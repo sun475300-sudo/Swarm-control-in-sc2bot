@@ -44,30 +44,30 @@ class IterativeReplayLearningWorkflow:
         self.collect_data_path = self.project_root / "tools" / "collect_training_data.py"
         self.extract_train_path = self.project_root / "tools" / "extract_and_train_from_training.py"
         self.run_training_path = self.project_root / "run_with_training.py"
-        
+
         # �ݺ� �н� ���
         self.iteration_history: List[Dict[str, Any]] = []
         self.history_path = self.project_root / "local_training" / "scripts" / "iterative_learning_history.json"
-    
+
     def learn_from_replays(self, max_replays: int = 30) -> bool:
         """���ΰ��̸� ���÷��̿��� ������� �н�"""
         if not self.replay_learner_path.exists():
             logger.error(f"Replay learner script not found: {self.replay_learner_path}")
             return False
-        
+
         try:
             env = os.environ.copy()
             env["MAX_REPLAYS_FOR_LEARNING"] = str(max_replays)
-            
+
             logger.info(f"Learning from {max_replays} replays...")
-            
+
             result = subprocess.run(
                 [sys.executable, str(self.replay_learner_path)],
                 cwd=str(self.project_root),
                 env=env,
                 capture_output=False
             )
-            
+
             if result.returncode == 0:
                 if self.learned_build_orders_path.exists():
                     with open(self.learned_build_orders_path, 'r', encoding='utf-8') as f:
@@ -75,61 +75,61 @@ class IterativeReplayLearningWorkflow:
                     logger.info(f"Learned parameters: {learned_params}")
                     return True
                 else:
-                    logger.warning(f"Learned build orders file not created")
+                    logger.warning("Learned build orders file not created")
                     return False
             else:
                 logger.error(f"Replay learning failed with return code {result.returncode}")
                 return False
-                
+
         except Exception as e:
             logger.error(f"Failed to learn from replays: {e}")
             import traceback
             traceback.print_exc()
             return False
-    
+
     def collect_training_data(self) -> bool:
         """���� �Ʒ� ������ ����"""
         if not self.collect_data_path.exists():
-            logger.warning(f"Collect training data script not found")
+            logger.warning("Collect training data script not found")
             return True  # Optional step
-        
+
         try:
             result = subprocess.run(
                 [sys.executable, str(self.collect_data_path)],
                 cwd=str(self.project_root),
                 capture_output=False
             )
-            
+
             return result.returncode == 0
-                
+
         except Exception as e:
             logger.error(f"Failed to collect training data: {e}")
             return True  # Optional step
-    
+
     def extract_and_learn_from_training(self) -> bool:
         """�Ʒ� �����Ϳ��� ���� �� �н�"""
         if not self.extract_train_path.exists():
-            logger.warning(f"Extract and train script not found")
+            logger.warning("Extract and train script not found")
             return True  # Optional step
-        
+
         try:
             result = subprocess.run(
                 [sys.executable, str(self.extract_train_path)],
                 cwd=str(self.project_root),
                 capture_output=False
             )
-            
+
             return result.returncode == 0
-                
+
         except Exception as e:
             logger.error(f"Failed to extract and learn from training: {e}")
             return True  # Optional step
-    
+
     def verify_learned_parameters(self) -> Dict[str, Any]:
         """�н��� �Ķ���� Ȯ��"""
         if not self.learned_build_orders_path.exists():
             return {}
-        
+
         try:
             with open(self.learned_build_orders_path, 'r', encoding='utf-8') as f:
                 learned_params = json.load(f)
@@ -137,61 +137,61 @@ class IterativeReplayLearningWorkflow:
         except Exception as e:
             logger.error(f"Failed to load learned parameters: {e}")
             return {}
-    
+
     def save_iteration_history(self):
         """�ݺ� �н� ��� ����"""
         try:
             self.history_path.parent.mkdir(parents=True, exist_ok=True)
-            
+
             # Load existing history
             existing_history = []
             if self.history_path.exists():
                 with open(self.history_path, 'r', encoding='utf-8') as f:
                     existing_history = json.load(f)
-            
+
             # Append current iteration history
             existing_history.extend(self.iteration_history)
-            
+
             # Save updated history
             with open(self.history_path, 'w', encoding='utf-8') as f:
                 json.dump(existing_history, f, indent=2, ensure_ascii=False)
-            
+
         except Exception as e:
             logger.error(f"Failed to save iteration history: {e}")
-    
+
     def run_game_training(self, num_games: int = 1) -> bool:
         """���� �Ʒ� ���� (�н��� ������� �ڵ� ����)"""
         if not self.run_training_path.exists():
             logger.warning(f"Game training script not found: {self.run_training_path}")
             return True  # Optional step for iterative learning
-        
+
         try:
             # Note: run_with_training.py runs continuously, so we'll just verify it can start
             # In practice, game training should run in parallel or separately
             logger.info(f"Game training script available: {self.run_training_path}")
-            logger.info(f"Learned parameters will be automatically applied in production_resilience.py")
-            logger.info(f"To start game training, run: python run_with_training.py")
+            logger.info("Learned parameters will be automatically applied in production_resilience.py")
+            logger.info("To start game training, run: python run_with_training.py")
             return True
-                
+
         except Exception as e:
             logger.error(f"Game training check failed: {e}")
             return True  # Optional step
-    
+
     def run_single_iteration(self, iteration: int, max_replays: int = 30, run_game_training: bool = False) -> Dict[str, Any]:
         """���� �ݺ� �н� ����"""
         iteration_start = datetime.now()
-        
+
         logger.info("\n" + "=" * 70)
         logger.info(f"[ITERATION {iteration}] Starting iterative learning cycle")
         logger.info("=" * 70)
-        
+
         iteration_result = {
             "iteration": iteration,
             "start_time": iteration_start.isoformat(),
             "max_replays": max_replays,
             "steps": []
         }
-        
+
         # Step 1: Learn from replays
         logger.info(f"\n[ITERATION {iteration} - STEP 1] Learning from {max_replays} replays...")
         step1_start = time.time()
@@ -213,9 +213,9 @@ class IterativeReplayLearningWorkflow:
                 "status": "failed",
                 "duration": step1_duration
             })
-            logger.error(f"Step 1 failed")
+            logger.error("Step 1 failed")
             return iteration_result
-        
+
         # Step 2: Verify game training can use learned parameters
         logger.info(f"\n[ITERATION {iteration} - STEP 2] Verifying game training integration...")
         step2_start = time.time()
@@ -227,9 +227,9 @@ class IterativeReplayLearningWorkflow:
             "duration": step2_duration
         })
         logger.info(f"Step 2 completed in {step2_duration:.1f}s")
-        logger.info(f"Learned parameters are ready for game training")
-        logger.info(f"Parameters will be automatically applied via production_resilience.py")
-        
+        logger.info("Learned parameters are ready for game training")
+        logger.info("Parameters will be automatically applied via production_resilience.py")
+
         # Step 3: Collect training data (if exists from previous games)
         logger.info(f"\n[ITERATION {iteration} - STEP 3] Collecting training data...")
         step3_start = time.time()
@@ -241,7 +241,7 @@ class IterativeReplayLearningWorkflow:
             "duration": step3_duration
         })
         logger.info(f"Step 3 completed in {step3_duration:.1f}s")
-        
+
         # Step 4: Extract and learn from training
         logger.info(f"\n[ITERATION {iteration} - STEP 4] Extracting and learning from training...")
         step4_start = time.time()
@@ -253,22 +253,22 @@ class IterativeReplayLearningWorkflow:
             "duration": step4_duration
         })
         logger.info(f"Step 4 completed in {step4_duration:.1f}s")
-        
+
         # Verify final parameters
         final_params = self.verify_learned_parameters()
         iteration_result["final_params"] = final_params
-        
+
         iteration_end = datetime.now()
         iteration_duration = (iteration_end - iteration_start).total_seconds()
         iteration_result["end_time"] = iteration_end.isoformat()
         iteration_result["duration"] = iteration_duration
-        
+
         logger.info(f"\n[ITERATION {iteration}] Completed in {iteration_duration:.1f}s")
         logger.info(f"Final parameters: {final_params}")
-        logger.info(f"These parameters are automatically used in game training")
-        
+        logger.info("These parameters are automatically used in game training")
+
         return iteration_result
-    
+
     def run_iterative_workflow(self, max_iterations: int = 30, max_replays: int = 30, run_game_training: bool = False):
         """�ݺ� �н� ��ũ�÷ο� ����"""
         logger.info("\n" + "=" * 70)
@@ -279,13 +279,13 @@ class IterativeReplayLearningWorkflow:
         logger.info(f"Max iterations: {max_iterations}")
         logger.info(f"Max replays per iteration: {max_replays}")
         workflow_start = datetime.now()
-        
+
         # Clear iteration history for this run
         self.iteration_history = []
-        
+
         successful_iterations = 0
         failed_iterations = 0
-        
+
         for iteration in range(1, max_iterations + 1):
             try:
                 iteration_result = self.run_single_iteration(
@@ -293,22 +293,22 @@ class IterativeReplayLearningWorkflow:
                     max_replays=max_replays,
                     run_game_training=run_game_training
                 )
-                
+
                 self.iteration_history.append(iteration_result)
-                
+
                 if iteration_result["steps"][0]["status"] == "success":
                     successful_iterations += 1
                 else:
                     failed_iterations += 1
-                
+
                 # Save history after each iteration (in case of interruption)
                 self.save_iteration_history()
-                
+
                 # Brief pause between iterations
                 if iteration < max_iterations:
-                    logger.info(f"\n[INFO] Waiting 2 seconds before next iteration...")
+                    logger.info("\n[INFO] Waiting 2 seconds before next iteration...")
                     time.sleep(2)
-                
+
             except KeyboardInterrupt:
                 logger.warning(f"\n[WARNING] Workflow interrupted by user at iteration {iteration}")
                 break
@@ -317,14 +317,14 @@ class IterativeReplayLearningWorkflow:
                 import traceback
                 traceback.print_exc()
                 failed_iterations += 1
-        
+
         # Final summary
         workflow_end = datetime.now()
         workflow_duration = (workflow_end - workflow_start).total_seconds()
-        
+
         # Final parameters
         final_params = self.verify_learned_parameters()
-        
+
         logger.info("\n" + "=" * 70)
         logger.info("")
         logger.info("=" * 70)
@@ -332,7 +332,7 @@ class IterativeReplayLearningWorkflow:
         logger.info(f"Successful: {successful_iterations}")
         logger.error(f"Failed: {failed_iterations}")
         logger.info(f"Total duration: {workflow_duration:.1f} seconds ({workflow_duration/60:.1f} minutes)")
-        logger.info(f"")
+        logger.info("")
         for param, value in final_params.items():
             logger.info(f"  - {param}: {value}")
         logger.info(f"Iteration history saved to: {self.history_path}")
@@ -346,7 +346,7 @@ class IterativeReplayLearningWorkflow:
 def main():
     """Main entry point"""
     import argparse
-    
+
     parser = argparse.ArgumentParser(
         description="Iterative Replay Learning Workflow (30 iterations)",
         formatter_class=argparse.RawDescriptionHelpFormatter,
@@ -362,29 +362,29 @@ Examples:
   python iterative_replay_learning_workflow.py --max-replays 50
         """
     )
-    
+
     parser.add_argument(
         "--max-iterations",
         type=int,
         default=30,
         help="Maximum number of learning iterations (default: 30)"
     )
-    
+
     parser.add_argument(
         "--max-replays",
         type=int,
         default=30,
         help="Maximum number of replays per iteration (default: 30)"
     )
-    
+
     parser.add_argument(
         "--run-game-training",
         action="store_true",
         help="Run game training as part of each iteration (experimental)"
     )
-    
+
     args = parser.parse_args()
-    
+
     workflow = IterativeReplayLearningWorkflow()
     workflow.run_iterative_workflow(
         max_iterations=args.max_iterations,
