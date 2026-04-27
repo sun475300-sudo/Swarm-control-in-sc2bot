@@ -20,11 +20,7 @@ from utils.logger import get_logger
 try:
     from sc2.ids.unit_typeid import UnitTypeId
 except ImportError:
-    class UnitTypeId:
-        ROACHWARREN = "ROACHWARREN"
-        HYDRALISKDEN = "HYDRALISKDEN"
-        SPIRE = "SPIRE"
-        INFESTATIONPIT = "INFESTATIONPIT"
+    from utils.sc2_stubs import UnitTypeId
 
 
 class RLTechAdapter:

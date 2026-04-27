@@ -18,16 +18,7 @@ logger = logging.getLogger("AggressiveTechBuilder")
 try:
     from sc2.ids.unit_typeid import UnitTypeId
 except ImportError:
-    class UnitTypeId:
-        SPAWNINGPOOL = "SPAWNINGPOOL"
-        EXTRACTOR = "EXTRACTOR"
-        ROACHWARREN = "ROACHWARREN"
-        HYDRALISKDEN = "HYDRALISKDEN"
-        LAIR = "LAIR"
-        HATCHERY = "HATCHERY"
-        BANELINGNEST = "BANELINGNEST"
-        EVOLUTIONCHAMBER = "EVOLUTIONCHAMBER"
-        SPIRE = "SPIRE"
+    from utils.sc2_stubs import UnitTypeId
 
 
 class AggressiveTechBuilder:

@@ -12,7 +12,7 @@ from typing import List, Set, Tuple
 try:
     from sc2.ids.unit_typeid import UnitTypeId
 except ImportError:
-    UnitTypeId = None
+    from utils.sc2_stubs import UnitTypeId
 
 
 class SplashThreatHandler:

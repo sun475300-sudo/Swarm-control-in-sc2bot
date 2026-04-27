@@ -21,8 +21,11 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'local_training')))
 
 from local_training.production_resilience import ProductionResilience
-from sc2.ids.unit_typeid import UnitTypeId
-from sc2.position import Point2
+try:
+    from sc2.ids.unit_typeid import UnitTypeId
+    from sc2.position import Point2
+except ImportError:
+    from utils.sc2_stubs import UnitTypeId, Point2
 
 
 class TestProductionResilience(unittest.TestCase):

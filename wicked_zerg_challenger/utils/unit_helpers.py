@@ -17,9 +17,7 @@ try:
     from sc2.units import Units
     from sc2.position import Point2
 except ImportError:
-    Unit = None
-    Units = None
-    Point2 = None
+    from utils.sc2_stubs import Unit, Units, Point2
 
 logger = get_logger("UnitHelpers")
 

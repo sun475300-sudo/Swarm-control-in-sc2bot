@@ -16,7 +16,7 @@ logger = logging.getLogger("GameDataLogger")
 try:
     from sc2.ids.unit_typeid import UnitTypeId
 except ImportError:
-    UnitTypeId = None
+    from utils.sc2_stubs import UnitTypeId
 
 
 class GameDataLogger:

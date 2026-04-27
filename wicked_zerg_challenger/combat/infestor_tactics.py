@@ -18,11 +18,7 @@ try:
     from sc2.position import Point2
     from sc2.unit import Unit
 except ImportError:
-    AbilityId = None
-    UnitTypeId = None
-    UpgradeId = None
-    Point2 = None
-    Unit = None
+    from utils.sc2_stubs import AbilityId, UnitTypeId, UpgradeId, Point2, Unit
 
 
 class InfestorTacticsController:

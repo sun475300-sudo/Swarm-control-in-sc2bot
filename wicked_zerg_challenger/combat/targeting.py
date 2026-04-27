@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 try:
     from sc2.ids.unit_typeid import UnitTypeId
 except ImportError:  # Fallback for tooling environments
-    UnitTypeId = None
+    from utils.sc2_stubs import UnitTypeId
 
 
 def _unit_type_ids(names: Sequence[str]) -> List[object]:

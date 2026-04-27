@@ -20,12 +20,7 @@ from utils.logger import get_logger
 try:
     from sc2.data import Race
 except ImportError:
-    class Race:
-        Terran = "Terran"
-        Protoss = "Protoss"
-        Zerg = "Zerg"
-        Random = "Random"
-
+    from utils.sc2_stubs import Race
 try:
     from config.unit_configs import StrategyConfig
 except ImportError:

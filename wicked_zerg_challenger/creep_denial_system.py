@@ -23,11 +23,7 @@ try:
     from sc2.ids.unit_typeid import UnitTypeId
     from sc2.ids.ability_id import AbilityId
 except ImportError:
-    Unit = object
-    Units = object
-    Point2 = tuple
-    UnitTypeId = None
-    AbilityId = None
+    from utils.sc2_stubs import Unit, Units, Point2, UnitTypeId, AbilityId
 
 from utils.logger import get_logger
 from game_config import GameConfig

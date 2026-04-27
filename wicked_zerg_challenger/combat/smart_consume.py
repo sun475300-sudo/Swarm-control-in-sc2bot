@@ -25,10 +25,7 @@ try:
     from sc2.unit import Unit
     from sc2.units import Units
 except ImportError:
-    BotAI = object
-    UnitTypeId = object
-    AbilityId = object
-    Unit = object
+    from utils.sc2_stubs import BotAI, UnitTypeId, AbilityId, Unit
     Units = list
 
 

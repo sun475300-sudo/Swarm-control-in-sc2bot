@@ -21,24 +21,7 @@ try:
     from sc2.ids.upgrade_id import UpgradeId
     from sc2.position import Point2
 except ImportError:
-    class UnitTypeId:
-        QUEEN = "QUEEN"
-        RAVAGER = "RAVAGER"
-        VIPER = "VIPER"
-        INFESTOR = "INFESTOR"
-        OVERSEER = "OVERSEER"
-        OVERLORD = "OVERLORD"
-    class AbilityId:
-        TRANSFUSION_TRANSFUSION = "TRANSFUSION_TRANSFUSION"
-        EFFECT_CORROSIVEBILE = "EFFECT_CORROSIVEBILE"
-        EFFECT_ABDUCT = "EFFECT_ABDUCT"
-        EFFECT_BLINDINGCLOUD = "EFFECT_BLINDINGCLOUD"
-        EFFECT_VIPERCONSUME = "EFFECT_VIPERCONSUME"
-        NEURALPARASITE_NEURALPARASITE = "NEURALPARASITE_NEURALPARASITE"
-        FUNGALGROWTH_FUNGALGROWTH = "FUNGALGROWTH_FUNGALGROWTH"
-        SPAWNCHANGELING_SPAWNCHANGELING = "SPAWNCHANGELING_SPAWNCHANGELING"
-    class UpgradeId:
-        pass
+    from utils.sc2_stubs import UnitTypeId, AbilityId, UpgradeId
     Point2 = tuple
 
 try:

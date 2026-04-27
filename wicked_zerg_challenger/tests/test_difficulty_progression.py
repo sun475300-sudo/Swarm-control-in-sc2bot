@@ -18,34 +18,21 @@ from unittest.mock import Mock, patch
 import sys
 from io import StringIO
 
+import pytest
+
 # Add parent directory to path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-from difficulty_progression import DifficultyProgression
-
-# Mock sc2.data imports
+# sc2가 설치되지 않으면 utils.sc2_stubs의 _StubMember(str) 기반 Difficulty/Race를
+# 사용한다. __getitem__/이름 문자열/해시 모두 실제 sc2 enum과 호환되므로
+# 대부분 테스트가 동작하지만, 일부(난이도 진행/승률 저장/로드 등) 상세 동작에
+# 차이가 있어 세부 케이스가 실패할 수 있음.
 try:
     from sc2.data import Difficulty, Race
 except ImportError:
-    # Create mock enums for testing
-    from enum import Enum
+    from utils.sc2_stubs import Difficulty, Race
 
-    class Difficulty(Enum):
-        VeryEasy = 1
-        Easy = 2
-        Medium = 3
-        MediumHard = 4
-        Hard = 5
-        Harder = 6
-        VeryHard = 7
-        CheatVision = 8
-        CheatMoney = 9
-        CheatInsane = 10
-
-    class Race(Enum):
-        Terran = 1
-        Protoss = 2
-        Zerg = 3
+from difficulty_progression import DifficultyProgression
 
 
 class TestDifficultyProgressionBasics(unittest.TestCase):

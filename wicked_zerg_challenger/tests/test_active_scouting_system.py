@@ -27,7 +27,10 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')
 
 try:
     from scouting.advanced_scout_system_v2 import AdvancedScoutingSystemV2
-    from sc2.position import Point2
+    try:
+        from sc2.position import Point2
+    except ImportError:
+        from utils.sc2_stubs import Point2
     SCOUT_V2_AVAILABLE = True
 except (ImportError, TypeError):
     SCOUT_V2_AVAILABLE = False

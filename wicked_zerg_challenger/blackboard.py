@@ -22,8 +22,7 @@ try:
     from sc2.ids.unit_typeid import UnitTypeId
     from sc2.position import Point2
 except ImportError:
-    UnitTypeId = None
-    Point2 = None
+    from utils.sc2_stubs import UnitTypeId, Point2
 
 
 class ThreatLevel(IntEnum):

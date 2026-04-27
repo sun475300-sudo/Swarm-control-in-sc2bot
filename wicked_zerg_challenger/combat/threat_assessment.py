@@ -20,9 +20,7 @@ else:
         from sc2.unit import Unit
         from sc2.position import Point2
     except ImportError:
-        Units = object
-        Unit = object
-        Point2 = tuple
+        from utils.sc2_stubs import Units, Unit, Point2
 
 from utils.logger import get_logger
 

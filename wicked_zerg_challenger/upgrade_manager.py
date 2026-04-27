@@ -17,9 +17,7 @@ try:
     from sc2.ids.unit_typeid import UnitTypeId
     from sc2.ids.upgrade_id import UpgradeId
 except ImportError:  # Fallbacks for tooling environments
-    UnitTypeId = None
-    UpgradeId = None
-
+    from utils.sc2_stubs import UnitTypeId, UpgradeId
 from utils.logger import get_logger
 
 

@@ -18,11 +18,7 @@ logger = logging.getLogger("ResourceManager")
 try:
     from sc2.ids.unit_typeid import UnitTypeId
 except ImportError:
-
-    class UnitTypeId:
-        DRONE = "DRONE"
-        EXTRACTOR = "EXTRACTOR"
-        HATCHERY = "HATCHERY"
+    from utils.sc2_stubs import UnitTypeId
 
 
 class ResourceManager:

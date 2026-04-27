@@ -14,7 +14,7 @@ from typing import Iterable, List, Optional
 try:
     from sc2.ids.unit_typeid import UnitTypeId
 except ImportError:  # Fallbacks for tooling environments
-    UnitTypeId = None
+    from utils.sc2_stubs import UnitTypeId
 
 
 class UnitFactory:

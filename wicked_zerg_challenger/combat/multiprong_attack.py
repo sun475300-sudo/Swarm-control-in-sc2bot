@@ -23,10 +23,8 @@ try:
     from sc2.unit import Unit
     from sc2.units import Units
 except ImportError:
-    UnitTypeId = None
-    Point2 = None
-    Unit = None
-    Units = None
+    from utils.sc2_stubs import UnitTypeId, Point2
+    from utils.sc2_stubs import Unit, Units
 
 from utils.logger import get_logger
 
