@@ -5,7 +5,6 @@ from __future__ import annotations
 
 from typing import Dict, Iterable, List, Optional, Sequence, Tuple, Any
 
-
 try:
     from swarm_rust_accel import (
         nearest_point_index as _nearest_point_index_rust,

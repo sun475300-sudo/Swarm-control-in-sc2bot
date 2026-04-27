@@ -9,7 +9,6 @@ from typing import Optional, Any
 import json
 import time
 
-
 # ─────────────────────────────────────────────
 # Wasmer host (with graceful fallback)
 # ─────────────────────────────────────────────

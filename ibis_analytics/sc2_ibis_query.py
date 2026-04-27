@@ -8,7 +8,6 @@ import ibis.expr.datatypes as dt
 from ibis import _
 import pandas as pd
 
-
 # ── Backend configuration ─────────────────────────────────────────────────────
 
 

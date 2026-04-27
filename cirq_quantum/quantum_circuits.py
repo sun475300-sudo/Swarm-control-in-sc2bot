@@ -10,7 +10,6 @@ import math
 import cmath
 import random
 
-
 try:
     import cirq
     import numpy as np

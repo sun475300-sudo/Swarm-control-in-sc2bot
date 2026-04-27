@@ -7,7 +7,6 @@ import modal
 from modal import App, Volume, Image, Period, web_endpoint
 from pathlib import Path
 
-
 # ── Modal App and infrastructure ──────────────────────────────────────────────
 
 app = App("sc2-bot-training")

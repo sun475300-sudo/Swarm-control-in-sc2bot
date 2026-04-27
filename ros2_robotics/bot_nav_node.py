@@ -10,7 +10,6 @@ import math
 import time
 import threading
 
-
 # ─────────────────────────────────────────────
 # ROS2 interface stubs (for testing without ROS2)
 # ─────────────────────────────────────────────

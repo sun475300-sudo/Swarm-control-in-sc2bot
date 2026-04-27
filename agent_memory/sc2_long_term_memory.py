@@ -15,7 +15,6 @@ from typing import Any, Dict, List, Optional, Tuple
 from enum import Enum
 from collections import defaultdict
 
-
 # ---------------------------------------------------------------------------
 # Constants
 # ---------------------------------------------------------------------------

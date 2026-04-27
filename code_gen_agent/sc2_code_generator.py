@@ -19,7 +19,6 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any, Optional
 
-
 # ── Constants ───────────────────────────────────────────────────────────────────
 
 SC2_UNIT_TYPES: dict[str, list[str]] = {
@@ -382,8 +381,7 @@ class StrategyCodeGen:
                 category=TemplateCategory.BUILD_ORDER,
                 description="Simple supply-based build order executor",
                 parameters={"steps": "list of (supply, action) tuples"},
-                code=textwrap.dedent(
-                    """\
+                code=textwrap.dedent("""\
                 async def execute_build_order(bot) -> None:
                     \"\"\"Execute a supply-based build order.\"\"\"
                     build_steps: list[tuple[int, str]] = {{ steps }}
@@ -404,8 +402,7 @@ class StrategyCodeGen:
                     handler = action_map.get(action)
                     if handler is not None:
                         await handler()
-            """
-                ),
+            """),
                 tags=["build_order", "macro", "basic"],
             )
         )
@@ -417,8 +414,7 @@ class StrategyCodeGen:
                 category=TemplateCategory.MICRO_CONTROL,
                 description="Kiting logic for ranged units against melee",
                 parameters={"unit_type": "unit type tag", "range_buffer": "float"},
-                code=textwrap.dedent(
-                    """\
+                code=textwrap.dedent("""\
                 async def kite_units(bot, unit_tag: int, enemies: list) -> None:
                     \"\"\"Kite enemy melee units with ranged {{ unit_type }}.\"\"\"
                     unit = bot.units.by_tag(unit_tag)
@@ -448,8 +444,7 @@ class StrategyCodeGen:
                     else:
                         # Approach
                         unit.attack(closest_enemy)
-            """
-                ),
+            """),
                 tags=["micro", "kiting", "ranged"],
             )
         )
@@ -461,8 +456,7 @@ class StrategyCodeGen:
                 category=TemplateCategory.MACRO_MANAGEMENT,
                 description="Queen inject larvae macro cycle",
                 parameters={},
-                code=textwrap.dedent(
-                    """\
+                code=textwrap.dedent("""\
                 async def inject_larvae(bot) -> None:
                     \"\"\"Inject larvae at all hatcheries with available queens.\"\"\"
                     queens = bot.units.of_type("Queen").idle
@@ -489,8 +483,7 @@ class StrategyCodeGen:
                         if closest_hatch is not None and min_dist < 10.0:
                             queen(AbilityId.EFFECT_INJECTLARVA, closest_hatch)
                             injected_hatch_tags.add(closest_hatch.tag)
-            """
-                ),
+            """),
                 tags=["macro", "inject", "queen", "zerg"],
             )
         )
@@ -505,8 +498,7 @@ class StrategyCodeGen:
                     "supply_threshold": "int",
                     "unit_composition": "dict of unit_type: count",
                 },
-                code=textwrap.dedent(
-                    """\
+                code=textwrap.dedent("""\
                 async def execute_timing_attack(bot) -> None:
                     \"\"\"Launch a timing push when army reaches threshold.\"\"\"
                     supply_threshold: int = {{ supply_threshold }}
@@ -529,8 +521,7 @@ class StrategyCodeGen:
                     )
                     for unit in army_units:
                         unit.attack(target)
-            """
-                ),
+            """),
                 tags=["timing", "attack", "aggressive"],
             )
         )
@@ -542,8 +533,7 @@ class StrategyCodeGen:
                 category=TemplateCategory.SCOUTING,
                 description="Overlord scouting pattern for Zerg",
                 parameters={"scout_positions": "list of (x, y) positions"},
-                code=textwrap.dedent(
-                    """\
+                code=textwrap.dedent("""\
                 async def overlord_scout(bot, step: int) -> None:
                     \"\"\"Send overlords to scout positions on a schedule.\"\"\"
                     scout_positions: list[tuple[float, float]] = {{ scout_positions }}
@@ -558,8 +548,7 @@ class StrategyCodeGen:
 
                     scout = overlords.first
                     scout.move(target)
-            """
-                ),
+            """),
                 tags=["scout", "overlord", "zerg", "info"],
             )
         )
@@ -571,8 +560,7 @@ class StrategyCodeGen:
                 category=TemplateCategory.DEFENSE,
                 description="Build spine crawlers at natural for defense",
                 parameters={"count": "int number of spines"},
-                code=textwrap.dedent(
-                    """\
+                code=textwrap.dedent("""\
                 async def build_spine_wall(bot) -> None:
                     \"\"\"Build spine crawlers at the natural expansion.\"\"\"
                     target_count: int = {{ count }}
@@ -593,8 +581,7 @@ class StrategyCodeGen:
                             )
                             if placement is not None:
                                 await bot.build("SpineCrawler", placement)
-            """
-                ),
+            """),
                 tags=["defense", "spine", "zerg", "structure"],
             )
         )
@@ -609,8 +596,7 @@ class StrategyCodeGen:
                     "tech_building": "structure type to build",
                     "new_units": "list of unit types to produce",
                 },
-                code=textwrap.dedent(
-                    """\
+                code=textwrap.dedent("""\
                 async def tech_transition(bot) -> None:
                     \"\"\"Transition to new tech path by building required structures.\"\"\"
                     tech_building: str = "{{ tech_building }}"
@@ -627,8 +613,7 @@ class StrategyCodeGen:
                         larvae = bot.units.of_type("Larva")
                         if larvae.exists and bot.can_afford(unit_type):
                             larvae.random.train(unit_type)
-            """
-                ),
+            """),
                 tags=["transition", "tech", "mid_game"],
             )
         )
@@ -916,14 +901,12 @@ class StrategyCodeGen:
     def _fallback_generation(self, description: str) -> GeneratedCode:
         """Generate a stub function when no template matches."""
         safe_name = re.sub(r"\W+", "_", description.lower())[:40].strip("_")
-        code = textwrap.dedent(
-            f"""\
+        code = textwrap.dedent(f"""\
             async def {safe_name}(bot) -> None:
                 \"\"\"Generated from: {description[:80]}\"\"\"
                 # TODO: Implement strategy logic
                 pass
-        """
-        )
+        """)
         return GeneratedCode(
             source_prompt=description,
             code=code,

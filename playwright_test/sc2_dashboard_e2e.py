@@ -771,8 +771,7 @@ class SC2DashboardTest:
         metrics = PerformanceMetrics()
 
         # Navigation timing
-        nav_timing = self.page.evaluate(
-            """() => {
+        nav_timing = self.page.evaluate("""() => {
             const nav = performance.getEntriesByType('navigation')[0];
             if (!nav) return null;
             return {
@@ -780,27 +779,23 @@ class SC2DashboardTest:
                 domContentLoaded: nav.domContentLoadedEventEnd - nav.startTime,
                 loadEvent: nav.loadEventEnd - nav.startTime,
             };
-        }"""
-        )
+        }""")
         if nav_timing:
             metrics.ttfb_ms = nav_timing.get("ttfb")
             metrics.dom_content_loaded_ms = nav_timing.get("domContentLoaded")
             metrics.load_event_ms = nav_timing.get("loadEvent")
 
         # Paint timing (FCP)
-        fcp = self.page.evaluate(
-            """() => {
+        fcp = self.page.evaluate("""() => {
             const entries = performance.getEntriesByName('first-contentful-paint');
             return entries.length > 0 ? entries[0].startTime : null;
-        }"""
-        )
+        }""")
         if fcp is not None:
             metrics.fcp_ms = fcp
 
         # LCP (via PerformanceObserver — must be injected before navigation
         # for accurate results; here we try post-hoc)
-        lcp = self.page.evaluate(
-            """() => {
+        lcp = self.page.evaluate("""() => {
             return new Promise((resolve) => {
                 new PerformanceObserver((list) => {
                     const entries = list.getEntries();
@@ -810,14 +805,12 @@ class SC2DashboardTest:
                 }).observe({type: 'largest-contentful-paint', buffered: true});
                 setTimeout(() => resolve(null), 3000);
             });
-        }"""
-        )
+        }""")
         if lcp is not None:
             metrics.lcp_ms = lcp
 
         # CLS
-        cls_score = self.page.evaluate(
-            """() => {
+        cls_score = self.page.evaluate("""() => {
             return new Promise((resolve) => {
                 let cls = 0;
                 new PerformanceObserver((list) => {
@@ -828,20 +821,17 @@ class SC2DashboardTest:
                 }).observe({type: 'layout-shift', buffered: true});
                 setTimeout(() => resolve(cls), 3000);
             });
-        }"""
-        )
+        }""")
         if cls_score is not None:
             metrics.cls_score = cls_score
 
         # JS heap (Chromium only)
-        heap = self.page.evaluate(
-            """() => {
+        heap = self.page.evaluate("""() => {
             if (performance.memory) {
                 return performance.memory.totalJSHeapSize / (1024 * 1024);
             }
             return null;
-        }"""
-        )
+        }""")
         if heap is not None:
             metrics.total_js_heap_mb = heap
 
@@ -851,8 +841,7 @@ class SC2DashboardTest:
     def inject_web_vitals_observer(self) -> None:
         """Inject PerformanceObserver scripts *before* page load for
         accurate LCP/FID/CLS measurement."""
-        self.page.add_init_script(
-            """
+        self.page.add_init_script("""
             window.__sc2_vitals = {lcp: 0, fid: 0, cls: 0};
 
             new PerformanceObserver((list) => {
@@ -876,8 +865,7 @@ class SC2DashboardTest:
                     }
                 }
             }).observe({type: 'layout-shift', buffered: true});
-        """
-        )
+        """)
 
     def read_injected_vitals(self) -> PerformanceMetrics:
         """Read metrics from the pre-injected observer."""

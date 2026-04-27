@@ -13,7 +13,6 @@ from agno.embedder.openai import OpenAIEmbedder
 from pydantic import BaseModel
 from pathlib import Path
 
-
 # ── Knowledge base content ────────────────────────────────────────────────────
 
 SC2_STRATEGY_DOCS = [

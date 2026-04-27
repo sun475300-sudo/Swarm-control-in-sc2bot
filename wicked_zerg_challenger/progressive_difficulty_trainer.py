@@ -38,7 +38,6 @@ if str(project_root) not in sys.path:
 
 from wicked_zerg_bot_pro_impl import WickedZergBotProImpl
 
-
 # 사용 가능한 맵 리스트 (다양성 개선)
 AVAILABLE_MAPS = [
     "(2)CatalystLE",

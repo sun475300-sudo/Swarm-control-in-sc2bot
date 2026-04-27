@@ -17,7 +17,6 @@ import numpy as np
 from flax.training import train_state
 from typing import Sequence
 
-
 # ---------------------------------------------------------------------------
 # Constants
 # ---------------------------------------------------------------------------

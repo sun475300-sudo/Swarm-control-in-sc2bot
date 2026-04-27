@@ -9,7 +9,6 @@ import math
 import random
 from dataclasses import dataclass, field
 
-
 try:
     import gymnasium as gym
     from gymnasium import spaces

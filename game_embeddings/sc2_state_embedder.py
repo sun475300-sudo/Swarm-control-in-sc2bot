@@ -17,7 +17,6 @@ import time
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional, Tuple
 
-
 # ---------------------------------------------------------------------------
 # SC2 game-state feature definitions
 # ---------------------------------------------------------------------------

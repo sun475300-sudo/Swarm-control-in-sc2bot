@@ -9,7 +9,6 @@ import json
 from dataclasses import dataclass
 from typing import AsyncGenerator, Optional
 
-
 OLLAMA_BASE_URL = "http://localhost:11434"
 DEFAULT_MODEL = "llama3"
 STRATEGY_MODEL = "mistral"

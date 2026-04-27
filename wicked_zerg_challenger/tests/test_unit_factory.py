@@ -5,6 +5,7 @@ UnitFactory 테스트
 gas ratio, combat mode, larva saving, emergency mode,
 unit table, priority queue 커버리지
 """
+
 import os
 
 os.environ["PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION"] = "python"

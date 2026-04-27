@@ -100,13 +100,11 @@ def observe(state: SC2GameState) -> SC2GameState:
 
 def analyze(state: SC2GameState) -> SC2GameState:
     """Analyze observations to identify threats and opportunities."""
-    system = SystemMessage(
-        content="""You are an SC2 Zerg strategist.
+    system = SystemMessage(content="""You are an SC2 Zerg strategist.
     Analyze the game state observations and identify:
     1. Key threats (max 3)
     2. Strategic opportunities (max 3)
-    Be concise. Format: THREATS: [...] OPPORTUNITIES: [...]"""
-    )
+    Be concise. Format: THREATS: [...] OPPORTUNITIES: [...]""")
 
     obs_text = "\n".join(state["observations"])
     response = llm.invoke([system, HumanMessage(content=f"Observations:\n{obs_text}")])
@@ -129,12 +127,10 @@ def analyze(state: SC2GameState) -> SC2GameState:
 
 def plan(state: SC2GameState) -> SC2GameState:
     """Create an action plan based on analysis."""
-    system = SystemMessage(
-        content=f"""You are planning SC2 Zerg strategy.
+    system = SystemMessage(content=f"""You are planning SC2 Zerg strategy.
     Phase: {state['game_phase']}, vs {state['enemy_race']}.
     Army: {state['army_supply']}, Enemy army: {state['enemy_army_supply']}.
-    Create a 3-5 step action plan. Be specific and actionable."""
-    )
+    Create a 3-5 step action plan. Be specific and actionable.""")
 
     context = f"""
     Threats: {state['threats']}

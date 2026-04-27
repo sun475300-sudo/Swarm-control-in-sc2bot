@@ -12,7 +12,6 @@ import strawberry
 from strawberry import ID
 from strawberry.scalars import JSON
 
-
 # ── Enums ─────────────────────────────────────────────────────────────────────
 
 

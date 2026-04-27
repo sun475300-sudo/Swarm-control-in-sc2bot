@@ -10,7 +10,6 @@ from __future__ import annotations
 
 from typing import Optional, Sequence, Tuple
 
-
 try:
     import pyopencl as cl
     import numpy as np

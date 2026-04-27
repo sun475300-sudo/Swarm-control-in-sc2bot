@@ -13,7 +13,6 @@ from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional, Tuple
 from enum import Enum
 
-
 # ---------------------------------------------------------------------------
 # Lightweight tensor helpers (numpy-free, pure Python fallback)
 # ---------------------------------------------------------------------------

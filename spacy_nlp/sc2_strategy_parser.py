@@ -813,7 +813,7 @@ class SC2TrainingDataGenerator:
 
     @staticmethod
     def _resolve_overlaps(
-        entities: List[Tuple[int, int, str]]
+        entities: List[Tuple[int, int, str]],
     ) -> List[Tuple[int, int, str]]:
         """Remove overlapping entity spans, keeping the longest."""
         if not entities:

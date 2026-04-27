@@ -22,7 +22,6 @@ from evidently.tests import (
 )
 from pathlib import Path
 
-
 # ── Data generation ───────────────────────────────────────────────────────────
 
 

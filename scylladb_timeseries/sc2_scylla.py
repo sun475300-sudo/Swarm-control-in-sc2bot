@@ -31,16 +31,13 @@ def get_session():
 
 def setup_keyspace_and_tables(session):
     """Create keyspace and time-series tables."""
-    session.execute(
-        f"""
+    session.execute(f"""
         CREATE KEYSPACE IF NOT EXISTS {KEYSPACE}
         WITH replication = {{'class': 'SimpleStrategy', 'replication_factor': 1}}
-    """
-    )
+    """)
     session.set_keyspace(KEYSPACE)
 
-    session.execute(
-        """
+    session.execute("""
         CREATE TABLE IF NOT EXISTS game_events (
             game_id     TEXT,
             event_time  TIMESTAMP,
@@ -53,11 +50,9 @@ def setup_keyspace_and_tables(session):
             PRIMARY KEY ((game_id), event_time, event_type)
         ) WITH CLUSTERING ORDER BY (event_time ASC)
           AND default_time_to_live = 604800
-    """
-    )
+    """)
 
-    session.execute(
-        """
+    session.execute("""
         CREATE TABLE IF NOT EXISTS game_summary (
             game_id    TEXT PRIMARY KEY,
             player_id  TEXT,
@@ -67,20 +62,17 @@ def setup_keyspace_and_tables(session):
             total_apm  INT,
             created_at TIMESTAMP
         )
-    """
-    )
+    """)
     logger.info("ScyllaDB keyspace and tables ready.")
 
 
 def batch_insert_events(session, game_id: str, events: list[dict]):
     """Batch insert game events for high throughput."""
-    insert_stmt = session.prepare(
-        """
+    insert_stmt = session.prepare("""
         INSERT INTO game_events
             (game_id, event_time, event_type, unit_name, x, y, value, metadata)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-    """
-    )
+    """)
 
     batch = BatchStatement(batch_type=BatchType.UNLOGGED)
     for ev in events:

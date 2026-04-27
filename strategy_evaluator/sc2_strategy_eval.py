@@ -14,7 +14,6 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any, Optional
 
-
 # ── Constants ───────────────────────────────────────────────────────────────────
 
 DEFAULT_ELO = 1500.0

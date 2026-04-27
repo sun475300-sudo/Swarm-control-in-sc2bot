@@ -43,24 +43,20 @@ def setup_data_masking(conn):
     """Create masking policies for PII protection."""
     cursor = conn.cursor()
     # Mask player_id for non-admin roles (show hash only)
-    cursor.execute(
-        """
+    cursor.execute("""
         CREATE MASKING POLICY IF NOT EXISTS mask_player_id AS (val STRING)
         RETURNS STRING ->
             CASE
                 WHEN CURRENT_ROLE() IN ('SC2_ADMIN', 'SC2_BOT_SERVICE') THEN val
                 ELSE SHA2(val, 256)
             END
-    """
-    )
+    """)
     # Apply masking policy to players table
-    cursor.execute(
-        """
+    cursor.execute("""
         ALTER TABLE SC2_DB.ANALYTICS.PLAYERS
         MODIFY COLUMN player_id
         SET MASKING POLICY mask_player_id
-    """
-    )
+    """)
     logger.info("Dynamic data masking applied to player_id.")
     cursor.close()
 
@@ -71,8 +67,7 @@ def setup_data_masking(conn):
 def create_tables(conn):
     """Create SC2 analytics tables in Snowflake."""
     cursor = conn.cursor()
-    cursor.execute(
-        """
+    cursor.execute("""
         CREATE TABLE IF NOT EXISTS games (
             game_id       VARCHAR(64)  NOT NULL,
             player_id     VARCHAR(64),
@@ -89,10 +84,8 @@ def create_tables(conn):
             created_at    TIMESTAMP_NTZ DEFAULT CURRENT_TIMESTAMP()
         )
         CLUSTER BY (game_date, player_race)
-    """
-    )
-    cursor.execute(
-        """
+    """)
+    cursor.execute("""
         CREATE TABLE IF NOT EXISTS players (
             player_id    VARCHAR(64) PRIMARY KEY,
             name         VARCHAR(128),
@@ -102,8 +95,7 @@ def create_tables(conn):
             win_rate     FLOAT,
             updated_at   TIMESTAMP_NTZ DEFAULT CURRENT_TIMESTAMP()
         )
-    """
-    )
+    """)
     logger.info("Snowflake tables created.")
     cursor.close()
 

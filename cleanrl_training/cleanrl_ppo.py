@@ -15,7 +15,6 @@ from typing import Optional
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from gymnasium_env.sc2_gym_env import SC2ZergEnv, OBS_DIM, ACT_DIM
 
-
 try:
     import torch
     import torch.nn as nn

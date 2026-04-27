@@ -32,7 +32,6 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Optional
 
-
 # ═══════════════════════════════════════════════════════
 # JSON 로그 포매터
 # ═══════════════════════════════════════════════════════

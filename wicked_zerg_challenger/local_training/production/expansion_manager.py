@@ -4,6 +4,7 @@ Expansion Manager Module
 
 확장 관련 로직을 담당하는 모듈
 """
+
 import logging
 
 logger = logging.getLogger("ExpansionManager")

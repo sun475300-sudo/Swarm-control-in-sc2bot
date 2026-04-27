@@ -20,14 +20,12 @@ app = mo.App(width="full")
 
 @app.cell
 def title_cell():
-    return mo.md(
-        """
+    return mo.md("""
     # SC2 Bot Performance Analysis
     **Zerg Bot** | Reactive analytics powered by Marimo
 
     Use the controls below to filter and explore match data.
-    """
-    )
+    """)
 
 
 # ============================================================
@@ -139,8 +137,7 @@ def summary_stats(filtered):
     avg_apm = filtered["apm"].mean()
     avg_dur = filtered["duration"].mean() / 60
 
-    stats_md = mo.md(
-        f"""
+    stats_md = mo.md(f"""
     ## Summary Statistics
     | Metric | Value |
     |--------|-------|
@@ -150,8 +147,7 @@ def summary_stats(filtered):
     | Avg APM  | {avg_apm:.0f} |
     | Avg Duration | {avg_dur:.1f} min |
     | Current MMR  | {filtered['mmr'].iloc[-1] if len(filtered) > 0 else '—'} |
-    """
-    )
+    """)
     return (stats_md,)
 
 

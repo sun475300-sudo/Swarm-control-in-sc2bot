@@ -61,16 +61,14 @@ def get_connection(db_path: Optional[str] = None) -> sqlite3.Connection:
 
 def ensure_migrations_table(conn: sqlite3.Connection) -> None:
     """마이그레이션 이력 테이블이 존재하는지 확인하고 없으면 생성한다."""
-    conn.execute(
-        """
+    conn.execute("""
         CREATE TABLE IF NOT EXISTS migrations (
             id           INTEGER PRIMARY KEY AUTOINCREMENT,
             migration_id TEXT    NOT NULL UNIQUE,
             description  TEXT,
             applied_at   TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
-    """
-    )
+    """)
     conn.commit()
 
 

@@ -53,8 +53,7 @@ class ReplayLearningTrackerSQLite:
 
     def _init_database(self) -> None:
         with self._get_connection() as conn:
-            conn.execute(
-                """
+            conn.execute("""
                 CREATE TABLE IF NOT EXISTS learning_tracking (
                     replay_hash TEXT PRIMARY KEY,
                     replay_path TEXT NOT NULL,
@@ -63,8 +62,7 @@ class ReplayLearningTrackerSQLite:
                     phase_focus TEXT,
                     metadata TEXT
                 )
-                """
-            )
+                """)
             conn.execute(
                 "CREATE INDEX IF NOT EXISTS idx_replay_path ON learning_tracking(replay_path)"
             )

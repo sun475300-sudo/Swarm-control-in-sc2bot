@@ -119,11 +119,9 @@ def time_travel_query(spark: SparkSession, as_of_instant: str):
 
 def compact_table(spark: SparkSession):
     """Run Hudi table compaction (MOR tables) and cleaning."""
-    spark.sql(
-        f"""
+    spark.sql(f"""
         CALL run_compaction(table => '{HUDI_TABLE_NAME}')
-    """
-    )
+    """)
     logger.info("Hudi compaction triggered.")
 
 

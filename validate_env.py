@@ -6,6 +6,7 @@ JARVIS 환경변수 검증 스크립트 (#162)
 - 누락된 변수 리스트 출력
 - 선택 변수 안내 (DISCORD_TOKEN, CRYPTO_WEBHOOK_URL 등)
 """
+
 import os
 import re
 import sys

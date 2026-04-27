@@ -673,11 +673,11 @@ def _safe_retry_after(headers, default: int = 60) -> int:
 
 # ── Coin Emoji Mapping ──
 COIN_EMOJI = {
-    "BTC": "\U0001FA99",
-    "ETH": "\U0001F4CE",
-    "XRP": "\U0001F4B1",
-    "SOL": "\u2600\uFE0F",
-    "DOGE": "\U0001F436",
+    "BTC": "\U0001fa99",
+    "ETH": "\U0001f4ce",
+    "XRP": "\U0001f4b1",
+    "SOL": "\u2600\ufe0f",
+    "DOGE": "\U0001f436",
 }
 
 # ── Global Instances ──
@@ -699,14 +699,14 @@ def _get_upbit_client():
 # ── Embed Utilities ──
 def _price_embed(ticker: str, price: float, change_pct=None) -> discord.Embed:
     coin = ticker.replace("KRW-", "")
-    emoji = COIN_EMOJI.get(coin, "\U0001F4B0")
+    emoji = COIN_EMOJI.get(coin, "\U0001f4b0")
     if change_pct is not None:
         if change_pct > 0:
-            color, arrow = discord.Color.red(), "\u25B2"
+            color, arrow = discord.Color.red(), "\u25b2"
         elif change_pct < 0:
-            color, arrow = discord.Color.blue(), "\u25BC"
+            color, arrow = discord.Color.blue(), "\u25bc"
         else:
-            color, arrow = discord.Color.greyple(), "\u25AC"
+            color, arrow = discord.Color.greyple(), "\u25ac"
         change_str = f"{arrow} {change_pct:+.2f}%"
     else:
         color, change_str = discord.Color.gold(), ""
@@ -722,13 +722,13 @@ def _price_embed(ticker: str, price: float, change_pct=None) -> discord.Embed:
 
 def _multi_price_embed(prices: dict, title: str = "관심 코인 시세") -> discord.Embed:
     embed = discord.Embed(
-        title=f"\U0001F4CA {title}",
+        title=f"\U0001f4ca {title}",
         color=discord.Color.dark_gold(),
         timestamp=datetime.now(timezone.utc),
     )
     for ticker, price in prices.items():
         coin = ticker.replace("KRW-", "")
-        emoji = COIN_EMOJI.get(coin, "\U0001F4B0")
+        emoji = COIN_EMOJI.get(coin, "\U0001f4b0")
         if price and price > 0:
             embed.add_field(
                 name=f"{emoji} {coin}", value=f"**{price:,.0f}** KRW", inline=True
@@ -741,12 +741,12 @@ def _multi_price_embed(prices: dict, title: str = "관심 코인 시세") -> dis
 
 def _balance_embed(balances: list, total_krw: float) -> discord.Embed:
     embed = discord.Embed(
-        title="\U0001F4B0 포트폴리오 잔고",
+        title="\U0001f4b0 포트폴리오 잔고",
         color=discord.Color.green(),
         timestamp=datetime.now(timezone.utc),
     )
     embed.add_field(
-        name="\U0001F3E6 총 자산 (KRW 환산)",
+        name="\U0001f3e6 총 자산 (KRW 환산)",
         value=f"**{total_krw:,.0f}** KRW",
         inline=False,
     )
@@ -758,7 +758,7 @@ def _balance_embed(balances: list, total_krw: float) -> discord.Embed:
         if total <= 0:
             continue
         avg_price = float(b.get("avg_buy_price", 0))
-        emoji = COIN_EMOJI.get(currency, "\U0001F4B0")
+        emoji = COIN_EMOJI.get(currency, "\U0001f4b0")
         if currency == "KRW":
             value_str = f"**{total:,.0f}** KRW"
         else:
@@ -774,7 +774,7 @@ def _balance_embed(balances: list, total_krw: float) -> discord.Embed:
 
 def _error_embed(message: str) -> discord.Embed:
     return discord.Embed(
-        title="\u274C 오류",
+        title="\u274c 오류",
         description=message,
         color=discord.Color.dark_red(),
         timestamp=datetime.now(timezone.utc),
@@ -785,7 +785,7 @@ def _trade_result_embed(action: str, ticker: str, result: dict) -> discord.Embed
     coin = ticker.replace("KRW-", "")
     is_buy = action == "매수"
     color = discord.Color.red() if is_buy else discord.Color.blue()
-    emoji = "\U0001F4C8" if is_buy else "\U0001F4C9"
+    emoji = "\U0001f4c8" if is_buy else "\U0001f4c9"
     embed = discord.Embed(
         title=f"{emoji} {coin} {action} {'완료' if result else '실패'}",
         color=color,
@@ -794,13 +794,13 @@ def _trade_result_embed(action: str, ticker: str, result: dict) -> discord.Embed
     if result:
         if result.get("dry_run"):
             embed.add_field(
-                name="모드", value="\u26A0\uFE0F DRY-RUN (모의)", inline=False
+                name="모드", value="\u26a0\ufe0f DRY-RUN (모의)", inline=False
             )
         if "uuid" in result:
             embed.add_field(name="주문 ID", value=result["uuid"], inline=False)
         embed.add_field(name="상태", value="\u2705 성공", inline=True)
     else:
-        embed.add_field(name="상태", value="\u274C 실패", inline=True)
+        embed.add_field(name="상태", value="\u274c 실패", inline=True)
     embed.set_footer(text="JARVIS Crypto | Upbit")
     return embed
 
@@ -907,7 +907,7 @@ class TradeApprovalView(discord.ui.View):
             item.disabled = True
         await interaction.edit_original_response(embed=embed, view=self)
 
-    @discord.ui.button(label="취소", style=discord.ButtonStyle.red, emoji="\u274C")
+    @discord.ui.button(label="취소", style=discord.ButtonStyle.red, emoji="\u274c")
     async def reject_button(
         self, interaction: discord.Interaction, button: discord.ui.Button
     ):
@@ -1230,9 +1230,9 @@ class JarvisBot(commands.Bot):
         if channel is None:
             return
         try:
-            if emoji == "\U0001F44D":  # 👍 상세보기
+            if emoji == "\U0001f44d":  # 👍 상세보기
                 await self._reaction_detail(channel, context)
-            elif emoji == "\U0001F4CA":  # 📊 차트
+            elif emoji == "\U0001f4ca":  # 📊 차트
                 await self._reaction_chart(channel, context)
         except Exception as e:
             logger.error(f"Reaction handler: {e}")
@@ -1248,7 +1248,7 @@ class JarvisBot(commands.Bot):
         if context.get("type") == "price_single":
             tickers = [context.get("ticker", "KRW-BTC")]
         embed = discord.Embed(
-            title="\U0001F50D 상세 정보",
+            title="\U0001f50d 상세 정보",
             color=discord.Color.teal(),
             timestamp=datetime.now(timezone.utc),
         )
@@ -1345,7 +1345,7 @@ class JarvisBot(commands.Bot):
                 plt.close(fig)
                 file = discord.File(buf, filename=f"{coin}_chart.png")
                 embed = discord.Embed(
-                    title=f"\U0001F4C8 {coin} 7일 차트",
+                    title=f"\U0001f4c8 {coin} 7일 차트",
                     color=discord.Color.dark_gold(),
                     timestamp=datetime.now(timezone.utc),
                 )
@@ -1369,7 +1369,7 @@ class JarvisBot(commands.Bot):
                     date_str = i.strftime("%m/%d")
                     lines.append(f"`{date_str}` {bar} **{close:,.0f}**")
                 embed = discord.Embed(
-                    title=f"\U0001F4CA {coin} 7일 차트",
+                    title=f"\U0001f4ca {coin} 7일 차트",
                     description="\n".join(lines),
                     color=discord.Color.dark_gold(),
                     timestamp=datetime.now(timezone.utc),
@@ -1514,12 +1514,12 @@ class JarvisBot(commands.Bot):
         # ── 도움말/기능 안내 (★ 최우선 — 이미지 생성보다 위) ──
         if _HELP_PATTERN.search(p):
             embed = discord.Embed(
-                title="\U0001F916 JARVIS 전체 기능 목록",
+                title="\U0001f916 JARVIS 전체 기능 목록",
                 color=discord.Color.blurple(),
                 timestamp=datetime.now(timezone.utc),
             )
             embed.add_field(
-                name="\U0001F50D 슬래시 명령",
+                name="\U0001f50d 슬래시 명령",
                 value=(
                     "`/price [코인]` - 시세 조회 (Embed)\n"
                     "`/balance` - 잔고 확인\n"
@@ -1529,7 +1529,7 @@ class JarvisBot(commands.Bot):
                 inline=False,
             )
             embed.add_field(
-                name="\U0001F4BB 시스템/유틸",
+                name="\U0001f4bb 시스템/유틸",
                 value=(
                     "`시스템` - PC 상태 | `프로세스` - 목록 | `캡처` - 스크린샷\n"
                     "`웹캠` - 웹캠 | `속도 측정` - 인터넷 | `네트워크` - IP/포트\n"
@@ -1541,7 +1541,7 @@ class JarvisBot(commands.Bot):
                 inline=False,
             )
             embed.add_field(
-                name="\U0001F4B0 크립토 매매",
+                name="\U0001f4b0 크립토 매매",
                 value=(
                     "`시세 BTC` - 코인 시세 | `호가 ETH` - 호가창\n"
                     "`김프` - 프리미엄 | `공포지수` - 공포/탐욕\n"
@@ -1557,7 +1557,7 @@ class JarvisBot(commands.Bot):
                 inline=False,
             )
             embed.add_field(
-                name="\U0001F3AE SC2 봇",
+                name="\U0001f3ae SC2 봇",
                 value=(
                     "`전적` - 승률 | `게임상황` - 유닛 현황\n"
                     "`로그` - 최근 로그 | `로그 읽어 game.log` - 로그 내용\n"
@@ -1566,7 +1566,7 @@ class JarvisBot(commands.Bot):
                 inline=False,
             )
             embed.add_field(
-                name="\U0001F30D 정보/생활",
+                name="\U0001f30d 정보/생활",
                 value=(
                     "`날씨 서울` - 날씨 | `검색 [키워드]` - 웹검색\n"
                     "`운세` - 오늘의 운세 | `번역 hello` - 번역\n"
@@ -1577,7 +1577,7 @@ class JarvisBot(commands.Bot):
                 inline=False,
             )
             embed.add_field(
-                name="\U0001F916 AI 강화",
+                name="\U0001f916 AI 강화",
                 value=(
                     "`!그려줘 <설명>` - AI 이미지 생성\n"
                     "`!말해줘 <텍스트>` - TTS 음성 변환\n"
@@ -1587,7 +1587,7 @@ class JarvisBot(commands.Bot):
                 inline=False,
             )
             embed.add_field(
-                name="\U0001F4C8 금융 확장",
+                name="\U0001f4c8 금융 확장",
                 value=(
                     "`!알림 BTC 1억` - 가격 알림 (DM)\n"
                     "`!백테스트 BTC RSI 30` - 전략 시뮬\n"
@@ -1599,7 +1599,7 @@ class JarvisBot(commands.Bot):
                 inline=False,
             )
             embed.add_field(
-                name="\U0001F3AE SC2 확장",
+                name="\U0001f3ae SC2 확장",
                 value=(
                     "`!중계` - 실시간 게임 중계\n"
                     "`!전략분석` - 상대 빌드오더 분석\n"
@@ -1609,7 +1609,7 @@ class JarvisBot(commands.Bot):
                 inline=False,
             )
             embed.add_field(
-                name="\U0001F6E0 시스템 확장",
+                name="\U0001f6e0 시스템 확장",
                 value=(
                     "`!파일보내기 <경로>` - PC→Discord 파일 전송\n"
                     "`!파일받기` - Discord→PC 파일 저장\n"
@@ -1633,7 +1633,7 @@ class JarvisBot(commands.Bot):
                 inline=False,
             )
             embed.add_field(
-                name="\U0001F3B2 엔터테인먼트",
+                name="\U0001f3b2 엔터테인먼트",
                 value=(
                     "`!재생 <URL>` - 음악 재생\n"
                     "`!가위바위보 가위` - 가위바위보\n"
@@ -1647,7 +1647,7 @@ class JarvisBot(commands.Bot):
                 inline=False,
             )
             embed.add_field(
-                name="\U0001F512 보안/관리",
+                name="\U0001f512 보안/관리",
                 value=(
                     "`!접속로그` - PC 로그인 이력\n"
                     "`!이상감지설정` - 임계값 설정\n"
@@ -1657,8 +1657,8 @@ class JarvisBot(commands.Bot):
                 inline=False,
             )
             embed.add_field(
-                name="\U0001F44D 리액션",
-                value="봇 시세 응답에 \U0001F44D 상세보기 | \U0001F4CA 차트",
+                name="\U0001f44d 리액션",
+                value="봇 시세 응답에 \U0001f44d 상세보기 | \U0001f4ca 차트",
                 inline=False,
             )
             embed.set_footer(text="JARVIS v2.0 | 36개 신규 기능 | @멘션 또는 DM")
@@ -3157,8 +3157,8 @@ async def price_slash(interaction: discord.Interaction, coin: Optional[str] = No
                     sent.id,
                     {"type": "price_single", "ticker": ticker, "tickers": [ticker]},
                 )
-            await sent.add_reaction("\U0001F44D")
-            await sent.add_reaction("\U0001F4CA")
+            await sent.add_reaction("\U0001f44d")
+            await sent.add_reaction("\U0001f4ca")
         else:
             default_tickers = ["KRW-BTC", "KRW-ETH", "KRW-XRP", "KRW-SOL"]
             if upbit_config and hasattr(upbit_config, "DEFAULT_WATCH_LIST"):
@@ -3171,8 +3171,8 @@ async def price_slash(interaction: discord.Interaction, coin: Optional[str] = No
                 bot_instance._add_reaction_context(
                     sent.id, {"type": "price_multi", "tickers": default_tickers}
                 )
-            await sent.add_reaction("\U0001F44D")
-            await sent.add_reaction("\U0001F4CA")
+            await sent.add_reaction("\U0001f44d")
+            await sent.add_reaction("\U0001f4ca")
     except Exception as e:
         logger.error(f"/price: {e}")
         await interaction.followup.send(embed=_error_embed(f"시세 조회 실패: {e}"))
@@ -3368,7 +3368,7 @@ async def chart_slash(interaction: discord.Interaction, coin: str = "BTC"):
             buf = generate_price_chart(coin_name, prices, timestamps)
             file = discord.File(buf, filename=f"{coin_name}_chart.png")
             embed = discord.Embed(
-                title=f"\U0001F4C8 {coin_name} 가격 차트",
+                title=f"\U0001f4c8 {coin_name} 가격 차트",
                 color=discord.Color.dark_gold(),
                 timestamp=datetime.now(timezone.utc),
             )
@@ -3392,7 +3392,7 @@ async def chart_slash(interaction: discord.Interaction, coin: str = "BTC"):
                 date_str = i.strftime("%m/%d")
                 lines.append(f"`{date_str}` {bar} **{close:,.0f}**")
             embed = discord.Embed(
-                title=f"\U0001F4CA {coin_name} 7일 차트",
+                title=f"\U0001f4ca {coin_name} 7일 차트",
                 description="\n".join(lines),
                 color=discord.Color.dark_gold(),
                 timestamp=datetime.now(timezone.utc),

@@ -18,7 +18,6 @@ import pandas as pd
 import numpy as np
 from datetime import date, timedelta
 
-
 # ── Partition definition ──────────────────────────────────────────────────────
 
 daily_partitions = DailyPartitionsDefinition(start_date="2025-01-01")

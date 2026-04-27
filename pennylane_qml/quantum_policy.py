@@ -9,7 +9,6 @@ from typing import Optional
 import math
 import random
 
-
 try:
     import pennylane as qml
     import numpy as np

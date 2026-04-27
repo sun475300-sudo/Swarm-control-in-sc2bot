@@ -25,8 +25,7 @@ async def connect() -> Surreal:
 
 async def setup_schema(db: Surreal):
     """Define SurrealDB schema for SC2 data."""
-    await db.query(
-        """
+    await db.query("""
         DEFINE TABLE game SCHEMAFULL;
         DEFINE FIELD game_id ON game TYPE string;
         DEFINE FIELD map ON game TYPE string;
@@ -43,8 +42,7 @@ async def setup_schema(db: Surreal):
         DEFINE TABLE unit_graph SCHEMAFULL TYPE RELATION IN player OUT game;
         DEFINE FIELD apm ON unit_graph TYPE int;
         DEFINE FIELD units_made ON unit_graph TYPE array;
-    """
-    )
+    """)
     logger.info("SurrealDB schema defined.")
 
 

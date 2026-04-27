@@ -67,7 +67,7 @@ class TradeView(discord.ui.View):
         self.result: Optional[str] = None
 
     @discord.ui.button(
-        label="매수", style=discord.ButtonStyle.green, emoji="\U0001F4B0"
+        label="매수", style=discord.ButtonStyle.green, emoji="\U0001f4b0"
     )
     async def buy_button(
         self, interaction: discord.Interaction, button: discord.ui.Button
@@ -84,7 +84,7 @@ class TradeView(discord.ui.View):
         self._disable_all()
         await interaction.message.edit(view=self)
 
-    @discord.ui.button(label="매도", style=discord.ButtonStyle.red, emoji="\U0001F4B8")
+    @discord.ui.button(label="매도", style=discord.ButtonStyle.red, emoji="\U0001f4b8")
     async def sell_button(
         self, interaction: discord.Interaction, button: discord.ui.Button
     ):
@@ -100,7 +100,7 @@ class TradeView(discord.ui.View):
         self._disable_all()
         await interaction.message.edit(view=self)
 
-    @discord.ui.button(label="취소", style=discord.ButtonStyle.grey, emoji="\u274C")
+    @discord.ui.button(label="취소", style=discord.ButtonStyle.grey, emoji="\u274c")
     async def cancel_button(
         self, interaction: discord.Interaction, button: discord.ui.Button
     ):
@@ -358,7 +358,7 @@ class ScheduledReporter(commands.Cog):
                 data = self._default_portfolio_data()
 
             embed = discord.Embed(
-                title="\U0001F4CA 일일 포트폴리오 리포트",
+                title="\U0001f4ca 일일 포트폴리오 리포트",
                 description=f"날짜: {datetime.now(KST).strftime('%Y-%m-%d %H:%M KST')}",
                 color=0x2196F3,
             )
@@ -421,7 +421,7 @@ class ScheduledReporter(commands.Cog):
                 data = self._default_market_data()
 
             embed = discord.Embed(
-                title="\U0001F4C8 시장 요약",
+                title="\U0001f4c8 시장 요약",
                 description=datetime.now(KST).strftime("%Y-%m-%d %H:%M KST"),
                 color=0xFF9800,
             )
@@ -429,7 +429,7 @@ class ScheduledReporter(commands.Cog):
                 symbol = item.get("symbol", "???")
                 price = item.get("price", 0)
                 change = item.get("change_pct", 0.0)
-                arrow = "\U0001F7E2" if change >= 0 else "\U0001F534"
+                arrow = "\U0001f7e2" if change >= 0 else "\U0001f534"
                 embed.add_field(
                     name=f"{arrow} {symbol}",
                     value=f"{price:,.0f} 원 ({change:+.2f}%)",
@@ -689,7 +689,7 @@ async def send_chart_to_channel(
     buf = generate_price_chart(ticker, prices, timestamps)
     file = discord.File(buf, filename=f"{ticker}_chart.png")
     embed = discord.Embed(
-        title=f"\U0001F4C8 {ticker} 가격 차트",
+        title=f"\U0001f4c8 {ticker} 가격 차트",
         color=0x2196F3,
         timestamp=datetime.now(KST),
     )
@@ -1356,13 +1356,13 @@ class VoiceHistoryLogger:
 
         event_type = record["event"]
         event_emojis = {
-            "join": "\U0001F7E2",
-            "leave": "\U0001F534",
-            "move": "\U0001F7E1",
-            "mute": "\U0001F507",
-            "unmute": "\U0001F50A",
-            "deafen": "\U0001F6D1",
-            "undeafen": "\U0001F3A7",
+            "join": "\U0001f7e2",
+            "leave": "\U0001f534",
+            "move": "\U0001f7e1",
+            "mute": "\U0001f507",
+            "unmute": "\U0001f50a",
+            "deafen": "\U0001f6d1",
+            "undeafen": "\U0001f3a7",
         }
         emoji = event_emojis.get(event_type, "\u2753")
 

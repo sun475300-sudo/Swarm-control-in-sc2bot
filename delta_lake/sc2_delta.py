@@ -109,12 +109,10 @@ def time_travel_read(spark: SparkSession, version: int = None, timestamp: str = 
 def add_new_feature_column(spark: SparkSession):
     """Schema evolution: add 'supply_peak' column to existing table."""
     delta_table = DeltaTable.forPath(spark, DELTA_PATH)
-    spark.sql(
-        f"""
+    spark.sql(f"""
         ALTER TABLE delta.`{DELTA_PATH}`
         ADD COLUMNS (supply_peak INT AFTER mmr)
-    """
-    )
+    """)
     logger.info("Schema evolved: added supply_peak column.")
 
 

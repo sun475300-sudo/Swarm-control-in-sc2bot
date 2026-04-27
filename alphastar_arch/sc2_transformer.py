@@ -9,7 +9,6 @@ import torch.nn.functional as F
 from torch.distributions import Categorical
 from typing import Dict, Optional, Tuple
 
-
 # --- Scatter / Entity Encoder ---
 
 

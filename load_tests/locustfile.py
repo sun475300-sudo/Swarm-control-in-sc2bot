@@ -19,7 +19,6 @@ import uuid
 from locust import HttpUser, between, events, task
 from locust.runners import MasterRunner
 
-
 # ── Shared data ───────────────────────────────────────────────────────────────
 
 RACES = ["Zerg", "Terran", "Protoss"]

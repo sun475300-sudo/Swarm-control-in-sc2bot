@@ -81,16 +81,14 @@ def load_to_db(**context):
     win_rates = context["ti"].xcom_pull(key="win_rates", task_ids="compute_stats")
     conn = sqlite3.connect(DB_PATH)
     cur = conn.cursor()
-    cur.execute(
-        """
+    cur.execute("""
         CREATE TABLE IF NOT EXISTS matchup_stats (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             matchup TEXT NOT NULL,
             win_rate REAL NOT NULL,
             recorded_at TEXT NOT NULL
         )
-    """
-    )
+    """)
     now = datetime.utcnow().isoformat()
     for matchup, rate in win_rates.items():
         cur.execute(

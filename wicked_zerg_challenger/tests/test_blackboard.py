@@ -5,6 +5,7 @@ Blackboard (GameStateBlackboard) 테스트
 authority mode, production queue, cache, building reservation,
 state queries 전체 커버리지
 """
+
 import os
 
 os.environ["PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION"] = "python"

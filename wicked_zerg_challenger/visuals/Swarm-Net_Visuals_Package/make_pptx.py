@@ -38,15 +38,13 @@ def main():
 
         for i in range(8):
             # 슬라이드 전환
-            page.evaluate(
-                f"""() => {{
+            page.evaluate(f"""() => {{
                 const slides = document.querySelectorAll('.slide');
                 slides.forEach(s => s.classList.remove('active'));
                 slides[{i}].classList.add('active');
                 const pb = document.querySelector('.progress-bar');
                 if (pb) pb.style.width = '{((i+1)/8)*100}%';
-            }}"""
-            )
+            }}""")
             page.wait_for_timeout(500)  # 전환 애니메이션 대기
 
             img_path = os.path.join(tmp_dir, f"slide_{i+1}.png")

@@ -9,7 +9,6 @@ from typing import Optional
 import math
 import random
 
-
 # ─────────────────────────────────────────────
 # Qiskit availability check
 # ─────────────────────────────────────────────
