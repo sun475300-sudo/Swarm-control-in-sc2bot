@@ -1295,9 +1295,13 @@ class EconomyManager:
             if self.bot.iteration % 50 == 0:
                 self.logger.warning(f"[ECONOMY_WARN] Worker redistribution failed: {e}")
 
-    async def _prevent_resource_banking(self) -> None:
+    async def _build_overflow_static_defense(self) -> None:
         """
-        ★ Prevent resource banking by spending excess minerals ★
+        ★ Spend excess minerals on extra queens + static defense ★
+
+        Renamed from `_prevent_resource_banking` (duplicate definition was
+        being shadowed by a later, broader implementation).  Kept as a helper
+        so the queen / spine / spore overflow logic can be reused.
 
         Logic:
         1. If Minerals > Config.Threshold and Larva < Config.Threshold:
@@ -1308,7 +1312,7 @@ class EconomyManager:
             return
 
         minerals = self.bot.minerals
-        vespene = self.bot.vespene
+        self.bot.vespene
         larva_count = len(self.bot.larva) if hasattr(self.bot, "larva") else 0
         game_time = getattr(self.bot, "time", 0)
         base_count = self.bot.townhalls.amount if hasattr(self.bot, "townhalls") else 1
@@ -1962,7 +1966,7 @@ class EconomyManager:
             if self.bot.enemy_start_locations
             else self.bot.game_info.map_center
         )
-        start_loc = self.bot.start_location
+        self.bot.start_location
 
         # Filter out taken bases
         available_bases = []
@@ -2595,6 +2599,11 @@ class EconomyManager:
                             f"Resource ratio (M/G = {minerals}/{gas} = {minerals/max(1,gas):.1f})"
                         )
 
+            # ★ Recovered (Phase 41): queen + static defense overflow logic
+            # was previously shadowed by this duplicate definition; reintroduce
+            # via the renamed helper so excess minerals also fund defense.
+            await self._build_overflow_static_defense()
+
         except Exception as e:
             if self.bot.iteration % 50 == 0:
                 self.logger.warning(
@@ -2626,33 +2635,6 @@ class EconomyManager:
             if not lairs.exists:
                 self._reserved_minerals = 150
                 self._reserved_gas = 100
-
-    async def _reduce_gas_workers(self) -> None:
-        """가스 일꾼 감소 (과잉 가스 방지)"""
-        try:
-            if (
-                not hasattr(self.bot, "gas_buildings")
-                or not self.bot.gas_buildings.ready
-            ):
-                return
-
-            for extractor in self.bot.gas_buildings.ready:
-                if extractor.assigned_harvesters >= 3:
-                    # 가스에서 일꾼 1명 이동
-                    workers_on_gas = self.bot.workers.filter(
-                        lambda w: w.is_gathering and w.order_target == extractor.tag
-                    )
-                    if workers_on_gas:
-                        worker = workers_on_gas.first
-                        # 가까운 미네랄로 이동
-                        closest_mineral = self.bot.mineral_field.closest_to(worker)
-                        if closest_mineral:
-                            self.bot.do(worker.gather(closest_mineral))
-                            return  # 한 번에 하나만
-
-        except (AttributeError, TypeError) as e:
-            if self.bot.iteration % 50 == 0:
-                self.logger.warning(f"[ECONOMY_WARN] Gas worker reduction failed: {e}")
 
     async def _build_extractors(self) -> None:
         """가스 익스트랙터 건설 (가스 부족 시)"""
@@ -2813,7 +2795,7 @@ class EconomyManager:
         game_time = getattr(self.bot, "time", 0)
         workers = self.bot.workers
         bases = self.bot.townhalls.ready
-        minerals = getattr(self.bot, "minerals", 0)
+        getattr(self.bot, "minerals", 0)
 
         # ★ 현재 경제 상태 분석 ★
         worker_count = workers.amount

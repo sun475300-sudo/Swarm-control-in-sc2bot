@@ -15,7 +15,6 @@ Defeat Detection System - 패배 직감 로직
 import logging
 from typing import Dict, Optional, Tuple
 
-from sc2.position import Point2
 
 
 class DefeatLevel:
@@ -522,7 +521,7 @@ class DefeatDetection:
             # 패배 직전 상태가 threshold 이상 지속되면 항복
             # ★ Feature 90: Use dynamic threshold (default 112 ticks ~40s) ★
             surrender_ticks = getattr(self, "_surrender_threshold_ticks", 112)
-            game_time = getattr(self.bot, "time", 0)
+            getattr(self.bot, "time", 0)
             if self.critical_moments > surrender_ticks:
                 should_surrender = True
                 self.defeat_reason = "장기간 패배 직전 상태 (항복)"

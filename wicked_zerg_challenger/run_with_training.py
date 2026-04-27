@@ -8,12 +8,9 @@ Model will be saved to: local_training/models/zerg_net_model.pt
 
 import logging
 import os
-import random
 import sys
-import time
-from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Set, Tuple, Union
+from typing import Optional
 
 from sc2 import maps  # type: ignore
 from sc2.data import Difficulty, Race  # type: ignore
@@ -892,7 +889,7 @@ def main():
             logger.info("\n[STEP 1] Extracting training data...")
             training_data = extractor.extract_training_stats()
             comparisons = extractor.extract_build_order_comparisons()
-            session_stats = extractor.extract_session_stats()
+            extractor.extract_session_stats()
 
             if training_data or comparisons:
                 # Analyze data

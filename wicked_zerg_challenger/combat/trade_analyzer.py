@@ -15,7 +15,7 @@ Features:
 """
 
 from collections import defaultdict
-from typing import Dict, List, Optional
+from typing import Dict
 
 from utils.logger import get_logger
 
