@@ -160,8 +160,6 @@ class HarassmentCoordinator:
     async def on_step(self, iteration: int):
         """매 프레임 실행"""
         try:
-            self.bot.time
-
             # 1. Update harassment targets
             if iteration % 110 == 0:  # ~5초마다
                 self._update_harassment_targets()

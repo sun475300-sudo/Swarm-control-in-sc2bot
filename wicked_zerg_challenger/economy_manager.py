@@ -1312,7 +1312,6 @@ class EconomyManager:
             return
 
         minerals = self.bot.minerals
-        self.bot.vespene
         larva_count = len(self.bot.larva) if hasattr(self.bot, "larva") else 0
         game_time = getattr(self.bot, "time", 0)
         base_count = self.bot.townhalls.amount if hasattr(self.bot, "townhalls") else 1
@@ -1966,7 +1965,6 @@ class EconomyManager:
             if self.bot.enemy_start_locations
             else self.bot.game_info.map_center
         )
-        self.bot.start_location
 
         # Filter out taken bases
         available_bases = []

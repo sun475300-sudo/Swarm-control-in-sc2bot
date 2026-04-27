@@ -336,9 +336,8 @@ class MultiprongAttackManager:
                     flank_prong.unit_tags.add(unit.tag)
                 self.prongs["flank"] = flank_prong
 
-        # 집결 지점 설정
+        # 집결 지점 설정 (start_location → target 방향으로 20)
         if hasattr(self.bot, "start_location") and hasattr(self.bot, "game_info"):
-            self.bot.game_info.map_center
             for prong in self.prongs.values():
                 if prong.target:
                     prong.rally_point = self.bot.start_location.towards(

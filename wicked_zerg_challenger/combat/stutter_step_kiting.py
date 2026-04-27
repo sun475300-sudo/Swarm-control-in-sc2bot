@@ -192,7 +192,6 @@ class StutterStepKiting:
 
     def _clamp_to_map(self, position: Point2) -> Point2:
         """위치를 맵 경계 내로 제한"""
-        self.bot.game_info.map_center
         playable_area = self.bot.game_info.playable_area
 
         x = max(playable_area.x, min(position.x, playable_area.x + playable_area.width))
