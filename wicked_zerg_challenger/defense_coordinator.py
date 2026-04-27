@@ -805,7 +805,12 @@ class DefenseCoordinator:
             can_afford = self.bot.can_afford(UnitTypeId.SPORECRAWLER)
 
         if not can_afford:
-            # print(f"[DEFENSE] [{int(game_time)}s] ⏳ Proactive Spore 자원 대기: {self.bot.minerals}m (필요: {cost.minerals}m)")
+            self.logger.debug(
+                "[%ds] proactive spore awaiting resources: %sm (need %sm)",
+                int(game_time),
+                self.bot.minerals,
+                cost.minerals,
+            )
             return
 
         # 건설 위치: 본진 기지 앞쪽 (설정값 사용)

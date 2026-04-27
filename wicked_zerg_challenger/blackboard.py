@@ -290,7 +290,12 @@ class GameStateBlackboard:
     def set_authority_mode(self, mode: AuthorityMode, reason: str = ""):
         """권한 모드 변경"""
         if self.authority_mode != mode:
-            # print(f"[AUTHORITY] {self.authority_mode.value} → {mode.value} ({reason})")
+            self.logger.debug(
+                "authority %s → %s (%s)",
+                self.authority_mode.value,
+                mode.value,
+                reason,
+            )
             self.authority_mode = mode
             self.authority_changed_at = self.game_time
 
