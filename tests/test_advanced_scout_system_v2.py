@@ -197,7 +197,7 @@ class TestAdvancedScoutSystemV2:
         # Should not crash when called
         try:
             await self.scout_system._manage_changelings()
-        except Exception as e:
+        except Exception:
             # Expected to fail in test env, just verify it exists
             pass
 
