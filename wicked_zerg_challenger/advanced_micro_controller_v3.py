@@ -1187,13 +1187,14 @@ class AdvancedMicroControllerV3:
         """Issue actions individually via bot.do() (burnysc2 7.x compatible)."""
         if not actions:
             return
+        _action_logger = get_logger("MicroV3.do_actions")
         for action in actions:
             try:
                 result = bot.do(action)
                 if hasattr(result, "__await__"):
                     await result
-            except Exception:
-                pass
+            except (AttributeError, RuntimeError, TypeError) as e:
+                _action_logger.debug("bot.do action failed: %s", e)
 
     async def on_step(self, iteration: int):
         """
