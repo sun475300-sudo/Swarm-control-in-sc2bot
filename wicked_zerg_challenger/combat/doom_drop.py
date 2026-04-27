@@ -15,7 +15,7 @@ Feature #94: Doom Drop 전술 매니저
 """
 
 from enum import Enum
-from typing import Dict, List, Optional, Set, Tuple
+from typing import Dict, List, Optional, Tuple
 
 try:
     from sc2.ids.ability_id import AbilityId

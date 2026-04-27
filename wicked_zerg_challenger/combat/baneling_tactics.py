@@ -9,7 +9,7 @@ Features:
 4. Expansion path mining
 """
 
-from typing import Dict, List, Optional, Set, Tuple
+from typing import Dict, List, Set, Tuple
 
 try:
     from sc2.ids.ability_id import AbilityId
