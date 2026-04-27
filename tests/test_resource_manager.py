@@ -5,7 +5,6 @@ Tests the thread-safe resource reservation system.
 """
 
 import asyncio
-from unittest.mock import Mock
 
 import pytest
 

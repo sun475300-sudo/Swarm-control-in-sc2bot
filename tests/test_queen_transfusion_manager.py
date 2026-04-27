@@ -4,7 +4,7 @@ Unit Tests for Queen Transfusion Manager
 Tests the smart transfusion priority system.
 """
 
-from unittest.mock import MagicMock, Mock
+from unittest.mock import Mock
 
 import pytest
 

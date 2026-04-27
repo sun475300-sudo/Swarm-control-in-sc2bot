@@ -4,7 +4,7 @@ Unit Tests for Spatial Query Optimizer
 Tests cache efficiency, query correctness, and performance improvements.
 """
 
-from unittest.mock import MagicMock, Mock
+from unittest.mock import Mock
 
 import pytest
 
