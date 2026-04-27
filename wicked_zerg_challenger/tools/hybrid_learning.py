@@ -12,7 +12,6 @@ Features:
 """
 
 import logging
-import os
 import re
 import shutil
 import sys
@@ -221,7 +220,6 @@ def main():
     # Disable HTTPS warnings for verify=False
     import argparse
 
-    import urllib3
 
     # SSL verification is now enabled; no need to suppress warnings
 

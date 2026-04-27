@@ -6,15 +6,13 @@ python-pptx로 텍스트 + 도형 기반의 편집 가능한 슬라이드 생성
 """
 
 import logging
-import os
 from pathlib import Path
 
 from pptx import Presentation
 from pptx.dml.color import RGBColor
 from pptx.enum.shapes import MSO_SHAPE
 from pptx.enum.text import MSO_ANCHOR, PP_ALIGN
-from pptx.oxml.ns import qn
-from pptx.util import Cm, Emu, Inches, Pt
+from pptx.util import Inches, Pt
 
 logger = logging.getLogger("MakePptx")
 

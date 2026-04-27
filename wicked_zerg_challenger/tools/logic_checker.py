@@ -11,7 +11,7 @@ import os
 import re
 from collections import defaultdict
 from pathlib import Path
-from typing import Any, Dict, List, Set, Tuple
+from typing import Any, Dict, List
 
 logger = logging.getLogger("LogicChecker")
 

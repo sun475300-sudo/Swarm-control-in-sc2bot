@@ -11,7 +11,6 @@ __pycache__ 디렉토리 정리 스크립트
 """
 
 import logging
-import os
 import shutil
 from pathlib import Path
 from typing import List, Tuple
