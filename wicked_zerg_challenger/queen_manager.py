@@ -12,6 +12,28 @@ Consolidated version combining features from original and improved versions:
 import logging
 from typing import Dict, Optional, Set
 
+try:
+    from wicked_zerg_challenger.game_config import GameConfig
+except ImportError:
+    try:
+        from game_config import GameConfig
+    except ImportError:  # 테스트 환경 fallback (sc2 미설치)
+
+        class GameConfig:  # type: ignore[no-redef]
+            QUEEN_INJECT_ENERGY_THRESHOLD = 25
+            QUEEN_INJECT_COOLDOWN_SEC = 29.0
+            QUEEN_MAX_INJECT_DISTANCE = 8.0
+            QUEEN_MAX_TRAVEL_DISTANCE = 10.0
+            QUEEN_CREEP_SPREAD_ENERGY = 20
+            QUEEN_CREEP_SPREAD_COOLDOWN_SEC = 4.0
+            QUEEN_INJECT_QUEEN_CREEP_ENERGY = 35
+            QUEEN_TRANSFUSE_ENERGY_THRESHOLD = 50
+            QUEEN_TRANSFUSE_COOLDOWN_SEC = 1.0
+            QUEEN_TRANSFUSE_HP_THRESHOLD = 0.5
+            QUEEN_MAX_PER_BASE = 2
+            QUEEN_CREEP_BONUS_QUEENS = 4
+
+
 logger = logging.getLogger(__name__)
 
 try:
@@ -55,24 +77,20 @@ class QueenManager:
         """
         self.bot = bot
 
-        # Injection settings - ★ OPTIMIZED ★
-        self.inject_energy_threshold = 25
-        self.inject_cooldown = (
-            29.0  # ★ FIXED: SC2 Spawn Larva 쿨다운 28.57초 + 0.43초 여유 ★
-        )
-        self.max_inject_distance = (
-            8.0  # ★ 4→8: 인젝트 사거리 여유 (SC2 기본 사거리 + 이동 보정)
-        )
-        self.max_queen_travel_distance = 10.0
+        # Injection settings (GameConfig 중앙화)
+        self.inject_energy_threshold = GameConfig.QUEEN_INJECT_ENERGY_THRESHOLD
+        self.inject_cooldown = GameConfig.QUEEN_INJECT_COOLDOWN_SEC
+        self.max_inject_distance = GameConfig.QUEEN_MAX_INJECT_DISTANCE
+        self.max_queen_travel_distance = GameConfig.QUEEN_MAX_TRAVEL_DISTANCE
 
-        # Creep settings - ★ OPTIMIZED: 공격적 점막 확장 ★
-        self.creep_energy_threshold = 20  # ★ OPTIMIZED: 25 → 20 ★
-        self.creep_spread_cooldown = 4.0  # ★ OPTIMIZED: 6 → 4초 (더 빠른 확장) ★
-        self.inject_queen_creep_threshold = 35  # ★ OPTIMIZED: 40 → 35 ★
+        # Creep settings (GameConfig 중앙화 — 공격적 점막 확장)
+        self.creep_energy_threshold = GameConfig.QUEEN_CREEP_SPREAD_ENERGY
+        self.creep_spread_cooldown = GameConfig.QUEEN_CREEP_SPREAD_COOLDOWN_SEC
+        self.inject_queen_creep_threshold = GameConfig.QUEEN_INJECT_QUEEN_CREEP_ENERGY
 
-        # Queen production - ★ OPTIMIZED: 더 많은 퀸 ★
-        self.max_queens_per_base = 2  # 기지당 2마리
-        self.creep_queen_bonus = 4  # ★ OPTIMIZED: 3 → 4 (점막 전용 퀸 4마리) ★
+        # Queen production (GameConfig 중앙화)
+        self.max_queens_per_base = GameConfig.QUEEN_MAX_PER_BASE
+        self.creep_queen_bonus = GameConfig.QUEEN_CREEP_BONUS_QUEENS
 
         # 점막 확장 추적
         self.creep_tumor_count = 0
@@ -89,10 +107,10 @@ class QueenManager:
             {}
         )  # hatchery_tag -> queen_tag (2차)
 
-        # Transfuse settings
-        self.transfuse_energy_threshold = 50
-        self.transfuse_cooldown = 1.0  # 1 second minimum between transfuses
-        self.transfuse_health_threshold = 0.5  # Target health ratio
+        # Transfuse settings (GameConfig 중앙화)
+        self.transfuse_energy_threshold = GameConfig.QUEEN_TRANSFUSE_ENERGY_THRESHOLD
+        self.transfuse_cooldown = GameConfig.QUEEN_TRANSFUSE_COOLDOWN_SEC
+        self.transfuse_health_threshold = GameConfig.QUEEN_TRANSFUSE_HP_THRESHOLD
 
     async def on_step(self, iteration: int) -> None:
         """
