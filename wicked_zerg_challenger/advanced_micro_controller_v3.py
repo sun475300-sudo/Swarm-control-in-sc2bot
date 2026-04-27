@@ -22,6 +22,8 @@ from typing import Dict, List, Optional, Set, Tuple
 
 from utils.logger import get_logger
 
+_module_logger = get_logger("AdvancedMicroController")
+
 try:
     from sc2.bot_ai import BotAI
     from sc2.ids.ability_id import AbilityId
@@ -859,8 +861,8 @@ class InfestorMicro:
                             self.last_fungal_time[infestor.tag] = current_time
                             acted_tags.add(infestor.tag)
                             continue
-                        except (AttributeError, TypeError):
-                            pass
+                        except (AttributeError, TypeError) as e:
+                            _module_logger.debug(f"fungal cast aborted: {e!r}")
 
             # Priority 2: Neural Parasite for high-value units
             if energy >= self.neural_energy_cost:
@@ -872,8 +874,8 @@ class InfestorMicro:
                             actions.append(infestor(ability, target))
                             acted_tags.add(infestor.tag)
                             continue
-                        except (AttributeError, TypeError):
-                            pass
+                        except (AttributeError, TypeError) as e:
+                            _module_logger.debug(f"infestor ability target failed: {e!r}")
 
             # Safety: Burrow if in danger and low energy
             if energy < 50:
@@ -888,8 +890,8 @@ class InfestorMicro:
                         try:
                             actions.append(infestor(burrow_ability))
                             acted_tags.add(infestor.tag)
-                        except (AttributeError, TypeError):
-                            pass
+                        except (AttributeError, TypeError) as e:
+                            _module_logger.debug(f"infestor burrow failed: {e!r}")
 
         if actions:
             await AdvancedMicroControllerV3._do_actions(bot, actions)
@@ -1011,8 +1013,8 @@ class BanelingMicro:
                         actions.append(baneling(ability))
                         acted_tags.add(baneling.tag)
                         continue
-                    except (AttributeError, TypeError):
-                        pass
+                    except (AttributeError, TypeError) as e:
+                        _module_logger.debug(f"baneling ability failed: {e!r}")
 
             # Otherwise, attack-move toward targets
             target_pos = self.should_attack_move(baneling, enemy_units)
@@ -1020,8 +1022,8 @@ class BanelingMicro:
                 try:
                     actions.append(baneling.attack(target_pos))
                     acted_tags.add(baneling.tag)
-                except (AttributeError, TypeError):
-                    pass
+                except (AttributeError, TypeError) as e:
+                    _module_logger.debug(f"baneling attack failed: {e!r}")
 
         if actions:
             await AdvancedMicroControllerV3._do_actions(bot, actions)
@@ -1198,8 +1200,8 @@ class AdvancedMicroControllerV3:
                 result = bot.do(action)
                 if hasattr(result, "__await__"):
                     await result
-            except Exception:
-                pass
+            except Exception as e:
+                _module_logger.debug(f"action dispatch failed ({action!r}): {e!r}")
 
     async def on_step(self, iteration: int):
         """
