@@ -504,6 +504,12 @@ class OpponentModeling:
             return
 
         strategy_manager = self.bot.strategy_manager
+        # ★ StrategyManager가 직접 참조할 수 있도록 예측 데이터를 부착.
+        #   이 곳에 attribute를 set해 두면 Phase 56 (router_modes) 이후 단계에서
+        #   blackboard 폴백이 비활성화된 환경에서도 예측을 활용할 수 있다.
+        if strategy_manager is not None:
+            strategy_manager.predicted_opponent_strategy = strategy
+            strategy_manager.predicted_opponent_confidence = confidence
 
         # Set blackboard recommendations
         if hasattr(self.bot, "blackboard") and self.bot.blackboard:
