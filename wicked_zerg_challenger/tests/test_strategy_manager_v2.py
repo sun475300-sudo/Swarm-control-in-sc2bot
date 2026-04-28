@@ -10,24 +10,25 @@ Tests Strategy Manager V2 features:
 - Multi-strategy execution
 """
 
-import unittest
-from unittest.mock import Mock, MagicMock, patch
-import sys
 import os
+import sys
+import unittest
+from unittest.mock import MagicMock, Mock, patch
 
 # Add parent directory to path
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 from strategy_manager_v2 import (
-    StrategyManagerV2,
-    WinCondition,
     BuildOrderPhase,
-    StrategyPriority
+    StrategyManagerV2,
+    StrategyPriority,
+    WinCondition,
 )
 
 
 class MockBot:
     """Mock SC2 bot for testing"""
+
     def __init__(self):
         self.time = 0.0
         self.iteration = 0
@@ -45,6 +46,7 @@ class MockBot:
 
 class MockUnits:
     """Mock units collection"""
+
     def __init__(self, units):
         self._units = units
         self.amount = len(units)
@@ -90,7 +92,9 @@ class TestWinConditionDetection(unittest.TestCase):
         self.manager._update_win_condition(10.0)
 
         # Should detect winning economy (total >= 6 and economy is highest)
-        self.assertEqual(self.manager.current_win_condition, WinCondition.WINNING_ECONOMY)
+        self.assertEqual(
+            self.manager.current_win_condition, WinCondition.WINNING_ECONOMY
+        )
 
     def test_army_disadvantage_detection(self):
         """Test detecting army disadvantage"""
@@ -277,7 +281,7 @@ class TestMultiStrategyExecution(unittest.TestCase):
         strategy = {
             "name": "test_strategy",
             "priority": StrategyPriority.HIGH,
-            "start_time": 0.0
+            "start_time": 0.0,
         }
         self.manager._add_strategy(strategy)
 
@@ -300,8 +304,10 @@ class TestMultiStrategyExecution(unittest.TestCase):
             self.manager._add_strategy({"name": f"strategy_{i}"})
 
         # Check limit is respected (initially limit is 3)
-        self.assertLessEqual(len(self.manager.active_strategies),
-                           self.manager.concurrent_strategy_limit + 2)
+        self.assertLessEqual(
+            len(self.manager.active_strategies),
+            self.manager.concurrent_strategy_limit + 2,
+        )
 
     def test_cleanup_completed_strategies(self):
         """Test cleaning up completed strategies"""
@@ -329,7 +335,7 @@ class TestHelperMethods(unittest.TestCase):
     def test_count_workers(self):
         """Test counting workers"""
         # Mock workers
-        with patch.object(self.manager, '_count_workers', return_value=25):
+        with patch.object(self.manager, "_count_workers", return_value=25):
             count = self.manager._count_workers()
             self.assertEqual(count, 25)
 
@@ -404,6 +410,6 @@ class TestStatusReport(unittest.TestCase):
         self.assertIn("game_phase", report)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     # Run all tests
     unittest.main(verbosity=2)

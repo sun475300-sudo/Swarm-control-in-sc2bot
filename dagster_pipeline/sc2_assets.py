@@ -3,15 +3,21 @@ Phase 425: Dagster - SC2 ML Data Assets
 Declarative data assets for the full SC2 machine learning pipeline.
 """
 
-from dagster import (
-    asset, AssetIn, AssetCheckResult, asset_check,
-    DailyPartitionsDefinition, MetadataValue,
-    Output, define_asset_job, AssetSelection,
-)
-import pandas as pd
-import numpy as np
 from datetime import date, timedelta
 
+import numpy as np
+import pandas as pd
+from dagster import (
+    AssetCheckResult,
+    AssetIn,
+    AssetSelection,
+    DailyPartitionsDefinition,
+    MetadataValue,
+    Output,
+    asset,
+    asset_check,
+    define_asset_job,
+)
 
 # ── Partition definition ──────────────────────────────────────────────────────
 
@@ -19,6 +25,7 @@ daily_partitions = DailyPartitionsDefinition(start_date="2025-01-01")
 
 
 # ── Assets ────────────────────────────────────────────────────────────────────
+
 
 @asset(
     partitions_def=daily_partitions,
@@ -32,13 +39,15 @@ def raw_replays(context) -> Output:
     n_replays = np.random.randint(200, 600)
     context.log.info(f"Downloading {n_replays} replays for {partition_date}")
 
-    df = pd.DataFrame({
-        "game_id": [f"{partition_date}_g{i:04d}" for i in range(n_replays)],
-        "duration": np.random.uniform(90, 1500, n_replays),
-        "race_p1": np.random.choice(["Zerg", "Terran", "Protoss"], n_replays),
-        "race_p2": np.random.choice(["Zerg", "Terran", "Protoss"], n_replays),
-        "winner": np.random.randint(1, 3, n_replays),
-    })
+    df = pd.DataFrame(
+        {
+            "game_id": [f"{partition_date}_g{i:04d}" for i in range(n_replays)],
+            "duration": np.random.uniform(90, 1500, n_replays),
+            "race_p1": np.random.choice(["Zerg", "Terran", "Protoss"], n_replays),
+            "race_p2": np.random.choice(["Zerg", "Terran", "Protoss"], n_replays),
+            "winner": np.random.randint(1, 3, n_replays),
+        }
+    )
 
     return Output(
         value=df,
@@ -63,19 +72,21 @@ def processed_features(context, raw_replays: pd.DataFrame) -> Output:
     context.log.info(f"Engineering features for {n} replays...")
 
     # Simulate feature extraction
-    features = pd.DataFrame({
-        "game_id": df["game_id"],
-        "duration": df["duration"],
-        "race_p1_enc": pd.Categorical(df["race_p1"]).codes,
-        "race_p2_enc": pd.Categorical(df["race_p2"]).codes,
-        "winner": df["winner"],
-        "apm_p1": np.random.uniform(40, 300, n),
-        "apm_p2": np.random.uniform(40, 300, n),
-        "supply_peak_p1": np.random.randint(60, 200, n),
-        "supply_peak_p2": np.random.randint(60, 200, n),
-        "minerals_p1": np.random.randint(3000, 25000, n),
-        "army_value_p1": np.random.randint(1000, 15000, n),
-    })
+    features = pd.DataFrame(
+        {
+            "game_id": df["game_id"],
+            "duration": df["duration"],
+            "race_p1_enc": pd.Categorical(df["race_p1"]).codes,
+            "race_p2_enc": pd.Categorical(df["race_p2"]).codes,
+            "winner": df["winner"],
+            "apm_p1": np.random.uniform(40, 300, n),
+            "apm_p2": np.random.uniform(40, 300, n),
+            "supply_peak_p1": np.random.randint(60, 200, n),
+            "supply_peak_p2": np.random.randint(60, 200, n),
+            "minerals_p1": np.random.randint(3000, 25000, n),
+            "army_value_p1": np.random.randint(1000, 15000, n),
+        }
+    )
 
     return Output(
         value=features,
@@ -122,7 +133,9 @@ def trained_model(context, processed_features: pd.DataFrame) -> Output:
     description="Evaluation metrics for the trained SC2 model.",
     group_name="evaluation",
 )
-def model_metrics(context, trained_model: dict, processed_features: pd.DataFrame) -> Output:
+def model_metrics(
+    context, trained_model: dict, processed_features: pd.DataFrame
+) -> Output:
     """Compute evaluation metrics on held-out test set."""
     n_test = int(len(processed_features) * 0.1)
     context.log.info(f"Evaluating on {n_test} test samples...")
@@ -147,6 +160,7 @@ def model_metrics(context, trained_model: dict, processed_features: pd.DataFrame
 
 # ── Asset checks ──────────────────────────────────────────────────────────────
 
+
 @asset_check(asset=raw_replays, description="Ensure raw replay count is reasonable.")
 def check_replay_count(raw_replays: pd.DataFrame) -> AssetCheckResult:
     n = len(raw_replays)
@@ -168,7 +182,9 @@ def check_win_rate(model_metrics: dict) -> AssetCheckResult:
 
 sc2_ml_job = define_asset_job(
     name="sc2_daily_ml_job",
-    selection=AssetSelection.groups("ingestion", "feature_engineering", "training", "evaluation"),
+    selection=AssetSelection.groups(
+        "ingestion", "feature_engineering", "training", "evaluation"
+    ),
     description="Daily SC2 ML training job.",
 )
 

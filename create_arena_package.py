@@ -7,12 +7,12 @@ SC2 AI Arena 업로드용 패키지 생성기
 결과: 바탕화면에 WickedZergBotPro_Arena.zip 생성
 """
 
-import os
-import zipfile
-import shutil
-from pathlib import Path
-from datetime import datetime
 import argparse
+import os
+import shutil
+import zipfile
+from datetime import datetime
+from pathlib import Path
 
 # 설정
 PROJECT_DIR = Path(__file__).parent
@@ -45,11 +45,11 @@ EXCLUDE_PATTERNS = [
     ".pytest_cache",
     "*.log",
     "*.replay",
-    "*.pt",        # 학습 모델 (용량 큼)
+    "*.pt",  # 학습 모델 (용량 큼)
     "*.pth",
     "*.onnx",
     "credentials",
-    "PHASE_",      # Phase 문서
+    "PHASE_",  # Phase 문서
     "CLAUDE.md",
     ".claude",
 ]
@@ -87,7 +87,7 @@ def create_arena_zip(output_dir: Path, zip_name: str):
     file_count = 0
     total_size = 0
 
-    with zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED) as zf:
+    with zipfile.ZipFile(zip_path, "w", zipfile.ZIP_DEFLATED) as zf:
         # 1. 루트 파일 추가
         for fname in INCLUDE_FILES:
             fpath = PROJECT_DIR / fname

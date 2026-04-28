@@ -6,6 +6,7 @@ Document + graph relations using surrealdb Python async client.
 import asyncio
 import logging
 from datetime import datetime
+
 from surrealdb import Surreal
 
 logger = logging.getLogger(__name__)
@@ -48,13 +49,16 @@ async def setup_schema(db: Surreal):
 
 async def insert_game(db: Surreal, game_data: dict) -> str:
     """Insert a game document record."""
-    result = await db.create("game", {
-        "game_id": game_data["game_id"],
-        "map": game_data.get("map", "Unknown"),
-        "duration": game_data.get("duration", 0),
-        "result": game_data.get("result", "unknown"),
-        "played_at": datetime.utcnow().isoformat(),
-    })
+    result = await db.create(
+        "game",
+        {
+            "game_id": game_data["game_id"],
+            "map": game_data.get("map", "Unknown"),
+            "duration": game_data.get("duration", 0),
+            "result": game_data.get("result", "unknown"),
+            "played_at": datetime.utcnow().isoformat(),
+        },
+    )
     game_id = result[0]["id"] if isinstance(result, list) else result["id"]
     logger.info(f"Inserted game: {game_id}")
     return game_id
@@ -62,18 +66,23 @@ async def insert_game(db: Surreal, game_data: dict) -> str:
 
 async def insert_player(db: Surreal, player_data: dict) -> str:
     """Insert a player document record."""
-    result = await db.create("player", {
-        "player_id": player_data["player_id"],
-        "name": player_data["name"],
-        "race": player_data.get("race", "Zerg"),
-        "mmr": player_data.get("mmr", 1000),
-    })
+    result = await db.create(
+        "player",
+        {
+            "player_id": player_data["player_id"],
+            "name": player_data["name"],
+            "race": player_data.get("race", "Zerg"),
+            "mmr": player_data.get("mmr", 1000),
+        },
+    )
     player_id = result[0]["id"] if isinstance(result, list) else result["id"]
     logger.info(f"Inserted player: {player_id}")
     return player_id
 
 
-async def relate_player_game(db: Surreal, player_id: str, game_id: str, apm: int, units: list):
+async def relate_player_game(
+    db: Surreal, player_id: str, game_id: str, apm: int, units: list
+):
     """Create a graph relation between player and game."""
     await db.query(
         f"RELATE {player_id}->unit_graph->{game_id} SET apm = {apm}, units_made = {units};"
@@ -104,9 +113,15 @@ async def main():
     db = await connect()
     await setup_schema(db)
 
-    game_id = await insert_game(db, {"game_id": "g001", "map": "Solaris", "duration": 420, "result": "win"})
-    player_id = await insert_player(db, {"player_id": "p001", "name": "ZergBot", "race": "Zerg", "mmr": 4200})
-    await relate_player_game(db, player_id, game_id, apm=180, units=["Zergling", "Roach", "Mutalisk"])
+    game_id = await insert_game(
+        db, {"game_id": "g001", "map": "Solaris", "duration": 420, "result": "win"}
+    )
+    player_id = await insert_player(
+        db, {"player_id": "p001", "name": "ZergBot", "race": "Zerg", "mmr": 4200}
+    )
+    await relate_player_game(
+        db, player_id, game_id, apm=180, units=["Zergling", "Roach", "Mutalisk"]
+    )
 
     games = await query_player_games(db, "ZergBot")
     print("Player games:", games)

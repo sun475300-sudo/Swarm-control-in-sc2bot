@@ -8,11 +8,11 @@ Filters by APM, opponent quality, map list, and file integrity.
 
 from __future__ import annotations
 
+import logging
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
-import logging
 
 logger = logging.getLogger("ReplayQualityFilter")
 

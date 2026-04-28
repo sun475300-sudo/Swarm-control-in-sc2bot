@@ -27,8 +27,10 @@ logger = logging.getLogger(__name__)
 # Enums
 # ---------------------------------------------------------------------------
 
+
 class ContractStatus(Enum):
     """Status of a contract verification."""
+
     PENDING = "pending"
     VERIFIED = "verified"
     FAILED = "failed"
@@ -37,6 +39,7 @@ class ContractStatus(Enum):
 
 class HttpMethod(Enum):
     """Supported HTTP methods for contract interactions."""
+
     GET = "GET"
     POST = "POST"
     PUT = "PUT"
@@ -46,6 +49,7 @@ class HttpMethod(Enum):
 
 class SchemaType(Enum):
     """Supported JSON Schema primitive types."""
+
     STRING = "string"
     INTEGER = "integer"
     NUMBER = "number"
@@ -59,9 +63,11 @@ class SchemaType(Enum):
 # Data classes
 # ---------------------------------------------------------------------------
 
+
 @dataclass
 class InteractionRequest:
     """Describes the expected request in a contract interaction."""
+
     method: HttpMethod
     path: str
     headers: Dict[str, str] = field(default_factory=dict)
@@ -72,17 +78,23 @@ class InteractionRequest:
         """Check whether an actual request matches this expectation."""
         errors: List[str] = []
         if self.method != actual.method:
-            errors.append(f"Method mismatch: expected {self.method.value}, got {actual.method.value}")
+            errors.append(
+                f"Method mismatch: expected {self.method.value}, got {actual.method.value}"
+            )
         if self.path != actual.path:
             errors.append(f"Path mismatch: expected {self.path}, got {actual.path}")
         for key, value in self.headers.items():
             actual_val = actual.headers.get(key)
             if actual_val != value:
-                errors.append(f"Header '{key}' mismatch: expected '{value}', got '{actual_val}'")
+                errors.append(
+                    f"Header '{key}' mismatch: expected '{value}', got '{actual_val}'"
+                )
         for key, value in self.query.items():
             actual_val = actual.query.get(key)
             if actual_val != value:
-                errors.append(f"Query param '{key}' mismatch: expected '{value}', got '{actual_val}'")
+                errors.append(
+                    f"Query param '{key}' mismatch: expected '{value}', got '{actual_val}'"
+                )
         if self.body is not None and actual.body != self.body:
             errors.append("Request body mismatch")
         return (len(errors) == 0, errors)
@@ -100,6 +112,7 @@ class InteractionRequest:
 @dataclass
 class InteractionResponse:
     """Describes the expected response in a contract interaction."""
+
     status: int
     headers: Dict[str, str] = field(default_factory=dict)
     body: Optional[Dict[str, Any]] = None
@@ -109,11 +122,15 @@ class InteractionResponse:
         """Validate an actual response against expected response."""
         errors: List[str] = []
         if self.status != actual.status:
-            errors.append(f"Status mismatch: expected {self.status}, got {actual.status}")
+            errors.append(
+                f"Status mismatch: expected {self.status}, got {actual.status}"
+            )
         for key, value in self.headers.items():
             actual_val = actual.headers.get(key)
             if actual_val != value:
-                errors.append(f"Response header '{key}' mismatch: expected '{value}', got '{actual_val}'")
+                errors.append(
+                    f"Response header '{key}' mismatch: expected '{value}', got '{actual_val}'"
+                )
         if self.body is not None and actual.body is not None:
             body_ok, body_errors = _deep_match(self.body, actual.body, path="body")
             errors.extend(body_errors)
@@ -134,6 +151,7 @@ class InteractionResponse:
 @dataclass
 class Interaction:
     """A single request-response pair in a contract."""
+
     description: str
     request: InteractionRequest
     response: InteractionResponse
@@ -151,6 +169,7 @@ class Interaction:
 # ---------------------------------------------------------------------------
 # Schema Validation
 # ---------------------------------------------------------------------------
+
 
 def validate_schema(
     data: Any,
@@ -178,7 +197,9 @@ def validate_schema(
         }
         expected_types = type_map.get(schema_type)
         if expected_types is not None and not isinstance(data, expected_types):
-            errors.append(f"{path}: expected type '{schema_type}', got '{type(data).__name__}'")
+            errors.append(
+                f"{path}: expected type '{schema_type}', got '{type(data).__name__}'"
+            )
             return (False, errors)
 
     # --- enum ---
@@ -189,11 +210,17 @@ def validate_schema(
     # --- string constraints ---
     if isinstance(data, str):
         if "minLength" in schema and len(data) < schema["minLength"]:
-            errors.append(f"{path}: string length {len(data)} < minLength {schema['minLength']}")
+            errors.append(
+                f"{path}: string length {len(data)} < minLength {schema['minLength']}"
+            )
         if "maxLength" in schema and len(data) > schema["maxLength"]:
-            errors.append(f"{path}: string length {len(data)} > maxLength {schema['maxLength']}")
+            errors.append(
+                f"{path}: string length {len(data)} > maxLength {schema['maxLength']}"
+            )
         if "pattern" in schema and not re.search(schema["pattern"], data):
-            errors.append(f"{path}: string does not match pattern '{schema['pattern']}'")
+            errors.append(
+                f"{path}: string does not match pattern '{schema['pattern']}'"
+            )
 
     # --- numeric constraints ---
     if isinstance(data, (int, float)) and not isinstance(data, bool):
@@ -211,7 +238,9 @@ def validate_schema(
         properties = schema.get("properties", {})
         for prop_name, prop_schema in properties.items():
             if prop_name in data:
-                _, prop_errors = validate_schema(data[prop_name], prop_schema, path=f"{path}.{prop_name}")
+                _, prop_errors = validate_schema(
+                    data[prop_name], prop_schema, path=f"{path}.{prop_name}"
+                )
                 errors.extend(prop_errors)
 
     # --- array constraints ---
@@ -219,7 +248,9 @@ def validate_schema(
         items_schema = schema.get("items")
         if items_schema is not None:
             for idx, item in enumerate(data):
-                _, item_errors = validate_schema(item, items_schema, path=f"{path}[{idx}]")
+                _, item_errors = validate_schema(
+                    item, items_schema, path=f"{path}[{idx}]"
+                )
                 errors.extend(item_errors)
 
     return (len(errors) == 0, errors)
@@ -247,16 +278,21 @@ def _deep_match(
             errors.append(f"{path}: expected array, got {type(actual).__name__}")
             return (False, errors)
         if len(expected) != len(actual):
-            errors.append(f"{path}: array length mismatch, expected {len(expected)}, got {len(actual)}")
+            errors.append(
+                f"{path}: array length mismatch, expected {len(expected)}, got {len(actual)}"
+            )
     else:
         if expected != actual:
-            errors.append(f"{path}: value mismatch, expected {expected!r}, got {actual!r}")
+            errors.append(
+                f"{path}: value mismatch, expected {expected!r}, got {actual!r}"
+            )
     return (len(errors) == 0, errors)
 
 
 # ---------------------------------------------------------------------------
 # Contract
 # ---------------------------------------------------------------------------
+
 
 class Contract:
     """
@@ -286,7 +322,11 @@ class Contract:
     def add_interaction(self, interaction: Interaction) -> "Contract":
         """Add an interaction to this contract."""
         self.interactions.append(interaction)
-        logger.info("Added interaction '%s' to contract %s", interaction.description, self.contract_id)
+        logger.info(
+            "Added interaction '%s' to contract %s",
+            interaction.description,
+            self.contract_id,
+        )
         return self
 
     def fingerprint(self) -> str:
@@ -317,6 +357,7 @@ class Contract:
 # ---------------------------------------------------------------------------
 # ConsumerExpectation builder
 # ---------------------------------------------------------------------------
+
 
 class ConsumerExpectation:
     """
@@ -416,9 +457,11 @@ class ConsumerExpectation:
 # ProviderVerifier
 # ---------------------------------------------------------------------------
 
+
 @dataclass
 class VerificationResult:
     """Result of a single interaction verification."""
+
     interaction_desc: str
     passed: bool
     errors: List[str] = field(default_factory=list)
@@ -434,7 +477,9 @@ class ProviderVerifier:
     def __init__(self, provider_name: str) -> None:
         self.provider_name = provider_name
         self._state_handlers: Dict[str, Callable[[], None]] = {}
-        self._request_handler: Optional[Callable[[InteractionRequest], InteractionResponse]] = None
+        self._request_handler: Optional[
+            Callable[[InteractionRequest], InteractionResponse]
+        ] = None
         self._results: List[VerificationResult] = []
 
     def set_state_handler(self, state: str, handler: Callable[[], None]) -> None:
@@ -454,7 +499,9 @@ class ProviderVerifier:
         Returns (all_passed, list_of_results).
         """
         if self._request_handler is None:
-            raise RuntimeError("No request handler registered. Call set_request_handler first.")
+            raise RuntimeError(
+                "No request handler registered. Call set_request_handler first."
+            )
 
         self._results = []
         all_passed = True
@@ -463,7 +510,10 @@ class ProviderVerifier:
             start = time.time()
 
             # set up provider state
-            if interaction.provider_state and interaction.provider_state in self._state_handlers:
+            if (
+                interaction.provider_state
+                and interaction.provider_state in self._state_handlers
+            ):
                 try:
                     self._state_handlers[interaction.provider_state]()
                 except Exception as exc:
@@ -504,7 +554,9 @@ class ProviderVerifier:
             if not passed:
                 all_passed = False
 
-        contract.status = ContractStatus.VERIFIED if all_passed else ContractStatus.FAILED
+        contract.status = (
+            ContractStatus.VERIFIED if all_passed else ContractStatus.FAILED
+        )
         logger.info(
             "Verification of contract %s: %s (%d/%d passed)",
             contract.contract_id,
@@ -523,6 +575,7 @@ class ProviderVerifier:
 # PactBroker (in-memory registry)
 # ---------------------------------------------------------------------------
 
+
 class PactBroker:
     """
     In-memory Pact broker that stores and retrieves contracts.
@@ -540,7 +593,9 @@ class PactBroker:
         self._tags[contract.contract_id] = tags or []
         logger.info(
             "Published contract %s (%s -> %s) with tags %s",
-            contract.contract_id, contract.consumer, contract.provider,
+            contract.contract_id,
+            contract.consumer,
+            contract.provider,
             tags or [],
         )
         return contract.contract_id
@@ -578,13 +633,15 @@ class PactBroker:
         results: List[VerificationResult],
     ) -> None:
         """Log a verification event."""
-        self._verification_log.append({
-            "contract_id": contract_id,
-            "passed": passed,
-            "timestamp": datetime.utcnow().isoformat(),
-            "results_count": len(results),
-            "failures": [r.interaction_desc for r in results if not r.passed],
-        })
+        self._verification_log.append(
+            {
+                "contract_id": contract_id,
+                "passed": passed,
+                "timestamp": datetime.utcnow().isoformat(),
+                "results_count": len(results),
+                "failures": [r.interaction_desc for r in results if not r.passed],
+            }
+        )
 
     def get_verification_history(self, contract_id: str) -> List[Dict[str, Any]]:
         """Get all verification events for a contract."""
@@ -610,6 +667,7 @@ class PactBroker:
 # ContractTester  (orchestrator)
 # ---------------------------------------------------------------------------
 
+
 class ContractTester:
     """
     High-level orchestrator for SC2 service contract testing.
@@ -626,25 +684,33 @@ class ContractTester:
         """Register a provider verifier."""
         self._verifiers[provider_name] = verifier
 
-    def publish_contract(self, contract: Contract, tags: Optional[List[str]] = None) -> str:
+    def publish_contract(
+        self, contract: Contract, tags: Optional[List[str]] = None
+    ) -> str:
         """Publish a contract to the internal broker."""
         return self.broker.publish(contract, tags=tags)
 
-    def verify_contract(self, contract: Contract) -> Tuple[bool, List[VerificationResult]]:
+    def verify_contract(
+        self, contract: Contract
+    ) -> Tuple[bool, List[VerificationResult]]:
         """Verify a contract using the registered provider verifier."""
         verifier = self._verifiers.get(contract.provider)
         if verifier is None:
-            raise ValueError(f"No verifier registered for provider '{contract.provider}'")
+            raise ValueError(
+                f"No verifier registered for provider '{contract.provider}'"
+            )
         passed, results = verifier.verify(contract)
         self.broker.record_verification(contract.contract_id, passed, results)
-        self._report.append({
-            "contract_id": contract.contract_id,
-            "consumer": contract.consumer,
-            "provider": contract.provider,
-            "passed": passed,
-            "total_interactions": len(results),
-            "failures": sum(1 for r in results if not r.passed),
-        })
+        self._report.append(
+            {
+                "contract_id": contract.contract_id,
+                "consumer": contract.consumer,
+                "provider": contract.provider,
+                "passed": passed,
+                "total_interactions": len(results),
+                "failures": sum(1 for r in results if not r.passed),
+            }
+        )
         return (passed, results)
 
     def verify_all(self) -> Dict[str, Any]:
@@ -687,14 +753,17 @@ class ContractTester:
                 f"{entry['failures']} failures)"
             )
         summary = self.broker.summary()
-        print(f"\nBroker: {summary['total_contracts']} contracts, "
-              f"{summary['total_verifications']} verifications")
+        print(
+            f"\nBroker: {summary['total_contracts']} contracts, "
+            f"{summary['total_verifications']} verifications"
+        )
         print("====================================\n")
 
 
 # ---------------------------------------------------------------------------
 # SC2-Specific contract helpers
 # ---------------------------------------------------------------------------
+
 
 def build_bot_core_game_state_contract() -> Contract:
     """
@@ -710,7 +779,14 @@ def build_bot_core_game_state_contract() -> Contract:
             headers={"Content-Type": "application/json"},
             body_schema={
                 "type": "object",
-                "required": ["game_id", "frame", "minerals", "vespene", "supply_used", "supply_cap"],
+                "required": [
+                    "game_id",
+                    "frame",
+                    "minerals",
+                    "vespene",
+                    "supply_used",
+                    "supply_cap",
+                ],
                 "properties": {
                     "game_id": {"type": "string", "minLength": 1},
                     "frame": {"type": "integer", "minimum": 0},
@@ -822,8 +898,15 @@ def build_dashboard_build_order_contract() -> Contract:
                             "required": ["name", "race", "steps"],
                             "properties": {
                                 "name": {"type": "string"},
-                                "race": {"type": "string", "enum": ["Zerg", "Terran", "Protoss"]},
-                                "win_rate": {"type": "number", "minimum": 0, "maximum": 1},
+                                "race": {
+                                    "type": "string",
+                                    "enum": ["Zerg", "Terran", "Protoss"],
+                                },
+                                "win_rate": {
+                                    "type": "number",
+                                    "minimum": 0,
+                                    "maximum": 1,
+                                },
                                 "steps": {
                                     "type": "array",
                                     "items": {
@@ -848,6 +931,7 @@ def build_dashboard_build_order_contract() -> Contract:
 # ---------------------------------------------------------------------------
 # Simulated provider handlers for demo
 # ---------------------------------------------------------------------------
+
 
 def _make_bot_core_handler() -> Callable[[InteractionRequest], InteractionResponse]:
     """Create a simulated bot core provider handler."""
@@ -895,7 +979,9 @@ def _make_bot_core_handler() -> Callable[[InteractionRequest], InteractionRespon
     return handler
 
 
-def _make_training_service_handler() -> Callable[[InteractionRequest], InteractionResponse]:
+def _make_training_service_handler() -> (
+    Callable[[InteractionRequest], InteractionResponse]
+):
     """Create a simulated training service provider handler."""
 
     def handler(req: InteractionRequest) -> InteractionResponse:
@@ -929,6 +1015,7 @@ def _make_training_service_handler() -> Callable[[InteractionRequest], Interacti
 # ---------------------------------------------------------------------------
 # Demo
 # ---------------------------------------------------------------------------
+
 
 def demo() -> None:
     """Demonstrate contract testing for SC2 microservices."""

@@ -11,13 +11,13 @@ Tests cover:
 - Assignment cleanup
 """
 
-import unittest
-from unittest.mock import Mock, MagicMock, patch
-import sys
 import os
+import sys
+import unittest
+from unittest.mock import MagicMock, Mock, patch
 
 # Add parent directory to path
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 from combat_manager import CombatManager
 from sc2.ids.unit_typeid import UnitTypeId
@@ -36,10 +36,7 @@ class TestCombatManager(unittest.TestCase):
         self.bot.townhalls = Mock()
         self.bot.start_location = Point2((50, 50))
         self.bot.enemy_start_locations = [Point2((150, 150))]
-        self.bot.expansion_locations_list = [
-            Point2((60, 60)),
-            Point2((140, 140))
-        ]
+        self.bot.expansion_locations_list = [Point2((60, 60)), Point2((140, 140))]
         self.bot.iteration = 0
         self.bot.time = 0
 
@@ -220,8 +217,10 @@ class TestCombatManager(unittest.TestCase):
         mock_enemy.position = Point2((55, 55))  # Close
         mock_enemy.type_id = Mock()
         mock_enemy.type_id.name = "MARINE"
+
         def enemy_distance_to(pos):
-            return ((pos.x - 55)**2 + (pos.y - 55)**2) ** 0.5
+            return ((pos.x - 55) ** 2 + (pos.y - 55) ** 2) ** 0.5
+
         mock_enemy.distance_to = enemy_distance_to
 
         mock_townhalls = Mock()
@@ -255,8 +254,10 @@ class TestCombatManager(unittest.TestCase):
         mock_enemy.position = Point2((150, 150))  # Very far
         mock_enemy.type_id = Mock()
         mock_enemy.type_id.name = "MARINE"
+
         def enemy_distance_to(pos):
-            return ((pos.x - 150)**2 + (pos.y - 150)**2) ** 0.5
+            return ((pos.x - 150) ** 2 + (pos.y - 150) ** 2) ** 0.5
+
         mock_enemy.distance_to = enemy_distance_to
 
         mock_townhalls = Mock()
@@ -276,8 +277,10 @@ class TestCombatManager(unittest.TestCase):
         mock_enemy.position = Point2((55, 55))  # Close
         mock_enemy.type_id = Mock()
         mock_enemy.type_id.name = "MARINE"
+
         def enemy_distance_to(pos):
-            return ((pos.x - 55)**2 + (pos.y - 55)**2) ** 0.5
+            return ((pos.x - 55) ** 2 + (pos.y - 55) ** 2) ** 0.5
+
         mock_enemy.distance_to = enemy_distance_to
 
         mock_townhalls = Mock()
@@ -451,7 +454,7 @@ class TestCombatManager(unittest.TestCase):
         mock_units = []
         for i in range(3):
             unit = Mock()
-            unit.position = Point2((100 + i*20, 100 + i*20))  # Far apart
+            unit.position = Point2((100 + i * 20, 100 + i * 20))  # Far apart
             if i == 0:
                 unit.distance_to = Mock(return_value=5.0)  # Only first unit near
             else:
@@ -516,8 +519,10 @@ class TestCombatManager(unittest.TestCase):
         """Test closest enemy selects nearest"""
         mock_unit = Mock()
         mock_unit.position = Point2((50, 50))
+
         def unit_distance_to(enemy):
-            return ((enemy.position.x - 50)**2 + (enemy.position.y - 50)**2) ** 0.5
+            return ((enemy.position.x - 50) ** 2 + (enemy.position.y - 50) ** 2) ** 0.5
+
         mock_unit.distance_to = unit_distance_to
 
         mock_enemy_close = Mock()
@@ -526,7 +531,9 @@ class TestCombatManager(unittest.TestCase):
         mock_enemy_far = Mock()
         mock_enemy_far.position = Point2((150, 150))
 
-        result = self.manager._closest_enemy([mock_enemy_far, mock_enemy_close], mock_unit)
+        result = self.manager._closest_enemy(
+            [mock_enemy_far, mock_enemy_close], mock_unit
+        )
         self.assertEqual(result, mock_enemy_close)
 
     # ==================== Assignment Cleanup Tests ====================
@@ -584,5 +591,5 @@ class TestCombatManager(unittest.TestCase):
         self.assertGreaterEqual(result, 0)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

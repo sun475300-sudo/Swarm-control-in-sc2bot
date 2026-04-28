@@ -9,12 +9,12 @@ that the training pipeline and model wiring are functional.
 
 import argparse
 import json
+import logging
 import random
 from pathlib import Path
-from typing import List, Dict, Any
+from typing import Any, Dict, List
 
 from batch_trainer import BatchTrainer
-import logging
 
 logger = logging.getLogger("RunSmokeTraining")
 
@@ -83,9 +83,13 @@ def build_fake_batch_results(samples: int) -> List[Dict[str, Any]]:
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Run smoke batch training")
-    parser.add_argument("--samples", type=int, default=64, help="Synthetic samples to generate")
+    parser.add_argument(
+        "--samples", type=int, default=64, help="Synthetic samples to generate"
+    )
     parser.add_argument("--epochs", type=int, default=2, help="Training epochs")
-    parser.add_argument("--output-dir", default="local_training/smoke_output", help="Output directory")
+    parser.add_argument(
+        "--output-dir", default="local_training/smoke_output", help="Output directory"
+    )
     args = parser.parse_args()
 
     output_dir = Path(args.output_dir)

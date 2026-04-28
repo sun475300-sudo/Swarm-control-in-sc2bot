@@ -37,9 +37,15 @@ logger = logging.getLogger(__name__)
 SC2_RACES = ("Zerg", "Terran", "Protoss")
 
 MATCHUP_LABELS = [
-    "ZvZ", "ZvT", "ZvP",
-    "TvZ", "TvT", "TvP",
-    "PvZ", "PvT", "PvP",
+    "ZvZ",
+    "ZvT",
+    "ZvP",
+    "TvZ",
+    "TvT",
+    "TvP",
+    "PvZ",
+    "PvT",
+    "PvP",
 ]
 
 GAME_PHASES = ("early", "mid", "late")
@@ -54,8 +60,13 @@ ACTION_TECH = "tech"
 ACTION_HARASS = "harass"
 
 ALL_ACTIONS = (
-    ACTION_BUILD, ACTION_ATTACK, ACTION_DEFEND,
-    ACTION_EXPAND, ACTION_SCOUT, ACTION_TECH, ACTION_HARASS,
+    ACTION_BUILD,
+    ACTION_ATTACK,
+    ACTION_DEFEND,
+    ACTION_EXPAND,
+    ACTION_SCOUT,
+    ACTION_TECH,
+    ACTION_HARASS,
 )
 
 
@@ -63,8 +74,10 @@ ALL_ACTIONS = (
 # Enums
 # ---------------------------------------------------------------------------
 
+
 class SkillCategory(Enum):
     """Broad categories for SC2 skills."""
+
     ANALYSIS = auto()
     STRATEGY = auto()
     TACTICS = auto()
@@ -74,6 +87,7 @@ class SkillCategory(Enum):
 
 class PlanStatus(Enum):
     """Execution status of a plan."""
+
     PENDING = auto()
     RUNNING = auto()
     SUCCESS = auto()
@@ -85,9 +99,11 @@ class PlanStatus(Enum):
 # Data classes
 # ---------------------------------------------------------------------------
 
+
 @dataclass
 class SkillParameter:
     """Typed parameter declaration for a skill function."""
+
     name: str
     description: str
     param_type: str = "str"  # str, int, float, bool, list, dict
@@ -97,8 +113,12 @@ class SkillParameter:
     def validate(self, value: Any) -> bool:
         """Check whether *value* is compatible with declared type."""
         type_map = {
-            "str": str, "int": int, "float": (int, float),
-            "bool": bool, "list": (list, tuple), "dict": dict,
+            "str": str,
+            "int": int,
+            "float": (int, float),
+            "bool": bool,
+            "list": (list, tuple),
+            "dict": dict,
         }
         expected = type_map.get(self.param_type, object)
         return isinstance(value, expected)
@@ -107,6 +127,7 @@ class SkillParameter:
 @dataclass
 class SkillResult:
     """Result returned by a single skill invocation."""
+
     skill_name: str
     success: bool
     data: Dict[str, Any] = field(default_factory=dict)
@@ -122,6 +143,7 @@ class SkillResult:
 @dataclass
 class PlanStep:
     """One step inside a sequential plan."""
+
     index: int
     skill_name: str
     parameters: Dict[str, Any] = field(default_factory=dict)
@@ -136,6 +158,7 @@ class PlanStep:
 @dataclass
 class Plan:
     """A sequential plan consisting of ordered steps."""
+
     plan_id: str
     name: str
     steps: List[PlanStep] = field(default_factory=list)
@@ -160,6 +183,7 @@ class Plan:
 @dataclass
 class MemoryEntry:
     """Single memory record (an episode or fact)."""
+
     key: str
     content: Dict[str, Any]
     tags: List[str] = field(default_factory=list)
@@ -171,6 +195,7 @@ class MemoryEntry:
 # ---------------------------------------------------------------------------
 # SKFunction
 # ---------------------------------------------------------------------------
+
 
 class SKFunction:
     """
@@ -246,6 +271,7 @@ class SKFunction:
 # SKill
 # ---------------------------------------------------------------------------
 
+
 class SKill:
     """
     A named collection of related SKFunctions (a *skill*).
@@ -301,6 +327,7 @@ class SKill:
 # SKMemory
 # ---------------------------------------------------------------------------
 
+
 class SKMemory:
     """
     Episodic + semantic memory store for the planner.
@@ -326,8 +353,10 @@ class SKMemory:
         if len(self._store) >= self.capacity and key not in self._store:
             self._evict_least_relevant()
         entry = MemoryEntry(
-            key=key, content=content,
-            tags=tags or [], relevance=relevance,
+            key=key,
+            content=content,
+            tags=tags or [],
+            relevance=relevance,
         )
         self._store[key] = entry
         for tag in entry.tags:
@@ -386,6 +415,7 @@ class SKMemory:
 # Built-in SC2 Skill Functions
 # ---------------------------------------------------------------------------
 
+
 def _analyze_matchup(ctx: Dict[str, Any]) -> SkillResult:
     """Analyze the current matchup and determine strategic considerations."""
     our_race = ctx.get("our_race", "Zerg")
@@ -405,14 +435,26 @@ def _analyze_matchup(ctx: Dict[str, Any]) -> SkillResult:
     # Heuristic threat profiles per matchup
     threat_profiles: Dict[str, Dict[str, Any]] = {
         "ZvT": {
-            "early": {"threats": ["hellion_rush", "reaper_harass"], "priority": "defense"},
+            "early": {
+                "threats": ["hellion_rush", "reaper_harass"],
+                "priority": "defense",
+            },
             "mid": {"threats": ["bio_push", "mine_drop"], "priority": "tech"},
-            "late": {"threats": ["liberator_siege", "ghost_snipe"], "priority": "flank"},
+            "late": {
+                "threats": ["liberator_siege", "ghost_snipe"],
+                "priority": "flank",
+            },
         },
         "ZvP": {
             "early": {"threats": ["cannon_rush", "adept_harass"], "priority": "scout"},
-            "mid": {"threats": ["immortal_push", "oracle_harass"], "priority": "roach_hydra"},
-            "late": {"threats": ["carrier_deathball", "storm"], "priority": "corruptor_viper"},
+            "mid": {
+                "threats": ["immortal_push", "oracle_harass"],
+                "priority": "roach_hydra",
+            },
+            "late": {
+                "threats": ["carrier_deathball", "storm"],
+                "priority": "corruptor_viper",
+            },
         },
         "ZvZ": {
             "early": {"threats": ["ling_flood", "bane_bust"], "priority": "ling_bane"},
@@ -421,9 +463,13 @@ def _analyze_matchup(ctx: Dict[str, Any]) -> SkillResult:
         },
     }
 
-    profile = threat_profiles.get(matchup, {}).get(phase, {
-        "threats": ["unknown"], "priority": "adaptive",
-    })
+    profile = threat_profiles.get(matchup, {}).get(
+        phase,
+        {
+            "threats": ["unknown"],
+            "priority": "adaptive",
+        },
+    )
 
     return SkillResult(
         skill_name="AnalyzeMatchup",
@@ -449,45 +495,75 @@ def _suggest_build_order(ctx: Dict[str, Any]) -> SkillResult:
     build_db: Dict[str, Dict[str, List[str]]] = {
         "ZvT": {
             "early": [
-                "16 hatch", "18 gas", "17 pool",
-                "20 ling speed", "30 queen x2", "36 third hatch",
+                "16 hatch",
+                "18 gas",
+                "17 pool",
+                "20 ling speed",
+                "30 queen x2",
+                "36 third hatch",
             ],
             "mid": [
-                "lair", "evo chamber x2", "+1/+1",
-                "bane nest", "roach warren (optional)",
+                "lair",
+                "evo chamber x2",
+                "+1/+1",
+                "bane nest",
+                "roach warren (optional)",
                 "66 supply: 4th base",
             ],
             "late": [
-                "hive", "adrenal glands", "ultra cavern",
-                "greater spire (alt)", "infestation pit",
+                "hive",
+                "adrenal glands",
+                "ultra cavern",
+                "greater spire (alt)",
+                "infestation pit",
             ],
         },
         "ZvP": {
             "early": [
-                "16 hatch", "18 gas", "17 pool",
-                "19 overlord", "queen x2", "ling speed",
+                "16 hatch",
+                "18 gas",
+                "17 pool",
+                "19 overlord",
+                "queen x2",
+                "ling speed",
             ],
             "mid": [
-                "roach warren", "lair", "hydra den",
-                "+1 ranged", "3rd base saturate",
+                "roach warren",
+                "lair",
+                "hydra den",
+                "+1 ranged",
+                "3rd base saturate",
             ],
             "late": [
-                "hive", "viper", "lurker den",
-                "+3/+3", "brood lords",
+                "hive",
+                "viper",
+                "lurker den",
+                "+3/+3",
+                "brood lords",
             ],
         },
         "ZvZ": {
             "early": [
-                "14 pool", "16 hatch", "15 gas",
-                "ling speed", "bane nest", "queen x2",
+                "14 pool",
+                "16 hatch",
+                "15 gas",
+                "ling speed",
+                "bane nest",
+                "queen x2",
             ],
             "mid": [
-                "roach warren", "lair", "evo chamber",
-                "+1 missile", "overseer",
+                "roach warren",
+                "lair",
+                "evo chamber",
+                "+1 missile",
+                "overseer",
             ],
             "late": [
-                "hive", "ultra cavern", "greater spire",
-                "infestor", "brood lords",
+                "hive",
+                "ultra cavern",
+                "greater spire",
+                "infestor",
+                "brood lords",
             ],
         },
     }
@@ -516,29 +592,54 @@ def _evaluate_army(ctx: Dict[str, Any]) -> SkillResult:
 
     # Unit strength table (simplified)
     unit_power: Dict[str, float] = {
-        "zergling": 0.5, "baneling": 1.2, "roach": 2.0,
-        "hydralisk": 3.0, "mutalisk": 3.5, "ultralisk": 8.0,
-        "brood_lord": 6.0, "corruptor": 4.0, "infestor": 3.0,
-        "lurker": 4.5, "viper": 3.5, "ravager": 3.0,
-        "queen": 2.5, "overlord": 0.1, "overseer": 0.5,
-        "marine": 1.0, "marauder": 2.0, "medivac": 2.0,
-        "siege_tank": 4.0, "thor": 6.0, "viking": 3.0,
-        "liberator": 4.0, "ghost": 4.5, "hellion": 1.5,
-        "banshee": 3.5, "battlecruiser": 8.0,
-        "zealot": 1.5, "stalker": 2.5, "sentry": 1.5,
-        "adept": 2.0, "immortal": 4.5, "colossus": 6.0,
-        "disruptor": 5.0, "archon": 4.0, "high_templar": 3.5,
-        "carrier": 8.0, "void_ray": 3.5, "phoenix": 2.5,
-        "oracle": 3.0, "tempest": 5.0, "mothership": 10.0,
+        "zergling": 0.5,
+        "baneling": 1.2,
+        "roach": 2.0,
+        "hydralisk": 3.0,
+        "mutalisk": 3.5,
+        "ultralisk": 8.0,
+        "brood_lord": 6.0,
+        "corruptor": 4.0,
+        "infestor": 3.0,
+        "lurker": 4.5,
+        "viper": 3.5,
+        "ravager": 3.0,
+        "queen": 2.5,
+        "overlord": 0.1,
+        "overseer": 0.5,
+        "marine": 1.0,
+        "marauder": 2.0,
+        "medivac": 2.0,
+        "siege_tank": 4.0,
+        "thor": 6.0,
+        "viking": 3.0,
+        "liberator": 4.0,
+        "ghost": 4.5,
+        "hellion": 1.5,
+        "banshee": 3.5,
+        "battlecruiser": 8.0,
+        "zealot": 1.5,
+        "stalker": 2.5,
+        "sentry": 1.5,
+        "adept": 2.0,
+        "immortal": 4.5,
+        "colossus": 6.0,
+        "disruptor": 5.0,
+        "archon": 4.0,
+        "high_templar": 3.5,
+        "carrier": 8.0,
+        "void_ray": 3.5,
+        "phoenix": 2.5,
+        "oracle": 3.0,
+        "tempest": 5.0,
+        "mothership": 10.0,
     }
 
     our_power = sum(
-        unit_power.get(unit, 1.0) * count
-        for unit, count in our_army.items()
+        unit_power.get(unit, 1.0) * count for unit, count in our_army.items()
     )
     enemy_power = sum(
-        unit_power.get(unit, 1.0) * count
-        for unit, count in enemy_army.items()
+        unit_power.get(unit, 1.0) * count for unit, count in enemy_army.items()
     )
 
     if enemy_power == 0:
@@ -596,8 +697,7 @@ def _plan_attack(ctx: Dict[str, Any]) -> SkillResult:
         for u in ("mutalisk", "corruptor", "brood_lord", "viper", "overseer")
     )
     has_siege = any(
-        u in our_army
-        for u in ("lurker", "brood_lord", "ravager", "infestor")
+        u in our_army for u in ("lurker", "brood_lord", "ravager", "infestor")
     )
 
     if assessment == "dominant":
@@ -640,6 +740,7 @@ def _plan_attack(ctx: Dict[str, Any]) -> SkillResult:
 # SKPlanner
 # ---------------------------------------------------------------------------
 
+
 class SKPlanner:
     """
     Sequential planner that chains skills into multi-step strategies.
@@ -660,8 +761,9 @@ class SKPlanner:
 
     def register_skill(self, skill: SKill) -> None:
         self.skills[skill.name] = skill
-        logger.info("Registered skill: %s (%d functions)",
-                     skill.name, len(skill.functions))
+        logger.info(
+            "Registered skill: %s (%d functions)", skill.name, len(skill.functions)
+        )
 
     def unregister_skill(self, name: str) -> bool:
         return self.skills.pop(name, None) is not None
@@ -703,7 +805,9 @@ class SKPlanner:
         plan_id = f"plan-{self._plan_counter:04d}"
         plan_steps: List[PlanStep] = []
         for i, (func_name, params) in enumerate(steps):
-            plan_steps.append(PlanStep(index=i, skill_name=func_name, parameters=params))
+            plan_steps.append(
+                PlanStep(index=i, skill_name=func_name, parameters=params)
+            )
 
         plan = Plan(
             plan_id=plan_id,
@@ -731,20 +835,29 @@ class SKPlanner:
         3. EvaluateArmy   -> 4. PlanAttack
         """
         steps: List[Tuple[str, Dict[str, Any]]] = [
-            ("AnalyzeMatchup", {
-                "our_race": our_race,
-                "enemy_race": enemy_race,
-                "game_time": game_time,
-            }),
-            ("SuggestBuildOrder", {}),   # filled from step 1
-            ("EvaluateArmy", {
-                "our_army": our_army,
-                "enemy_army": enemy_army,
-            }),
-            ("PlanAttack", {
-                "our_position": our_position,
-                "enemy_position": enemy_position,
-            }),
+            (
+                "AnalyzeMatchup",
+                {
+                    "our_race": our_race,
+                    "enemy_race": enemy_race,
+                    "game_time": game_time,
+                },
+            ),
+            ("SuggestBuildOrder", {}),  # filled from step 1
+            (
+                "EvaluateArmy",
+                {
+                    "our_army": our_army,
+                    "enemy_army": enemy_army,
+                },
+            ),
+            (
+                "PlanAttack",
+                {
+                    "our_position": our_position,
+                    "enemy_position": enemy_position,
+                },
+            ),
         ]
         return self.create_plan(
             name=f"Strategy_{our_race}v{enemy_race}_{int(game_time)}s",
@@ -806,6 +919,7 @@ class SKPlanner:
 # SC2SkillPlanner  (top-level facade)
 # ---------------------------------------------------------------------------
 
+
 class SC2SkillPlanner:
     """
     High-level facade integrating the planner, built-in skills, and memory.
@@ -831,72 +945,94 @@ class SC2SkillPlanner:
     def _register_builtin_skills(self) -> None:
         # --- AnalyzeMatchup skill ---
         analyze_skill = SKill(
-            "MatchupAnalysis", SkillCategory.ANALYSIS,
+            "MatchupAnalysis",
+            SkillCategory.ANALYSIS,
             "Analyze SC2 matchup and identify threats",
         )
-        analyze_skill.add_function(SKFunction(
-            name="AnalyzeMatchup",
-            func=_analyze_matchup,
-            description="Determine matchup characteristics and threat profile",
-            parameters=[
-                SkillParameter("our_race", "Our race", "str"),
-                SkillParameter("enemy_race", "Enemy race", "str"),
-                SkillParameter("game_time", "Seconds elapsed", "float", required=False, default=0.0),
-            ],
-            game_actions=[ACTION_SCOUT],
-        ))
+        analyze_skill.add_function(
+            SKFunction(
+                name="AnalyzeMatchup",
+                func=_analyze_matchup,
+                description="Determine matchup characteristics and threat profile",
+                parameters=[
+                    SkillParameter("our_race", "Our race", "str"),
+                    SkillParameter("enemy_race", "Enemy race", "str"),
+                    SkillParameter(
+                        "game_time",
+                        "Seconds elapsed",
+                        "float",
+                        required=False,
+                        default=0.0,
+                    ),
+                ],
+                game_actions=[ACTION_SCOUT],
+            )
+        )
         self.planner.register_skill(analyze_skill)
 
         # --- SuggestBuildOrder skill ---
         build_skill = SKill(
-            "BuildOrderSuggestion", SkillCategory.STRATEGY,
+            "BuildOrderSuggestion",
+            SkillCategory.STRATEGY,
             "Suggest build orders for current game state",
         )
-        build_skill.add_function(SKFunction(
-            name="SuggestBuildOrder",
-            func=_suggest_build_order,
-            description="Generate build order steps",
-            parameters=[
-                SkillParameter("matchup", "Matchup label", "str"),
-                SkillParameter("phase", "Game phase", "str"),
-            ],
-            game_actions=[ACTION_BUILD, ACTION_TECH, ACTION_EXPAND],
-        ))
+        build_skill.add_function(
+            SKFunction(
+                name="SuggestBuildOrder",
+                func=_suggest_build_order,
+                description="Generate build order steps",
+                parameters=[
+                    SkillParameter("matchup", "Matchup label", "str"),
+                    SkillParameter("phase", "Game phase", "str"),
+                ],
+                game_actions=[ACTION_BUILD, ACTION_TECH, ACTION_EXPAND],
+            )
+        )
         self.planner.register_skill(build_skill)
 
         # --- EvaluateArmy skill ---
         army_skill = SKill(
-            "ArmyEvaluation", SkillCategory.TACTICS,
+            "ArmyEvaluation",
+            SkillCategory.TACTICS,
             "Evaluate army strength and give recommendation",
         )
-        army_skill.add_function(SKFunction(
-            name="EvaluateArmy",
-            func=_evaluate_army,
-            description="Compare army power levels",
-            parameters=[
-                SkillParameter("our_army", "Our units {name: count}", "dict"),
-                SkillParameter("enemy_army", "Enemy units {name: count}", "dict"),
-            ],
-            game_actions=[ACTION_DEFEND, ACTION_ATTACK],
-        ))
+        army_skill.add_function(
+            SKFunction(
+                name="EvaluateArmy",
+                func=_evaluate_army,
+                description="Compare army power levels",
+                parameters=[
+                    SkillParameter("our_army", "Our units {name: count}", "dict"),
+                    SkillParameter("enemy_army", "Enemy units {name: count}", "dict"),
+                ],
+                game_actions=[ACTION_DEFEND, ACTION_ATTACK],
+            )
+        )
         self.planner.register_skill(army_skill)
 
         # --- PlanAttack skill ---
         attack_skill = SKill(
-            "AttackPlanning", SkillCategory.TACTICS,
+            "AttackPlanning",
+            SkillCategory.TACTICS,
             "Generate attack plans with waypoints",
         )
-        attack_skill.add_function(SKFunction(
-            name="PlanAttack",
-            func=_plan_attack,
-            description="Create phased attack plan",
-            parameters=[
-                SkillParameter("assessment", "Army assessment", "str"),
-                SkillParameter("our_position", "Our army position", "list", required=False),
-                SkillParameter("enemy_position", "Enemy position", "list", required=False),
-            ],
-            game_actions=[ACTION_ATTACK, ACTION_HARASS],
-        ))
+        attack_skill.add_function(
+            SKFunction(
+                name="PlanAttack",
+                func=_plan_attack,
+                description="Create phased attack plan",
+                parameters=[
+                    SkillParameter("assessment", "Army assessment", "str"),
+                    SkillParameter(
+                        "our_position", "Our army position", "list", required=False
+                    ),
+                    SkillParameter(
+                        "enemy_position", "Enemy position", "list", required=False
+                    ),
+                ],
+                game_actions=[ACTION_ATTACK, ACTION_HARASS],
+            )
+        )
         self.planner.register_skill(attack_skill)
 
     # ------------------------------------------------------------------
@@ -953,9 +1089,7 @@ class SC2SkillPlanner:
             "status": executed.status.name,
             "progress": executed.progress,
             "results": executed.results_summary(),
-            "step_data": [
-                s.result.data if s.result else {} for s in executed.steps
-            ],
+            "step_data": [s.result.data if s.result else {} for s in executed.steps],
             "memory_key": mem_key,
         }
 
@@ -978,6 +1112,7 @@ class SC2SkillPlanner:
 # ---------------------------------------------------------------------------
 # Demo
 # ---------------------------------------------------------------------------
+
 
 def demo() -> None:
     """Demonstrate Phase 628 Semantic Kernel Skill Planner."""
@@ -1040,11 +1175,13 @@ def demo() -> None:
     pair = planner.planner.find_function("AnalyzeMatchup")
     if pair:
         _, fn = pair
-        direct_result = fn.invoke({
-            "our_race": "Zerg",
-            "enemy_race": "Zerg",
-            "game_time": 120.0,
-        })
+        direct_result = fn.invoke(
+            {
+                "our_race": "Zerg",
+                "enemy_race": "Zerg",
+                "game_time": 120.0,
+            }
+        )
         print(f"    {direct_result.summary()}")
         print(f"    Threats: {direct_result.data.get('threats')}")
 
@@ -1053,7 +1190,10 @@ def demo() -> None:
     custom = planner.planner.create_plan(
         name="EconFocus",
         steps=[
-            ("AnalyzeMatchup", {"our_race": "Zerg", "enemy_race": "Protoss", "game_time": 60.0}),
+            (
+                "AnalyzeMatchup",
+                {"our_race": "Zerg", "enemy_race": "Protoss", "game_time": 60.0},
+            ),
             ("SuggestBuildOrder", {}),
         ],
     )

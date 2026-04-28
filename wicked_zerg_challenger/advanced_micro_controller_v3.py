@@ -17,17 +17,18 @@ Integration:
 - Energy and cooldown management
 """
 
-from typing import Dict, List, Optional, Set, Tuple
 from collections import defaultdict
+from typing import Dict, List, Optional, Set, Tuple
+
 from utils.logger import get_logger
 
 try:
+    from sc2.bot_ai import BotAI
     from sc2.ids.ability_id import AbilityId
     from sc2.ids.unit_typeid import UnitTypeId
     from sc2.ids.upgrade_id import UpgradeId
     from sc2.position import Point2
     from sc2.unit import Unit
-    from sc2.bot_ai import BotAI
 except ImportError:
     AbilityId = None
     UnitTypeId = None
@@ -67,9 +68,7 @@ class RavagerMicro:
         return current_time - self.last_shot_time[ravager.tag] < self.cooldown_duration
 
     def predict_enemy_position(
-        self,
-        enemy: Unit,
-        prediction_time: float
+        self, enemy: Unit, prediction_time: float
     ) -> Optional[Point2]:
         """
         Predict enemy position after prediction_time seconds.
@@ -91,15 +90,16 @@ class RavagerMicro:
 
         # ★ Phase 18: Velocity-based prediction ★
         # SC2 API provides velocity components when unit is moving
-        if hasattr(enemy, 'movement_speed') and enemy.movement_speed > 0:
+        if hasattr(enemy, "movement_speed") and enemy.movement_speed > 0:
             # Get velocity if available (newer SC2 API versions)
-            if hasattr(enemy, 'velocity'):
-                vx = enemy.velocity.x if hasattr(enemy.velocity, 'x') else 0
-                vy = enemy.velocity.y if hasattr(enemy.velocity, 'y') else 0
-            elif hasattr(enemy, 'is_moving') and enemy.is_moving:
+            if hasattr(enemy, "velocity"):
+                vx = enemy.velocity.x if hasattr(enemy.velocity, "x") else 0
+                vy = enemy.velocity.y if hasattr(enemy.velocity, "y") else 0
+            elif hasattr(enemy, "is_moving") and enemy.is_moving:
                 # Estimate direction from facing angle
                 import math
-                if hasattr(enemy, 'facing'):
+
+                if hasattr(enemy, "facing"):
                     speed = enemy.movement_speed
                     angle = enemy.facing
                     vx = math.cos(angle) * speed
@@ -118,10 +118,7 @@ class RavagerMicro:
         return Point2((pos.x, pos.y))
 
     def find_best_bile_target(
-        self,
-        ravager: Unit,
-        enemy_units,
-        current_time: float
+        self, ravager: Unit, enemy_units, current_time: float
     ) -> Optional[Point2]:
         """
         Find best target position for Corrosive Bile.
@@ -140,7 +137,8 @@ class RavagerMicro:
         # Filter enemies within range (range 9)
         range_limit = 9
         in_range = [
-            e for e in enemy_units
+            e
+            for e in enemy_units
             if ravager.position.distance_to(e.position) <= range_limit
         ]
 
@@ -159,8 +157,7 @@ class RavagerMicro:
 
             # Count enemies near predicted position (splash radius ~2)
             nearby_count = sum(
-                1 for e in in_range
-                if e.position.distance_to(predicted_pos) <= 2.0
+                1 for e in in_range if e.position.distance_to(predicted_pos) <= 2.0
             )
 
             if nearby_count >= self.min_targets_for_shot and nearby_count > best_score:
@@ -170,11 +167,7 @@ class RavagerMicro:
         return best_target
 
     async def execute_bile_shots(
-        self,
-        ravagers,
-        enemy_units,
-        bot,
-        current_time: float
+        self, ravagers, enemy_units, bot, current_time: float
     ) -> Set[int]:
         """
         Execute Corrosive Bile shots.
@@ -199,7 +192,7 @@ class RavagerMicro:
 
             if target_pos:
                 # Execute Corrosive Bile
-                ability = getattr(AbilityId, 'EFFECT_CORROSIVEBILE', None)
+                ability = getattr(AbilityId, "EFFECT_CORROSIVEBILE", None)
                 if ability:
                     try:
                         actions.append(ravager(ability, target_pos))
@@ -229,7 +222,7 @@ class LurkerMicro:
     def __init__(
         self,
         optimal_range: float = 9.0,  # Lurker attack range
-        burrow_threshold: int = 1,    # Min enemies to stay burrowed
+        burrow_threshold: int = 1,  # Min enemies to stay burrowed
         reposition_threshold: float = 3.0,  # Distance to trigger reposition
     ):
         self.optimal_range = optimal_range
@@ -241,12 +234,13 @@ class LurkerMicro:
 
     def should_burrow(self, lurker: Unit, enemy_units) -> bool:
         """Check if Lurker should burrow."""
-        if getattr(lurker, 'is_burrowed', False):
+        if getattr(lurker, "is_burrowed", False):
             return False
 
         # Count enemies in range
         enemies_in_range = sum(
-            1 for e in enemy_units
+            1
+            for e in enemy_units
             if lurker.position.distance_to(e.position) <= self.optimal_range
         )
 
@@ -254,23 +248,19 @@ class LurkerMicro:
 
     def should_unburrow(self, lurker: Unit, enemy_units) -> bool:
         """Check if Lurker should unburrow."""
-        if not getattr(lurker, 'is_burrowed', False):
+        if not getattr(lurker, "is_burrowed", False):
             return False
 
         # Unburrow if no enemies in range
         enemies_in_range = sum(
-            1 for e in enemy_units
+            1
+            for e in enemy_units
             if lurker.position.distance_to(e.position) <= self.optimal_range + 2
         )
 
         return enemies_in_range == 0
 
-    def find_optimal_position(
-        self,
-        lurker: Unit,
-        enemy_units,
-        bot
-    ) -> Optional[Point2]:
+    def find_optimal_position(self, lurker: Unit, enemy_units, bot) -> Optional[Point2]:
         """
         Find optimal burrow position.
 
@@ -293,7 +283,7 @@ class LurkerMicro:
         # Position at optimal range from enemy center
         direction_x = lurker.position.x - enemy_center.x
         direction_y = lurker.position.y - enemy_center.y
-        length = (direction_x ** 2 + direction_y ** 2) ** 0.5
+        length = (direction_x**2 + direction_y**2) ** 0.5
 
         if length == 0:
             return None
@@ -307,12 +297,7 @@ class LurkerMicro:
 
         return Point2((optimal_x, optimal_y))
 
-    async def execute_lurker_micro(
-        self,
-        lurkers,
-        enemy_units,
-        bot
-    ) -> Set[int]:
+    async def execute_lurker_micro(self, lurkers, enemy_units, bot) -> Set[int]:
         """
         Execute Lurker micro.
 
@@ -331,12 +316,12 @@ class LurkerMicro:
         acted_tags = set()
 
         for lurker in lurkers:
-            is_burrowed = getattr(lurker, 'is_burrowed', False)
+            is_burrowed = getattr(lurker, "is_burrowed", False)
 
             # Check burrow status
             if self.should_burrow(lurker, enemy_units) and not is_burrowed:
                 # Burrow
-                ability = getattr(AbilityId, 'BURROWDOWN_LURKER', None)
+                ability = getattr(AbilityId, "BURROWDOWN_LURKER", None)
                 if ability:
                     try:
                         actions.append(lurker(ability))
@@ -349,7 +334,7 @@ class LurkerMicro:
 
             elif self.should_unburrow(lurker, enemy_units) and is_burrowed:
                 # Unburrow
-                ability = getattr(AbilityId, 'BURROWUP_LURKER', None)
+                ability = getattr(AbilityId, "BURROWUP_LURKER", None)
                 if ability:
                     try:
                         actions.append(lurker(ability))
@@ -364,7 +349,11 @@ class LurkerMicro:
             if not is_burrowed and enemy_units:
                 optimal_pos = self.find_optimal_position(lurker, enemy_units, bot)
 
-                if optimal_pos and lurker.position.distance_to(optimal_pos) > self.reposition_threshold:
+                if (
+                    optimal_pos
+                    and lurker.position.distance_to(optimal_pos)
+                    > self.reposition_threshold
+                ):
                     try:
                         actions.append(lurker.move(optimal_pos))
                         acted_tags.add(lurker.tag)
@@ -391,9 +380,9 @@ class QueenMicro:
     def __init__(
         self,
         transfuse_threshold: float = 0.4,  # HP ratio to trigger transfuse
-        transfuse_energy_cost: int = 50,    # Energy cost for transfuse
-        transfuse_range: float = 7.0,       # Transfuse cast range
-        min_energy_for_creep: int = 50,     # Minimum energy for creep tumor
+        transfuse_energy_cost: int = 50,  # Energy cost for transfuse
+        transfuse_range: float = 7.0,  # Transfuse cast range
+        min_energy_for_creep: int = 50,  # Minimum energy for creep tumor
     ):
         self.transfuse_threshold = transfuse_threshold
         self.transfuse_energy_cost = transfuse_energy_cost
@@ -412,11 +401,7 @@ class QueenMicro:
                 UnitTypeId.QUEEN,
             }
 
-    def find_transfuse_target(
-        self,
-        queen: Unit,
-        friendly_units
-    ) -> Optional[Unit]:
+    def find_transfuse_target(self, queen: Unit, friendly_units) -> Optional[Unit]:
         """
         Find best target for Transfuse.
 
@@ -439,7 +424,10 @@ class QueenMicro:
             health_ratio = unit.health / unit.health_max if unit.health_max > 0 else 1.0
             distance = queen.position.distance_to(unit.position)
 
-            if health_ratio < self.transfuse_threshold and distance <= self.transfuse_range:
+            if (
+                health_ratio < self.transfuse_threshold
+                and distance <= self.transfuse_range
+            ):
                 # Priority score: lower HP + priority type = higher score
                 priority_bonus = 1.0 if unit.type_id in self.priority_types else 0.5
                 score = (1.0 - health_ratio) * priority_bonus
@@ -453,12 +441,7 @@ class QueenMicro:
         injured_units.sort(key=lambda x: x[1], reverse=True)
         return injured_units[0][0]
 
-    async def execute_queen_micro(
-        self,
-        queens,
-        friendly_units,
-        bot
-    ) -> Set[int]:
+    async def execute_queen_micro(self, queens, friendly_units, bot) -> Set[int]:
         """
         Execute Queen micro.
 
@@ -477,14 +460,14 @@ class QueenMicro:
         acted_tags = set()
 
         for queen in queens:
-            energy = getattr(queen, 'energy', 0)
+            energy = getattr(queen, "energy", 0)
 
             # Priority 1: Transfuse if energy available
             if energy >= self.transfuse_energy_cost:
                 target = self.find_transfuse_target(queen, friendly_units)
 
                 if target:
-                    ability = getattr(AbilityId, 'TRANSFUSION_TRANSFUSION', None)
+                    ability = getattr(AbilityId, "TRANSFUSION_TRANSFUSION", None)
                     if ability:
                         try:
                             actions.append(queen(ability, target))
@@ -536,18 +519,15 @@ class ViperMicro:
                 UnitTypeId.BATTLECRUISER,
             }
 
-    def find_abduct_target(
-        self,
-        viper: Unit,
-        enemy_units
-    ) -> Optional[Unit]:
+    def find_abduct_target(self, viper: Unit, enemy_units) -> Optional[Unit]:
         """Find best target for Abduct."""
         if not enemy_units:
             return None
 
         # Find high-value targets in range
         targets = [
-            e for e in enemy_units
+            e
+            for e in enemy_units
             if e.type_id in self.abduct_priorities
             and viper.position.distance_to(e.position) <= self.abduct_range
         ]
@@ -559,11 +539,7 @@ class ViperMicro:
         return min(targets, key=lambda e: viper.position.distance_to(e.position))
 
     async def execute_viper_micro(
-        self,
-        vipers,
-        enemy_units,
-        friendly_units,
-        bot
+        self, vipers, enemy_units, friendly_units, bot
     ) -> Set[int]:
         """
         Execute Viper micro.
@@ -584,16 +560,18 @@ class ViperMicro:
         acted_tags = set()
 
         for viper in vipers:
-            energy = getattr(viper, 'energy', 0)
+            energy = getattr(viper, "energy", 0)
 
             # Priority 1: Abduct high-value targets
             if energy >= self.abduct_energy_cost:
                 target = self.find_abduct_target(viper, enemy_units)
 
                 if target:
-                    ability = getattr(AbilityId, 'VIPERCONSUMESTRUCTURE_VIPERCONSUME', None)
+                    ability = getattr(
+                        AbilityId, "VIPERCONSUMESTRUCTURE_VIPERCONSUME", None
+                    )
                     if not ability:
-                        ability = getattr(AbilityId, 'EFFECT_ABDUCT', None)
+                        ability = getattr(AbilityId, "EFFECT_ABDUCT", None)
 
                     if ability:
                         try:
@@ -608,13 +586,16 @@ class ViperMicro:
             if energy < self.consume_threshold and friendly_units:
                 # Find nearby friendly structure
                 consume_targets = [
-                    u for u in friendly_units
-                    if getattr(u, 'is_structure', False)
+                    u
+                    for u in friendly_units
+                    if getattr(u, "is_structure", False)
                     and viper.position.distance_to(u.position) <= 2.0
                 ]
 
                 if consume_targets:
-                    ability = getattr(AbilityId, 'VIPERCONSUMESTRUCTURE_VIPERCONSUME', None)
+                    ability = getattr(
+                        AbilityId, "VIPERCONSUMESTRUCTURE_VIPERCONSUME", None
+                    )
                     if ability:
                         try:
                             actions.append(viper(ability, consume_targets[0]))
@@ -669,13 +650,12 @@ class CorruptorMicro:
         """Check if Caustic Spray is on cooldown."""
         if corruptor.tag not in self.last_spray_time:
             return False
-        return current_time - self.last_spray_time[corruptor.tag] < self.cooldown_duration
+        return (
+            current_time - self.last_spray_time[corruptor.tag] < self.cooldown_duration
+        )
 
     def find_spray_target(
-        self,
-        corruptor: Unit,
-        enemy_units,
-        current_time: float
+        self, corruptor: Unit, enemy_units, current_time: float
     ) -> Optional[Unit]:
         """
         Find best target for Caustic Spray.
@@ -693,14 +673,17 @@ class CorruptorMicro:
 
         # Filter enemy structures in range
         structures_in_range = [
-            e for e in enemy_units
-            if getattr(e, 'is_structure', False)
-            and getattr(e, 'is_flying', False)  # Flying structures only
+            e
+            for e in enemy_units
+            if getattr(e, "is_structure", False)
+            and getattr(e, "is_flying", False)  # Flying structures only
             and corruptor.position.distance_to(e.position) <= self.caustic_spray_range
         ]
 
         # Prioritize high-value structures
-        priority_structures = [s for s in structures_in_range if s.type_id in self.priority_targets]
+        priority_structures = [
+            s for s in structures_in_range if s.type_id in self.priority_targets
+        ]
 
         if priority_structures:
             return priority_structures[0]
@@ -710,11 +693,7 @@ class CorruptorMicro:
         return None
 
     async def execute_corruptor_micro(
-        self,
-        corruptors,
-        enemy_units,
-        bot,
-        current_time: float
+        self, corruptors, enemy_units, bot, current_time: float
     ) -> Set[int]:
         """
         Execute Corruptor micro.
@@ -735,13 +714,13 @@ class CorruptorMicro:
         acted_tags = set()
 
         for corruptor in corruptors:
-            energy = getattr(corruptor, 'energy', 0)
+            energy = getattr(corruptor, "energy", 0)
 
             if energy >= self.caustic_spray_energy_cost:
                 target = self.find_spray_target(corruptor, enemy_units, current_time)
 
                 if target:
-                    ability = getattr(AbilityId, 'CAUSTICSPRAY_CAUSTICSPRAY', None)
+                    ability = getattr(AbilityId, "CAUSTICSPRAY_CAUSTICSPRAY", None)
                     if ability:
                         try:
                             actions.append(corruptor(ability, target))
@@ -793,10 +772,7 @@ class InfestorMicro:
             }
 
     def find_fungal_target(
-        self,
-        infestor: Unit,
-        enemy_units,
-        current_time: float
+        self, infestor: Unit, enemy_units, current_time: float
     ) -> Optional[Point2]:
         """Find best position for Fungal Growth."""
         if not enemy_units:
@@ -804,12 +780,16 @@ class InfestorMicro:
 
         # Cooldown check
         if infestor.tag in self.last_fungal_time:
-            if current_time - self.last_fungal_time[infestor.tag] < self.fungal_cooldown:
+            if (
+                current_time - self.last_fungal_time[infestor.tag]
+                < self.fungal_cooldown
+            ):
                 return None
 
         # Find enemies in range
         in_range = [
-            e for e in enemy_units
+            e
+            for e in enemy_units
             if infestor.position.distance_to(e.position) <= self.fungal_range
         ]
 
@@ -822,7 +802,8 @@ class InfestorMicro:
 
         for enemy in in_range:
             nearby = sum(
-                1 for e in in_range
+                1
+                for e in in_range
                 if e.position.distance_to(enemy.position) <= self.fungal_radius
             )
             if nearby > best_count:
@@ -833,18 +814,15 @@ class InfestorMicro:
             return Point2((best_pos.x, best_pos.y)) if Point2 else None
         return None
 
-    def find_neural_target(
-        self,
-        infestor: Unit,
-        enemy_units
-    ) -> Optional[Unit]:
+    def find_neural_target(self, infestor: Unit, enemy_units) -> Optional[Unit]:
         """Find high-value target for Neural Parasite."""
         if not enemy_units:
             return None
 
         # Find priority targets in range
         targets = [
-            e for e in enemy_units
+            e
+            for e in enemy_units
             if e.type_id in self.neural_priority_targets
             and infestor.position.distance_to(e.position) <= self.neural_range
         ]
@@ -856,11 +834,7 @@ class InfestorMicro:
         return min(targets, key=lambda e: infestor.position.distance_to(e.position))
 
     async def execute_infestor_micro(
-        self,
-        infestors,
-        enemy_units,
-        bot,
-        current_time: float
+        self, infestors, enemy_units, bot, current_time: float
     ) -> Set[int]:
         """Execute Infestor micro."""
         if not infestors or not enemy_units:
@@ -870,13 +844,15 @@ class InfestorMicro:
         acted_tags = set()
 
         for infestor in infestors:
-            energy = getattr(infestor, 'energy', 0)
+            energy = getattr(infestor, "energy", 0)
 
             # Priority 1: Fungal Growth for crowd control
             if energy >= self.fungal_energy_cost:
-                target_pos = self.find_fungal_target(infestor, enemy_units, current_time)
+                target_pos = self.find_fungal_target(
+                    infestor, enemy_units, current_time
+                )
                 if target_pos:
-                    ability = getattr(AbilityId, 'FUNGALGROWTH_FUNGALGROWTH', None)
+                    ability = getattr(AbilityId, "FUNGALGROWTH_FUNGALGROWTH", None)
                     if ability:
                         try:
                             actions.append(infestor(ability, target_pos))
@@ -890,7 +866,7 @@ class InfestorMicro:
             if energy >= self.neural_energy_cost:
                 target = self.find_neural_target(infestor, enemy_units)
                 if target:
-                    ability = getattr(AbilityId, 'NEURALPARASITE_NEURALPARASITE', None)
+                    ability = getattr(AbilityId, "NEURALPARASITE_NEURALPARASITE", None)
                     if ability:
                         try:
                             actions.append(infestor(ability, target))
@@ -902,11 +878,12 @@ class InfestorMicro:
             # Safety: Burrow if in danger and low energy
             if energy < 50:
                 nearby_enemies = [
-                    e for e in enemy_units
+                    e
+                    for e in enemy_units
                     if infestor.position.distance_to(e.position) < 7
                 ]
                 if nearby_enemies and not infestor.is_burrowed:
-                    burrow_ability = getattr(AbilityId, 'BURROWDOWN_INFESTOR', None)
+                    burrow_ability = getattr(AbilityId, "BURROWDOWN_INFESTOR", None)
                     if burrow_ability:
                         try:
                             actions.append(infestor(burrow_ability))
@@ -949,19 +926,14 @@ class BanelingMicro:
                 UnitTypeId.MARAUDER,
             }
 
-    def find_detonation_position(
-        self,
-        baneling: Unit,
-        enemy_units
-    ) -> Optional[Point2]:
+    def find_detonation_position(self, baneling: Unit, enemy_units) -> Optional[Point2]:
         """Find optimal position for Baneling detonation."""
         if not enemy_units:
             return None
 
         # Find enemies in range
         in_range = [
-            e for e in enemy_units
-            if baneling.position.distance_to(e.position) <= 5
+            e for e in enemy_units if baneling.position.distance_to(e.position) <= 5
         ]
 
         if not in_range:
@@ -974,15 +946,13 @@ class BanelingMicro:
         for enemy in in_range:
             # Count nearby units that would be hit
             nearby = [
-                e for e in in_range
+                e
+                for e in in_range
                 if e.position.distance_to(enemy.position) <= self.detonation_radius
             ]
 
             # Calculate value (priority targets worth more)
-            value = sum(
-                2 if e.type_id in self.priority_targets else 1
-                for e in nearby
-            )
+            value = sum(2 if e.type_id in self.priority_targets else 1 for e in nearby)
 
             if value > best_value:
                 best_value = value
@@ -992,39 +962,33 @@ class BanelingMicro:
             return Point2((best_pos.x, best_pos.y)) if Point2 else None
         return None
 
-    def should_attack_move(
-        self,
-        baneling: Unit,
-        enemy_units
-    ) -> Optional[Point2]:
+    def should_attack_move(self, baneling: Unit, enemy_units) -> Optional[Point2]:
         """Determine if Baneling should attack-move toward enemies."""
         if not enemy_units:
             return None
 
         # Find closest cluster of priority targets
         priority_enemies = [
-            e for e in enemy_units
-            if e.type_id in self.priority_targets
+            e for e in enemy_units if e.type_id in self.priority_targets
         ]
 
         if not priority_enemies:
             # Attack closest enemy if no priority targets
             all_enemies = list(enemy_units)
             if all_enemies:
-                closest = min(all_enemies, key=lambda e: baneling.position.distance_to(e.position))
+                closest = min(
+                    all_enemies, key=lambda e: baneling.position.distance_to(e.position)
+                )
                 return closest.position
             return None
 
         # Find cluster center of priority targets
-        closest = min(priority_enemies, key=lambda e: baneling.position.distance_to(e.position))
+        closest = min(
+            priority_enemies, key=lambda e: baneling.position.distance_to(e.position)
+        )
         return closest.position
 
-    async def execute_baneling_micro(
-        self,
-        banelings,
-        enemy_units,
-        bot
-    ) -> Set[int]:
+    async def execute_baneling_micro(self, banelings, enemy_units, bot) -> Set[int]:
         """Execute Baneling micro."""
         if not banelings or not enemy_units:
             return set()
@@ -1036,9 +1000,12 @@ class BanelingMicro:
             # Check if we should detonate (manual explosion)
             det_pos = self.find_detonation_position(baneling, enemy_units)
 
-            if det_pos and baneling.position.distance_to(det_pos) <= self.detonation_radius:
+            if (
+                det_pos
+                and baneling.position.distance_to(det_pos) <= self.detonation_radius
+            ):
                 # Explode command
-                ability = getattr(AbilityId, 'EXPLODE_EXPLODE', None)
+                ability = getattr(AbilityId, "EXPLODE_EXPLODE", None)
                 if ability:
                     try:
                         actions.append(baneling(ability))
@@ -1089,17 +1056,15 @@ class FocusFireCoordinator:
 
         # Current target assignments
         self.target_assignments: Dict[int, int] = {}  # unit_tag -> target_tag
-        self.target_damage_count: Dict[int, int] = defaultdict(int)  # target_tag -> attacker_count
+        self.target_damage_count: Dict[int, int] = defaultdict(
+            int
+        )  # target_tag -> attacker_count
 
         # ★ Phase 18: Memory leak prevention ★
         self.max_tracked_units = 500  # Maximum tracked entries
         self.last_cleanup_time = 0
 
-    def select_focus_target(
-        self,
-        unit: Unit,
-        enemy_units
-    ) -> Optional[Unit]:
+    def select_focus_target(self, unit: Unit, enemy_units) -> Optional[Unit]:
         """
         Select best focus fire target.
 
@@ -1114,10 +1079,15 @@ class FocusFireCoordinator:
             return None
 
         # Find priority targets in range
-        unit_range = getattr(unit, 'ground_range', 5) if not getattr(unit, 'is_flying', False) else getattr(unit, 'air_range', 5)
+        unit_range = (
+            getattr(unit, "ground_range", 5)
+            if not getattr(unit, "is_flying", False)
+            else getattr(unit, "air_range", 5)
+        )
 
         priority_targets = [
-            e for e in enemy_units
+            e
+            for e in enemy_units
             if e.type_id in self.priority_types
             and unit.position.distance_to(e.position) <= unit_range + 2
         ]
@@ -1125,7 +1095,8 @@ class FocusFireCoordinator:
         # If no priority targets, find any target in range
         if not priority_targets:
             priority_targets = [
-                e for e in enemy_units
+                e
+                for e in enemy_units
                 if unit.position.distance_to(e.position) <= unit_range + 2
             ]
 
@@ -1134,8 +1105,7 @@ class FocusFireCoordinator:
 
         # Select target with least damage assigned (prevent overkill)
         best_target = min(
-            priority_targets,
-            key=lambda e: (self.target_damage_count[e.tag], e.health)
+            priority_targets, key=lambda e: (self.target_damage_count[e.tag], e.health)
         )
 
         return best_target
@@ -1145,20 +1115,26 @@ class FocusFireCoordinator:
         # Remove old assignment
         if unit_tag in self.target_assignments:
             old_target = self.target_assignments[unit_tag]
-            self.target_damage_count[old_target] = max(0, self.target_damage_count[old_target] - 1)
+            self.target_damage_count[old_target] = max(
+                0, self.target_damage_count[old_target] - 1
+            )
 
         # Add new assignment
         self.target_assignments[unit_tag] = target_tag
         self.target_damage_count[target_tag] += 1
 
-    def clear_dead_assignments(self, alive_unit_tags: Set[int], alive_enemy_tags: Set[int]):
+    def clear_dead_assignments(
+        self, alive_unit_tags: Set[int], alive_enemy_tags: Set[int]
+    ):
         """Remove assignments for dead units."""
         # Remove dead attackers
         dead_attackers = set(self.target_assignments.keys()) - alive_unit_tags
         for tag in dead_attackers:
             target = self.target_assignments.pop(tag, None)
             if target is not None:
-                self.target_damage_count[target] = max(0, self.target_damage_count.get(target, 1) - 1)
+                self.target_damage_count[target] = max(
+                    0, self.target_damage_count.get(target, 1) - 1
+                )
 
         # Clear counts for dead targets
         for target_tag in list(self.target_damage_count.keys()):
@@ -1169,7 +1145,7 @@ class FocusFireCoordinator:
         if len(self.target_assignments) > self.max_tracked_units:
             # Keep only the most recent half
             entries = list(self.target_assignments.items())
-            self.target_assignments = dict(entries[-self.max_tracked_units // 2:])
+            self.target_assignments = dict(entries[-self.max_tracked_units // 2 :])
             # Rebuild damage counts
             self.target_damage_count.clear()
             for _, target_tag in self.target_assignments.items():
@@ -1208,7 +1184,9 @@ class AdvancedMicroControllerV3:
         self.last_update = 0
         self.update_interval = 8  # ~0.3s between updates
 
-        self.logger.info("[MICRO_V3] Advanced Micro Controller V3 initialized (Phase 18)")
+        self.logger.info(
+            "[MICRO_V3] Advanced Micro Controller V3 initialized (Phase 18)"
+        )
 
     @staticmethod
     async def _do_actions(bot, actions):
@@ -1237,8 +1215,8 @@ class AdvancedMicroControllerV3:
         current_time = self.bot.time
 
         # Get units
-        enemy_units = getattr(self.bot, 'enemy_units', [])
-        units = getattr(self.bot, 'units', [])
+        enemy_units = getattr(self.bot, "enemy_units", [])
+        units = getattr(self.bot, "units", [])
 
         # Execute micro for each unit type
         await self._execute_ravager_micro(current_time, enemy_units)
@@ -1262,41 +1240,27 @@ class AdvancedMicroControllerV3:
         ravagers = self.bot.units(UnitTypeId.RAVAGER) if UnitTypeId else []
         if ravagers:
             await self.ravager_micro.execute_bile_shots(
-                ravagers,
-                enemy_units,
-                self.bot,
-                current_time
+                ravagers, enemy_units, self.bot, current_time
             )
 
     async def _execute_lurker_micro(self, enemy_units):
         """Execute Lurker positioning and burrow management."""
         lurkers = self.bot.units(UnitTypeId.LURKERMP) if UnitTypeId else []
         if lurkers:
-            await self.lurker_micro.execute_lurker_micro(
-                lurkers,
-                enemy_units,
-                self.bot
-            )
+            await self.lurker_micro.execute_lurker_micro(lurkers, enemy_units, self.bot)
 
     async def _execute_queen_micro(self, friendly_units):
         """Execute Queen Transfuse."""
         queens = self.bot.units(UnitTypeId.QUEEN) if UnitTypeId else []
         if queens:
-            await self.queen_micro.execute_queen_micro(
-                queens,
-                friendly_units,
-                self.bot
-            )
+            await self.queen_micro.execute_queen_micro(queens, friendly_units, self.bot)
 
     async def _execute_viper_micro(self, enemy_units, friendly_units):
         """Execute Viper abilities."""
         vipers = self.bot.units(UnitTypeId.VIPER) if UnitTypeId else []
         if vipers:
             await self.viper_micro.execute_viper_micro(
-                vipers,
-                enemy_units,
-                friendly_units,
-                self.bot
+                vipers, enemy_units, friendly_units, self.bot
             )
 
     async def _execute_corruptor_micro(self, current_time: float, enemy_units):
@@ -1304,10 +1268,7 @@ class AdvancedMicroControllerV3:
         corruptors = self.bot.units(UnitTypeId.CORRUPTOR) if UnitTypeId else []
         if corruptors:
             await self.corruptor_micro.execute_corruptor_micro(
-                corruptors,
-                enemy_units,
-                self.bot,
-                current_time
+                corruptors, enemy_units, self.bot, current_time
             )
 
     async def _execute_focus_fire(self, units, enemy_units):
@@ -1316,13 +1277,22 @@ class AdvancedMicroControllerV3:
             return
 
         # Get combat units
-        combat_units = [
-            u for u in units
-            if u.type_id in {
-                UnitTypeId.ZERGLING, UnitTypeId.ROACH, UnitTypeId.HYDRALISK,
-                UnitTypeId.RAVAGER, UnitTypeId.MUTALISK
-            }
-        ] if UnitTypeId else []
+        combat_units = (
+            [
+                u
+                for u in units
+                if u.type_id
+                in {
+                    UnitTypeId.ZERGLING,
+                    UnitTypeId.ROACH,
+                    UnitTypeId.HYDRALISK,
+                    UnitTypeId.RAVAGER,
+                    UnitTypeId.MUTALISK,
+                }
+            ]
+            if UnitTypeId
+            else []
+        )
 
         actions = []
         for unit in combat_units:
@@ -1343,10 +1313,7 @@ class AdvancedMicroControllerV3:
         infestors = self.bot.units(UnitTypeId.INFESTOR) if UnitTypeId else []
         if infestors:
             await self.infestor_micro.execute_infestor_micro(
-                infestors,
-                enemy_units,
-                self.bot,
-                current_time
+                infestors, enemy_units, self.bot, current_time
             )
 
     async def _execute_baneling_micro(self, enemy_units):
@@ -1354,9 +1321,7 @@ class AdvancedMicroControllerV3:
         banelings = self.bot.units(UnitTypeId.BANELING) if UnitTypeId else []
         if banelings:
             await self.baneling_micro.execute_baneling_micro(
-                banelings,
-                enemy_units,
-                self.bot
+                banelings, enemy_units, self.bot
             )
 
     async def _execute_broodlord_micro(self, enemy_units):
@@ -1381,9 +1346,18 @@ class AdvancedMicroControllerV3:
 
         # 대공 위험 유닛
         anti_air_types = {
-            "MARINE", "HYDRALISK", "STALKER", "PHOENIX", "VIKING",
-            "VIKINGFIGHTER", "CORRUPTOR", "THOR", "CYCLONE",
-            "ARCHON", "TEMPEST", "VOIDRAY"
+            "MARINE",
+            "HYDRALISK",
+            "STALKER",
+            "PHOENIX",
+            "VIKING",
+            "VIKINGFIGHTER",
+            "CORRUPTOR",
+            "THOR",
+            "CYCLONE",
+            "ARCHON",
+            "TEMPEST",
+            "VOIDRAY",
         }
 
         for bl in broodlords:
@@ -1393,7 +1367,8 @@ class AdvancedMicroControllerV3:
 
             # 적의 대공 능력 확인
             nearby_aa = [
-                e for e in enemy_units
+                e
+                for e in enemy_units
                 if bl.distance_to(e) < 12
                 and getattr(e.type_id, "name", "").upper() in anti_air_types
             ]
@@ -1419,14 +1394,16 @@ class AdvancedMicroControllerV3:
 
     def _cleanup_dead_units(self):
         """Cleanup dead unit assignments."""
-        alive_unit_tags = {u.tag for u in getattr(self.bot, 'units', [])}
-        alive_enemy_tags = {e.tag for e in getattr(self.bot, 'enemy_units', [])}
+        alive_unit_tags = {u.tag for u in getattr(self.bot, "units", [])}
+        alive_enemy_tags = {e.tag for e in getattr(self.bot, "enemy_units", [])}
 
         self.focus_fire.clear_dead_assignments(alive_unit_tags, alive_enemy_tags)
 
         # ★ Phase 18: Cleanup for new micro controllers ★
         # Clean infestor cooldown tracking
-        dead_infestor_tags = set(self.infestor_micro.last_fungal_time.keys()) - alive_unit_tags
+        dead_infestor_tags = (
+            set(self.infestor_micro.last_fungal_time.keys()) - alive_unit_tags
+        )
         for tag in dead_infestor_tags:
             del self.infestor_micro.last_fungal_time[tag]
 

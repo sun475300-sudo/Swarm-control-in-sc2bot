@@ -13,7 +13,7 @@ import logging
 import os
 import time
 from collections import defaultdict
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, Optional
 
 logger = logging.getLogger("jarvis.tool_registry")
@@ -77,9 +77,9 @@ class ToolRegistry:
                 if os.path.getsize(_AUDIT_LOG_PATH) > _MAX_AUDIT_LOG_SIZE:
                     self._rotate_audit_log()
 
-            now_kst = datetime.now(
-                timezone(timedelta(hours=9))
-            ).strftime("%Y-%m-%d %H:%M:%S")
+            now_kst = datetime.now(timezone(timedelta(hours=9))).strftime(
+                "%Y-%m-%d %H:%M:%S"
+            )
 
             entry = {
                 "timestamp": now_kst,
@@ -157,7 +157,11 @@ class ToolRegistry:
         lines = [
             f"도구 레지스트리 요약 (가동시간: {uptime_str})",
             f"총 호출: {total_calls:,} | 성공: {total_success:,} | 실패: {total_fail:,}",
-            f"성공률: {total_success / total_calls * 100:.1f}%" if total_calls > 0 else "성공률: N/A",
+            (
+                f"성공률: {total_success / total_calls * 100:.1f}%"
+                if total_calls > 0
+                else "성공률: N/A"
+            ),
             "",
         ]
 

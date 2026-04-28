@@ -4,15 +4,16 @@ IMPALA (Importance Weighted Actor-Learner Architecture) for distributed SC2 trai
 Central learner with V-trace off-policy correction and async actor workers.
 """
 
+import queue
+import threading
+from dataclasses import dataclass, field
+from typing import Dict, List, Optional, Tuple
+
+import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from torch.distributions import Categorical
-import numpy as np
-from dataclasses import dataclass, field
-from typing import List, Dict, Optional, Tuple
-import queue
-import threading
 
 
 @dataclass
@@ -22,8 +23,8 @@ class ImpalaConfig:
     hidden_dim: int = 256
     lr: float = 5e-4
     gamma: float = 0.99
-    rho_bar: float = 1.0      # V-trace importance ratio clip
-    c_bar: float = 1.0        # V-trace trace coefficient clip
+    rho_bar: float = 1.0  # V-trace importance ratio clip
+    c_bar: float = 1.0  # V-trace trace coefficient clip
     entropy_coef: float = 0.01
     value_coef: float = 0.5
     max_grad_norm: float = 40.0
@@ -35,11 +36,12 @@ class ImpalaConfig:
 @dataclass
 class ActorBatch:
     """A single rollout from an actor worker."""
-    obs: torch.Tensor              # (T, obs_dim)
-    actions: torch.Tensor          # (T,)
+
+    obs: torch.Tensor  # (T, obs_dim)
+    actions: torch.Tensor  # (T,)
     behavior_log_probs: torch.Tensor  # (T,)
-    rewards: torch.Tensor          # (T,)
-    dones: torch.Tensor            # (T,)
+    rewards: torch.Tensor  # (T,)
+    dones: torch.Tensor  # (T,)
 
 
 def vtrace_returns(
@@ -59,14 +61,26 @@ def vtrace_returns(
     rho = torch.exp(log_rho).clamp(max=rho_bar)
     c = torch.exp(log_rho).clamp(max=c_bar)
 
-    deltas = rho * (rewards + gamma * (1 - dones) * torch.cat([values[1:], bootstrap_value.unsqueeze(0)]) - values[:T])
+    deltas = rho * (
+        rewards
+        + gamma * (1 - dones) * torch.cat([values[1:], bootstrap_value.unsqueeze(0)])
+        - values[:T]
+    )
     vs = torch.zeros(T)
     vs_t = bootstrap_value.item()
     for t in reversed(range(T)):
-        vs_t = values[t].item() + deltas[t].item() + gamma * (1 - dones[t].item()) * c[t].item() * (vs_t - values[t].item())
+        vs_t = (
+            values[t].item()
+            + deltas[t].item()
+            + gamma * (1 - dones[t].item()) * c[t].item() * (vs_t - values[t].item())
+        )
         vs[t] = vs_t
 
-    advantages = rho * (rewards + gamma * (1 - dones) * torch.cat([vs[1:], bootstrap_value.unsqueeze(0)]) - values[:T])
+    advantages = rho * (
+        rewards
+        + gamma * (1 - dones) * torch.cat([vs[1:], bootstrap_value.unsqueeze(0)])
+        - values[:T]
+    )
     return vs, advantages
 
 
@@ -76,8 +90,10 @@ class ImpalaNet(nn.Module):
     def __init__(self, obs_dim: int, action_dim: int, hidden_dim: int = 256):
         super().__init__()
         self.backbone = nn.Sequential(
-            nn.Linear(obs_dim, hidden_dim), nn.ReLU(),
-            nn.Linear(hidden_dim, hidden_dim), nn.ReLU(),
+            nn.Linear(obs_dim, hidden_dim),
+            nn.ReLU(),
+            nn.Linear(hidden_dim, hidden_dim),
+            nn.ReLU(),
         )
         self.policy_head = nn.Linear(hidden_dim, action_dim)
         self.value_head = nn.Linear(hidden_dim, 1)
@@ -110,20 +126,32 @@ class ImpalaLearner:
     def learn_from_batch(self, batch: ActorBatch) -> Dict[str, float]:
         T = batch.obs.shape[0]
         target_log_probs, values, entropy = self.net.get_log_prob_and_value(
-            batch.obs, batch.actions)
+            batch.obs, batch.actions
+        )
         bootstrap_val = torch.zeros(1)
         with torch.no_grad():
             _, bv = self.net(batch.obs[-1:])
             bootstrap_val = bv.squeeze()
 
         vs, advantages = vtrace_returns(
-            batch.behavior_log_probs, target_log_probs, batch.rewards,
-            values.detach(), bootstrap_val, batch.dones,
-            self.cfg.gamma, self.cfg.rho_bar, self.cfg.c_bar)
+            batch.behavior_log_probs,
+            target_log_probs,
+            batch.rewards,
+            values.detach(),
+            bootstrap_val,
+            batch.dones,
+            self.cfg.gamma,
+            self.cfg.rho_bar,
+            self.cfg.c_bar,
+        )
 
         policy_loss = -(advantages.detach() * target_log_probs).mean()
         value_loss = F.mse_loss(values, vs.detach())
-        loss = policy_loss + self.cfg.value_coef * value_loss - self.cfg.entropy_coef * entropy.mean()
+        loss = (
+            policy_loss
+            + self.cfg.value_coef * value_loss
+            - self.cfg.entropy_coef * entropy.mean()
+        )
 
         self.optimizer.zero_grad()
         loss.backward()
@@ -131,8 +159,11 @@ class ImpalaLearner:
         with self._lock:
             self.optimizer.step()
         self.update_count += 1
-        return {"policy_loss": policy_loss.item(), "value_loss": value_loss.item(),
-                "entropy": entropy.mean().item()}
+        return {
+            "policy_loss": policy_loss.item(),
+            "value_loss": value_loss.item(),
+            "entropy": entropy.mean().item(),
+        }
 
     def run(self) -> None:
         """Main learner loop consuming actor batches from queue."""
@@ -147,8 +178,7 @@ class ImpalaLearner:
 class ImpalaActor:
     """Distributed actor collecting rollouts and pushing to learner queue."""
 
-    def __init__(self, actor_id: int, cfg: ImpalaConfig,
-                 learner_queue: queue.Queue):
+    def __init__(self, actor_id: int, cfg: ImpalaConfig, learner_queue: queue.Queue):
         self.actor_id = actor_id
         self.cfg = cfg
         self.queue = learner_queue
@@ -159,7 +189,13 @@ class ImpalaActor:
         self.net.load_state_dict(weights)
 
     def collect_rollout(self, env) -> ActorBatch:
-        obs_list, action_list, log_prob_list, reward_list, done_list = [], [], [], [], []
+        obs_list, action_list, log_prob_list, reward_list, done_list = (
+            [],
+            [],
+            [],
+            [],
+            [],
+        )
         obs = env.reset()
         for _ in range(self.cfg.rollout_len):
             obs_t = torch.FloatTensor(obs).unsqueeze(0)

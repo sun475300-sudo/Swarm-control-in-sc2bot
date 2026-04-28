@@ -14,7 +14,8 @@ Features:
 - 공격적 유닛 생산
 """
 
-from typing import Optional, List
+from typing import List, Optional
+
 from utils.logger import get_logger
 
 try:
@@ -22,11 +23,14 @@ try:
     from sc2.ids.unit_typeid import UnitTypeId
     from sc2.position import Point2
 except ImportError:
+
     class BotAI:
         pass
+
     class UnitTypeId:
         HATCHERY = "HATCHERY"
         DRONE = "DRONE"
+
     Point2 = tuple
 
 

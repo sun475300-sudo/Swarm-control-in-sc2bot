@@ -4,19 +4,27 @@ SC2 Bot WASM host using wasmer-python for sandboxed bot execution
 """
 
 from __future__ import annotations
-from dataclasses import dataclass, field
-from typing import Optional, Any
+
 import json
 import time
-
+from dataclasses import dataclass, field
+from typing import Any, Optional
 
 # ─────────────────────────────────────────────
 # Wasmer host (with graceful fallback)
 # ─────────────────────────────────────────────
 
 try:
-    from wasmer import engine, Store, Module, Instance, ImportObject, Function  # type: ignore
+    from wasmer import (  # type: ignore
+        Function,
+        ImportObject,
+        Instance,
+        Module,
+        Store,
+        engine,
+    )
     from wasmer_compiler_cranelift import Compiler  # type: ignore
+
     WASMER_AVAILABLE = True
 except ImportError:
     WASMER_AVAILABLE = False
@@ -25,6 +33,7 @@ except ImportError:
 @dataclass
 class BotSandbox:
     """Sandboxed bot execution environment via WebAssembly."""
+
     wasm_path: str
     store: Any = field(default=None, init=False)
     instance: Any = field(default=None, init=False)
@@ -74,9 +83,11 @@ class BotSandbox:
 # Pure-Python fallback simulation
 # ─────────────────────────────────────────────
 
+
 @dataclass
 class PythonBotSim:
     """Python-native simulation matching WASM bot logic."""
+
     minerals: int = 50
     gas: int = 0
     supply: int = 12
@@ -85,11 +96,11 @@ class PythonBotSim:
     frame: int = 0
     threat_level: int = 0
 
-    ACTION_WAIT     = 0
-    ACTION_DRONE    = 1
+    ACTION_WAIT = 0
+    ACTION_DRONE = 1
     ACTION_ZERGLING = 2
-    ACTION_EXPAND   = 3
-    ACTION_ATTACK   = 4
+    ACTION_EXPAND = 3
+    ACTION_ATTACK = 4
 
     def tick_economy(self) -> None:
         income = (self.workers * 8) // 10
@@ -140,6 +151,7 @@ class PythonBotSim:
 # ─────────────────────────────────────────────
 # Multi-bot arena (parallel sandboxes)
 # ─────────────────────────────────────────────
+
 
 class BotArena:
     """Run multiple sandboxed bot instances in parallel."""

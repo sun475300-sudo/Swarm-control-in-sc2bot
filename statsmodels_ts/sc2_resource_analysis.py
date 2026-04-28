@@ -31,14 +31,15 @@ log = logging.getLogger("sc2_resource_analysis")
 # ---------------------------------------------------------------------------
 try:
     import statsmodels.api as sm
+    from statsmodels.graphics.gofplots import qqplot
+    from statsmodels.stats.diagnostic import het_breuschpagan
+    from statsmodels.stats.stattools import durbin_watson
     from statsmodels.tsa.arima.model import ARIMA
     from statsmodels.tsa.holtwinters import ExponentialSmoothing
     from statsmodels.tsa.seasonal import seasonal_decompose
-    from statsmodels.tsa.stattools import adfuller, acf, pacf, grangercausalitytests
+    from statsmodels.tsa.stattools import acf, adfuller, grangercausalitytests, pacf
     from statsmodels.tsa.vector_ar.var_model import VAR
-    from statsmodels.stats.stattools import durbin_watson
-    from statsmodels.stats.diagnostic import het_breuschpagan
-    from statsmodels.graphics.gofplots import qqplot
+
     SM_AVAILABLE = True
     log.info("statsmodels available.")
 except ImportError:
@@ -50,8 +51,10 @@ except ImportError:
 
 try:
     import matplotlib
+
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
+
     MPL_AVAILABLE = True
 except ImportError:
     MPL_AVAILABLE = False
@@ -60,9 +63,11 @@ except ImportError:
 # Data structures
 # ---------------------------------------------------------------------------
 
+
 @dataclass
 class ResourceSnapshot:
     """Single point-in-time observation of the in-game economy."""
+
     game_time_s: float
     minerals: float
     gas: float
@@ -77,21 +82,23 @@ class ResourceSnapshot:
 @dataclass
 class GameRecord:
     """Aggregate record for one completed game (for regression models)."""
+
     avg_mineral_income: float
     avg_gas_income: float
     avg_army_supply: float
     avg_worker_count: float
     avg_base_count: float
     avg_apm: float
-    tech_tier_reached: int        # 1-3
+    tech_tier_reached: int  # 1-3
     game_length_s: float
-    opponent_race: str            # "zerg", "terran", "protoss"
+    opponent_race: str  # "zerg", "terran", "protoss"
     win: bool
 
 
 @dataclass
 class AnalysisResult:
     """Container for any analysis output."""
+
     name: str
     summary: Dict[str, Any] = field(default_factory=dict)
     values: Optional[np.ndarray] = None
@@ -103,6 +110,7 @@ class AnalysisResult:
 # ---------------------------------------------------------------------------
 # Pure-NumPy fallback helpers
 # ---------------------------------------------------------------------------
+
 
 def _np_linear_trend(y: np.ndarray) -> Tuple[float, float]:
     """OLS slope and intercept via closed-form normal equation."""
@@ -118,10 +126,10 @@ def _np_acf(y: np.ndarray, nlags: int = 20) -> np.ndarray:
     """Autocorrelation function via brute-force."""
     y = y - y.mean()
     n = len(y)
-    var = np.sum(y ** 2)
+    var = np.sum(y**2)
     if var < 1e-12:
         return np.zeros(nlags + 1)
-    result = np.array([np.sum(y[:n - k] * y[k:]) / var for k in range(nlags + 1)])
+    result = np.array([np.sum(y[: n - k] * y[k:]) / var for k in range(nlags + 1)])
     return result
 
 
@@ -129,7 +137,12 @@ def _np_adf_approx(y: np.ndarray) -> Dict[str, Any]:
     """Rough stationarity heuristic: variance-ratio test (not real ADF)."""
     n = len(y)
     if n < 10:
-        return {"statistic": 0.0, "p_value": 1.0, "stationary": False, "note": "too few observations"}
+        return {
+            "statistic": 0.0,
+            "p_value": 1.0,
+            "stationary": False,
+            "note": "too few observations",
+        }
     half = n // 2
     var1 = np.var(y[:half])
     var2 = np.var(y[half:])
@@ -155,7 +168,7 @@ def _np_simple_ema(y: np.ndarray, alpha: float = 0.3) -> np.ndarray:
 def _np_durbin_watson(residuals: np.ndarray) -> float:
     """Durbin-Watson statistic from residuals."""
     diff = np.diff(residuals)
-    return float(np.sum(diff ** 2) / max(np.sum(residuals ** 2), 1e-12))
+    return float(np.sum(diff**2) / max(np.sum(residuals**2), 1e-12))
 
 
 def _np_sigmoid(z: np.ndarray) -> np.ndarray:
@@ -163,8 +176,9 @@ def _np_sigmoid(z: np.ndarray) -> np.ndarray:
     return 1.0 / (1.0 + np.exp(-z))
 
 
-def _np_logistic_regression(X: np.ndarray, y: np.ndarray,
-                            lr: float = 0.01, epochs: int = 1000) -> np.ndarray:
+def _np_logistic_regression(
+    X: np.ndarray, y: np.ndarray, lr: float = 0.01, epochs: int = 1000
+) -> np.ndarray:
     """Mini gradient-descent logistic regression."""
     n, d = X.shape
     w = np.zeros(d)
@@ -179,17 +193,22 @@ def _np_logistic_regression(X: np.ndarray, y: np.ndarray,
 # SC2ResourceAnalysis
 # ---------------------------------------------------------------------------
 
+
 class SC2ResourceAnalysis:
     """Comprehensive statsmodels-based analysis of SC2 economy time series."""
 
-    def __init__(self, snapshots: Optional[List[ResourceSnapshot]] = None,
-                 game_records: Optional[List[GameRecord]] = None):
+    def __init__(
+        self,
+        snapshots: Optional[List[ResourceSnapshot]] = None,
+        game_records: Optional[List[GameRecord]] = None,
+    ):
         self.snapshots: List[ResourceSnapshot] = snapshots or []
         self.game_records: List[GameRecord] = game_records or []
         self._ts_cache: Dict[str, np.ndarray] = {}
         log.info(
             "SC2ResourceAnalysis initialised — %d snapshots, %d game records.",
-            len(self.snapshots), len(self.game_records),
+            len(self.snapshots),
+            len(self.game_records),
         )
 
     # ------------------------------------------------------------------
@@ -200,15 +219,14 @@ class SC2ResourceAnalysis:
         """Extract a time series array from snapshots, with caching."""
         if attr not in self._ts_cache:
             self._ts_cache[attr] = np.array(
-                [getattr(s, attr) for s in self.snapshots], dtype=np.float64,
+                [getattr(s, attr) for s in self.snapshots],
+                dtype=np.float64,
             )
         return self._ts_cache[attr]
 
     def _require_snapshots(self, min_n: int = 10) -> None:
         if len(self.snapshots) < min_n:
-            raise ValueError(
-                f"Need >= {min_n} snapshots, got {len(self.snapshots)}."
-            )
+            raise ValueError(f"Need >= {min_n} snapshots, got {len(self.snapshots)}.")
 
     def _require_records(self, min_n: int = 10) -> None:
         if len(self.game_records) < min_n:
@@ -223,14 +241,17 @@ class SC2ResourceAnalysis:
 
     def add_game_records(self, records: List[GameRecord]) -> None:
         self.game_records.extend(records)
-        log.info("Added %d game records (total %d).", len(records), len(self.game_records))
+        log.info(
+            "Added %d game records (total %d).", len(records), len(self.game_records)
+        )
 
     # ------------------------------------------------------------------
     # 1. Augmented Dickey-Fuller stationarity test
     # ------------------------------------------------------------------
 
-    def test_stationarity(self, series_name: str = "income_minerals",
-                          significance: float = 0.05) -> AnalysisResult:
+    def test_stationarity(
+        self, series_name: str = "income_minerals", significance: float = 0.05
+    ) -> AnalysisResult:
         """Run ADF test on the given snapshot attribute."""
         self._require_snapshots()
         y = self._series(series_name)
@@ -239,7 +260,8 @@ class SC2ResourceAnalysis:
             with warnings.catch_warnings():
                 warnings.simplefilter("ignore")
                 adf_stat, p_value, used_lag, n_obs, crit_values, icbest = adfuller(
-                    y, autolag="AIC",
+                    y,
+                    autolag="AIC",
                 )
             stationary = p_value < significance
             summary = {
@@ -256,8 +278,10 @@ class SC2ResourceAnalysis:
 
         log.info(
             "ADF test on '%s': stat=%.4f  p=%.4f  stationary=%s",
-            series_name, summary.get("adf_statistic", summary.get("statistic", 0)),
-            summary["p_value"], summary.get("stationary"),
+            series_name,
+            summary.get("adf_statistic", summary.get("statistic", 0)),
+            summary["p_value"],
+            summary.get("stationary"),
         )
         return AnalysisResult(name=f"adf_{series_name}", summary=summary, values=y)
 
@@ -265,8 +289,9 @@ class SC2ResourceAnalysis:
     # 2. ACF / PACF lag selection
     # ------------------------------------------------------------------
 
-    def acf_pacf_analysis(self, series_name: str = "income_minerals",
-                          nlags: int = 20) -> AnalysisResult:
+    def acf_pacf_analysis(
+        self, series_name: str = "income_minerals", nlags: int = 20
+    ) -> AnalysisResult:
         """Compute ACF and PACF and suggest ARIMA(p,d,q) orders."""
         self._require_snapshots(min_n=nlags + 5)
         y = self._series(series_name)
@@ -305,17 +330,24 @@ class SC2ResourceAnalysis:
         }
         log.info(
             "ACF/PACF on '%s': suggested ARIMA order p=%d, q=%d",
-            series_name, suggested_p, suggested_q,
+            series_name,
+            suggested_p,
+            suggested_q,
         )
-        return AnalysisResult(name=f"acf_pacf_{series_name}", summary=summary, values=acf_vals)
+        return AnalysisResult(
+            name=f"acf_pacf_{series_name}", summary=summary, values=acf_vals
+        )
 
     # ------------------------------------------------------------------
     # 3. ARIMA mineral income forecasting
     # ------------------------------------------------------------------
 
-    def arima_forecast(self, series_name: str = "income_minerals",
-                       order: Optional[Tuple[int, int, int]] = None,
-                       forecast_steps: int = 30) -> AnalysisResult:
+    def arima_forecast(
+        self,
+        series_name: str = "income_minerals",
+        order: Optional[Tuple[int, int, int]] = None,
+        forecast_steps: int = 30,
+    ) -> AnalysisResult:
         """Fit ARIMA model and forecast future values."""
         self._require_snapshots()
         y = self._series(series_name)
@@ -348,7 +380,9 @@ class SC2ResourceAnalysis:
             # Fallback: linear-trend extrapolation
             slope, intercept = _np_linear_trend(y)
             n = len(y)
-            fcast = np.array([slope * (n + i) + intercept for i in range(forecast_steps)])
+            fcast = np.array(
+                [slope * (n + i) + intercept for i in range(forecast_steps)]
+            )
             residuals = y - (slope * np.arange(n) + intercept)
             summary = {
                 "order": order,
@@ -364,26 +398,36 @@ class SC2ResourceAnalysis:
 
         log.info(
             "ARIMA%s forecast on '%s': mean=%.2f  std=%.2f",
-            order, series_name, summary["forecast_mean"], summary["forecast_std"],
+            order,
+            series_name,
+            summary["forecast_mean"],
+            summary["forecast_std"],
         )
         return AnalysisResult(
-            name=f"arima_{series_name}", summary=summary,
-            values=y, forecast=fcast, residuals=residuals,
+            name=f"arima_{series_name}",
+            summary=summary,
+            values=y,
+            forecast=fcast,
+            residuals=residuals,
         )
 
     # ------------------------------------------------------------------
     # 4. Seasonal decomposition of game economy cycles
     # ------------------------------------------------------------------
 
-    def seasonal_decomposition(self, series_name: str = "income_minerals",
-                               period: int = 30,
-                               model: str = "additive") -> AnalysisResult:
+    def seasonal_decomposition(
+        self,
+        series_name: str = "income_minerals",
+        period: int = 30,
+        model: str = "additive",
+    ) -> AnalysisResult:
         """Decompose time series into trend, seasonal, and residual components."""
         self._require_snapshots(min_n=period * 2)
         y = self._series(series_name)
 
         if SM_AVAILABLE:
             import pandas as pd
+
             ts = pd.Series(y)
             decomp = seasonal_decompose(ts, model=model, period=period)
             trend = decomp.trend.values
@@ -419,19 +463,25 @@ class SC2ResourceAnalysis:
 
         log.info(
             "Seasonal decomposition (%s, period=%d): amplitude=%.2f  resid_std=%.2f",
-            model, period, summary["seasonal_amplitude"], summary["residual_std"],
+            model,
+            period,
+            summary["seasonal_amplitude"],
+            summary["residual_std"],
         )
         return AnalysisResult(
-            name=f"seasonal_{series_name}", summary=summary,
-            values=trend, residuals=resid,
+            name=f"seasonal_{series_name}",
+            summary=summary,
+            values=trend,
+            residuals=resid,
         )
 
     # ------------------------------------------------------------------
     # 5. VAR — multi-resource interaction
     # ------------------------------------------------------------------
 
-    def var_analysis(self, series_names: Optional[List[str]] = None,
-                     maxlags: int = 5) -> AnalysisResult:
+    def var_analysis(
+        self, series_names: Optional[List[str]] = None, maxlags: int = 5
+    ) -> AnalysisResult:
         """Fit Vector AutoRegression across multiple resource series."""
         series_names = series_names or ["income_minerals", "income_gas", "army_supply"]
         self._require_snapshots(min_n=maxlags * 3)
@@ -440,17 +490,20 @@ class SC2ResourceAnalysis:
 
         if SM_AVAILABLE:
             import pandas as pd
+
             df = pd.DataFrame(data, columns=series_names)
             var_model = VAR(df)
             fitted = var_model.fit(maxlags=maxlags, ic="aic")
-            fcast = fitted.forecast(data[-fitted.k_ar:], steps=10)
+            fcast = fitted.forecast(data[-fitted.k_ar :], steps=10)
 
             summary = {
                 "series": series_names,
                 "selected_lag": fitted.k_ar,
                 "aic": float(fitted.aic),
                 "bic": float(fitted.bic),
-                "forecast_means": {s: float(fcast[:, i].mean()) for i, s in enumerate(series_names)},
+                "forecast_means": {
+                    s: float(fcast[:, i].mean()) for i, s in enumerate(series_names)
+                },
                 "det_order": fitted.det_order,
             }
         else:
@@ -478,11 +531,14 @@ class SC2ResourceAnalysis:
     # 6. Exponential smoothing (Holt-Winters)
     # ------------------------------------------------------------------
 
-    def holt_winters(self, series_name: str = "income_minerals",
-                     seasonal_periods: int = 30,
-                     trend: str = "add",
-                     seasonal: str = "add",
-                     forecast_steps: int = 20) -> AnalysisResult:
+    def holt_winters(
+        self,
+        series_name: str = "income_minerals",
+        seasonal_periods: int = 30,
+        trend: str = "add",
+        seasonal: str = "add",
+        forecast_steps: int = 20,
+    ) -> AnalysisResult:
         """Fit Holt-Winters exponential smoothing and forecast."""
         self._require_snapshots(min_n=seasonal_periods * 2)
         y = self._series(series_name)
@@ -491,7 +547,9 @@ class SC2ResourceAnalysis:
             with warnings.catch_warnings():
                 warnings.simplefilter("ignore")
                 model = ExponentialSmoothing(
-                    y, trend=trend, seasonal=seasonal,
+                    y,
+                    trend=trend,
+                    seasonal=seasonal,
                     seasonal_periods=seasonal_periods,
                     initialization_method="estimated",
                 )
@@ -516,7 +574,9 @@ class SC2ResourceAnalysis:
             smoothed = _np_simple_ema(y, alpha=0.3)
             slope, intercept = _np_linear_trend(y)
             n = len(y)
-            fcast = np.array([slope * (n + i) + intercept for i in range(forecast_steps)])
+            fcast = np.array(
+                [slope * (n + i) + intercept for i in range(forecast_steps)]
+            )
             residuals = y - smoothed
 
             summary = {
@@ -525,28 +585,36 @@ class SC2ResourceAnalysis:
                 "seasonal_periods": seasonal_periods,
                 "aic": None,
                 "bic": None,
-                "sse": float(np.sum(residuals ** 2)),
+                "sse": float(np.sum(residuals**2)),
                 "forecast_mean": float(np.mean(fcast)),
                 "note": "EMA fallback (statsmodels not available)",
             }
 
         log.info(
             "Holt-Winters (%s/%s, period=%d) forecast mean=%.2f",
-            trend, seasonal, seasonal_periods, summary["forecast_mean"],
+            trend,
+            seasonal,
+            seasonal_periods,
+            summary["forecast_mean"],
         )
         return AnalysisResult(
-            name=f"holt_winters_{series_name}", summary=summary,
-            forecast=fcast, residuals=residuals,
+            name=f"holt_winters_{series_name}",
+            summary=summary,
+            forecast=fcast,
+            residuals=residuals,
         )
 
     # ------------------------------------------------------------------
     # 7. Granger causality — does gas income predict army growth?
     # ------------------------------------------------------------------
 
-    def granger_causality(self, cause: str = "income_gas",
-                          effect: str = "army_supply",
-                          maxlag: int = 5,
-                          significance: float = 0.05) -> AnalysisResult:
+    def granger_causality(
+        self,
+        cause: str = "income_gas",
+        effect: str = "army_supply",
+        maxlag: int = 5,
+        significance: float = 0.05,
+    ) -> AnalysisResult:
         """Test whether *cause* Granger-causes *effect*."""
         self._require_snapshots(min_n=maxlag * 3)
         y_cause = self._series(cause)
@@ -554,10 +622,13 @@ class SC2ResourceAnalysis:
 
         if SM_AVAILABLE:
             import pandas as pd
+
             df = pd.DataFrame({cause: y_cause, effect: y_effect})
             with warnings.catch_warnings():
                 warnings.simplefilter("ignore")
-                results = grangercausalitytests(df[[effect, cause]], maxlag=maxlag, verbose=False)
+                results = grangercausalitytests(
+                    df[[effect, cause]], maxlag=maxlag, verbose=False
+                )
 
             lag_pvalues: Dict[int, float] = {}
             significant_lags: List[int] = []
@@ -581,7 +652,7 @@ class SC2ResourceAnalysis:
             max_corr = 0.0
             n = len(y_cause)
             for lag in range(1, maxlag + 1):
-                c = np.corrcoef(y_cause[:n - lag], y_effect[lag:])[0, 1]
+                c = np.corrcoef(y_cause[: n - lag], y_effect[lag:])[0, 1]
                 if abs(c) > abs(max_corr):
                     max_corr = c
                     max_corr_lag = lag
@@ -598,7 +669,9 @@ class SC2ResourceAnalysis:
 
         log.info(
             "Granger causality %s -> %s: causes=%s",
-            cause, effect, summary["granger_causes"],
+            cause,
+            effect,
+            summary["granger_causes"],
         )
         return AnalysisResult(name=f"granger_{cause}_to_{effect}", summary=summary)
 
@@ -615,25 +688,34 @@ class SC2ResourceAnalysis:
         race_map = {"zerg": 0, "terran": 1, "protoss": 2}
         X_list, y_list = [], []
         for r in records:
-            X_list.append([
-                r.avg_mineral_income,
-                r.avg_gas_income,
-                r.avg_army_supply,
-                r.avg_worker_count,
-                r.avg_base_count,
-                r.avg_apm,
-                r.tech_tier_reached,
-                r.game_length_s / 600.0,
-                race_map.get(r.opponent_race.lower(), 0),
-            ])
+            X_list.append(
+                [
+                    r.avg_mineral_income,
+                    r.avg_gas_income,
+                    r.avg_army_supply,
+                    r.avg_worker_count,
+                    r.avg_base_count,
+                    r.avg_apm,
+                    r.tech_tier_reached,
+                    r.game_length_s / 600.0,
+                    race_map.get(r.opponent_race.lower(), 0),
+                ]
+            )
             y_list.append(1.0 if r.win else 0.0)
 
         X = np.array(X_list, dtype=np.float64)
         y = np.array(y_list, dtype=np.float64)
 
         feature_names = [
-            "mineral_income", "gas_income", "army_supply", "worker_count",
-            "base_count", "apm", "tech_tier", "game_length", "opponent_race",
+            "mineral_income",
+            "gas_income",
+            "army_supply",
+            "worker_count",
+            "base_count",
+            "apm",
+            "tech_tier",
+            "game_length",
+            "opponent_race",
         ]
 
         if SM_AVAILABLE:
@@ -660,7 +742,9 @@ class SC2ResourceAnalysis:
                 "durbin_watson": dw,
                 "n_obs": len(y),
                 "significant_factors": [
-                    name for name, p in pval_dict.items() if p < 0.05 and name != "const"
+                    name
+                    for name, p in pval_dict.items()
+                    if p < 0.05 and name != "const"
                 ],
             }
             res = residuals
@@ -673,7 +757,7 @@ class SC2ResourceAnalysis:
                 beta = np.zeros(X_const.shape[1])
             y_hat = X_const @ beta
             res = y - y_hat
-            ss_res = np.sum(res ** 2)
+            ss_res = np.sum(res**2)
             ss_tot = np.sum((y - y.mean()) ** 2)
             r2 = 1 - ss_res / max(ss_tot, 1e-12)
             dw = _np_durbin_watson(res)
@@ -684,14 +768,20 @@ class SC2ResourceAnalysis:
 
             summary = {
                 "r_squared": float(r2),
-                "adj_r_squared": float(1 - (1 - r2) * (len(y) - 1) / max(len(y) - X.shape[1] - 1, 1)),
+                "adj_r_squared": float(
+                    1 - (1 - r2) * (len(y) - 1) / max(len(y) - X.shape[1] - 1, 1)
+                ),
                 "coefficients": coef_dict,
                 "durbin_watson": dw,
                 "n_obs": len(y),
                 "note": "normal-equation fallback",
             }
 
-        log.info("OLS win-rate regression: R²=%.4f  DW=%.4f", summary["r_squared"], summary.get("durbin_watson", 0))
+        log.info(
+            "OLS win-rate regression: R²=%.4f  DW=%.4f",
+            summary["r_squared"],
+            summary.get("durbin_watson", 0),
+        )
         return AnalysisResult(name="ols_winrate", summary=summary, residuals=res)
 
     # ------------------------------------------------------------------
@@ -706,24 +796,32 @@ class SC2ResourceAnalysis:
         race_map = {"zerg": 0, "terran": 1, "protoss": 2}
         X_list, y_list = [], []
         for r in records:
-            X_list.append([
-                r.avg_mineral_income / 1000.0,
-                r.avg_gas_income / 500.0,
-                r.avg_army_supply / 100.0,
-                r.avg_worker_count / 80.0,
-                r.avg_apm / 200.0,
-                r.tech_tier_reached / 3.0,
-                r.game_length_s / 600.0,
-                float(race_map.get(r.opponent_race.lower(), 0)) / 2.0,
-            ])
+            X_list.append(
+                [
+                    r.avg_mineral_income / 1000.0,
+                    r.avg_gas_income / 500.0,
+                    r.avg_army_supply / 100.0,
+                    r.avg_worker_count / 80.0,
+                    r.avg_apm / 200.0,
+                    r.tech_tier_reached / 3.0,
+                    r.game_length_s / 600.0,
+                    float(race_map.get(r.opponent_race.lower(), 0)) / 2.0,
+                ]
+            )
             y_list.append(1.0 if r.win else 0.0)
 
         X = np.array(X_list, dtype=np.float64)
         y = np.array(y_list, dtype=np.float64)
 
         feature_names = [
-            "mineral_income", "gas_income", "army_supply", "worker_count",
-            "apm", "tech_tier", "game_length", "opponent_race",
+            "mineral_income",
+            "gas_income",
+            "army_supply",
+            "worker_count",
+            "apm",
+            "tech_tier",
+            "game_length",
+            "opponent_race",
         ]
 
         if SM_AVAILABLE:
@@ -753,7 +851,9 @@ class SC2ResourceAnalysis:
                 "n_obs": len(y),
                 "converged": model.mle_retvals["converged"],
                 "significant_factors": [
-                    name for name, p in pval_dict.items() if p < 0.05 and name != "const"
+                    name
+                    for name, p in pval_dict.items()
+                    if p < 0.05 and name != "const"
                 ],
             }
         else:
@@ -781,8 +881,9 @@ class SC2ResourceAnalysis:
     # 10. QQ plot and residual analysis
     # ------------------------------------------------------------------
 
-    def residual_analysis(self, result: AnalysisResult,
-                          save_path: Optional[str] = None) -> AnalysisResult:
+    def residual_analysis(
+        self, result: AnalysisResult, save_path: Optional[str] = None
+    ) -> AnalysisResult:
         """Perform residual diagnostics: QQ plot, Durbin-Watson, normality."""
         if result.residuals is None or len(result.residuals) == 0:
             raise ValueError("AnalysisResult has no residuals to analyse.")
@@ -803,7 +904,7 @@ class SC2ResourceAnalysis:
 
         # Jarque-Bera test for normality
         n = len(residuals)
-        jb_stat = (n / 6.0) * (resid_skew ** 2 + (resid_kurtosis ** 2) / 4.0)
+        jb_stat = (n / 6.0) * (resid_skew**2 + (resid_kurtosis**2) / 4.0)
 
         summary = {
             "source_analysis": result.name,
@@ -814,9 +915,9 @@ class SC2ResourceAnalysis:
             "excess_kurtosis": resid_kurtosis,
             "durbin_watson": dw,
             "dw_interpretation": (
-                "positive autocorrelation" if dw < 1.5 else
-                "no autocorrelation" if dw < 2.5 else
-                "negative autocorrelation"
+                "positive autocorrelation"
+                if dw < 1.5
+                else "no autocorrelation" if dw < 2.5 else "negative autocorrelation"
             ),
             "jarque_bera_statistic": jb_stat,
             "likely_normal": jb_stat < 5.99,  # chi2(2) critical at 5%
@@ -865,18 +966,26 @@ class SC2ResourceAnalysis:
 
         log.info(
             "Residual analysis for '%s': DW=%.3f  skew=%.3f  kurtosis=%.3f  normal=%s",
-            result.name, dw, resid_skew, resid_kurtosis, summary["likely_normal"],
+            result.name,
+            dw,
+            resid_skew,
+            resid_kurtosis,
+            summary["likely_normal"],
         )
         return AnalysisResult(
-            name=f"residuals_{result.name}", summary=summary,
-            residuals=residuals, plot_path=plot_path,
+            name=f"residuals_{result.name}",
+            summary=summary,
+            residuals=residuals,
+            plot_path=plot_path,
         )
 
     # ------------------------------------------------------------------
     # 11. Durbin-Watson autocorrelation test (standalone)
     # ------------------------------------------------------------------
 
-    def durbin_watson_test(self, series_name: str = "income_minerals") -> AnalysisResult:
+    def durbin_watson_test(
+        self, series_name: str = "income_minerals"
+    ) -> AnalysisResult:
         """Compute Durbin-Watson statistic on a raw series' first differences."""
         self._require_snapshots()
         y = self._series(series_name)
@@ -888,11 +997,21 @@ class SC2ResourceAnalysis:
             dw = _np_durbin_watson(diffs)
 
         interpretation = (
-            "strong positive autocorrelation" if dw < 1.0 else
-            "positive autocorrelation" if dw < 1.5 else
-            "no significant autocorrelation" if dw < 2.5 else
-            "negative autocorrelation" if dw < 3.0 else
-            "strong negative autocorrelation"
+            "strong positive autocorrelation"
+            if dw < 1.0
+            else (
+                "positive autocorrelation"
+                if dw < 1.5
+                else (
+                    "no significant autocorrelation"
+                    if dw < 2.5
+                    else (
+                        "negative autocorrelation"
+                        if dw < 3.0
+                        else "strong negative autocorrelation"
+                    )
+                )
+            )
         )
 
         summary = {
@@ -908,7 +1027,9 @@ class SC2ResourceAnalysis:
     # Full pipeline
     # ------------------------------------------------------------------
 
-    def run_full_analysis(self, save_dir: Optional[str] = None) -> Dict[str, AnalysisResult]:
+    def run_full_analysis(
+        self, save_dir: Optional[str] = None
+    ) -> Dict[str, AnalysisResult]:
         """Execute the complete analysis pipeline and return all results."""
         results: Dict[str, AnalysisResult] = {}
 
@@ -939,11 +1060,15 @@ class SC2ResourceAnalysis:
         # Residual diagnostics on ARIMA if available
         if "arima" in results and results["arima"].residuals is not None:
             plot_path = f"{save_dir}/arima_residuals.png" if save_dir else None
-            results["arima_residuals"] = self.residual_analysis(results["arima"], save_path=plot_path)
+            results["arima_residuals"] = self.residual_analysis(
+                results["arima"], save_path=plot_path
+            )
 
         if "ols" in results and results["ols"].residuals is not None:
             plot_path = f"{save_dir}/ols_residuals.png" if save_dir else None
-            results["ols_residuals"] = self.residual_analysis(results["ols"], save_path=plot_path)
+            results["ols_residuals"] = self.residual_analysis(
+                results["ols"], save_path=plot_path
+            )
 
         log.info("Full analysis complete — %d results produced.", len(results))
         return results
@@ -953,7 +1078,10 @@ class SC2ResourceAnalysis:
 # Synthetic data generator for testing / demo
 # ---------------------------------------------------------------------------
 
-def generate_synthetic_snapshots(n: int = 200, seed: int = 42) -> List[ResourceSnapshot]:
+
+def generate_synthetic_snapshots(
+    n: int = 200, seed: int = 42
+) -> List[ResourceSnapshot]:
     """Generate realistic SC2 economy snapshots for testing."""
     rng = np.random.RandomState(seed)
     snapshots: List[ResourceSnapshot] = []
@@ -969,7 +1097,9 @@ def generate_synthetic_snapshots(n: int = 200, seed: int = 42) -> List[ResourceS
         game_time = i * time_step
         # Income scales with workers and bases
         mineral_income = workers * 1.2 + rng.normal(0, 3)
-        gas_income = max(0, (workers - 16) * 0.8 + rng.normal(0, 2)) if workers > 16 else 0
+        gas_income = (
+            max(0, (workers - 16) * 0.8 + rng.normal(0, 2)) if workers > 16 else 0
+        )
 
         # Economy evolves
         minerals += mineral_income * (time_step / 60.0)
@@ -991,17 +1121,19 @@ def generate_synthetic_snapshots(n: int = 200, seed: int = 42) -> List[ResourceS
 
         supply_used = workers + army
 
-        snapshots.append(ResourceSnapshot(
-            game_time_s=game_time,
-            minerals=max(0, minerals),
-            gas=max(0, gas),
-            supply_used=supply_used,
-            army_supply=army,
-            worker_count=workers,
-            base_count=bases,
-            income_minerals=max(0, mineral_income),
-            income_gas=max(0, gas_income),
-        ))
+        snapshots.append(
+            ResourceSnapshot(
+                game_time_s=game_time,
+                minerals=max(0, minerals),
+                gas=max(0, gas),
+                supply_used=supply_used,
+                army_supply=army,
+                worker_count=workers,
+                base_count=bases,
+                income_minerals=max(0, mineral_income),
+                income_gas=max(0, gas_income),
+            )
+        )
 
     return snapshots
 
@@ -1025,25 +1157,33 @@ def generate_synthetic_records(n: int = 100, seed: int = 42) -> List[GameRecord]
 
         # Win probability influenced by factors
         logit = (
-            0.02 * mineral_inc + 0.01 * gas_inc + 0.03 * army
-            + 0.01 * workers + 0.15 * bases + 0.005 * apm
-            + 0.3 * tech - 0.001 * length - 6.0
+            0.02 * mineral_inc
+            + 0.01 * gas_inc
+            + 0.03 * army
+            + 0.01 * workers
+            + 0.15 * bases
+            + 0.005 * apm
+            + 0.3 * tech
+            - 0.001 * length
+            - 6.0
         )
         win_prob = 1 / (1 + np.exp(-logit))
         win = rng.random() < win_prob
 
-        records.append(GameRecord(
-            avg_mineral_income=mineral_inc,
-            avg_gas_income=gas_inc,
-            avg_army_supply=army,
-            avg_worker_count=workers,
-            avg_base_count=bases,
-            avg_apm=apm,
-            tech_tier_reached=tech,
-            game_length_s=length,
-            opponent_race=opp,
-            win=bool(win),
-        ))
+        records.append(
+            GameRecord(
+                avg_mineral_income=mineral_inc,
+                avg_gas_income=gas_inc,
+                avg_army_supply=army,
+                avg_worker_count=workers,
+                avg_base_count=bases,
+                avg_apm=apm,
+                tech_tier_reached=tech,
+                game_length_s=length,
+                opponent_race=opp,
+                win=bool(win),
+            )
+        )
 
     return records
 
@@ -1051,6 +1191,7 @@ def generate_synthetic_records(n: int = 100, seed: int = 42) -> List[GameRecord]
 # ---------------------------------------------------------------------------
 # CLI entry point
 # ---------------------------------------------------------------------------
+
 
 def main() -> None:
     """Run a demo analysis with synthetic data."""

@@ -1,12 +1,13 @@
-import requests
-import re
-import os
-import zipfile
 import io
-from pathlib import Path
-import time
-import random
 import logging
+import os
+import random
+import re
+import time
+import zipfile
+from pathlib import Path
+
+import requests
 
 logger = logging.getLogger("ScrapeSpawningtool")
 

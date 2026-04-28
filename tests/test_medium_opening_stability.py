@@ -1,6 +1,6 @@
 import os
-from pathlib import Path
 import sys
+from pathlib import Path
 from types import SimpleNamespace
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -11,7 +11,6 @@ for candidate in (str(ROOT), str(PACKAGE_ROOT)):
         sys.path.insert(0, candidate)
 
 import pytest
-
 from wicked_zerg_challenger.blackboard import GameStateBlackboard
 from wicked_zerg_challenger.early_scout_system import EarlyScoutSystem
 from wicked_zerg_challenger.economy_manager import EconomyManager
@@ -142,11 +141,35 @@ def test_training_summary_tracks_by_race_and_next_focus():
     results = [
         GameResult(1, "AbyssalReefLE", "Protoss", "Medium", "victory", 500.0, 0, 0, 0),
         GameResult(2, "AbyssalReefLE", "Protoss", "Medium", "victory", 480.0, 1, 0, 0),
-        GameResult(3, "AbyssalReefLE", "Terran", "Medium", "defeat", 430.0, 0, 1, 1, crashed=True),
-        GameResult(4, "AbyssalReefLE", "Zerg", "Medium", "timeout", 1500.0, 0, 1, -1, timed_out=True),
+        GameResult(
+            3,
+            "AbyssalReefLE",
+            "Terran",
+            "Medium",
+            "defeat",
+            430.0,
+            0,
+            1,
+            1,
+            crashed=True,
+        ),
+        GameResult(
+            4,
+            "AbyssalReefLE",
+            "Zerg",
+            "Medium",
+            "timeout",
+            1500.0,
+            0,
+            1,
+            -1,
+            timed_out=True,
+        ),
     ]
 
-    summary = build_training_summary(results, started_at="20260329_120000", finished_at="20260329_121000")
+    summary = build_training_summary(
+        results, started_at="20260329_120000", finished_at="20260329_121000"
+    )
 
     assert summary.by_race["Protoss"]["win_rate"] == 100.0
     assert summary.timeouts == 1
@@ -226,7 +249,9 @@ async def test_economy_manager_suppresses_drone_greed_under_pressure():
         time=120.0,
         iteration=44,
         workers=UnitGroup([MockUnit("DRONE") for _ in range(20)]),
-        townhalls=SimpleNamespace(ready=UnitGroup([MockStructure("HATCHERY")]), amount=1),
+        townhalls=SimpleNamespace(
+            ready=UnitGroup([MockStructure("HATCHERY")]), amount=1
+        ),
         supply_left=8,
         production=None,
     )

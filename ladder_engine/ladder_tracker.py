@@ -4,11 +4,11 @@ Tracks ladder progress, per-race win rates, map performance, streaks, and
 rank history. Exports to JSON and generates trend analysis.
 """
 
+import json
+import os
+import time
 from dataclasses import dataclass, field
 from typing import Dict, List, Optional, Tuple
-import json
-import time
-import os
 
 
 @dataclass
@@ -49,7 +49,7 @@ class PlayerStats:
     current_mmr: int = 0
     peak_mmr: int = 0
     rank: str = "Unranked"
-    current_streak: int = 0    # positive = win streak, negative = loss streak
+    current_streak: int = 0  # positive = win streak, negative = loss streak
     best_win_streak: int = 0
 
     @property
@@ -83,8 +83,8 @@ MMR_TIERS = [
     (1800, "Gold 1"),
     (1400, "Gold 2"),
     (1000, "Silver 1"),
-    (600,  "Bronze 1"),
-    (0,    "Bronze 3"),
+    (600, "Bronze 1"),
+    (0, "Bronze 3"),
 ]
 
 
@@ -147,10 +147,7 @@ class LadderTracker:
             counts[r][0] += 1
             if m.won:
                 counts[r][1] += 1
-        return {
-            race: round(wins / total, 4)
-            for race, (total, wins) in counts.items()
-        }
+        return {race: round(wins / total, 4) for race, (total, wins) in counts.items()}
 
     def win_rate_by_map(self) -> Dict[str, float]:
         """Return win rate broken down by map name."""
@@ -240,16 +237,18 @@ class LadderTracker:
             )
             self._mmr_history = [tuple(x) for x in data.get("mmr_history", [])]
             for m in data.get("matches", []):
-                self.match_history.append(MatchResult(
-                    match_id=m["match_id"],
-                    timestamp=m["timestamp"],
-                    opponent_race=m["opponent_race"],
-                    map_name=m["map_name"],
-                    won=m["won"],
-                    game_duration_s=m["duration_s"],
-                    our_mmr_before=m["mmr_before"],
-                    our_mmr_after=m["mmr_after"],
-                    notes=m.get("notes", ""),
-                ))
+                self.match_history.append(
+                    MatchResult(
+                        match_id=m["match_id"],
+                        timestamp=m["timestamp"],
+                        opponent_race=m["opponent_race"],
+                        map_name=m["map_name"],
+                        won=m["won"],
+                        game_duration_s=m["duration_s"],
+                        our_mmr_before=m["mmr_before"],
+                        our_mmr_after=m["mmr_after"],
+                        notes=m.get("notes", ""),
+                    )
+                )
         except Exception:
             pass

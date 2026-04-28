@@ -4,20 +4,22 @@ Smart Market Analyzer
 - 종합 스코어링 (-100 ~ +100)
 - 자동 매매 의사결정 지원
 """
-import logging
-import time
+
 import json
+import logging
+import os
+import time
 from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Optional
-import pandas as pd
+
 import numpy as np
-import os
+import pandas as pd
 import requests
 
 from . import config
+from .strategies import MACrossover, RSIStrategy, Signal, VolatilityBreakout
 from .upbit_client import UpbitClient
-from .strategies import VolatilityBreakout, MACrossover, RSIStrategy, Signal
 from .utils import normalize_ticker
 
 logger = logging.getLogger("crypto.analyzer")
@@ -55,30 +57,31 @@ SCORING_THRESHOLDS = {
 @dataclass
 class CoinAnalysis:
     """개별 코인 분석 결과"""
+
     ticker: str
     current_price: float = 0
-    price_change_24h_pct: float = 0       # 24시간 변동률
-    volume_change_pct: float = 0           # 거래량 변화율
-    rsi_14: float = 50                     # RSI(14)
-    ma5: float = 0                         # 5일 이동평균
-    ma20: float = 0                        # 20일 이동평균
-    ma60: float = 0                        # 60일 이동평균
-    bb_upper: float = 0                    # 볼린저 밴드 상단
-    bb_lower: float = 0                    # 볼린저 밴드 하단
-    macd: float = 0                        # MACD 값
-    macd_signal: float = 0                 # MACD 시그널선
-    macd_histogram: float = 0              # MACD 히스토그램
-    trend_strength: float = 0              # 추세 강도 (0~1)
-    consecutive_candles: int = 0           # 연속 양봉(+) / 음봉(-) 수
-    price_ma20_distance_pct: float = 0     # 현재가와 MA20 이격률
-    volatility_signal: str = "hold"        # 변동성 돌파 신호
-    ma_signal: str = "hold"                # 이동평균 신호
-    rsi_signal: str = "hold"               # RSI 신호
-    support_price: float = 0               # 지지선
-    resistance_price: float = 0            # 저항선
-    bid_ask_ratio: float = 0.5             # 매수/매도 비율
-    score: int = 0                         # 종합 점수 (-100 ~ +100)
-    recommendation: str = "HOLD"           # BUY / SELL / HOLD
+    price_change_24h_pct: float = 0  # 24시간 변동률
+    volume_change_pct: float = 0  # 거래량 변화율
+    rsi_14: float = 50  # RSI(14)
+    ma5: float = 0  # 5일 이동평균
+    ma20: float = 0  # 20일 이동평균
+    ma60: float = 0  # 60일 이동평균
+    bb_upper: float = 0  # 볼린저 밴드 상단
+    bb_lower: float = 0  # 볼린저 밴드 하단
+    macd: float = 0  # MACD 값
+    macd_signal: float = 0  # MACD 시그널선
+    macd_histogram: float = 0  # MACD 히스토그램
+    trend_strength: float = 0  # 추세 강도 (0~1)
+    consecutive_candles: int = 0  # 연속 양봉(+) / 음봉(-) 수
+    price_ma20_distance_pct: float = 0  # 현재가와 MA20 이격률
+    volatility_signal: str = "hold"  # 변동성 돌파 신호
+    ma_signal: str = "hold"  # 이동평균 신호
+    rsi_signal: str = "hold"  # RSI 신호
+    support_price: float = 0  # 지지선
+    resistance_price: float = 0  # 저항선
+    bid_ask_ratio: float = 0.5  # 매수/매도 비율
+    score: int = 0  # 종합 점수 (-100 ~ +100)
+    recommendation: str = "HOLD"  # BUY / SELL / HOLD
     reasons: list = field(default_factory=list)  # 판단 근거
 
 
@@ -114,7 +117,11 @@ def _calc_macd(series: pd.Series, fast: int = 12, slow: int = 26, signal: int = 
     macd_line = ema_fast - ema_slow
     signal_line = macd_line.ewm(span=signal, adjust=False).mean()
     histogram = macd_line - signal_line
-    return float(macd_line.iloc[-1]), float(signal_line.iloc[-1]), float(histogram.iloc[-1])
+    return (
+        float(macd_line.iloc[-1]),
+        float(signal_line.iloc[-1]),
+        float(histogram.iloc[-1]),
+    )
 
 
 def _calc_consecutive_candles(df: pd.DataFrame) -> int:
@@ -176,7 +183,7 @@ class MarketAnalyzer:
             except (ValueError, TypeError):
                 pass
         # 캐시된 환율이 있으면 사용 (10분)
-        if hasattr(self, '_usd_krw_cache') and self._usd_krw_cache:
+        if hasattr(self, "_usd_krw_cache") and self._usd_krw_cache:
             rate, ts = self._usd_krw_cache
             if time.time() - ts < 600:
                 return rate
@@ -226,7 +233,9 @@ class MarketAnalyzer:
             recent_vol = df_day["volume"].iloc[-1]
             avg_vol = df_day["volume"].iloc[-6:-1].mean()
             if avg_vol > 0:
-                result.volume_change_pct = round((recent_vol - avg_vol) / avg_vol * 100, 1)
+                result.volume_change_pct = round(
+                    (recent_vol - avg_vol) / avg_vol * 100, 1
+                )
 
         # 5. RSI
         result.rsi_14 = round(_calc_rsi(df_day["close"], 14), 1)
@@ -248,7 +257,9 @@ class MarketAnalyzer:
 
         # 8b. MACD
         if len(df_day) >= 26:
-            result.macd, result.macd_signal, result.macd_histogram = _calc_macd(df_day["close"])
+            result.macd, result.macd_signal, result.macd_histogram = _calc_macd(
+                df_day["close"]
+            )
 
         # 8c. 연속 캔들 패턴
         result.consecutive_candles = _calc_consecutive_candles(df_day)
@@ -287,11 +298,19 @@ class MarketAnalyzer:
         # RSI 기반
         w_rsi = SCORING_WEIGHTS["rsi"]
         if result.rsi_14 < SCORING_THRESHOLDS["rsi_oversold"]:
-            s = int((SCORING_THRESHOLDS["rsi_oversold"] - result.rsi_14) / SCORING_THRESHOLDS["rsi_oversold"] * w_rsi)
+            s = int(
+                (SCORING_THRESHOLDS["rsi_oversold"] - result.rsi_14)
+                / SCORING_THRESHOLDS["rsi_oversold"]
+                * w_rsi
+            )
             score += s
             reasons.append(f"RSI 과매도({result.rsi_14}) +{s}")
         elif result.rsi_14 > SCORING_THRESHOLDS["rsi_overbought"]:
-            s = int((result.rsi_14 - SCORING_THRESHOLDS["rsi_overbought"]) / (100 - SCORING_THRESHOLDS["rsi_overbought"]) * w_rsi)
+            s = int(
+                (result.rsi_14 - SCORING_THRESHOLDS["rsi_overbought"])
+                / (100 - SCORING_THRESHOLDS["rsi_overbought"])
+                * w_rsi
+            )
             score -= s
             reasons.append(f"RSI 과매수({result.rsi_14}) -{s}")
 
@@ -331,7 +350,10 @@ class MarketAnalyzer:
             else:
                 score -= w_vol_d
                 reasons.append(f"거래량 급증+하락 -{w_vol_d}")
-        elif result.volume_change_pct > SCORING_THRESHOLDS["volume_increase_pct"] and result.price_change_24h_pct > 0:
+        elif (
+            result.volume_change_pct > SCORING_THRESHOLDS["volume_increase_pct"]
+            and result.price_change_24h_pct > 0
+        ):
             score += w_vol_m
             reasons.append(f"거래량 증가+상승 +{w_vol_m}")
 
@@ -356,11 +378,25 @@ class MarketAnalyzer:
         # MACD
         w_macd = SCORING_WEIGHTS["macd"]
         if result.macd_histogram > 0 and result.macd > result.macd_signal:
-            s = min(w_macd, int(abs(result.macd_histogram) / max(abs(result.macd_signal), 1) * w_macd))
+            s = min(
+                w_macd,
+                int(
+                    abs(result.macd_histogram)
+                    / max(abs(result.macd_signal), 1)
+                    * w_macd
+                ),
+            )
             score += s
             reasons.append(f"MACD 상승({result.macd_histogram:+.0f}) +{s}")
         elif result.macd_histogram < 0 and result.macd < result.macd_signal:
-            s = min(w_macd, int(abs(result.macd_histogram) / max(abs(result.macd_signal), 1) * w_macd))
+            s = min(
+                w_macd,
+                int(
+                    abs(result.macd_histogram)
+                    / max(abs(result.macd_signal), 1)
+                    * w_macd
+                ),
+            )
             score -= s
             reasons.append(f"MACD 하락({result.macd_histogram:+.0f}) -{s}")
 
@@ -371,19 +407,27 @@ class MarketAnalyzer:
             trend_bonus = int(result.trend_strength * w_trend)
             if result.consecutive_candles >= cc_min:
                 score += trend_bonus
-                reasons.append(f"강한 상승추세(연속{result.consecutive_candles}양봉) +{trend_bonus}")
+                reasons.append(
+                    f"강한 상승추세(연속{result.consecutive_candles}양봉) +{trend_bonus}"
+                )
             elif result.consecutive_candles <= -cc_min:
                 score -= trend_bonus
-                reasons.append(f"강한 하락추세(연속{abs(result.consecutive_candles)}음봉) -{trend_bonus}")
+                reasons.append(
+                    f"강한 하락추세(연속{abs(result.consecutive_candles)}음봉) -{trend_bonus}"
+                )
 
         # MA20 이격률 반전 신호 - 과도한 이탈 시 평균회귀 기대
         w_dist = SCORING_WEIGHTS["ma20_distance"]
         if result.price_ma20_distance_pct < SCORING_THRESHOLDS["ma20_distance_low"]:
             score += w_dist
-            reasons.append(f"MA20 대비 과이격 하방({result.price_ma20_distance_pct:+.1f}%) +{w_dist}")
+            reasons.append(
+                f"MA20 대비 과이격 하방({result.price_ma20_distance_pct:+.1f}%) +{w_dist}"
+            )
         elif result.price_ma20_distance_pct > SCORING_THRESHOLDS["ma20_distance_high"]:
             score -= w_dist
-            reasons.append(f"MA20 대비 과이격 상방({result.price_ma20_distance_pct:+.1f}%) -{w_dist}")
+            reasons.append(
+                f"MA20 대비 과이격 상방({result.price_ma20_distance_pct:+.1f}%) -{w_dist}"
+            )
 
         # 스코어 클램핑
         result.score = max(-100, min(100, score))
@@ -412,7 +456,9 @@ class MarketAnalyzer:
                 results.append(analysis)
             except Exception as e:
                 logger.error(f"분석 실패 ({ticker}): {e}")
-                results.append(CoinAnalysis(ticker=ticker, reasons=[f"분석 오류: {str(e)}"]))
+                results.append(
+                    CoinAnalysis(ticker=ticker, reasons=[f"분석 오류: {str(e)}"])
+                )
         # 스코어 순 정렬 (높은 것 = 매수 기회)
         results.sort(key=lambda x: x.score, reverse=True)
         return results
@@ -421,16 +467,30 @@ class MarketAnalyzer:
         """분석 결과를 자연어 리포트로 포맷"""
         coin = analysis.ticker.replace("KRW-", "")
         rec_emoji = {
-            "STRONG_BUY": "🟢🟢", "BUY": "🟢", "HOLD": "⚪",
-            "SELL": "🔴", "STRONG_SELL": "🔴🔴"
+            "STRONG_BUY": "🟢🟢",
+            "BUY": "🟢",
+            "HOLD": "⚪",
+            "SELL": "🔴",
+            "STRONG_SELL": "🔴🔴",
         }.get(analysis.recommendation, "⚪")
         rec_kr = {
-            "STRONG_BUY": "강력 매수", "BUY": "매수", "HOLD": "관망",
-            "SELL": "매도", "STRONG_SELL": "강력 매도"
+            "STRONG_BUY": "강력 매수",
+            "BUY": "매수",
+            "HOLD": "관망",
+            "SELL": "매도",
+            "STRONG_SELL": "강력 매도",
         }.get(analysis.recommendation, "관망")
 
-        macd_dir = "▲" if analysis.macd_histogram > 0 else "▼" if analysis.macd_histogram < 0 else "─"
-        candle_str = f"{analysis.consecutive_candles:+d}봉" if analysis.consecutive_candles != 0 else "중립"
+        macd_dir = (
+            "▲"
+            if analysis.macd_histogram > 0
+            else "▼" if analysis.macd_histogram < 0 else "─"
+        )
+        candle_str = (
+            f"{analysis.consecutive_candles:+d}봉"
+            if analysis.consecutive_candles != 0
+            else "중립"
+        )
         lines = [
             f"{rec_emoji} {coin} | {rec_kr} (점수: {analysis.score:+d}/100)",
             f"  현재가: {analysis.current_price:,.0f}원 ({analysis.price_change_24h_pct:+.1f}%) MA20이격: {analysis.price_ma20_distance_pct:+.1f}%",
@@ -460,10 +520,14 @@ class MarketAnalyzer:
 
         lines.append("=" * 50)
         if buy_candidates:
-            coins = ", ".join(f"{a.ticker.replace('KRW-', '')}({a.score:+d})" for a in buy_candidates)
+            coins = ", ".join(
+                f"{a.ticker.replace('KRW-', '')}({a.score:+d})" for a in buy_candidates
+            )
             lines.append(f"🟢 매수 후보: {coins}")
         if sell_candidates:
-            coins = ", ".join(f"{a.ticker.replace('KRW-', '')}({a.score:+d})" for a in sell_candidates)
+            coins = ", ".join(
+                f"{a.ticker.replace('KRW-', '')}({a.score:+d})" for a in sell_candidates
+            )
             lines.append(f"🔴 매도 후보: {coins}")
         if not buy_candidates and not sell_candidates:
             lines.append("⚪ 현재 뚜렷한 매매 시그널 없음 - 관망 추천")
@@ -520,7 +584,9 @@ class MarketAnalyzer:
                     tf_score -= 10
 
                 scores.append(tf_score)
-                all_reasons.append(f"[{tf}] RSI={rsi_val} MA5{'>' if ma5 > ma20 else '<'}MA20 MACD_H={macd_hist:+.0f} => {tf_score:+d}")
+                all_reasons.append(
+                    f"[{tf}] RSI={rsi_val} MA5{'>' if ma5 > ma20 else '<'}MA20 MACD_H={macd_hist:+.0f} => {tf_score:+d}"
+                )
 
                 if base_result is None:
                     base_result = self.analyze_coin(ticker)
@@ -535,7 +601,9 @@ class MarketAnalyzer:
             # Blend: 70% base analysis + 30% multi-TF average
             blended = int(base_result.score * 0.7 + avg_score * 0.3)
             base_result.score = max(-100, min(100, blended))
-            base_result.reasons.append(f"멀티TF({','.join(timeframes)}) 보정: {avg_score:+d}")
+            base_result.reasons.append(
+                f"멀티TF({','.join(timeframes)}) 보정: {avg_score:+d}"
+            )
             for r in all_reasons:
                 base_result.reasons.append(r)
 
@@ -571,6 +639,7 @@ class MarketAnalyzer:
 
         try:
             import pyupbit
+
             usdt_price = pyupbit.get_current_price(usdt_ticker)
             if usdt_price and usdt_price > 0:
                 global_usd_price = usdt_price
@@ -582,7 +651,7 @@ class MarketAnalyzer:
             try:
                 resp = requests.get(
                     f"https://api.binance.com/api/v3/ticker/price?symbol={coin}USDT",
-                    timeout=5
+                    timeout=5,
                 )
                 if resp.status_code == 200:
                     global_usd_price = float(resp.json().get("price", 0))
@@ -590,7 +659,10 @@ class MarketAnalyzer:
                 logger.debug(f"Binance USD price lookup failed for {coin}: {e}")
 
         if not global_usd_price or global_usd_price <= 0:
-            return {"error": f"글로벌 USD 시세 조회 실패: {coin}", "krw_price": krw_price}
+            return {
+                "error": f"글로벌 USD 시세 조회 실패: {coin}",
+                "krw_price": krw_price,
+            }
 
         estimated_global_krw = global_usd_price * usd_krw_rate
         premium_pct = ((krw_price - estimated_global_krw) / estimated_global_krw) * 100
@@ -627,7 +699,12 @@ class MarketAnalyzer:
         except Exception as e:
             logger.error(f"Fear & Greed 조회 실패: {e}")
 
-        return {"value": 0, "classification": "Unknown", "timestamp": "", "error": "조회 실패"}
+        return {
+            "value": 0,
+            "classification": "Unknown",
+            "timestamp": "",
+            "error": "조회 실패",
+        }
 
     # ─────────── #32 Analysis Report File Saving ───────────
 
@@ -667,7 +744,14 @@ class MarketAnalyzer:
                 cur = float(df["close"].iloc[-1])
                 vol = float(df["volume"].iloc[-1]) * cur  # KRW volume estimate
                 chg = ((cur - prev) / prev * 100) if prev > 0 else 0
-                changes.append({"ticker": t, "price": cur, "change_pct": round(chg, 2), "volume_krw": vol})
+                changes.append(
+                    {
+                        "ticker": t,
+                        "price": cur,
+                        "change_pct": round(chg, 2),
+                        "volume_krw": vol,
+                    }
+                )
                 total_volume += vol
             except Exception as e:
                 logger.debug(f"Failed to fetch market data for {t}: {e}")
@@ -678,7 +762,9 @@ class MarketAnalyzer:
         flat = [c for c in changes if -0.5 <= c["change_pct"] <= 0.5]
 
         changes_sorted = sorted(changes, key=lambda x: x["change_pct"], reverse=True)
-        avg_change = sum(c["change_pct"] for c in changes) / len(changes) if changes else 0
+        avg_change = (
+            sum(c["change_pct"] for c in changes) / len(changes) if changes else 0
+        )
 
         return {
             "total_coins": len(changes),
@@ -727,8 +813,7 @@ class MarketAnalyzer:
         # 최근 N개 이격도 시계열
         disparity_series = (close / ma) * 100
         recent_disparities = [
-            round(float(v), 2) for v in disparity_series.iloc[-10:]
-            if not pd.isna(v)
+            round(float(v), 2) for v in disparity_series.iloc[-10:] if not pd.isna(v)
         ]
 
         # 이격도 통계
@@ -812,14 +897,18 @@ class MarketAnalyzer:
             if i == num_bins - 1:
                 mask = (close >= bin_low) & (close <= bin_high)
             bin_vol = float(volume[mask].sum())
-            price_volume_profile.append({
-                "price_range": f"{bin_low:,.0f} ~ {bin_high:,.0f}",
-                "volume": round(bin_vol, 4),
-            })
+            price_volume_profile.append(
+                {
+                    "price_range": f"{bin_low:,.0f} ~ {bin_high:,.0f}",
+                    "volume": round(bin_vol, 4),
+                }
+            )
 
         # POC (Point of Control): 거래량이 가장 많은 가격대
-        poc_idx = max(range(len(price_volume_profile)),
-                      key=lambda i: price_volume_profile[i]["volume"])
+        poc_idx = max(
+            range(len(price_volume_profile)),
+            key=lambda i: price_volume_profile[i]["volume"],
+        )
         poc = price_volume_profile[poc_idx]
 
         # 거래량 추세 (최근 5일 기울기)
@@ -844,7 +933,11 @@ class MarketAnalyzer:
                 obv -= float(volume.iloc[i])
             obv_series.append(obv)
 
-        obv_trend = "상승" if len(obv_series) >= 2 and obv_series[-1] > obv_series[-5] else "하락"
+        obv_trend = (
+            "상승"
+            if len(obv_series) >= 2 and obv_series[-1] > obv_series[-5]
+            else "하락"
+        )
 
         return {
             "ticker": ticker,
@@ -898,12 +991,14 @@ class MarketAnalyzer:
 
         # 도지 (Doji): 몸통이 전체 범위의 10% 이하
         if c_range > 0 and (c_body / c_range) < 0.1:
-            patterns.append({
-                "pattern": "도지 (Doji)",
-                "description": "시가와 종가가 거의 같음 - 추세 전환 가능성",
-                "signal": "neutral",
-                "reliability": "medium",
-            })
+            patterns.append(
+                {
+                    "pattern": "도지 (Doji)",
+                    "description": "시가와 종가가 거의 같음 - 추세 전환 가능성",
+                    "signal": "neutral",
+                    "reliability": "medium",
+                }
+            )
 
         # 해머 (Hammer): 아래 그림자가 몸통의 2배 이상, 위 그림자 작음
         lower_shadow = min(c_open, c_close) - c_low
@@ -912,54 +1007,68 @@ class MarketAnalyzer:
             # 하락 추세 후 해머 = 강세 반전 신호
             is_downtrend = float(df["close"].iloc[-3]) > float(df["close"].iloc[-2])
             if is_downtrend:
-                patterns.append({
-                    "pattern": "해머 (Hammer)",
-                    "description": "하락 추세 후 긴 아래꼬리 - 강세 반전 신호",
-                    "signal": "bullish",
-                    "reliability": "high",
-                })
+                patterns.append(
+                    {
+                        "pattern": "해머 (Hammer)",
+                        "description": "하락 추세 후 긴 아래꼬리 - 강세 반전 신호",
+                        "signal": "bullish",
+                        "reliability": "high",
+                    }
+                )
             else:
-                patterns.append({
-                    "pattern": "교수형 (Hanging Man)",
-                    "description": "상승 추세 후 긴 아래꼬리 - 약세 반전 가능",
-                    "signal": "bearish",
-                    "reliability": "medium",
-                })
+                patterns.append(
+                    {
+                        "pattern": "교수형 (Hanging Man)",
+                        "description": "상승 추세 후 긴 아래꼬리 - 약세 반전 가능",
+                        "signal": "bearish",
+                        "reliability": "medium",
+                    }
+                )
 
         # 역해머 (Inverted Hammer): 위 그림자가 몸통의 2배 이상, 아래 그림자 작음
         if c_body > 0 and upper_shadow >= c_body * 2 and lower_shadow <= c_body * 0.5:
             is_downtrend = float(df["close"].iloc[-3]) > float(df["close"].iloc[-2])
             if is_downtrend:
-                patterns.append({
-                    "pattern": "역해머 (Inverted Hammer)",
-                    "description": "하락 추세 후 긴 위꼬리 - 강세 반전 가능",
-                    "signal": "bullish",
-                    "reliability": "medium",
-                })
+                patterns.append(
+                    {
+                        "pattern": "역해머 (Inverted Hammer)",
+                        "description": "하락 추세 후 긴 위꼬리 - 강세 반전 가능",
+                        "signal": "bullish",
+                        "reliability": "medium",
+                    }
+                )
 
         # 강세 잉승 (Bullish Engulfing): 이전 음봉을 현재 양봉이 감싸는 패턴
-        if (p_close < p_open and  # 이전: 음봉
-                c_close > c_open and  # 현재: 양봉
-                c_open <= p_close and  # 현재 시가 <= 이전 종가
-                c_close >= p_open):    # 현재 종가 >= 이전 시가
-            patterns.append({
-                "pattern": "강세 잉승 (Bullish Engulfing)",
-                "description": "이전 음봉을 완전히 감싸는 양봉 - 강한 상승 반전 신호",
-                "signal": "bullish",
-                "reliability": "high",
-            })
+        if (
+            p_close < p_open  # 이전: 음봉
+            and c_close > c_open  # 현재: 양봉
+            and c_open <= p_close  # 현재 시가 <= 이전 종가
+            and c_close >= p_open
+        ):  # 현재 종가 >= 이전 시가
+            patterns.append(
+                {
+                    "pattern": "강세 잉승 (Bullish Engulfing)",
+                    "description": "이전 음봉을 완전히 감싸는 양봉 - 강한 상승 반전 신호",
+                    "signal": "bullish",
+                    "reliability": "high",
+                }
+            )
 
         # 약세 잉승 (Bearish Engulfing): 이전 양봉을 현재 음봉이 감싸는 패턴
-        if (p_close > p_open and  # 이전: 양봉
-                c_close < c_open and  # 현재: 음봉
-                c_open >= p_close and  # 현재 시가 >= 이전 종가
-                c_close <= p_open):    # 현재 종가 <= 이전 시가
-            patterns.append({
-                "pattern": "약세 잉승 (Bearish Engulfing)",
-                "description": "이전 양봉을 완전히 감싸는 음봉 - 강한 하락 반전 신호",
-                "signal": "bearish",
-                "reliability": "high",
-            })
+        if (
+            p_close > p_open  # 이전: 양봉
+            and c_close < c_open  # 현재: 음봉
+            and c_open >= p_close  # 현재 시가 >= 이전 종가
+            and c_close <= p_open
+        ):  # 현재 종가 <= 이전 시가
+            patterns.append(
+                {
+                    "pattern": "약세 잉승 (Bearish Engulfing)",
+                    "description": "이전 양봉을 완전히 감싸는 음봉 - 강한 하락 반전 신호",
+                    "signal": "bearish",
+                    "reliability": "high",
+                }
+            )
 
         # 모닝스타 (Morning Star): 3개 캔들 패턴
         if len(df) >= 3:
@@ -969,16 +1078,22 @@ class MarketAnalyzer:
             pp_body = abs(pp_close - pp_open)
 
             # 2일전: 큰 음봉, 어제: 작은 몸통(갭다운), 오늘: 큰 양봉
-            if (pp_close < pp_open and pp_body > 0 and  # 큰 음봉
-                    p_body < pp_body * 0.3 and              # 작은 몸통
-                    c_close > c_open and c_body > 0 and     # 양봉
-                    c_close > (pp_open + pp_close) / 2):    # 2일전 중간 이상 회복
-                patterns.append({
-                    "pattern": "모닝스타 (Morning Star)",
-                    "description": "강한 하락 후 소형 캔들, 큰 양봉 반등 - 강세 반전",
-                    "signal": "bullish",
-                    "reliability": "high",
-                })
+            if (
+                pp_close < pp_open
+                and pp_body > 0  # 큰 음봉
+                and p_body < pp_body * 0.3  # 작은 몸통
+                and c_close > c_open
+                and c_body > 0  # 양봉
+                and c_close > (pp_open + pp_close) / 2
+            ):  # 2일전 중간 이상 회복
+                patterns.append(
+                    {
+                        "pattern": "모닝스타 (Morning Star)",
+                        "description": "강한 하락 후 소형 캔들, 큰 양봉 반등 - 강세 반전",
+                        "signal": "bullish",
+                        "reliability": "high",
+                    }
+                )
 
         # 종합 판단
         bullish_count = sum(1 for p in patterns if p["signal"] == "bullish")
@@ -1002,13 +1117,19 @@ class MarketAnalyzer:
                 "high": c_high,
                 "low": c_low,
                 "body_ratio": round(c_body / c_range * 100, 1) if c_range > 0 else 0,
-                "type": "양봉" if c_close > c_open else "음봉" if c_close < c_open else "도지",
+                "type": (
+                    "양봉"
+                    if c_close > c_open
+                    else "음봉" if c_close < c_open else "도지"
+                ),
             },
         }
 
     # ─────────── #49 BTC-알트코인 상관관계 ───────────
 
-    def calculate_correlation(self, ticker1: str, ticker2: str, period: int = 30) -> dict:
+    def calculate_correlation(
+        self, ticker1: str, ticker2: str, period: int = 30
+    ) -> dict:
         """
         두 코인 간의 가격 상관관계 분석 (#49)
 
@@ -1039,7 +1160,11 @@ class MarketAnalyzer:
         returns2 = returns2.iloc[-min_len:]
 
         if min_len < 5:
-            return {"error": "충분한 수익률 데이터 없음", "ticker1": ticker1, "ticker2": ticker2}
+            return {
+                "error": "충분한 수익률 데이터 없음",
+                "ticker1": ticker1,
+                "ticker2": ticker2,
+            }
 
         # 피어슨 상관계수
         correlation = float(returns1.corr(returns2))
@@ -1117,12 +1242,18 @@ class MarketAnalyzer:
         spread_pct = (spread / best_bid) * 100
 
         # Depth calculation
-        bid_depth_krw = sum(float(u.get("bid_price", 0)) * float(u.get("bid_size", 0)) for u in units)
-        ask_depth_krw = sum(float(u.get("ask_price", 0)) * float(u.get("ask_size", 0)) for u in units)
+        bid_depth_krw = sum(
+            float(u.get("bid_price", 0)) * float(u.get("bid_size", 0)) for u in units
+        )
+        ask_depth_krw = sum(
+            float(u.get("ask_price", 0)) * float(u.get("ask_size", 0)) for u in units
+        )
 
         # Liquidity score (0~100): low spread + high depth = high score
         spread_score = max(0, 100 - spread_pct * 50)  # 2% spread = 0
-        depth_score = min(100, (bid_depth_krw + ask_depth_krw) / 1_000_000_000 * 100)  # 10B KRW = 100
+        depth_score = min(
+            100, (bid_depth_krw + ask_depth_krw) / 1_000_000_000 * 100
+        )  # 10B KRW = 100
         liquidity_score = int(spread_score * 0.6 + depth_score * 0.4)
 
         result = {

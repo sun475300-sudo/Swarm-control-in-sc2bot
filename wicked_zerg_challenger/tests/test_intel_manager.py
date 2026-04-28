@@ -11,13 +11,13 @@ Tests:
 5. Blackboard integration
 """
 
-import unittest
-from unittest.mock import Mock, MagicMock
-import sys
 import os
+import sys
+import unittest
+from unittest.mock import MagicMock, Mock
 
 # Add parent directory to path
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 from intel_manager import IntelManager
 
@@ -51,10 +51,7 @@ class TestIntelManager(unittest.TestCase):
     def test_build_pattern_confidence_calculation_basic(self):
         """Test basic confidence calculation"""
         pattern = "terran_bio"
-        structure_counts = {
-            "BARRACKS": 3,
-            "COMMANDCENTER": 1
-        }
+        structure_counts = {"BARRACKS": 3, "COMMANDCENTER": 1}
         enemy_units = []
         game_time = 180.0
 
@@ -79,11 +76,7 @@ class TestIntelManager(unittest.TestCase):
 
         # Set up with related units
         self.intel.enemy_tech_buildings = {"BARRACKS"}
-        self.intel.enemy_unit_counts = {
-            "MARINE": 10,
-            "MARAUDER": 5,
-            "MEDIVAC": 2
-        }
+        self.intel.enemy_unit_counts = {"MARINE": 10, "MARAUDER": 5, "MEDIVAC": 2}
 
         confidence = self.intel._calculate_build_confidence(
             pattern, structure_counts, enemy_units, game_time
@@ -184,8 +177,9 @@ class TestIntelManager(unittest.TestCase):
         self.assertEqual(call_dict["enemy_build_pattern"], "terran_bio")
         self.assertEqual(call_dict["enemy_build_confidence"], 0.8)
         self.assertEqual(call_dict["enemy_build_status"], "confirmed")
-        self.assertEqual(call_dict["recommended_counter_units"],
-                        ["baneling", "zergling"])
+        self.assertEqual(
+            call_dict["recommended_counter_units"], ["baneling", "zergling"]
+        )
 
     def test_is_build_pattern_confirmed(self):
         """Test build pattern confirmation check"""
@@ -319,5 +313,5 @@ class TestIntelManagerIntegration(unittest.TestCase):
         self.assertIn(status, ["unknown", "suspected", "confirmed"])
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

@@ -1,5 +1,6 @@
-import requests
 import json
+
+import requests
 
 URL = "http://127.0.0.1:8317/v1/messages"
 HEADERS = {

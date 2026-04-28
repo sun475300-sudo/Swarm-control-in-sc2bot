@@ -9,18 +9,21 @@ Map Memory System - 맵 기억 시스템
 4. 맵 전체 탐색 진행도
 """
 
-from typing import Dict, Set, List, Optional, Tuple
-from dataclasses import dataclass, field
-from sc2.position import Point2
-from sc2.ids.unit_typeid import UnitTypeId
-from utils.logger import get_logger
 import json
 import os
+from dataclasses import dataclass, field
+from typing import Dict, List, Optional, Set, Tuple
+
+from sc2.ids.unit_typeid import UnitTypeId
+from sc2.position import Point2
+
+from utils.logger import get_logger
 
 
 @dataclass
 class DiscoveredStructure:
     """발견된 건물 정보"""
+
     unit_type: UnitTypeId
     position: Point2
     first_seen_time: float
@@ -33,6 +36,7 @@ class DiscoveredStructure:
 @dataclass
 class PredictedBase:
     """예측된 적 기지"""
+
     position: Point2
     confidence: float  # 0.0 ~ 1.0
     reason: str  # "expansion_location", "scouted", "mineral_patch"
@@ -62,7 +66,9 @@ class MapMemorySystem:
         self.exploration_progress = 0.0  # 0% ~ 100%
 
         # 확장 위치별 상태
-        self.expansion_status: Dict[Point2, str] = {}  # "unknown", "enemy", "ally", "neutral"
+        self.expansion_status: Dict[Point2, str] = (
+            {}
+        )  # "unknown", "enemy", "ally", "neutral"
 
         # 통계
         self.total_structures_discovered = 0
@@ -87,14 +93,18 @@ class MapMemorySystem:
             self.expansion_status[enemy_start] = "enemy"
 
             # 적 본진 예측 기지 추가
-            self.predicted_bases.append(PredictedBase(
-                position=enemy_start,
-                confidence=1.0,
-                reason="enemy_start_location",
-                predicted_time=0.0
-            ))
+            self.predicted_bases.append(
+                PredictedBase(
+                    position=enemy_start,
+                    confidence=1.0,
+                    reason="enemy_start_location",
+                    predicted_time=0.0,
+                )
+            )
 
-        self.logger.info(f"[INIT] Tracking {len(self.bot.expansion_locations_list)} expansion locations")
+        self.logger.info(
+            f"[INIT] Tracking {len(self.bot.expansion_locations_list)} expansion locations"
+        )
 
     async def on_step(self, iteration: int):
         """매 프레임 실행"""
@@ -143,7 +153,7 @@ class MapMemorySystem:
                     position=structure.position,
                     first_seen_time=game_time,
                     last_seen_time=game_time,
-                    race=str(self.bot.enemy_race)
+                    race=str(self.bot.enemy_race),
                 )
                 self.total_structures_discovered += 1
 
@@ -162,9 +172,13 @@ class MapMemorySystem:
     def _is_townhall(self, unit_type: UnitTypeId) -> bool:
         """타운홀 건물인지 확인"""
         townhalls = {
-            UnitTypeId.HATCHERY, UnitTypeId.LAIR, UnitTypeId.HIVE,
-            UnitTypeId.COMMANDCENTER, UnitTypeId.ORBITALCOMMAND, UnitTypeId.PLANETARYFORTRESS,
-            UnitTypeId.NEXUS
+            UnitTypeId.HATCHERY,
+            UnitTypeId.LAIR,
+            UnitTypeId.HIVE,
+            UnitTypeId.COMMANDCENTER,
+            UnitTypeId.ORBITALCOMMAND,
+            UnitTypeId.PLANETARYFORTRESS,
+            UnitTypeId.NEXUS,
         }
         return unit_type in townhalls
 
@@ -204,7 +218,11 @@ class MapMemorySystem:
         for exp_pos, status in self.expansion_status.items():
             if status == "unknown":
                 # 거리 기반 예측
-                distance_to_enemy = exp_pos.distance_to(self.bot.enemy_start_locations[0]) if self.bot.enemy_start_locations else 999
+                distance_to_enemy = (
+                    exp_pos.distance_to(self.bot.enemy_start_locations[0])
+                    if self.bot.enemy_start_locations
+                    else 999
+                )
 
                 # 적 본진에 가까울수록 높은 확률
                 if distance_to_enemy < 30:
@@ -221,12 +239,14 @@ class MapMemorySystem:
                 )
 
                 if not already_predicted and confidence >= 0.5:
-                    self.predicted_bases.append(PredictedBase(
-                        position=exp_pos,
-                        confidence=confidence,
-                        reason="expansion_location",
-                        predicted_time=game_time
-                    ))
+                    self.predicted_bases.append(
+                        PredictedBase(
+                            position=exp_pos,
+                            confidence=confidence,
+                            reason="expansion_location",
+                            predicted_time=game_time,
+                        )
+                    )
 
         # 2. 미네랄 패치 기반 예측
         if hasattr(self.bot, "mineral_field"):
@@ -257,12 +277,14 @@ class MapMemorySystem:
                         )
 
                         if near_expansion:
-                            self.predicted_bases.append(PredictedBase(
-                                position=mineral_center,
-                                confidence=0.6,
-                                reason="mineral_patch",
-                                predicted_time=game_time
-                            ))
+                            self.predicted_bases.append(
+                                PredictedBase(
+                                    position=mineral_center,
+                                    confidence=0.6,
+                                    reason="mineral_patch",
+                                    predicted_time=game_time,
+                                )
+                            )
 
     def _update_exploration_progress(self):
         """맵 탐색 진행도 업데이트"""
@@ -275,18 +297,26 @@ class MapMemorySystem:
         total_cells = 0
         explored_cells = 0
 
-        for x in range(int(playable.x), int(playable.x + playable.width), self.GRID_SIZE):
-            for y in range(int(playable.y), int(playable.y + playable.height), self.GRID_SIZE):
+        for x in range(
+            int(playable.x), int(playable.x + playable.width), self.GRID_SIZE
+        ):
+            for y in range(
+                int(playable.y), int(playable.y + playable.height), self.GRID_SIZE
+            ):
                 total_cells += 1
 
                 pos = Point2((x, y))
                 # Visibility: 0 = Hidden, 1 = Fogged, 2 = Visible
-                visibility = self.bot.state.visibility.data_numpy[int(pos.y), int(pos.x)]
+                visibility = self.bot.state.visibility.data_numpy[
+                    int(pos.y), int(pos.x)
+                ]
 
                 if visibility > 0:  # Fogged or Visible
                     explored_cells += 1
 
-        self.exploration_progress = (explored_cells / total_cells * 100) if total_cells > 0 else 0
+        self.exploration_progress = (
+            (explored_cells / total_cells * 100) if total_cells > 0 else 0
+        )
 
     async def _check_destroyed_structures(self, game_time: float):
         """파괴된 건물 확인"""
@@ -315,7 +345,8 @@ class MapMemorySystem:
     def get_all_known_enemy_structures(self) -> List[DiscoveredStructure]:
         """모든 기억된 적 건물 반환 (파괴되지 않은 것만)"""
         return [
-            structure for structure in self.discovered_structures.values()
+            structure
+            for structure in self.discovered_structures.values()
             if not structure.is_destroyed
         ]
 
@@ -389,13 +420,19 @@ class MapMemorySystem:
         return {
             "total_structures_discovered": self.total_structures_discovered,
             "total_structures_destroyed": self.total_structures_destroyed,
-            "active_structures": len([s for s in self.discovered_structures.values() if not s.is_destroyed]),
+            "active_structures": len(
+                [s for s in self.discovered_structures.values() if not s.is_destroyed]
+            ),
             "known_enemy_bases": len(self.get_enemy_bases()),
-            "predicted_bases": len([p for p in self.predicted_bases if p.confidence >= 0.5]),
+            "predicted_bases": len(
+                [p for p in self.predicted_bases if p.confidence >= 0.5]
+            ),
             "exploration_progress": f"{self.exploration_progress:.1f}%",
             "expansion_status": {
                 "enemy": sum(1 for s in self.expansion_status.values() if s == "enemy"),
                 "ally": sum(1 for s in self.expansion_status.values() if s == "ally"),
-                "unknown": sum(1 for s in self.expansion_status.values() if s == "unknown")
-            }
+                "unknown": sum(
+                    1 for s in self.expansion_status.values() if s == "unknown"
+                ),
+            },
         }

@@ -157,7 +157,9 @@ def rust_cargo_check() -> dict[str, Any]:
     }
 
 
-def language_router_check(base_ref: str, change_mode: str, execute: bool) -> dict[str, Any]:
+def language_router_check(
+    base_ref: str, change_mode: str, execute: bool
+) -> dict[str, Any]:
     router_script = ROOT / "phase55_language_router.py"
     if not router_script.exists():
         return {
@@ -249,7 +251,9 @@ def main() -> int:
     }
 
     report_path = REPORT_DIR / f"phase54_quality_gate_{ts}.json"
-    report_path.write_text(json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8")
+    report_path.write_text(
+        json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8"
+    )
 
     print("=" * 70)
     print("Phase 54 Quality Gate")

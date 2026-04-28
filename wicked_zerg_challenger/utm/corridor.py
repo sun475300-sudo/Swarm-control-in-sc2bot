@@ -18,15 +18,15 @@ from wicked_zerg_challenger.utm.types3d import Point3D
 
 # 고도층 정의 (UTM 규정 모사)
 ALTITUDE_LAYERS = {
-    "low": (5.0, 30.0),       # 저고도: 5~30m (촬영, 농업)
-    "medium": (30.0, 60.0),   # 중고도: 30~60m (배송, 순찰)
-    "high": (60.0, 120.0),    # 고고도: 60~120m (장거리 이동)
+    "low": (5.0, 30.0),  # 저고도: 5~30m (촬영, 농업)
+    "medium": (30.0, 60.0),  # 중고도: 30~60m (배송, 순찰)
+    "high": (60.0, 120.0),  # 고고도: 60~120m (장거리 이동)
 }
 
 # 방향별 고도 분리 (항공 규칙: 동행 → 홀수, 서행 → 짝수)
 DIRECTION_ALTITUDE_OFFSETS = {
-    "eastbound": 0.0,    # 0~180° heading
-    "westbound": 15.0,   # 180~360° heading → +15m 오프셋
+    "eastbound": 0.0,  # 0~180° heading
+    "westbound": 15.0,  # 180~360° heading → +15m 오프셋
 }
 
 
@@ -41,6 +41,7 @@ class FlightCorridor:
         width: 회랑 폭 (미터)
         altitude_layer: 할당된 고도층
     """
+
     corridor_id: str
     waypoints: List[Point3D]
     width: float = 20.0  # 기본 회랑 폭 (SC2: waypoint_spacing = 9.0)
@@ -97,6 +98,7 @@ class CorridorManager:
     비행 회랑 관리자. 회랑 생성, 할당, 충돌 검사.
     SC2 CreepHighway의 경로 관리 기능을 UTM으로 진화.
     """
+
     corridors: Dict[str, FlightCorridor] = field(default_factory=dict)
     waypoint_spacing: float = 50.0  # 미터 (SC2: 9.0 game units)
 

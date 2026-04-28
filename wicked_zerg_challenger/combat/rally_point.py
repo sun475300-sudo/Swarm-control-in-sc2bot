@@ -8,17 +8,17 @@ Rally Point Manager - 랠리 포인트 관리
 3. 공격 타이밍 판단
 """
 
-from typing import Optional, TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional
 
 if TYPE_CHECKING:
-    from sc2.units import Units
-    from sc2.unit import Unit
     from sc2.position import Point2
+    from sc2.unit import Unit
+    from sc2.units import Units
 else:
     try:
-        from sc2.units import Units
-        from sc2.unit import Unit
         from sc2.position import Point2
+        from sc2.unit import Unit
+        from sc2.units import Units
     except ImportError:
         Units = object
         Unit = object
@@ -51,7 +51,7 @@ class RallyPointManager:
         self._early_game_min_attack = 12  # ★ FIX: 3→12 (최소 24 저글링급)
 
     @property
-    def rally_point(self) -> Optional['Point2']:
+    def rally_point(self) -> Optional["Point2"]:
         """현재 랠리 포인트 반환"""
         return self._rally_point
 
@@ -84,7 +84,11 @@ class RallyPointManager:
 
         try:
             our_base = self.bot.townhalls.first.position
-            map_center = self.bot.game_info.map_center if hasattr(self.bot, "game_info") else our_base
+            map_center = (
+                self.bot.game_info.map_center
+                if hasattr(self.bot, "game_info")
+                else our_base
+            )
 
             # Rally point is 30% of the way from our base to map center
             rally_x = our_base.x + (map_center.x - our_base.x) * 0.3
@@ -94,6 +98,7 @@ class RallyPointManager:
                 self._rally_point = self.bot.Point2((rally_x, rally_y))
             else:
                 from sc2.position import Point2
+
                 self._rally_point = Point2((rally_x, rally_y))
 
             self._last_rally_update = getattr(self.bot, "time", 0)
@@ -103,7 +108,7 @@ class RallyPointManager:
             if hasattr(self.bot, "start_location"):
                 self._rally_point = self.bot.start_location
 
-    def calculate_rally_point(self) -> Optional['Point2']:
+    def calculate_rally_point(self) -> Optional["Point2"]:
         """
         랠리 포인트 계산 (병력 집결지)
 
@@ -121,7 +126,9 @@ class RallyPointManager:
         target_base = main_base
         if self.bot.townhalls.amount > 1 and hasattr(self.bot, "game_info"):
             try:
-                target_base = self.bot.townhalls.closest_to(self.bot.game_info.map_center)
+                target_base = self.bot.townhalls.closest_to(
+                    self.bot.game_info.map_center
+                )
             except Exception:
                 pass
 

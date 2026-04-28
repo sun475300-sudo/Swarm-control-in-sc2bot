@@ -11,8 +11,8 @@ Features:
 - Dynamic grid sizing
 """
 
-from typing import Dict, List, Optional, Set, Tuple, Any
 import math
+from typing import Any, Dict, List, Optional, Set, Tuple
 
 
 class SpatialGrid:
@@ -25,7 +25,9 @@ class SpatialGrid:
     - Range query: O(cells_checked * units_per_cell)
     """
 
-    def __init__(self, cell_size: float = 5.0, map_size: Tuple[float, float] = (200.0, 200.0)):
+    def __init__(
+        self, cell_size: float = 5.0, map_size: Tuple[float, float] = (200.0, 200.0)
+    ):
         """
         Initialize spatial grid.
 
@@ -134,7 +136,11 @@ class SpatialGrid:
         results = []
 
         # Calculate cells to check
-        cells_to_check = int(math.ceil(radius / self.cell_size)) + 1 if self.cell_size else int(radius) + 1
+        cells_to_check = (
+            int(math.ceil(radius / self.cell_size)) + 1
+            if self.cell_size
+            else int(radius) + 1
+        )
         center_cell = self._get_cell(center[0], center[1])
 
         # Check all cells within radius
@@ -207,7 +213,9 @@ class SpatialGrid:
         results.sort(key=lambda r: r[2])
         return results
 
-    def get_cell_contents(self, cell: Tuple[int, int]) -> List[Tuple[Tuple[float, float], Any]]:
+    def get_cell_contents(
+        self, cell: Tuple[int, int]
+    ) -> List[Tuple[Tuple[float, float], Any]]:
         """Get all entries in a specific cell."""
         return self.grid.get(cell, [])
 
@@ -252,7 +260,9 @@ class DynamicSpatialPartition:
         self.points: List[Tuple[Tuple[float, float], Any]] = []
 
     def build(
-        self, points: List[Tuple[Tuple[float, float], Any]], map_size: Tuple[float, float] = (200.0, 200.0)
+        self,
+        points: List[Tuple[Tuple[float, float], Any]],
+        map_size: Tuple[float, float] = (200.0, 200.0),
     ) -> None:
         """
         Build spatial structure from points.

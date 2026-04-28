@@ -6,16 +6,16 @@ monitoring for StarCraft II bot processes. Captures syscall latency, network I/O
 file operations, memory allocation, and CPU usage with minimal performance impact.
 """
 
-import time
-import struct
 import hashlib
 import logging
-import threading
 import statistics
+import struct
+import threading
+import time
+from collections import defaultdict, deque
+from dataclasses import dataclass, field
 from enum import Enum, auto
 from typing import Optional, Union
-from dataclasses import dataclass, field
-from collections import defaultdict, deque
 
 logger = logging.getLogger(__name__)
 
@@ -23,6 +23,7 @@ logger = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------
 # Enums & Constants
 # ---------------------------------------------------------------------------
+
 
 class ProbeType(Enum):
     KPROBE = auto()
@@ -65,9 +66,11 @@ class MonitorTarget(Enum):
 # Data Classes
 # ---------------------------------------------------------------------------
 
+
 @dataclass
 class BPFMapDef:
     """Definition of a BPF map used for kernel/user-space data sharing."""
+
     name: str
     map_type: BPFMapType
     key_size: int = 4
@@ -78,6 +81,7 @@ class BPFMapDef:
 @dataclass
 class ProbeEvent:
     """Single event captured by a probe."""
+
     timestamp_ns: int
     probe_name: str
     pid: int
@@ -90,6 +94,7 @@ class ProbeEvent:
 @dataclass
 class HistogramBucket:
     """Bucket for histogram metric aggregation."""
+
     lower_bound: float
     upper_bound: float
     count: int = 0
@@ -98,6 +103,7 @@ class HistogramBucket:
 @dataclass
 class SC2ProcessInfo:
     """Information about a monitored SC2 bot process."""
+
     pid: int
     name: str
     cpu_percent: float = 0.0
@@ -113,6 +119,7 @@ class SC2ProcessInfo:
 # ---------------------------------------------------------------------------
 # BPFProgram
 # ---------------------------------------------------------------------------
+
 
 class BPFProgram:
     """
@@ -136,8 +143,12 @@ class BPFProgram:
         """Register a BPF map definition with the program."""
         self.maps[map_def.name] = map_def
         self._map_data[map_def.name] = {}
-        logger.debug("Map '%s' (type=%s) added to program '%s'",
-                      map_def.name, map_def.map_type.name, self.name)
+        logger.debug(
+            "Map '%s' (type=%s) added to program '%s'",
+            map_def.name,
+            map_def.map_type.name,
+            self.name,
+        )
 
     def compile(self) -> bytes:
         """Compile the BPF C source into bytecode (simulated)."""
@@ -145,8 +156,11 @@ class BPFProgram:
             self.source = self._generate_default_source()
         raw = self.source.encode("utf-8")
         self._compiled_bytecode = hashlib.sha256(raw).digest() + raw[:256]
-        logger.info("Program '%s' compiled (%d bytes bytecode)",
-                     self.name, len(self._compiled_bytecode))
+        logger.info(
+            "Program '%s' compiled (%d bytes bytecode)",
+            self.name,
+            len(self._compiled_bytecode),
+        )
         return self._compiled_bytecode
 
     def load(self) -> bool:
@@ -171,13 +185,17 @@ class BPFProgram:
     def is_loaded(self) -> bool:
         return self._loaded
 
-    def map_update(self, map_name: str, key: Union[int, str], value: Union[int, float, bytes]) -> None:
+    def map_update(
+        self, map_name: str, key: Union[int, str], value: Union[int, float, bytes]
+    ) -> None:
         """Update a value in a BPF map."""
         if map_name not in self.maps:
             raise KeyError(f"Map '{map_name}' not found in program '{self.name}'")
         self._map_data[map_name][key] = value
 
-    def map_lookup(self, map_name: str, key: Union[int, str]) -> Optional[Union[int, float, bytes]]:
+    def map_lookup(
+        self, map_name: str, key: Union[int, str]
+    ) -> Optional[Union[int, float, bytes]]:
         """Lookup a value in a BPF map."""
         if map_name not in self.maps:
             raise KeyError(f"Map '{map_name}' not found")
@@ -228,14 +246,20 @@ class BPFProgram:
 # ProbePoint
 # ---------------------------------------------------------------------------
 
+
 class ProbePoint:
     """
     Represents an eBPF probe attached to a kernel or user-space function.
     Collects events and timing information.
     """
 
-    def __init__(self, name: str, probe_type: ProbeType,
-                 target: str, program: Optional[BPFProgram] = None):
+    def __init__(
+        self,
+        name: str,
+        probe_type: ProbeType,
+        target: str,
+        program: Optional[BPFProgram] = None,
+    ):
         self.name = name
         self.probe_type = probe_type
         self.target = target
@@ -246,8 +270,12 @@ class ProbePoint:
         self._total_latency_ns = 0
         self._entry_timestamps: dict[int, int] = {}
         self._lock = threading.Lock()
-        logger.info("ProbePoint '%s' (type=%s, target='%s') created",
-                     name, probe_type.name, target)
+        logger.info(
+            "ProbePoint '%s' (type=%s, target='%s') created",
+            name,
+            probe_type.name,
+            target,
+        )
 
     def attach(self) -> bool:
         """Attach the probe to its target."""
@@ -280,8 +308,9 @@ class ProbePoint:
             self._entry_timestamps[tid] = ts
             self._hit_count += 1
 
-    def record_exit(self, pid: int, tid: int, comm: str,
-                    data: Optional[dict] = None) -> Optional[ProbeEvent]:
+    def record_exit(
+        self, pid: int, tid: int, comm: str, data: Optional[dict] = None
+    ) -> Optional[ProbeEvent]:
         """Record a function exit event and compute latency."""
         ts = time.time_ns()
         with self._lock:
@@ -303,8 +332,9 @@ class ProbePoint:
         self._events.append(event)
         return event
 
-    def record_event(self, pid: int, tid: int, comm: str,
-                     data: Optional[dict] = None) -> ProbeEvent:
+    def record_event(
+        self, pid: int, tid: int, comm: str, data: Optional[dict] = None
+    ) -> ProbeEvent:
         """Record a single probe event without entry/exit pairing."""
         ts = time.time_ns()
         with self._lock:
@@ -335,11 +365,16 @@ class ProbePoint:
             "attached": self._attached,
             "hit_count": self._hit_count,
             "event_count": len(self._events),
-            "avg_latency_us": (statistics.mean(latencies) / 1000.0) if latencies else 0.0,
-            "p50_latency_us": (statistics.median(latencies) / 1000.0) if latencies else 0.0,
+            "avg_latency_us": (
+                (statistics.mean(latencies) / 1000.0) if latencies else 0.0
+            ),
+            "p50_latency_us": (
+                (statistics.median(latencies) / 1000.0) if latencies else 0.0
+            ),
             "p99_latency_us": (
                 statistics.quantiles(latencies, n=100)[-1] / 1000.0
-                if len(latencies) >= 2 else 0.0
+                if len(latencies) >= 2
+                else 0.0
             ),
             "total_latency_ms": self._total_latency_ns / 1_000_000.0,
         }
@@ -357,6 +392,7 @@ class ProbePoint:
 # MetricCollector
 # ---------------------------------------------------------------------------
 
+
 class MetricCollector:
     """
     Aggregates metrics from eBPF probes into counters, gauges, histograms,
@@ -364,8 +400,21 @@ class MetricCollector:
     """
 
     DEFAULT_HISTOGRAM_BOUNDS = [
-        0.001, 0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1.0,
-        2.5, 5.0, 10.0, 25.0, 50.0, 100.0,
+        0.001,
+        0.005,
+        0.01,
+        0.025,
+        0.05,
+        0.1,
+        0.25,
+        0.5,
+        1.0,
+        2.5,
+        5.0,
+        10.0,
+        25.0,
+        50.0,
+        100.0,
     ]
 
     def __init__(self, ring_buffer_size: int = 65536):
@@ -380,12 +429,15 @@ class MetricCollector:
         self._lock = threading.Lock()
         self._collection_interval_sec = 1.0
         self._running = False
-        logger.info("MetricCollector initialised (ring_buffer_size=%d)", ring_buffer_size)
+        logger.info(
+            "MetricCollector initialised (ring_buffer_size=%d)", ring_buffer_size
+        )
 
     # -- Counter --------------------------------------------------------
 
-    def counter_inc(self, name: str, value: float = 1.0,
-                    labels: Optional[dict[str, str]] = None) -> None:
+    def counter_inc(
+        self, name: str, value: float = 1.0, labels: Optional[dict[str, str]] = None
+    ) -> None:
         """Increment a counter metric."""
         key = self._label_key(name, labels)
         with self._lock:
@@ -393,15 +445,15 @@ class MetricCollector:
         if labels:
             self._labels[key] = labels
 
-    def counter_get(self, name: str,
-                    labels: Optional[dict[str, str]] = None) -> float:
+    def counter_get(self, name: str, labels: Optional[dict[str, str]] = None) -> float:
         key = self._label_key(name, labels)
         return self._counters.get(key, 0.0)
 
     # -- Gauge ----------------------------------------------------------
 
-    def gauge_set(self, name: str, value: float,
-                  labels: Optional[dict[str, str]] = None) -> None:
+    def gauge_set(
+        self, name: str, value: float, labels: Optional[dict[str, str]] = None
+    ) -> None:
         """Set a gauge metric to an absolute value."""
         key = self._label_key(name, labels)
         with self._lock:
@@ -409,21 +461,20 @@ class MetricCollector:
         if labels:
             self._labels[key] = labels
 
-    def gauge_inc(self, name: str, value: float = 1.0,
-                  labels: Optional[dict[str, str]] = None) -> None:
+    def gauge_inc(
+        self, name: str, value: float = 1.0, labels: Optional[dict[str, str]] = None
+    ) -> None:
         key = self._label_key(name, labels)
         with self._lock:
             self._gauges[key] = self._gauges.get(key, 0.0) + value
 
-    def gauge_get(self, name: str,
-                  labels: Optional[dict[str, str]] = None) -> float:
+    def gauge_get(self, name: str, labels: Optional[dict[str, str]] = None) -> float:
         key = self._label_key(name, labels)
         return self._gauges.get(key, 0.0)
 
     # -- Histogram ------------------------------------------------------
 
-    def histogram_create(self, name: str,
-                         bounds: Optional[list[float]] = None) -> None:
+    def histogram_create(self, name: str, bounds: Optional[list[float]] = None) -> None:
         """Create a histogram metric with specified bucket bounds."""
         bounds = bounds or self.DEFAULT_HISTOGRAM_BOUNDS
         buckets: list[HistogramBucket] = []
@@ -452,8 +503,7 @@ class MetricCollector:
             return {}
         return {
             "buckets": [
-                {"le": b.upper_bound, "count": b.count}
-                for b in self._histograms[name]
+                {"le": b.upper_bound, "count": b.count} for b in self._histograms[name]
             ],
             "sum": self._histogram_sums.get(name, 0.0),
             "count": self._histogram_counts.get(name, 0),
@@ -461,8 +511,7 @@ class MetricCollector:
 
     # -- Summary --------------------------------------------------------
 
-    def summary_observe(self, name: str, value: float,
-                        window: int = 1000) -> None:
+    def summary_observe(self, name: str, value: float, window: int = 1000) -> None:
         """Record an observation for a summary metric."""
         if name not in self._summaries:
             self._summaries[name] = deque(maxlen=window)
@@ -547,6 +596,7 @@ class MetricCollector:
 # TraceViewer
 # ---------------------------------------------------------------------------
 
+
 class TraceViewer:
     """
     Visualises and analyses trace data from eBPF probes.
@@ -560,8 +610,14 @@ class TraceViewer:
         self._annotations: list[dict] = []
         logger.info("TraceViewer created (max_spans=%d)", max_spans)
 
-    def add_span(self, name: str, start_ns: int, end_ns: int,
-                 pid: int = 0, metadata: Optional[dict] = None) -> dict:
+    def add_span(
+        self,
+        name: str,
+        start_ns: int,
+        end_ns: int,
+        pid: int = 0,
+        metadata: Optional[dict] = None,
+    ) -> dict:
         """Add a trace span for timeline visualisation."""
         span = {
             "name": name,
@@ -608,13 +664,20 @@ class TraceViewer:
                 "timestamp_ns": span["end_ns"],
             }
             self._annotations.append(annotation)
-            logger.warning("Anomaly detected: %s took %.1f us (threshold %.1f us)",
-                           span["name"], span["duration_us"], threshold)
+            logger.warning(
+                "Anomaly detected: %s took %.1f us (threshold %.1f us)",
+                span["name"],
+                span["duration_us"],
+                threshold,
+            )
 
-    def get_timeline(self, pid: Optional[int] = None,
-                     start_ns: Optional[int] = None,
-                     end_ns: Optional[int] = None,
-                     limit: int = 500) -> list[dict]:
+    def get_timeline(
+        self,
+        pid: Optional[int] = None,
+        start_ns: Optional[int] = None,
+        end_ns: Optional[int] = None,
+        limit: int = 500,
+    ) -> list[dict]:
         """Return filtered timeline spans."""
         result: list[dict] = []
         for span in self._spans:
@@ -670,6 +733,7 @@ class TraceViewer:
 # eBPFMonitor  (main orchestrator)
 # ---------------------------------------------------------------------------
 
+
 class eBPFMonitor:
     """
     Main eBPF monitoring system for SC2 bot processes.
@@ -691,8 +755,7 @@ class eBPFMonitor:
         ("sys_futex", "futex"),
     ]
 
-    def __init__(self, sc2_pid: Optional[int] = None,
-                 collection_interval: float = 1.0):
+    def __init__(self, sc2_pid: Optional[int] = None, collection_interval: float = 1.0):
         self.sc2_pid = sc2_pid
         self.collection_interval = collection_interval
 
@@ -714,10 +777,14 @@ class eBPFMonitor:
         """Create default BPF programs for SC2 monitoring."""
         # Syscall latency program
         syscall_prog = BPFProgram("sc2_syscall_latency")
-        syscall_prog.add_map(BPFMapDef("latency_map", BPFMapType.HASH,
-                                        max_entries=4096))
-        syscall_prog.add_map(BPFMapDef("events", BPFMapType.RING_BUFFER,
-                                        value_size=256, max_entries=256 * 1024))
+        syscall_prog.add_map(
+            BPFMapDef("latency_map", BPFMapType.HASH, max_entries=4096)
+        )
+        syscall_prog.add_map(
+            BPFMapDef(
+                "events", BPFMapType.RING_BUFFER, value_size=256, max_entries=256 * 1024
+            )
+        )
         self._programs["syscall_latency"] = syscall_prog
 
         # Network I/O program
@@ -740,12 +807,15 @@ class eBPFMonitor:
         self._programs["file_ops"] = file_prog
 
         # Histograms for metric collection
-        self._collector.histogram_create("syscall_latency_us",
-                                          [1, 5, 10, 25, 50, 100, 500, 1000, 5000])
-        self._collector.histogram_create("net_latency_us",
-                                          [10, 50, 100, 500, 1000, 5000, 10000, 50000])
-        self._collector.histogram_create("alloc_size_bytes",
-                                          [64, 256, 1024, 4096, 16384, 65536, 262144])
+        self._collector.histogram_create(
+            "syscall_latency_us", [1, 5, 10, 25, 50, 100, 500, 1000, 5000]
+        )
+        self._collector.histogram_create(
+            "net_latency_us", [10, 50, 100, 500, 1000, 5000, 10000, 50000]
+        )
+        self._collector.histogram_create(
+            "alloc_size_bytes", [64, 256, 1024, 4096, 16384, 65536, 262144]
+        )
 
     def _setup_probes(self) -> None:
         """Create and attach probes for all monitored syscalls."""
@@ -808,8 +878,11 @@ class eBPFMonitor:
             target=self._collection_loop, daemon=True
         )
         self._collection_thread.start()
-        logger.info("eBPFMonitor started (%d programs, %d probes)",
-                     len(self._programs), len(self._probes))
+        logger.info(
+            "eBPFMonitor started (%d programs, %d probes)",
+            len(self._programs),
+            len(self._probes),
+        )
         return True
 
     def stop(self) -> None:
@@ -828,6 +901,7 @@ class eBPFMonitor:
     def _collection_loop(self) -> None:
         """Background thread collecting simulated metrics."""
         import random
+
         cycle = 0
         while self._running:
             cycle += 1
@@ -866,14 +940,12 @@ class eBPFMonitor:
             self._collector.counter_inc("net_bytes_sent", net_sent)
             self._collector.counter_inc("net_bytes_recv", net_recv)
             self._collector.histogram_observe("net_latency_us", net_lat)
-            self._collector.gauge_set("net_connections_active",
-                                       random.randint(1, 5))
+            self._collector.gauge_set("net_connections_active", random.randint(1, 5))
 
             # Simulate memory metrics
             alloc_size = random.choice([64, 128, 256, 512, 1024, 4096, 16384])
             self._collector.histogram_observe("alloc_size_bytes", alloc_size)
-            self._collector.gauge_set("memory_rss_mb",
-                                       random.uniform(150.0, 350.0))
+            self._collector.gauge_set("memory_rss_mb", random.uniform(150.0, 350.0))
 
             # SC2 process info
             if self._sc2_info:
@@ -886,18 +958,18 @@ class eBPFMonitor:
                 self._sc2_info.open_files = random.randint(10, 60)
                 self._sc2_info.last_update = ts
 
-                self._collector.gauge_set("sc2_cpu_percent",
-                                           self._sc2_info.cpu_percent)
-                self._collector.gauge_set("sc2_memory_mb",
-                                           self._sc2_info.memory_mb)
+                self._collector.gauge_set("sc2_cpu_percent", self._sc2_info.cpu_percent)
+                self._collector.gauge_set("sc2_memory_mb", self._sc2_info.memory_mb)
 
             # Push to ring buffer
-            self._collector.ring_buffer_push({
-                "cycle": cycle,
-                "syscall_events": len(self.SYSCALL_PROBES),
-                "net_sent": net_sent,
-                "net_recv": net_recv,
-            })
+            self._collector.ring_buffer_push(
+                {
+                    "cycle": cycle,
+                    "syscall_events": len(self.SYSCALL_PROBES),
+                    "net_sent": net_sent,
+                    "net_recv": net_recv,
+                }
+            )
 
             time.sleep(self.collection_interval)
 
@@ -976,6 +1048,7 @@ class eBPFMonitor:
 # Demo
 # ---------------------------------------------------------------------------
 
+
 def demo() -> None:
     """Demonstrate eBPF-based SC2 bot process monitoring."""
     import json
@@ -1004,8 +1077,10 @@ def demo() -> None:
         time.sleep(0.001)
         probe.record_exit(pid, tid, "reader", {"fd": i})
     stats = probe.get_stats()
-    print(f"  Probe stats: hit_count={stats['hit_count']}, "
-          f"avg_latency={stats['avg_latency_us']:.1f} us")
+    print(
+        f"  Probe stats: hit_count={stats['hit_count']}, "
+        f"avg_latency={stats['avg_latency_us']:.1f} us"
+    )
 
     # 3. MetricCollector
     print("\n[3] Metric Collection")
@@ -1051,8 +1126,10 @@ def demo() -> None:
     print(f"  Probes: {report['monitor']['probes']}")
     if report["sc2_process"]:
         p = report["sc2_process"]
-        print(f"  SC2 PID {p['pid']}: CPU={p['cpu_percent']}%, "
-              f"MEM={p['memory_mb']} MB, Syscalls={p['syscall_count']}")
+        print(
+            f"  SC2 PID {p['pid']}: CPU={p['cpu_percent']}%, "
+            f"MEM={p['memory_mb']} MB, Syscalls={p['syscall_count']}"
+        )
     print(f"  Trace spans: {report['trace_summary']['total_spans']}")
     print(f"  Anomalies: {report['trace_summary']['total_anomalies']}")
     print(f"  Ring buffer records: {report['ring_buffer_size']}")
@@ -1070,8 +1147,9 @@ def demo() -> None:
 
 
 if __name__ == "__main__":
-    logging.basicConfig(level=logging.INFO,
-                        format="%(asctime)s [%(levelname)s] %(name)s: %(message)s")
+    logging.basicConfig(
+        level=logging.INFO, format="%(asctime)s [%(levelname)s] %(name)s: %(message)s"
+    )
     demo()
 
 # Phase 652: eBPF registered

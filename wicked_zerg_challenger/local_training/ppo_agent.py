@@ -13,11 +13,12 @@ PyTorch 기반 PPO 알고리즘으로 SC2 저그 봇의 전략적 의사결정�
 6. 보상: 승리+1, 패배-1, 자원효율 보너스
 """
 
+import logging
 import os
-import numpy as np
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
-import logging
+
+import numpy as np
 
 logger = logging.getLogger("PpoAgent")
 
@@ -26,6 +27,7 @@ try:
     import torch.nn as nn
     import torch.optim as optim
     from torch.distributions import Categorical
+
     TORCH_AVAILABLE = True
 except ImportError:
     TORCH_AVAILABLE = False
@@ -46,14 +48,14 @@ STATE_DIM = 15
 #             확장, 업그레이드우선, 견제]
 ACTION_DIM = 8
 ACTION_LABELS = [
-    "ECONOMY",       # 드론 우선 생산
-    "AGGRESSIVE",    # 공격적 유닛 생산 + 공격
-    "DEFENSIVE",     # 수비 유닛 + 방어 건물
-    "TECH_UP",       # 테크 건물 우선
-    "ALL_IN",        # 전 병력 공격
-    "EXPAND",        # 확장 기지 건설
-    "UPGRADE",       # 업그레이드 우선
-    "HARASS",        # 소규모 견제
+    "ECONOMY",  # 드론 우선 생산
+    "AGGRESSIVE",  # 공격적 유닛 생산 + 공격
+    "DEFENSIVE",  # 수비 유닛 + 방어 건물
+    "TECH_UP",  # 테크 건물 우선
+    "ALL_IN",  # 전 병력 공격
+    "EXPAND",  # 확장 기지 건설
+    "UPGRADE",  # 업그레이드 우선
+    "HARASS",  # 소규모 견제
 ]
 
 
@@ -67,8 +69,12 @@ class ActorCriticNetwork(nn.Module):
     공유 레이어를 통해 특징을 추출하고, 별도의 헤드로 분기합니다.
     """
 
-    def __init__(self, state_dim: int = STATE_DIM, action_dim: int = ACTION_DIM,
-                 hidden_dim: int = 128):
+    def __init__(
+        self,
+        state_dim: int = STATE_DIM,
+        action_dim: int = ACTION_DIM,
+        hidden_dim: int = 128,
+    ):
         """
         Args:
             state_dim: 상태 벡터 차원
@@ -76,7 +82,9 @@ class ActorCriticNetwork(nn.Module):
             hidden_dim: 은닉층 차원
         """
         if not TORCH_AVAILABLE:
-            raise ImportError("PyTorch가 설치되지 않았습니다. pip install torch 로 설치하세요.")
+            raise ImportError(
+                "PyTorch가 설치되지 않았습니다. pip install torch 로 설치하세요."
+            )
 
         super().__init__()
 
@@ -155,8 +163,15 @@ class PPOMemory:
         self.values: List[float] = []
         self.dones: List[bool] = []
 
-    def store(self, state: np.ndarray, action: int, reward: float,
-              log_prob: float, value: float, done: bool = False) -> None:
+    def store(
+        self,
+        state: np.ndarray,
+        action: int,
+        reward: float,
+        log_prob: float,
+        value: float,
+        done: bool = False,
+    ) -> None:
         """경험 하나를 버퍼에 저장"""
         self.states.append(state)
         self.actions.append(action)
@@ -194,14 +209,28 @@ class PPOMemory:
         for start in range(0, n, batch_size):
             end = min(start + batch_size, n)
             batch_indices = indices[start:end]
-            batches.append({
-                "states": np.array([self.states[i] for i in batch_indices], dtype=np.float32),
-                "actions": np.array([self.actions[i] for i in batch_indices], dtype=np.int64),
-                "rewards": np.array([self.rewards[i] for i in batch_indices], dtype=np.float32),
-                "log_probs": np.array([self.log_probs[i] for i in batch_indices], dtype=np.float32),
-                "values": np.array([self.values[i] for i in batch_indices], dtype=np.float32),
-                "dones": np.array([self.dones[i] for i in batch_indices], dtype=np.float32),
-            })
+            batches.append(
+                {
+                    "states": np.array(
+                        [self.states[i] for i in batch_indices], dtype=np.float32
+                    ),
+                    "actions": np.array(
+                        [self.actions[i] for i in batch_indices], dtype=np.int64
+                    ),
+                    "rewards": np.array(
+                        [self.rewards[i] for i in batch_indices], dtype=np.float32
+                    ),
+                    "log_probs": np.array(
+                        [self.log_probs[i] for i in batch_indices], dtype=np.float32
+                    ),
+                    "values": np.array(
+                        [self.values[i] for i in batch_indices], dtype=np.float32
+                    ),
+                    "dones": np.array(
+                        [self.dones[i] for i in batch_indices], dtype=np.float32
+                    ),
+                }
+            )
 
         return batches
 
@@ -272,7 +301,9 @@ class PPOAgent:
 
         # 네트워크
         self.network = ActorCriticNetwork(STATE_DIM, ACTION_DIM).to(self.device)
-        self.optimizer = optim.Adam(self.network.parameters(), lr=learning_rate, eps=1e-5)
+        self.optimizer = optim.Adam(
+            self.network.parameters(), lr=learning_rate, eps=1e-5
+        )
 
         # 경험 버퍼
         self.memory = PPOMemory()
@@ -291,8 +322,10 @@ class PPOAgent:
         # 모델 로드 시도
         self._load_model()
 
-        logger.info(f"초기화 완료 (device={self.device}, "
-              f"state_dim={STATE_DIM}, action_dim={ACTION_DIM})")
+        logger.info(
+            f"초기화 완료 (device={self.device}, "
+            f"state_dim={STATE_DIM}, action_dim={ACTION_DIM})"
+        )
 
     def get_state_from_bot(self, bot) -> np.ndarray:
         """
@@ -358,14 +391,26 @@ class PPOAgent:
                 if hasattr(bot.intel, "get_threat_level"):
                     threat_level = bot.intel.get_threat_level()
 
-            state = np.array([
-                minerals, vespene, supply_used, supply_cap,
-                drone_count / 80.0, zergling_count / 100.0,
-                roach_count / 50.0, hydra_count / 50.0,
-                enemy_unit_count / 100.0, enemy_structure_count / 20.0,
-                base_count / 5.0, game_time,
-                upgrade_count / 10.0, score_val, threat_level
-            ], dtype=np.float32)
+            state = np.array(
+                [
+                    minerals,
+                    vespene,
+                    supply_used,
+                    supply_cap,
+                    drone_count / 80.0,
+                    zergling_count / 100.0,
+                    roach_count / 50.0,
+                    hydra_count / 50.0,
+                    enemy_unit_count / 100.0,
+                    enemy_structure_count / 20.0,
+                    base_count / 5.0,
+                    game_time,
+                    upgrade_count / 10.0,
+                    score_val,
+                    threat_level,
+                ],
+                dtype=np.float32,
+            )
 
             return state
 
@@ -373,7 +418,9 @@ class PPOAgent:
             logger.info(f"상태 추출 실패: {e}")
             return np.zeros(STATE_DIM, dtype=np.float32)
 
-    def get_action(self, state: np.ndarray, training: bool = True) -> Tuple[int, str, float]:
+    def get_action(
+        self, state: np.ndarray, training: bool = True
+    ) -> Tuple[int, str, float]:
         """
         상태에서 행동 선택
 
@@ -426,8 +473,9 @@ class PPOAgent:
         self.reward_buffer += reward
         self.total_reward += reward
 
-    def calculate_game_reward(self, won: bool, game_time: float,
-                              resource_efficiency: float = 0.0) -> float:
+    def calculate_game_reward(
+        self, won: bool, game_time: float, resource_efficiency: float = 0.0
+    ) -> float:
         """
         게임 종료 시 최종 보상 계산
 
@@ -460,8 +508,9 @@ class PPOAgent:
 
         return reward
 
-    def _compute_gae(self, rewards: np.ndarray, values: np.ndarray,
-                     dones: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
+    def _compute_gae(
+        self, rewards: np.ndarray, values: np.ndarray, dones: np.ndarray
+    ) -> Tuple[np.ndarray, np.ndarray]:
         """
         GAE (Generalized Advantage Estimation) 계산
 
@@ -548,7 +597,9 @@ class PPOAgent:
                 # 텐서 변환
                 states_t = torch.FloatTensor(all_states[batch_idx]).to(self.device)
                 actions_t = torch.LongTensor(all_actions[batch_idx]).to(self.device)
-                old_log_probs_t = torch.FloatTensor(all_old_log_probs[batch_idx]).to(self.device)
+                old_log_probs_t = torch.FloatTensor(all_old_log_probs[batch_idx]).to(
+                    self.device
+                )
                 advantages_t = torch.FloatTensor(advantages[batch_idx]).to(self.device)
                 returns_t = torch.FloatTensor(returns[batch_idx]).to(self.device)
 
@@ -561,16 +612,21 @@ class PPOAgent:
                 # PPO Clipped Objective
                 ratio = torch.exp(new_log_probs - old_log_probs_t)
                 surr1 = ratio * advantages_t
-                surr2 = torch.clamp(ratio, 1 - self.clip_epsilon, 1 + self.clip_epsilon) * advantages_t
+                surr2 = (
+                    torch.clamp(ratio, 1 - self.clip_epsilon, 1 + self.clip_epsilon)
+                    * advantages_t
+                )
                 policy_loss = -torch.min(surr1, surr2).mean()
 
                 # 가치 함수 손실
                 value_loss = nn.functional.mse_loss(state_values.squeeze(), returns_t)
 
                 # 총 손실
-                loss = (policy_loss
-                        + self.value_coeff * value_loss
-                        - self.entropy_coeff * entropy)
+                loss = (
+                    policy_loss
+                    + self.value_coeff * value_loss
+                    - self.entropy_coeff * entropy
+                )
 
                 # 역전파
                 self.optimizer.zero_grad()
@@ -602,10 +658,12 @@ class PPOAgent:
         self.memory.clear()
         self.episode_count += 1
 
-        logger.info(f"Episode {self.episode_count}: "
-              f"return={stats['episode_return']:.3f}, "
-              f"policy_loss={avg_policy_loss:.4f}, "
-              f"value_loss={avg_value_loss:.4f}")
+        logger.info(
+            f"Episode {self.episode_count}: "
+            f"return={stats['episode_return']:.3f}, "
+            f"policy_loss={avg_policy_loss:.4f}, "
+            f"value_loss={avg_value_loss:.4f}"
+        )
 
         return stats
 
@@ -622,13 +680,16 @@ class PPOAgent:
         save_path = Path(path) if path else self.model_path
         try:
             save_path.parent.mkdir(parents=True, exist_ok=True)
-            torch.save({
-                "network_state_dict": self.network.state_dict(),
-                "optimizer_state_dict": self.optimizer.state_dict(),
-                "episode_count": self.episode_count,
-                "total_reward": self.total_reward,
-                "training_history": self.training_history[-100:],  # 최근 100개만
-            }, str(save_path))
+            torch.save(
+                {
+                    "network_state_dict": self.network.state_dict(),
+                    "optimizer_state_dict": self.optimizer.state_dict(),
+                    "episode_count": self.episode_count,
+                    "total_reward": self.total_reward,
+                    "training_history": self.training_history[-100:],  # 최근 100개만
+                },
+                str(save_path),
+            )
             logger.info(f"모델 저장 완료: {save_path}")
             return True
         except Exception as e:
@@ -645,7 +706,9 @@ class PPOAgent:
                 self.episode_count = checkpoint.get("episode_count", 0)
                 self.total_reward = checkpoint.get("total_reward", 0.0)
                 self.training_history = checkpoint.get("training_history", [])
-                logger.info(f"모델 로드 완료: {self.model_path} (episode={self.episode_count})")
+                logger.info(
+                    f"모델 로드 완료: {self.model_path} (episode={self.episode_count})"
+                )
                 return True
         except Exception as e:
             logger.info(f"모델 로드 실패: {e}")

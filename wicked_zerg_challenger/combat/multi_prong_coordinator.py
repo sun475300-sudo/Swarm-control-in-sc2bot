@@ -14,7 +14,8 @@ Features:
 - 실시간 위협 레벨 평가
 """
 
-from typing import List, Dict, Optional, Set
+from typing import Dict, List, Optional, Set
+
 from utils.logger import get_logger
 
 try:
@@ -23,12 +24,15 @@ try:
     from sc2.position import Point2
     from sc2.units import Units
 except ImportError:
+
     class BotAI:
         pass
+
     class UnitTypeId:
         ZERGLING = "ZERGLING"
         ROACH = "ROACH"
         MUTALISK = "MUTALISK"
+
     Point2 = tuple
     Units = list
 
@@ -101,8 +105,10 @@ class MultiProngCoordinator:
         # ★ 캐싱: 2초마다만 병력 수 재계산 ★
         current_time = self.bot.time
         if current_time - self._last_count_update >= 2.0:
-            self._cached_army_count = self.bot.units(UnitTypeId.ZERGLING).amount + \
-                                      self.bot.units(UnitTypeId.ROACH).amount * 2
+            self._cached_army_count = (
+                self.bot.units(UnitTypeId.ZERGLING).amount
+                + self.bot.units(UnitTypeId.ROACH).amount * 2
+            )
             self._cached_muta_count = self.bot.units(UnitTypeId.MUTALISK).amount
             self._last_count_update = current_time
 
@@ -111,7 +117,9 @@ class MultiProngCoordinator:
 
     async def _plan_multi_prong_attack(self):
         """다방향 공격 계획"""
-        self.logger.info(f"[{int(self.bot.time)}s] [*] MULTI-PRONG ATTACK INITIATED [*]")
+        self.logger.info(
+            f"[{int(self.bot.time)}s] [*] MULTI-PRONG ATTACK INITIATED [*]"
+        )
 
         # Assign units to prongs
         self._assign_units_to_prongs()
@@ -149,9 +157,12 @@ class MultiProngCoordinator:
         if not hasattr(self.bot, "enemy_structures"):
             return
 
-        enemy_bases = list(self.bot.enemy_structures.filter(
-            lambda s: s.type_id in {UnitTypeId.HATCHERY, UnitTypeId.COMMANDCENTER, UnitTypeId.NEXUS}
-        ))
+        enemy_bases = list(
+            self.bot.enemy_structures.filter(
+                lambda s: s.type_id
+                in {UnitTypeId.HATCHERY, UnitTypeId.COMMANDCENTER, UnitTypeId.NEXUS}
+            )
+        )
 
         if not enemy_bases:
             return

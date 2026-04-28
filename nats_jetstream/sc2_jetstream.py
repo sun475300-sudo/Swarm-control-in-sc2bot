@@ -4,11 +4,12 @@ Streams, durable consumers, and KV store for SC2 game pipeline.
 """
 
 import asyncio
-import logging
 import json
+import logging
 from datetime import datetime
-from nats.aio.client import Client as NATS
+
 import nats.js.api as js_api
+from nats.aio.client import Client as NATS
 from nats.js.errors import NotFoundError
 
 logger = logging.getLogger(__name__)
@@ -17,7 +18,7 @@ NATS_URL = "nats://localhost:4222"
 
 # Stream definitions
 STREAMS = {
-    "SC2_GAMES":  ["sc2.games.*"],
+    "SC2_GAMES": ["sc2.games.*"],
     "SC2_EVENTS": ["sc2.events.*"],
     "SC2_ALERTS": ["sc2.alerts.*"],
 }
@@ -47,9 +48,9 @@ async def create_streams(js):
 async def create_durable_consumers(js):
     """Create durable consumers for replay processing pipeline."""
     consumers = [
-        ("SC2_GAMES",  "replay-processor", "sc2.games.>"),
-        ("SC2_EVENTS", "event-analyzer",   "sc2.events.>"),
-        ("SC2_ALERTS", "alert-handler",    "sc2.alerts.>"),
+        ("SC2_GAMES", "replay-processor", "sc2.games.>"),
+        ("SC2_EVENTS", "event-analyzer", "sc2.events.>"),
+        ("SC2_ALERTS", "alert-handler", "sc2.alerts.>"),
     ]
     for stream, consumer_name, filter_subj in consumers:
         try:
@@ -73,12 +74,14 @@ async def create_durable_consumers(js):
 async def publish_game_event(js, game_id: str, event_type: str, data: dict):
     """Publish a game event to the appropriate stream."""
     subject = f"sc2.games.{event_type}"
-    payload = json.dumps({
-        "game_id": game_id,
-        "event_type": event_type,
-        "timestamp": datetime.utcnow().isoformat(),
-        "data": data,
-    }).encode()
+    payload = json.dumps(
+        {
+            "game_id": game_id,
+            "event_type": event_type,
+            "timestamp": datetime.utcnow().isoformat(),
+            "data": data,
+        }
+    ).encode()
     ack = await js.publish(subject, payload)
     logger.info(f"Published {event_type} for {game_id}: seq={ack.seq}")
     return ack

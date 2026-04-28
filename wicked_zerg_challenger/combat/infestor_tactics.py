@@ -39,9 +39,9 @@ class InfestorTacticsController:
     def __init__(
         self,
         infiltration_distance: float = 15.0,  # Distance to infiltrate into enemy base
-        flank_distance: float = 8.0,          # Distance to flank behind enemy
-        escape_threshold: float = 0.5,        # Health ratio to trigger escape
-        energy_threshold: int = 75,           # Minimum energy for infiltration
+        flank_distance: float = 8.0,  # Distance to flank behind enemy
+        escape_threshold: float = 0.5,  # Health ratio to trigger escape
+        energy_threshold: int = 75,  # Minimum energy for infiltration
     ):
         """
         Initialize Infestor tactics controller.
@@ -59,8 +59,8 @@ class InfestorTacticsController:
 
         # Tactical state tracking
         self.infiltrating: Dict[int, Point2] = {}  # unit_tag -> target_position
-        self.flanking: Dict[int, Point2] = {}      # unit_tag -> flank_position
-        self.escaping: Set[int] = set()            # unit_tags that are escaping
+        self.flanking: Dict[int, Point2] = {}  # unit_tag -> flank_position
+        self.escaping: Set[int] = set()  # unit_tags that are escaping
 
         self.last_tactic_update: float = 0.0
         self.tactic_update_interval: float = 2.0  # Update every 2 seconds
@@ -69,7 +69,7 @@ class InfestorTacticsController:
         """Check if Burrow Movement upgrade is researched."""
         if not UpgradeId:
             return False
-        if hasattr(bot, 'state') and hasattr(bot.state, 'upgrades'):
+        if hasattr(bot, "state") and hasattr(bot.state, "upgrades"):
             return UpgradeId.TUNNELINGCLAWS in bot.state.upgrades
         return False
 
@@ -77,7 +77,7 @@ class InfestorTacticsController:
         """Check if Burrow upgrade is researched."""
         if not UpgradeId:
             return False
-        if hasattr(bot, 'state') and hasattr(bot.state, 'upgrades'):
+        if hasattr(bot, "state") and hasattr(bot.state, "upgrades"):
             return UpgradeId.BURROW in bot.state.upgrades
         return False
 
@@ -100,17 +100,21 @@ class InfestorTacticsController:
             return None
 
         # Try enemy main base
-        if hasattr(bot, 'enemy_start_locations') and bot.enemy_start_locations:
+        if hasattr(bot, "enemy_start_locations") and bot.enemy_start_locations:
             return bot.enemy_start_locations[0]
 
         # Try enemy structures
-        enemy_structures = getattr(bot, 'enemy_structures', [])
+        enemy_structures = getattr(bot, "enemy_structures", [])
         if enemy_structures and enemy_structures.exists:
             # Prefer townhalls
             townhall_types = {
-                UnitTypeId.NEXUS, UnitTypeId.COMMANDCENTER,
-                UnitTypeId.ORBITALCOMMAND, UnitTypeId.PLANETARYFORTRESS,
-                UnitTypeId.HATCHERY, UnitTypeId.LAIR, UnitTypeId.HIVE
+                UnitTypeId.NEXUS,
+                UnitTypeId.COMMANDCENTER,
+                UnitTypeId.ORBITALCOMMAND,
+                UnitTypeId.PLANETARYFORTRESS,
+                UnitTypeId.HATCHERY,
+                UnitTypeId.LAIR,
+                UnitTypeId.HIVE,
             }
             for structure in enemy_structures:
                 if structure.type_id in townhall_types:
@@ -122,10 +126,7 @@ class InfestorTacticsController:
         return None
 
     def find_flank_position(
-        self,
-        infestor: Unit,
-        enemy_army_center: Point2,
-        bot
+        self, infestor: Unit, enemy_army_center: Point2, bot
     ) -> Optional[Point2]:
         """
         Calculate flanking position behind enemy army.
@@ -138,7 +139,7 @@ class InfestorTacticsController:
         Returns:
             Position behind enemy army
         """
-        if not Point2 or not hasattr(bot, 'start_location'):
+        if not Point2 or not hasattr(bot, "start_location"):
             return None
 
         # Calculate direction from our base to enemy
@@ -175,9 +176,10 @@ class InfestorTacticsController:
 
         # Filter combat units only
         combat_units = [
-            e for e in enemy_units
-            if not getattr(e.type_id, 'name', '').endswith('WORKER')
-            and not getattr(e, 'is_structure', False)
+            e
+            for e in enemy_units
+            if not getattr(e.type_id, "name", "").endswith("WORKER")
+            and not getattr(e, "is_structure", False)
         ]
 
         if not combat_units:
@@ -187,17 +189,10 @@ class InfestorTacticsController:
         total_x = sum(u.position.x for u in combat_units)
         total_y = sum(u.position.y for u in combat_units)
 
-        return Point2((
-            total_x / len(combat_units),
-            total_y / len(combat_units)
-        ))
+        return Point2((total_x / len(combat_units), total_y / len(combat_units)))
 
     async def execute_burrow_tactics(
-        self,
-        infestors,
-        enemy_units,
-        bot,
-        current_time: float
+        self, infestors, enemy_units, bot, current_time: float
     ) -> Set[int]:
         """
         Execute burrow movement tactics.
@@ -231,15 +226,15 @@ class InfestorTacticsController:
 
         for infestor in infestors:
             unit_tag = infestor.tag
-            is_burrowed = getattr(infestor, 'is_burrowed', False)
+            is_burrowed = getattr(infestor, "is_burrowed", False)
             health_ratio = self._get_health_ratio(infestor)
-            energy = getattr(infestor, 'energy', 0)
+            energy = getattr(infestor, "energy", 0)
 
             # ★ ESCAPE MODE: Low health ★
             if health_ratio < self.escape_threshold and not is_burrowed:
                 # Burrow to escape
                 if self.has_burrow(bot):
-                    burrow_ability = getattr(AbilityId, 'BURROWDOWN_INFESTOR', None)
+                    burrow_ability = getattr(AbilityId, "BURROWDOWN_INFESTOR", None)
                     if burrow_ability:
                         try:
                             actions.append(infestor(burrow_ability))
@@ -266,7 +261,7 @@ class InfestorTacticsController:
 
                     # Burrow if not already
                     if not is_burrowed and self.has_burrow(bot):
-                        burrow_ability = getattr(AbilityId, 'BURROWDOWN_INFESTOR', None)
+                        burrow_ability = getattr(AbilityId, "BURROWDOWN_INFESTOR", None)
                         if burrow_ability:
                             try:
                                 actions.append(infestor(burrow_ability))
@@ -282,7 +277,7 @@ class InfestorTacticsController:
                 if infestor.position.distance_to(target_pos) < 5.0:
                     # Unburrow at target
                     if is_burrowed:
-                        unburrow_ability = getattr(AbilityId, 'BURROWUP_INFESTOR', None)
+                        unburrow_ability = getattr(AbilityId, "BURROWUP_INFESTOR", None)
                         if unburrow_ability:
                             try:
                                 actions.append(infestor(unburrow_ability))
@@ -310,7 +305,7 @@ class InfestorTacticsController:
 
                     # Burrow if not already
                     if not is_burrowed and self.has_burrow(bot):
-                        burrow_ability = getattr(AbilityId, 'BURROWDOWN_INFESTOR', None)
+                        burrow_ability = getattr(AbilityId, "BURROWDOWN_INFESTOR", None)
                         if burrow_ability:
                             try:
                                 actions.append(infestor(burrow_ability))
@@ -340,8 +335,8 @@ class InfestorTacticsController:
     @staticmethod
     def _get_health_ratio(unit: Unit) -> float:
         """Get unit's current health ratio (0-1)."""
-        health = getattr(unit, 'health', 0)
-        health_max = getattr(unit, 'health_max', 1)
+        health = getattr(unit, "health", 0)
+        health_max = getattr(unit, "health_max", 1)
         if health_max <= 0:
             return 1.0
         return max(0.0, min(1.0, health / health_max))

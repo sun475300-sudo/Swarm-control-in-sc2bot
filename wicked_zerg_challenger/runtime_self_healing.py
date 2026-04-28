@@ -10,9 +10,10 @@ Runtime Self-Healing System - 실행 중 자동 복구
 5. 자동 복구 조치
 """
 
-from typing import Dict, List, Optional, Set
-from utils.logger import get_logger
 import time
+from typing import Dict, List, Optional, Set
+
+from utils.logger import get_logger
 
 
 class HealthMetric:
@@ -110,9 +111,12 @@ class RuntimeSelfHealing:
 
         # 일꾼 정체 감지 (90초 동안 증가 없음)
         if game_time > 120:  # 2분 이후부터 체크
-            if hasattr(self, '_worker_check_start'):
+            if hasattr(self, "_worker_check_start"):
                 elapsed = game_time - self._worker_check_start
-                if current_worker_count <= self.last_worker_count and elapsed > self.WORKER_STALL_THRESHOLD:
+                if (
+                    current_worker_count <= self.last_worker_count
+                    and elapsed > self.WORKER_STALL_THRESHOLD
+                ):
                     # 정체 감지!
                     await self._recover_economy_stall(game_time)
                     self._worker_check_start = game_time
@@ -127,9 +131,12 @@ class RuntimeSelfHealing:
         current_supply = self.bot.supply_used
 
         if game_time > 180:  # 3분 이후부터 체크
-            if hasattr(self, '_supply_check_start'):
+            if hasattr(self, "_supply_check_start"):
                 elapsed = game_time - self._supply_check_start
-                if current_supply <= self.last_supply and elapsed > self.SUPPLY_STALL_THRESHOLD:
+                if (
+                    current_supply <= self.last_supply
+                    and elapsed > self.SUPPLY_STALL_THRESHOLD
+                ):
                     # 서플라이 정체!
                     await self._recover_production_stall(game_time)
                     self._supply_check_start = game_time
@@ -181,7 +188,7 @@ class RuntimeSelfHealing:
                 "time": game_time,
                 "type": "economy_stall",
                 "action": "Force drone production",
-                "workers": self.last_worker_count
+                "workers": self.last_worker_count,
             }
             self.recovery_actions.append(recovery_action)
             self.total_recoveries += 1
@@ -200,7 +207,7 @@ class RuntimeSelfHealing:
             "time": game_time,
             "type": "production_stall",
             "action": "Force overlord + army production",
-            "supply": self.last_supply
+            "supply": self.last_supply,
         }
         self.recovery_actions.append(recovery_action)
         self.total_recoveries += 1
@@ -210,7 +217,7 @@ class RuntimeSelfHealing:
     async def _recover_mineral_waste(self, game_time: float, minerals: int):
         """미네랄 낭비 복구"""
         # 이미 최근에 복구했으면 스킵
-        if hasattr(self, '_last_mineral_recovery'):
+        if hasattr(self, "_last_mineral_recovery"):
             if game_time - self._last_mineral_recovery < 30:
                 return
 
@@ -224,7 +231,7 @@ class RuntimeSelfHealing:
             "time": game_time,
             "type": "mineral_waste",
             "action": "Expansion or mass unit production",
-            "minerals": minerals
+            "minerals": minerals,
         }
         self.recovery_actions.append(recovery_action)
         self.total_recoveries += 1
@@ -235,7 +242,7 @@ class RuntimeSelfHealing:
     async def _recover_gas_waste(self, game_time: float, gas: int):
         """가스 낭비 복구"""
         # 이미 최근에 복구했으면 스킵
-        if hasattr(self, '_last_gas_recovery'):
+        if hasattr(self, "_last_gas_recovery"):
             if game_time - self._last_gas_recovery < 30:
                 return
 
@@ -249,7 +256,7 @@ class RuntimeSelfHealing:
             "time": game_time,
             "type": "gas_waste",
             "action": "Worker rebalance or gas unit production",
-            "gas": gas
+            "gas": gas,
         }
         self.recovery_actions.append(recovery_action)
         self.total_recoveries += 1
@@ -272,7 +279,7 @@ class RuntimeSelfHealing:
             "time": game_time,
             "type": "missing_manager",
             "action": f"Attempt to reinitialize {manager_name}",
-            "manager": manager_name
+            "manager": manager_name,
         }
         self.recovery_actions.append(recovery_action)
         self.total_recoveries += 1
@@ -281,10 +288,12 @@ class RuntimeSelfHealing:
         try:
             if manager_name == "economy":
                 from economy_manager import EconomyManager
+
                 self.bot.economy = EconomyManager(self.bot)
                 self.logger.info(f"[RECOVERY] Reinitialized EconomyManager")
             elif manager_name == "strategy_manager":
                 from strategy_manager_v2 import StrategyManagerV2
+
                 self.bot.strategy_manager = StrategyManagerV2(self.bot)
                 self.logger.info(f"[RECOVERY] Reinitialized StrategyManagerV2")
             # 다른 매니저들도 필요시 추가
@@ -308,14 +317,13 @@ class RuntimeSelfHealing:
         """통계 반환"""
         recovery_by_type = {}
         for action in self.recovery_actions:
-            action_type = action['type']
+            action_type = action["type"]
             recovery_by_type[action_type] = recovery_by_type.get(action_type, 0) + 1
 
         return {
             "total_recoveries": self.total_recoveries,
             "recovery_by_type": recovery_by_type,
             "health_status": {
-                name: metric.is_healthy
-                for name, metric in self.metrics.items()
-            }
+                name: metric.is_healthy for name, metric in self.metrics.items()
+            },
         }

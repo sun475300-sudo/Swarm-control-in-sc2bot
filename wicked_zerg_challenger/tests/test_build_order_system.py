@@ -9,17 +9,17 @@ Tests:
 - Knowledge JSON integrity (all builds, unit ratios)
 """
 
-import unittest
-from unittest.mock import Mock
-import sys
-import os
 import json
+import os
+import sys
+import unittest
 from pathlib import Path
+from unittest.mock import Mock
 
 # Add bot directory to path
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from build_order_system import BuildOrderSystem, BuildOrderType, BuildOrderStep
+from build_order_system import BuildOrderStep, BuildOrderSystem, BuildOrderType
 
 
 class MockBot:
@@ -80,14 +80,16 @@ class TestBuildOrderStepParsing(unittest.TestCase):
     def test_standard_12pool_has_steps(self):
         bot = MockBot("Race.Terran")
         system = BuildOrderSystem(bot)
-        self.assertGreater(len(system.build_steps), 0,
-                           "STANDARD_12POOL should have build steps")
+        self.assertGreater(
+            len(system.build_steps), 0, "STANDARD_12POOL should have build steps"
+        )
 
     def test_safe_14pool_has_steps(self):
         bot = MockBot("Race.Zerg")
         system = BuildOrderSystem(bot)
-        self.assertGreater(len(system.build_steps), 0,
-                           "SAFE_14POOL should have build steps")
+        self.assertGreater(
+            len(system.build_steps), 0, "SAFE_14POOL should have build steps"
+        )
 
     def test_build_steps_have_supply(self):
         bot = MockBot("Race.Terran")
@@ -101,8 +103,11 @@ class TestBuildOrderStepParsing(unittest.TestCase):
         system = BuildOrderSystem(bot)
         valid_actions = {"build", "train", "expand", "morph"}
         for step in system.build_steps:
-            self.assertIn(step.action, valid_actions,
-                          f"Step action '{step.action}' not in valid actions")
+            self.assertIn(
+                step.action,
+                valid_actions,
+                f"Step action '{step.action}' not in valid actions",
+            )
 
 
 class TestKnowledgeJsonIntegrity(unittest.TestCase):
@@ -110,9 +115,10 @@ class TestKnowledgeJsonIntegrity(unittest.TestCase):
 
     def setUp(self):
         json_path = Path(__file__).parent.parent / "commander_knowledge.json"
-        self.assertTrue(json_path.exists(),
-                        f"commander_knowledge.json not found at {json_path}")
-        with open(json_path, 'r', encoding='utf-8') as f:
+        self.assertTrue(
+            json_path.exists(), f"commander_knowledge.json not found at {json_path}"
+        )
+        with open(json_path, "r", encoding="utf-8") as f:
             self.knowledge = json.load(f)
 
     def test_build_orders_section_exists(self):
@@ -130,8 +136,7 @@ class TestKnowledgeJsonIntegrity(unittest.TestCase):
     def test_all_builds_have_steps(self):
         for name, build in self.knowledge["build_orders"].items():
             self.assertIn("steps", build, f"{name} missing 'steps'")
-            self.assertGreater(len(build["steps"]), 0,
-                               f"{name} has empty steps")
+            self.assertGreater(len(build["steps"]), 0, f"{name} has empty steps")
 
     def test_all_builds_have_name(self):
         for key, build in self.knowledge["build_orders"].items():
@@ -145,8 +150,7 @@ class TestKnowledgeJsonIntegrity(unittest.TestCase):
         for race in ["Terran", "Protoss", "Zerg"]:
             self.assertIn(race, ratios, f"Missing unit ratios for {race}")
             for phase in ["early", "mid", "late"]:
-                self.assertIn(phase, ratios[race],
-                              f"Missing {phase} phase for {race}")
+                self.assertIn(phase, ratios[race], f"Missing {phase} phase for {race}")
 
     def test_unit_ratios_sum_to_one(self):
         """Each phase's ratios should approximately sum to 1.0."""
@@ -154,8 +158,9 @@ class TestKnowledgeJsonIntegrity(unittest.TestCase):
         for race, phases in ratios.items():
             for phase, units in phases.items():
                 total = sum(units.values())
-                self.assertAlmostEqual(total, 1.0, places=1,
-                                       msg=f"{race}/{phase} ratios sum to {total}")
+                self.assertAlmostEqual(
+                    total, 1.0, places=1, msg=f"{race}/{phase} ratios sum to {total}"
+                )
 
     def test_counter_rules_exist(self):
         self.assertIn("counter_rules", self.knowledge)

@@ -36,11 +36,11 @@ class EconomySnapshot:
     game_time: float
     minerals: int
     vespene: int
-    mineral_income: float    # per minute
-    vespene_income: float    # per minute
+    mineral_income: float  # per minute
+    vespene_income: float  # per minute
     worker_count: int
     base_count: int
-    spending_efficiency: float   # resources spent / resources collected
+    spending_efficiency: float  # resources spent / resources collected
 
 
 class EconomyManager:
@@ -67,7 +67,9 @@ class EconomyManager:
     # Base registration
     # ------------------------------------------------------------------
 
-    def register_base(self, location_tag: int, mineral_patches: int = 8, geysers: int = 2):
+    def register_base(
+        self, location_tag: int, mineral_patches: int = 8, geysers: int = 2
+    ):
         self.bases.append(BaseInfo(location_tag, mineral_patches, geysers))
 
     def remove_base(self, location_tag: int):
@@ -77,10 +79,7 @@ class EconomyManager:
     # Worker distribution
     # ------------------------------------------------------------------
 
-    def optimal_worker_distribution(
-        self,
-        total_workers: int
-    ) -> Dict[int, int]:
+    def optimal_worker_distribution(self, total_workers: int) -> Dict[int, int]:
         """
         Return a mapping of {base_tag: worker_count} for optimal saturation.
         Fills bases in order until all workers are assigned.
@@ -99,7 +98,10 @@ class EconomyManager:
         # Second pass: distribute excess to bases with room
         if remaining > 0:
             for base in self.bases:
-                extra = min(remaining, self.MAX_WORKERS_PER_BASE - distribution[base.location_tag])
+                extra = min(
+                    remaining,
+                    self.MAX_WORKERS_PER_BASE - distribution[base.location_tag],
+                )
                 if extra > 0:
                     distribution[base.location_tag] += extra
                     remaining -= extra
@@ -121,15 +123,16 @@ class EconomyManager:
         return results
 
     def transfer_workers_recommendation(
-        self,
-        worker_count: int
+        self, worker_count: int
     ) -> Optional[Tuple[int, int, int]]:
         """
         Suggest (from_base_tag, to_base_tag, count) for worker transfer.
         Returns None if no transfer is beneficial.
         """
         over_saturated = [b for b in self.bases if b.over_saturation > 0]
-        under_saturated = [b for b in self.bases if b.assigned_workers < b.ideal_workers]
+        under_saturated = [
+            b for b in self.bases if b.assigned_workers < b.ideal_workers
+        ]
         if not over_saturated or not under_saturated:
             return None
         src = max(over_saturated, key=lambda b: b.over_saturation)
@@ -142,11 +145,7 @@ class EconomyManager:
     # ------------------------------------------------------------------
 
     def gas_timing_calculator(
-        self,
-        opponent_race: str,
-        supply_used: int,
-        has_pool: bool,
-        has_lair: bool
+        self, opponent_race: str, supply_used: int, has_pool: bool, has_lair: bool
     ) -> bool:
         """
         Return True when it is the right time to start taking gas.
@@ -155,9 +154,9 @@ class EconomyManager:
             return False
 
         thresholds = {
-            "Terran":  self.GAS_TIMING_SUPPLY_ZVT,
+            "Terran": self.GAS_TIMING_SUPPLY_ZVT,
             "Protoss": self.GAS_TIMING_SUPPLY_ZVP,
-            "Zerg":    self.GAS_TIMING_SUPPLY_ZVZ,
+            "Zerg": self.GAS_TIMING_SUPPLY_ZVZ,
         }
         threshold = thresholds.get(opponent_race, 18)
 
@@ -177,7 +176,7 @@ class EconomyManager:
         worker_count: int,
         base_count: int,
         army_supply: int,
-        opponent_aggression: float = 0.0
+        opponent_aggression: float = 0.0,
     ) -> bool:
         """
         Return True when expanding is economically justified.

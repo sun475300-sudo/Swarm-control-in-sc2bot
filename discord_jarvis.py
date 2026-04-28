@@ -1,22 +1,22 @@
-
-import os
-import sys
-import time
-import logging
 import asyncio
+import base64
+import csv
+import io
+import json
+import logging
+import os
+import re
 import signal
 import socket
-import discord
-import aiohttp
-import json
 import subprocess
-import re
-import io
-import csv
-import base64
-from collections import deque, OrderedDict
-from datetime import datetime, timezone, timedelta
-from typing import Optional, List, Dict, Any
+import sys
+import time
+from collections import OrderedDict, deque
+from datetime import datetime, timedelta, timezone
+from typing import Any, Dict, List, Optional
+
+import aiohttp
+import discord
 from discord import app_commands
 from discord.ext import commands, tasks
 
@@ -48,7 +48,12 @@ try:
 except Exception as e:
     logging.warning(f"system_mcp_server 임포트 실패: {type(e).__name__}: {e}")
     import traceback
-    with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "import_error.log"), "w", encoding="utf-8") as _ef:
+
+    with open(
+        os.path.join(os.path.dirname(os.path.abspath(__file__)), "import_error.log"),
+        "w",
+        encoding="utf-8",
+    ) as _ef:
         _ef.write(f"system_mcp_server import failed: {type(e).__name__}: {e}\n")
         traceback.print_exc(file=_ef)
 
@@ -58,7 +63,14 @@ try:
 except Exception as e:
     logging.warning(f"crypto_mcp_server 임포트 실패: {type(e).__name__}: {e}")
     import traceback
-    with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "import_error_crypto.log"), "w", encoding="utf-8") as _ef:
+
+    with open(
+        os.path.join(
+            os.path.dirname(os.path.abspath(__file__)), "import_error_crypto.log"
+        ),
+        "w",
+        encoding="utf-8",
+    ) as _ef:
         _ef.write(f"crypto_mcp_server import failed: {type(e).__name__}: {e}\n")
         traceback.print_exc(file=_ef)
 
@@ -70,8 +82,8 @@ except Exception as e:
 
 # ── Tool Registry & System Prompts ──
 try:
-    from tool_registry import get_tool_registry
     from system_prompts import build_system_prompt
+    from tool_registry import get_tool_registry
 except ImportError as e:
     logging.warning(f"tool_registry/system_prompts 임포트 실패: {e}")
     get_tool_registry = None
@@ -80,8 +92,8 @@ except ImportError as e:
 UpbitClient = None
 upbit_config = None
 try:
-    from crypto_trading.upbit_client import UpbitClient
     from crypto_trading import config as upbit_config
+    from crypto_trading.upbit_client import UpbitClient
 except ImportError as e:
     logging.warning(f"crypto_trading 임포트 실패: {e}")
 
@@ -105,11 +117,19 @@ set_user_language = None
 ActivityManager = None
 try:
     from discord_advanced_features import (
-        TradeView, CoinSelectView, generate_price_chart,
-        ScheduledReporter, setup_advanced_features, AdvancedCommandsCog,
+        ActivityManager,
+        AdvancedCommandsCog,
+        CoinSelectView,
+        ScheduledReporter,
+        TradeView,
         create_thread_for_long_conversation,
-        get_text, get_user_language, set_user_language, ActivityManager,
+        generate_price_chart,
+        get_text,
+        get_user_language,
+        set_user_language,
+        setup_advanced_features,
     )
+
     ADVANCED_AVAILABLE = True
 except ImportError as e:
     logging.warning(f"discord_advanced_features 임포트 실패: {e}")
@@ -122,12 +142,15 @@ try:
 except ImportError as e:
     logging.warning(f"jarvis_features 임포트 실패: {e}")
 
-MCP_AVAILABLE = any([sc2_mcp_server, system_mcp_server, crypto_mcp_server, agentic_mcp_server])
+MCP_AVAILABLE = any(
+    [sc2_mcp_server, system_mcp_server, crypto_mcp_server, agentic_mcp_server]
+)
 
 # ── Dispatchers (점진적 마이그레이션 — 레거시 폴백 포함) ──
 try:
     from jarvis_features.command_dispatcher import dispatcher as command_dispatcher
     from jarvis_features.keyword_handlers import register_all as _register_kw_handlers
+
     _register_kw_handlers(command_dispatcher)
 except ImportError as e:
     command_dispatcher = None
@@ -166,6 +189,7 @@ except ImportError:
 # ── Logging Setup (unified_logger 통합: 일별 로테이션 + 30일 보존) ──
 try:
     from unified_logger import UnifiedLogger
+
     UnifiedLogger.setup(
         log_dir=os.path.join(os.path.dirname(os.path.abspath(__file__)), "logs"),
         json_format=False,
@@ -178,23 +202,34 @@ try:
     logger = UnifiedLogger.get_logger("JarvisBot")
 except ImportError:
     # fallback: unified_logger 없을 때 기본 설정
-    logging.basicConfig(level=logging.INFO, format='%(asctime)s [%(levelname)s]JARVIS: %(message)s')
+    logging.basicConfig(
+        level=logging.INFO, format="%(asctime)s [%(levelname)s]JARVIS: %(message)s"
+    )
     logger = logging.getLogger("JarvisBot")
     logger.setLevel(logging.DEBUG)
-    _jarvis_fh = logging.FileHandler(os.path.join(os.path.dirname(os.path.abspath(__file__)), "jarvis_bot.log"), encoding="utf-8")
+    _jarvis_fh = logging.FileHandler(
+        os.path.join(os.path.dirname(os.path.abspath(__file__)), "jarvis_bot.log"),
+        encoding="utf-8",
+    )
     _jarvis_fh.setLevel(logging.DEBUG)
-    _jarvis_fh.setFormatter(logging.Formatter('%(asctime)s [%(levelname)s] %(message)s'))
+    _jarvis_fh.setFormatter(
+        logging.Formatter("%(asctime)s [%(levelname)s] %(message)s")
+    )
     logger.addHandler(_jarvis_fh)
+
 
 class RateLimitError(Exception):
     """API 한도 초과 (429) 에러"""
+
     def __init__(self, message: str, retry_after: int = None):
         super().__init__(message)
         self.retry_after = retry_after
 
+
 # ── Environment Variables ──
 try:
     from config_loader import load_dotenv_jarvis
+
     load_dotenv_jarvis()
 except ImportError:
     # fallback: config_loader 없을 때 직접 파싱
@@ -220,13 +255,17 @@ TRADER_ROLE_NAME = os.environ.get("TRADER_ROLE_NAME", "Trader")
 # 모델별 쿨다운 관리: {model_name: datetime_when_available}
 _rate_limit_cooldowns: Dict[str, datetime] = {}
 # ── JARVIS Configuration Constants ──
-RATE_LIMIT_COOLDOWN_SECONDS = 60      # 429 에러 시 쿨다운
+RATE_LIMIT_COOLDOWN_SECONDS = 60  # 429 에러 시 쿨다운
 HISTORY_TURNS = int(os.environ.get("JARVIS_HISTORY_TURNS", "5"))  # 대화 히스토리 턴 수
 try:
     from jarvis_features.constants import (
-        HTTP_TIMEOUT_GEMINI, HTTP_TIMEOUT_DEFAULT, HTTP_TIMEOUT_PROXY,
-        DISCORD_MSG_LIMIT, SEARCH_RESULT_LIMIT, ATTACHMENT_TEXT_LIMIT,
+        ATTACHMENT_TEXT_LIMIT,
+        DISCORD_MSG_LIMIT,
+        HTTP_TIMEOUT_DEFAULT,
+        HTTP_TIMEOUT_GEMINI,
+        HTTP_TIMEOUT_PROXY,
         PROMPT_TRUNCATE_LIMIT,
+        SEARCH_RESULT_LIMIT,
     )
 except ImportError:
     HTTP_TIMEOUT_GEMINI = 45
@@ -239,29 +278,77 @@ except ImportError:
 
 # ── 권한 체크: 위험한 명령어는 봇 오너 또는 관리자만 실행 가능 ──
 BOT_OWNER_ID = os.environ.get("BOT_OWNER_ID", "")
-ADMIN_ROLE_NAMES = {r.lower() for r in os.environ.get("ADMIN_ROLE_NAMES", "Admin,관리자,Trader").split(",")}
+ADMIN_ROLE_NAMES = {
+    r.lower()
+    for r in os.environ.get("ADMIN_ROLE_NAMES", "Admin,관리자,Trader").split(",")
+}
 
 # ── Coin Ticker Mappings (7-5) ──
 COIN_NAME_MAP: Dict[str, str] = {
-    "비트코인": "KRW-BTC", "비코": "KRW-BTC", "btc": "KRW-BTC",
-    "이더리움": "KRW-ETH", "이더": "KRW-ETH", "eth": "KRW-ETH",
-    "리플": "KRW-XRP", "xrp": "KRW-XRP",
-    "솔라나": "KRW-SOL", "sol": "KRW-SOL",
-    "도지": "KRW-DOGE", "doge": "KRW-DOGE",
-    "에이다": "KRW-ADA", "ada": "KRW-ADA",
-    "폴카닷": "KRW-DOT", "dot": "KRW-DOT",
-    "아발란체": "KRW-AVAX", "avax": "KRW-AVAX",
-    "매틱": "KRW-MATIC", "matic": "KRW-MATIC",
-    "체인링크": "KRW-LINK", "link": "KRW-LINK",
-    "샌드박스": "KRW-SAND", "sand": "KRW-SAND",
-    "시바": "KRW-SHIB", "shib": "KRW-SHIB",
+    "비트코인": "KRW-BTC",
+    "비코": "KRW-BTC",
+    "btc": "KRW-BTC",
+    "이더리움": "KRW-ETH",
+    "이더": "KRW-ETH",
+    "eth": "KRW-ETH",
+    "리플": "KRW-XRP",
+    "xrp": "KRW-XRP",
+    "솔라나": "KRW-SOL",
+    "sol": "KRW-SOL",
+    "도지": "KRW-DOGE",
+    "doge": "KRW-DOGE",
+    "에이다": "KRW-ADA",
+    "ada": "KRW-ADA",
+    "폴카닷": "KRW-DOT",
+    "dot": "KRW-DOT",
+    "아발란체": "KRW-AVAX",
+    "avax": "KRW-AVAX",
+    "매틱": "KRW-MATIC",
+    "matic": "KRW-MATIC",
+    "체인링크": "KRW-LINK",
+    "link": "KRW-LINK",
+    "샌드박스": "KRW-SAND",
+    "sand": "KRW-SAND",
+    "시바": "KRW-SHIB",
+    "shib": "KRW-SHIB",
 }
-TICKER_EXCLUDE: frozenset = frozenset({
-    "SSH", "MCP", "CPU", "GPU", "RAM", "DNS", "PID", "KST", "API",
-    "THE", "AND", "FOR", "NOT", "ALL", "THIS", "THAT", "HELP",
-    "SHOW", "FROM", "WITH", "YOUR", "WHAT", "HOW", "ARE", "HAS",
-    "GET", "SET", "USE", "CAN", "RUN", "GIT", "BOT", "LOG",
-})
+TICKER_EXCLUDE: frozenset = frozenset(
+    {
+        "SSH",
+        "MCP",
+        "CPU",
+        "GPU",
+        "RAM",
+        "DNS",
+        "PID",
+        "KST",
+        "API",
+        "THE",
+        "AND",
+        "FOR",
+        "NOT",
+        "ALL",
+        "THIS",
+        "THAT",
+        "HELP",
+        "SHOW",
+        "FROM",
+        "WITH",
+        "YOUR",
+        "WHAT",
+        "HOW",
+        "ARE",
+        "HAS",
+        "GET",
+        "SET",
+        "USE",
+        "CAN",
+        "RUN",
+        "GIT",
+        "BOT",
+        "LOG",
+    }
+)
 
 # ── JARVIS Persona Preamble (프록시 system 무시 대비 — user 메시지에 강제 결합) ──
 _PERSONA_PREAMBLE = (
@@ -279,17 +366,18 @@ _PERSONA_PREAMBLE = (
 
 # ── Regex: 도움말/기능 안내 Intent (최우선 매칭) ──
 import re as _re
+
 _HELP_PATTERN = _re.compile(
-    r'(도움|help|명령|기능|뭐\s*할\s*수\s*있|가능한\s*일|할\s*수\s*있|'
-    r'뭐해|뭘\s*할|무엇을|능력|사용법|할\s*줄|알려.*기능|'
-    r'설명.*기능|기능.*설명|기능.*알려)',
-    _re.IGNORECASE
+    r"(도움|help|명령|기능|뭐\s*할\s*수\s*있|가능한\s*일|할\s*수\s*있|"
+    r"뭐해|뭘\s*할|무엇을|능력|사용법|할\s*줄|알려.*기능|"
+    r"설명.*기능|기능.*설명|기능.*알려)",
+    _re.IGNORECASE,
 )
 
 # ── Regex: 이미지 생성 Intent (그림/이미지 문맥 필수) ──
 _IMAGE_GEN_PATTERN = _re.compile(
-    r'(그려\s*줘|그림\s*(그려|만들|생성)|이미지\s*(생성|만들)|draw\b|만들어\s*줘\s*그림)',
-    _re.IGNORECASE
+    r"(그려\s*줘|그림\s*(그려|만들|생성)|이미지\s*(생성|만들)|draw\b|만들어\s*줘\s*그림)",
+    _re.IGNORECASE,
 )
 
 
@@ -297,7 +385,10 @@ def _is_authorized(message: discord.Message) -> bool:
     """봇 오너 또는 관리자 역할 보유 확인. 위험한 명령어에 사용."""
     if BOT_OWNER_ID and str(message.author.id) == BOT_OWNER_ID:
         return True
-    if hasattr(message.author, "guild_permissions") and message.author.guild_permissions.administrator:
+    if (
+        hasattr(message.author, "guild_permissions")
+        and message.author.guild_permissions.administrator
+    ):
         return True
     if hasattr(message.author, "roles"):
         user_roles = {r.name.lower() for r in message.author.roles}
@@ -319,7 +410,9 @@ def _is_trader(message: discord.Message) -> bool:
 
 def _detect_language_direction(text: str) -> tuple:
     """한국어 문자 비율로 원본/대상 언어를 자동 감지. Returns (target, source)."""
-    korean_chars = sum(1 for c in text if '\uac00' <= c <= '\ud7a3' or '\u3131' <= c <= '\u3163')
+    korean_chars = sum(
+        1 for c in text if "\uac00" <= c <= "\ud7a3" or "\u3131" <= c <= "\u3163"
+    )
     ratio = korean_chars / max(len(text), 1)
     if ratio > 0.3:
         return ("en", "ko")  # 한국어 텍스트 → 영어로 번역
@@ -328,19 +421,58 @@ def _detect_language_direction(text: str) -> tuple:
 
 # ── 보안: SSH 호스트 화이트리스트 (P3-1) ──
 _SSH_ALLOWED_HOSTS = frozenset(
-    h.strip().lower() for h in os.environ.get("SSH_ALLOWED_HOSTS", "").split(",") if h.strip()
+    h.strip().lower()
+    for h in os.environ.get("SSH_ALLOWED_HOSTS", "").split(",")
+    if h.strip()
 )
 
 # ── 보안: SSH 화이트리스트 (Fix 2-1) ──
-_SSH_ALLOWED_COMMANDS = frozenset({
-    "ls", "cat", "head", "tail", "grep", "find", "df", "du",
-    "free", "uptime", "top", "htop", "ps", "whoami", "hostname",
-    "pwd", "date", "uname", "echo", "wc", "sort", "uniq",
-    "systemctl", "journalctl", "docker", "nvidia-smi", "sensors",
-    "ifconfig", "ip", "ping", "traceroute", "netstat", "ss",
-    "which", "file", "stat", "lsblk", "lscpu", "lsof",
-})
-_SSH_BLOCKED_CHARS = frozenset({"|", ";", "&&", "||", "`", "$(", ">>", ">", "<", "\n", "\r"})
+_SSH_ALLOWED_COMMANDS = frozenset(
+    {
+        "ls",
+        "cat",
+        "head",
+        "tail",
+        "grep",
+        "find",
+        "df",
+        "du",
+        "free",
+        "uptime",
+        "top",
+        "htop",
+        "ps",
+        "whoami",
+        "hostname",
+        "pwd",
+        "date",
+        "uname",
+        "echo",
+        "wc",
+        "sort",
+        "uniq",
+        "systemctl",
+        "journalctl",
+        "docker",
+        "nvidia-smi",
+        "sensors",
+        "ifconfig",
+        "ip",
+        "ping",
+        "traceroute",
+        "netstat",
+        "ss",
+        "which",
+        "file",
+        "stat",
+        "lsblk",
+        "lscpu",
+        "lsof",
+    }
+)
+_SSH_BLOCKED_CHARS = frozenset(
+    {"|", ";", "&&", "||", "`", "$(", ">>", ">", "<", "\n", "\r"}
+)
 
 
 def _is_ssh_command_safe(command: str) -> bool:
@@ -366,15 +498,18 @@ def _validate_max_len(max_len):
         if len(args) > max_len:
             return False, f"인자 길이 초과 (max {max_len})"
         return True, ""
+
     return validator
 
 
 def _validate_pattern(pattern):
     _compiled = re.compile(pattern)
+
     def validator(args):
         if not _compiled.match(args.strip()):
             return False, "잘못된 형식"
         return True, ""
+
     return validator
 
 
@@ -402,16 +537,41 @@ def _validate_tool_args(tool_name: str, tool_args: str) -> tuple:
 # ── 보안: Python 코드 AST 검사 (Fix 2-3) ──
 import ast as _ast
 
-_PYTHON_BLOCKED_MODULES = frozenset({
-    "os", "subprocess", "shutil", "sys", "ctypes", "socket",
-    "http", "urllib", "requests", "pathlib", "importlib",
-    "signal", "multiprocessing", "threading",
-})
-_PYTHON_BLOCKED_BUILTINS = frozenset({
-    "exec", "eval", "compile", "__import__", "open",
-    "getattr", "setattr", "delattr", "globals", "locals",
-    "breakpoint", "exit", "quit",
-})
+_PYTHON_BLOCKED_MODULES = frozenset(
+    {
+        "os",
+        "subprocess",
+        "shutil",
+        "sys",
+        "ctypes",
+        "socket",
+        "http",
+        "urllib",
+        "requests",
+        "pathlib",
+        "importlib",
+        "signal",
+        "multiprocessing",
+        "threading",
+    }
+)
+_PYTHON_BLOCKED_BUILTINS = frozenset(
+    {
+        "exec",
+        "eval",
+        "compile",
+        "__import__",
+        "open",
+        "getattr",
+        "setattr",
+        "delattr",
+        "globals",
+        "locals",
+        "breakpoint",
+        "exit",
+        "quit",
+    }
+)
 
 
 def _ast_check_python_code(code: str) -> tuple:
@@ -457,19 +617,30 @@ def _redact_sensitive(text: str, max_len: int = 60) -> str:
 
 
 # ── Model Performance Tracking ──
-_model_stats: Dict[str, Dict[str, Any]] = {}  # model -> {success, fail, total_ms, last_error}
+_model_stats: Dict[str, Dict[str, Any]] = (
+    {}
+)  # model -> {success, fail, total_ms, last_error}
 _MODEL_STATS_MAX = 50  # ★ 메모리 릭 방지: 최대 50개 모델만 추적 ★
 _model_stats_lock = asyncio.Lock()  # 동시 접근 보호
 _global_model_selector = None  # ModelSelector 인스턴스 (적응형 라우팅 연동)
+
 
 def _track_model_result(model: str, success: bool, elapsed_ms: float = 0):
     """모델별 성공/실패율 및 응답시간 추적 + ModelSelector 피드백 (event loop 내 호출 전용)"""
     now = time.time()
     if model not in _model_stats:
         if len(_model_stats) >= _MODEL_STATS_MAX:
-            oldest = min(_model_stats, key=lambda k: _model_stats[k].get("last_used", 0))
+            oldest = min(
+                _model_stats, key=lambda k: _model_stats[k].get("last_used", 0)
+            )
             del _model_stats[oldest]
-        _model_stats[model] = {"success": 0, "fail": 0, "total_ms": 0, "calls": 0, "last_used": now}
+        _model_stats[model] = {
+            "success": 0,
+            "fail": 0,
+            "total_ms": 0,
+            "calls": 0,
+            "last_used": now,
+        }
     _model_stats[model]["calls"] += 1
     _model_stats[model]["last_used"] = now
     if success:
@@ -483,12 +654,14 @@ def _track_model_result(model: str, success: bool, elapsed_ms: float = 0):
         except Exception as e:
             logger.debug(f"ModelSelector 메트릭 기록 실패: {e}")
 
+
 def _cleanup_rate_limits():
     """만료된 레이트 리밋 엔트리 정리 (메모리 누수 방지)"""
     now = datetime.now(timezone.utc)
     expired = [k for k, v in _rate_limit_cooldowns.items() if v < now]
     for k in expired:
         del _rate_limit_cooldowns[k]
+
 
 def _safe_retry_after(headers, default: int = 60) -> int:
     """retry-after 헤더를 안전하게 파싱 (비숫자/누락 시 default 반환)"""
@@ -498,15 +671,20 @@ def _safe_retry_after(headers, default: int = 60) -> int:
     except (ValueError, TypeError):
         return default
 
+
 # ── Coin Emoji Mapping ──
 COIN_EMOJI = {
-    "BTC": "\U0001FA99", "ETH": "\U0001F4CE", "XRP": "\U0001F4B1",
-    "SOL": "\u2600\uFE0F", "DOGE": "\U0001F436",
+    "BTC": "\U0001fa99",
+    "ETH": "\U0001f4ce",
+    "XRP": "\U0001f4b1",
+    "SOL": "\u2600\ufe0f",
+    "DOGE": "\U0001f436",
 }
 
 # ── Global Instances ──
 # Lazy init: UpbitClient is instantiated after env vars are loaded (above).
 upbit_client = None
+
 
 def _get_upbit_client():
     """Lazy-initialize UpbitClient after env loading."""
@@ -522,18 +700,20 @@ def _get_upbit_client():
 # ── Embed Utilities ──
 def _price_embed(ticker: str, price: float, change_pct=None) -> discord.Embed:
     coin = ticker.replace("KRW-", "")
-    emoji = COIN_EMOJI.get(coin, "\U0001F4B0")
+    emoji = COIN_EMOJI.get(coin, "\U0001f4b0")
     if change_pct is not None:
         if change_pct > 0:
-            color, arrow = discord.Color.red(), "\u25B2"
+            color, arrow = discord.Color.red(), "\u25b2"
         elif change_pct < 0:
-            color, arrow = discord.Color.blue(), "\u25BC"
+            color, arrow = discord.Color.blue(), "\u25bc"
         else:
-            color, arrow = discord.Color.greyple(), "\u25AC"
+            color, arrow = discord.Color.greyple(), "\u25ac"
         change_str = f"{arrow} {change_pct:+.2f}%"
     else:
         color, change_str = discord.Color.gold(), ""
-    embed = discord.Embed(title=f"{emoji} {coin} 시세", color=color, timestamp=datetime.now(timezone.utc))
+    embed = discord.Embed(
+        title=f"{emoji} {coin} 시세", color=color, timestamp=datetime.now(timezone.utc)
+    )
     embed.add_field(name="현재가", value=f"**{price:,.0f}** KRW", inline=True)
     if change_str:
         embed.add_field(name="24h 변동", value=change_str, inline=True)
@@ -542,12 +722,18 @@ def _price_embed(ticker: str, price: float, change_pct=None) -> discord.Embed:
 
 
 def _multi_price_embed(prices: dict, title: str = "관심 코인 시세") -> discord.Embed:
-    embed = discord.Embed(title=f"\U0001F4CA {title}", color=discord.Color.dark_gold(), timestamp=datetime.now(timezone.utc))
+    embed = discord.Embed(
+        title=f"\U0001f4ca {title}",
+        color=discord.Color.dark_gold(),
+        timestamp=datetime.now(timezone.utc),
+    )
     for ticker, price in prices.items():
         coin = ticker.replace("KRW-", "")
-        emoji = COIN_EMOJI.get(coin, "\U0001F4B0")
+        emoji = COIN_EMOJI.get(coin, "\U0001f4b0")
         if price and price > 0:
-            embed.add_field(name=f"{emoji} {coin}", value=f"**{price:,.0f}** KRW", inline=True)
+            embed.add_field(
+                name=f"{emoji} {coin}", value=f"**{price:,.0f}** KRW", inline=True
+            )
         else:
             embed.add_field(name=f"{emoji} {coin}", value="조회 실패", inline=True)
     embed.set_footer(text="JARVIS Crypto | Upbit")
@@ -555,8 +741,16 @@ def _multi_price_embed(prices: dict, title: str = "관심 코인 시세") -> dis
 
 
 def _balance_embed(balances: list, total_krw: float) -> discord.Embed:
-    embed = discord.Embed(title="\U0001F4B0 포트폴리오 잔고", color=discord.Color.green(), timestamp=datetime.now(timezone.utc))
-    embed.add_field(name="\U0001F3E6 총 자산 (KRW 환산)", value=f"**{total_krw:,.0f}** KRW", inline=False)
+    embed = discord.Embed(
+        title="\U0001f4b0 포트폴리오 잔고",
+        color=discord.Color.green(),
+        timestamp=datetime.now(timezone.utc),
+    )
+    embed.add_field(
+        name="\U0001f3e6 총 자산 (KRW 환산)",
+        value=f"**{total_krw:,.0f}** KRW",
+        inline=False,
+    )
     for b in balances:
         currency = b.get("currency", "")
         balance = float(b.get("balance", 0))
@@ -565,7 +759,7 @@ def _balance_embed(balances: list, total_krw: float) -> discord.Embed:
         if total <= 0:
             continue
         avg_price = float(b.get("avg_buy_price", 0))
-        emoji = COIN_EMOJI.get(currency, "\U0001F4B0")
+        emoji = COIN_EMOJI.get(currency, "\U0001f4b0")
         if currency == "KRW":
             value_str = f"**{total:,.0f}** KRW"
         else:
@@ -580,23 +774,34 @@ def _balance_embed(balances: list, total_krw: float) -> discord.Embed:
 
 
 def _error_embed(message: str) -> discord.Embed:
-    return discord.Embed(title="\u274C 오류", description=message, color=discord.Color.dark_red(), timestamp=datetime.now(timezone.utc))
+    return discord.Embed(
+        title="\u274c 오류",
+        description=message,
+        color=discord.Color.dark_red(),
+        timestamp=datetime.now(timezone.utc),
+    )
 
 
 def _trade_result_embed(action: str, ticker: str, result: dict) -> discord.Embed:
     coin = ticker.replace("KRW-", "")
     is_buy = action == "매수"
     color = discord.Color.red() if is_buy else discord.Color.blue()
-    emoji = "\U0001F4C8" if is_buy else "\U0001F4C9"
-    embed = discord.Embed(title=f"{emoji} {coin} {action} {'완료' if result else '실패'}", color=color, timestamp=datetime.now(timezone.utc))
+    emoji = "\U0001f4c8" if is_buy else "\U0001f4c9"
+    embed = discord.Embed(
+        title=f"{emoji} {coin} {action} {'완료' if result else '실패'}",
+        color=color,
+        timestamp=datetime.now(timezone.utc),
+    )
     if result:
         if result.get("dry_run"):
-            embed.add_field(name="모드", value="\u26A0\uFE0F DRY-RUN (모의)", inline=False)
+            embed.add_field(
+                name="모드", value="\u26a0\ufe0f DRY-RUN (모의)", inline=False
+            )
         if "uuid" in result:
             embed.add_field(name="주문 ID", value=result["uuid"], inline=False)
         embed.add_field(name="상태", value="\u2705 성공", inline=True)
     else:
-        embed.add_field(name="상태", value="\u274C 실패", inline=True)
+        embed.add_field(name="상태", value="\u274c 실패", inline=True)
     embed.set_footer(text="JARVIS Crypto | Upbit")
     return embed
 
@@ -608,13 +813,20 @@ except ImportError:
     _ApprovalStatus = None
 
 try:
-    from jarvis_features.ai_features import _generate_image_openai, _generate_image_stable_diffusion, _generate_image_free
+    from jarvis_features.ai_features import (
+        _generate_image_free,
+        _generate_image_openai,
+        _generate_image_stable_diffusion,
+    )
 except ImportError:
-    _generate_image_openai = _generate_image_stable_diffusion = _generate_image_free = None
+    _generate_image_openai = _generate_image_stable_diffusion = _generate_image_free = (
+        None
+    )
 
 # ── Trade Orchestrator (거래 승인 게이트) ──
 
 _trade_orchestrator_instance = None
+
 
 def _get_trade_orchestrator():
     """TradeOrchestrator 싱글톤 반환"""
@@ -622,6 +834,7 @@ def _get_trade_orchestrator():
     if _trade_orchestrator_instance is None:
         try:
             from jarvis_features.trade_orchestrator import TradeOrchestrator
+
             _trade_orchestrator_instance = TradeOrchestrator()
         except ImportError:
             return None
@@ -631,7 +844,9 @@ def _get_trade_orchestrator():
 class TradeApprovalView(discord.ui.View):
     """거래 승인/거부 버튼 UI (human-in-the-loop)"""
 
-    def __init__(self, orchestrator, trade_request, client, ticker, amount, action_type):
+    def __init__(
+        self, orchestrator, trade_request, client, ticker, amount, action_type
+    ):
         super().__init__(timeout=300)  # 5분
         self.orchestrator = orchestrator
         self.trade_request = trade_request
@@ -641,15 +856,21 @@ class TradeApprovalView(discord.ui.View):
         self.action_type = action_type
 
     @discord.ui.button(label="승인", style=discord.ButtonStyle.green, emoji="\u2705")
-    async def approve_button(self, interaction: discord.Interaction, button: discord.ui.Button):
+    async def approve_button(
+        self, interaction: discord.Interaction, button: discord.ui.Button
+    ):
         # 요청자만 승인 가능
         if str(interaction.user.id) != self.trade_request.user_id:
-            await interaction.response.send_message("본인만 승인할 수 있습니다.", ephemeral=True)
+            await interaction.response.send_message(
+                "본인만 승인할 수 있습니다.", ephemeral=True
+            )
             return
 
         approved = self.orchestrator.approve(self.trade_request.request_id)
         if not approved:
-            await interaction.response.send_message("승인 실패 (이미 만료 또는 처리됨)", ephemeral=True)
+            await interaction.response.send_message(
+                "승인 실패 (이미 만료 또는 처리됨)", ephemeral=True
+            )
             return
 
         await interaction.response.defer()
@@ -657,16 +878,24 @@ class TradeApprovalView(discord.ui.View):
         try:
             if self.action_type == "buy":
                 result = await asyncio.to_thread(
-                    self.client.buy_market_order, self.ticker, self.amount,
+                    self.client.buy_market_order,
+                    self.ticker,
+                    self.amount,
                 )
                 embed = _trade_result_embed("매수", self.ticker, result)
-                embed.add_field(name="주문 금액", value=f"{self.amount:,.0f} KRW", inline=True)
+                embed.add_field(
+                    name="주문 금액", value=f"{self.amount:,.0f} KRW", inline=True
+                )
             else:
                 result = await asyncio.to_thread(
-                    self.client.sell_market_order, self.ticker, self.amount,
+                    self.client.sell_market_order,
+                    self.ticker,
+                    self.amount,
                 )
                 embed = _trade_result_embed("매도", self.ticker, result)
-                embed.add_field(name="매도 수량", value=f"{self.amount:.8g}", inline=True)
+                embed.add_field(
+                    name="매도 수량", value=f"{self.amount:.8g}", inline=True
+                )
 
             embed.add_field(name="승인", value="\u2705 수동 승인됨", inline=True)
             self.trade_request.status = _ApprovalStatus.EXECUTED
@@ -679,10 +908,14 @@ class TradeApprovalView(discord.ui.View):
             item.disabled = True
         await interaction.edit_original_response(embed=embed, view=self)
 
-    @discord.ui.button(label="취소", style=discord.ButtonStyle.red, emoji="\u274C")
-    async def reject_button(self, interaction: discord.Interaction, button: discord.ui.Button):
+    @discord.ui.button(label="취소", style=discord.ButtonStyle.red, emoji="\u274c")
+    async def reject_button(
+        self, interaction: discord.Interaction, button: discord.ui.Button
+    ):
         if str(interaction.user.id) != self.trade_request.user_id:
-            await interaction.response.send_message("본인만 취소할 수 있습니다.", ephemeral=True)
+            await interaction.response.send_message(
+                "본인만 취소할 수 있습니다.", ephemeral=True
+            )
             return
 
         self.orchestrator.reject(self.trade_request.request_id, "사용자 취소")
@@ -719,24 +952,36 @@ class VoiceControlView(discord.ui.View):
         self.bot = bot
 
     @discord.ui.button(label="Join", style=discord.ButtonStyle.green, emoji="🔊")
-    async def join_button(self, interaction: discord.Interaction, button: discord.ui.Button):
+    async def join_button(
+        self, interaction: discord.Interaction, button: discord.ui.Button
+    ):
         if interaction.user.voice:
             channel = interaction.user.voice.channel
             if interaction.guild.voice_client:
                 await interaction.guild.voice_client.move_to(channel)
             else:
                 await channel.connect()
-            await interaction.response.send_message(f"Connected to {channel.name}", ephemeral=True)
+            await interaction.response.send_message(
+                f"Connected to {channel.name}", ephemeral=True
+            )
         else:
-            await interaction.response.send_message("음성 채널에 먼저 입장해주세요.", ephemeral=True)
+            await interaction.response.send_message(
+                "음성 채널에 먼저 입장해주세요.", ephemeral=True
+            )
 
     @discord.ui.button(label="Leave", style=discord.ButtonStyle.red, emoji="👋")
-    async def leave_button(self, interaction: discord.Interaction, button: discord.ui.Button):
+    async def leave_button(
+        self, interaction: discord.Interaction, button: discord.ui.Button
+    ):
         if interaction.guild.voice_client:
             await interaction.guild.voice_client.disconnect()
-            await interaction.response.send_message("연결을 끊었습니다.", ephemeral=True)
+            await interaction.response.send_message(
+                "연결을 끊었습니다.", ephemeral=True
+            )
         else:
-            await interaction.response.send_message("연결된 상태가 아닙니다.", ephemeral=True)
+            await interaction.response.send_message(
+                "연결된 상태가 아닙니다.", ephemeral=True
+            )
 
     async def on_timeout(self):
         """음성 컨트롤 타임아웃 시 버튼 비활성화"""
@@ -760,7 +1005,9 @@ class JarvisBot(commands.Bot):
         intents.guilds = True
         super().__init__(command_prefix=["!"], intents=intents, help_command=None)
         self.memory = MemoryManager() if MemoryManager else None
-        self._reaction_context: OrderedDict = OrderedDict()  # message_id -> context data (최대 100개 유지, FIFO O(1))
+        self._reaction_context: OrderedDict = (
+            OrderedDict()
+        )  # message_id -> context data (최대 100개 유지, FIFO O(1))
         self._REACTION_CONTEXT_MAX = 100
         self._advanced_managers: dict = {}
         self.monitor_enabled = False
@@ -774,12 +1021,17 @@ class JarvisBot(commands.Bot):
         self._cctv_channel = None
         self._daily_briefing = DailyBriefing() if DailyBriefing else None
         self._processed_messages: set = set()  # 중복 메시지 처리 방지
-        self._processed_messages_order: deque = deque(maxlen=200)  # FIFO 순서 추적 (O(1) popleft)
-        self._agent_locks: Dict[str, asyncio.Lock] = {}  # 동일 메시지 동시 에이전트 실행 방지
+        self._processed_messages_order: deque = deque(
+            maxlen=200
+        )  # FIFO 순서 추적 (O(1) popleft)
+        self._agent_locks: Dict[str, asyncio.Lock] = (
+            {}
+        )  # 동일 메시지 동시 에이전트 실행 방지
 
         # ★ Agent Router (도메인 기반 메시지 라우팅) ★
         try:
             from jarvis_features.agent_router import AgentRouter
+
             self.agent_router = AgentRouter(
                 memory_manager=self.memory,
                 tool_registry=get_tool_registry() if get_tool_registry else None,
@@ -790,6 +1042,7 @@ class JarvisBot(commands.Bot):
         # ★ Model Selector (지능형 모델 선택) ★
         try:
             from jarvis_features.model_selector import ModelSelector
+
             self.model_selector = ModelSelector(
                 rate_limit_checker=self._is_rate_limited,
             )
@@ -801,6 +1054,7 @@ class JarvisBot(commands.Bot):
         # ★ Tool Executor (도구 실행 엔진 — 분리된 모듈) ★
         try:
             from jarvis_features.tool_executor import ToolExecutor
+
             self._tool_executor = ToolExecutor(self)
         except ImportError:
             self._tool_executor = None
@@ -862,7 +1116,10 @@ class JarvisBot(commands.Bot):
             self.tree.add_command(chart_slash)
         # Note: Global sync disabled to avoid rate limits. Use guild-specific sync for dev.
         # await self.tree.sync()
-        logger.info("Slash commands registered (sync disabled): /price, /balance, /trade" + (", /chart" if generate_price_chart else ""))
+        logger.info(
+            "Slash commands registered (sync disabled): /price, /balance, /trade"
+            + (", /chart" if generate_price_chart else "")
+        )
 
         # Start background tasks
         if not update_status_task.is_running():
@@ -880,13 +1137,21 @@ class JarvisBot(commands.Bot):
         if ADVANCED_AVAILABLE and setup_advanced_features:
             try:
                 report_ch = int(BRIEFING_CHANNEL_ID) if BRIEFING_CHANNEL_ID else None
-                self._advanced_managers = await setup_advanced_features(self, report_channel_id=report_ch)
+                self._advanced_managers = await setup_advanced_features(
+                    self, report_channel_id=report_ch
+                )
                 if AdvancedCommandsCog:
                     try:
-                        await self.add_cog(AdvancedCommandsCog(self, self._advanced_managers))
+                        await self.add_cog(
+                            AdvancedCommandsCog(self, self._advanced_managers)
+                        )
                     except Exception as cog_err:
-                        logger.info(f"AdvancedCommandsCog 일부 명령어 중복 (무시): {cog_err}")
-                logger.info("Advanced features loaded: %s", list(self._advanced_managers.keys()))
+                        logger.info(
+                            f"AdvancedCommandsCog 일부 명령어 중복 (무시): {cog_err}"
+                        )
+                logger.info(
+                    "Advanced features loaded: %s", list(self._advanced_managers.keys())
+                )
             except Exception as e:
                 logger.warning(f"Advanced features setup failed: {e}")
 
@@ -933,11 +1198,12 @@ class JarvisBot(commands.Bot):
         logger.info(f"  Claude Session: {'설정됨' if CLAUDE_SESSION_KEY else '미설정'}")
 
         # 오너에게 온라인 알림 DM 전송 (최초 1회만)
-        if not getattr(self, '_first_ready_done', False):
+        if not getattr(self, "_first_ready_done", False):
             self._first_ready_done = True
             try:
                 if BOT_OWNER_ID:
                     from datetime import datetime
+
                     owner = await self.fetch_user(int(BOT_OWNER_ID))
                     if owner:
                         now = datetime.now().strftime("%Y년 %m월 %d일 %H:%M")
@@ -965,9 +1231,9 @@ class JarvisBot(commands.Bot):
         if channel is None:
             return
         try:
-            if emoji == "\U0001F44D":  # 👍 상세보기
+            if emoji == "\U0001f44d":  # 👍 상세보기
                 await self._reaction_detail(channel, context)
-            elif emoji == "\U0001F4CA":  # 📊 차트
+            elif emoji == "\U0001f4ca":  # 📊 차트
                 await self._reaction_chart(channel, context)
         except Exception as e:
             logger.error(f"Reaction handler: {e}")
@@ -975,15 +1241,25 @@ class JarvisBot(commands.Bot):
     async def _reaction_detail(self, channel, context: dict):
         """코인 상세 정보 (호가창)"""
         if not upbit_client:
-            await channel.send(embed=_error_embed("Upbit 클라이언트가 로드되지 않았습니다."))
+            await channel.send(
+                embed=_error_embed("Upbit 클라이언트가 로드되지 않았습니다.")
+            )
             return
         tickers = context.get("tickers", [])
         if context.get("type") == "price_single":
             tickers = [context.get("ticker", "KRW-BTC")]
-        embed = discord.Embed(title="\U0001F50D 상세 정보", color=discord.Color.teal(), timestamp=datetime.now(timezone.utc))
+        embed = discord.Embed(
+            title="\U0001f50d 상세 정보",
+            color=discord.Color.teal(),
+            timestamp=datetime.now(timezone.utc),
+        )
         # P2-5: batch 가격 조회로 N+1 API 호출 최적화
         batch_tickers = tickers[:5]
-        batch_prices = await asyncio.to_thread(upbit_client.get_prices, batch_tickers) if batch_tickers else {}
+        batch_prices = (
+            await asyncio.to_thread(upbit_client.get_prices, batch_tickers)
+            if batch_tickers
+            else {}
+        )
         for ticker in batch_tickers:
             coin = ticker.replace("KRW-", "")
             try:
@@ -1009,7 +1285,9 @@ class JarvisBot(commands.Bot):
     async def _reaction_chart(self, channel, context: dict):
         """7일 차트 생성"""
         if not upbit_client:
-            await channel.send(embed=_error_embed("Upbit 클라이언트가 로드되지 않았습니다."))
+            await channel.send(
+                embed=_error_embed("Upbit 클라이언트가 로드되지 않았습니다.")
+            )
             return
         ticker = "KRW-BTC"
         if context.get("type") == "price_single":
@@ -1018,12 +1296,15 @@ class JarvisBot(commands.Bot):
             ticker = context["tickers"][0]
         coin = ticker.replace("KRW-", "")
         try:
-            df = await asyncio.to_thread(upbit_client.get_ohlcv, ticker, interval="day", count=7)
+            df = await asyncio.to_thread(
+                upbit_client.get_ohlcv, ticker, interval="day", count=7
+            )
             if df is None or df.empty:
                 await channel.send(embed=_error_embed(f"{coin} 차트 데이터 없음"))
                 return
             try:
                 import matplotlib
+
                 matplotlib.use("Agg")
                 import matplotlib.pyplot as plt
 
@@ -1033,7 +1314,9 @@ class JarvisBot(commands.Bot):
                 closes = df["close"].values
                 dates = [d.strftime("%m/%d") for d in df.index]
                 color = "#ED4245" if closes[-1] >= closes[0] else "#5865F2"
-                ax.plot(dates, closes, color=color, linewidth=2, marker="o", markersize=4)
+                ax.plot(
+                    dates, closes, color=color, linewidth=2, marker="o", markersize=4
+                )
                 ax.fill_between(dates, closes, alpha=0.1, color=color)
                 ax.set_title(f"{coin} 7-Day Price", color="white", fontsize=14)
                 ax.tick_params(colors="white")
@@ -1042,13 +1325,31 @@ class JarvisBot(commands.Bot):
                 ax.spines["top"].set_visible(False)
                 ax.spines["right"].set_visible(False)
                 for i, v in enumerate(closes):
-                    ax.annotate(f"{v:,.0f}", (i, v), textcoords="offset points", xytext=(0, 8), ha="center", fontsize=7, color="white")
+                    ax.annotate(
+                        f"{v:,.0f}",
+                        (i, v),
+                        textcoords="offset points",
+                        xytext=(0, 8),
+                        ha="center",
+                        fontsize=7,
+                        color="white",
+                    )
                 buf = io.BytesIO()
-                fig.savefig(buf, format="png", dpi=120, bbox_inches="tight", facecolor=fig.get_facecolor())
+                fig.savefig(
+                    buf,
+                    format="png",
+                    dpi=120,
+                    bbox_inches="tight",
+                    facecolor=fig.get_facecolor(),
+                )
                 buf.seek(0)
                 plt.close(fig)
                 file = discord.File(buf, filename=f"{coin}_chart.png")
-                embed = discord.Embed(title=f"\U0001F4C8 {coin} 7일 차트", color=discord.Color.dark_gold(), timestamp=datetime.now(timezone.utc))
+                embed = discord.Embed(
+                    title=f"\U0001f4c8 {coin} 7일 차트",
+                    color=discord.Color.dark_gold(),
+                    timestamp=datetime.now(timezone.utc),
+                )
                 embed.set_image(url=f"attachment://{coin}_chart.png")
                 embed.set_footer(text="JARVIS Crypto | Upbit")
                 await channel.send(embed=embed, file=file)
@@ -1060,11 +1361,20 @@ class JarvisBot(commands.Bot):
                 lines = []
                 for i, row in df.iterrows():
                     close = row["close"]
-                    bar_len = int((close - min_p) / (max_p - min_p) * chart_width) if max_p > min_p else chart_width // 2
+                    bar_len = (
+                        int((close - min_p) / (max_p - min_p) * chart_width)
+                        if max_p > min_p
+                        else chart_width // 2
+                    )
                     bar = "\u2588" * bar_len + "\u2591" * (chart_width - bar_len)
                     date_str = i.strftime("%m/%d")
                     lines.append(f"`{date_str}` {bar} **{close:,.0f}**")
-                embed = discord.Embed(title=f"\U0001F4CA {coin} 7일 차트", description="\n".join(lines), color=discord.Color.dark_gold(), timestamp=datetime.now(timezone.utc))
+                embed = discord.Embed(
+                    title=f"\U0001f4ca {coin} 7일 차트",
+                    description="\n".join(lines),
+                    color=discord.Color.dark_gold(),
+                    timestamp=datetime.now(timezone.utc),
+                )
                 embed.set_footer(text="JARVIS Crypto | 텍스트 차트")
                 await channel.send(embed=embed)
         except Exception as e:
@@ -1073,7 +1383,8 @@ class JarvisBot(commands.Bot):
 
     async def on_message(self, message: discord.Message):
         """모든 메시지 수신 처리. 로컬 명령어 → 에이전트 파이프라인 순서로 라우팅."""
-        if message.author.bot: return
+        if message.author.bot:
+            return
 
         # ── 중복 메시지 처리 방지 (gateway reconnect 등으로 같은 메시지가 여러 번 올 수 있음) ──
         if message.id in self._processed_messages:
@@ -1087,7 +1398,9 @@ class JarvisBot(commands.Bot):
         self._processed_messages_order.append(message.id)
 
         self._message_count += 1
-        logger.debug(f"[MSG] from={message.author} ch={message.channel} content='{_redact_sensitive(message.content)}'")
+        logger.debug(
+            f"[MSG] from={message.author} ch={message.channel} content='{_redact_sensitive(message.content)}'"
+        )
 
         ctx = await self.get_context(message)
         if ctx.command:
@@ -1097,15 +1410,22 @@ class JarvisBot(commands.Bot):
         # ── !status 빠른 상태 확인 (에이전트 루프 우회) ──
         if message.content.strip().lower() in ("!status", "!상태"):
             import psutil as _ps
+
             proc = _ps.Process(os.getpid())
             mem_mb = proc.memory_info().rss / 1024 / 1024
             uptime = self.get_uptime()
-            embed = discord.Embed(title="JARVIS Status", color=0x00ff88)
+            embed = discord.Embed(title="JARVIS Status", color=0x00FF88)
             embed.add_field(name="Uptime", value=uptime, inline=True)
-            embed.add_field(name="Messages", value=f"{self._message_count:,}", inline=True)
-            embed.add_field(name="Commands", value=f"{self._command_count:,}", inline=True)
+            embed.add_field(
+                name="Messages", value=f"{self._message_count:,}", inline=True
+            )
+            embed.add_field(
+                name="Commands", value=f"{self._command_count:,}", inline=True
+            )
             embed.add_field(name="Memory", value=f"{mem_mb:.0f} MB", inline=True)
-            embed.add_field(name="Python", value=f"{sys.version.split()[0]}", inline=True)
+            embed.add_field(
+                name="Python", value=f"{sys.version.split()[0]}", inline=True
+            )
             await message.reply(embed=embed)
             return
 
@@ -1114,15 +1434,19 @@ class JarvisBot(commands.Bot):
         # "자비스" 키워드도 멘션처럼 처리
         content_lower = message.content.lower().strip()
         is_keyword = any(kw in content_lower for kw in ["자비스", "jarvis"])
-        logger.debug(f"[MSG] is_dm={is_dm} is_mention={is_mention} is_keyword={is_keyword} bot_id={self.user.id}")
+        logger.debug(
+            f"[MSG] is_dm={is_dm} is_mention={is_mention} is_keyword={is_keyword} bot_id={self.user.id}"
+        )
         if is_dm or is_mention or is_keyword:
             content = message.content.replace(f"<@{self.user.id}>", "").strip()
             # "자비스"/"jarvis" 키워드도 제거하여 순수 프롬프트만 남김
             if is_keyword:
-                content = re.sub(r'(?i)자비스|jarvis', '', content).strip()
+                content = re.sub(r"(?i)자비스|jarvis", "", content).strip()
             # 빈 멘션(@JARVIS만 보낸 경우) → 안내 메시지 응답
             if not content and len(message.attachments) == 0:
-                await message.reply("무엇을 도와드릴까요? 질문을 함께 적어주세요.\n예: `@JARVIS 날씨 알려줘`")
+                await message.reply(
+                    "무엇을 도와드릴까요? 질문을 함께 적어주세요.\n예: `@JARVIS 날씨 알려줘`"
+                )
                 return
             logger.info(f"[MSG] Dispatching to agent: '{content[:80]}'")
             await self._process_agent_request(message, content)
@@ -1130,13 +1454,17 @@ class JarvisBot(commands.Bot):
     async def on_command_error(self, ctx, error):
         """User-friendly error handler for prefix commands."""
         if isinstance(error, commands.MissingRequiredArgument):
-            await ctx.send(f"필수 인자가 누락되었습니다: `{error.param.name}`\n사용법을 확인해주세요.")
+            await ctx.send(
+                f"필수 인자가 누락되었습니다: `{error.param.name}`\n사용법을 확인해주세요."
+            )
         elif isinstance(error, commands.CommandNotFound):
             pass  # Silently ignore unknown commands
         elif isinstance(error, commands.MissingPermissions):
             await ctx.send("이 명령어를 실행할 권한이 없습니다.")
         elif isinstance(error, commands.CommandOnCooldown):
-            await ctx.send(f"명령어 쿨다운 중입니다. {error.retry_after:.1f}초 후 다시 시도해주세요.")
+            await ctx.send(
+                f"명령어 쿨다운 중입니다. {error.retry_after:.1f}초 후 다시 시도해주세요."
+            )
         else:
             logger.error(f"Command error in '{ctx.command}': {error}", exc_info=error)
             await ctx.send(f"명령어 처리 중 오류가 발생했습니다: {error}")
@@ -1146,7 +1474,7 @@ class JarvisBot(commands.Bot):
         """텍스트에서 코인 티커 추출. 기본값 KRW-BTC."""
 
         # KRW-BTC 형식
-        m = re.search(r'(KRW-[A-Z]{2,10})', text.upper())
+        m = re.search(r"(KRW-[A-Z]{2,10})", text.upper())
         if m:
             return m.group(1)
         lower = text.lower()
@@ -1154,7 +1482,7 @@ class JarvisBot(commands.Bot):
             if kw in lower:
                 return ticker
         # 대문자 3~5글자 토큰
-        m = re.search(r'\b([A-Z]{3,5})\b', text.upper())
+        m = re.search(r"\b([A-Z]{3,5})\b", text.upper())
         if m and m.group(1) not in TICKER_EXCLUDE:
             return f"KRW-{m.group(1)}"
         return "KRW-BTC"
@@ -1167,12 +1495,17 @@ class JarvisBot(commands.Bot):
         p = prompt.lower().strip()
         user_id = str(message.author.id)
         now_kst = datetime.now(timezone(timedelta(hours=9)))
-        logger.info(f"[LOCAL] Checking keywords for: '{p[:50]}' | system_mcp={system_mcp_server is not None}")
+        logger.info(
+            f"[LOCAL] Checking keywords for: '{p[:50]}' | system_mcp={system_mcp_server is not None}"
+        )
 
         # ── CommandDispatcher (점진적 이관 — 등록된 핸들러 우선 실행) ──
         if command_dispatcher:
             result = await command_dispatcher.dispatch(
-                prompt=prompt, message=message, bot=self, user_id=user_id,
+                prompt=prompt,
+                message=message,
+                bot=self,
+                user_id=user_id,
             )
             if result is not None:
                 if isinstance(result, str) and result and result != "__SENT__":
@@ -1182,107 +1515,162 @@ class JarvisBot(commands.Bot):
         # ── 도움말/기능 안내 (★ 최우선 — 이미지 생성보다 위) ──
         if _HELP_PATTERN.search(p):
             embed = discord.Embed(
-                title="\U0001F916 JARVIS 전체 기능 목록",
+                title="\U0001f916 JARVIS 전체 기능 목록",
                 color=discord.Color.blurple(),
                 timestamp=datetime.now(timezone.utc),
             )
-            embed.add_field(name="\U0001F50D 슬래시 명령", value=(
-                "`/price [코인]` - 시세 조회 (Embed)\n"
-                "`/balance` - 잔고 확인\n"
-                "`/trade <매수|매도> <코인> <금액>` - 매매\n"
-                "`/chart [코인]` - 가격 차트"
-            ), inline=False)
-            embed.add_field(name="\U0001F4BB 시스템/유틸", value=(
-                "`시스템` - PC 상태 | `프로세스` - 목록 | `캡처` - 스크린샷\n"
-                "`웹캠` - 웹캠 | `속도 측정` - 인터넷 | `네트워크` - IP/포트\n"
-                "`파일 *.log` - 파일 검색 | `크롬 열어` - 프로그램 실행\n"
-                "`프로세스 1234 종료` - PID 종료 | `예약 목록` - 예약 작업\n"
-                "`클립보드` - 복사 | `알림 [내용]` - 알림 | `타이머 5` - 타이머\n"
-                "`ssh user@host ls` - SSH 원격 | `mcp 도구 목록` - MCP"
-            ), inline=False)
-            embed.add_field(name="\U0001F4B0 크립토 매매", value=(
-                "`시세 BTC` - 코인 시세 | `호가 ETH` - 호가창\n"
-                "`김프` - 프리미엄 | `공포지수` - 공포/탐욕\n"
-                "`시장 요약` - 시장 | `분석 BTC` - 기술적 분석\n"
-                "`포트폴리오` - 자산 요약 | `거래내역` - 최근 거래\n"
-                "`매매통계` - 수익률 | `대기주문` - 미체결 주문\n"
-                "`자동매매 시작/중지/상태` - 자동 트레이딩\n"
-                "`모의모드`/`실전모드` - 전환 | `스마트매매` - AI 매매\n"
-                "`손절 -5 익절 10 설정` - 리스크 | `관심종목 BTC ETH`\n"
-                "`가격알림 BTC 50000000` - 알림 | `트레일링 5%`\n"
-                "`마켓 목록` - 상장 종목 | `보안 상태` - 보안 체크"
-            ), inline=False)
-            embed.add_field(name="\U0001F3AE SC2 봇", value=(
-                "`전적` - 승률 | `게임상황` - 유닛 현황\n"
-                "`로그` - 최근 로그 | `로그 읽어 game.log` - 로그 내용\n"
-                "`SC2 테스트` - 연습 게임 | `공격성 공격` - 공격성 조절"
-            ), inline=False)
-            embed.add_field(name="\U0001F30D 정보/생활", value=(
-                "`날씨 서울` - 날씨 | `검색 [키워드]` - 웹검색\n"
-                "`운세` - 오늘의 운세 | `번역 hello` - 번역\n"
-                "`계산 2+3*4` - 계산 | `시간` - 현재 시간\n"
-                "`브리핑` - 모닝 브리핑 | `git` - Git 상태\n"
-                "`스마트홈 조명 켜` - IoT 제어"
-            ), inline=False)
-            embed.add_field(name="\U0001F916 AI 강화", value=(
-                "`!그려줘 <설명>` - AI 이미지 생성\n"
-                "`!말해줘 <텍스트>` - TTS 음성 변환\n"
-                "`!요약 [수]` - 채널 대화 요약\n"
-                "`!분석` - 첨부 이미지/PDF AI 분석"
-            ), inline=False)
-            embed.add_field(name="\U0001F4C8 금융 확장", value=(
-                "`!알림 BTC 1억` - 가격 알림 (DM)\n"
-                "`!백테스트 BTC RSI 30` - 전략 시뮬\n"
-                "`!뉴스감정 BTC` - 뉴스 감정 분석\n"
-                "`!환율 USD` - 실시간 환율\n"
-                "`!수익리포트` - 주간/월간 리포트\n"
-                "`!온체인 BTC` - 온체인 데이터"
-            ), inline=False)
-            embed.add_field(name="\U0001F3AE SC2 확장", value=(
-                "`!중계` - 실시간 게임 중계\n"
-                "`!전략분석` - 상대 빌드오더 분석\n"
-                "`!대시보드` - 전적 통계 대시보드\n"
-                "`!훈련 14:00` - 훈련 스케줄 설정"
-            ), inline=False)
-            embed.add_field(name="\U0001F6E0 시스템 확장", value=(
-                "`!파일보내기 <경로>` - PC→Discord 파일 전송\n"
-                "`!파일받기` - Discord→PC 파일 저장\n"
-                "`!실행 크롬` - 앱 원격 실행\n"
-                "`!모니터링` - 시스템 대시보드\n"
-                "`!디스크정리` - 임시 파일 정리\n"
-                "`!네트워크` - 네트워크 상태\n"
-                "`!스마트홈 조명 켜기` - IoT 제어"
-            ), inline=False)
-            embed.add_field(name="\u2705 생산성", value=(
-                "`!할일 추가/완료/삭제` - 투두 리스트\n"
-                "`!알려줘 30분후 회의` - 리마인더\n"
-                "`!뽀모 25` - 뽀모도로 타이머\n"
-                "`!회의록` - AI 회의록 생성\n"
-                "`!습관 추가/체크` - 습관 트래커"
-            ), inline=False)
-            embed.add_field(name="\U0001F3B2 엔터테인먼트", value=(
-                "`!재생 <URL>` - 음악 재생\n"
-                "`!가위바위보 가위` - 가위바위보\n"
-                "`!숫자맞히기 100` - 숫자 게임\n"
-                "`!퀴즈` - 퀴즈\n"
-                "`!밈 윗줄|아랫줄` - 밈 생성\n"
-                "`!레벨` - 내 레벨/XP\n"
-                "`!랭킹` - 서버 랭킹\n"
-                "`!챌린지` - 데일리 챌린지"
-            ), inline=False)
-            embed.add_field(name="\U0001F512 보안/관리", value=(
-                "`!접속로그` - PC 로그인 이력\n"
-                "`!이상감지설정` - 임계값 설정\n"
-                "`!권한` - 역할별 권한 확인\n"
-                "`!감사로그` - 명령어 실행 이력"
-            ), inline=False)
-            embed.add_field(name="\U0001F44D 리액션", value="봇 시세 응답에 \U0001F44D 상세보기 | \U0001F4CA 차트", inline=False)
+            embed.add_field(
+                name="\U0001f50d 슬래시 명령",
+                value=(
+                    "`/price [코인]` - 시세 조회 (Embed)\n"
+                    "`/balance` - 잔고 확인\n"
+                    "`/trade <매수|매도> <코인> <금액>` - 매매\n"
+                    "`/chart [코인]` - 가격 차트"
+                ),
+                inline=False,
+            )
+            embed.add_field(
+                name="\U0001f4bb 시스템/유틸",
+                value=(
+                    "`시스템` - PC 상태 | `프로세스` - 목록 | `캡처` - 스크린샷\n"
+                    "`웹캠` - 웹캠 | `속도 측정` - 인터넷 | `네트워크` - IP/포트\n"
+                    "`파일 *.log` - 파일 검색 | `크롬 열어` - 프로그램 실행\n"
+                    "`프로세스 1234 종료` - PID 종료 | `예약 목록` - 예약 작업\n"
+                    "`클립보드` - 복사 | `알림 [내용]` - 알림 | `타이머 5` - 타이머\n"
+                    "`ssh user@host ls` - SSH 원격 | `mcp 도구 목록` - MCP"
+                ),
+                inline=False,
+            )
+            embed.add_field(
+                name="\U0001f4b0 크립토 매매",
+                value=(
+                    "`시세 BTC` - 코인 시세 | `호가 ETH` - 호가창\n"
+                    "`김프` - 프리미엄 | `공포지수` - 공포/탐욕\n"
+                    "`시장 요약` - 시장 | `분석 BTC` - 기술적 분석\n"
+                    "`포트폴리오` - 자산 요약 | `거래내역` - 최근 거래\n"
+                    "`매매통계` - 수익률 | `대기주문` - 미체결 주문\n"
+                    "`자동매매 시작/중지/상태` - 자동 트레이딩\n"
+                    "`모의모드`/`실전모드` - 전환 | `스마트매매` - AI 매매\n"
+                    "`손절 -5 익절 10 설정` - 리스크 | `관심종목 BTC ETH`\n"
+                    "`가격알림 BTC 50000000` - 알림 | `트레일링 5%`\n"
+                    "`마켓 목록` - 상장 종목 | `보안 상태` - 보안 체크"
+                ),
+                inline=False,
+            )
+            embed.add_field(
+                name="\U0001f3ae SC2 봇",
+                value=(
+                    "`전적` - 승률 | `게임상황` - 유닛 현황\n"
+                    "`로그` - 최근 로그 | `로그 읽어 game.log` - 로그 내용\n"
+                    "`SC2 테스트` - 연습 게임 | `공격성 공격` - 공격성 조절"
+                ),
+                inline=False,
+            )
+            embed.add_field(
+                name="\U0001f30d 정보/생활",
+                value=(
+                    "`날씨 서울` - 날씨 | `검색 [키워드]` - 웹검색\n"
+                    "`운세` - 오늘의 운세 | `번역 hello` - 번역\n"
+                    "`계산 2+3*4` - 계산 | `시간` - 현재 시간\n"
+                    "`브리핑` - 모닝 브리핑 | `git` - Git 상태\n"
+                    "`스마트홈 조명 켜` - IoT 제어"
+                ),
+                inline=False,
+            )
+            embed.add_field(
+                name="\U0001f916 AI 강화",
+                value=(
+                    "`!그려줘 <설명>` - AI 이미지 생성\n"
+                    "`!말해줘 <텍스트>` - TTS 음성 변환\n"
+                    "`!요약 [수]` - 채널 대화 요약\n"
+                    "`!분석` - 첨부 이미지/PDF AI 분석"
+                ),
+                inline=False,
+            )
+            embed.add_field(
+                name="\U0001f4c8 금융 확장",
+                value=(
+                    "`!알림 BTC 1억` - 가격 알림 (DM)\n"
+                    "`!백테스트 BTC RSI 30` - 전략 시뮬\n"
+                    "`!뉴스감정 BTC` - 뉴스 감정 분석\n"
+                    "`!환율 USD` - 실시간 환율\n"
+                    "`!수익리포트` - 주간/월간 리포트\n"
+                    "`!온체인 BTC` - 온체인 데이터"
+                ),
+                inline=False,
+            )
+            embed.add_field(
+                name="\U0001f3ae SC2 확장",
+                value=(
+                    "`!중계` - 실시간 게임 중계\n"
+                    "`!전략분석` - 상대 빌드오더 분석\n"
+                    "`!대시보드` - 전적 통계 대시보드\n"
+                    "`!훈련 14:00` - 훈련 스케줄 설정"
+                ),
+                inline=False,
+            )
+            embed.add_field(
+                name="\U0001f6e0 시스템 확장",
+                value=(
+                    "`!파일보내기 <경로>` - PC→Discord 파일 전송\n"
+                    "`!파일받기` - Discord→PC 파일 저장\n"
+                    "`!실행 크롬` - 앱 원격 실행\n"
+                    "`!모니터링` - 시스템 대시보드\n"
+                    "`!디스크정리` - 임시 파일 정리\n"
+                    "`!네트워크` - 네트워크 상태\n"
+                    "`!스마트홈 조명 켜기` - IoT 제어"
+                ),
+                inline=False,
+            )
+            embed.add_field(
+                name="\u2705 생산성",
+                value=(
+                    "`!할일 추가/완료/삭제` - 투두 리스트\n"
+                    "`!알려줘 30분후 회의` - 리마인더\n"
+                    "`!뽀모 25` - 뽀모도로 타이머\n"
+                    "`!회의록` - AI 회의록 생성\n"
+                    "`!습관 추가/체크` - 습관 트래커"
+                ),
+                inline=False,
+            )
+            embed.add_field(
+                name="\U0001f3b2 엔터테인먼트",
+                value=(
+                    "`!재생 <URL>` - 음악 재생\n"
+                    "`!가위바위보 가위` - 가위바위보\n"
+                    "`!숫자맞히기 100` - 숫자 게임\n"
+                    "`!퀴즈` - 퀴즈\n"
+                    "`!밈 윗줄|아랫줄` - 밈 생성\n"
+                    "`!레벨` - 내 레벨/XP\n"
+                    "`!랭킹` - 서버 랭킹\n"
+                    "`!챌린지` - 데일리 챌린지"
+                ),
+                inline=False,
+            )
+            embed.add_field(
+                name="\U0001f512 보안/관리",
+                value=(
+                    "`!접속로그` - PC 로그인 이력\n"
+                    "`!이상감지설정` - 임계값 설정\n"
+                    "`!권한` - 역할별 권한 확인\n"
+                    "`!감사로그` - 명령어 실행 이력"
+                ),
+                inline=False,
+            )
+            embed.add_field(
+                name="\U0001f44d 리액션",
+                value="봇 시세 응답에 \U0001f44d 상세보기 | \U0001f4ca 차트",
+                inline=False,
+            )
             embed.set_footer(text="JARVIS v2.0 | 36개 신규 기능 | @멘션 또는 DM")
             await message.reply(embed=embed)
             return True
 
         # ── 시스템 상태 (psutil 폴백 — keyword_handlers로 이관 불가) ──
-        if any(w in p for w in ["시스템", "cpu", "메모리", "리소스", "system", "ram"]) and len(p) < 30:
+        if (
+            any(w in p for w in ["시스템", "cpu", "메모리", "리소스", "system", "ram"])
+            and len(p) < 30
+        ):
             if system_mcp_server:
                 try:
                     result = await system_mcp_server.system_resources()
@@ -1295,7 +1683,7 @@ class JarvisBot(commands.Bot):
                 try:
                     cpu = await asyncio.to_thread(psutil.cpu_percent, 1)
                     mem = psutil.virtual_memory()
-                    disk = psutil.disk_usage('/')
+                    disk = psutil.disk_usage("/")
                     await message.reply(
                         f"**시스템 상태**\n"
                         f"• CPU: {cpu}%\n"
@@ -1311,7 +1699,9 @@ class JarvisBot(commands.Bot):
         # ══════════════════════════════════════════
 
         # ── SSH 원격 실행 (관리자 전용) ──
-        if any(w in p for w in ["ssh", "원격"]) and any(w in p for w in ["실행", "접속", "명령", "연결"]):
+        if any(w in p for w in ["ssh", "원격"]) and any(
+            w in p for w in ["실행", "접속", "명령", "연결"]
+        ):
             if not _is_authorized(message):
                 await message.reply("🔒 SSH 원격 실행은 관리자 권한이 필요합니다.")
                 return True
@@ -1327,12 +1717,18 @@ class JarvisBot(commands.Bot):
                             parts = t.split("@", 1)
                             user = parts[0]
                             host = parts[1]
-                        elif not host and ("." in t or ":" in t) and t.lower() not in ("ssh", "원격"):
+                        elif (
+                            not host
+                            and ("." in t or ":" in t)
+                            and t.lower() not in ("ssh", "원격")
+                        ):
                             host = t
                         elif host:
                             cmd_parts.append(t)
                     if not host:
-                        await message.reply("SSH 접속 정보를 지정하세요.\n예: `ssh user@host ls -la`")
+                        await message.reply(
+                            "SSH 접속 정보를 지정하세요.\n예: `ssh user@host ls -la`"
+                        )
                         return True
                     # P3-1: SSH 호스트 화이트리스트 검증
                     if _SSH_ALLOWED_HOSTS and host.lower() not in _SSH_ALLOWED_HOSTS:
@@ -1342,7 +1738,9 @@ class JarvisBot(commands.Bot):
                         )
                         return True
                     if not _SSH_ALLOWED_HOSTS:
-                        await message.reply("SSH_ALLOWED_HOSTS 환경변수가 설정되지 않았습니다. SSH 접속이 비활성화되어 있습니다.")
+                        await message.reply(
+                            "SSH_ALLOWED_HOSTS 환경변수가 설정되지 않았습니다. SSH 접속이 비활성화되어 있습니다."
+                        )
                         return True
                     command = " ".join(cmd_parts) if cmd_parts else "echo connected"
                     # SSH 명령어 화이트리스트 검증 (Fix 2-1)
@@ -1352,7 +1750,9 @@ class JarvisBot(commands.Bot):
                             f"허용 명령어: `{'`, `'.join(sorted(list(_SSH_ALLOWED_COMMANDS)[:15]))}` 등"
                         )
                         return True
-                    result = await system_mcp_server.ssh_execute(host, command, user=user)
+                    result = await system_mcp_server.ssh_execute(
+                        host, command, user=user
+                    )
                     if len(result) > SEARCH_RESULT_LIMIT:
                         result = result[:SEARCH_RESULT_LIMIT] + "\n..."
                     await message.reply(f"**SSH 결과 ({host})**\n```\n{result}\n```")
@@ -1362,31 +1762,47 @@ class JarvisBot(commands.Bot):
                     return True
 
         # ── 프로세스 종료 (관리자 전용) ──
-        if (any(w in p for w in ["종료", "kill"]) and "pid" in p) or ("프로세스" in p and "종료" in p):
+        if (any(w in p for w in ["종료", "kill"]) and "pid" in p) or (
+            "프로세스" in p and "종료" in p
+        ):
             if not _is_authorized(message):
                 await message.reply("🔒 프로세스 종료는 관리자 권한이 필요합니다.")
                 return True
             if system_mcp_server:
                 try:
 
-                    pid_match = re.search(r'\b(\d{2,})\b', prompt)
+                    pid_match = re.search(r"\b(\d{2,})\b", prompt)
                     if pid_match:
                         pid = int(pid_match.group(1))
                         # 시스템 중요 프로세스 보호
                         try:
-                            _PROTECTED = {"csrss.exe", "smss.exe", "wininit.exe", "services.exe",
-                                          "lsass.exe", "svchost.exe", "explorer.exe", "winlogon.exe",
-                                          "system", "registry", "dwm.exe"}
+                            _PROTECTED = {
+                                "csrss.exe",
+                                "smss.exe",
+                                "wininit.exe",
+                                "services.exe",
+                                "lsass.exe",
+                                "svchost.exe",
+                                "explorer.exe",
+                                "winlogon.exe",
+                                "system",
+                                "registry",
+                                "dwm.exe",
+                            }
                             proc = psutil.Process(pid) if psutil else None
                             if proc and proc.name().lower() in _PROTECTED:
-                                await message.reply(f"시스템 핵심 프로세스({proc.name()})는 종료할 수 없습니다.")
+                                await message.reply(
+                                    f"시스템 핵심 프로세스({proc.name()})는 종료할 수 없습니다."
+                                )
                                 return True
                         except Exception:
                             pass  # psutil 실패 시 MCP에서 처리
                         result = await system_mcp_server.kill_process(pid)
                         await message.reply(f"**프로세스 종료**\n```\n{result}\n```")
                     else:
-                        await message.reply("종료할 프로세스의 PID를 숫자로 지정해주세요.\n예: `프로세스 1234 종료`")
+                        await message.reply(
+                            "종료할 프로세스의 PID를 숫자로 지정해주세요.\n예: `프로세스 1234 종료`"
+                        )
                     return True
                 except Exception as e:
                     logger.error(f"Kill process: {e}")
@@ -1396,41 +1812,66 @@ class JarvisBot(commands.Bot):
         # ══════════════════════════════════════════
         # ── PC 원격 제어 (관리자 전용) ──
         # ══════════════════════════════════════════
-        if any(w in p for w in ["컴퓨터 꺼", "컴퓨터 종료", "shutdown", "pc 꺼", "재시작", "재부팅",
-                                 "restart", "reboot", "절전", "sleep", "잠자기", "잠금", "lock",
-                                 "볼륨", "소리", "volume", "음량", "밝기", "brightness"]):
+        if any(
+            w in p
+            for w in [
+                "컴퓨터 꺼",
+                "컴퓨터 종료",
+                "shutdown",
+                "pc 꺼",
+                "재시작",
+                "재부팅",
+                "restart",
+                "reboot",
+                "절전",
+                "sleep",
+                "잠자기",
+                "잠금",
+                "lock",
+                "볼륨",
+                "소리",
+                "volume",
+                "음량",
+                "밝기",
+                "brightness",
+            ]
+        ):
             if not _is_authorized(message):
                 await message.reply("🔒 PC 원격 제어는 관리자 권한이 필요합니다.")
                 return True
 
         if any(w in p for w in ["컴퓨터 꺼", "컴퓨터 종료", "shutdown", "pc 꺼"]):
-            if system_mcp_server and hasattr(system_mcp_server, 'pc_control'):
-                await message.reply("60초 후 컴퓨터가 종료됩니다. 취소하려면 `shutdown /a`")
+            if system_mcp_server and hasattr(system_mcp_server, "pc_control"):
+                await message.reply(
+                    "60초 후 컴퓨터가 종료됩니다. 취소하려면 `shutdown /a`"
+                )
                 result = await system_mcp_server.pc_control("shutdown")
                 await message.reply(f"```\n{result}\n```")
                 return True
 
         if any(w in p for w in ["재시작", "재부팅", "restart", "reboot"]):
-            if system_mcp_server and hasattr(system_mcp_server, 'pc_control'):
+            if system_mcp_server and hasattr(system_mcp_server, "pc_control"):
                 await message.reply("60초 후 PC가 재시작됩니다.")
                 result = await system_mcp_server.pc_control("restart")
                 await message.reply(f"```\n{result}\n```")
                 return True
 
-        if (any(w in p for w in ["절전", "sleep", "잠자기"]) and "모드" in p) or p.strip() in ["절전", "sleep"]:
-            if system_mcp_server and hasattr(system_mcp_server, 'pc_control'):
+        if (
+            any(w in p for w in ["절전", "sleep", "잠자기"]) and "모드" in p
+        ) or p.strip() in ["절전", "sleep"]:
+            if system_mcp_server and hasattr(system_mcp_server, "pc_control"):
                 result = await system_mcp_server.pc_control("sleep")
                 await message.reply(f"```\n{result}\n```")
                 return True
 
         if any(w in p for w in ["잠금", "lock", "화면 잠금"]):
-            if system_mcp_server and hasattr(system_mcp_server, 'pc_control'):
+            if system_mcp_server and hasattr(system_mcp_server, "pc_control"):
                 result = await system_mcp_server.pc_control("lock")
                 await message.reply(f"```\n{result}\n```")
                 return True
 
         if any(w in p for w in ["볼륨", "소리", "volume", "음량"]):
-            if system_mcp_server and hasattr(system_mcp_server, 'pc_control'):
+            if system_mcp_server and hasattr(system_mcp_server, "pc_control"):
                 try:
                     if any(w in p for w in ["올려", "up", "높여", "크게"]):
                         result = await system_mcp_server.pc_control("volume_up")
@@ -1440,9 +1881,11 @@ class JarvisBot(commands.Bot):
                         result = await system_mcp_server.pc_control("volume_mute")
                     else:
 
-                        nums = re.findall(r'\d+', p)
+                        nums = re.findall(r"\d+", p)
                         if nums:
-                            result = await system_mcp_server.pc_control("volume_set", nums[0])
+                            result = await system_mcp_server.pc_control(
+                                "volume_set", nums[0]
+                            )
                         else:
                             result = await system_mcp_server.pc_control("volume_up")
                     await message.reply(f"**볼륨 제어**\n```\n{result}\n```")
@@ -1452,10 +1895,10 @@ class JarvisBot(commands.Bot):
                     return True
 
         if any(w in p for w in ["밝기", "brightness"]):
-            if system_mcp_server and hasattr(system_mcp_server, 'pc_control'):
+            if system_mcp_server and hasattr(system_mcp_server, "pc_control"):
                 try:
 
-                    nums = re.findall(r'\d+', p)
+                    nums = re.findall(r"\d+", p)
                     val = nums[0] if nums else "50"
                     result = await system_mcp_server.pc_control("brightness", val)
                     await message.reply(f"**밝기 조절**\n```\n{result}\n```")
@@ -1467,9 +1910,17 @@ class JarvisBot(commands.Bot):
         # ══════════════════════════════════════════
         # ── Vision: !scan 화면 분석 (Phase 2) ──
         # ══════════════════════════════════════════
-        if any(w in p for w in ["!scan", "화면 분석", "스캔", "화면분석", "screen scan"]):
+        if any(
+            w in p for w in ["!scan", "화면 분석", "스캔", "화면분석", "screen scan"]
+        ):
             try:
-                custom_prompt = p.replace("!scan", "").replace("화면 분석", "").replace("스캔", "").replace("화면분석", "").strip()
+                custom_prompt = (
+                    p.replace("!scan", "")
+                    .replace("화면 분석", "")
+                    .replace("스캔", "")
+                    .replace("화면분석", "")
+                    .strip()
+                )
                 if not custom_prompt:
                     custom_prompt = "이 화면을 분석해서 한국어로 설명해줘. 주요 내용, UI 요소, 텍스트 등을 요약해."
                 result = await self._analyze_screen(custom_prompt)
@@ -1483,7 +1934,10 @@ class JarvisBot(commands.Bot):
 
         # ── Vision: !monitor 모니터링 (Phase 2) ──
         # 3분 주기 화면 감시 (tasks.loop 기반 monitor_task 사용)
-        if p.startswith("!monitor") or (any(w in p for w in ["모니터링", "감시"]) and any(w in p for w in ["시작", "중지", "on", "off", "start", "stop"])):
+        if p.startswith("!monitor") or (
+            any(w in p for w in ["모니터링", "감시"])
+            and any(w in p for w in ["시작", "중지", "on", "off", "start", "stop"])
+        ):
             try:
                 if any(w in p for w in ["off", "중지", "끄기", "stop"]):
                     self.monitor_enabled = False
@@ -1498,18 +1952,22 @@ class JarvisBot(commands.Bot):
                     self.monitor_channel = message.channel
                     if not monitor_task.is_running():
                         monitor_task.start(self)
-                    await message.reply(f"👁️ **스마트 감시 모드 시작** (3분 주기)\n채널: {message.channel.mention}\n종료: `!monitor off`")
+                    await message.reply(
+                        f"👁️ **스마트 감시 모드 시작** (3분 주기)\n채널: {message.channel.mention}\n종료: `!monitor off`"
+                    )
                     return True
             except Exception as e:
                 await message.reply(f"모니터링 설정 실패: {e}")
                 return True
 
         # ── Vision: !cctv 웹캠 주기 전송 (Phase 2) ──
-        if p.startswith("!cctv") or ("cctv" in p and any(w in p for w in ["시작", "중지", "snap", "캡처"])):
+        if p.startswith("!cctv") or (
+            "cctv" in p and any(w in p for w in ["시작", "중지", "snap", "캡처"])
+        ):
             if system_mcp_server:
                 try:
                     if any(w in p for w in ["stop", "중지", "끄기", "off"]):
-                        if hasattr(self, '_cctv_task') and self._cctv_task is not None:
+                        if hasattr(self, "_cctv_task") and self._cctv_task is not None:
                             self._cctv_task.cancel()
                             self._cctv_task = None
                             await message.reply("CCTV 모드를 중지했습니다.")
@@ -1518,12 +1976,13 @@ class JarvisBot(commands.Bot):
                         return True
                     elif any(w in p for w in ["snap", "캡처", "찍어"]):
 
-
                         res = await system_mcp_server.capture_webcam()
                         if "base64," in res:
                             b64_str = res.split("base64,", 1)[-1]
                             img_data = base64.b64decode(b64_str)
-                            file = discord.File(io.BytesIO(img_data), filename="cctv_snap.jpg")
+                            file = discord.File(
+                                io.BytesIO(img_data), filename="cctv_snap.jpg"
+                            )
                             await message.reply(content="**CCTV 스냅샷**", file=file)
                         else:
                             await message.reply(f"웹캠 결과: {res[:500]}")
@@ -1531,7 +1990,7 @@ class JarvisBot(commands.Bot):
                     else:
                         # start with interval
 
-                        nums = re.findall(r'\d+', p)
+                        nums = re.findall(r"\d+", p)
                         interval_min = int(nums[0]) if nums else 5
                         interval_sec = interval_min * 60
                         self._cctv_channel = message.channel
@@ -1546,22 +2005,34 @@ class JarvisBot(commands.Bot):
                                     if "base64," in res:
                                         b64_str = res.split("base64,", 1)[-1]
                                         img_data = base64.b64decode(b64_str)
-                                        now_str = datetime.now(timezone(timedelta(hours=9))).strftime("%H:%M:%S")
-                                        file = discord.File(io.BytesIO(img_data), filename=f"cctv_{now_str}.jpg")
+                                        now_str = datetime.now(
+                                            timezone(timedelta(hours=9))
+                                        ).strftime("%H:%M:%S")
+                                        file = discord.File(
+                                            io.BytesIO(img_data),
+                                            filename=f"cctv_{now_str}.jpg",
+                                        )
                                         ch = self._cctv_channel
                                         if ch:
-                                            await ch.send(content=f"**CCTV [{now_str}]**", file=file)
+                                            await ch.send(
+                                                content=f"**CCTV [{now_str}]**",
+                                                file=file,
+                                            )
                                         _consecutive_failures = 0
                                 except asyncio.CancelledError:
                                     break
                                 except Exception as e:
                                     _consecutive_failures += 1
-                                    logger.warning(f"CCTV 캡처 실패 ({_consecutive_failures}/5): {e}")
+                                    logger.warning(
+                                        f"CCTV 캡처 실패 ({_consecutive_failures}/5): {e}"
+                                    )
                                     if _consecutive_failures >= 5:
                                         ch = self._cctv_channel
                                         if ch:
                                             try:
-                                                await ch.send("CCTV 5회 연속 실패 — 자동 중단합니다. `!cctv start`로 재시작하세요.")
+                                                await ch.send(
+                                                    "CCTV 5회 연속 실패 — 자동 중단합니다. `!cctv start`로 재시작하세요."
+                                                )
                                             except Exception:
                                                 pass
                                         break
@@ -1574,7 +2045,9 @@ class JarvisBot(commands.Bot):
                             except asyncio.CancelledError:
                                 pass
                         self._cctv_task = asyncio.create_task(_cctv_loop())
-                        await message.reply(f"CCTV 모드 시작 (간격: {interval_min}분)\n중지: `!cctv stop`\n즉시 캡처: `!cctv snap`")
+                        await message.reply(
+                            f"CCTV 모드 시작 (간격: {interval_min}분)\n중지: `!cctv stop`\n즉시 캡처: `!cctv snap`"
+                        )
                         return True
                 except Exception as e:
                     await message.reply(f"CCTV 설정 실패: {e}")
@@ -1598,6 +2071,7 @@ class JarvisBot(commands.Bot):
             if ext == ".pdf":
                 try:
                     from PyPDF2 import PdfReader
+
                     reader = PdfReader(io.BytesIO(data))
                     pages = reader.pages[:20]
                     text = "\n".join(p.extract_text() or "" for p in pages).strip()
@@ -1613,6 +2087,7 @@ class JarvisBot(commands.Bot):
             elif ext in (".xlsx", ".xls"):
                 try:
                     from openpyxl import load_workbook
+
                     wb = load_workbook(io.BytesIO(data), read_only=True, data_only=True)
                     result_parts = []
                     for sheet_name in wb.sheetnames[:5]:
@@ -1622,7 +2097,9 @@ class JarvisBot(commands.Bot):
                             if i >= 100:
                                 rows.append("...(이하 생략)")
                                 break
-                            rows.append("\t".join(str(c) if c is not None else "" for c in row))
+                            rows.append(
+                                "\t".join(str(c) if c is not None else "" for c in row)
+                            )
                         result_parts.append(f"[시트: {sheet_name}]\n" + "\n".join(rows))
                     wb.close()
                     text = "\n\n".join(result_parts)
@@ -1662,6 +2139,7 @@ class JarvisBot(commands.Bot):
             elif ext == ".docx":
                 try:
                     from docx import Document
+
                     doc = Document(io.BytesIO(data))
                     paragraphs = [p.text for p in doc.paragraphs if p.text.strip()]
                     # 테이블도 추출
@@ -1683,6 +2161,7 @@ class JarvisBot(commands.Bot):
             elif ext == ".pptx":
                 try:
                     from pptx import Presentation
+
                     prs = Presentation(io.BytesIO(data))
                     slides_text = []
                     for i, slide in enumerate(prs.slides):
@@ -1722,22 +2201,67 @@ class JarvisBot(commands.Bot):
                         text = text[:ATTACHMENT_TEXT_LIMIT] + "\n...(이하 생략)"
                     return f"\n\n--- 📋 첨부파일: {fname} ---\n{text}\n--- 끝 ---\n"
                 except json.JSONDecodeError:
-                    text = data.decode("utf-8", errors="replace")[:ATTACHMENT_TEXT_LIMIT]
+                    text = data.decode("utf-8", errors="replace")[
+                        :ATTACHMENT_TEXT_LIMIT
+                    ]
                     return f"\n\n--- 📋 첨부파일: {fname} (JSON 파싱 실패, 원본) ---\n{text}\n--- 끝 ---\n"
 
             # ── 코드/텍스트 파일 (알려진 확장자) ──
             else:
                 CODE_EXTS = {
-                    ".py", ".js", ".ts", ".jsx", ".tsx", ".java", ".c", ".cpp", ".h",
-                    ".cs", ".go", ".rs", ".rb", ".php", ".swift", ".kt", ".scala",
-                    ".sh", ".bash", ".zsh", ".bat", ".cmd", ".ps1",
-                    ".html", ".css", ".scss", ".less", ".xml", ".svg",
-                    ".sql", ".r", ".m", ".lua", ".pl", ".dart",
-                    ".yaml", ".yml", ".toml", ".ini", ".cfg", ".conf",
-                    ".md", ".rst", ".txt", ".log", ".env.example",
-                    ".gitignore", ".dockerignore", ".editorconfig",
+                    ".py",
+                    ".js",
+                    ".ts",
+                    ".jsx",
+                    ".tsx",
+                    ".java",
+                    ".c",
+                    ".cpp",
+                    ".h",
+                    ".cs",
+                    ".go",
+                    ".rs",
+                    ".rb",
+                    ".php",
+                    ".swift",
+                    ".kt",
+                    ".scala",
+                    ".sh",
+                    ".bash",
+                    ".zsh",
+                    ".bat",
+                    ".cmd",
+                    ".ps1",
+                    ".html",
+                    ".css",
+                    ".scss",
+                    ".less",
+                    ".xml",
+                    ".svg",
+                    ".sql",
+                    ".r",
+                    ".m",
+                    ".lua",
+                    ".pl",
+                    ".dart",
+                    ".yaml",
+                    ".yml",
+                    ".toml",
+                    ".ini",
+                    ".cfg",
+                    ".conf",
+                    ".md",
+                    ".rst",
+                    ".txt",
+                    ".log",
+                    ".env.example",
+                    ".gitignore",
+                    ".dockerignore",
+                    ".editorconfig",
                 }
-                is_text = ext in CODE_EXTS or (att.content_type and "text" in att.content_type)
+                is_text = ext in CODE_EXTS or (
+                    att.content_type and "text" in att.content_type
+                )
 
                 if not is_text:
                     # 바이너리 여부 간단 체크 (null 바이트 비율)
@@ -1774,7 +2298,9 @@ class JarvisBot(commands.Bot):
             self._agent_locks[_key] = asyncio.Lock()
         _agent_lock = self._agent_locks[_key]
         if _agent_lock.locked():
-            logger.warning(f"[AGENT] Duplicate agent request ignored for message {message.id}")
+            logger.warning(
+                f"[AGENT] Duplicate agent request ignored for message {message.id}"
+            )
             return
         await _agent_lock.acquire()
         try:
@@ -1791,7 +2317,9 @@ class JarvisBot(commands.Bot):
                         else:
                             sz = (att.size or 0) / 1_000_000
                             attachment_text += f"\n[첨부파일: {att.filename} - 파일이 너무 큽니다 ({sz:.1f}MB, 최대 5MB)]"
-                    logger.info(f"[AGENT] 첨부파일 처리: image={image_url is not None}, text_len={len(attachment_text)}")
+                    logger.info(
+                        f"[AGENT] 첨부파일 처리: image={image_url is not None}, text_len={len(attachment_text)}"
+                    )
 
                 # 텍스트 없이 첨부파일만 보낸 경우 → 기본 분석 프롬프트 추가
                 if not prompt.strip() and (attachment_text or image_url):
@@ -1816,13 +2344,18 @@ class JarvisBot(commands.Bot):
                     if local_result:
                         return
                 except Exception as local_err:
-                    logger.error(f"[AGENT] _try_local_response EXCEPTION: {type(local_err).__name__}: {local_err}", exc_info=True)
+                    logger.error(
+                        f"[AGENT] _try_local_response EXCEPTION: {type(local_err).__name__}: {local_err}",
+                        exc_info=True,
+                    )
 
                 # ★ 1.5단계: Agent Router (도메인 기반 지능형 라우팅) ★
                 routing_decision = None
                 if self.agent_router:
                     try:
-                        routing_decision = self.agent_router.route(prompt, user_id, has_image=bool(image_url))
+                        routing_decision = self.agent_router.route(
+                            prompt, user_id, has_image=bool(image_url)
+                        )
                         logger.info(
                             f"[AGENT_ROUTER] {routing_decision.domain.name} "
                             f"(conf={routing_decision.confidence:.2f}, model={routing_decision.model_hint})"
@@ -1839,19 +2372,28 @@ class JarvisBot(commands.Bot):
                     history = []
 
                 current_prompt = prompt
-                _executed_tools: set = set()  # Deduplication: track (tool_name, tool_args)
+                _executed_tools: set = (
+                    set()
+                )  # Deduplication: track (tool_name, tool_args)
                 _tool_fail_counts: Dict[str, int] = {}  # 도구별 연속 실패 카운터
                 _blocked_tools: set = set()  # 2회 실패 시 차단
 
                 for _ in range(5):
                     # history 전달 + 라우팅 결정 전달
                     response = await self._query_hybrid_model(
-                        current_prompt, context, history, image_url, user_id,
+                        current_prompt,
+                        context,
+                        history,
+                        image_url,
+                        user_id,
                         routing=routing_decision,
                     )
 
                     if not response:
-                        await self._safe_reply(message, "⚠️ AI 응답을 받지 못했습니다. 잠시 후 다시 시도해주세요.")
+                        await self._safe_reply(
+                            message,
+                            "⚠️ AI 응답을 받지 못했습니다. 잠시 후 다시 시도해주세요.",
+                        )
                         return
                     if response.startswith("⚠️") or response.startswith("❌"):
                         await self._safe_reply(message, response)
@@ -1866,13 +2408,17 @@ class JarvisBot(commands.Bot):
                             tool_args = match.group(2).strip() if match.group(2) else ""
                             tool_key = (tool_name, tool_args)
                             if tool_key in _executed_tools:
-                                logger.warning(f"[AGENT] Duplicate tool call skipped: {tool_name}({tool_args[:50]})")
+                                logger.warning(
+                                    f"[AGENT] Duplicate tool call skipped: {tool_name}({tool_args[:50]})"
+                                )
                                 continue
                             _executed_tools.add(tool_key)
                             # ── 도구 인자 검증 (Fix 2-2) ──
                             valid, err_msg = _validate_tool_args(tool_name, tool_args)
                             if not valid:
-                                logger.warning(f"[AGENT] Tool args blocked: {tool_name} - {err_msg}")
+                                logger.warning(
+                                    f"[AGENT] Tool args blocked: {tool_name} - {err_msg}"
+                                )
                                 current_prompt = (
                                     f"Tool '{tool_name}' 인자 검증 실패: {err_msg}. "
                                     f"다른 방법을 시도하거나 직접 답변하세요.\n원래 질문: {prompt}"
@@ -1885,15 +2431,26 @@ class JarvisBot(commands.Bot):
                                     f"다른 방법을 시도하거나 직접 답변하세요.\n원래 질문: {prompt}"
                                 )
                                 continue
-                            result = await self._execute_tool(tool_name, tool_args, message, user_id)
+                            result = await self._execute_tool(
+                                tool_name, tool_args, message, user_id
+                            )
 
                             # ★ REFLECT: 도구 실패 시 자기 수정 패턴 ★
-                            is_error = result and ("Error" in result or "실패" in result or "blocked" in result.lower() or "보안 차단" in result)
+                            is_error = result and (
+                                "Error" in result
+                                or "실패" in result
+                                or "blocked" in result.lower()
+                                or "보안 차단" in result
+                            )
                             if is_error:
-                                _tool_fail_counts[tool_name] = _tool_fail_counts.get(tool_name, 0) + 1
+                                _tool_fail_counts[tool_name] = (
+                                    _tool_fail_counts.get(tool_name, 0) + 1
+                                )
                                 if _tool_fail_counts[tool_name] >= 2:
                                     _blocked_tools.add(tool_name)
-                                    logger.warning(f"[AGENT] Tool '{tool_name}' blocked after 2 consecutive failures")
+                                    logger.warning(
+                                        f"[AGENT] Tool '{tool_name}' blocked after 2 consecutive failures"
+                                    )
                                 current_prompt = (
                                     f"이전 요청: {current_prompt}\n"
                                     f"도구 '{tool_name}' 실패: {result}\n"
@@ -1902,7 +2459,11 @@ class JarvisBot(commands.Bot):
                             else:
                                 current_prompt = f"이전 요청: {current_prompt}\n도구 '{tool_name}' 결과: {result}\n(위 결과를 바탕으로 한국어로 답변하세요)"
                             if len(current_prompt) > PROMPT_TRUNCATE_LIMIT:
-                                current_prompt = current_prompt[:2000] + "\n...(중략)...\n" + current_prompt[-4000:]
+                                current_prompt = (
+                                    current_prompt[:2000]
+                                    + "\n...(중략)...\n"
+                                    + current_prompt[-4000:]
+                                )
                             image_url = None
                             continue
 
@@ -1910,11 +2471,15 @@ class JarvisBot(commands.Bot):
                     if clean_response:
                         # [MEMORY] 봇 응답 저장
                         if self.memory:
-                            self.memory.add_chat_history(user_id, "assistant", clean_response)
+                            self.memory.add_chat_history(
+                                user_id, "assistant", clean_response
+                            )
 
                         if len(clean_response) > DISCORD_MSG_LIMIT:
                             for i in range(0, len(clean_response), 2000):
-                                await self._safe_reply(message, clean_response[i:i+2000])
+                                await self._safe_reply(
+                                    message, clean_response[i : i + 2000]
+                                )
                         else:
                             await self._safe_reply(message, clean_response)
                     return
@@ -1923,11 +2488,15 @@ class JarvisBot(commands.Bot):
 
         except Exception as e:
             logger.error(f"Agent Error: {e}", exc_info=True)
-            await self._safe_reply(message, "❌ 내부 오류가 발생했습니다. 잠시 후 다시 시도해주세요.")
+            await self._safe_reply(
+                message, "❌ 내부 오류가 발생했습니다. 잠시 후 다시 시도해주세요."
+            )
         finally:
             _agent_lock.release()
             self._agent_locks.pop(_key, None)
-            if create_thread_for_long_conversation and not isinstance(message.channel, discord.Thread):
+            if create_thread_for_long_conversation and not isinstance(
+                message.channel, discord.Thread
+            ):
                 try:
                     await create_thread_for_long_conversation(message)
                 except Exception as thread_err:
@@ -1941,7 +2510,10 @@ class JarvisBot(commands.Bot):
             return True
         return False
 
-    async def _analyze_screen(self, prompt="이 화면을 분석해서 한국어로 설명해줘. 주요 내용, UI 요소, 텍스트 등을 요약해."):
+    async def _analyze_screen(
+        self,
+        prompt="이 화면을 분석해서 한국어로 설명해줘. 주요 내용, UI 요소, 텍스트 등을 요약해.",
+    ):
         if not GEMINI_API_KEY:
             return "Gemini API Key가 설정되지 않아 화면 분석을 할 수 없습니다."
         if not system_mcp_server:
@@ -1952,25 +2524,48 @@ class JarvisBot(commands.Bot):
                 img_data_b64 = b64_str.split("base64,", 1)[-1]
                 url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent"
                 payload = {
-                    "contents": [{"parts": [
-                        {"text": prompt},
-                        {"inline_data": {"mime_type": "image/jpeg", "data": img_data_b64}}
-                    ]}]
+                    "contents": [
+                        {
+                            "parts": [
+                                {"text": prompt},
+                                {
+                                    "inline_data": {
+                                        "mime_type": "image/jpeg",
+                                        "data": img_data_b64,
+                                    }
+                                },
+                            ]
+                        }
+                    ]
                 }
                 session = await self._get_http_session()
-                async with session.post(url, json=payload, headers={"Content-Type": "application/json", "x-goog-api-key": GEMINI_API_KEY}, timeout=aiohttp.ClientTimeout(total=HTTP_TIMEOUT_GEMINI)) as resp:
+                async with session.post(
+                    url,
+                    json=payload,
+                    headers={
+                        "Content-Type": "application/json",
+                        "x-goog-api-key": GEMINI_API_KEY,
+                    },
+                    timeout=aiohttp.ClientTimeout(total=HTTP_TIMEOUT_GEMINI),
+                ) as resp:
                     if resp.status == 200:
                         data = await resp.json()
-                        candidates = data.get('candidates') or []
+                        candidates = data.get("candidates") or []
                         if not candidates:
-                            block_reason = data.get('promptFeedback', {}).get('blockReason', 'UNKNOWN')
-                            logger.warning(f"[Gemini] No candidates. blockReason={block_reason}")
+                            block_reason = data.get("promptFeedback", {}).get(
+                                "blockReason", "UNKNOWN"
+                            )
+                            logger.warning(
+                                f"[Gemini] No candidates. blockReason={block_reason}"
+                            )
                             return f"Gemini 분석 결과 없음 (사유: {block_reason})"
-                        parts = candidates[0].get('content', {}).get('parts') or []
-                        text = parts[0].get('text') if parts else None
+                        parts = candidates[0].get("content", {}).get("parts") or []
+                        text = parts[0].get("text") if parts else None
                         if not text:
-                            finish_reason = candidates[0].get('finishReason', 'UNKNOWN')
-                            logger.warning(f"[Gemini] Empty text. finishReason={finish_reason}")
+                            finish_reason = candidates[0].get("finishReason", "UNKNOWN")
+                            logger.warning(
+                                f"[Gemini] Empty text. finishReason={finish_reason}"
+                            )
                             return f"Gemini 분석 텍스트 비어있음 (finishReason: {finish_reason})"
                         return text
                     else:
@@ -1984,18 +2579,25 @@ class JarvisBot(commands.Bot):
     def _set_rate_limit(self, model_name: str, seconds: int = None):
         """모델에 쿨다운 설정"""
         cd = seconds or RATE_LIMIT_COOLDOWN_SECONDS
-        _rate_limit_cooldowns[model_name] = datetime.now(timezone.utc) + timedelta(seconds=cd)
+        _rate_limit_cooldowns[model_name] = datetime.now(timezone.utc) + timedelta(
+            seconds=cd
+        )
         logger.warning(f"[RateLimit] {model_name} 쿨다운 {cd}초 설정")
 
     def _build_fallback_system_prompt(self, context: str, history_str: str) -> str:
         """라우터 미사용 시 기본 시스템 프롬프트 (전체 도구 포함)"""
         try:
             return build_system_prompt(
-                role="default", context=context,
-                history_str=history_str, categories=None, domain=None,
+                role="default",
+                context=context,
+                history_str=history_str,
+                categories=None,
+                domain=None,
             )
         except Exception:
-            now_kst = datetime.now(timezone(timedelta(hours=9))).strftime("%Y-%m-%d %H:%M:%S (KST)")
+            now_kst = datetime.now(timezone(timedelta(hours=9))).strftime(
+                "%Y-%m-%d %H:%M:%S (KST)"
+            )
             return (
                 "[절대 지시사항]\n"
                 "당신은 J.A.R.V.I.S., 장선우 사령관의 AI 부관입니다.\n"
@@ -2006,7 +2608,15 @@ class JarvisBot(commands.Bot):
                 f"사용자 컨텍스트: {context}\n{history_str}\n"
             )
 
-    async def _query_hybrid_model(self, prompt: str, context: str, history: list, image_url: str, user_id: str, routing=None) -> Optional[str]:
+    async def _query_hybrid_model(
+        self,
+        prompt: str,
+        context: str,
+        history: list,
+        image_url: str,
+        user_id: str,
+        routing=None,
+    ) -> Optional[str]:
         """Proxy/직접 API를 통한 Claude 모델 쿼리. 캐스케이드 폴백 지원."""
         # ★ 페르소나 강제 주입 — 프록시가 system 메시지를 무시해도 user 메시지로 전달 ★
         prompt = _PERSONA_PREAMBLE + prompt
@@ -2015,7 +2625,7 @@ class JarvisBot(commands.Bot):
         if history:
             history_str = "대화 내역:\n"
             for msg in history[-HISTORY_TURNS:]:
-                role = "User" if msg['role'] == 'user' else "Jarvis"
+                role = "User" if msg["role"] == "user" else "Jarvis"
                 history_str += f"{role}: {msg['content'][:200]}\n"
 
         # ★ AgentRouter 기반 도메인별 시스템 프롬프트 생성 ★
@@ -2037,6 +2647,7 @@ class JarvisBot(commands.Bot):
         # ★ 페르소나 가드: system 프롬프트에 "사령관" 없으면 강제 주입 ★
         if "사령관" not in system_prompt:
             from system_prompts import _JARVIS_IDENTITY
+
             system_prompt = _JARVIS_IDENTITY + "\n" + system_prompt
 
         # ★ Model Selector: 모델 힌트 기반 최적 캐스케이드 계획 ★
@@ -2055,8 +2666,11 @@ class JarvisBot(commands.Bot):
 
         # 1. Claude API (Official) — ModelSelector 기반 모델 순서 적용
         # Claude는 이미지 분석(Vision)도 지원하므로 image_url 유무와 관계없이 시도
-        claude_models = (model_plan.claude_models if model_plan
-                         else ["claude-haiku-4-5-20251001", "claude-sonnet-4-5-20250929"])
+        claude_models = (
+            model_plan.claude_models
+            if model_plan
+            else ["claude-haiku-4-5-20251001", "claude-sonnet-4-5-20250929"]
+        )
         if CLAUDE_API_KEY and claude_models:
             all_claude_cooled = all(
                 self._is_rate_limited(f"claude-{m}") for m in claude_models
@@ -2065,13 +2679,17 @@ class JarvisBot(commands.Bot):
                 for attempt in range(2):
                     try:
                         result = await self._query_claude_api(
-                            prompt, system_prompt, models=claude_models,
+                            prompt,
+                            system_prompt,
+                            models=claude_models,
                             image_url=image_url,
                         )
                         if result:
                             return result
                     except RateLimitError as e:
-                        errors.append(f"Claude API: 한도 초과 (쿨다운 {e.retry_after or 60}초)")
+                        errors.append(
+                            f"Claude API: 한도 초과 (쿨다운 {e.retry_after or 60}초)"
+                        )
                         break
                     except PermissionError as e:
                         errors.append(f"Claude API: {e}")
@@ -2087,10 +2705,17 @@ class JarvisBot(commands.Bot):
 
         # 2. Claude Proxy (Session Key) — model_hint 전달
         proxy_model = model_plan.proxy_model if model_plan else "sonnet"
-        if CLAUDE_SESSION_KEY and not image_url and not self._is_rate_limited("claude-proxy"):
+        if (
+            CLAUDE_SESSION_KEY
+            and not image_url
+            and not self._is_rate_limited("claude-proxy")
+        ):
             try:
                 return await self._query_claude_proxy(
-                    prompt, user_id, system_prompt, model=proxy_model,
+                    prompt,
+                    user_id,
+                    system_prompt,
+                    model=proxy_model,
                 )
             except Exception as e:
                 errors.append(f"Claude Proxy: {e}")
@@ -2110,7 +2735,9 @@ class JarvisBot(commands.Bot):
         error_str = " | ".join(errors)
         has_auth_error = any("키 오류" in e or "401" in e or "403" in e for e in errors)
         has_rate_limit = any("한도 초과" in e or "쿨다운" in e for e in errors)
-        has_connection = any("연결 오류" in e or "Connection" in e or "Ollama" in e for e in errors)
+        has_connection = any(
+            "연결 오류" in e or "Connection" in e or "Ollama" in e for e in errors
+        )
 
         if has_auth_error:
             error_msg = "API 키 오류입니다. `.env.jarvis` 파일의 API 키를 확인해주세요."
@@ -2122,7 +2749,9 @@ class JarvisBot(commands.Bot):
             error_msg = "AI 모델이 일시적으로 응답하지 않습니다."
 
         error_msg += "\n\n**AI 없이 사용 가능한 기능:**\n"
-        error_msg += "• `날씨 [지역]` • `시세`/`BTC` • `시스템` • `전적` • `시간` • `도움`"
+        error_msg += (
+            "• `날씨 [지역]` • `시세`/`BTC` • `시스템` • `전적` • `시간` • `도움`"
+        )
 
         logger.debug(f"[AI] Error details: {error_str[:300]}")
 
@@ -2130,26 +2759,44 @@ class JarvisBot(commands.Bot):
 
     async def _query_claude_api(self, prompt, system, models=None, image_url=None):
         # ModelSelector가 결정한 모델 순서 사용, 없으면 기본값
-        claude_models = models or ["claude-haiku-4-5-20251001", "claude-sonnet-4-5-20250929"]
-        headers = {"x-api-key": CLAUDE_API_KEY, "anthropic-version": "2023-06-01", "content-type": "application/json"}
+        claude_models = models or [
+            "claude-haiku-4-5-20251001",
+            "claude-sonnet-4-5-20250929",
+        ]
+        headers = {
+            "x-api-key": CLAUDE_API_KEY,
+            "anthropic-version": "2023-06-01",
+            "content-type": "application/json",
+        }
 
         # 이미지가 있으면 multimodal content 구성
         user_content = prompt
         if image_url:
             try:
                 session = await self._get_http_session()
-                async with session.get(image_url, timeout=aiohttp.ClientTimeout(total=15)) as img_resp:
+                async with session.get(
+                    image_url, timeout=aiohttp.ClientTimeout(total=15)
+                ) as img_resp:
                     if img_resp.status == 200:
                         img_data = await img_resp.read()
-                        b64_img = base64.b64encode(img_data).decode('utf-8')
+                        b64_img = base64.b64encode(img_data).decode("utf-8")
                         mime = img_resp.content_type or "image/jpeg"
                         user_content = [
-                            {"type": "image", "source": {"type": "base64", "media_type": mime, "data": b64_img}},
+                            {
+                                "type": "image",
+                                "source": {
+                                    "type": "base64",
+                                    "media_type": mime,
+                                    "data": b64_img,
+                                },
+                            },
                             {"type": "text", "text": prompt},
                         ]
             except Exception as e:
                 logger.warning(f"[Claude] 이미지 다운로드 실패: {e} — 텍스트만 전송")
-                user_content = f"[NOTE: 이미지 다운로드 실패 — 이미지 분석 불가]\n{prompt}"
+                user_content = (
+                    f"[NOTE: 이미지 다운로드 실패 — 이미지 분석 불가]\n{prompt}"
+                )
 
         last_error = None
         for model in claude_models:
@@ -2159,24 +2806,27 @@ class JarvisBot(commands.Bot):
                 "model": model,
                 "max_tokens": 2048,
                 "messages": [{"role": "user", "content": user_content}],
-                "system": system
+                "system": system,
             }
             start_time = datetime.now(timezone.utc)
             try:
                 session = await self._get_http_session()
                 async with session.post(
                     "https://api.anthropic.com/v1/messages",
-                    json=data, headers=headers,
-                    timeout=aiohttp.ClientTimeout(total=HTTP_TIMEOUT_DEFAULT)
+                    json=data,
+                    headers=headers,
+                    timeout=aiohttp.ClientTimeout(total=HTTP_TIMEOUT_DEFAULT),
                 ) as resp:
-                    elapsed = (datetime.now(timezone.utc) - start_time).total_seconds() * 1000
+                    elapsed = (
+                        datetime.now(timezone.utc) - start_time
+                    ).total_seconds() * 1000
                     if resp.status == 200:
                         res = await resp.json()
                         _track_model_result(f"claude-{model}", True, elapsed)
                         logger.info(f"[Claude] {model} 응답 성공 ({elapsed:.0f}ms)")
-                        content = res.get('content') or []
-                        if content and 'text' in content[0]:
-                            return content[0]['text']
+                        content = res.get("content") or []
+                        if content and "text" in content[0]:
+                            return content[0]["text"]
                         return str(res)
                     elif resp.status == 429:
                         retry_after = _safe_retry_after(resp.headers, 60)
@@ -2188,7 +2838,9 @@ class JarvisBot(commands.Bot):
                         error_text = await resp.text()
                         _track_model_result(f"claude-{model}", False)
                         # API 키 오류 → 다른 모델도 동일 실패하므로 즉시 중단
-                        raise PermissionError(f"Claude API 키 오류 ({resp.status}): {error_text[:150]}")
+                        raise PermissionError(
+                            f"Claude API 키 오류 ({resp.status}): {error_text[:150]}"
+                        )
                     elif resp.status == 529:
                         _track_model_result(f"claude-{model}", False)
                         last_error = Exception(f"{model} 서버 과부하 (529)")
@@ -2197,7 +2849,9 @@ class JarvisBot(commands.Bot):
                     else:
                         error_text = await resp.text()
                         _track_model_result(f"claude-{model}", False)
-                        last_error = Exception(f"{model} Error {resp.status}: {error_text[:200]}")
+                        last_error = Exception(
+                            f"{model} Error {resp.status}: {error_text[:200]}"
+                        )
                         continue
             except asyncio.TimeoutError:
                 _track_model_result(f"claude-{model}", False)
@@ -2218,32 +2872,37 @@ class JarvisBot(commands.Bot):
         # Local Proxy (claude_proxy.js) - 8780 포트 (8765는 mcp_gateway_proxy가 사용)
         proxy_port = os.environ.get("JARVIS_PORT", "8780")
         url = f"http://localhost:{proxy_port}/chat"
-        payload = {
-            "message": prompt,
-            "user": user_id,
-            "model": model,
-            "system": system
-        }
+        payload = {"message": prompt, "user": user_id, "model": model, "system": system}
         try:
             session = await self._get_http_session()
-            async with session.post(url, json=payload, timeout=aiohttp.ClientTimeout(total=HTTP_TIMEOUT_DEFAULT)) as resp:
+            async with session.post(
+                url,
+                json=payload,
+                timeout=aiohttp.ClientTimeout(total=HTTP_TIMEOUT_DEFAULT),
+            ) as resp:
                 if resp.status == 200:
                     data = await resp.json()
                     # model이 "none"이면 Proxy 내부에서 모든 모델 실패 → 폴백 필요
-                    if data.get('model') == 'none' or data.get('error'):
+                    if data.get("model") == "none" or data.get("error"):
                         raise Exception("Claude Proxy: 모든 upstream 모델 실패")
-                    reply = data.get('reply')
+                    reply = data.get("reply")
                     if reply:
                         return reply
                     raise Exception("Claude Proxy: 빈 응답")
                 raise Exception(f"Claude Proxy Error {resp.status}")
-        except (aiohttp.ClientConnectorError, aiohttp.ClientError,
-                asyncio.TimeoutError, OSError) as e:
+        except (
+            aiohttp.ClientConnectorError,
+            aiohttp.ClientError,
+            asyncio.TimeoutError,
+            OSError,
+        ) as e:
             self._set_rate_limit("claude-proxy", 300)
             logger.warning(f"[AI] Claude Proxy 연결 실패 (300초 쿨다운): {e}")
             raise
 
-    async def _query_gemini(self, prompt, system, image_url=None, model="gemini-2.0-flash"):
+    async def _query_gemini(
+        self, prompt, system, image_url=None, model="gemini-2.0-flash"
+    ):
         url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
         parts = [{"text": system + "\nUser: " + prompt}]
         if image_url:
@@ -2252,26 +2911,34 @@ class JarvisBot(commands.Bot):
                 async with session.get(image_url) as resp:
                     if resp.status == 200:
                         img_data = await resp.read()
-                        b64_img = base64.b64encode(img_data).decode('utf-8')
+                        b64_img = base64.b64encode(img_data).decode("utf-8")
                         mime = resp.content_type or "image/jpeg"
-                        parts.append({"inline_data": {"mime_type": mime, "data": b64_img}})
+                        parts.append(
+                            {"inline_data": {"mime_type": mime, "data": b64_img}}
+                        )
             except Exception as e:
                 logger.warning(f"[Gemini] 이미지 다운로드 실패: {e}")
-                parts.append({"text": "[NOTE: 이미지 다운로드 실패 — 이미지 분석 불가]"})
+                parts.append(
+                    {"text": "[NOTE: 이미지 다운로드 실패 — 이미지 분석 불가]"}
+                )
         payload = {"contents": [{"parts": parts}]}
         session = await self._get_http_session()
         async with session.post(
-            url, json=payload,
-            headers={"Content-Type": "application/json", "x-goog-api-key": GEMINI_API_KEY},
-            timeout=aiohttp.ClientTimeout(total=30)
+            url,
+            json=payload,
+            headers={
+                "Content-Type": "application/json",
+                "x-goog-api-key": GEMINI_API_KEY,
+            },
+            timeout=aiohttp.ClientTimeout(total=30),
         ) as resp:
             if resp.status == 200:
                 data = await resp.json()
-                candidates = data.get('candidates') or []
+                candidates = data.get("candidates") or []
                 if candidates:
                     logger.info(f"[Gemini] {model} 응답 성공")
-                    parts_list = candidates[0].get('content', {}).get('parts', [])
-                    text = parts_list[0].get('text') if parts_list else None
+                    parts_list = candidates[0].get("content", {}).get("parts", [])
+                    text = parts_list[0].get("text") if parts_list else None
                     if text:
                         return text
                     raise Exception("Gemini 응답에 텍스트 없음")
@@ -2283,29 +2950,40 @@ class JarvisBot(commands.Bot):
             elif resp.status in (400, 401, 403):
                 error_text = await resp.text()
                 # 인증/키 오류 → 다른 Gemini 모델도 동일 실패하므로 즉시 중단
-                raise PermissionError(f"Gemini API 키 오류 ({resp.status}): {error_text[:150]}")
+                raise PermissionError(
+                    f"Gemini API 키 오류 ({resp.status}): {error_text[:150]}"
+                )
             elif resp.status == 503:
                 raise Exception(f"{model} 서비스 일시 불가 (503)")
             else:
                 error_text = await resp.text()
-                raise Exception(f"Gemini {model} Error {resp.status}: {error_text[:200]}")
+                raise Exception(
+                    f"Gemini {model} Error {resp.status}: {error_text[:200]}"
+                )
 
     async def _query_ollama(self, prompt, system):
         # Ollama가 쿨다운 중이면 skip (이전 연결 실패 시 5분 쿨다운)
         if self._is_rate_limited("ollama-local"):
             raise Exception("Ollama 서버 미응답 (쿨다운 중)")
         url = "http://localhost:11434/api/generate"
-        payload = {"model": os.environ.get("OLLAMA_MODEL", "qwen2.5:1.5b"), "prompt": system + "\nUser: " + prompt, "stream": False}
+        payload = {
+            "model": os.environ.get("OLLAMA_MODEL", "qwen2.5:1.5b"),
+            "prompt": system + "\nUser: " + prompt,
+            "stream": False,
+        }
         try:
             session = await self._get_http_session()
             async with session.post(
-                url, json=payload,
-                timeout=aiohttp.ClientTimeout(total=30, connect=5)  # connect 5초로 빠른 실패
+                url,
+                json=payload,
+                timeout=aiohttp.ClientTimeout(
+                    total=30, connect=5
+                ),  # connect 5초로 빠른 실패
             ) as resp:
                 if resp.status == 200:
                     data = await resp.json()
                     logger.info("[Ollama] 응답 성공")
-                    return data.get('response') or str(data)
+                    return data.get("response") or str(data)
                 raise Exception(f"Ollama Error {resp.status}")
         except (aiohttp.ClientConnectorError, asyncio.TimeoutError, OSError) as e:
             # Ollama 서버 미실행 → 300초(5분) 쿨다운 (매번 연결 시도 방지)
@@ -2323,7 +3001,9 @@ class JarvisBot(commands.Bot):
     @commands.command(name="scan")
     async def scan_cmd(self, ctx):
         msg = await ctx.send("Scanning...")
-        res = await self._execute_tool("scan_screen", "", ctx.message, str(ctx.author.id))
+        res = await self._execute_tool(
+            "scan_screen", "", ctx.message, str(ctx.author.id)
+        )
         await msg.edit(content=f"**Analysis Result:**\n{res}")
 
     @commands.command(name="search")
@@ -2341,13 +3021,17 @@ class JarvisBot(commands.Bot):
     async def git_cmd(self, ctx):
         try:
             res = await asyncio.to_thread(
-                subprocess.check_output, ["git", "status"],
-                encoding="utf-8", stderr=subprocess.STDOUT,
-                cwd=os.path.dirname(os.path.abspath(__file__))
+                subprocess.check_output,
+                ["git", "status"],
+                encoding="utf-8",
+                stderr=subprocess.STDOUT,
+                cwd=os.path.dirname(os.path.abspath(__file__)),
             )
-            if len(res) > 900: res = res[:900] + "..."
+            if len(res) > 900:
+                res = res[:900] + "..."
             await ctx.send(f"```\n{res}\n```")
-        except Exception as e: await ctx.send(f"Git Error: {e}")
+        except Exception as e:
+            await ctx.send(f"Git Error: {e}")
 
     @commands.command(name="briefing")
     async def briefing_cmd(self, ctx):
@@ -2360,7 +3044,7 @@ class JarvisBot(commands.Bot):
             report = await self._daily_briefing.generate_briefing_async()
             if len(report) > DISCORD_MSG_LIMIT:
                 for i in range(0, len(report), 2000):
-                    await ctx.send(report[i:i+2000])
+                    await ctx.send(report[i : i + 2000])
             else:
                 await ctx.send(report)
         except Exception as e:
@@ -2384,14 +3068,18 @@ class JarvisBot(commands.Bot):
 
         msg = await ctx.send(f"🎵 검색 중: {url}...")
 
-        ydl_opts = {'format': 'bestaudio/best', 'noplaylist': True, 'quiet': True}
+        ydl_opts = {"format": "bestaudio/best", "noplaylist": True, "quiet": True}
         try:
             import yt_dlp
+
             with yt_dlp.YoutubeDL(ydl_opts) as ydl:
                 info = await asyncio.to_thread(ydl.extract_info, url, download=False)
-                url2 = info['url']
-                title = info['title']
-            source = discord.FFmpegPCMAudio(url2, before_options="-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5")
+                url2 = info["url"]
+                title = info["title"]
+            source = discord.FFmpegPCMAudio(
+                url2,
+                before_options="-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5",
+            )
             if ctx.voice_client.is_playing():
                 ctx.voice_client.stop()
             ctx.voice_client.play(source)
@@ -2414,7 +3102,9 @@ class JarvisBot(commands.Bot):
             self.monitor_channel = ctx.channel
             if not monitor_task.is_running():
                 monitor_task.start(self)
-            await ctx.send(f"👁️ **스마트 감시 모드 시작** (3분 주기)\n채널: {ctx.channel.mention}")
+            await ctx.send(
+                f"👁️ **스마트 감시 모드 시작** (3분 주기)\n채널: {ctx.channel.mention}"
+            )
         else:
             self.monitor_enabled = False
             self.monitor_channel = None
@@ -2422,9 +3112,11 @@ class JarvisBot(commands.Bot):
                 monitor_task.stop()
             await ctx.send("👁️ **스마트 감시 모드 종료**")
 
+
 # ═══════════════════════════════════════════════════════════════
 #  Slash Commands (/price, /balance, /trade, /chart)
 # ═══════════════════════════════════════════════════════════════
+
 
 @app_commands.command(name="price", description="코인 시세를 조회합니다")
 @app_commands.describe(coin="조회할 코인 심볼 (예: BTC, ETH). 비우면 관심 코인 전체")
@@ -2433,7 +3125,9 @@ async def price_slash(interaction: discord.Interaction, coin: Optional[str] = No
     await interaction.response.defer()
     try:
         if not upbit_client:
-            await interaction.followup.send(embed=_error_embed("Upbit 클라이언트를 불러올 수 없습니다."))
+            await interaction.followup.send(
+                embed=_error_embed("Upbit 클라이언트를 불러올 수 없습니다.")
+            )
             return
         if coin:
             ticker = coin.upper()
@@ -2441,11 +3135,15 @@ async def price_slash(interaction: discord.Interaction, coin: Optional[str] = No
                 ticker = f"KRW-{ticker}"
             price = await asyncio.to_thread(upbit_client.get_current_price, ticker)
             if price is None:
-                await interaction.followup.send(embed=_error_embed(f"`{ticker}` 시세를 조회할 수 없습니다."))
+                await interaction.followup.send(
+                    embed=_error_embed(f"`{ticker}` 시세를 조회할 수 없습니다.")
+                )
                 return
             change_pct = None
             try:
-                df = await asyncio.to_thread(upbit_client.get_ohlcv, ticker, interval="day", count=2)
+                df = await asyncio.to_thread(
+                    upbit_client.get_ohlcv, ticker, interval="day", count=2
+                )
                 if df is not None and len(df) >= 2:
                     prev_close = df["close"].iloc[-2]
                     if prev_close > 0:
@@ -2456,21 +3154,26 @@ async def price_slash(interaction: discord.Interaction, coin: Optional[str] = No
             sent = await interaction.followup.send(embed=embed, wait=True)
             bot_instance = interaction.client
             if isinstance(bot_instance, JarvisBot):
-                bot_instance._add_reaction_context(sent.id, {"type": "price_single", "ticker": ticker, "tickers": [ticker]})
-            await sent.add_reaction("\U0001F44D")
-            await sent.add_reaction("\U0001F4CA")
+                bot_instance._add_reaction_context(
+                    sent.id,
+                    {"type": "price_single", "ticker": ticker, "tickers": [ticker]},
+                )
+            await sent.add_reaction("\U0001f44d")
+            await sent.add_reaction("\U0001f4ca")
         else:
             default_tickers = ["KRW-BTC", "KRW-ETH", "KRW-XRP", "KRW-SOL"]
-            if upbit_config and hasattr(upbit_config, 'DEFAULT_WATCH_LIST'):
+            if upbit_config and hasattr(upbit_config, "DEFAULT_WATCH_LIST"):
                 default_tickers = list(upbit_config.DEFAULT_WATCH_LIST)
             prices = await asyncio.to_thread(upbit_client.get_prices, default_tickers)
             embed = _multi_price_embed(prices)
             sent = await interaction.followup.send(embed=embed, wait=True)
             bot_instance = interaction.client
             if isinstance(bot_instance, JarvisBot):
-                bot_instance._add_reaction_context(sent.id, {"type": "price_multi", "tickers": default_tickers})
-            await sent.add_reaction("\U0001F44D")
-            await sent.add_reaction("\U0001F4CA")
+                bot_instance._add_reaction_context(
+                    sent.id, {"type": "price_multi", "tickers": default_tickers}
+                )
+            await sent.add_reaction("\U0001f44d")
+            await sent.add_reaction("\U0001f4ca")
     except Exception as e:
         logger.error(f"/price: {e}")
         await interaction.followup.send(embed=_error_embed(f"시세 조회 실패: {e}"))
@@ -2482,7 +3185,10 @@ async def balance_slash(interaction: discord.Interaction):
     await interaction.response.defer(ephemeral=True)
     try:
         if not upbit_client:
-            await interaction.followup.send(embed=_error_embed("Upbit 클라이언트를 불러올 수 없습니다."), ephemeral=True)
+            await interaction.followup.send(
+                embed=_error_embed("Upbit 클라이언트를 불러올 수 없습니다."),
+                ephemeral=True,
+            )
             return
         balances = await asyncio.to_thread(upbit_client.get_balances)
         total = await asyncio.to_thread(upbit_client.get_total_balance_krw)
@@ -2490,16 +3196,29 @@ async def balance_slash(interaction: discord.Interaction):
         await interaction.followup.send(embed=embed, ephemeral=True)
     except Exception as e:
         logger.error(f"/balance: {e}")
-        await interaction.followup.send(embed=_error_embed(f"잔고 조회 실패: {e}"), ephemeral=True)
+        await interaction.followup.send(
+            embed=_error_embed(f"잔고 조회 실패: {e}"), ephemeral=True
+        )
 
 
 @app_commands.command(name="trade", description="코인을 매수 또는 매도합니다")
-@app_commands.describe(action="매매 유형", coin="코인 심볼 (예: BTC)", amount="금액 (매수: KRW, 매도: 수량)")
-@app_commands.choices(action=[
-    app_commands.Choice(name="매수 (Buy)", value="buy"),
-    app_commands.Choice(name="매도 (Sell)", value="sell"),
-])
-async def trade_slash_cmd(interaction: discord.Interaction, action: app_commands.Choice[str], coin: str, amount: float):
+@app_commands.describe(
+    action="매매 유형",
+    coin="코인 심볼 (예: BTC)",
+    amount="금액 (매수: KRW, 매도: 수량)",
+)
+@app_commands.choices(
+    action=[
+        app_commands.Choice(name="매수 (Buy)", value="buy"),
+        app_commands.Choice(name="매도 (Sell)", value="sell"),
+    ]
+)
+async def trade_slash_cmd(
+    interaction: discord.Interaction,
+    action: app_commands.Choice[str],
+    coin: str,
+    amount: float,
+):
     """매매 실행 (버튼 UI 포함)"""
     await interaction.response.defer()
 
@@ -2507,14 +3226,19 @@ async def trade_slash_cmd(interaction: discord.Interaction, action: app_commands
     has_perm = False
     if BOT_OWNER_ID and str(interaction.user.id) == BOT_OWNER_ID:
         has_perm = True
-    elif hasattr(interaction.user, "guild_permissions") and interaction.user.guild_permissions.administrator:
+    elif (
+        hasattr(interaction.user, "guild_permissions")
+        and interaction.user.guild_permissions.administrator
+    ):
         has_perm = True
     elif hasattr(interaction.user, "roles"):
         user_roles = {r.name.lower() for r in interaction.user.roles}
         if TRADER_ROLE_NAME.lower() in user_roles or (user_roles & ADMIN_ROLE_NAMES):
             has_perm = True
     if not has_perm:
-        await interaction.followup.send(embed=_error_embed(f"🔒 매매는 **{TRADER_ROLE_NAME}** 역할이 필요합니다."))
+        await interaction.followup.send(
+            embed=_error_embed(f"🔒 매매는 **{TRADER_ROLE_NAME}** 역할이 필요합니다.")
+        )
         return
 
     # 매도 금액 검증
@@ -2527,29 +3251,36 @@ async def trade_slash_cmd(interaction: discord.Interaction, action: app_commands
         ticker = f"KRW-{ticker}"
     try:
         if not upbit_client:
-            await interaction.followup.send(embed=_error_embed("Upbit 클라이언트를 불러올 수 없습니다."))
+            await interaction.followup.send(
+                embed=_error_embed("Upbit 클라이언트를 불러올 수 없습니다.")
+            )
             return
 
         # ★ TradeOrchestrator: 승인 게이트 ★
         trade_orch = None
         try:
             from jarvis_features.trade_orchestrator import TradeOrchestrator
+
             trade_orch = _get_trade_orchestrator()
         except ImportError:
             pass
 
         if action.value == "buy":
             min_order = 5000
-            if upbit_config and hasattr(upbit_config, 'MIN_ORDER_AMOUNT'):
+            if upbit_config and hasattr(upbit_config, "MIN_ORDER_AMOUNT"):
                 min_order = upbit_config.MIN_ORDER_AMOUNT
             if amount < min_order:
-                await interaction.followup.send(embed=_error_embed(f"최소 주문 금액: **{min_order:,.0f}** KRW"))
+                await interaction.followup.send(
+                    embed=_error_embed(f"최소 주문 금액: **{min_order:,.0f}** KRW")
+                )
                 return
 
             # 승인 게이트: 고액 거래는 확인 필요
             if trade_orch:
                 req = trade_orch.create_request(
-                    "buy", ticker, amount_krw=amount,
+                    "buy",
+                    ticker,
+                    amount_krw=amount,
                     user_id=str(interaction.user.id),
                 )
                 if req.needs_approval:
@@ -2558,19 +3289,27 @@ async def trade_slash_cmd(interaction: discord.Interaction, action: app_commands
                         description=req.preview_text(),
                         color=discord.Color.orange(),
                     )
-                    embed.set_footer(text=f"ID: {req.request_id[:8]} | 5분 후 자동 취소")
-                    view = TradeApprovalView(trade_orch, req, upbit_client, ticker, amount, "buy")
+                    embed.set_footer(
+                        text=f"ID: {req.request_id[:8]} | 5분 후 자동 취소"
+                    )
+                    view = TradeApprovalView(
+                        trade_orch, req, upbit_client, ticker, amount, "buy"
+                    )
                     await interaction.followup.send(embed=embed, view=view)
                     return
 
-            result = await asyncio.to_thread(upbit_client.buy_market_order, ticker, amount)
+            result = await asyncio.to_thread(
+                upbit_client.buy_market_order, ticker, amount
+            )
             embed = _trade_result_embed("매수", ticker, result)
             embed.add_field(name="주문 금액", value=f"{amount:,.0f} KRW", inline=True)
         else:
             # 매도 승인 게이트
             if trade_orch:
                 req = trade_orch.create_request(
-                    "sell", ticker, sell_percent=100.0,
+                    "sell",
+                    ticker,
+                    sell_percent=100.0,
                     user_id=str(interaction.user.id),
                 )
                 if req.needs_approval:
@@ -2579,12 +3318,18 @@ async def trade_slash_cmd(interaction: discord.Interaction, action: app_commands
                         description=req.preview_text(),
                         color=discord.Color.orange(),
                     )
-                    embed.set_footer(text=f"ID: {req.request_id[:8]} | 5분 후 자동 취소")
-                    view = TradeApprovalView(trade_orch, req, upbit_client, ticker, amount, "sell")
+                    embed.set_footer(
+                        text=f"ID: {req.request_id[:8]} | 5분 후 자동 취소"
+                    )
+                    view = TradeApprovalView(
+                        trade_orch, req, upbit_client, ticker, amount, "sell"
+                    )
                     await interaction.followup.send(embed=embed, view=view)
                     return
 
-            result = await asyncio.to_thread(upbit_client.sell_market_order, ticker, amount)
+            result = await asyncio.to_thread(
+                upbit_client.sell_market_order, ticker, amount
+            )
             embed = _trade_result_embed("매도", ticker, result)
             embed.add_field(name="매도 수량", value=f"{amount:.8g}", inline=True)
         # 버튼 UI 추가
@@ -2606,18 +3351,28 @@ async def chart_slash(interaction: discord.Interaction, coin: str = "BTC"):
     coin_name = ticker.replace("KRW-", "")
     try:
         if not upbit_client:
-            await interaction.followup.send(embed=_error_embed("Upbit 클라이언트를 불러올 수 없습니다."))
+            await interaction.followup.send(
+                embed=_error_embed("Upbit 클라이언트를 불러올 수 없습니다.")
+            )
             return
-        df = await asyncio.to_thread(upbit_client.get_ohlcv, ticker, interval="day", count=7)
+        df = await asyncio.to_thread(
+            upbit_client.get_ohlcv, ticker, interval="day", count=7
+        )
         if df is None or df.empty:
-            await interaction.followup.send(embed=_error_embed(f"{coin_name} 차트 데이터 없음"))
+            await interaction.followup.send(
+                embed=_error_embed(f"{coin_name} 차트 데이터 없음")
+            )
             return
         if generate_price_chart:
             prices = df["close"].tolist()
             timestamps = df.index.tolist()
             buf = generate_price_chart(coin_name, prices, timestamps)
             file = discord.File(buf, filename=f"{coin_name}_chart.png")
-            embed = discord.Embed(title=f"\U0001F4C8 {coin_name} 가격 차트", color=discord.Color.dark_gold(), timestamp=datetime.now(timezone.utc))
+            embed = discord.Embed(
+                title=f"\U0001f4c8 {coin_name} 가격 차트",
+                color=discord.Color.dark_gold(),
+                timestamp=datetime.now(timezone.utc),
+            )
             embed.set_image(url=f"attachment://{coin_name}_chart.png")
             embed.set_footer(text="JARVIS Crypto | Upbit")
             await interaction.followup.send(embed=embed, file=file)
@@ -2629,11 +3384,20 @@ async def chart_slash(interaction: discord.Interaction, coin: str = "BTC"):
             lines = []
             for i, row in df.iterrows():
                 close = row["close"]
-                bar_len = int((close - min_p) / (max_p - min_p) * chart_width) if max_p > min_p else chart_width // 2
+                bar_len = (
+                    int((close - min_p) / (max_p - min_p) * chart_width)
+                    if max_p > min_p
+                    else chart_width // 2
+                )
                 bar = "\u2588" * bar_len + "\u2591" * (chart_width - bar_len)
                 date_str = i.strftime("%m/%d")
                 lines.append(f"`{date_str}` {bar} **{close:,.0f}**")
-            embed = discord.Embed(title=f"\U0001F4CA {coin_name} 7일 차트", description="\n".join(lines), color=discord.Color.dark_gold(), timestamp=datetime.now(timezone.utc))
+            embed = discord.Embed(
+                title=f"\U0001f4ca {coin_name} 7일 차트",
+                description="\n".join(lines),
+                color=discord.Color.dark_gold(),
+                timestamp=datetime.now(timezone.utc),
+            )
             embed.set_footer(text="JARVIS Crypto | 텍스트 차트")
             await interaction.followup.send(embed=embed)
     except Exception as e:
@@ -2645,28 +3409,41 @@ async def chart_slash(interaction: discord.Interaction, coin: str = "BTC"):
 #  Background Tasks
 # ═══════════════════════════════════════════════════════════════
 
+
 @tasks.loop(minutes=1)
 async def update_status_task(bot):
     try:
         if upbit_client:
             price = await asyncio.to_thread(upbit_client.get_current_price, "KRW-BTC")
             if price:
-                await bot.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name=f"BTC {price:,.0f} KRW"))
+                await bot.change_presence(
+                    activity=discord.Activity(
+                        type=discord.ActivityType.watching, name=f"BTC {price:,.0f} KRW"
+                    )
+                )
             else:
                 logger.debug("[StatusTask] Upbit returned None price")
     except Exception as e:
         logger.warning(f"[StatusTask] Upbit price fetch failed: {e}")
         try:
-            await bot.change_presence(activity=discord.Activity(type=discord.ActivityType.playing, name="JARVIS Online"))
+            await bot.change_presence(
+                activity=discord.Activity(
+                    type=discord.ActivityType.playing, name="JARVIS Online"
+                )
+            )
         except Exception:
             pass
+
 
 @update_status_task.before_loop
 async def before_status(bot):
     await bot.wait_until_ready()
 
 
-_last_briefing_date: Optional[str] = None  # Track last briefing date to prevent double-fire
+_last_briefing_date: Optional[str] = (
+    None  # Track last briefing date to prevent double-fire
+)
+
 
 @tasks.loop(minutes=1)
 async def daily_briefing_task(bot):
@@ -2686,18 +3463,22 @@ async def daily_briefing_task(bot):
                     if ch.permissions_for(guild.me).send_messages:
                         channel = ch
                         break
-                if channel: break
+                if channel:
+                    break
         if channel and bot._daily_briefing:
             try:
-                logger.info(f"Sending Morning Briefing to {channel.name} ({channel.id})")
+                logger.info(
+                    f"Sending Morning Briefing to {channel.name} ({channel.id})"
+                )
                 report = await bot._daily_briefing.generate_briefing_async()
                 if len(report) > DISCORD_MSG_LIMIT:
                     for i in range(0, len(report), 2000):
-                        await channel.send(report[i:i+2000])
+                        await channel.send(report[i : i + 2000])
                 else:
                     await channel.send(report)
             except Exception as e:
                 logger.error(f"Briefing Auto-Send Error: {e}")
+
 
 @daily_briefing_task.before_loop
 async def before_briefing(bot):
@@ -2708,16 +3489,27 @@ _monitor_last_result: str = ""
 _monitor_last_alert_time: float = 0.0
 _MONITOR_THROTTLE_SEC = 600  # 10분 내 동일 알림 억제
 
+
 @tasks.loop(minutes=3)
 async def monitor_task(bot):
     global _monitor_last_result, _monitor_last_alert_time
-    if hasattr(bot, 'monitor_enabled') and bot.monitor_enabled and hasattr(bot, 'monitor_channel') and bot.monitor_channel:
+    if (
+        hasattr(bot, "monitor_enabled")
+        and bot.monitor_enabled
+        and hasattr(bot, "monitor_channel")
+        and bot.monitor_channel
+    ):
         try:
             logger.info("Auto-Monitor Scanning...")
-            result = await bot._analyze_screen("화면을 감시 중입니다. 특이사항이나 중요한 변화가 있는지 확인해서 보고해주세요. 만약 특이사항이 없다면 '특이사항 없음'이라고만 답해주세요.")
+            result = await bot._analyze_screen(
+                "화면을 감시 중입니다. 특이사항이나 중요한 변화가 있는지 확인해서 보고해주세요. 만약 특이사항이 없다면 '특이사항 없음'이라고만 답해주세요."
+            )
             if "특이사항 없음" not in result and len(result) > 10:
                 now = time.monotonic()
-                if result == _monitor_last_result and (now - _monitor_last_alert_time) < _MONITOR_THROTTLE_SEC:
+                if (
+                    result == _monitor_last_result
+                    and (now - _monitor_last_alert_time) < _MONITOR_THROTTLE_SEC
+                ):
                     logger.debug("[Monitor] Duplicate alert suppressed")
                     return
                 _monitor_last_result = result
@@ -2732,6 +3524,7 @@ async def monitor_task(bot):
 # ── 포트폴리오 자동 추적 (30분 주기) ──
 _last_portfolio_value: float = 0.0
 
+
 @tasks.loop(minutes=30)
 async def portfolio_monitor_task(bot):
     """포트폴리오 변동률 5% 초과 시 사령관에게 DM 알림."""
@@ -2742,22 +3535,27 @@ async def portfolio_monitor_task(bot):
         summary = await crypto_mcp_server.portfolio_summary()
         # 총 자산 추출 — "총 자산" 또는 "평가액" 뒤의 숫자
         import re as _re_local
-        m = _re_local.search(r'(?:총\s*자산|평가액)[^\d]*([\d,]+(?:\.\d+)?)', summary)
+
+        m = _re_local.search(r"(?:총\s*자산|평가액)[^\d]*([\d,]+(?:\.\d+)?)", summary)
         if not m:
             # fallback: 마지막 큰 숫자 (1000 이상)
-            nums = _re_local.findall(r'[\d,]{4,}', summary)
+            nums = _re_local.findall(r"[\d,]{4,}", summary)
             if not nums:
                 return
-            current_value = float(nums[-1].replace(',', ''))
+            current_value = float(nums[-1].replace(",", ""))
         else:
-            current_value = float(m.group(1).replace(',', ''))
+            current_value = float(m.group(1).replace(",", ""))
         if _last_portfolio_value > 0:
-            change_pct = abs(current_value - _last_portfolio_value) / _last_portfolio_value * 100
+            change_pct = (
+                abs(current_value - _last_portfolio_value) / _last_portfolio_value * 100
+            )
             if change_pct >= 5.0:
                 direction = "상승" if current_value > _last_portfolio_value else "하락"
                 if BOT_OWNER_ID:
                     try:
-                        owner = bot.get_user(int(BOT_OWNER_ID)) or await bot.fetch_user(int(BOT_OWNER_ID))
+                        owner = bot.get_user(int(BOT_OWNER_ID)) or await bot.fetch_user(
+                            int(BOT_OWNER_ID)
+                        )
                         await owner.send(
                             f"**포트폴리오 변동 알림**\n"
                             f"{direction} {change_pct:.1f}% | "
@@ -2769,6 +3567,7 @@ async def portfolio_monitor_task(bot):
     except Exception as e:
         logger.warning(f"[PortfolioMonitor] {e}")
 
+
 @portfolio_monitor_task.before_loop
 async def before_portfolio_monitor(bot):
     await bot.wait_until_ready()
@@ -2778,6 +3577,7 @@ async def before_portfolio_monitor(bot):
 # 구조: {user_id: {"KRW-BTC": 60000000, "KRW-ETH": 5000000}}
 _price_alert_store: Dict[str, Dict[str, float]] = {}
 _price_alert_lock = asyncio.Lock()
+
 
 @tasks.loop(minutes=1)
 async def price_alert_check_task(bot):
@@ -2818,6 +3618,7 @@ async def price_alert_check_task(bot):
     except Exception as e:
         logger.warning(f"[PriceAlert] {e}")
 
+
 @price_alert_check_task.before_loop
 async def before_price_alert(bot):
     await bot.wait_until_ready()
@@ -2836,6 +3637,7 @@ async def rate_limit_cleanup_task():
     if cleaned > 0:
         logger.debug(f"[RateLimitCleanup] {cleaned}개 만료 엔트리 정리")
 
+
 @rate_limit_cleanup_task.before_loop
 async def before_rate_limit_cleanup():
     pass  # 즉시 시작, bot.wait_until_ready() 불필요
@@ -2845,6 +3647,7 @@ async def before_rate_limit_cleanup():
 #  Main
 # ═══════════════════════════════════════════════════════════════
 
+
 def main():
     if not DISCORD_BOT_TOKEN:
         logger.error("No Token")
@@ -2853,14 +3656,18 @@ def main():
 
     logger.info("JARVIS Discord Bot starting...")
     logger.info(f"  Claude API: {'OK' if CLAUDE_API_KEY else 'N/A'}")
-    logger.info(f"  MCP Modules: {MCP_AVAILABLE} (sc2={sc2_mcp_server is not None}, sys={system_mcp_server is not None}, crypto={crypto_mcp_server is not None})")
+    logger.info(
+        f"  MCP Modules: {MCP_AVAILABLE} (sc2={sc2_mcp_server is not None}, sys={system_mcp_server is not None}, crypto={crypto_mcp_server is not None})"
+    )
     logger.info(f"  Advanced Features: {ADVANCED_AVAILABLE}")
     logger.info(f"  Web Tools: {'OK' if web_tools else 'N/A'}")
     logger.info(f"  Memory: {'OK' if MemoryManager else 'N/A'}")
 
     # ★ Phase 5: Graceful Shutdown ★
     def _graceful_shutdown(sig, frame):
-        logger.info(f"[SHUTDOWN] Signal {sig} received. Initiating graceful shutdown...")
+        logger.info(
+            f"[SHUTDOWN] Signal {sig} received. Initiating graceful shutdown..."
+        )
         if get_tool_registry:
             logger.info(f"[SHUTDOWN] Tool stats:\n{get_tool_registry().get_summary()}")
         # 안전한 이벤트 루프 스레드 호출

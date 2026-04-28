@@ -32,15 +32,15 @@ CROSSOVER_RATE = 0.70
 # ---------------------------------------------------------------------------
 
 HYPERPARAM_SPACE = {
-    "learning_rate":       (1e-5, 1e-3),
-    "clip_epsilon":        (0.1, 0.3),
-    "value_coeff":         (0.3, 0.7),
-    "entropy_coeff":       (0.001, 0.05),
-    "gamma":               (0.95, 0.999),
-    "gae_lambda":          (0.9, 0.99),
+    "learning_rate": (1e-5, 1e-3),
+    "clip_epsilon": (0.1, 0.3),
+    "value_coeff": (0.3, 0.7),
+    "entropy_coeff": (0.001, 0.05),
+    "gamma": (0.95, 0.999),
+    "gae_lambda": (0.9, 0.99),
     "aggression_threshold": (0.3, 0.8),
-    "retreat_hp_ratio":    (0.2, 0.5),
-    "expand_timing":       (3.0, 8.0),   # minutes
+    "retreat_hp_ratio": (0.2, 0.5),
+    "expand_timing": (3.0, 8.0),  # minutes
     "army_size_threshold": (10, 30),
 }
 
@@ -48,6 +48,7 @@ HYPERPARAM_SPACE = {
 @dataclass
 class Individual:
     """A candidate hyperparameter configuration (genome)."""
+
     genes: dict[str, float]
     fitness: float = 0.0
     win_rate: float = 0.0
@@ -68,7 +69,9 @@ class Individual:
             if rng.random() < mutation_rate:
                 # Gaussian perturbation
                 sigma = (hi - lo) * 0.1
-                new_genes[param] = max(lo, min(hi, new_genes[param] + rng.gauss(0, sigma)))
+                new_genes[param] = max(
+                    lo, min(hi, new_genes[param] + rng.gauss(0, sigma))
+                )
         return Individual(genes=new_genes)
 
     def crossover(self, other: "Individual", rng: random.Random) -> "Individual":
@@ -85,15 +88,16 @@ class Individual:
 # Sub-Optimizers
 # ---------------------------------------------------------------------------
 
+
 class StrategyOptimizer:
     """Selects high-level strategy based on game context and match history."""
 
     STRATEGIES = {
-        "roach_hydra":     {"minerals": 0.6, "gas": 0.7, "timing": 7.0},
-        "ling_bane_muta":  {"minerals": 0.5, "gas": 0.6, "timing": 8.0},
+        "roach_hydra": {"minerals": 0.6, "gas": 0.7, "timing": 7.0},
+        "ling_bane_muta": {"minerals": 0.5, "gas": 0.6, "timing": 8.0},
         "ultra_corruptor": {"minerals": 0.4, "gas": 0.9, "timing": 14.0},
-        "nydus_rush":      {"minerals": 0.7, "gas": 0.5, "timing": 5.5},
-        "mass_ling":       {"minerals": 0.9, "gas": 0.1, "timing": 4.0},
+        "nydus_rush": {"minerals": 0.7, "gas": 0.5, "timing": 5.5},
+        "mass_ling": {"minerals": 0.9, "gas": 0.1, "timing": 4.0},
     }
 
     def __init__(self):
@@ -114,7 +118,10 @@ class StrategyOptimizer:
             # Race-specific bonus
             if opponent_race == "Terran" and name in ("roach_hydra", "nydus_rush"):
                 score += 0.05
-            elif opponent_race == "Protoss" and name in ("ling_bane_muta", "roach_hydra"):
+            elif opponent_race == "Protoss" and name in (
+                "ling_bane_muta",
+                "roach_hydra",
+            ):
                 score += 0.05
             elif opponent_race == "Zerg" and name in ("roach_hydra", "ultra_corruptor"):
                 score += 0.03
@@ -142,7 +149,9 @@ class MicroOptimizer:
         self.retreat_hp = self.config.get("retreat_hp_ratio", 0.30)
         self.aggression = self.config.get("aggression_threshold", 0.5)
 
-    def should_retreat(self, unit_hp_ratio: float, nearby_enemies: int, nearby_allies: int) -> bool:
+    def should_retreat(
+        self, unit_hp_ratio: float, nearby_enemies: int, nearby_allies: int
+    ) -> bool:
         """Decide if a unit should retreat based on local situation."""
         if unit_hp_ratio < self.retreat_hp:
             return True
@@ -186,7 +195,9 @@ class MacroOptimizer:
         self.expand_timing = self.config.get("expand_timing", 5.0)
         self.army_threshold = int(self.config.get("army_size_threshold", 20))
 
-    def should_expand(self, game_time_min: float, base_count: int, minerals: float) -> bool:
+    def should_expand(
+        self, game_time_min: float, base_count: int, minerals: float
+    ) -> bool:
         """Decide whether to take a new expansion."""
         natural_timing = self.expand_timing * base_count
         if game_time_min >= natural_timing and minerals > 300:
@@ -211,12 +222,15 @@ class MacroOptimizer:
     def update_config(self, new_config: dict) -> None:
         self.config.update(new_config)
         self.expand_timing = self.config.get("expand_timing", self.expand_timing)
-        self.army_threshold = int(self.config.get("army_size_threshold", self.army_threshold))
+        self.army_threshold = int(
+            self.config.get("army_size_threshold", self.army_threshold)
+        )
 
 
 # ---------------------------------------------------------------------------
 # Genetic Algorithm
 # ---------------------------------------------------------------------------
+
 
 class GeneticTuner:
     """
@@ -255,15 +269,22 @@ class GeneticTuner:
             population.sort(key=lambda x: x.fitness, reverse=True)
             best = population[0]
 
-            if self.best_individual is None or best.fitness > self.best_individual.fitness:
-                self.best_individual = Individual(genes=dict(best.genes), fitness=best.fitness)
+            if (
+                self.best_individual is None
+                or best.fitness > self.best_individual.fitness
+            ):
+                self.best_individual = Individual(
+                    genes=dict(best.genes), fitness=best.fitness
+                )
 
-            self.history.append({
-                "generation": gen,
-                "best_fitness": best.fitness,
-                "avg_fitness": sum(i.fitness for i in population) / len(population),
-                "best_genes": dict(best.genes),
-            })
+            self.history.append(
+                {
+                    "generation": gen,
+                    "best_fitness": best.fitness,
+                    "avg_fitness": sum(i.fitness for i in population) / len(population),
+                    "best_genes": dict(best.genes),
+                }
+            )
 
             if gen % 10 == 0:
                 logger.info(
@@ -273,7 +294,9 @@ class GeneticTuner:
                 )
 
             if best.fitness >= TARGET_WIN_RATE:
-                logger.info(f"Target win rate {TARGET_WIN_RATE:.0%} reached at generation {gen}!")
+                logger.info(
+                    f"Target win rate {TARGET_WIN_RATE:.0%} reached at generation {gen}!"
+                )
                 break
 
             # Elitism: keep top 10%
@@ -295,7 +318,9 @@ class GeneticTuner:
 
         return self.best_individual
 
-    def _tournament_select(self, population: list[Individual], k: int = 3) -> Individual:
+    def _tournament_select(
+        self, population: list[Individual], k: int = 3
+    ) -> Individual:
         """Tournament selection."""
         contestants = self.rng.choices(population, k=k)
         return max(contestants, key=lambda x: x.fitness)
@@ -304,6 +329,7 @@ class GeneticTuner:
 # ---------------------------------------------------------------------------
 # Main BotOptimizer
 # ---------------------------------------------------------------------------
+
 
 class BotOptimizer:
     """
@@ -340,7 +366,9 @@ class BotOptimizer:
 
     def tune(self, n_eval_games: int = 20) -> dict[str, float]:
         """Run genetic algorithm to find optimal hyperparameters."""
-        logger.info(f"Starting genetic hyperparameter tuning ({GENERATIONS} generations)...")
+        logger.info(
+            f"Starting genetic hyperparameter tuning ({GENERATIONS} generations)..."
+        )
 
         def fitness_fn(genes: dict) -> float:
             return self._simulate_win_rate(genes, n_games=n_eval_games)
@@ -359,7 +387,9 @@ class BotOptimizer:
         )
         return best.genes
 
-    def get_action(self, game_state: dict, opponent_race: str = "Zerg") -> dict[str, Any]:
+    def get_action(
+        self, game_state: dict, opponent_race: str = "Zerg"
+    ) -> dict[str, Any]:
         """
         Main decision entry point.
         Returns an action dict with strategy, micro, and macro decisions.
@@ -392,15 +422,19 @@ class BotOptimizer:
     def record_game_result(self, strategy: str, won: bool, stats: dict) -> None:
         """Record game outcome for adaptive optimization."""
         self.strategy_optimizer.record_outcome(strategy, won)
-        self._game_history.append({
-            "strategy": strategy,
-            "won": won,
-            "apm": stats.get("apm", 0),
-            "game_length_s": stats.get("game_length_s", 0),
-        })
+        self._game_history.append(
+            {
+                "strategy": strategy,
+                "won": won,
+                "apm": stats.get("apm", 0),
+                "game_length_s": stats.get("game_length_s", 0),
+            }
+        )
         recent = self._game_history[-50:]
         recent_wr = sum(1 for g in recent if g["won"]) / len(recent) if recent else 0
-        logger.info(f"Game recorded: {'WIN' if won else 'LOSS'} | Recent WR: {recent_wr:.2%}")
+        logger.info(
+            f"Game recorded: {'WIN' if won else 'LOSS'} | Recent WR: {recent_wr:.2%}"
+        )
 
     def win_rate_report(self) -> dict:
         if not self._game_history:
@@ -408,7 +442,9 @@ class BotOptimizer:
         total = len(self._game_history)
         wins = sum(1 for g in self._game_history if g["won"])
         last_50 = self._game_history[-50:]
-        last_50_wr = sum(1 for g in last_50 if g["won"]) / len(last_50) if last_50 else 0
+        last_50_wr = (
+            sum(1 for g in last_50 if g["won"]) / len(last_50) if last_50 else 0
+        )
         return {
             "total_games": total,
             "total_wins": wins,
@@ -454,7 +490,9 @@ class BotOptimizer:
 
 
 if __name__ == "__main__":
-    logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
+    logging.basicConfig(
+        level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s"
+    )
 
     optimizer = BotOptimizer()
     print("Running final hyperparameter optimization...")
@@ -471,11 +509,17 @@ if __name__ == "__main__":
     for i in range(20):
         strategy = rng.choice(strategies)
         won = rng.random() < 0.42
-        optimizer.record_game_result(strategy, won, {"apm": rng.gauss(130, 20), "game_length_s": rng.gauss(420, 90)})
+        optimizer.record_game_result(
+            strategy,
+            won,
+            {"apm": rng.gauss(130, 20), "game_length_s": rng.gauss(420, 90)},
+        )
 
     report = optimizer.win_rate_report()
     print(f"\nPerformance Report:")
     print(f"  Total games:        {report['total_games']}")
     print(f"  Overall win rate:   {report['overall_win_rate']:.2%}")
     print(f"  Last 50 win rate:   {report['last_50_win_rate']:.2%}")
-    print(f"  Target (40%+):      {'ACHIEVED' if report['target_achieved'] else 'NOT YET'}")
+    print(
+        f"  Target (40%+):      {'ACHIEVED' if report['target_achieved'] else 'NOT YET'}"
+    )

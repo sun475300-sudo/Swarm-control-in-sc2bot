@@ -14,7 +14,7 @@ import asyncio
 import json
 import logging
 import os
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Optional
 
 import discord
@@ -23,7 +23,9 @@ from discord.ext import commands, tasks
 
 logger = logging.getLogger("jarvis.productivity")
 
-DATA_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "data")
+DATA_DIR = os.path.join(
+    os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "data"
+)
 TODO_FILE = os.path.join(DATA_DIR, "todos.json")
 REMINDER_FILE = os.path.join(DATA_DIR, "reminders.json")
 HABIT_FILE = os.path.join(DATA_DIR, "habits.json")
@@ -72,6 +74,7 @@ class ProductivityCog(commands.Cog, name="생산성"):
     def _parse_due_date(self, text: str) -> Optional[datetime]:
         """한국어 마감일 표현을 파싱합니다. (내일까지, 금요일까지, N일후까지 등)"""
         import re
+
         now = datetime.now(timezone.utc)
 
         # "내일까지"
@@ -98,8 +101,13 @@ class ProductivityCog(commands.Cog, name="생산성"):
 
         # 요일까지 (월~일)
         weekday_map = {
-            "월요일": 0, "화요일": 1, "수요일": 2, "목요일": 3,
-            "금요일": 4, "토요일": 5, "일요일": 6,
+            "월요일": 0,
+            "화요일": 1,
+            "수요일": 2,
+            "목요일": 3,
+            "금요일": 4,
+            "토요일": 5,
+            "일요일": 6,
         }
         for day_name, day_num in weekday_map.items():
             if day_name + "까지" in text or day_name in text:
@@ -113,7 +121,12 @@ class ProductivityCog(commands.Cog, name="생산성"):
         m = re.search(r"(\d{4})-(\d{1,2})-(\d{1,2})", text)
         if m:
             try:
-                return datetime(int(m.group(1)), int(m.group(2)), int(m.group(3)), tzinfo=timezone.utc)
+                return datetime(
+                    int(m.group(1)),
+                    int(m.group(2)),
+                    int(m.group(3)),
+                    tzinfo=timezone.utc,
+                )
             except ValueError:
                 pass
 
@@ -131,6 +144,7 @@ class ProductivityCog(commands.Cog, name="생산성"):
     def _remove_due_date_text(self, text: str) -> str:
         """마감일 관련 텍스트를 제거하고 깔끔한 할일 내용을 반환합니다."""
         import re
+
         patterns = [
             r"\d{4}-\d{1,2}-\d{1,2}까지\s*",
             r"\d{1,2}/\d{1,2}까지\s*",
@@ -171,13 +185,15 @@ class ProductivityCog(commands.Cog, name="생산성"):
             lines = []
             for i, t in enumerate(pending):
                 line = f"**{i+1}.** ⬜ {t['content']}"
-                if t.get('priority'):
+                if t.get("priority"):
                     line += f" (우선: {'🔴' if t['priority'] == 'high' else '🟡' if t['priority'] == 'mid' else '🟢'})"
-                if t.get('due_date'):
+                if t.get("due_date"):
                     line += f" 📅 {t['due_date']}"
                 lines.append(line)
             text = "\n".join(lines)
-            embed.add_field(name=f"미완료 ({len(pending)})", value=text[:1024], inline=False)
+            embed.add_field(
+                name=f"미완료 ({len(pending)})", value=text[:1024], inline=False
+            )
 
         if done:
             text = "\n".join(f"~~{t['content']}~~" for t in done[-5:])
@@ -196,7 +212,14 @@ class ProductivityCog(commands.Cog, name="생산성"):
         for tag in ["!높음", "!high", "!중간", "!mid", "!낮음", "!low"]:
             if tag in content:
                 content = content.replace(tag, "").strip()
-                priority = {"!높음": "high", "!high": "high", "!중간": "mid", "!mid": "mid", "!낮음": "low", "!low": "low"}[tag]
+                priority = {
+                    "!높음": "high",
+                    "!high": "high",
+                    "!중간": "mid",
+                    "!mid": "mid",
+                    "!낮음": "low",
+                    "!low": "low",
+                }[tag]
 
         # 마감일 파싱
         due_date = self._parse_due_date(content)
@@ -257,13 +280,19 @@ class ProductivityCog(commands.Cog, name="생산성"):
         await ctx.send(f"🧹 완료 항목 {before - after}개 삭제됨")
 
     @app_commands.command(name="todo", description="할 일 목록을 확인하거나 추가합니다")
-    @app_commands.describe(action="동작 (목록/추가/완료)", content="할 일 내용 또는 완료할 번호")
-    @app_commands.choices(action=[
-        app_commands.Choice(name="목록", value="list"),
-        app_commands.Choice(name="추가", value="add"),
-        app_commands.Choice(name="완료", value="done"),
-    ])
-    async def todo_slash(self, interaction: discord.Interaction, action: str = "list", content: str = ""):
+    @app_commands.describe(
+        action="동작 (목록/추가/완료)", content="할 일 내용 또는 완료할 번호"
+    )
+    @app_commands.choices(
+        action=[
+            app_commands.Choice(name="목록", value="list"),
+            app_commands.Choice(name="추가", value="add"),
+            app_commands.Choice(name="완료", value="done"),
+        ]
+    )
+    async def todo_slash(
+        self, interaction: discord.Interaction, action: str = "list", content: str = ""
+    ):
         uid = str(interaction.user.id)
         if uid not in self.todos:
             self.todos[uid] = []
@@ -271,25 +300,38 @@ class ProductivityCog(commands.Cog, name="생산성"):
 
         if action == "list":
             if not todos:
-                await interaction.response.send_message("📋 할 일이 없습니다. `/todo add <내용>`으로 추가하세요.", ephemeral=True)
+                await interaction.response.send_message(
+                    "📋 할 일이 없습니다. `/todo add <내용>`으로 추가하세요.",
+                    ephemeral=True,
+                )
                 return
             pending = [t for t in todos if not t.get("done")]
             done = [t for t in todos if t.get("done")]
-            embed = discord.Embed(title=f"📋 {interaction.user.display_name}의 할 일 목록", color=discord.Color.blue())
+            embed = discord.Embed(
+                title=f"📋 {interaction.user.display_name}의 할 일 목록",
+                color=discord.Color.blue(),
+            )
             if pending:
                 text = "\n".join(
-                    f"**{i+1}.** ⬜ {t['content']}" + (f" 📅 {t['due_date']}" if t.get('due_date') else "")
+                    f"**{i+1}.** ⬜ {t['content']}"
+                    + (f" 📅 {t['due_date']}" if t.get("due_date") else "")
                     for i, t in enumerate(pending)
                 )
-                embed.add_field(name=f"미완료 ({len(pending)})", value=text[:1024], inline=False)
+                embed.add_field(
+                    name=f"미완료 ({len(pending)})", value=text[:1024], inline=False
+                )
             if done:
                 text = "\n".join(f"~~{t['content']}~~" for t in done[-5:])
-                embed.add_field(name=f"완료 ({len(done)})", value=text[:1024], inline=False)
+                embed.add_field(
+                    name=f"완료 ({len(done)})", value=text[:1024], inline=False
+                )
             await interaction.response.send_message(embed=embed)
 
         elif action == "add":
             if not content:
-                await interaction.response.send_message("❌ 내용을 입력해주세요.", ephemeral=True)
+                await interaction.response.send_message(
+                    "❌ 내용을 입력해주세요.", ephemeral=True
+                )
                 return
             due_date = self._parse_due_date(content)
             clean_content = self._remove_due_date_text(content)
@@ -312,16 +354,22 @@ class ProductivityCog(commands.Cog, name="생산성"):
             try:
                 index = int(content)
             except ValueError:
-                await interaction.response.send_message("❌ 완료할 번호를 입력해주세요.", ephemeral=True)
+                await interaction.response.send_message(
+                    "❌ 완료할 번호를 입력해주세요.", ephemeral=True
+                )
                 return
             pending = [t for t in todos if not t.get("done")]
             if index < 1 or index > len(pending):
-                await interaction.response.send_message(f"❌ 번호 범위: 1~{len(pending)}", ephemeral=True)
+                await interaction.response.send_message(
+                    f"❌ 번호 범위: 1~{len(pending)}", ephemeral=True
+                )
                 return
             pending[index - 1]["done"] = True
             pending[index - 1]["done_at"] = datetime.now(timezone.utc).isoformat()
             _save_json(TODO_FILE, self.todos)
-            await interaction.response.send_message(f"✅ 완료: ~~{pending[index - 1]['content']}~~")
+            await interaction.response.send_message(
+                f"✅ 완료: ~~{pending[index - 1]['content']}~~"
+            )
 
     # ═══════════════════════════════════════════════════════════════════════════
     # 5-2. 리마인더
@@ -368,10 +416,14 @@ class ProductivityCog(commands.Cog, name="생산성"):
             message = text.replace(m.group(0), "").strip()
 
         if minutes <= 0:
-            await ctx.send("❌ 시간을 지정해주세요. 예: `!알려줘 30분후 회의` 또는 `!알려줘 매일 9시 운동`")
+            await ctx.send(
+                "❌ 시간을 지정해주세요. 예: `!알려줘 30분후 회의` 또는 `!알려줘 매일 9시 운동`"
+            )
             return
 
-        trigger_at = (datetime.now(timezone.utc) + timedelta(minutes=minutes)).isoformat()
+        trigger_at = (
+            datetime.now(timezone.utc) + timedelta(minutes=minutes)
+        ).isoformat()
 
         reminder = {
             "user_id": ctx.author.id,
@@ -384,25 +436,37 @@ class ProductivityCog(commands.Cog, name="생산성"):
         self.reminders.append(reminder)
         _save_json(REMINDER_FILE, self.reminders)
 
-        time_str = f"{minutes}분" if minutes < 60 else f"{minutes // 60}시간 {minutes % 60}분"
+        time_str = (
+            f"{minutes}분" if minutes < 60 else f"{minutes // 60}시간 {minutes % 60}분"
+        )
         repeat_str = " (매일 반복)" if repeat == "daily" else ""
         await ctx.send(f"⏰ 리마인더 설정: **{message}** - {time_str} 후{repeat_str}")
 
     @commands.command(name="리마인더목록", aliases=["reminders", "내리마인더"])
     async def list_reminders(self, ctx: commands.Context):
         """리마인더 목록을 확인합니다."""
-        user_reminders = [r for r in self.reminders if r["user_id"] == ctx.author.id and not r["triggered"]]
+        user_reminders = [
+            r
+            for r in self.reminders
+            if r["user_id"] == ctx.author.id and not r["triggered"]
+        ]
         if not user_reminders:
             await ctx.send("📭 설정된 리마인더가 없습니다.")
             return
         embed = discord.Embed(title="⏰ 내 리마인더 목록", color=discord.Color.gold())
         for i, r in enumerate(user_reminders, 1):
             try:
-                trigger = datetime.fromisoformat(r["trigger_at"]).strftime("%m/%d %H:%M")
+                trigger = datetime.fromisoformat(r["trigger_at"]).strftime(
+                    "%m/%d %H:%M"
+                )
             except (ValueError, TypeError):
                 trigger = r.get("trigger_at", "???")
             repeat_str = " 🔁" if r.get("repeat") else ""
-            embed.add_field(name=f"#{i}{repeat_str}", value=f"{r['message']}\n⏰ {trigger}", inline=True)
+            embed.add_field(
+                name=f"#{i}{repeat_str}",
+                value=f"{r['message']}\n⏰ {trigger}",
+                inline=True,
+            )
         await ctx.send(embed=embed)
 
     @tasks.loop(seconds=30)
@@ -471,7 +535,9 @@ class ProductivityCog(commands.Cog, name="생산성"):
             if not pomo.get("done"):
                 remaining = pomo["end_time"] - datetime.now(timezone.utc)
                 if remaining.total_seconds() > 0:
-                    await ctx.send(f"⏳ 진행 중인 뽀모도로가 있습니다. 남은 시간: {int(remaining.total_seconds() / 60)}분")
+                    await ctx.send(
+                        f"⏳ 진행 중인 뽀모도로가 있습니다. 남은 시간: {int(remaining.total_seconds() / 60)}분"
+                    )
                     return
 
         end_time = datetime.now(timezone.utc) + timedelta(minutes=minutes)
@@ -490,14 +556,21 @@ class ProductivityCog(commands.Cog, name="생산성"):
             description=f"**{minutes}분** 집중 시간입니다. 화이팅!",
             color=discord.Color.red(),
         )
-        embed.add_field(name="종료 시각", value=f"<t:{int(end_time.timestamp())}:R>", inline=True)
-        embed.add_field(name="완료 세션", value=f"{self.active_pomodoros[user_id]['sessions']}회", inline=True)
+        embed.add_field(
+            name="종료 시각", value=f"<t:{int(end_time.timestamp())}:R>", inline=True
+        )
+        embed.add_field(
+            name="완료 세션",
+            value=f"{self.active_pomodoros[user_id]['sessions']}회",
+            inline=True,
+        )
         embed.set_footer(text="!뽀모중지 로 중단")
         await ctx.send(embed=embed)
 
         # 타이머 비동기 실행 -- store the task for cancellation
         async def _pomo_wait():
             await asyncio.sleep(minutes * 60)
+
         task = asyncio.create_task(_pomo_wait())
         self.active_pomodoros[user_id]["_task"] = task
         try:
@@ -505,7 +578,10 @@ class ProductivityCog(commands.Cog, name="생산성"):
         except asyncio.CancelledError:
             return
 
-        if user_id in self.active_pomodoros and not self.active_pomodoros[user_id]["done"]:
+        if (
+            user_id in self.active_pomodoros
+            and not self.active_pomodoros[user_id]["done"]
+        ):
             self.active_pomodoros[user_id]["done"] = True
             self.active_pomodoros[user_id]["sessions"] += 1
             sessions = self.active_pomodoros[user_id]["sessions"]
@@ -513,13 +589,19 @@ class ProductivityCog(commands.Cog, name="생산성"):
             # 통계 업데이트
             uid = str(user_id)
             if uid not in self.pomo_stats:
-                self.pomo_stats[uid] = {"total_sessions": 0, "total_focus_minutes": 0, "history": []}
+                self.pomo_stats[uid] = {
+                    "total_sessions": 0,
+                    "total_focus_minutes": 0,
+                    "history": [],
+                }
             self.pomo_stats[uid]["total_sessions"] += 1
             self.pomo_stats[uid]["total_focus_minutes"] += minutes
-            self.pomo_stats[uid]["history"].append({
-                "date": datetime.now(timezone.utc).isoformat(),
-                "minutes": minutes,
-            })
+            self.pomo_stats[uid]["history"].append(
+                {
+                    "date": datetime.now(timezone.utc).isoformat(),
+                    "minutes": minutes,
+                }
+            )
             # 히스토리는 최근 200개만 유지
             self.pomo_stats[uid]["history"] = self.pomo_stats[uid]["history"][-200:]
             _save_json(POMO_STATS_FILE, self.pomo_stats)
@@ -540,9 +622,19 @@ class ProductivityCog(commands.Cog, name="생산성"):
                     color=discord.Color.green(),
                 )
                 embed.add_field(name="오늘 세션", value=f"{sessions}회", inline=True)
-                embed.add_field(name="누적 세션", value=f"{self.pomo_stats[uid]['total_sessions']}회", inline=True)
-                embed.add_field(name="누적 집중", value=f"{total_hours}시간 {total_mins}분", inline=True)
-                embed.add_field(name="다음", value=f"`!뽀모 {minutes}` 로 재시작", inline=True)
+                embed.add_field(
+                    name="누적 세션",
+                    value=f"{self.pomo_stats[uid]['total_sessions']}회",
+                    inline=True,
+                )
+                embed.add_field(
+                    name="누적 집중",
+                    value=f"{total_hours}시간 {total_mins}분",
+                    inline=True,
+                )
+                embed.add_field(
+                    name="다음", value=f"`!뽀모 {minutes}` 로 재시작", inline=True
+                )
                 await channel.send(f"{ctx.author.mention}", embed=embed)
 
     @commands.command(name="뽀모중지", aliases=["pomostop"])
@@ -576,20 +668,28 @@ class ProductivityCog(commands.Cog, name="생산성"):
         # 최근 7일 통계
         now = datetime.now(timezone.utc)
         week_ago = now - timedelta(days=7)
+
         def _safe_parse(d):
             try:
                 return datetime.fromisoformat(d)
             except (ValueError, TypeError):
                 return None
-        recent = [h for h in stats.get("history", [])
-                  if (_dt := _safe_parse(h.get("date"))) and _dt >= week_ago]
+
+        recent = [
+            h
+            for h in stats.get("history", [])
+            if (_dt := _safe_parse(h.get("date"))) and _dt >= week_ago
+        ]
         week_sessions = len(recent)
         week_minutes = sum(h["minutes"] for h in recent)
 
         # 오늘 통계
         today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
-        today = [h for h in stats.get("history", [])
-                 if (_dt := _safe_parse(h.get("date"))) and _dt >= today_start]
+        today = [
+            h
+            for h in stats.get("history", [])
+            if (_dt := _safe_parse(h.get("date"))) and _dt >= today_start
+        ]
         today_sessions = len(today)
         today_minutes = sum(h["minutes"] for h in today)
 
@@ -598,11 +698,27 @@ class ProductivityCog(commands.Cog, name="생산성"):
             color=discord.Color.red(),
             timestamp=now,
         )
-        embed.add_field(name="📊 전체 세션", value=f"**{total_sessions}**회", inline=True)
-        embed.add_field(name="⏱️ 전체 집중 시간", value=f"**{total_hours}**시간 **{total_mins}**분", inline=True)
-        embed.add_field(name="📐 평균 세션 길이", value=f"**{total_minutes // total_sessions}**분", inline=True)
-        embed.add_field(name="📅 오늘", value=f"{today_sessions}회 / {today_minutes}분", inline=True)
-        embed.add_field(name="📅 최근 7일", value=f"{week_sessions}회 / {week_minutes}분", inline=True)
+        embed.add_field(
+            name="📊 전체 세션", value=f"**{total_sessions}**회", inline=True
+        )
+        embed.add_field(
+            name="⏱️ 전체 집중 시간",
+            value=f"**{total_hours}**시간 **{total_mins}**분",
+            inline=True,
+        )
+        embed.add_field(
+            name="📐 평균 세션 길이",
+            value=f"**{total_minutes // total_sessions}**분",
+            inline=True,
+        )
+        embed.add_field(
+            name="📅 오늘", value=f"{today_sessions}회 / {today_minutes}분", inline=True
+        )
+        embed.add_field(
+            name="📅 최근 7일",
+            value=f"{week_sessions}회 / {week_minutes}분",
+            inline=True,
+        )
 
         # 최근 7일 시각화
         day_counts = {}
@@ -613,7 +729,9 @@ class ProductivityCog(commands.Cog, name="생산성"):
             day = _parsed.strftime("%m/%d")
             day_counts[day] = day_counts.get(day, 0) + 1
         if day_counts:
-            chart = " | ".join(f"{d}: {'🍅' * min(c, 8)}" for d, c in sorted(day_counts.items()))
+            chart = " | ".join(
+                f"{d}: {'🍅' * min(c, 8)}" for d, c in sorted(day_counts.items())
+            )
             embed.add_field(name="최근 활동", value=chart[:1024], inline=False)
 
         embed.set_footer(text="꾸준한 집중이 성공의 비결!")
@@ -632,24 +750,31 @@ class ProductivityCog(commands.Cog, name="생산성"):
             messages = []
             async for msg in ctx.channel.history(limit=count):
                 if not msg.author.bot:
-                    messages.append({
-                        "author": msg.author.display_name,
-                        "content": msg.content,
-                        "time": msg.created_at.strftime("%H:%M"),
-                    })
+                    messages.append(
+                        {
+                            "author": msg.author.display_name,
+                            "content": msg.content,
+                            "time": msg.created_at.strftime("%H:%M"),
+                        }
+                    )
             messages.reverse()
 
             if len(messages) < 3:
                 await ctx.send("회의록을 작성할 메시지가 부족합니다.")
                 return
 
-            conversation = "\n".join(f"[{m['time']}] {m['author']}: {m['content']}" for m in messages)
+            conversation = "\n".join(
+                f"[{m['time']}] {m['author']}: {m['content']}" for m in messages
+            )
 
             # AI로 회의록 생성
-            claude_key = os.environ.get("CLAUDE_API_KEY") or os.environ.get("ANTHROPIC_API_KEY")
+            claude_key = os.environ.get("CLAUDE_API_KEY") or os.environ.get(
+                "ANTHROPIC_API_KEY"
+            )
             meeting_notes = None
             if claude_key:
                 import aiohttp
+
                 async with aiohttp.ClientSession() as session:
                     async with session.post(
                         "https://api.anthropic.com/v1/messages",
@@ -662,8 +787,13 @@ class ProductivityCog(commands.Cog, name="생산성"):
                             "model": "claude-sonnet-4-5-20250929",
                             "max_tokens": 2048,
                             "system": "당신은 전문 회의록 작성자입니다. 대화 내용을 분석하여 구조화된 회의록을 한국어로 작성해주세요.",
-                            "messages": [{"role": "user", "content": f"다음 대화를 바탕으로 회의록을 작성해주세요. "
-                                f"안건, 논의사항, 결정사항, 액션아이템(담당자 포함)을 포함해주세요:\n\n{conversation[:6000]}"}],
+                            "messages": [
+                                {
+                                    "role": "user",
+                                    "content": f"다음 대화를 바탕으로 회의록을 작성해주세요. "
+                                    f"안건, 논의사항, 결정사항, 액션아이템(담당자 포함)을 포함해주세요:\n\n{conversation[:6000]}",
+                                }
+                            ],
                         },
                     ) as resp:
                         if resp.status == 200:
@@ -691,7 +821,9 @@ class ProductivityCog(commands.Cog, name="생산성"):
                 color=discord.Color.blue(),
                 timestamp=datetime.now(timezone.utc),
             )
-            embed.set_footer(text=f"메시지 {len(messages)}개 기반 | {ctx.author.display_name}")
+            embed.set_footer(
+                text=f"메시지 {len(messages)}개 기반 | {ctx.author.display_name}"
+            )
             await ctx.send(embed=embed)
 
     # ═══════════════════════════════════════════════════════════════════════════
@@ -705,7 +837,9 @@ class ProductivityCog(commands.Cog, name="생산성"):
         user_habits = self.habits.get(uid, {})
 
         if not user_habits:
-            await ctx.send("📊 등록된 습관이 없습니다. `!습관 추가 <습관이름>`으로 시작하세요.")
+            await ctx.send(
+                "📊 등록된 습관이 없습니다. `!습관 추가 <습관이름>`으로 시작하세요."
+            )
             return
 
         embed = discord.Embed(
@@ -753,7 +887,9 @@ class ProductivityCog(commands.Cog, name="생산성"):
             "created_at": datetime.now(timezone.utc).isoformat(),
         }
         _save_json(HABIT_FILE, self.habits)
-        await ctx.send(f"✅ 습관 추가: **{name}**\n매일 `!습관 체크 {name}`으로 체크하세요!")
+        await ctx.send(
+            f"✅ 습관 추가: **{name}**\n매일 `!습관 체크 {name}`으로 체크하세요!"
+        )
 
     @habit_group.command(name="체크", aliases=["check", "done"])
     async def habit_check(self, ctx: commands.Context, *, name: str):

@@ -11,12 +11,12 @@ This workflow executes:
 6. Repeat 5 times
 """
 
+import logging
 import subprocess
 import sys
 import time
 from pathlib import Path
 from typing import List, Tuple
-import logging
 
 logger = logging.getLogger("ComprehensiveTrainingWorkflow5xV2")
 

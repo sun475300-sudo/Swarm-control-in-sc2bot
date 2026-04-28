@@ -24,25 +24,48 @@ Unit Tests for ExpansionManager
 - pytest 프레임워크 사용
 """
 
-import pytest
-from unittest.mock import Mock, MagicMock, AsyncMock
 from typing import List
+from unittest.mock import AsyncMock, MagicMock, Mock
 
+import pytest
 
 # ExpansionManager 함수 임포트
 try:
-    import sys
     import os
-    sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'wicked_zerg_challenger', 'local_training', 'production'))
-    from expansion_manager import can_expand_safely, try_expand, log_expand_block, cleanup_build_reservations
+    import sys
+
+    sys.path.insert(
+        0,
+        os.path.join(
+            os.path.dirname(__file__),
+            "..",
+            "wicked_zerg_challenger",
+            "local_training",
+            "production",
+        ),
+    )
+    from expansion_manager import (
+        can_expand_safely,
+        cleanup_build_reservations,
+        log_expand_block,
+        try_expand,
+    )
 except ImportError:
     pytest.skip("ExpansionManager not available", allow_module_level=True)
 
 
 class MockUnit:
     """Mock SC2 Unit"""
-    def __init__(self, tag: int, type_id, position, health: float = 100.0,
-                 health_max: float = 100.0, is_idle: bool = False):
+
+    def __init__(
+        self,
+        tag: int,
+        type_id,
+        position,
+        health: float = 100.0,
+        health_max: float = 100.0,
+        is_idle: bool = False,
+    ):
         self.tag = tag
         self.type_id = type_id
         self.position = position
@@ -56,15 +79,18 @@ class MockUnit:
         return self.health / self.health_max if self.health_max > 0 else 0
 
     def distance_to(self, other):
-        if hasattr(other, 'position'):
+        if hasattr(other, "position"):
             pos = other.position
         else:
             pos = other
-        return ((self.position[0] - pos[0])**2 + (self.position[1] - pos[1])**2)**0.5
+        return (
+            (self.position[0] - pos[0]) ** 2 + (self.position[1] - pos[1]) ** 2
+        ) ** 0.5
 
 
 class MockUnits:
     """Mock SC2 Units collection"""
+
     def __init__(self, units: List[MockUnit]):
         self._units = units
 
@@ -88,10 +114,7 @@ class MockUnits:
         return len(self._units) > 0
 
     def closer_than(self, distance: float, position):
-        return MockUnits([
-            u for u in self._units
-            if u.distance_to(position) < distance
-        ])
+        return MockUnits([u for u in self._units if u.distance_to(position) < distance])
 
     def filter(self, func):
         return MockUnits([u for u in self._units if func(u)])
@@ -99,6 +122,7 @@ class MockUnits:
 
 class MockIntel:
     """Mock Intel Manager"""
+
     def __init__(self, under_attack: bool = False):
         self._under_attack = under_attack
 
@@ -108,6 +132,7 @@ class MockIntel:
 
 class MockBot:
     """Mock SC2 Bot"""
+
     def __init__(self):
         self.minerals = 300
         self.vespene = 0
@@ -136,6 +161,7 @@ class MockBot:
 
 class MockResilience:
     """Mock ProductionResilience instance"""
+
     def __init__(self, bot):
         self.bot = bot
         self.enemy_near_base_distance = 30.0
@@ -197,10 +223,9 @@ class TestExpansionSafetyUnderAttack:
         bot.supply_army = 10
         bot.time = 100.0
         # 2 bases so aggressive_expand needs minerals >= 300 (not 200)
-        bot.townhalls = MockUnits([
-            MockUnit(100, "HATCHERY", (50, 50)),
-            MockUnit(101, "HATCHERY", (60, 60))
-        ])
+        bot.townhalls = MockUnits(
+            [MockUnit(100, "HATCHERY", (50, 50)), MockUnit(101, "HATCHERY", (60, 60))]
+        )
         bot.workers = MockUnits([MockUnit(i, "DRONE", (50, 50)) for i in range(32)])
 
         resilience = MockResilience(bot)
@@ -236,15 +261,18 @@ class TestExpansionSafetyEnemyNearby:
         bot = MockBot()
         bot.minerals = 150  # Less than 200 (not aggressive for any case)
         # 2 bases so aggressive_expand needs minerals >= 300
-        bot.townhalls = MockUnits([
-            MockUnit(100, "HATCHERY", (50, 50)),
-            MockUnit(101, "HATCHERY", (60, 60))
-        ])
-        bot.enemy_units = MockUnits([
-            MockUnit(200, "MARINE", (55, 55)),  # Close to base
-            MockUnit(201, "MARINE", (56, 56)),
-            MockUnit(202, "MARINE", (57, 57)),  # 3 enemies - more than scout threshold
-        ])
+        bot.townhalls = MockUnits(
+            [MockUnit(100, "HATCHERY", (50, 50)), MockUnit(101, "HATCHERY", (60, 60))]
+        )
+        bot.enemy_units = MockUnits(
+            [
+                MockUnit(200, "MARINE", (55, 55)),  # Close to base
+                MockUnit(201, "MARINE", (56, 56)),
+                MockUnit(
+                    202, "MARINE", (57, 57)
+                ),  # 3 enemies - more than scout threshold
+            ]
+        )
         bot.supply_army = 10
         bot.time = 100.0
         bot.workers = MockUnits([MockUnit(i, "DRONE", (50, 50)) for i in range(32)])
@@ -261,9 +289,11 @@ class TestExpansionSafetyEnemyNearby:
         """정찰 유닛(1-2기)은 무시하고 확장 가능"""
         bot = MockBot()
         bot.minerals = 250
-        bot.enemy_units = MockUnits([
-            MockUnit(200, "REAPER", (55, 55)),  # Just 1 scout
-        ])
+        bot.enemy_units = MockUnits(
+            [
+                MockUnit(200, "REAPER", (55, 55)),  # Just 1 scout
+            ]
+        )
         bot.supply_army = 10
         bot.time = 100.0
 
@@ -283,11 +313,13 @@ class TestExpansionAggressiveMode:
         """미네랄 300+ 이상이면 적 근처 체크 우회"""
         bot = MockBot()
         bot.minerals = 350
-        bot.enemy_units = MockUnits([
-            MockUnit(200, "MARINE", (55, 55)),
-            MockUnit(201, "MARINE", (56, 56)),
-            MockUnit(202, "MARINE", (57, 57)),
-        ])
+        bot.enemy_units = MockUnits(
+            [
+                MockUnit(200, "MARINE", (55, 55)),
+                MockUnit(201, "MARINE", (56, 56)),
+                MockUnit(202, "MARINE", (57, 57)),
+            ]
+        )
         bot.supply_army = 10
         bot.workers = MockUnits([MockUnit(i, "DRONE", (50, 50)) for i in range(16)])
         bot.time = 100.0
@@ -325,10 +357,12 @@ class TestExpansionLowArmy:
         """3번째 확장(bases >= 2) 시 군대 부족하면 차단"""
         bot = MockBot()
         bot.minerals = 250  # Not aggressive enough to bypass
-        bot.townhalls = MockUnits([
-            MockUnit(100, "HATCHERY", (50, 50)),
-            MockUnit(101, "HATCHERY", (60, 60)),  # 2 bases
-        ])
+        bot.townhalls = MockUnits(
+            [
+                MockUnit(100, "HATCHERY", (50, 50)),
+                MockUnit(101, "HATCHERY", (60, 60)),  # 2 bases
+            ]
+        )
         bot.supply_army = 3  # Low army
         bot.time = 200.0  # Past min_army_time (180s)
 
@@ -344,13 +378,17 @@ class TestExpansionLowArmy:
         """3번째 확장 시 군대가 충분하면 허용"""
         bot = MockBot()
         bot.minerals = 300
-        bot.townhalls = MockUnits([
-            MockUnit(100, "HATCHERY", (50, 50)),
-            MockUnit(101, "HATCHERY", (60, 60)),
-        ])
+        bot.townhalls = MockUnits(
+            [
+                MockUnit(100, "HATCHERY", (50, 50)),
+                MockUnit(101, "HATCHERY", (60, 60)),
+            ]
+        )
         bot.supply_army = 10  # Sufficient army
         bot.time = 200.0
-        bot.workers = MockUnits([MockUnit(i, "DRONE", (50, 50)) for i in range(32)])  # 16 per base
+        bot.workers = MockUnits(
+            [MockUnit(i, "DRONE", (50, 50)) for i in range(32)]
+        )  # 16 per base
 
         resilience = MockResilience(bot)
         resilience.min_army_supply = 8
@@ -367,11 +405,15 @@ class TestExpansionLowDrones:
         """드론 포화도가 낮으면 확장 차단"""
         bot = MockBot()
         bot.minerals = 250
-        bot.townhalls = MockUnits([
-            MockUnit(100, "HATCHERY", (50, 50)),
-            MockUnit(101, "HATCHERY", (60, 60)),
-        ])
-        bot.workers = MockUnits([MockUnit(i, "DRONE", (50, 50)) for i in range(20)])  # 10 per base (too low)
+        bot.townhalls = MockUnits(
+            [
+                MockUnit(100, "HATCHERY", (50, 50)),
+                MockUnit(101, "HATCHERY", (60, 60)),
+            ]
+        )
+        bot.workers = MockUnits(
+            [MockUnit(i, "DRONE", (50, 50)) for i in range(20)]
+        )  # 10 per base (too low)
         bot.supply_army = 10
         bot.time = 100.0
 
@@ -388,11 +430,15 @@ class TestExpansionLowDrones:
         """미네랄 1000+ 이상이면 드론 체크 우회"""
         bot = MockBot()
         bot.minerals = 1200
-        bot.townhalls = MockUnits([
-            MockUnit(100, "HATCHERY", (50, 50)),
-            MockUnit(101, "HATCHERY", (60, 60)),
-        ])
-        bot.workers = MockUnits([MockUnit(i, "DRONE", (50, 50)) for i in range(20)])  # Low drones
+        bot.townhalls = MockUnits(
+            [
+                MockUnit(100, "HATCHERY", (50, 50)),
+                MockUnit(101, "HATCHERY", (60, 60)),
+            ]
+        )
+        bot.workers = MockUnits(
+            [MockUnit(i, "DRONE", (50, 50)) for i in range(20)]
+        )  # Low drones
         bot.supply_army = 10
         bot.time = 100.0
 
@@ -417,10 +463,9 @@ class TestExpansionCooldown:
         bot.supply_army = 10
         bot.workers = MockUnits([MockUnit(i, "DRONE", (50, 50)) for i in range(32)])
         # 2 bases - so cooldown is not reduced (natural already exists)
-        bot.townhalls = MockUnits([
-            MockUnit(100, "HATCHERY", (50, 50)),
-            MockUnit(101, "HATCHERY", (60, 60))
-        ])
+        bot.townhalls = MockUnits(
+            [MockUnit(100, "HATCHERY", (50, 50)), MockUnit(101, "HATCHERY", (60, 60))]
+        )
 
         resilience = MockResilience(bot)
         resilience.last_expansion_attempt = 10.0
@@ -580,9 +625,9 @@ class TestCleanupBuildReservations:
         bot = MockBot()
         bot.time = 100.0
         bot.build_reservations = {
-            "structure_1": 50.0,   # 50s old - should be removed
-            "structure_2": 70.0,   # 30s old - keep
-            "structure_3": 90.0,   # 10s old - keep
+            "structure_1": 50.0,  # 50s old - should be removed
+            "structure_2": 70.0,  # 30s old - keep
+            "structure_3": 90.0,  # 10s old - keep
         }
 
         resilience = MockResilience(bot)
@@ -621,5 +666,5 @@ class TestCleanupBuildReservations:
         assert True  # No exception raised
 
 
-if __name__ == '__main__':
-    pytest.main([__file__, '-v'])
+if __name__ == "__main__":
+    pytest.main([__file__, "-v"])

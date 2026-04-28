@@ -123,13 +123,20 @@ class PruningSchedule:
         schedule: str = "cosine",
     ) -> None:
         if schedule not in self.SCHEDULES:
-            raise ValueError(f"Unknown schedule '{schedule}', pick from {self.SCHEDULES}")
+            raise ValueError(
+                f"Unknown schedule '{schedule}', pick from {self.SCHEDULES}"
+            )
         self.target = target_sparsity
         self.start = start_step
         self.end = end_step
         self.schedule = schedule
-        logger.info("PruningSchedule(%s): %.1f%% sparsity over steps %d -> %d",
-                     schedule, target_sparsity * 100, start_step, end_step)
+        logger.info(
+            "PruningSchedule(%s): %.1f%% sparsity over steps %d -> %d",
+            schedule,
+            target_sparsity * 100,
+            start_step,
+            end_step,
+        )
 
     # ------------------------------------------------------------------
     def sparsity_at(self, step: int) -> float:
@@ -181,8 +188,11 @@ class StructuredPruner:
         self.cfg = config
         self._initial_weights: Optional[Dict[str, NDArray]] = None
         self._masks: Dict[str, NDArray] = {}
-        logger.info("StructuredPruner initialised (structured=%s, lottery_rewind=%d)",
-                     config.structured, config.lottery_rewind_step)
+        logger.info(
+            "StructuredPruner initialised (structured=%s, lottery_rewind=%d)",
+            config.structured,
+            config.lottery_rewind_step,
+        )
 
     # ------------------------------------------------------------------
     # Snapshot for lottery ticket
@@ -221,7 +231,9 @@ class StructuredPruner:
         return mask
 
     # ------------------------------------------------------------------
-    def compute_masks(self, weights: Dict[str, NDArray], step: int) -> Dict[str, NDArray]:
+    def compute_masks(
+        self, weights: Dict[str, NDArray], step: int
+    ) -> Dict[str, NDArray]:
         """Compute pruning masks for all weight tensors at *step*."""
         sparsity = self.schedule.sparsity_at(step)
         if sparsity <= 0.0:
@@ -303,8 +315,12 @@ class KnowledgeDistiller:
         self.hint_layers = list(config.hint_layers)
         self._teacher_logits: Optional[NDArray] = None
         self._teacher_hints: Dict[int, NDArray] = {}
-        logger.info("KnowledgeDistiller(T=%.1f, alpha=%.2f, hints=%s)",
-                     self.temperature, self.alpha, self.hint_layers)
+        logger.info(
+            "KnowledgeDistiller(T=%.1f, alpha=%.2f, hints=%s)",
+            self.temperature,
+            self.alpha,
+            self.hint_layers,
+        )
 
     # ------------------------------------------------------------------
     @staticmethod
@@ -355,9 +371,17 @@ class KnowledgeDistiller:
         # Hard cross-entropy
         student_probs = self._softmax(student_logits, 1.0)
         batch = student_probs.shape[0]
-        hard_loss = float(-np.mean(
-            np.log(np.clip(student_probs[np.arange(batch), hard_labels.astype(int)], 1e-12, 1.0))
-        ))
+        hard_loss = float(
+            -np.mean(
+                np.log(
+                    np.clip(
+                        student_probs[np.arange(batch), hard_labels.astype(int)],
+                        1e-12,
+                        1.0,
+                    )
+                )
+            )
+        )
 
         total = self.alpha * soft_loss + (1.0 - self.alpha) * hard_loss
 
@@ -400,10 +424,14 @@ class QuantizationAware:
         self._scales: Dict[str, NDArray] = {}
         self._zero_points: Dict[str, NDArray] = {}
         self._calibrated = False
-        logger.info("QuantizationAware(bits=%d, per_channel=%s)", self.bits, self.per_channel)
+        logger.info(
+            "QuantizationAware(bits=%d, per_channel=%s)", self.bits, self.per_channel
+        )
 
     # ------------------------------------------------------------------
-    def _compute_scale_zp(self, w: NDArray, per_channel: bool) -> Tuple[NDArray, NDArray]:
+    def _compute_scale_zp(
+        self, w: NDArray, per_channel: bool
+    ) -> Tuple[NDArray, NDArray]:
         """Compute symmetric quantization scale and zero-point."""
         qmin = -(1 << (self.bits - 1))
         qmax = (1 << (self.bits - 1)) - 1
@@ -460,9 +488,9 @@ class QuantizationAware:
         overhead = len(weights) * 64  # scale + zp per tensor
         return {
             "fp32_bytes": fp32_bytes,
-            "fp32_mb": fp32_bytes / (1024 ** 2),
+            "fp32_mb": fp32_bytes / (1024**2),
             "quantized_bytes": int(quant_bytes + overhead),
-            "quantized_mb": (quant_bytes + overhead) / (1024 ** 2),
+            "quantized_mb": (quant_bytes + overhead) / (1024**2),
             "compression_ratio": fp32_bytes / max(quant_bytes + overhead, 1),
         }
 
@@ -507,39 +535,51 @@ class ModelCompressor:
     # ------------------------------------------------------------------
     # Synthetic network builders (for demo / test)
     # ------------------------------------------------------------------
-    def _build_synthetic_teacher(self, layer_sizes: Sequence[int]) -> Dict[str, NDArray]:
+    def _build_synthetic_teacher(
+        self, layer_sizes: Sequence[int]
+    ) -> Dict[str, NDArray]:
         """Create a synthetic teacher policy network."""
         weights: Dict[str, NDArray] = {}
         for i in range(len(layer_sizes) - 1):
             fan_in, fan_out = layer_sizes[i], layer_sizes[i + 1]
             scale = np.sqrt(2.0 / fan_in)
-            weights[f"layer_{i}.weight"] = self.rng.randn(fan_out, fan_in).astype(np.float32) * scale
+            weights[f"layer_{i}.weight"] = (
+                self.rng.randn(fan_out, fan_in).astype(np.float32) * scale
+            )
             weights[f"layer_{i}.bias"] = np.zeros(fan_out, dtype=np.float32)
         self._teacher_weights = weights
         total = sum(w.size for w in weights.values())
-        logger.info("Built synthetic teacher: %d params (%.2f MB)",
-                     total, total * 4 / (1024 ** 2))
+        logger.info(
+            "Built synthetic teacher: %d params (%.2f MB)", total, total * 4 / (1024**2)
+        )
         return weights
 
-    def _build_synthetic_student(self, layer_sizes: Sequence[int]) -> Dict[str, NDArray]:
+    def _build_synthetic_student(
+        self, layer_sizes: Sequence[int]
+    ) -> Dict[str, NDArray]:
         """Create a smaller student policy network."""
         weights: Dict[str, NDArray] = {}
         for i in range(len(layer_sizes) - 1):
             fan_in, fan_out = layer_sizes[i], layer_sizes[i + 1]
             scale = np.sqrt(2.0 / fan_in)
-            weights[f"layer_{i}.weight"] = self.rng.randn(fan_out, fan_in).astype(np.float32) * scale
+            weights[f"layer_{i}.weight"] = (
+                self.rng.randn(fan_out, fan_in).astype(np.float32) * scale
+            )
             weights[f"layer_{i}.bias"] = np.zeros(fan_out, dtype=np.float32)
         self._student_weights = weights
         total = sum(w.size for w in weights.values())
-        logger.info("Built synthetic student: %d params (%.2f MB)",
-                     total, total * 4 / (1024 ** 2))
+        logger.info(
+            "Built synthetic student: %d params (%.2f MB)", total, total * 4 / (1024**2)
+        )
         return weights
 
     # ------------------------------------------------------------------
     # Forward helpers
     # ------------------------------------------------------------------
     @staticmethod
-    def _forward(weights: Dict[str, NDArray], x: NDArray) -> Tuple[NDArray, Dict[int, NDArray]]:
+    def _forward(
+        weights: Dict[str, NDArray], x: NDArray
+    ) -> Tuple[NDArray, Dict[int, NDArray]]:
         """Simple dense forward pass, returning logits and intermediate hints."""
         hints: Dict[int, NDArray] = {}
         layer_idx = 0
@@ -562,8 +602,7 @@ class ModelCompressor:
         masks = self.pruner.compute_masks(self._student_weights, step)
         self._student_weights = self.pruner.apply_masks(self._student_weights)
 
-        if (self.cfg.lottery_rewind_step > 0 and
-                step == self.cfg.lottery_rewind_step):
+        if self.cfg.lottery_rewind_step > 0 and step == self.cfg.lottery_rewind_step:
             self._student_weights = self.pruner.lottery_rewind(self._student_weights)
 
         report = self.pruner.report(self._student_weights)
@@ -587,7 +626,9 @@ class ModelCompressor:
         grad_scale = total_loss * lr
         for name in self._student_weights:
             if "weight" in name:
-                noise = self.rng.randn(*self._student_weights[name].shape).astype(np.float32)
+                noise = self.rng.randn(*self._student_weights[name].shape).astype(
+                    np.float32
+                )
                 self._student_weights[name] -= grad_scale * noise * 0.01
 
         return breakdown
@@ -600,8 +641,11 @@ class ModelCompressor:
         self.quantizer.calibrate(self._student_weights)
         self._student_weights = self.quantizer.quantize_weights(self._student_weights)
         size_report = self.quantizer.estimate_size_bytes(self._student_weights)
-        logger.info("Post-quantization size: %.2f MB (ratio %.1fx)",
-                     size_report["quantized_mb"], size_report["compression_ratio"])
+        logger.info(
+            "Post-quantization size: %.2f MB (ratio %.1fx)",
+            size_report["quantized_mb"],
+            size_report["compression_ratio"],
+        )
         return size_report
 
     # ------------------------------------------------------------------
@@ -622,8 +666,12 @@ class ModelCompressor:
             "p99_ms": float(np.percentile(arr, 99)),
             "within_budget": bool(np.percentile(arr, 99) < self.cfg.max_latency_ms),
         }
-        logger.info("Latency benchmark: mean=%.2f ms, p99=%.2f ms, budget_ok=%s",
-                     result["mean_ms"], result["p99_ms"], result["within_budget"])
+        logger.info(
+            "Latency benchmark: mean=%.2f ms, p99=%.2f ms, budget_ok=%s",
+            result["mean_ms"],
+            result["p99_ms"],
+            result["within_budget"],
+        )
         return result
 
     def _student_input_dim(self) -> int:
@@ -637,8 +685,11 @@ class ModelCompressor:
         """Return True if win rate is acceptable after compression."""
         ok = winrate >= self.cfg.winrate_gate_threshold
         if not ok:
-            logger.warning("Win-rate gate FAILED: %.2f < %.2f",
-                           winrate, self.cfg.winrate_gate_threshold)
+            logger.warning(
+                "Win-rate gate FAILED: %.2f < %.2f",
+                winrate,
+                self.cfg.winrate_gate_threshold,
+            )
         return ok
 
     # ------------------------------------------------------------------
@@ -662,8 +713,8 @@ class ModelCompressor:
 
         teacher_size = sum(w.size * 4 for w in self._teacher_weights.values())
         student_size_before = sum(w.size * 4 for w in self._student_weights.values())
-        results["teacher_size_mb"] = teacher_size / (1024 ** 2)
-        results["student_size_before_mb"] = student_size_before / (1024 ** 2)
+        results["teacher_size_mb"] = teacher_size / (1024**2)
+        results["student_size_before_mb"] = student_size_before / (1024**2)
 
         # Snapshot for lottery ticket
         self.pruner.snapshot_initial_weights(self._student_weights)
@@ -680,7 +731,12 @@ class ModelCompressor:
             breakdown = self.distill_step(batch_x, batch_labels)
             distill_losses.append(breakdown["total"])
             if verbose and step % 50 == 0:
-                logger.info("  distill step %d / %d  loss=%.4f", step, n_distill_steps, breakdown["total"])
+                logger.info(
+                    "  distill step %d / %d  loss=%.4f",
+                    step,
+                    n_distill_steps,
+                    breakdown["total"],
+                )
         results["distill_final_loss"] = distill_losses[-1] if distill_losses else 0.0
 
         # 3. Iterative pruning
@@ -689,13 +745,20 @@ class ModelCompressor:
         prune_reports: List[Dict[str, Any]] = []
         step_span = self.cfg.pruning_end_step - self.cfg.pruning_start_step
         for i in range(n_prune_steps):
-            step = self.cfg.pruning_start_step + int(i * step_span / max(n_prune_steps - 1, 1))
+            step = self.cfg.pruning_start_step + int(
+                i * step_span / max(n_prune_steps - 1, 1)
+            )
             report = self.prune_step(step)
             prune_reports.append(report)
             if verbose and i % 25 == 0:
-                logger.info("  prune step %d  sparsity=%.2f%%",
-                             i, report["global_sparsity"] * 100)
-        results["final_sparsity"] = prune_reports[-1]["global_sparsity"] if prune_reports else 0.0
+                logger.info(
+                    "  prune step %d  sparsity=%.2f%%",
+                    i,
+                    report["global_sparsity"] * 100,
+                )
+        results["final_sparsity"] = (
+            prune_reports[-1]["global_sparsity"] if prune_reports else 0.0
+        )
 
         # 4. Quantization
         if verbose:
@@ -712,20 +775,28 @@ class ModelCompressor:
         results["simulated_winrate"] = simulated_winrate
         results["winrate_gate_passed"] = self.winrate_gate(simulated_winrate)
 
-        student_size_after = sum(w.size * (self.cfg.quantize_bits / 8)
-                                 for w in self._student_weights.values())
-        results["student_size_after_mb"] = student_size_after / (1024 ** 2)
+        student_size_after = sum(
+            w.size * (self.cfg.quantize_bits / 8)
+            for w in self._student_weights.values()
+        )
+        results["student_size_after_mb"] = student_size_after / (1024**2)
         results["overall_compression_ratio"] = teacher_size / max(student_size_after, 1)
 
         if verbose:
             logger.info("=== Compression Summary ===")
             logger.info("  Teacher   : %.2f MB", results["teacher_size_mb"])
-            logger.info("  Student   : %.2f MB -> %.2f MB",
-                         results["student_size_before_mb"], results["student_size_after_mb"])
+            logger.info(
+                "  Student   : %.2f MB -> %.2f MB",
+                results["student_size_before_mb"],
+                results["student_size_after_mb"],
+            )
             logger.info("  Sparsity  : %.1f%%", results["final_sparsity"] * 100)
             logger.info("  Latency   : %.2f ms (p99)", latency["p99_ms"])
-            logger.info("  Win-rate  : %.2f (gate=%s)",
-                         simulated_winrate, results["winrate_gate_passed"])
+            logger.info(
+                "  Win-rate  : %.2f (gate=%s)",
+                simulated_winrate,
+                results["winrate_gate_passed"],
+            )
             logger.info("  Ratio     : %.1fx", results["overall_compression_ratio"])
 
         self._metrics_log.append(results)
@@ -748,7 +819,9 @@ class ModelCompressor:
 
 def demo() -> Dict[str, Any]:
     """Run a self-contained demonstration of the compression pipeline."""
-    logging.basicConfig(level=logging.INFO, format="%(name)s %(levelname)s: %(message)s")
+    logging.basicConfig(
+        level=logging.INFO, format="%(name)s %(levelname)s: %(message)s"
+    )
     logger.info("Phase 642 Demo: Model Compression & Pruning for SC2 Policy Networks")
 
     cfg = CompressionConfig(
@@ -770,9 +843,15 @@ def demo() -> Dict[str, Any]:
         verbose=True,
     )
     print("\n--- Phase 642 Demo Results ---")
-    for key in ("teacher_size_mb", "student_size_before_mb", "student_size_after_mb",
-                "final_sparsity", "simulated_winrate", "winrate_gate_passed",
-                "overall_compression_ratio"):
+    for key in (
+        "teacher_size_mb",
+        "student_size_before_mb",
+        "student_size_after_mb",
+        "final_sparsity",
+        "simulated_winrate",
+        "winrate_gate_passed",
+        "overall_compression_ratio",
+    ):
         val = result.get(key)
         if isinstance(val, float):
             print(f"  {key}: {val:.4f}")
@@ -792,7 +871,9 @@ def main() -> None:
         description="Phase 642: Model Compression & Pruning for SC2 Policy Networks"
     )
     parser.add_argument("--sparsity", type=float, default=0.85, help="Target sparsity")
-    parser.add_argument("--schedule", choices=PruningSchedule.SCHEDULES, default="cosine")
+    parser.add_argument(
+        "--schedule", choices=PruningSchedule.SCHEDULES, default="cosine"
+    )
     parser.add_argument("--bits", type=int, default=8, help="Quantization bits")
     parser.add_argument("--distill-steps", type=int, default=100)
     parser.add_argument("--prune-steps", type=int, default=50)

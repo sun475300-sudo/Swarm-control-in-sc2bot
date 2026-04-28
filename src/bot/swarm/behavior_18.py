@@ -17,10 +17,10 @@ class Behavior18:
     def tick(self, positions: list) -> list:
         """
         Execute behavior tick.
-        
+
         Args:
             positions: Current unit positions
-            
+
         Returns:
             Target positions for units
         """

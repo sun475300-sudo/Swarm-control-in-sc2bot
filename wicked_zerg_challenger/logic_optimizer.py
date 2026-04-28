@@ -9,32 +9,36 @@ Logic Optimizer - 전체 시스템 실행 최적화
 4. 중복 작업 제거
 """
 
-from typing import Dict, List, Set, Optional, Callable
-from enum import Enum
 from dataclasses import dataclass
+from enum import Enum
+from typing import Callable, Dict, List, Optional, Set
+
 from utils.logger import get_logger
 
 
 class GamePhase(Enum):
     """게임 단계"""
-    OPENING = "opening"          # 0-3분: 빌드 오더
-    EARLY = "early"              # 3-6분: 초반 공격/방어
-    MID = "mid"                  # 6-12분: 확장 및 테크
-    LATE = "late"                # 12분+: 후반전
+
+    OPENING = "opening"  # 0-3분: 빌드 오더
+    EARLY = "early"  # 3-6분: 초반 공격/방어
+    MID = "mid"  # 6-12분: 확장 및 테크
+    LATE = "late"  # 12분+: 후반전
 
 
 class SystemPriority(Enum):
     """시스템 우선순위"""
-    CRITICAL = 0    # 매 프레임 실행 (Defense, Combat)
-    HIGH = 1        # 0.5초마다 (Economy, Production)
-    MEDIUM = 2      # 1초마다 (Strategy, Intel)
-    LOW = 3         # 2초마다 (Creep, Upgrades)
-    MINIMAL = 4     # 5초마다 (Analytics, Stats)
+
+    CRITICAL = 0  # 매 프레임 실행 (Defense, Combat)
+    HIGH = 1  # 0.5초마다 (Economy, Production)
+    MEDIUM = 2  # 1초마다 (Strategy, Intel)
+    LOW = 3  # 2초마다 (Creep, Upgrades)
+    MINIMAL = 4  # 5초마다 (Analytics, Stats)
 
 
 @dataclass
 class SystemConfig:
     """시스템 실행 설정"""
+
     name: str
     priority: SystemPriority
     enabled_phases: Set[GamePhase]
@@ -71,175 +75,276 @@ class LogicOptimizer:
         """시스템 설정 초기화"""
 
         # === CRITICAL: 매 프레임 (전투/방어) ===
-        self._register_system("DefenseCoordinator", SystemPriority.CRITICAL,
-                             {GamePhase.OPENING, GamePhase.EARLY, GamePhase.MID, GamePhase.LATE},
-                             interval=1)
+        self._register_system(
+            "DefenseCoordinator",
+            SystemPriority.CRITICAL,
+            {GamePhase.OPENING, GamePhase.EARLY, GamePhase.MID, GamePhase.LATE},
+            interval=1,
+        )
 
-        self._register_system("Combat", SystemPriority.CRITICAL,
-                             {GamePhase.EARLY, GamePhase.MID, GamePhase.LATE},
-                             interval=1)
+        self._register_system(
+            "Combat",
+            SystemPriority.CRITICAL,
+            {GamePhase.EARLY, GamePhase.MID, GamePhase.LATE},
+            interval=1,
+        )
 
-        self._register_system("Micro", SystemPriority.CRITICAL,
-                             {GamePhase.EARLY, GamePhase.MID, GamePhase.LATE},
-                             interval=1,
-                             condition=lambda: self._has_army())
+        self._register_system(
+            "Micro",
+            SystemPriority.CRITICAL,
+            {GamePhase.EARLY, GamePhase.MID, GamePhase.LATE},
+            interval=1,
+            condition=lambda: self._has_army(),
+        )
 
-        self._register_system("BattlePrep", SystemPriority.CRITICAL,
-                             {GamePhase.EARLY, GamePhase.MID, GamePhase.LATE},
-                             interval=2,
-                             condition=lambda: self._is_combat_active())
+        self._register_system(
+            "BattlePrep",
+            SystemPriority.CRITICAL,
+            {GamePhase.EARLY, GamePhase.MID, GamePhase.LATE},
+            interval=2,
+            condition=lambda: self._is_combat_active(),
+        )
 
         # === HIGH: 0.5초마다 (경제/생산) ===
-        self._register_system("Economy", SystemPriority.HIGH,
-                             {GamePhase.OPENING, GamePhase.EARLY, GamePhase.MID, GamePhase.LATE},
-                             interval=11)  # ~0.5초
+        self._register_system(
+            "Economy",
+            SystemPriority.HIGH,
+            {GamePhase.OPENING, GamePhase.EARLY, GamePhase.MID, GamePhase.LATE},
+            interval=11,
+        )  # ~0.5초
 
-        self._register_system("ProductionController", SystemPriority.HIGH,
-                             {GamePhase.OPENING, GamePhase.EARLY, GamePhase.MID, GamePhase.LATE},
-                             interval=11)
+        self._register_system(
+            "ProductionController",
+            SystemPriority.HIGH,
+            {GamePhase.OPENING, GamePhase.EARLY, GamePhase.MID, GamePhase.LATE},
+            interval=11,
+        )
 
-        self._register_system("UnitFactory", SystemPriority.HIGH,
-                             {GamePhase.OPENING, GamePhase.EARLY, GamePhase.MID, GamePhase.LATE},
-                             interval=11)
+        self._register_system(
+            "UnitFactory",
+            SystemPriority.HIGH,
+            {GamePhase.OPENING, GamePhase.EARLY, GamePhase.MID, GamePhase.LATE},
+            interval=11,
+        )
 
-        self._register_system("SmartBalancer", SystemPriority.HIGH,
-                             {GamePhase.EARLY, GamePhase.MID, GamePhase.LATE},
-                             interval=22,  # 1초
-                             condition=lambda: self.bot.vespene > 500 or self.bot.minerals > 1000)
+        self._register_system(
+            "SmartBalancer",
+            SystemPriority.HIGH,
+            {GamePhase.EARLY, GamePhase.MID, GamePhase.LATE},
+            interval=22,  # 1초
+            condition=lambda: self.bot.vespene > 500 or self.bot.minerals > 1000,
+        )
 
         # === MEDIUM: 1초마다 (전략/정보) ===
-        self._register_system("Strategy", SystemPriority.MEDIUM,
-                             {GamePhase.OPENING, GamePhase.EARLY, GamePhase.MID, GamePhase.LATE},
-                             interval=22)
+        self._register_system(
+            "Strategy",
+            SystemPriority.MEDIUM,
+            {GamePhase.OPENING, GamePhase.EARLY, GamePhase.MID, GamePhase.LATE},
+            interval=22,
+        )
 
-        self._register_system("Intel", SystemPriority.MEDIUM,
-                             {GamePhase.OPENING, GamePhase.EARLY, GamePhase.MID, GamePhase.LATE},
-                             interval=22)
+        self._register_system(
+            "Intel",
+            SystemPriority.MEDIUM,
+            {GamePhase.OPENING, GamePhase.EARLY, GamePhase.MID, GamePhase.LATE},
+            interval=22,
+        )
 
-        self._register_system("HierarchicalRL", SystemPriority.MEDIUM,
-                             {GamePhase.EARLY, GamePhase.MID, GamePhase.LATE},
-                             interval=22)
+        self._register_system(
+            "HierarchicalRL",
+            SystemPriority.MEDIUM,
+            {GamePhase.EARLY, GamePhase.MID, GamePhase.LATE},
+            interval=22,
+        )
 
-        self._register_system("DynamicCounter", SystemPriority.MEDIUM,
-                             {GamePhase.EARLY, GamePhase.MID, GamePhase.LATE},
-                             interval=22,
-                             condition=lambda: self._has_enemy_threats())
+        self._register_system(
+            "DynamicCounter",
+            SystemPriority.MEDIUM,
+            {GamePhase.EARLY, GamePhase.MID, GamePhase.LATE},
+            interval=22,
+            condition=lambda: self._has_enemy_threats(),
+        )
 
-        self._register_system("BaseDestruction", SystemPriority.MEDIUM,
-                             {GamePhase.MID, GamePhase.LATE},
-                             interval=22,
-                             condition=lambda: self._can_attack())
+        self._register_system(
+            "BaseDestruction",
+            SystemPriority.MEDIUM,
+            {GamePhase.MID, GamePhase.LATE},
+            interval=22,
+            condition=lambda: self._can_attack(),
+        )
 
-        self._register_system("CompleteDestruction", SystemPriority.CRITICAL,
-                             {GamePhase.OPENING, GamePhase.EARLY, GamePhase.MID, GamePhase.LATE},
-                             interval=11,  # 0.5초마다 (더 빠른 건물 파괴)
-                             condition=lambda: self._has_army())
+        self._register_system(
+            "CompleteDestruction",
+            SystemPriority.CRITICAL,
+            {GamePhase.OPENING, GamePhase.EARLY, GamePhase.MID, GamePhase.LATE},
+            interval=11,  # 0.5초마다 (더 빠른 건물 파괴)
+            condition=lambda: self._has_army(),
+        )
 
         # === LOW: 2초마다 (점막/업그레이드) ===
-        self._register_system("Creep", SystemPriority.LOW,
-                             {GamePhase.EARLY, GamePhase.MID, GamePhase.LATE},
-                             interval=44)
+        self._register_system(
+            "Creep",
+            SystemPriority.LOW,
+            {GamePhase.EARLY, GamePhase.MID, GamePhase.LATE},
+            interval=44,
+        )
 
-        self._register_system("CreepHighway", SystemPriority.LOW,
-                             {GamePhase.MID, GamePhase.LATE},
-                             interval=44,
-                             condition=lambda: self.bot.townhalls.amount >= 2)
+        self._register_system(
+            "CreepHighway",
+            SystemPriority.LOW,
+            {GamePhase.MID, GamePhase.LATE},
+            interval=44,
+            condition=lambda: self.bot.townhalls.amount >= 2,
+        )
 
-        self._register_system("UpgradeCoord", SystemPriority.LOW,
-                             {GamePhase.EARLY, GamePhase.MID, GamePhase.LATE},
-                             interval=44)
+        self._register_system(
+            "UpgradeCoord",
+            SystemPriority.LOW,
+            {GamePhase.EARLY, GamePhase.MID, GamePhase.LATE},
+            interval=44,
+        )
 
-        self._register_system("QueenManager", SystemPriority.LOW,
-                             {GamePhase.OPENING, GamePhase.EARLY, GamePhase.MID, GamePhase.LATE},
-                             interval=44)
+        self._register_system(
+            "QueenManager",
+            SystemPriority.LOW,
+            {GamePhase.OPENING, GamePhase.EARLY, GamePhase.MID, GamePhase.LATE},
+            interval=44,
+        )
 
         # === MINIMAL: 5초마다 (분석/통계) ===
-        self._register_system("Scouting", SystemPriority.MINIMAL,
-                             {GamePhase.OPENING, GamePhase.EARLY, GamePhase.MID, GamePhase.LATE},
-                             interval=110)
+        self._register_system(
+            "Scouting",
+            SystemPriority.MINIMAL,
+            {GamePhase.OPENING, GamePhase.EARLY, GamePhase.MID, GamePhase.LATE},
+            interval=110,
+        )
 
-        self._register_system("ActiveScout", SystemPriority.MINIMAL,
-                             {GamePhase.EARLY, GamePhase.MID},
-                             interval=110,
-                             condition=lambda: self.bot.time < 600)  # 10분까지만
+        self._register_system(
+            "ActiveScout",
+            SystemPriority.MINIMAL,
+            {GamePhase.EARLY, GamePhase.MID},
+            interval=110,
+            condition=lambda: self.bot.time < 600,
+        )  # 10분까지만
 
-        self._register_system("DestructibleAware", SystemPriority.MINIMAL,
-                             {GamePhase.EARLY, GamePhase.MID},
-                             interval=220,
-                             condition=lambda: self.bot.time < 480)  # 8분까지만
+        self._register_system(
+            "DestructibleAware",
+            SystemPriority.MINIMAL,
+            {GamePhase.EARLY, GamePhase.MID},
+            interval=220,
+            condition=lambda: self.bot.time < 480,
+        )  # 8분까지만
 
         # === 특수: 빌드 오더 (5분까지만) ===
-        self._register_system("BuildOrder", SystemPriority.CRITICAL,
-                             {GamePhase.OPENING},
-                             interval=1,
-                             condition=lambda: self.bot.time < 300)
+        self._register_system(
+            "BuildOrder",
+            SystemPriority.CRITICAL,
+            {GamePhase.OPENING},
+            interval=1,
+            condition=lambda: self.bot.time < 300,
+        )
 
         # === 특수: Nydus Network (4분 이후) ===
-        self._register_system("NydusTrainer", SystemPriority.MEDIUM,
-                             {GamePhase.EARLY, GamePhase.MID, GamePhase.LATE},
-                             interval=110,
-                             condition=lambda: self.bot.time > 240 and self._has_nydus_network())
+        self._register_system(
+            "NydusTrainer",
+            SystemPriority.MEDIUM,
+            {GamePhase.EARLY, GamePhase.MID, GamePhase.LATE},
+            interval=110,
+            condition=lambda: self.bot.time > 240 and self._has_nydus_network(),
+        )
 
         # === 특수: 공격 전략 ===
-        self._register_system("AggressiveStrategies", SystemPriority.HIGH,
-                             {GamePhase.OPENING, GamePhase.EARLY},
-                             interval=4,
-                             condition=lambda: self.bot.time < 360)  # 6분까지만
+        self._register_system(
+            "AggressiveStrategies",
+            SystemPriority.HIGH,
+            {GamePhase.OPENING, GamePhase.EARLY},
+            interval=4,
+            condition=lambda: self.bot.time < 360,
+        )  # 6분까지만
 
         # === 최적화 시스템 (항상 실행) ===
-        self._register_system("SpatialOptimizer", SystemPriority.CRITICAL,
-                             {GamePhase.OPENING, GamePhase.EARLY, GamePhase.MID, GamePhase.LATE},
-                             interval=1)
+        self._register_system(
+            "SpatialOptimizer",
+            SystemPriority.CRITICAL,
+            {GamePhase.OPENING, GamePhase.EARLY, GamePhase.MID, GamePhase.LATE},
+            interval=1,
+        )
 
-        self._register_system("DataCache", SystemPriority.CRITICAL,
-                             {GamePhase.OPENING, GamePhase.EARLY, GamePhase.MID, GamePhase.LATE},
-                             interval=1)
+        self._register_system(
+            "DataCache",
+            SystemPriority.CRITICAL,
+            {GamePhase.OPENING, GamePhase.EARLY, GamePhase.MID, GamePhase.LATE},
+            interval=1,
+        )
 
-        self._register_system("MapMemory", SystemPriority.CRITICAL,
-                             {GamePhase.OPENING, GamePhase.EARLY, GamePhase.MID, GamePhase.LATE},
-                             interval=1)  # 매 프레임 (적 건물 발견 중요)
+        self._register_system(
+            "MapMemory",
+            SystemPriority.CRITICAL,
+            {GamePhase.OPENING, GamePhase.EARLY, GamePhase.MID, GamePhase.LATE},
+            interval=1,
+        )  # 매 프레임 (적 건물 발견 중요)
 
-        self._register_system("SelfHealing", SystemPriority.HIGH,
-                             {GamePhase.OPENING, GamePhase.EARLY, GamePhase.MID, GamePhase.LATE},
-                             interval=110)  # 5초
+        self._register_system(
+            "SelfHealing",
+            SystemPriority.HIGH,
+            {GamePhase.OPENING, GamePhase.EARLY, GamePhase.MID, GamePhase.LATE},
+            interval=110,
+        )  # 5초
 
         # === 특수: 바퀴 잠복 회복 전술 ===
-        self._register_system("RoachTactics", SystemPriority.CRITICAL,
-                             {GamePhase.EARLY, GamePhase.MID, GamePhase.LATE},
-                             interval=1,  # 매 프레임 (빠른 반응 필요)
-                             condition=lambda: self._has_roaches())
+        self._register_system(
+            "RoachTactics",
+            SystemPriority.CRITICAL,
+            {GamePhase.EARLY, GamePhase.MID, GamePhase.LATE},
+            interval=1,  # 매 프레임 (빠른 반응 필요)
+            condition=lambda: self._has_roaches(),
+        )
 
         # === 특수: 저글링 괴롭힘 전술 (초반) ===
-        self._register_system("ZerglingHarass", SystemPriority.HIGH,
-                             {GamePhase.OPENING, GamePhase.EARLY, GamePhase.MID},
-                             interval=11,  # 0.5초
-                             condition=lambda: self._has_zerglings())
+        self._register_system(
+            "ZerglingHarass",
+            SystemPriority.HIGH,
+            {GamePhase.OPENING, GamePhase.EARLY, GamePhase.MID},
+            interval=11,  # 0.5초
+            condition=lambda: self._has_zerglings(),
+        )
 
         # === 특수: 공중 위협 대응 ===
-        self._register_system("AirThreatResponse", SystemPriority.HIGH,
-                             {GamePhase.EARLY, GamePhase.MID, GamePhase.LATE},
-                             interval=22,  # 1초
-                             condition=lambda: self._has_enemy_air())
+        self._register_system(
+            "AirThreatResponse",
+            SystemPriority.HIGH,
+            {GamePhase.EARLY, GamePhase.MID, GamePhase.LATE},
+            interval=22,  # 1초
+            condition=lambda: self._has_enemy_air(),
+        )
 
         # === 특수: 공간 확보 (장애물 파괴) ===
-        self._register_system("SpaceControl", SystemPriority.MEDIUM,
-                             {GamePhase.OPENING, GamePhase.EARLY, GamePhase.MID},
-                             interval=44,  # 2초
-                             condition=lambda: self._has_destructibles())
+        self._register_system(
+            "SpaceControl",
+            SystemPriority.MEDIUM,
+            {GamePhase.OPENING, GamePhase.EARLY, GamePhase.MID},
+            interval=44,  # 2초
+            condition=lambda: self._has_destructibles(),
+        )
 
         self.total_systems = len(self.systems)
         self.logger.info(f"[INIT] Registered {self.total_systems} systems")
 
-    def _register_system(self, name: str, priority: SystemPriority,
-                        enabled_phases: Set[GamePhase], interval: int,
-                        condition: Optional[Callable] = None):
+    def _register_system(
+        self,
+        name: str,
+        priority: SystemPriority,
+        enabled_phases: Set[GamePhase],
+        interval: int,
+        condition: Optional[Callable] = None,
+    ):
         """시스템 등록"""
         self.systems[name] = SystemConfig(
             name=name,
             priority=priority,
             enabled_phases=enabled_phases,
             interval_frames=interval,
-            condition=condition
+            condition=condition,
         )
 
     def should_execute_system(self, system_name: str, iteration: int) -> bool:
@@ -295,10 +400,14 @@ class LogicOptimizer:
         """군대가 있는지 확인"""
         try:
             from sc2.ids.unit_typeid import UnitTypeId
+
             army = self.bot.units.filter(
-                lambda u: u.type_id not in {
-                    UnitTypeId.DRONE, UnitTypeId.OVERLORD,
-                    UnitTypeId.LARVA, UnitTypeId.EGG
+                lambda u: u.type_id
+                not in {
+                    UnitTypeId.DRONE,
+                    UnitTypeId.OVERLORD,
+                    UnitTypeId.LARVA,
+                    UnitTypeId.EGG,
                 }
             )
             return army.amount > 5
@@ -333,10 +442,16 @@ class LogicOptimizer:
 
             # 고위협 유닛 확인
             from sc2.ids.unit_typeid import UnitTypeId
+
             threats = {
-                UnitTypeId.BATTLECRUISER, UnitTypeId.CARRIER, UnitTypeId.TEMPEST,
-                UnitTypeId.SIEGETANK, UnitTypeId.COLOSSUS, UnitTypeId.IMMORTAL,
-                UnitTypeId.ULTRALISK, UnitTypeId.THOR
+                UnitTypeId.BATTLECRUISER,
+                UnitTypeId.CARRIER,
+                UnitTypeId.TEMPEST,
+                UnitTypeId.SIEGETANK,
+                UnitTypeId.COLOSSUS,
+                UnitTypeId.IMMORTAL,
+                UnitTypeId.ULTRALISK,
+                UnitTypeId.THOR,
             }
 
             for enemy in self.bot.enemy_units:
@@ -370,6 +485,7 @@ class LogicOptimizer:
         """Nydus Network가 있는지 확인"""
         try:
             from sc2.ids.unit_typeid import UnitTypeId
+
             networks = self.bot.structures(UnitTypeId.NYDUSNETWORK).ready
             return networks.exists
         except Exception:
@@ -379,6 +495,7 @@ class LogicOptimizer:
         """바퀴가 있는지 확인"""
         try:
             from sc2.ids.unit_typeid import UnitTypeId
+
             roaches = self.bot.units(UnitTypeId.ROACH)
             return roaches.amount > 0
         except Exception:
@@ -388,6 +505,7 @@ class LogicOptimizer:
         """저글링이 있는지 확인"""
         try:
             from sc2.ids.unit_typeid import UnitTypeId
+
             zerglings = self.bot.units(UnitTypeId.ZERGLING)
             return zerglings.amount >= 4  # 4마리 이상일 때만 괴롭힘 활성화
         except Exception:
@@ -400,11 +518,18 @@ class LogicOptimizer:
                 return False
 
             from sc2.ids.unit_typeid import UnitTypeId
+
             air_units = {
-                UnitTypeId.MUTALISK, UnitTypeId.PHOENIX, UnitTypeId.VOIDRAY,
-                UnitTypeId.CARRIER, UnitTypeId.BATTLECRUISER, UnitTypeId.MEDIVAC,
-                UnitTypeId.ORACLE, UnitTypeId.TEMPEST, UnitTypeId.BROODLORD,
-                UnitTypeId.CORRUPTOR
+                UnitTypeId.MUTALISK,
+                UnitTypeId.PHOENIX,
+                UnitTypeId.VOIDRAY,
+                UnitTypeId.CARRIER,
+                UnitTypeId.BATTLECRUISER,
+                UnitTypeId.MEDIVAC,
+                UnitTypeId.ORACLE,
+                UnitTypeId.TEMPEST,
+                UnitTypeId.BROODLORD,
+                UnitTypeId.CORRUPTOR,
             }
 
             enemy_air = self.bot.enemy_units.filter(lambda u: u.type_id in air_units)
@@ -429,37 +554,47 @@ class LogicOptimizer:
             self.bot.combat_manager.task_priorities["air_harassment"] = 60
             # 방어 시 일꾼 보호 로직 강화
             self.bot.combat_manager.task_priorities["worker_defense"] = 110
-            
+
     def apply_economy_improvements(self):
         """경제 로직 개선: 최적화된 일꾼 생산 및 자원 관리"""
         self.logger.info("Applying economy improvements...")
         if hasattr(self.bot, "economy_manager"):
             # 가스 채취 효율 최적화
-            self.bot.economy_manager.gas_worker_adjustment_interval = 22 # 더 자주 조정
+            self.bot.economy_manager.gas_worker_adjustment_interval = 22  # 더 자주 조정
             # 매크로 해처리 타이밍 최적화
-            self.bot.economy_manager.macro_hatchery_mineral_threshold = 500 # 더 공격적인 인프라 확장
-            
+            self.bot.economy_manager.macro_hatchery_mineral_threshold = (
+                500  # 더 공격적인 인프라 확장
+            )
+
     def apply_strategy_improvements(self, difficulty):
         """전략 로직 개선: 난이도별 맞춤형 전략 적용"""
         self.logger.info(f"Applying strategy improvements for {difficulty.name}...")
-        
+
         # 난이도가 높을수록 더 공격적인 빌드 및 정찰 빈도 증가
         from sc2.data import Difficulty
-        if difficulty in [Difficulty.CheatVision, Difficulty.CheatMoney, Difficulty.CheatInsane]:
+
+        if difficulty in [
+            Difficulty.CheatVision,
+            Difficulty.CheatMoney,
+            Difficulty.CheatInsane,
+        ]:
             if hasattr(self.bot, "strategy_manager"):
                 self.bot.strategy_manager.current_mode = "aggressive"
-                
+
     def optimize_all(self):
         """모든 로직 최적화 실행"""
         self.apply_combat_improvements()
         self.apply_economy_improvements()
-        
+
         # 현재 난이도 확인 후 전략 적용
         from sc2.data import Difficulty, Race
+
         current_diff = Difficulty.VeryHard
         if hasattr(self.bot, "difficulty_progression"):
-             current_diff = self.bot.difficulty_progression.get_recommended_difficulty("DefaultMap", Race.Random)
-        
+            current_diff = self.bot.difficulty_progression.get_recommended_difficulty(
+                "DefaultMap", Race.Random
+            )
+
         self.apply_strategy_improvements(current_diff)
         return True
 
@@ -491,7 +626,9 @@ class LogicOptimizer:
         self.disabled_systems = disabled
 
         # CPU 절약 추정
-        cpu_saved_percent = (disabled / self.total_systems * 100) if self.total_systems > 0 else 0
+        cpu_saved_percent = (
+            (disabled / self.total_systems * 100) if self.total_systems > 0 else 0
+        )
 
         return {
             "current_phase": current_phase.value,
@@ -499,7 +636,7 @@ class LogicOptimizer:
             "active_systems": active,
             "disabled_systems": disabled,
             "cpu_saved_percent": f"{cpu_saved_percent:.1f}%",
-            "iteration": iteration
+            "iteration": iteration,
         }
 
     def print_optimization_report(self, iteration: int):

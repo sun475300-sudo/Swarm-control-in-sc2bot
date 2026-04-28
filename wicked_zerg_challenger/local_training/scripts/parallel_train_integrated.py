@@ -9,12 +9,12 @@ Launches multiple training instances with staggered starts.
 from __future__ import annotations
 
 import argparse
+import logging
 import os
 import subprocess
 import sys
 import time
 from pathlib import Path
-import logging
 
 logger = logging.getLogger("ParallelTrainIntegrated")
 

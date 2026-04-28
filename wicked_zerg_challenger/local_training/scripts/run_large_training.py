@@ -14,20 +14,24 @@ SC2 클라이언트 없이 독립 실행 가능합니다.
 """
 
 import argparse
+import logging
 import os
 import sys
 import time
 
 import numpy as np
-import logging
 
 logger = logging.getLogger("RunLargeTraining")
 
 # 프로젝트 루트를 path에 추가
-PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", ".."))
+PROJECT_ROOT = os.path.abspath(
+    os.path.join(os.path.dirname(__file__), "..", "..", "..")
+)
 sys.path.insert(0, PROJECT_ROOT)
 sys.path.insert(0, os.path.join(PROJECT_ROOT, "wicked_zerg_challenger"))
-sys.path.insert(0, os.path.join(PROJECT_ROOT, "wicked_zerg_challenger", "local_training"))
+sys.path.insert(
+    0, os.path.join(PROJECT_ROOT, "wicked_zerg_challenger", "local_training")
+)
 
 # SC2ZergEnv 시뮬레이터
 from gymnasium_env.sc2_gym_env import SC2ZergEnv
@@ -40,9 +44,15 @@ def train_ppo_agent(n_episodes: int, save_dir: str, max_frames: int = 2000):
     agent = PPOAgent(learning_rate=3e-4, gamma=0.99, ppo_epochs=4, batch_size=64)
     env = SC2ZergEnv(max_frames=max_frames)
 
-    logger.info("╔══════════════════════════════════════════════════════════════════════╗")
-    logger.info(f"║  PPO Agent Training — {n_episodes} Episodes (max_frames={max_frames})")
-    logger.info("╠══════════════════════════════════════════════════════════════════════╣")
+    logger.info(
+        "╔══════════════════════════════════════════════════════════════════════╗"
+    )
+    logger.info(
+        f"║  PPO Agent Training — {n_episodes} Episodes (max_frames={max_frames})"
+    )
+    logger.info(
+        "╠══════════════════════════════════════════════════════════════════════╣"
+    )
 
     wins = 0
     total_rewards = []
@@ -95,8 +105,10 @@ def train_ppo_agent(n_episodes: int, save_dir: str, max_frames: int = 2000):
         result_str = "[OK] WIN " if won else "[X] LOSS"
         avg_r = np.mean(total_rewards[-10:])
         wr = wins / ep * 100
-        logger.info(f"║ Ep {ep:4d}/{n_episodes} │ {steps:4d}s │ R={ep_reward:7.1f} │ "
-              f"AvgR={avg_r:6.1f} │ VL={vl:7.2f} │ WR={wr:4.1f}% │ {result_str} ║")
+        logger.info(
+            f"║ Ep {ep:4d}/{n_episodes} │ {steps:4d}s │ R={ep_reward:7.1f} │ "
+            f"AvgR={avg_r:6.1f} │ VL={vl:7.2f} │ WR={wr:4.1f}% │ {result_str} ║"
+        )
 
         # 10에피소드마다 체크포인트
         if ep % 10 == 0:
@@ -104,18 +116,28 @@ def train_ppo_agent(n_episodes: int, save_dir: str, max_frames: int = 2000):
             agent.save_model(cp_path)
             elapsed = time.time() - t0
             eps_per_sec = ep / elapsed
-            logger.info(f"║ ── Checkpoint: {cp_path} ({elapsed:.0f}s, {eps_per_sec:.1f} ep/s) ──")
+            logger.info(
+                f"║ ── Checkpoint: {cp_path} ({elapsed:.0f}s, {eps_per_sec:.1f} ep/s) ──"
+            )
 
     # 최종 저장
     final_path = os.path.join(save_dir, f"ppo_{n_episodes}ep.npz")
     agent.save_model(final_path)
 
     elapsed = time.time() - t0
-    logger.info("╠══════════════════════════════════════════════════════════════════════╣")
-    logger.info(f"║  PPO 훈련 완료: {n_episodes}ep, 승률 {wins}/{n_episodes} ({wins/n_episodes*100:.1f}%)")
-    logger.info(f"║  is_trained={agent.is_trained()}, deployment={agent.is_ready_for_deployment()}")
+    logger.info(
+        "╠══════════════════════════════════════════════════════════════════════╣"
+    )
+    logger.info(
+        f"║  PPO 훈련 완료: {n_episodes}ep, 승률 {wins}/{n_episodes} ({wins/n_episodes*100:.1f}%)"
+    )
+    logger.info(
+        f"║  is_trained={agent.is_trained()}, deployment={agent.is_ready_for_deployment()}"
+    )
     logger.info(f"║  최종 모델: {final_path} ({elapsed:.1f}s)")
-    logger.info("╚══════════════════════════════════════════════════════════════════════╝")
+    logger.info(
+        "╚══════════════════════════════════════════════════════════════════════╝"
+    )
 
     return {
         "agent": "PPO",
@@ -138,9 +160,13 @@ def train_rl_agent(n_episodes: int, save_dir: str, max_frames: int = 2000):
     agent = RLAgent(learning_rate=0.001)
     env = SC2ZergEnv(max_frames=max_frames)
 
-    logger.info("╔══════════════════════════════════════════════════════════════════════╗")
+    logger.info(
+        "╔══════════════════════════════════════════════════════════════════════╗"
+    )
     logger.info(f"║  RL Agent (REINFORCE) Training — {n_episodes} Episodes")
-    logger.info("╠══════════════════════════════════════════════════════════════════════╣")
+    logger.info(
+        "╠══════════════════════════════════════════════════════════════════════╣"
+    )
 
     wins = 0
     total_rewards = []
@@ -189,8 +215,10 @@ def train_rl_agent(n_episodes: int, save_dir: str, max_frames: int = 2000):
         avg_r = np.mean(total_rewards[-10:])
         wr = wins / ep * 100
         loss = metrics.get("loss", 0) if isinstance(metrics, dict) else 0
-        logger.info(f"║ Ep {ep:4d}/{n_episodes} │ {steps:4d}s │ R={ep_reward:7.1f} │ "
-              f"AvgR={avg_r:6.1f} │ L={loss:7.4f} │ WR={wr:4.1f}% │ {result_str} ║")
+        logger.info(
+            f"║ Ep {ep:4d}/{n_episodes} │ {steps:4d}s │ R={ep_reward:7.1f} │ "
+            f"AvgR={avg_r:6.1f} │ L={loss:7.4f} │ WR={wr:4.1f}% │ {result_str} ║"
+        )
 
         if ep % 10 == 0:
             cp_path = os.path.join(save_dir, f"rl_ep{ep}.npz")
@@ -203,11 +231,17 @@ def train_rl_agent(n_episodes: int, save_dir: str, max_frames: int = 2000):
 
     elapsed = time.time() - t0
     ready = agent.is_ready_for_deployment()
-    logger.info("╠══════════════════════════════════════════════════════════════════════╣")
-    logger.info(f"║  RL 훈련 완료: {n_episodes}ep, 승률 {wins}/{n_episodes} ({wins/n_episodes*100:.1f}%)")
+    logger.info(
+        "╠══════════════════════════════════════════════════════════════════════╣"
+    )
+    logger.info(
+        f"║  RL 훈련 완료: {n_episodes}ep, 승률 {wins}/{n_episodes} ({wins/n_episodes*100:.1f}%)"
+    )
     logger.info(f"║  is_trained={agent.is_trained()}, deployment={ready}")
     logger.info(f"║  최종 모델: {final_path} ({elapsed:.1f}s)")
-    logger.info("╚══════════════════════════════════════════════════════════════════════╝")
+    logger.info(
+        "╚══════════════════════════════════════════════════════════════════════╝"
+    )
 
     return {
         "agent": "RL",
@@ -229,9 +263,13 @@ if __name__ == "__main__":
     parser.add_argument("--max-frames", type=int, default=2000)
     parser.add_argument("--skip-ppo", action="store_true")
     parser.add_argument("--skip-rl", action="store_true")
-    parser.add_argument("--save-dir", type=str,
-                        default=os.path.join(PROJECT_ROOT, "wicked_zerg_challenger",
-                                             "local_training", "models"))
+    parser.add_argument(
+        "--save-dir",
+        type=str,
+        default=os.path.join(
+            PROJECT_ROOT, "wicked_zerg_challenger", "local_training", "models"
+        ),
+    )
     args = parser.parse_args()
 
     os.makedirs(args.save_dir, exist_ok=True)
@@ -250,6 +288,8 @@ if __name__ == "__main__":
     print("  대규모 훈련 최종 요약")
     print("=" * 72)
     for r in results:
-        print(f"  {r['agent']:4s} │ {r['episodes']}ep │ WR={r['win_rate']*100:.1f}% │ "
-              f"AvgR={r['avg_reward']:.1f} │ Trained={r['is_trained']} │ {r['elapsed']:.1f}s")
+        print(
+            f"  {r['agent']:4s} │ {r['episodes']}ep │ WR={r['win_rate']*100:.1f}% │ "
+            f"AvgR={r['avg_reward']:.1f} │ Trained={r['is_trained']} │ {r['elapsed']:.1f}s"
+        )
     print("=" * 72)

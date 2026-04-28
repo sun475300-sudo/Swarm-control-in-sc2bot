@@ -4,8 +4,8 @@
 Quick extractor sanity check.
 """
 
-from pathlib import Path
 import logging
+from pathlib import Path
 
 logger = logging.getLogger("TestExtractorQuick")
 

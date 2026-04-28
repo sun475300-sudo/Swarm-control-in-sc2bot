@@ -1,26 +1,34 @@
 # Phase 406: Apache Flink - SC2 Stream Processing
 # PyFlink DataStream API for real-time SC2 game event processing
 
-from pyflink.datastream import StreamExecutionEnvironment, TimeCharacteristic
-from pyflink.datastream.connectors.kafka import (
-    FlinkKafkaConsumer, FlinkKafkaProducer,
-)
-from pyflink.datastream.window import (
-    SlidingEventTimeWindows, TumblingEventTimeWindows,
-)
-from pyflink.datastream.functions import (
-    MapFunction, FlatMapFunction, ReduceFunction,
-    ProcessWindowFunction, KeyedProcessFunction,
-)
-from pyflink.cep import pattern as cep_pattern, CEP
-from pyflink.common import Time, Types, Row, WatermarkStrategy
-from pyflink.common.serialization import SimpleStringSchema
 import json
 from datetime import timedelta
+
+from pyflink.cep import CEP
+from pyflink.cep import pattern as cep_pattern
+from pyflink.common import Row, Time, Types, WatermarkStrategy
+from pyflink.common.serialization import SimpleStringSchema
+from pyflink.datastream import StreamExecutionEnvironment, TimeCharacteristic
+from pyflink.datastream.connectors.kafka import (
+    FlinkKafkaConsumer,
+    FlinkKafkaProducer,
+)
+from pyflink.datastream.functions import (
+    FlatMapFunction,
+    KeyedProcessFunction,
+    MapFunction,
+    ProcessWindowFunction,
+    ReduceFunction,
+)
+from pyflink.datastream.window import (
+    SlidingEventTimeWindows,
+    TumblingEventTimeWindows,
+)
 
 # ============================================================
 # Environment Setup
 # ============================================================
+
 
 def create_env() -> StreamExecutionEnvironment:
     env = StreamExecutionEnvironment.get_execution_environment()
@@ -29,9 +37,11 @@ def create_env() -> StreamExecutionEnvironment:
     env.add_jars("file:///opt/flink/lib/flink-sql-connector-kafka.jar")
     return env
 
+
 # ============================================================
 # Deserialization
 # ============================================================
+
 
 class SC2EventDeserializer(MapFunction):
     def map(self, value: str) -> Row:
@@ -46,39 +56,45 @@ class SC2EventDeserializer(MapFunction):
             timestamp=event.get("timestamp", ""),
         )
 
+
 # ============================================================
 # APM Calculation: Sliding Window
 # ============================================================
+
 
 class APMWindowFunction(ProcessWindowFunction):
     """Compute APM over a 60-second sliding window (step=5s)."""
 
     def process(self, key, context, elements):
         actions = list(elements)
-        window  = context.window()
+        window = context.window()
         duration_minutes = (window.end - window.start) / 60_000.0
         apm = len(actions) / max(duration_minutes, 1e-6)
 
-        yield json.dumps({
-            "metric":     "apm",
-            "game_id":    key,
-            "apm":        round(apm, 2),
-            "window_end": window.end,
-        })
+        yield json.dumps(
+            {
+                "metric": "apm",
+                "game_id": key,
+                "apm": round(apm, 2),
+                "window_end": window.end,
+            }
+        )
+
 
 def build_apm_stream(action_stream):
     """Sliding window APM: 60s window, 5s slide."""
     return (
-        action_stream
-        .filter(lambda r: r.event_type == "action_taken")
+        action_stream.filter(lambda r: r.event_type == "action_taken")
         .key_by(lambda r: r.game_id)
         .window(SlidingEventTimeWindows.of(Time.seconds(60), Time.seconds(5)))
         .process(APMWindowFunction())
     )
 
+
 # ============================================================
 # Win Rate: Tumbling Window
 # ============================================================
+
 
 class WinRateReducer(ReduceFunction):
     def reduce(self, a: Row, b: Row) -> Row:
@@ -87,22 +103,27 @@ class WinRateReducer(ReduceFunction):
             total=a.total + b.total,
         )
 
+
 class WinRateWindowFunction(ProcessWindowFunction):
     def process(self, key, context, elements):
         results = list(elements)
-        wins  = sum(r.wins for r in results)
+        wins = sum(r.wins for r in results)
         total = len(results)
         win_rate = wins / max(total, 1)
-        yield json.dumps({
-            "metric":    "win_rate",
-            "race":      key,
-            "win_rate":  round(win_rate, 4),
-            "games":     total,
-        })
+        yield json.dumps(
+            {
+                "metric": "win_rate",
+                "race": key,
+                "win_rate": round(win_rate, 4),
+                "games": total,
+            }
+        )
+
 
 # ============================================================
 # CEP Pattern Detection
 # ============================================================
+
 
 def build_timing_attack_pattern(action_stream):
     """
@@ -114,11 +135,20 @@ def build_timing_attack_pattern(action_stream):
     )
 
     timing_pattern = (
-        cep_pattern.Pattern
-        .begin("supply_cap", Types.ROW([
-            Types.STRING(), Types.INT(), Types.INT(), Types.STRING(),
-            Types.STRING(), Types.STRING(), Types.STRING(),
-        ]))
+        cep_pattern.Pattern.begin(
+            "supply_cap",
+            Types.ROW(
+                [
+                    Types.STRING(),
+                    Types.INT(),
+                    Types.INT(),
+                    Types.STRING(),
+                    Types.STRING(),
+                    Types.STRING(),
+                    Types.STRING(),
+                ]
+            ),
+        )
         .where(lambda r, _: r.event_type == "resource_change")
         .next("attack", Types.ROW_NAMED(["event_type"], [Types.STRING()]))
         .where(lambda r, _: r.action == "attack_move")
@@ -127,13 +157,13 @@ def build_timing_attack_pattern(action_stream):
 
     return CEP.pattern(timed_actions.key_by(lambda r: r.game_id), timing_pattern)
 
+
 def build_drop_harass_pattern(action_stream):
     """
     Detect drop harass: medivac_load -> attack_move at opponent's base in 60s.
     """
     drop_pattern = (
-        cep_pattern.Pattern
-        .begin("load")
+        cep_pattern.Pattern.begin("load")
         .where(lambda r, _: r.unit_type == "Medivac" and r.action == "load")
         .followed_by("move")
         .where(lambda r, _: r.action == "attack_move")
@@ -141,9 +171,11 @@ def build_drop_harass_pattern(action_stream):
     )
     return CEP.pattern(action_stream.key_by(lambda r: r.game_id), drop_pattern)
 
+
 # ============================================================
 # Kafka Source / Sink
 # ============================================================
+
 
 def create_kafka_source(env: StreamExecutionEnvironment, topic: str, group_id: str):
     props = {
@@ -158,6 +190,7 @@ def create_kafka_source(env: StreamExecutionEnvironment, topic: str, group_id: s
     consumer.set_start_from_latest()
     return env.add_source(consumer)
 
+
 def create_kafka_sink(topic: str) -> FlinkKafkaProducer:
     return FlinkKafkaProducer(
         topic=topic,
@@ -165,9 +198,11 @@ def create_kafka_sink(topic: str) -> FlinkKafkaProducer:
         producer_config={"bootstrap.servers": "localhost:9092"},
     )
 
+
 # ============================================================
 # Main Job
 # ============================================================
+
 
 def main():
     env = create_env()
@@ -180,9 +215,24 @@ def main():
     event_stream = raw_stream.map(
         SC2EventDeserializer(),
         output_type=Types.ROW_NAMED(
-            ["event_type", "game_id", "game_loop", "team", "unit_type", "action", "timestamp"],
-            [Types.STRING(), Types.INT(), Types.INT(), Types.STRING(),
-             Types.STRING(), Types.STRING(), Types.STRING()],
+            [
+                "event_type",
+                "game_id",
+                "game_loop",
+                "team",
+                "unit_type",
+                "action",
+                "timestamp",
+            ],
+            [
+                Types.STRING(),
+                Types.INT(),
+                Types.INT(),
+                Types.STRING(),
+                Types.STRING(),
+                Types.STRING(),
+                Types.STRING(),
+            ],
         ),
     ).assign_timestamps_and_watermarks(
         WatermarkStrategy.for_bounded_out_of_orderness(timedelta(seconds=5))
@@ -196,12 +246,14 @@ def main():
     # CEP: timing attack detection
     timing_match = build_timing_attack_pattern(event_stream)
     timing_match.select(
-        lambda pattern: json.dumps({"alert": "timing_attack_detected",
-                                    "game_id": pattern["attack"][0].game_id})
+        lambda pattern: json.dumps(
+            {"alert": "timing_attack_detected", "game_id": pattern["attack"][0].game_id}
+        )
     ).add_sink(create_kafka_sink("sc2-alerts"))
 
     print("[Flink] Executing job graph...")
     env.execute("SC2 Game Stream Processing Job")
+
 
 if __name__ == "__main__":
     main()

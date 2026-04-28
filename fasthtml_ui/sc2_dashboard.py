@@ -1,18 +1,47 @@
 # Phase 419: FastHTML - SC2 Dashboard
 # FastHTML (Python web framework) SC2 bot management dashboard with HTMX
 
-from fasthtml.common import (
-    FastHTML, serve,
-    Html, Head, Body, Title, Meta, Link, Script,
-    Div, H1, H2, H3, P, Span, Strong,
-    Table, Thead, Tbody, Tr, Th, Td,
-    Nav, A, Button, Form, Input, Select, Option,
-    Card, Main, Header, Footer,
-    Ul, Li,
-    fast_app,
-)
-from datetime import datetime
 import json
+from datetime import datetime
+
+from fasthtml.common import (
+    H1,
+    H2,
+    H3,
+    A,
+    Body,
+    Button,
+    Card,
+    Div,
+    FastHTML,
+    Footer,
+    Form,
+    Head,
+    Header,
+    Html,
+    Input,
+    Li,
+    Link,
+    Main,
+    Meta,
+    Nav,
+    Option,
+    P,
+    Script,
+    Select,
+    Span,
+    Strong,
+    Table,
+    Tbody,
+    Td,
+    Th,
+    Thead,
+    Title,
+    Tr,
+    Ul,
+    fast_app,
+    serve,
+)
 
 # ============================================================
 # App Setup
@@ -20,7 +49,10 @@ import json
 
 app, rt = fast_app(
     hdrs=(
-        Link(rel="stylesheet", href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"),
+        Link(
+            rel="stylesheet",
+            href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css",
+        ),
         Script(src="https://cdn.jsdelivr.net/npm/chart.js"),
     )
 )
@@ -30,26 +62,67 @@ app, rt = fast_app(
 # ============================================================
 
 GAME_HISTORY = [
-    {"id": 1, "map": "Equilibrium LE",   "result": "Win",  "race": "ZvT", "duration": "7:03",  "mmr": +18, "apm": 184},
-    {"id": 2, "map": "Site Delta LE",    "result": "Loss", "race": "ZvP", "duration": "10:12", "mmr": -15, "apm": 201},
-    {"id": 3, "map": "Gresvan LE",       "result": "Win",  "race": "ZvZ", "duration": "4:47",  "mmr": +21, "apm": 167},
-    {"id": 4, "map": "Goldenaura LE",    "result": "Win",  "race": "ZvT", "duration": "9:30",  "mmr": +20, "apm": 195},
-    {"id": 5, "map": "Crimson Court LE", "result": "Loss", "race": "ZvP", "duration": "15:22", "mmr": -18, "apm": 220},
+    {
+        "id": 1,
+        "map": "Equilibrium LE",
+        "result": "Win",
+        "race": "ZvT",
+        "duration": "7:03",
+        "mmr": +18,
+        "apm": 184,
+    },
+    {
+        "id": 2,
+        "map": "Site Delta LE",
+        "result": "Loss",
+        "race": "ZvP",
+        "duration": "10:12",
+        "mmr": -15,
+        "apm": 201,
+    },
+    {
+        "id": 3,
+        "map": "Gresvan LE",
+        "result": "Win",
+        "race": "ZvZ",
+        "duration": "4:47",
+        "mmr": +21,
+        "apm": 167,
+    },
+    {
+        "id": 4,
+        "map": "Goldenaura LE",
+        "result": "Win",
+        "race": "ZvT",
+        "duration": "9:30",
+        "mmr": +20,
+        "apm": 195,
+    },
+    {
+        "id": 5,
+        "map": "Crimson Court LE",
+        "result": "Loss",
+        "race": "ZvP",
+        "duration": "15:22",
+        "mmr": -18,
+        "apm": 220,
+    },
 ]
 
 BOT_STATUS = {
-    "running":    False,
-    "mmr":        4867,
-    "wins":       47,
-    "losses":     23,
-    "win_rate":   67.1,
-    "avg_apm":    191,
+    "running": False,
+    "mmr": 4867,
+    "wins": 47,
+    "losses": 23,
+    "win_rate": 67.1,
+    "avg_apm": 191,
     "current_map": "—",
 }
 
 # ============================================================
 # Components
 # ============================================================
+
 
 def stat_card(title: str, value: str, color: str = "primary", sub: str = ""):
     return Div(
@@ -62,10 +135,11 @@ def stat_card(title: str, value: str, color: str = "primary", sub: str = ""):
         cls="card shadow-sm h-100",
     )
 
+
 def game_row(game: dict) -> Tr:
     result_color = "success" if game["result"] == "Win" else "danger"
-    mmr_str      = f"+{game['mmr']}" if game['mmr'] > 0 else str(game['mmr'])
-    mmr_color    = "text-success" if game['mmr'] > 0 else "text-danger"
+    mmr_str = f"+{game['mmr']}" if game["mmr"] > 0 else str(game["mmr"])
+    mmr_color = "text-success" if game["mmr"] > 0 else "text-danger"
     return Tr(
         Td(str(game["id"])),
         Td(game["map"]),
@@ -76,6 +150,7 @@ def game_row(game: dict) -> Tr:
         Td(str(game["apm"])),
     )
 
+
 def navbar() -> Nav:
     return Nav(
         Div(
@@ -83,9 +158,9 @@ def navbar() -> Nav:
             Div(
                 Ul(
                     Li(A("Dashboard", cls="nav-link", href="/")),
-                    Li(A("Games",     cls="nav-link", href="/games")),
-                    Li(A("Stats",     cls="nav-link", href="/stats")),
-                    Li(A("Live",      cls="nav-link", href="/live")),
+                    Li(A("Games", cls="nav-link", href="/games")),
+                    Li(A("Stats", cls="nav-link", href="/stats")),
+                    Li(A("Live", cls="nav-link", href="/live")),
                     cls="navbar-nav",
                 ),
                 cls="collapse navbar-collapse",
@@ -95,9 +170,11 @@ def navbar() -> Nav:
         cls="navbar navbar-expand-lg navbar-dark bg-dark mb-4",
     )
 
+
 # ============================================================
 # Routes
 # ============================================================
+
 
 @rt("/")
 def index():
@@ -110,25 +187,53 @@ def index():
                 H1("SC2 Bot Dashboard", cls="mb-4"),
                 # Status banner
                 Div(
-                    Span("● OFFLINE", cls="badge bg-secondary fs-6") if not status["running"]
-                    else Span("● RUNNING", cls="badge bg-success fs-6"),
+                    (
+                        Span("● OFFLINE", cls="badge bg-secondary fs-6")
+                        if not status["running"]
+                        else Span("● RUNNING", cls="badge bg-success fs-6")
+                    ),
                     cls="mb-4",
                 ),
                 # Stat cards row
                 Div(
                     Div(stat_card("MMR", str(status["mmr"]), "primary"), cls="col"),
-                    Div(stat_card("Win Rate", f"{status['win_rate']}%", "success",
-                                   f"{status['wins']}W / {status['losses']}L"), cls="col"),
-                    Div(stat_card("Avg APM", str(status["avg_apm"]), "info"), cls="col"),
-                    Div(stat_card("Total Games", str(status["wins"] + status["losses"]), "warning"), cls="col"),
+                    Div(
+                        stat_card(
+                            "Win Rate",
+                            f"{status['win_rate']}%",
+                            "success",
+                            f"{status['wins']}W / {status['losses']}L",
+                        ),
+                        cls="col",
+                    ),
+                    Div(
+                        stat_card("Avg APM", str(status["avg_apm"]), "info"), cls="col"
+                    ),
+                    Div(
+                        stat_card(
+                            "Total Games",
+                            str(status["wins"] + status["losses"]),
+                            "warning",
+                        ),
+                        cls="col",
+                    ),
                     cls="row row-cols-4 g-3 mb-4",
                 ),
                 # Recent games table
                 H2("Recent Games", cls="mb-3"),
                 Div(
                     Table(
-                        Thead(Tr(Th("#"), Th("Map"), Th("Result"), Th("Race"),
-                                  Th("Duration"), Th("MMR"), Th("APM"))),
+                        Thead(
+                            Tr(
+                                Th("#"),
+                                Th("Map"),
+                                Th("Result"),
+                                Th("Race"),
+                                Th("Duration"),
+                                Th("MMR"),
+                                Th("APM"),
+                            )
+                        ),
                         Tbody(*[game_row(g) for g in GAME_HISTORY]),
                         cls="table table-striped table-hover",
                     ),
@@ -148,6 +253,7 @@ def index():
         ),
     )
 
+
 @rt("/games")
 def games():
     return Html(
@@ -158,8 +264,17 @@ def games():
                 H1("Game History", cls="mb-4"),
                 Div(
                     Table(
-                        Thead(Tr(Th("#"), Th("Map"), Th("Result"), Th("Race"),
-                                  Th("Duration"), Th("MMR"), Th("APM"))),
+                        Thead(
+                            Tr(
+                                Th("#"),
+                                Th("Map"),
+                                Th("Result"),
+                                Th("Race"),
+                                Th("Duration"),
+                                Th("MMR"),
+                                Th("APM"),
+                            )
+                        ),
                         Tbody(*[game_row(g) for g in GAME_HISTORY]),
                         cls="table table-striped",
                     ),
@@ -170,9 +285,10 @@ def games():
         ),
     )
 
+
 @rt("/stats")
 def stats():
-    wins   = sum(1 for g in GAME_HISTORY if g["result"] == "Win")
+    wins = sum(1 for g in GAME_HISTORY if g["result"] == "Win")
     losses = len(GAME_HISTORY) - wins
     return Html(
         Head(Title("Stats - SC2 Bot")),
@@ -181,15 +297,21 @@ def stats():
             Div(
                 H1("Statistics", cls="mb-4"),
                 Div(
-                    Div(stat_card("Total Wins",   str(wins),   "success"), cls="col"),
-                    Div(stat_card("Total Losses", str(losses), "danger"),  cls="col"),
-                    Div(stat_card("Win Rate", f"{wins/(wins+losses)*100:.1f}%", "primary"), cls="col"),
+                    Div(stat_card("Total Wins", str(wins), "success"), cls="col"),
+                    Div(stat_card("Total Losses", str(losses), "danger"), cls="col"),
+                    Div(
+                        stat_card(
+                            "Win Rate", f"{wins/(wins+losses)*100:.1f}%", "primary"
+                        ),
+                        cls="col",
+                    ),
                     cls="row row-cols-3 g-3",
                 ),
                 cls="container",
             ),
         ),
     )
+
 
 @rt("/live")
 def live():
@@ -215,9 +337,11 @@ def live():
         ),
     )
 
+
 # ============================================================
 # HTMX API Endpoints
 # ============================================================
+
 
 @rt("/api/status")
 def api_status():
@@ -228,12 +352,16 @@ def api_status():
         Strong(str(BOT_STATUS["mmr"]), cls="text-primary"),
     )
 
+
 @rt("/api/live_state")
 def api_live_state():
     return Div(
         P("Bot is idle. Start a game to see live data.", cls="text-muted"),
-        Span(f"Checked at {datetime.now().strftime('%H:%M:%S')}", cls="text-muted small"),
+        Span(
+            f"Checked at {datetime.now().strftime('%H:%M:%S')}", cls="text-muted small"
+        ),
     )
+
 
 # ============================================================
 # Main

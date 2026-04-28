@@ -13,9 +13,9 @@ Upgrade Timing Manager - 업그레이드 타이밍 관리자 (#109)
 5. 기존 EvolutionUpgradeManager와 연동
 """
 
-from typing import Any, Dict, List, Optional, Set, Tuple
-from enum import Enum
 import logging
+from enum import Enum
+from typing import Any, Dict, List, Optional, Set, Tuple
 
 logger = logging.getLogger("UpgradeTiming")
 
@@ -29,12 +29,13 @@ except ImportError:
 
 class UpgradePathType(Enum):
     """업그레이드 경로 타입"""
-    MELEE_FIRST = "melee_first"          # 근접 공격 우선 (저글링/맹독충)
-    RANGED_FIRST = "ranged_first"        # 원거리 공격 우선 (바퀴/히드라)
-    ARMOR_FIRST = "armor_first"          # 방어 우선 (테란 바이오닉 대응)
-    AIR_FIRST = "air_first"              # 공중 우선 (뮤탈/커럽터)
-    BALANCED = "balanced"                # 균형 (공1 -> 방1 -> 공2 -> 방2)
-    SPEED_FIRST = "speed_first"          # 속도업 우선 (발업, 히속업 등)
+
+    MELEE_FIRST = "melee_first"  # 근접 공격 우선 (저글링/맹독충)
+    RANGED_FIRST = "ranged_first"  # 원거리 공격 우선 (바퀴/히드라)
+    ARMOR_FIRST = "armor_first"  # 방어 우선 (테란 바이오닉 대응)
+    AIR_FIRST = "air_first"  # 공중 우선 (뮤탈/커럽터)
+    BALANCED = "balanced"  # 균형 (공1 -> 방1 -> 공2 -> 방2)
+    SPEED_FIRST = "speed_first"  # 속도업 우선 (발업, 히속업 등)
 
 
 class UpgradeTimingManager:
@@ -53,18 +54,18 @@ class UpgradeTimingManager:
 
     # 타이밍 벤치마크 (프로 게이머 기준, 초)
     BENCHMARK_TIMINGS = {
-        "zergling_speed": 120,        # 2분 (최대한 빨리)
-        "ground_attack_1": 240,       # 4분
-        "ground_armor_1": 300,        # 5분
-        "roach_speed": 270,           # 4분 30초
-        "hydra_speed": 330,           # 5분 30초
-        "lair": 240,                  # 4분
-        "ground_attack_2": 420,       # 7분
-        "ground_armor_2": 480,        # 8분
-        "hive": 540,                  # 9분
-        "ground_attack_3": 660,       # 11분
-        "ground_armor_3": 720,        # 12분
-        "adrenal_glands": 600,        # 10분
+        "zergling_speed": 120,  # 2분 (최대한 빨리)
+        "ground_attack_1": 240,  # 4분
+        "ground_armor_1": 300,  # 5분
+        "roach_speed": 270,  # 4분 30초
+        "hydra_speed": 330,  # 5분 30초
+        "lair": 240,  # 4분
+        "ground_attack_2": 420,  # 7분
+        "ground_armor_2": 480,  # 8분
+        "hive": 540,  # 9분
+        "ground_attack_3": 660,  # 11분
+        "ground_armor_3": 720,  # 12분
+        "adrenal_glands": 600,  # 10분
     }
 
     def __init__(self, bot):
@@ -116,14 +117,51 @@ class UpgradeTimingManager:
             업그레이드 레인 우선순위 리스트 ["melee", "armor", ...]
         """
         path_orders = {
-            UpgradePathType.MELEE_FIRST: ["melee", "armor", "melee", "armor", "melee", "armor"],
-            UpgradePathType.RANGED_FIRST: ["missile", "armor", "missile", "armor", "missile", "armor"],
-            UpgradePathType.ARMOR_FIRST: ["armor", "melee", "armor", "missile", "armor", "melee"],
+            UpgradePathType.MELEE_FIRST: [
+                "melee",
+                "armor",
+                "melee",
+                "armor",
+                "melee",
+                "armor",
+            ],
+            UpgradePathType.RANGED_FIRST: [
+                "missile",
+                "armor",
+                "missile",
+                "armor",
+                "missile",
+                "armor",
+            ],
+            UpgradePathType.ARMOR_FIRST: [
+                "armor",
+                "melee",
+                "armor",
+                "missile",
+                "armor",
+                "melee",
+            ],
             UpgradePathType.AIR_FIRST: ["air_attack", "air_armor", "missile", "armor"],
-            UpgradePathType.BALANCED: ["melee", "armor", "missile", "melee", "armor", "missile"],
-            UpgradePathType.SPEED_FIRST: ["melee", "missile", "armor", "melee", "missile", "armor"],
+            UpgradePathType.BALANCED: [
+                "melee",
+                "armor",
+                "missile",
+                "melee",
+                "armor",
+                "missile",
+            ],
+            UpgradePathType.SPEED_FIRST: [
+                "melee",
+                "missile",
+                "armor",
+                "melee",
+                "missile",
+                "armor",
+            ],
         }
-        return path_orders.get(self.recommended_path, path_orders[UpgradePathType.BALANCED])
+        return path_orders.get(
+            self.recommended_path, path_orders[UpgradePathType.BALANCED]
+        )
 
     def should_upgrade_now(self, upgrade_name: str) -> bool:
         """
@@ -153,7 +191,9 @@ class UpgradeTimingManager:
         """
         game_time = getattr(self.bot, "time", 0.0)
 
-        for name, benchmark in sorted(self.BENCHMARK_TIMINGS.items(), key=lambda x: x[1]):
+        for name, benchmark in sorted(
+            self.BENCHMARK_TIMINGS.items(), key=lambda x: x[1]
+        ):
             if name in self.actual_timings:
                 continue  # 이미 완료
 
@@ -181,8 +221,10 @@ class UpgradeTimingManager:
         if benchmark > 0:
             diff = game_time - benchmark
             status = "정시" if abs(diff) < 15 else ("지연" if diff > 0 else "빠름")
-            logger.info(f"{upgrade_name} 완료: {int(game_time)}초 "
-                  f"(벤치마크: {benchmark}초, {status}: {diff:+.0f}초)")
+            logger.info(
+                f"{upgrade_name} 완료: {int(game_time)}초 "
+                f"(벤치마크: {benchmark}초, {status}: {diff:+.0f}초)"
+            )
 
     def _analyze_and_recommend(self, game_time: float) -> None:
         """적 상황 분석 및 업그레이드 경로 추천"""
@@ -197,15 +239,38 @@ class UpgradeTimingManager:
         for unit in self.bot.enemy_units:
             try:
                 name = getattr(unit.type_id, "name", "").upper()
-                if name in ("MARINE", "MARAUDER", "ZEALOT", "STALKER", "ADEPT",
-                           "ZERGLING", "HYDRALISK"):
+                if name in (
+                    "MARINE",
+                    "MARAUDER",
+                    "ZEALOT",
+                    "STALKER",
+                    "ADEPT",
+                    "ZERGLING",
+                    "HYDRALISK",
+                ):
                     enemy_bio += 1
-                elif name in ("SIEGETANK", "SIEGETANKSIEGED", "THOR", "CYCLONE",
-                             "COLOSSUS", "IMMORTAL", "ROACH"):
+                elif name in (
+                    "SIEGETANK",
+                    "SIEGETANKSIEGED",
+                    "THOR",
+                    "CYCLONE",
+                    "COLOSSUS",
+                    "IMMORTAL",
+                    "ROACH",
+                ):
                     enemy_mech += 1
-                elif name in ("MUTALISK", "VOIDRAY", "CARRIER", "BATTLECRUISER",
-                             "PHOENIX", "ORACLE", "LIBERATOR", "BANSHEE",
-                             "CORRUPTOR", "BROODLORD"):
+                elif name in (
+                    "MUTALISK",
+                    "VOIDRAY",
+                    "CARRIER",
+                    "BATTLECRUISER",
+                    "PHOENIX",
+                    "ORACLE",
+                    "LIBERATOR",
+                    "BANSHEE",
+                    "CORRUPTOR",
+                    "BROODLORD",
+                ):
                     enemy_air += 1
             except Exception:
                 continue

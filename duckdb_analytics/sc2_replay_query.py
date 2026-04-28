@@ -1,51 +1,62 @@
 # Phase 408: DuckDB - SC2 In-Process OLAP Analytics
 # DuckDB for fast in-process analytical queries on SC2 replay Parquet files
 
-import duckdb
-import pandas as pd
-import numpy as np
 from pathlib import Path
 from typing import Optional
+
+import duckdb
+import numpy as np
+import pandas as pd
 
 # ============================================================
 # Setup: Create DuckDB connection and sample Parquet files
 # ============================================================
+
 
 def create_connection(db_path: str = ":memory:") -> duckdb.DuckDBPyConnection:
     con = duckdb.connect(db_path)
     con.execute("INSTALL parquet; LOAD parquet;")
     return con
 
+
 def generate_sample_parquet(output_dir: str = "data/replays"):
     """Generate sample Parquet replay files for demonstration."""
     Path(output_dir).mkdir(parents=True, exist_ok=True)
 
     rng = np.random.default_rng(42)
-    n   = 2000
+    n = 2000
 
-    games_df = pd.DataFrame({
-        "game_id":       range(n),
-        "played_at":     pd.date_range("2025-01-01", periods=n, freq="2h"),
-        "map":           rng.choice(["Equilibrium LE", "Site Delta LE", "Gresvan LE", "Goldenaura LE"], n),
-        "player_race":   rng.choice(["Zerg", "Terran", "Protoss"], n),
-        "opponent_race": rng.choice(["Zerg", "Terran", "Protoss"], n),
-        "result":        rng.choice(["Win", "Loss"], n, p=[0.55, 0.45]),
-        "duration_sec":  rng.integers(120, 900, n),
-        "apm":           rng.integers(80, 350, n),
-        "mmr_before":    rng.integers(4500, 5200, n),
-        "mmr_change":    rng.integers(-25, 31, n),
-        "supply_peak":   rng.integers(60, 200, n),
-    })
+    games_df = pd.DataFrame(
+        {
+            "game_id": range(n),
+            "played_at": pd.date_range("2025-01-01", periods=n, freq="2h"),
+            "map": rng.choice(
+                ["Equilibrium LE", "Site Delta LE", "Gresvan LE", "Goldenaura LE"], n
+            ),
+            "player_race": rng.choice(["Zerg", "Terran", "Protoss"], n),
+            "opponent_race": rng.choice(["Zerg", "Terran", "Protoss"], n),
+            "result": rng.choice(["Win", "Loss"], n, p=[0.55, 0.45]),
+            "duration_sec": rng.integers(120, 900, n),
+            "apm": rng.integers(80, 350, n),
+            "mmr_before": rng.integers(4500, 5200, n),
+            "mmr_change": rng.integers(-25, 31, n),
+            "supply_peak": rng.integers(60, 200, n),
+        }
+    )
 
     games_df.to_parquet(f"{output_dir}/games.parquet", index=False)
     print(f"[DuckDB] Sample data written to {output_dir}/games.parquet")
     return output_dir
 
+
 # ============================================================
 # Query 1: Win rate by matchup (direct Parquet query)
 # ============================================================
 
-def query_win_rate_by_matchup(con: duckdb.DuckDBPyConnection, parquet_dir: str) -> pd.DataFrame:
+
+def query_win_rate_by_matchup(
+    con: duckdb.DuckDBPyConnection, parquet_dir: str
+) -> pd.DataFrame:
     sql = f"""
     SELECT
         player_race,
@@ -61,11 +72,15 @@ def query_win_rate_by_matchup(con: duckdb.DuckDBPyConnection, parquet_dir: str) 
     """
     return con.execute(sql).df()
 
+
 # ============================================================
 # Query 2: Window functions for per-game analysis
 # ============================================================
 
-def query_mmr_progression(con: duckdb.DuckDBPyConnection, parquet_dir: str) -> pd.DataFrame:
+
+def query_mmr_progression(
+    con: duckdb.DuckDBPyConnection, parquet_dir: str
+) -> pd.DataFrame:
     sql = f"""
     WITH ordered_games AS (
         SELECT
@@ -91,11 +106,15 @@ def query_mmr_progression(con: duckdb.DuckDBPyConnection, parquet_dir: str) -> p
     """
     return con.execute(sql).df()
 
+
 # ============================================================
 # Query 3: APM histogram with ntile buckets
 # ============================================================
 
-def query_apm_histogram(con: duckdb.DuckDBPyConnection, parquet_dir: str) -> pd.DataFrame:
+
+def query_apm_histogram(
+    con: duckdb.DuckDBPyConnection, parquet_dir: str
+) -> pd.DataFrame:
     sql = f"""
     SELECT
         NTILE(10) OVER (ORDER BY apm)          AS apm_decile,
@@ -110,9 +129,11 @@ def query_apm_histogram(con: duckdb.DuckDBPyConnection, parquet_dir: str) -> pd.
     """
     return con.execute(sql).df()
 
+
 # ============================================================
 # Query 4: Map statistics
 # ============================================================
+
 
 def query_map_stats(con: duckdb.DuckDBPyConnection, parquet_dir: str) -> pd.DataFrame:
     sql = f"""
@@ -129,27 +150,31 @@ def query_map_stats(con: duckdb.DuckDBPyConnection, parquet_dir: str) -> pd.Data
     """
     return con.execute(sql).df()
 
+
 # ============================================================
 # Export to pandas for visualization
 # ============================================================
 
+
 def export_for_visualization(con: duckdb.DuckDBPyConnection, parquet_dir: str) -> dict:
     return {
         "win_rate_by_matchup": query_win_rate_by_matchup(con, parquet_dir),
-        "mmr_progression":     query_mmr_progression(con, parquet_dir),
-        "apm_histogram":       query_apm_histogram(con, parquet_dir),
-        "map_stats":           query_map_stats(con, parquet_dir),
+        "mmr_progression": query_mmr_progression(con, parquet_dir),
+        "apm_histogram": query_apm_histogram(con, parquet_dir),
+        "map_stats": query_map_stats(con, parquet_dir),
     }
+
 
 # ============================================================
 # Main
 # ============================================================
 
+
 def main():
     print("[DuckDB] SC2 replay analytics starting...")
-    con        = create_connection()
-    data_dir   = generate_sample_parquet("data/replays")
-    results    = export_for_visualization(con, data_dir)
+    con = create_connection()
+    data_dir = generate_sample_parquet("data/replays")
+    results = export_for_visualization(con, data_dir)
 
     print("\n=== Win Rate by Matchup ===")
     print(results["win_rate_by_matchup"].to_string(index=False))
@@ -162,6 +187,7 @@ def main():
 
     print("\n[DuckDB] Analysis complete. DataFrames ready for matplotlib/plotly.")
     con.close()
+
 
 if __name__ == "__main__":
     main()

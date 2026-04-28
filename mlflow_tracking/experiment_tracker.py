@@ -5,16 +5,16 @@
 
 from __future__ import annotations
 
-import os
 import json
-import math
-import time
-import random
 import logging
+import math
+import os
+import random
 import tempfile
 import threading
+import time
 from contextlib import contextmanager
-from dataclasses import dataclass, field, asdict
+from dataclasses import asdict, dataclass, field
 from datetime import datetime, timezone
 from enum import Enum
 from pathlib import Path
@@ -28,9 +28,10 @@ logger = logging.getLogger(__name__)
 try:
     import mlflow
     import mlflow.pyfunc
-    from mlflow.tracking import MlflowClient
     from mlflow.exceptions import MlflowException
     from mlflow.models import infer_signature
+    from mlflow.tracking import MlflowClient
+
     _MLFLOW_AVAILABLE = True
 except ImportError:
     _MLFLOW_AVAILABLE = False
@@ -74,6 +75,7 @@ TRACKING_URI_ENV = "MLFLOW_TRACKING_URI"
 @dataclass
 class TrainingHyperparams:
     """Hyperparameters for a PPO/IMPALA-style RL training run."""
+
     algorithm: str = "PPO"
     learning_rate: float = 3e-4
     gamma: float = 0.99
@@ -104,6 +106,7 @@ class TrainingHyperparams:
 @dataclass
 class TrainingMetrics:
     """Per-step training metrics."""
+
     step: int
     timestep: int
     policy_loss: float
@@ -122,6 +125,7 @@ class TrainingMetrics:
 @dataclass
 class GameResultRecord:
     """Record of a single SC2 game outcome during evaluation."""
+
     game_id: str
     bot_race: Race
     opponent_race: Race
@@ -130,8 +134,8 @@ class GameResultRecord:
     duration_seconds: float
     actions_per_minute: float
     avg_decision_latency_ms: float
-    economy_score: float    # normalised mineral/gas efficiency 0-1
-    combat_score: float     # kill-loss ratio normalised 0-1
+    economy_score: float  # normalised mineral/gas efficiency 0-1
+    combat_score: float  # kill-loss ratio normalised 0-1
 
 
 # ──────────────────────────────────────────────
@@ -151,8 +155,17 @@ class _FileSink:
         ts = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S")
         self._run_id = f"local-{ts}-{run_name[:16]}"
         run_file = self._dir / f"{self._run_id}.jsonl"
-        run_file.write_text(json.dumps({"type": "run_start", "run_id": self._run_id,
-                                        "run_name": run_name, "tags": tags}) + "\n")
+        run_file.write_text(
+            json.dumps(
+                {
+                    "type": "run_start",
+                    "run_id": self._run_id,
+                    "run_name": run_name,
+                    "tags": tags,
+                }
+            )
+            + "\n"
+        )
         print(f"[MLflow-STUB] Run started: {self._run_id}")
         return self._run_id
 
@@ -224,7 +237,8 @@ class SC2ExperimentTracker:
                 self._sink = None
                 logger.info(
                     "SC2ExperimentTracker connected to MLflow: %s | experiment: %s",
-                    uri or "(local)", experiment_name,
+                    uri or "(local)",
+                    experiment_name,
                 )
             except Exception as exc:
                 logger.warning("MLflow init failed (%s) — using file fallback.", exc)
@@ -259,9 +273,13 @@ class SC2ExperimentTracker:
         merged_tags.setdefault("phase", "575")
 
         if _MLFLOW_AVAILABLE and self._sink is None:
-            with mlflow.start_run(run_name=run_name, tags=merged_tags, nested=nested) as run:
+            with mlflow.start_run(
+                run_name=run_name, tags=merged_tags, nested=nested
+            ) as run:
                 self._active_run_id = run.info.run_id
-                logger.info("MLflow run started: %s (id=%s)", run_name, self._active_run_id)
+                logger.info(
+                    "MLflow run started: %s (id=%s)", run_name, self._active_run_id
+                )
                 try:
                     yield self._active_run_id
                 except Exception:
@@ -289,10 +307,7 @@ class SC2ExperimentTracker:
     def log_params(self, params: Union[TrainingHyperparams, Dict[str, Any]]) -> None:
         """Log hyperparameters (flat dict or TrainingHyperparams dataclass)."""
         if isinstance(params, TrainingHyperparams):
-            param_dict = {
-                k: str(v) for k, v in asdict(params).items()
-                if v is not None
-            }
+            param_dict = {k: str(v) for k, v in asdict(params).items() if v is not None}
         else:
             param_dict = {k: str(v) for k, v in params.items()}
 
@@ -336,7 +351,9 @@ class SC2ExperimentTracker:
             self._game_results.append(record)
 
         game_dict = {
-            f"game/{record.game_id}/won": 1.0 if record.result == GameResult.WIN else 0.0,
+            f"game/{record.game_id}/won": (
+                1.0 if record.result == GameResult.WIN else 0.0
+            ),
             f"game/{record.game_id}/duration_s": record.duration_seconds,
             f"game/{record.game_id}/apm": record.actions_per_minute,
             f"game/{record.game_id}/latency_ms": record.avg_decision_latency_ms,
@@ -349,18 +366,25 @@ class SC2ExperimentTracker:
         aggregate = {
             "eval/win_rate": wins / max(total, 1),
             "eval/games_played": float(total),
-            "eval/avg_apm": sum(g.actions_per_minute for g in self._game_results) / max(total, 1),
-            "eval/avg_latency_ms": sum(g.avg_decision_latency_ms for g in self._game_results) / max(total, 1),
-            "eval/avg_economy_score": sum(g.economy_score for g in self._game_results) / max(total, 1),
+            "eval/avg_apm": sum(g.actions_per_minute for g in self._game_results)
+            / max(total, 1),
+            "eval/avg_latency_ms": sum(
+                g.avg_decision_latency_ms for g in self._game_results
+            )
+            / max(total, 1),
+            "eval/avg_economy_score": sum(g.economy_score for g in self._game_results)
+            / max(total, 1),
         }
 
         self._log_metrics({**game_dict, **aggregate}, step=total)
 
         if _MLFLOW_AVAILABLE and self._sink is None:
-            mlflow.set_tags({
-                f"game.{record.game_id}.result": record.result.value,
-                f"game.{record.game_id}.map": record.map_name,
-            })
+            mlflow.set_tags(
+                {
+                    f"game.{record.game_id}.result": record.result.value,
+                    f"game.{record.game_id}.map": record.map_name,
+                }
+            )
         else:
             self._sink.set_tag(f"game.{record.game_id}.result", record.result.value)
 
@@ -400,7 +424,9 @@ class SC2ExperimentTracker:
                 "model_type": type(model).__name__,
                 "timestamp": datetime.now(timezone.utc).isoformat(),
             }
-            stub_file = self._sink._dir / f"model_{artifact_path}_{int(time.time())}.json"
+            stub_file = (
+                self._sink._dir / f"model_{artifact_path}_{int(time.time())}.json"
+            )
             stub_file.write_text(json.dumps(stub, indent=2))
             logger.info("[MLflow-STUB] Model stub saved: %s", stub_file)
             return str(stub_file)
@@ -411,7 +437,9 @@ class SC2ExperimentTracker:
         else:
             self._sink.set_tag(key, value)
 
-    def log_artifact(self, local_path: str, artifact_path: Optional[str] = None) -> None:
+    def log_artifact(
+        self, local_path: str, artifact_path: Optional[str] = None
+    ) -> None:
         if _MLFLOW_AVAILABLE and self._sink is None:
             mlflow.log_artifact(local_path, artifact_path)
         else:
@@ -438,7 +466,8 @@ class SC2ExperimentTracker:
             try:
                 self._client.create_registered_model(
                     name=reg_name,
-                    description=description or f"SC2 Commander Bot policy -- {reg_name}",
+                    description=description
+                    or f"SC2 Commander Bot policy -- {reg_name}",
                     tags=tags,
                 )
             except MlflowException:
@@ -469,7 +498,9 @@ class SC2ExperimentTracker:
         reg_name = name or self._model_name
 
         if not (_MLFLOW_AVAILABLE and self._client):
-            logger.info("[MLflow-STUB] promote_to_production(%s v%s)", reg_name, version)
+            logger.info(
+                "[MLflow-STUB] promote_to_production(%s v%s)", reg_name, version
+            )
             return False
 
         try:
@@ -526,7 +557,9 @@ class SC2ExperimentTracker:
         exp_name = experiment_name or self._experiment_name
 
         if not (_MLFLOW_AVAILABLE and self._client):
-            logger.info("[MLflow-STUB] compare_runs('%s') -- returning empty list.", metric_key)
+            logger.info(
+                "[MLflow-STUB] compare_runs('%s') -- returning empty list.", metric_key
+            )
             return []
 
         try:
@@ -541,13 +574,15 @@ class SC2ExperimentTracker:
             )
             results = []
             for _, row in runs.iterrows():
-                results.append({
-                    "run_id": row.get("run_id"),
-                    "run_name": row.get("tags.mlflow.runName", ""),
-                    metric_key: row.get(f"metrics.{metric_key}"),
-                    "status": row.get("status"),
-                    "start_time": row.get("start_time"),
-                })
+                results.append(
+                    {
+                        "run_id": row.get("run_id"),
+                        "run_name": row.get("tags.mlflow.runName", ""),
+                        metric_key: row.get(f"metrics.{metric_key}"),
+                        "status": row.get("status"),
+                        "start_time": row.get("start_time"),
+                    }
+                )
             return results
         except Exception as exc:
             logger.error("compare_runs failed: %s", exc)
@@ -559,8 +594,9 @@ class SC2ExperimentTracker:
         experiment_name: Optional[str] = None,
     ) -> Optional[Dict[str, Any]]:
         """Return the single best run by a given metric."""
-        runs = self.compare_runs(metric_key=metric_key, n_runs=1,
-                                  experiment_name=experiment_name)
+        runs = self.compare_runs(
+            metric_key=metric_key, n_runs=1, experiment_name=experiment_name
+        )
         return runs[0] if runs else None
 
     # ── Summary helpers ───────────────────────
@@ -614,8 +650,10 @@ def _simulate_training_run(
     )
 
     print(f"\n  [RUN] {run_name}")
-    print(f"  lr={hp.learning_rate}, gamma={hp.gamma}, clip={hp.clip_range}, "
-          f"batch={hp.batch_size}, entropy={hp.entropy_coef}")
+    print(
+        f"  lr={hp.learning_rate}, gamma={hp.gamma}, clip={hp.clip_range}, "
+        f"batch={hp.batch_size}, entropy={hp.entropy_coef}"
+    )
 
     with tracker.start_run(run_name=run_name, tags={"algorithm": hp.algorithm}):
         tracker.log_params(hp)
@@ -683,13 +721,22 @@ def _simulate_training_run(
             tracker.log_game_result(game)
 
         summary = tracker.win_rate_summary()
-        tracker.log_metrics({"final/win_rate": summary["win_rate"],
-                              "final/policy_loss": policy_loss,
-                              "final/value_loss": value_loss}, step=num_steps)
+        tracker.log_metrics(
+            {
+                "final/win_rate": summary["win_rate"],
+                "final/policy_loss": policy_loss,
+                "final/value_loss": value_loss,
+            },
+            step=num_steps,
+        )
 
-        print(f"  Win rate: {summary['win_rate']:.1%} ({wins_count}/{num_eval_games} games)")
-        print(f"  Final losses -- policy={policy_loss:.4f}, value={value_loss:.4f}, "
-              f"entropy={entropy:.4f}")
+        print(
+            f"  Win rate: {summary['win_rate']:.1%} ({wins_count}/{num_eval_games} games)"
+        )
+        print(
+            f"  Final losses -- policy={policy_loss:.4f}, value={value_loss:.4f}, "
+            f"entropy={entropy:.4f}"
+        )
 
 
 # ──────────────────────────────────────────────
@@ -702,12 +749,13 @@ if __name__ == "__main__":
     parser.add_argument("--tracking-uri", default=os.environ.get(TRACKING_URI_ENV, ""))
     parser.add_argument("--experiment", default=DEFAULT_EXPERIMENT)
     parser.add_argument("--model-name", default=DEFAULT_MODEL_NAME)
-    parser.add_argument("--runs", type=int, default=3,
-                        help="Number of simulated training runs")
-    parser.add_argument("--steps", type=int, default=30,
-                        help="Training steps per run")
-    parser.add_argument("--eval-games", type=int, default=10,
-                        help="Evaluation games per run")
+    parser.add_argument(
+        "--runs", type=int, default=3, help="Number of simulated training runs"
+    )
+    parser.add_argument("--steps", type=int, default=30, help="Training steps per run")
+    parser.add_argument(
+        "--eval-games", type=int, default=10, help="Evaluation games per run"
+    )
     parser.add_argument("--verbose", action="store_true")
     args = parser.parse_args()
 
@@ -752,6 +800,8 @@ if __name__ == "__main__":
 
     best = tracker.get_best_run()
     if best:
-        print(f"\nBest run: {best.get('run_name')} -- win_rate={best.get('eval/win_rate', 0):.1%}")
+        print(
+            f"\nBest run: {best.get('run_name')} -- win_rate={best.get('eval/win_rate', 0):.1%}"
+        )
 
     print("\nDone. All runs tracked.")

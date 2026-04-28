@@ -29,7 +29,15 @@ from dataclasses import dataclass, field
 from enum import Enum, auto
 from pathlib import Path
 from typing import (
-    Any, Callable, Dict, Generator, List, Optional, Sequence, Tuple, Union,
+    Any,
+    Callable,
+    Dict,
+    Generator,
+    List,
+    Optional,
+    Sequence,
+    Tuple,
+    Union,
 )
 
 import numpy as np
@@ -48,8 +56,8 @@ try:
         load_index_from_storage,
     )
     from llama_index.core.node_parser import SentenceSplitter
-    from llama_index.core.schema import TextNode, NodeWithScore
     from llama_index.core.query_engine import RetrieverQueryEngine
+    from llama_index.core.schema import NodeWithScore, TextNode
 
     _LLAMAINDEX_AVAILABLE = True
 except ImportError:
@@ -75,10 +83,10 @@ class Matchup(Enum):
 
 
 class GamePhase(Enum):
-    OPENING = auto()    # 0--3 min
-    EARLY = auto()      # 3--6 min
-    MID = auto()        # 6--12 min
-    LATE = auto()       # 12+ min
+    OPENING = auto()  # 0--3 min
+    EARLY = auto()  # 3--6 min
+    MID = auto()  # 6--12 min
+    LATE = auto()  # 12+ min
 
 
 class DocumentType(Enum):
@@ -145,8 +153,12 @@ class SC2Document:
         matchup = Matchup(d["matchup"]) if d.get("matchup") else None
         phase = None
         if d.get("game_phase"):
-            phase = GamePhase[d["game_phase"]] if isinstance(
-                d["game_phase"], str) and d["game_phase"] in GamePhase.__members__ else None
+            phase = (
+                GamePhase[d["game_phase"]]
+                if isinstance(d["game_phase"], str)
+                and d["game_phase"] in GamePhase.__members__
+                else None
+            )
         return cls(
             doc_id=d["doc_id"],
             title=d["title"],
@@ -181,9 +193,7 @@ class SC2Document:
 def _deterministic_embed(text: str, dim: int = _EMBED_DIM) -> NDArray:
     """Generate a deterministic pseudo-embedding from text content."""
     digest = hashlib.sha256(text.encode("utf-8")).digest()
-    rng = np.random.RandomState(
-        int.from_bytes(digest[:4], byteorder="big") % (2 ** 31)
-    )
+    rng = np.random.RandomState(int.from_bytes(digest[:4], byteorder="big") % (2**31))
     vec = rng.randn(dim).astype(np.float32)
     norm = np.linalg.norm(vec)
     if norm > 0:
@@ -322,9 +332,7 @@ class ReplayIndexer:
                 return ph
         return None
 
-    def _supply_range(
-        self, phase: Optional[GamePhase]
-    ) -> Tuple[int, int]:
+    def _supply_range(self, phase: Optional[GamePhase]) -> Tuple[int, int]:
         if phase and phase in SUPPLY_RANGES:
             return SUPPLY_RANGES[phase]
         return (0, 200)
@@ -343,25 +351,31 @@ class ReplayIndexer:
             ("2:00", "Natural Hatchery"),
         ]
         if matchup == Matchup.ZvT:
-            base.extend([
-                ("2:30", "Queen x2"),
-                ("3:00", "Ling Speed"),
-                ("3:30", "Baneling Nest"),
-                ("4:00", "Roach Warren"),
-            ])
+            base.extend(
+                [
+                    ("2:30", "Queen x2"),
+                    ("3:00", "Ling Speed"),
+                    ("3:30", "Baneling Nest"),
+                    ("4:00", "Roach Warren"),
+                ]
+            )
         elif matchup == Matchup.ZvP:
-            base.extend([
-                ("2:30", "Queen x2"),
-                ("3:00", "Ling Speed"),
-                ("3:30", "Roach Warren"),
-                ("4:00", "Lair"),
-            ])
+            base.extend(
+                [
+                    ("2:30", "Queen x2"),
+                    ("3:00", "Ling Speed"),
+                    ("3:30", "Roach Warren"),
+                    ("4:00", "Lair"),
+                ]
+            )
         else:
-            base.extend([
-                ("2:30", "Queen x2"),
-                ("3:00", "Ling Speed"),
-                ("3:30", "Baneling Nest"),
-            ])
+            base.extend(
+                [
+                    ("2:30", "Queen x2"),
+                    ("3:00", "Ling Speed"),
+                    ("3:30", "Baneling Nest"),
+                ]
+            )
         return base
 
     def _generate_observations(
@@ -473,7 +487,9 @@ class StrategyQueryEngine:
         results: List[QueryResult] = []
         for sim, doc in scored[:top_k]:
             explanation = self._build_explanation(doc, sim, matchup, game_phase)
-            results.append(QueryResult(document=doc, score=sim, explanation=explanation))
+            results.append(
+                QueryResult(document=doc, score=sim, explanation=explanation)
+            )
         return results
 
     def query_by_game_state(
@@ -496,8 +512,11 @@ class StrategyQueryEngine:
             query_parts.append(f"army: {comp_str}")
         query_text = " | ".join(query_parts)
         return self.query(
-            query_text, top_k=top_k, matchup=matchup,
-            game_phase=phase, supply=supply,
+            query_text,
+            top_k=top_k,
+            matchup=matchup,
+            game_phase=phase,
+            supply=supply,
         )
 
     # -- Helpers -----------------------------------------------------------
@@ -513,7 +532,9 @@ class StrategyQueryEngine:
         if matchup:
             result = [d for d in result if d.matchup is None or d.matchup == matchup]
         if game_phase:
-            result = [d for d in result if d.game_phase is None or d.game_phase == game_phase]
+            result = [
+                d for d in result if d.game_phase is None or d.game_phase == game_phase
+            ]
         if supply is not None:
             result = [d for d in result if d.supply_min <= supply <= d.supply_max]
         if doc_type:
@@ -689,7 +710,11 @@ class KnowledgeBase:
             matchup_val = gd.get("matchup")
             matchup = Matchup(matchup_val) if matchup_val else None
             phase_val = gd.get("phase")
-            phase = GamePhase[phase_val] if phase_val and phase_val in GamePhase.__members__ else None
+            phase = (
+                GamePhase[phase_val]
+                if phase_val and phase_val in GamePhase.__members__
+                else None
+            )
             doc = self.indexer.parse_strategy_guide(
                 title=gd["title"],
                 text=gd["content"],
@@ -754,8 +779,12 @@ class KnowledgeBase:
     ) -> List[QueryResult]:
         """Natural language query into the knowledge base."""
         return self.engine.query(
-            question, top_k=top_k, matchup=matchup,
-            game_phase=game_phase, supply=supply, doc_type=doc_type,
+            question,
+            top_k=top_k,
+            matchup=matchup,
+            game_phase=game_phase,
+            supply=supply,
+            doc_type=doc_type,
         )
 
     def ask_game_state(
@@ -768,7 +797,11 @@ class KnowledgeBase:
     ) -> List[QueryResult]:
         """Query using current game state."""
         return self.engine.query_by_game_state(
-            supply, matchup, game_time_seconds, army_comp, top_k,
+            supply,
+            matchup,
+            game_time_seconds,
+            army_comp,
+            top_k,
         )
 
     # -- Persistence -------------------------------------------------------
@@ -896,7 +929,7 @@ def demo() -> None:
     print("[5] Query results:")
     for question, mu, ph in test_queries:
         results = kb.ask(question, top_k=3, matchup=mu, game_phase=ph)
-        print(f"\n  Q: \"{question}\" (matchup={mu}, phase={ph})")
+        print(f'\n  Q: "{question}" (matchup={mu}, phase={ph})')
         for i, r in enumerate(results):
             print(f"    #{i + 1} [{r.score:.3f}] {r.document.title}")
             print(f"         {r.explanation}")
@@ -918,6 +951,7 @@ def demo() -> None:
 
     # 7. Persistence round-trip
     import tempfile
+
     with tempfile.TemporaryDirectory() as tmpdir:
         saved = kb.save(tmpdir)
         print(f"[7] Saved knowledge base to: {saved}")

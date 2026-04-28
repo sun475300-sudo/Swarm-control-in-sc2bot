@@ -12,15 +12,17 @@ SpellCaster Automation - 마법 유닛 스킬 자동화
 효과: 고급 유닛 활용도 0% → 100%
 """
 
-from typing import List, Dict, Optional
+from typing import Dict, List, Optional
+
 from utils.logger import get_logger
 
 try:
-    from sc2.ids.unit_typeid import UnitTypeId
     from sc2.ids.ability_id import AbilityId
+    from sc2.ids.unit_typeid import UnitTypeId
     from sc2.ids.upgrade_id import UpgradeId
     from sc2.position import Point2
 except ImportError:
+
     class UnitTypeId:
         QUEEN = "QUEEN"
         RAVAGER = "RAVAGER"
@@ -28,6 +30,7 @@ except ImportError:
         INFESTOR = "INFESTOR"
         OVERSEER = "OVERSEER"
         OVERLORD = "OVERLORD"
+
     class AbilityId:
         TRANSFUSION_TRANSFUSION = "TRANSFUSION_TRANSFUSION"
         EFFECT_CORROSIVEBILE = "EFFECT_CORROSIVEBILE"
@@ -37,12 +40,14 @@ except ImportError:
         NEURALPARASITE_NEURALPARASITE = "NEURALPARASITE_NEURALPARASITE"
         FUNGALGROWTH_FUNGALGROWTH = "FUNGALGROWTH_FUNGALGROWTH"
         SPAWNCHANGELING_SPAWNCHANGELING = "SPAWNCHANGELING_SPAWNCHANGELING"
+
     class UpgradeId:
         pass
+
     Point2 = tuple
 
 try:
-    from unit_authority_manager import UnitAuthorityManager, AuthorityLevel
+    from unit_authority_manager import AuthorityLevel, UnitAuthorityManager
 except ImportError:
     UnitAuthorityManager = None
     AuthorityLevel = None
@@ -71,7 +76,9 @@ class SpellCasterAutomation:
         self.queen_transfuse_threshold = 0.35  # 체력 35% 이하
         self.ravager_min_targets = 3  # 최소 3명 이상 밀집
         self.viper_abduct_range = 9
-        self.infestor_fungal_min_targets = 3  # ★ IMPROVED: 5 → 3 (실전에서 5명 밀집은 드뭄)
+        self.infestor_fungal_min_targets = (
+            3  # ★ IMPROVED: 5 → 3 (실전에서 5명 밀집은 드뭄)
+        )
 
         # ★ 통계 ★
         self.skills_used = {
@@ -96,7 +103,7 @@ class SpellCasterAutomation:
         # Release units that are no longer casting or died
         for tag in list(self.active_casters.keys()):
             unit = self.bot.units.find_by_tag(tag)
-            
+
             # If unit dead or idle (finished casting), release
             if not unit or (unit.is_idle and self._is_cast_finished(tag)):
                 self.bot.unit_authority.release_unit(tag, "SpellCaster")
@@ -106,10 +113,10 @@ class SpellCasterAutomation:
         """Check if enough time passed since cast"""
         if tag not in self.active_casters:
             return True
-            
+
         ability = self.active_casters[tag]
         last_used = self.last_skill_used.get(tag, {}).get(ability, 0)
-        
+
         # Give 2 seconds for cast execution
         return (getattr(self.bot, "time", 0) - last_used) > 1.0
 
@@ -121,7 +128,7 @@ class SpellCasterAutomation:
         if self.bot.unit_authority.request_unit(
             unit.tag,
             "SpellCaster",
-            AuthorityLevel.SPELL_UNIT  # ★ 80 > COMBAT(70) - 스펠캐스터 우선권 ★
+            AuthorityLevel.SPELL_UNIT,  # ★ 80 > COMBAT(70) - 스펠캐스터 우선권 ★
         ):
             self.active_casters[unit.tag] = ability_name
             return True
@@ -336,17 +343,24 @@ class SpellCasterAutomation:
         """
         # 고가치 유닛 점수 (높을수록 우선)
         UNIT_VALUE = {
-            "COLOSSUS": 10, "CARRIER": 10, "BATTLECRUISER": 10,
-            "SIEGETANKSIEGED": 9, "SIEGETANK": 9, "TEMPEST": 9,
-            "THOR": 8, "IMMORTAL": 8, "MOTHERSHIP": 10,
-            "BROODLORD": 7, "ULTRALISK": 7,
-            "LURKER": 6, "RAVAGER": 5, "DISRUPTOR": 8,
+            "COLOSSUS": 10,
+            "CARRIER": 10,
+            "BATTLECRUISER": 10,
+            "SIEGETANKSIEGED": 9,
+            "SIEGETANK": 9,
+            "TEMPEST": 9,
+            "THOR": 8,
+            "IMMORTAL": 8,
+            "MOTHERSHIP": 10,
+            "BROODLORD": 7,
+            "ULTRALISK": 7,
+            "LURKER": 6,
+            "RAVAGER": 5,
+            "DISRUPTOR": 8,
         }
 
         # ★ 안전 검사 1: 살모사 주변 적이 너무 많으면 납치 금지 ★
-        enemies_near_viper = sum(
-            1 for e in enemies if viper.distance_to(e) < 5
-        )
+        enemies_near_viper = sum(1 for e in enemies if viper.distance_to(e) < 5)
         if enemies_near_viper >= 5:
             return
 
@@ -354,7 +368,8 @@ class SpellCasterAutomation:
         friendlies_near = 0
         if hasattr(self.bot, "units"):
             friendlies_near = sum(
-                1 for u in self.bot.units
+                1
+                for u in self.bot.units
                 if u.can_attack and u.tag != viper.tag and viper.distance_to(u) < 5
             )
         if friendlies_near < 5:
@@ -409,8 +424,13 @@ class SpellCasterAutomation:
         살모사 흑구름 - 원거리 유닛 무력화
         """
         ranged_units = {
-            "MARINE", "MARAUDER", "STALKER", "HYDRALISK",
-            "ROACH", "IMMORTAL", "THOR"
+            "MARINE",
+            "MARAUDER",
+            "STALKER",
+            "HYDRALISK",
+            "ROACH",
+            "IMMORTAL",
+            "THOR",
         }
 
         # 원거리 유닛 밀집 지역 찾기
@@ -427,9 +447,10 @@ class SpellCasterAutomation:
 
             pos = enemy.position
             nearby_ranged = sum(
-                1 for e in enemies
-                if e.position.distance_to(pos) < 4 and
-                   getattr(e.type_id, "name", "").upper() in ranged_units
+                1
+                for e in enemies
+                if e.position.distance_to(pos) < 4
+                and getattr(e.type_id, "name", "").upper() in ranged_units
             )
 
             if nearby_ranged > max_count:
@@ -470,11 +491,14 @@ class SpellCasterAutomation:
             exclude_buildings = set()
             if UnitTypeId:
                 exclude_buildings = {
-                    UnitTypeId.HATCHERY, UnitTypeId.LAIR, UnitTypeId.HIVE,
+                    UnitTypeId.HATCHERY,
+                    UnitTypeId.LAIR,
+                    UnitTypeId.HIVE,
                 }
 
             consumable_buildings = [
-                b for b in self.bot.structures
+                b
+                for b in self.bot.structures
                 if b.health > 250
                 and b.type_id not in exclude_buildings
                 and viper.distance_to(b) < 8
@@ -519,23 +543,23 @@ class SpellCasterAutomation:
             self.skills_used["consume"] = self.skills_used.get("consume", 0) + 1
 
             game_time = getattr(self.bot, "time", 0)
-            self.logger.info(
-                f"[{int(game_time)}s] ★ CONSUME: Overlord sacrificed ★"
-            )
+            self.logger.info(f"[{int(game_time)}s] ★ CONSUME: Overlord sacrificed ★")
 
     async def _viper_safety(self, viper, enemies):
         """살모사 안전 관리 - 스킬 사용 후 후퇴"""
         # 최근에 스킬을 썼으면 후퇴
-        if self._is_on_cooldown(viper.tag, "abduct", 2) or self._is_on_cooldown(viper.tag, "blinding_cloud", 2):
-             retreat_pos = viper.position.towards(self.bot.game_info.map_center, -5)
-             self.bot.do(viper.move(retreat_pos))
-             return
+        if self._is_on_cooldown(viper.tag, "abduct", 2) or self._is_on_cooldown(
+            viper.tag, "blinding_cloud", 2
+        ):
+            retreat_pos = viper.position.towards(self.bot.game_info.map_center, -5)
+            self.bot.do(viper.move(retreat_pos))
+            return
 
         # 적이 너무 가까우면 후퇴
         closest_enemy = enemies.closest_to(viper) if enemies else None
         if closest_enemy and closest_enemy.distance_to(viper) < 8:
-             retreat_pos = viper.position.towards(closest_enemy, -4)
-             self.bot.do(viper.move(retreat_pos))
+            retreat_pos = viper.position.towards(closest_enemy, -4)
+            self.bot.do(viper.move(retreat_pos))
 
     async def _infestor_skills(self):
         """
@@ -557,7 +581,7 @@ class SpellCasterAutomation:
                     await self._infestor_fungal(infestor, enemy_units)
                     continue
 
-            # ★ 2. 신경 기생충 (Neural Parasite) - 100 에너지 ★
+                # ★ 2. 신경 기생충 (Neural Parasite) - 100 에너지 ★
                 if not self._is_on_cooldown(infestor.tag, "neural", 20):
                     await self._infestor_neural(infestor, enemy_units)
                     continue
@@ -598,7 +622,9 @@ class SpellCasterAutomation:
                 else:
                     predicted = pos
             except Exception as e:
-                self.logger.warning(f"[SpellCaster] Predicted position calc suppressed: {e}")
+                self.logger.warning(
+                    f"[SpellCaster] Predicted position calc suppressed: {e}"
+                )
                 predicted = pos
 
             # 유닛 가치 계산 (mineral + vespene cost)
@@ -629,10 +655,15 @@ class SpellCasterAutomation:
                         total_value += other_value
                         hit_count += 1
                 except Exception as e:
-                    self.logger.warning(f"[SpellCaster] Fungal target distance suppressed: {e}")
+                    self.logger.warning(
+                        f"[SpellCaster] Fungal target distance suppressed: {e}"
+                    )
                     continue
 
-            if hit_count >= self.infestor_fungal_min_targets and total_value > best_value:
+            if (
+                hit_count >= self.infestor_fungal_min_targets
+                and total_value > best_value
+            ):
                 best_value = total_value
                 best_pos = pred_pos
                 best_count = hit_count
@@ -662,9 +693,15 @@ class SpellCasterAutomation:
         감염충 신경 기생충 - 고가치 유닛 빼앗기
         """
         high_value = {
-            "THOR", "BATTLECRUISER", "SIEGETANK",
-            "COLOSSUS", "IMMORTAL", "CARRIER", "TEMPEST",
-            "ULTRALISK", "BROODLORD"
+            "THOR",
+            "BATTLECRUISER",
+            "SIEGETANK",
+            "COLOSSUS",
+            "IMMORTAL",
+            "CARRIER",
+            "TEMPEST",
+            "ULTRALISK",
+            "BROODLORD",
         }
 
         targets = []
@@ -693,23 +730,21 @@ class SpellCasterAutomation:
             self.skills_used["neural"] += 1
 
             game_time = getattr(self.bot, "time", 0)
-            self.logger.info(
-                f"[{int(game_time)}s] ★ NEURAL: {target.type_id.name} ★"
-            )
+            self.logger.info(f"[{int(game_time)}s] ★ NEURAL: {target.type_id.name} ★")
 
     async def _infestor_safety(self, infestor, enemies):
         """감염충 안전 잠복"""
         # 적이 가까우면 잠복
         nearby_enemies = enemies.closer_than(9, infestor)
-        
+
         if nearby_enemies.exists:
-             if not infestor.is_burrowed:
-                 self.bot.do(infestor(AbilityId.BURROWDOWN_INFESTOR))
+            if not infestor.is_burrowed:
+                self.bot.do(infestor(AbilityId.BURROWDOWN_INFESTOR))
         else:
-             # 적이 없고 에너지가 차면 잠복 해제 (이동을 위해)
-             # 단, 진균/신경 쓸 때는 자동 해제되므로 평소엔 잠복 해제 상태 유지
-             if infestor.is_burrowed and infestor.energy > 80:
-                 self.bot.do(infestor(AbilityId.BURROWUP_INFESTOR))
+            # 적이 없고 에너지가 차면 잠복 해제 (이동을 위해)
+            # 단, 진균/신경 쓸 때는 자동 해제되므로 평소엔 잠복 해제 상태 유지
+            if infestor.is_burrowed and infestor.energy > 80:
+                self.bot.do(infestor(AbilityId.BURROWUP_INFESTOR))
 
     async def _overseer_changeling(self):
         """
@@ -743,9 +778,13 @@ class SpellCasterAutomation:
 
             abilities = await self.bot.get_available_abilities(overseer)
             if AbilityId.SPAWNCHANGELING_SPAWNCHANGELING in abilities:
-                self.bot.do(overseer(AbilityId.SPAWNCHANGELING_SPAWNCHANGELING, target_pos))
+                self.bot.do(
+                    overseer(AbilityId.SPAWNCHANGELING_SPAWNCHANGELING, target_pos)
+                )
                 self._record_skill_use(overseer.tag, "changeling")
-                self.skills_used["changeling"] = self.skills_used.get("changeling", 0) + 1
+                self.skills_used["changeling"] = (
+                    self.skills_used.get("changeling", 0) + 1
+                )
 
                 game_time = getattr(self.bot, "time", 0)
                 self.logger.info(

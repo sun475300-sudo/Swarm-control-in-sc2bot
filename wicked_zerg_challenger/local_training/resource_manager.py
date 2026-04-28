@@ -10,8 +10,8 @@ Features:
 - Resource spending priority
 """
 
-from typing import Dict, List, Optional
 import logging
+from typing import Dict, List, Optional
 
 logger = logging.getLogger("ResourceManager")
 
@@ -99,11 +99,13 @@ class ResourceManager:
         mineral_income = minerals - self.last_minerals
         gas_income = gas - self.last_gas
 
-        self.income_history.append({
-            "time": game_time,
-            "mineral_income": mineral_income,
-            "gas_income": gas_income,
-        })
+        self.income_history.append(
+            {
+                "time": game_time,
+                "mineral_income": mineral_income,
+                "gas_income": gas_income,
+            }
+        )
 
         # Keep only last 10 entries
         if len(self.income_history) > 10:
@@ -186,9 +188,9 @@ class ResourceManager:
                 # Find nearby workers on minerals
                 nearby_workers = workers.filter(
                     lambda w: (
-                        w.is_gathering and
-                        not w.is_carrying_vespene and
-                        w.distance_to(extractor) < 15
+                        w.is_gathering
+                        and not w.is_carrying_vespene
+                        and w.distance_to(extractor) < 15
                     )
                 )
 
@@ -218,7 +220,9 @@ class ResourceManager:
             return
 
         worker_count = self.bot.workers.amount
-        extractors = self.bot.gas_buildings if hasattr(self.bot, "gas_buildings") else []
+        extractors = (
+            self.bot.gas_buildings if hasattr(self.bot, "gas_buildings") else []
+        )
         extractor_count = len(extractors) if extractors else 0
 
         # Determine desired gas geysers
@@ -237,7 +241,11 @@ class ResourceManager:
         desired_extractors = min(desired_extractors, max_extractors)
 
         # Build extractor if needed
-        pending = self.bot.already_pending(UnitTypeId.EXTRACTOR) if hasattr(self.bot, "already_pending") else 0
+        pending = (
+            self.bot.already_pending(UnitTypeId.EXTRACTOR)
+            if hasattr(self.bot, "already_pending")
+            else 0
+        )
         if extractor_count + pending < desired_extractors:
             if self.bot.can_afford(UnitTypeId.EXTRACTOR):
                 await self._build_extractor()
@@ -257,8 +265,7 @@ class ResourceManager:
             for geyser in geysers:
                 # Check if already has extractor
                 has_extractor = any(
-                    e.distance_to(geyser) < 1
-                    for e in self.bot.gas_buildings
+                    e.distance_to(geyser) < 1 for e in self.bot.gas_buildings
                 )
                 if has_extractor:
                     continue
@@ -295,7 +302,9 @@ class ResourceManager:
             return result
 
         townhalls = self.bot.townhalls.ready
-        extractors = self.bot.gas_buildings.ready if hasattr(self.bot, "gas_buildings") else []
+        extractors = (
+            self.bot.gas_buildings.ready if hasattr(self.bot, "gas_buildings") else []
+        )
 
         for th in townhalls:
             assigned = th.assigned_harvesters
@@ -324,7 +333,11 @@ class ResourceManager:
         if not self.income_history:
             return {"minerals": 0.0, "gas": 0.0}
 
-        recent = self.income_history[-5:] if len(self.income_history) >= 5 else self.income_history
+        recent = (
+            self.income_history[-5:]
+            if len(self.income_history) >= 5
+            else self.income_history
+        )
         avg_mineral = sum(h["mineral_income"] for h in recent) / len(recent)
         avg_gas = sum(h["gas_income"] for h in recent) / len(recent)
 
@@ -350,11 +363,19 @@ class ResourceManager:
         # If planning to build gas-heavy units
         # Check for tech buildings
         if hasattr(self.bot, "structures"):
-            has_spire = self.bot.structures(UnitTypeId.SPIRE).exists if hasattr(UnitTypeId, "SPIRE") else False
-            has_hydra_den = self.bot.structures.filter(
-                lambda s: hasattr(s, "type_id") and
-                getattr(s.type_id, "name", "") == "HYDRALISKDEN"
-            ).exists if hasattr(self.bot, "structures") else False
+            has_spire = (
+                self.bot.structures(UnitTypeId.SPIRE).exists
+                if hasattr(UnitTypeId, "SPIRE")
+                else False
+            )
+            has_hydra_den = (
+                self.bot.structures.filter(
+                    lambda s: hasattr(s, "type_id")
+                    and getattr(s.type_id, "name", "") == "HYDRALISKDEN"
+                ).exists
+                if hasattr(self.bot, "structures")
+                else False
+            )
 
             if (has_spire or has_hydra_den) and gas < 300:
                 return True

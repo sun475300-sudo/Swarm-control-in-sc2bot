@@ -28,7 +28,7 @@ MODEL_REGISTRY_NAME = "sc2bot-ppo-model"
 
 PERFORMANCE_GATES = {
     "min_win_rate": 0.35,
-    "max_apm_loss": 0.05,      # APM must not drop more than 5%
+    "max_apm_loss": 0.05,  # APM must not drop more than 5%
     "min_test_games": 50,
     "max_latency_ms": 200,
 }
@@ -48,6 +48,7 @@ class ModelMetrics:
 # ---------------------------------------------------------------------------
 # Data Pipeline
 # ---------------------------------------------------------------------------
+
 
 class DataPipeline:
     """
@@ -106,6 +107,7 @@ class DataPipeline:
 # Training Pipeline
 # ---------------------------------------------------------------------------
 
+
 class TrainingPipeline:
     """
     Manages PPO model training with MLflow and W&B tracking.
@@ -118,6 +120,7 @@ class TrainingPipeline:
     def _setup_tracking(self) -> None:
         try:
             import mlflow
+
             mlflow.set_tracking_uri(MLFLOW_TRACKING_URI)
             mlflow.set_experiment(self.experiment_name)
             logger.info(f"MLflow tracking at {MLFLOW_TRACKING_URI}")
@@ -126,6 +129,7 @@ class TrainingPipeline:
 
         try:
             import wandb
+
             wandb.init(project=WANDB_PROJECT, name=self.experiment_name, mode="offline")
             logger.info(f"W&B project: {WANDB_PROJECT}")
         except ImportError:
@@ -178,11 +182,13 @@ class TrainingPipeline:
     def _log_metrics(self, metrics: dict) -> None:
         try:
             import mlflow
+
             mlflow.log_metrics(metrics)
         except Exception:
             pass
         try:
             import wandb
+
             wandb.log(metrics)
         except Exception:
             pass
@@ -203,6 +209,7 @@ class TrainingPipeline:
 # ---------------------------------------------------------------------------
 # Evaluation Pipeline
 # ---------------------------------------------------------------------------
+
 
 class EvaluationPipeline:
     """
@@ -247,7 +254,9 @@ class EvaluationPipeline:
         )
         return metrics
 
-    def check_gates(self, metrics: ModelMetrics, baseline: ModelMetrics | None = None) -> tuple[bool, list[str]]:
+    def check_gates(
+        self, metrics: ModelMetrics, baseline: ModelMetrics | None = None
+    ) -> tuple[bool, list[str]]:
         """Check if model passes all performance gates."""
         failures = []
 
@@ -269,7 +278,9 @@ class EvaluationPipeline:
         if baseline and baseline.avg_apm > 0:
             apm_loss = (baseline.avg_apm - metrics.avg_apm) / baseline.avg_apm
             if apm_loss > PERFORMANCE_GATES["max_apm_loss"]:
-                failures.append(f"APM regression {apm_loss:.2%} > max {PERFORMANCE_GATES['max_apm_loss']:.2%}")
+                failures.append(
+                    f"APM regression {apm_loss:.2%} > max {PERFORMANCE_GATES['max_apm_loss']:.2%}"
+                )
 
         passed = len(failures) == 0
         if passed:
@@ -281,6 +292,7 @@ class EvaluationPipeline:
 
     def _simulate_eval_game(self, game_idx: int) -> dict:
         import random
+
         random.seed(game_idx + 42)
         return {
             "won": random.random() < 0.42,
@@ -293,6 +305,7 @@ class EvaluationPipeline:
 # ---------------------------------------------------------------------------
 # Deployment Pipeline
 # ---------------------------------------------------------------------------
+
 
 class DeploymentPipeline:
     """
@@ -307,12 +320,15 @@ class DeploymentPipeline:
 
         try:
             import mlflow
+
             with mlflow.start_run():
-                mlflow.log_metrics({
-                    "win_rate": metrics.win_rate,
-                    "avg_apm": metrics.avg_apm,
-                    "inference_latency_ms": metrics.inference_latency_ms,
-                })
+                mlflow.log_metrics(
+                    {
+                        "win_rate": metrics.win_rate,
+                        "avg_apm": metrics.avg_apm,
+                        "inference_latency_ms": metrics.inference_latency_ms,
+                    }
+                )
                 mlflow.log_artifact(checkpoint_path)
                 mlflow.register_model(
                     f"runs:/{mlflow.active_run().info.run_id}/model",
@@ -326,10 +342,14 @@ class DeploymentPipeline:
 
     def deploy_canary(self, model_version: str, traffic_percent: int = 10) -> bool:
         """Deploy new model as canary with specified traffic split."""
-        logger.info(f"Deploying canary: {model_version} with {traffic_percent}% traffic")
+        logger.info(
+            f"Deploying canary: {model_version} with {traffic_percent}% traffic"
+        )
         seldon_manifest = self._build_seldon_manifest(model_version, traffic_percent)
         self._apply_manifest(seldon_manifest)
-        logger.info(f"Canary deployment active: {traffic_percent}% traffic to {model_version}")
+        logger.info(
+            f"Canary deployment active: {traffic_percent}% traffic to {model_version}"
+        )
         return True
 
     def promote_to_production(self, model_version: str) -> bool:
@@ -371,6 +391,7 @@ class DeploymentPipeline:
 # Orchestrator
 # ---------------------------------------------------------------------------
 
+
 class MLOpsPipeline:
     """End-to-end MLOps pipeline orchestrator."""
 
@@ -410,7 +431,9 @@ class MLOpsPipeline:
 
 
 if __name__ == "__main__":
-    logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
+    logging.basicConfig(
+        level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s"
+    )
     pipeline = MLOpsPipeline()
     success = pipeline.run()
     print(f"\nPipeline {'SUCCEEDED' if success else 'FAILED'}")

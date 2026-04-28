@@ -141,7 +141,9 @@ def start_all() -> None:
         log_file = None
         try:
             log_file = open(log_path, "a", encoding="utf-8")
-            log_file.write(f"\n--- {name} started at {datetime.now().isoformat()} ---\n")
+            log_file.write(
+                f"\n--- {name} started at {datetime.now().isoformat()} ---\n"
+            )
             log_file.flush()
         except OSError as e:
             print(f"  [{name}] 로그 파일 생성 실패: {e}")
@@ -154,8 +156,7 @@ def start_all() -> None:
             creation_flags = 0
             if sys.platform == "win32":
                 creation_flags = (
-                    subprocess.CREATE_NO_WINDOW
-                    | subprocess.CREATE_NEW_PROCESS_GROUP
+                    subprocess.CREATE_NO_WINDOW | subprocess.CREATE_NEW_PROCESS_GROUP
                 )
 
             proc = subprocess.Popen(
@@ -262,7 +263,9 @@ def show_status() -> None:
         print()
         return
 
-    print(f"  {'서비스':<20} {'PID':>7}  {'상태':<10} {'CPU%':>6} {'RAM%':>6}  {'RAM(MB)':>8}")
+    print(
+        f"  {'서비스':<20} {'PID':>7}  {'상태':<10} {'CPU%':>6} {'RAM%':>6}  {'RAM(MB)':>8}"
+    )
     print(f"  {'─' * 70}")
 
     alive_count = 0
@@ -275,7 +278,7 @@ def show_status() -> None:
             proc = psutil.Process(pid)
             cpu = proc.cpu_percent(interval=0.1)
             mem = proc.memory_info()
-            mem_mb = mem.rss / (1024 ** 2)
+            mem_mb = mem.rss / (1024**2)
             mem_pct = proc.memory_percent()
             status = proc.status()
 

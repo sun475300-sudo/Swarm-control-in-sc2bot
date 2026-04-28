@@ -56,17 +56,18 @@ logger = logging.getLogger(__name__)
 # Constants
 # ---------------------------------------------------------------------------
 
-SC2_STATE_DIM = 267          # flattened game-state vector size
-SC2_SPATIAL_H = 64           # spatial feature map height
-SC2_SPATIAL_W = 64           # spatial feature map width
-SC2_SPATIAL_CHANNELS = 17    # spatial feature channels
-SC2_NUM_ACTIONS = 573        # total SC2 action space
+SC2_STATE_DIM = 267  # flattened game-state vector size
+SC2_SPATIAL_H = 64  # spatial feature map height
+SC2_SPATIAL_W = 64  # spatial feature map width
+SC2_SPATIAL_CHANNELS = 17  # spatial feature channels
+SC2_NUM_ACTIONS = 573  # total SC2 action space
 DEFAULT_WARMUP_RUNS = 10
 DEFAULT_BENCHMARK_RUNS = 100
 
 # ---------------------------------------------------------------------------
 # Enums & data classes
 # ---------------------------------------------------------------------------
+
 
 class ExecutionProviderKind(Enum):
     CPU = "CPUExecutionProvider"
@@ -206,9 +207,7 @@ if nn is not None:
                 nn.Linear(256, num_actions),
             )
 
-        def forward(
-            self, spatial: torch.Tensor, scalar: torch.Tensor
-        ) -> torch.Tensor:
+        def forward(self, spatial: torch.Tensor, scalar: torch.Tensor) -> torch.Tensor:
             s = self.spatial_encoder(spatial).squeeze(-1).squeeze(-1)
             v = self.scalar_encoder(scalar)
             combined = torch.cat([s, v], dim=-1)
@@ -218,6 +217,7 @@ if nn is not None:
 # ---------------------------------------------------------------------------
 # Calibration data reader (for static INT8 quantization)
 # ---------------------------------------------------------------------------
+
 
 class SC2CalibrationReader:
     """Generates calibration data for ONNX static quantization."""
@@ -249,6 +249,7 @@ class SC2CalibrationReader:
 # ---------------------------------------------------------------------------
 # SC2ModelServer
 # ---------------------------------------------------------------------------
+
 
 class SC2ModelServer:
     """Cross-platform ONNX Runtime model server for SC2 inference.
@@ -408,9 +409,7 @@ class SC2ModelServer:
         so.optimized_model_filepath = str(opt_path)
 
         if enable_transformers_opts:
-            so.add_session_config_entry(
-                "session.transformers_optimization", "true"
-            )
+            so.add_session_config_entry("session.transformers_optimization", "true")
 
         # Creating a session with optimized_model_filepath writes the optimised
         # graph to disk then we discard this temporary session.
@@ -521,13 +520,13 @@ class SC2ModelServer:
             else [ExecutionProviderKind.CPU.value]
         )
 
-        session = ort.InferenceSession(str(model_path), sess_options=so, providers=ep_list)
+        session = ort.InferenceSession(
+            str(model_path), sess_options=so, providers=ep_list
+        )
         self._sessions[model_name] = session
 
         active_eps = session.get_providers()
-        logger.info(
-            "Session loaded: %s | providers=%s", model_name, active_eps
-        )
+        logger.info("Session loaded: %s | providers=%s", model_name, active_eps)
 
         # Warm-up
         if warmup_runs > 0:
@@ -580,7 +579,9 @@ class SC2ModelServer:
     def infer_policy(self, state: np.ndarray) -> np.ndarray:
         """Convenience: get action logits from the policy network."""
         if "policy" not in self._sessions:
-            raise RuntimeError("Policy session not loaded. Call load_session('policy').")
+            raise RuntimeError(
+                "Policy session not loaded. Call load_session('policy')."
+            )
         results = self.infer("policy", {"input": state})
         return results[0]
 
@@ -591,9 +592,7 @@ class SC2ModelServer:
         results = self.infer("value", {"input": state})
         return results[0]
 
-    def infer_multi(
-        self, state: np.ndarray
-    ) -> Tuple[np.ndarray, np.ndarray]:
+    def infer_multi(self, state: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
         """Run both policy and value inference in one call.
 
         Returns ``(action_logits, value_estimate)`` as a tuple.
@@ -606,9 +605,7 @@ class SC2ModelServer:
     # Shape inference
     # ------------------------------------------------------------------
 
-    def get_input_info(
-        self, model_name: str
-    ) -> List[Dict[str, Any]]:
+    def get_input_info(self, model_name: str) -> List[Dict[str, Any]]:
         """Return input names, shapes, and types for a loaded session."""
         session = self._get_session(model_name)
         info = []
@@ -622,9 +619,7 @@ class SC2ModelServer:
             )
         return info
 
-    def get_output_info(
-        self, model_name: str
-    ) -> List[Dict[str, Any]]:
+    def get_output_info(self, model_name: str) -> List[Dict[str, Any]]:
         """Return output names, shapes, and types for a loaded session."""
         session = self._get_session(model_name)
         info = []
@@ -840,9 +835,11 @@ class SC2ModelServer:
                 {
                     "name": name,
                     "path": str(path),
-                    "size_mb": round(path.stat().st_size / (1024 * 1024), 2)
-                    if path.exists()
-                    else None,
+                    "size_mb": (
+                        round(path.stat().st_size / (1024 * 1024), 2)
+                        if path.exists()
+                        else None
+                    ),
                     "loaded": name in self._sessions,
                     "metadata": self._metadata.get(name),
                 }
@@ -932,9 +929,7 @@ class SC2ModelServer:
         return session
 
     @staticmethod
-    def _make_dummy_inputs(
-        session: Any, batch_size: int = 1
-    ) -> Dict[str, np.ndarray]:
+    def _make_dummy_inputs(session: Any, batch_size: int = 1) -> Dict[str, np.ndarray]:
         """Create random inputs matching a session's expected shapes."""
         dummy: Dict[str, np.ndarray] = {}
         for inp in session.get_inputs():
@@ -955,6 +950,7 @@ class SC2ModelServer:
 # CLI entry point
 # ---------------------------------------------------------------------------
 
+
 def main() -> None:
     """Demonstrate full export-optimise-serve-benchmark pipeline."""
     logging.basicConfig(
@@ -963,7 +959,9 @@ def main() -> None:
     )
 
     if torch is None or ort is None:
-        logger.error("PyTorch and onnxruntime are required. pip install torch onnxruntime")
+        logger.error(
+            "PyTorch and onnxruntime are required. pip install torch onnxruntime"
+        )
         return
 
     server = SC2ModelServer(model_dir="./onnx_models")

@@ -9,18 +9,19 @@ Game Analytics System - 게임 분석 및 통계 시스템
 - 타이밍 분석 (게임 길이, 첫 공격, 확장 등)
 """
 
-from typing import Dict, List, Optional
-from enum import Enum
 import json
-from pathlib import Path
-from datetime import datetime
 import logging
+from datetime import datetime
+from enum import Enum
+from pathlib import Path
+from typing import Dict, List, Optional
 
 logger = logging.getLogger("GameAnalyticsSystem")
 
 
 class DefeatReason(Enum):
     """패배 원인"""
+
     EARLY_RUSH = "초반 러시"  # 0-3분
     ECONOMY_COLLAPSE = "경제 붕괴"  # 미네랄/가스 부족
     ARMY_WIPEOUT = "병력 전멸"  # 전투 패배
@@ -60,12 +61,14 @@ class GameAnalytics:
         self.map_stats: Dict[str, Dict] = {}
 
         # 패배 원인 통계
-        self.defeat_reasons: Dict[str, int] = {reason.value: 0 for reason in DefeatReason}
+        self.defeat_reasons: Dict[str, int] = {
+            reason.value: 0 for reason in DefeatReason
+        }
 
         # 타이밍 분석
         self.timing_stats = {
             "avg_game_time": 0.0,
-            "shortest_game": float('inf'),
+            "shortest_game": float("inf"),
             "longest_game": 0.0,
             "avg_first_expand": 0.0,
             "avg_pool_timing": 0.0,
@@ -87,7 +90,7 @@ class GameAnalytics:
         result: str,
         game_time: float,
         defeat_reason: Optional[DefeatReason] = None,
-        additional_stats: Optional[Dict] = None
+        additional_stats: Optional[Dict] = None,
     ) -> None:
         """
         게임 결과 기록 및 분석
@@ -97,7 +100,9 @@ class GameAnalytics:
 
         # 패배 원인 자동 분석
         if not won and defeat_reason is None:
-            defeat_reason = self._analyze_defeat_reason(game_time, additional_stats or {})
+            defeat_reason = self._analyze_defeat_reason(
+                game_time, additional_stats or {}
+            )
 
         # 게임 기록
         game_record = {
@@ -110,7 +115,7 @@ class GameAnalytics:
             "won": won,
             "game_time": game_time,
             "defeat_reason": defeat_reason.value if defeat_reason else None,
-            "additional_stats": additional_stats or {}
+            "additional_stats": additional_stats or {},
         }
 
         self.games.append(game_record)
@@ -126,7 +131,9 @@ class GameAnalytics:
 
             # 평균 게임 시간 업데이트
             race = self.race_stats[opponent_race]
-            race["avg_time"] = (race["avg_time"] * (race["games"] - 1) + game_time) / race["games"]
+            race["avg_time"] = (
+                race["avg_time"] * (race["games"] - 1) + game_time
+            ) / race["games"]
 
         # 맵별 통계 업데이트
         if map_name not in self.map_stats:
@@ -137,7 +144,9 @@ class GameAnalytics:
             self.map_stats[map_name]["wins"] += 1
 
         map_stat = self.map_stats[map_name]
-        map_stat["avg_time"] = (map_stat["avg_time"] * (map_stat["games"] - 1) + game_time) / map_stat["games"]
+        map_stat["avg_time"] = (
+            map_stat["avg_time"] * (map_stat["games"] - 1) + game_time
+        ) / map_stat["games"]
 
         # 패배 원인 통계
         if not won and defeat_reason:
@@ -226,8 +235,12 @@ class GameAnalytics:
         lines.append(f"{'='*60}")
 
         lines.append(f"맵: {game_record['map']}")
-        lines.append(f"상대: {game_record['opponent_race']} ({game_record['difficulty']})")
-        lines.append(f"게임 시간: {int(game_record['game_time'])}초 ({int(game_record['game_time']//60)}분)")
+        lines.append(
+            f"상대: {game_record['opponent_race']} ({game_record['difficulty']})"
+        )
+        lines.append(
+            f"게임 시간: {int(game_record['game_time'])}초 ({int(game_record['game_time']//60)}분)"
+        )
         lines.append(f"패배 원인: {game_record['defeat_reason']}")
 
         # 개선 제안
@@ -276,28 +289,40 @@ class GameAnalytics:
         lines.append(f"{'='*60}")
 
         # 전체 승률
-        win_rate = (self.total_wins / self.total_games * 100) if self.total_games > 0 else 0.0
-        lines.append(f"전체 승률: {self.total_wins}/{self.total_games}승 ({win_rate:.1f}%)")
+        win_rate = (
+            (self.total_wins / self.total_games * 100) if self.total_games > 0 else 0.0
+        )
+        lines.append(
+            f"전체 승률: {self.total_wins}/{self.total_games}승 ({win_rate:.1f}%)"
+        )
         lines.append(f"평균 게임 시간: {int(self.timing_stats['avg_game_time'])}초")
 
         # 종족별 승률
         lines.append(f"\n종족별 승률:")
         for race, stats in self.race_stats.items():
             if stats["games"] > 0:
-                race_wr = (stats["wins"] / stats["games"] * 100)
-                lines.append(f"  vs {race}: {stats['wins']}/{stats['games']}승 ({race_wr:.1f}%) | 평균: {int(stats['avg_time'])}초")
+                race_wr = stats["wins"] / stats["games"] * 100
+                lines.append(
+                    f"  vs {race}: {stats['wins']}/{stats['games']}승 ({race_wr:.1f}%) | 평균: {int(stats['avg_time'])}초"
+                )
 
         # 맵별 승률 (상위 5개)
         lines.append(f"\n맵별 승률 (상위 5개):")
-        sorted_maps = sorted(self.map_stats.items(), key=lambda x: x[1]["games"], reverse=True)[:5]
+        sorted_maps = sorted(
+            self.map_stats.items(), key=lambda x: x[1]["games"], reverse=True
+        )[:5]
         for map_name, stats in sorted_maps:
             if stats["games"] > 0:
-                map_wr = (stats["wins"] / stats["games"] * 100)
-                lines.append(f"  {map_name}: {stats['wins']}/{stats['games']}승 ({map_wr:.1f}%)")
+                map_wr = stats["wins"] / stats["games"] * 100
+                lines.append(
+                    f"  {map_name}: {stats['wins']}/{stats['games']}승 ({map_wr:.1f}%)"
+                )
 
         # 패배 원인 Top 3
         lines.append(f"\n주요 패배 원인:")
-        sorted_reasons = sorted(self.defeat_reasons.items(), key=lambda x: x[1], reverse=True)[:3]
+        sorted_reasons = sorted(
+            self.defeat_reasons.items(), key=lambda x: x[1], reverse=True
+        )[:3]
         for reason, count in sorted_reasons:
             if count > 0:
                 lines.append(f"  {reason}: {count}회")
@@ -348,10 +373,10 @@ class GameAnalytics:
                 "map_stats": self.map_stats,
                 "defeat_reasons": self.defeat_reasons,
                 "timing_stats": self.timing_stats,
-                "recent_games": self.games[-50:]  # 최근 50게임만 저장
+                "recent_games": self.games[-50:],  # 최근 50게임만 저장
             }
 
-            with open(self.save_path, 'w', encoding='utf-8') as f:
+            with open(self.save_path, "w", encoding="utf-8") as f:
                 json.dump(data, f, indent=2, ensure_ascii=False)
 
         except Exception as e:
@@ -362,7 +387,7 @@ class GameAnalytics:
         try:
             self.detailed_log_path.parent.mkdir(parents=True, exist_ok=True)
 
-            with open(self.detailed_log_path, 'a', encoding='utf-8') as f:
+            with open(self.detailed_log_path, "a", encoding="utf-8") as f:
                 f.write(json.dumps(game_record, ensure_ascii=False) + "\n")
 
         except Exception as e:
@@ -372,7 +397,7 @@ class GameAnalytics:
         """통계 로드"""
         try:
             if self.save_path.exists():
-                with open(self.save_path, 'r', encoding='utf-8') as f:
+                with open(self.save_path, "r", encoding="utf-8") as f:
                     data = json.load(f)
 
                 self.total_games = data.get("total_games", 0)

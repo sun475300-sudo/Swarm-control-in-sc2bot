@@ -4,6 +4,7 @@
 aiohttp 기반 간단한 웹 대시보드.
 포트폴리오, SC2 전적, 시스템 상태 페이지를 제공한다.
 """
+
 import json
 import logging
 from datetime import datetime
@@ -170,17 +171,26 @@ class WebDashboard:
         """포트폴리오 데이터 로드"""
         data = {"total_krw": 0, "daily_pnl": 0, "trade_count": 0, "holdings": []}
         try:
-            pf = self._project_root / "crypto_trading" / "data" / "portfolio_history.json"
+            pf = (
+                self._project_root
+                / "crypto_trading"
+                / "data"
+                / "portfolio_history.json"
+            )
             if pf.exists():
                 with open(pf, "r", encoding="utf-8") as f:
                     history = json.load(f)
                 if isinstance(history, list) and history:
                     latest = history[-1]
-                    data["total_krw"] = latest.get("total_value_krw", latest.get("total_krw", 0))
+                    data["total_krw"] = latest.get(
+                        "total_value_krw", latest.get("total_krw", 0)
+                    )
                     data["holdings"] = latest.get("holdings", [])
                     if len(history) >= 2:
                         prev = history[-2]
-                        prev_total = prev.get("total_value_krw", prev.get("total_krw", 0))
+                        prev_total = prev.get(
+                            "total_value_krw", prev.get("total_krw", 0)
+                        )
                         data["daily_pnl"] = data["total_krw"] - prev_total
 
             tl = self._project_root / "crypto_trading" / "data" / "trade_log.json"
@@ -190,8 +200,10 @@ class WebDashboard:
                 today = datetime.now().strftime("%Y-%m-%d")
                 if isinstance(trades, list):
                     data["trade_count"] = sum(
-                        1 for t in trades
-                        if isinstance(t, dict) and t.get("timestamp", "").startswith(today)
+                        1
+                        for t in trades
+                        if isinstance(t, dict)
+                        and t.get("timestamp", "").startswith(today)
                     )
         except Exception as e:
             logger.error(f"포트폴리오 데이터 로드 실패: {e}")
@@ -201,7 +213,9 @@ class WebDashboard:
         """SC2 전적 데이터 로드"""
         data = {"total_games": 0, "wins": 0, "losses": 0, "win_rate": 0.0}
         try:
-            log_path = self._project_root / "wicked_zerg_challenger" / "logs" / "bot.log"
+            log_path = (
+                self._project_root / "wicked_zerg_challenger" / "logs" / "bot.log"
+            )
             if log_path.exists():
                 with open(log_path, "r", encoding="utf-8", errors="replace") as f:
                     for line in f:
@@ -220,12 +234,21 @@ class WebDashboard:
     def _get_system_data(self) -> dict:
         """시스템 상태"""
         import platform
+
         return {
             "platform": platform.system(),
             "python": platform.python_version(),
             "hostname": platform.node(),
-            "crypto_module": "OK" if (self._project_root / "crypto_trading" / "__init__.py").exists() else "Missing",
-            "sc2_module": "OK" if (self._project_root / "wicked_zerg_challenger").exists() else "Missing",
+            "crypto_module": (
+                "OK"
+                if (self._project_root / "crypto_trading" / "__init__.py").exists()
+                else "Missing"
+            ),
+            "sc2_module": (
+                "OK"
+                if (self._project_root / "wicked_zerg_challenger").exists()
+                else "Missing"
+            ),
         }
 
     def _render_page(self, page: str) -> str:
@@ -248,8 +271,8 @@ class WebDashboard:
             holdings_rows = ""
             for h in pf.get("holdings", []):
                 if isinstance(h, dict):
-                    _ticker = escape(str(h.get('ticker', 'N/A')))
-                    _amount = escape(str(h.get('amount', 0)))
+                    _ticker = escape(str(h.get("ticker", "N/A")))
+                    _amount = escape(str(h.get("amount", 0)))
                     _value = escape(f"{h.get('value_krw', 0):,.0f}")
                     holdings_rows += (
                         f"<tr><td>{_ticker}</td>"
@@ -294,26 +317,33 @@ class WebDashboard:
     async def _handle_home(self, request):
         """홈 페이지 핸들러"""
         from aiohttp import web
+
         return web.Response(text=self._render_page("home"), content_type="text/html")
 
     async def _handle_portfolio(self, request):
         """포트폴리오 페이지 핸들러"""
         from aiohttp import web
-        return web.Response(text=self._render_page("portfolio"), content_type="text/html")
+
+        return web.Response(
+            text=self._render_page("portfolio"), content_type="text/html"
+        )
 
     async def _handle_sc2(self, request):
         """SC2 페이지 핸들러"""
         from aiohttp import web
+
         return web.Response(text=self._render_page("sc2"), content_type="text/html")
 
     async def _handle_system(self, request):
         """시스템 페이지 핸들러"""
         from aiohttp import web
+
         return web.Response(text=self._render_page("system"), content_type="text/html")
 
     async def _handle_api_status(self, request):
         """API 상태 JSON 엔드포인트"""
         from aiohttp import web
+
         data = {
             "timestamp": datetime.now().isoformat(),
             "portfolio": self._get_portfolio_data(),
@@ -325,6 +355,7 @@ class WebDashboard:
     def create_app(self):
         """aiohttp 앱 생성"""
         from aiohttp import web
+
         app = web.Application()
         app.router.add_get("/", self._handle_home)
         app.router.add_get("/portfolio", self._handle_portfolio)
@@ -337,6 +368,7 @@ class WebDashboard:
     def run(self):
         """대시보드 서버 실행"""
         from aiohttp import web
+
         app = self.create_app()
         logger.info(f"웹 대시보드 시작: http://{self.host}:{self.port}")
         web.run_app(app, host=self.host, port=self.port)

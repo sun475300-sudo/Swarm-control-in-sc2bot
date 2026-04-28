@@ -2,67 +2,146 @@
 # Pinecone vector search for SC2 Zerg strategy recommendations
 
 import time
-from sentence_transformers import SentenceTransformer
+
 import pinecone
+from sentence_transformers import SentenceTransformer
 
 # ---------------------------------------------------------------------------
 # Configuration
 # ---------------------------------------------------------------------------
 PINECONE_API_KEY = "your-pinecone-api-key-here"
-PINECONE_ENV     = "us-east-1-aws"
-INDEX_NAME       = "sc2-strategies"
-EMBEDDING_DIM    = 384          # all-MiniLM-L6-v2 output dimension
-TOP_K            = 5
+PINECONE_ENV = "us-east-1-aws"
+INDEX_NAME = "sc2-strategies"
+EMBEDDING_DIM = 384  # all-MiniLM-L6-v2 output dimension
+TOP_K = 5
 
 # ---------------------------------------------------------------------------
 # Strategy corpus: 20 Zerg strategies across all matchups
 # ---------------------------------------------------------------------------
 STRATEGIES = [
     # ZvT openings (7 strategies)
-    {"id": "zvt_01", "matchup": "ZvT", "name": "12 Pool Speed",
-     "description": "Fast Zergling speed into economical expansion, pressures bio early."},
-    {"id": "zvt_02", "matchup": "ZvT", "name": "Roach-Ravager All-In",
-     "description": "Mass Roach with Ravager support, hits before Terran mech establishes."},
-    {"id": "zvt_03", "matchup": "ZvT", "name": "Ling-Bane Flood",
-     "description": "Heavy Zergling and Baneling production to overwhelm bio walls."},
-    {"id": "zvt_04", "matchup": "ZvT", "name": "Muta Harass into Ling-Bane",
-     "description": "Mutalisks force defensive turrets then transition to ground army."},
-    {"id": "zvt_05", "matchup": "ZvT", "name": "Hydra-Lurker Timing",
-     "description": "Lurker ambushes deny pushes and set up economic third base."},
-    {"id": "zvt_06", "matchup": "ZvT", "name": "Ultra-Bane Late Game",
-     "description": "Ultralist with Baneling support crushes siege positions in late game."},
-    {"id": "zvt_07", "matchup": "ZvT", "name": "Nydus Worm Drop",
-     "description": "Nydus delivers units inside Terran main to disrupt production."},
-
+    {
+        "id": "zvt_01",
+        "matchup": "ZvT",
+        "name": "12 Pool Speed",
+        "description": "Fast Zergling speed into economical expansion, pressures bio early.",
+    },
+    {
+        "id": "zvt_02",
+        "matchup": "ZvT",
+        "name": "Roach-Ravager All-In",
+        "description": "Mass Roach with Ravager support, hits before Terran mech establishes.",
+    },
+    {
+        "id": "zvt_03",
+        "matchup": "ZvT",
+        "name": "Ling-Bane Flood",
+        "description": "Heavy Zergling and Baneling production to overwhelm bio walls.",
+    },
+    {
+        "id": "zvt_04",
+        "matchup": "ZvT",
+        "name": "Muta Harass into Ling-Bane",
+        "description": "Mutalisks force defensive turrets then transition to ground army.",
+    },
+    {
+        "id": "zvt_05",
+        "matchup": "ZvT",
+        "name": "Hydra-Lurker Timing",
+        "description": "Lurker ambushes deny pushes and set up economic third base.",
+    },
+    {
+        "id": "zvt_06",
+        "matchup": "ZvT",
+        "name": "Ultra-Bane Late Game",
+        "description": "Ultralist with Baneling support crushes siege positions in late game.",
+    },
+    {
+        "id": "zvt_07",
+        "matchup": "ZvT",
+        "name": "Nydus Worm Drop",
+        "description": "Nydus delivers units inside Terran main to disrupt production.",
+    },
     # ZvZ responses (7 strategies)
-    {"id": "zvz_01", "matchup": "ZvZ", "name": "Pool-First Aggression",
-     "description": "12 Pool into ling-flood to deny economic hatch before pool."},
-    {"id": "zvz_02", "matchup": "ZvZ", "name": "Roach Warren Defence",
-     "description": "Fast Roach Warren to hold early ling aggression then macro."},
-    {"id": "zvz_03", "matchup": "ZvZ", "name": "Muta-Ling Mid Game",
-     "description": "Mutalisks for map control, Zerglings trade efficiently mirror."},
-    {"id": "zvz_04", "matchup": "ZvZ", "name": "Hydra Timing vs Muta",
-     "description": "Hydralisk push targets Mutalisk heavy opponent with anti-air."},
-    {"id": "zvz_05", "matchup": "ZvZ", "name": "Lurker Wall Defence",
-     "description": "Lurker burrowed at natural choke holds aggression until macro lead."},
-    {"id": "zvz_06", "matchup": "ZvZ", "name": "Infestor Blob",
-     "description": "Infestors use Fungal Growth to clump and melt opposing Zerg army."},
-    {"id": "zvz_07", "matchup": "ZvZ", "name": "Spire Skip Roach Max",
-     "description": "Skip air tech, max Roach-Ravager to punish Mutalisk transition."},
-
+    {
+        "id": "zvz_01",
+        "matchup": "ZvZ",
+        "name": "Pool-First Aggression",
+        "description": "12 Pool into ling-flood to deny economic hatch before pool.",
+    },
+    {
+        "id": "zvz_02",
+        "matchup": "ZvZ",
+        "name": "Roach Warren Defence",
+        "description": "Fast Roach Warren to hold early ling aggression then macro.",
+    },
+    {
+        "id": "zvz_03",
+        "matchup": "ZvZ",
+        "name": "Muta-Ling Mid Game",
+        "description": "Mutalisks for map control, Zerglings trade efficiently mirror.",
+    },
+    {
+        "id": "zvz_04",
+        "matchup": "ZvZ",
+        "name": "Hydra Timing vs Muta",
+        "description": "Hydralisk push targets Mutalisk heavy opponent with anti-air.",
+    },
+    {
+        "id": "zvz_05",
+        "matchup": "ZvZ",
+        "name": "Lurker Wall Defence",
+        "description": "Lurker burrowed at natural choke holds aggression until macro lead.",
+    },
+    {
+        "id": "zvz_06",
+        "matchup": "ZvZ",
+        "name": "Infestor Blob",
+        "description": "Infestors use Fungal Growth to clump and melt opposing Zerg army.",
+    },
+    {
+        "id": "zvz_07",
+        "matchup": "ZvZ",
+        "name": "Spire Skip Roach Max",
+        "description": "Skip air tech, max Roach-Ravager to punish Mutalisk transition.",
+    },
     # ZvP builds (6 strategies)
-    {"id": "zvp_01", "matchup": "ZvP", "name": "Roach-Ravager Timing",
-     "description": "Ravager Corrosive Bile breaks Force Field allowing ling flood."},
-    {"id": "zvp_02", "matchup": "ZvP", "name": "Ling-Bane-Hydra",
-     "description": "Cost-efficient ground army that trades well against Immortal-Chargelot."},
-    {"id": "zvp_03", "matchup": "ZvP", "name": "Muta-Ling Aggression",
-     "description": "Mutalisks harass mineral lines forcing Protoss to go Stalker-heavy."},
-    {"id": "zvp_04", "matchup": "ZvP", "name": "Lurker-Hydra",
-     "description": "Lurker burrowed in key chokes controls Colossus-heavy Protoss."},
-    {"id": "zvp_05", "matchup": "ZvP", "name": "Ultra-Infestor Combo",
-     "description": "Infestor Neural Parasite targets Colossi; Ultralisks tank Chargelot."},
-    {"id": "zvp_06", "matchup": "ZvP", "name": "Swarm-Host Nydus",
-     "description": "Swarm Host locusts drain Protoss army near Nydus entry, then push."},
+    {
+        "id": "zvp_01",
+        "matchup": "ZvP",
+        "name": "Roach-Ravager Timing",
+        "description": "Ravager Corrosive Bile breaks Force Field allowing ling flood.",
+    },
+    {
+        "id": "zvp_02",
+        "matchup": "ZvP",
+        "name": "Ling-Bane-Hydra",
+        "description": "Cost-efficient ground army that trades well against Immortal-Chargelot.",
+    },
+    {
+        "id": "zvp_03",
+        "matchup": "ZvP",
+        "name": "Muta-Ling Aggression",
+        "description": "Mutalisks harass mineral lines forcing Protoss to go Stalker-heavy.",
+    },
+    {
+        "id": "zvp_04",
+        "matchup": "ZvP",
+        "name": "Lurker-Hydra",
+        "description": "Lurker burrowed in key chokes controls Colossus-heavy Protoss.",
+    },
+    {
+        "id": "zvp_05",
+        "matchup": "ZvP",
+        "name": "Ultra-Infestor Combo",
+        "description": "Infestor Neural Parasite targets Colossi; Ultralisks tank Chargelot.",
+    },
+    {
+        "id": "zvp_06",
+        "matchup": "ZvP",
+        "name": "Swarm-Host Nydus",
+        "description": "Swarm Host locusts drain Protoss army near Nydus entry, then push.",
+    },
 ]
 
 # ---------------------------------------------------------------------------
@@ -90,7 +169,7 @@ def init_index() -> pinecone.Index:
             dimension=EMBEDDING_DIM,
             metric="cosine",
         )
-        time.sleep(5)           # wait for index to be ready
+        time.sleep(5)  # wait for index to be ready
 
     return pinecone.Index(INDEX_NAME)
 
@@ -100,14 +179,18 @@ def init_index() -> pinecone.Index:
 # ---------------------------------------------------------------------------
 def upsert_strategies(index: pinecone.Index) -> None:
     """Embed all 20 strategy descriptions and upsert into Pinecone."""
-    texts    = [s["description"] for s in STRATEGIES]
-    vectors  = embed_texts(texts)
+    texts = [s["description"] for s in STRATEGIES]
+    vectors = embed_texts(texts)
 
     upsert_data = [
         (
             s["id"],
             vec,
-            {"matchup": s["matchup"], "name": s["name"], "description": s["description"]},
+            {
+                "matchup": s["matchup"],
+                "name": s["name"],
+                "description": s["description"],
+            },
         )
         for s, vec in zip(STRATEGIES, vectors)
     ]
@@ -147,13 +230,15 @@ def query_similar_strategy(
 
     hits = []
     for match in result.matches:
-        hits.append({
-            "id":          match.id,
-            "score":       round(match.score, 4),
-            "matchup":     match.metadata.get("matchup"),
-            "name":        match.metadata.get("name"),
-            "description": match.metadata.get("description"),
-        })
+        hits.append(
+            {
+                "id": match.id,
+                "score": round(match.score, 4),
+                "matchup": match.metadata.get("matchup"),
+                "name": match.metadata.get("name"),
+                "description": match.metadata.get("description"),
+            }
+        )
     return hits
 
 
@@ -177,9 +262,5 @@ if __name__ == "__main__":
     recommend_counter_strategy(
         "Heavy Marine-Marauder bio ball with Medivacs", matchup="ZvT"
     )
-    recommend_counter_strategy(
-        "Mass Mutalisk into late-game Ling", matchup="ZvZ"
-    )
-    recommend_counter_strategy(
-        "Immortal-Chargelot-Archon deathball", matchup="ZvP"
-    )
+    recommend_counter_strategy("Mass Mutalisk into late-game Ling", matchup="ZvZ")
+    recommend_counter_strategy("Immortal-Chargelot-Archon deathball", matchup="ZvP")

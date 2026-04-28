@@ -16,7 +16,6 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional, Set, Tuple
 
-
 # ============================================================
 # Constants
 # ============================================================
@@ -77,7 +76,9 @@ class FuzzInput:
     def clone(self) -> "FuzzInput":
         return FuzzInput(
             data=bytearray(self.data),
-            structured=json.loads(json.dumps(self.structured)) if self.structured else None,
+            structured=(
+                json.loads(json.dumps(self.structured)) if self.structured else None
+            ),
             source=self.source,
             parent_id=self.input_id,
             generation=self.generation + 1,
@@ -122,7 +123,9 @@ class CrashReport:
             "reproducible": self.reproducible,
             "target_function": self.target_function,
             "input_size": len(self.input_data),
-            "minimized_size": len(self.minimized_input) if self.minimized_input else None,
+            "minimized_size": (
+                len(self.minimized_input) if self.minimized_input else None
+            ),
         }
 
 
@@ -159,8 +162,21 @@ class Mutator:
             b"Nexus",
         ]
         # Add integer boundary values as little-endian bytes
-        for val in [0, 1, -1, 127, 128, 255, 256, 32767, 32768, 65535, 65536,
-                    2147483647, -2147483648]:
+        for val in [
+            0,
+            1,
+            -1,
+            127,
+            128,
+            255,
+            256,
+            32767,
+            32768,
+            65535,
+            65536,
+            2147483647,
+            -2147483648,
+        ]:
             try:
                 self.dictionary.append(struct.pack("<i", val))
             except struct.error:
@@ -183,7 +199,7 @@ class Mutator:
         for _ in range(num_flips):
             byte_idx = self.rng.randint(0, len(result) - 1)
             bit_idx = self.rng.randint(0, 7)
-            result[byte_idx] ^= (1 << bit_idx)
+            result[byte_idx] ^= 1 << bit_idx
         return bytes(result)
 
     def byte_flip(self, data: bytes, num_flips: int = 1) -> bytes:
@@ -248,7 +264,7 @@ class Mutator:
             return data
         result = bytearray(data)
         pos = self.rng.randint(0, len(result) - 4)
-        val = struct.unpack("<I", result[pos:pos + 4])[0]
+        val = struct.unpack("<I", result[pos : pos + 4])[0]
         delta = self.rng.randint(-35, 35)
         new_val = (val + delta) & 0xFFFFFFFF
         struct.pack_into("<I", result, pos, new_val)
@@ -260,7 +276,7 @@ class Mutator:
             return data
         start = self.rng.randint(0, len(data) - 2)
         length = self.rng.randint(1, min(32, len(data) - start))
-        return data[:start] + data[start + length:]
+        return data[:start] + data[start + length :]
 
     def chunk_duplicate(self, data: bytes) -> bytes:
         """Duplicate a random chunk within the input."""
@@ -268,7 +284,7 @@ class Mutator:
             return data
         start = self.rng.randint(0, len(data) - 1)
         length = self.rng.randint(1, min(32, len(data) - start))
-        chunk = data[start:start + length]
+        chunk = data[start : start + length]
         insert_pos = self.rng.randint(0, len(data))
         result = data[:insert_pos] + chunk + data[insert_pos:]
         return bytes(result[:MAX_INPUT_SIZE])
@@ -280,9 +296,9 @@ class Mutator:
         start = self.rng.randint(0, len(data) - 4)
         length = self.rng.randint(4, min(32, len(data) - start))
         result = bytearray(data)
-        sub = list(result[start:start + length])
+        sub = list(result[start : start + length])
         self.rng.shuffle(sub)
-        result[start:start + length] = sub
+        result[start : start + length] = sub
         return bytes(result)
 
     def structure_aware_sc2_state(self) -> Dict[str, Any]:
@@ -305,61 +321,109 @@ class Mutator:
             units.append(unit)
 
         state = {
-            "game_loop": self.rng.choice([
-                0, -1, SC2_MAX_GAME_LOOP, SC2_MAX_GAME_LOOP + 1,
-                self.rng.randint(0, SC2_MAX_GAME_LOOP),
-                2**31, 2**32 - 1,
-            ]),
-            "minerals": self.rng.choice([
-                0, -1, SC2_MAX_MINERALS, SC2_MAX_MINERALS + 1,
-                self.rng.randint(0, SC2_MAX_MINERALS),
-            ]),
-            "vespene": self.rng.choice([
-                0, -1, SC2_MAX_VESPENE,
-                self.rng.randint(0, SC2_MAX_VESPENE),
-            ]),
-            "supply_used": self.rng.choice([
-                0, -1, SC2_MAX_SUPPLY, SC2_MAX_SUPPLY + 1, 999,
-                self.rng.randint(0, SC2_MAX_SUPPLY),
-            ]),
-            "supply_cap": self.rng.choice([
-                0, SC2_MAX_SUPPLY, -1,
-                self.rng.randint(0, SC2_MAX_SUPPLY),
-            ]),
+            "game_loop": self.rng.choice(
+                [
+                    0,
+                    -1,
+                    SC2_MAX_GAME_LOOP,
+                    SC2_MAX_GAME_LOOP + 1,
+                    self.rng.randint(0, SC2_MAX_GAME_LOOP),
+                    2**31,
+                    2**32 - 1,
+                ]
+            ),
+            "minerals": self.rng.choice(
+                [
+                    0,
+                    -1,
+                    SC2_MAX_MINERALS,
+                    SC2_MAX_MINERALS + 1,
+                    self.rng.randint(0, SC2_MAX_MINERALS),
+                ]
+            ),
+            "vespene": self.rng.choice(
+                [
+                    0,
+                    -1,
+                    SC2_MAX_VESPENE,
+                    self.rng.randint(0, SC2_MAX_VESPENE),
+                ]
+            ),
+            "supply_used": self.rng.choice(
+                [
+                    0,
+                    -1,
+                    SC2_MAX_SUPPLY,
+                    SC2_MAX_SUPPLY + 1,
+                    999,
+                    self.rng.randint(0, SC2_MAX_SUPPLY),
+                ]
+            ),
+            "supply_cap": self.rng.choice(
+                [
+                    0,
+                    SC2_MAX_SUPPLY,
+                    -1,
+                    self.rng.randint(0, SC2_MAX_SUPPLY),
+                ]
+            ),
             "race": self.rng.choice(SC2_RACES + ["Unknown", "", None, 42]),
             "enemy_race": self.rng.choice(SC2_RACES + ["Unknown", "", None]),
             "units": units,
             "pending_actions": [
                 {
                     "ability_id": self.rng.choice(SC2_ABILITY_IDS + [0, -1, 99999]),
-                    "target_unit_tag": self.rng.choice([None, 0, -1, self.rng.randint(1, 2**32)]),
+                    "target_unit_tag": self.rng.choice(
+                        [None, 0, -1, self.rng.randint(1, 2**32)]
+                    ),
                     "target_x": self.rng.uniform(-50.0, SC2_MAX_MAP_X + 50.0),
                     "target_y": self.rng.uniform(-50.0, SC2_MAX_MAP_Y + 50.0),
                 }
                 for _ in range(self.rng.randint(0, 50))
             ],
-            "upgrades": [self.rng.choice(SC2_UPGRADE_IDS + [0, -1, 9999])
-                         for _ in range(self.rng.randint(0, 30))],
-            "map_name": self.rng.choice([
-                "Equilibrium", "", None, "A" * 10000, "\x00" * 100,
-                "DragonScales", "../../../etc/passwd",
-            ]),
+            "upgrades": [
+                self.rng.choice(SC2_UPGRADE_IDS + [0, -1, 9999])
+                for _ in range(self.rng.randint(0, 30))
+            ],
+            "map_name": self.rng.choice(
+                [
+                    "Equilibrium",
+                    "",
+                    None,
+                    "A" * 10000,
+                    "\x00" * 100,
+                    "DragonScales",
+                    "../../../etc/passwd",
+                ]
+            ),
         }
         return state
 
     def structure_aware_sc2_action(self) -> Dict[str, Any]:
         """Generate a structure-aware SC2 action command for fuzzing."""
         action_types = [
-            "build", "train", "attack", "move", "patrol", "hold_position",
-            "ability", "upgrade", "rally", "unload", "lift", "land",
-            "", None, "INVALID", "drop_table",
+            "build",
+            "train",
+            "attack",
+            "move",
+            "patrol",
+            "hold_position",
+            "ability",
+            "upgrade",
+            "rally",
+            "unload",
+            "lift",
+            "land",
+            "",
+            None,
+            "INVALID",
+            "drop_table",
         ]
         action = {
             "type": self.rng.choice(action_types),
             "ability_id": self.rng.choice(SC2_ABILITY_IDS + [0, -1, 2**31]),
             "unit_tags": [
-                self.rng.randint(-1, 2**32)
-                for _ in range(self.rng.randint(0, 100))
+                self.rng.randint(-1, 2**32) for _ in range(self.rng.randint(0, 100))
             ],
             "target": {
                 "type": self.rng.choice(["point", "unit", "none", "", None, 42]),
@@ -394,11 +458,19 @@ class Mutator:
     def mutate(self, fuzz_input: FuzzInput) -> FuzzInput:
         """Apply a random mutation strategy to a FuzzInput."""
         child = fuzz_input.clone()
-        strategy = self.rng.choice([
-            "bit_flip", "byte_flip", "boundary", "dict_insert",
-            "dict_replace", "arithmetic", "chunk_delete",
-            "chunk_duplicate", "shuffle",
-        ])
+        strategy = self.rng.choice(
+            [
+                "bit_flip",
+                "byte_flip",
+                "boundary",
+                "dict_insert",
+                "dict_replace",
+                "arithmetic",
+                "chunk_delete",
+                "chunk_duplicate",
+                "shuffle",
+            ]
+        )
         data = child.data
         if strategy == "bit_flip":
             child.data = self.bit_flip(data, self.rng.randint(1, 8))
@@ -453,8 +525,9 @@ class CoverageTracker:
         trace_str = "|".join(execution_trace)
         return hashlib.md5(trace_str.encode()).hexdigest()[:16]
 
-    def record_execution(self, fuzz_input: FuzzInput,
-                         execution_trace: List[str]) -> bool:
+    def record_execution(
+        self, fuzz_input: FuzzInput, execution_trace: List[str]
+    ) -> bool:
         """Record an execution. Returns True if new coverage was discovered."""
         self.total_inputs += 1
         cov_hash = self.compute_coverage_hash(execution_trace)
@@ -525,8 +598,9 @@ class CrashAnalyzer:
     def total_crash_count(self) -> int:
         return len(self.crash_history)
 
-    def record_crash(self, fuzz_input: FuzzInput, error: Exception,
-                     target_name: str = "") -> CrashReport:
+    def record_crash(
+        self, fuzz_input: FuzzInput, error: Exception, target_name: str = ""
+    ) -> CrashReport:
         """Record a crash, deduplicating by crash hash."""
         tb = traceback.format_exception(type(error), error, error.__traceback__)
         stack_str = "".join(tb)
@@ -564,9 +638,12 @@ class CrashAnalyzer:
             return "MEDIUM"
         return "LOW"
 
-    def minimize_input(self, fuzz_input: FuzzInput,
-                       target_fn: Callable[[bytes], Any],
-                       max_rounds: int = 50) -> bytes:
+    def minimize_input(
+        self,
+        fuzz_input: FuzzInput,
+        target_fn: Callable[[bytes], Any],
+        max_rounds: int = 50,
+    ) -> bytes:
         """
         Minimize a crash-inducing input by binary search and delta debugging.
         Returns the smallest input that still triggers the crash.
@@ -584,7 +661,7 @@ class CrashAnalyzer:
         while chunk_size >= 1:
             i = 0
             while i < len(data):
-                candidate = bytes(data[:i] + data[i + chunk_size:])
+                candidate = bytes(data[:i] + data[i + chunk_size :])
                 if candidate and self._triggers_crash(candidate, target_fn):
                     data = bytearray(candidate)
                 else:
@@ -595,7 +672,7 @@ class CrashAnalyzer:
         i = 0
         rounds = 0
         while i < len(data) and rounds < max_rounds:
-            candidate = bytes(data[:i] + data[i + 1:])
+            candidate = bytes(data[:i] + data[i + 1 :])
             if candidate and self._triggers_crash(candidate, target_fn):
                 data = bytearray(candidate)
             else:
@@ -614,7 +691,12 @@ class CrashAnalyzer:
             return True
 
     def get_report_summary(self) -> Dict[str, Any]:
-        severity_counts: Dict[str, int] = {"CRITICAL": 0, "HIGH": 0, "MEDIUM": 0, "LOW": 0}
+        severity_counts: Dict[str, int] = {
+            "CRITICAL": 0,
+            "HIGH": 0,
+            "MEDIUM": 0,
+            "LOW": 0,
+        }
         for cr in self.crashes.values():
             sev = cr.severity
             if sev in severity_counts:
@@ -639,9 +721,12 @@ class SC2Fuzzer:
     and SC2-specific input generation.
     """
 
-    def __init__(self, seed: int = DEFAULT_SEED,
-                 max_iterations: int = 1000,
-                 max_input_size: int = MAX_INPUT_SIZE) -> None:
+    def __init__(
+        self,
+        seed: int = DEFAULT_SEED,
+        max_iterations: int = 1000,
+        max_input_size: int = MAX_INPUT_SIZE,
+    ) -> None:
         self.seed = seed
         self.max_iterations = max_iterations
         self.max_input_size = max_input_size
@@ -815,7 +900,9 @@ class SC2Fuzzer:
         trace.append(f"exit:{target_name}")
         return trace
 
-    def fuzz_target(self, target_name: str, iterations: Optional[int] = None) -> Dict[str, Any]:
+    def fuzz_target(
+        self, target_name: str, iterations: Optional[int] = None
+    ) -> Dict[str, Any]:
         """Run fuzzing against a specific target."""
         if target_name not in self._targets:
             return {"error": f"Unknown target: {target_name}"}
@@ -996,9 +1083,20 @@ class SC2Fuzzer:
     def _validate_action(action: Dict[str, Any]) -> None:
         """Validate an SC2 action dict."""
         action_type = action.get("type")
-        valid_types = {"build", "train", "attack", "move", "patrol",
-                       "hold_position", "ability", "upgrade", "rally",
-                       "unload", "lift", "land"}
+        valid_types = {
+            "build",
+            "train",
+            "attack",
+            "move",
+            "patrol",
+            "hold_position",
+            "ability",
+            "upgrade",
+            "rally",
+            "unload",
+            "lift",
+            "land",
+        }
         if action_type not in valid_types:
             raise ValueError(f"Invalid action type: {action_type}")
         ability_id = action.get("ability_id")
@@ -1052,7 +1150,9 @@ class SC2Fuzzer:
 
         results["summary"] = {
             "total_iterations": self._stats["iterations"],
-            "total_time_sec": round(self._stats["end_time"] - self._stats["start_time"], 3),
+            "total_time_sec": round(
+                self._stats["end_time"] - self._stats["start_time"], 3
+            ),
             "total_crashes": self.crash_analyzer.total_crash_count,
             "unique_crashes": self.crash_analyzer.unique_crash_count,
             "coverage": self.coverage.get_stats(),
@@ -1086,14 +1186,21 @@ def demo() -> None:
     strategies_seen: Set[str] = set()
     for _ in range(20):
         mutated = fuzzer.mutator.mutate(sample_input)
-        strategy = mutated.source.split(":")[1] if ":" in mutated.source else mutated.source
+        strategy = (
+            mutated.source.split(":")[1] if ":" in mutated.source else mutated.source
+        )
         strategies_seen.add(strategy)
     print(f"    Strategies exercised: {', '.join(sorted(strategies_seen))}")
 
     # --- Binary Target Fuzzing ---
     print("\n[3] Fuzzing Binary Targets")
-    for target_name in ["game_state_parser", "action_validator", "replay_header_parser",
-                        "unit_command_handler", "resource_validator"]:
+    for target_name in [
+        "game_state_parser",
+        "action_validator",
+        "replay_header_parser",
+        "unit_command_handler",
+        "resource_validator",
+    ]:
         result = fuzzer.fuzz_target(target_name, iterations=150)
         crashes = result.get("crashes", 0)
         new_cov = result.get("new_coverage", 0)
@@ -1131,9 +1238,11 @@ def demo() -> None:
     crash_summary = fuzzer.crash_analyzer.get_report_summary()
     print(f"    Total crashes:  {crash_summary['total_crashes']}")
     print(f"    Unique crashes: {crash_summary['unique_crashes']}")
-    sev = crash_summary['by_severity']
-    print(f"    By severity: CRITICAL={sev['CRITICAL']} HIGH={sev['HIGH']} "
-          f"MEDIUM={sev['MEDIUM']} LOW={sev['LOW']}")
+    sev = crash_summary["by_severity"]
+    print(
+        f"    By severity: CRITICAL={sev['CRITICAL']} HIGH={sev['HIGH']} "
+        f"MEDIUM={sev['MEDIUM']} LOW={sev['LOW']}"
+    )
 
     # --- Minimization Demo ---
     print("\n[9] Input Minimization Demo")

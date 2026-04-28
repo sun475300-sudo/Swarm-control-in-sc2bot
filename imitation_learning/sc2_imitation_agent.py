@@ -84,6 +84,7 @@ SC2_ACTION_NAMES: List[str] = [
 # NumPy neural-network helpers (fallback)
 # ---------------------------------------------------------------------------
 
+
 def _relu(x: NDArray) -> NDArray:
     return np.maximum(0.0, x)
 
@@ -450,12 +451,17 @@ class GAILDiscriminator:
         input_dim = state_dim + action_dim
 
         if HAS_TORCH:
-            self.net = TorchMLP([input_dim, hidden, hidden, 1], output_activation="sigmoid")
+            self.net = TorchMLP(
+                [input_dim, hidden, hidden, 1], output_activation="sigmoid"
+            )
             self.optimizer = optim.Adam(self.net.parameters(), lr=lr)
             self.loss_fn = nn.BCELoss()
         else:
             self.net = NumpyMLP(
-                [input_dim, hidden, hidden, 1], output_activation="sigmoid", lr=lr, seed=seed
+                [input_dim, hidden, hidden, 1],
+                output_activation="sigmoid",
+                lr=lr,
+                seed=seed,
             )
 
         self.train_history: List[float] = []
@@ -588,7 +594,11 @@ class PolicyDistiller:
             # Soft target loss (KL divergence)
             soft_loss = torch.mean(
                 torch.sum(
-                    teacher_probs * (torch.log(teacher_probs + 1e-8) - torch.log(student_probs + 1e-8)),
+                    teacher_probs
+                    * (
+                        torch.log(teacher_probs + 1e-8)
+                        - torch.log(student_probs + 1e-8)
+                    ),
                     dim=-1,
                 )
             )
@@ -597,9 +607,14 @@ class PolicyDistiller:
             hard_targets = torch.zeros_like(student_probs)
             for i, a in enumerate(hard_labels):
                 hard_targets[i, int(a)] = 1.0
-            hard_loss = -torch.mean(torch.sum(hard_targets * torch.log(student_probs + 1e-8), dim=-1))
+            hard_loss = -torch.mean(
+                torch.sum(hard_targets * torch.log(student_probs + 1e-8), dim=-1)
+            )
 
-            loss = self.alpha * soft_loss * (self.temperature ** 2) + (1 - self.alpha) * hard_loss
+            loss = (
+                self.alpha * soft_loss * (self.temperature**2)
+                + (1 - self.alpha) * hard_loss
+            )
             self.optimizer.zero_grad()
             loss.backward()
             self.optimizer.step()
@@ -608,16 +623,21 @@ class PolicyDistiller:
             teacher_probs = self.teacher.forward(states.astype(np.float32))
             student_probs = self.student.forward(states.astype(np.float32))
             # KL divergence (soft targets)
-            kl = float(np.mean(np.sum(
-                teacher_probs * (np.log(teacher_probs + 1e-8) - np.log(student_probs + 1e-8)),
-                axis=-1,
-            )))
+            kl = float(
+                np.mean(
+                    np.sum(
+                        teacher_probs
+                        * (np.log(teacher_probs + 1e-8) - np.log(student_probs + 1e-8)),
+                        axis=-1,
+                    )
+                )
+            )
             # Hard target cross entropy
             hard_targets = np.zeros_like(student_probs)
             for i, a in enumerate(hard_labels):
                 hard_targets[i, int(a)] = 1.0
             ce = _cross_entropy(student_probs, hard_targets)
-            loss_val = self.alpha * kl * (self.temperature ** 2) + (1 - self.alpha) * ce
+            loss_val = self.alpha * kl * (self.temperature**2) + (1 - self.alpha) * ce
 
             # Update student via its train_step (uses combined target)
             combined = self.alpha * teacher_probs + (1 - self.alpha) * hard_targets
@@ -827,8 +847,13 @@ class SC2ImitationAgent:
             # Re-train on aggregated dataset
             states_arr = np.array(all_states, dtype=np.float32)
             actions_arr = np.array(all_actions, dtype=np.int64)
-            losses = self.train_bc(states_arr, actions_arr, epochs=bc_epochs,
-                                   batch_size=batch_size, verbose=False)
+            losses = self.train_bc(
+                states_arr,
+                actions_arr,
+                epochs=bc_epochs,
+                batch_size=batch_size,
+                verbose=False,
+            )
             avg = float(np.mean(losses))
             iteration_losses.append(avg)
             self.dagger_losses.append(avg)
@@ -836,7 +861,11 @@ class SC2ImitationAgent:
             if verbose:
                 logger.info(
                     "[DAgger] Iter %d/%d  beta=%.2f  dataset_size=%d  loss=%.4f",
-                    it + 1, n_iterations, beta, len(all_states), avg,
+                    it + 1,
+                    n_iterations,
+                    beta,
+                    len(all_states),
+                    avg,
                 )
 
         return iteration_losses
@@ -857,7 +886,9 @@ class SC2ImitationAgent:
         for it in range(n_iterations):
             # 1. Generate policy rollouts
             n_samples = min(batch_size, len(expert_states))
-            policy_states = expert_states[self.rng.choice(len(expert_states), n_samples)]
+            policy_states = expert_states[
+                self.rng.choice(len(expert_states), n_samples)
+            ]
             policy_actions = np.array([self.select_action(s) for s in policy_states])
 
             # 2. Sample expert mini-batch
@@ -895,7 +926,10 @@ class SC2ImitationAgent:
             if verbose and (it + 1) % 20 == 0:
                 logger.info(
                     "[GAIL] Iter %d/%d  d_loss=%.4f  avg_reward=%.4f",
-                    it + 1, n_iterations, d_loss, avg_reward,
+                    it + 1,
+                    n_iterations,
+                    d_loss,
+                    avg_reward,
                 )
 
         return rewards_log
@@ -959,7 +993,9 @@ class SC2ImitationAgent:
             combined_t = np.concatenate(
                 [il_weight * il_targets, (1 - il_weight) * rl_targets], axis=0
             )
-            combined_t = combined_t / (np.sum(combined_t, axis=-1, keepdims=True) + 1e-8)
+            combined_t = combined_t / (
+                np.sum(combined_t, axis=-1, keepdims=True) + 1e-8
+            )
 
             if HAS_TORCH:
                 s_t = torch.from_numpy(combined_s)
@@ -976,7 +1012,9 @@ class SC2ImitationAgent:
             losses.append(loss_val)
 
             if verbose and (epoch + 1) % 10 == 0:
-                logger.info("[Mixed] Epoch %d/%d  loss=%.4f", epoch + 1, epochs, loss_val)
+                logger.info(
+                    "[Mixed] Epoch %d/%d  loss=%.4f", epoch + 1, epochs, loss_val
+                )
 
         return losses
 
@@ -1006,9 +1044,15 @@ class SC2ImitationAgent:
             expert_one_hot[i, int(a)] = 1.0
 
         eps = 1e-8
-        kl = float(np.mean(
-            np.sum(expert_one_hot * (np.log(expert_one_hot + eps) - np.log(probs + eps)), axis=-1)
-        ))
+        kl = float(
+            np.mean(
+                np.sum(
+                    expert_one_hot
+                    * (np.log(expert_one_hot + eps) - np.log(probs + eps)),
+                    axis=-1,
+                )
+            )
+        )
 
         # Policy entropy
         entropy = float(-np.mean(np.sum(probs * np.log(probs + eps), axis=-1)))
@@ -1067,9 +1111,8 @@ class SC2ImitationAgent:
         }
         if not HAS_TORCH:
             state["policy_params"] = [
-                (w.tolist(), b.tolist()) for w, b in zip(
-                    self.policy.weights, self.policy.biases
-                )
+                (w.tolist(), b.tolist())
+                for w, b in zip(self.policy.weights, self.policy.biases)
             ]
         else:
             state["policy_state_dict"] = {
@@ -1134,7 +1177,9 @@ class SimpleSC2Env:
         return self.state.copy(), float(reward), done
 
 
-def make_expert_policy(action_dim: int = SC2_ACTION_DIM, seed: int = 99) -> Callable[[NDArray], int]:
+def make_expert_policy(
+    action_dim: int = SC2_ACTION_DIM, seed: int = 99
+) -> Callable[[NDArray], int]:
     """Create a deterministic 'expert' policy for demonstration."""
     rng = np.random.default_rng(seed)
     expert_weights = rng.standard_normal((SC2_STATE_DIM, action_dim)).astype(np.float32)
@@ -1157,11 +1202,17 @@ def main() -> None:
     parser = argparse.ArgumentParser(
         description="Phase 614 -- SC2 Imitation Learning Agent"
     )
-    parser.add_argument("--mode", choices=["bc", "dagger", "gail", "mixed", "distill", "all"],
-                        default="all", help="Training mode to demo")
+    parser.add_argument(
+        "--mode",
+        choices=["bc", "dagger", "gail", "mixed", "distill", "all"],
+        default="all",
+        help="Training mode to demo",
+    )
     parser.add_argument("--epochs", type=int, default=30, help="Training epochs")
     parser.add_argument("--seed", type=int, default=42, help="Random seed")
-    parser.add_argument("--n-demos", type=int, default=20, help="Number of expert demos")
+    parser.add_argument(
+        "--n-demos", type=int, default=20, help="Number of expert demos"
+    )
     args = parser.parse_args()
 
     print("=" * 70)
@@ -1204,8 +1255,13 @@ def main() -> None:
     if args.mode in ("bc", "all"):
         print(f"\n[2] Behavioral Cloning ({args.epochs} epochs)...")
         conf_weights = compute_confidence_weights(expert_a)
-        losses = agent.train_bc(expert_s, expert_a, epochs=args.epochs,
-                                confidence_weights=conf_weights, verbose=False)
+        losses = agent.train_bc(
+            expert_s,
+            expert_a,
+            epochs=args.epochs,
+            confidence_weights=conf_weights,
+            verbose=False,
+        )
         print(f"   Final BC loss: {losses[-1]:.4f}")
         eval_result = agent.evaluate_divergence(expert_s, expert_a)
         print(f"   Expert divergence: {eval_result}")
@@ -1227,7 +1283,9 @@ def main() -> None:
     # ---- GAIL ----
     if args.mode in ("gail", "all"):
         print(f"\n[4] GAIL training (50 iterations)...")
-        gail_rewards = agent.train_gail(expert_s, expert_a, n_iterations=50, verbose=False)
+        gail_rewards = agent.train_gail(
+            expert_s, expert_a, n_iterations=50, verbose=False
+        )
         print(f"   Avg GAIL reward (last 10): {np.mean(gail_rewards[-10:]):.4f}")
 
     # ---- Mixed IL + RL ----
@@ -1237,8 +1295,14 @@ def main() -> None:
         rl_actions = env.rng.integers(0, SC2_ACTION_DIM, size=500)
         rl_rewards = env.rng.standard_normal(500).astype(np.float32)
         mixed_losses = agent.train_mixed(
-            expert_s, expert_a, rl_states, rl_actions, rl_rewards,
-            il_weight=0.7, epochs=20, verbose=False,
+            expert_s,
+            expert_a,
+            rl_states,
+            rl_actions,
+            rl_rewards,
+            il_weight=0.7,
+            epochs=20,
+            verbose=False,
         )
         print(f"   Final mixed loss: {mixed_losses[-1]:.4f}")
 

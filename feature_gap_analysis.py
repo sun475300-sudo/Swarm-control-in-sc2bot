@@ -3,9 +3,9 @@ Feature Gap Analysis - Identifies missing features and potential improvements
 """
 
 import json
-from pathlib import Path
 from datetime import datetime
-from typing import Dict, List, Any
+from pathlib import Path
+from typing import Any, Dict, List
 
 
 class FeatureGapAnalyzer:

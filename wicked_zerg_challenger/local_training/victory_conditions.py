@@ -18,10 +18,10 @@ Victory & Defeat Conditions Learning System
 """
 
 import json
+import logging
 from datetime import datetime
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
-import logging
 
 logger = logging.getLogger("VictoryConditions")
 
@@ -98,7 +98,9 @@ class VictoryConditionsLearner:
             with open(self.conditions_file, "r", encoding="utf-8") as f:
                 data = json.load(f)
 
-            self.victory_patterns = data.get("victory_patterns", [])[-100:]  # 최근 100개
+            self.victory_patterns = data.get("victory_patterns", [])[
+                -100:
+            ]  # 최근 100개
             self.defeat_patterns = data.get("defeat_patterns", [])[-100:]
             self.victory_counts = data.get("victory_counts", {})
             self.defeat_counts = data.get("defeat_counts", {})
@@ -272,7 +274,9 @@ class VictoryConditionsLearner:
 
         return conditions, final_penalty
 
-    def _record_victory(self, conditions: List[str], game_time: float, reward: float) -> None:
+    def _record_victory(
+        self, conditions: List[str], game_time: float, reward: float
+    ) -> None:
         """승리 기록"""
         record = {
             "timestamp": datetime.now().isoformat(),
@@ -288,7 +292,9 @@ class VictoryConditionsLearner:
 
         self._save_data()
 
-    def _record_defeat(self, conditions: List[str], game_time: float, penalty: float) -> None:
+    def _record_defeat(
+        self, conditions: List[str], game_time: float, penalty: float
+    ) -> None:
         """패배 기록"""
         record = {
             "timestamp": datetime.now().isoformat(),
@@ -304,14 +310,18 @@ class VictoryConditionsLearner:
 
         self._save_data()
 
-    def get_most_common_victory_conditions(self, top_n: int = 5) -> List[Tuple[str, int]]:
+    def get_most_common_victory_conditions(
+        self, top_n: int = 5
+    ) -> List[Tuple[str, int]]:
         """가장 흔한 승리 조건 반환"""
         sorted_conditions = sorted(
             self.victory_counts.items(), key=lambda x: x[1], reverse=True
         )
         return sorted_conditions[:top_n]
 
-    def get_most_common_defeat_conditions(self, top_n: int = 5) -> List[Tuple[str, int]]:
+    def get_most_common_defeat_conditions(
+        self, top_n: int = 5
+    ) -> List[Tuple[str, int]]:
         """가장 흔한 패배 조건 반환"""
         sorted_conditions = sorted(
             self.defeat_counts.items(), key=lambda x: x[1], reverse=True
@@ -353,7 +363,9 @@ class VictoryConditionsLearner:
         victory_conditions = self.get_most_common_victory_conditions(5)
         if victory_conditions:
             for idx, (condition, count) in enumerate(victory_conditions, 1):
-                percentage = (count / total_victories * 100) if total_victories > 0 else 0
+                percentage = (
+                    (count / total_victories * 100) if total_victories > 0 else 0
+                )
                 logger.info(f"  {idx}. {condition}: {count} times ({percentage:.1f}%)")
         else:
             logger.info("  No victories yet.")
@@ -392,7 +404,9 @@ class VictoryConditionsLearner:
         elif win_rate < 0.7:
             logger.info(f"  - Win rate is good ({win_rate:.1%}). Refine strategies.")
         else:
-            logger.info(f"  - Win rate is excellent ({win_rate:.1%}). Mastery achieved!")
+            logger.info(
+                f"  - Win rate is excellent ({win_rate:.1%}). Mastery achieved!"
+            )
 
         logger.info("=" * 70)
 

@@ -157,7 +157,14 @@ def downgrade(conn) -> None:
     """
     cursor = conn.cursor()
 
-    _ALLOWED_TABLES = {"settings", "bot_sessions", "api_logs", "portfolio_snapshots", "trades", "migrations"}
+    _ALLOWED_TABLES = {
+        "settings",
+        "bot_sessions",
+        "api_logs",
+        "portfolio_snapshots",
+        "trades",
+        "migrations",
+    }
     for table in _ALLOWED_TABLES:
         if table.isidentifier():
             cursor.execute(f"DROP TABLE IF EXISTS [{table}]")

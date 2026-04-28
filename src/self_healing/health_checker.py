@@ -13,10 +13,10 @@ class HealthChecker:
     def process(self, data):
         """
         Process data.
-        
+
         Args:
             data: Input data
-            
+
         Returns:
             Processed result
         """

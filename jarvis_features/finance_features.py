@@ -16,7 +16,7 @@ import io
 import json
 import logging
 import os
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Optional
 
 import aiohttp
@@ -26,12 +26,15 @@ from discord.ext import commands, tasks
 
 logger = logging.getLogger("jarvis.finance")
 
-DATA_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "data")
+DATA_DIR = os.path.join(
+    os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "data"
+)
 ALERTS_FILE = os.path.join(DATA_DIR, "price_alerts.json")
 
 UpbitClient = None
 try:
     from crypto_trading.upbit_client import UpbitClient as _UC
+
     UpbitClient = _UC
 except ImportError:
     pass
@@ -74,7 +77,9 @@ class FinanceFeaturesCog(commands.Cog, name="금융 기능"):
 
     # ── 2-1. 가격 알림 ──
     @commands.command(name="알림", aliases=["alert", "가격알림"])
-    async def set_price_alert(self, ctx: commands.Context, coin: str, target_price: str):
+    async def set_price_alert(
+        self, ctx: commands.Context, coin: str, target_price: str
+    ):
         """가격 알림을 설정합니다. 사용법: !알림 BTC 1억 / !알림 ETH 500만"""
         coin = coin.upper().replace("KRW-", "")
         ticker = f"KRW-{coin}"
@@ -95,7 +100,9 @@ class FinanceFeaturesCog(commands.Cog, name="금융 기능"):
         try:
             target = float(price_str) * multiplier
         except ValueError:
-            await ctx.send("❌ 가격 형식이 올바르지 않습니다. 예: `!알림 BTC 1억` 또는 `!알림 ETH 5000000`")
+            await ctx.send(
+                "❌ 가격 형식이 올바르지 않습니다. 예: `!알림 BTC 1억` 또는 `!알림 ETH 5000000`"
+            )
             return
 
         # 현재가 확인
@@ -132,14 +139,20 @@ class FinanceFeaturesCog(commands.Cog, name="금융 기능"):
         embed.add_field(name="코인", value=coin, inline=True)
         embed.add_field(name="목표가", value=f"{target:,.0f} KRW {arrow}", inline=True)
         if current_price:
-            embed.add_field(name="현재가", value=f"{current_price:,.0f} KRW", inline=True)
+            embed.add_field(
+                name="현재가", value=f"{current_price:,.0f} KRW", inline=True
+            )
         embed.set_footer(text="목표가 도달 시 DM으로 알려드립니다")
         await ctx.send(embed=embed)
 
     @commands.command(name="알림목록", aliases=["alerts", "내알림"])
     async def list_alerts(self, ctx: commands.Context):
         """설정된 가격 알림 목록을 확인합니다."""
-        user_alerts = [a for a in self.price_alerts if a["user_id"] == ctx.author.id and not a["triggered"]]
+        user_alerts = [
+            a
+            for a in self.price_alerts
+            if a["user_id"] == ctx.author.id and not a["triggered"]
+        ]
         if not user_alerts:
             await ctx.send("📭 설정된 가격 알림이 없습니다.")
             return
@@ -154,11 +167,19 @@ class FinanceFeaturesCog(commands.Cog, name="금융 기능"):
             )
         await ctx.send(embed=embed)
 
-    @app_commands.command(name="alerts", description="설정된 가격 알림 목록을 확인합니다")
+    @app_commands.command(
+        name="alerts", description="설정된 가격 알림 목록을 확인합니다"
+    )
     async def alerts_slash(self, interaction: discord.Interaction):
-        user_alerts = [a for a in self.price_alerts if a["user_id"] == interaction.user.id and not a["triggered"]]
+        user_alerts = [
+            a
+            for a in self.price_alerts
+            if a["user_id"] == interaction.user.id and not a["triggered"]
+        ]
         if not user_alerts:
-            await interaction.response.send_message("📭 설정된 가격 알림이 없습니다.", ephemeral=True)
+            await interaction.response.send_message(
+                "📭 설정된 가격 알림이 없습니다.", ephemeral=True
+            )
             return
         embed = discord.Embed(title="🔔 내 가격 알림 목록", color=discord.Color.gold())
         for i, alert in enumerate(user_alerts, 1):
@@ -174,7 +195,11 @@ class FinanceFeaturesCog(commands.Cog, name="금융 기능"):
     @commands.command(name="알림삭제", aliases=["delalert"])
     async def delete_alert(self, ctx: commands.Context, index: int):
         """가격 알림을 삭제합니다. 사용법: !알림삭제 1"""
-        user_alerts = [(i, a) for i, a in enumerate(self.price_alerts) if a["user_id"] == ctx.author.id and not a["triggered"]]
+        user_alerts = [
+            (i, a)
+            for i, a in enumerate(self.price_alerts)
+            if a["user_id"] == ctx.author.id and not a["triggered"]
+        ]
         if index < 1 or index > len(user_alerts):
             await ctx.send(f"❌ 유효한 번호를 입력해주세요. (1~{len(user_alerts)})")
             return
@@ -182,7 +207,9 @@ class FinanceFeaturesCog(commands.Cog, name="금융 기능"):
         removed = self.price_alerts.pop(real_idx)
         _save_alerts(self.price_alerts)
         coin = removed["ticker"].replace("KRW-", "")
-        await ctx.send(f"✅ {coin} {removed['target_price']:,.0f} KRW 알림이 삭제되었습니다.")
+        await ctx.send(
+            f"✅ {coin} {removed['target_price']:,.0f} KRW 알림이 삭제되었습니다."
+        )
 
     @tasks.loop(seconds=30)
     async def check_price_alerts(self):
@@ -219,11 +246,21 @@ class FinanceFeaturesCog(commands.Cog, name="금융 기능"):
                 direction = "돌파 📈" if alert["direction"] == "above" else "하락 📉"
                 embed = discord.Embed(
                     title=f"🚨 가격 알림: {coin} 목표가 {direction}!",
-                    color=discord.Color.red() if alert["direction"] == "above" else discord.Color.blue(),
+                    color=(
+                        discord.Color.red()
+                        if alert["direction"] == "above"
+                        else discord.Color.blue()
+                    ),
                     timestamp=datetime.now(timezone.utc),
                 )
-                embed.add_field(name="현재가", value=f"**{price:,.0f}** KRW", inline=True)
-                embed.add_field(name="목표가", value=f"{alert['target_price']:,.0f} KRW", inline=True)
+                embed.add_field(
+                    name="현재가", value=f"**{price:,.0f}** KRW", inline=True
+                )
+                embed.add_field(
+                    name="목표가",
+                    value=f"{alert['target_price']:,.0f} KRW",
+                    inline=True,
+                )
                 await user.send(embed=embed)
             except Exception as e:
                 logger.warning(f"알림 DM 전송 실패: {e}")
@@ -241,7 +278,9 @@ class FinanceFeaturesCog(commands.Cog, name="금융 기능"):
             triggered = triggered[-100:]
             self.price_alerts = active + triggered
             _save_alerts(self.price_alerts)
-            logger.info(f"오래된 트리거 알림 정리 완료. 남은 알림: {len(self.price_alerts)}")
+            logger.info(
+                f"오래된 트리거 알림 정리 완료. 남은 알림: {len(self.price_alerts)}"
+            )
 
     @cleanup_old_alerts.before_loop
     async def before_cleanup_alerts(self):
@@ -249,7 +288,13 @@ class FinanceFeaturesCog(commands.Cog, name="금융 기능"):
 
     # ── 2-2. 백테스트 ──
     @commands.command(name="백테스트", aliases=["backtest"])
-    async def backtest(self, ctx: commands.Context, coin: str = "BTC", strategy: str = "RSI", days: int = 30):
+    async def backtest(
+        self,
+        ctx: commands.Context,
+        coin: str = "BTC",
+        strategy: str = "RSI",
+        days: int = 30,
+    ):
         """과거 데이터로 전략을 시뮬레이션합니다. 사용법: !백테스트 BTC RSI 30"""
         coin = coin.upper()
         ticker = f"KRW-{coin}"
@@ -276,14 +321,18 @@ class FinanceFeaturesCog(commands.Cog, name="금융 기능"):
                     # RSI 전략: RSI < 30 매수, RSI > 70 매도
                     rsi_period = 14
                     if len(closes) < rsi_period + 1:
-                        await ctx.send(f"❌ 데이터가 부족합니다. 최소 {rsi_period + 1}일 필요")
+                        await ctx.send(
+                            f"❌ 데이터가 부족합니다. 최소 {rsi_period + 1}일 필요"
+                        )
                         return
 
                     for i in range(rsi_period, len(closes)):
                         gains = []
                         losses = []
                         for j in range(i - rsi_period, i):
-                            change = closes[j + 1] - closes[j] if j + 1 < len(closes) else 0
+                            change = (
+                                closes[j + 1] - closes[j] if j + 1 < len(closes) else 0
+                            )
                             if change > 0:
                                 gains.append(change)
                             else:
@@ -306,8 +355,8 @@ class FinanceFeaturesCog(commands.Cog, name="금융 기능"):
                     # 이동평균 교차 전략
                     short_period, long_period = 5, 20
                     for i in range(long_period, len(closes)):
-                        short_ma = sum(closes[i - short_period:i]) / short_period
-                        long_ma = sum(closes[i - long_period:i]) / long_period
+                        short_ma = sum(closes[i - short_period : i]) / short_period
+                        long_ma = sum(closes[i - long_period : i]) / long_period
 
                         if short_ma > long_ma and krw > 0:
                             holdings = krw / closes[i]
@@ -332,32 +381,55 @@ class FinanceFeaturesCog(commands.Cog, name="금융 기능"):
                     color=discord.Color.green() if pnl >= 0 else discord.Color.red(),
                     timestamp=datetime.now(timezone.utc),
                 )
-                embed.add_field(name="시작 금액", value=f"{initial_krw:,.0f} KRW", inline=True)
-                embed.add_field(name="최종 금액", value=f"{final_value:,.0f} KRW", inline=True)
-                embed.add_field(name="수익률", value=f"{'📈' if pnl >= 0 else '📉'} {pnl_pct:+.2f}%", inline=True)
+                embed.add_field(
+                    name="시작 금액", value=f"{initial_krw:,.0f} KRW", inline=True
+                )
+                embed.add_field(
+                    name="최종 금액", value=f"{final_value:,.0f} KRW", inline=True
+                )
+                embed.add_field(
+                    name="수익률",
+                    value=f"{'📈' if pnl >= 0 else '📉'} {pnl_pct:+.2f}%",
+                    inline=True,
+                )
                 embed.add_field(name="거래 횟수", value=f"{len(trades)}회", inline=True)
-                embed.add_field(name="단순 보유 수익률", value=f"{buy_hold_pnl:+.2f}%", inline=True)
-                embed.add_field(name="초과 수익", value=f"{pnl_pct - buy_hold_pnl:+.2f}%", inline=True)
+                embed.add_field(
+                    name="단순 보유 수익률", value=f"{buy_hold_pnl:+.2f}%", inline=True
+                )
+                embed.add_field(
+                    name="초과 수익",
+                    value=f"{pnl_pct - buy_hold_pnl:+.2f}%",
+                    inline=True,
+                )
 
                 if trades:
                     trade_log = "\n".join(
                         f"{'🟢' if t[0] == '매수' else '🔴'} {t[0]} @ {t[1]:,.0f}"
                         for t in trades[-10:]
                     )
-                    embed.add_field(name="최근 거래 (최대 10건)", value=trade_log, inline=False)
+                    embed.add_field(
+                        name="최근 거래 (최대 10건)", value=trade_log, inline=False
+                    )
 
-                embed.set_footer(text="⚠️ 백테스트 결과는 과거 데이터 기반이며 미래 수익을 보장하지 않습니다")
+                embed.set_footer(
+                    text="⚠️ 백테스트 결과는 과거 데이터 기반이며 미래 수익을 보장하지 않습니다"
+                )
 
                 # 차트 생성 (matplotlib 사용 가능 시)
                 chart_file = None
                 try:
                     import matplotlib
-                    matplotlib.use("Agg")
-                    import matplotlib.pyplot as plt
-                    import matplotlib.dates as mdates
 
-                    fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(10, 6), gridspec_kw={"height_ratios": [3, 1]})
-                    fig.suptitle(f"{coin} {strategy.upper()} Backtest ({days}d)", fontsize=14)
+                    matplotlib.use("Agg")
+                    import matplotlib.dates as mdates
+                    import matplotlib.pyplot as plt
+
+                    fig, (ax1, ax2) = plt.subplots(
+                        2, 1, figsize=(10, 6), gridspec_kw={"height_ratios": [3, 1]}
+                    )
+                    fig.suptitle(
+                        f"{coin} {strategy.upper()} Backtest ({days}d)", fontsize=14
+                    )
 
                     # 가격 차트 + 매수/매도 표시
                     ax1.plot(closes, color="steelblue", linewidth=1, label="Price")
@@ -372,7 +444,9 @@ class FinanceFeaturesCog(commands.Cog, name="금융 기능"):
                     for idx_pos, t in trade_positions:
                         marker = "^" if t[0] == "매수" else "v"
                         color = "green" if t[0] == "매수" else "red"
-                        ax1.scatter(idx_pos, t[1], marker=marker, color=color, s=80, zorder=5)
+                        ax1.scatter(
+                            idx_pos, t[1], marker=marker, color=color, s=80, zorder=5
+                        )
                     ax1.set_ylabel("Price (KRW)")
                     ax1.legend(loc="upper left")
                     ax1.grid(True, alpha=0.3)
@@ -395,9 +469,17 @@ class FinanceFeaturesCog(commands.Cog, name="금융 기능"):
                                 trade_idx += 1
                         val = sim_krw + sim_holdings * price
                         cumulative.append((val - initial_krw) / initial_krw * 100)
-                    ax2.fill_between(range(len(cumulative)), cumulative, alpha=0.3,
-                                     color="green" if cumulative[-1] >= 0 else "red")
-                    ax2.plot(cumulative, color="green" if cumulative[-1] >= 0 else "red", linewidth=1)
+                    ax2.fill_between(
+                        range(len(cumulative)),
+                        cumulative,
+                        alpha=0.3,
+                        color="green" if cumulative[-1] >= 0 else "red",
+                    )
+                    ax2.plot(
+                        cumulative,
+                        color="green" if cumulative[-1] >= 0 else "red",
+                        linewidth=1,
+                    )
                     ax2.axhline(y=0, color="black", linewidth=0.5)
                     ax2.set_ylabel("PnL %")
                     ax2.set_xlabel("Days")
@@ -433,10 +515,16 @@ class FinanceFeaturesCog(commands.Cog, name="금융 기능"):
             articles = []
             try:
                 from duckduckgo_search import DDGS
+
                 with DDGS() as ddgs:
                     results = list(ddgs.news(f"{coin} cryptocurrency", max_results=5))
                     for r in results:
-                        articles.append({"title": r.get("title", ""), "body": r.get("body", "")[:200]})
+                        articles.append(
+                            {
+                                "title": r.get("title", ""),
+                                "body": r.get("body", "")[:200],
+                            }
+                        )
             except ImportError:
                 try:
                     async with aiohttp.ClientSession() as session:
@@ -445,6 +533,7 @@ class FinanceFeaturesCog(commands.Cog, name="금융 기능"):
                         ) as resp:
                             if resp.status == 200:
                                 import xml.etree.ElementTree as ET
+
                                 text = await resp.text()
                                 root = ET.fromstring(text)
                                 for item in root.findall(".//item")[:5]:
@@ -460,7 +549,9 @@ class FinanceFeaturesCog(commands.Cog, name="금융 기능"):
             news_text = "\n".join(f"- {a['title']}: {a['body']}" for a in articles)
 
             # AI 감정 분석
-            claude_key = os.environ.get("CLAUDE_API_KEY") or os.environ.get("ANTHROPIC_API_KEY")
+            claude_key = os.environ.get("CLAUDE_API_KEY") or os.environ.get(
+                "ANTHROPIC_API_KEY"
+            )
             sentiment_result = None
             if claude_key:
                 async with aiohttp.ClientSession() as session:
@@ -474,8 +565,13 @@ class FinanceFeaturesCog(commands.Cog, name="금융 기능"):
                         json={
                             "model": "claude-sonnet-4-5-20250929",
                             "max_tokens": 1024,
-                            "messages": [{"role": "user", "content": f"다음 {coin} 관련 뉴스들의 시장 감정을 분석해주세요. "
-                                f"긍정/부정/중립 비율, 전체 감정 점수(-100~+100), 핵심 키워드를 한국어로 알려주세요:\n{news_text}"}],
+                            "messages": [
+                                {
+                                    "role": "user",
+                                    "content": f"다음 {coin} 관련 뉴스들의 시장 감정을 분석해주세요. "
+                                    f"긍정/부정/중립 비율, 전체 감정 점수(-100~+100), 핵심 키워드를 한국어로 알려주세요:\n{news_text}",
+                                }
+                            ],
                         },
                     ) as resp:
                         if resp.status == 200:
@@ -498,7 +594,11 @@ class FinanceFeaturesCog(commands.Cog, name="금융 기능"):
             else:
                 embed.description = "AI 분석 불가 (API 키 확인 필요)\n\n**최근 뉴스:**"
                 for a in articles[:5]:
-                    embed.add_field(name=a["title"][:100], value=a["body"][:100] or "...", inline=False)
+                    embed.add_field(
+                        name=a["title"][:100],
+                        value=a["body"][:100] or "...",
+                        inline=False,
+                    )
 
             embed.set_footer(text="JARVIS News Sentiment")
             await ctx.send(embed=embed)
@@ -509,8 +609,12 @@ class FinanceFeaturesCog(commands.Cog, name="금융 기능"):
         """실시간 환율을 조회합니다. 사용법: !환율 USD"""
         currency = currency.upper()
         currency_map = {
-            "달러": "USD", "엔": "JPY", "유로": "EUR", "위안": "CNY",
-            "파운드": "GBP", "원": "KRW",
+            "달러": "USD",
+            "엔": "JPY",
+            "유로": "EUR",
+            "위안": "CNY",
+            "파운드": "GBP",
+            "원": "KRW",
         }
         currency = currency_map.get(currency, currency)
 
@@ -533,11 +637,21 @@ class FinanceFeaturesCog(commands.Cog, name="금융 기능"):
                 timestamp=datetime.now(timezone.utc),
             )
             if krw_rate:
-                embed.add_field(name="🇰🇷 KRW", value=f"**{krw_rate:,.2f}** 원", inline=True)
+                embed.add_field(
+                    name="🇰🇷 KRW", value=f"**{krw_rate:,.2f}** 원", inline=True
+                )
             for code in ["USD", "EUR", "JPY", "CNY", "GBP"]:
                 if code != currency and code in rates:
-                    flag = {"USD": "🇺🇸", "EUR": "🇪🇺", "JPY": "🇯🇵", "CNY": "🇨🇳", "GBP": "🇬🇧"}.get(code, "🏳️")
-                    embed.add_field(name=f"{flag} {code}", value=f"{rates[code]:,.4f}", inline=True)
+                    flag = {
+                        "USD": "🇺🇸",
+                        "EUR": "🇪🇺",
+                        "JPY": "🇯🇵",
+                        "CNY": "🇨🇳",
+                        "GBP": "🇬🇧",
+                    }.get(code, "🏳️")
+                    embed.add_field(
+                        name=f"{flag} {code}", value=f"{rates[code]:,.4f}", inline=True
+                    )
 
             embed.set_footer(text=f"Source: ExchangeRate API | {data.get('date', '')}")
             await ctx.send(embed=embed)
@@ -554,7 +668,9 @@ class FinanceFeaturesCog(commands.Cog, name="금융 기능"):
             days = 7 if period in ["주간", "weekly", "7일"] else 30
             trade_log_path = os.path.join(
                 os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
-                "crypto_trading", "data", "trade_log.json",
+                "crypto_trading",
+                "data",
+                "trade_log.json",
             )
 
             trades = []
@@ -562,13 +678,19 @@ class FinanceFeaturesCog(commands.Cog, name="금융 기능"):
                 try:
                     with open(trade_log_path, "r", encoding="utf-8") as f:
                         all_trades = json.load(f)
-                    cutoff = (datetime.now(timezone.utc) - timedelta(days=days)).isoformat()
+                    cutoff = (
+                        datetime.now(timezone.utc) - timedelta(days=days)
+                    ).isoformat()
                     trades = [t for t in all_trades if t.get("timestamp", "") >= cutoff]
                 except Exception:
                     pass
 
-            total_buy = sum(t.get("amount_krw", 0) for t in trades if t.get("side") == "buy")
-            total_sell = sum(t.get("amount_krw", 0) for t in trades if t.get("side") == "sell")
+            total_buy = sum(
+                t.get("amount_krw", 0) for t in trades if t.get("side") == "buy"
+            )
+            total_sell = sum(
+                t.get("amount_krw", 0) for t in trades if t.get("side") == "sell"
+            )
             realized_pnl = total_sell - total_buy
 
             # 현재 포트폴리오
@@ -589,20 +711,30 @@ class FinanceFeaturesCog(commands.Cog, name="금융 기능"):
             period_name = "주간" if days == 7 else "월간"
             embed = discord.Embed(
                 title=f"📊 {period_name} 수익 리포트",
-                color=discord.Color.green() if realized_pnl >= 0 else discord.Color.red(),
+                color=(
+                    discord.Color.green() if realized_pnl >= 0 else discord.Color.red()
+                ),
                 timestamp=datetime.now(timezone.utc),
             )
             embed.add_field(name="기간", value=f"최근 {days}일", inline=True)
             embed.add_field(name="총 거래", value=f"{len(trades)}건", inline=True)
-            embed.add_field(name="매수 총액", value=f"{total_buy:,.0f} KRW", inline=True)
-            embed.add_field(name="매도 총액", value=f"{total_sell:,.0f} KRW", inline=True)
+            embed.add_field(
+                name="매수 총액", value=f"{total_buy:,.0f} KRW", inline=True
+            )
+            embed.add_field(
+                name="매도 총액", value=f"{total_sell:,.0f} KRW", inline=True
+            )
             embed.add_field(
                 name="실현 손익",
                 value=f"{'📈' if realized_pnl >= 0 else '📉'} {realized_pnl:+,.0f} KRW",
                 inline=True,
             )
             if portfolio_value:
-                embed.add_field(name="현재 포트폴리오", value=f"💰 {portfolio_value:,.0f} KRW", inline=True)
+                embed.add_field(
+                    name="현재 포트폴리오",
+                    value=f"💰 {portfolio_value:,.0f} KRW",
+                    inline=True,
+                )
 
             embed.set_footer(text="JARVIS Finance Report")
             await ctx.send(embed=embed)
@@ -627,21 +759,49 @@ class FinanceFeaturesCog(commands.Cog, name="금융 기능"):
                         async with session.get(stats_url) as resp:
                             if resp.status == 200:
                                 stats = await resp.json()
-                                embed.add_field(name="해시레이트", value=f"{stats.get('hash_rate', 0) / 1e9:.2f} EH/s", inline=True)
-                                embed.add_field(name="난이도", value=f"{stats.get('difficulty', 0) / 1e12:.2f}T", inline=True)
-                                embed.add_field(name="일일 거래량", value=f"{stats.get('n_tx', 0):,}", inline=True)
-                                embed.add_field(name="블록 수", value=f"{stats.get('n_blocks_total', 0):,}", inline=True)
-                                market_cap = stats.get('market_price_usd', 0) * 21_000_000
-                                embed.add_field(name="시가총액 (추정)", value=f"${market_cap / 1e9:,.1f}B", inline=True)
+                                embed.add_field(
+                                    name="해시레이트",
+                                    value=f"{stats.get('hash_rate', 0) / 1e9:.2f} EH/s",
+                                    inline=True,
+                                )
+                                embed.add_field(
+                                    name="난이도",
+                                    value=f"{stats.get('difficulty', 0) / 1e12:.2f}T",
+                                    inline=True,
+                                )
+                                embed.add_field(
+                                    name="일일 거래량",
+                                    value=f"{stats.get('n_tx', 0):,}",
+                                    inline=True,
+                                )
+                                embed.add_field(
+                                    name="블록 수",
+                                    value=f"{stats.get('n_blocks_total', 0):,}",
+                                    inline=True,
+                                )
+                                market_cap = (
+                                    stats.get("market_price_usd", 0) * 21_000_000
+                                )
+                                embed.add_field(
+                                    name="시가총액 (추정)",
+                                    value=f"${market_cap / 1e9:,.1f}B",
+                                    inline=True,
+                                )
                                 embed.add_field(
                                     name="채굴 보상",
                                     value=f"{stats.get('miners_revenue_btc', 0):.2f} BTC/day",
                                     inline=True,
                                 )
                 except Exception as e:
-                    embed.add_field(name="⚠️", value=f"BTC 온체인 데이터 조회 실패: {e}", inline=False)
+                    embed.add_field(
+                        name="⚠️",
+                        value=f"BTC 온체인 데이터 조회 실패: {e}",
+                        inline=False,
+                    )
             else:
-                embed.description = f"{coin} 온체인 데이터는 BTC만 지원됩니다. (추후 ETH 확장 예정)"
+                embed.description = (
+                    f"{coin} 온체인 데이터는 BTC만 지원됩니다. (추후 ETH 확장 예정)"
+                )
 
             embed.set_footer(text="JARVIS On-Chain Analytics")
             await ctx.send(embed=embed)

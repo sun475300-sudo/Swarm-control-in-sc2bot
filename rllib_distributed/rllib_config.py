@@ -4,28 +4,30 @@ SC2 Bot large-scale RL with RLlib APPO/IMPALA
 """
 
 from __future__ import annotations
-from typing import Optional, Any
+
 import os
 import sys
+from typing import Any, Optional
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 try:
     import ray
-    from ray.rllib.algorithms.ppo import PPOConfig
     from ray.rllib.algorithms.appo import APPOConfig
     from ray.rllib.algorithms.impala import IMPALAConfig
+    from ray.rllib.algorithms.ppo import PPOConfig
     from ray.rllib.env.env_context import EnvContext
+
     RLLIB_AVAILABLE = True
 except ImportError:
     RLLIB_AVAILABLE = False
 
 from gymnasium_env.sc2_gym_env import SC2ZergEnv
 
-
 # ─────────────────────────────────────────────
 # RLlib environment wrapper
 # ─────────────────────────────────────────────
+
 
 class SC2RLlibEnv(SC2ZergEnv):
     """RLlib-compatible SC2 Gym environment."""
@@ -41,6 +43,7 @@ class SC2RLlibEnv(SC2ZergEnv):
 # ─────────────────────────────────────────────
 # Algorithm configurations
 # ─────────────────────────────────────────────
+
 
 def build_ppo_config() -> dict:
     """PPO config for SC2 bot training."""
@@ -115,6 +118,7 @@ def build_appo_config() -> dict:
 # Training runner
 # ─────────────────────────────────────────────
 
+
 def train_with_rllib(
     algorithm: str = "ppo",
     iterations: int = 10,
@@ -140,9 +144,11 @@ def train_with_rllib(
     for i in range(iterations):
         result = algo.train()
         results.append(result)
-        print(f"  Iter {i+1:3d} | "
-              f"Reward: {result.get('episode_reward_mean', 0):.2f} | "
-              f"Steps: {result.get('timesteps_total', 0)}")
+        print(
+            f"  Iter {i+1:3d} | "
+            f"Reward: {result.get('episode_reward_mean', 0):.2f} | "
+            f"Steps: {result.get('timesteps_total', 0)}"
+        )
 
         if (i + 1) % 5 == 0:
             checkpoint = algo.save(checkpoint_dir)
@@ -156,6 +162,7 @@ def train_with_rllib(
 # ─────────────────────────────────────────────
 # Self-play league (multi-agent)
 # ─────────────────────────────────────────────
+
 
 def build_selfplay_config():
     """Multi-agent self-play configuration."""
@@ -186,10 +193,12 @@ def build_selfplay_config():
 # Simulation fallback
 # ─────────────────────────────────────────────
 
+
 def _simulate_distributed_training(iterations: int) -> dict:
     """Simulate multi-worker training without Ray."""
-    from gymnasium_env.sc2_gym_env import SC2ZergEnv
     import random
+
+    from gymnasium_env.sc2_gym_env import SC2ZergEnv
 
     # 4 parallel "workers"
     n_workers = 4
@@ -220,8 +229,9 @@ def _simulate_distributed_training(iterations: int) -> dict:
             iter_rewards.append(ep_r)
         mean_r = sum(iter_rewards) / len(iter_rewards)
         all_rewards.append(mean_r)
-        print(f"  Iter {it+1:3d} | Mean reward: {mean_r:.2f} "
-              f"(4 workers × 500 steps)")
+        print(
+            f"  Iter {it+1:3d} | Mean reward: {mean_r:.2f} " f"(4 workers × 500 steps)"
+        )
 
     return {
         "iterations": iterations,

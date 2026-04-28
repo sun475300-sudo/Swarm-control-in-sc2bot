@@ -5,9 +5,9 @@ Runs all test categories in sequence with detailed logging
 
 import json
 import time
-from pathlib import Path
 from datetime import datetime
-from typing import Dict, List, Any
+from pathlib import Path
+from typing import Any, Dict, List
 
 
 class ComprehensiveTestSuite:

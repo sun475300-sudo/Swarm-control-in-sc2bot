@@ -18,15 +18,15 @@ Usage:
     python log_analyzer.py --focus timing # 타이밍 분석만
 """
 
-import json
-import os
-import glob
 import argparse
-from pathlib import Path
-from datetime import datetime
-from typing import Dict, List, Optional, Any
-from collections import Counter, defaultdict
+import glob
+import json
 import logging
+import os
+from collections import Counter, defaultdict
+from datetime import datetime
+from pathlib import Path
+from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger("LogAnalyzer")
 
@@ -50,13 +50,17 @@ class LogAnalyzer:
         race_path = self.base_dir / "local_training" / "data" / "race_stats.json"
         if race_path.exists():
             self.race_stats = json.loads(race_path.read_text(encoding="utf-8"))
-            logger.info(f"  race_stats.json: {sum(v.get('games', 0) for v in self.race_stats.values())} games")
+            logger.info(
+                f"  race_stats.json: {sum(v.get('games', 0) for v in self.race_stats.values())} games"
+            )
 
         # 2. Game stats
         stats_path = self.base_dir / "game_stats.json"
         if stats_path.exists():
             self.game_stats = json.loads(stats_path.read_text(encoding="utf-8"))
-            logger.info(f"  game_stats.json: {self.game_stats.get('total_games', 0)} games")
+            logger.info(
+                f"  game_stats.json: {self.game_stats.get('total_games', 0)} games"
+            )
 
         # 3. Game data files (from GameDataLogger)
         game_dir = self.base_dir / "data" / "games"
@@ -79,13 +83,17 @@ class LogAnalyzer:
                     self.tournament_results.append(data)
                 except Exception:
                     pass
-            logger.info(f"  data/tournament/: {len(self.tournament_results)} tournaments")
+            logger.info(
+                f"  data/tournament/: {len(self.tournament_results)} tournaments"
+            )
 
         # 5. Bot log (last 500 lines)
         log_path = self.base_dir / "logs" / "bot.log"
         if log_path.exists():
             try:
-                lines = log_path.read_text(encoding="utf-8", errors="replace").splitlines()
+                lines = log_path.read_text(
+                    encoding="utf-8", errors="replace"
+                ).splitlines()
                 self.bot_log_lines = lines[-500:]
                 logger.info(f"  logs/bot.log: {len(lines)} lines (last 500 loaded)")
             except Exception:
@@ -142,7 +150,9 @@ class LogAnalyzer:
             return "\n".join(lines)
 
         win_rate = total_wins / total_games * 100
-        lines.append(f"  Total: {total_games} games, {total_wins}W-{total_games - total_wins}L")
+        lines.append(
+            f"  Total: {total_games} games, {total_wins}W-{total_games - total_wins}L"
+        )
         lines.append(f"  Overall Win Rate: {win_rate:.1f}%")
 
         # Rating
@@ -170,8 +180,9 @@ class LogAnalyzer:
             return "\n".join(lines)
 
         # Sort by win rate (worst first - needs most improvement)
-        sorted_races = sorted(self.race_stats.items(),
-                              key=lambda x: x[1].get("win_rate", 0))
+        sorted_races = sorted(
+            self.race_stats.items(), key=lambda x: x[1].get("win_rate", 0)
+        )
 
         for race, stats in sorted_races:
             games = stats.get("games", 0)
@@ -180,22 +191,32 @@ class LogAnalyzer:
             win_rate = stats.get("win_rate", 0)
 
             indicator = "!!" if win_rate < 20 else ("!" if win_rate < 40 else " ")
-            lines.append(f"  {indicator} vs {race:8s}: {wins}W-{losses}L ({win_rate:.1f}%) [{games} games]")
+            lines.append(
+                f"  {indicator} vs {race:8s}: {wins}W-{losses}L ({win_rate:.1f}%) [{games} games]"
+            )
 
         # Identify weakest matchup
         weakest = sorted_races[0]
-        lines.append(f"\n  WEAKEST MATCHUP: vs {weakest[0]} ({weakest[1].get('win_rate', 0):.1f}%)")
+        lines.append(
+            f"\n  WEAKEST MATCHUP: vs {weakest[0]} ({weakest[1].get('win_rate', 0):.1f}%)"
+        )
 
         # Specific recommendations per race
         for race, stats in sorted_races:
             wr = stats.get("win_rate", 0)
             if wr < 20:
                 if race == "Zerg":
-                    lines.append(f"  -> vs Zerg: Need better ZvZ opening (roach timing / baneling bust defense)")
+                    lines.append(
+                        f"  -> vs Zerg: Need better ZvZ opening (roach timing / baneling bust defense)"
+                    )
                 elif race == "Terran":
-                    lines.append(f"  -> vs Terran: Need better anti-bio strategy (banelings vs marines)")
+                    lines.append(
+                        f"  -> vs Terran: Need better anti-bio strategy (banelings vs marines)"
+                    )
                 elif race == "Protoss":
-                    lines.append(f"  -> vs Protoss: Need better anti-gateway pressure (roach/ravager timing)")
+                    lines.append(
+                        f"  -> vs Protoss: Need better anti-gateway pressure (roach/ravager timing)"
+                    )
 
         lines.append("")
         return "\n".join(lines)
@@ -313,9 +334,13 @@ class LogAnalyzer:
 
         total = len(self.game_data_files)
         if total > 0:
-            lines.append(f"  Mineral Banking (>1000): {high_mineral_games}/{total} games ({high_mineral_games/total*100:.0f}%)")
+            lines.append(
+                f"  Mineral Banking (>1000): {high_mineral_games}/{total} games ({high_mineral_games/total*100:.0f}%)"
+            )
             if high_mineral_games / total > 0.5:
-                lines.append("    !! SPENDING ISSUE - Over half of games have mineral banking")
+                lines.append(
+                    "    !! SPENDING ISSUE - Over half of games have mineral banking"
+                )
 
         if peak_workers_list:
             avg_peak = sum(peak_workers_list) / len(peak_workers_list)
@@ -355,7 +380,9 @@ class LogAnalyzer:
             lines.append(f"  Average Loss per Fight: {avg_loss:.1f} supply")
             lines.append(f"  Big Losses (>30 supply): {big_losses}")
             if big_losses > total_engagements * 0.3:
-                lines.append("    !! TOO MANY BIG LOSSES - Improve engagement decisions")
+                lines.append(
+                    "    !! TOO MANY BIG LOSSES - Improve engagement decisions"
+                )
 
         # Unit composition from production logs
         unit_counts = Counter()
@@ -412,13 +439,21 @@ class LogAnalyzer:
                 pattern, count = most_common[0]
                 lines.append(f"\n  PRIMARY WEAKNESS: {pattern} ({count} occurrences)")
                 if "Early Rush" in pattern:
-                    lines.append("    -> Focus on: Early defense (spine crawlers, queens, zergling production)")
+                    lines.append(
+                        "    -> Focus on: Early defense (spine crawlers, queens, zergling production)"
+                    )
                 elif "Early-Mid" in pattern:
-                    lines.append("    -> Focus on: Macro efficiency, timely expansion, roach timing")
+                    lines.append(
+                        "    -> Focus on: Macro efficiency, timely expansion, roach timing"
+                    )
                 elif "Mid Game" in pattern:
-                    lines.append("    -> Focus on: Army composition, tech transitions, engagement timing")
+                    lines.append(
+                        "    -> Focus on: Army composition, tech transitions, engagement timing"
+                    )
                 elif "Late Game" in pattern:
-                    lines.append("    -> Focus on: Upgrades, Hive tech, endgame composition")
+                    lines.append(
+                        "    -> Focus on: Upgrades, Hive tech, endgame composition"
+                    )
         else:
             lines.append("  No defeat data available")
 
@@ -477,17 +512,22 @@ class LogAnalyzer:
 
         # 1. Weakest matchup
         if self.race_stats:
-            weakest_race = min(self.race_stats.items(),
-                               key=lambda x: x[1].get("win_rate", 100))
+            weakest_race = min(
+                self.race_stats.items(), key=lambda x: x[1].get("win_rate", 100)
+            )
             if weakest_race[1].get("win_rate", 100) < 20:
-                lines.append(f"  {priority}. [CRITICAL] vs {weakest_race[0]} win rate is "
-                             f"{weakest_race[1]['win_rate']:.0f}% - needs dedicated practice")
+                lines.append(
+                    f"  {priority}. [CRITICAL] vs {weakest_race[0]} win rate is "
+                    f"{weakest_race[1]['win_rate']:.0f}% - needs dedicated practice"
+                )
                 priority += 1
 
         # 2. Overall rate
         if overall_wr < 30:
-            lines.append(f"  {priority}. [HIGH] Overall win rate {overall_wr:.0f}% - "
-                         "focus on fundamentals (macro, spending, expansion timing)")
+            lines.append(
+                f"  {priority}. [HIGH] Overall win rate {overall_wr:.0f}% - "
+                "focus on fundamentals (macro, spending, expansion timing)"
+            )
             priority += 1
 
         # 3. Game data insights
@@ -499,23 +539,34 @@ class LogAnalyzer:
                 if exps:
                     exp_times.append(exps[0].get("time", 999))
             if exp_times and sum(exp_times) / len(exp_times) > 90:
-                lines.append(f"  {priority}. [HIGH] Natural expansion averaging "
-                             f"{sum(exp_times)/len(exp_times):.0f}s - use Hatch First build (target: 60s)")
+                lines.append(
+                    f"  {priority}. [HIGH] Natural expansion averaging "
+                    f"{sum(exp_times)/len(exp_times):.0f}s - use Hatch First build (target: 60s)"
+                )
                 priority += 1
 
             # Mineral banking
-            banking = sum(1 for gd in self.game_data_files
-                          if any(s.get("minerals", 0) > 1000
-                                 for s in gd.get("resource_snapshots", [])))
+            banking = sum(
+                1
+                for gd in self.game_data_files
+                if any(
+                    s.get("minerals", 0) > 1000
+                    for s in gd.get("resource_snapshots", [])
+                )
+            )
             if banking > len(self.game_data_files) * 0.5:
-                lines.append(f"  {priority}. [MEDIUM] Mineral banking detected in "
-                             f"{banking}/{len(self.game_data_files)} games - add more production")
+                lines.append(
+                    f"  {priority}. [MEDIUM] Mineral banking detected in "
+                    f"{banking}/{len(self.game_data_files)} games - add more production"
+                )
                 priority += 1
 
         # 4. General recommendations
         if total_games < 50:
-            lines.append(f"  {priority}. [INFO] Only {total_games} games recorded - "
-                         "need more data for accurate analysis (target: 100+ games)")
+            lines.append(
+                f"  {priority}. [INFO] Only {total_games} games recorded - "
+                "need more data for accurate analysis (target: 100+ games)"
+            )
             priority += 1
 
         if priority == 1:
@@ -540,9 +591,13 @@ class LogAnalyzer:
 
 def main():
     parser = argparse.ArgumentParser(description="SC2 Bot Log Analyzer")
-    parser.add_argument("--focus", type=str, default=None,
-                        choices=["race", "timing", "combat", "economy", "errors"],
-                        help="Focus on specific analysis area")
+    parser.add_argument(
+        "--focus",
+        type=str,
+        default=None,
+        choices=["race", "timing", "combat", "economy", "errors"],
+        help="Focus on specific analysis area",
+    )
     args = parser.parse_args()
 
     analyzer = LogAnalyzer()

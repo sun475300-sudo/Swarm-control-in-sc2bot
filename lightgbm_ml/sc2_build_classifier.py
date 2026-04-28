@@ -30,6 +30,7 @@ log = logging.getLogger("sc2_build_classifier")
 # ---------------------------------------------------------------------------
 try:
     import lightgbm as lgb
+
     LGB_AVAILABLE = True
     log.info("LightGBM %s available.", lgb.__version__)
 except ImportError:
@@ -38,6 +39,7 @@ except ImportError:
 
 try:
     import optuna
+
     OPTUNA_AVAILABLE = True
     optuna.logging.set_verbosity(optuna.logging.WARNING)
 except ImportError:
@@ -54,14 +56,15 @@ except ImportError:
     PLT_AVAILABLE = False
 
 try:
-    from sklearn.model_selection import train_test_split, StratifiedKFold
     from sklearn.metrics import (
         accuracy_score,
         classification_report,
         confusion_matrix,
         log_loss,
     )
+    from sklearn.model_selection import StratifiedKFold, train_test_split
     from sklearn.preprocessing import LabelEncoder
+
     SK_AVAILABLE = True
 except ImportError:
     SK_AVAILABLE = False
@@ -104,10 +107,10 @@ NUMERIC_FEATURES: List[str] = [
 ]
 
 CATEGORICAL_FEATURES: List[str] = [
-    "opponent_race",        # terran / protoss / zerg / random
-    "map_name",             # categorical map identifier
+    "opponent_race",  # terran / protoss / zerg / random
+    "map_name",  # categorical map identifier
     "first_building_type",  # first non-hatchery building placed
-    "gas_timing",           # early / normal / late
+    "gas_timing",  # early / normal / late
 ]
 
 ALL_FEATURES: List[str] = NUMERIC_FEATURES + CATEGORICAL_FEATURES
@@ -185,23 +188,62 @@ def feature_engineering_from_game_state(state: Dict[str, Any]) -> Dict[str, Any]
     enemy_units = state.get("enemy_units", [])
     enemy_structures = state.get("enemy_structures", [])
 
-    tech_buildings = {"SPAWNINGPOOL", "ROACHWARREN", "HYDRALISKDEN",
-                      "SPIRE", "INFESTATIONPIT", "ULTRALISKCAVERN",
-                      "LURKERDENMP", "BANELINGNEST"}
-    prod_buildings = {"HATCHERY", "LAIR", "HIVE", "GATEWAY", "BARRACKS",
-                      "FACTORY", "STARPORT", "ROBOTICSFACILITY"}
+    tech_buildings = {
+        "SPAWNINGPOOL",
+        "ROACHWARREN",
+        "HYDRALISKDEN",
+        "SPIRE",
+        "INFESTATIONPIT",
+        "ULTRALISKCAVERN",
+        "LURKERDENMP",
+        "BANELINGNEST",
+    }
+    prod_buildings = {
+        "HATCHERY",
+        "LAIR",
+        "HIVE",
+        "GATEWAY",
+        "BARRACKS",
+        "FACTORY",
+        "STARPORT",
+        "ROBOTICSFACILITY",
+    }
 
-    tech_count = sum(1 for s in structures if s.get("name", "").upper() in tech_buildings)
-    prod_count = sum(1 for s in structures if s.get("name", "").upper() in prod_buildings)
+    tech_count = sum(
+        1 for s in structures if s.get("name", "").upper() in tech_buildings
+    )
+    prod_count = sum(
+        1 for s in structures if s.get("name", "").upper() in prod_buildings
+    )
     expansion_count = sum(
-        1 for s in structures
-        if s.get("name", "").upper() in {"HATCHERY", "LAIR", "HIVE", "NEXUS", "COMMANDCENTER", "ORBITALCOMMAND", "PLANETARYFORTRESS"}
+        1
+        for s in structures
+        if s.get("name", "").upper()
+        in {
+            "HATCHERY",
+            "LAIR",
+            "HIVE",
+            "NEXUS",
+            "COMMANDCENTER",
+            "ORBITALCOMMAND",
+            "PLANETARYFORTRESS",
+        }
     )
 
-    workers = sum(1 for u in units if u.get("name", "").upper() in {"DRONE", "PROBE", "SCV"})
+    workers = sum(
+        1 for u in units if u.get("name", "").upper() in {"DRONE", "PROBE", "SCV"}
+    )
     army_supply = supply_used - workers
-    army_value_min = sum(u.get("mineral_cost", 0) for u in units if u.get("name", "").upper() not in {"DRONE", "PROBE", "SCV"})
-    army_value_ves = sum(u.get("vespene_cost", 0) for u in units if u.get("name", "").upper() not in {"DRONE", "PROBE", "SCV"})
+    army_value_min = sum(
+        u.get("mineral_cost", 0)
+        for u in units
+        if u.get("name", "").upper() not in {"DRONE", "PROBE", "SCV"}
+    )
+    army_value_ves = sum(
+        u.get("vespene_cost", 0)
+        for u in units
+        if u.get("name", "").upper() not in {"DRONE", "PROBE", "SCV"}
+    )
 
     # Simple mineral / gas income heuristic: 60 per worker-minute for minerals
     mineral_rate = workers * 60 if game_time > 0 else 0
@@ -367,7 +409,11 @@ class SC2BuildClassifier:
         self._fitted = True
         log.info(
             "Training complete — best iteration %d.",
-            self.model.best_iteration_ if hasattr(self.model, "best_iteration_") else -1,
+            (
+                self.model.best_iteration_
+                if hasattr(self.model, "best_iteration_")
+                else -1
+            ),
         )
         return self
 
@@ -401,7 +447,10 @@ class SC2BuildClassifier:
         probs = np.zeros((X.shape[0], n_classes))
         for i in range(X.shape[0]):
             dists = np.array(
-                [np.linalg.norm(X[i] - self._centroids[c]) for c in sorted(self._centroids)]
+                [
+                    np.linalg.norm(X[i] - self._centroids[c])
+                    for c in sorted(self._centroids)
+                ]
             )
             exp_neg = np.exp(-dists)
             probs[i] = exp_neg / exp_neg.sum()
@@ -410,7 +459,9 @@ class SC2BuildClassifier:
     def predict_build(self, game_state: Dict[str, Any]) -> Tuple[str, float]:
         """Predict the build label for a live game state dictionary."""
         feats = feature_engineering_from_game_state(game_state)
-        row = np.array([[feats.get(f, 0) for f in self.feature_names]], dtype=np.float32)
+        row = np.array(
+            [[feats.get(f, 0) for f in self.feature_names]], dtype=np.float32
+        )
         proba = self.predict_proba(row)[0]
         idx = int(np.argmax(proba))
         return BUILD_LABELS[idx], float(proba[idx])
@@ -443,14 +494,16 @@ class SC2BuildClassifier:
                 log.info("  %-30s %.4f", name, val)
 
     # ---- evaluation -------------------------------------------------------
-    def evaluate(
-        self, X: np.ndarray, y: np.ndarray
-    ) -> Dict[str, Any]:
+    def evaluate(self, X: np.ndarray, y: np.ndarray) -> Dict[str, Any]:
         """Compute accuracy, log-loss, confusion matrix, per-class report."""
         y_pred = self.predict(X)
         y_proba = self.predict_proba(X)
 
-        acc = float(accuracy_score(y, y_pred)) if SK_AVAILABLE else float((y_pred == y).mean())
+        acc = (
+            float(accuracy_score(y, y_pred))
+            if SK_AVAILABLE
+            else float((y_pred == y).mean())
+        )
 
         ll = None
         if SK_AVAILABLE:
@@ -467,8 +520,15 @@ class SC2BuildClassifier:
                 y, y_pred, target_names=BUILD_LABELS, output_dict=True
             )
 
-        result = {"accuracy": acc, "log_loss": ll, "confusion_matrix": cm, "report": report}
-        log.info("Evaluation — accuracy=%.4f  log_loss=%s", acc, f"{ll:.4f}" if ll else "N/A")
+        result = {
+            "accuracy": acc,
+            "log_loss": ll,
+            "confusion_matrix": cm,
+            "report": report,
+        }
+        log.info(
+            "Evaluation — accuracy=%.4f  log_loss=%s", acc, f"{ll:.4f}" if ll else "N/A"
+        )
         return result
 
     def plot_confusion_matrix(
@@ -505,13 +565,18 @@ class SC2BuildClassifier:
         for i in range(n):
             for j in range(n):
                 ax.text(
-                    j, i, f"{cm[i, j]}",
-                    ha="center", va="center",
+                    j,
+                    i,
+                    f"{cm[i, j]}",
+                    ha="center",
+                    va="center",
                     color="white" if cm[i, j] > thresh else "black",
                 )
 
         # Per-class precision / recall beneath the matrix
-        report = classification_report(y, y_pred, target_names=BUILD_LABELS, output_dict=True)
+        report = classification_report(
+            y, y_pred, target_names=BUILD_LABELS, output_dict=True
+        )
         lines = []
         for lbl in BUILD_LABELS:
             p = report[lbl]["precision"]
@@ -543,7 +608,9 @@ class SC2BuildClassifier:
         if train_sizes is None:
             train_sizes = [0.2, 0.4, 0.6, 0.8, 1.0]
 
-        skf = StratifiedKFold(n_splits=n_splits, shuffle=True, random_state=self.random_state)
+        skf = StratifiedKFold(
+            n_splits=n_splits, shuffle=True, random_state=self.random_state
+        )
         train_scores_mean = []
         val_scores_mean = []
 
@@ -560,7 +627,8 @@ class SC2BuildClassifier:
                 if clf is None:
                     return None
                 clf.fit(
-                    X_tr, y_tr,
+                    X_tr,
+                    y_tr,
                     eval_set=[(X_va, y_va)],
                     callbacks=[
                         lgb.early_stopping(stopping_rounds=30, verbose=False),
@@ -617,7 +685,8 @@ class SC2BuildClassifier:
             clf = lgb.LGBMClassifier(**params)
             t0 = time.perf_counter()
             clf.fit(
-                X_train, y_train,
+                X_train,
+                y_train,
                 eval_set=[(X_test, y_test)],
                 callbacks=[
                     lgb.early_stopping(stopping_rounds=50, verbose=False),
@@ -649,7 +718,9 @@ class SC2BuildClassifier:
         Returns the best parameters found and re-fits the model.
         """
         if not OPTUNA_AVAILABLE or not LGB_AVAILABLE or not SK_AVAILABLE:
-            log.warning("Optuna / LightGBM / sklearn not available — skipping optimisation.")
+            log.warning(
+                "Optuna / LightGBM / sklearn not available — skipping optimisation."
+            )
             return {}
 
         X_train, X_val, y_train, y_val = train_test_split(
@@ -658,11 +729,15 @@ class SC2BuildClassifier:
 
         def objective(trial: "optuna.Trial") -> float:
             params = {
-                "boosting_type": trial.suggest_categorical("boosting_type", ["gbdt", "dart"]),
+                "boosting_type": trial.suggest_categorical(
+                    "boosting_type", ["gbdt", "dart"]
+                ),
                 "objective": "multiclass",
                 "num_class": len(BUILD_LABELS),
                 "metric": "multi_logloss",
-                "learning_rate": trial.suggest_float("learning_rate", 0.01, 0.3, log=True),
+                "learning_rate": trial.suggest_float(
+                    "learning_rate", 0.01, 0.3, log=True
+                ),
                 "max_depth": trial.suggest_int("max_depth", 3, 12),
                 "num_leaves": trial.suggest_int("num_leaves", 15, 255),
                 "n_estimators": 800,
@@ -675,13 +750,16 @@ class SC2BuildClassifier:
                 "verbose": -1,
             }
 
-            skf = StratifiedKFold(n_splits=cv_folds, shuffle=True, random_state=self.random_state)
+            skf = StratifiedKFold(
+                n_splits=cv_folds, shuffle=True, random_state=self.random_state
+            )
             losses: List[float] = []
 
             for tr_idx, va_idx in skf.split(X_train, y_train):
                 clf = lgb.LGBMClassifier(**params)
                 clf.fit(
-                    X_train[tr_idx], y_train[tr_idx],
+                    X_train[tr_idx],
+                    y_train[tr_idx],
                     eval_set=[(X_train[va_idx], y_train[va_idx])],
                     callbacks=[
                         lgb.early_stopping(stopping_rounds=30, verbose=False),
@@ -712,7 +790,8 @@ class SC2BuildClassifier:
         best_full.update(best)
         self.model = lgb.LGBMClassifier(**best_full)
         self.model.fit(
-            X_train, y_train,
+            X_train,
+            y_train,
             eval_set=[(X_val, y_val)],
             callbacks=[
                 lgb.early_stopping(stopping_rounds=50, verbose=True),
@@ -756,7 +835,12 @@ def main() -> None:
 
     # 1. Generate data
     X, y, feat_names = generate_synthetic_dataset(n_samples=4000)
-    log.info("Dataset: %d samples, %d features, %d classes", X.shape[0], X.shape[1], len(BUILD_LABELS))
+    log.info(
+        "Dataset: %d samples, %d features, %d classes",
+        X.shape[0],
+        X.shape[1],
+        len(BUILD_LABELS),
+    )
 
     X_train, X_test, y_train, y_test = (
         train_test_split(X, y, test_size=0.2, stratify=y, random_state=42)
@@ -779,7 +863,12 @@ def main() -> None:
     dart_results = clf.compare_dart(X, y)
     if dart_results:
         for btype, vals in dart_results.items():
-            log.info("  %s → acc=%.4f  logloss=%.4f", btype, vals["accuracy"], vals["log_loss"])
+            log.info(
+                "  %s → acc=%.4f  logloss=%.4f",
+                btype,
+                vals["accuracy"],
+                vals["log_loss"],
+            )
 
     # 6. Confusion matrix
     clf.plot_confusion_matrix(X_test, y_test, save_path="sc2_build_confusion.png")
@@ -801,8 +890,13 @@ def main() -> None:
         "vespene": 200,
         "supply_used": 44,
         "supply_cap": 52,
-        "structures": [{"name": "Hatchery"}, {"name": "SpawningPool"}, {"name": "RoachWarren"}],
-        "units": [{"name": "Drone"}] * 16 + [{"name": "Roach", "mineral_cost": 75, "vespene_cost": 25}] * 8,
+        "structures": [
+            {"name": "Hatchery"},
+            {"name": "SpawningPool"},
+            {"name": "RoachWarren"},
+        ],
+        "units": [{"name": "Drone"}] * 16
+        + [{"name": "Roach", "mineral_cost": 75, "vespene_cost": 25}] * 8,
         "enemy_units": [{"name": "Marine"}] * 5,
         "enemy_structures": [{"name": "Barracks"}],
         "opponent_race": "terran",

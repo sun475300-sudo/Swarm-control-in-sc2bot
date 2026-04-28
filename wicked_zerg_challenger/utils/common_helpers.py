@@ -8,7 +8,7 @@ Common Helpers - 공통 유틸리티 함수
 3. 유지보수성 개선
 """
 
-from typing import Any, Optional, List
+from typing import Any, List, Optional
 
 
 def has_units(units: Any) -> bool:
@@ -29,11 +29,11 @@ def has_units(units: Any) -> bool:
         return False
 
     # SC2 Units collection
-    if hasattr(units, 'exists'):
+    if hasattr(units, "exists"):
         return units.exists
 
     # Standard list/collection
-    if hasattr(units, '__len__'):
+    if hasattr(units, "__len__"):
         return len(units) > 0
 
     return False
@@ -58,7 +58,7 @@ def safe_first(units: Any) -> Optional[Any]:
         return None
 
     # SC2 Units collection
-    if hasattr(units, 'first'):
+    if hasattr(units, "first"):
         return units.first
 
     # Standard list/collection
@@ -91,7 +91,7 @@ def safe_closest(units: Any, position) -> Optional[Any]:
         return None
 
     try:
-        if hasattr(units, 'closest_to'):
+        if hasattr(units, "closest_to"):
             return units.closest_to(position)
 
         # Fallback: manual distance calculation
@@ -117,11 +117,11 @@ def safe_amount(units: Any) -> int:
         return 0
 
     # SC2 Units collection
-    if hasattr(units, 'amount'):
+    if hasattr(units, "amount"):
         return units.amount
 
     # Standard list/collection
-    if hasattr(units, '__len__'):
+    if hasattr(units, "__len__"):
         return len(units)
 
     return 0

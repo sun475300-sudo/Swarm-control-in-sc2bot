@@ -45,13 +45,18 @@ mcp = FastMCP("JARVIS-Ops-Commander")
 PROJECT_DIR = Path(__file__).parent.resolve()
 
 # Swarm-Net 3D 시뮬레이터 경로
-SWARM_NET_SCRIPT = PROJECT_DIR / "wicked_zerg_challenger" / "visuals" / "swarm_3d_ursina.py"
+SWARM_NET_SCRIPT = (
+    PROJECT_DIR / "wicked_zerg_challenger" / "visuals" / "swarm_3d_ursina.py"
+)
 SWARM_NET_CWD = PROJECT_DIR / "wicked_zerg_challenger" / "visuals"
 
 # SC2 RL 훈련 스크립트 경로
 TRAINING_SCRIPTS = {
     "hybrid": PROJECT_DIR / "wicked_zerg_challenger" / "tools" / "hybrid_learning.py",
-    "pipeline": PROJECT_DIR / "wicked_zerg_challenger" / "local_training" / "training_pipeline.py",
+    "pipeline": PROJECT_DIR
+    / "wicked_zerg_challenger"
+    / "local_training"
+    / "training_pipeline.py",
 }
 
 # 훈련 로그 디렉토리
@@ -115,7 +120,7 @@ def _read_tail(filepath: Path, max_lines: int = 20, max_bytes: int = 8192) -> st
         if seek_pos > 0:
             first_newline = text.find("\n")
             if first_newline != -1:
-                text = text[first_newline + 1:]
+                text = text[first_newline + 1 :]
 
         lines = text.splitlines()
         selected = lines[-max_lines:] if len(lines) > max_lines else lines
@@ -154,13 +159,21 @@ def _collect_system_status() -> str:
 
     # RAM
     ram = psutil.virtual_memory()
-    result["ram"] = f"{ram.percent}%/{ram.used / (1024 ** 3):.1f}/{ram.total / (1024 ** 3):.1f}GB"
+    result["ram"] = (
+        f"{ram.percent}%/{ram.used / (1024 ** 3):.1f}/{ram.total / (1024 ** 3):.1f}GB"
+    )
 
     # Disk
     try:
-        disk_path = os.path.splitdrive(os.path.expanduser("~"))[0] + os.sep if sys.platform == "win32" else "/"
+        disk_path = (
+            os.path.splitdrive(os.path.expanduser("~"))[0] + os.sep
+            if sys.platform == "win32"
+            else "/"
+        )
         disk = psutil.disk_usage(disk_path)
-        result["disk"] = f"{disk.percent}%/{disk.used / (1024 ** 3):.0f}/{disk.total / (1024 ** 3):.0f}GB"
+        result["disk"] = (
+            f"{disk.percent}%/{disk.used / (1024 ** 3):.0f}/{disk.total / (1024 ** 3):.0f}GB"
+        )
     except Exception:
         result["disk"] = "err"
 
@@ -170,7 +183,9 @@ def _collect_system_status() -> str:
     # Network (총량만)
     try:
         net = psutil.net_io_counters()
-        result["net"] = f"tx{net.bytes_sent / (1024 ** 2):.0f}/rx{net.bytes_recv / (1024 ** 2):.0f}MB"
+        result["net"] = (
+            f"tx{net.bytes_sent / (1024 ** 2):.0f}/rx{net.bytes_recv / (1024 ** 2):.0f}MB"
+        )
     except Exception:
         result["net"] = "err"
 
@@ -227,7 +242,9 @@ async def launch_swarm_net() -> str:
         )
 
     if not SWARM_NET_SCRIPT.exists():
-        return f"오류: 시뮬레이터 스크립트를 찾을 수 없습니다.\n경로: {SWARM_NET_SCRIPT}"
+        return (
+            f"오류: 시뮬레이터 스크립트를 찾을 수 없습니다.\n경로: {SWARM_NET_SCRIPT}"
+        )
 
     try:
         creation_flags = 0
@@ -338,11 +355,16 @@ async def run_sc2_zerg_rl(mode: str = "hybrid") -> str:
         await asyncio.sleep(2)
         initial_log = _read_tail(log_file, max_lines=3)
 
-        return json.dumps({
-            "status": "started", "mode": mode,
-            "pid": proc.pid, "log": log_file.name,
-            "init": initial_log
-        }, ensure_ascii=False)
+        return json.dumps(
+            {
+                "status": "started",
+                "mode": mode,
+                "pid": proc.pid,
+                "log": log_file.name,
+                "init": initial_log,
+            },
+            ensure_ascii=False,
+        )
     except Exception as e:
         return f"훈련 시작 실패: {e}"
 
@@ -402,12 +424,15 @@ async def check_training_log(lines: int = 5) -> str:
     training_pid = _get_pid("sc2_training")
     status = f"RUNNING (PID: {training_pid})" if training_pid else "STOPPED"
 
-    return json.dumps({
-        "log": latest.name,
-        "status": "RUN" if training_pid else "STOP",
-        "pid": training_pid,
-        "tail": content
-    }, ensure_ascii=False)
+    return json.dumps(
+        {
+            "log": latest.name,
+            "status": "RUN" if training_pid else "STOP",
+            "pid": training_pid,
+            "tail": content,
+        },
+        ensure_ascii=False,
+    )
 
 
 # ──────────────────────────────────────────────

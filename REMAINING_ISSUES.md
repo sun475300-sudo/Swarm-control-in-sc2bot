@@ -4,82 +4,34 @@
 
 통합 문제 해결 후 발견된 추가 개선 사항들입니다.
 
----
-
-## 🟡 MEDIUM Priority Issues
-
-### Issue #1: Queen Inject 쿨다운 시간 부정확
-
-**위치**: `queen_manager.py` (추정)
-
-**문제**:
-- 현재 코드: `INJECT_COOLDOWN = 25` (25초)
-- 실제 게임: **29초** (정확한 쿨다운)
-
-**영향**:
-- Inject 타이밍이 4초 빠름
-- 에너지 낭비 가능성
-- 최적 인젝트 효율 저하
-
-**해결 방법**:
-```python
-# Before:
-INJECT_COOLDOWN = 25  # 부정확
-
-# After:
-INJECT_COOLDOWN = 29  # 정확한 SC2 inject 쿨다운
-```
-
-**우선순위**: 🟡 MEDIUM (게임플레이 영향 있지만 치명적이지 않음)
+**Last refreshed:** 2026-04-27 (Issue #1, #2 → Resolved 섹션으로 이동)
 
 ---
 
-### Issue #2: 누락된 중요 업그레이드
+## ✅ Resolved (확인일: 2026-04-27)
 
-**위치**: `upgrade_manager.py` 또는 `build_order_system.py`
+이전 버전(2026-01-29)에 남아있던 두 이슈는 코드에 이미 반영된 상태로 확인됐습니다.
+문서가 stale했던 것으로, 별도 작업 없이 닫습니다.
 
-**누락된 업그레이드**:
-1. **Adrenal Glands** (아드레날린 분비선) - 저글링 공격 속도 +24%
-2. **Grooved Spines** (홈이 파인 가시) - 히드라 사거리 +2
+### ✅ Issue #1: Queen Inject 쿨다운 — 25→29초 수정 완료
 
-**영향**:
-- 저글링 DPS 24% 손실
-- 히드라 사거리 부족 (6 → 8)
-- 중후반 전투력 크게 저하
+| Where | Verification |
+|-------|--------------|
+| `wicked_zerg_challenger/queen_manager.py:60` | `self.inject_cooldown = 29.0  # ★ FIXED: SC2 Spawn Larva 쿨다운 28.57초 + 0.43초 여유 ★` |
+| `wicked_zerg_challenger/economy/queen_inject_optimizer.py:69` | `self.INJECT_COOLDOWN = 29.0  # 29초 쿨다운` |
 
-**해결 방법**:
-```python
-# upgrade_manager.py에 추가
+### ✅ Issue #2: 누락 업그레이드 — Adrenal Glands + Grooved Spines 구현 완료
 
-from sc2.ids.upgrade_id import UpgradeId
+| Where | Verification |
+|-------|--------------|
+| `wicked_zerg_challenger/upgrade_manager.py:819-820` | `"""아드레날린 분비선 (Adrenal Glands) 연구 - 저글링 공속업 (Crackling)"""` → `adrenal = getattr(UpgradeId, "ZERGLINGATTACKSPEED", None)` |
+| `wicked_zerg_challenger/upgrade_manager.py:740-741` | `"""홈 스파인 (Grooved Spines) 연구 - 히드라 사거리 +2"""` → `hydra_range = getattr(UpgradeId, "EVOLVEGROOVEDSPINES", None)` |
 
-CRITICAL_ZERG_UPGRADES = {
-    # 기존 업그레이드...
-
-    # ★ 누락된 업그레이드 ★
-    UpgradeId.ZERGLINGATTACKSPEED: {  # Adrenal Glands
-        "name": "Adrenal Glands",
-        "building": UnitTypeId.SPAWNINGPOOL,
-        "minerals": 200,
-        "gas": 200,
-        "priority": 80,  # 높은 우선순위
-        "condition": lambda bot: bot.already_pending_upgrade(UpgradeId.ZERGLINGMOVEMENTSPEED) > 0
-    },
-
-    UpgradeId.GROOVEDSPINES: {  # Grooved Spines
-        "name": "Grooved Spines",
-        "building": UnitTypeId.HYDRALISKDEN,
-        "minerals": 100,
-        "gas": 100,
-        "priority": 75,
-        "condition": lambda bot: bot.units(UnitTypeId.HYDRALISK).amount >= 10
-    },
-}
-```
-
-**우선순위**: 🟡 MEDIUM (전투력 향상에 중요)
+검증 출처: `ACTION_LOG_20260419.md` Task #6.
 
 ---
+
+## 🟡 MEDIUM Priority Issues (still open)
 
 ### Issue #3: Transfusion 우선순위 개선 필요
 
@@ -371,29 +323,29 @@ if iteration % SECOND == 0:
 
 ---
 
-## 📊 이슈 우선순위 요약
+## 📊 이슈 우선순위 요약 (open만)
 
 | 우선순위 | 이슈 | 영향도 | 난이도 |
 |---------|------|--------|--------|
-| 🟡 MEDIUM | Queen Inject 쿨다운 | 중간 | 매우 쉬움 |
-| 🟡 MEDIUM | 누락된 업그레이드 | 높음 | 쉬움 |
-| 🟡 MEDIUM | Transfusion 우선순위 | 중간 | 중간 |
-| 🟡 MEDIUM | Resource Race Condition | 낮음 | 중간 |
-| 🟢 LOW | 코드 중복 제거 | 낮음 | 쉬움 |
-| 🟢 LOW | 매직 넘버 | 낮음 | 쉬움 |
+| 🟡 MEDIUM | #3 Transfusion 우선순위 | 중간 | 중간 |
+| 🟡 MEDIUM | #4 Resource Race Condition | 낮음 | 중간 |
+| 🟢 LOW | #5 코드 중복 제거 | 낮음 | 쉬움 |
+| 🟢 LOW | #6 매직 넘버 | 낮음 | 쉬움 |
+
+(Issue #1, #2 → ✅ Resolved 섹션 참조)
 
 ---
 
 ## 🎯 권장 수정 순서
 
-### 1단계: 빠른 수정 (5분 이내)
-1. ✅ Queen Inject 쿨다운 수정 (25 → 29)
-2. ✅ 누락된 업그레이드 추가
+### 1단계: 완료 (✅)
+~~1. Queen Inject 쿨다운 수정 (25 → 29)~~ — 코드 반영 완료, 본 문서 ✅ Resolved 섹션 참조
+~~2. 누락된 업그레이드 추가~~ — 코드 반영 완료, 본 문서 ✅ Resolved 섹션 참조
 
-### 2단계: 로직 개선 (30분)
+### 2단계: 로직 개선 (30분, 미진행)
 3. Transfusion 우선순위 시스템 구현
 
-### 3단계: 구조 개선 (1시간)
+### 3단계: 구조 개선 (1시간, 미진행)
 4. Resource Reservation 동기화
 5. Position Utils 유틸리티 함수 분리
 6. Constants 정리

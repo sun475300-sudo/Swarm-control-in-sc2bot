@@ -71,3 +71,46 @@
   `.gitattributes` already correct, codebase stabilising after a large
   print→logger migration. No P0 stabilisation work needed beyond a
   regression guard for empty-logger calls.
+- **2026-04-26** — Re-review. Local `main` is one commit behind
+  `origin/main` (fast-forwardable; not auto-pulled per nightly
+  no-destructive-ops policy). Status of last run's P0:
+  - P0.1 (verify migration introduced no further breakage) — partially
+    verified: `grep -RnE "logger\.(info|debug|warning|error)\(\)$"
+    wicked_zerg_challenger/` returns zero source-code matches (only one
+    documentation reference). Actual pytest run not executed inside
+    nightly sandbox (sc2 / burnysc2 deps not installable here).
+  - P0.2 (regression guard for empty-`logger()`) — landed via
+    `881501a ci: add empty logger call regression guard` and the
+    `.github/workflows/empty-logger-guard.yml` + `scripts/check_no_empty_logger_calls.py`
+    pair.
+  Code-level TODO/FIXME scan: 3 hits total, all minor and not blocking.
+  Documentation surface area unchanged: 47 top-level `*.md` files.
+  P1.5 (trim doc surface area) is the highest-ROI cleanup tonight if
+  picked, but moving 30+ docs touches a lot of files in one commit and
+  is best done as a single dedicated PR with `git mv` to preserve
+  blame. Tonight's preferred small commit: a `STATUS.md` index that
+  catalogues which historical reports map to which subsystem, so the
+  eventual `docs/history/` move is mechanical. Tracked as **P1.7 —
+  add a STATUS.md index pointing at the existing reports**.
+  - P0.2 (regression guard for empty-logger) — not yet implemented; promoted
+    to tonight's next work item, but merge blocker took priority.
+  - Stale `index.lock` / `HEAD.lock` / `objects/maintenance.lock` present at
+    run start — cleared via rename workaround.
+
+  **Work completed this run: pending merge commit**
+
+  A previous session left a half-finished merge (local `985ee5b` vs
+  origin `c7bb6dd` — logic_optimizer improvements) in "all conflicts
+  resolved but not committed" state. Completed as commit `55eb51e`:
+  - `apply_combat_improvements()`: air harassment priority=60, worker defense=110
+  - `apply_economy_improvements()`: gas adjustment interval=22, macro hatch threshold=500
+  - `apply_strategy_improvements()`: aggressive mode on Cheat difficulties
+  - `optimize_all()`: orchestrates all three passes
+
+  **Next P1 items for following night:**
+
+| #    | Item                                    | Notes |
+|------|-----------------------------------------|-------|
+| P0.2 | Empty-logger regression guard (CI)      | `grep -RnE "logger\.(info|debug|warning|error)\(\)$"` fails build if any hits. Add to `ci.yml`. |
+| P1.1 | Scout cadence improvements              | `scouting_system.py` — initial overlord 30s, mid-game zergling sweep 60s, late overseer cloak detection |
+| P1.2 | Harassment loop polish                  | `strategy_manager.py:228–262`, `combat_manager.py` — retraction on HP threshold, worker kill tracking |

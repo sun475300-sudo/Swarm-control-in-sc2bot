@@ -23,11 +23,13 @@ logger = logging.getLogger(__name__)
 # Data Types
 # ---------------------------------------------------------------------------
 
+
 @dataclass
 class Feature:
     """A single feature definition."""
+
     name: str
-    dtype: str               # "float32", "int32", "bool"
+    dtype: str  # "float32", "int32", "bool"
     description: str
     default_value: Any = 0.0
 
@@ -47,6 +49,7 @@ class FeatureGroup:
     A logical grouping of related features.
     Each group has an entity key (e.g., game_id, player_id).
     """
+
     name: str
     entity_key: str
     features: list[Feature]
@@ -63,6 +66,7 @@ class FeatureGroup:
 @dataclass
 class FeatureVector:
     """A retrieved feature vector for a specific entity at a point in time."""
+
     entity_id: str
     feature_group: str
     timestamp: datetime
@@ -73,6 +77,7 @@ class FeatureVector:
         """Convert to PyTorch tensor."""
         try:
             import torch
+
             return torch.tensor(self.vector, dtype=torch.float32)
         except ImportError:
             return self.vector
@@ -87,22 +92,22 @@ GAME_STATE_FEATURES = FeatureGroup(
     entity_key="game_id",
     description="High-level game state features observed each step",
     features=[
-        Feature("game_loop",           "int32",   "Current game loop (step count)"),
-        Feature("map_width",           "int32",   "Map width in game units"),
-        Feature("map_height",          "int32",   "Map height in game units"),
-        Feature("player_minerals",     "float32", "Current mineral count"),
-        Feature("player_vespene",      "float32", "Current vespene gas count"),
-        Feature("player_supply_used",  "int32",   "Supply used"),
-        Feature("player_supply_cap",   "int32",   "Supply cap"),
-        Feature("player_army_value",   "float32", "Total army mineral+gas value"),
-        Feature("enemy_army_value",    "float32", "Estimated enemy army value"),
-        Feature("army_advantage",      "float32", "Our army value / enemy army value"),
-        Feature("base_count",          "int32",   "Number of active bases"),
-        Feature("enemy_base_count",    "int32",   "Estimated enemy base count"),
-        Feature("creep_coverage",      "float32", "Fraction of map covered by creep"),
-        Feature("vision_coverage",     "float32", "Fraction of map with vision"),
-        Feature("threat_level",        "float32", "Normalized threat level 0-1"),
-        Feature("time_minutes",        "float32", "Game time in minutes"),
+        Feature("game_loop", "int32", "Current game loop (step count)"),
+        Feature("map_width", "int32", "Map width in game units"),
+        Feature("map_height", "int32", "Map height in game units"),
+        Feature("player_minerals", "float32", "Current mineral count"),
+        Feature("player_vespene", "float32", "Current vespene gas count"),
+        Feature("player_supply_used", "int32", "Supply used"),
+        Feature("player_supply_cap", "int32", "Supply cap"),
+        Feature("player_army_value", "float32", "Total army mineral+gas value"),
+        Feature("enemy_army_value", "float32", "Estimated enemy army value"),
+        Feature("army_advantage", "float32", "Our army value / enemy army value"),
+        Feature("base_count", "int32", "Number of active bases"),
+        Feature("enemy_base_count", "int32", "Estimated enemy base count"),
+        Feature("creep_coverage", "float32", "Fraction of map covered by creep"),
+        Feature("vision_coverage", "float32", "Fraction of map with vision"),
+        Feature("threat_level", "float32", "Normalized threat level 0-1"),
+        Feature("time_minutes", "float32", "Game time in minutes"),
     ],
 )
 
@@ -111,20 +116,22 @@ UNIT_FEATURES = FeatureGroup(
     entity_key="game_id",
     description="Aggregate statistics about unit composition",
     features=[
-        Feature("drone_count",         "int32",   "Number of drones"),
-        Feature("zergling_count",      "int32",   "Number of zerglings"),
-        Feature("roach_count",         "int32",   "Number of roaches"),
-        Feature("hydralisk_count",     "int32",   "Number of hydralisks"),
-        Feature("mutalisk_count",      "int32",   "Number of mutalisks"),
-        Feature("corruptor_count",     "int32",   "Number of corruptors"),
-        Feature("broodlord_count",     "int32",   "Number of brood lords"),
-        Feature("ultra_count",         "int32",   "Number of ultralisks"),
-        Feature("infestor_count",      "int32",   "Number of infestors"),
-        Feature("army_count",          "int32",   "Total army units"),
-        Feature("worker_count",        "int32",   "Total worker units"),
-        Feature("avg_unit_health",     "float32", "Average unit health percentage"),
-        Feature("units_in_combat",     "int32",   "Units currently attacking or being attacked"),
-        Feature("units_idle",          "int32",   "Army units currently idle"),
+        Feature("drone_count", "int32", "Number of drones"),
+        Feature("zergling_count", "int32", "Number of zerglings"),
+        Feature("roach_count", "int32", "Number of roaches"),
+        Feature("hydralisk_count", "int32", "Number of hydralisks"),
+        Feature("mutalisk_count", "int32", "Number of mutalisks"),
+        Feature("corruptor_count", "int32", "Number of corruptors"),
+        Feature("broodlord_count", "int32", "Number of brood lords"),
+        Feature("ultra_count", "int32", "Number of ultralisks"),
+        Feature("infestor_count", "int32", "Number of infestors"),
+        Feature("army_count", "int32", "Total army units"),
+        Feature("worker_count", "int32", "Total worker units"),
+        Feature("avg_unit_health", "float32", "Average unit health percentage"),
+        Feature(
+            "units_in_combat", "int32", "Units currently attacking or being attacked"
+        ),
+        Feature("units_idle", "int32", "Army units currently idle"),
     ],
 )
 
@@ -133,18 +140,20 @@ ECONOMIC_FEATURES = FeatureGroup(
     entity_key="game_id",
     description="Economy and production statistics",
     features=[
-        Feature("mineral_rate",        "float32", "Minerals mined per minute"),
-        Feature("vespene_rate",        "float32", "Gas mined per minute"),
-        Feature("mineral_banked",      "float32", "Banked minerals (unspent)"),
-        Feature("vespene_banked",      "float32", "Banked gas (unspent)"),
-        Feature("spending_efficiency", "float32", "Resources spent / resources collected"),
-        Feature("hatchery_count",      "int32",   "Number of hatcheries/lairs/hives"),
-        Feature("extractor_count",     "int32",   "Number of extractors"),
-        Feature("queen_count",         "int32",   "Number of queens"),
-        Feature("larvae_count",        "int32",   "Available larvae"),
-        Feature("production_queue",    "int32",   "Units/buildings currently in production"),
-        Feature("tech_tier",           "int32",   "Current tech tier (1=Hatch, 2=Lair, 3=Hive)"),
-        Feature("upgrade_count",       "int32",   "Number of completed upgrades"),
+        Feature("mineral_rate", "float32", "Minerals mined per minute"),
+        Feature("vespene_rate", "float32", "Gas mined per minute"),
+        Feature("mineral_banked", "float32", "Banked minerals (unspent)"),
+        Feature("vespene_banked", "float32", "Banked gas (unspent)"),
+        Feature(
+            "spending_efficiency", "float32", "Resources spent / resources collected"
+        ),
+        Feature("hatchery_count", "int32", "Number of hatcheries/lairs/hives"),
+        Feature("extractor_count", "int32", "Number of extractors"),
+        Feature("queen_count", "int32", "Number of queens"),
+        Feature("larvae_count", "int32", "Available larvae"),
+        Feature("production_queue", "int32", "Units/buildings currently in production"),
+        Feature("tech_tier", "int32", "Current tech tier (1=Hatch, 2=Lair, 3=Hive)"),
+        Feature("upgrade_count", "int32", "Number of completed upgrades"),
     ],
 )
 
@@ -153,16 +162,18 @@ HISTORICAL_FEATURES = FeatureGroup(
     entity_key="game_id",
     description="Aggregated historical game performance metrics",
     features=[
-        Feature("last_10_win_rate",    "float32", "Win rate over last 10 games"),
-        Feature("last_50_win_rate",    "float32", "Win rate over last 50 games"),
-        Feature("avg_game_length",     "float32", "Average game length in minutes"),
-        Feature("most_used_strategy",  "int32",   "Most frequently used strategy ID"),
-        Feature("avg_apm",             "float32", "Average actions per minute"),
-        Feature("max_apm",             "float32", "Peak actions per minute"),
-        Feature("avg_first_attack",    "float32", "Average time of first attack (minutes)"),
-        Feature("loss_streak",         "int32",   "Current loss streak"),
-        Feature("win_streak",          "int32",   "Current win streak"),
-        Feature("total_games",         "int32",   "Total games played"),
+        Feature("last_10_win_rate", "float32", "Win rate over last 10 games"),
+        Feature("last_50_win_rate", "float32", "Win rate over last 50 games"),
+        Feature("avg_game_length", "float32", "Average game length in minutes"),
+        Feature("most_used_strategy", "int32", "Most frequently used strategy ID"),
+        Feature("avg_apm", "float32", "Average actions per minute"),
+        Feature("max_apm", "float32", "Peak actions per minute"),
+        Feature(
+            "avg_first_attack", "float32", "Average time of first attack (minutes)"
+        ),
+        Feature("loss_streak", "int32", "Current loss streak"),
+        Feature("win_streak", "int32", "Current win streak"),
+        Feature("total_games", "int32", "Total games played"),
     ],
 )
 
@@ -177,6 +188,7 @@ ALL_FEATURE_GROUPS = [
 # ---------------------------------------------------------------------------
 # In-Memory Feature Store Backend
 # ---------------------------------------------------------------------------
+
 
 class _InMemoryBackend:
     """Simple in-memory backend for feature storage."""
@@ -212,6 +224,7 @@ class _InMemoryBackend:
 # Feature Store
 # ---------------------------------------------------------------------------
 
+
 class FeatureStore:
     """
     SC2 Bot Feature Store - Feast-like API.
@@ -231,11 +244,15 @@ class FeatureStore:
         for fg in ALL_FEATURE_GROUPS:
             self.register_feature_group(fg)
 
-        logger.info(f"FeatureStore initialized with {len(self._feature_groups)} feature groups")
+        logger.info(
+            f"FeatureStore initialized with {len(self._feature_groups)} feature groups"
+        )
 
     def register_feature_group(self, fg: FeatureGroup) -> None:
         self._feature_groups[fg.name] = fg
-        logger.debug(f"Registered feature group: {fg.name} ({len(fg.features)} features)")
+        logger.debug(
+            f"Registered feature group: {fg.name} ({len(fg.features)} features)"
+        )
 
     def write_features(
         self,
@@ -338,36 +355,49 @@ class FeatureStore:
         logger.info(f"Training dataset shape: {matrix.shape}")
         return matrix
 
-    def ingest_game_state(self, game_id: str, game_state: dict, game_info: dict | None = None) -> None:
+    def ingest_game_state(
+        self, game_id: str, game_state: dict, game_info: dict | None = None
+    ) -> None:
         """Convenience method: ingest a full game state into all relevant feature groups."""
         ts = datetime.utcnow()
 
-        self.write_features(game_id, "game_state_features", {
-            "game_loop": game_state.get("game_loop", 0),
-            "map_width": game_info.get("map_width", 200) if game_info else 200,
-            "map_height": game_info.get("map_height", 200) if game_info else 200,
-            "player_minerals": game_state.get("minerals", 50),
-            "player_vespene": game_state.get("vespene", 0),
-            "player_supply_used": game_state.get("supply_used", 0),
-            "player_supply_cap": game_state.get("supply_cap", 14),
-            "player_army_value": game_state.get("army_value", 0),
-            "enemy_army_value": game_state.get("enemy_army_value", 0),
-            "army_advantage": game_state.get("army_advantage", 1.0),
-            "base_count": game_state.get("base_count", 1),
-            "enemy_base_count": game_state.get("enemy_base_count", 1),
-            "creep_coverage": game_state.get("creep_coverage", 0.0),
-            "vision_coverage": game_state.get("vision_coverage", 0.0),
-            "threat_level": game_state.get("threat_level", 0.0),
-            "time_minutes": game_state.get("time_minutes", 0.0),
-        }, timestamp=ts)
+        self.write_features(
+            game_id,
+            "game_state_features",
+            {
+                "game_loop": game_state.get("game_loop", 0),
+                "map_width": game_info.get("map_width", 200) if game_info else 200,
+                "map_height": game_info.get("map_height", 200) if game_info else 200,
+                "player_minerals": game_state.get("minerals", 50),
+                "player_vespene": game_state.get("vespene", 0),
+                "player_supply_used": game_state.get("supply_used", 0),
+                "player_supply_cap": game_state.get("supply_cap", 14),
+                "player_army_value": game_state.get("army_value", 0),
+                "enemy_army_value": game_state.get("enemy_army_value", 0),
+                "army_advantage": game_state.get("army_advantage", 1.0),
+                "base_count": game_state.get("base_count", 1),
+                "enemy_base_count": game_state.get("enemy_base_count", 1),
+                "creep_coverage": game_state.get("creep_coverage", 0.0),
+                "vision_coverage": game_state.get("vision_coverage", 0.0),
+                "threat_level": game_state.get("threat_level", 0.0),
+                "time_minutes": game_state.get("time_minutes", 0.0),
+            },
+            timestamp=ts,
+        )
 
-        self.write_features(game_id, "unit_features", {
-            k: game_state.get(k, 0) for k in UNIT_FEATURES.feature_names()
-        }, timestamp=ts)
+        self.write_features(
+            game_id,
+            "unit_features",
+            {k: game_state.get(k, 0) for k in UNIT_FEATURES.feature_names()},
+            timestamp=ts,
+        )
 
-        self.write_features(game_id, "economic_features", {
-            k: game_state.get(k, 0) for k in ECONOMIC_FEATURES.feature_names()
-        }, timestamp=ts)
+        self.write_features(
+            game_id,
+            "economic_features",
+            {k: game_state.get(k, 0) for k in ECONOMIC_FEATURES.feature_names()},
+            timestamp=ts,
+        )
 
     def _make_key(self, entity_id: str, feature_group: str) -> str:
         return f"{feature_group}::{entity_id}"
@@ -403,6 +433,7 @@ class FeatureStore:
 # ---------------------------------------------------------------------------
 
 _store_instance: FeatureStore | None = None
+
 
 def get_feature_store() -> FeatureStore:
     global _store_instance

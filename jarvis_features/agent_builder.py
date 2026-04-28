@@ -27,30 +27,36 @@ import logging
 import os
 import re
 from dataclasses import dataclass, field
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Dict, List, Optional
 
 logger = logging.getLogger("jarvis.agent_builder")
 
 # 기본 에이전트 정의 디렉토리
-AGENT_DEFINITIONS_DIR = os.path.join(
-    os.path.dirname(__file__), "agent_definitions"
-)
+AGENT_DEFINITIONS_DIR = os.path.join(os.path.dirname(__file__), "agent_definitions")
 
 # 모델 옵션
 VALID_MODELS = ["haiku", "sonnet", "opus"]
 
 # 컬러 옵션
 VALID_COLORS = [
-    "red", "green", "blue", "orange", "purple", "yellow", "cyan", "grey",
+    "red",
+    "green",
+    "blue",
+    "orange",
+    "purple",
+    "yellow",
+    "cyan",
+    "grey",
 ]
 
 
 @dataclass
 class PipelineStepDef:
     """파이프라인 스텝 정의"""
+
     name: str
-    source: str = ""        # Python 모듈.함수 경로
+    source: str = ""  # Python 모듈.함수 경로
     timeout: int = 10
     required: bool = False
 
@@ -58,12 +64,13 @@ class PipelineStepDef:
 @dataclass
 class AgentDefinition:
     """에이전트 정의 구조체"""
+
     name: str
     description: str
     model: str = "sonnet"
     color: str = "blue"
     memory: str = "session"  # "session" | "project" | "none"
-    domain: str = ""         # AgentRouter 도메인 매핑
+    domain: str = ""  # AgentRouter 도메인 매핑
     tools: List[str] = field(default_factory=list)
     keywords: List[str] = field(default_factory=list)
     pipeline: List[PipelineStepDef] = field(default_factory=list)
@@ -204,7 +211,9 @@ class AgentBuilder:
 
         # 모델 검증
         if model not in VALID_MODELS:
-            logger.warning(f"[AGENT_BUILDER] Invalid model '{model}', defaulting to 'sonnet'")
+            logger.warning(
+                f"[AGENT_BUILDER] Invalid model '{model}', defaulting to 'sonnet'"
+            )
             model = "sonnet"
 
         # 컬러 검증
@@ -216,12 +225,14 @@ class AgentBuilder:
         if pipeline:
             for step_data in pipeline:
                 if isinstance(step_data, dict):
-                    pipeline_steps.append(PipelineStepDef(
-                        name=step_data.get("name", "unnamed"),
-                        source=step_data.get("source", ""),
-                        timeout=step_data.get("timeout", 10),
-                        required=step_data.get("required", False),
-                    ))
+                    pipeline_steps.append(
+                        PipelineStepDef(
+                            name=step_data.get("name", "unnamed"),
+                            source=step_data.get("source", ""),
+                            timeout=step_data.get("timeout", 10),
+                            required=step_data.get("required", False),
+                        )
+                    )
                 elif isinstance(step_data, str):
                     pipeline_steps.append(PipelineStepDef(name=step_data))
 
@@ -281,8 +292,17 @@ class AgentBuilder:
 
         # build()에 허용된 키만 전달
         valid_keys = {
-            "name", "description", "model", "color", "memory", "domain",
-            "tools", "keywords", "pipeline", "hard_rules", "body_markdown",
+            "name",
+            "description",
+            "model",
+            "color",
+            "memory",
+            "domain",
+            "tools",
+            "keywords",
+            "pipeline",
+            "hard_rules",
+            "body_markdown",
         }
         filtered = {k: v for k, v in parsed.items() if k in valid_keys}
 
@@ -323,12 +343,14 @@ class AgentBuilder:
                 filepath = os.path.join(self._definitions_dir, filename)
                 parsed = self._parse_definition_file(filepath)
                 if parsed:
-                    definitions.append({
-                        "name": parsed.get("name", filename[:-3]),
-                        "description": parsed.get("description", "")[:100],
-                        "model": parsed.get("model", "unknown"),
-                        "file": filename,
-                    })
+                    definitions.append(
+                        {
+                            "name": parsed.get("name", filename[:-3]),
+                            "description": parsed.get("description", "")[:100],
+                            "model": parsed.get("model", "unknown"),
+                            "file": filename,
+                        }
+                    )
 
         return definitions
 
@@ -344,10 +366,10 @@ class AgentBuilder:
 
         keywords_str = ", ".join(f'"{kw}"' for kw in definition.keywords)
         return (
-            f'# {definition.name}\n'
+            f"# {definition.name}\n"
             f'AgentDomain.{definition.domain.upper() if definition.domain else "GENERAL_CHAT"}: [\n'
-            f'    {keywords_str},\n'
-            f'],'
+            f"    {keywords_str},\n"
+            f"],"
         )
 
     def _normalize_name(self, name: str) -> str:

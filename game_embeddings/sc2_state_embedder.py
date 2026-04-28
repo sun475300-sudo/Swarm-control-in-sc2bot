@@ -17,27 +17,65 @@ import time
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional, Tuple
 
-
 # ---------------------------------------------------------------------------
 # SC2 game-state feature definitions
 # ---------------------------------------------------------------------------
 
 UNIT_TYPES: List[str] = [
-    "zergling", "baneling", "roach", "hydralisk", "mutalisk",
-    "corruptor", "brood_lord", "ultralisk", "infestor", "viper",
-    "queen", "drone", "overlord", "overseer",
-    "marine", "marauder", "medivac", "siege_tank", "viking",
-    "thor", "hellion", "banshee", "battlecruiser",
-    "zealot", "stalker", "sentry", "colossus", "immortal",
-    "phoenix", "void_ray", "carrier", "high_templar", "dark_templar",
+    "zergling",
+    "baneling",
+    "roach",
+    "hydralisk",
+    "mutalisk",
+    "corruptor",
+    "brood_lord",
+    "ultralisk",
+    "infestor",
+    "viper",
+    "queen",
+    "drone",
+    "overlord",
+    "overseer",
+    "marine",
+    "marauder",
+    "medivac",
+    "siege_tank",
+    "viking",
+    "thor",
+    "hellion",
+    "banshee",
+    "battlecruiser",
+    "zealot",
+    "stalker",
+    "sentry",
+    "colossus",
+    "immortal",
+    "phoenix",
+    "void_ray",
+    "carrier",
+    "high_templar",
+    "dark_templar",
 ]
 
 TECH_BUILDINGS: List[str] = [
-    "spawning_pool", "roach_warren", "hydralisk_den", "spire",
-    "infestation_pit", "ultralisk_cavern", "greater_spire",
-    "barracks", "factory", "starport", "armory", "fusion_core",
-    "gateway", "cybernetics_core", "robotics_facility", "stargate",
-    "templar_archives", "fleet_beacon",
+    "spawning_pool",
+    "roach_warren",
+    "hydralisk_den",
+    "spire",
+    "infestation_pit",
+    "ultralisk_cavern",
+    "greater_spire",
+    "barracks",
+    "factory",
+    "starport",
+    "armory",
+    "fusion_core",
+    "gateway",
+    "cybernetics_core",
+    "robotics_facility",
+    "stargate",
+    "templar_archives",
+    "fleet_beacon",
 ]
 
 
@@ -45,9 +83,11 @@ TECH_BUILDINGS: List[str] = [
 # StateEncoder
 # ---------------------------------------------------------------------------
 
+
 @dataclass
 class GameState:
     """Raw SC2 game state snapshot."""
+
     game_time_seconds: int = 0
     minerals: int = 0
     vespene: int = 0
@@ -112,9 +152,9 @@ class StateEncoder:
 
         # game phase (3)
         t = state.game_time_seconds
-        features.append(1.0 if t < 300 else 0.0)   # early game
+        features.append(1.0 if t < 300 else 0.0)  # early game
         features.append(1.0 if 300 <= t < 720 else 0.0)  # mid game
-        features.append(1.0 if t >= 720 else 0.0)   # late game
+        features.append(1.0 if t >= 720 else 0.0)  # late game
 
         return features
 
@@ -145,6 +185,7 @@ class StateEncoder:
 # ---------------------------------------------------------------------------
 # ContrastiveLoss
 # ---------------------------------------------------------------------------
+
 
 class ContrastiveLoss:
     """Temporal contrastive loss for game state embeddings.
@@ -186,9 +227,7 @@ class ContrastiveLoss:
         """Compute InfoNCE contrastive loss for one anchor."""
         tau = self.temperature
         sim_pos = self.cosine_similarity(anchor, positive) / tau
-        sim_negs = [
-            self.cosine_similarity(anchor, neg) / tau for neg in negatives
-        ]
+        sim_negs = [self.cosine_similarity(anchor, neg) / tau for neg in negatives]
 
         # numerical stability: subtract max
         all_sims = [sim_pos] + sim_negs
@@ -220,12 +259,14 @@ class ContrastiveLoss:
         for i in range(n):
             # find positives (temporally close)
             positives = [
-                j for j in range(n)
+                j
+                for j in range(n)
                 if j != i and abs(time_steps[j] - time_steps[i]) <= self.temporal_window
             ]
             # find negatives (temporally distant)
             negatives = [
-                j for j in range(n)
+                j
+                for j in range(n)
                 if j != i and abs(time_steps[j] - time_steps[i]) > self.temporal_window
             ]
 
@@ -256,6 +297,7 @@ class ContrastiveLoss:
 # ---------------------------------------------------------------------------
 # EmbeddingIndex
 # ---------------------------------------------------------------------------
+
 
 class EmbeddingIndex:
     """In-memory nearest-neighbor index for game state embeddings.
@@ -321,9 +363,7 @@ class EmbeddingIndex:
         return len(self.embeddings)
 
     def stats(self) -> Dict[str, Any]:
-        active = sum(
-            1 for m in self.metadata if not m.get("_deleted", False)
-        )
+        active = sum(1 for m in self.metadata if not m.get("_deleted", False))
         return {
             "total_entries": len(self.embeddings),
             "active_entries": active,
@@ -337,6 +377,7 @@ class EmbeddingIndex:
 # ---------------------------------------------------------------------------
 # StateEmbedder
 # ---------------------------------------------------------------------------
+
 
 class StateEmbedder:
     """High-level facade that combines encoding, contrastive training,
@@ -485,15 +526,48 @@ class StateEmbedder:
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def _unit_matches_race(unit: str, race: str) -> bool:
     """Check if a unit belongs to the given race (simplified)."""
-    zerg = {"zergling", "baneling", "roach", "hydralisk", "mutalisk",
-            "corruptor", "brood_lord", "ultralisk", "infestor", "viper",
-            "queen", "drone", "overlord", "overseer"}
-    terran = {"marine", "marauder", "medivac", "siege_tank", "viking",
-              "thor", "hellion", "banshee", "battlecruiser"}
-    protoss = {"zealot", "stalker", "sentry", "colossus", "immortal",
-               "phoenix", "void_ray", "carrier", "high_templar", "dark_templar"}
+    zerg = {
+        "zergling",
+        "baneling",
+        "roach",
+        "hydralisk",
+        "mutalisk",
+        "corruptor",
+        "brood_lord",
+        "ultralisk",
+        "infestor",
+        "viper",
+        "queen",
+        "drone",
+        "overlord",
+        "overseer",
+    }
+    terran = {
+        "marine",
+        "marauder",
+        "medivac",
+        "siege_tank",
+        "viking",
+        "thor",
+        "hellion",
+        "banshee",
+        "battlecruiser",
+    }
+    protoss = {
+        "zealot",
+        "stalker",
+        "sentry",
+        "colossus",
+        "immortal",
+        "phoenix",
+        "void_ray",
+        "carrier",
+        "high_templar",
+        "dark_templar",
+    }
     if race == "zerg":
         return unit in zerg
     elif race == "terran":
@@ -505,11 +579,24 @@ def _unit_matches_race(unit: str, race: str) -> bool:
 
 def _tech_matches_race(building: str, race: str) -> bool:
     """Check if a tech building belongs to the given race (simplified)."""
-    zerg = {"spawning_pool", "roach_warren", "hydralisk_den", "spire",
-            "infestation_pit", "ultralisk_cavern", "greater_spire"}
+    zerg = {
+        "spawning_pool",
+        "roach_warren",
+        "hydralisk_den",
+        "spire",
+        "infestation_pit",
+        "ultralisk_cavern",
+        "greater_spire",
+    }
     terran = {"barracks", "factory", "starport", "armory", "fusion_core"}
-    protoss = {"gateway", "cybernetics_core", "robotics_facility", "stargate",
-               "templar_archives", "fleet_beacon"}
+    protoss = {
+        "gateway",
+        "cybernetics_core",
+        "robotics_facility",
+        "stargate",
+        "templar_archives",
+        "fleet_beacon",
+    }
     if race == "zerg":
         return building in zerg
     elif race == "terran":
@@ -522,6 +609,7 @@ def _tech_matches_race(building: str, race: str) -> bool:
 # ---------------------------------------------------------------------------
 # demo
 # ---------------------------------------------------------------------------
+
 
 def demo() -> None:
     """Demonstrate the SC2 game state embedding system."""
@@ -559,13 +647,17 @@ def demo() -> None:
     print("\n[4] Querying similar historical states...")
     query_state = StateEmbedder.generate_random_state(game_time=300, race="zerg")
     results = embedder.find_similar(query_state, top_k=5)
-    print(f"    Query: time={query_state.game_time_seconds}s, "
-          f"army={query_state.army_supply}, bases={query_state.base_count}")
+    print(
+        f"    Query: time={query_state.game_time_seconds}s, "
+        f"army={query_state.army_supply}, bases={query_state.base_count}"
+    )
     for rank, (idx, sim, meta) in enumerate(results, 1):
-        print(f"    #{rank}: idx={idx}, sim={sim:.4f}, "
-              f"time={meta.get('game_time', '?')}s, "
-              f"army={meta.get('army_supply', '?')}, "
-              f"bases={meta.get('base_count', '?')}")
+        print(
+            f"    #{rank}: idx={idx}, sim={sim:.4f}, "
+            f"time={meta.get('game_time', '?')}s, "
+            f"army={meta.get('army_supply', '?')}, "
+            f"bases={meta.get('base_count', '?')}"
+        )
 
     # 5. Embedding distances
     print("\n[5] Embedding distance analysis...")

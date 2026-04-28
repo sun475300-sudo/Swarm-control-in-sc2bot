@@ -5,9 +5,9 @@ Production Logic Verification - Production logic verification tool
 Verifies the correctness of modified production logic.
 """
 
+import logging
 import sys
 from pathlib import Path
-import logging
 
 logger = logging.getLogger("ProductionLogicVerification")
 
