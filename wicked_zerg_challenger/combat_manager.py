@@ -4338,3 +4338,4 @@ class CombatManager:
             pass
 
         return None
+# Improved micro management for VeryHard difficulty
