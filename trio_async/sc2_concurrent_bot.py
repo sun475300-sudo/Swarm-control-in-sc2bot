@@ -14,10 +14,18 @@ import dataclasses
 import enum
 import logging
 import math
+import sys
 import time
 from typing import Any, Optional
 
 import trio
+
+# Python 3.10 호환: BaseExceptionGroup은 3.11+에서 builtin
+if sys.version_info < (3, 11):
+    try:
+        from exceptiongroup import BaseExceptionGroup
+    except ImportError:
+        BaseExceptionGroup = BaseException  # type: ignore[misc,assignment]
 
 # ---------------------------------------------------------------------------
 # Logging
