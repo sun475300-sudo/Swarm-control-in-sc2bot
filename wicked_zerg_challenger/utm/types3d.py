@@ -74,7 +74,9 @@ class DroneState:
 
     id: int
     position: Point3D
-    velocity: np.ndarray = field(default_factory=lambda: np.zeros(3))  # [vx, vy, vz] m/s
+    velocity: np.ndarray = field(
+        default_factory=lambda: np.zeros(3)
+    )  # [vx, vy, vz] m/s
     heading: float = 0.0  # radians (0 = North/+y)
     drone_type: str = "quadrotor"  # "quadrotor" | "fixed_wing"
     max_speed: float = 15.0  # m/s

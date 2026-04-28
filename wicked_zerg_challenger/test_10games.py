@@ -4,17 +4,18 @@
 10게임 연속 성능 모니터링 테스트
 """
 
-from sc2 import maps
-from sc2.player import Bot, Computer
-from sc2.main import run_game
-from sc2.data import Race, Difficulty
-from wicked_zerg_bot_pro_impl import WickedZergBotProImpl as WickedZergBotPro
-import sys
-import os
-import time
-import psutil
-import tracemalloc
 import logging
+import os
+import sys
+import time
+import tracemalloc
+
+import psutil
+from sc2 import maps
+from sc2.data import Difficulty, Race
+from sc2.main import run_game
+from sc2.player import Bot, Computer
+from wicked_zerg_bot_pro_impl import WickedZergBotProImpl as WickedZergBotPro
 
 logger = logging.getLogger("Test10games")
 
@@ -32,8 +33,10 @@ def _ensure_sc2_path():
 
     try:
         import winreg
-        key = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE,
-                             r"SOFTWARE\Blizzard Entertainment\StarCraft II")
+
+        key = winreg.OpenKey(
+            winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\Blizzard Entertainment\StarCraft II"
+        )
         install_path, _ = winreg.QueryValueEx(key, "InstallPath")
         winreg.CloseKey(key)
 
@@ -112,9 +115,7 @@ def main():
         try:
             start_time = time.time()
             result = run_game(
-                map_instance,
-                [bot, Computer(opponent_race, difficulty)],
-                realtime=False
+                map_instance, [bot, Computer(opponent_race, difficulty)], realtime=False
             )
             elapsed = time.time() - start_time
 
@@ -131,7 +132,9 @@ def main():
         # Memory after game
         mem_after = process.memory_info().rss / 1024 / 1024
         mem_delta = mem_after - mem_before
-        logger.info(f"After game {game_num}: {mem_after:.1f} MB (delta: {mem_delta:+.1f} MB)")
+        logger.info(
+            f"After game {game_num}: {mem_after:.1f} MB (delta: {mem_delta:+.1f} MB)"
+        )
 
         # Short pause between games
         if game_num < total_games:
@@ -147,12 +150,18 @@ def main():
     logger.info("  PERFORMANCE TEST SUMMARY")
     logger.info("=" * 70)
     logger.info(f"\nGames Completed: {len(results)}/{total_games}")
-    logger.info(f"Win Rate: {wins}W-{losses}L ({wins/total_games*100:.1f}%)" if total_games > 0 else "No games")
+    logger.info(
+        f"Win Rate: {wins}W-{losses}L ({wins/total_games*100:.1f}%)"
+        if total_games > 0
+        else "No games"
+    )
     logger.info(f"\nMemory:")
     logger.info(f"  Initial: {initial_memory:.1f} MB")
     logger.info(f"  Final: {final_memory:.1f} MB")
     logger.info(f"  Total Leak: {total_leak:+.1f} MB")
-    logger.info(f"  Per Game: {total_leak/total_games:+.1f} MB" if total_games > 0 else "N/A")
+    logger.info(
+        f"  Per Game: {total_leak/total_games:+.1f} MB" if total_games > 0 else "N/A"
+    )
 
     logger.info(f"\nResults:")
     for result in results:

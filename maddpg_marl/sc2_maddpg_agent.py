@@ -55,6 +55,7 @@ try:
     import torch.nn as nn
     import torch.nn.functional as F
     import torch.optim as optim
+
     _TORCH_AVAILABLE = True
 except ImportError:
     pass
@@ -75,19 +76,20 @@ ZERG_AGENT_TYPES: Dict[str, int] = {
 
 # Default dimensions per agent type: (obs_dim, act_dim)
 AGENT_DIM_DEFAULTS: Dict[str, Tuple[int, int]] = {
-    "zergling":   (24, 4),
-    "baneling":   (24, 4),
-    "roach":      (28, 5),
-    "hydralisk":  (28, 5),
-    "mutalisk":   (30, 5),
-    "ultralisk":  (32, 5),
-    "infestor":   (32, 6),
-    "corruptor":  (30, 5),
+    "zergling": (24, 4),
+    "baneling": (24, 4),
+    "roach": (28, 5),
+    "hydralisk": (28, 5),
+    "mutalisk": (30, 5),
+    "ultralisk": (32, 5),
+    "infestor": (32, 6),
+    "corruptor": (30, 5),
 }
 
 # ---------------------------------------------------------------------------
 # Ornstein-Uhlenbeck noise
 # ---------------------------------------------------------------------------
+
 
 class OUNoise:
     """Ornstein-Uhlenbeck process for temporally correlated exploration noise."""
@@ -115,7 +117,9 @@ class OUNoise:
         self.state = self.mu.copy()
 
     def sample(self) -> NDArray:
-        dx = self.theta * (self.mu - self.state) + self.sigma * self.rng.randn(self.size)
+        dx = self.theta * (self.mu - self.state) + self.sigma * self.rng.randn(
+            self.size
+        )
         self.state += dx.astype(np.float32)
         self.sigma = max(self.sigma_min, self.sigma * self.sigma_decay)
         return self.state.copy()
@@ -125,14 +129,16 @@ class OUNoise:
 # Multi-Agent Replay Buffer
 # ---------------------------------------------------------------------------
 
+
 @dataclass
 class MultiAgentTransition:
     """Single joint transition across all agents."""
-    observations: List[NDArray]       # per-agent obs
-    actions: List[NDArray]            # per-agent actions
-    rewards: List[float]              # per-agent rewards
+
+    observations: List[NDArray]  # per-agent obs
+    actions: List[NDArray]  # per-agent actions
+    rewards: List[float]  # per-agent rewards
     next_observations: List[NDArray]  # per-agent next obs
-    dones: List[bool]                 # per-agent done flags
+    dones: List[bool]  # per-agent done flags
     messages: Optional[List[NDArray]] = None  # optional comm messages
 
 
@@ -148,7 +154,9 @@ class MultiAgentReplayBuffer:
         self.buffer.append(transition)
 
     def sample(self, batch_size: int) -> List[MultiAgentTransition]:
-        indices = self.rng.choice(len(self.buffer), size=min(batch_size, len(self.buffer)), replace=False)
+        indices = self.rng.choice(
+            len(self.buffer), size=min(batch_size, len(self.buffer)), replace=False
+        )
         return [self.buffer[i] for i in indices]
 
     def batch_tensors(self, batch: List[MultiAgentTransition], n_agents: int):
@@ -170,7 +178,9 @@ class MultiAgentReplayBuffer:
             for i in range(n_agents)
         ]
         done_batch = [
-            np.array([float(t.dones[i]) for t in batch], dtype=np.float32).reshape(-1, 1)
+            np.array([float(t.dones[i]) for t in batch], dtype=np.float32).reshape(
+                -1, 1
+            )
             for i in range(n_agents)
         ]
         msg_batch = None
@@ -188,6 +198,7 @@ class MultiAgentReplayBuffer:
 # ---------------------------------------------------------------------------
 # NumPy neural network primitives (fallback)
 # ---------------------------------------------------------------------------
+
 
 def _relu(x: NDArray) -> NDArray:
     return np.maximum(0.0, x)
@@ -256,7 +267,7 @@ class NumpyMLP:
         idx = 0
         for layer in self.layers:
             n = len(layer.parameters())
-            layer.set_parameters(params[idx:idx + n])
+            layer.set_parameters(params[idx : idx + n])
             idx += n
 
     def copy(self) -> "NumpyMLP":
@@ -268,6 +279,7 @@ class NumpyMLP:
 # ---------------------------------------------------------------------------
 # Communication Channel
 # ---------------------------------------------------------------------------
+
 
 class CommunicationChannel:
     """Learned message-passing between agents.
@@ -307,11 +319,18 @@ class CommunicationChannel:
 # Actor & Critic (NumPy fallback)
 # ---------------------------------------------------------------------------
 
+
 class NumpyActor:
     """Decentralised actor: maps local obs (+message) -> continuous action."""
 
-    def __init__(self, obs_dim: int, act_dim: int, msg_dim: int = 8,
-                 hidden: int = 128, seed: int = 0) -> None:
+    def __init__(
+        self,
+        obs_dim: int,
+        act_dim: int,
+        msg_dim: int = 8,
+        hidden: int = 128,
+        seed: int = 0,
+    ) -> None:
         self.net = NumpyMLP([obs_dim + msg_dim, hidden, hidden, act_dim], seed=seed)
         self.obs_dim = obs_dim
         self.act_dim = act_dim
@@ -340,9 +359,12 @@ class NumpyActor:
 class NumpyCritic:
     """Centralised critic: maps joint (obs, actions) -> Q-value."""
 
-    def __init__(self, total_obs_dim: int, total_act_dim: int,
-                 hidden: int = 256, seed: int = 0) -> None:
-        self.net = NumpyMLP([total_obs_dim + total_act_dim, hidden, hidden, 1], seed=seed)
+    def __init__(
+        self, total_obs_dim: int, total_act_dim: int, hidden: int = 256, seed: int = 0
+    ) -> None:
+        self.net = NumpyMLP(
+            [total_obs_dim + total_act_dim, hidden, hidden, 1], seed=seed
+        )
         self.total_obs_dim = total_obs_dim
         self.total_act_dim = total_act_dim
 
@@ -367,10 +389,13 @@ class NumpyCritic:
 # ---------------------------------------------------------------------------
 
 if _TORCH_AVAILABLE:
+
     class TorchActor(nn.Module):
         """Decentralised actor (PyTorch)."""
-        def __init__(self, obs_dim: int, act_dim: int, msg_dim: int = 8,
-                     hidden: int = 128) -> None:
+
+        def __init__(
+            self, obs_dim: int, act_dim: int, msg_dim: int = 8, hidden: int = 128
+        ) -> None:
             super().__init__()
             self.fc1 = nn.Linear(obs_dim + msg_dim, hidden)
             self.fc2 = nn.Linear(hidden, hidden)
@@ -387,8 +412,10 @@ if _TORCH_AVAILABLE:
 
     class TorchCritic(nn.Module):
         """Centralised critic (PyTorch)."""
-        def __init__(self, total_obs_dim: int, total_act_dim: int,
-                     hidden: int = 256) -> None:
+
+        def __init__(
+            self, total_obs_dim: int, total_act_dim: int, hidden: int = 256
+        ) -> None:
             super().__init__()
             self.fc1 = nn.Linear(total_obs_dim + total_act_dim, hidden)
             self.fc2 = nn.Linear(hidden, hidden)
@@ -402,6 +429,7 @@ if _TORCH_AVAILABLE:
 
     class TorchCommEncoder(nn.Module):
         """Communication message encoder (PyTorch)."""
+
         def __init__(self, obs_dim: int, msg_dim: int = 8) -> None:
             super().__init__()
             self.fc1 = nn.Linear(obs_dim, 64)
@@ -416,9 +444,11 @@ if _TORCH_AVAILABLE:
 # SC2 Reward Shaping
 # ---------------------------------------------------------------------------
 
+
 @dataclass
 class SC2RewardConfig:
     """Weights for reward shaping components."""
+
     damage_dealt_weight: float = 1.0
     damage_taken_weight: float = -0.5
     units_killed_weight: float = 2.0
@@ -453,7 +483,9 @@ def compute_sc2_reward(
     reward = 0.0
 
     # Individual components
-    reward += cfg.damage_dealt_weight * damage_dealt / max(1.0, damage_dealt + damage_taken)
+    reward += (
+        cfg.damage_dealt_weight * damage_dealt / max(1.0, damage_dealt + damage_taken)
+    )
     reward += cfg.damage_taken_weight * damage_taken / 100.0
     reward += cfg.units_killed_weight * units_killed
     reward += cfg.units_lost_weight * units_lost
@@ -480,7 +512,10 @@ def compute_sc2_reward(
 # Numerical gradient helper (NumPy fallback)
 # ---------------------------------------------------------------------------
 
-def _numerical_gradient(func, params: List[NDArray], eps: float = 1e-4) -> List[NDArray]:
+
+def _numerical_gradient(
+    func, params: List[NDArray], eps: float = 1e-4
+) -> List[NDArray]:
     """Central-difference gradient estimation for NumPy networks."""
     grads = []
     for p in params:
@@ -512,9 +547,9 @@ def _adam_update(
     """In-place Adam update on NumPy parameter arrays."""
     for i, (p, g) in enumerate(zip(params, grads)):
         m_states[i] = beta1 * m_states[i] + (1 - beta1) * g
-        v_states[i] = beta2 * v_states[i] + (1 - beta2) * (g ** 2)
-        m_hat = m_states[i] / (1 - beta1 ** step)
-        v_hat = v_states[i] / (1 - beta2 ** step)
+        v_states[i] = beta2 * v_states[i] + (1 - beta2) * (g**2)
+        m_hat = m_states[i] / (1 - beta1**step)
+        v_hat = v_states[i] / (1 - beta2**step)
         p -= lr * m_hat / (np.sqrt(v_hat) + eps)
 
 
@@ -522,26 +557,28 @@ def _adam_update(
 # Polyak (soft) target update
 # ---------------------------------------------------------------------------
 
+
 def _polyak_update(
     source_params: List[NDArray],
     target_params: List[NDArray],
     tau: float = 0.005,
 ) -> List[NDArray]:
     """Soft-update: target = tau * source + (1 - tau) * target."""
-    return [
-        tau * sp + (1.0 - tau) * tp
-        for sp, tp in zip(source_params, target_params)
-    ]
+    return [tau * sp + (1.0 - tau) * tp for sp, tp in zip(source_params, target_params)]
 
 
 # ---------------------------------------------------------------------------
 # SC2MADDPGAgent --- Main Coordinator
 # ---------------------------------------------------------------------------
 
+
 @dataclass
 class MADDPGConfig:
     """Hyperparameters for MADDPG training."""
-    agent_types: List[str] = field(default_factory=lambda: ["zergling", "roach", "hydralisk"])
+
+    agent_types: List[str] = field(
+        default_factory=lambda: ["zergling", "roach", "hydralisk"]
+    )
     gamma: float = 0.99
     tau: float = 0.005
     actor_lr: float = 1e-4
@@ -632,7 +669,8 @@ class SC2MADDPGAgent:
     def _build_numpy_networks(self, total_obs: int, total_act: int) -> None:
         for i in range(self.n_agents):
             actor = NumpyActor(
-                self.obs_dims[i], self.act_dims[i],
+                self.obs_dims[i],
+                self.act_dims[i],
                 msg_dim=self.cfg.msg_dim,
                 hidden=self.cfg.hidden_actor,
                 seed=self.cfg.seed + i,
@@ -640,7 +678,12 @@ class SC2MADDPGAgent:
             self.actors.append(actor)
             self.target_actors.append(actor.copy())
             self.critics.append(
-                NumpyCritic(total_obs, total_act, hidden=self.cfg.hidden_critic, seed=self.cfg.seed + 100 + i)
+                NumpyCritic(
+                    total_obs,
+                    total_act,
+                    hidden=self.cfg.hidden_critic,
+                    seed=self.cfg.seed + 100 + i,
+                )
             )
             self.target_critics.append(self.critics[-1].copy())
             self.noises.append(
@@ -654,14 +697,24 @@ class SC2MADDPGAgent:
                 )
             )
             self.comm_channels.append(
-                CommunicationChannel(self.obs_dims[i], self.cfg.msg_dim, seed=self.cfg.seed + 300 + i)
+                CommunicationChannel(
+                    self.obs_dims[i], self.cfg.msg_dim, seed=self.cfg.seed + 300 + i
+                )
             )
 
         # Adam states for NumPy training
-        self._actor_m = [[np.zeros_like(p) for p in a.parameters()] for a in self.actors]
-        self._actor_v = [[np.zeros_like(p) for p in a.parameters()] for a in self.actors]
-        self._critic_m = [[np.zeros_like(p) for p in c.parameters()] for c in self.critics]
-        self._critic_v = [[np.zeros_like(p) for p in c.parameters()] for c in self.critics]
+        self._actor_m = [
+            [np.zeros_like(p) for p in a.parameters()] for a in self.actors
+        ]
+        self._actor_v = [
+            [np.zeros_like(p) for p in a.parameters()] for a in self.actors
+        ]
+        self._critic_m = [
+            [np.zeros_like(p) for p in c.parameters()] for c in self.critics
+        ]
+        self._critic_v = [
+            [np.zeros_like(p) for p in c.parameters()] for c in self.critics
+        ]
 
     def _build_torch_networks(self, total_obs: int, total_act: int) -> None:
         if not _TORCH_AVAILABLE:
@@ -671,18 +724,23 @@ class SC2MADDPGAgent:
         self.comm_optimizers = []
         for i in range(self.n_agents):
             actor = TorchActor(
-                self.obs_dims[i], self.act_dims[i],
+                self.obs_dims[i],
+                self.act_dims[i],
                 msg_dim=self.cfg.msg_dim,
                 hidden=self.cfg.hidden_actor,
             )
             self.actors.append(actor)
             self.target_actors.append(copy.deepcopy(actor))
-            self.actor_optimizers.append(optim.Adam(actor.parameters(), lr=self.cfg.actor_lr))
+            self.actor_optimizers.append(
+                optim.Adam(actor.parameters(), lr=self.cfg.actor_lr)
+            )
 
             critic = TorchCritic(total_obs, total_act, hidden=self.cfg.hidden_critic)
             self.critics.append(critic)
             self.target_critics.append(copy.deepcopy(critic))
-            self.critic_optimizers.append(optim.Adam(critic.parameters(), lr=self.cfg.critic_lr))
+            self.critic_optimizers.append(
+                optim.Adam(critic.parameters(), lr=self.cfg.critic_lr)
+            )
 
             self.noises.append(
                 OUNoise(
@@ -696,7 +754,9 @@ class SC2MADDPGAgent:
             )
             comm = TorchCommEncoder(self.obs_dims[i], self.cfg.msg_dim)
             self.comm_channels.append(comm)
-            self.comm_optimizers.append(optim.Adam(comm.parameters(), lr=self.cfg.actor_lr))
+            self.comm_optimizers.append(
+                optim.Adam(comm.parameters(), lr=self.cfg.actor_lr)
+            )
 
     # ---- Communication -------------------------------------------------------
 
@@ -713,7 +773,9 @@ class SC2MADDPGAgent:
             messages.append(msg)
         return messages
 
-    def _get_aggregated_message(self, messages: List[NDArray], agent_idx: int) -> NDArray:
+    def _get_aggregated_message(
+        self, messages: List[NDArray], agent_idx: int
+    ) -> NDArray:
         """Get aggregated message for a specific agent (excluding self)."""
         if len(messages) <= 1:
             return np.zeros(self.cfg.msg_dim, dtype=np.float32)
@@ -744,7 +806,7 @@ class SC2MADDPGAgent:
                 action = self.actors[i].forward(observations[i], agg_msg).squeeze(0)
 
             if explore:
-                noise = self.noises[i].sample()[:self.act_dims[i]]
+                noise = self.noises[i].sample()[: self.act_dims[i]]
                 action = np.clip(action + noise, -1.0, 1.0)
             actions.append(action)
         self.step_count += 1
@@ -781,8 +843,9 @@ class SC2MADDPGAgent:
             return None
 
         batch = self.replay_buffer.sample(self.cfg.batch_size)
-        obs_b, act_b, rew_b, next_obs_b, done_b, msg_b = \
+        obs_b, act_b, rew_b, next_obs_b, done_b, msg_b = (
             self.replay_buffer.batch_tensors(batch, self.n_agents)
+        )
 
         self.train_step += 1
 
@@ -831,17 +894,28 @@ class SC2MADDPGAgent:
                 grad = np.zeros_like(p)
                 perturbation = self.rng.randn(*p.shape).astype(np.float32) * 0.01
                 p += perturbation
-                loss_plus = float(np.mean((self.critics[i].forward(joint_obs, joint_act) - y) ** 2))
+                loss_plus = float(
+                    np.mean((self.critics[i].forward(joint_obs, joint_act) - y) ** 2)
+                )
                 p -= 2 * perturbation
-                loss_minus = float(np.mean((self.critics[i].forward(joint_obs, joint_act) - y) ** 2))
+                loss_minus = float(
+                    np.mean((self.critics[i].forward(joint_obs, joint_act) - y) ** 2)
+                )
                 p += perturbation  # restore
-                grad = perturbation * (loss_plus - loss_minus) / (2 * np.sum(perturbation ** 2) + 1e-8)
+                grad = (
+                    perturbation
+                    * (loss_plus - loss_minus)
+                    / (2 * np.sum(perturbation**2) + 1e-8)
+                )
                 c_grads.append(grad)
 
             _adam_update(
-                c_params, c_grads,
-                self._critic_m[i], self._critic_v[i],
-                self.cfg.critic_lr, self.train_step,
+                c_params,
+                c_grads,
+                self._critic_m[i],
+                self._critic_v[i],
+                self.cfg.critic_lr,
+                self.train_step,
             )
             self.critics[i].set_parameters(c_params)
 
@@ -875,13 +949,20 @@ class SC2MADDPGAgent:
                 jca = np.concatenate(new_actions, axis=-1)
                 loss_minus = -float(np.mean(self.critics[i].forward(joint_obs, jca)))
                 p += perturbation
-                grad = perturbation * (loss_plus - loss_minus) / (2 * np.sum(perturbation ** 2) + 1e-8)
+                grad = (
+                    perturbation
+                    * (loss_plus - loss_minus)
+                    / (2 * np.sum(perturbation**2) + 1e-8)
+                )
                 a_grads.append(grad)
 
             _adam_update(
-                a_params, a_grads,
-                self._actor_m[i], self._actor_v[i],
-                self.cfg.actor_lr, self.train_step,
+                a_params,
+                a_grads,
+                self._actor_m[i],
+                self._actor_v[i],
+                self.cfg.actor_lr,
+                self.train_step,
             )
             self.actors[i].set_parameters(a_params)
 
@@ -955,7 +1036,9 @@ class SC2MADDPGAgent:
 
             self.critic_optimizers[i].zero_grad()
             critic_loss.backward()
-            torch.nn.utils.clip_grad_norm_(self.critics[i].parameters(), self.cfg.max_grad_norm)
+            torch.nn.utils.clip_grad_norm_(
+                self.critics[i].parameters(), self.cfg.max_grad_norm
+            )
             self.critic_optimizers[i].step()
             critic_losses.append(critic_loss.item())
 
@@ -975,16 +1058,22 @@ class SC2MADDPGAgent:
             self.actor_optimizers[i].zero_grad()
             self.comm_optimizers[i].zero_grad()
             actor_loss.backward()
-            torch.nn.utils.clip_grad_norm_(self.actors[i].parameters(), self.cfg.max_grad_norm)
+            torch.nn.utils.clip_grad_norm_(
+                self.actors[i].parameters(), self.cfg.max_grad_norm
+            )
             self.actor_optimizers[i].step()
             self.comm_optimizers[i].step()
             actor_losses.append(actor_loss.item())
 
             # --- Soft target update ---
             with torch.no_grad():
-                for tp, sp in zip(self.target_critics[i].parameters(), self.critics[i].parameters()):
+                for tp, sp in zip(
+                    self.target_critics[i].parameters(), self.critics[i].parameters()
+                ):
                     tp.data.mul_(1.0 - self.cfg.tau).add_(sp.data, alpha=self.cfg.tau)
-                for tp, sp in zip(self.target_actors[i].parameters(), self.actors[i].parameters()):
+                for tp, sp in zip(
+                    self.target_actors[i].parameters(), self.actors[i].parameters()
+                ):
                     tp.data.mul_(1.0 - self.cfg.tau).add_(sp.data, alpha=self.cfg.tau)
 
         metrics = {
@@ -1026,10 +1115,18 @@ class SC2MADDPGAgent:
             "metrics": {k: v[-100:] for k, v in self.metrics.items()},
         }
         if not self.use_torch:
-            state["actors"] = [[p.tolist() for p in a.parameters()] for a in self.actors]
-            state["critics"] = [[p.tolist() for p in c.parameters()] for c in self.critics]
-            state["target_actors"] = [[p.tolist() for p in a.parameters()] for a in self.target_actors]
-            state["target_critics"] = [[p.tolist() for p in c.parameters()] for c in self.target_critics]
+            state["actors"] = [
+                [p.tolist() for p in a.parameters()] for a in self.actors
+            ]
+            state["critics"] = [
+                [p.tolist() for p in c.parameters()] for c in self.critics
+            ]
+            state["target_actors"] = [
+                [p.tolist() for p in a.parameters()] for a in self.target_actors
+            ]
+            state["target_critics"] = [
+                [p.tolist() for p in c.parameters()] for c in self.target_critics
+            ]
 
         with open(path / "maddpg_state.json", "w") as f:
             json.dump(state, f, indent=2)
@@ -1038,8 +1135,12 @@ class SC2MADDPGAgent:
             for i in range(self.n_agents):
                 torch.save(self.actors[i].state_dict(), path / f"actor_{i}.pt")
                 torch.save(self.critics[i].state_dict(), path / f"critic_{i}.pt")
-                torch.save(self.target_actors[i].state_dict(), path / f"target_actor_{i}.pt")
-                torch.save(self.target_critics[i].state_dict(), path / f"target_critic_{i}.pt")
+                torch.save(
+                    self.target_actors[i].state_dict(), path / f"target_actor_{i}.pt"
+                )
+                torch.save(
+                    self.target_critics[i].state_dict(), path / f"target_critic_{i}.pt"
+                )
 
         logger.info("MADDPG agent saved to %s", path)
 
@@ -1058,17 +1159,25 @@ class SC2MADDPGAgent:
                 self.actors[i].set_parameters(params)
                 params = [np.array(p, dtype=np.float32) for p in state["critics"][i]]
                 self.critics[i].set_parameters(params)
-                params = [np.array(p, dtype=np.float32) for p in state["target_actors"][i]]
+                params = [
+                    np.array(p, dtype=np.float32) for p in state["target_actors"][i]
+                ]
                 self.target_actors[i].set_parameters(params)
-                params = [np.array(p, dtype=np.float32) for p in state["target_critics"][i]]
+                params = [
+                    np.array(p, dtype=np.float32) for p in state["target_critics"][i]
+                ]
                 self.target_critics[i].set_parameters(params)
 
         if self.use_torch:
             for i in range(self.n_agents):
                 self.actors[i].load_state_dict(torch.load(path / f"actor_{i}.pt"))
                 self.critics[i].load_state_dict(torch.load(path / f"critic_{i}.pt"))
-                self.target_actors[i].load_state_dict(torch.load(path / f"target_actor_{i}.pt"))
-                self.target_critics[i].load_state_dict(torch.load(path / f"target_critic_{i}.pt"))
+                self.target_actors[i].load_state_dict(
+                    torch.load(path / f"target_actor_{i}.pt")
+                )
+                self.target_critics[i].load_state_dict(
+                    torch.load(path / f"target_critic_{i}.pt")
+                )
 
         logger.info("MADDPG agent loaded from %s", path)
 
@@ -1108,6 +1217,7 @@ class SC2MADDPGAgent:
 # ---------------------------------------------------------------------------
 # Simulated SC2 environment for demo / testing
 # ---------------------------------------------------------------------------
+
 
 class SimpleSC2Env:
     """Minimal multi-agent environment simulating SC2 combat for testing."""
@@ -1157,6 +1267,7 @@ class SimpleSC2Env:
 # ---------------------------------------------------------------------------
 # CLI Demo
 # ---------------------------------------------------------------------------
+
 
 def run_demo(
     n_episodes: int = 5,
@@ -1213,8 +1324,12 @@ def run_demo(
         all_returns.append(ep_return)
         agent.metrics["episode_return"].append(ep_return)
 
-        avg_critic = np.mean([m["critic_loss"] for m in ep_metrics]) if ep_metrics else 0.0
-        avg_actor = np.mean([m["actor_loss"] for m in ep_metrics]) if ep_metrics else 0.0
+        avg_critic = (
+            np.mean([m["critic_loss"] for m in ep_metrics]) if ep_metrics else 0.0
+        )
+        avg_actor = (
+            np.mean([m["actor_loss"] for m in ep_metrics]) if ep_metrics else 0.0
+        )
 
         if verbose:
             print(
@@ -1228,7 +1343,9 @@ def run_demo(
 
     if verbose:
         print("-" * 70)
-        print(f"  Mean Return: {np.mean(all_returns):.2f} +/- {np.std(all_returns):.2f}")
+        print(
+            f"  Mean Return: {np.mean(all_returns):.2f} +/- {np.std(all_returns):.2f}"
+        )
         print(f"  Total train steps: {agent.train_step}")
         print(f"  Backend: {'PyTorch' if agent.use_torch else 'NumPy (fallback)'}")
         print("=" * 70)
@@ -1247,7 +1364,9 @@ def main() -> None:
         description="Phase 608: MADDPG Multi-Agent DDPG for SC2 Zerg Coordination",
     )
     parser.add_argument("--episodes", type=int, default=5, help="Number of episodes")
-    parser.add_argument("--max-steps", type=int, default=100, help="Max steps per episode")
+    parser.add_argument(
+        "--max-steps", type=int, default=100, help="Max steps per episode"
+    )
     parser.add_argument(
         "--agents",
         nargs="+",

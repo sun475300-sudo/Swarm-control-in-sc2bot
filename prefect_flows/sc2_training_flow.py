@@ -3,15 +3,16 @@ Phase 424: Prefect - SC2 Training Pipeline Orchestration
 Workflow orchestration for the full SC2 model training lifecycle.
 """
 
-from prefect import flow, task, get_run_logger
-from prefect.artifacts import create_table_artifact, create_markdown_artifact
-from prefect.tasks import task_input_hash
-from datetime import timedelta
-import time
 import random
+import time
+from datetime import timedelta
 
+from prefect import flow, get_run_logger, task
+from prefect.artifacts import create_markdown_artifact, create_table_artifact
+from prefect.tasks import task_input_hash
 
 # ── Tasks ─────────────────────────────────────────────────────────────────────
+
 
 @task(
     name="ingest-sc2-replays",
@@ -31,7 +32,9 @@ def ingest_replay_data(data_path: str) -> dict:
         "total_size_mb": random.uniform(500, 2000),
         "races": {"Zerg": 420, "Terran": 390, "Protoss": 390},
     }
-    logger.info(f"Loaded {dataset['n_replays']} replays ({dataset['total_size_mb']:.0f} MB)")
+    logger.info(
+        f"Loaded {dataset['n_replays']} replays ({dataset['total_size_mb']:.0f} MB)"
+    )
     return dataset
 
 
@@ -48,7 +51,13 @@ def engineer_features(dataset: dict) -> dict:
     features = {
         "n_samples": n,
         "n_features": 128,
-        "feature_groups": ["unit_counts", "economy", "army_value", "map_control", "timing"],
+        "feature_groups": [
+            "unit_counts",
+            "economy",
+            "army_value",
+            "map_control",
+            "timing",
+        ],
         "train_split": int(n * 0.8),
         "val_split": int(n * 0.1),
         "test_split": int(n * 0.1),
@@ -66,7 +75,9 @@ def engineer_features(dataset: dict) -> dict:
 def train_model(features: dict, model_type: str = "ppo") -> dict:
     """Train the SC2 strategy model."""
     logger = get_run_logger()
-    logger.info(f"Training {model_type.upper()} model on {features['train_split']} samples...")
+    logger.info(
+        f"Training {model_type.upper()} model on {features['train_split']} samples..."
+    )
     time.sleep(0.2)  # Simulate training
     model_info = {
         "model_type": model_type,
@@ -83,7 +94,9 @@ def train_model(features: dict, model_type: str = "ppo") -> dict:
 def evaluate_model(model_info: dict, features: dict) -> dict:
     """Evaluate SC2 model on held-out test set."""
     logger = get_run_logger()
-    logger.info(f"Evaluating {model_info['model_path']} on {features['test_split']} samples...")
+    logger.info(
+        f"Evaluating {model_info['model_path']} on {features['test_split']} samples..."
+    )
     metrics = {
         "test_win_rate": round(random.uniform(0.52, 0.68), 4),
         "avg_game_duration": round(random.uniform(300, 700), 1),
@@ -101,7 +114,9 @@ def deploy_model(model_info: dict, metrics: dict, min_win_rate: float = 0.55) ->
     win_rate = metrics["test_win_rate"]
 
     if win_rate < min_win_rate:
-        logger.warning(f"Win rate {win_rate:.1%} below threshold {min_win_rate:.1%}. Skipping deploy.")
+        logger.warning(
+            f"Win rate {win_rate:.1%} below threshold {min_win_rate:.1%}. Skipping deploy."
+        )
         return {"deployed": False, "reason": "below_threshold"}
 
     logger.info(f"Deploying {model_info['model_path']} (win rate: {win_rate:.1%})")
@@ -116,6 +131,7 @@ def deploy_model(model_info: dict, metrics: dict, min_win_rate: float = 0.55) ->
 
 
 # ── Flow ──────────────────────────────────────────────────────────────────────
+
 
 @flow(
     name="sc2-training-pipeline",

@@ -1,7 +1,7 @@
+import logging
 import os
 import subprocess
 import sys
-import logging
 
 logger = logging.getLogger("CheckProxy")
 
@@ -22,7 +22,9 @@ if size == 0:
 
 logger.info("Attempting to run with -help...")
 try:
-    result = subprocess.run([proxy_path, "-help"], capture_output=True, text=True, timeout=5)
+    result = subprocess.run(
+        [proxy_path, "-help"], capture_output=True, text=True, timeout=5
+    )
     logger.info("Return code:", result.returncode)
     logger.info("Stdout:", result.stdout[:200])
     logger.info("Stderr:", result.stderr[:200])

@@ -4,25 +4,31 @@ SC2 Bot game sequence modeling with transformer (BERT/GPT-style)
 """
 
 from __future__ import annotations
+
+import math
+import os
+import random
+import sys
 from dataclasses import dataclass
 from typing import Optional
-import math
-import random
-import os
-import sys
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 
 try:
-    from transformers import (
-        AutoConfig, AutoModel, AutoModelForSequenceClassification,
-        PreTrainedModel, PretrainedConfig,
-        Trainer, TrainingArguments,
-        DataCollatorWithPadding,
-    )
     import torch
     import torch.nn as nn
+    from transformers import (
+        AutoConfig,
+        AutoModel,
+        AutoModelForSequenceClassification,
+        DataCollatorWithPadding,
+        PretrainedConfig,
+        PreTrainedModel,
+        Trainer,
+        TrainingArguments,
+    )
+
     HF_AVAILABLE = True
 except ImportError:
     HF_AVAILABLE = False
@@ -33,6 +39,7 @@ except ImportError:
 # ─────────────────────────────────────────────
 
 if HF_AVAILABLE:
+
     class SC2TransformerConfig(PretrainedConfig):
         model_type = "sc2_transformer"
 
@@ -83,7 +90,7 @@ if HF_AVAILABLE:
                 encoder_layer, num_layers=config.n_layers
             )
             self.policy_head = nn.Linear(config.d_model, config.n_actions)
-            self.value_head  = nn.Linear(config.d_model, 1)
+            self.value_head = nn.Linear(config.d_model, 1)
             self.post_init()
 
         def forward(
@@ -97,7 +104,7 @@ if HF_AVAILABLE:
 
             h = self.obs_embed(obs_seq) + self.pos_embed(positions)
             if attention_mask is not None:
-                key_padding_mask = (attention_mask == 0)
+                key_padding_mask = attention_mask == 0
             else:
                 key_padding_mask = None
 
@@ -106,20 +113,20 @@ if HF_AVAILABLE:
             # Use last token for prediction (GPT-style)
             last = h[:, -1, :]
             logits = self.policy_head(last)
-            value  = self.value_head(last).squeeze(-1)
+            value = self.value_head(last).squeeze(-1)
 
             loss = None
             if labels is not None:
                 loss_fn = nn.CrossEntropyLoss()
                 loss = loss_fn(logits, labels)
 
-            return {"logits": logits, "value": value, "loss": loss,
-                    "hidden_states": h}
+            return {"logits": logits, "value": value, "loss": loss, "hidden_states": h}
 
 
 # ─────────────────────────────────────────────
 # Game sequence dataset (HF Dataset-compatible)
 # ─────────────────────────────────────────────
+
 
 def generate_game_sequences(
     n_games: int = 200,
@@ -151,10 +158,12 @@ def generate_game_sequences(
             sequence.append([0.0] * obs_dim)
             actions.append(0)
 
-        dataset.append({
-            "obs_seq": sequence[:seq_len],
-            "label": actions[seq_len - 1] if actions else 0,
-        })
+        dataset.append(
+            {
+                "obs_seq": sequence[:seq_len],
+                "label": actions[seq_len - 1] if actions else 0,
+            }
+        )
 
     return dataset
 
@@ -162,6 +171,7 @@ def generate_game_sequences(
 # ─────────────────────────────────────────────
 # Python-native transformer (no HF)
 # ─────────────────────────────────────────────
+
 
 class PythonSelfAttention:
     """Manual self-attention without frameworks."""
@@ -172,7 +182,8 @@ class PythonSelfAttention:
         self.head_dim = d_model // n_heads
 
     def scaled_dot_product(
-        self, q: list[list[float]],
+        self,
+        q: list[list[float]],
         k: list[list[float]],
         v: list[list[float]],
     ) -> list[list[float]]:
@@ -209,6 +220,7 @@ class PythonSelfAttention:
 # Training
 # ─────────────────────────────────────────────
 
+
 def train_hf_model(epochs: int = 3) -> dict:
     if not HF_AVAILABLE:
         print("[HF] Not available — using statistics on generated data")
@@ -230,7 +242,8 @@ def train_hf_model(epochs: int = 3) -> dict:
             self.seq_len = seq_len
             self.obs_dim = obs_dim
 
-        def __len__(self): return len(self.data)
+        def __len__(self):
+            return len(self.data)
 
         def __getitem__(self, idx):
             item = self.data[idx]
@@ -244,7 +257,7 @@ def train_hf_model(epochs: int = 3) -> dict:
     raw_data = generate_game_sequences(n_games=100)
     split = int(len(raw_data) * 0.8)
     train_ds = SC2Dataset(raw_data[:split])
-    eval_ds  = SC2Dataset(raw_data[split:])
+    eval_ds = SC2Dataset(raw_data[split:])
 
     training_args = TrainingArguments(
         output_dir="./sc2_transformer",

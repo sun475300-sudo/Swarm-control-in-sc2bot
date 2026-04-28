@@ -63,15 +63,15 @@ class SC2BotServicer:
             "confidence": 1.0,
         }
 
-    async def StreamGameUpdates(
-        self, request, context
-    ) -> AsyncIterator[dict]:
+    async def StreamGameUpdates(self, request, context) -> AsyncIterator[dict]:
         """
         Stream periodic game state snapshots to subscribed clients.
         Yields an update every 22.4 game loops (~1 real second).
         """
         session_id = request.session_id
-        logger.info("StreamGameUpdates: session=%s player=%d", session_id, request.player_id)
+        logger.info(
+            "StreamGameUpdates: session=%s player=%d", session_id, request.player_id
+        )
         self.active_sessions[session_id] = {"player_id": request.player_id, "loop": 0}
 
         try:
@@ -113,7 +113,10 @@ class SC2BotServicer:
         self.match_results.append(result_record)
         logger.info(
             "ReportResult: match=%s result=%s score=%.1f apm=%d",
-            match_id, request.result, request.score, request.apm,
+            match_id,
+            request.result,
+            request.score,
+            request.apm,
         )
         return {"success": True, "message": "Result recorded", "match_id": match_id}
 

@@ -100,15 +100,28 @@ class FederatedConfig:
     sparse_updates: bool = True
 
     # SC2-specific
-    maps: List[str] = field(default_factory=lambda: [
-        "AcropolisLE", "DiscoBloodbathLE", "EphemeronLE",
-        "ThunderbirdLE", "TritonLE", "WintersGateLE",
-        "WorldofSleepersLE", "Simulacrum",
-    ])
-    opponent_pool: List[str] = field(default_factory=lambda: [
-        "ZergRush", "TerranMech", "ProtossDeathball",
-        "RandomMacro", "CheeseLingAll", "SkyToss",
-    ])
+    maps: List[str] = field(
+        default_factory=lambda: [
+            "AcropolisLE",
+            "DiscoBloodbathLE",
+            "EphemeronLE",
+            "ThunderbirdLE",
+            "TritonLE",
+            "WintersGateLE",
+            "WorldofSleepersLE",
+            "Simulacrum",
+        ]
+    )
+    opponent_pool: List[str] = field(
+        default_factory=lambda: [
+            "ZergRush",
+            "TerranMech",
+            "ProtossDeathball",
+            "RandomMacro",
+            "CheeseLingAll",
+            "SkyToss",
+        ]
+    )
 
     # General
     seed: int = 42
@@ -143,14 +156,19 @@ class DifferentialPrivacy:
         self.rng = np.random.RandomState(seed)
         self._spent_epsilon = 0.0
         self._rounds_counted = 0
-        logger.info("DifferentialPrivacy(sigma=%.2f, C=%.2f, eps=%.1f, delta=%.1e)",
-                     noise_multiplier, max_grad_norm, target_epsilon, target_delta)
+        logger.info(
+            "DifferentialPrivacy(sigma=%.2f, C=%.2f, eps=%.1f, delta=%.1e)",
+            noise_multiplier,
+            max_grad_norm,
+            target_epsilon,
+            target_delta,
+        )
 
     # ------------------------------------------------------------------
     def clip_gradients(self, gradients: Dict[str, NDArray]) -> Dict[str, NDArray]:
         """Clip per-sample gradients to max_grad_norm (L2)."""
         # Compute global L2 norm
-        total_norm_sq = sum(float(np.sum(g ** 2)) for g in gradients.values())
+        total_norm_sq = sum(float(np.sum(g**2)) for g in gradients.values())
         total_norm = math.sqrt(total_norm_sq)
         clip_factor = min(1.0, self.max_grad_norm / max(total_norm, 1e-12))
 
@@ -159,12 +177,17 @@ class DifferentialPrivacy:
             clipped[name] = (g * clip_factor).astype(np.float32)
 
         if clip_factor < 1.0:
-            logger.debug("Gradient clipped: norm %.4f -> %.4f", total_norm,
-                          total_norm * clip_factor)
+            logger.debug(
+                "Gradient clipped: norm %.4f -> %.4f",
+                total_norm,
+                total_norm * clip_factor,
+            )
         return clipped
 
     # ------------------------------------------------------------------
-    def add_noise(self, gradients: Dict[str, NDArray], n_samples: int) -> Dict[str, NDArray]:
+    def add_noise(
+        self, gradients: Dict[str, NDArray], n_samples: int
+    ) -> Dict[str, NDArray]:
         """Add calibrated Gaussian noise to aggregated gradients."""
         sigma = self.noise_multiplier * self.max_grad_norm / max(n_samples, 1)
         noisy: Dict[str, NDArray] = {}
@@ -178,7 +201,7 @@ class DifferentialPrivacy:
         """Simple RDP-based privacy accounting for one round."""
         alpha = 2.0  # Renyi order
         sigma = self.noise_multiplier
-        rdp = alpha * sampling_rate ** 2 / (2 * sigma ** 2)
+        rdp = alpha * sampling_rate**2 / (2 * sigma**2)
         epsilon_step = rdp + math.log(1.0 / self.target_delta) / (alpha - 1.0)
         self._spent_epsilon += epsilon_step
         self._rounds_counted += 1
@@ -228,7 +251,7 @@ class FedAvgAggregator:
     ) -> float:
         last_round = self._round_history.get(client_id, current_round)
         staleness = current_round - last_round
-        weight = n_samples * (self.staleness_decay ** staleness)
+        weight = n_samples * (self.staleness_decay**staleness)
         self._round_history[client_id] = current_round
         return weight
 
@@ -261,9 +284,11 @@ class FedAvgAggregator:
                     agg_delta += (w / total_weight) * delta[name]
             new_global[name] = global_weights[name] + agg_delta
 
-        logger.debug("FedAvg aggregated %d clients, weights=%s",
-                      len(client_deltas),
-                      [f"{w:.1f}" for w in weights_per_client])
+        logger.debug(
+            "FedAvg aggregated %d clients, weights=%s",
+            len(client_deltas),
+            [f"{w:.1f}" for w in weights_per_client],
+        )
         return new_global
 
     # ------------------------------------------------------------------
@@ -371,18 +396,26 @@ class FederatedClient:
                 probs = self._softmax(logits)
 
                 batch_size = x_batch.shape[0]
-                loss = float(-np.mean(
-                    np.log(np.clip(probs[np.arange(batch_size), y_batch], 1e-12, 1.0))
-                ))
+                loss = float(
+                    -np.mean(
+                        np.log(
+                            np.clip(probs[np.arange(batch_size), y_batch], 1e-12, 1.0)
+                        )
+                    )
+                )
                 total_loss += loss
                 n_batches += 1
 
                 # Simple SGD update
                 for name in self._local_weights:
                     if "weight" in name:
-                        grad_approx = self.rng.randn(
-                            *self._local_weights[name].shape
-                        ).astype(np.float32) * loss * 0.01
+                        grad_approx = (
+                            self.rng.randn(*self._local_weights[name].shape).astype(
+                                np.float32
+                            )
+                            * loss
+                            * 0.01
+                        )
                         self._local_weights[name] -= self.cfg.local_lr * grad_approx
 
         avg_loss = total_loss / max(n_batches, 1)
@@ -390,14 +423,21 @@ class FederatedClient:
 
         # Simulate win tracking
         self._game_count += 4
-        self._win_count += self.rng.binomial(4, min(0.7, 0.3 + 0.1 / max(avg_loss, 0.01)))
+        self._win_count += self.rng.binomial(
+            4, min(0.7, 0.3 + 0.1 / max(avg_loss, 0.01))
+        )
 
         # Compute delta
         delta: Dict[str, NDArray] = {}
         for name in self._local_weights:
             delta[name] = self._local_weights[name] - global_snapshot[name]
 
-        logger.debug("Client %d trained: loss=%.4f, samples=%d", self.client_id, avg_loss, n_samples)
+        logger.debug(
+            "Client %d trained: loss=%.4f, samples=%d",
+            self.client_id,
+            avg_loss,
+            n_samples,
+        )
         return delta, n_samples, avg_loss
 
     # ------------------------------------------------------------------
@@ -460,12 +500,17 @@ class FederatedServer:
         for i in range(len(layer_sizes) - 1):
             fan_in, fan_out = layer_sizes[i], layer_sizes[i + 1]
             scale = np.sqrt(2.0 / fan_in)
-            weights[f"layer_{i}.weight"] = self.rng.randn(fan_out, fan_in).astype(np.float32) * scale
+            weights[f"layer_{i}.weight"] = (
+                self.rng.randn(fan_out, fan_in).astype(np.float32) * scale
+            )
             weights[f"layer_{i}.bias"] = np.zeros(fan_out, dtype=np.float32)
         self._global_weights = weights
         total = sum(w.size for w in weights.values())
-        logger.info("Global model initialised: %d params (%.2f MB)",
-                     total, total * 4 / (1024 ** 2))
+        logger.info(
+            "Global model initialised: %d params (%.2f MB)",
+            total,
+            total * 4 / (1024**2),
+        )
         return weights
 
     # ------------------------------------------------------------------
@@ -490,7 +535,9 @@ class FederatedServer:
             losses = np.array([c.local_loss for c in clients])
             if np.all(np.isinf(losses)):
                 return list(self.rng.choice(clients, size=k, replace=False))
-            losses = np.where(np.isinf(losses), np.max(losses[~np.isinf(losses)]) * 2, losses)
+            losses = np.where(
+                np.isinf(losses), np.max(losses[~np.isinf(losses)]) * 2, losses
+            )
             probs = losses / losses.sum()
             indices = self.rng.choice(len(clients), size=k, replace=False, p=probs)
             return [clients[i] for i in indices]
@@ -569,8 +616,11 @@ class FederatedServer:
 
         # Aggregate
         self._global_weights = self.aggregator.aggregate(
-            self._global_weights, deltas, selected_ids,
-            n_samples_list, self._round,
+            self._global_weights,
+            deltas,
+            selected_ids,
+            n_samples_list,
+            self._round,
         )
 
         # DP noise on aggregated model update
@@ -593,7 +643,9 @@ class FederatedServer:
             round_info["dp"] = self.dp.summary()
 
         self._round_log.append(round_info)
-        logger.info("Round %d: loss=%.4f, clients=%s", self._round, avg_loss, selected_ids)
+        logger.info(
+            "Round %d: loss=%.4f, clients=%s", self._round, avg_loss, selected_ids
+        )
         return round_info
 
     # ------------------------------------------------------------------
@@ -627,8 +679,11 @@ class FederatedTrainer:
         self.server = FederatedServer(self.cfg)
         self.clients: List[FederatedClient] = []
         self._convergence_log: List[Dict[str, Any]] = []
-        logger.info("FederatedTrainer initialised (%d clients, %d rounds)",
-                     self.cfg.n_clients, self.cfg.rounds)
+        logger.info(
+            "FederatedTrainer initialised (%d clients, %d rounds)",
+            self.cfg.n_clients,
+            self.cfg.rounds,
+        )
 
     # ------------------------------------------------------------------
     def setup(self) -> None:
@@ -647,8 +702,11 @@ class FederatedTrainer:
             )
             self.clients.append(client)
 
-        logger.info("Setup complete: %d clients across %d maps",
-                     len(self.clients), len(set(c.map_name for c in self.clients)))
+        logger.info(
+            "Setup complete: %d clients across %d maps",
+            len(self.clients),
+            len(set(c.map_name for c in self.clients)),
+        )
 
     # ------------------------------------------------------------------
     def train(self, verbose: bool = True) -> List[Dict[str, Any]]:
@@ -661,14 +719,21 @@ class FederatedTrainer:
 
             if result.get("status") == "dp_budget_exhausted":
                 if verbose:
-                    logger.info("Training halted: DP budget exhausted at round %d", r + 1)
+                    logger.info(
+                        "Training halted: DP budget exhausted at round %d", r + 1
+                    )
                 break
 
             if verbose and (r + 1) % 10 == 0:
                 client_winrates = [c.winrate for c in self.clients]
                 mean_wr = float(np.mean(client_winrates)) if client_winrates else 0.0
-                logger.info("  Round %d/%d  avg_loss=%.4f  mean_winrate=%.3f",
-                             r + 1, self.cfg.rounds, result["avg_loss"], mean_wr)
+                logger.info(
+                    "  Round %d/%d  avg_loss=%.4f  mean_winrate=%.3f",
+                    r + 1,
+                    self.cfg.rounds,
+                    result["avg_loss"],
+                    mean_wr,
+                )
 
         self._convergence_log = round_results
         return round_results
@@ -700,7 +765,7 @@ class FederatedTrainer:
 
         total_params = sum(w.size for w in self.server.global_weights.values())
         result["model_params"] = total_params
-        result["model_size_mb"] = total_params * 4 / (1024 ** 2)
+        result["model_size_mb"] = total_params * 4 / (1024**2)
 
         return result
 
@@ -710,24 +775,32 @@ class FederatedTrainer:
         self.setup()
 
         if verbose:
-            logger.info("=== Federated Training (%d rounds, %d clients) ===",
-                         self.cfg.rounds, self.cfg.n_clients)
+            logger.info(
+                "=== Federated Training (%d rounds, %d clients) ===",
+                self.cfg.rounds,
+                self.cfg.n_clients,
+            )
 
         self.train(verbose=verbose)
         evaluation = self.evaluate()
 
         if verbose:
             logger.info("=== Training Complete ===")
-            logger.info("  Mean win-rate  : %.3f +/- %.3f",
-                         evaluation["global_mean_winrate"],
-                         evaluation["global_std_winrate"])
+            logger.info(
+                "  Mean win-rate  : %.3f +/- %.3f",
+                evaluation["global_mean_winrate"],
+                evaluation["global_std_winrate"],
+            )
             logger.info("  Mean loss      : %.4f", evaluation["global_mean_loss"])
             logger.info("  Model size     : %.2f MB", evaluation["model_size_mb"])
             if "dp_summary" in evaluation:
                 dp = evaluation["dp_summary"]
-                logger.info("  DP epsilon     : %.2f / %.2f (%.1f%% budget used)",
-                             dp["spent_epsilon"], dp["target_epsilon"],
-                             (1 - dp["budget_remaining"] / dp["target_epsilon"]) * 100)
+                logger.info(
+                    "  DP epsilon     : %.2f / %.2f (%.1f%% budget used)",
+                    dp["spent_epsilon"],
+                    dp["target_epsilon"],
+                    (1 - dp["budget_remaining"] / dp["target_epsilon"]) * 100,
+                )
 
         return evaluation
 
@@ -748,8 +821,12 @@ class FederatedTrainer:
 
 def demo() -> Dict[str, Any]:
     """Run a self-contained federated learning demonstration."""
-    logging.basicConfig(level=logging.INFO, format="%(name)s %(levelname)s: %(message)s")
-    logger.info("Phase 643 Demo: Federated Learning for Privacy-Preserving SC2 Training")
+    logging.basicConfig(
+        level=logging.INFO, format="%(name)s %(levelname)s: %(message)s"
+    )
+    logger.info(
+        "Phase 643 Demo: Federated Learning for Privacy-Preserving SC2 Training"
+    )
 
     cfg = FederatedConfig(
         n_clients=6,
@@ -771,8 +848,13 @@ def demo() -> Dict[str, Any]:
     result = trainer.run_pipeline(verbose=True)
 
     print("\n--- Phase 643 Demo Results ---")
-    for key in ("global_mean_winrate", "global_std_winrate", "global_mean_loss",
-                "model_params", "model_size_mb"):
+    for key in (
+        "global_mean_winrate",
+        "global_std_winrate",
+        "global_mean_loss",
+        "model_params",
+        "model_size_mb",
+    ):
         val = result.get(key)
         if isinstance(val, float):
             print(f"  {key}: {val:.4f}")
@@ -785,7 +867,9 @@ def demo() -> Dict[str, Any]:
         print(f"  dp_budget_remaining: {dp['budget_remaining']:.4f}")
 
     best = result.get("best_client", {})
-    print(f"  best_client: id={best.get('client_id')} wr={best.get('winrate', 0):.3f} map={best.get('map')}")
+    print(
+        f"  best_client: id={best.get('client_id')} wr={best.get('winrate', 0):.3f} map={best.get('map')}"
+    )
     print("--- Demo Complete ---\n")
     return result
 
@@ -799,11 +883,18 @@ def main() -> None:
     parser = argparse.ArgumentParser(
         description="Phase 643: Federated Learning for Privacy-Preserving SC2 Training"
     )
-    parser.add_argument("--clients", type=int, default=6, help="Number of federated clients")
+    parser.add_argument(
+        "--clients", type=int, default=6, help="Number of federated clients"
+    )
     parser.add_argument("--rounds", type=int, default=30, help="Federated rounds")
-    parser.add_argument("--strategy", choices=["random", "loss_weighted", "staleness_aware"],
-                        default="staleness_aware")
-    parser.add_argument("--no-dp", action="store_true", help="Disable differential privacy")
+    parser.add_argument(
+        "--strategy",
+        choices=["random", "loss_weighted", "staleness_aware"],
+        default="staleness_aware",
+    )
+    parser.add_argument(
+        "--no-dp", action="store_true", help="Disable differential privacy"
+    )
     parser.add_argument("--quiet", action="store_true")
     args = parser.parse_args()
 

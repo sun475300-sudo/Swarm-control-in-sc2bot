@@ -4,37 +4,41 @@ SC2 Bot RL training with PPO/SAC/A2C via SB3
 """
 
 from __future__ import annotations
-from typing import Optional
+
 import math
-import random
 import os
+import random
 import sys
+from typing import Optional
 
 # Add parent dir so sc2_gym_env is importable
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 
 try:
-    from stable_baselines3 import PPO, SAC, A2C
+    from stable_baselines3 import A2C, PPO, SAC
+    from stable_baselines3.common.callbacks import (
+        BaseCallback,
+        CheckpointCallback,
+        EvalCallback,
+    )
     from stable_baselines3.common.env_util import make_vec_env
     from stable_baselines3.common.evaluation import evaluate_policy
-    from stable_baselines3.common.callbacks import (
-        EvalCallback, CheckpointCallback, BaseCallback
-    )
     from stable_baselines3.common.monitor import Monitor
     from stable_baselines3.common.vec_env import SubprocVecEnv
+
     SB3_AVAILABLE = True
 except ImportError:
     SB3_AVAILABLE = False
 
 from gymnasium_env.sc2_gym_env import SC2ZergEnv
 
-
 # ─────────────────────────────────────────────
 # Custom callbacks
 # ─────────────────────────────────────────────
 
 if SB3_AVAILABLE:
+
     class SC2MetricsCallback(BaseCallback):
         """Log SC2-specific metrics during training."""
 
@@ -55,8 +59,10 @@ if SB3_AVAILABLE:
         def _on_training_end(self) -> None:
             if self.episode_rewards:
                 avg = sum(self.episode_rewards) / len(self.episode_rewards)
-                print(f"Training end | Avg reward: {avg:.2f} "
-                      f"over {len(self.episode_rewards)} episodes")
+                print(
+                    f"Training end | Avg reward: {avg:.2f} "
+                    f"over {len(self.episode_rewards)} episodes"
+                )
 
 
 # ─────────────────────────────────────────────
@@ -94,6 +100,7 @@ A2C_CONFIG = {
 # Training runner
 # ─────────────────────────────────────────────
 
+
 def make_env(seed: int = 0):
     def _init():
         env = SC2ZergEnv(max_frames=2000, enemy_aggression=0.5)
@@ -101,6 +108,7 @@ def make_env(seed: int = 0):
             env = Monitor(env)
         env.reset(seed=seed)
         return env
+
     return _init
 
 
@@ -148,6 +156,7 @@ def train_a2c(total_timesteps: int = 50_000, save_path: str = "./models"):
 # Python-native simulation fallback
 # ─────────────────────────────────────────────
 
+
 def simulate_training(total_timesteps: int) -> dict:
     """Simulate SB3-style training without the dependency."""
     env = SC2ZergEnv(max_frames=2000)
@@ -188,9 +197,11 @@ def simulate_training(total_timesteps: int) -> dict:
 
         if episodes % 10 == 0:
             avg = total_reward / episodes
-            print(f"  Episode {episodes:4d} | "
-                  f"Steps: {steps_done:6d} | "
-                  f"Avg reward: {avg:.2f}")
+            print(
+                f"  Episode {episodes:4d} | "
+                f"Steps: {steps_done:6d} | "
+                f"Avg reward: {avg:.2f}"
+            )
 
     return {
         "total_timesteps": steps_done,
@@ -207,8 +218,12 @@ if __name__ == "__main__":
     import argparse
 
     parser = argparse.ArgumentParser(description="Phase 533: SB3 SC2 Bot RL Training")
-    parser.add_argument("--algo", choices=["ppo", "a2c", "sim"], default="ppo",
-                        help="Training algorithm: ppo, a2c, or sim(ulation)")
+    parser.add_argument(
+        "--algo",
+        choices=["ppo", "a2c", "sim"],
+        default="ppo",
+        help="Training algorithm: ppo, a2c, or sim(ulation)",
+    )
     parser.add_argument("--timesteps", type=int, default=100_000)
     parser.add_argument("--save_path", type=str, default="./models")
     args = parser.parse_args()

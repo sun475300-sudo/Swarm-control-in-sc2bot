@@ -8,8 +8,8 @@ SC2 SpatialGrid(2D)를 3D 복셀 공간으로 확장.
 Origin: wicked_zerg_challenger/utils/spatial_partition.py
 """
 
-from typing import Any, Dict, List, Optional, Tuple
 import math
+from typing import Any, Dict, List, Optional, Tuple
 
 # Type alias: 3D 좌표 튜플
 Pos3 = Tuple[float, float, float]

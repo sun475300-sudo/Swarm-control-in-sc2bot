@@ -16,7 +16,6 @@ from enum import Enum
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional, Tuple
 
-
 # ============================================================
 # Statistics Helpers
 # ============================================================
@@ -58,6 +57,7 @@ def _stddev(data: List[float]) -> float:
 
 class LoadProfileType(Enum):
     """Types of load profiles for testing."""
+
     CONSTANT = "constant"
     RAMP_UP = "ramp_up"
     SPIKE = "spike"
@@ -66,6 +66,7 @@ class LoadProfileType(Enum):
 
 class RequestType(Enum):
     """SC2-specific request types to simulate."""
+
     BOT_API_CALL = "bot_api_call"
     TRAINING_PIPELINE = "training_pipeline"
     DASHBOARD_QUERY = "dashboard_query"
@@ -82,6 +83,7 @@ class RequestType(Enum):
 @dataclass
 class ResponseMetrics:
     """Metrics collected from a single request."""
+
     request_id: str
     request_type: str
     start_time: float
@@ -113,6 +115,7 @@ class ResponseMetrics:
 @dataclass
 class LoadProfile:
     """Defines how load is applied over time."""
+
     profile_type: LoadProfileType
     duration_seconds: float
     target_users: int
@@ -156,7 +159,9 @@ class LoadProfile:
         if self.profile_type == LoadProfileType.RAMP_UP:
             desc += f", Ramp-up: {self.ramp_up_seconds}s"
         elif self.profile_type == LoadProfileType.SPIKE:
-            desc += f", Spike: {self.spike_multiplier}x for {self.spike_duration_seconds}s"
+            desc += (
+                f", Spike: {self.spike_multiplier}x for {self.spike_duration_seconds}s"
+            )
         return desc
 
 
@@ -322,7 +327,11 @@ class LoadBalancer:
                 # Prefer instances with lower average latency
                 weights = []
                 for i in range(self.num_instances):
-                    avg = _mean(self.instance_latencies[i]) if self.instance_latencies[i] else 1.0
+                    avg = (
+                        _mean(self.instance_latencies[i])
+                        if self.instance_latencies[i]
+                        else 1.0
+                    )
                     weights.append(1.0 / max(avg, 0.1))
                 total = sum(weights)
                 probs = [w / total for w in weights]
@@ -338,7 +347,9 @@ class LoadBalancer:
 
     def record_request(self, instance_id: int, latency_ms: float) -> None:
         with self._lock:
-            self.instance_loads[instance_id] = self.instance_loads.get(instance_id, 0) + 1
+            self.instance_loads[instance_id] = (
+                self.instance_loads.get(instance_id, 0) + 1
+            )
             if instance_id not in self.instance_latencies:
                 self.instance_latencies[instance_id] = []
             self.instance_latencies[instance_id].append(latency_ms)
@@ -346,7 +357,9 @@ class LoadBalancer:
     def release_connection(self, instance_id: int) -> None:
         with self._lock:
             if instance_id in self.instance_loads:
-                self.instance_loads[instance_id] = max(0, self.instance_loads[instance_id] - 1)
+                self.instance_loads[instance_id] = max(
+                    0, self.instance_loads[instance_id] - 1
+                )
 
     def get_distribution_report(self) -> Dict[str, Any]:
         report: Dict[str, Any] = {"algorithm": self.algorithm, "instances": {}}
@@ -412,6 +425,7 @@ class LatencyHistogram:
 @dataclass
 class TestScenario:
     """Defines a complete load test scenario."""
+
     name: str
     profile: LoadProfile
     request_types: List[RequestType] = field(default_factory=lambda: list(RequestType))
@@ -452,7 +466,9 @@ class TestReport:
         latencies = [m.latency_ms for m in self.all_metrics]
         successes = sum(1 for m in self.all_metrics if m.success)
         failures = len(self.all_metrics) - successes
-        elapsed = self.end_time - self.start_time if self.end_time > self.start_time else 1.0
+        elapsed = (
+            self.end_time - self.start_time if self.end_time > self.start_time else 1.0
+        )
 
         # Per request type breakdown
         by_type: Dict[str, List[float]] = {}
@@ -515,8 +531,10 @@ class TestReport:
         print(f"\n  Per Request Type:")
         for rtype, stats in summary.get("by_request_type", {}).items():
             print(f"    {rtype}:")
-            print(f"      Count: {stats['count']}, Avg: {stats['avg_ms']}ms, "
-                  f"p95: {stats['p95_ms']}ms, p99: {stats['p99_ms']}ms")
+            print(
+                f"      Count: {stats['count']}, Avg: {stats['avg_ms']}ms, "
+                f"p95: {stats['p95_ms']}ms, p99: {stats['p99_ms']}ms"
+            )
 
         # Histogram
         latencies = [m.latency_ms for m in self.all_metrics]
@@ -669,8 +687,10 @@ class SC2LoadTester:
         lb_report = lb.get_distribution_report()
         print(f"\n  Load Balancer ({lb_report['algorithm']}) distribution:")
         for inst, stats in lb_report["instances"].items():
-            print(f"    {inst}: {stats['total_requests']} reqs, "
-                  f"avg={stats['avg_latency_ms']}ms")
+            print(
+                f"    {inst}: {stats['total_requests']} reqs, "
+                f"avg={stats['avg_latency_ms']}ms"
+            )
 
         return report
 
@@ -697,7 +717,9 @@ class SC2LoadTester:
     ) -> Dict[str, Any]:
         """SC2-specific: stress test training pipeline throughput."""
         print(f"\n  Training Pipeline Stress Test")
-        print(f"    Pipelines: {concurrent_pipelines}, Batches each: {batches_per_pipeline}")
+        print(
+            f"    Pipelines: {concurrent_pipelines}, Batches each: {batches_per_pipeline}"
+        )
 
         all_latencies: List[float] = []
         errors = 0
@@ -723,13 +745,17 @@ class SC2LoadTester:
             "avg_batch_ms": round(_mean(all_latencies), 2),
             "p95_batch_ms": round(_percentile(all_latencies, 95), 2),
             "p99_batch_ms": round(_percentile(all_latencies, 99), 2),
-            "estimated_throughput_batches_per_sec": round(
-                1000.0 / max(_mean(all_latencies), 0.01), 2
-            ) if all_latencies else 0.0,
+            "estimated_throughput_batches_per_sec": (
+                round(1000.0 / max(_mean(all_latencies), 0.01), 2)
+                if all_latencies
+                else 0.0
+            ),
         }
-        print(f"    Avg batch: {result['avg_batch_ms']}ms, "
-              f"p95: {result['p95_batch_ms']}ms, "
-              f"Errors: {result['errors']}")
+        print(
+            f"    Avg batch: {result['avg_batch_ms']}ms, "
+            f"p95: {result['p95_batch_ms']}ms, "
+            f"Errors: {result['errors']}"
+        )
         return result
 
     def run_dashboard_concurrency_test(
@@ -783,8 +809,10 @@ class SC2LoadTester:
                 "p95_ms": round(_percentile(lats, 95), 2),
             }
 
-        print(f"    Avg: {result['avg_latency_ms']}ms, p95: {result['p95_ms']}ms, "
-              f"Errors: {errors}")
+        print(
+            f"    Avg: {result['avg_latency_ms']}ms, p95: {result['p95_ms']}ms, "
+            f"Errors: {errors}"
+        )
         return result
 
     def generate_full_report(self, output_dir: str = "load_test_results") -> None:
@@ -847,7 +875,9 @@ def demo() -> None:
         concurrent_pipelines=3,
         batches_per_pipeline=20,
     )
-    print(f"    Throughput: ~{pipeline_result['estimated_throughput_batches_per_sec']} batches/sec")
+    print(
+        f"    Throughput: ~{pipeline_result['estimated_throughput_batches_per_sec']} batches/sec"
+    )
 
     # 5. Dashboard concurrency test
     print("\n[5] Dashboard Concurrency Test")
@@ -863,11 +893,20 @@ def demo() -> None:
     profiles = [
         LoadProfile(LoadProfileType.CONSTANT, 10.0, 20),
         LoadProfile(LoadProfileType.RAMP_UP, 10.0, 20, ramp_up_seconds=8.0),
-        LoadProfile(LoadProfileType.SPIKE, 10.0, 10, spike_multiplier=4.0,
-                    spike_duration_seconds=2.0, spike_interval_seconds=5.0),
+        LoadProfile(
+            LoadProfileType.SPIKE,
+            10.0,
+            10,
+            spike_multiplier=4.0,
+            spike_duration_seconds=2.0,
+            spike_interval_seconds=5.0,
+        ),
     ]
     for prof in profiles:
-        points = [prof.get_active_users_at(t) for t in range(0, int(prof.duration_seconds) + 1)]
+        points = [
+            prof.get_active_users_at(t)
+            for t in range(0, int(prof.duration_seconds) + 1)
+        ]
         print(f"    {prof.profile_type.value:>10}: {points}")
 
     # 7. Latency histogram

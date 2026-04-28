@@ -1,18 +1,20 @@
 """Capture UTM airspace control slides as PNG."""
+
 import asyncio
 from pathlib import Path
+
 from playwright.async_api import async_playwright
 
 HTML_PATH = Path(__file__).parent / "utm_slides.html"
 OUTPUT_DIR = Path(__file__).parent
 SLIDE_COUNT = 10
 
+
 async def main():
     async with async_playwright() as p:
         browser = await p.chromium.launch()
         page = await browser.new_page(
-            viewport={"width": 1280, "height": 720},
-            device_scale_factor=2
+            viewport={"width": 1280, "height": 720}, device_scale_factor=2
         )
         await page.goto(f"file:///{HTML_PATH.as_posix()}")
         await page.wait_for_load_state("domcontentloaded")
@@ -27,5 +29,6 @@ async def main():
 
         await browser.close()
         print(f"\nDone! {SLIDE_COUNT} slides saved to {OUTPUT_DIR}")
+
 
 asyncio.run(main())

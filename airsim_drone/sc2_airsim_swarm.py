@@ -32,6 +32,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class Vector3:
     """Lightweight 3-D vector for positions / velocities."""
+
     x: float = 0.0
     y: float = 0.0
     z: float = 0.0
@@ -49,7 +50,7 @@ class Vector3:
         return self.__mul__(scalar)
 
     def magnitude(self) -> float:
-        return math.sqrt(self.x ** 2 + self.y ** 2 + self.z ** 2)
+        return math.sqrt(self.x**2 + self.y**2 + self.z**2)
 
     def normalized(self) -> "Vector3":
         m = self.magnitude()
@@ -74,6 +75,7 @@ class Vector3:
 # ============================================================
 # Enums
 # ============================================================
+
 
 class DroneState(Enum):
     IDLE = auto()
@@ -106,8 +108,14 @@ class AvoidanceMethod(Enum):
 class PIDController:
     """Simple 1-D PID controller for flight axis stabilisation."""
 
-    def __init__(self, kp: float = 1.0, ki: float = 0.0, kd: float = 0.1,
-                 output_min: float = -10.0, output_max: float = 10.0):
+    def __init__(
+        self,
+        kp: float = 1.0,
+        ki: float = 0.0,
+        kd: float = 0.1,
+        output_min: float = -10.0,
+        output_max: float = 10.0,
+    ):
         self.kp = kp
         self.ki = ki
         self.kd = kd
@@ -155,7 +163,9 @@ class AirSimDrone:
 
     def takeoff(self, altitude: float = 10.0) -> bool:
         if self.state not in (DroneState.IDLE, DroneState.HOVERING):
-            logger.warning("Drone %s cannot take off from state %s", self.drone_id, self.state)
+            logger.warning(
+                "Drone %s cannot take off from state %s", self.drone_id, self.state
+            )
             return False
         self.state = DroneState.TAKING_OFF
         self.home_position = Vector3(self.position.x, self.position.y, self.position.z)
@@ -211,7 +221,9 @@ class AirSimDrone:
 
     # ---- telemetry ----
 
-    def _log_telemetry(self, event: str, extra: Optional[Dict[str, Any]] = None) -> None:
+    def _log_telemetry(
+        self, event: str, extra: Optional[Dict[str, Any]] = None
+    ) -> None:
         entry: Dict[str, Any] = {
             "ts": time.time(),
             "drone": self.drone_id,
@@ -249,7 +261,9 @@ class SwarmFormation:
 
     # ---- formation generators ----
 
-    def v_shape(self, center: Vector3, count: int, heading_deg: float = 0.0) -> List[Vector3]:
+    def v_shape(
+        self, center: Vector3, count: int, heading_deg: float = 0.0
+    ) -> List[Vector3]:
         positions: List[Vector3] = []
         rad = math.radians(heading_deg)
         half_angle = math.radians(30)
@@ -263,7 +277,9 @@ class SwarmFormation:
             positions.append(Vector3(center.x + rx, center.y + ry, center.z))
         return positions
 
-    def line(self, center: Vector3, count: int, heading_deg: float = 0.0) -> List[Vector3]:
+    def line(
+        self, center: Vector3, count: int, heading_deg: float = 0.0
+    ) -> List[Vector3]:
         positions: List[Vector3] = []
         rad = math.radians(heading_deg)
         start_offset = -(count - 1) / 2.0 * self.spacing
@@ -274,16 +290,20 @@ class SwarmFormation:
             positions.append(Vector3(center.x + dx, center.y + dy, center.z))
         return positions
 
-    def circle(self, center: Vector3, count: int, radius: Optional[float] = None) -> List[Vector3]:
+    def circle(
+        self, center: Vector3, count: int, radius: Optional[float] = None
+    ) -> List[Vector3]:
         radius = radius or (self.spacing * count / (2 * math.pi))
         positions: List[Vector3] = []
         for i in range(count):
             angle = 2 * math.pi * i / count
-            positions.append(Vector3(
-                center.x + radius * math.cos(angle),
-                center.y + radius * math.sin(angle),
-                center.z,
-            ))
+            positions.append(
+                Vector3(
+                    center.x + radius * math.cos(angle),
+                    center.y + radius * math.sin(angle),
+                    center.z,
+                )
+            )
         return positions
 
     def grid(self, center: Vector3, count: int) -> List[Vector3]:
@@ -310,8 +330,13 @@ class SwarmFormation:
             positions.append(center + o)
         return positions
 
-    def compute(self, formation: FormationType, center: Vector3, count: int,
-                heading_deg: float = 0.0) -> List[Vector3]:
+    def compute(
+        self,
+        formation: FormationType,
+        center: Vector3,
+        count: int,
+        heading_deg: float = 0.0,
+    ) -> List[Vector3]:
         if formation == FormationType.V_SHAPE:
             return self.v_shape(center, count, heading_deg)
         elif formation == FormationType.LINE:
@@ -326,21 +351,27 @@ class SwarmFormation:
 
     # ---- SC2 tactic mapping ----
 
-    def zergling_surround(self, target: Vector3, count: int, radius: float = 8.0) -> List[Vector3]:
+    def zergling_surround(
+        self, target: Vector3, count: int, radius: float = 8.0
+    ) -> List[Vector3]:
         """Map zergling surround micro to drone encirclement positions."""
         return self.circle(target, count, radius=radius)
 
-    def baneling_split_approach(self, target: Vector3, count: int, spread: float = 12.0) -> List[Vector3]:
+    def baneling_split_approach(
+        self, target: Vector3, count: int, spread: float = 12.0
+    ) -> List[Vector3]:
         """Map baneling split pattern to spread-out approach vectors."""
         positions: List[Vector3] = []
         for i in range(count):
             angle = 2 * math.pi * i / count + random.uniform(-0.2, 0.2)
             r = spread + random.uniform(-2, 2)
-            positions.append(Vector3(
-                target.x + r * math.cos(angle),
-                target.y + r * math.sin(angle),
-                target.z,
-            ))
+            positions.append(
+                Vector3(
+                    target.x + r * math.cos(angle),
+                    target.y + r * math.sin(angle),
+                    target.z,
+                )
+            )
         return positions
 
 
@@ -383,8 +414,13 @@ class FlightController:
             return True
         return current.distance_to(self._target) < threshold
 
-    def track_waypoints(self, drone: AirSimDrone, waypoints: List[Vector3],
-                        dt: float = 0.1, max_steps: int = 2000) -> List[Dict[str, Any]]:
+    def track_waypoints(
+        self,
+        drone: AirSimDrone,
+        waypoints: List[Vector3],
+        dt: float = 0.1,
+        max_steps: int = 2000,
+    ) -> List[Dict[str, Any]]:
         """Run PID tracking through a sequence of waypoints (simulation)."""
         trajectory: List[Dict[str, Any]] = []
         for wp in waypoints:
@@ -400,7 +436,9 @@ class FlightController:
                     vel = vel.normalized() * drone.max_speed
                 drone.velocity = vel
                 drone.position = drone.position + vel * dt
-                trajectory.append({"pos": drone.position.to_dict(), "vel": vel.to_dict()})
+                trajectory.append(
+                    {"pos": drone.position.to_dict(), "vel": vel.to_dict()}
+                )
                 if self.is_arrived(drone.position):
                     break
         drone.hover()
@@ -415,8 +453,12 @@ class FlightController:
 class CollisionAvoidance:
     """Multi-drone collision avoidance with potential field and velocity obstacle methods."""
 
-    def __init__(self, method: AvoidanceMethod = AvoidanceMethod.POTENTIAL_FIELD,
-                 safety_radius: float = 2.0, influence_radius: float = 8.0):
+    def __init__(
+        self,
+        method: AvoidanceMethod = AvoidanceMethod.POTENTIAL_FIELD,
+        safety_radius: float = 2.0,
+        influence_radius: float = 8.0,
+    ):
         self.method = method
         self.safety_radius = safety_radius
         self.influence_radius = influence_radius
@@ -425,8 +467,9 @@ class CollisionAvoidance:
 
     # ---- potential field ----
 
-    def _potential_field_force(self, drone: AirSimDrone,
-                               neighbours: List[AirSimDrone]) -> Vector3:
+    def _potential_field_force(
+        self, drone: AirSimDrone, neighbours: List[AirSimDrone]
+    ) -> Vector3:
         repulsion = Vector3()
         for nb in neighbours:
             if nb.drone_id == drone.drone_id:
@@ -434,15 +477,18 @@ class CollisionAvoidance:
             dist = drone.position.distance_to(nb.position)
             if dist < self.influence_radius and dist > 1e-6:
                 direction = (drone.position - nb.position).normalized()
-                strength = self._repulsion_gain * (1.0 / dist - 1.0 / self.influence_radius)
+                strength = self._repulsion_gain * (
+                    1.0 / dist - 1.0 / self.influence_radius
+                )
                 strength = max(0.0, strength)
                 repulsion = repulsion + direction * strength
         return repulsion
 
     # ---- velocity obstacle ----
 
-    def _velocity_obstacle_adjust(self, drone: AirSimDrone,
-                                   neighbours: List[AirSimDrone]) -> Vector3:
+    def _velocity_obstacle_adjust(
+        self, drone: AirSimDrone, neighbours: List[AirSimDrone]
+    ) -> Vector3:
         adjustment = Vector3()
         for nb in neighbours:
             if nb.drone_id == drone.drone_id:
@@ -464,8 +510,9 @@ class CollisionAvoidance:
 
     # ---- public API ----
 
-    def compute_avoidance(self, drone: AirSimDrone,
-                          neighbours: List[AirSimDrone]) -> Vector3:
+    def compute_avoidance(
+        self, drone: AirSimDrone, neighbours: List[AirSimDrone]
+    ) -> Vector3:
         if self.method == AvoidanceMethod.POTENTIAL_FIELD:
             return self._potential_field_force(drone, neighbours)
         elif self.method == AvoidanceMethod.VELOCITY_OBSTACLE:
@@ -497,9 +544,12 @@ class AirSimSwarm:
     """Orchestrate multi-drone swarm missions with formation flying and
     collision avoidance, transferring SC2 swarm tactics to real-world drones."""
 
-    def __init__(self, num_drones: int = 6,
-                 formation_spacing: float = 5.0,
-                 avoidance_method: AvoidanceMethod = AvoidanceMethod.HYBRID):
+    def __init__(
+        self,
+        num_drones: int = 6,
+        formation_spacing: float = 5.0,
+        avoidance_method: AvoidanceMethod = AvoidanceMethod.HYBRID,
+    ):
         self.drones: List[AirSimDrone] = [
             AirSimDrone(drone_id=f"drone-{i:03d}") for i in range(num_drones)
         ]
@@ -529,16 +579,22 @@ class AirSimSwarm:
 
     # ---- formation commands ----
 
-    def set_formation(self, formation: FormationType, center: Vector3,
-                      heading_deg: float = 0.0) -> List[Vector3]:
-        targets = self.formation.compute(formation, center, len(self.drones), heading_deg)
+    def set_formation(
+        self, formation: FormationType, center: Vector3, heading_deg: float = 0.0
+    ) -> List[Vector3]:
+        targets = self.formation.compute(
+            formation, center, len(self.drones), heading_deg
+        )
         for drone, target in zip(self.drones, targets):
             drone.move_to(target)
-        self._log("set_formation", {
-            "type": formation.value,
-            "center": center.to_dict(),
-            "heading": heading_deg,
-        })
+        self._log(
+            "set_formation",
+            {
+                "type": formation.value,
+                "center": center.to_dict(),
+                "heading": heading_deg,
+            },
+        )
         return targets
 
     def encircle_target(self, target: Vector3, radius: float = 8.0) -> List[Vector3]:
@@ -551,7 +607,9 @@ class AirSimSwarm:
 
     def split_approach(self, target: Vector3, spread: float = 12.0) -> List[Vector3]:
         """SC2 baneling-split inspired spread-out approach."""
-        targets = self.formation.baneling_split_approach(target, len(self.drones), spread)
+        targets = self.formation.baneling_split_approach(
+            target, len(self.drones), spread
+        )
         for drone, tgt in zip(self.drones, targets):
             drone.move_to(tgt)
         self._log("split_approach", {"target": target.to_dict(), "spread": spread})
@@ -564,7 +622,9 @@ class AirSimSwarm:
         collisions_before = self.collision_avoidance.all_collisions(self.drones)
         for drone in self.drones:
             if drone.state == DroneState.MOVING:
-                avoidance_vec = self.collision_avoidance.compute_avoidance(drone, self.drones)
+                avoidance_vec = self.collision_avoidance.compute_avoidance(
+                    drone, self.drones
+                )
                 drone.velocity = drone.velocity + avoidance_vec * dt
                 # clamp
                 speed = drone.velocity.magnitude()
@@ -574,11 +634,17 @@ class AirSimSwarm:
         self._sim_time += dt
         return {
             "sim_time": round(self._sim_time, 3),
-            "active": sum(1 for d in self.drones if d.state not in (DroneState.IDLE, DroneState.CRASHED)),
+            "active": sum(
+                1
+                for d in self.drones
+                if d.state not in (DroneState.IDLE, DroneState.CRASHED)
+            ),
             "collisions": len(collisions_before),
         }
 
-    def run_simulation(self, duration: float = 10.0, dt: float = 0.1) -> List[Dict[str, Any]]:
+    def run_simulation(
+        self, duration: float = 10.0, dt: float = 0.1
+    ) -> List[Dict[str, Any]]:
         steps = int(duration / dt)
         results: List[Dict[str, Any]] = []
         for _ in range(steps):
@@ -612,7 +678,9 @@ class AirSimSwarm:
 
     # ---- waypoint mission ----
 
-    def assign_waypoint_mission(self, waypoints_per_drone: Dict[str, List[Vector3]]) -> int:
+    def assign_waypoint_mission(
+        self, waypoints_per_drone: Dict[str, List[Vector3]]
+    ) -> int:
         assigned = 0
         for drone in self.drones:
             wps = waypoints_per_drone.get(drone.drone_id, [])
@@ -677,9 +745,13 @@ def demo() -> None:
 
     # --- line formation ---
     print("\n[3] Line formation")
-    targets = swarm.set_formation(FormationType.LINE, Vector3(100, 50, 15), heading_deg=90.0)
+    targets = swarm.set_formation(
+        FormationType.LINE, Vector3(100, 50, 15), heading_deg=90.0
+    )
     sim_result = swarm.run_simulation(duration=5.0, dt=0.1)
-    print(f"    Centroid: x={swarm.swarm_centroid().x:.1f}, y={swarm.swarm_centroid().y:.1f}")
+    print(
+        f"    Centroid: x={swarm.swarm_centroid().x:.1f}, y={swarm.swarm_centroid().y:.1f}"
+    )
 
     # --- circle formation ---
     print("\n[4] Circle formation")
@@ -725,10 +797,17 @@ def demo() -> None:
     fc = FlightController(kp=3.0, ki=0.1, kd=1.0)
     test_drone = AirSimDrone(drone_id="pid-test")
     test_drone.takeoff(altitude=10.0)
-    waypoints = [Vector3(10, 0, 10), Vector3(10, 10, 10), Vector3(0, 10, 10), Vector3(0, 0, 10)]
+    waypoints = [
+        Vector3(10, 0, 10),
+        Vector3(10, 10, 10),
+        Vector3(0, 10, 10),
+        Vector3(0, 0, 10),
+    ]
     traj = fc.track_waypoints(test_drone, waypoints, dt=0.05)
     print(f"    Trajectory points: {len(traj)}")
-    print(f"    Final position: ({test_drone.position.x:.2f}, {test_drone.position.y:.2f}, {test_drone.position.z:.2f})")
+    print(
+        f"    Final position: ({test_drone.position.x:.2f}, {test_drone.position.y:.2f}, {test_drone.position.z:.2f})"
+    )
 
     # --- fleet status ---
     print("\n[10] Fleet Status Summary")

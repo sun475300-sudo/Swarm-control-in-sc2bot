@@ -28,13 +28,13 @@ def initialize_combat_state(manager):
     # === MULTITASKING SYSTEM ===
     # Task priorities (higher = more important)
     manager.task_priorities = {
-        "base_defense": 100,      # Defend our base - HIGHEST PRIORITY
-        "worker_defense": 90,     # Protect workers
-        "counter_attack": 70,     # Attack enemy attackers
-        "air_harass": 60,         # Air unit harassment
-        "scout": 50,              # Scouting
-        "main_attack": 40,        # Main army attack
-        "creep_spread": 30,       # Creep spreading
+        "base_defense": 100,  # Defend our base - HIGHEST PRIORITY
+        "worker_defense": 90,  # Protect workers
+        "counter_attack": 70,  # Attack enemy attackers
+        "air_harass": 60,  # Air unit harassment
+        "scout": 50,  # Scouting
+        "main_attack": 40,  # Main army attack
+        "creep_spread": 30,  # Creep spreading
     }
 
     # Active tasks and assigned units
@@ -53,8 +53,12 @@ def initialize_combat_state(manager):
     manager._rally_point = None
     manager._last_rally_update = 0
     manager._rally_update_interval = 30  # Update rally point every 30 seconds
-    manager._min_army_for_attack = 12  # ★ FIX: 20→12 (faster aggression, 20 was too passive)
-    manager._early_game_min_attack = 8  # ★ FIX: 12→8 (earlier pressure with fewer units)
+    manager._min_army_for_attack = (
+        12  # ★ FIX: 20→12 (faster aggression, 20 was too passive)
+    )
+    manager._early_game_min_attack = (
+        8  # ★ FIX: 12→8 (earlier pressure with fewer units)
+    )
     manager._winning_state_start_time = 0.0  # Track when WINNING state began
 
     # === ★★★ ROACH RUSH TIMING ATTACK ★★★ ===
@@ -71,9 +75,13 @@ def initialize_combat_state(manager):
     manager.is_engaging = False  # True when actively fighting enemy units
 
     # === ★ EARLY HARASS RETREAT & KILL TRACKING ★ ===
-    manager._harass_worker_kills = 0          # Total workers killed during harassment
-    manager._harass_last_enemy_workers = None  # Snapshot of enemy worker count for kill tracking
-    manager._harass_retreating_tags = set()   # Units currently retreating from harassment
+    manager._harass_worker_kills = 0  # Total workers killed during harassment
+    manager._harass_last_enemy_workers = (
+        None  # Snapshot of enemy worker count for kill tracking
+    )
+    manager._harass_retreating_tags = (
+        set()
+    )  # Units currently retreating from harassment
 
     # === ★ MANDATORY BASE DEFENSE SYSTEM ★ ===
     manager._base_defense_active = False
@@ -82,6 +90,7 @@ def initialize_combat_state(manager):
     # === ★ Creep Denial System (New) ★ ===
     try:
         from combat.creep_denial_system import CreepDenialSystem
+
         manager.creep_denial = CreepDenialSystem(manager.bot)
         manager.logger.info("CreepDenialSystem initialized")
     except ImportError as e:
@@ -166,93 +175,104 @@ def initialize_managers(manager):
     """
     try:
         from combat.targeting import Targeting
+
         manager.targeting = Targeting(manager.bot)
     except (ImportError, AttributeError):
-        if hasattr(manager.bot, 'iteration') and manager.bot.iteration % 500 == 0:
+        if hasattr(manager.bot, "iteration") and manager.bot.iteration % 500 == 0:
             manager.logger.warning("Targeting system not available")
 
     try:
         from combat.micro_combat import MicroCombat
+
         manager.micro_combat = MicroCombat(manager.bot)
     except (ImportError, AttributeError):
-        if hasattr(manager.bot, 'iteration') and manager.bot.iteration % 500 == 0:
+        if hasattr(manager.bot, "iteration") and manager.bot.iteration % 500 == 0:
             manager.logger.warning("Micro combat not available")
 
     try:
         from combat.boids_swarm_control import BoidsSwarmController
+
         manager.boids = BoidsSwarmController()
     except (ImportError, AttributeError):
-        if hasattr(manager.bot, 'iteration') and manager.bot.iteration % 500 == 0:
+        if hasattr(manager.bot, "iteration") and manager.bot.iteration % 500 == 0:
             manager.logger.warning("Boids controller not available")
 
     # ★ Formation Manager (Concave + Choke Control) ★
     try:
         from combat.formation_manager import FormationManager
+
         manager.formation_manager = FormationManager(manager.bot)
     except (ImportError, AttributeError):
         manager.formation_manager = None
-        if hasattr(manager.bot, 'iteration') and manager.bot.iteration % 500 == 0:
+        if hasattr(manager.bot, "iteration") and manager.bot.iteration % 500 == 0:
             manager.logger.warning("Formation manager not available")
 
     # ★ NEW: Mutalisk Micro Controller (Regen Dance + Magic Box) ★
     try:
         from combat.mutalisk_micro import MutaliskMicroController
+
         manager.mutalisk_micro = MutaliskMicroController()
     except (ImportError, AttributeError):
         manager.mutalisk_micro = None
-        if hasattr(manager.bot, 'iteration') and manager.bot.iteration % 500 == 0:
+        if hasattr(manager.bot, "iteration") and manager.bot.iteration % 500 == 0:
             manager.logger.warning("Mutalisk micro controller not available")
 
     # ★ NEW: Baneling Tactics Controller (Land Mines) ★
     try:
         from combat.baneling_tactics import BanelingTacticsController
+
         manager.baneling_tactics = BanelingTacticsController()
     except (ImportError, AttributeError):
         manager.baneling_tactics = None
-        if hasattr(manager.bot, 'iteration') and manager.bot.iteration % 500 == 0:
+        if hasattr(manager.bot, "iteration") and manager.bot.iteration % 500 == 0:
             manager.logger.warning("Baneling tactics controller not available")
 
     # ★ NEW: Overlord Transport (대군주 수송) ★
     try:
         from combat.overlord_transport import OverlordTransport
+
         manager.overlord_transport = OverlordTransport(manager.bot)
     except (ImportError, AttributeError):
         manager.overlord_transport = None
-        if hasattr(manager.bot, 'iteration') and manager.bot.iteration % 500 == 0:
+        if hasattr(manager.bot, "iteration") and manager.bot.iteration % 500 == 0:
             manager.logger.warning("Overlord transport not available")
 
     # ★ NEW: Roach Burrow Heal (바퀴 잠복 회복) ★
     try:
         from combat.roach_burrow_heal import RoachBurrowHeal
+
         manager.roach_burrow_heal = RoachBurrowHeal(manager.bot)
     except (ImportError, AttributeError):
         manager.roach_burrow_heal = None
-        if hasattr(manager.bot, 'iteration') and manager.bot.iteration % 500 == 0:
+        if hasattr(manager.bot, "iteration") and manager.bot.iteration % 500 == 0:
             manager.logger.warning("Roach burrow heal not available")
 
     # ★★★ Phase 19: Lurker Ambush System ★★★
     try:
         from combat.lurker_ambush import LurkerAmbushSystem
+
         manager.lurker_ambush = LurkerAmbushSystem(manager.bot)
     except (ImportError, AttributeError):
         manager.lurker_ambush = None
-        if hasattr(manager.bot, 'iteration') and manager.bot.iteration % 500 == 0:
+        if hasattr(manager.bot, "iteration") and manager.bot.iteration % 500 == 0:
             manager.logger.warning("Lurker ambush system not available")
 
     # ★★★ Phase 19: Smart Consume System ★★★
     try:
         from combat.smart_consume import SmartConsumeSystem
+
         manager.smart_consume = SmartConsumeSystem(manager.bot)
     except (ImportError, AttributeError):
         manager.smart_consume = None
-        if hasattr(manager.bot, 'iteration') and manager.bot.iteration % 500 == 0:
+        if hasattr(manager.bot, "iteration") and manager.bot.iteration % 500 == 0:
             manager.logger.warning("Smart consume system not available")
 
     # ★★★ Phase 20: Overlord Hunter ★★★
     try:
         from combat.overlord_hunter import OverlordHunter
+
         manager.overlord_hunter = OverlordHunter(manager.bot)
     except (ImportError, AttributeError):
         manager.overlord_hunter = None
-        if hasattr(manager.bot, 'iteration') and manager.bot.iteration % 500 == 0:
+        if hasattr(manager.bot, "iteration") and manager.bot.iteration % 500 == 0:
             manager.logger.warning("Overlord hunter not available")

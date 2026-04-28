@@ -4,19 +4,19 @@
 
 from __future__ import annotations
 
+import hashlib
 import io
 import json
-import math
-import time
-import struct
-import hashlib
 import logging
+import math
+import struct
 import threading
+import time
+from dataclasses import asdict, dataclass, field
 from enum import Enum, auto
+from http.server import BaseHTTPRequestHandler, HTTPServer
 from pathlib import Path
-from dataclasses import dataclass, field, asdict
-from typing import Optional, Any, Union
-from http.server import HTTPServer, BaseHTTPRequestHandler
+from typing import Any, Optional, Union
 
 logger = logging.getLogger(__name__)
 
@@ -33,25 +33,44 @@ DEFAULT_HOST = "0.0.0.0"
 DEFAULT_PORT = 8641
 
 STRATEGY_LABELS = [
-    "rush", "timing_attack", "macro", "cheese",
-    "all_in", "turtle", "harass", "drop",
-    "air_switch", "counter_push",
+    "rush",
+    "timing_attack",
+    "macro",
+    "cheese",
+    "all_in",
+    "turtle",
+    "harass",
+    "drop",
+    "air_switch",
+    "counter_push",
 ]
 
 RACE_ENCODING = {"terran": 0, "zerg": 1, "protoss": 2, "random": 3}
 
 FEATURE_NAMES = [
-    "minerals", "vespene", "supply_used", "supply_cap",
-    "army_count", "worker_count", "base_count", "tech_level",
-    "game_loop", "enemy_race", "enemy_army_estimate",
-    "enemy_base_count", "apm", "upgrades_count",
-    "production_facilities", "expansion_timing",
+    "minerals",
+    "vespene",
+    "supply_used",
+    "supply_cap",
+    "army_count",
+    "worker_count",
+    "base_count",
+    "tech_level",
+    "game_loop",
+    "enemy_race",
+    "enemy_army_estimate",
+    "enemy_base_count",
+    "apm",
+    "upgrades_count",
+    "production_facilities",
+    "expansion_timing",
 ]
 
 
 # ============================================================
 # Enums
 # ============================================================
+
 
 class ModelFormat(Enum):
     ONNX = "onnx"
@@ -75,9 +94,11 @@ class InferenceBackend(Enum):
 # Data Classes
 # ============================================================
 
+
 @dataclass
 class ModelMetadata:
     """Metadata describing an ONNX model for browser deployment."""
+
     name: str = DEFAULT_MODEL_NAME
     version: str = "1.0.0"
     opset_version: int = ONNX_OPSET_VERSION
@@ -106,6 +127,7 @@ class ModelMetadata:
 @dataclass
 class InferenceRequest:
     """A single inference request from the browser client."""
+
     request_id: str = ""
     features: list[float] = field(default_factory=list)
     race: str = "zerg"
@@ -122,6 +144,7 @@ class InferenceRequest:
 @dataclass
 class InferenceResult:
     """Prediction result returned to the browser."""
+
     request_id: str = ""
     strategy: str = ""
     confidence: float = 0.0
@@ -141,10 +164,13 @@ class InferenceResult:
 # WASM Compiler (Mock)
 # ============================================================
 
+
 class WASMCompiler:
     """Compiles ONNX model graphs to WebAssembly modules for browser execution."""
 
-    def __init__(self, target: CompilationTarget = CompilationTarget.WASM_BASIC) -> None:
+    def __init__(
+        self, target: CompilationTarget = CompilationTarget.WASM_BASIC
+    ) -> None:
         self.target = target
         self._compilation_log: list[dict[str, Any]] = []
         self._compiled_modules: dict[str, bytes] = {}
@@ -190,19 +216,24 @@ class WASMCompiler:
         checksum = hashlib.sha256(wasm_binary).hexdigest()[:16]
 
         self._compiled_modules[model_name] = wasm_binary
-        self._compilation_log.append({
-            "model": model_name,
-            "target": self.target.value,
-            "layers": layers_desc,
-            "size_bytes": len(wasm_binary),
-            "checksum": checksum,
-            "compile_time_ms": elapsed * 1000,
-            "timestamp": time.time(),
-        })
+        self._compilation_log.append(
+            {
+                "model": model_name,
+                "target": self.target.value,
+                "layers": layers_desc,
+                "size_bytes": len(wasm_binary),
+                "checksum": checksum,
+                "compile_time_ms": elapsed * 1000,
+                "timestamp": time.time(),
+            }
+        )
 
         logger.info(
             "Compiled %s to WASM (%s): %d bytes, layers=%s",
-            model_name, self.target.value, len(wasm_binary), layers_desc,
+            model_name,
+            self.target.value,
+            len(wasm_binary),
+            layers_desc,
         )
         return wasm_binary
 
@@ -222,8 +253,7 @@ class WASMCompiler:
 
     def _build_memory_section(self, layers: list[int]) -> bytes:
         total_params = sum(
-            layers[i] * layers[i + 1] + layers[i + 1]
-            for i in range(len(layers) - 1)
+            layers[i] * layers[i + 1] + layers[i + 1] for i in range(len(layers) - 1)
         )
         pages = max(1, (total_params * 4) // 65536 + 1)
         return struct.pack("<BHH", 0x05, pages, pages * 2)
@@ -257,6 +287,7 @@ class WASMCompiler:
 # ONNX.js Runner (Mock)
 # ============================================================
 
+
 class ONNXJSRunner:
     """Simulates ONNX.js inference as it would run in a browser environment."""
 
@@ -284,18 +315,17 @@ class ONNXJSRunner:
             # Deterministic pseudo-weights using simple hash-based init
             scale = 1.0 / math.sqrt(rows)
             self._weights[layer_key] = [
-                [
-                    scale * math.sin((r * cols + c) * 0.1)
-                    for c in range(cols)
-                ]
+                [scale * math.sin((r * cols + c) * 0.1) for c in range(cols)]
                 for r in range(rows)
             ]
-            self._biases[layer_key] = [
-                0.01 * math.cos(c * 0.3) for c in range(cols)
-            ]
+            self._biases[layer_key] = [0.01 * math.cos(c * 0.3) for c in range(cols)]
 
         self._model_loaded = True
-        logger.info("ONNXJSRunner loaded model: %s (backend=%s)", metadata.name, self.backend.name)
+        logger.info(
+            "ONNXJSRunner loaded model: %s (backend=%s)",
+            metadata.name,
+            self.backend.name,
+        )
         return True
 
     def infer(self, request: InferenceRequest) -> InferenceResult:
@@ -313,7 +343,7 @@ class ONNXJSRunner:
         activations = list(request.features)
         if len(activations) < len(FEATURE_NAMES):
             activations.extend([0.0] * (len(FEATURE_NAMES) - len(activations)))
-        activations = activations[:len(FEATURE_NAMES)]
+        activations = activations[: len(FEATURE_NAMES)]
 
         layer_keys = sorted(self._weights.keys())
         for idx, layer_key in enumerate(layer_keys):
@@ -344,7 +374,9 @@ class ONNXJSRunner:
                 prob_dict[label] = 0.0
 
         best_idx = max(range(len(probabilities)), key=lambda x: probabilities[x])
-        best_strategy = STRATEGY_LABELS[best_idx] if best_idx < len(STRATEGY_LABELS) else "unknown"
+        best_strategy = (
+            STRATEGY_LABELS[best_idx] if best_idx < len(STRATEGY_LABELS) else "unknown"
+        )
         best_confidence = probabilities[best_idx]
 
         elapsed_ms = (time.time() - start) * 1000
@@ -373,7 +405,8 @@ class ONNXJSRunner:
     def get_stats(self) -> dict[str, Any]:
         avg_latency = (
             self._total_latency_ms / self._inference_count
-            if self._inference_count > 0 else 0.0
+            if self._inference_count > 0
+            else 0.0
         )
         return {
             "model": self._model_name,
@@ -388,6 +421,7 @@ class ONNXJSRunner:
 # WebWorker Simulator
 # ============================================================
 
+
 class WebWorkerPool:
     """Simulates browser WebWorker threads for offloading inference."""
 
@@ -400,14 +434,18 @@ class WebWorkerPool:
         self._next_worker = 0
 
         for i in range(num_workers):
-            self._workers.append({
-                "id": i,
-                "busy": False,
-                "tasks_completed": 0,
-            })
+            self._workers.append(
+                {
+                    "id": i,
+                    "busy": False,
+                    "tasks_completed": 0,
+                }
+            )
 
     def submit_task(
-        self, request: InferenceRequest, runner: ONNXJSRunner,
+        self,
+        request: InferenceRequest,
+        runner: ONNXJSRunner,
     ) -> InferenceResult:
         """Submit inference task to the next available worker."""
         worker = self._get_next_worker()
@@ -441,6 +479,7 @@ class WebWorkerPool:
 # Web Model Server (REST API)
 # ============================================================
 
+
 class WebModelServer:
     """HTTP server that serves model metadata, health checks, and fallback inference."""
 
@@ -466,7 +505,9 @@ class WebModelServer:
         class SC2Handler(BaseHTTPRequestHandler):
             def do_GET(self) -> None:
                 if self.path == "/health":
-                    self._respond_json({"status": "ok", "model": server_ref.metadata.name})
+                    self._respond_json(
+                        {"status": "ok", "model": server_ref.metadata.name}
+                    )
                 elif self.path == "/metadata":
                     self._respond_json(server_ref.metadata.to_dict())
                 elif self.path == "/stats":
@@ -478,9 +519,13 @@ class WebModelServer:
                 else:
                     self.send_error(404, "Not Found")
 
-                server_ref._request_log.append({
-                    "method": "GET", "path": self.path, "timestamp": time.time(),
-                })
+                server_ref._request_log.append(
+                    {
+                        "method": "GET",
+                        "path": self.path,
+                        "timestamp": time.time(),
+                    }
+                )
 
             def do_POST(self) -> None:
                 if self.path == "/predict":
@@ -497,7 +542,8 @@ class WebModelServer:
                         )
                         if not req.validate():
                             self._respond_json(
-                                {"error": f"Expected {len(FEATURE_NAMES)} features"}, 400,
+                                {"error": f"Expected {len(FEATURE_NAMES)} features"},
+                                400,
                             )
                             return
                         result = server_ref.runner.infer(req)
@@ -507,9 +553,13 @@ class WebModelServer:
                 else:
                     self.send_error(404, "Not Found")
 
-                server_ref._request_log.append({
-                    "method": "POST", "path": self.path, "timestamp": time.time(),
-                })
+                server_ref._request_log.append(
+                    {
+                        "method": "POST",
+                        "path": self.path,
+                        "timestamp": time.time(),
+                    }
+                )
 
             def _respond_json(self, data: Any, status: int = 200) -> None:
                 body = json.dumps(data, indent=2).encode("utf-8")
@@ -604,7 +654,9 @@ class WebModelServer:
             handler_cls = self._create_handler()
             self._server = HTTPServer((self.host, self.port), handler_cls)
             self._running = True
-            self._thread = threading.Thread(target=self._server.serve_forever, daemon=True)
+            self._thread = threading.Thread(
+                target=self._server.serve_forever, daemon=True
+            )
             self._thread.start()
             logger.info("WebModelServer started on http://%s:%d", self.host, self.port)
             return True
@@ -628,6 +680,7 @@ class WebModelServer:
 # ============================================================
 # Browser Inference Client
 # ============================================================
+
 
 class BrowserInferenceClient:
     """Client that simulates browser-side inference with WASM/ONNX.js fallback."""
@@ -655,11 +708,15 @@ class BrowserInferenceClient:
         self._worker_pool = WebWorkerPool(num_workers=num_workers)
         logger.info(
             "BrowserInferenceClient initialized: model=%s backend=%s workers=%d",
-            metadata.name, backend.name, num_workers,
+            metadata.name,
+            backend.name,
+            num_workers,
         )
         return True
 
-    def predict(self, features: list[float], race: str = "zerg", game_loop: int = 0) -> InferenceResult:
+    def predict(
+        self, features: list[float], race: str = "zerg", game_loop: int = 0
+    ) -> InferenceResult:
         """Run client-side prediction using WebWorker pool."""
         if self._runner is None or self._worker_pool is None:
             return InferenceResult(strategy="uninitialized", confidence=0.0)
@@ -677,25 +734,41 @@ class BrowserInferenceClient:
 
     def predict_from_game_state(
         self,
-        minerals: int, vespene: int,
-        supply_used: int, supply_cap: int,
-        army_count: int, worker_count: int,
-        base_count: int = 1, tech_level: int = 1,
-        game_loop: int = 0, enemy_race: str = "zerg",
-        enemy_army_estimate: int = 0, enemy_base_count: int = 1,
-        apm: float = 150.0, upgrades_count: int = 0,
-        production_facilities: int = 3, expansion_timing: float = 150.0,
+        minerals: int,
+        vespene: int,
+        supply_used: int,
+        supply_cap: int,
+        army_count: int,
+        worker_count: int,
+        base_count: int = 1,
+        tech_level: int = 1,
+        game_loop: int = 0,
+        enemy_race: str = "zerg",
+        enemy_army_estimate: int = 0,
+        enemy_base_count: int = 1,
+        apm: float = 150.0,
+        upgrades_count: int = 0,
+        production_facilities: int = 3,
+        expansion_timing: float = 150.0,
     ) -> InferenceResult:
         """Convenience method: build feature vector from game state values."""
         features = [
-            float(minerals), float(vespene),
-            float(supply_used), float(supply_cap),
-            float(army_count), float(worker_count),
-            float(base_count), float(tech_level),
-            float(game_loop), float(RACE_ENCODING.get(enemy_race.lower(), 3)),
-            float(enemy_army_estimate), float(enemy_base_count),
-            float(apm), float(upgrades_count),
-            float(production_facilities), float(expansion_timing),
+            float(minerals),
+            float(vespene),
+            float(supply_used),
+            float(supply_cap),
+            float(army_count),
+            float(worker_count),
+            float(base_count),
+            float(tech_level),
+            float(game_loop),
+            float(RACE_ENCODING.get(enemy_race.lower(), 3)),
+            float(enemy_army_estimate),
+            float(enemy_base_count),
+            float(apm),
+            float(upgrades_count),
+            float(production_facilities),
+            float(expansion_timing),
         ]
         return self.predict(features, race=enemy_race, game_loop=game_loop)
 
@@ -716,6 +789,7 @@ class BrowserInferenceClient:
 # ============================================================
 # Demo
 # ============================================================
+
 
 def demo() -> None:
     """Demonstrate web browser inference pipeline for SC2 strategy prediction."""
@@ -750,9 +824,27 @@ def demo() -> None:
     runner = ONNXJSRunner(backend=InferenceBackend.ONNXJS)
     runner.load_model(metadata)
 
-    test_features = [400.0, 200.0, 60.0, 86.0, 20.0, 30.0, 2.0, 1.0,
-                     4000.0, 1.0, 15.0, 1.0, 160.0, 2.0, 4.0, 150.0]
-    req = InferenceRequest(request_id="test_001", features=test_features, race="zerg", game_loop=4000)
+    test_features = [
+        400.0,
+        200.0,
+        60.0,
+        86.0,
+        20.0,
+        30.0,
+        2.0,
+        1.0,
+        4000.0,
+        1.0,
+        15.0,
+        1.0,
+        160.0,
+        2.0,
+        4.0,
+        150.0,
+    ]
+    req = InferenceRequest(
+        request_id="test_001", features=test_features, race="zerg", game_loop=4000
+    )
     result = runner.infer(req)
     print(f"  Strategy: {result.strategy} (confidence: {result.confidence:.4f})")
     print(f"  Latency: {result.latency_ms:.3f} ms")
@@ -767,12 +859,20 @@ def demo() -> None:
     pool = WebWorkerPool(num_workers=3)
     scenarios = [
         ("early_rush", [200, 50, 30, 46, 8, 16, 1, 1, 1500, 1, 5, 1, 150, 0, 2, 90]),
-        ("mid_macro",  [800, 400, 100, 130, 35, 50, 2, 2, 7000, 1, 25, 2, 175, 3, 5, 180]),
-        ("late_army",  [1500, 1200, 185, 200, 75, 60, 4, 3, 14000, 1, 60, 3, 195, 7, 9, 280]),
+        (
+            "mid_macro",
+            [800, 400, 100, 130, 35, 50, 2, 2, 7000, 1, 25, 2, 175, 3, 5, 180],
+        ),
+        (
+            "late_army",
+            [1500, 1200, 185, 200, 75, 60, 4, 3, 14000, 1, 60, 3, 195, 7, 9, 280],
+        ),
     ]
     for name, feats in scenarios:
         r = InferenceRequest(
-            request_id=name, features=[float(f) for f in feats], race="zerg",
+            request_id=name,
+            features=[float(f) for f in feats],
+            race="zerg",
         )
         res = pool.submit_task(r, runner)
         print(f"  {name:<12} -> {res.strategy:<16} ({res.confidence:.4f})")
@@ -787,17 +887,43 @@ def demo() -> None:
     client.initialize(metadata, wasm_module=wasm_binary, num_workers=2)
 
     game_states = [
-        {"minerals": 300, "vespene": 100, "supply_used": 40, "supply_cap": 60,
-         "army_count": 12, "worker_count": 22, "game_loop": 2500, "enemy_race": "terran"},
-        {"minerals": 1200, "vespene": 800, "supply_used": 150, "supply_cap": 180,
-         "army_count": 55, "worker_count": 55, "game_loop": 10000, "enemy_race": "protoss"},
-        {"minerals": 2500, "vespene": 2000, "supply_used": 195, "supply_cap": 200,
-         "army_count": 90, "worker_count": 66, "game_loop": 18000, "enemy_race": "zerg"},
+        {
+            "minerals": 300,
+            "vespene": 100,
+            "supply_used": 40,
+            "supply_cap": 60,
+            "army_count": 12,
+            "worker_count": 22,
+            "game_loop": 2500,
+            "enemy_race": "terran",
+        },
+        {
+            "minerals": 1200,
+            "vespene": 800,
+            "supply_used": 150,
+            "supply_cap": 180,
+            "army_count": 55,
+            "worker_count": 55,
+            "game_loop": 10000,
+            "enemy_race": "protoss",
+        },
+        {
+            "minerals": 2500,
+            "vespene": 2000,
+            "supply_used": 195,
+            "supply_cap": 200,
+            "army_count": 90,
+            "worker_count": 66,
+            "game_loop": 18000,
+            "enemy_race": "zerg",
+        },
     ]
     for gs in game_states:
         res = client.predict_from_game_state(**gs)
-        print(f"  Loop {gs['game_loop']:>6} vs {gs['enemy_race']:<8} -> "
-              f"{res.strategy:<16} ({res.confidence:.4f})")
+        print(
+            f"  Loop {gs['game_loop']:>6} vs {gs['enemy_race']:<8} -> "
+            f"{res.strategy:<16} ({res.confidence:.4f})"
+        )
 
     # --- Runner stats ---
     print("\n[6] Runner Stats")

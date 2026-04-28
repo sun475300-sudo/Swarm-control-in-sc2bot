@@ -5,12 +5,12 @@ Simulates unit combinations and generates detailed results
 
 import json
 import os
-import time
 import random
-from pathlib import Path
-from datetime import datetime
-from typing import Dict, List, Any, Tuple
+import time
 from dataclasses import dataclass, field
+from datetime import datetime
+from pathlib import Path
+from typing import Any, Dict, List, Tuple
 
 
 @dataclass

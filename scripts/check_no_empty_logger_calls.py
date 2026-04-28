@@ -17,6 +17,7 @@ Exit code:
 Default search root:
     wicked_zerg_challenger/
 """
+
 from __future__ import annotations
 
 import re

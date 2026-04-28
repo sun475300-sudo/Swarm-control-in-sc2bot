@@ -32,7 +32,7 @@ import random
 import time
 from collections import OrderedDict
 from dataclasses import dataclass, field
-from typing import Any, Dict, FrozenSet, List, Optional, Set, Sequence, Tuple
+from typing import Any, Dict, FrozenSet, List, Optional, Sequence, Set, Tuple
 
 import numpy as np
 
@@ -46,16 +46,20 @@ _GYM_AVAILABLE = False
 
 try:
     from pettingzoo import ParallelEnv as _PZParallelEnv
+
     _PETTINGZOO_AVAILABLE = True
 except ImportError:
 
     class _PZParallelEnv:
         """Minimal stub when PettingZoo is not installed."""
+
         pass
+
 
 try:
     import gymnasium as gym
     from gymnasium import spaces
+
     _GYM_AVAILABLE = True
 except ImportError:
     pass
@@ -113,6 +117,7 @@ MAP_SIZE = 200.0  # normalisation constant for coordinates
 # AgentObservation
 # ===================================================================
 
+
 @dataclass
 class AgentObservation:
     """Structured observation for a single SC2 agent/unit.
@@ -131,6 +136,7 @@ class AgentObservation:
         relative_enemy_positions: Array of (dx, dy, health) for nearby enemies.
         is_alive: Whether the unit is still alive.
     """
+
     agent_id: str
     unit_type: str = "zergling"
     health: float = 1.0
@@ -148,26 +154,29 @@ class AgentObservation:
 
     def to_array(self) -> np.ndarray:
         """Flatten observation into a fixed-size feature vector."""
-        base = np.array([
-            self.health,
-            self.shield,
-            self.energy,
-            self.pos_x,
-            self.pos_y,
-            self.cooldown,
-            float(self.nearby_allies) / MAX_AGENTS,
-            float(self.nearby_enemies) / MAX_AGENTS,
-            float(self.is_alive),
-            float(ZERG_UNIT_TYPES.get(self.unit_type, 0)) / len(ZERG_UNIT_TYPES),
-        ], dtype=np.float32)
+        base = np.array(
+            [
+                self.health,
+                self.shield,
+                self.energy,
+                self.pos_x,
+                self.pos_y,
+                self.cooldown,
+                float(self.nearby_allies) / MAX_AGENTS,
+                float(self.nearby_enemies) / MAX_AGENTS,
+                float(self.is_alive),
+                float(ZERG_UNIT_TYPES.get(self.unit_type, 0)) / len(ZERG_UNIT_TYPES),
+            ],
+            dtype=np.float32,
+        )
         enemy_flat = self.relative_enemy_positions.flatten()
         obs_dim = UNIT_OBS_DIM.get(self.unit_type, 20)
         combined = np.concatenate([base, enemy_flat])
         # Pad or truncate to expected dimension
         if len(combined) < obs_dim:
-            combined = np.concatenate([
-                combined, np.zeros(obs_dim - len(combined), dtype=np.float32)
-            ])
+            combined = np.concatenate(
+                [combined, np.zeros(obs_dim - len(combined), dtype=np.float32)]
+            )
         else:
             combined = combined[:obs_dim]
         return combined
@@ -176,6 +185,7 @@ class AgentObservation:
 # ===================================================================
 # SC2ActionSpace
 # ===================================================================
+
 
 class SC2ActionSpace:
     """Action space descriptor for SC2 unit micro-control.
@@ -226,7 +236,8 @@ class SC2ActionSpace:
             return None
         if self.continuous:
             return spaces.Box(
-                low=-1.0, high=1.0,
+                low=-1.0,
+                high=1.0,
                 shape=(self.act_dim,),
                 dtype=np.float32,
             )
@@ -241,9 +252,11 @@ class SC2ActionSpace:
 # Reward configuration
 # ===================================================================
 
+
 @dataclass
 class RewardConfig:
     """Configurable reward weights for cooperative SC2 tasks."""
+
     damage_dealt_weight: float = 1.0
     damage_taken_weight: float = -0.5
     kill_reward: float = 5.0
@@ -292,9 +305,11 @@ class RewardConfig:
 # Simulated SC2 unit (for demo / testing without SC2 client)
 # ===================================================================
 
+
 @dataclass
 class _SimUnit:
     """Internal simulated SC2 unit for environment stepping."""
+
     agent_id: str
     unit_type: str
     x: float
@@ -327,6 +342,7 @@ class _SimUnit:
 # ===================================================================
 # SC2ParallelEnv - PettingZoo Parallel API
 # ===================================================================
+
 
 class SC2ParallelEnv(_PZParallelEnv):
     """PettingZoo Parallel Environment for StarCraft II multi-agent control.
@@ -393,7 +409,8 @@ class SC2ParallelEnv(_PZParallelEnv):
         for agent_name in self.possible_agents:
             utype = agent_name.rsplit("_", 1)[0]
             self._action_space_cache[agent_name] = SC2ActionSpace(
-                unit_type=utype, continuous=continuous_actions,
+                unit_type=utype,
+                continuous=continuous_actions,
             )
 
         # Runtime state
@@ -426,15 +443,27 @@ class SC2ParallelEnv(_PZParallelEnv):
         for agent_name in self.possible_agents:
             utype = agent_name.rsplit("_", 1)[0]
             health_map = {
-                "zergling": 35.0, "baneling": 30.0, "roach": 145.0,
-                "hydralisk": 80.0, "mutalisk": 120.0, "ultralisk": 500.0,
-                "infestor": 90.0, "corruptor": 200.0, "queen": 175.0,
+                "zergling": 35.0,
+                "baneling": 30.0,
+                "roach": 145.0,
+                "hydralisk": 80.0,
+                "mutalisk": 120.0,
+                "ultralisk": 500.0,
+                "infestor": 90.0,
+                "corruptor": 200.0,
+                "queen": 175.0,
                 "overseer": 200.0,
             }
             dmg_map = {
-                "zergling": 5.0, "baneling": 20.0, "roach": 16.0,
-                "hydralisk": 12.0, "mutalisk": 9.0, "ultralisk": 35.0,
-                "infestor": 0.0, "corruptor": 14.0, "queen": 8.0,
+                "zergling": 5.0,
+                "baneling": 20.0,
+                "roach": 16.0,
+                "hydralisk": 12.0,
+                "mutalisk": 9.0,
+                "ultralisk": 35.0,
+                "infestor": 0.0,
+                "corruptor": 14.0,
+                "queen": 8.0,
                 "overseer": 0.0,
             }
             hp = health_map.get(utype, 50.0)
@@ -452,16 +481,18 @@ class SC2ParallelEnv(_PZParallelEnv):
         # Spawn enemies
         self._enemies = []
         for i in range(self._n_enemies):
-            self._enemies.append(_SimUnit(
-                agent_id=f"enemy_{i}",
-                unit_type="roach",
-                x=self._rng.uniform(140, 190),
-                y=self._rng.uniform(140, 190),
-                health=145.0,
-                max_health=145.0,
-                damage=16.0,
-                team=1,
-            ))
+            self._enemies.append(
+                _SimUnit(
+                    agent_id=f"enemy_{i}",
+                    unit_type="roach",
+                    x=self._rng.uniform(140, 190),
+                    y=self._rng.uniform(140, 190),
+                    health=145.0,
+                    max_health=145.0,
+                    damage=16.0,
+                    team=1,
+                )
+            )
 
         self._episode_stats = {
             "total_damage_dealt": 0.0,
@@ -524,9 +555,13 @@ class SC2ParallelEnv(_PZParallelEnv):
                         alive_enemies,
                         key=lambda e: (e.x - unit.x) ** 2 + (e.y - unit.y) ** 2,
                     )
-                    dist = math.sqrt((target.x - unit.x) ** 2 + (target.y - unit.y) ** 2)
+                    dist = math.sqrt(
+                        (target.x - unit.x) ** 2 + (target.y - unit.y) ** 2
+                    )
                     if dist <= unit.attack_range:
-                        actual = target.take_damage(unit.damage * float(np.clip(action[2], 0, 1)))
+                        actual = target.take_damage(
+                            unit.damage * float(np.clip(action[2], 0, 1))
+                        )
                         dmg_dealt += actual
                         if not target.is_alive:
                             kills += 1
@@ -551,7 +586,9 @@ class SC2ParallelEnv(_PZParallelEnv):
                         alive_enemies,
                         key=lambda e: (e.x - unit.x) ** 2 + (e.y - unit.y) ** 2,
                     )
-                    dist = math.sqrt((target.x - unit.x) ** 2 + (target.y - unit.y) ** 2)
+                    dist = math.sqrt(
+                        (target.x - unit.x) ** 2 + (target.y - unit.y) ** 2
+                    )
                     if dist <= unit.attack_range:
                         actual = target.take_damage(unit.damage)
                         dmg_dealt += actual
@@ -588,7 +625,9 @@ class SC2ParallelEnv(_PZParallelEnv):
         # --- Compute rewards ---
         n_alive = sum(1 for u in self._units.values() if u.is_alive)
         alive_enemies_after = [e for e in self._enemies if e.is_alive]
-        team_objective = float(self._n_enemies - len(alive_enemies_after)) / max(self._n_enemies, 1)
+        team_objective = float(self._n_enemies - len(alive_enemies_after)) / max(
+            self._n_enemies, 1
+        )
 
         # Check win/lose
         all_enemies_dead = len(alive_enemies_after) == 0
@@ -634,7 +673,8 @@ class SC2ParallelEnv(_PZParallelEnv):
 
         # Remove dead or terminated agents
         self.agents = [
-            a for a in self.agents
+            a
+            for a in self.agents
             if not terminations.get(a, False) and not truncations.get(a, False)
         ]
 
@@ -657,9 +697,7 @@ class SC2ParallelEnv(_PZParallelEnv):
         # Compute relative enemy positions
         alive_enemies = [e for e in self._enemies if e.is_alive]
         # Sort by distance
-        alive_enemies.sort(
-            key=lambda e: (e.x - unit.x) ** 2 + (e.y - unit.y) ** 2
-        )
+        alive_enemies.sort(key=lambda e: (e.x - unit.x) ** 2 + (e.y - unit.y) ** 2)
         rel_enemy = np.zeros((5, 3), dtype=np.float32)
         for i, enemy in enumerate(alive_enemies[:5]):
             rel_enemy[i, 0] = (enemy.x - unit.x) / self._map_size
@@ -667,12 +705,15 @@ class SC2ParallelEnv(_PZParallelEnv):
             rel_enemy[i, 2] = enemy.normalised_health()
 
         nearby_allies = sum(
-            1 for u in self._units.values()
-            if u.is_alive and u.agent_id != agent
+            1
+            for u in self._units.values()
+            if u.is_alive
+            and u.agent_id != agent
             and math.sqrt((u.x - unit.x) ** 2 + (u.y - unit.y) ** 2) < 30.0
         )
         nearby_enemies = sum(
-            1 for e in self._enemies
+            1
+            for e in self._enemies
             if e.is_alive
             and math.sqrt((e.x - unit.x) ** 2 + (e.y - unit.y) ** 2) < 30.0
         )
@@ -699,7 +740,10 @@ class SC2ParallelEnv(_PZParallelEnv):
         obs_dim = UNIT_OBS_DIM.get(utype, 20)
         if _GYM_AVAILABLE:
             return spaces.Box(
-                low=0.0, high=1.0, shape=(obs_dim,), dtype=np.float32,
+                low=0.0,
+                high=1.0,
+                shape=(obs_dim,),
+                dtype=np.float32,
             )
         return {"type": "Box", "low": 0.0, "high": 1.0, "shape": (obs_dim,)}
 
@@ -721,7 +765,9 @@ class SC2ParallelEnv(_PZParallelEnv):
             return None
 
         lines = [f"=== SC2 Parallel Env  Step {self._step_count} ==="]
-        lines.append(f"Alive allies: {sum(1 for u in self._units.values() if u.is_alive)}")
+        lines.append(
+            f"Alive allies: {sum(1 for u in self._units.values() if u.is_alive)}"
+        )
         lines.append(f"Alive enemies: {sum(1 for e in self._enemies if e.is_alive)}")
         for name, unit in self._units.items():
             status = "ALIVE" if unit.is_alive else "DEAD"
@@ -746,22 +792,32 @@ class SC2ParallelEnv(_PZParallelEnv):
         for name in self.possible_agents:
             unit = self._units.get(name)
             if unit is not None and unit.is_alive:
-                parts.append(np.array([
-                    unit.x / self._map_size,
-                    unit.y / self._map_size,
-                    unit.normalised_health(),
-                    1.0,
-                ], dtype=np.float32))
+                parts.append(
+                    np.array(
+                        [
+                            unit.x / self._map_size,
+                            unit.y / self._map_size,
+                            unit.normalised_health(),
+                            1.0,
+                        ],
+                        dtype=np.float32,
+                    )
+                )
             else:
                 parts.append(np.zeros(4, dtype=np.float32))
         for enemy in self._enemies:
             if enemy.is_alive:
-                parts.append(np.array([
-                    enemy.x / self._map_size,
-                    enemy.y / self._map_size,
-                    enemy.normalised_health(),
-                    1.0,
-                ], dtype=np.float32))
+                parts.append(
+                    np.array(
+                        [
+                            enemy.x / self._map_size,
+                            enemy.y / self._map_size,
+                            enemy.normalised_health(),
+                            1.0,
+                        ],
+                        dtype=np.float32,
+                    )
+                )
             else:
                 parts.append(np.zeros(4, dtype=np.float32))
         return np.concatenate(parts)
@@ -790,6 +846,7 @@ class SC2ParallelEnv(_PZParallelEnv):
 # ===================================================================
 # Demo
 # ===================================================================
+
 
 def demo(
     n_episodes: int = 3,
@@ -884,7 +941,9 @@ def main() -> None:
         description="Phase 609: PettingZoo Multi-Agent Environment for SC2",
     )
     parser.add_argument("--episodes", type=int, default=3, help="Number of episodes")
-    parser.add_argument("--max-steps", type=int, default=50, help="Max steps per episode")
+    parser.add_argument(
+        "--max-steps", type=int, default=50, help="Max steps per episode"
+    )
     parser.add_argument(
         "--agents",
         nargs="+",
@@ -892,7 +951,9 @@ def main() -> None:
         choices=list(ZERG_UNIT_TYPES.keys()),
         help="Agent unit types",
     )
-    parser.add_argument("--continuous", action="store_true", help="Use continuous actions")
+    parser.add_argument(
+        "--continuous", action="store_true", help="Use continuous actions"
+    )
     parser.add_argument("--quiet", action="store_true", help="Suppress output")
     args = parser.parse_args()
 

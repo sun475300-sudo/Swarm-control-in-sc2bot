@@ -38,10 +38,10 @@ class BanelingTacticsController:
 
     def __init__(
         self,
-        mine_spacing: float = 2.5,           # Minimum distance between mines
-        unburrow_range: float = 3.5,         # Range to unburrow
-        explode_range: float = 2.2,          # Range to auto-explode
-        min_targets_for_explode: int = 3,    # Minimum enemies to explode
+        mine_spacing: float = 2.5,  # Minimum distance between mines
+        unburrow_range: float = 3.5,  # Range to unburrow
+        explode_range: float = 2.2,  # Range to auto-explode
+        min_targets_for_explode: int = 3,  # Minimum enemies to explode
     ):
         """
         Initialize Baneling tactics controller.
@@ -67,15 +67,11 @@ class BanelingTacticsController:
         """Check if burrow upgrade is available."""
         if not UpgradeId:
             return False
-        if hasattr(bot, 'state') and hasattr(bot.state, 'upgrades'):
+        if hasattr(bot, "state") and hasattr(bot.state, "upgrades"):
             return UpgradeId.BURROW in bot.state.upgrades
         return False
 
-    def find_mine_positions(
-        self,
-        bot,
-        count: int = 5
-    ) -> List[Point2]:
+    def find_mine_positions(self, bot, count: int = 5) -> List[Point2]:
         """
         Find strategic positions for Baneling land mines.
 
@@ -97,16 +93,17 @@ class BanelingTacticsController:
         positions = []
 
         # 1. Choke points near our bases
-        if hasattr(bot, 'townhalls') and bot.townhalls.exists:
+        if hasattr(bot, "townhalls") and bot.townhalls.exists:
             for townhall in bot.townhalls:
                 # Get expansion locations
-                expansions = getattr(bot, 'expansion_locations_list', [])
+                expansions = getattr(bot, "expansion_locations_list", [])
                 if not expansions:
                     continue
 
                 # Find nearby expansions (potential enemy attack paths)
                 nearby_expos = [
-                    exp for exp in expansions
+                    exp
+                    for exp in expansions
                     if townhall.position.distance_to(exp) < 30
                     and townhall.position.distance_to(exp) > 5
                 ]
@@ -123,15 +120,14 @@ class BanelingTacticsController:
                             return positions
 
         # 2. Enemy expansion paths (if we know enemy location)
-        if hasattr(bot, 'enemy_start_locations') and bot.enemy_start_locations:
+        if hasattr(bot, "enemy_start_locations") and bot.enemy_start_locations:
             enemy_start = bot.enemy_start_locations[0]
-            expansions = getattr(bot, 'expansion_locations_list', [])
+            expansions = getattr(bot, "expansion_locations_list", [])
 
             if expansions:
                 # Find closest expansion to enemy
                 enemy_natural = min(
-                    expansions,
-                    key=lambda exp: exp.distance_to(enemy_start)
+                    expansions, key=lambda exp: exp.distance_to(enemy_start)
                 )
 
                 # Place mine near enemy natural
@@ -142,9 +138,9 @@ class BanelingTacticsController:
                     positions.append(mine_pos)
 
         # 3. Map center (main army path)
-        if hasattr(bot, 'game_info') and len(positions) < count:
+        if hasattr(bot, "game_info") and len(positions) < count:
             map_center = bot.game_info.map_center
-            if hasattr(bot, 'start_location'):
+            if hasattr(bot, "start_location"):
                 # Position between our start and map center
                 direction = map_center - bot.start_location
                 mine_pos = bot.start_location + direction * 0.5
@@ -191,12 +187,7 @@ class BanelingTacticsController:
             self.mine_positions.discard(pos_tuple)
             del self.active_mines[unit_tag]
 
-    async def deploy_land_mines(
-        self,
-        banelings,
-        bot,
-        current_time: float
-    ) -> Set[int]:
+    async def deploy_land_mines(self, banelings, bot, current_time: float) -> Set[int]:
         """
         Deploy Banelings as land mines.
 
@@ -220,9 +211,9 @@ class BanelingTacticsController:
 
         # Find available Banelings (not burrowed, not already mines)
         available = [
-            b for b in banelings
-            if not getattr(b, 'is_burrowed', False)
-            and b.tag not in self.active_mines
+            b
+            for b in banelings
+            if not getattr(b, "is_burrowed", False) and b.tag not in self.active_mines
         ]
 
         if not available:
@@ -244,7 +235,7 @@ class BanelingTacticsController:
 
                 # If close enough, burrow
                 if baneling.position.distance_to(target_pos) < 1.0:
-                    burrow_ability = getattr(AbilityId, 'BURROWDOWN_BANELING', None)
+                    burrow_ability = getattr(AbilityId, "BURROWDOWN_BANELING", None)
                     if burrow_ability:
                         actions.append(baneling(burrow_ability))
                         self.register_mine(baneling.tag, target_pos)
@@ -263,12 +254,7 @@ class BanelingTacticsController:
 
         return deployed
 
-    async def manage_land_mines(
-        self,
-        banelings,
-        enemy_units,
-        bot
-    ) -> Set[int]:
+    async def manage_land_mines(self, banelings, enemy_units, bot) -> Set[int]:
         """
         Manage active land mines - unburrow and explode when enemies approach.
 
@@ -288,21 +274,22 @@ class BanelingTacticsController:
 
         # Check each burrowed Baneling
         burrowed_banelings = [
-            b for b in banelings
-            if getattr(b, 'is_burrowed', False)
-            and b.tag in self.active_mines
+            b
+            for b in banelings
+            if getattr(b, "is_burrowed", False) and b.tag in self.active_mines
         ]
 
         for baneling in burrowed_banelings:
             # Find nearby enemies
             nearby_enemies = [
-                e for e in enemy_units
+                e
+                for e in enemy_units
                 if baneling.position.distance_to(e.position) <= self.unburrow_range
             ]
 
             if nearby_enemies:
                 # Unburrow when enemies approach
-                unburrow_ability = getattr(AbilityId, 'BURROWUP_BANELING', None)
+                unburrow_ability = getattr(AbilityId, "BURROWUP_BANELING", None)
                 if unburrow_ability:
                     try:
                         actions.append(baneling(unburrow_ability))
@@ -313,20 +300,20 @@ class BanelingTacticsController:
 
         # Check unburrowed Banelings for auto-explode
         unburrowed_banelings = [
-            b for b in banelings
-            if not getattr(b, 'is_burrowed', False)
+            b for b in banelings if not getattr(b, "is_burrowed", False)
         ]
 
         for baneling in unburrowed_banelings:
             # Find very close enemies
             close_enemies = [
-                e for e in enemy_units
+                e
+                for e in enemy_units
                 if baneling.position.distance_to(e.position) <= self.explode_range
             ]
 
             # Auto-explode if enough enemies
             if len(close_enemies) >= self.min_targets_for_explode:
-                explode_ability = getattr(AbilityId, 'EFFECT_EXPLODE', None)
+                explode_ability = getattr(AbilityId, "EFFECT_EXPLODE", None)
                 if explode_ability:
                     try:
                         actions.append(baneling(explode_ability))

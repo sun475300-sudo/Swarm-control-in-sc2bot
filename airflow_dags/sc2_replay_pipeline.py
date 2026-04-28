@@ -1,15 +1,15 @@
 # airflow_dags/sc2_replay_pipeline.py
 # Apache Airflow DAG for SC2 Zerg replay analysis pipeline
 
-from datetime import datetime, timedelta
-import os
 import glob
+import os
 import sqlite3
+from datetime import datetime, timedelta
 
 from airflow import DAG
 from airflow.operators.bash import BashOperator
-from airflow.operators.python import PythonOperator
 from airflow.operators.email import EmailOperator
+from airflow.operators.python import PythonOperator
 
 # ---------------------------------------------------------------------------
 # Default arguments
@@ -32,9 +32,12 @@ DB_PATH = "/data/sc2_stats.db"
 # Task callbacks
 # ---------------------------------------------------------------------------
 
+
 def parse_metadata(**context):
     """Read .SC2Replay files and extract basic metadata."""
-    replay_files = glob.glob(os.path.join(REPLAY_DIR, "**", "*.SC2Replay"), recursive=True)
+    replay_files = glob.glob(
+        os.path.join(REPLAY_DIR, "**", "*.SC2Replay"), recursive=True
+    )
     records = []
     for path in replay_files:
         filename = os.path.basename(path)
@@ -43,12 +46,14 @@ def parse_metadata(**context):
         matchup = parts[0] if len(parts) > 0 else "ZvT"
         result = parts[1] if len(parts) > 1 else "win"
         date_str = parts[2] if len(parts) > 2 else "20260101"
-        records.append({
-            "file": filename,
-            "matchup": matchup,
-            "result": result,
-            "date": date_str,
-        })
+        records.append(
+            {
+                "file": filename,
+                "matchup": matchup,
+                "result": result,
+                "date": date_str,
+            }
+        )
     context["ti"].xcom_push(key="replay_records", value=records)
     print(f"Parsed {len(records)} replay files.")
 
@@ -137,9 +142,17 @@ with DAG(
         html_content="""
             <h2>SC2 Zerg Bot — Daily Stats</h2>
             <p>Replay pipeline completed for <b>{{ ds }}</b>.</p>
-            <p>Check the database at <code>""" + DB_PATH + """</code> for updated win rates.</p>
+            <p>Check the database at <code>"""
+        + DB_PATH
+        + """</code> for updated win rates.</p>
         """,
     )
 
     # Task dependency chain
-    extract_replays >> parse_metadata_task >> compute_stats_task >> load_to_db_task >> send_report
+    (
+        extract_replays
+        >> parse_metadata_task
+        >> compute_stats_task
+        >> load_to_db_task
+        >> send_report
+    )

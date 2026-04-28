@@ -44,20 +44,20 @@ class UnitMorphManager:
         # 변태 비율 설정 (상대 종족별)
         self.morph_ratios = {
             "Terran": {
-                "baneling_ratio": 0.2,   
-                "ravager_ratio": 0.3,    # ★ AGGRESSIVE: 15% -> 30%
-                "lurker_ratio": 0.3,     
-                "broodlord_ratio": 0.4,  
+                "baneling_ratio": 0.2,
+                "ravager_ratio": 0.3,  # ★ AGGRESSIVE: 15% -> 30%
+                "lurker_ratio": 0.3,
+                "broodlord_ratio": 0.4,
             },
             "Protoss": {
-                "baneling_ratio": 0.25,  
-                "ravager_ratio": 0.35,   # ★ AGGRESSIVE: 25% -> 35%
-                "lurker_ratio": 0.4,     
+                "baneling_ratio": 0.25,
+                "ravager_ratio": 0.35,  # ★ AGGRESSIVE: 25% -> 35%
+                "lurker_ratio": 0.4,
                 "broodlord_ratio": 0.3,
             },
             "Zerg": {
-                "baneling_ratio": 0.3,   
-                "ravager_ratio": 0.3,    # ★ AGGRESSIVE: 20% -> 30%
+                "baneling_ratio": 0.3,
+                "ravager_ratio": 0.3,  # ★ AGGRESSIVE: 20% -> 30%
                 "lurker_ratio": 0.2,
                 "broodlord_ratio": 0.3,
             },
@@ -66,12 +66,14 @@ class UnitMorphManager:
                 "ravager_ratio": 0.3,
                 "lurker_ratio": 0.25,
                 "broodlord_ratio": 0.3,
-            }
+            },
         }
 
     def _get_dynamic_ratios(self, enemy_race: str) -> dict:
         """★ Phase 14: Blackboard에서 전략 비율을 읽어 변이 비율 동적 조정 ★"""
-        base_ratios = self.morph_ratios.get(enemy_race, self.morph_ratios["Unknown"]).copy()
+        base_ratios = self.morph_ratios.get(
+            enemy_race, self.morph_ratios["Unknown"]
+        ).copy()
 
         # Blackboard에서 unit_ratios 읽기
         blackboard = getattr(self.bot, "blackboard", None)
@@ -142,7 +144,9 @@ class UnitMorphManager:
             if iteration % 50 == 0:
                 self.logger.error(f"Morph manager error: {e}")
 
-    async def _morph_banelings(self, enemy_race: str, iteration: int, dynamic_ratios: dict = None):
+    async def _morph_banelings(
+        self, enemy_race: str, iteration: int, dynamic_ratios: dict = None
+    ):
         """저글링 -> 베인링 변태"""
         # 쿨다운 체크 (10초마다)
         if self.bot.time - self.last_baneling_morph < 10:
@@ -161,7 +165,9 @@ class UnitMorphManager:
             return
 
         # 목표 비율 계산 (★ Phase 14: 동적 비율 우선)
-        ratios = dynamic_ratios or self.morph_ratios.get(enemy_race, self.morph_ratios["Unknown"])
+        ratios = dynamic_ratios or self.morph_ratios.get(
+            enemy_race, self.morph_ratios["Unknown"]
+        )
         target_ratio = ratios["baneling_ratio"]
 
         total_lings = zerglings.amount + banelings.amount
@@ -191,7 +197,9 @@ class UnitMorphManager:
             for zergling in zerglings[:morphs_needed]:
                 if self.bot.can_afford(UnitTypeId.BANELING):
                     try:
-                        self.bot.do(zergling(AbilityId.MORPHZERGLINGTOBANELING_BANELING))
+                        self.bot.do(
+                            zergling(AbilityId.MORPHZERGLINGTOBANELING_BANELING)
+                        )
                         morphed += 1
                     except Exception:
                         continue
@@ -199,9 +207,13 @@ class UnitMorphManager:
             if morphed > 0:
                 self.last_baneling_morph = self.bot.time
                 if iteration % 100 == 0:
-                    self.logger.info(f"[{int(self.bot.time)}s] Morphed {morphed} Banelings (target ratio: {target_ratio:.1%})")
+                    self.logger.info(
+                        f"[{int(self.bot.time)}s] Morphed {morphed} Banelings (target ratio: {target_ratio:.1%})"
+                    )
 
-    async def _morph_ravagers(self, enemy_race: str, iteration: int, dynamic_ratios: dict = None):
+    async def _morph_ravagers(
+        self, enemy_race: str, iteration: int, dynamic_ratios: dict = None
+    ):
         """바퀴 -> 파멸충 변태"""
         # 쿨다운 체크 (15초마다)
         if self.bot.time - self.last_ravager_morph < 15:
@@ -220,7 +232,9 @@ class UnitMorphManager:
             return
 
         # 목표 비율 계산 (★ Phase 14: 동적 비율 우선)
-        ratios = dynamic_ratios or self.morph_ratios.get(enemy_race, self.morph_ratios["Unknown"])
+        ratios = dynamic_ratios or self.morph_ratios.get(
+            enemy_race, self.morph_ratios["Unknown"]
+        )
         target_ratio = ratios["ravager_ratio"]
 
         total_roaches = roaches.amount + ravagers.amount
@@ -256,9 +270,13 @@ class UnitMorphManager:
 
             if morphed > 0:
                 self.last_ravager_morph = self.bot.time
-                self.logger.info(f"[{int(self.bot.time)}s] Morphed {morphed} Ravagers (target ratio: {target_ratio:.1%})")
+                self.logger.info(
+                    f"[{int(self.bot.time)}s] Morphed {morphed} Ravagers (target ratio: {target_ratio:.1%})"
+                )
 
-    async def _morph_lurkers(self, enemy_race: str, iteration: int, dynamic_ratios: dict = None):
+    async def _morph_lurkers(
+        self, enemy_race: str, iteration: int, dynamic_ratios: dict = None
+    ):
         """히드라 -> 럴커 변태"""
         # 쿨다운 체크 (20초마다)
         if self.bot.time - self.last_lurker_morph < 20:
@@ -277,7 +295,9 @@ class UnitMorphManager:
             return
 
         # 목표 비율 계산 (★ Phase 14: 동적 비율 우선)
-        ratios = dynamic_ratios or self.morph_ratios.get(enemy_race, self.morph_ratios["Unknown"])
+        ratios = dynamic_ratios or self.morph_ratios.get(
+            enemy_race, self.morph_ratios["Unknown"]
+        )
         target_ratio = ratios["lurker_ratio"]
 
         total_hydras = hydralisks.amount + lurkers.amount
@@ -313,9 +333,13 @@ class UnitMorphManager:
 
             if morphed > 0:
                 self.last_lurker_morph = self.bot.time
-                self.logger.info(f"[{int(self.bot.time)}s] Morphed {morphed} Lurkers (target ratio: {target_ratio:.1%})")
+                self.logger.info(
+                    f"[{int(self.bot.time)}s] Morphed {morphed} Lurkers (target ratio: {target_ratio:.1%})"
+                )
 
-    async def _morph_broodlords(self, enemy_race: str, iteration: int, dynamic_ratios: dict = None):
+    async def _morph_broodlords(
+        self, enemy_race: str, iteration: int, dynamic_ratios: dict = None
+    ):
         """코럽터 -> 무리군주 변태"""
         # 쿨다운 체크 (30초마다)
         if self.bot.time - self.last_broodlord_morph < 30:
@@ -334,7 +358,9 @@ class UnitMorphManager:
             return
 
         # 목표 비율 계산 (★ Phase 14: 동적 비율 우선)
-        ratios = dynamic_ratios or self.morph_ratios.get(enemy_race, self.morph_ratios["Unknown"])
+        ratios = dynamic_ratios or self.morph_ratios.get(
+            enemy_race, self.morph_ratios["Unknown"]
+        )
         target_ratio = ratios["broodlord_ratio"]
 
         total_corruptors = corruptors.amount + broodlords.amount
@@ -370,12 +396,17 @@ class UnitMorphManager:
 
             if morphed > 0:
                 self.last_broodlord_morph = self.bot.time
-                self.logger.info(f"[{int(self.bot.time)}s] Morphed {morphed} Brood Lords (target ratio: {target_ratio:.1%})")
+                self.logger.info(
+                    f"[{int(self.bot.time)}s] Morphed {morphed} Brood Lords (target ratio: {target_ratio:.1%})"
+                )
 
     async def _morph_overseers(self, iteration: int):
         """오버로드 -> 오버시어 변태 (탐지기 확보)"""
         # 쿨다운 체크 (10초마다)
-        if hasattr(self, "last_overseer_morph") and self.bot.time - self.last_overseer_morph < 10:
+        if (
+            hasattr(self, "last_overseer_morph")
+            and self.bot.time - self.last_overseer_morph < 10
+        ):
             return
 
         # 레어/하이브 필요
@@ -384,13 +415,13 @@ class UnitMorphManager:
 
         # 오버시어 수 확인
         overseers = self.bot.units(UnitTypeId.OVERSEER)
-        
+
         # 목표 오버시어 수: 기본 2기, 프로토스전 3기 (DT 대비)
         target_count = 2
         enemy_race = self._get_enemy_race()
         if enemy_race == "Protoss":
             target_count = 3
-        
+
         if overseers.amount >= target_count:
             return
 
@@ -398,7 +429,7 @@ class UnitMorphManager:
         overlords = self.bot.units(UnitTypeId.OVERLORD)
         if not overlords.exists:
             return
-            
+
         # 자원 확인 (미네랄 50, 가스 50)
         if not self.bot.can_afford(UnitTypeId.OVERSEER):
             return
@@ -406,11 +437,13 @@ class UnitMorphManager:
         # 변태 실행 (가장 가까운 오버로드 선택? 그냥 랜덤)
         # 본진 근처 오버로드 선호?
         target_overlord = overlords.closest_to(self.bot.start_location)
-        
+
         try:
             self.bot.do(target_overlord(AbilityId.MORPH_OVERSEER))
             self.last_overseer_morph = self.bot.time
-            self.logger.info(f"[{int(self.bot.time)}s] Morphed Overseer (Active: {overseers.amount}/{target_count})")
+            self.logger.info(
+                f"[{int(self.bot.time)}s] Morphed Overseer (Active: {overseers.amount}/{target_count})"
+            )
         except Exception:
             pass
 
@@ -440,7 +473,7 @@ class UnitMorphManager:
             return False
         lairs = self.bot.structures(UnitTypeId.LAIR)
         hives = self.bot.structures(UnitTypeId.HIVE)
-        return (lairs.exists or hives.exists)
+        return lairs.exists or hives.exists
 
     def _has_roach_warren(self) -> bool:
         """Roach Warren 존재 확인"""

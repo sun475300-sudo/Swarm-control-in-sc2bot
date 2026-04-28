@@ -8,6 +8,7 @@ Counter Units Module
 try:
     from sc2.ids.unit_typeid import UnitTypeId
 except ImportError:
+
     class UnitTypeId:
         ZERGLING = "ZERGLING"
         ROACH = "ROACH"
@@ -17,7 +18,13 @@ except ImportError:
         BANELINGNEST = "BANELINGNEST"
 
 
-def get_counter_unit(resilience, enemy_units, has_roach_warren: bool, has_hydra_den: bool, has_spire: bool):
+def get_counter_unit(
+    resilience,
+    enemy_units,
+    has_roach_warren: bool,
+    has_hydra_den: bool,
+    has_spire: bool,
+):
     """
     적 구성을 분석하고 최적의 카운터 유닛 반환
 
@@ -47,17 +54,28 @@ def get_counter_unit(resilience, enemy_units, has_roach_warren: bool, has_hydra_
     enemy_counts = {
         "light_infantry": 0,  # Marines, Zealots, Zerglings
         "armored_ground": 0,  # Roaches, Stalkers, Marauders
-        "air": 0,             # Any flying units
-        "siege": 0,           # Siege Tanks, Colossus
-        "anti_armor": 0,      # Immortals
+        "air": 0,  # Any flying units
+        "siege": 0,  # Siege Tanks, Colossus
+        "anti_armor": 0,  # Immortals
     }
 
     # Light infantry unit IDs
     light_infantry_ids = ["MARINE", "ZEALOT", "ZERGLING", "ADEPT"]
     armored_ground_ids = ["ROACH", "STALKER", "MARAUDER", "IMMORTAL", "RAVAGER"]
-    air_unit_ids = ["VOIDRAY", "PHOENIX", "ORACLE", "CARRIER", "TEMPEST",
-                    "VIKINGFIGHTER", "BANSHEE", "BATTLECRUISER", "LIBERATOR",
-                    "MUTALISK", "CORRUPTOR", "BROODLORD"]
+    air_unit_ids = [
+        "VOIDRAY",
+        "PHOENIX",
+        "ORACLE",
+        "CARRIER",
+        "TEMPEST",
+        "VIKINGFIGHTER",
+        "BANSHEE",
+        "BATTLECRUISER",
+        "LIBERATOR",
+        "MUTALISK",
+        "CORRUPTOR",
+        "BROODLORD",
+    ]
     siege_ids = ["SIEGETANK", "SIEGETANKSIEGED", "COLOSSUS", "DISRUPTOR"]
     anti_armor_ids = ["IMMORTAL"]
 
@@ -116,7 +134,10 @@ def get_counter_unit(resilience, enemy_units, has_roach_warren: bool, has_hydra_
 
     elif main_threat == "anti_armor":
         # vs Immortals: Zerglings (swarm) > Hydralisks
-        if b.can_afford(UnitTypeId.ZERGLING) and b.structures(UnitTypeId.SPAWNINGPOOL).ready.exists:
+        if (
+            b.can_afford(UnitTypeId.ZERGLING)
+            and b.structures(UnitTypeId.SPAWNINGPOOL).ready.exists
+        ):
             return UnitTypeId.ZERGLING
         if has_hydra_den and b.can_afford(UnitTypeId.HYDRALISK):
             return UnitTypeId.HYDRALISK

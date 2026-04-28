@@ -2,9 +2,9 @@
 # -*- coding: utf-8 -*-
 """Analyze why high tech units are not being produced"""
 
+import logging
 import sys
 from pathlib import Path
-import logging
 
 logger = logging.getLogger("AnalyzeTechUnitProduction")
 

@@ -4,15 +4,16 @@ Run 3 games for testing improvements.
 개선 사항 테스트를 위한 3게임 실행 스크립트.
 """
 
-from sc2 import maps
-from sc2.player import Bot, Computer
-from sc2.main import run_game
-from sc2.data import Race, Difficulty
-from wicked_zerg_bot_pro_impl import WickedZergBotProImpl as WickedZergBotPro
-import sys
-import os
-import time
 import logging
+import os
+import sys
+import time
+
+from sc2 import maps
+from sc2.data import Difficulty, Race
+from sc2.main import run_game
+from sc2.player import Bot, Computer
+from wicked_zerg_bot_pro_impl import WickedZergBotProImpl as WickedZergBotPro
 
 logger = logging.getLogger("Test3games")
 
@@ -30,8 +31,10 @@ def _ensure_sc2_path():
 
     try:
         import winreg
-        key = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE,
-                             r"SOFTWARE\Blizzard Entertainment\StarCraft II")
+
+        key = winreg.OpenKey(
+            winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\Blizzard Entertainment\StarCraft II"
+        )
         install_path, _ = winreg.QueryValueEx(key, "InstallPath")
         winreg.CloseKey(key)
 
@@ -103,7 +106,7 @@ def main():
             result = run_game(
                 map_instance,
                 [bot, Computer(opponent_race, difficulty)],
-                realtime=False  # Fast mode
+                realtime=False,  # Fast mode
             )
             elapsed = time.time() - start_time
 
@@ -133,5 +136,7 @@ def main():
     logger.info("    - [EXPANSION] Expansion timing and success")
     logger.error("    - [CURRICULUM] No NoneType errors")
     logger.info("=" * 70)
+
+
 if __name__ == "__main__":
     main()

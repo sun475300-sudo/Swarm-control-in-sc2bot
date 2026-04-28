@@ -9,18 +9,21 @@ Smart Resource Balancer - 실시간 일꾼 재배치로 자원 효율 극대화
 """
 
 from typing import Dict, List, Tuple
+
 from utils.logger import get_logger
 
 try:
     from sc2.ids.unit_typeid import UnitTypeId
     from sc2.position import Point2
 except ImportError:
+
     class UnitTypeId:
         DRONE = "DRONE"
         EXTRACTOR = "EXTRACTOR"
         HATCHERY = "HATCHERY"
         LAIR = "LAIR"
         HIVE = "HIVE"
+
     Point2 = tuple
 
 
@@ -84,7 +87,10 @@ class SmartResourceBalancer:
                 minerals, gas, target_ratio, current_ratio, game_time
             )
 
-            if needs_rebalance and iteration - self.last_worker_moved > self.worker_move_cooldown:
+            if (
+                needs_rebalance
+                and iteration - self.last_worker_moved > self.worker_move_cooldown
+            ):
                 # ★ 5. 일꾼 재배치 실행 ★
                 await self._rebalance_workers(action, minerals, gas)
                 self.last_worker_moved = iteration
@@ -94,7 +100,9 @@ class SmartResourceBalancer:
             if iteration % 50 == 0:
                 self.logger.error(f"[SMART_BALANCE] Error: {e}")
 
-    def _calculate_target_ratio(self, minerals: int, gas: int, game_time: float) -> float:
+    def _calculate_target_ratio(
+        self, minerals: int, gas: int, game_time: float
+    ) -> float:
         """
         현재 자원 상태와 게임 페이즈에 따라 목표 비율 계산
 
@@ -149,7 +157,11 @@ class SmartResourceBalancer:
                     # 가스 채취 중
                     if hasattr(target, "type_id"):
                         type_name = getattr(target.type_id, "name", "").upper()
-                        if "EXTRACTOR" in type_name or "ASSIMILATOR" in type_name or "REFINERY" in type_name:
+                        if (
+                            "EXTRACTOR" in type_name
+                            or "ASSIMILATOR" in type_name
+                            or "REFINERY" in type_name
+                        ):
                             gas_workers += 1
                             continue
                     # 미네랄 채취 중
@@ -166,7 +178,7 @@ class SmartResourceBalancer:
         gas: int,
         target_ratio: float,
         current_ratio: float,
-        game_time: float
+        game_time: float,
     ) -> Tuple[bool, str]:
         """
         재배치 필요 여부 판단
@@ -176,11 +188,17 @@ class SmartResourceBalancer:
             action: "gas_to_mineral", "mineral_to_gas", "none"
         """
         # ★ Critical: 가스 2000+ & 미네랄 부족 ★
-        if gas > self.gas_critical_threshold and minerals < self.mineral_shortage_threshold:
+        if (
+            gas > self.gas_critical_threshold
+            and minerals < self.mineral_shortage_threshold
+        ):
             return True, "gas_to_mineral"
 
         # ★ 가스 1000+ & 미네랄 100- ★
-        if gas > self.gas_excess_threshold and minerals < self.mineral_critical_threshold:
+        if (
+            gas > self.gas_excess_threshold
+            and minerals < self.mineral_critical_threshold
+        ):
             return True, "gas_to_mineral"
 
         # ★ 가스 과다 (목표 비율 대비) ★
@@ -308,7 +326,7 @@ class SmartResourceBalancer:
                 # 가장 가까운 미네랄 일꾼 보내기
                 if mineral_workers:
                     closest_worker = None
-                    min_distance = float('inf')
+                    min_distance = float("inf")
 
                     for worker in mineral_workers[:5]:  # 최대 5명 중에서 선택
                         distance = worker.position.distance_to(extractor.position)

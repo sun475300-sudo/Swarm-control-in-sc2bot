@@ -12,22 +12,24 @@ Features:
 """
 
 from __future__ import annotations
-from dataclasses import dataclass, field
-from typing import Any, Callable, Dict, List, Optional, Tuple
-from enum import Enum
-import math
-import random
-import time
-import json
-import os
-import sys
+
 import collections
 import hashlib
+import json
+import math
+import os
+import random
+import sys
+import time
+from dataclasses import dataclass, field
+from enum import Enum
+from typing import Any, Callable, Dict, List, Optional, Tuple
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 try:
     import numpy as np
+
     NP_AVAILABLE = True
 except ImportError:
     NP_AVAILABLE = False
@@ -36,6 +38,7 @@ except ImportError:
 # ─────────────────────────────────────────────
 # NumPy fallback helpers
 # ─────────────────────────────────────────────
+
 
 def _np_zeros(shape):
     if NP_AVAILABLE:
@@ -82,9 +85,11 @@ def _np_dot(a, b):
 # SC2 Game State
 # ─────────────────────────────────────────────
 
+
 @dataclass
 class SC2GameState:
     """Snapshot of SC2 game state for reward computation."""
+
     frame: int = 0
     minerals: float = 50.0
     gas: float = 0.0
@@ -94,25 +99,25 @@ class SC2GameState:
     army_supply: int = 0
     army_value: float = 0.0
     bases: int = 1
-    tech_level: float = 0.0         # 0.0 - 1.0
+    tech_level: float = 0.0  # 0.0 - 1.0
     damage_dealt: float = 0.0
     damage_taken: float = 0.0
     units_produced: int = 0
     units_lost: int = 0
     units_killed: int = 0
     resources_gathered: float = 0.0
-    map_control: float = 0.0       # 0.0 - 1.0 fraction of map controlled
-    scouting_coverage: float = 0.0 # 0.0 - 1.0 fraction of map scouted
-    apm: float = 0.0               # actions per minute
+    map_control: float = 0.0  # 0.0 - 1.0 fraction of map controlled
+    scouting_coverage: float = 0.0  # 0.0 - 1.0 fraction of map scouted
+    apm: float = 0.0  # actions per minute
     upgrades_completed: int = 0
     enemy_army_value: float = 0.0
     enemy_bases: int = 1
     enemy_workers: int = 12
-    income_rate: float = 0.0       # minerals per minute
+    income_rate: float = 0.0  # minerals per minute
     idle_workers: int = 0
     production_facilities: int = 1
-    creep_spread: float = 0.0      # 0.0 - 1.0
-    queen_energy: float = 0.0      # avg queen energy
+    creep_spread: float = 0.0  # 0.0 - 1.0
+    queen_energy: float = 0.0  # avg queen energy
 
     def to_vector(self) -> list:
         """Convert to feature vector for potential function input."""
@@ -149,7 +154,8 @@ class SC2GameState:
     def state_hash(self) -> str:
         """Discretized hash for curiosity counting."""
         discretized = tuple(
-            int(v * 10) for v in [
+            int(v * 10)
+            for v in [
                 self.minerals / 200.0,
                 self.gas / 100.0,
                 self.supply_used / 20.0,
@@ -166,6 +172,7 @@ class SC2GameState:
 # ─────────────────────────────────────────────
 # Reward Components
 # ─────────────────────────────────────────────
+
 
 class RewardComponentType(str, Enum):
     DAMAGE_DEALT = "damage_dealt"
@@ -192,6 +199,7 @@ class RewardComponentType(str, Enum):
 @dataclass
 class RewardComponent:
     """Single composable reward function component."""
+
     name: RewardComponentType
     weight: float = 1.0
     clip_min: float = -10.0
@@ -231,10 +239,15 @@ class RewardComponent:
 
 # ─── Concrete reward components ───
 
+
 class DamageDealtReward(RewardComponent):
     def __init__(self, weight=1.0):
-        super().__init__(RewardComponentType.DAMAGE_DEALT, weight,
-                         description="Reward for damage dealt to enemy units")
+        super().__init__(
+            RewardComponentType.DAMAGE_DEALT,
+            weight,
+            description="Reward for damage dealt to enemy units",
+        )
+
     def compute(self, prev, curr):
         delta = curr.damage_dealt - prev.damage_dealt
         return delta / 500.0
@@ -242,8 +255,12 @@ class DamageDealtReward(RewardComponent):
 
 class DamageTakenReward(RewardComponent):
     def __init__(self, weight=-0.8):
-        super().__init__(RewardComponentType.DAMAGE_TAKEN, weight,
-                         description="Penalty for damage taken from enemy")
+        super().__init__(
+            RewardComponentType.DAMAGE_TAKEN,
+            weight,
+            description="Penalty for damage taken from enemy",
+        )
+
     def compute(self, prev, curr):
         delta = curr.damage_taken - prev.damage_taken
         return delta / 500.0
@@ -251,8 +268,12 @@ class DamageTakenReward(RewardComponent):
 
 class UnitsProducedReward(RewardComponent):
     def __init__(self, weight=0.3):
-        super().__init__(RewardComponentType.UNITS_PRODUCED, weight,
-                         description="Reward for producing units")
+        super().__init__(
+            RewardComponentType.UNITS_PRODUCED,
+            weight,
+            description="Reward for producing units",
+        )
+
     def compute(self, prev, curr):
         delta = curr.units_produced - prev.units_produced
         return float(delta)
@@ -260,8 +281,12 @@ class UnitsProducedReward(RewardComponent):
 
 class UnitsLostReward(RewardComponent):
     def __init__(self, weight=-0.5):
-        super().__init__(RewardComponentType.UNITS_LOST, weight,
-                         description="Penalty for losing units")
+        super().__init__(
+            RewardComponentType.UNITS_LOST,
+            weight,
+            description="Penalty for losing units",
+        )
+
     def compute(self, prev, curr):
         delta = curr.units_lost - prev.units_lost
         return float(delta)
@@ -269,8 +294,12 @@ class UnitsLostReward(RewardComponent):
 
 class UnitsKilledReward(RewardComponent):
     def __init__(self, weight=0.6):
-        super().__init__(RewardComponentType.UNITS_KILLED, weight,
-                         description="Reward for killing enemy units")
+        super().__init__(
+            RewardComponentType.UNITS_KILLED,
+            weight,
+            description="Reward for killing enemy units",
+        )
+
     def compute(self, prev, curr):
         delta = curr.units_killed - prev.units_killed
         return float(delta)
@@ -278,8 +307,12 @@ class UnitsKilledReward(RewardComponent):
 
 class ResourcesGatheredReward(RewardComponent):
     def __init__(self, weight=0.2):
-        super().__init__(RewardComponentType.RESOURCES_GATHERED, weight,
-                         description="Reward for total resources gathered")
+        super().__init__(
+            RewardComponentType.RESOURCES_GATHERED,
+            weight,
+            description="Reward for total resources gathered",
+        )
+
     def compute(self, prev, curr):
         delta = curr.resources_gathered - prev.resources_gathered
         return delta / 500.0
@@ -287,24 +320,36 @@ class ResourcesGatheredReward(RewardComponent):
 
 class TechProgressionReward(RewardComponent):
     def __init__(self, weight=1.0):
-        super().__init__(RewardComponentType.TECH_PROGRESSION, weight,
-                         description="Reward for tech upgrades")
+        super().__init__(
+            RewardComponentType.TECH_PROGRESSION,
+            weight,
+            description="Reward for tech upgrades",
+        )
+
     def compute(self, prev, curr):
         return (curr.tech_level - prev.tech_level) * 5.0
 
 
 class MapControlReward(RewardComponent):
     def __init__(self, weight=0.5):
-        super().__init__(RewardComponentType.MAP_CONTROL, weight,
-                         description="Reward for map control percentage")
+        super().__init__(
+            RewardComponentType.MAP_CONTROL,
+            weight,
+            description="Reward for map control percentage",
+        )
+
     def compute(self, prev, curr):
         return (curr.map_control - prev.map_control) * 3.0
 
 
 class ArmyValueReward(RewardComponent):
     def __init__(self, weight=0.4):
-        super().__init__(RewardComponentType.ARMY_VALUE, weight,
-                         description="Reward for building army value")
+        super().__init__(
+            RewardComponentType.ARMY_VALUE,
+            weight,
+            description="Reward for building army value",
+        )
+
     def compute(self, prev, curr):
         delta = curr.army_value - prev.army_value
         return delta / 1000.0
@@ -312,8 +357,12 @@ class ArmyValueReward(RewardComponent):
 
 class SupplyEfficiencyReward(RewardComponent):
     def __init__(self, weight=0.3):
-        super().__init__(RewardComponentType.SUPPLY_EFFICIENCY, weight,
-                         description="Reward for efficient supply usage")
+        super().__init__(
+            RewardComponentType.SUPPLY_EFFICIENCY,
+            weight,
+            description="Reward for efficient supply usage",
+        )
+
     def compute(self, prev, curr):
         if curr.supply_max == 0:
             return 0.0
@@ -329,8 +378,12 @@ class SupplyEfficiencyReward(RewardComponent):
 
 class APMReward(RewardComponent):
     def __init__(self, weight=0.1):
-        super().__init__(RewardComponentType.APM_REWARD, weight,
-                         description="Reward for maintaining reasonable APM")
+        super().__init__(
+            RewardComponentType.APM_REWARD,
+            weight,
+            description="Reward for maintaining reasonable APM",
+        )
+
     def compute(self, prev, curr):
         # Diminishing returns above 150 APM
         if curr.apm < 50:
@@ -343,8 +396,12 @@ class APMReward(RewardComponent):
 
 class ScoutingCoverageReward(RewardComponent):
     def __init__(self, weight=0.4):
-        super().__init__(RewardComponentType.SCOUTING_COVERAGE, weight,
-                         description="Reward for scouting the map")
+        super().__init__(
+            RewardComponentType.SCOUTING_COVERAGE,
+            weight,
+            description="Reward for scouting the map",
+        )
+
     def compute(self, prev, curr):
         delta = curr.scouting_coverage - prev.scouting_coverage
         return delta * 5.0
@@ -352,8 +409,12 @@ class ScoutingCoverageReward(RewardComponent):
 
 class ExpansionTimingReward(RewardComponent):
     def __init__(self, weight=0.8):
-        super().__init__(RewardComponentType.EXPANSION_TIMING, weight,
-                         description="Reward for well-timed expansions")
+        super().__init__(
+            RewardComponentType.EXPANSION_TIMING,
+            weight,
+            description="Reward for well-timed expansions",
+        )
+
     def compute(self, prev, curr):
         if curr.bases > prev.bases:
             # Reward if workers are saturated
@@ -369,8 +430,12 @@ class ExpansionTimingReward(RewardComponent):
 
 class WorkerSaturationReward(RewardComponent):
     def __init__(self, weight=0.5):
-        super().__init__(RewardComponentType.WORKER_SATURATION, weight,
-                         description="Reward for optimal worker count per base")
+        super().__init__(
+            RewardComponentType.WORKER_SATURATION,
+            weight,
+            description="Reward for optimal worker count per base",
+        )
+
     def compute(self, prev, curr):
         ideal = curr.bases * 16
         if ideal == 0:
@@ -386,8 +451,12 @@ class WorkerSaturationReward(RewardComponent):
 
 class IncomeRateReward(RewardComponent):
     def __init__(self, weight=0.3):
-        super().__init__(RewardComponentType.INCOME_RATE, weight,
-                         description="Reward for mineral income rate")
+        super().__init__(
+            RewardComponentType.INCOME_RATE,
+            weight,
+            description="Reward for mineral income rate",
+        )
+
     def compute(self, prev, curr):
         delta = curr.income_rate - prev.income_rate
         return delta / 500.0
@@ -395,16 +464,24 @@ class IncomeRateReward(RewardComponent):
 
 class CreepSpreadReward(RewardComponent):
     def __init__(self, weight=0.2):
-        super().__init__(RewardComponentType.CREEP_SPREAD, weight,
-                         description="Reward for creep spread (Zerg)")
+        super().__init__(
+            RewardComponentType.CREEP_SPREAD,
+            weight,
+            description="Reward for creep spread (Zerg)",
+        )
+
     def compute(self, prev, curr):
         return (curr.creep_spread - prev.creep_spread) * 5.0
 
 
 class QueenEnergyReward(RewardComponent):
     def __init__(self, weight=0.15):
-        super().__init__(RewardComponentType.QUEEN_ENERGY, weight,
-                         description="Penalty for high unused queen energy")
+        super().__init__(
+            RewardComponentType.QUEEN_ENERGY,
+            weight,
+            description="Penalty for high unused queen energy",
+        )
+
     def compute(self, prev, curr):
         # Penalize unused queen energy (should inject/spread creep)
         if curr.queen_energy > 50:
@@ -414,16 +491,24 @@ class QueenEnergyReward(RewardComponent):
 
 class IdleWorkersPenalty(RewardComponent):
     def __init__(self, weight=-0.4):
-        super().__init__(RewardComponentType.IDLE_WORKERS_PENALTY, weight,
-                         description="Penalty for idle workers")
+        super().__init__(
+            RewardComponentType.IDLE_WORKERS_PENALTY,
+            weight,
+            description="Penalty for idle workers",
+        )
+
     def compute(self, prev, curr):
         return float(curr.idle_workers)
 
 
 class WinLossReward(RewardComponent):
     def __init__(self, weight=10.0):
-        super().__init__(RewardComponentType.WIN_LOSS, weight,
-                         description="Sparse reward for game outcome")
+        super().__init__(
+            RewardComponentType.WIN_LOSS,
+            weight,
+            description="Sparse reward for game outcome",
+        )
+
     def compute(self, prev, curr):
         # Called externally with game result
         return 0.0
@@ -432,6 +517,7 @@ class WinLossReward(RewardComponent):
 # ─────────────────────────────────────────────
 # Potential-Based Reward Shaping (PBRS)
 # ─────────────────────────────────────────────
+
 
 class PotentialFunction:
     """
@@ -444,33 +530,33 @@ class PotentialFunction:
         self.gamma = gamma
         # Weights for potential function over state features
         default_weights = [
-            0.1,   # minerals
+            0.1,  # minerals
             0.15,  # gas
             0.05,  # supply_used
             0.05,  # supply_max
-            0.3,   # workers
-            0.2,   # army_supply
-            0.4,   # army_value
-            0.5,   # bases
-            0.6,   # tech_level
-            0.3,   # damage_dealt
+            0.3,  # workers
+            0.2,  # army_supply
+            0.4,  # army_value
+            0.5,  # bases
+            0.6,  # tech_level
+            0.3,  # damage_dealt
             -0.2,  # damage_taken
             0.15,  # units_produced
             -0.3,  # units_lost
             0.35,  # units_killed
-            0.2,   # resources_gathered
-            0.5,   # map_control
-            0.3,   # scouting
+            0.2,  # resources_gathered
+            0.5,  # map_control
+            0.3,  # scouting
             0.05,  # apm
-            0.4,   # upgrades
+            0.4,  # upgrades
             -0.3,  # enemy_army
             -0.4,  # enemy_bases
-            0.2,   # income
+            0.2,  # income
             -0.1,  # idle_workers
             0.15,  # production_facilities
-            0.2,   # creep
-            -0.05, # queen_energy
-            0.0,   # frame (time-neutral)
+            0.2,  # creep
+            -0.05,  # queen_energy
+            0.0,  # frame (time-neutral)
         ]
         self.weights = weights if weights is not None else default_weights
 
@@ -492,14 +578,14 @@ class PotentialFunction:
 # Curiosity-Driven Intrinsic Reward
 # ─────────────────────────────────────────────
 
+
 class CuriosityReward:
     """
     Count-based intrinsic reward for exploration.
     Reward inversely proportional to state visitation count.
     """
 
-    def __init__(self, beta: float = 0.1, decay: float = 0.999,
-                 max_count: int = 1000):
+    def __init__(self, beta: float = 0.1, decay: float = 0.999, max_count: int = 1000):
         self.beta = beta
         self.decay = decay
         self.max_count = max_count
@@ -517,9 +603,7 @@ class CuriosityReward:
     def decay_counts(self):
         """Apply decay to all visit counts for non-stationarity."""
         for key in self.visit_counts:
-            self.visit_counts[key] = max(
-                1, int(self.visit_counts[key] * self.decay)
-            )
+            self.visit_counts[key] = max(1, int(self.visit_counts[key] * self.decay))
 
     def unique_states(self) -> int:
         return len(self.visit_counts)
@@ -538,6 +622,7 @@ class CuriosityReward:
 # ─────────────────────────────────────────────
 # Reward Normalizer
 # ─────────────────────────────────────────────
+
 
 class RewardNormalizer:
     """
@@ -580,6 +665,7 @@ class RewardNormalizer:
 # Reward Weight Scheduler
 # ─────────────────────────────────────────────
 
+
 class RewardWeightScheduler:
     """
     Schedules reward weights to anneal from fully-shaped to sparse rewards.
@@ -609,8 +695,9 @@ class RewardWeightScheduler:
         if self.current_step <= self.warmup_steps:
             return 1.0
 
-        progress = (self.current_step - self.warmup_steps) / \
-            max(1, self.total_steps - self.warmup_steps)
+        progress = (self.current_step - self.warmup_steps) / max(
+            1, self.total_steps - self.warmup_steps
+        )
         progress = min(1.0, progress)
 
         if self.schedule_type == "linear":
@@ -638,9 +725,11 @@ class RewardWeightScheduler:
 # Reward Configuration
 # ─────────────────────────────────────────────
 
+
 @dataclass
 class RewardConfig:
     """Complete reward configuration for A/B testing."""
+
     name: str = "default"
     component_weights: Dict[str, float] = field(default_factory=dict)
     use_pbrs: bool = True
@@ -670,54 +759,74 @@ REWARD_PRESETS: Dict[str, RewardConfig] = {
     "aggressive": RewardConfig(
         name="aggressive",
         component_weights={
-            "damage_dealt": 2.0, "units_killed": 1.5, "army_value": 1.0,
-            "damage_taken": -0.5, "map_control": 0.8,
-            "resources_gathered": 0.1, "worker_saturation": 0.2,
+            "damage_dealt": 2.0,
+            "units_killed": 1.5,
+            "army_value": 1.0,
+            "damage_taken": -0.5,
+            "map_control": 0.8,
+            "resources_gathered": 0.1,
+            "worker_saturation": 0.2,
         },
-        use_pbrs=True, use_curiosity=False,
+        use_pbrs=True,
+        use_curiosity=False,
         schedule_type="linear",
     ),
     "economic": RewardConfig(
         name="economic",
         component_weights={
-            "resources_gathered": 2.0, "worker_saturation": 1.5,
-            "expansion_timing": 1.2, "income_rate": 1.0,
-            "supply_efficiency": 0.8, "tech_progression": 0.5,
+            "resources_gathered": 2.0,
+            "worker_saturation": 1.5,
+            "expansion_timing": 1.2,
+            "income_rate": 1.0,
+            "supply_efficiency": 0.8,
+            "tech_progression": 0.5,
             "idle_workers_penalty": -1.0,
         },
-        use_pbrs=True, use_curiosity=True,
+        use_pbrs=True,
+        use_curiosity=True,
         curiosity_beta=0.05,
         schedule_type="cosine",
     ),
     "balanced": RewardConfig(
         name="balanced",
         component_weights={
-            "damage_dealt": 1.0, "damage_taken": -0.8,
-            "units_produced": 0.3, "units_lost": -0.5,
-            "units_killed": 0.6, "resources_gathered": 0.5,
-            "tech_progression": 0.8, "map_control": 0.5,
-            "army_value": 0.4, "supply_efficiency": 0.3,
-            "scouting_coverage": 0.4, "expansion_timing": 0.7,
-            "worker_saturation": 0.5, "income_rate": 0.3,
+            "damage_dealt": 1.0,
+            "damage_taken": -0.8,
+            "units_produced": 0.3,
+            "units_lost": -0.5,
+            "units_killed": 0.6,
+            "resources_gathered": 0.5,
+            "tech_progression": 0.8,
+            "map_control": 0.5,
+            "army_value": 0.4,
+            "supply_efficiency": 0.3,
+            "scouting_coverage": 0.4,
+            "expansion_timing": 0.7,
+            "worker_saturation": 0.5,
+            "income_rate": 0.3,
         },
-        use_pbrs=True, use_curiosity=True,
+        use_pbrs=True,
+        use_curiosity=True,
         curiosity_beta=0.1,
         schedule_type="cosine",
     ),
     "sparse_only": RewardConfig(
         name="sparse_only",
         component_weights={},
-        use_pbrs=False, use_curiosity=False,
+        use_pbrs=False,
+        use_curiosity=False,
         normalize=False,
         sparse_weight=20.0,
     ),
     "curiosity_heavy": RewardConfig(
         name="curiosity_heavy",
         component_weights={
-            "scouting_coverage": 1.0, "map_control": 0.8,
+            "scouting_coverage": 1.0,
+            "map_control": 0.8,
             "tech_progression": 0.5,
         },
-        use_pbrs=False, use_curiosity=True,
+        use_pbrs=False,
+        use_curiosity=True,
         curiosity_beta=0.5,
         schedule_type="exponential",
     ),
@@ -727,6 +836,7 @@ REWARD_PRESETS: Dict[str, RewardConfig] = {
 # ─────────────────────────────────────────────
 # SC2 Reward Designer
 # ─────────────────────────────────────────────
+
 
 class SC2RewardDesigner:
     """
@@ -747,16 +857,25 @@ class SC2RewardDesigner:
         self.components: Dict[str, RewardComponent] = self._build_components()
 
         # PBRS
-        self.pbrs = PotentialFunction(gamma=self.config.pbrs_gamma) \
-            if self.config.use_pbrs else None
+        self.pbrs = (
+            PotentialFunction(gamma=self.config.pbrs_gamma)
+            if self.config.use_pbrs
+            else None
+        )
 
         # Curiosity
-        self.curiosity = CuriosityReward(beta=self.config.curiosity_beta) \
-            if self.config.use_curiosity else None
+        self.curiosity = (
+            CuriosityReward(beta=self.config.curiosity_beta)
+            if self.config.use_curiosity
+            else None
+        )
 
         # Normalizer
-        self.normalizer = RewardNormalizer(clip_range=self.config.clip_range) \
-            if self.config.normalize else None
+        self.normalizer = (
+            RewardNormalizer(clip_range=self.config.clip_range)
+            if self.config.normalize
+            else None
+        )
 
         # Scheduler
         self.scheduler = RewardWeightScheduler(
@@ -971,8 +1090,9 @@ class SC2RewardDesigner:
         bar_width = 40
 
         # Sort by absolute contribution
-        sorted_items = sorted(contributions.items(), key=lambda x: abs(x[1]),
-                              reverse=True)
+        sorted_items = sorted(
+            contributions.items(), key=lambda x: abs(x[1]), reverse=True
+        )
         for name, val in sorted_items:
             norm = val / max_abs
             bar_len = int(abs(norm) * bar_width)
@@ -991,7 +1111,9 @@ class SC2RewardDesigner:
 
         # Shaping weight
         if self.shaping_weight_history:
-            lines.append(f"  Shaping weight:      {self.shaping_weight_history[-1]:.4f}")
+            lines.append(
+                f"  Shaping weight:      {self.shaping_weight_history[-1]:.4f}"
+            )
 
         lines.append("=" * 70)
         return "\n".join(lines)
@@ -1014,8 +1136,9 @@ class SC2RewardDesigner:
         for i, r in enumerate(recent):
             norm = (r - r_min) / r_range
             bar_len = int(norm * chart_width)
-            lines.append(f"  {i:3d}|{'#' * bar_len}{' ' * (chart_width - bar_len)}| "
-                         f"{r:+.3f}")
+            lines.append(
+                f"  {i:3d}|{'#' * bar_len}{' ' * (chart_width - bar_len)}| " f"{r:+.3f}"
+            )
 
         return "\n".join(lines)
 
@@ -1024,10 +1147,14 @@ class SC2RewardDesigner:
         return {
             "config": self.config.to_dict(),
             "steps": self.steps,
-            "total_reward_mean": _np_mean(self.total_reward_history)
-            if self.total_reward_history else 0.0,
-            "total_reward_std": _np_std(self.total_reward_history)
-            if self.total_reward_history else 0.0,
+            "total_reward_mean": (
+                _np_mean(self.total_reward_history)
+                if self.total_reward_history
+                else 0.0
+            ),
+            "total_reward_std": (
+                _np_std(self.total_reward_history) if self.total_reward_history else 0.0
+            ),
             "shaping_weight": self.scheduler.get_weight(),
             "normalizer": self.normalizer.stats() if self.normalizer else None,
             "curiosity": self.curiosity.stats() if self.curiosity else None,
@@ -1039,9 +1166,11 @@ class SC2RewardDesigner:
 # A/B Testing Framework
 # ─────────────────────────────────────────────
 
+
 @dataclass
 class ABTestResult:
     """Results from one A/B test trial."""
+
     config_name: str
     episode_rewards: List[float] = field(default_factory=list)
     win_rate: float = 0.0
@@ -1059,14 +1188,16 @@ class RewardABTester:
     reports comparative statistics.
     """
 
-    def __init__(self, configs: Optional[Dict[str, RewardConfig]] = None,
-                 seed: Optional[int] = None):
+    def __init__(
+        self,
+        configs: Optional[Dict[str, RewardConfig]] = None,
+        seed: Optional[int] = None,
+    ):
         self.configs = configs or REWARD_PRESETS
         self.results: Dict[str, ABTestResult] = {}
         self.seed = seed
 
-    def _simulate_game_step(self, state: SC2GameState,
-                            step: int) -> SC2GameState:
+    def _simulate_game_step(self, state: SC2GameState, step: int) -> SC2GameState:
         """Simulate one game step with randomized events."""
         new = SC2GameState(
             frame=state.frame + 16,
@@ -1076,43 +1207,41 @@ class RewardABTester:
             supply_max=state.supply_max + (8 if random.random() < 0.05 else 0),
             workers=state.workers + (1 if random.random() < 0.1 else 0),
             army_supply=state.army_supply + (1 if random.random() < 0.12 else 0),
-            army_value=max(0, state.army_value +
-                          random.uniform(-20, 50)),
+            army_value=max(0, state.army_value + random.uniform(-20, 50)),
             bases=state.bases + (1 if random.random() < 0.02 else 0),
-            tech_level=min(1.0, state.tech_level +
-                           (0.1 if random.random() < 0.03 else 0)),
+            tech_level=min(
+                1.0, state.tech_level + (0.1 if random.random() < 0.03 else 0)
+            ),
             damage_dealt=state.damage_dealt + random.uniform(0, 30),
             damage_taken=state.damage_taken + random.uniform(0, 20),
             units_produced=state.units_produced + (1 if random.random() < 0.15 else 0),
             units_lost=state.units_lost + (1 if random.random() < 0.08 else 0),
             units_killed=state.units_killed + (1 if random.random() < 0.1 else 0),
             resources_gathered=state.resources_gathered + state.workers * 0.8,
-            map_control=_np_clip(state.map_control +
-                                 random.gauss(0, 0.02), 0, 1),
-            scouting_coverage=min(1.0, state.scouting_coverage +
-                                  random.uniform(0, 0.01)),
+            map_control=_np_clip(state.map_control + random.gauss(0, 0.02), 0, 1),
+            scouting_coverage=min(
+                1.0, state.scouting_coverage + random.uniform(0, 0.01)
+            ),
             apm=max(0, state.apm + random.gauss(0, 10)),
-            upgrades_completed=state.upgrades_completed +
-                               (1 if random.random() < 0.02 else 0),
-            enemy_army_value=max(0, state.enemy_army_value +
-                                 random.uniform(-10, 40)),
+            upgrades_completed=state.upgrades_completed
+            + (1 if random.random() < 0.02 else 0),
+            enemy_army_value=max(0, state.enemy_army_value + random.uniform(-10, 40)),
             enemy_bases=state.enemy_bases + (1 if random.random() < 0.01 else 0),
             enemy_workers=state.enemy_workers + (1 if random.random() < 0.05 else 0),
             income_rate=state.workers * 50.0 + random.gauss(0, 50),
             idle_workers=max(0, int(random.gauss(1, 2))),
-            production_facilities=state.production_facilities +
-                                  (1 if random.random() < 0.03 else 0),
-            creep_spread=min(1.0, state.creep_spread +
-                             random.uniform(0, 0.005)),
-            queen_energy=_np_clip(state.queen_energy +
-                                  random.gauss(2, 5), 0, 200),
+            production_facilities=state.production_facilities
+            + (1 if random.random() < 0.03 else 0),
+            creep_spread=min(1.0, state.creep_spread + random.uniform(0, 0.005)),
+            queen_energy=_np_clip(state.queen_energy + random.gauss(2, 5), 0, 200),
         )
         new.minerals = max(0, new.minerals)
         new.gas = max(0, new.gas)
         return new
 
-    def run_test(self, episodes: int = 50, steps_per_episode: int = 200,
-                 verbose: bool = True) -> Dict[str, ABTestResult]:
+    def run_test(
+        self, episodes: int = 50, steps_per_episode: int = 200, verbose: bool = True
+    ) -> Dict[str, ABTestResult]:
         """
         Run A/B test across all configurations.
 
@@ -1151,8 +1280,10 @@ class RewardABTester:
 
                     game_result = None
                     if step == steps_per_episode - 1:
-                        won = state.army_value > state.enemy_army_value and \
-                              state.bases >= state.enemy_bases
+                        won = (
+                            state.army_value > state.enemy_army_value
+                            and state.bases >= state.enemy_bases
+                        )
                         game_result = 1.0 if won else -1.0
                         if won:
                             wins += 1
@@ -1172,8 +1303,10 @@ class RewardABTester:
 
             if verbose:
                 print(f"\n  Config: {config_name}")
-                print(f"    Avg Reward: {result.avg_reward:+.2f} "
-                      f"(std: {result.reward_std:.2f})")
+                print(
+                    f"    Avg Reward: {result.avg_reward:+.2f} "
+                    f"(std: {result.reward_std:.2f})"
+                )
                 print(f"    Win Rate: {result.win_rate:.1%}")
                 print(f"    Shaping Weight: {result.final_shaping_weight:.3f}")
 
@@ -1185,12 +1318,15 @@ class RewardABTester:
         lines.append("=" * 70)
         lines.append("  A/B Test Comparison Report")
         lines.append("=" * 70)
-        lines.append(f"  {'Config':<20s} {'Avg Reward':>12s} {'Std':>8s} "
-                     f"{'Win Rate':>10s} {'Shaping W':>10s}")
+        lines.append(
+            f"  {'Config':<20s} {'Avg Reward':>12s} {'Std':>8s} "
+            f"{'Win Rate':>10s} {'Shaping W':>10s}"
+        )
         lines.append("  " + "-" * 62)
 
-        sorted_results = sorted(self.results.values(),
-                                key=lambda r: r.avg_reward, reverse=True)
+        sorted_results = sorted(
+            self.results.values(), key=lambda r: r.avg_reward, reverse=True
+        )
         best = sorted_results[0] if sorted_results else None
 
         for r in sorted_results:
@@ -1202,19 +1338,21 @@ class RewardABTester:
             )
 
         if best:
-            lines.append(f"\n  Best config: {best.config_name} "
-                         f"(avg reward: {best.avg_reward:+.2f}, "
-                         f"win rate: {best.win_rate:.1%})")
+            lines.append(
+                f"\n  Best config: {best.config_name} "
+                f"(avg reward: {best.avg_reward:+.2f}, "
+                f"win rate: {best.win_rate:.1%})"
+            )
 
         # Effect size (Cohen's d) between best and worst
         if len(sorted_results) >= 2:
             worst = sorted_results[-1]
-            pooled_std = math.sqrt(
-                (best.reward_std ** 2 + worst.reward_std ** 2) / 2
-            )
+            pooled_std = math.sqrt((best.reward_std**2 + worst.reward_std**2) / 2)
             if pooled_std > 0:
                 cohens_d = (best.avg_reward - worst.avg_reward) / pooled_std
-                lines.append(f"  Effect size (best vs worst): Cohen's d = {cohens_d:.2f}")
+                lines.append(
+                    f"  Effect size (best vs worst): Cohen's d = {cohens_d:.2f}"
+                )
 
         lines.append("=" * 70)
         return "\n".join(lines)
@@ -1223,6 +1361,7 @@ class RewardABTester:
 # ─────────────────────────────────────────────
 # CLI Demo
 # ─────────────────────────────────────────────
+
 
 def demo_reward_computation():
     """Demo: compute rewards with all components."""
@@ -1250,7 +1389,9 @@ def demo_reward_computation():
             units_killed=prev.units_killed + (1 if random.random() < 0.08 else 0),
             resources_gathered=prev.resources_gathered + prev.workers * 0.5,
             map_control=min(1.0, prev.map_control + random.uniform(0, 0.02)),
-            scouting_coverage=min(1.0, prev.scouting_coverage + random.uniform(0, 0.01)),
+            scouting_coverage=min(
+                1.0, prev.scouting_coverage + random.uniform(0, 0.01)
+            ),
             apm=max(0, 120 + random.gauss(0, 20)),
             income_rate=prev.workers * 50.0,
             idle_workers=max(0, int(random.gauss(0.5, 1))),
@@ -1265,11 +1406,13 @@ def demo_reward_computation():
         result = designer.compute_reward(prev, curr, game_result)
 
         if (i + 1) % 10 == 0 or i == 29:
-            print(f"  Step {i+1:3d}: total={result['total']:+.4f}, "
-                  f"shaped={result['shaped']:+.4f}, "
-                  f"sparse={result['sparse']:+.4f}, "
-                  f"pbrs={result['pbrs']:+.4f}, "
-                  f"curiosity={result['curiosity']:.4f}")
+            print(
+                f"  Step {i+1:3d}: total={result['total']:+.4f}, "
+                f"shaped={result['shaped']:+.4f}, "
+                f"sparse={result['sparse']:+.4f}, "
+                f"pbrs={result['pbrs']:+.4f}, "
+                f"curiosity={result['curiosity']:.4f}"
+            )
         prev = curr
 
     print("\n" + designer.visualize_contributions(last_n=30))
@@ -1331,9 +1474,11 @@ def demo_weight_scheduler():
             weights.append(sched.step())
 
         print(f"  Schedule: {stype}")
-        print(f"    Start: {weights[0]:.3f}, "
-              f"Mid: {weights[49]:.3f}, "
-              f"End: {weights[-1]:.3f}")
+        print(
+            f"    Start: {weights[0]:.3f}, "
+            f"Mid: {weights[49]:.3f}, "
+            f"End: {weights[-1]:.3f}"
+        )
         # Mini chart
         chart = "    "
         for i in range(0, 100, 5):
@@ -1353,10 +1498,14 @@ def demo_normalizer():
     for v in raw_values:
         normalized.append(norm.normalize(v))
 
-    print(f"  Raw:        mean={_np_mean(raw_values):.2f}, "
-          f"std={_np_std(raw_values):.2f}")
-    print(f"  Normalized: mean={_np_mean(normalized):.2f}, "
-          f"std={_np_std(normalized):.2f}")
+    print(
+        f"  Raw:        mean={_np_mean(raw_values):.2f}, "
+        f"std={_np_std(raw_values):.2f}"
+    )
+    print(
+        f"  Normalized: mean={_np_mean(normalized):.2f}, "
+        f"std={_np_std(normalized):.2f}"
+    )
     print(f"  Normalizer stats: {norm.stats()}")
 
 
@@ -1415,23 +1564,36 @@ def demo_custom_config():
 
     print(f"  Config: {config.name}")
     print(f"  Avg reward: {_np_mean(rewards):+.4f}")
-    print(f"  Components enabled: "
-          f"{[n for n, c in designer.components.items() if c.enabled]}")
-    print(f"\n  Summary: {json.dumps(designer.summary(), indent=2, default=str)[:500]}...")
+    print(
+        f"  Components enabled: "
+        f"{[n for n, c in designer.components.items() if c.enabled]}"
+    )
+    print(
+        f"\n  Summary: {json.dumps(designer.summary(), indent=2, default=str)[:500]}..."
+    )
 
 
 def main():
     """Main CLI entry point."""
     import argparse
+
     parser = argparse.ArgumentParser(
         description="Phase 613: SC2 Reward Shaping Designer"
     )
     parser.add_argument(
         "--demo",
-        choices=["reward", "pbrs", "curiosity", "scheduler",
-                 "normalizer", "ab", "custom", "all"],
+        choices=[
+            "reward",
+            "pbrs",
+            "curiosity",
+            "scheduler",
+            "normalizer",
+            "ab",
+            "custom",
+            "all",
+        ],
         default="all",
-        help="Demo to run"
+        help="Demo to run",
     )
     parser.add_argument("--seed", type=int, default=42, help="Random seed")
     args = parser.parse_args()

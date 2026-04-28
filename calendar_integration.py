@@ -4,10 +4,11 @@
     GOOGLE_APPLICATION_CREDENTIALS - 서비스 계정 JSON 경로
     또는 credentials.json + token.json (OAuth2)
 """
+
 import asyncio
 import json
-import os
 import logging
+import os
 from datetime import datetime, timedelta, timezone
 
 logger = logging.getLogger("jarvis.calendar")
@@ -17,13 +18,18 @@ KST = timezone(timedelta(hours=9))
 # Google API 가용 여부
 _google_available = False
 try:
-    from googleapiclient.discovery import build
     from google.oauth2 import service_account
+    from googleapiclient.discovery import build
+
     _google_available = True
 except ImportError:
-    logger.warning("google-api-python-client 미설치. pip install google-api-python-client google-auth")
+    logger.warning(
+        "google-api-python-client 미설치. pip install google-api-python-client google-auth"
+    )
 
 _SCOPES = ["https://www.googleapis.com/auth/calendar"]
+
+
 class CalendarIntegration:
     def __init__(self):
         self._service = None
@@ -37,7 +43,9 @@ class CalendarIntegration:
 
         creds_path = os.environ.get("GOOGLE_APPLICATION_CREDENTIALS", "")
         if creds_path and os.path.exists(creds_path):
-            creds = service_account.Credentials.from_service_account_file(creds_path, scopes=_SCOPES)
+            creds = service_account.Credentials.from_service_account_file(
+                creds_path, scopes=_SCOPES
+            )
             self._service = build("calendar", "v3", credentials=creds)
             return self._service
 
@@ -45,8 +53,8 @@ class CalendarIntegration:
         token_path = os.path.join(os.path.dirname(__file__), "token.json")
         if os.path.exists(token_path):
             try:
-                from google.oauth2.credentials import Credentials
                 from google.auth.transport.requests import Request as GRequest
+                from google.oauth2.credentials import Credentials
 
                 creds = Credentials.from_authorized_user_file(token_path, _SCOPES)
                 if creds and creds.expired and creds.refresh_token:
@@ -56,7 +64,9 @@ class CalendarIntegration:
             except Exception as e:
                 logger.error(f"OAuth2 인증 실패: {e}")
 
-        logger.warning("Google Calendar 인증 정보 없음. GOOGLE_APPLICATION_CREDENTIALS 환경변수를 설정하세요.")
+        logger.warning(
+            "Google Calendar 인증 정보 없음. GOOGLE_APPLICATION_CREDENTIALS 환경변수를 설정하세요."
+        )
         return None
 
     async def get_today_events(self) -> str:
@@ -67,20 +77,27 @@ class CalendarIntegration:
 
         try:
             now = datetime.now(KST)
-            start_of_day = now.replace(hour=0, minute=0, second=0, microsecond=0).isoformat()
-            end_of_day = now.replace(hour=23, minute=59, second=59, microsecond=0).isoformat()
+            start_of_day = now.replace(
+                hour=0, minute=0, second=0, microsecond=0
+            ).isoformat()
+            end_of_day = now.replace(
+                hour=23, minute=59, second=59, microsecond=0
+            ).isoformat()
 
             events_result = None
             for attempt in range(3):
                 try:
                     events_result = await asyncio.get_running_loop().run_in_executor(
-                        None, lambda: svc.events().list(
+                        None,
+                        lambda: svc.events()
+                        .list(
                             calendarId="primary",
                             timeMin=start_of_day,
                             timeMax=end_of_day,
                             singleEvents=True,
                             orderBy="startTime",
-                        ).execute()
+                        )
+                        .execute(),
                     )
                     break
                 except Exception as e:
@@ -125,14 +142,17 @@ class CalendarIntegration:
             for attempt in range(3):
                 try:
                     events_result = await asyncio.get_running_loop().run_in_executor(
-                        None, lambda: svc.events().list(
+                        None,
+                        lambda: svc.events()
+                        .list(
                             calendarId="primary",
                             timeMin=time_min,
                             timeMax=time_max,
                             singleEvents=True,
                             orderBy="startTime",
                             maxResults=20,
-                        ).execute()
+                        )
+                        .execute(),
                     )
                     break
                 except Exception as e:
@@ -163,7 +183,9 @@ class CalendarIntegration:
         except Exception as e:
             return f"일정 조회 실패: {e}"
 
-    async def create_event(self, title: str, start_str: str, end_str: str = "", description: str = "") -> str:
+    async def create_event(
+        self, title: str, start_str: str, end_str: str = "", description: str = ""
+    ) -> str:
         """일정을 생성합니다."""
         svc = self._get_service()
         if not svc:
@@ -186,15 +208,22 @@ class CalendarIntegration:
                     "end": {"date": end_date},
                 }
             else:
-                start_dt = datetime.strptime(start_str.strip(), "%Y-%m-%d %H:%M").replace(tzinfo=KST)
+                start_dt = datetime.strptime(
+                    start_str.strip(), "%Y-%m-%d %H:%M"
+                ).replace(tzinfo=KST)
                 if end_str:
-                    end_dt = datetime.strptime(end_str.strip(), "%Y-%m-%d %H:%M").replace(tzinfo=KST)
+                    end_dt = datetime.strptime(
+                        end_str.strip(), "%Y-%m-%d %H:%M"
+                    ).replace(tzinfo=KST)
                 else:
                     end_dt = start_dt + timedelta(hours=1)
 
                 event = {
                     "summary": title,
-                    "start": {"dateTime": start_dt.isoformat(), "timeZone": "Asia/Seoul"},
+                    "start": {
+                        "dateTime": start_dt.isoformat(),
+                        "timeZone": "Asia/Seoul",
+                    },
                     "end": {"dateTime": end_dt.isoformat(), "timeZone": "Asia/Seoul"},
                 }
 
@@ -205,7 +234,10 @@ class CalendarIntegration:
             for attempt in range(3):
                 try:
                     created = await asyncio.get_running_loop().run_in_executor(
-                        None, lambda: svc.events().insert(calendarId="primary", body=event).execute()
+                        None,
+                        lambda: svc.events()
+                        .insert(calendarId="primary", body=event)
+                        .execute(),
                     )
                     break
                 except Exception as e:
@@ -228,9 +260,11 @@ class CalendarIntegration:
             return "Google Calendar가 설정되지 않았습니다."
         try:
             await asyncio.get_running_loop().run_in_executor(
-                None, lambda: svc.events().delete(calendarId="primary", eventId=event_id).execute()
+                None,
+                lambda: svc.events()
+                .delete(calendarId="primary", eventId=event_id)
+                .execute(),
             )
             return f"✅ 일정 삭제 완료 (ID: {event_id})"
         except Exception as e:
             return f"일정 삭제 실패: {e}"
-

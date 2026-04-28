@@ -37,22 +37,24 @@ logger = logging.getLogger("jarvis.orchestrator")
 @dataclass
 class PipelineStep:
     """파이프라인 단일 스텝 정의"""
-    name: str                       # 스텝 이름 (로깅용)
-    agent_fn: Callable              # 실행 함수 (sync 또는 async)
-    required: bool = False          # True: 실패 시 파이프라인 중단
-    timeout: float = 10.0           # 타임아웃 (초)
-    retry: int = 0                  # 재시도 횟수 (0 = 재시도 없음)
+
+    name: str  # 스텝 이름 (로깅용)
+    agent_fn: Callable  # 실행 함수 (sync 또는 async)
+    required: bool = False  # True: 실패 시 파이프라인 중단
+    timeout: float = 10.0  # 타임아웃 (초)
+    retry: int = 0  # 재시도 횟수 (0 = 재시도 없음)
 
 
 @dataclass
 class StepResult:
     """스텝 실행 결과"""
+
     step_name: str
     success: bool
     output: str
     elapsed_ms: float
     error: str = ""
-    round_label: str = ""           # "[weather - Round 0]" 형태
+    round_label: str = ""  # "[weather - Round 0]" 형태
 
 
 class WorkflowOrchestrator:
@@ -94,7 +96,9 @@ class WorkflowOrchestrator:
         self._execution_count += 1
         run_id = self._execution_count
 
-        logger.info(f"[ORCHESTRATOR] Pipeline start (run #{run_id}, {len(pipeline)} steps)")
+        logger.info(
+            f"[ORCHESTRATOR] Pipeline start (run #{run_id}, {len(pipeline)} steps)"
+        )
 
         for i, step in enumerate(pipeline):
             result = await self._execute_step(step, context, round_num=0)
@@ -148,7 +152,9 @@ class WorkflowOrchestrator:
         self._execution_count += 1
         run_id = self._execution_count
 
-        logger.info(f"[ORCHESTRATOR] Parallel start (run #{run_id}, {len(steps)} steps)")
+        logger.info(
+            f"[ORCHESTRATOR] Parallel start (run #{run_id}, {len(steps)} steps)"
+        )
 
         start_all = time.perf_counter()
 
@@ -160,14 +166,16 @@ class WorkflowOrchestrator:
         results = []
         for i, r in enumerate(raw_results):
             if isinstance(r, BaseException):
-                results.append(StepResult(
-                    step_name=steps[i].name,
-                    success=False,
-                    output="",
-                    elapsed_ms=0.0,
-                    error=f"Unhandled: {type(r).__name__}: {r}",
-                    round_label=f"[{steps[i].name.upper()} - EXCEPTION]",
-                ))
+                results.append(
+                    StepResult(
+                        step_name=steps[i].name,
+                        success=False,
+                        output="",
+                        elapsed_ms=0.0,
+                        error=f"Unhandled: {type(r).__name__}: {r}",
+                        round_label=f"[{steps[i].name.upper()} - EXCEPTION]",
+                    )
+                )
             else:
                 results.append(r)
 
@@ -183,8 +191,11 @@ class WorkflowOrchestrator:
         if self.tool_registry:
             try:
                 self.tool_registry.record_call(
-                    "orchestrator_parallel", "", succeeded == len(results),
-                    total_ms, "" if succeeded == len(results) else "partial_failure",
+                    "orchestrator_parallel",
+                    "",
+                    succeeded == len(results),
+                    total_ms,
+                    "" if succeeded == len(results) else "partial_failure",
                 )
             except Exception:
                 pass
@@ -192,7 +203,10 @@ class WorkflowOrchestrator:
         return list(results)
 
     async def _execute_step(
-        self, step: PipelineStep, context: Dict, round_num: int = 0,
+        self,
+        step: PipelineStep,
+        context: Dict,
+        round_num: int = 0,
     ) -> StepResult:
         """단일 스텝 실행 (타임아웃 + 재시도)"""
         attempts = 1 + step.retry
@@ -216,7 +230,11 @@ class WorkflowOrchestrator:
                 if self.tool_registry:
                     try:
                         self.tool_registry.record_call(
-                            f"orchestrator.{step.name}", "", True, elapsed_ms, "",
+                            f"orchestrator.{step.name}",
+                            "",
+                            True,
+                            elapsed_ms,
+                            "",
                         )
                     except Exception:
                         pass
@@ -252,7 +270,11 @@ class WorkflowOrchestrator:
         if self.tool_registry:
             try:
                 self.tool_registry.record_call(
-                    f"orchestrator.{step.name}", "", False, elapsed_ms, last_error,
+                    f"orchestrator.{step.name}",
+                    "",
+                    False,
+                    elapsed_ms,
+                    last_error,
                 )
             except Exception:
                 pass
@@ -274,7 +296,8 @@ class WorkflowOrchestrator:
             # sync 함수를 executor에서 실행
             loop = asyncio.get_event_loop()
             return await asyncio.wait_for(
-                loop.run_in_executor(None, fn), timeout=timeout,
+                loop.run_in_executor(None, fn),
+                timeout=timeout,
             )
 
     def format_results(
@@ -323,5 +346,7 @@ class WorkflowOrchestrator:
             )
 
         succeeded = sum(1 for r in results if r.success)
-        lines.append(f"  Total: {succeeded}/{len(results)} succeeded ({total_ms:.0f}ms)")
+        lines.append(
+            f"  Total: {succeeded}/{len(results)} succeeded ({total_ms:.0f}ms)"
+        )
         return "\n".join(lines)

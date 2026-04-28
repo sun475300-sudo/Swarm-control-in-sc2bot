@@ -27,7 +27,15 @@ import time
 from dataclasses import dataclass, field
 from enum import Enum, auto
 from typing import (
-    Any, Callable, Dict, Generator, List, Optional, Sequence, Tuple, Union,
+    Any,
+    Callable,
+    Dict,
+    Generator,
+    List,
+    Optional,
+    Sequence,
+    Tuple,
+    Union,
 )
 
 import numpy as np
@@ -63,10 +71,10 @@ class Matchup(Enum):
 
 
 class GamePhase(Enum):
-    OPENING = auto()    # 0--3 min
-    EARLY = auto()      # 3--6 min
-    MID = auto()        # 6--12 min
-    LATE = auto()       # 12+ min
+    OPENING = auto()  # 0--3 min
+    EARLY = auto()  # 3--6 min
+    MID = auto()  # 6--12 min
+    LATE = auto()  # 12+ min
 
 
 class CoachingTopic(Enum):
@@ -397,8 +405,10 @@ class CoachingSession:
         game_time: Optional[float] = None,
     ) -> None:
         msg = ChatMessage(
-            role="user", content=content,
-            topic=topic, game_time=game_time,
+            role="user",
+            content=content,
+            topic=topic,
+            game_time=game_time,
         )
         self.messages.append(msg)
         self._trim()
@@ -410,10 +420,7 @@ class CoachingSession:
 
     def to_api_messages(self) -> List[Dict[str, str]]:
         """Convert history to Claude API message format."""
-        return [
-            {"role": m.role, "content": m.content}
-            for m in self.messages
-        ]
+        return [{"role": m.role, "content": m.content} for m in self.messages]
 
     def get_context_summary(self) -> str:
         """Summarise conversation so far."""
@@ -433,7 +440,7 @@ class CoachingSession:
 
     def _trim(self) -> None:
         if len(self.messages) > self.max_history:
-            self.messages = self.messages[-self.max_history:]
+            self.messages = self.messages[-self.max_history :]
 
 
 # ---------------------------------------------------------------------------
@@ -559,7 +566,8 @@ class ClaudeCoach:
         else:
             logger.info(
                 "Running in mock mode (anthropic=%s, key=%s)",
-                _ANTHROPIC_AVAILABLE, bool(resolved_key),
+                _ANTHROPIC_AVAILABLE,
+                bool(resolved_key),
             )
 
     @property
@@ -580,11 +588,15 @@ class ClaudeCoach:
         Returns Claude's response or a mock response if API unavailable.
         """
         prompt = self.prompt_builder.build_prompt(
-            state, topic=topic, custom_question=custom_question,
+            state,
+            topic=topic,
+            custom_question=custom_question,
         )
         self.session.matchup = state.matchup
         self.session.add_user_message(
-            prompt, topic=topic, game_time=state.game_time_seconds,
+            prompt,
+            topic=topic,
+            game_time=state.game_time_seconds,
         )
 
         response = self._call_api(prompt, state)
@@ -599,10 +611,13 @@ class ClaudeCoach:
     ) -> str:
         """Get urgent advice about an incoming timing attack."""
         prompt = self.prompt_builder.build_timing_alert(
-            state, expected_attack_time, attack_type,
+            state,
+            expected_attack_time,
+            attack_type,
         )
         self.session.add_user_message(
-            prompt, topic=CoachingTopic.TIMING_ATTACK_ALERT,
+            prompt,
+            topic=CoachingTopic.TIMING_ATTACK_ALERT,
             game_time=state.game_time_seconds,
         )
         response = self._call_api(prompt, state)
@@ -629,7 +644,9 @@ class ClaudeCoach:
     def quick_check(self, state: GameState) -> str:
         """Fast economy/army check with compact prompt."""
         prompt = self.prompt_builder.build_prompt(
-            state, topic=CoachingTopic.ECONOMY_CHECK, compact=True,
+            state,
+            topic=CoachingTopic.ECONOMY_CHECK,
+            compact=True,
         )
         return self._call_api(prompt, state)
 
@@ -700,9 +717,7 @@ class ClaudeCoach:
         return _GENERIC_MOCK
 
     @staticmethod
-    def _detect_topic_from_text(
-        text: str, state: GameState
-    ) -> str:
+    def _detect_topic_from_text(text: str, state: GameState) -> str:
         """Heuristic topic detection from prompt text."""
         low = text.lower()
         if "timing" in low or "alert" in low or "attack" in low:
@@ -777,7 +792,9 @@ def demo() -> None:
 
     # -- Scenario 1: ZvT Opening ------------------------------------------
     state1 = _make_demo_state(
-        Matchup.ZvT, 150.0, 30,
+        Matchup.ZvT,
+        150.0,
+        30,
         army={"Zergling": 6, "Queen": 2},
         enemy={"Marine": 4, "Reaper": 1},
     )
@@ -791,7 +808,9 @@ def demo() -> None:
 
     # -- Scenario 2: ZvP Mid-game -----------------------------------------
     state2 = _make_demo_state(
-        Matchup.ZvP, 480.0, 90,
+        Matchup.ZvP,
+        480.0,
+        90,
         army={"Roach": 12, "Ravager": 4, "Hydralisk": 8, "Queen": 4},
         enemy={"Stalker": 6, "Immortal": 3, "Sentry": 2},
     )
@@ -802,7 +821,9 @@ def demo() -> None:
 
     # -- Scenario 3: ZvT Timing Alert -------------------------------------
     state3 = _make_demo_state(
-        Matchup.ZvT, 360.0, 70,
+        Matchup.ZvT,
+        360.0,
+        70,
         army={"Zergling": 20, "Baneling": 6, "Hydralisk": 4},
         enemy={"Marine": 20, "Medivac": 2, "Siege Tank": 2},
     )
@@ -813,7 +834,9 @@ def demo() -> None:
 
     # -- Scenario 4: ZvT Late-game Transition -----------------------------
     state4 = _make_demo_state(
-        Matchup.ZvT, 900.0, 160,
+        Matchup.ZvT,
+        900.0,
+        160,
         army={"Zergling": 40, "Baneling": 12, "Hydralisk": 20, "Viper": 3},
         enemy={"Marine": 30, "Medivac": 4, "Siege Tank": 6, "Thor": 2},
     )
@@ -830,7 +853,9 @@ def demo() -> None:
 
     # -- Scenario 6: ZvZ Opening ------------------------------------------
     state6 = _make_demo_state(
-        Matchup.ZvZ, 120.0, 22,
+        Matchup.ZvZ,
+        120.0,
+        22,
         army={"Zergling": 4, "Queen": 1},
         enemy={"Zergling": 6},
     )
@@ -861,7 +886,9 @@ def demo() -> None:
     sid = coach.new_session(Matchup.ZvP)
     print(f"     New session ID: {sid}")
     state_new = _make_demo_state(
-        Matchup.ZvP, 600.0, 110,
+        Matchup.ZvP,
+        600.0,
+        110,
         army={"Roach": 15, "Hydralisk": 12, "Lurker": 4},
     )
     advice_new = coach.get_advice(state_new, CoachingTopic.ARMY_COMPOSITION)

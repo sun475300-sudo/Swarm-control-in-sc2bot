@@ -2,32 +2,33 @@
 Phase 459: Databricks - SC2 MLflow + Delta + Spark Integration
 Databricks Connect for remote cluster, AutoML, Feature Store.
 """
-import os
 
 import logging
+import os
+
 import mlflow
 import mlflow.sklearn
 import mlflow.spark
-from mlflow.tracking import MlflowClient
-from databricks.sdk import WorkspaceClient
-from databricks.feature_engineering import FeatureEngineeringClient, FeatureLookup
-from databricks.connect import DatabricksSession
-from pyspark.sql import SparkSession
-from pyspark.sql.functions import col, when, avg, count, stddev
-import pandas as pd
 import numpy as np
+import pandas as pd
+from databricks.connect import DatabricksSession
+from databricks.feature_engineering import FeatureEngineeringClient, FeatureLookup
+from databricks.sdk import WorkspaceClient
+from mlflow.tracking import MlflowClient
+from pyspark.sql import SparkSession
+from pyspark.sql.functions import avg, col, count, stddev, when
 from sklearn.ensemble import GradientBoostingClassifier
-from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score, roc_auc_score
+from sklearn.model_selection import train_test_split
 
 logger = logging.getLogger(__name__)
 
-DATABRICKS_HOST  = "https://adb-xxxx.azuredatabricks.net"
+DATABRICKS_HOST = "https://adb-xxxx.azuredatabricks.net"
 DATABRICKS_TOKEN = os.environ.get("DATABRICKS_TOKEN", "")
-MLFLOW_URI       = f"{DATABRICKS_HOST}/api/2.0/mlflow"
-EXPERIMENT_NAME  = "/Users/sc2bot/win_rate_prediction"
-FEATURE_TABLE    = "sc2_features.game_features"
-MODEL_NAME       = "sc2_win_predictor"
+MLFLOW_URI = f"{DATABRICKS_HOST}/api/2.0/mlflow"
+EXPERIMENT_NAME = "/Users/sc2bot/win_rate_prediction"
+FEATURE_TABLE = "sc2_features.game_features"
+MODEL_NAME = "sc2_win_predictor"
 
 
 def get_spark() -> SparkSession:
@@ -72,12 +73,21 @@ def write_feature_store(fe_client: FeatureEngineeringClient, spark: SparkSession
     logger.info(f"Feature table {FEATURE_TABLE} written.")
 
 
-def read_feature_store(fe_client: FeatureEngineeringClient, game_ids: list) -> pd.DataFrame:
+def read_feature_store(
+    fe_client: FeatureEngineeringClient, game_ids: list
+) -> pd.DataFrame:
     """Read features from Feature Store for inference."""
     lookup = FeatureLookup(
         table_name=FEATURE_TABLE,
         lookup_key="game_id",
-        feature_names=["apm", "mmr", "duration_sec", "is_zerg", "is_terran", "is_protoss"],
+        feature_names=[
+            "apm",
+            "mmr",
+            "duration_sec",
+            "is_zerg",
+            "is_terran",
+            "is_protoss",
+        ],
     )
     inference_df = pd.DataFrame({"game_id": game_ids})
     training_set = fe_client.create_training_set(
@@ -112,7 +122,9 @@ def train_and_log_model(spark: SparkSession):
     features_df = prepare_features(spark).toPandas()
     X = features_df[["apm", "mmr", "is_zerg", "is_terran", "is_protoss"]]
     y = features_df["label"]
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+    X_train, X_test, y_train, y_test = train_test_split(
+        X, y, test_size=0.2, random_state=42
+    )
 
     with mlflow.start_run(run_name="sc2_gbm_v1") as run:
         params = {"n_estimators": 200, "max_depth": 5, "learning_rate": 0.05}
@@ -128,7 +140,9 @@ def train_and_log_model(spark: SparkSession):
 
         mlflow.log_metrics({"accuracy": acc, "roc_auc": auc})
         mlflow.sklearn.log_model(model, "model", registered_model_name=MODEL_NAME)
-        logger.info(f"Model logged: acc={acc:.4f}, auc={auc:.4f}, run_id={run.info.run_id}")
+        logger.info(
+            f"Model logged: acc={acc:.4f}, auc={auc:.4f}, run_id={run.info.run_id}"
+        )
         return run.info.run_id
 
 

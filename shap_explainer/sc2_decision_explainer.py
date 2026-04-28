@@ -43,9 +43,9 @@ except ImportError:
     )
 
 try:
-    from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
-    from sklearn.model_selection import train_test_split
+    from sklearn.ensemble import GradientBoostingClassifier, RandomForestClassifier
     from sklearn.metrics import accuracy_score, classification_report
+    from sklearn.model_selection import train_test_split
 
     SKLEARN_AVAILABLE = True
 except ImportError:
@@ -87,15 +87,15 @@ SC2_FEATURE_NAMES: List[str] = [
     "enemy_army_value_estimate",
     "base_count",
     "enemy_base_count",
-    "tech_level",             # 0=hatch, 1=lair, 2=hive
+    "tech_level",  # 0=hatch, 1=lair, 2=hive
     "upgrade_count",
-    "production_capacity",    # number of larvae / production buildings
-    "map_control_pct",        # 0-1 creep / vision coverage
+    "production_capacity",  # number of larvae / production buildings
+    "map_control_pct",  # 0-1 creep / vision coverage
     "time_seconds",
     "idle_workers",
     "pending_units",
-    "enemy_air_threat",       # 0-1 estimated
-    "enemy_ground_threat",    # 0-1 estimated
+    "enemy_air_threat",  # 0-1 estimated
+    "enemy_ground_threat",  # 0-1 estimated
 ]
 
 NUM_FEATURES = len(SC2_FEATURE_NAMES)
@@ -103,6 +103,7 @@ NUM_FEATURES = len(SC2_FEATURE_NAMES)
 
 class SC2Decision(Enum):
     """Possible bot macro decisions."""
+
     ATTACK = 0
     DEFEND = 1
     EXPAND = 2
@@ -127,6 +128,7 @@ DECISION_LABELS = [d.name.lower() for d in SC2Decision]
 @dataclass
 class FeatureExplanation:
     """Explanation for a single feature's contribution to a decision."""
+
     feature_name: str
     feature_value: float
     shap_value: float
@@ -144,6 +146,7 @@ class FeatureExplanation:
 @dataclass
 class DecisionExplanation:
     """Full explanation for a single game-state decision."""
+
     game_state: np.ndarray
     predicted_decision: SC2Decision
     predicted_proba: Dict[str, float]
@@ -155,7 +158,9 @@ class DecisionExplanation:
     def to_dict(self) -> Dict[str, Any]:
         return {
             "predicted_decision": self.predicted_decision.name,
-            "predicted_proba": {k: round(v, 4) for k, v in self.predicted_proba.items()},
+            "predicted_proba": {
+                k: round(v, 4) for k, v in self.predicted_proba.items()
+            },
             "base_value": round(self.base_value, 6),
             "model_output": round(self.model_output, 6),
             "top_features": [fe.to_dict() for fe in self.feature_explanations[:10]],
@@ -177,6 +182,7 @@ class DecisionExplanation:
 @dataclass
 class GlobalExplanation:
     """Global feature importance summary across all samples."""
+
     mean_abs_shap: Dict[str, float]
     feature_ranking: List[str]
     interaction_pairs: List[Tuple[str, str, float]]
@@ -197,6 +203,7 @@ class GlobalExplanation:
 # ---------------------------------------------------------------------------
 # SHAP value cache
 # ---------------------------------------------------------------------------
+
 
 class SHAPCache:
     """LRU cache for SHAP value computations keyed by game-state hash."""
@@ -249,11 +256,14 @@ class SHAPCache:
 # Synthetic data generator
 # ---------------------------------------------------------------------------
 
+
 class SC2DataGenerator:
     """Generate synthetic SC2 game-state data with decision labels for demos."""
 
     @staticmethod
-    def generate(n_samples: int = 5000, seed: int = 42) -> Tuple[np.ndarray, np.ndarray]:
+    def generate(
+        n_samples: int = 5000, seed: int = 42
+    ) -> Tuple[np.ndarray, np.ndarray]:
         """
         Generate (X, y) where X is game-state features and y is decision label.
         Decision logic:
@@ -290,10 +300,26 @@ class SC2DataGenerator:
             ground_threat = rng.uniform(0, 1)
 
             X[i] = [
-                minerals, gas, supply_used, supply_cap, workers,
-                army_supply, army_val_min, army_val_gas, enemy_val,
-                bases, enemy_bases, tech, upgrades, prod_cap,
-                map_ctrl, game_time, idle, pending, air_threat, ground_threat,
+                minerals,
+                gas,
+                supply_used,
+                supply_cap,
+                workers,
+                army_supply,
+                army_val_min,
+                army_val_gas,
+                enemy_val,
+                bases,
+                enemy_bases,
+                tech,
+                upgrades,
+                prod_cap,
+                map_ctrl,
+                game_time,
+                idle,
+                pending,
+                air_threat,
+                ground_threat,
             ]
 
             total_army = army_val_min + army_val_gas
@@ -312,14 +338,18 @@ class SC2DataGenerator:
             else:
                 y[i] = SC2Decision.PRODUCE.value
 
-        log.info("Generated %d synthetic game states. Class distribution: %s",
-                 n_samples, dict(zip(*np.unique(y, return_counts=True))))
+        log.info(
+            "Generated %d synthetic game states. Class distribution: %s",
+            n_samples,
+            dict(zip(*np.unique(y, return_counts=True))),
+        )
         return X, y
 
 
 # ---------------------------------------------------------------------------
 # Main class — SC2DecisionExplainer
 # ---------------------------------------------------------------------------
+
 
 class SC2DecisionExplainer:
     """
@@ -368,25 +398,35 @@ class SC2DecisionExplainer:
                 self._explainer = shap.TreeExplainer(model)
                 log.info("Initialised TreeExplainer for %s.", self.model_type)
             except Exception as exc:
-                log.warning("TreeExplainer failed (%s). Falling back to KernelExplainer.", exc)
+                log.warning(
+                    "TreeExplainer failed (%s). Falling back to KernelExplainer.", exc
+                )
                 self._init_kernel_explainer(model)
         else:
             self._init_kernel_explainer(model)
 
-    def _init_kernel_explainer(self, model: Any, background: Optional[np.ndarray] = None) -> None:
+    def _init_kernel_explainer(
+        self, model: Any, background: Optional[np.ndarray] = None
+    ) -> None:
         """Initialise KernelExplainer (model-agnostic)."""
         if not SHAP_AVAILABLE:
             return
         if background is None:
             background = self._background_data
         if background is None:
-            log.warning("No background data for KernelExplainer. Call set_background() first.")
+            log.warning(
+                "No background data for KernelExplainer. Call set_background() first."
+            )
             return
 
-        predict_fn = model.predict_proba if hasattr(model, "predict_proba") else model.predict
+        predict_fn = (
+            model.predict_proba if hasattr(model, "predict_proba") else model.predict
+        )
         bg_summary = shap.kmeans(background, min(50, len(background)))
         self._explainer = shap.KernelExplainer(predict_fn, bg_summary)
-        log.info("Initialised KernelExplainer with %d background samples.", len(background))
+        log.info(
+            "Initialised KernelExplainer with %d background samples.", len(background)
+        )
 
     def set_background(self, data: np.ndarray) -> None:
         """Set background dataset for KernelExplainer."""
@@ -422,8 +462,13 @@ class SC2DecisionExplainer:
         self._background_data = X_train
 
         if model_type == "xgboost" and XGB_AVAILABLE:
-            default_params = {"n_estimators": 200, "max_depth": 6, "learning_rate": 0.1,
-                              "use_label_encoder": False, "eval_metric": "mlogloss"}
+            default_params = {
+                "n_estimators": 200,
+                "max_depth": 6,
+                "learning_rate": 0.1,
+                "use_label_encoder": False,
+                "eval_metric": "mlogloss",
+            }
             default_params.update(model_kwargs)
             self.model = xgb.XGBClassifier(**default_params)
         elif model_type == "gradient_boosting":
@@ -484,7 +529,9 @@ class SC2DecisionExplainer:
         Returns a DecisionExplanation with per-feature SHAP values.
         """
         if not self._is_fitted:
-            raise RuntimeError("Model not fitted. Call train_model() or provide a model.")
+            raise RuntimeError(
+                "Model not fitted. Call train_model() or provide a model."
+            )
 
         game_state = np.asarray(game_state, dtype=np.float32).reshape(1, -1)
 
@@ -530,12 +577,14 @@ class SC2DecisionExplainer:
         for i, fname in enumerate(self.feature_names):
             val = float(game_state[0, i])
             shap_v = float(sv[i])
-            feature_explanations.append(FeatureExplanation(
-                feature_name=fname,
-                feature_value=val,
-                shap_value=shap_v,
-                direction="positive" if shap_v > 0 else "negative",
-            ))
+            feature_explanations.append(
+                FeatureExplanation(
+                    feature_name=fname,
+                    feature_value=val,
+                    shap_value=shap_v,
+                    direction="positive" if shap_v > 0 else "negative",
+                )
+            )
 
         # Sort by absolute SHAP value
         feature_explanations.sort(key=lambda fe: abs(fe.shap_value), reverse=True)
@@ -556,12 +605,16 @@ class SC2DecisionExplainer:
         if SHAP_AVAILABLE and self._explainer is not None:
             sv = self._explainer.shap_values(game_state)
             if isinstance(sv, list):
-                return np.array(sv).transpose(1, 2, 0)  # (n_samples, n_features, n_classes)
+                return np.array(sv).transpose(
+                    1, 2, 0
+                )  # (n_samples, n_features, n_classes)
             return np.asarray(sv)
         else:
             return self._permutation_importance(game_state)
 
-    def _permutation_importance(self, game_state: np.ndarray, n_repeats: int = 20) -> np.ndarray:
+    def _permutation_importance(
+        self, game_state: np.ndarray, n_repeats: int = 20
+    ) -> np.ndarray:
         """Fallback: estimate feature importance via output perturbation."""
         n_features = game_state.shape[1]
         importances = np.zeros(n_features, dtype=np.float64)
@@ -594,10 +647,14 @@ class SC2DecisionExplainer:
 
         # Convert to signed SHAP-like values (positive = pushes toward predicted class)
         pred_idx = int(np.argmax(base_pred)) if len(base_pred) > 1 else 0
-        signed = importances * np.sign(game_state[0] - (
-            self._background_data.mean(axis=0) if self._background_data is not None
-            else game_state[0]
-        ))
+        signed = importances * np.sign(
+            game_state[0]
+            - (
+                self._background_data.mean(axis=0)
+                if self._background_data is not None
+                else game_state[0]
+            )
+        )
 
         return signed.reshape(1, -1)
 
@@ -613,7 +670,9 @@ class SC2DecisionExplainer:
             raise RuntimeError("Model not fitted.")
 
         if len(X) > max_samples:
-            indices = np.random.RandomState(42).choice(len(X), max_samples, replace=False)
+            indices = np.random.RandomState(42).choice(
+                len(X), max_samples, replace=False
+            )
             X_sub = X[indices]
         else:
             X_sub = X
@@ -636,14 +695,17 @@ class SC2DecisionExplainer:
             # Fallback
             mean_abs = np.zeros(NUM_FEATURES)
             for i in range(len(X_sub)):
-                sv = self._permutation_importance(X_sub[i:i + 1])
+                sv = self._permutation_importance(X_sub[i : i + 1])
                 mean_abs += np.abs(sv[0])
             mean_abs /= len(X_sub)
 
         elapsed = time.time() - t0
         log.info("Global explanation computed in %.2fs.", elapsed)
 
-        mean_abs_dict = {self.feature_names[i]: float(mean_abs[i]) for i in range(len(self.feature_names))}
+        mean_abs_dict = {
+            self.feature_names[i]: float(mean_abs[i])
+            for i in range(len(self.feature_names))
+        }
         ranking = sorted(mean_abs_dict, key=mean_abs_dict.get, reverse=True)
 
         # Feature interactions (top pairs by correlation of SHAP values)
@@ -677,7 +739,9 @@ class SC2DecisionExplainer:
                     continue
                 corr = float(np.abs(np.corrcoef(sv[:, i], sv[:, j])[0, 1]))
                 if not np.isnan(corr):
-                    interactions.append((self.feature_names[i], self.feature_names[j], corr))
+                    interactions.append(
+                        (self.feature_names[i], self.feature_names[j], corr)
+                    )
 
         interactions.sort(key=lambda t: t[2], reverse=True)
         return interactions[:20]
@@ -722,11 +786,17 @@ class SC2DecisionExplainer:
         fn = [fe.feature_name for fe in explanation.feature_explanations]
 
         shap.force_plot(
-            explanation.base_value, sv, fv,
-            feature_names=fn, matplotlib=True, show=False,
+            explanation.base_value,
+            sv,
+            fv,
+            feature_names=fn,
+            matplotlib=True,
+            show=False,
         )
 
-        path = save_path or f"force_plot_{explanation.predicted_decision.name.lower()}.png"
+        path = (
+            save_path or f"force_plot_{explanation.predicted_decision.name.lower()}.png"
+        )
         plt.savefig(path, bbox_inches="tight", dpi=150)
         plt.close()
         log.info("Force plot saved to %s", path)
@@ -752,9 +822,11 @@ class SC2DecisionExplainer:
         n_plot = min(len(X), sv.shape[0])
         plt.figure(figsize=(10, 8))
         shap.summary_plot(
-            sv[:n_plot], X[:n_plot],
+            sv[:n_plot],
+            X[:n_plot],
             feature_names=self.feature_names,
-            plot_type=plot_type, show=False,
+            plot_type=plot_type,
+            show=False,
         )
 
         path = save_path or "shap_summary_plot.png"
@@ -787,7 +859,9 @@ class SC2DecisionExplainer:
         n_plot = min(len(X), sv.shape[0])
         plt.figure(figsize=(8, 6))
         shap.dependence_plot(
-            feature, sv[:n_plot], X[:n_plot],
+            feature,
+            sv[:n_plot],
+            X[:n_plot],
             feature_names=self.feature_names,
             interaction_index=interaction_feature,
             show=False,
@@ -819,7 +893,9 @@ class SC2DecisionExplainer:
         plt.figure(figsize=(8, 10))
         shap.plots.waterfall(shap_explanation, show=False)
 
-        path = save_path or f"waterfall_{explanation.predicted_decision.name.lower()}.png"
+        path = (
+            save_path or f"waterfall_{explanation.predicted_decision.name.lower()}.png"
+        )
         plt.savefig(path, bbox_inches="tight", dpi=150)
         plt.close()
         log.info("Waterfall chart saved to %s", path)
@@ -835,7 +911,9 @@ class SC2DecisionExplainer:
     ) -> Optional[str]:
         """Visualise decision boundary for two selected features."""
         if not MPL_AVAILABLE or not self._is_fitted:
-            log.warning("Decision boundary plot requires matplotlib and a fitted model.")
+            log.warning(
+                "Decision boundary plot requires matplotlib and a fitted model."
+            )
             return None
 
         idx_x = self.feature_names.index(feature_x)
@@ -858,8 +936,15 @@ class SC2DecisionExplainer:
 
         plt.figure(figsize=(10, 8))
         plt.contourf(xx, yy, Z, alpha=0.4, cmap="RdYlGn")
-        plt.scatter(X[:300, idx_x], X[:300, idx_y], c=self.model.predict(X[:300]),
-                    cmap="RdYlGn", edgecolors="k", s=20, alpha=0.6)
+        plt.scatter(
+            X[:300, idx_x],
+            X[:300, idx_y],
+            c=self.model.predict(X[:300]),
+            cmap="RdYlGn",
+            edgecolors="k",
+            s=20,
+            alpha=0.6,
+        )
         plt.xlabel(feature_x)
         plt.ylabel(feature_y)
         plt.title(f"Decision Boundary: {feature_x} vs {feature_y}")
@@ -899,14 +984,31 @@ class SC2DecisionExplainer:
         Convenience method: explain a decision from explicit game-state values.
         All SC2 feature values are passed as keyword arguments.
         """
-        state = np.array([
-            minerals, gas, supply_used, supply_cap, worker_count,
-            army_supply, army_value_minerals, army_value_gas,
-            enemy_army_value_estimate, base_count, enemy_base_count,
-            tech_level, upgrade_count, production_capacity,
-            map_control_pct, time_seconds, idle_workers, pending_units,
-            enemy_air_threat, enemy_ground_threat,
-        ], dtype=np.float32)
+        state = np.array(
+            [
+                minerals,
+                gas,
+                supply_used,
+                supply_cap,
+                worker_count,
+                army_supply,
+                army_value_minerals,
+                army_value_gas,
+                enemy_army_value_estimate,
+                base_count,
+                enemy_base_count,
+                tech_level,
+                upgrade_count,
+                production_capacity,
+                map_control_pct,
+                time_seconds,
+                idle_workers,
+                pending_units,
+                enemy_air_threat,
+                enemy_ground_threat,
+            ],
+            dtype=np.float32,
+        )
         return self.explain_decision(state)
 
     # ------------------------------------------------------------ cache ops
@@ -939,6 +1041,7 @@ class SC2DecisionExplainer:
 # NumPy-only nearest centroid model (fallback)
 # ---------------------------------------------------------------------------
 
+
 class _NearestCentroidModel:
     """Minimal nearest-centroid classifier for fallback use."""
 
@@ -950,7 +1053,9 @@ class _NearestCentroidModel:
         X = np.atleast_2d(X)
         predictions = np.zeros(len(X), dtype=np.int32)
         for i, sample in enumerate(X):
-            dists = {c: np.linalg.norm(sample - cent) for c, cent in self._centroids.items()}
+            dists = {
+                c: np.linalg.norm(sample - cent) for c, cent in self._centroids.items()
+            }
             predictions[i] = min(dists, key=dists.get)
         return predictions
 
@@ -959,9 +1064,9 @@ class _NearestCentroidModel:
         n_classes = len(self._classes)
         proba = np.zeros((len(X), n_classes), dtype=np.float64)
         for i, sample in enumerate(X):
-            dists = np.array([
-                np.linalg.norm(sample - self._centroids[c]) for c in self._classes
-            ])
+            dists = np.array(
+                [np.linalg.norm(sample - self._centroids[c]) for c in self._classes]
+            )
             inv_dists = 1.0 / (dists + 1e-10)
             proba[i] = inv_dists / inv_dists.sum()
         return proba
@@ -970,6 +1075,7 @@ class _NearestCentroidModel:
 # ---------------------------------------------------------------------------
 # CLI / demo
 # ---------------------------------------------------------------------------
+
 
 def _demo() -> None:
     """Run a demonstration of the SC2 decision explainer."""
@@ -991,15 +1097,26 @@ def _demo() -> None:
     print("LOCAL EXPLANATION: Specific Game Moment")
     print("=" * 72)
     explanation = explainer.explain_game_moment(
-        minerals=1200, gas=800, supply_used=140, supply_cap=200,
-        worker_count=70, army_supply=70,
-        army_value_minerals=5000, army_value_gas=3000,
+        minerals=1200,
+        gas=800,
+        supply_used=140,
+        supply_cap=200,
+        worker_count=70,
+        army_supply=70,
+        army_value_minerals=5000,
+        army_value_gas=3000,
         enemy_army_value_estimate=3500,
-        base_count=4, enemy_base_count=3,
-        tech_level=2, upgrade_count=6,
-        production_capacity=12, map_control_pct=0.65,
-        time_seconds=600, idle_workers=2, pending_units=5,
-        enemy_air_threat=0.3, enemy_ground_threat=0.5,
+        base_count=4,
+        enemy_base_count=3,
+        tech_level=2,
+        upgrade_count=6,
+        production_capacity=12,
+        map_control_pct=0.65,
+        time_seconds=600,
+        idle_workers=2,
+        pending_units=5,
+        enemy_air_threat=0.3,
+        enemy_ground_threat=0.5,
     )
     print(f"  Decision: {explanation.predicted_decision.name}")
     print(f"  Probabilities: {explanation.predicted_proba}")
@@ -1008,31 +1125,46 @@ def _demo() -> None:
     print("  Top contributing features:")
     for fe in explanation.feature_explanations[:5]:
         arrow = "+" if fe.direction == "positive" else "-"
-        print(f"    {arrow} {fe.feature_name}: value={fe.feature_value:.1f}, "
-              f"shap={fe.shap_value:.4f}")
+        print(
+            f"    {arrow} {fe.feature_name}: value={fe.feature_value:.1f}, "
+            f"shap={fe.shap_value:.4f}"
+        )
 
     # Local explanation — defensive scenario
     print("\n" + "=" * 72)
     print("LOCAL EXPLANATION: Under Attack Scenario")
     print("=" * 72)
     explanation2 = explainer.explain_game_moment(
-        minerals=300, gas=200, supply_used=80, supply_cap=100,
-        worker_count=50, army_supply=30,
-        army_value_minerals=1500, army_value_gas=800,
+        minerals=300,
+        gas=200,
+        supply_used=80,
+        supply_cap=100,
+        worker_count=50,
+        army_supply=30,
+        army_value_minerals=1500,
+        army_value_gas=800,
         enemy_army_value_estimate=6000,
-        base_count=2, enemy_base_count=3,
-        tech_level=1, upgrade_count=2,
-        production_capacity=6, map_control_pct=0.3,
-        time_seconds=360, idle_workers=0, pending_units=8,
-        enemy_air_threat=0.2, enemy_ground_threat=0.85,
+        base_count=2,
+        enemy_base_count=3,
+        tech_level=1,
+        upgrade_count=2,
+        production_capacity=6,
+        map_control_pct=0.3,
+        time_seconds=360,
+        idle_workers=0,
+        pending_units=8,
+        enemy_air_threat=0.2,
+        enemy_ground_threat=0.85,
     )
     print(f"  Decision: {explanation2.predicted_decision.name}")
     print(f"  Probabilities: {explanation2.predicted_proba}")
     print("  Top contributing features:")
     for fe in explanation2.feature_explanations[:5]:
         arrow = "+" if fe.direction == "positive" else "-"
-        print(f"    {arrow} {fe.feature_name}: value={fe.feature_value:.1f}, "
-              f"shap={fe.shap_value:.4f}")
+        print(
+            f"    {arrow} {fe.feature_name}: value={fe.feature_value:.1f}, "
+            f"shap={fe.shap_value:.4f}"
+        )
 
     # Global explanation
     print("\n" + "=" * 72)

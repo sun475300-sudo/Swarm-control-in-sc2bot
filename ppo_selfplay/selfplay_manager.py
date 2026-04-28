@@ -3,14 +3,15 @@ Phase 349: Self-Play Manager
 Self-play matchmaking and opponent pool management for SC2 bot training.
 """
 
-import os
-import math
-import random
-import torch
 import copy
+import math
+import os
+import random
 from dataclasses import dataclass, field
-from typing import List, Optional, Dict, Tuple
 from enum import Enum
+from typing import Dict, List, Optional, Tuple
+
+import torch
 
 
 class AgentRole(Enum):
@@ -42,14 +43,21 @@ class OpponentEntry:
 class OpponentPool:
     """Stores and manages past model checkpoints for self-play."""
 
-    def __init__(self, max_size: int = 20, checkpoint_dir: str = "checkpoints/opponents"):
+    def __init__(
+        self, max_size: int = 20, checkpoint_dir: str = "checkpoints/opponents"
+    ):
         self.max_size = max_size
         self.checkpoint_dir = checkpoint_dir
         self.pool: List[OpponentEntry] = []
         os.makedirs(checkpoint_dir, exist_ok=True)
 
-    def add(self, model: torch.nn.Module, step: int, elo: float = 1000.0,
-            role: AgentRole = AgentRole.MAIN_AGENT) -> OpponentEntry:
+    def add(
+        self,
+        model: torch.nn.Module,
+        step: int,
+        elo: float = 1000.0,
+        role: AgentRole = AgentRole.MAIN_AGENT,
+    ) -> OpponentEntry:
         path = os.path.join(self.checkpoint_dir, f"opponent_step{step}.pt")
         torch.save(model.state_dict(), path)
         entry = OpponentEntry(checkpoint_path=path, elo=elo, role=role, step=step)
@@ -73,7 +81,9 @@ class OpponentPool:
             return self.pool[-1]
         return random.choice(self.pool)
 
-    def load_opponent_model(self, entry: OpponentEntry, model_cls, model_kwargs: Dict) -> torch.nn.Module:
+    def load_opponent_model(
+        self, entry: OpponentEntry, model_cls, model_kwargs: Dict
+    ) -> torch.nn.Module:
         model = model_cls(**model_kwargs)
         model.load_state_dict(torch.load(entry.checkpoint_path, map_location="cpu"))
         model.eval()
@@ -83,7 +93,9 @@ class OpponentPool:
         return len(self.pool)
 
 
-def calculate_elo(winner_elo: float, loser_elo: float, k: float = 32.0) -> Tuple[float, float]:
+def calculate_elo(
+    winner_elo: float, loser_elo: float, k: float = 32.0
+) -> Tuple[float, float]:
     """Compute new Elo ratings after a match."""
     expected_win = 1.0 / (1.0 + math.pow(10, (loser_elo - winner_elo) / 400.0))
     new_winner = winner_elo + k * (1.0 - expected_win)
@@ -100,8 +112,12 @@ class SelfPlayManager:
         AgentRole.MAIN_EXPLOITER: 0.30,
     }
 
-    def __init__(self, main_model: torch.nn.Module, pool: OpponentPool,
-                 checkpoint_interval: int = 1000):
+    def __init__(
+        self,
+        main_model: torch.nn.Module,
+        pool: OpponentPool,
+        checkpoint_interval: int = 1000,
+    ):
         self.main_model = main_model
         self.pool = pool
         self.checkpoint_interval = checkpoint_interval
@@ -111,7 +127,9 @@ class SelfPlayManager:
 
     def sample_opponent(self) -> Optional[OpponentEntry]:
         role_weights = list(self.ROLE_SAMPLE_PROBS.values())
-        chosen_role = random.choices(list(self.ROLE_SAMPLE_PROBS.keys()), weights=role_weights, k=1)[0]
+        chosen_role = random.choices(
+            list(self.ROLE_SAMPLE_PROBS.keys()), weights=role_weights, k=1
+        )[0]
         role_pool = [e for e in self.pool.pool if e.role == chosen_role]
         if not role_pool:
             return self.pool.sample_opponent(strategy="pfsp")
@@ -125,9 +143,12 @@ class SelfPlayManager:
         entry = self.pool.add(model_copy, step=self.step, elo=self.main_elo, role=role)
         return entry
 
-    def run_match(self, env, opponent_entry: OpponentEntry,
-                  model_cls, model_kwargs: Dict) -> Dict:
-        opponent_model = self.pool.load_opponent_model(opponent_entry, model_cls, model_kwargs)
+    def run_match(
+        self, env, opponent_entry: OpponentEntry, model_cls, model_kwargs: Dict
+    ) -> Dict:
+        opponent_model = self.pool.load_opponent_model(
+            opponent_entry, model_cls, model_kwargs
+        )
         obs = env.reset()
         done = False
         total_reward = 0.0
@@ -137,6 +158,7 @@ class SelfPlayManager:
             with torch.no_grad():
                 logits, _ = self.main_model(obs_t)
             from torch.distributions import Categorical
+
             action = Categorical(logits=logits).sample().item()
             obs, reward, done, info = env.step(action)
             total_reward += reward

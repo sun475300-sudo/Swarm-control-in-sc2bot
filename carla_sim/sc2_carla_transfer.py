@@ -44,16 +44,86 @@ CARLA_DEFAULT_TIMEOUT: float = 30.0
 
 # Weather presets for domain randomization
 WEATHER_PRESETS: List[Dict[str, Any]] = [
-    {"name": "ClearNoon", "cloud": 0, "rain": 0, "wind": 0.1, "sun_altitude": 70.0, "fog": 0.0},
-    {"name": "CloudyNoon", "cloud": 60, "rain": 0, "wind": 0.3, "sun_altitude": 65.0, "fog": 0.0},
-    {"name": "WetNoon", "cloud": 40, "rain": 30, "wind": 0.2, "sun_altitude": 60.0, "fog": 5.0},
-    {"name": "HardRainNoon", "cloud": 90, "rain": 80, "wind": 0.7, "sun_altitude": 50.0, "fog": 20.0},
-    {"name": "ClearSunset", "cloud": 10, "rain": 0, "wind": 0.15, "sun_altitude": 10.0, "fog": 0.0},
-    {"name": "CloudySunset", "cloud": 70, "rain": 0, "wind": 0.4, "sun_altitude": 8.0, "fog": 10.0},
-    {"name": "WetSunset", "cloud": 50, "rain": 40, "wind": 0.35, "sun_altitude": 5.0, "fog": 15.0},
-    {"name": "NightClear", "cloud": 5, "rain": 0, "wind": 0.05, "sun_altitude": -30.0, "fog": 0.0},
-    {"name": "NightRain", "cloud": 80, "rain": 70, "wind": 0.6, "sun_altitude": -25.0, "fog": 30.0},
-    {"name": "FoggyMorning", "cloud": 30, "rain": 5, "wind": 0.1, "sun_altitude": 15.0, "fog": 60.0},
+    {
+        "name": "ClearNoon",
+        "cloud": 0,
+        "rain": 0,
+        "wind": 0.1,
+        "sun_altitude": 70.0,
+        "fog": 0.0,
+    },
+    {
+        "name": "CloudyNoon",
+        "cloud": 60,
+        "rain": 0,
+        "wind": 0.3,
+        "sun_altitude": 65.0,
+        "fog": 0.0,
+    },
+    {
+        "name": "WetNoon",
+        "cloud": 40,
+        "rain": 30,
+        "wind": 0.2,
+        "sun_altitude": 60.0,
+        "fog": 5.0,
+    },
+    {
+        "name": "HardRainNoon",
+        "cloud": 90,
+        "rain": 80,
+        "wind": 0.7,
+        "sun_altitude": 50.0,
+        "fog": 20.0,
+    },
+    {
+        "name": "ClearSunset",
+        "cloud": 10,
+        "rain": 0,
+        "wind": 0.15,
+        "sun_altitude": 10.0,
+        "fog": 0.0,
+    },
+    {
+        "name": "CloudySunset",
+        "cloud": 70,
+        "rain": 0,
+        "wind": 0.4,
+        "sun_altitude": 8.0,
+        "fog": 10.0,
+    },
+    {
+        "name": "WetSunset",
+        "cloud": 50,
+        "rain": 40,
+        "wind": 0.35,
+        "sun_altitude": 5.0,
+        "fog": 15.0,
+    },
+    {
+        "name": "NightClear",
+        "cloud": 5,
+        "rain": 0,
+        "wind": 0.05,
+        "sun_altitude": -30.0,
+        "fog": 0.0,
+    },
+    {
+        "name": "NightRain",
+        "cloud": 80,
+        "rain": 70,
+        "wind": 0.6,
+        "sun_altitude": -25.0,
+        "fog": 30.0,
+    },
+    {
+        "name": "FoggyMorning",
+        "cloud": 30,
+        "rain": 5,
+        "wind": 0.1,
+        "sun_altitude": 15.0,
+        "fog": 60.0,
+    },
 ]
 
 # SC2 formation patterns that map to drone formations
@@ -83,7 +153,9 @@ def _clamp(value: float, lo: float, hi: float) -> float:
     return max(lo, min(hi, value))
 
 
-def _vec3_distance(a: Tuple[float, float, float], b: Tuple[float, float, float]) -> float:
+def _vec3_distance(
+    a: Tuple[float, float, float], b: Tuple[float, float, float]
+) -> float:
     return math.sqrt(sum((ai - bi) ** 2 for ai, bi in zip(a, b)))
 
 
@@ -123,6 +195,7 @@ class SensorType(Enum):
 @dataclass
 class SensorReading:
     """A single reading from a simulated sensor."""
+
     sensor_type: SensorType
     timestamp: float
     data: Any  # type depends on sensor
@@ -140,6 +213,7 @@ class SensorReading:
 @dataclass
 class DroneState:
     """Full state of a drone in the CARLA world."""
+
     drone_id: str
     position: Tuple[float, float, float] = (0.0, 0.0, 10.0)
     velocity: Tuple[float, float, float] = (0.0, 0.0, 0.0)
@@ -163,6 +237,7 @@ class DroneState:
 @dataclass
 class SC2FormationSnapshot:
     """Snapshot of an SC2 unit formation for transfer."""
+
     formation_type: str
     center: Tuple[float, float]
     radius: float
@@ -178,6 +253,7 @@ class SC2FormationSnapshot:
 @dataclass
 class WeatherState:
     """Current weather configuration in the CARLA world."""
+
     preset_name: str = "ClearNoon"
     cloud_density: float = 0.0
     rain_intensity: float = 0.0
@@ -210,7 +286,9 @@ class SensorSuite:
     radar, GPS, and IMU sensors.
     """
 
-    def __init__(self, drone_id: str, enabled_sensors: Optional[List[SensorType]] = None):
+    def __init__(
+        self, drone_id: str, enabled_sensors: Optional[List[SensorType]] = None
+    ):
         self.drone_id: str = drone_id
         self.enabled: List[SensorType] = enabled_sensors or [
             SensorType.CAMERA_RGB,
@@ -221,7 +299,9 @@ class SensorSuite:
         self._readings: List[SensorReading] = []
         self._tick: int = 0
         self._noise_scale: float = 0.01
-        logger.info("SensorSuite for drone %s: %s", drone_id, [s.name for s in self.enabled])
+        logger.info(
+            "SensorSuite for drone %s: %s", drone_id, [s.name for s in self.enabled]
+        )
 
     def set_noise_scale(self, scale: float) -> None:
         self._noise_scale = max(0.0, scale)
@@ -247,10 +327,16 @@ class SensorSuite:
 
         if sensor == SensorType.CAMERA_RGB:
             # Simulate RGB image as brightness/contrast metrics affected by weather
-            brightness = _clamp(weather.sun_altitude / 90.0 + random.gauss(0, noise), 0, 1)
-            visibility = _clamp(1.0 - weather.fog_density / 100.0 + random.gauss(0, noise), 0, 1)
+            brightness = _clamp(
+                weather.sun_altitude / 90.0 + random.gauss(0, noise), 0, 1
+            )
+            visibility = _clamp(
+                1.0 - weather.fog_density / 100.0 + random.gauss(0, noise), 0, 1
+            )
             data = {
-                "width": 640, "height": 480, "channels": 3,
+                "width": 640,
+                "height": 480,
+                "channels": 3,
                 "brightness": round(brightness, 3),
                 "visibility": round(visibility, 3),
                 "rain_drops": int(weather.rain_intensity * random.uniform(0.5, 1.5)),
@@ -266,21 +352,34 @@ class SensorSuite:
             # Class distribution depends on altitude
             ground_pct = _clamp(80 - pz * 0.5 + random.gauss(0, 5), 0, 100)
             sky_pct = _clamp(pz * 0.3 + random.gauss(0, 3), 0, 100 - ground_pct)
-            data = {"classes": {"ground": round(ground_pct, 1), "sky": round(sky_pct, 1),
-                                "building": round(100 - ground_pct - sky_pct, 1)}}
+            data = {
+                "classes": {
+                    "ground": round(ground_pct, 1),
+                    "sky": round(sky_pct, 1),
+                    "building": round(100 - ground_pct - sky_pct, 1),
+                }
+            }
             return SensorReading(sensor, ts, data, {"altitude": pz})
 
         elif sensor == SensorType.LIDAR:
             num_points = int(random.gauss(5000, 500))
             max_range = 50.0 * (1.0 - weather.rain_intensity / 200.0)
-            data = {"num_points": max(0, num_points), "max_range": round(max_range, 2),
-                    "channels": 32, "rotation_freq": 10}
+            data = {
+                "num_points": max(0, num_points),
+                "max_range": round(max_range, 2),
+                "channels": 32,
+                "rotation_freq": 10,
+            }
             return SensorReading(sensor, ts, data, {"altitude": pz})
 
         elif sensor == SensorType.RADAR:
             num_detections = random.randint(0, 20)
-            data = {"num_detections": num_detections, "max_range": 100.0,
-                    "fov_h": 30.0, "fov_v": 30.0}
+            data = {
+                "num_detections": num_detections,
+                "max_range": 100.0,
+                "fov_h": 30.0,
+                "fov_v": 30.0,
+            }
             return SensorReading(sensor, ts, data, {"altitude": pz})
 
         elif sensor == SensorType.GPS:
@@ -288,8 +387,12 @@ class SensorSuite:
             lat = 37.7749 + py * 0.00001 + random.gauss(0, noise * 0.0001)
             lon = -122.4194 + px * 0.00001 + random.gauss(0, noise * 0.0001)
             alt = pz + random.gauss(0, noise * 2)
-            data = {"latitude": round(lat, 8), "longitude": round(lon, 8),
-                    "altitude": round(alt, 2), "hdop": round(random.uniform(0.5, 2.0), 2)}
+            data = {
+                "latitude": round(lat, 8),
+                "longitude": round(lon, 8),
+                "altitude": round(alt, 2),
+                "hdop": round(random.uniform(0.5, 2.0), 2),
+            }
             return SensorReading(sensor, ts, data, {})
 
         elif sensor == SensorType.IMU:
@@ -331,7 +434,9 @@ class DroneController:
     collision avoidance via repulsive fields.
     """
 
-    def __init__(self, drone_id: str, initial_pos: Tuple[float, float, float] = (0.0, 0.0, 10.0)):
+    def __init__(
+        self, drone_id: str, initial_pos: Tuple[float, float, float] = (0.0, 0.0, 10.0)
+    ):
         self.drone_id: str = drone_id
         self.state: DroneState = DroneState(drone_id=drone_id, position=initial_pos)
         self.sensor_suite: SensorSuite = SensorSuite(drone_id)
@@ -359,7 +464,9 @@ class DroneController:
     def set_target(self, target: Tuple[float, float, float]) -> None:
         self._target = target
 
-    def step(self, dt: float = 0.1, weather: Optional[WeatherState] = None) -> DroneState:
+    def step(
+        self, dt: float = 0.1, weather: Optional[WeatherState] = None
+    ) -> DroneState:
         """Advance one simulation step."""
         weather = weather or WeatherState()
         self._step_count += 1
@@ -375,7 +482,9 @@ class DroneController:
                 self._target = self._waypoints[self._wp_index]
 
         # Battery drain
-        self.state.battery_pct = max(0.0, self.state.battery_pct - self._battery_drain_rate)
+        self.state.battery_pct = max(
+            0.0, self.state.battery_pct - self._battery_drain_rate
+        )
         if self.state.battery_pct <= 0.0:
             self.state.is_armed = False
             self.state.mode = "emergency_land"
@@ -416,7 +525,7 @@ class DroneController:
         vz = self._kp * ez + self._ki * iz + self._kd * dz
 
         # Clamp speed
-        speed = math.sqrt(vx ** 2 + vy ** 2 + vz ** 2)
+        speed = math.sqrt(vx**2 + vy**2 + vz**2)
         if speed > DRONE_MAX_SPEED:
             scale = DRONE_MAX_SPEED / speed
             vx, vy, vz = vx * scale, vy * scale, vz * scale
@@ -506,7 +615,9 @@ class CARLAEnvironment:
 
     # -- drone management --
 
-    def spawn_drone(self, drone_id: str, position: Tuple[float, float, float] = (0.0, 0.0, 10.0)) -> DroneController:
+    def spawn_drone(
+        self, drone_id: str, position: Tuple[float, float, float] = (0.0, 0.0, 10.0)
+    ) -> DroneController:
         drone = DroneController(drone_id=drone_id, initial_pos=position)
         self._drones[drone_id] = drone
         logger.info("Spawned drone %s at %s", drone_id, position)
@@ -540,15 +651,23 @@ class CARLAEnvironment:
         preset = random.choice(WEATHER_PRESETS)
         self._weather = WeatherState.from_preset(preset)
         # Add noise on top of preset
-        self._weather.cloud_density = _clamp(self._weather.cloud_density + random.gauss(0, 5), 0, 100)
-        self._weather.rain_intensity = _clamp(self._weather.rain_intensity + random.gauss(0, 5), 0, 100)
-        self._weather.fog_density = _clamp(self._weather.fog_density + random.gauss(0, 3), 0, 100)
+        self._weather.cloud_density = _clamp(
+            self._weather.cloud_density + random.gauss(0, 5), 0, 100
+        )
+        self._weather.rain_intensity = _clamp(
+            self._weather.rain_intensity + random.gauss(0, 5), 0, 100
+        )
+        self._weather.fog_density = _clamp(
+            self._weather.fog_density + random.gauss(0, 3), 0, 100
+        )
         return self._weather
 
     def set_traffic_density(self, density: float) -> None:
         self._traffic_density = _clamp(density, 0.0, 1.0)
 
-    def enable_domain_randomization(self, enabled: bool = True, interval: int = 50) -> None:
+    def enable_domain_randomization(
+        self, enabled: bool = True, interval: int = 50
+    ) -> None:
         self._randomization_enabled = enabled
         self._randomization_interval = max(1, interval)
 
@@ -561,7 +680,10 @@ class CARLAEnvironment:
         self._tick += 1
 
         # Domain randomization
-        if self._randomization_enabled and self._tick % self._randomization_interval == 0:
+        if (
+            self._randomization_enabled
+            and self._tick % self._randomization_interval == 0
+        ):
             self.randomize_weather()
 
         results: Dict[str, DroneState] = {}
@@ -642,7 +764,10 @@ class TransferPipeline:
         return positions_3d
 
     def generate_drone_formation(
-        self, formation_type: str, num_drones: int, center: Tuple[float, float, float] = (0.0, 0.0, 15.0)
+        self,
+        formation_type: str,
+        num_drones: int,
+        center: Tuple[float, float, float] = (0.0, 0.0, 15.0),
     ) -> List[Tuple[float, float, float]]:
         """Generate a named 3D drone formation directly."""
         drone_type = SC2_FORMATION_MAP.get(formation_type, formation_type)
@@ -724,7 +849,9 @@ class TransferPipeline:
         return positions
 
     def assign_drones_to_positions(
-        self, drones: List[DroneController], target_positions: List[Tuple[float, float, float]]
+        self,
+        drones: List[DroneController],
+        target_positions: List[Tuple[float, float, float]],
     ) -> Dict[str, Tuple[float, float, float]]:
         """Greedy nearest-first assignment of drones to target positions."""
         available = list(range(len(target_positions)))
@@ -733,7 +860,10 @@ class TransferPipeline:
         for drone in drones:
             if not available:
                 break
-            best_idx = min(available, key=lambda j: _vec3_distance(drone.state.position, target_positions[j]))
+            best_idx = min(
+                available,
+                key=lambda j: _vec3_distance(drone.state.position, target_positions[j]),
+            )
             assignment[drone.drone_id] = target_positions[best_idx]
             available.remove(best_idx)
 
@@ -748,18 +878,24 @@ class TransferPipeline:
 
         # If more drones than positions, generate extras
         while len(positions_3d) < len(drones):
-            offset = (random.uniform(-2, 2), random.uniform(-2, 2), self.default_altitude)
+            offset = (
+                random.uniform(-2, 2),
+                random.uniform(-2, 2),
+                self.default_altitude,
+            )
             positions_3d.append(offset)
 
         assignment = self.assign_drones_to_positions(drones, positions_3d)
 
-        self._formation_log.append({
-            "transfer_id": self._transfer_count,
-            "sc2_type": formation.formation_type,
-            "num_units": formation.unit_count,
-            "num_drones": len(drones),
-            "assignments": len(assignment),
-        })
+        self._formation_log.append(
+            {
+                "transfer_id": self._transfer_count,
+                "sc2_type": formation.formation_type,
+                "num_units": formation.unit_count,
+                "num_drones": len(drones),
+                "assignments": len(assignment),
+            }
+        )
 
         return assignment
 
@@ -803,7 +939,9 @@ class CARLABridge:
     # -- environment --
 
     def create_environment(self) -> CARLAEnvironment:
-        self._env = CARLAEnvironment(host=self.host, port=self.port, map_name=self.map_name)
+        self._env = CARLAEnvironment(
+            host=self.host, port=self.port, map_name=self.map_name
+        )
         self._env.connect()
         return self._env
 
@@ -814,7 +952,11 @@ class CARLABridge:
 
     # -- fleet management --
 
-    def spawn_fleet(self, num_drones: int, base_position: Tuple[float, float, float] = (0.0, 0.0, 10.0)) -> List[DroneController]:
+    def spawn_fleet(
+        self,
+        num_drones: int,
+        base_position: Tuple[float, float, float] = (0.0, 0.0, 10.0),
+    ) -> List[DroneController]:
         if self._env is None:
             raise RuntimeError("Call create_environment() first")
         drones: List[DroneController] = []
@@ -830,7 +972,9 @@ class CARLABridge:
 
     # -- formation commands --
 
-    def apply_sc2_formation(self, formation: SC2FormationSnapshot) -> Dict[str, Tuple[float, float, float]]:
+    def apply_sc2_formation(
+        self, formation: SC2FormationSnapshot
+    ) -> Dict[str, Tuple[float, float, float]]:
         if self._env is None:
             raise RuntimeError("Environment not initialised")
         drones = list(self._env._drones.values())
@@ -841,11 +985,15 @@ class CARLABridge:
                 drone.set_target(target)
         return assignment
 
-    def apply_named_formation(self, formation_type: str, center: Tuple[float, float, float] = (0.0, 0.0, 15.0)) -> Dict[str, Tuple[float, float, float]]:
+    def apply_named_formation(
+        self, formation_type: str, center: Tuple[float, float, float] = (0.0, 0.0, 15.0)
+    ) -> Dict[str, Tuple[float, float, float]]:
         if self._env is None:
             raise RuntimeError("Environment not initialised")
         drones = list(self._env._drones.values())
-        positions = self._pipeline.generate_drone_formation(formation_type, len(drones), center)
+        positions = self._pipeline.generate_drone_formation(
+            formation_type, len(drones), center
+        )
         assignment = self._pipeline.assign_drones_to_positions(drones, positions)
         for did, target in assignment.items():
             drone = self._env.get_drone(did)
@@ -864,7 +1012,9 @@ class CARLABridge:
     ) -> List[Dict[str, Any]]:
         if self._env is None:
             raise RuntimeError("Environment not initialised")
-        self._env.enable_domain_randomization(domain_randomization, randomization_interval)
+        self._env.enable_domain_randomization(
+            domain_randomization, randomization_interval
+        )
 
         tick_log: List[Dict[str, Any]] = []
         for t in range(ticks):
@@ -926,8 +1076,10 @@ def demo() -> None:
     print("\n[4] Domain randomization ...")
     for i in range(3):
         w = env.randomize_weather()
-        print(f"    Randomized weather #{i + 1}: {w.preset_name} "
-              f"(cloud={w.cloud_density:.0f}, rain={w.rain_intensity:.0f}, fog={w.fog_density:.0f})")
+        print(
+            f"    Randomized weather #{i + 1}: {w.preset_name} "
+            f"(cloud={w.cloud_density:.0f}, rain={w.rain_intensity:.0f}, fog={w.fog_density:.0f})"
+        )
 
     # 5. SC2 formation transfer
     print("\n[5] SC2 formation transfer ...")
@@ -936,8 +1088,12 @@ def demo() -> None:
         center=(100.0, 80.0),
         radius=15.0,
         unit_positions=[
-            (90.0, 75.0), (95.0, 72.0), (100.0, 70.0),
-            (105.0, 72.0), (110.0, 75.0), (100.0, 68.0),
+            (90.0, 75.0),
+            (95.0, 72.0),
+            (100.0, 70.0),
+            (105.0, 72.0),
+            (110.0, 75.0),
+            (100.0, 68.0),
         ],
         unit_types=["Zergling", "Zergling", "Roach", "Roach", "Hydralisk", "Queen"],
         heading=0.3,
@@ -951,28 +1107,38 @@ def demo() -> None:
     print("\n[6] Named formations ...")
     for ftype in ["ring", "v_formation", "grid"]:
         positions = bridge._pipeline.generate_drone_formation(ftype, 6)
-        print(f"    {ftype:15s}: {len(positions)} positions, "
-              f"first={positions[0] if positions else 'N/A'}")
+        print(
+            f"    {ftype:15s}: {len(positions)} positions, "
+            f"first={positions[0] if positions else 'N/A'}"
+        )
 
     # 7. Run simulation
     print("\n[7] Running simulation (50 ticks) ...")
-    sim_log = bridge.run_simulation(ticks=50, dt=0.1, domain_randomization=True, randomization_interval=10)
+    sim_log = bridge.run_simulation(
+        ticks=50, dt=0.1, domain_randomization=True, randomization_interval=10
+    )
     print(f"    Simulation complete, {len(sim_log)} snapshots recorded")
     for snap in sim_log[:2]:
         drone_sample = list(snap["drones"].values())[0] if snap["drones"] else {}
-        print(f"    Tick {snap['tick']}: weather={snap['weather']}, "
-              f"drone_0 pos={drone_sample.get('position', 'N/A')}")
+        print(
+            f"    Tick {snap['tick']}: weather={snap['weather']}, "
+            f"drone_0 pos={drone_sample.get('position', 'N/A')}"
+        )
 
     # 8. PID waypoint following test
     print("\n[8] PID waypoint following ...")
     test_drone = fleet[0]
-    test_drone.set_waypoints([(20.0, 10.0, 15.0), (30.0, 20.0, 20.0), (10.0, 30.0, 12.0)])
+    test_drone.set_waypoints(
+        [(20.0, 10.0, 15.0), (30.0, 20.0, 20.0), (10.0, 30.0, 12.0)]
+    )
     for step in range(30):
         test_drone.step(dt=0.2, weather=weather)
     d_sum = test_drone.summary()
-    print(f"    Drone {d_sum['drone_id']}: pos={d_sum['position']}, "
-          f"wp={d_sum['waypoint_index']}/{d_sum['waypoints_total']}, "
-          f"battery={d_sum['battery_pct']:.1f}%")
+    print(
+        f"    Drone {d_sum['drone_id']}: pos={d_sum['position']}, "
+        f"wp={d_sum['waypoint_index']}/{d_sum['waypoints_total']}, "
+        f"battery={d_sum['battery_pct']:.1f}%"
+    )
 
     # 9. Summary
     print("\n[9] Bridge summary:")

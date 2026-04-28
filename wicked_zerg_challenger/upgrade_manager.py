@@ -38,7 +38,9 @@ class EvolutionUpgradeManager:
         self.bot = bot
         self.last_update = 0
         self.update_interval = 7  # ★ OPTIMIZED: 11 → 7 (더 자주 체크) ★
-        self.gas_reserve_threshold = 100  # ★ OPTIMIZED: 150 → 100 (가스 자유롭게 사용) ★
+        self.gas_reserve_threshold = (
+            100  # ★ OPTIMIZED: 150 → 100 (가스 자유롭게 사용) ★
+        )
 
         # 0순위 업그레이드 상태 추적
         self._zergling_speed_started = False
@@ -56,7 +58,9 @@ class EvolutionUpgradeManager:
         self.gas_reservation_threshold = 50  # 가스가 50 이상이면 예약 업그레이드 실행
 
         # ★★★ Phase 18: IntelManager Integration ★★★
-        self.intel_based_priority_boost: Dict[str, float] = {}  # {upgrade_type: boost_multiplier}
+        self.intel_based_priority_boost: Dict[str, float] = (
+            {}
+        )  # {upgrade_type: boost_multiplier}
         self.last_intel_check = 0
         self.intel_check_interval = 110  # ~5초마다
 
@@ -70,9 +74,21 @@ class EvolutionUpgradeManager:
 
         # ★★★ Phase 18: Race-Specific Priority Modifiers ★★★
         self.race_priority_modifiers = {
-            "Terran": {"armor": 1.3, "melee": 1.0, "missile": 1.1},  # 테란: 방어력 중요 (마린/해병)
-            "Protoss": {"armor": 1.2, "melee": 1.2, "missile": 1.0},  # 프로토스: 근접/방어 균형
-            "Zerg": {"melee": 1.3, "armor": 1.0, "missile": 1.1},  # 저그: 공격력 중요 (저글링 싸움)
+            "Terran": {
+                "armor": 1.3,
+                "melee": 1.0,
+                "missile": 1.1,
+            },  # 테란: 방어력 중요 (마린/해병)
+            "Protoss": {
+                "armor": 1.2,
+                "melee": 1.2,
+                "missile": 1.0,
+            },  # 프로토스: 근접/방어 균형
+            "Zerg": {
+                "melee": 1.3,
+                "armor": 1.0,
+                "missile": 1.1,
+            },  # 저그: 공격력 중요 (저글링 싸움)
         }
 
     async def on_step(self, iteration: int) -> None:
@@ -117,7 +133,10 @@ class EvolutionUpgradeManager:
         gas_constrained = vespene < 50
 
         # ★★★ Spire 공중 업그레이드 ★★★
-        spires = self.bot.structures(UnitTypeId.SPIRE).ready | self.bot.structures(UnitTypeId.GREATERSPIRE).ready
+        spires = (
+            self.bot.structures(UnitTypeId.SPIRE).ready
+            | self.bot.structures(UnitTypeId.GREATERSPIRE).ready
+        )
         for spire in spires:
             if hasattr(spire, "is_idle") and not spire.is_idle:
                 continue
@@ -149,7 +168,9 @@ class EvolutionUpgradeManager:
                     self.logger.info(f"[SPIRE] Researching {upgrade_name}")
                     return
                 except Exception as e:
-                    self.logger.warning(f"[SPIRE] Failed to research {upgrade_name}: {e}")
+                    self.logger.warning(
+                        f"[SPIRE] Failed to research {upgrade_name}: {e}"
+                    )
 
         # Evolution Chamber 지상 업그레이드
         for evo in evo_chambers:
@@ -189,7 +210,9 @@ class EvolutionUpgradeManager:
                 try:
                     self.bot.do(evo.research(upgrade_id))
                     game_time = getattr(self.bot, "time", 0)
-                    self.logger.info(f"[{int(game_time)}s] [*] {upgrade_name} 시작! [*]")
+                    self.logger.info(
+                        f"[{int(game_time)}s] [*] {upgrade_name} 시작! [*]"
+                    )
                 except Exception as e:
                     self.logger.warning(f"Failed to research upgrade {upgrade_id}: {e}")
                     continue
@@ -228,7 +251,11 @@ class EvolutionUpgradeManager:
         hydra_count = composition.get("hydralisk", 0)
         mutalisk_count = composition.get("mutalisk", 0)
         # ★ Phase 44: 울트라리스크도 근접 계열 (melee attack upgrade 적용)
-        ultralisk_count = self.bot.units(UnitTypeId.ULTRALISK).amount if hasattr(self.bot, "units") else 0
+        ultralisk_count = (
+            self.bot.units(UnitTypeId.ULTRALISK).amount
+            if hasattr(self.bot, "units")
+            else 0
+        )
 
         total_melee = zergling_count + baneling_count + ultralisk_count
         total_ranged = roach_count + hydra_count
@@ -249,9 +276,23 @@ class EvolutionUpgradeManager:
             # ★★★ NEW: 바퀴 사용 시 지상 갑피 2단계까지 우선 연구 ★★★
             if roach_count >= 8:  # 바퀴 8기 이상
                 # 원거리 공1 -> 방어1 -> 방어2 -> 원거리 공2
-                priorities = ["missile", "armor", "armor", "missile", "missile", "armor"]
+                priorities = [
+                    "missile",
+                    "armor",
+                    "armor",
+                    "missile",
+                    "missile",
+                    "armor",
+                ]
             else:
-                priorities = ["missile", "missile", "missile", "armor", "armor", "armor"]
+                priorities = [
+                    "missile",
+                    "missile",
+                    "missile",
+                    "armor",
+                    "armor",
+                    "armor",
+                ]
         else:
             # ★ 저글링/맹독충 체제: 근접 공격 + 방어 균형
             # 근접1 -> 방어1 -> 근접2 -> 방어2...
@@ -292,8 +333,14 @@ class EvolutionUpgradeManager:
         """
         if not hasattr(self.bot, "units"):
             return {
-                "melee": 0, "ranged": 0, "zergling": 0, "baneling": 0,
-                "hydralisk": 0, "roach": 0, "mutalisk": 0, "corruptor": 0,
+                "melee": 0,
+                "ranged": 0,
+                "zergling": 0,
+                "baneling": 0,
+                "hydralisk": 0,
+                "roach": 0,
+                "mutalisk": 0,
+                "corruptor": 0,
             }
 
         # Direct counting using SC2 API - much faster than manual iteration
@@ -514,7 +561,9 @@ class EvolutionUpgradeManager:
             # ★ IMPROVED: 히드라 1기부터 발업 시작 (3→1, 사거리가 핵심)
             hydras = self.bot.units(UnitTypeId.HYDRALISK)
             if hydras.amount >= 1:
-                await self._research_hydra_range(iteration)  # ★ 사거리 먼저! (속도보다 중요)
+                await self._research_hydra_range(
+                    iteration
+                )  # ★ 사거리 먼저! (속도보다 중요)
                 await self._research_hydra_speed(iteration)
 
             # 잠복 (맹독충 4기 이상일 때)
@@ -526,12 +575,12 @@ class EvolutionUpgradeManager:
         # 공2업 이후 연구
         if self._has_hive():
             await self._research_adrenal_glands(iteration)
-            
+
             # 울트라리스크 업그레이드
             if self.bot.units(UnitTypeId.ULTRALISK).amount >= 1:
                 await self._research_ultra_upgrades(iteration)
 
-    # 럴커 업그레이드 (Lair or Hive)
+        # 럴커 업그레이드 (Lair or Hive)
         if self.bot.units(UnitTypeId.LURKERMP).amount >= 1:
             await self._research_lurker_upgrades(iteration)
 
@@ -566,7 +615,9 @@ class EvolutionUpgradeManager:
                 self.bot.do(pool.research(zergling_speed))
                 self._zergling_speed_started = True
                 game_time = getattr(self.bot, "time", 0)
-                self.logger.info(f"[{int(game_time)}s] [*][*][*] 대사 촉진 (저글링 발업) 연구 시작! [*][*][*]")
+                self.logger.info(
+                    f"[{int(game_time)}s] [*][*][*] 대사 촉진 (저글링 발업) 연구 시작! [*][*][*]"
+                )
             except Exception as e:
                 if iteration % 50 == 0:
                     self.logger.warning(f"Zergling speed research error: {e}")
@@ -601,7 +652,9 @@ class EvolutionUpgradeManager:
                     self.bot.do(th.research(overlord_speed))
                     self._overlord_speed_started = True
                     game_time = getattr(self.bot, "time", 0)
-                    self.logger.info(f"[{int(game_time)}s] [*][*][*] 기낭 갑피 (대군주 속업) 연구 시작! [*][*][*]")
+                    self.logger.info(
+                        f"[{int(game_time)}s] [*][*][*] 기낭 갑피 (대군주 속업) 연구 시작! [*][*][*]"
+                    )
                     return
                 except Exception:
                     continue
@@ -633,7 +686,9 @@ class EvolutionUpgradeManager:
                 try:
                     self.bot.do(th.research(ventral_sacs))
                     game_time = getattr(self.bot, "time", 0)
-                    self.logger.info(f"[{int(game_time)}s] [*][*][*] 배주머니 (대군주 수송) 연구 시작! [*][*][*]")
+                    self.logger.info(
+                        f"[{int(game_time)}s] [*][*][*] 배주머니 (대군주 수송) 연구 시작! [*][*][*]"
+                    )
                     return
                 except Exception:
                     continue
@@ -665,7 +720,9 @@ class EvolutionUpgradeManager:
             try:
                 self.bot.do(nest.research(baneling_speed))
                 game_time = getattr(self.bot, "time", 0)
-                self.logger.info(f"[{int(game_time)}s] [*][*] 원심 고리 (맹독충 발업) 연구 시작! [*][*]")
+                self.logger.info(
+                    f"[{int(game_time)}s] [*][*] 원심 고리 (맹독충 발업) 연구 시작! [*][*]"
+                )
             except Exception as e:
                 self.logger.warning(f"Failed to research baneling speed: {e}")
 
@@ -701,7 +758,9 @@ class EvolutionUpgradeManager:
             try:
                 self.bot.do(warren.research(roach_speed))
                 game_time = getattr(self.bot, "time", 0)
-                self.logger.info(f"[{int(game_time)}s] [*][*] 신경 재구성 (바퀴 발업) 연구 시작! [*][*]")
+                self.logger.info(
+                    f"[{int(game_time)}s] [*][*] 신경 재구성 (바퀴 발업) 연구 시작! [*][*]"
+                )
             except Exception as e:
                 self.logger.warning(f"Failed to research roach speed: {e}")
 
@@ -732,7 +791,9 @@ class EvolutionUpgradeManager:
             try:
                 self.bot.do(den.research(hydra_speed))
                 game_time = getattr(self.bot, "time", 0)
-                self.logger.info(f"[{int(game_time)}s] [*][*] 근육 보강 (히드라 발업) 연구 시작! [*][*]")
+                self.logger.info(
+                    f"[{int(game_time)}s] [*][*] 근육 보강 (히드라 발업) 연구 시작! [*][*]"
+                )
             except Exception as e:
                 self.logger.warning(f"Failed to research hydra speed: {e}")
 
@@ -747,8 +808,6 @@ class EvolutionUpgradeManager:
 
         if self.bot.already_pending_upgrade(hydra_range) > 0:
             return
-
-
 
         # 히드라 굴 확인
         hydra_dens = self.bot.structures(UnitTypeId.HYDRALISKDEN).ready
@@ -765,7 +824,9 @@ class EvolutionUpgradeManager:
             try:
                 self.bot.do(den.research(hydra_range))
                 game_time = getattr(self.bot, "time", 0)
-                self.logger.info(f"[{int(game_time)}s] [*][*] 홈 스파인 (히드라 사거리 +2) 연구 시작! [*][*]")
+                self.logger.info(
+                    f"[{int(game_time)}s] [*][*] 홈 스파인 (히드라 사거리 +2) 연구 시작! [*][*]"
+                )
             except Exception as e:
                 self.logger.warning(f"Failed to research hydra range: {e}")
 
@@ -790,12 +851,12 @@ class EvolutionUpgradeManager:
         # 또는 바퀴가 5기 이상 있을 때 (바퀴 잠복 회복용)
         banelings = self.bot.units(UnitTypeId.BANELING)
         roaches = self.bot.units(UnitTypeId.ROACH)
-        
+
         should_research_burrow = False
         if banelings.amount >= 2:
             should_research_burrow = True
         elif roaches.amount >= 5:
-             should_research_burrow = True
+            should_research_burrow = True
 
         if not should_research_burrow:
             return
@@ -810,7 +871,9 @@ class EvolutionUpgradeManager:
                 try:
                     self.bot.do(th.research(burrow))
                     game_time = getattr(self.bot, "time", 0)
-                    self.logger.info(f"[{int(game_time)}s] [*][*] 잠복 (Burrow) 연구 시작! [*][*]")
+                    self.logger.info(
+                        f"[{int(game_time)}s] [*][*] 잠복 (Burrow) 연구 시작! [*][*]"
+                    )
                     return
                 except Exception as e:
                     self.logger.warning(f"Failed to research burrow: {e}")
@@ -847,7 +910,9 @@ class EvolutionUpgradeManager:
             try:
                 self.bot.do(pool.research(adrenal))
                 game_time = getattr(self.bot, "time", 0)
-                self.logger.info(f"[{int(game_time)}s] [*][*][*] 아드레날린 분비선 (Crackling) 연구 시작! [*][*][*]")
+                self.logger.info(
+                    f"[{int(game_time)}s] [*][*][*] 아드레날린 분비선 (Crackling) 연구 시작! [*][*][*]"
+                )
             except Exception as e:
                 self.logger.warning(f"Failed to research adrenal glands: {e}")
 
@@ -863,7 +928,11 @@ class EvolutionUpgradeManager:
 
         # Check existing chambers
         evo_chambers = self.bot.structures(UnitTypeId.EVOLUTIONCHAMBER)
-        evo_count = evo_chambers.amount if hasattr(evo_chambers, 'amount') else len(list(evo_chambers))
+        evo_count = (
+            evo_chambers.amount
+            if hasattr(evo_chambers, "amount")
+            else len(list(evo_chambers))
+        )
         pending_evo = self.bot.already_pending(UnitTypeId.EVOLUTIONCHAMBER)
         total_evo = evo_count + pending_evo
 
@@ -904,8 +973,7 @@ class EvolutionUpgradeManager:
         if self.bot.townhalls.exists:
             try:
                 await self.bot.build(
-                    UnitTypeId.EVOLUTIONCHAMBER,
-                    near=self.bot.townhalls.first.position
+                    UnitTypeId.EVOLUTIONCHAMBER, near=self.bot.townhalls.first.position
                 )
                 self.logger.info(f"[{int(self.bot.time)}s] Building Evolution Chamber")
                 return True
@@ -938,12 +1006,17 @@ class EvolutionUpgradeManager:
         # === 1. Baneling Nest: 3분 이후 보장 (Spawning Pool 필수) ===
         if game_time >= 180:
             baneling_nests = self.bot.structures(UnitTypeId.BANELINGNEST)
-            if not baneling_nests.exists and self.bot.already_pending(UnitTypeId.BANELINGNEST) == 0:
+            if (
+                not baneling_nests.exists
+                and self.bot.already_pending(UnitTypeId.BANELINGNEST) == 0
+            ):
                 pools = self.bot.structures(UnitTypeId.SPAWNINGPOOL).ready
                 if pools.exists and self.bot.minerals >= 100 and self.bot.vespene >= 50:
                     try:
                         await self.bot.build(UnitTypeId.BANELINGNEST, near=build_pos)
-                        self.logger.info(f"[{int(game_time)}s] [*] Phase 14: Baneling Nest 건설 (변이 유닛 보장)")
+                        self.logger.info(
+                            f"[{int(game_time)}s] [*] Phase 14: Baneling Nest 건설 (변이 유닛 보장)"
+                        )
                     except Exception as e:
                         if iteration % 100 == 0:
                             self.logger.debug(f"Baneling Nest build failed: {e}")
@@ -951,13 +1024,18 @@ class EvolutionUpgradeManager:
         # === 2. Lurker Den: 7분 이후 보장 (Hydralisk Den + Lair 필수) ===
         if game_time >= 420:
             lurker_dens = self.bot.structures(UnitTypeId.LURKERDENMP)
-            if not lurker_dens.exists and self.bot.already_pending(UnitTypeId.LURKERDENMP) == 0:
+            if (
+                not lurker_dens.exists
+                and self.bot.already_pending(UnitTypeId.LURKERDENMP) == 0
+            ):
                 hydra_dens = self.bot.structures(UnitTypeId.HYDRALISKDEN).ready
                 if hydra_dens.exists and self._has_lair():
                     if self.bot.minerals >= 150 and self.bot.vespene >= 150:
                         try:
                             await self.bot.build(UnitTypeId.LURKERDENMP, near=build_pos)
-                            self.logger.info(f"[{int(game_time)}s] [*] Phase 14: Lurker Den 건설 (변이 유닛 보장)")
+                            self.logger.info(
+                                f"[{int(game_time)}s] [*] Phase 14: Lurker Den 건설 (변이 유닛 보장)"
+                            )
                         except Exception as e:
                             if iteration % 100 == 0:
                                 self.logger.debug(f"Lurker Den build failed: {e}")
@@ -965,11 +1043,16 @@ class EvolutionUpgradeManager:
         # === ★ Phase 31: Ultralisk Cavern — Hive 완성 후 자동 건설 ===
         if self._has_hive():
             ultra_caverns = self.bot.structures(UnitTypeId.ULTRALISKCAVERN)
-            if not ultra_caverns.exists and self.bot.already_pending(UnitTypeId.ULTRALISKCAVERN) == 0:
+            if (
+                not ultra_caverns.exists
+                and self.bot.already_pending(UnitTypeId.ULTRALISKCAVERN) == 0
+            ):
                 if self.bot.minerals >= 150 and self.bot.vespene >= 200:
                     try:
                         await self.bot.build(UnitTypeId.ULTRALISKCAVERN, near=build_pos)
-                        self.logger.info(f"[{int(game_time)}s] [*] Phase 31: Ultralisk Cavern 건설 (Hive 완성)")
+                        self.logger.info(
+                            f"[{int(game_time)}s] [*] Phase 31: Ultralisk Cavern 건설 (Hive 완성)"
+                        )
                     except Exception as e:
                         if iteration % 100 == 0:
                             self.logger.debug(f"Ultralisk Cavern build failed: {e}")
@@ -977,12 +1060,21 @@ class EvolutionUpgradeManager:
         # === 3. Roach Warren: 2분 30초 이후 보장 (Spawning Pool 필수) ===
         if game_time >= 150:
             roach_warrens = self.bot.structures(UnitTypeId.ROACHWARREN)
-            if not roach_warrens.exists and self.bot.already_pending(UnitTypeId.ROACHWARREN) == 0:
+            if (
+                not roach_warrens.exists
+                and self.bot.already_pending(UnitTypeId.ROACHWARREN) == 0
+            ):
                 pools = self.bot.structures(UnitTypeId.SPAWNINGPOOL).ready
-                if pools.exists and self.bot.minerals >= 150 and self.bot.vespene >= 100:
+                if (
+                    pools.exists
+                    and self.bot.minerals >= 150
+                    and self.bot.vespene >= 100
+                ):
                     try:
                         await self.bot.build(UnitTypeId.ROACHWARREN, near=build_pos)
-                        self.logger.info(f"[{int(game_time)}s] [*] Phase 14: Roach Warren 건설 (변이 유닛 보장)")
+                        self.logger.info(
+                            f"[{int(game_time)}s] [*] Phase 14: Roach Warren 건설 (변이 유닛 보장)"
+                        )
                     except Exception as e:
                         if iteration % 100 == 0:
                             self.logger.debug(f"Roach Warren build failed: {e}")
@@ -1040,7 +1132,9 @@ class EvolutionUpgradeManager:
         spawning_pools = self.bot.structures(UnitTypeId.SPAWNINGPOOL).ready
         if not spawning_pools.exists:
             if iteration % 100 == 0:
-                self.logger.warning(f"[{int(self.bot.time)}s] [!] Lair 대기 중: Spawning Pool 미완료")
+                self.logger.warning(
+                    f"[{int(self.bot.time)}s] [!] Lair 대기 중: Spawning Pool 미완료"
+                )
             return
 
         # ★ 최적화: idle 체크 제거 - 모든 ready Hatchery 허용 ★
@@ -1052,7 +1146,9 @@ class EvolutionUpgradeManager:
         # Drone 생산과 겹치지 않도록 버퍼 추가
         if self.bot.minerals < 200 or self.bot.vespene < 100:
             if iteration % 100 == 0:
-                self.logger.info(f"[{int(self.bot.time)}s] ⏳ Lair 자원 대기: {self.bot.minerals}m/{self.bot.vespene}g (필요: 150m/100g)")
+                self.logger.info(
+                    f"[{int(self.bot.time)}s] ⏳ Lair 자원 대기: {self.bot.minerals}m/{self.bot.vespene}g (필요: 150m/100g)"
+                )
             return
 
         # 변이 시작 (가장 안전한 해처리 = 본진)
@@ -1067,15 +1163,21 @@ class EvolutionUpgradeManager:
             else:
                 # idle 해처리가 없으면 다음 틱에 재시도
                 if iteration % 100 == 0:
-                    self.logger.info(f"[{int(self.bot.time)}s] Lair 대기: 모든 Hatchery가 사용 중")
+                    self.logger.info(
+                        f"[{int(self.bot.time)}s] Lair 대기: 모든 Hatchery가 사용 중"
+                    )
                 return
 
             self.bot.do(main_hatch(UnitTypeId.LAIR))
             game_time = getattr(self.bot, "time", 0)
-            self.logger.info(f"[{int(game_time)}s] [*][*][*] 레어 (Lair) 변이 시작! (목표: 3:30) [*][*][*]")
+            self.logger.info(
+                f"[{int(game_time)}s] [*][*][*] 레어 (Lair) 변이 시작! (목표: 3:30) [*][*][*]"
+            )
         except Exception as e:
             if iteration % 50 == 0:
-                self.logger.warning(f"Lair upgrade error: {e} (hatcheries: {hatcheries.amount}, idle: {hatcheries.idle.amount})")
+                self.logger.warning(
+                    f"Lair upgrade error: {e} (hatcheries: {hatcheries.amount}, idle: {hatcheries.idle.amount})"
+                )
 
     async def _upgrade_to_hive(self, iteration: int) -> None:
         """
@@ -1121,7 +1223,9 @@ class EvolutionUpgradeManager:
             lair = lairs.first
             self.bot.do(lair(UnitTypeId.HIVE))
             game_time = getattr(self.bot, "time", 0)
-            self.logger.info(f"[{int(game_time)}s] [*][*][*] 군락 (Hive) 변이 시작! [*][*][*]")
+            self.logger.info(
+                f"[{int(game_time)}s] [*][*][*] 군락 (Hive) 변이 시작! [*][*][*]"
+            )
         except Exception as e:
             if iteration % 50 == 0:
                 self.logger.warning(f"Hive upgrade error: {e}")
@@ -1142,7 +1246,10 @@ class EvolutionUpgradeManager:
 
         # 이미 있거나 건설 중이면 스킵
         infestation_pits = self.bot.structures(UnitTypeId.INFESTATIONPIT)
-        if infestation_pits.exists or self.bot.already_pending(UnitTypeId.INFESTATIONPIT) > 0:
+        if (
+            infestation_pits.exists
+            or self.bot.already_pending(UnitTypeId.INFESTATIONPIT) > 0
+        ):
             return
 
         # 레어 필요
@@ -1157,8 +1264,7 @@ class EvolutionUpgradeManager:
         if self.bot.townhalls.exists:
             try:
                 await self.bot.build(
-                    UnitTypeId.INFESTATIONPIT,
-                    near=self.bot.townhalls.first.position
+                    UnitTypeId.INFESTATIONPIT, near=self.bot.townhalls.first.position
                 )
                 self.logger.info(f"[{int(game_time)}s] Building Infestation Pit")
             except Exception as e:
@@ -1176,15 +1282,23 @@ class EvolutionUpgradeManager:
 
         # 1. 사거리 업 (Seismic Spines) - Priority 1
         range_up = getattr(UpgradeId, "LURKERRANGE", None)
-        if range_up and not self._is_upgrade_done(range_up) and self.bot.already_pending_upgrade(range_up) == 0:
+        if (
+            range_up
+            and not self._is_upgrade_done(range_up)
+            and self.bot.already_pending_upgrade(range_up) == 0
+        ):
             if self.bot.can_afford(range_up):
                 self.bot.do(den.research(range_up))
                 self.logger.info("Researching Lurker Range")
                 return
 
         # 2. 속도 업 (Adaptive Talons) - Priority 2
-        speed_up = getattr(UpgradeId, "DIGGINGCLAWS", None) 
-        if speed_up and not self._is_upgrade_done(speed_up) and self.bot.already_pending_upgrade(speed_up) == 0:
+        speed_up = getattr(UpgradeId, "DIGGINGCLAWS", None)
+        if (
+            speed_up
+            and not self._is_upgrade_done(speed_up)
+            and self.bot.already_pending_upgrade(speed_up) == 0
+        ):
             if self.bot.can_afford(speed_up):
                 self.bot.do(den.research(speed_up))
                 self.logger.info("Researching Lurker Speed")
@@ -1202,7 +1316,11 @@ class EvolutionUpgradeManager:
 
         # 1. 방어 업 (Chitinous Plating) - Priority 1
         armor_up = getattr(UpgradeId, "CHITINOUSPLATING", None)
-        if armor_up and not self._is_upgrade_done(armor_up) and self.bot.already_pending_upgrade(armor_up) == 0:
+        if (
+            armor_up
+            and not self._is_upgrade_done(armor_up)
+            and self.bot.already_pending_upgrade(armor_up) == 0
+        ):
             if self.bot.can_afford(armor_up):
                 self.bot.do(cavern.research(armor_up))
                 self.logger.info("Researching Ultra Armor (Chitinous Plating)")
@@ -1210,12 +1328,15 @@ class EvolutionUpgradeManager:
 
         # 2. 속도 업 (Anabolic Synthesis) - Priority 2
         speed_up = getattr(UpgradeId, "ANABOLICSYNTHESIS", None)
-        if speed_up and not self._is_upgrade_done(speed_up) and self.bot.already_pending_upgrade(speed_up) == 0:
+        if (
+            speed_up
+            and not self._is_upgrade_done(speed_up)
+            and self.bot.already_pending_upgrade(speed_up) == 0
+        ):
             if self.bot.can_afford(speed_up):
                 self.bot.do(cavern.research(speed_up))
                 self.logger.info("Researching Ultra Speed (Anabolic Synthesis)")
                 return
-
 
     # ========================================
     # ★★★ Phase 18: Intel-Based Priorities ★★★
@@ -1235,7 +1356,7 @@ class EvolutionUpgradeManager:
 
         # 적 유닛 구성 분석
         enemy_units = self.bot.enemy_units
-        
+
         # 카운트
         enemy_bio = 0  # 마린, 사신, 히드라, 저글링 등
         enemy_armored = 0  # 불멸자, 거신, 토르, 울트라 등
@@ -1243,17 +1364,39 @@ class EvolutionUpgradeManager:
 
         for unit in enemy_units:
             unit_type = getattr(unit.type_id, "name", "").upper()
-            
+
             # Bio 유닛
-            if unit_type in {"MARINE", "MARAUDER", "REAPER", "ZEALOT", "STALKER", "ZERGLING", "HYDRALISK"}:
+            if unit_type in {
+                "MARINE",
+                "MARAUDER",
+                "REAPER",
+                "ZEALOT",
+                "STALKER",
+                "ZERGLING",
+                "HYDRALISK",
+            }:
                 enemy_bio += 1
-            
+
             # Armored 유닛
-            if unit_type in {"IMMORTAL", "COLOSSUS", "THOR", "SIEGETANK", "ULTRALISK", "ROACH"}:
+            if unit_type in {
+                "IMMORTAL",
+                "COLOSSUS",
+                "THOR",
+                "SIEGETANK",
+                "ULTRALISK",
+                "ROACH",
+            }:
                 enemy_armored += 1
-            
+
             # Air 유닛
-            if unit_type in {"MUTALISK", "CORRUPTOR", "BANSHEE", "VIKING", "PHOENIX", "VOIDRAY"}:
+            if unit_type in {
+                "MUTALISK",
+                "CORRUPTOR",
+                "BANSHEE",
+                "VIKING",
+                "PHOENIX",
+                "VOIDRAY",
+            }:
                 enemy_air += 1
 
         # ★ 우선순위 부스트 결정 ★
@@ -1262,19 +1405,25 @@ class EvolutionUpgradeManager:
         # Bio가 많으면 방어력 우선 (작은 공격 여러 번)
         if enemy_bio >= 10:
             self.intel_based_priority_boost["armor"] = 1.5
-            self.logger.info(f"[UPGRADE] Intel: Enemy has {enemy_bio} bio units → Armor priority boost!")
+            self.logger.info(
+                f"[UPGRADE] Intel: Enemy has {enemy_bio} bio units → Armor priority boost!"
+            )
 
         # Armored가 많으면 공격력 우선 (강한 공격 필요)
         if enemy_armored >= 5:
             self.intel_based_priority_boost["melee"] = 1.3
             self.intel_based_priority_boost["missile"] = 1.3
-            self.logger.info(f"[UPGRADE] Intel: Enemy has {enemy_armored} armored units → Attack priority boost!")
+            self.logger.info(
+                f"[UPGRADE] Intel: Enemy has {enemy_armored} armored units → Attack priority boost!"
+            )
 
         # Air가 많으면 공중 업그레이드 우선
         if enemy_air >= 5:
             self.intel_based_priority_boost["air_attack"] = 1.8
             self.intel_based_priority_boost["air_armor"] = 1.3
-            self.logger.info(f"[UPGRADE] Intel: Enemy has {enemy_air} air units → Air upgrade priority boost!")
+            self.logger.info(
+                f"[UPGRADE] Intel: Enemy has {enemy_air} air units → Air upgrade priority boost!"
+            )
 
     # ========================================
     # ★★★ Phase 18: Gas Reservation System ★★★
@@ -1311,7 +1460,10 @@ class EvolutionUpgradeManager:
 
         # 가스가 충분함 - 예약된 업그레이드 실행
         evo_chambers = self.bot.structures(UnitTypeId.EVOLUTIONCHAMBER).ready
-        spires = self.bot.structures(UnitTypeId.SPIRE).ready | self.bot.structures(UnitTypeId.GREATERSPIRE).ready
+        spires = (
+            self.bot.structures(UnitTypeId.SPIRE).ready
+            | self.bot.structures(UnitTypeId.GREATERSPIRE).ready
+        )
 
         for upgrade_id in self.reserved_upgrades[:]:  # 복사본으로 순회 (삭제 중)
             if not self._can_research(upgrade_id):

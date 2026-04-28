@@ -24,8 +24,13 @@ async def track_enemy_expansions(manager):
 
     # 타운홀 타입
     townhall_types = {
-        "NEXUS", "COMMANDCENTER", "ORBITALCOMMAND", "PLANETARYFORTRESS",
-        "HATCHERY", "LAIR", "HIVE"
+        "NEXUS",
+        "COMMANDCENTER",
+        "ORBITALCOMMAND",
+        "PLANETARYFORTRESS",
+        "HATCHERY",
+        "LAIR",
+        "HIVE",
     }
 
     # 적 타운홀 찾기
@@ -36,7 +41,9 @@ async def track_enemy_expansions(manager):
             pos = struct.position
             if pos not in manager._known_enemy_expansions:
                 manager._known_enemy_expansions.add(pos)
-                manager.logger.info(f"New enemy expansion discovered at ({pos.x:.1f}, {pos.y:.1f})")
+                manager.logger.info(
+                    f"New enemy expansion discovered at ({pos.x:.1f}, {pos.y:.1f})"
+                )
 
 
 def get_anti_air_threats(enemy_units, position, range_check=15):
@@ -53,10 +60,22 @@ def get_anti_air_threats(enemy_units, position, range_check=15):
     """
     # ★ Phase 22: Use set for O(1) lookup + closer_than() ★
     anti_air_names = {
-        "MARINE", "HYDRALISK", "STALKER", "PHOENIX", "VOIDRAY",
-        "VIKINGFIGHTER", "THOR", "CYCLONE", "LIBERATOR",
-        "QUEEN", "CORRUPTOR", "MUTALISK", "ARCHON",
-        "MISSILETURRET", "SPORECRAWLER", "PHOTONCANNON"
+        "MARINE",
+        "HYDRALISK",
+        "STALKER",
+        "PHOENIX",
+        "VOIDRAY",
+        "VIKINGFIGHTER",
+        "THOR",
+        "CYCLONE",
+        "LIBERATOR",
+        "QUEEN",
+        "CORRUPTOR",
+        "MUTALISK",
+        "ARCHON",
+        "MISSILETURRET",
+        "SPORECRAWLER",
+        "PHOTONCANNON",
     }
 
     # Use closer_than to pre-filter by distance first
@@ -64,9 +83,12 @@ def get_anti_air_threats(enemy_units, position, range_check=15):
         nearby = enemy_units.closer_than(range_check, position)
         return [e for e in nearby if getattr(e.type_id, "name", "") in anti_air_names]
     else:
-        return [e for e in enemy_units
-                if getattr(e.type_id, "name", "") in anti_air_names
-                and e.distance_to(position) < range_check]
+        return [
+            e
+            for e in enemy_units
+            if getattr(e.type_id, "name", "") in anti_air_names
+            and e.distance_to(position) < range_check
+        ]
 
 
 def find_densest_enemy_position(enemies):

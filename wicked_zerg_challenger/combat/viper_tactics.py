@@ -65,19 +65,19 @@ class ViperTacticsManager:
         self.abduct_priority: List = []
         if UnitTypeId:
             self.abduct_priority = [
-                UnitTypeId.SIEGETANKSIEGED,     # 시즈 모드 탱크 (최우선)
-                UnitTypeId.COLOSSUS,            # 콜로서스
-                UnitTypeId.HIGHTEMPLAR,         # 하이템플러
-                UnitTypeId.DISRUPTOR,           # 디스럽터
-                UnitTypeId.THOR,                # 토르
-                UnitTypeId.CARRIER,             # 캐리어
-                UnitTypeId.BATTLECRUISER,       # 배틀크루저
-                UnitTypeId.TEMPEST,             # 템페스트
-                UnitTypeId.IMMORTAL,            # 불멸자
-                UnitTypeId.SIEGETANK,            # 이동 모드 탱크
-                UnitTypeId.LIBERATORAG,         # 리버레이터 (시즈)
-                UnitTypeId.ARCHON,              # 아콘
-                UnitTypeId.MOTHERSHIP,          # 모선
+                UnitTypeId.SIEGETANKSIEGED,  # 시즈 모드 탱크 (최우선)
+                UnitTypeId.COLOSSUS,  # 콜로서스
+                UnitTypeId.HIGHTEMPLAR,  # 하이템플러
+                UnitTypeId.DISRUPTOR,  # 디스럽터
+                UnitTypeId.THOR,  # 토르
+                UnitTypeId.CARRIER,  # 캐리어
+                UnitTypeId.BATTLECRUISER,  # 배틀크루저
+                UnitTypeId.TEMPEST,  # 템페스트
+                UnitTypeId.IMMORTAL,  # 불멸자
+                UnitTypeId.SIEGETANK,  # 이동 모드 탱크
+                UnitTypeId.LIBERATORAG,  # 리버레이터 (시즈)
+                UnitTypeId.ARCHON,  # 아콘
+                UnitTypeId.MOTHERSHIP,  # 모선
             ]
 
         # 블라인딩 클라우드 우선순위 (원거리 유닛 그룹)
@@ -109,12 +109,12 @@ class ViperTacticsManager:
             ]
 
         # 전술 파라미터
-        self.abduct_range: float = 9.0          # 어브덕트 사거리
+        self.abduct_range: float = 9.0  # 어브덕트 사거리
         self.blinding_cloud_range: float = 11.0  # 블라인딩 클라우드 사거리
-        self.parasitic_bomb_range: float = 8.0   # 패러사이틱 밤 사거리
-        self.safe_distance: float = 10.0         # 바이퍼 안전 거리
-        self.min_air_cluster: int = 3            # 패러사이틱 밤 최소 공중 유닛 수
-        self.min_ground_cluster: int = 4         # 블라인딩 클라우드 최소 지상 유닛 수
+        self.parasitic_bomb_range: float = 8.0  # 패러사이틱 밤 사거리
+        self.safe_distance: float = 10.0  # 바이퍼 안전 거리
+        self.min_air_cluster: int = 3  # 패러사이틱 밤 최소 공중 유닛 수
+        self.min_ground_cluster: int = 4  # 블라인딩 클라우드 최소 지상 유닛 수
 
         # 바이퍼 체력 관리
         self.retreat_hp: float = 0.3  # 체력 30% 이하 시 후퇴
@@ -290,8 +290,7 @@ class ViperTacticsManager:
             패러사이틱 밤 대상 또는 None
         """
         air_enemies = enemy_units.filter(
-            lambda u: u.is_flying
-            and u.distance_to(viper) <= self.parasitic_bomb_range
+            lambda u: u.is_flying and u.distance_to(viper) <= self.parasitic_bomb_range
         )
 
         if air_enemies.amount < self.min_air_cluster:
@@ -325,7 +324,9 @@ class ViperTacticsManager:
         except Exception as e:
             self.logger.warning(f"[VIPER] 어브덕트 실패: {e}")
 
-    async def _cast_blinding_cloud(self, viper: Unit, target_pos: Point2, game_time: float):
+    async def _cast_blinding_cloud(
+        self, viper: Unit, target_pos: Point2, game_time: float
+    ):
         """블라인딩 클라우드 시전"""
         try:
             self.bot.do(viper(AbilityId.EFFECT_BLINDINGCLOUD, target_pos))
@@ -368,11 +369,16 @@ class ViperTacticsManager:
             return
 
         consumable = self.bot.structures.filter(
-            lambda s: s.type_id in {
-                UnitTypeId.SPAWNINGPOOL, UnitTypeId.EVOLUTIONCHAMBER,
-                UnitTypeId.ROACHWARREN, UnitTypeId.BANELINGNEST,
-                UnitTypeId.HYDRALISKDEN, UnitTypeId.SPIRE,
-                UnitTypeId.INFESTATIONPIT, UnitTypeId.ULTRALISKCAVERN,
+            lambda s: s.type_id
+            in {
+                UnitTypeId.SPAWNINGPOOL,
+                UnitTypeId.EVOLUTIONCHAMBER,
+                UnitTypeId.ROACHWARREN,
+                UnitTypeId.BANELINGNEST,
+                UnitTypeId.HYDRALISKDEN,
+                UnitTypeId.SPIRE,
+                UnitTypeId.INFESTATIONPIT,
+                UnitTypeId.ULTRALISKCAVERN,
             }
             and s.distance_to(viper) < 7
             and s.health_percentage > 0.5
@@ -381,7 +387,11 @@ class ViperTacticsManager:
         if consumable.exists:
             target_building = consumable.closest_to(viper)
             try:
-                self.bot.do(viper(AbilityId.VIPERCONSUMESTRUCTURE_YOURBUILDINGS, target_building))
+                self.bot.do(
+                    viper(
+                        AbilityId.VIPERCONSUMESTRUCTURE_YOURBUILDINGS, target_building
+                    )
+                )
             except Exception:
                 pass
 
@@ -395,12 +405,14 @@ class ViperTacticsManager:
             # 위협에서 반대 방향으로 이동
             threat_center = threats.center
             flee_direction = viper.position - threat_center
-            length = (flee_direction.x ** 2 + flee_direction.y ** 2) ** 0.5
+            length = (flee_direction.x**2 + flee_direction.y**2) ** 0.5
             if length > 0:
-                flee_pos = Point2((
-                    viper.position.x + (flee_direction.x / length) * 5,
-                    viper.position.y + (flee_direction.y / length) * 5,
-                ))
+                flee_pos = Point2(
+                    (
+                        viper.position.x + (flee_direction.x / length) * 5,
+                        viper.position.y + (flee_direction.y / length) * 5,
+                    )
+                )
                 self.bot.do(viper.move(flee_pos))
 
     async def _retreat_viper(self, viper: Unit):
@@ -440,6 +452,8 @@ class ViperTacticsManager:
             "blinding_clouds_cast": self.blinding_clouds_cast,
             "parasitic_bombs_cast": self.parasitic_bombs_cast,
             "total_casts": (
-                self.abducts_cast + self.blinding_clouds_cast + self.parasitic_bombs_cast
+                self.abducts_cast
+                + self.blinding_clouds_cast
+                + self.parasitic_bombs_cast
             ),
         }

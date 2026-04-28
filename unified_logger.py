@@ -32,10 +32,10 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Optional
 
-
 # ═══════════════════════════════════════════════════════
 # JSON 로그 포매터
 # ═══════════════════════════════════════════════════════
+
 
 class JsonFormatter(logging.Formatter):
     """로그 레코드를 JSON 형태로 직렬화하는 포매터."""
@@ -57,11 +57,28 @@ class JsonFormatter(logging.Formatter):
         # extra 필드가 있으면 추가
         # logging 표준 속성이 아닌 것만 포함
         _standard_attrs = {
-            "name", "msg", "args", "created", "relativeCreated",
-            "exc_info", "exc_text", "stack_info", "lineno", "funcName",
-            "filename", "module", "pathname", "thread", "threadName",
-            "process", "processName", "levelname", "levelno",
-            "message", "msecs", "taskName",
+            "name",
+            "msg",
+            "args",
+            "created",
+            "relativeCreated",
+            "exc_info",
+            "exc_text",
+            "stack_info",
+            "lineno",
+            "funcName",
+            "filename",
+            "module",
+            "pathname",
+            "thread",
+            "threadName",
+            "process",
+            "processName",
+            "levelname",
+            "levelno",
+            "message",
+            "msecs",
+            "taskName",
         }
         for key, value in record.__dict__.items():
             if key not in _standard_attrs and not key.startswith("_"):
@@ -86,6 +103,7 @@ class JsonFormatter(logging.Formatter):
 # 사람이 읽기 좋은 포매터
 # ═══════════════════════════════════════════════════════
 
+
 class ReadableFormatter(logging.Formatter):
     """색상 없는, 사람이 읽기 좋은 로그 포매터."""
 
@@ -100,15 +118,16 @@ class ReadableFormatter(logging.Formatter):
 # 콘솔 컬러 포매터
 # ═══════════════════════════════════════════════════════
 
+
 class ColorFormatter(logging.Formatter):
     """터미널에서 로그 레벨별 색상을 적용하는 포매터."""
 
     # ANSI 색상 코드
     COLORS = {
-        "DEBUG": "\033[36m",     # 시안
-        "INFO": "\033[32m",      # 녹색
-        "WARNING": "\033[33m",   # 노란색
-        "ERROR": "\033[31m",     # 빨간색
+        "DEBUG": "\033[36m",  # 시안
+        "INFO": "\033[32m",  # 녹색
+        "WARNING": "\033[33m",  # 노란색
+        "ERROR": "\033[31m",  # 빨간색
         "CRITICAL": "\033[35m",  # 보라색
     }
     RESET = "\033[0m"
@@ -130,6 +149,7 @@ class ColorFormatter(logging.Formatter):
 # UnifiedLogger 메인 클래스
 # ═══════════════════════════════════════════════════════
 
+
 class UnifiedLogger:
     """
     JARVIS 프로젝트의 통합 로깅 관리자.
@@ -143,7 +163,7 @@ class UnifiedLogger:
     _json_format: bool = False
     _log_level: int = logging.INFO
     _max_bytes: int = 50 * 1024 * 1024  # 50MB (크기 기반 백업용)
-    _backup_count: int = 30             # 최대 30일 보관
+    _backup_count: int = 30  # 최대 30일 보관
     _loggers: dict = {}
 
     @classmethod
@@ -336,6 +356,7 @@ class UnifiedLogger:
 # 편의 함수
 # ═══════════════════════════════════════════════════════
 
+
 def get_logger(name: str) -> logging.Logger:
     """UnifiedLogger.get_logger의 단축 함수."""
     return UnifiedLogger.get_logger(name)
@@ -361,9 +382,7 @@ if __name__ == "__main__":
 
     # 테스트: JSON 포맷
     UnifiedLogger.shutdown()
-    UnifiedLogger.setup(
-        log_dir="./logs", json_format=True, log_level="DEBUG"
-    )
+    UnifiedLogger.setup(log_dir="./logs", json_format=True, log_level="DEBUG")
     json_log = UnifiedLogger.get_logger("test.json")
     json_log.info("JSON 포맷 테스트", extra={"key": "value", "count": 42})
 

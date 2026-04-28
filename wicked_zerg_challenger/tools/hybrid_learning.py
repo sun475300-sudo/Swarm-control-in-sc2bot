@@ -11,17 +11,18 @@ Features:
 4. [Learn] Trigger iterative learning cycles
 """
 
-import requests
-import re
+import logging
 import os
-import sys
+import re
 import shutil
+import sys
 import time
 import zipfile
-from pathlib import Path
 from datetime import datetime
+from pathlib import Path
 from typing import List, Optional
-import logging
+
+import requests
 
 logger = logging.getLogger("HybridLearning")
 
@@ -32,6 +33,7 @@ if str(project_root) not in sys.path:
     sys.path.insert(0, str(project_root))
 
 from local_training.scripts.replay_build_order_learner import ReplayBuildOrderLearner
+
 
 class ReplayPipeline:
     def __init__(self):
@@ -217,8 +219,10 @@ class ReplayPipeline:
 
 def main():
     # Disable HTTPS warnings for verify=False
-    import urllib3
     import argparse
+
+    import urllib3
+
     # SSL verification is now enabled; no need to suppress warnings
     
     parser = argparse.ArgumentParser(description="MLOps Pipeline for SC2 Bot")

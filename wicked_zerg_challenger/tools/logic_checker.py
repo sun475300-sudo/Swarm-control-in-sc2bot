@@ -6,12 +6,12 @@ Scans source code for overlapping commands, duplicate logic, and bug patterns.
 """
 
 import ast
+import logging
 import os
 import re
 from collections import defaultdict
 from pathlib import Path
 from typing import Any, Dict, List, Set, Tuple
-import logging
 
 logger = logging.getLogger("LogicChecker")
 

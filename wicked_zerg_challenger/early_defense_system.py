@@ -7,22 +7,30 @@ Purpose: Counter early rushes and improve initial survival rate
 - Manage initial unit production priority
 """
 
-from typing import Optional, Set
 import logging
+from typing import Optional, Set
 
 logger = logging.getLogger("EarlyDefenseSystem")
 try:
     from sc2.bot_ai import BotAI
-    from sc2.ids.unit_typeid import UnitTypeId
     from sc2.ids.ability_id import AbilityId
+    from sc2.ids.unit_typeid import UnitTypeId
+    from sc2.ids.upgrade_id import UpgradeId
     from sc2.position import Point2
 except ImportError:
+
     class BotAI:
         pass
+
     class UnitTypeId:
         pass
+
     class AbilityId:
         pass
+
+    class UpgradeId:
+        pass
+
     class Point2:
         pass
 
@@ -73,7 +81,10 @@ class EarlyDefenseSystem:
             await self._produce_early_zerglings()
 
         # 4. Queen priority production
-        if not self.queen_started and self.bot.structures(UnitTypeId.SPAWNINGPOOL).ready:
+        if (
+            not self.queen_started
+            and self.bot.structures(UnitTypeId.SPAWNINGPOOL).ready
+        ):
             await self._produce_first_queen()
 
         # 5. Emergency defense mode (If enemy detected)
@@ -100,7 +111,9 @@ class EarlyDefenseSystem:
             self.emergency_mode = True
             self.early_threats = set(nearby_enemies.tags)
 
-            logger.warning(f"[WARNING] Early rush detected! {nearby_enemies.amount} enemies found (Game Time: {int(self.bot.time)}s)")
+            logger.warning(
+                f"[WARNING] Early rush detected! {nearby_enemies.amount} enemies found (Game Time: {int(self.bot.time)}s)"
+            )
             logger.info(f"Emergency Defense Mode ACTIVATED!")
 
     async def _build_early_pool(self) -> None:
@@ -132,17 +145,23 @@ class EarlyDefenseSystem:
         # Pool 건설 via TechCoordinator
         try:
             tech_coordinator = getattr(self.bot, "tech_coordinator", None)
-            if tech_coordinator and not tech_coordinator.is_planned(UnitTypeId.SPAWNINGPOOL):
-                target_pos = main_base.position.towards(self.bot.game_info.map_center, 5)
+            if tech_coordinator and not tech_coordinator.is_planned(
+                UnitTypeId.SPAWNINGPOOL
+            ):
+                target_pos = main_base.position.towards(
+                    self.bot.game_info.map_center, 5
+                )
                 PRIORITY_DEFENSE = 85  # High priority for early defense
                 tech_coordinator.request_structure(
                     UnitTypeId.SPAWNINGPOOL,
                     target_pos,
                     PRIORITY_DEFENSE,
-                    "EarlyDefenseSystem"
+                    "EarlyDefenseSystem",
                 )
                 self.pool_started = True
-                logger.info(f"[OK] Spawning Pool requested via TechCoordinator (Game Time: {int(self.bot.time)}s)")
+                logger.info(
+                    f"[OK] Spawning Pool requested via TechCoordinator (Game Time: {int(self.bot.time)}s)"
+                )
             elif not tech_coordinator:
                 logger.warning(f"[WARNING] TechCoordinator not available")
         except Exception as e:
@@ -176,8 +195,9 @@ class EarlyDefenseSystem:
         # Produce Zerglings (As many as possible)
         larvae_for_lings = min(
             len(self.bot.larva),
-            (target_zerglings - current_zerglings - pending_zerglings + 1) // 2,  # 2 per egg
-            self.bot.minerals // 50
+            (target_zerglings - current_zerglings - pending_zerglings + 1)
+            // 2,  # 2 per egg
+            self.bot.minerals // 50,
         )
 
         for larva in self.bot.larva[:larvae_for_lings]:
@@ -185,7 +205,9 @@ class EarlyDefenseSystem:
                 self.bot.do(larva.train(UnitTypeId.ZERGLING))
 
         if larvae_for_lings > 0:
-            logger.info(f"Producing {larvae_for_lings * 2} Zerglings (Target: {target_zerglings})")
+            logger.info(
+                f"Producing {larvae_for_lings * 2} Zerglings (Target: {target_zerglings})"
+            )
 
     async def _produce_first_queen(self) -> None:
         """
@@ -214,7 +236,9 @@ class EarlyDefenseSystem:
             if self.bot.can_afford(UnitTypeId.QUEEN):
                 self.bot.do(hatchery.train(UnitTypeId.QUEEN))
                 self.queen_started = True
-                logger.info(f"[OK] Started First Queen Production (Game Time: {int(self.bot.time)}s)")
+                logger.info(
+                    f"[OK] Started First Queen Production (Game Time: {int(self.bot.time)}s)"
+                )
                 break
 
     async def _emergency_defense(self) -> None:
@@ -253,20 +277,26 @@ class EarlyDefenseSystem:
         # Worker Defense (Only if enemy is very close)
         if closest_enemy.distance_to(main_base) < 10:
             defending_workers = min(6, len(self.bot.workers))  # Max 6 workers
-            workers_to_defend = self.bot.workers.closest_n_units(closest_enemy.position, defending_workers)
+            workers_to_defend = self.bot.workers.closest_n_units(
+                closest_enemy.position, defending_workers
+            )
 
             for worker in workers_to_defend:
                 # ★ CRITICAL: Ensure workers don't go further than 12 distance from base ★
                 if worker.distance_to(main_base) > 12:
                     # Return if too far
                     if self.bot.mineral_field:
-                        self.bot.do(worker.gather(self.bot.mineral_field.closest_to(main_base)))
+                        self.bot.do(
+                            worker.gather(self.bot.mineral_field.closest_to(main_base))
+                        )
                     else:
                         self.bot.do(worker.move(main_base.position))
                     continue
 
                 # Attack only if enemy is near (within 15)
-                if (worker.is_idle or worker.is_gathering) and closest_enemy.distance_to(main_base) < 10:
+                if (
+                    worker.is_idle or worker.is_gathering
+                ) and closest_enemy.distance_to(main_base) < 10:
                     self.bot.do(worker.attack(closest_enemy.position))
 
             logger.info(f"[FIGHT] Deployed {defending_workers} workers for defense!")
@@ -338,7 +368,9 @@ class EarlyDefenseSystem:
         try:
             self.bot.do(pool.research(zergling_speed))
             self._zergling_speed_researched = True
-            logger.info(f"[*][*][*] Zergling Speed (Metabolic Boost) researched at {int(self.bot.time)}s! [*][*][*]")
+            logger.info(
+                f"[*][*][*] Zergling Speed (Metabolic Boost) researched at {int(self.bot.time)}s! [*][*][*]"
+            )
         except Exception as e:
             logger.error(f"Zergling speed research failed: {e}")
 
@@ -389,23 +421,27 @@ class EarlyDefenseSystem:
                         UnitTypeId.SPINECRAWLER,
                         build_pos,
                         80,  # High priority
-                        "EarlyDefenseSystem"
+                        "EarlyDefenseSystem",
                     )
                     self._spine_crawler_ordered = True
-                    logger.info(f"[*] Spine Crawler ordered at {int(self.bot.time)}s (early defense) [*]")
+                    logger.info(
+                        f"[*] Spine Crawler ordered at {int(self.bot.time)}s (early defense) [*]"
+                    )
             else:
                 location = await self.bot.find_placement(
                     UnitTypeId.SPINECRAWLER,
                     build_pos,
                     max_distance=10,
-                    placement_step=2
+                    placement_step=2,
                 )
                 if location:
                     worker = self.bot.workers.closest_to(location)
                     if worker:
                         self.bot.do(worker.build(UnitTypeId.SPINECRAWLER, location))
                         self._spine_crawler_ordered = True
-                        logger.info(f"[*] Spine Crawler building at {int(self.bot.time)}s (early defense) [*]")
+                        logger.info(
+                            f"[*] Spine Crawler building at {int(self.bot.time)}s (early defense) [*]"
+                        )
         except Exception as e:
             logger.error(f"Spine crawler build failed: {e}")
 
@@ -446,20 +482,26 @@ class EarlyDefenseSystem:
         if enemy_count > 3 and our_army < 6 and self.bot.workers.amount > 6:
             # Pull 4-6 workers based on enemy count
             workers_to_pull = min(6, max(4, enemy_count))
-            workers_to_pull = min(workers_to_pull, self.bot.workers.amount - 4)  # Keep at least 4 mining
+            workers_to_pull = min(
+                workers_to_pull, self.bot.workers.amount - 4
+            )  # Keep at least 4 mining
 
             if workers_to_pull <= 0:
                 return
 
             closest_enemy = nearby_enemies.closest_to(main_base)
-            pulled = self.bot.workers.closest_n_units(closest_enemy.position, workers_to_pull)
+            pulled = self.bot.workers.closest_n_units(
+                closest_enemy.position, workers_to_pull
+            )
 
             for worker in pulled:
                 self.bot.do(worker.attack(closest_enemy.position))
                 self._pulled_worker_tags.add(worker.tag)
 
             self._workers_pulled = True
-            logger.info(f"[*] WORKER PULL: {workers_to_pull} workers defending vs {enemy_count} enemies! (army: {our_army}) [*]")
+            logger.info(
+                f"[*] WORKER PULL: {workers_to_pull} workers defending vs {enemy_count} enemies! (army: {our_army}) [*]"
+            )
 
     async def _return_pulled_workers(self) -> None:
         """
@@ -481,7 +523,9 @@ class EarlyDefenseSystem:
         for worker in self.bot.workers:
             if worker.tag in self._pulled_worker_tags:
                 if self.bot.mineral_field:
-                    self.bot.do(worker.gather(self.bot.mineral_field.closest_to(main_base)))
+                    self.bot.do(
+                        worker.gather(self.bot.mineral_field.closest_to(main_base))
+                    )
                 else:
                     self.bot.do(worker.move(main_base.position))
                 returned += 1

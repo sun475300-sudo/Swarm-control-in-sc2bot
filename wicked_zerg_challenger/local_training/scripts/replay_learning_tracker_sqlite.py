@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import logging
 import sqlite3
 import threading
 from dataclasses import dataclass
@@ -17,7 +18,6 @@ from datetime import datetime
 from enum import Enum
 from pathlib import Path
 from typing import Dict, Optional
-import logging
 
 logger = logging.getLogger("ReplayLearningTrackerSqlite")
 

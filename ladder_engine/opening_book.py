@@ -4,8 +4,8 @@ SC2 Zerg opening book with build order trees and matchup-based selection.
 """
 
 from dataclasses import dataclass, field
-from typing import List, Dict, Optional, Tuple
 from enum import Enum
+from typing import Dict, List, Optional, Tuple
 
 
 class Race(Enum):
@@ -45,7 +45,7 @@ def _build_hatch_first() -> BuildOrder:
         race_matchup="ZvX",
         win_rate=0.52,
         sample_size=340,
-        description="Greedy economic opening; expand before pool."
+        description="Greedy economic opening; expand before pool.",
     )
     bo.add_step(17, "build", "Hatchery", "natural expansion")
     bo.add_step(17, "build", "Spawning Pool")
@@ -61,7 +61,7 @@ def _build_pool_first() -> BuildOrder:
         race_matchup="ZvT",
         win_rate=0.55,
         sample_size=210,
-        description="Early pool for lings/queen pressure into expand."
+        description="Early pool for lings/queen pressure into expand.",
     )
     bo.add_step(13, "build", "Spawning Pool")
     bo.add_step(13, "build", "Overlord")
@@ -77,7 +77,7 @@ def _build_12pool() -> BuildOrder:
         race_matchup="ZvP",
         win_rate=0.49,
         sample_size=175,
-        description="12-pool speedling rush to punish greedy protoss openers."
+        description="12-pool speedling rush to punish greedy protoss openers.",
     )
     bo.add_step(12, "build", "Spawning Pool")
     bo.add_step(13, "build", "Overlord")
@@ -93,7 +93,7 @@ def _build_overpool() -> BuildOrder:
         race_matchup="ZvZ",
         win_rate=0.51,
         sample_size=290,
-        description="Overlord first then pool; standard safe ZvZ opener."
+        description="Overlord first then pool; standard safe ZvZ opener.",
     )
     bo.add_step(13, "build", "Overlord")
     bo.add_step(14, "build", "Spawning Pool")
@@ -109,7 +109,7 @@ def _build_gasless_expand() -> BuildOrder:
         race_matchup="ZvT",
         win_rate=0.48,
         sample_size=130,
-        description="Gasless double expand into roach/ravager transition."
+        description="Gasless double expand into roach/ravager transition.",
     )
     bo.add_step(17, "build", "Hatchery", "natural")
     bo.add_step(17, "build", "Spawning Pool")
@@ -125,21 +125,21 @@ class OpeningBook:
 
     # Win rate stats: {(opening_name, opponent_race): win_rate}
     WIN_RATE_TABLE: Dict[Tuple[str, str], float] = {
-        ("hatch_first", "Terran"):  0.51,
+        ("hatch_first", "Terran"): 0.51,
         ("hatch_first", "Protoss"): 0.53,
-        ("hatch_first", "Zerg"):    0.50,
-        ("pool_first",  "Terran"):  0.55,
-        ("pool_first",  "Protoss"): 0.47,
-        ("pool_first",  "Zerg"):    0.50,
-        ("12pool",      "Terran"):  0.44,
-        ("12pool",      "Protoss"): 0.49,
-        ("12pool",      "Zerg"):    0.46,
-        ("overpool",    "Terran"):  0.50,
-        ("overpool",    "Protoss"): 0.51,
-        ("overpool",    "Zerg"):    0.51,
-        ("gasless_expand", "Terran"):  0.48,
+        ("hatch_first", "Zerg"): 0.50,
+        ("pool_first", "Terran"): 0.55,
+        ("pool_first", "Protoss"): 0.47,
+        ("pool_first", "Zerg"): 0.50,
+        ("12pool", "Terran"): 0.44,
+        ("12pool", "Protoss"): 0.49,
+        ("12pool", "Zerg"): 0.46,
+        ("overpool", "Terran"): 0.50,
+        ("overpool", "Protoss"): 0.51,
+        ("overpool", "Zerg"): 0.51,
+        ("gasless_expand", "Terran"): 0.48,
         ("gasless_expand", "Protoss"): 0.45,
-        ("gasless_expand", "Zerg"):    0.43,
+        ("gasless_expand", "Zerg"): 0.43,
     }
 
     # Maps flagged as favoring aggressive openers
@@ -147,21 +147,25 @@ class OpeningBook:
 
     def __init__(self):
         self._openings: Dict[str, BuildOrder] = {
-            "hatch_first":    _build_hatch_first(),
-            "pool_first":     _build_pool_first(),
-            "12pool":         _build_12pool(),
-            "overpool":       _build_overpool(),
+            "hatch_first": _build_hatch_first(),
+            "pool_first": _build_pool_first(),
+            "12pool": _build_12pool(),
+            "overpool": _build_overpool(),
             "gasless_expand": _build_gasless_expand(),
         }
 
     def _opponent_race_str(self, opponent_race: Race) -> str:
-        return opponent_race.value if isinstance(opponent_race, Race) else str(opponent_race)
+        return (
+            opponent_race.value
+            if isinstance(opponent_race, Race)
+            else str(opponent_race)
+        )
 
     def select_opening(
         self,
         opponent_race: Race,
         map_name: str = "",
-        game_history: Optional[List[Dict]] = None
+        game_history: Optional[List[Dict]] = None,
     ) -> BuildOrder:
         """
         Select the best opening based on matchup, map, and recent game history.
@@ -183,7 +187,9 @@ class OpeningBook:
         # Bias toward aggression on certain maps
         if map_name in self.AGGRESSIVE_MAPS:
             if "pool_first" in candidates:
-                candidates = ["pool_first"] + [c for c in candidates if c != "pool_first"]
+                candidates = ["pool_first"] + [
+                    c for c in candidates if c != "pool_first"
+                ]
             elif "12pool" in candidates:
                 candidates = ["12pool"] + [c for c in candidates if c != "12pool"]
 

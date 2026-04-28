@@ -9,9 +9,11 @@ Complete Destruction Trainer - 완전 파괴 학습 시스템
 4. Combat Manager와 통합
 """
 
-from typing import List, Dict, Optional, Set
-from sc2.position import Point2
+from typing import Dict, List, Optional, Set
+
 from sc2.ids.unit_typeid import UnitTypeId
+from sc2.position import Point2
+
 from utils.logger import get_logger
 
 
@@ -52,7 +54,6 @@ class CompleteDestructionTrainer:
             UnitTypeId.HATCHERY: 100,
             UnitTypeId.LAIR: 100,
             UnitTypeId.HIVE: 100,
-
             # 생산 건물 (두 번째 우선순위)
             UnitTypeId.BARRACKS: 80,
             UnitTypeId.FACTORY: 80,
@@ -64,7 +65,6 @@ class CompleteDestructionTrainer:
             UnitTypeId.ROACHWARREN: 80,
             UnitTypeId.HYDRALISKDEN: 80,
             UnitTypeId.SPIRE: 80,
-
             # 테크 건물 (세 번째 우선순위)
             UnitTypeId.ENGINEERINGBAY: 60,
             UnitTypeId.ARMORY: 60,
@@ -72,14 +72,12 @@ class CompleteDestructionTrainer:
             UnitTypeId.CYBERNETICSCORE: 60,
             UnitTypeId.TWILIGHTCOUNCIL: 60,
             UnitTypeId.EVOLUTIONCHAMBER: 60,
-
             # 방어 건물 (네 번째 우선순위)
             UnitTypeId.BUNKER: 70,
             UnitTypeId.PHOTONCANNON: 70,
             UnitTypeId.SPINECRAWLER: 70,
             UnitTypeId.SPORECRAWLER: 70,
             UnitTypeId.MISSILETURRET: 50,
-
             # 기타 건물 (낮은 우선순위)
             UnitTypeId.SUPPLYDEPOT: 30,
             UnitTypeId.PYLON: 30,
@@ -138,9 +136,7 @@ class CompleteDestructionTrainer:
             if tag not in self.target_buildings and tag not in self.destroyed_buildings:
                 # 새 건물 발견
                 self.target_buildings[tag] = TargetBuilding(
-                    position=structure.position,
-                    unit_type=structure.type_id,
-                    tag=tag
+                    position=structure.position, unit_type=structure.type_id, tag=tag
                 )
                 self.total_buildings_found += 1
 
@@ -174,8 +170,9 @@ class CompleteDestructionTrainer:
 
             # 타입별 통계
             type_name = building.unit_type.name
-            self.buildings_destroyed_per_type[type_name] = \
+            self.buildings_destroyed_per_type[type_name] = (
                 self.buildings_destroyed_per_type.get(type_name, 0) + 1
+            )
 
             self.logger.info(
                 f"[DESTROYED] {type_name} at {building.position} "
@@ -206,7 +203,9 @@ class CompleteDestructionTrainer:
             base_weight = 1.5 if near_enemy_base else 1.0
 
             # 최종 우선순위
-            building.priority = int(base_priority * base_weight * (0.7 + 0.3 * distance_weight))
+            building.priority = int(
+                base_priority * base_weight * (0.7 + 0.3 * distance_weight)
+            )
 
     def _is_combat_happening(self) -> bool:
         """
@@ -225,16 +224,24 @@ class CompleteDestructionTrainer:
             # 2. 아군 유닛 근처에 적 유닛이 있는지 확인
             if self.bot.enemy_units:
                 army_units = self.bot.units.filter(
-                    lambda u: u.type_id in {
-                        UnitTypeId.ZERGLING, UnitTypeId.ROACH, UnitTypeId.HYDRALISK,
-                        UnitTypeId.MUTALISK, UnitTypeId.RAVAGER, UnitTypeId.ULTRALISK,
-                        UnitTypeId.CORRUPTOR, UnitTypeId.BROODLORD
+                    lambda u: u.type_id
+                    in {
+                        UnitTypeId.ZERGLING,
+                        UnitTypeId.ROACH,
+                        UnitTypeId.HYDRALISK,
+                        UnitTypeId.MUTALISK,
+                        UnitTypeId.RAVAGER,
+                        UnitTypeId.ULTRALISK,
+                        UnitTypeId.CORRUPTOR,
+                        UnitTypeId.BROODLORD,
                     }
                 )
 
                 if army_units:
                     for unit in army_units:
-                        nearby_enemies = self.bot.enemy_units.closer_than(12, unit.position)
+                        nearby_enemies = self.bot.enemy_units.closer_than(
+                            12, unit.position
+                        )
                         if nearby_enemies.amount > 0:
                             return True
 
@@ -262,10 +269,17 @@ class CompleteDestructionTrainer:
 
         # 공격 가능한 군대 확인
         army_units = self.bot.units.filter(
-            lambda u: u.type_id in {
-                UnitTypeId.ZERGLING, UnitTypeId.ROACH, UnitTypeId.HYDRALISK,
-                UnitTypeId.MUTALISK, UnitTypeId.RAVAGER, UnitTypeId.ULTRALISK,
-                UnitTypeId.CORRUPTOR, UnitTypeId.BROODLORD, UnitTypeId.SWARMHOSTMP
+            lambda u: u.type_id
+            in {
+                UnitTypeId.ZERGLING,
+                UnitTypeId.ROACH,
+                UnitTypeId.HYDRALISK,
+                UnitTypeId.MUTALISK,
+                UnitTypeId.RAVAGER,
+                UnitTypeId.ULTRALISK,
+                UnitTypeId.CORRUPTOR,
+                UnitTypeId.BROODLORD,
+                UnitTypeId.SWARMHOSTMP,
             }
         )
 
@@ -277,9 +291,7 @@ class CompleteDestructionTrainer:
 
         # 우선순위 순으로 정렬
         sorted_buildings = sorted(
-            self.target_buildings.values(),
-            key=lambda b: b.priority,
-            reverse=True
+            self.target_buildings.values(), key=lambda b: b.priority, reverse=True
         )
 
         if not sorted_buildings:
@@ -336,11 +348,12 @@ class CompleteDestructionTrainer:
                     # Unit Authority Manager 통합
                     if hasattr(self.bot, "unit_authority") and self.bot.unit_authority:
                         from unit_authority_manager import AuthorityLevel
+
                         granted = self.bot.unit_authority.request_authority(
                             {unit.tag},
                             AuthorityLevel.COMBAT,
                             "CompleteDestruction",
-                            self.bot.state.game_loop
+                            self.bot.state.game_loop,
                         )
 
                         if unit.tag in granted:
@@ -384,11 +397,12 @@ class CompleteDestructionTrainer:
                     # Unit Authority Manager 통합
                     if hasattr(self.bot, "unit_authority") and self.bot.unit_authority:
                         from unit_authority_manager import AuthorityLevel
+
                         granted = self.bot.unit_authority.request_authority(
                             {unit.tag},
                             AuthorityLevel.COMBAT,
                             "CompleteDestruction",
-                            self.bot.state.game_loop
+                            self.bot.state.game_loop,
                         )
 
                         if unit.tag in granted:
@@ -413,9 +427,7 @@ class CompleteDestructionTrainer:
 
         # 우선순위 순으로 정렬
         sorted_buildings = sorted(
-            self.target_buildings.values(),
-            key=lambda b: b.priority,
-            reverse=True
+            self.target_buildings.values(), key=lambda b: b.priority, reverse=True
         )
 
         if sorted_buildings:
@@ -434,7 +446,9 @@ class CompleteDestructionTrainer:
     def _print_status(self, game_time: float):
         """상태 출력"""
         remaining = len(self.target_buildings)
-        destroyed_percent = (self.total_buildings_destroyed / max(self.total_buildings_found, 1) * 100)
+        destroyed_percent = (
+            self.total_buildings_destroyed / max(self.total_buildings_found, 1) * 100
+        )
 
         self.logger.info(
             f"[STATUS] [{int(game_time)}s] "
@@ -445,12 +459,18 @@ class CompleteDestructionTrainer:
         # 타입별 파괴 통계
         if self.buildings_destroyed_per_type:
             self.logger.info("[DESTROYED BY TYPE]")
-            for type_name, count in sorted(self.buildings_destroyed_per_type.items(), key=lambda x: x[1], reverse=True):
+            for type_name, count in sorted(
+                self.buildings_destroyed_per_type.items(),
+                key=lambda x: x[1],
+                reverse=True,
+            ):
                 self.logger.info(f"  {type_name}: {count}")
 
     def get_statistics(self) -> Dict:
         """통계 반환"""
-        destroyed_percent = (self.total_buildings_destroyed / max(self.total_buildings_found, 1) * 100)
+        destroyed_percent = (
+            self.total_buildings_destroyed / max(self.total_buildings_found, 1) * 100
+        )
 
         return {
             "total_found": self.total_buildings_found,
@@ -458,5 +478,5 @@ class CompleteDestructionTrainer:
             "remaining": len(self.target_buildings),
             "destroyed_percent": f"{destroyed_percent:.1f}%",
             "is_complete_victory": self.is_complete_victory(),
-            "destroyed_by_type": dict(self.buildings_destroyed_per_type)
+            "destroyed_by_type": dict(self.buildings_destroyed_per_type),
         }

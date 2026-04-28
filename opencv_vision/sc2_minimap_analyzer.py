@@ -30,6 +30,7 @@ log = logging.getLogger("sc2_minimap_analyzer")
 # ---------------------------------------------------------------------------
 try:
     import cv2
+
     CV2_AVAILABLE = True
     log.info("OpenCV %s available.", cv2.__version__)
 except ImportError:
@@ -66,31 +67,31 @@ COLOUR_PRESETS: Dict[str, ColourRange] = {
         name="creep",
         lower=np.array([120, 30, 40]),
         upper=np.array([160, 255, 200]),
-        bgr_display=(180, 50, 180),   # purple
+        bgr_display=(180, 50, 180),  # purple
     ),
     "minerals": ColourRange(
         name="minerals",
         lower=np.array([90, 100, 100]),
         upper=np.array([130, 255, 255]),
-        bgr_display=(255, 180, 0),    # blue
+        bgr_display=(255, 180, 0),  # blue
     ),
     "enemy": ColourRange(
         name="enemy",
         lower=np.array([0, 120, 120]),
         upper=np.array([10, 255, 255]),
-        bgr_display=(0, 0, 255),      # red
+        bgr_display=(0, 0, 255),  # red
     ),
     "friendly": ColourRange(
         name="friendly",
         lower=np.array([35, 80, 80]),
         upper=np.array([85, 255, 255]),
-        bgr_display=(0, 255, 0),      # green
+        bgr_display=(0, 255, 0),  # green
     ),
     "terrain": ColourRange(
         name="terrain",
         lower=np.array([15, 20, 30]),
         upper=np.array([35, 120, 140]),
-        bgr_display=(80, 120, 80),    # brownish-green
+        bgr_display=(80, 120, 80),  # brownish-green
     ),
 }
 
@@ -171,9 +172,7 @@ class MinimapAnalyzer:
     # ------------------------------------------------------------------
     # Colour-based segmentation
     # ------------------------------------------------------------------
-    def segment_by_colour(
-        self, frame_bgr: np.ndarray
-    ) -> Dict[str, np.ndarray]:
+    def segment_by_colour(self, frame_bgr: np.ndarray) -> Dict[str, np.ndarray]:
         """Segment the minimap into binary masks for each colour preset.
 
         Returns dict mapping preset name -> binary mask (uint8, 0/255).
@@ -258,8 +257,12 @@ class MinimapAnalyzer:
                         contour=np.array([[cx, cy]]),
                         area=area,
                         centroid=(cx, cy),
-                        bounding_rect=(int(xs.min()), int(ys.min()),
-                                       int(xs.ptp()), int(ys.ptp())),
+                        bounding_rect=(
+                            int(xs.min()),
+                            int(ys.min()),
+                            int(xs.ptp()),
+                            int(ys.ptp()),
+                        ),
                     )
                 )
         return regions
@@ -274,8 +277,12 @@ class MinimapAnalyzer:
     ) -> List[BaseLocation]:
         """Identify base locations by finding mineral clusters."""
         masks = self.segment_by_colour(frame_bgr)
-        mineral_mask = masks.get("minerals", np.zeros(frame_bgr.shape[:2], dtype=np.uint8))
-        regions = self.detect_contours(mineral_mask, "minerals", min_area=min_mineral_area)
+        mineral_mask = masks.get(
+            "minerals", np.zeros(frame_bgr.shape[:2], dtype=np.uint8)
+        )
+        regions = self.detect_contours(
+            mineral_mask, "minerals", min_area=min_mineral_area
+        )
 
         # Sort by area descending — largest cluster is likely main base minerals.
         regions.sort(key=lambda r: r.area, reverse=True)
@@ -312,14 +319,15 @@ class MinimapAnalyzer:
                 for dy in range(-1, 2):
                     for dx in range(-1, 2):
                         nx, ny = x + dx, y + dy
-                        if 0 <= nx < self.minimap_size[0] and 0 <= ny < self.minimap_size[1]:
+                        if (
+                            0 <= nx < self.minimap_size[0]
+                            and 0 <= ny < self.minimap_size[1]
+                        ):
                             weight = 1.0 if (dx == 0 and dy == 0) else 0.5
                             self.heatmap[ny, nx] += weight
         return self.heatmap
 
-    def render_heatmap(
-        self, save_path: Optional[str] = None
-    ) -> np.ndarray:
+    def render_heatmap(self, save_path: Optional[str] = None) -> np.ndarray:
         """Normalise heatmap to 0-255 and apply a colour map."""
         norm = self.heatmap.copy()
         max_val = norm.max()
@@ -343,9 +351,7 @@ class MinimapAnalyzer:
     # ------------------------------------------------------------------
     # Template matching
     # ------------------------------------------------------------------
-    def register_template(
-        self, name: str, template_bgr: np.ndarray
-    ) -> None:
+    def register_template(self, name: str, template_bgr: np.ndarray) -> None:
         """Register a building template image (BGR) for later matching."""
         if CV2_AVAILABLE:
             grey = cv2.cvtColor(template_bgr, cv2.COLOR_BGR2GRAY)
@@ -414,22 +420,18 @@ class MinimapAnalyzer:
             grey = np.mean(frame_bgr, axis=2).astype(np.float32)
             gx = np.diff(grey, axis=1, prepend=0)
             gy = np.diff(grey, axis=0, prepend=0)
-            mag = np.sqrt(gx ** 2 + gy ** 2)
+            mag = np.sqrt(gx**2 + gy**2)
             edges = ((mag > low_threshold) * 255).astype(np.uint8)
         return edges
 
     # ------------------------------------------------------------------
     # Image histogram comparison
     # ------------------------------------------------------------------
-    def compute_histogram(
-        self, frame_bgr: np.ndarray, bins: int = 64
-    ) -> np.ndarray:
+    def compute_histogram(self, frame_bgr: np.ndarray, bins: int = 64) -> np.ndarray:
         """Compute a normalised HSV histogram for the frame."""
         if CV2_AVAILABLE:
             hsv = cv2.cvtColor(frame_bgr, cv2.COLOR_BGR2HSV)
-            hist = cv2.calcHist(
-                [hsv], [0, 1], None, [bins, bins], [0, 180, 0, 256]
-            )
+            hist = cv2.calcHist([hsv], [0, 1], None, [bins, bins], [0, 180, 0, 256])
             cv2.normalize(hist, hist, 0, 1, cv2.NORM_MINMAX)
         else:
             # Stub: flatten and bin
@@ -540,7 +542,9 @@ class MinimapAnalyzer:
         heatmap_colour = self.render_heatmap()
         # Resize heatmap if needed
         h, w = frame_bgr.shape[:2]
-        if CV2_AVAILABLE and (heatmap_colour.shape[0] != h or heatmap_colour.shape[1] != w):
+        if CV2_AVAILABLE and (
+            heatmap_colour.shape[0] != h or heatmap_colour.shape[1] != w
+        ):
             heatmap_colour = cv2.resize(heatmap_colour, (w, h))
 
         if CV2_AVAILABLE:
@@ -579,7 +583,16 @@ class MinimapAnalyzer:
         canvas = frame_bgr.copy()
         if not CV2_AVAILABLE:
             return canvas
-        cv2.putText(canvas, text, position, cv2.FONT_HERSHEY_SIMPLEX, scale, colour, 1, cv2.LINE_AA)
+        cv2.putText(
+            canvas,
+            text,
+            position,
+            cv2.FONT_HERSHEY_SIMPLEX,
+            scale,
+            colour,
+            1,
+            cv2.LINE_AA,
+        )
         return canvas
 
     # ------------------------------------------------------------------
@@ -670,7 +683,9 @@ class MinimapAnalyzer:
                 if corr < 0.85:
                     log.info(
                         "Frame %d (%.1fs): significant minimap change detected (corr=%.3f)",
-                        idx, ts, corr,
+                        idx,
+                        ts,
+                        corr,
                     )
             prev_hist = analysis.histogram
 
@@ -713,7 +728,9 @@ class MinimapAnalyzer:
         w, h = size
 
         # Static elements: terrain background, mineral patches
-        base_terrain = np.full((h, w, 3), (60, 90, 50), dtype=np.uint8)  # brownish green
+        base_terrain = np.full(
+            (h, w, 3), (60, 90, 50), dtype=np.uint8
+        )  # brownish green
 
         # Mineral patch positions (fixed)
         mineral_positions = [(50, 50), (200, 50), (50, 200), (200, 200), (128, 128)]
@@ -729,7 +746,7 @@ class MinimapAnalyzer:
                     cv2.circle(frame, (jx, jy), 12, (255, 180, 0), -1)
                 else:
                     yy, xx = np.ogrid[-12:13, -12:13]
-                    mask = xx ** 2 + yy ** 2 <= 144
+                    mask = xx**2 + yy**2 <= 144
                     for dy in range(-12, 13):
                         for dx in range(-12, 13):
                             py, px = jy + dy, jx + dx
@@ -740,7 +757,9 @@ class MinimapAnalyzer:
             creep_radius = min(15 + f_idx // 3, 80)
             creep_cx, creep_cy = 180, 180
             if CV2_AVAILABLE:
-                cv2.circle(frame, (creep_cx, creep_cy), creep_radius, (180, 50, 180), -1)
+                cv2.circle(
+                    frame, (creep_cx, creep_cy), creep_radius, (180, 50, 180), -1
+                )
             else:
                 for dy in range(-creep_radius, creep_radius + 1):
                     for dx in range(-creep_radius, creep_radius + 1):
@@ -760,7 +779,11 @@ class MinimapAnalyzer:
                     for ddy in range(-3, 4):
                         for ddx in range(-3, 4):
                             py, px = uy + ddy, ux + ddx
-                            if 0 <= py < h and 0 <= px < w and ddx * ddx + ddy * ddy <= 9:
+                            if (
+                                0 <= py < h
+                                and 0 <= px < w
+                                and ddx * ddx + ddy * ddy <= 9
+                            ):
                                 frame[py, px] = [0, 255, 0]
 
             # Enemy units (red dots)
@@ -774,7 +797,11 @@ class MinimapAnalyzer:
                     for ddy in range(-3, 4):
                         for ddx in range(-3, 4):
                             py, px = ey + ddy, ex + ddx
-                            if 0 <= py < h and 0 <= px < w and ddx * ddx + ddy * ddy <= 9:
+                            if (
+                                0 <= py < h
+                                and 0 <= px < w
+                                and ddx * ddx + ddy * ddy <= 9
+                            ):
                                 frame[py, px] = [0, 0, 255]
 
             # Add slight noise
@@ -869,7 +896,11 @@ def main() -> None:
     # 4. Edge detection demo
     edges = analyzer.detect_edges(frames[30])
     edge_pixels = int(np.count_nonzero(edges))
-    log.info("Edge pixels in frame 30: %d (%.1f%%)", edge_pixels, edge_pixels / edges.size * 100)
+    log.info(
+        "Edge pixels in frame 30: %d (%.1f%%)",
+        edge_pixels,
+        edge_pixels / edges.size * 100,
+    )
 
     # 5. Histogram comparison (frame 0 vs frame 50)
     hist_a = analyzer.compute_histogram(frames[0])
@@ -896,7 +927,9 @@ def main() -> None:
         canvas = analyzer.draw_regions(canvas, region_list)
     canvas = analyzer.draw_base_locations(canvas, single.base_locations)
     canvas = analyzer.draw_text(canvas, "SC2 Minimap Analysis", (10, 15))
-    canvas = analyzer.draw_rectangles(canvas, [(100, 100, 50, 50)], colour=(0, 255, 255))
+    canvas = analyzer.draw_rectangles(
+        canvas, [(100, 100, 50, 50)], colour=(0, 255, 255)
+    )
     canvas = analyzer.draw_heatmap_overlay(canvas, alpha=0.3)
     if CV2_AVAILABLE:
         cv2.imwrite("sc2_minimap_annotated.png", canvas)

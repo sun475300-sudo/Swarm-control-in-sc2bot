@@ -34,10 +34,10 @@ from discord.ext import commands, tasks
 # 프로젝트 루트를 path에 추가
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from crypto_trading.upbit_client import UpbitClient
+from crypto_trading import config
 from crypto_trading.auto_trader import AutoTrader
 from crypto_trading.portfolio_tracker import PortfolioTracker
-from crypto_trading import config
+from crypto_trading.upbit_client import UpbitClient
 
 # ── 로깅 설정 ──
 logging.basicConfig(
@@ -48,7 +48,9 @@ logger = logging.getLogger("jarvis.discord")
 
 # ── 환경변수 ──
 DISCORD_BOT_TOKEN = os.environ.get("DISCORD_BOT_TOKEN", "")
-CLAUDE_API_KEY = os.environ.get("CLAUDE_API_KEY", "") or os.environ.get("ANTHROPIC_API_KEY", "")
+CLAUDE_API_KEY = os.environ.get("CLAUDE_API_KEY", "") or os.environ.get(
+    "ANTHROPIC_API_KEY", ""
+)
 TRADER_ROLE_NAME = os.environ.get("TRADER_ROLE_NAME", "Trader")
 
 # ── 전역 인스턴스 (초기화 실패 시 None으로 대체) ──
@@ -72,11 +74,11 @@ except Exception as _e:
 
 # ── 코인 이모지 매핑 ──
 COIN_EMOJI = {
-    "BTC": "\U0001FA99",   # 동전 이모지
-    "ETH": "\U0001F4CE",   # 보석 대용
-    "XRP": "\U0001F4B1",   # 환전
-    "SOL": "\u2600\uFE0F", # 태양
-    "DOGE": "\U0001F436",  # 강아지
+    "BTC": "\U0001fa99",  # 동전 이모지
+    "ETH": "\U0001f4ce",  # 보석 대용
+    "XRP": "\U0001f4b1",  # 환전
+    "SOL": "\u2600\ufe0f",  # 태양
+    "DOGE": "\U0001f436",  # 강아지
 }
 
 
@@ -84,18 +86,22 @@ COIN_EMOJI = {
 #  #140: 역할 기반 권한 체크 유틸리티
 # ═══════════════════════════════════════════════════════════════
 
+
 def has_trader_role():
     """매매 명령 실행 전 'Trader' 역할을 확인하는 데코레이터.
 
     DM에서는 역할 확인 불가하므로 거부한다.
     서버 채널에서 TRADER_ROLE_NAME 역할이 없으면 권한 부족 메시지를 표시한다.
     """
+
     async def predicate(interaction: discord.Interaction) -> bool:
         # DM에서는 매매 명령 차단 (#140 + #139 보안)
         if interaction.guild is None:
             await interaction.response.send_message(
-                embed=_error_embed("매매 명령은 서버 채널에서만 사용 가능합니다.\n"
-                                   "(역할 확인이 필요합니다)"),
+                embed=_error_embed(
+                    "매매 명령은 서버 채널에서만 사용 가능합니다.\n"
+                    "(역할 확인이 필요합니다)"
+                ),
                 ephemeral=True,
             )
             return False
@@ -112,6 +118,7 @@ def has_trader_role():
             )
             return False
         return True
+
     return app_commands.check(predicate)
 
 
@@ -119,7 +126,10 @@ def has_trader_role():
 #  #135: Embed 포맷 유틸리티
 # ═══════════════════════════════════════════════════════════════
 
-def _price_embed(ticker: str, price: float, change_pct: Optional[float] = None) -> discord.Embed:
+
+def _price_embed(
+    ticker: str, price: float, change_pct: Optional[float] = None
+) -> discord.Embed:
     """코인 시세를 예쁜 Embed로 변환한다.
 
     Args:
@@ -131,19 +141,19 @@ def _price_embed(ticker: str, price: float, change_pct: Optional[float] = None) 
         discord.Embed: 시세 정보 Embed
     """
     coin = ticker.replace("KRW-", "")
-    emoji = COIN_EMOJI.get(coin, "\U0001F4B0")
+    emoji = COIN_EMOJI.get(coin, "\U0001f4b0")
 
     # 변동률에 따른 색상 결정
     if change_pct is not None:
         if change_pct > 0:
-            color = discord.Color.red()       # 상승 = 빨강 (한국 주식 관례)
-            arrow = "\u25B2"
+            color = discord.Color.red()  # 상승 = 빨강 (한국 주식 관례)
+            arrow = "\u25b2"
         elif change_pct < 0:
-            color = discord.Color.blue()      # 하락 = 파랑
-            arrow = "\u25BC"
+            color = discord.Color.blue()  # 하락 = 파랑
+            arrow = "\u25bc"
         else:
             color = discord.Color.greyple()
-            arrow = "\u25AC"
+            arrow = "\u25ac"
         change_str = f"{arrow} {change_pct:+.2f}%"
     else:
         color = discord.Color.gold()
@@ -172,13 +182,13 @@ def _multi_price_embed(prices: dict, title: str = "관심 코인 시세") -> dis
         discord.Embed: 복수 시세 정보 Embed
     """
     embed = discord.Embed(
-        title=f"\U0001F4CA {title}",
+        title=f"\U0001f4ca {title}",
         color=discord.Color.dark_gold(),
         timestamp=datetime.now(timezone.utc),
     )
     for ticker, price in prices.items():
         coin = ticker.replace("KRW-", "")
-        emoji = COIN_EMOJI.get(coin, "\U0001F4B0")
+        emoji = COIN_EMOJI.get(coin, "\U0001f4b0")
         if price is not None and price > 0:
             embed.add_field(
                 name=f"{emoji} {coin}",
@@ -206,12 +216,12 @@ def _balance_embed(balances: list, total_krw: float) -> discord.Embed:
         discord.Embed: 잔고 정보 Embed
     """
     embed = discord.Embed(
-        title="\U0001F4B0 포트폴리오 잔고",
+        title="\U0001f4b0 포트폴리오 잔고",
         color=discord.Color.green(),
         timestamp=datetime.now(timezone.utc),
     )
     embed.add_field(
-        name="\U0001F3E6 총 자산 (KRW 환산)",
+        name="\U0001f3e6 총 자산 (KRW 환산)",
         value=f"**{total_krw:,.0f}** KRW",
         inline=False,
     )
@@ -224,7 +234,7 @@ def _balance_embed(balances: list, total_krw: float) -> discord.Embed:
         if total <= 0:
             continue
         avg_price = float(b.get("avg_buy_price", 0))
-        emoji = COIN_EMOJI.get(currency, "\U0001F4B0")
+        emoji = COIN_EMOJI.get(currency, "\U0001f4b0")
 
         if currency == "KRW":
             value_str = f"**{total:,.0f}** KRW"
@@ -260,7 +270,7 @@ def _trade_result_embed(action: str, ticker: str, result: dict) -> discord.Embed
     coin = ticker.replace("KRW-", "")
     is_buy = action == "매수"
     color = discord.Color.red() if is_buy else discord.Color.blue()
-    emoji = "\U0001F4C8" if is_buy else "\U0001F4C9"
+    emoji = "\U0001f4c8" if is_buy else "\U0001f4c9"
 
     embed = discord.Embed(
         title=f"{emoji} {coin} {action} {'완료' if result else '실패'}",
@@ -269,13 +279,17 @@ def _trade_result_embed(action: str, ticker: str, result: dict) -> discord.Embed
     )
     if result:
         if result.get("dry_run"):
-            embed.add_field(name="모드", value="\u26A0\uFE0F DRY-RUN (모의 매매)", inline=False)
+            embed.add_field(
+                name="모드", value="\u26a0\ufe0f DRY-RUN (모의 매매)", inline=False
+            )
         if "uuid" in result:
             embed.add_field(name="주문 ID", value=result["uuid"], inline=False)
         embed.add_field(name="상태", value="\u2705 성공", inline=True)
     else:
-        embed.add_field(name="상태", value="\u274C 실패", inline=True)
-        embed.add_field(name="안내", value="주문이 실패했습니다. 로그를 확인하세요.", inline=False)
+        embed.add_field(name="상태", value="\u274c 실패", inline=True)
+        embed.add_field(
+            name="안내", value="주문이 실패했습니다. 로그를 확인하세요.", inline=False
+        )
 
     embed.set_footer(text="JARVIS Crypto | Upbit")
     return embed
@@ -291,7 +305,7 @@ def _error_embed(message: str) -> discord.Embed:
         discord.Embed: 에러 Embed
     """
     return discord.Embed(
-        title="\u274C 오류",
+        title="\u274c 오류",
         description=message,
         color=discord.Color.dark_red(),
         timestamp=datetime.now(timezone.utc),
@@ -320,6 +334,7 @@ def _info_embed(title: str, description: str) -> discord.Embed:
 #  봇 클래스 정의
 # ═══════════════════════════════════════════════════════════════
 
+
 class JarvisCryptoBot(commands.Bot):
     """JARVIS 암호화폐 Discord 봇.
 
@@ -329,11 +344,11 @@ class JarvisCryptoBot(commands.Bot):
 
     def __init__(self):
         intents = discord.Intents.default()
-        intents.message_content = True   # 멘션 감지에 필요 (#138)
-        intents.dm_messages = True       # DM 지원에 필요 (#139)
-        intents.reactions = True         # 리액션 인터랙션에 필요 (#136)
-        intents.guilds = True            # 역할 확인에 필요 (#140)
-        intents.members = True           # 멤버 역할 조회에 필요 (#140)
+        intents.message_content = True  # 멘션 감지에 필요 (#138)
+        intents.dm_messages = True  # DM 지원에 필요 (#139)
+        intents.reactions = True  # 리액션 인터랙션에 필요 (#136)
+        intents.guilds = True  # 역할 확인에 필요 (#140)
+        intents.members = True  # 멤버 역할 조회에 필요 (#140)
 
         super().__init__(
             command_prefix="!",
@@ -439,12 +454,15 @@ class JarvisCryptoBot(commands.Bot):
             embed = _multi_price_embed(prices, "관심 코인 시세")
             sent = await message.channel.send(embed=embed)
             # 리액션 컨텍스트 저장 (#136)
-            self._store_reaction_context(sent.id, {
-                "type": "price_multi",
-                "tickers": list(config.DEFAULT_WATCH_LIST),
-            })
-            await sent.add_reaction("\U0001F44D")  # 상세보기
-            await sent.add_reaction("\U0001F4CA")  # 차트
+            self._store_reaction_context(
+                sent.id,
+                {
+                    "type": "price_multi",
+                    "tickers": list(config.DEFAULT_WATCH_LIST),
+                },
+            )
+            await sent.add_reaction("\U0001f44d")  # 상세보기
+            await sent.add_reaction("\U0001f4ca")  # 차트
         except Exception as e:
             logger.error(f"DM 시세 응답 실패: {e}")
             await message.channel.send(embed=_error_embed(f"시세 조회 실패: {e}"))
@@ -479,15 +497,17 @@ class JarvisCryptoBot(commands.Bot):
         # 멘션 부분 제거
         content = message.content
         for mention in message.mentions:
-            content = content.replace(f"<@{mention.id}>", "").replace(f"<@!{mention.id}>", "")
+            content = content.replace(f"<@{mention.id}>", "").replace(
+                f"<@!{mention.id}>", ""
+            )
         content = content.strip()
 
         if not content:
             await message.reply(
                 embed=_info_embed(
-                    "\U0001F916 JARVIS",
+                    "\U0001f916 JARVIS",
                     "무엇을 도와드릴까요? 질문을 함께 적어주세요.\n"
-                    "예: `@JARVIS BTC 전망은?`"
+                    "예: `@JARVIS BTC 전망은?`",
                 )
             )
             return
@@ -500,7 +520,7 @@ class JarvisCryptoBot(commands.Bot):
 
         if response:
             embed = discord.Embed(
-                title="\U0001F916 JARVIS 응답",
+                title="\U0001f916 JARVIS 응답",
                 description=response[:4096],  # Embed 설명 최대 길이
                 color=discord.Color.purple(),
                 timestamp=datetime.now(timezone.utc),
@@ -509,7 +529,9 @@ class JarvisCryptoBot(commands.Bot):
             await message.reply(embed=embed)
         else:
             await message.reply(
-                embed=_error_embed("Claude 응답을 받지 못했습니다. API 키를 확인하세요.")
+                embed=_error_embed(
+                    "Claude 응답을 받지 못했습니다. API 키를 확인하세요."
+                )
             )
 
     async def _ask_claude(self, message: discord.Message):
@@ -527,7 +549,7 @@ class JarvisCryptoBot(commands.Bot):
 
         if response:
             embed = discord.Embed(
-                title="\U0001F916 JARVIS 응답",
+                title="\U0001f916 JARVIS 응답",
                 description=response[:4096],
                 color=discord.Color.purple(),
                 timestamp=datetime.now(timezone.utc),
@@ -536,11 +558,11 @@ class JarvisCryptoBot(commands.Bot):
         else:
             await message.channel.send(
                 embed=_info_embed(
-                    "\U0001F916 JARVIS",
+                    "\U0001f916 JARVIS",
                     "Claude API가 설정되지 않았습니다.\n"
                     "시세 조회: `시세` 또는 `price`\n"
                     "잔고 확인: `잔고` 또는 `balance`\n"
-                    "도움말: `help`"
+                    "도움말: `help`",
                 )
             )
 
@@ -571,9 +593,7 @@ class JarvisCryptoBot(commands.Bot):
             payload = {
                 "model": "claude-sonnet-4-5-20250929",
                 "max_tokens": 1024,
-                "messages": [
-                    {"role": "user", "content": question}
-                ],
+                "messages": [{"role": "user", "content": question}],
                 "system": (
                     "너는 JARVIS, 암호화폐 트레이딩 어시스턴트야. "
                     "한국어로 간결하게 답변해. 암호화폐, 투자, 시장 분석에 특화되어 있어."
@@ -627,9 +647,9 @@ class JarvisCryptoBot(commands.Bot):
             return
 
         try:
-            if emoji == "\U0001F44D":  # 👍 상세보기
+            if emoji == "\U0001f44d":  # 👍 상세보기
                 await self._reaction_detail(channel, context)
-            elif emoji == "\U0001F4CA":  # 📊 차트
+            elif emoji == "\U0001f4ca":  # 📊 차트
                 await self._reaction_chart(channel, context)
         except Exception as e:
             logger.error(f"리액션 처리 실패: {e}")
@@ -651,7 +671,7 @@ class JarvisCryptoBot(commands.Bot):
             tickers = [context.get("ticker", "KRW-BTC")]
 
         embed = discord.Embed(
-            title="\U0001F50D 상세 정보",
+            title="\U0001f50d 상세 정보",
             color=discord.Color.teal(),
             timestamp=datetime.now(timezone.utc),
         )
@@ -672,7 +692,11 @@ class JarvisCryptoBot(commands.Bot):
                         best_bid = units[0].get("bid_price", 0)
                         detail += f"\n매도 1호가: {best_ask:,.0f}"
                         detail += f"\n매수 1호가: {best_bid:,.0f}"
-                        spread = ((best_ask - best_bid) / best_bid * 100) if best_bid > 0 else 0
+                        spread = (
+                            ((best_ask - best_bid) / best_bid * 100)
+                            if best_bid > 0
+                            else 0
+                        )
                         detail += f"\n스프레드: {spread:.3f}%"
 
                 embed.add_field(name=f"{coin}", value=detail, inline=True)
@@ -712,9 +736,11 @@ class JarvisCryptoBot(commands.Bot):
             # matplotlib 사용 가능하면 이미지로, 아니면 텍스트 차트
             try:
                 import matplotlib
+
                 matplotlib.use("Agg")
-                import matplotlib.pyplot as plt
                 import io
+
+                import matplotlib.pyplot as plt
 
                 fig, ax = plt.subplots(figsize=(8, 4))
                 fig.patch.set_facecolor("#2C2F33")
@@ -724,7 +750,9 @@ class JarvisCryptoBot(commands.Bot):
                 dates = [d.strftime("%m/%d") for d in df.index]
 
                 color = "#ED4245" if closes[-1] >= closes[0] else "#5865F2"
-                ax.plot(dates, closes, color=color, linewidth=2, marker="o", markersize=4)
+                ax.plot(
+                    dates, closes, color=color, linewidth=2, marker="o", markersize=4
+                )
                 ax.fill_between(dates, closes, alpha=0.1, color=color)
 
                 ax.set_title(f"{coin} 7-Day Price", color="white", fontsize=14)
@@ -735,18 +763,30 @@ class JarvisCryptoBot(commands.Bot):
                 ax.spines["right"].set_visible(False)
 
                 for i, v in enumerate(closes):
-                    ax.annotate(f"{v:,.0f}", (i, v), textcoords="offset points",
-                                xytext=(0, 8), ha="center", fontsize=7, color="white")
+                    ax.annotate(
+                        f"{v:,.0f}",
+                        (i, v),
+                        textcoords="offset points",
+                        xytext=(0, 8),
+                        ha="center",
+                        fontsize=7,
+                        color="white",
+                    )
 
                 buf = io.BytesIO()
-                fig.savefig(buf, format="png", dpi=120, bbox_inches="tight",
-                            facecolor=fig.get_facecolor())
+                fig.savefig(
+                    buf,
+                    format="png",
+                    dpi=120,
+                    bbox_inches="tight",
+                    facecolor=fig.get_facecolor(),
+                )
                 buf.seek(0)
                 plt.close(fig)
 
                 file = discord.File(buf, filename=f"{coin}_chart.png")
                 embed = discord.Embed(
-                    title=f"\U0001F4C8 {coin} 7일 차트",
+                    title=f"\U0001f4c8 {coin} 7일 차트",
                     color=discord.Color.dark_gold(),
                     timestamp=datetime.now(timezone.utc),
                 )
@@ -771,7 +811,7 @@ class JarvisCryptoBot(commands.Bot):
                     lines.append(f"`{date_str}` {bar} **{close:,.0f}**")
 
                 embed = discord.Embed(
-                    title=f"\U0001F4CA {coin} 7일 차트",
+                    title=f"\U0001f4ca {coin} 7일 차트",
                     description="\n".join(lines),
                     color=discord.Color.dark_gold(),
                     timestamp=datetime.now(timezone.utc),
@@ -790,13 +830,13 @@ class JarvisCryptoBot(commands.Bot):
             discord.Embed: 도움말 Embed
         """
         embed = discord.Embed(
-            title="\U0001F916 JARVIS 도움말",
+            title="\U0001f916 JARVIS 도움말",
             description="암호화폐 트레이딩 봇 JARVIS 사용법",
             color=discord.Color.blurple(),
             timestamp=datetime.now(timezone.utc),
         )
         embed.add_field(
-            name="\U0001F50D 슬래시 명령",
+            name="\U0001f50d 슬래시 명령",
             value=(
                 "`/price [코인]` - 시세 조회\n"
                 "`/balance` - 잔고 확인\n"
@@ -805,12 +845,12 @@ class JarvisCryptoBot(commands.Bot):
             inline=False,
         )
         embed.add_field(
-            name="\U0001F4AC 멘션 모드",
+            name="\U0001f4ac 멘션 모드",
             value="`@JARVIS 질문` - Claude에게 질문 전달",
             inline=False,
         )
         embed.add_field(
-            name="\u2709\uFE0F DM 지원",
+            name="\u2709\ufe0f DM 지원",
             value=(
                 "봇에게 DM으로 메시지를 보내면 응답합니다.\n"
                 "키워드: `시세`, `잔고`, `도움`\n"
@@ -819,15 +859,15 @@ class JarvisCryptoBot(commands.Bot):
             inline=False,
         )
         embed.add_field(
-            name="\U0001F44D 리액션 인터랙션",
+            name="\U0001f44d 리액션 인터랙션",
             value=(
                 "봇 응답 메시지에 리액션을 추가하세요:\n"
-                "\U0001F44D 상세보기 | \U0001F4CA 차트"
+                "\U0001f44d 상세보기 | \U0001f4ca 차트"
             ),
             inline=False,
         )
         embed.add_field(
-            name="\U0001F512 역할 기반 권한",
+            name="\U0001f512 역할 기반 권한",
             value=f"매매 명령에는 **{TRADER_ROLE_NAME}** 역할이 필요합니다.",
             inline=False,
         )
@@ -838,6 +878,7 @@ class JarvisCryptoBot(commands.Bot):
 # ═══════════════════════════════════════════════════════════════
 #  #134: Slash Commands (/price, /balance, /trade)
 # ═══════════════════════════════════════════════════════════════
+
 
 @app_commands.command(name="price", description="코인 시세를 조회합니다")
 @app_commands.describe(
@@ -891,13 +932,16 @@ async def price_command(interaction: discord.Interaction, coin: Optional[str] = 
             # #136: 리액션 추가
             bot_instance = interaction.client
             if isinstance(bot_instance, JarvisCryptoBot):
-                bot_instance._store_reaction_context(sent.id, {
-                    "type": "price_single",
-                    "ticker": ticker,
-                    "tickers": [ticker],
-                })
-            await sent.add_reaction("\U0001F44D")  # 상세보기
-            await sent.add_reaction("\U0001F4CA")  # 차트
+                bot_instance._store_reaction_context(
+                    sent.id,
+                    {
+                        "type": "price_single",
+                        "ticker": ticker,
+                        "tickers": [ticker],
+                    },
+                )
+            await sent.add_reaction("\U0001f44d")  # 상세보기
+            await sent.add_reaction("\U0001f4ca")  # 차트
         else:
             # 관심 코인 전체 조회
             prices = upbit_client.get_prices(list(config.DEFAULT_WATCH_LIST))
@@ -907,12 +951,15 @@ async def price_command(interaction: discord.Interaction, coin: Optional[str] = 
             # #136: 리액션 추가
             bot_instance = interaction.client
             if isinstance(bot_instance, JarvisCryptoBot):
-                bot_instance._store_reaction_context(sent.id, {
-                    "type": "price_multi",
-                    "tickers": list(config.DEFAULT_WATCH_LIST),
-                })
-            await sent.add_reaction("\U0001F44D")
-            await sent.add_reaction("\U0001F4CA")
+                bot_instance._store_reaction_context(
+                    sent.id,
+                    {
+                        "type": "price_multi",
+                        "tickers": list(config.DEFAULT_WATCH_LIST),
+                    },
+                )
+            await sent.add_reaction("\U0001f44d")
+            await sent.add_reaction("\U0001f4ca")
 
     except Exception as e:
         logger.error(f"/price 명령 실패: {e}")
@@ -957,10 +1004,12 @@ async def balance_command(interaction: discord.Interaction):
     coin="코인 심볼 (예: BTC, ETH)",
     amount="금액 (매수: KRW, 매도: 수량)",
 )
-@app_commands.choices(action=[
-    app_commands.Choice(name="매수 (Buy)", value="buy"),
-    app_commands.Choice(name="매도 (Sell)", value="sell"),
-])
+@app_commands.choices(
+    action=[
+        app_commands.Choice(name="매수 (Buy)", value="buy"),
+        app_commands.Choice(name="매도 (Sell)", value="sell"),
+    ]
+)
 @has_trader_role()  # #140: 역할 확인
 async def trade_command(
     interaction: discord.Interaction,
@@ -1031,7 +1080,9 @@ async def trade_command(
 
 # /trade 명령의 권한 에러 핸들러
 @trade_command.error
-async def trade_command_error(interaction: discord.Interaction, error: app_commands.AppCommandError):
+async def trade_command_error(
+    interaction: discord.Interaction, error: app_commands.AppCommandError
+):
     """매매 명령 권한 에러를 처리한다 (#140).
 
     has_trader_role() 체크에서 발생하는 CheckFailure를 처리한다.
@@ -1043,7 +1094,9 @@ async def trade_command_error(interaction: discord.Interaction, error: app_comma
     """
     if isinstance(error, app_commands.CheckFailure):
         # has_trader_role()에서 이미 응답을 보냈으므로 로깅만
-        logger.warning(f"매매 권한 부족: {interaction.user} (서버: {interaction.guild})")
+        logger.warning(
+            f"매매 권한 부족: {interaction.user} (서버: {interaction.guild})"
+        )
     else:
         logger.error(f"/trade 명령 에러: {error}")
         if not interaction.response.is_done():
@@ -1056,6 +1109,7 @@ async def trade_command_error(interaction: discord.Interaction, error: app_comma
 # ═══════════════════════════════════════════════════════════════
 #  #137: 봇 상태 표시 (BTC 시세)
 # ═══════════════════════════════════════════════════════════════
+
 
 @tasks.loop(minutes=1)
 async def update_bot_presence(bot: JarvisCryptoBot):
@@ -1116,6 +1170,7 @@ async def before_presence_update(bot: JarvisCryptoBot):
 #  메인 엔트리포인트
 # ═══════════════════════════════════════════════════════════════
 
+
 def main():
     """Discord 봇을 시작한다.
 
@@ -1125,20 +1180,26 @@ def main():
     # discord_jarvis.py를 실행 중이라면 이 파일은 단독 실행하지 말 것.
     # 이 파일은 crypto 전용 독립 봇 또는 테스트 용도로만 사용.
     import psutil
+
     _current_pid = os.getpid()
     _conflict_procs = []
-    for _proc in psutil.process_iter(['pid', 'cmdline']):
+    for _proc in psutil.process_iter(["pid", "cmdline"]):
         try:
-            _cmd = ' '.join(_proc.info.get('cmdline') or [])
-            if _proc.info['pid'] != _current_pid and 'discord_jarvis.py' in _cmd:
-                _conflict_procs.append(_proc.info['pid'])
+            _cmd = " ".join(_proc.info.get("cmdline") or [])
+            if _proc.info["pid"] != _current_pid and "discord_jarvis.py" in _cmd:
+                _conflict_procs.append(_proc.info["pid"])
         except Exception:
             pass
     if _conflict_procs:
-        print(f"[⚠️ 경고] discord_jarvis.py가 이미 실행 중입니다 (PID: {_conflict_procs}).")
-        print("  같은 DISCORD_BOT_TOKEN으로 두 봇을 동시에 실행하면 연결 충돌이 발생합니다.")
+        print(
+            f"[⚠️ 경고] discord_jarvis.py가 이미 실행 중입니다 (PID: {_conflict_procs})."
+        )
+        print(
+            "  같은 DISCORD_BOT_TOKEN으로 두 봇을 동시에 실행하면 연결 충돌이 발생합니다."
+        )
         print("  계속하려면 Ctrl+C를 눌러 취소하거나, 5초 후 자동으로 시작됩니다...")
         import time
+
         try:
             time.sleep(5)
         except KeyboardInterrupt:

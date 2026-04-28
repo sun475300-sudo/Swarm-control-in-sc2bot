@@ -4,14 +4,15 @@
 Test script to verify bot initialization and manager connections.
 """
 
-import sys
-import os
 import logging
+import os
+import sys
 
 logger = logging.getLogger("TestBotInitialization")
 
 # Add current directory to path
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+
 
 def test_imports():
     """Test that all critical modules can be imported."""
@@ -21,6 +22,7 @@ def test_imports():
 
     try:
         from wicked_zerg_bot_pro_impl import WickedZergBotProImpl
+
         logger.info("WickedZergBotProImpl imported successfully")
     except Exception as e:
         logger.error(f"Failed to import WickedZergBotProImpl: {e}")
@@ -28,6 +30,7 @@ def test_imports():
 
     try:
         from bot_step_integration import BotStepIntegrator
+
         logger.info("BotStepIntegrator imported successfully")
     except Exception as e:
         logger.error(f"Failed to import BotStepIntegrator: {e}")
@@ -35,6 +38,7 @@ def test_imports():
 
     try:
         from local_training.production_resilience import ProductionResilience
+
         logger.info("ProductionResilience imported successfully")
     except Exception as e:
         logger.error(f"Failed to import ProductionResilience: {e}")
@@ -42,6 +46,7 @@ def test_imports():
 
     try:
         from strategy_manager import StrategyManager
+
         logger.info("StrategyManager imported successfully")
     except Exception as e:
         logger.error(f"Failed to import StrategyManager: {e}")
@@ -49,6 +54,7 @@ def test_imports():
 
     try:
         from rogue_tactics_manager import RogueTacticsManager
+
         logger.info("RogueTacticsManager imported successfully")
     except Exception as e:
         logger.error(f"Failed to import RogueTacticsManager: {e}")
@@ -56,6 +62,7 @@ def test_imports():
 
     try:
         from unit_factory import UnitFactory
+
         logger.info("UnitFactory imported successfully")
     except Exception as e:
         logger.error(f"Failed to import UnitFactory: {e}")
@@ -63,12 +70,14 @@ def test_imports():
 
     try:
         from combat.boids_swarm_control import BoidsSwarmController
+
         logger.info("BoidsSwarmController imported successfully")
     except Exception as e:
         logger.error(f"Failed to import BoidsSwarmController: {e}")
         return False
 
     return True
+
 
 def test_bot_structure():
     """Test bot initialization structure."""
@@ -84,10 +93,19 @@ def test_bot_structure():
 
         # Check that manager attributes exist
         managers = [
-            'intel', 'economy', 'production', 'combat', 'scout', 'micro',
-            'queen_manager', 'strategy_manager', 'performance_optimizer',
-            'formation_controller', 'rogue_tactics', 'transformer_model',
-            'hierarchical_rl'
+            "intel",
+            "economy",
+            "production",
+            "combat",
+            "scout",
+            "micro",
+            "queen_manager",
+            "strategy_manager",
+            "performance_optimizer",
+            "formation_controller",
+            "rogue_tactics",
+            "transformer_model",
+            "hierarchical_rl",
         ]
 
         for manager in managers:
@@ -97,13 +115,13 @@ def test_bot_structure():
                 logger.info(f"Bot missing attribute: {manager}")
 
         # Check that on_step method exists
-        if hasattr(bot, 'on_step'):
+        if hasattr(bot, "on_step"):
             logger.info("Bot has on_step method")
         else:
             logger.info("Bot missing on_step method")
 
         # Check that on_start method exists
-        if hasattr(bot, 'on_start'):
+        if hasattr(bot, "on_start"):
             logger.info("Bot has on_start method")
         else:
             logger.info("Bot missing on_start method")
@@ -113,8 +131,10 @@ def test_bot_structure():
     except Exception as e:
         logger.error(f"Failed to test bot structure: {e}")
         import traceback
+
         traceback.print_exc()
         return False
+
 
 def verify_code_patterns():
     """Verify critical code patterns exist in files."""
@@ -124,7 +144,7 @@ def verify_code_patterns():
 
     # Check wicked_zerg_bot_pro_impl.py
     impl_path = os.path.join(os.path.dirname(__file__), "wicked_zerg_bot_pro_impl.py")
-    with open(impl_path, 'r', encoding='utf-8') as f:
+    with open(impl_path, "r", encoding="utf-8") as f:
         impl_content = f.read()
 
     checks = [
@@ -142,7 +162,7 @@ def verify_code_patterns():
 
     # Check unit_factory.py
     factory_path = os.path.join(os.path.dirname(__file__), "unit_factory.py")
-    with open(factory_path, 'r', encoding='utf-8') as f:
+    with open(factory_path, "r", encoding="utf-8") as f:
         factory_content = f.read()
 
     if "_safe_train" in factory_content:
@@ -152,7 +172,7 @@ def verify_code_patterns():
 
     # Check bot_step_integration.py
     integrator_path = os.path.join(os.path.dirname(__file__), "bot_step_integration.py")
-    with open(integrator_path, 'r', encoding='utf-8') as f:
+    with open(integrator_path, "r", encoding="utf-8") as f:
         integrator_content = f.read()
 
     if "end_frame()" in integrator_content:
@@ -161,6 +181,7 @@ def verify_code_patterns():
         logger.info("bot_step_integration.py doesn't call end_frame()")
 
     return True
+
 
 def main():
     """Run all tests."""
@@ -200,6 +221,7 @@ def main():
         logger.info("=" * 60)
         logger.error("\nPlease review the errors above.")
     return 0 if success else 1
+
 
 if __name__ == "__main__":
     sys.exit(main())

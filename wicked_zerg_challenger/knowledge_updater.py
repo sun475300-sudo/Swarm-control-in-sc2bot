@@ -6,11 +6,11 @@ Knowledge Updater - 학습 데이터 분석 및 지식 베이스 업데이트
 """
 
 import json
-import os
-from typing import Dict, List, Tuple
-from collections import defaultdict
-import statistics
 import logging
+import os
+import statistics
+from collections import defaultdict
+from typing import Dict, List, Tuple
 
 logger = logging.getLogger("KnowledgeUpdater")
 
@@ -26,7 +26,11 @@ class KnowledgeUpdater:
     4. 자원 효율 분석 → 최적 자원 사용 패턴
     """
 
-    def __init__(self, games_dir: str = "data/games", knowledge_file: str = "commander_knowledge.json"):
+    def __init__(
+        self,
+        games_dir: str = "data/games",
+        knowledge_file: str = "commander_knowledge.json",
+    ):
         self.games_dir = games_dir
         self.knowledge_file = knowledge_file
         self.games_data = []
@@ -43,7 +47,7 @@ class KnowledgeUpdater:
             if filename.endswith(".json"):
                 filepath = os.path.join(self.games_dir, filename)
                 try:
-                    with open(filepath, 'r', encoding='utf-8') as f:
+                    with open(filepath, "r", encoding="utf-8") as f:
                         game_data = json.load(f)
                         self.games_data.append(game_data)
                 except Exception as e:
@@ -91,13 +95,13 @@ class KnowledgeUpdater:
     def _load_knowledge(self) -> Dict:
         """기존 지식 베이스 로드"""
         if os.path.exists(self.knowledge_file):
-            with open(self.knowledge_file, 'r', encoding='utf-8') as f:
+            with open(self.knowledge_file, "r", encoding="utf-8") as f:
                 return json.load(f)
         return {}
 
     def _save_knowledge(self, knowledge: Dict):
         """지식 베이스 저장"""
-        with open(self.knowledge_file, 'w', encoding='utf-8') as f:
+        with open(self.knowledge_file, "w", encoding="utf-8") as f:
             json.dump(knowledge, f, indent=2, ensure_ascii=False)
 
     def _analyze_map_winrates(self) -> Dict:
@@ -126,10 +130,7 @@ class KnowledgeUpdater:
 
     def _analyze_timings(self) -> Dict:
         """타이밍 분석 (평균 확장 시간, 테크 시간)"""
-        timings = {
-            "expansion": defaultdict(list),
-            "tech": defaultdict(list)
-        }
+        timings = {"expansion": defaultdict(list), "tech": defaultdict(list)}
 
         for game in self.games_data:
             # 확장 타이밍
@@ -145,10 +146,7 @@ class KnowledgeUpdater:
                 timings["tech"][building].append(time)
 
         # 평균 계산
-        result = {
-            "expansion_avg": {},
-            "tech_avg": {}
-        }
+        result = {"expansion_avg": {}, "tech_avg": {}}
 
         for exp_type, times in timings["expansion"].items():
             if times:
@@ -156,7 +154,7 @@ class KnowledgeUpdater:
                     "avg": round(statistics.mean(times), 1),
                     "min": round(min(times), 1),
                     "max": round(max(times), 1),
-                    "samples": len(times)
+                    "samples": len(times),
                 }
 
         for tech_type, times in timings["tech"].items():
@@ -165,7 +163,7 @@ class KnowledgeUpdater:
                     "avg": round(statistics.mean(times), 1),
                     "min": round(min(times), 1),
                     "max": round(max(times), 1),
-                    "samples": len(times)
+                    "samples": len(times),
                 }
 
         return result
@@ -179,26 +177,42 @@ class KnowledgeUpdater:
             expansions = game.get("expansions", [])
 
             if expansions:
-                expansion_data.append({
-                    "result": result,
-                    "expansion_times": [e["time"] for e in expansions],
-                    "final_bases": len(expansions)
-                })
+                expansion_data.append(
+                    {
+                        "result": result,
+                        "expansion_times": [e["time"] for e in expansions],
+                        "final_bases": len(expansions),
+                    }
+                )
 
         # 승리 게임의 평균 확장 패턴
         winning_expansions = [e for e in expansion_data if e["result"] == "Victory"]
 
         if winning_expansions:
             avg_bases = statistics.mean([e["final_bases"] for e in winning_expansions])
-            avg_2nd_base = statistics.mean([e["expansion_times"][0] for e in winning_expansions if len(e["expansion_times"]) > 0])
-            avg_3rd_base = statistics.mean([e["expansion_times"][1] for e in winning_expansions if len(e["expansion_times"]) > 1])
+            avg_2nd_base = statistics.mean(
+                [
+                    e["expansion_times"][0]
+                    for e in winning_expansions
+                    if len(e["expansion_times"]) > 0
+                ]
+            )
+            avg_3rd_base = statistics.mean(
+                [
+                    e["expansion_times"][1]
+                    for e in winning_expansions
+                    if len(e["expansion_times"]) > 1
+                ]
+            )
 
             return {
                 "winning_pattern": {
                     "avg_bases_at_10min": round(avg_bases, 1),
                     "avg_2nd_base_timing": round(avg_2nd_base, 1),
-                    "avg_3rd_base_timing": round(avg_3rd_base, 1) if winning_expansions else None,
-                    "samples": len(winning_expansions)
+                    "avg_3rd_base_timing": (
+                        round(avg_3rd_base, 1) if winning_expansions else None
+                    ),
+                    "samples": len(winning_expansions),
                 }
             }
 
@@ -214,22 +228,23 @@ class KnowledgeUpdater:
 
             if result == "Victory" and len(build_order) >= 5:
                 # 처음 5개 빌드만 추출
-                pattern = [
-                    f"{b['supply']}_{b['unit_type']}"
-                    for b in build_order[:5]
-                ]
+                pattern = [f"{b['supply']}_{b['unit_type']}" for b in build_order[:5]]
                 pattern_str = " -> ".join(pattern)
-                build_patterns[pattern_str].append(game["meta"].get("map_name", "Unknown"))
+                build_patterns[pattern_str].append(
+                    game["meta"].get("map_name", "Unknown")
+                )
 
         # 빈도순 정렬
-        sorted_patterns = sorted(build_patterns.items(), key=lambda x: len(x[1]), reverse=True)
+        sorted_patterns = sorted(
+            build_patterns.items(), key=lambda x: len(x[1]), reverse=True
+        )
 
         return {
             "successful_patterns": [
                 {
                     "pattern": pattern,
                     "frequency": len(maps),
-                    "maps": list(set(maps))[:5]  # 최대 5개 맵만
+                    "maps": list(set(maps))[:5],  # 최대 5개 맵만
                 }
                 for pattern, maps in sorted_patterns[:10]  # 상위 10개만
             ]
@@ -245,25 +260,29 @@ class KnowledgeUpdater:
             total_engagements += len(engagements)
             total_supply_lost += sum(e.get("supply_lost", 0) for e in engagements)
 
-        avg_loss_per_engagement = total_supply_lost / total_engagements if total_engagements > 0 else 0
+        avg_loss_per_engagement = (
+            total_supply_lost / total_engagements if total_engagements > 0 else 0
+        )
 
         return {
             "total_engagements": total_engagements,
             "avg_supply_lost_per_engagement": round(avg_loss_per_engagement, 1),
-            "total_games_analyzed": len(self.games_data)
+            "total_games_analyzed": len(self.games_data),
         }
 
     def _print_summary(self, knowledge: Dict):
         """분석 결과 요약 출력"""
-        logger.info("\n" + "="*60)
+        logger.info("\n" + "=" * 60)
         logger.info("KNOWLEDGE BASE UPDATE SUMMARY")
-        logger.info("="*60)
+        logger.info("=" * 60)
 
         # 맵 통계
         if "map_statistics" in knowledge:
             logger.info("\nMAP STATISTICS:")
             for map_name, stats in knowledge["map_statistics"].items():
-                logger.info(f"  {map_name}: {stats['winrate']}% ({stats['wins']}W-{stats['losses']}L)")
+                logger.info(
+                    f"  {map_name}: {stats['winrate']}% ({stats['wins']}W-{stats['losses']}L)"
+                )
 
         # 타이밍 통계
         if "learned_timings" in knowledge:
@@ -276,10 +295,14 @@ class KnowledgeUpdater:
         # 교전 통계
         if "engagement_statistics" in knowledge:
             eng_stats = knowledge["engagement_statistics"]
-            logger.info(f"\nENGAGEMENTS: {eng_stats['total_engagements']} battles analyzed")
-            logger.info(f"  Avg supply lost: {eng_stats['avg_supply_lost_per_engagement']}")
+            logger.info(
+                f"\nENGAGEMENTS: {eng_stats['total_engagements']} battles analyzed"
+            )
+            logger.info(
+                f"  Avg supply lost: {eng_stats['avg_supply_lost_per_engagement']}"
+            )
 
-        logger.info("="*60 + "\n")
+        logger.info("=" * 60 + "\n")
 
 
 def main():

@@ -3,18 +3,19 @@
 Single Game Only - 절대 하나만 실행 (Lock 파일 사용)
 """
 
-import sc2
-from sc2 import maps
-from sc2.player import Bot, Computer
-from sc2.main import run_game
-from sc2.data import Race, Difficulty
-import sys
-import time
+import logging
+import os
 import random
 import subprocess
-import os
+import sys
+import time
 from pathlib import Path
-import logging
+
+import sc2
+from sc2 import maps
+from sc2.data import Difficulty, Race
+from sc2.main import run_game
+from sc2.player import Bot, Computer
 
 logger = logging.getLogger("SingleGameOnly")
 
@@ -23,8 +24,8 @@ project_root = Path(__file__).parent
 if str(project_root) not in sys.path:
     sys.path.insert(0, str(project_root))
 
-from wicked_zerg_bot_pro_impl import WickedZergBotProImpl
 from game_statistics import GameStatistics
+from wicked_zerg_bot_pro_impl import WickedZergBotProImpl
 
 # Lock 파일
 LOCK_FILE = Path("game_running.lock")
@@ -37,7 +38,7 @@ def is_game_running():
     """다른 게임이 실행 중인지 확인"""
     if LOCK_FILE.exists():
         try:
-            with open(LOCK_FILE, 'r') as f:
+            with open(LOCK_FILE, "r") as f:
                 pid = int(f.read().strip())
                 # PID가 실제로 실행 중인지 확인
                 try:
@@ -55,7 +56,7 @@ def is_game_running():
 
 def create_lock():
     """Lock 파일 생성"""
-    with open(LOCK_FILE, 'w') as f:
+    with open(LOCK_FILE, "w") as f:
         f.write(str(os.getpid()))
 
 
@@ -71,10 +72,12 @@ def remove_lock():
 def kill_all_sc2():
     """모든 SC2 프로세스 강제 종료"""
     try:
-        subprocess.run(["taskkill", "/F", "/IM", "SC2_x64.exe"],
-                      capture_output=True, timeout=5)
-        subprocess.run(["taskkill", "/F", "/IM", "SC2.exe"],
-                      capture_output=True, timeout=5)
+        subprocess.run(
+            ["taskkill", "/F", "/IM", "SC2_x64.exe"], capture_output=True, timeout=5
+        )
+        subprocess.run(
+            ["taskkill", "/F", "/IM", "SC2.exe"], capture_output=True, timeout=5
+        )
         time.sleep(3)  # 충분한 대기 시간
     except Exception:
         pass
@@ -92,45 +95,42 @@ def main():
         create_lock()
 
         # ★ 3. 모든 기존 SC2 프로세스 종료 ★
-        logger.info("\n" + "="*70)
+        logger.info("\n" + "=" * 70)
         logger.info("CLEANING UP OLD PROCESSES...")
-        logger.info("="*70)
+        logger.info("=" * 70)
         kill_all_sc2()
 
         # ★ 4. 맵/종족 선택 (사용 가능한 맵만) ★
-        maps_list = [
-            "AbyssalReefLE",
-            "AscensiontoAiurLE",
-            "BelShirVestigeLE"
-        ]
+        maps_list = ["AbyssalReefLE", "AscensiontoAiurLE", "BelShirVestigeLE"]
         races = [Race.Terran, Race.Protoss, Race.Zerg]
 
         selected_map = random.choice(maps_list)
         enemy_race = random.choice(races)
 
-        logger.info("\n" + "="*70)
+        logger.info("\n" + "=" * 70)
         logger.info("SINGLE GAME - ONE WINDOW ONLY")
-        logger.info("="*70)
+        logger.info("=" * 70)
         logger.info(f"Map: {selected_map}")
         logger.info(f"Enemy: {enemy_race.name}")
         logger.info(f"Difficulty: Easy")
-        logger.info("="*70 + "\n")
+        logger.info("=" * 70 + "\n")
 
         # ★ 5. 게임 실행 (하나만) ★
         result = run_game(
             maps.get(selected_map),
             [
                 Bot(Race.Zerg, WickedZergBotProImpl()),
-                Computer(enemy_race, Difficulty.Easy)
+                Computer(enemy_race, Difficulty.Easy),
             ],
             realtime=False,
             save_replay_as=None,
-            game_time_limit=(60*10)  # 10분 제한
+            game_time_limit=(60 * 10),  # 10분 제한
         )
 
         # ★ 6. 결과 기록 및 출력 ★
         from sc2.data import Result
-        victory = (result == Result.Victory)
+
+        victory = result == Result.Victory
         stats.record_game(selected_map, "Easy", enemy_race.name, victory)
 
         if victory:
@@ -148,9 +148,9 @@ def main():
 
     finally:
         # ★ 8. 정리 (항상 실행) ★
-        logger.info("\n" + "="*70)
+        logger.info("\n" + "=" * 70)
         logger.info("CLEANUP...")
-        logger.info("="*70)
+        logger.info("=" * 70)
         kill_all_sc2()
         remove_lock()
         logger.info("Done.\n")

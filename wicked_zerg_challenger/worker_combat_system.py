@@ -9,11 +9,13 @@ Worker Combat System - 일꾼 전투 시스템
 - 적이 물러나면 다시 채광으로 복귀
 """
 
-from typing import Set, Optional, Dict
+from typing import Dict, Optional, Set
+
 from sc2.ids.unit_typeid import UnitTypeId
+from sc2.position import Point2
 from sc2.unit import Unit
 from sc2.units import Units
-from sc2.position import Point2
+
 from utils.logger import get_logger
 
 
@@ -106,14 +108,17 @@ class WorkerCombatSystem:
 
         # 방어 유닛이 충분하면 일꾼 전투 불필요
         combat_units = self.bot.units.filter(
-            lambda u: u.type_id in {UnitTypeId.ZERGLING, UnitTypeId.ROACH, UnitTypeId.QUEEN}
+            lambda u: u.type_id
+            in {UnitTypeId.ZERGLING, UnitTypeId.ROACH, UnitTypeId.QUEEN}
         )
         if combat_units.amount >= 6:
             return
 
         if not self.combat_mode:
             self.combat_mode = True
-            self.logger.info(f"[WORKER_COMBAT] 전투 모드 활성화! 위협: {threats.amount}개")
+            self.logger.info(
+                f"[WORKER_COMBAT] 전투 모드 활성화! 위협: {threats.amount}개"
+            )
 
         self.last_threat_time = self.bot.time
 
@@ -160,9 +165,7 @@ class WorkerCombatSystem:
 
         # 포위 위치 계산
         surround_positions = self._calculate_surround_positions(
-            target.position,
-            len(workers),
-            self.surround_distance
+            target.position, len(workers), self.surround_distance
         )
 
         current_time = self.bot.time
@@ -196,13 +199,11 @@ class WorkerCombatSystem:
                     self.bot.do(worker.attack(target))
 
     def _calculate_surround_positions(
-        self,
-        center: Point2,
-        count: int,
-        radius: float
+        self, center: Point2, count: int, radius: float
     ) -> list[Point2]:
         """포위 위치 계산 (원형 배치)"""
         import math
+
         positions = []
 
         angle_step = 2 * math.pi / max(count, 1)
@@ -228,8 +229,7 @@ class WorkerCombatSystem:
                 nearest_base = self.bot.townhalls.closest_to(worker.position)
                 # 본진 뒤쪽으로 이동
                 retreat_pos = nearest_base.position.towards(
-                    self.bot.game_info.map_center,
-                    -3
+                    self.bot.game_info.map_center, -3
                 )
                 self.bot.do(worker.move(retreat_pos))
 

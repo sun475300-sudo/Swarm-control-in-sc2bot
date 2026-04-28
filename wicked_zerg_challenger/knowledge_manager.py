@@ -1,13 +1,16 @@
 import json
 from pathlib import Path
-from typing import Dict, Any, Optional
+from typing import Any, Dict, Optional
+
 from utils.logger import get_logger
+
 
 class KnowledgeManager:
     """
     Commander Knowledge Manager
     Loads and serves strategic knowledge (build orders, ratios, timings) from JSON.
     """
+
     def __init__(self):
         self.logger = get_logger("KnowledgeManager")
         self.knowledge: Dict[str, Any] = {}
@@ -18,16 +21,20 @@ class KnowledgeManager:
         try:
             # Assume file is in the same directory as this script
             file_path = Path(__file__).parent / "commander_knowledge.json"
-            
+
             if not file_path.exists():
                 self.logger.error(f"Knowledge file not found: {file_path}")
                 return
 
             with open(file_path, "r", encoding="utf-8") as f:
                 self.knowledge = json.load(f)
-            
-            self.logger.info(f"Loaded knowledge version: {self.knowledge.get('version', 'unknown')}")
-            self.logger.info(f"Loaded {len(self.knowledge.get('build_orders', {}))} build orders")
+
+            self.logger.info(
+                f"Loaded knowledge version: {self.knowledge.get('version', 'unknown')}"
+            )
+            self.logger.info(
+                f"Loaded {len(self.knowledge.get('build_orders', {}))} build orders"
+            )
 
         except Exception as e:
             self.logger.error(f"Failed to load knowledge: {e}")
@@ -64,4 +71,8 @@ class KnowledgeManager:
     def get_micro_priority(self, enemy_unit_type: str) -> int:
         """Get target priority for enemy unit"""
         key = enemy_unit_type.upper()
-        return self.knowledge.get("micro_settings", {}).get("target_priorities", {}).get(key, 1) # Default 1
+        return (
+            self.knowledge.get("micro_settings", {})
+            .get("target_priorities", {})
+            .get(key, 1)
+        )  # Default 1

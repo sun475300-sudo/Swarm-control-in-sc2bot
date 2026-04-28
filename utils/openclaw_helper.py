@@ -7,11 +7,11 @@ via subprocess, with JSON parsing, timeout management, and usage stats.
 """
 
 import asyncio
-import subprocess
 import json
 import logging
 import os
 import re
+import subprocess
 import sys
 import threading
 from pathlib import Path
@@ -120,7 +120,11 @@ class OpenClawHelper:
             return {"success": False, "output": "", "error": f"Timed out ({timeout}s)"}
         except Exception as exc:
             logger.error("OpenClaw CLI error: %s", exc)
-            return {"success": False, "output": "", "error": "OpenClaw execution failed."}
+            return {
+                "success": False,
+                "output": "",
+                "error": "OpenClaw execution failed.",
+            }
 
     # ------------------------------------------------------------------
     # High-level skill runner (via openclaw agent)
@@ -140,8 +144,10 @@ class OpenClawHelper:
 
         args = [
             "agent",
-            "--message", message,
-            "--session-id", session_id,
+            "--message",
+            message,
+            "--session-id",
+            session_id,
             "--local",
         ]
         result = await self.run_cli(args, timeout=timeout)

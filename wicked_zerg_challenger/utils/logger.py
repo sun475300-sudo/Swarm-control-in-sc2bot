@@ -11,15 +11,16 @@ from typing import Optional
 # Singleton logger instance
 _LOGGER_INITIALIZED = False
 
+
 def setup_logger(
     name: str = "WickedZergBot",
     log_file: Optional[str] = "logs/bot.log",
     level: int = logging.INFO,
-    log_to_console: bool = True
+    log_to_console: bool = True,
 ) -> logging.Logger:
     """
     Setup and return a standardized logger.
-    
+
     Args:
         name: Logger name
         log_file: Path to log file (relative to bot root)
@@ -27,17 +28,16 @@ def setup_logger(
         log_to_console: Whether to print to stdout
     """
     global _LOGGER_INITIALIZED
-    
+
     logger = logging.getLogger(name)
     logger.setLevel(level)
-    
+
     # Avoid duplicate handlers if setup is called multiple times
     if logger.handlers:
         return logger
 
     formatter = logging.Formatter(
-        '%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-        datefmt='%H:%M:%S'
+        "%(asctime)s - %(name)s - %(levelname)s - %(message)s", datefmt="%H:%M:%S"
     )
 
     # File Handler
@@ -45,8 +45,8 @@ def setup_logger(
         try:
             log_path = Path(log_file)
             log_path.parent.mkdir(parents=True, exist_ok=True)
-            
-            file_handler = logging.FileHandler(str(log_path), encoding='utf-8')
+
+            file_handler = logging.FileHandler(str(log_path), encoding="utf-8")
             file_handler.setFormatter(formatter)
             logger.addHandler(file_handler)
         except Exception as e:
@@ -56,17 +56,19 @@ def setup_logger(
     if log_to_console:
         try:
             # Windows 콘솔에서 UTF-8 출력 지원
-            if sys.platform == 'win32':
+            if sys.platform == "win32":
                 import io
-                sys.stdout.reconfigure(encoding='utf-8', errors='replace')
+
+                sys.stdout.reconfigure(encoding="utf-8", errors="replace")
         except (AttributeError, Exception):
             pass
         console_handler = logging.StreamHandler(sys.stdout)
         console_handler.setFormatter(formatter)
         logger.addHandler(console_handler)
-    
+
     _LOGGER_INITIALIZED = True
     return logger
+
 
 def get_logger(name: str = "WickedZergBot") -> logging.Logger:
     """Get the existing logger or create a default one."""

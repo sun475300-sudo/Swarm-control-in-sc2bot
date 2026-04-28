@@ -5,6 +5,7 @@ WebSocket 실시간 가격 스트리밍 (#51)
 - 다중 티커 동시 구독 지원
 - 자동 재연결 메커니즘
 """
+
 import json
 import logging
 import threading
@@ -48,7 +49,9 @@ class PriceStreamManager:
             self._subscribers[ticker].append(callback)
             if ticker not in self._tickers:
                 self._tickers.append(ticker)
-        logger.info(f"가격 스트림 구독: {ticker} (콜백 {len(self._subscribers[ticker])}개)")
+        logger.info(
+            f"가격 스트림 구독: {ticker} (콜백 {len(self._subscribers[ticker])}개)"
+        )
 
     def unsubscribe(self, ticker: str, callback: Callable = None) -> None:
         """
@@ -98,9 +101,7 @@ class PriceStreamManager:
 
         self._is_running = True
         self._ws_thread = threading.Thread(
-            target=self._stream_loop,
-            daemon=True,
-            name="ws_price_stream"
+            target=self._stream_loop, daemon=True, name="ws_price_stream"
         )
         self._ws_thread.start()
 
@@ -138,9 +139,7 @@ class PriceStreamManager:
         return {
             "is_running": self._is_running,
             "subscribed_tickers": list(self._tickers),
-            "subscriber_counts": {
-                t: len(cbs) for t, cbs in self._subscribers.items()
-            },
+            "subscriber_counts": {t: len(cbs) for t, cbs in self._subscribers.items()},
             "latest_prices": {
                 t: info.get("price", 0) for t, info in self._latest_prices.items()
             },
@@ -156,7 +155,9 @@ class PriceStreamManager:
             except Exception as e:
                 if not self._is_running:
                     break
-                logger.error(f"WebSocket 오류: {e}. {reconnect_delay:.0f}초 후 재연결...")
+                logger.error(
+                    f"WebSocket 오류: {e}. {reconnect_delay:.0f}초 후 재연결..."
+                )
                 time.sleep(reconnect_delay)
                 # 지수 백오프
                 reconnect_delay = min(reconnect_delay * 2, self._max_reconnect_delay)
@@ -169,7 +170,9 @@ class PriceStreamManager:
         try:
             from pyupbit import WebSocketManager
         except ImportError:
-            logger.error("pyupbit WebSocketManager를 import할 수 없습니다. pyupbit 버전을 확인하세요.")
+            logger.error(
+                "pyupbit WebSocketManager를 import할 수 없습니다. pyupbit 버전을 확인하세요."
+            )
             # Fallback: REST polling
             self._run_polling_fallback()
             return

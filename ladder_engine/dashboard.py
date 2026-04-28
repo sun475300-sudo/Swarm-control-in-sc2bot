@@ -12,6 +12,7 @@ from typing import Any, Dict, List, Optional, Set
 try:
     from fastapi import FastAPI, WebSocket, WebSocketDisconnect
     from fastapi.responses import HTMLResponse, JSONResponse
+
     _FASTAPI_AVAILABLE = True
 except ImportError:
     _FASTAPI_AVAILABLE = False
@@ -122,6 +123,7 @@ ws.onmessage = (e) => {
 # FastAPI application factory
 # ------------------------------------------------------------------
 
+
 def create_app() -> Any:
     """Create and configure the FastAPI dashboard application."""
     if not _FASTAPI_AVAILABLE:
@@ -167,11 +169,13 @@ def create_app() -> Any:
         _ws_clients.add(websocket)
         try:
             while True:
-                payload = json.dumps({
-                    "game": _game_state,
-                    "stats": _player_stats,
-                    "timestamp": time.time(),
-                })
+                payload = json.dumps(
+                    {
+                        "game": _game_state,
+                        "stats": _player_stats,
+                        "timestamp": time.time(),
+                    }
+                )
                 await websocket.send_text(payload)
                 await asyncio.sleep(1.0)
         except WebSocketDisconnect:
@@ -185,6 +189,7 @@ def create_app() -> Any:
 # ------------------------------------------------------------------
 # Broadcast helper (call from bot game loop)
 # ------------------------------------------------------------------
+
 
 async def broadcast_update(data: Dict):
     """Push a data payload to all connected WebSocket clients."""
@@ -207,6 +212,7 @@ async def broadcast_update(data: Dict):
 if __name__ == "__main__":
     try:
         import uvicorn
+
         app = create_app()
         uvicorn.run(app, host="0.0.0.0", port=8765, log_level="info")
     except ImportError:

@@ -13,12 +13,13 @@ from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from typing import Any, Callable, ClassVar
 
-
 # ── Base Event ────────────────────────────────────────────────────────────────
+
 
 @dataclass(frozen=True)
 class GameEvent:
     """Immutable base class for all SC2 game events."""
+
     event_id: str = field(default_factory=lambda: str(uuid.uuid4()))
     game_id: str = ""
     game_loop: int = 0
@@ -36,6 +37,7 @@ class GameEvent:
 
 
 # ── Concrete Events ───────────────────────────────────────────────────────────
+
 
 @dataclass(frozen=True)
 class UnitCreated(GameEvent):
@@ -91,6 +93,7 @@ class GameEnded(GameEvent):
 
 # ── Event Store ───────────────────────────────────────────────────────────────
 
+
 class EventStore:
     """Append-only store for game events, indexed by game_id."""
 
@@ -116,6 +119,7 @@ class EventStore:
 
 # ── Event Bus ─────────────────────────────────────────────────────────────────
 
+
 class EventBus:
     """Publish/subscribe event bus for async event dispatching."""
 
@@ -135,6 +139,7 @@ class EventBus:
 
 
 # ── Projection ────────────────────────────────────────────────────────────────
+
 
 class GameStateProjection:
     """Rebuilds current game state by replaying events from the store."""

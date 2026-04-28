@@ -9,17 +9,18 @@
 
 """
 
-import os
-import sys
 import json
-import time
-import requests
-import zipfile
-import shutil
-from pathlib import Path
-from typing import List, Dict, Optional
-from datetime import datetime
 import logging
+import os
+import shutil
+import sys
+import time
+import zipfile
+from datetime import datetime
+from pathlib import Path
+from typing import Dict, List, Optional
+
+import requests
 
 logger = logging.getLogger("AutoReplayLearner")
 

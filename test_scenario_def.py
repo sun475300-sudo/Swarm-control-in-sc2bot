@@ -4,11 +4,11 @@ Allows users to define custom test scenarios with unit combinations
 """
 
 import json
-from pathlib import Path
+from dataclasses import asdict, dataclass, field
 from datetime import datetime
-from typing import Dict, List, Any, Optional
-from dataclasses import dataclass, field, asdict
 from enum import Enum
+from pathlib import Path
+from typing import Any, Dict, List, Optional
 
 
 class ScenarioType(Enum):

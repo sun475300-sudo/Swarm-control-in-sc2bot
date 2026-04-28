@@ -1,9 +1,9 @@
 # Phase 607: QMIX - Value Decomposition for SC2 Cooperative Play
 from .sc2_qmix_agent import (
-    QMIXConfig,
-    QMIXMixingNetNumpy,
     AgentQNetNumpy,
     PrioritizedReplayBuffer,
+    QMIXConfig,
+    QMIXMixingNetNumpy,
     SC2QMIXAgent,
 )
 

@@ -38,9 +38,9 @@ class Boids3DController:
         avoidance_weight: float = 2.5,
         altitude_hold_weight: float = 1.0,
         terrain_clearance_weight: float = 3.0,
-        separation_radius: float = 5.0,    # 미터 (SC2: 2.0 game units)
-        neighbor_radius: float = 30.0,     # 미터 (SC2: 5.0 game units)
-        max_force: float = 5.0,            # m/s² (SC2: 0.5)
+        separation_radius: float = 5.0,  # 미터 (SC2: 2.0 game units)
+        neighbor_radius: float = 30.0,  # 미터 (SC2: 5.0 game units)
+        max_force: float = 5.0,  # m/s² (SC2: 0.5)
     ):
         self.separation_weight = separation_weight
         self.alignment_weight = alignment_weight
@@ -236,7 +236,9 @@ class Boids3DController:
         fz = max(-self.max_force, min(fz, self.max_force))
         return np.array([0.0, 0.0, fz])
 
-    def _terrain_clearance(self, drone: DroneState, terrain_height: float) -> np.ndarray:
+    def _terrain_clearance(
+        self, drone: DroneState, terrain_height: float
+    ) -> np.ndarray:
         """
         지면 이격력: 최소 안전 고도 미만 시 강한 상승력. (UTM 신규)
         기존 potential_fields.py의 반발력 패턴 적용.
@@ -265,9 +267,7 @@ class Boids3DController:
         """
         forces = []
         for drone in drones:
-            f = self.calculate_force(
-                drone, drones, target, obstacles, desired_altitude
-            )
+            f = self.calculate_force(drone, drones, target, obstacles, desired_altitude)
             forces.append(f)
 
         for drone, f in zip(drones, forces):

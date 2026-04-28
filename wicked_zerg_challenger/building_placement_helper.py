@@ -3,12 +3,13 @@
 저그 건물의 점막(Creep) 요구사항을 관리하고 안전한 건물 배치를 지원합니다.
 """
 
+import logging
+import math
+import random
+from typing import List, Optional
+
 from sc2.ids.unit_typeid import UnitTypeId
 from sc2.position import Point2
-from typing import Optional, List
-import random
-import math
-import logging
 
 logger = logging.getLogger("BuildingPlacementHelper")
 
@@ -92,7 +93,6 @@ def is_too_close_to_resources(position: Point2, bot, min_distance: float = 3.0) 
         return False  # 에러 시 안전하게 False 반환 (배치 허용)
 
 
-
 def can_build_off_creep(building_type: UnitTypeId) -> bool:
     """
     건물을 점막 없이 지을 수 있는지 확인합니다.
@@ -134,7 +134,9 @@ class BuildingPlacementHelper:
         except Exception:
             return False
 
-    def is_too_close_to_resources(self, position: Point2, min_distance: float = 3.0) -> bool:
+    def is_too_close_to_resources(
+        self, position: Point2, min_distance: float = 3.0
+    ) -> bool:
         """
         건물 위치가 광물이나 가스 근처인지 확인합니다.
 
@@ -171,14 +173,11 @@ class BuildingPlacementHelper:
             return False
 
     def find_creep_positions(
-        self,
-        near: Point2,
-        search_radius: float = 15.0,
-        max_candidates: int = 20
+        self, near: Point2, search_radius: float = 15.0, max_candidates: int = 20
     ) -> List[Point2]:
         """
         주어진 위치 근처의 점막 위치를 찾습니다.
-        
+
         OPTIMIZED: 무작위 샘플링 대신 나선형 탐색(Spiral Search) 사용
         - 결정론적(Deterministic) 결과 보장
         - 가까운 위치부터 탐색하여 효율성 증대
@@ -192,44 +191,46 @@ class BuildingPlacementHelper:
             List[Point2]: 점막이 있는 위치 리스트 (거리 순으로 정렬됨)
         """
         candidates = []
-        
+
         # 나선형 탐색 파라미터
         step_size = 2.0  # 검색 간격 (그리드 크기)
         current_radius = 2.0
-        
+
         # 중심점 확인
         if self.has_creep(near):
             candidates.append(near)
-            
+
         while current_radius <= search_radius and len(candidates) < max_candidates:
             # 원주상의 점들 생성 (반지름에 비례하여 각도 간격 조절)
             circumference = 2 * 3.14159 * current_radius
             num_points = int(circumference / step_size)
             angle_step = 6.28318 / max(1, num_points)
-            
+
             for i in range(num_points):
                 angle = i * angle_step
-                
+
                 # 좌표 계산
                 offset_x = current_radius * math.cos(angle)
                 offset_y = current_radius * math.sin(angle)
-                
+
                 test_pos = Point2((near.x + offset_x, near.y + offset_y))
-                
+
                 # 맵 범위 내인지 확인
-                if not (0 <= test_pos.x < self.bot.game_info.map_size.x and
-                        0 <= test_pos.y < self.bot.game_info.map_size.y):
+                if not (
+                    0 <= test_pos.x < self.bot.game_info.map_size.x
+                    and 0 <= test_pos.y < self.bot.game_info.map_size.y
+                ):
                     continue
-                
+
                 # 점막 확인
                 if self.has_creep(test_pos):
                     candidates.append(test_pos)
                     if len(candidates) >= max_candidates:
                         break
-            
+
             # 다음 반지름으로 이동
             current_radius += step_size
-            
+
         return candidates
 
     async def find_placement_on_creep(
@@ -237,7 +238,7 @@ class BuildingPlacementHelper:
         building_type: UnitTypeId,
         near: Point2,
         max_distance: float = 15.0,
-        placement_step: int = 2
+        placement_step: int = 2,
     ) -> Optional[Point2]:
         """
         점막 위에서 건물 배치 가능한 위치를 찾습니다.
@@ -257,7 +258,7 @@ class BuildingPlacementHelper:
                 building_type,
                 near,
                 max_distance=max_distance,
-                placement_step=placement_step
+                placement_step=placement_step,
             )
 
         # 점막 위치 찾기
@@ -278,14 +279,13 @@ class BuildingPlacementHelper:
                 return pos
 
         # 배치 가능한 위치를 찾지 못함
-        logger.warning(f"No valid placement on creep near {near} for {building_type.name}")
+        logger.warning(
+            f"No valid placement on creep near {near} for {building_type.name}"
+        )
         return None
 
     async def build_structure_safely(
-        self,
-        building_type: UnitTypeId,
-        near: Point2,
-        max_distance: float = 15.0
+        self, building_type: UnitTypeId, near: Point2, max_distance: float = 15.0
     ) -> bool:
         """
         안전하게 건물을 배치합니다 (점막 체크 포함).
@@ -309,9 +309,7 @@ class BuildingPlacementHelper:
 
         # 배치 위치 찾기
         location = await self.find_placement_on_creep(
-            building_type,
-            near,
-            max_distance=max_distance
+            building_type, near, max_distance=max_distance
         )
 
         if not location:
@@ -325,13 +323,17 @@ class BuildingPlacementHelper:
         # 건설 명령
         try:
             self.bot.do(worker.build(building_type, location))
-            logger.info(f"{building_type.name} at {location} (creep: {self.has_creep(location)})")
+            logger.info(
+                f"{building_type.name} at {location} (creep: {self.has_creep(location)})"
+            )
             return True
         except Exception as e:
             logger.error(f"Failed to build {building_type.name}: {e}")
             return False
 
-    def get_closest_creep_position(self, near: Point2, min_distance: float = 5.0) -> Optional[Point2]:
+    def get_closest_creep_position(
+        self, near: Point2, min_distance: float = 5.0
+    ) -> Optional[Point2]:
         """
         가장 가까운 점막 위치를 찾습니다.
 

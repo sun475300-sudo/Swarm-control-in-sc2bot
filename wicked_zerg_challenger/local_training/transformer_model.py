@@ -70,7 +70,11 @@ class MultiHeadAttention:
         self.W_o = np.random.randn(d_model, d_model) * scale
 
     def attention(
-        self, Q: np.ndarray, K: np.ndarray, V: np.ndarray, mask: Optional[np.ndarray] = None
+        self,
+        Q: np.ndarray,
+        K: np.ndarray,
+        V: np.ndarray,
+        mask: Optional[np.ndarray] = None,
     ) -> np.ndarray:
         """Scaled Dot-Product Attention"""
         scores = np.matmul(Q, K.T) / np.sqrt(self.d_k)
@@ -220,7 +224,9 @@ class TransformerDecisionModel:
             # 입력 검증
             if not game_state or len(game_state) < self.input_dim:
                 # 부족한 차원을 0으로 채움
-                game_state = list(game_state) + [0.0] * (self.input_dim - len(game_state))
+                game_state = list(game_state) + [0.0] * (
+                    self.input_dim - len(game_state)
+                )
 
             # numpy 배열로 변환
             state = np.array(game_state[: self.input_dim], dtype=np.float32)

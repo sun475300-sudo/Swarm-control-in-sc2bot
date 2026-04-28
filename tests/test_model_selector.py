@@ -3,10 +3,10 @@
 
 import pytest
 from jarvis_features.model_selector import (
-    ModelSelector,
-    ModelPlan,
     CLAUDE_CASCADE,
     GEMINI_CASCADE,
+    ModelPlan,
+    ModelSelector,
 )
 
 

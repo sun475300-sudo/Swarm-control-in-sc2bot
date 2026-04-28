@@ -10,10 +10,10 @@ class AsyncUtilsUtils:
     def process(data):
         """
         Process data.
-        
+
         Args:
             data: Input data
-            
+
         Returns:
             Processed data
         """
@@ -24,10 +24,10 @@ class AsyncUtilsUtils:
     def validate(data):
         """
         Validate data.
-        
+
         Args:
             data: Data to validate
-            
+
         Returns:
             True if valid, False otherwise
         """

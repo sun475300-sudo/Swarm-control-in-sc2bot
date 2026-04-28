@@ -6,11 +6,12 @@ across the codebase. Uses efficient algorithms and consistent interfaces.
 """
 
 from typing import TYPE_CHECKING, List, Optional, Union
+
 from sc2.position import Point2
 
 if TYPE_CHECKING:
-    from sc2.units import Units
     from sc2.unit import Unit
+    from sc2.units import Units
 
 
 def get_center_position(units: Union[List, "Units"]) -> Point2:
@@ -41,7 +42,7 @@ def get_center_position(units: Union[List, "Units"]) -> Point2:
 def get_weighted_center(
     units: Union[List, "Units"],
     weight_by_health: bool = False,
-    weight_by_supply: bool = False
+    weight_by_supply: bool = False,
 ) -> Point2:
     """
     Calculate weighted center of units
@@ -109,14 +110,16 @@ def get_closest_unit(units: Union[List, "Units"], position: Point2) -> Optional[
         return None
 
     # Use built-in closest_to if available (Units collection)
-    if hasattr(units, 'closest_to'):
+    if hasattr(units, "closest_to"):
         return units.closest_to(position)
 
     # Fallback for lists
     return min(units, key=lambda u: u.position.distance_to(position))
 
 
-def get_furthest_unit(units: Union[List, "Units"], position: Point2) -> Optional["Unit"]:
+def get_furthest_unit(
+    units: Union[List, "Units"], position: Point2
+) -> Optional["Unit"]:
     """
     Get the furthest unit from a position
 
@@ -136,7 +139,7 @@ def get_furthest_unit(units: Union[List, "Units"], position: Point2) -> Optional
         return None
 
     # Use built-in furthest_to if available (Units collection)
-    if hasattr(units, 'furthest_to'):
+    if hasattr(units, "furthest_to"):
         return units.furthest_to(position)
 
     # Fallback for lists
@@ -190,9 +193,7 @@ def get_spread_radius(units: Union[List, "Units"]) -> float:
 
 
 def is_position_safe(
-    position: Point2,
-    enemy_units: Union[List, "Units"],
-    safe_distance: float = 10.0
+    position: Point2, enemy_units: Union[List, "Units"], safe_distance: float = 10.0
 ) -> bool:
     """
     Check if a position is safe (no enemies within safe_distance)
@@ -213,7 +214,7 @@ def is_position_safe(
         return True
 
     # Use C++ closer_than if available
-    if hasattr(enemy_units, 'closer_than'):
+    if hasattr(enemy_units, "closer_than"):
         return len(enemy_units.closer_than(safe_distance, position)) == 0
 
     # Fallback for lists
@@ -224,9 +225,7 @@ def is_position_safe(
 
 
 def get_perimeter_positions(
-    center: Point2,
-    radius: float,
-    count: int = 8
+    center: Point2, radius: float, count: int = 8
 ) -> List[Point2]:
     """
     Get positions arranged in a circle around a center point
@@ -280,8 +279,9 @@ def interpolate_position(start: Point2, end: Point2, ratio: float) -> Point2:
     return Point2((x, y))
 
 
-def clamp_position(position: Point2, min_x: float, max_x: float,
-                   min_y: float, max_y: float) -> Point2:
+def clamp_position(
+    position: Point2, min_x: float, max_x: float, min_y: float, max_y: float
+) -> Point2:
     """
     Clamp a position to within bounds
 

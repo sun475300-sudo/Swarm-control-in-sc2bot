@@ -3,16 +3,17 @@ Phase 432: Outlines - Structured SC2 Strategy Generation
 Constrained text generation for build orders, strategy JSON, and unit compositions.
 """
 
+import json
+import re
+from typing import Literal
+
 import outlines
 import outlines.models as models
 import outlines.text.generate as generate
 from pydantic import BaseModel, Field
-from typing import Literal
-import json
-import re
-
 
 # ── Pydantic schemas for structured output ────────────────────────────────────
+
 
 class BuildOrderStep(BaseModel):
     supply: int = Field(..., ge=9, le=200)
@@ -81,13 +82,16 @@ def generate_unit_composition_json(model_name: str = "gpt2") -> UnitComposition:
 def generate_regex_build_order(model_name: str = "gpt2") -> str:
     """Generate a build order string constrained by regex pattern."""
     lm = models.transformers(model_name)
-    pattern = re.compile(r"(1[2-9]|[2-9]\d)\s+(Drone|Overlord|Zergling|Roach|Queen|Hatchery|Spawning Pool|Extractor)")
+    pattern = re.compile(
+        r"(1[2-9]|[2-9]\d)\s+(Drone|Overlord|Zergling|Roach|Queen|Hatchery|Spawning Pool|Extractor)"
+    )
     generator = generate.regex(lm, pattern)
     prompt = "17 "
     return generator(prompt)
 
 
 # ── Template-based generation (no LLM needed) ─────────────────────────────────
+
 
 def template_sc2_strategy(
     race: str = "Zerg",

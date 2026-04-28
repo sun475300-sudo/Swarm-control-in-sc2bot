@@ -3,12 +3,12 @@ Phase 434: Ollama - Local LLM SC2 Strategy Advisor
 Run open-source LLMs locally via Ollama for offline SC2 strategy analysis.
 """
 
-import httpx
 import asyncio
 import json
 from dataclasses import dataclass
 from typing import AsyncGenerator, Optional
 
+import httpx
 
 OLLAMA_BASE_URL = "http://localhost:11434"
 DEFAULT_MODEL = "llama3"
@@ -16,6 +16,7 @@ STRATEGY_MODEL = "mistral"
 
 
 # ── Game state prompt builder ─────────────────────────────────────────────────
+
 
 @dataclass
 class SC2GameContext:
@@ -48,6 +49,7 @@ class SC2GameContext:
 
 
 # ── Async Ollama client ───────────────────────────────────────────────────────
+
 
 class OllamaClient:
     """Async HTTP client for the Ollama local LLM API."""
@@ -82,7 +84,9 @@ class OllamaClient:
             },
         }
         async with httpx.AsyncClient(timeout=120) as client:
-            async with client.stream("POST", f"{self.base_url}/api/generate", json=payload) as resp:
+            async with client.stream(
+                "POST", f"{self.base_url}/api/generate", json=payload
+            ) as resp:
                 resp.raise_for_status()
                 async for line in resp.aiter_lines():
                     if line:
@@ -99,7 +103,9 @@ class OllamaClient:
     ) -> str:
         """Generate a complete response (non-streaming)."""
         chunks = []
-        async for token in self.generate_stream(prompt, model=model, temperature=temperature):
+        async for token in self.generate_stream(
+            prompt, model=model, temperature=temperature
+        ):
             chunks.append(token)
         return "".join(chunks)
 
@@ -118,6 +124,7 @@ class OllamaClient:
 
 # ── SC2-specific advisor ──────────────────────────────────────────────────────
 
+
 class SC2LocalAdvisor:
     """Local SC2 strategy advisor powered by Ollama."""
 
@@ -125,7 +132,9 @@ class SC2LocalAdvisor:
         self.client = OllamaClient()
         self.model = strategy_model
 
-    async def get_real_time_advice(self, ctx: SC2GameContext) -> AsyncGenerator[str, None]:
+    async def get_real_time_advice(
+        self, ctx: SC2GameContext
+    ) -> AsyncGenerator[str, None]:
         """Stream real-time advice token by token during a live game."""
         prompt = ctx.build_strategy_prompt()
         async for token in self.client.generate_stream(prompt, model=self.model):
@@ -144,13 +153,17 @@ class SC2LocalAdvisor:
         return await self.client.chat(
             messages=[
                 {"role": "system", "content": "You are an SC2 threat analysis expert."},
-                {"role": "user", "content": f"Threat description: {description}\nAssess and recommend counter:"},
+                {
+                    "role": "user",
+                    "content": f"Threat description: {description}\nAssess and recommend counter:",
+                },
             ],
             model=self.model,
         )
 
 
 # ── Demo runner ───────────────────────────────────────────────────────────────
+
 
 async def demo_sc2_ollama():
     """Demo the SC2 local LLM advisor."""

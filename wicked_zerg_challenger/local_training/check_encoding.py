@@ -3,8 +3,8 @@
 
 """Simple UTF-8 validation for main_integrated.py."""
 
-from pathlib import Path
 import logging
+from pathlib import Path
 
 logger = logging.getLogger("CheckEncoding")
 

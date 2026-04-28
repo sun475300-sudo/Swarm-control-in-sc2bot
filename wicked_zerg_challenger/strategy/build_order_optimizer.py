@@ -15,6 +15,7 @@ Features:
 """
 
 from typing import Dict, List, Optional, Set
+
 from utils.logger import get_logger
 
 try:
@@ -23,8 +24,10 @@ try:
     from sc2.ids.upgrade_id import UpgradeId
     from sc2.position import Point2
 except ImportError:
+
     class BotAI:
         pass
+
     class UnitTypeId:
         DRONE = "DRONE"
         OVERLORD = "OVERLORD"
@@ -32,8 +35,10 @@ except ImportError:
         HATCHERY = "HATCHERY"
         SPAWNINGPOOL = "SPAWNINGPOOL"
         EXTRACTOR = "EXTRACTOR"
+
     class UpgradeId:
         ZERGLINGMOVEMENTSPEED = "ZERGLINGMOVEMENTSPEED"
+
     Point2 = tuple
 
 
@@ -145,7 +150,9 @@ class BuildOrderOptimizer:
         # Train Overlord
         if larvae.idle:
             self.bot.do(larvae.first.train(UnitTypeId.OVERLORD))
-            self.logger.info(f"[{int(self.bot.time)}s] [*] Overlord trained (Supply: {self.bot.supply_used}) [*]")
+            self.logger.info(
+                f"[{int(self.bot.time)}s] [*] Overlord trained (Supply: {self.bot.supply_used}) [*]"
+            )
 
     async def _build_expansion(self):
         """자연 확장 Hatchery 건설"""
@@ -159,7 +166,9 @@ class BuildOrderOptimizer:
         await self.bot.expand_now()
         self.expansion_placed = True
 
-        self.logger.info(f"[{int(self.bot.time)}s] [*] EXPANSION HATCHERY placed (Supply: {self.bot.supply_used}) [*]")
+        self.logger.info(
+            f"[{int(self.bot.time)}s] [*] EXPANSION HATCHERY placed (Supply: {self.bot.supply_used}) [*]"
+        )
 
     async def _build_spawning_pool(self):
         """Spawning Pool 건설"""
@@ -180,7 +189,7 @@ class BuildOrderOptimizer:
             main_base = self.bot.townhalls.first
             position = await self.bot.find_placement(
                 UnitTypeId.SPAWNINGPOOL,
-                main_base.position.towards(self.bot.game_info.map_center, 5)
+                main_base.position.towards(self.bot.game_info.map_center, 5),
             )
 
             if position:
@@ -189,7 +198,9 @@ class BuildOrderOptimizer:
                     self.bot.do(workers.first.build(UnitTypeId.SPAWNINGPOOL, position))
                     self.pool_placed = True
 
-                    self.logger.info(f"[{int(self.bot.time)}s] [*] SPAWNING POOL placed (Supply: {self.bot.supply_used}) [*]")
+                    self.logger.info(
+                        f"[{int(self.bot.time)}s] [*] SPAWNING POOL placed (Supply: {self.bot.supply_used}) [*]"
+                    )
 
     async def _build_extractor(self):
         """Extractor 건설"""
@@ -213,10 +224,14 @@ class BuildOrderOptimizer:
             if geysers:
                 workers = self.bot.units(UnitTypeId.DRONE)
                 if workers:
-                    self.bot.do(workers.first.build(UnitTypeId.EXTRACTOR, geysers.first))
+                    self.bot.do(
+                        workers.first.build(UnitTypeId.EXTRACTOR, geysers.first)
+                    )
                     self.gas_placed = True
 
-                    self.logger.info(f"[{int(self.bot.time)}s] [*] EXTRACTOR placed (Supply: {self.bot.supply_used}) [*]")
+                    self.logger.info(
+                        f"[{int(self.bot.time)}s] [*] EXTRACTOR placed (Supply: {self.bot.supply_used}) [*]"
+                    )
 
     def _can_build_queen(self) -> bool:
         """Queen을 생산할 수 있는지 확인"""
@@ -229,7 +244,9 @@ class BuildOrderOptimizer:
             return False
 
         # 가스가 충분한지 확인
-        if self.bot.vespene < 100:  # Actually Queen costs 0 gas, but this is for general use
+        if (
+            self.bot.vespene < 100
+        ):  # Actually Queen costs 0 gas, but this is for general use
             return False
 
         # Hatchery가 있는지 확인
@@ -251,7 +268,9 @@ class BuildOrderOptimizer:
         self.bot.do(hatcheries.first.train(UnitTypeId.QUEEN))
         self.first_queen_made = True
 
-        self.logger.info(f"[{int(self.bot.time)}s] [*] QUEEN trained (first 100 gas priority) [*]")
+        self.logger.info(
+            f"[{int(self.bot.time)}s] [*] QUEEN trained (first 100 gas priority) [*]"
+        )
 
     # ========================================
     # Supply Block Prevention
@@ -297,7 +316,9 @@ class BuildOrderOptimizer:
                 # Metabolic Boost 연구 (아직 안 했으면)
                 if UpgradeId.ZERGLINGMOVEMENTSPEED not in self.bot.state.upgrades:
                     self.bot.do(pools.first.research(UpgradeId.ZERGLINGMOVEMENTSPEED))
-                    self.logger.info(f"[{int(self.bot.time)}s] [*] METABOLIC BOOST started [*]")
+                    self.logger.info(
+                        f"[{int(self.bot.time)}s] [*] METABOLIC BOOST started [*]"
+                    )
 
     # ========================================
     # Drone Saturation Management
@@ -329,7 +350,9 @@ class BuildOrderOptimizer:
             # Larvae로 드론 생산
             larvae = self.bot.units(UnitTypeId.LARVA).idle
             if larvae and self.bot.minerals >= 50:
-                drones_to_make = min(larvae.amount, target_total_drones - current_drones)
+                drones_to_make = min(
+                    larvae.amount, target_total_drones - current_drones
+                )
 
                 for i in range(drones_to_make):
                     if self.bot.minerals >= 50:
@@ -360,14 +383,18 @@ class BuildOrderOptimizer:
         if "metabolic_boost" not in self.milestones_completed:
             if UpgradeId.ZERGLINGMOVEMENTSPEED in self.bot.state.upgrades:
                 self.milestones_completed.add("metabolic_boost")
-                self.logger.info(f"[{int(game_time)}s] [*] MILESTONE: Metabolic Boost [*]")
+                self.logger.info(
+                    f"[{int(game_time)}s] [*] MILESTONE: Metabolic Boost [*]"
+                )
 
         # ★ Milestone 4: 16 Drones on minerals ★
         if "16_mineral_drones" not in self.milestones_completed:
             # Simplified check
             if self.bot.units(UnitTypeId.DRONE).amount >= 16:
                 self.milestones_completed.add("16_mineral_drones")
-                self.logger.info(f"[{int(game_time)}s] [*] MILESTONE: 16 Mineral Drones [*]")
+                self.logger.info(
+                    f"[{int(game_time)}s] [*] MILESTONE: 16 Mineral Drones [*]"
+                )
 
     def get_build_order_status(self) -> Dict:
         """빌드 오더 상태 반환"""
@@ -379,5 +406,9 @@ class BuildOrderOptimizer:
             "milestones_completed": list(self.milestones_completed),
             "current_supply": self.bot.supply_used,
             "supply_cap": self.bot.supply_cap,
-            "drones": self.bot.units(UnitTypeId.DRONE).amount if hasattr(self.bot, "units") else 0,
+            "drones": (
+                self.bot.units(UnitTypeId.DRONE).amount
+                if hasattr(self.bot, "units")
+                else 0
+            ),
         }

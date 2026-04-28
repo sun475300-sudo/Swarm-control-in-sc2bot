@@ -40,15 +40,30 @@ class BoidsSwarmController:
 
     # 고위협 유닛 목록 (우선 회피/집중 공격)
     HIGH_THREAT_UNITS = {
-        "SIEGETANK", "SIEGETANKSIEGED", "COLOSSUS", "DISRUPTOR",
-        "HIGHTEMPLAR", "WIDOWMINE", "LIBERATOR", "LIBERATORAG",
-        "BANELING", "LURKER", "LURKERMP", "RAVAGER"
+        "SIEGETANK",
+        "SIEGETANKSIEGED",
+        "COLOSSUS",
+        "DISRUPTOR",
+        "HIGHTEMPLAR",
+        "WIDOWMINE",
+        "LIBERATOR",
+        "LIBERATORAG",
+        "BANELING",
+        "LURKER",
+        "LURKERMP",
+        "RAVAGER",
     }
 
     # 스플래시 피해 유닛
     SPLASH_UNITS = {
-        "SIEGETANKSIEGED", "COLOSSUS", "HIGHTEMPLAR", "DISRUPTOR",
-        "BANELING", "HELLION", "HELLBAT", "LURKERMP"
+        "SIEGETANKSIEGED",
+        "COLOSSUS",
+        "HIGHTEMPLAR",
+        "DISRUPTOR",
+        "BANELING",
+        "HELLION",
+        "HELLBAT",
+        "LURKERMP",
     }
 
     def __init__(
@@ -250,9 +265,7 @@ class BoidsSwarmController:
 
         return np.array([0.0, 0.0])
 
-    def _calculate_enemy_avoidance(
-        self, unit: Unit, enemy_units: Units
-    ) -> np.ndarray:
+    def _calculate_enemy_avoidance(self, unit: Unit, enemy_units: Units) -> np.ndarray:
         """
         적 회피 힘 계산: 적 유닛으로부터 멀어지기
 
@@ -434,8 +447,11 @@ class BoidsSwarmController:
         if has_splash_threat and enemy_units:
             nearby_enemies = enemy_units
             # ★ Dynamic dispersal based on splash unit count ★
-            splash_count = sum(1 for e in nearby_enemies
-                              if getattr(e.type_id, "name", "").upper() in self.SPLASH_UNITS)
+            splash_count = sum(
+                1
+                for e in nearby_enemies
+                if getattr(e.type_id, "name", "").upper() in self.SPLASH_UNITS
+            )
             separation_mult = min(2.5 + splash_count * 0.3, 4.0)
         else:
             separation_mult = 1.5
@@ -458,10 +474,7 @@ class BoidsSwarmController:
                 # 기지 → 적 방향
                 defense_x, defense_y = _get_pos(defense_point)
                 base_x, base_y = _get_pos(base_position)
-                base_to_enemy = np.array([
-                    defense_x - base_x,
-                    defense_y - base_y
-                ])
+                base_to_enemy = np.array([defense_x - base_x, defense_y - base_y])
                 base_angle = math.atan2(base_to_enemy[1], base_to_enemy[0])
 
                 # 유닛별 부채꼴 각도 (±45도 범위)
@@ -474,13 +487,17 @@ class BoidsSwarmController:
 
                 # 방어 거리 (기지와 적 사이)
                 defense_distance = 8.0
-                formation_x = base_x + math.cos(base_angle + angle_offset) * defense_distance
-                formation_y = base_y + math.sin(base_angle + angle_offset) * defense_distance
+                formation_x = (
+                    base_x + math.cos(base_angle + angle_offset) * defense_distance
+                )
+                formation_y = (
+                    base_y + math.sin(base_angle + angle_offset) * defense_distance
+                )
 
                 # 진형 위치로 부드럽게 이동
                 unit_x, unit_y = _get_pos(unit)
-                velocity_x = (velocity_x + (formation_x - unit_x) * 0.3)
-                velocity_y = (velocity_y + (formation_y - unit_y) * 0.3)
+                velocity_x = velocity_x + (formation_x - unit_x) * 0.3
+                velocity_y = velocity_y + (formation_y - unit_y) * 0.3
 
             # 목표 위치 계산
             cur_x, cur_y = _get_pos(unit)
@@ -512,10 +529,22 @@ class BoidsSwarmController:
             return None
 
         SPELL_CASTERS = {"HIGHTEMPLAR", "INFESTOR", "VIPER", "GHOST", "RAVEN", "ORACLE"}
-        SPLASH_PRIORITY = {"COLOSSUS", "SIEGETANKSIEGED", "DISRUPTOR", "DISRUPTORPHASED",
-                          "LIBERATORAG", "WIDOWMINEBURROWED"}
-        SUPPORT_UNITS = {"MEDIVAC", "WARPPRISM", "WARPPRISMPHASING", "OBSERVER",
-                        "OVERLORDTRANSPORT", "OVERSEER"}
+        SPLASH_PRIORITY = {
+            "COLOSSUS",
+            "SIEGETANKSIEGED",
+            "DISRUPTOR",
+            "DISRUPTORPHASED",
+            "LIBERATORAG",
+            "WIDOWMINEBURROWED",
+        }
+        SUPPORT_UNITS = {
+            "MEDIVAC",
+            "WARPPRISM",
+            "WARPPRISMPHASING",
+            "OBSERVER",
+            "OVERLORDTRANSPORT",
+            "OVERSEER",
+        }
 
         best_target = None
         best_priority = 999
@@ -542,8 +571,9 @@ class BoidsSwarmController:
                     priority = 4
 
                 # Select by: priority (lower = better), then distance
-                if (priority < best_priority or
-                    (priority == best_priority and dist < best_distance)):
+                if priority < best_priority or (
+                    priority == best_priority and dist < best_distance
+                ):
                     best_priority = priority
                     best_distance = dist
                     best_target = enemy

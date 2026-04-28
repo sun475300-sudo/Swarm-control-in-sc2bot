@@ -35,10 +35,7 @@ def assign_unit_to_task(manager, unit_tag, task_name):
 
     # Add unit to active task
     if task_name not in manager._active_tasks:
-        manager._active_tasks[task_name] = {
-            "units": set(),
-            "target": None
-        }
+        manager._active_tasks[task_name] = {"units": set(), "target": None}
 
     manager._active_tasks[task_name]["units"].add(unit_tag)
 
@@ -120,10 +117,7 @@ def set_task_target(manager, task_name, target_position):
         target_position: 목표 위치
     """
     if task_name not in manager._active_tasks:
-        manager._active_tasks[task_name] = {
-            "units": set(),
-            "target": target_position
-        }
+        manager._active_tasks[task_name] = {"units": set(), "target": target_position}
     else:
         manager._active_tasks[task_name]["target"] = target_position
 

@@ -9,8 +9,8 @@ Feature #92: Queen Walk 러시 매니저
 4. 크립 종양 설치하며 전진 (시야 확보)
 """
 
-from typing import Dict, List, Optional, Set
 from enum import Enum
+from typing import Dict, List, Optional, Set
 
 try:
     from sc2.ids.ability_id import AbilityId
@@ -30,10 +30,11 @@ from utils.logger import get_logger
 
 class QueenWalkPhase(Enum):
     """퀸 워크 전술 단계"""
+
     IDLE = "idle"
     PREPARING = "preparing"  # 퀸 + 저글링 집결
     ADVANCING = "advancing"  # 전진 중
-    ENGAGING = "engaging"    # 교전 중
+    ENGAGING = "engaging"  # 교전 중
     RETREATING = "retreating"  # 후퇴 중
 
 
@@ -66,18 +67,18 @@ class QueenWalkManager:
         self.walk_active: bool = False
 
         # 할당된 유닛
-        self.queen_tags: Set[int] = set()      # 퀸 워크에 참여하는 퀸
-        self.zergling_tags: Set[int] = set()   # 호위 저글링
+        self.queen_tags: Set[int] = set()  # 퀸 워크에 참여하는 퀸
+        self.zergling_tags: Set[int] = set()  # 호위 저글링
         self.rally_point: Optional[Point2] = None  # 집결 지점
         self.target_point: Optional[Point2] = None  # 공격 목표
 
         # 전술 파라미터
-        self.min_queens: int = 2            # 최소 퀸 수
-        self.min_zerglings: int = 8         # 최소 저글링 수
+        self.min_queens: int = 2  # 최소 퀸 수
+        self.min_zerglings: int = 8  # 최소 저글링 수
         self.queen_retreat_hp: float = 0.4  # 퀸 후퇴 체력 비율
-        self.queen_heal_hp: float = 0.7     # 트랜스퓨전 시작 체력
-        self.transfusion_energy: int = 50   # 트랜스퓨전 필요 에너지
-        self.max_game_time: float = 360.0   # 최대 실행 시간 (6분)
+        self.queen_heal_hp: float = 0.7  # 트랜스퓨전 시작 체력
+        self.transfusion_energy: int = 50  # 트랜스퓨전 필요 에너지
+        self.max_game_time: float = 360.0  # 최대 실행 시간 (6분)
         self.creep_tumor_interval: float = 15.0  # 크립 종양 설치 간격
 
         # 타이밍
@@ -171,7 +172,7 @@ class QueenWalkManager:
         self.walks_attempted += 1
 
         # 퀸 할당 (인젝트용 퀸 1기는 남기기)
-        queens_for_walk = list(queens)[:min(queens.amount - 1, 3)]
+        queens_for_walk = list(queens)[: min(queens.amount - 1, 3)]
         self.queen_tags = {q.tag for q in queens_for_walk}
 
         # 저글링 할당
@@ -181,13 +182,15 @@ class QueenWalkManager:
         # 집결 지점 (아군 내추럴 앞)
         if hasattr(self.bot, "start_location"):
             direction = target - self.bot.start_location
-            length = (direction.x ** 2 + direction.y ** 2) ** 0.5
+            length = (direction.x**2 + direction.y**2) ** 0.5
             if length > 0:
                 nx, ny = direction.x / length, direction.y / length
-                self.rally_point = Point2((
-                    self.bot.start_location.x + nx * 20,
-                    self.bot.start_location.y + ny * 20,
-                ))
+                self.rally_point = Point2(
+                    (
+                        self.bot.start_location.x + nx * 20,
+                        self.bot.start_location.y + ny * 20,
+                    )
+                )
 
         self.logger.info(
             f"[{int(game_time)}s] [QUEEN_WALK] 퀸 워크 개시! "
@@ -196,7 +199,10 @@ class QueenWalkManager:
 
     def _find_attack_target(self) -> Optional[Point2]:
         """공격 목표 찾기 (적 내추럴 우선)"""
-        if not hasattr(self.bot, "enemy_start_locations") or not self.bot.enemy_start_locations:
+        if (
+            not hasattr(self.bot, "enemy_start_locations")
+            or not self.bot.enemy_start_locations
+        ):
             return None
 
         enemy_start = self.bot.enemy_start_locations[0]
@@ -246,9 +252,7 @@ class QueenWalkManager:
         # 모두 집결 완료 또는 10초 경과
         if all_gathered or (game_time - self.walk_start_time > 10):
             self.phase = QueenWalkPhase.ADVANCING
-            self.logger.info(
-                f"[{int(game_time)}s] [QUEEN_WALK] 집결 완료, 전진 개시!"
-            )
+            self.logger.info(f"[{int(game_time)}s] [QUEEN_WALK] 집결 완료, 전진 개시!")
 
     async def _advance(self, game_time: float):
         """목표를 향해 전진"""
@@ -274,8 +278,11 @@ class QueenWalkManager:
                 self.bot.do(queen.attack(self.target_point))
 
                 # 크립 종양 설치 (에너지 충분하고 쿨다운 지남)
-                if (queen.energy >= self.transfusion_energy + 25 and
-                        game_time - self.last_creep_tumor_time > self.creep_tumor_interval):
+                if (
+                    queen.energy >= self.transfusion_energy + 25
+                    and game_time - self.last_creep_tumor_time
+                    > self.creep_tumor_interval
+                ):
                     await self._place_creep_tumor(queen, game_time)
 
         # 저글링은 퀸 주변에서 호위
@@ -330,7 +337,9 @@ class QueenWalkManager:
                 )
                 if lowest_hp_queen.health_percentage < self.queen_heal_hp:
                     try:
-                        self.bot.do(queen(AbilityId.TRANSFUSION_TRANSFUSION, lowest_hp_queen))
+                        self.bot.do(
+                            queen(AbilityId.TRANSFUSION_TRANSFUSION, lowest_hp_queen)
+                        )
                         self.last_transfusion_time = game_time
                     except Exception:
                         pass
@@ -385,7 +394,9 @@ class QueenWalkManager:
                 low_hp_queen = min(queens_alive, key=lambda q: q.health_percentage)
                 if low_hp_queen.health_percentage < 0.6:
                     try:
-                        self.bot.do(queen(AbilityId.TRANSFUSION_TRANSFUSION, low_hp_queen))
+                        self.bot.do(
+                            queen(AbilityId.TRANSFUSION_TRANSFUSION, low_hp_queen)
+                        )
                     except Exception:
                         pass
                     break

@@ -30,8 +30,8 @@ class CreepHighway:
     3. 점막 퀸이 순서대로 웨이포인트 따라 종양 설치
     """
 
-    GRID_RESOLUTION = 4      # A* 그리드 셀 크기 (게임 단위)
-    WAYPOINT_SPACING = 9.0   # 종양 확산 범위 (게임 단위)
+    GRID_RESOLUTION = 4  # A* 그리드 셀 크기 (게임 단위)
+    WAYPOINT_SPACING = 9.0  # 종양 확산 범위 (게임 단위)
 
     def __init__(self, bot):
         self.bot = bot
@@ -120,8 +120,16 @@ class CreepHighway:
                 return path
 
             # 8방향 이웃 탐색
-            for dx, dy in [(-1, 0), (1, 0), (0, -1), (0, 1),
-                           (-1, -1), (1, 1), (-1, 1), (1, -1)]:
+            for dx, dy in [
+                (-1, 0),
+                (1, 0),
+                (0, -1),
+                (0, 1),
+                (-1, -1),
+                (1, 1),
+                (-1, 1),
+                (1, -1),
+            ]:
                 nx, ny = cx + dx, cy + dy
 
                 if not (0 <= nx < w and 0 <= ny < h):

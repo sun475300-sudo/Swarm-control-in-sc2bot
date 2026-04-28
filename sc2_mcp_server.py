@@ -3,9 +3,10 @@ import json
 import logging
 import os
 import subprocess
+import urllib.error
 import urllib.parse
 import urllib.request
-import urllib.error
+
 from mcp.server.fastmcp import FastMCP
 
 logger = logging.getLogger(__name__)
@@ -16,15 +17,17 @@ mcp = FastMCP("JARVIS-SC2-Manager")
 # Base directory for SC2 bot (환경변수 우선, 없으면 스크립트 위치 기반)
 SC2_DIR = os.environ.get("SC2_BOT_DIR", os.path.dirname(os.path.abspath(__file__)))
 
+
 @mcp.tool()
 async def list_bot_logs(limit: int = 10) -> str:
     """Lists the most recent log files from the SC2 bot logs directory."""
     log_dir = os.path.join(SC2_DIR, "logs")
     if not os.path.exists(log_dir):
         return "Log directory not found."
-    
+
     logs = sorted([f for f in os.listdir(log_dir) if f.endswith(".log")], reverse=True)
     return "\n".join(logs[:limit])
+
 
 @mcp.tool()
 async def read_log_content(filename: str) -> str:
@@ -34,7 +37,7 @@ async def read_log_content(filename: str) -> str:
     if safe_filename != filename or ".." in filename:
         return "오류: 잘못된 파일명입니다. 파일 이름만 지정하세요."
     # H-5: 확장자 화이트리스트 (로그/텍스트 파일만 허용)
-    if not safe_filename.lower().endswith(('.log', '.txt', '.csv')):
+    if not safe_filename.lower().endswith((".log", ".txt", ".csv")):
         return "오류: 허용되지 않은 파일 형식입니다. (.log, .txt, .csv만 허용)"
 
     log_dir = os.path.join(SC2_DIR, "logs")
@@ -49,18 +52,19 @@ async def read_log_content(filename: str) -> str:
     if not os.path.exists(log_path):
         return f"File {safe_filename} not found."
 
-    with open(log_path, 'rb') as f:
+    with open(log_path, "rb") as f:
         # 바이너리 모드로 정확한 바이트 오프셋 계산
         try:
             f.seek(0, 2)
             size = f.tell()
             read_size = min(size, 4000)
             f.seek(max(0, size - read_size))
-            content = f.read().decode('utf-8', errors='replace')
+            content = f.read().decode("utf-8", errors="replace")
         except OSError:
             f.seek(0)
-            content = f.read().decode('utf-8', errors='replace')
+            content = f.read().decode("utf-8", errors="replace")
         return content[-2000:]
+
 
 @mcp.tool()
 async def run_sc2_test_game() -> str:
@@ -72,6 +76,7 @@ async def run_sc2_test_game() -> str:
     except Exception as e:
         return f"Failed to start game: {str(e)}"
 
+
 @mcp.tool()
 async def get_game_situation() -> str:
     """Provides a summarized report of the current game situation (minerals, supply, units, etc.)"""
@@ -80,12 +85,12 @@ async def get_game_situation() -> str:
     if not os.path.exists(state_file):
         # Fallback to sensor_network.json if game_state.json doesn't exist
         state_file = os.path.join(SC2_DIR, "logs", "sensor_network.json")
-        
+
     if not os.path.exists(state_file):
         return "No real-time game state data available yet. Please start a game."
-    
+
     try:
-        with open(state_file, 'r', encoding='utf-8') as f:
+        with open(state_file, "r", encoding="utf-8") as f:
             data = json.load(f)
             # Summarize the data for the AI
             if isinstance(data, list) and len(data) > 0:
@@ -99,6 +104,7 @@ async def get_game_situation() -> str:
     except Exception as e:
         return f"Error reading state: {str(e)}"
 
+
 @mcp.tool()
 async def set_aggression_level(level: str) -> str:
     """Sets the bot's aggression level. Options: 'passive', 'balanced', 'aggressive', 'all_in'"""
@@ -107,23 +113,28 @@ async def set_aggression_level(level: str) -> str:
     valid_levels = ["passive", "balanced", "aggressive", "all_in"]
     if level not in valid_levels:
         return f"Invalid level. Choose from: {valid_levels}"
-    
+
     cmd_file = os.path.join(SC2_DIR, "jarvis_command.json")
     try:
         import tempfile
-        temp_fd, temp_path = tempfile.mkstemp(dir=os.path.dirname(cmd_file), suffix='.tmp')
+
+        temp_fd, temp_path = tempfile.mkstemp(
+            dir=os.path.dirname(cmd_file), suffix=".tmp"
+        )
         try:
-            with os.fdopen(temp_fd, 'w', encoding='utf-8') as f:
+            with os.fdopen(temp_fd, "w", encoding="utf-8") as f:
                 json.dump({"aggression_level": level}, f)
             os.replace(temp_path, cmd_file)
         except Exception as e:
-            try: os.remove(temp_path)
+            try:
+                os.remove(temp_path)
             except OSError as oe:
                 logger.debug(f"temp file cleanup failed: {oe}")
             return f"공격성 설정 실패: {e}"
         return f"Aggression level set to: {level}. The bot will update its strategy shortly."
     except Exception as e:
         return f"Failed to set aggression: {str(e)}"
+
 
 # ──────────────────────────────────────────────
 # #122  SC2 Bot Stats
@@ -150,7 +161,7 @@ async def sc2_bot_stats() -> str:
                     continue
                 fpath = os.path.join(games_dir, fname)
                 try:
-                    with open(fpath, 'r', encoding='utf-8') as f:
+                    with open(fpath, "r", encoding="utf-8") as f:
                         data = _json.load(f)
                     meta = data.get("meta", {})
                     gr = data.get("game_result", {})
@@ -180,7 +191,7 @@ async def sc2_bot_stats() -> str:
         )
         if os.path.isfile(analytics_path) and wins + losses + draws == 0:
             try:
-                with open(analytics_path, 'r', encoding='utf-8') as f:
+                with open(analytics_path, "r", encoding="utf-8") as f:
                     analytics = _json.load(f)
                 for race, stats in analytics.get("race_stats", {}).items():
                     rw = stats.get("wins", 0)
@@ -210,7 +221,7 @@ async def sc2_bot_stats() -> str:
                     if not os.path.isfile(fpath):
                         continue
                     try:
-                        with open(fpath, 'r', encoding='utf-8', errors='replace') as f:
+                        with open(fpath, "r", encoding="utf-8", errors="replace") as f:
                             content = f.read()
                         # 파일당 최초 "Match result:" 라인만 카운트 (중복 방지)
                         match = result_pattern.search(content)
@@ -275,8 +286,10 @@ _SC2_REPLAY_DIRS = [
 def _find_latest_replay(limit: int = 1) -> list:
     """최근 SC2Replay 파일을 탐색합니다."""
     replays = []
-    _MAX_FILES = 5000  # Bug fix #22: Limit max files scanned to prevent unbounded os.walk
-    _MAX_DEPTH = 5     # Limit directory traversal depth
+    _MAX_FILES = (
+        5000  # Bug fix #22: Limit max files scanned to prevent unbounded os.walk
+    )
+    _MAX_DEPTH = 5  # Limit directory traversal depth
     file_count = 0
     for base_dir in _SC2_REPLAY_DIRS:
         if not os.path.exists(base_dir):
@@ -310,7 +323,9 @@ async def analyze_replay(replay_path: str = "") -> str:
         if not replay_path:
             found = _find_latest_replay(1)
             if not found:
-                return "리플레이 파일을 찾을 수 없습니다.\n탐색 경로: " + ", ".join(_SC2_REPLAY_DIRS)
+                return "리플레이 파일을 찾을 수 없습니다.\n탐색 경로: " + ", ".join(
+                    _SC2_REPLAY_DIRS
+                )
             replay_path = found[0]
 
         if not os.path.exists(replay_path):
@@ -320,6 +335,7 @@ async def analyze_replay(replay_path: str = "") -> str:
         fsize = os.path.getsize(replay_path)
         mtime = os.path.getmtime(replay_path)
         from datetime import datetime
+
         date_str = datetime.fromtimestamp(mtime).strftime("%Y-%m-%d %H:%M")
 
         # 파일 크기 유효성 검사
@@ -331,6 +347,7 @@ async def analyze_replay(replay_path: str = "") -> str:
         # sc2reader가 설치되어 있으면 상세 분석
         try:
             import sc2reader
+
             replay = sc2reader.load_replay(replay_path)
             players = []
             for p in replay.players:
@@ -348,14 +365,20 @@ async def analyze_replay(replay_path: str = "") -> str:
                 f"━━━━━━━━━━━━━━━━━━━━"
             )
             # 유닛 생산 통계 (가능한 경우)
-            if hasattr(replay, 'tracker_events'):
+            if hasattr(replay, "tracker_events"):
                 unit_counts = {}
                 for event in replay.tracker_events:
-                    if hasattr(event, 'unit') and hasattr(event, 'name') and 'Born' in type(event).__name__:
-                        uname = getattr(event.unit, 'name', 'Unknown')
+                    if (
+                        hasattr(event, "unit")
+                        and hasattr(event, "name")
+                        and "Born" in type(event).__name__
+                    ):
+                        uname = getattr(event.unit, "name", "Unknown")
                         unit_counts[uname] = unit_counts.get(uname, 0) + 1
                 if unit_counts:
-                    top_units = sorted(unit_counts.items(), key=lambda x: x[1], reverse=True)[:15]
+                    top_units = sorted(
+                        unit_counts.items(), key=lambda x: x[1], reverse=True
+                    )[:15]
                     result += "\n\n유닛 생산 TOP 15:\n"
                     for uname, cnt in top_units:
                         result += f"  {uname}: {cnt}\n"
@@ -385,6 +408,7 @@ async def list_replays(limit: int = 10) -> str:
     if not found:
         return "리플레이 파일을 찾을 수 없습니다."
     from datetime import datetime
+
     lines = []
     for i, fpath in enumerate(found, 1):
         fname = os.path.basename(fpath)
@@ -405,7 +429,9 @@ async def sc2_coaching_check() -> str:
     if not os.path.exists(state_file):
         state_file = os.path.join(SC2_DIR, "logs", "sensor_network.json")
     if not os.path.exists(state_file):
-        state_file = os.path.join(SC2_DIR, "wicked_zerg_challenger", "logs", "sensor_network.json")
+        state_file = os.path.join(
+            SC2_DIR, "wicked_zerg_challenger", "logs", "sensor_network.json"
+        )
     if not os.path.exists(state_file):
         return "게임 상태 데이터가 없습니다. 게임 실행 중인지 확인하세요."
 
@@ -413,10 +439,12 @@ async def sc2_coaching_check() -> str:
     if not os.access(state_file, os.R_OK):
         return f"게임 상태 파일을 읽을 수 없습니다 (권한 부족): {state_file}"
     if os.path.getsize(state_file) == 0:
-        return "게임 상태 파일이 비어있습니다. 게임이 데이터를 기록할 때까지 기다려주세요."
+        return (
+            "게임 상태 파일이 비어있습니다. 게임이 데이터를 기록할 때까지 기다려주세요."
+        )
 
     try:
-        with open(state_file, 'r', encoding='utf-8') as f:
+        with open(state_file, "r", encoding="utf-8") as f:
             data = json.load(f)
 
         warnings = []
@@ -435,21 +463,31 @@ async def sc2_coaching_check() -> str:
             if minerals > 1000:
                 warnings.append(f"미네랄 과다 축적: {minerals} (소비 필요!)")
             if minerals > 500 and vespene > 300:
-                tips.append("자원이 충분합니다. 생산 시설을 추가하거나 유닛을 생산하세요.")
+                tips.append(
+                    "자원이 충분합니다. 생산 시설을 추가하거나 유닛을 생산하세요."
+                )
 
             # 인구수 경고
             if supply_cap > 0 and supply_used / supply_cap > 0.95:
-                warnings.append(f"인구수 막힘! {supply_used}/{supply_cap} - 오버로드/서플라이 디포 필요")
+                warnings.append(
+                    f"인구수 막힘! {supply_used}/{supply_cap} - 오버로드/서플라이 디포 필요"
+                )
             elif supply_cap > 0 and supply_used / supply_cap > 0.85:
-                tips.append(f"인구수 {supply_used}/{supply_cap} - 곧 막힐 수 있으니 미리 대비하세요.")
+                tips.append(
+                    f"인구수 {supply_used}/{supply_cap} - 곧 막힐 수 있으니 미리 대비하세요."
+                )
 
             # 놀고 있는 일꾼
             if idle_workers > 0:
-                warnings.append(f"놀고 있는 일꾼: {idle_workers}마리! 자원에 배치하세요.")
+                warnings.append(
+                    f"놀고 있는 일꾼: {idle_workers}마리! 자원에 배치하세요."
+                )
 
             # 일꾼 수 체크
             if worker_count < 16 and supply_used > 20:
-                warnings.append(f"일꾼 부족: {worker_count}마리 (최소 16마리 이상 권장)")
+                warnings.append(
+                    f"일꾼 부족: {worker_count}마리 (최소 16마리 이상 권장)"
+                )
             elif worker_count > 80:
                 tips.append(f"일꾼 과다: {worker_count}마리. 일부를 군대로 전환하세요.")
 
@@ -461,7 +499,9 @@ async def sc2_coaching_check() -> str:
                 f"군대: {army_count} | 일꾼: {worker_count}\n"
             )
             if warnings:
-                status += f"\n⚠️ 경고:\n" + "\n".join(f"  - {w}" for w in warnings) + "\n"
+                status += (
+                    f"\n⚠️ 경고:\n" + "\n".join(f"  - {w}" for w in warnings) + "\n"
+                )
             if tips:
                 status += f"\n💡 팁:\n" + "\n".join(f"  - {t}" for t in tips) + "\n"
             if not warnings and not tips:
@@ -503,7 +543,9 @@ async def track_ladder(player_name: str, server: str = "kr") -> str:
     try:
         # SC2Pulse API 시도
         encoded_name = urllib.parse.quote(player_name)
-        url = f"https://sc2pulse.nephest.com/sc2/api/character/search?term={encoded_name}"
+        url = (
+            f"https://sc2pulse.nephest.com/sc2/api/character/search?term={encoded_name}"
+        )
 
         req = urllib.request.Request(url, headers={"User-Agent": "JARVIS-SC2/1.0"})
         try:
@@ -516,11 +558,18 @@ async def track_ladder(player_name: str, server: str = "kr") -> str:
             # 서버 필터
             server_map = {"kr": "KR", "us": "US", "eu": "EU"}
             target_region = server_map.get(server.lower(), "KR")
-            matches = [p for p in data if p.get("members", [{}])[0].get("region", {}).get("name", "") == target_region]
+            matches = [
+                p
+                for p in data
+                if p.get("members", [{}])[0].get("region", {}).get("name", "")
+                == target_region
+            ]
             if not matches:
                 matches = data[:3]
 
-            lines = [f"SC2 래더 조회: {player_name} ({server.upper()})\n━━━━━━━━━━━━━━━━━━━━"]
+            lines = [
+                f"SC2 래더 조회: {player_name} ({server.upper()})\n━━━━━━━━━━━━━━━━━━━━"
+            ]
             for p in matches[:3]:
                 members = p.get("members", [{}])
                 if members:
@@ -531,11 +580,19 @@ async def track_ladder(player_name: str, server: str = "kr") -> str:
                     region = m.get("region", {}).get("name", "?")
                     rating = p.get("ratingMax", p.get("rating", "?"))
                     league = p.get("leagueMax", {})
-                    league_type = league.get("type", "?") if isinstance(league, dict) else "?"
-                    race = p.get("race", {}).get("name", "?") if isinstance(p.get("race"), dict) else str(p.get("race", "?"))
+                    league_type = (
+                        league.get("type", "?") if isinstance(league, dict) else "?"
+                    )
+                    race = (
+                        p.get("race", {}).get("name", "?")
+                        if isinstance(p.get("race"), dict)
+                        else str(p.get("race", "?"))
+                    )
 
                     lines.append(f"  {name}#{realm} ({region})")
-                    lines.append(f"    MMR: {rating} | 리그: {league_type} | 종족: {race}")
+                    lines.append(
+                        f"    MMR: {rating} | 리그: {league_type} | 종족: {race}"
+                    )
 
             result = "\n".join(lines)
         else:
@@ -551,19 +608,22 @@ async def track_ladder(player_name: str, server: str = "kr") -> str:
         key = f"{player_name}_{server}"
         if key not in history:
             history[key] = []
-        history[key].append({
-            "timestamp": datetime.now().isoformat(),
-            "result_preview": result[:200],
-        })
+        history[key].append(
+            {
+                "timestamp": datetime.now().isoformat(),
+                "result_preview": result[:200],
+            }
+        )
         # 최근 30개만 유지
         history[key] = history[key][-30:]
 
         # Bug fix #23: Use atomic write (tempfile + os.replace) for ladder file
         import tempfile
+
         ladder_dir = os.path.dirname(_LADDER_CACHE_FILE)
-        temp_fd, temp_path = tempfile.mkstemp(dir=ladder_dir, suffix='.tmp')
+        temp_fd, temp_path = tempfile.mkstemp(dir=ladder_dir, suffix=".tmp")
         try:
-            with os.fdopen(temp_fd, 'w', encoding='utf-8') as f:
+            with os.fdopen(temp_fd, "w", encoding="utf-8") as f:
                 json.dump(history, f, ensure_ascii=False, indent=2)
             os.replace(temp_path, _LADDER_CACHE_FILE)
         except Exception:

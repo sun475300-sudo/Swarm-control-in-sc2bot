@@ -3,6 +3,7 @@
 """
 Import test for local training scripts.
 """
+
 import logging
 
 logger = logging.getLogger("TestImports")

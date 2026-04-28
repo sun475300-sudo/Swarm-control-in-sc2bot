@@ -23,6 +23,7 @@ import pytest
 
 # ── Fake policy inference (replace with actual model calls) ──────────────────
 
+
 def fake_observation(num_units: int = 64) -> dict[str, Any]:
     return {
         "minerals": random.randint(0, 2000),
@@ -30,13 +31,23 @@ def fake_observation(num_units: int = 64) -> dict[str, Any]:
         "supply_used": random.randint(0, 200),
         "supply_cap": 200,
         "units": [
-            {"tag": i, "type": random.randint(0, 200), "x": random.random() * 200,
-             "y": random.random() * 200, "hp": random.random() * 100}
+            {
+                "tag": i,
+                "type": random.randint(0, 200),
+                "x": random.random() * 200,
+                "y": random.random() * 200,
+                "hp": random.random() * 100,
+            }
             for i in range(num_units)
         ],
         "enemy_units": [
-            {"tag": 10000 + i, "type": random.randint(0, 200), "x": random.random() * 200,
-             "y": random.random() * 200, "hp": random.random() * 100}
+            {
+                "tag": 10000 + i,
+                "type": random.randint(0, 200),
+                "x": random.random() * 200,
+                "y": random.random() * 200,
+                "hp": random.random() * 100,
+            }
             for i in range(num_units // 2)
         ],
     }
@@ -52,7 +63,9 @@ def fake_inference(obs: dict[str, Any]) -> dict[str, Any]:
     }
 
 
-def calculate_apm(action_log: list[tuple[float, str]], duration_seconds: float) -> float:
+def calculate_apm(
+    action_log: list[tuple[float, str]], duration_seconds: float
+) -> float:
     """Compute APM from a timestamped action log."""
     if duration_seconds <= 0:
         return 0.0
@@ -61,6 +74,7 @@ def calculate_apm(action_log: list[tuple[float, str]], duration_seconds: float) 
 
 
 # ── Pytest-benchmark fixtures ─────────────────────────────────────────────────
+
 
 @pytest.fixture
 def sample_obs():
@@ -73,6 +87,7 @@ def large_obs():
 
 
 # ── Inference latency benchmarks ──────────────────────────────────────────────
+
 
 def test_inference_latency_small(benchmark, sample_obs):
     """Benchmark inference latency with 64 units."""
@@ -94,6 +109,7 @@ def test_observation_construction(benchmark):
 
 # ── APM calculation benchmark ─────────────────────────────────────────────────
 
+
 def test_apm_calculation(benchmark):
     """Benchmark APM calculation over 1000 actions."""
     action_log = [(i * 0.1, "attack") for i in range(1000)]
@@ -102,6 +118,7 @@ def test_apm_calculation(benchmark):
 
 
 # ── Standalone benchmark runner ───────────────────────────────────────────────
+
 
 def run_latency_benchmark(n: int = 200) -> dict[str, float]:
     """Measure p50/p95/p99 inference latency over n trials."""

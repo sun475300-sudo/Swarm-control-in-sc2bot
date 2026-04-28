@@ -1,11 +1,14 @@
 # SC2 Bot - Pulumi Automation API
 # Programmatic IaC: create/update stacks from Python code
 
+import os
+import sys
+from typing import Optional
+
 import pulumi
 import pulumi_aws as aws
 from pulumi import automation as auto
-from typing import Optional
-import os, sys
+
 
 # -----------------------------------------------
 # Inline Pulumi Program: SC2 Bot Infrastructure
@@ -20,10 +23,12 @@ def sc2_pulumi_program():
         bucket=f"sc2-bot-replays-{env}",
         acl="private",
         versioning=aws.s3.BucketVersioningArgs(enabled=True),
-        lifecycle_rules=[aws.s3.BucketLifecycleRuleArgs(
-            enabled=True,
-            expiration=aws.s3.BucketLifecycleRuleExpirationArgs(days=365),
-        )],
+        lifecycle_rules=[
+            aws.s3.BucketLifecycleRuleArgs(
+                enabled=True,
+                expiration=aws.s3.BucketLifecycleRuleExpirationArgs(days=365),
+            )
+        ],
         tags={"Project": "SC2Bot", "Env": env},
     )
 
@@ -67,10 +72,10 @@ def sc2_pulumi_program():
     )
 
     # --- Outputs ---
-    pulumi.export("replay_bucket",  replay_bucket.bucket)
-    pulumi.export("eks_cluster",    eks_cluster.name)
-    pulumi.export("db_endpoint",    db.endpoint)
-    pulumi.export("ecr_url",        ecr.repository_url)
+    pulumi.export("replay_bucket", replay_bucket.bucket)
+    pulumi.export("eks_cluster", eks_cluster.name)
+    pulumi.export("db_endpoint", db.endpoint)
+    pulumi.export("ecr_url", ecr.repository_url)
 
 
 # -----------------------------------------------
@@ -78,7 +83,7 @@ def sc2_pulumi_program():
 # -----------------------------------------------
 def deploy(env: str = "production", preview_only: bool = False):
     """Create or select a stack and deploy SC2 bot infrastructure."""
-    project  = "sc2-bot-infra"
+    project = "sc2-bot-infra"
     stack_name = f"{project}/{env}"
 
     print(f"[Pulumi Auto] Initializing stack: {stack_name}")
@@ -128,8 +133,8 @@ def destroy(env: str):
 # CI/CD Integration Entry Point
 # -----------------------------------------------
 if __name__ == "__main__":
-    env          = os.environ.get("ENVIRONMENT", "staging")
-    is_pr        = os.environ.get("CI_PULL_REQUEST", "false") == "true"
+    env = os.environ.get("ENVIRONMENT", "staging")
+    is_pr = os.environ.get("CI_PULL_REQUEST", "false") == "true"
     preview_only = is_pr  # preview on PR, full up on merge
 
     result = deploy(env=env, preview_only=preview_only)

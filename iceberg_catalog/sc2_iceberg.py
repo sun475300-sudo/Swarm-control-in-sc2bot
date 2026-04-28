@@ -5,45 +5,56 @@ PyIceberg catalog, partitioning, schema evolution, snapshot management.
 
 import logging
 from datetime import date, datetime
+
 from pyiceberg.catalog import load_catalog
-from pyiceberg.schema import Schema
-from pyiceberg.types import (
-    NestedField, StringType, IntegerType, DoubleType, DateType, TimestampType, BooleanType,
-)
-from pyiceberg.partitioning import PartitionSpec, PartitionField
-from pyiceberg.transforms import DayTransform, IdentityTransform
 from pyiceberg.expressions import And, EqualTo, GreaterThanOrEqual
+from pyiceberg.partitioning import PartitionField, PartitionSpec
+from pyiceberg.schema import Schema
 from pyiceberg.table.snapshots import Operation
+from pyiceberg.transforms import DayTransform, IdentityTransform
+from pyiceberg.types import (
+    BooleanType,
+    DateType,
+    DoubleType,
+    IntegerType,
+    NestedField,
+    StringType,
+    TimestampType,
+)
 
 logger = logging.getLogger(__name__)
 
 CATALOG_NAME = "sc2_catalog"
-NAMESPACE    = "sc2bot"
-TABLE_NAME   = "game_records"
-FULL_TABLE   = f"{NAMESPACE}.{TABLE_NAME}"
+NAMESPACE = "sc2bot"
+TABLE_NAME = "game_records"
+FULL_TABLE = f"{NAMESPACE}.{TABLE_NAME}"
 
 # Iceberg schema for SC2 game records
 SC2_SCHEMA = Schema(
-    NestedField(1,  "game_id",      StringType(),    required=True),
-    NestedField(2,  "player_id",    StringType(),    required=True),
-    NestedField(3,  "player_race",  StringType(),    required=False),
-    NestedField(4,  "opponent_race",StringType(),    required=False),
-    NestedField(5,  "map_name",     StringType(),    required=False),
-    NestedField(6,  "result",       StringType(),    required=False),
-    NestedField(7,  "apm",          IntegerType(),   required=False),
-    NestedField(8,  "mmr",          IntegerType(),   required=False),
-    NestedField(9,  "duration_sec", IntegerType(),   required=False),
-    NestedField(10, "win_rate",     DoubleType(),    required=False),
-    NestedField(11, "game_date",    DateType(),      required=True),
-    NestedField(12, "race_matchup", StringType(),    required=False),
-    NestedField(13, "processed",    BooleanType(),   required=False),
-    NestedField(14, "created_at",   TimestampType(), required=False),
+    NestedField(1, "game_id", StringType(), required=True),
+    NestedField(2, "player_id", StringType(), required=True),
+    NestedField(3, "player_race", StringType(), required=False),
+    NestedField(4, "opponent_race", StringType(), required=False),
+    NestedField(5, "map_name", StringType(), required=False),
+    NestedField(6, "result", StringType(), required=False),
+    NestedField(7, "apm", IntegerType(), required=False),
+    NestedField(8, "mmr", IntegerType(), required=False),
+    NestedField(9, "duration_sec", IntegerType(), required=False),
+    NestedField(10, "win_rate", DoubleType(), required=False),
+    NestedField(11, "game_date", DateType(), required=True),
+    NestedField(12, "race_matchup", StringType(), required=False),
+    NestedField(13, "processed", BooleanType(), required=False),
+    NestedField(14, "created_at", TimestampType(), required=False),
 )
 
 # Partition by game_date (day) and race_matchup (identity)
 SC2_PARTITION = PartitionSpec(
-    PartitionField(source_id=11, field_id=100, transform=DayTransform(),      name="game_date_day"),
-    PartitionField(source_id=12, field_id=101, transform=IdentityTransform(), name="race_matchup"),
+    PartitionField(
+        source_id=11, field_id=100, transform=DayTransform(), name="game_date_day"
+    ),
+    PartitionField(
+        source_id=12, field_id=101, transform=IdentityTransform(), name="race_matchup"
+    ),
 )
 
 
@@ -89,6 +100,7 @@ def setup_catalog(catalog):
 def append_games(table, records: list[dict]):
     """Append new game records to the Iceberg table."""
     import pyarrow as pa
+
     arrow_schema = table.schema().as_arrow()
     arrow_table = pa.Table.from_pylist(records, schema=arrow_schema)
     table.append(arrow_table)
@@ -117,7 +129,9 @@ def manage_snapshots(table):
     snapshots = table.snapshots()
     logger.info(f"Total snapshots: {len(snapshots)}")
     for snap in snapshots[-3:]:
-        logger.info(f"  Snapshot {snap.snapshot_id}: operation={snap.summary.get('operation')}")
+        logger.info(
+            f"  Snapshot {snap.snapshot_id}: operation={snap.summary.get('operation')}"
+        )
 
     # Expire snapshots older than 7 days
     table.expire_snapshots().expire_older_than(

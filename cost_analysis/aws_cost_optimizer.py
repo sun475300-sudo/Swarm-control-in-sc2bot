@@ -65,19 +65,19 @@ class CostAnalyzer:
 
     # On-demand pricing estimates (USD/hour) - simplified
     EC2_PRICING = {
-        "t3.medium":   0.0416,
-        "t3.large":    0.0832,
-        "t3.xlarge":   0.1664,
-        "m5.large":    0.096,
-        "m5.xlarge":   0.192,
-        "m5.2xlarge":  0.384,
-        "c5.xlarge":   0.17,
-        "c5.2xlarge":  0.34,
+        "t3.medium": 0.0416,
+        "t3.large": 0.0832,
+        "t3.xlarge": 0.1664,
+        "m5.large": 0.096,
+        "m5.xlarge": 0.192,
+        "m5.2xlarge": 0.384,
+        "c5.xlarge": 0.17,
+        "c5.2xlarge": 0.34,
         "g4dn.xlarge": 0.526,
         "g4dn.2xlarge": 0.752,
     }
 
-    SPOT_DISCOUNT = 0.70   # Spot is ~70% cheaper on average
+    SPOT_DISCOUNT = 0.70  # Spot is ~70% cheaper on average
     RI_1YR_DISCOUNT = 0.40  # 1-year reserved = ~40% cheaper
     RI_3YR_DISCOUNT = 0.60  # 3-year reserved = ~60% cheaper
 
@@ -113,17 +113,13 @@ class CostAnalyzer:
             response = self.ec2.describe_instances(
                 Filters=[{"Name": "instance-state-name", "Values": ["running"]}]
             )
-            instances = [
-                i
-                for r in response["Reservations"]
-                for i in r["Instances"]
-            ]
+            instances = [i for r in response["Reservations"] for i in r["Instances"]]
 
         for inst in instances:
             inst_type = inst["InstanceType"]
             inst_id = inst["InstanceId"]
             avg_cpu = inst.get("AvgCpuUtil", 15.0)  # mock value
-            avg_mem = inst.get("AvgMemUtil", 30.0)   # mock value
+            avg_mem = inst.get("AvgMemUtil", 30.0)  # mock value
 
             if avg_cpu < 20 and avg_mem < 40:
                 # Under-utilized - recommend smaller instance
@@ -141,7 +137,8 @@ class CostAnalyzer:
                     current_cost_monthly=monthly_current,
                     optimized_cost_monthly=monthly_new,
                     savings_monthly=monthly_current - monthly_new,
-                    savings_percent=((monthly_current - monthly_new) / monthly_current) * 100,
+                    savings_percent=((monthly_current - monthly_new) / monthly_current)
+                    * 100,
                     action=f"Rightsize from {inst_type} to {recommended}",
                     risk="LOW",
                     details={
@@ -158,7 +155,11 @@ class CostAnalyzer:
         """Find workloads suitable for spot instances (training jobs, non-critical)."""
         spot_candidates = [
             {"id": "i-training-001", "type": "g4dn.2xlarge", "workload": "ML Training"},
-            {"id": "i-replay-proc-001", "type": "c5.2xlarge", "workload": "Replay Processing"},
+            {
+                "id": "i-replay-proc-001",
+                "type": "c5.2xlarge",
+                "workload": "Replay Processing",
+            },
         ]
 
         for candidate in spot_candidates:
@@ -189,9 +190,9 @@ class CostAnalyzer:
             {"name": "sc2bot-backups", "size_gb": 1000, "avg_access_days": 365},
         ]
 
-        s3_standard = 0.023   # per GB/month
-        s3_ia = 0.0125        # per GB/month
-        s3_glacier = 0.004    # per GB/month
+        s3_standard = 0.023  # per GB/month
+        s3_ia = 0.0125  # per GB/month
+        s3_glacier = 0.004  # per GB/month
 
         for bucket in buckets:
             size = bucket["size_gb"]
@@ -222,7 +223,11 @@ class CostAnalyzer:
     def _analyze_rds_reserved(self) -> None:
         """Recommend Reserved Instances for stable RDS workloads."""
         rds_instances = [
-            {"id": "sc2bot-postgres-prod", "type": "db.r6g.xlarge", "monthly_cost": 350.0},
+            {
+                "id": "sc2bot-postgres-prod",
+                "type": "db.r6g.xlarge",
+                "monthly_cost": 350.0,
+            },
         ]
 
         for inst in rds_instances:
@@ -255,7 +260,9 @@ class CostAnalyzer:
                 "optimized_monthly_cost": round(total_optimized, 2),
                 "monthly_savings": round(total_savings, 2),
                 "annual_savings": round(total_savings * 12, 2),
-                "savings_percent": round((total_savings / total_current * 100) if total_current else 0, 1),
+                "savings_percent": round(
+                    (total_savings / total_current * 100) if total_current else 0, 1
+                ),
             },
             "recommendations_by_type": {},
             "recommendations": [r.to_dict() for r in self.recommendations],
@@ -264,9 +271,14 @@ class CostAnalyzer:
         for rec in self.recommendations:
             rtype = rec.resource_type
             if rtype not in report["recommendations_by_type"]:
-                report["recommendations_by_type"][rtype] = {"count": 0, "monthly_savings": 0}
+                report["recommendations_by_type"][rtype] = {
+                    "count": 0,
+                    "monthly_savings": 0,
+                }
             report["recommendations_by_type"][rtype]["count"] += 1
-            report["recommendations_by_type"][rtype]["monthly_savings"] += rec.savings_monthly
+            report["recommendations_by_type"][rtype][
+                "monthly_savings"
+            ] += rec.savings_monthly
 
         logger.info(
             f"Cost analysis complete. "
@@ -290,9 +302,24 @@ class CostAnalyzer:
     def _mock_ec2_instances(self) -> list[dict]:
         """Mock EC2 data for dry-run mode."""
         return [
-            {"InstanceId": "i-001", "InstanceType": "m5.2xlarge", "AvgCpuUtil": 12.0, "AvgMemUtil": 28.0},
-            {"InstanceId": "i-002", "InstanceType": "c5.2xlarge", "AvgCpuUtil": 18.0, "AvgMemUtil": 35.0},
-            {"InstanceId": "i-003", "InstanceType": "t3.xlarge",  "AvgCpuUtil": 65.0, "AvgMemUtil": 72.0},
+            {
+                "InstanceId": "i-001",
+                "InstanceType": "m5.2xlarge",
+                "AvgCpuUtil": 12.0,
+                "AvgMemUtil": 28.0,
+            },
+            {
+                "InstanceId": "i-002",
+                "InstanceType": "c5.2xlarge",
+                "AvgCpuUtil": 18.0,
+                "AvgMemUtil": 35.0,
+            },
+            {
+                "InstanceId": "i-003",
+                "InstanceType": "t3.xlarge",
+                "AvgCpuUtil": 65.0,
+                "AvgMemUtil": 72.0,
+            },
         ]
 
     def save_report(self, report: dict, output_path: str = "cost_report.json") -> None:

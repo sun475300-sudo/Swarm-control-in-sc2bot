@@ -9,8 +9,8 @@ Feature #91: Nydus Worm 전술 매니저
 4. 다중 나이더스 출구 조율
 """
 
-from typing import Dict, List, Optional, Set, Tuple
 from enum import Enum
+from typing import Dict, List, Optional, Set, Tuple
 
 try:
     from sc2.ids.ability_id import AbilityId
@@ -30,6 +30,7 @@ from utils.logger import get_logger
 
 class NydusPhase(Enum):
     """나이더스 전술 단계"""
+
     IDLE = "idle"
     BUILDING_NETWORK = "building_network"
     PLACING_WORM = "placing_worm"
@@ -241,10 +242,15 @@ class NydusTacticsManager:
         enemy_structures = getattr(self.bot, "enemy_structures", None)
         if enemy_structures and enemy_structures.exists:
             enemy_bases = enemy_structures.filter(
-                lambda s: s.type_id in {
-                    UnitTypeId.HATCHERY, UnitTypeId.LAIR, UnitTypeId.HIVE,
-                    UnitTypeId.COMMANDCENTER, UnitTypeId.ORBITALCOMMAND,
-                    UnitTypeId.PLANETARYFORTRESS, UnitTypeId.NEXUS,
+                lambda s: s.type_id
+                in {
+                    UnitTypeId.HATCHERY,
+                    UnitTypeId.LAIR,
+                    UnitTypeId.HIVE,
+                    UnitTypeId.COMMANDCENTER,
+                    UnitTypeId.ORBITALCOMMAND,
+                    UnitTypeId.PLANETARYFORTRESS,
+                    UnitTypeId.NEXUS,
                 }
             )
             for base in enemy_bases:
@@ -252,7 +258,10 @@ class NydusTacticsManager:
                 if behind_pos:
                     # 우리 본진에서 멀수록 = 적 확장기지 = 방어 약함
                     dist_from_enemy_main = 0
-                    if hasattr(self.bot, "enemy_start_locations") and self.bot.enemy_start_locations:
+                    if (
+                        hasattr(self.bot, "enemy_start_locations")
+                        and self.bot.enemy_start_locations
+                    ):
                         dist_from_enemy_main = base.distance_to(
                             self.bot.enemy_start_locations[0]
                         )
@@ -261,20 +270,25 @@ class NydusTacticsManager:
 
         # 2. 적 시작 위치 후방 (기본 폴백)
         if not candidates:
-            if hasattr(self.bot, "enemy_start_locations") and self.bot.enemy_start_locations:
+            if (
+                hasattr(self.bot, "enemy_start_locations")
+                and self.bot.enemy_start_locations
+            ):
                 enemy_start = self.bot.enemy_start_locations[0]
                 if hasattr(self.bot, "start_location"):
                     our_start = self.bot.start_location
                     # 적 본진 뒤쪽 (우리 방향 반대)
                     dx = enemy_start.x - our_start.x
                     dy = enemy_start.y - our_start.y
-                    length = (dx ** 2 + dy ** 2) ** 0.5
+                    length = (dx**2 + dy**2) ** 0.5
                     if length > 0:
                         nx, ny = dx / length, dy / length
-                        behind_pos = Point2((
-                            enemy_start.x + nx * 8,
-                            enemy_start.y + ny * 8,
-                        ))
+                        behind_pos = Point2(
+                            (
+                                enemy_start.x + nx * 8,
+                                enemy_start.y + ny * 8,
+                            )
+                        )
                         candidates.append((behind_pos, 0))
 
         if not candidates:
@@ -317,15 +331,17 @@ class NydusTacticsManager:
         # 기지에서 미네랄 방향의 반대쪽으로 6 거리
         dx = mineral_center.x - base.position.x
         dy = mineral_center.y - base.position.y
-        length = (dx ** 2 + dy ** 2) ** 0.5
+        length = (dx**2 + dy**2) ** 0.5
         if length == 0:
             return None
 
         nx, ny = dx / length, dy / length
-        behind_pos = Point2((
-            mineral_center.x + nx * 6,
-            mineral_center.y + ny * 6,
-        ))
+        behind_pos = Point2(
+            (
+                mineral_center.x + nx * 6,
+                mineral_center.y + ny * 6,
+            )
+        )
         return behind_pos
 
     async def _attempt_place_worm(self, game_time: float):
@@ -461,8 +477,10 @@ class NydusTacticsManager:
             nearby_units = self.bot.units.closer_than(10, canal)
             for unit in nearby_units:
                 if unit.type_id in {
-                    UnitTypeId.ZERGLING, UnitTypeId.ROACH,
-                    UnitTypeId.HYDRALISK, UnitTypeId.RAVAGER,
+                    UnitTypeId.ZERGLING,
+                    UnitTypeId.ROACH,
+                    UnitTypeId.HYDRALISK,
+                    UnitTypeId.RAVAGER,
                 }:
                     if unit.health_percentage < 0.5:
                         self.bot.do(unit(AbilityId.LOAD_NYDUSNETWORK, canal))

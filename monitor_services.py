@@ -5,6 +5,7 @@ JARVIS 프로세스 감시 스크립트 (#164)
 - 서비스 다운 시 자동 재시작 (subprocess)
 - 로그 파일에 모니터링 기록
 """
+
 import argparse
 import json
 import logging
@@ -14,8 +15,8 @@ import subprocess
 import sys
 import time
 from datetime import datetime
-from urllib.request import urlopen, Request
 from urllib.error import URLError
+from urllib.request import Request, urlopen
 
 # ═══════════════════════════════════════════════════
 #  설정
@@ -30,7 +31,10 @@ SERVICES = {
         "name": "JARVIS Crypto HTTP Service",
         "port": 8766,
         "health_url": "http://127.0.0.1:8766/health",
-        "start_cmd": [sys.executable, os.path.join(PROJECT_DIR, "crypto_trading", "crypto_http_service.py")],
+        "start_cmd": [
+            sys.executable,
+            os.path.join(PROJECT_DIR, "crypto_trading", "crypto_http_service.py"),
+        ],
         "pid_file": os.path.join(PROJECT_DIR, "pids", "crypto_http.pid"),
     },
     "claude_proxy": {
@@ -69,6 +73,7 @@ LOG_DIR = os.path.join(PROJECT_DIR, "logs")
 #  로깅 설정
 # ═══════════════════════════════════════════════════
 
+
 def setup_logging():
     """모니터링 로그 설정"""
     os.makedirs(LOG_DIR, exist_ok=True)
@@ -76,8 +81,7 @@ def setup_logging():
 
     # 파일 핸들러 + 콘솔 핸들러
     formatter = logging.Formatter(
-        "%(asctime)s [%(levelname)s] %(message)s",
-        datefmt="%Y-%m-%d %H:%M:%S"
+        "%(asctime)s [%(levelname)s] %(message)s", datefmt="%Y-%m-%d %H:%M:%S"
     )
 
     file_handler = logging.FileHandler(log_file, encoding="utf-8")
@@ -97,6 +101,7 @@ def setup_logging():
 # ═══════════════════════════════════════════════════
 #  유틸리티 함수
 # ═══════════════════════════════════════════════════
+
 
 def check_health(url: str, timeout: int = HEALTH_TIMEOUT) -> dict:
     """
@@ -164,7 +169,9 @@ def is_process_running(pid: int) -> bool:
             # Windows: tasklist으로 확인
             result = subprocess.run(
                 ["tasklist", "/FI", f"PID eq {pid}"],
-                capture_output=True, text=True, timeout=5,
+                capture_output=True,
+                text=True,
+                timeout=5,
             )
             return str(pid) in result.stdout
         else:
@@ -185,7 +192,8 @@ def kill_process(pid: int, logger: logging.Logger) -> bool:
         if sys.platform == "win32":
             subprocess.run(
                 ["taskkill", "/F", "/PID", str(pid)],
-                capture_output=True, timeout=10,
+                capture_output=True,
+                timeout=10,
             )
         else:
             os.kill(pid, signal.SIGTERM)
@@ -248,11 +256,16 @@ def start_service(service_id: str, service_config: dict, logger: logging.Logger)
 #  모니터링 메인 루프
 # ═══════════════════════════════════════════════════
 
+
 class ServiceMonitor:
     """서비스 모니터링 및 자동 재시작 관리 클래스"""
 
-    def __init__(self, logger: logging.Logger, auto_restart: bool = True,
-                 interval: int = DEFAULT_INTERVAL):
+    def __init__(
+        self,
+        logger: logging.Logger,
+        auto_restart: bool = True,
+        interval: int = DEFAULT_INTERVAL,
+    ):
         self.logger = logger
         self.auto_restart = auto_restart
         self.interval = interval
@@ -279,8 +292,7 @@ class ServiceMonitor:
                     )
                 self.failure_counts[service_id] = 0
                 self.logger.debug(
-                    f"[{config['name']}] 정상 "
-                    f"(응답: {result['response_ms']}ms)"
+                    f"[{config['name']}] 정상 " f"(응답: {result['response_ms']}ms)"
                 )
             else:
                 # 실패
@@ -315,9 +327,7 @@ class ServiceMonitor:
         elapsed = now - self.last_restart_time[service_id]
         if elapsed < RESTART_COOLDOWN:
             remaining = int(RESTART_COOLDOWN - elapsed)
-            self.logger.info(
-                f"[{name}] 재시작 쿨다운 중 ({remaining}초 남음)"
-            )
+            self.logger.info(f"[{name}] 재시작 쿨다운 중 ({remaining}초 남음)")
             return
 
         # 기존 프로세스 종료
@@ -360,7 +370,9 @@ class ServiceMonitor:
         cycle = 0
         while self.running:
             cycle += 1
-            self.logger.info(f"--- 모니터링 사이클 #{cycle} ({datetime.now().strftime('%H:%M:%S')}) ---")
+            self.logger.info(
+                f"--- 모니터링 사이클 #{cycle} ({datetime.now().strftime('%H:%M:%S')}) ---"
+            )
 
             try:
                 results = self.check_all_services()
@@ -371,9 +383,7 @@ class ServiceMonitor:
                 if ok_count == total:
                     self.logger.info(f"모든 서비스 정상 ({ok_count}/{total})")
                 else:
-                    self.logger.warning(
-                        f"비정상 서비스 있음 ({ok_count}/{total} 정상)"
-                    )
+                    self.logger.warning(f"비정상 서비스 있음 ({ok_count}/{total} 정상)")
 
             except Exception as e:
                 self.logger.error(f"모니터링 오류: {e}")
@@ -395,8 +405,7 @@ class ServiceMonitor:
             restarts = self.total_restarts[service_id]
             status = "정상" if self.failure_counts[service_id] == 0 else "비정상"
             self.logger.info(
-                f"  [{config['name']}] 상태: {status}, "
-                f"총 재시작: {restarts}회"
+                f"  [{config['name']}] 상태: {status}, " f"총 재시작: {restarts}회"
             )
         self.logger.info("=" * 60)
 
@@ -427,21 +436,22 @@ class ServiceMonitor:
 #  엔트리포인트
 # ═══════════════════════════════════════════════════
 
+
 def main():
-    parser = argparse.ArgumentParser(
-        description="JARVIS 서비스 모니터링 (#164)"
+    parser = argparse.ArgumentParser(description="JARVIS 서비스 모니터링 (#164)")
+    parser.add_argument(
+        "--interval",
+        type=int,
+        default=DEFAULT_INTERVAL,
+        help=f"헬스체크 간격 (초, 기본: {DEFAULT_INTERVAL})",
     )
     parser.add_argument(
-        "--interval", type=int, default=DEFAULT_INTERVAL,
-        help=f"헬스체크 간격 (초, 기본: {DEFAULT_INTERVAL})"
+        "--no-restart",
+        action="store_true",
+        help="자동 재시작 비활성화 (모니터링만 수행)",
     )
     parser.add_argument(
-        "--no-restart", action="store_true",
-        help="자동 재시작 비활성화 (모니터링만 수행)"
-    )
-    parser.add_argument(
-        "--once", action="store_true",
-        help="1회 헬스체크만 수행하고 종료"
+        "--once", action="store_true", help="1회 헬스체크만 수행하고 종료"
     )
     args = parser.parse_args()
 

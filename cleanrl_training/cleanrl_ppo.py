@@ -4,24 +4,25 @@ Single-file PPO implementation for SC2 Bot training
 """
 
 from __future__ import annotations
+
 import math
-import random
-import time
 import os
+import random
 import sys
+import time
 from dataclasses import dataclass
 from typing import Optional
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from gymnasium_env.sc2_gym_env import SC2ZergEnv, OBS_DIM, ACT_DIM
-
+from gymnasium_env.sc2_gym_env import ACT_DIM, OBS_DIM, SC2ZergEnv
 
 try:
+    import numpy as np
     import torch
     import torch.nn as nn
     import torch.optim as optim
     from torch.distributions import Categorical
-    import numpy as np
+
     TORCH_AVAILABLE = True
 except ImportError:
     TORCH_AVAILABLE = False
@@ -30,6 +31,7 @@ except ImportError:
 # ─────────────────────────────────────────────
 # Hyperparameters
 # ─────────────────────────────────────────────
+
 
 @dataclass
 class Args:
@@ -67,6 +69,7 @@ class Args:
 # ─────────────────────────────────────────────
 
 if TORCH_AVAILABLE:
+
     def layer_init(layer, std=math.sqrt(2), bias_const=0.0):
         nn.init.orthogonal_(layer.weight, std)
         nn.init.constant_(layer.bias, bias_const)
@@ -105,6 +108,7 @@ if TORCH_AVAILABLE:
 # Vectorized environment (manual)
 # ─────────────────────────────────────────────
 
+
 class VecSC2Env:
     def __init__(self, num_envs: int, **env_kwargs):
         self.num_envs = num_envs
@@ -136,6 +140,7 @@ class VecSC2Env:
 # ─────────────────────────────────────────────
 # CleanRL PPO training loop
 # ─────────────────────────────────────────────
+
 
 def train_cleanrl(args: Args) -> dict:
     if not TORCH_AVAILABLE:
@@ -197,8 +202,9 @@ def train_cleanrl(args: Args) -> dict:
                 else:
                     nextnonterminal = 1.0 - done_buf[t + 1]
                     nextvalues = val_buf[t + 1]
-                delta = (rew_buf[t] + args.gamma * nextvalues * nextnonterminal
-                         - val_buf[t])
+                delta = (
+                    rew_buf[t] + args.gamma * nextvalues * nextnonterminal - val_buf[t]
+                )
                 advantages[t] = lastgaelam = (
                     delta + args.gamma * args.gae_lambda * nextnonterminal * lastgaelam
                 )
@@ -216,7 +222,7 @@ def train_cleanrl(args: Args) -> dict:
         b_inds = torch.randperm(args.batch_size)
         for epoch in range(args.update_epochs):
             for mb_start in range(0, args.batch_size, args.minibatch_size):
-                mb_inds = b_inds[mb_start:mb_start + args.minibatch_size]
+                mb_inds = b_inds[mb_start : mb_start + args.minibatch_size]
                 _, newlogp, entropy, newval = agent.get_action_and_value(
                     b_obs[mb_inds], b_act[mb_inds]
                 )
@@ -228,7 +234,9 @@ def train_cleanrl(args: Args) -> dict:
                     mb_adv = (mb_adv - mb_adv.mean()) / (mb_adv.std() + 1e-8)
 
                 pg_loss1 = -mb_adv * ratio
-                pg_loss2 = -mb_adv * torch.clamp(ratio, 1-args.clip_coef, 1+args.clip_coef)
+                pg_loss2 = -mb_adv * torch.clamp(
+                    ratio, 1 - args.clip_coef, 1 + args.clip_coef
+                )
                 pg_loss = torch.max(pg_loss1, pg_loss2).mean()
 
                 newval = newval.flatten()
@@ -245,9 +253,11 @@ def train_cleanrl(args: Args) -> dict:
         if update % 5 == 0:
             sps = int(update * args.batch_size / (time.time() - start_time))
             recent = ep_rewards[-100:] if ep_rewards else [0]
-            print(f"  Update {update:4d}/{num_updates} | "
-                  f"SPS: {sps:5d} | "
-                  f"Avg reward: {sum(recent)/len(recent):.3f}")
+            print(
+                f"  Update {update:4d}/{num_updates} | "
+                f"SPS: {sps:5d} | "
+                f"Avg reward: {sum(recent)/len(recent):.3f}"
+            )
 
     return {
         "total_timesteps": num_updates * args.batch_size,

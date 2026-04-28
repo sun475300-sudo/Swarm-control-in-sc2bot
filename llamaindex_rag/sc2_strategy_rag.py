@@ -1,22 +1,23 @@
 # Phase 410: LlamaIndex - SC2 Strategy RAG
 # Retrieval Augmented Generation for SC2 strategy guides and match analysis
 
+from typing import List
+
+import chromadb
 from llama_index.core import (
-    VectorStoreIndex,
-    SimpleDirectoryReader,
     Document,
     Settings,
+    SimpleDirectoryReader,
     StorageContext,
+    VectorStoreIndex,
 )
 from llama_index.core.node_parser import SentenceSplitter
-from llama_index.core.retrievers import VectorIndexRetriever
 from llama_index.core.query_engine import RetrieverQueryEngine
 from llama_index.core.response_synthesizers import get_response_synthesizer
-from llama_index.vector_stores.chroma import ChromaVectorStore
-from llama_index.llms.anthropic import Anthropic
+from llama_index.core.retrievers import VectorIndexRetriever
 from llama_index.embeddings.huggingface import HuggingFaceEmbedding
-import chromadb
-from typing import List
+from llama_index.llms.anthropic import Anthropic
+from llama_index.vector_stores.chroma import ChromaVectorStore
 
 # ============================================================
 # Strategy Knowledge Base
@@ -48,7 +49,11 @@ SC2_STRATEGY_DOCS = [
         Positional play: force Terran to siege, then surround with flanking lings.
         Key tip: never run units into sieged tanks - use Infestor fungal to clump marines.
         """,
-        metadata={"matchup": "ZvT", "composition": "brood-lord-infestor", "phase": "late"},
+        metadata={
+            "matchup": "ZvT",
+            "composition": "brood-lord-infestor",
+            "phase": "late",
+        },
     ),
     Document(
         text="""
@@ -60,7 +65,11 @@ SC2_STRATEGY_DOCS = [
         Corruptors mandatory if Protoss gets Colossus (4+ Colossus = GG without corruptors).
         Transition: add Infestors for Disruptor shots, Vipers for late game.
         """,
-        metadata={"matchup": "ZvP", "composition": "roach-ravager-hydra", "phase": "mid"},
+        metadata={
+            "matchup": "ZvP",
+            "composition": "roach-ravager-hydra",
+            "phase": "mid",
+        },
     ),
     Document(
         text="""
@@ -109,6 +118,7 @@ SC2_STRATEGY_DOCS = [
 # Index Construction with ChromaVectorStore
 # ============================================================
 
+
 def build_strategy_index() -> VectorStoreIndex:
     """Build a vector index from SC2 strategy documents using Chroma."""
 
@@ -135,9 +145,11 @@ def build_strategy_index() -> VectorStoreIndex:
     print(f"[LlamaIndex] Index built with {len(SC2_STRATEGY_DOCS)} strategy documents")
     return index
 
+
 # ============================================================
 # Query Engine
 # ============================================================
+
 
 def create_query_engine(index: VectorStoreIndex) -> RetrieverQueryEngine:
     retriever = VectorIndexRetriever(index=index, similarity_top_k=3)
@@ -147,20 +159,23 @@ def create_query_engine(index: VectorStoreIndex) -> RetrieverQueryEngine:
         response_synthesizer=synthesizer,
     )
 
+
 def ask_strategy_question(query_engine: RetrieverQueryEngine, question: str) -> str:
     print(f"\n[RAG] Q: {question}")
     response = query_engine.query(question)
     print(f"[RAG] A: {response.response}")
     return response.response
 
+
 # ============================================================
 # Main
 # ============================================================
 
+
 def main():
     print("[LlamaIndex] Building SC2 strategy knowledge base...")
     index = build_strategy_index()
-    qe    = create_query_engine(index)
+    qe = create_query_engine(index)
 
     questions = [
         "What is the best counter to mech Terran?",
@@ -175,6 +190,7 @@ def main():
         ask_strategy_question(qe, q)
 
     print("\n[LlamaIndex] RAG pipeline complete.")
+
 
 if __name__ == "__main__":
     main()

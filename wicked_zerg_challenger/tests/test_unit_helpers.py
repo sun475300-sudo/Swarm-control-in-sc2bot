@@ -15,33 +15,46 @@ Tests all 11 utility functions:
 - can_unit_attack
 """
 
-import unittest
-from unittest.mock import Mock, MagicMock, patch
-import sys
 import os
+import sys
+import unittest
+from unittest.mock import MagicMock, Mock, patch
 
 # Add parent directory to path
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 from utils.unit_helpers import (
+    calculate_unit_supply,
+    can_unit_attack,
+    execute_unit_action,
+    filter_workers_by_task,
     find_nearby_enemies,
     get_health_ratio,
     get_shield_ratio,
-    filter_workers_by_task,
-    execute_unit_action,
-    calculate_unit_supply,
-    is_unit_idle,
-    is_unit_attacking,
     get_unit_range,
-    can_unit_attack
+    is_unit_attacking,
+    is_unit_idle,
 )
 
 
 class MockUnit:
     """Mock unit for testing"""
-    def __init__(self, tag=1, health=100, health_max=100, shield=0, shield_max=0,
-                 supply_cost=2, position_x=10, position_y=10, is_idle=False,
-                 is_flying=False, ground_range=5.0, air_range=0.0):
+
+    def __init__(
+        self,
+        tag=1,
+        health=100,
+        health_max=100,
+        shield=0,
+        shield_max=0,
+        supply_cost=2,
+        position_x=10,
+        position_y=10,
+        is_idle=False,
+        is_flying=False,
+        ground_range=5.0,
+        air_range=0.0,
+    ):
         self.tag = tag
         self.health = health
         self.health_max = health_max
@@ -59,13 +72,13 @@ class MockUnit:
 
     def distance_to(self, target):
         """Calculate distance to target"""
-        if hasattr(target, 'position'):
+        if hasattr(target, "position"):
             target_pos = target.position
         else:
             target_pos = target
         dx = self.position.x - target_pos.x
         dy = self.position.y - target_pos.y
-        return (dx**2 + dy**2)**0.5
+        return (dx**2 + dy**2) ** 0.5
 
     def can_attack(self, target):
         """Check if can attack target"""
@@ -74,6 +87,7 @@ class MockUnit:
 
 class MockUnits:
     """Mock Units collection"""
+
     def __init__(self, units):
         self.units = units
 
@@ -310,7 +324,7 @@ class TestIsUnitAttacking(unittest.TestCase):
     def test_unit_with_attack_order(self):
         """Test unit with attack order"""
         unit = MockUnit()
-        delattr(unit, 'is_attacking')  # Remove is_attacking to test fallback
+        delattr(unit, "is_attacking")  # Remove is_attacking to test fallback
         order = Mock()
         order.ability = Mock()
         order.ability.button_name = "ATTACK"
@@ -328,7 +342,7 @@ class TestGetUnitRange(unittest.TestCase):
 
     def test_air_range(self):
         """Test getting air attack range"""
-        unit = Mock(spec=['air_range'])
+        unit = Mock(spec=["air_range"])
         unit.air_range = 7.0
         self.assertEqual(get_unit_range(unit), 7.0)
 
@@ -374,6 +388,6 @@ class TestCanUnitAttack(unittest.TestCase):
         self.assertFalse(can_unit_attack(unit, None))
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     # Run all tests
     unittest.main(verbosity=2)

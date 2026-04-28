@@ -11,8 +11,8 @@ integrating separate modules for:
 - Boids swarm control (boids_swarm_control.py)
 """
 
-from typing import List, Set
 import logging
+from typing import List, Set
 
 logger = logging.getLogger("MicroController")
 
@@ -25,12 +25,12 @@ except ImportError:
 
 # Import modular components
 from combat.boids_swarm_control import BoidsSwarmController
+from combat.formation_tactics import BurrowController, ConcaveFormationController
 from combat.potential_fields import PotentialFieldController
+from combat.stutter_step_kiting import StutterStepKiting
+from combat.targeting import select_target
 from combat.terrain_analysis import ChokePointDetector
 from combat.threat_response import SplashThreatHandler
-from combat.formation_tactics import ConcaveFormationController, BurrowController
-from combat.targeting import select_target
-from combat.stutter_step_kiting import StutterStepKiting
 
 
 class BoidsController:
@@ -119,11 +119,10 @@ class BoidsController:
                 UnitTypeId.SWARMHOSTMP,
             }
 
-
     def set_focus_mode(self, active: bool, duration: int = 44) -> None:
         """
         Set High-Performance Focus Mode for combat.
-        
+
         Args:
             active: Enable/Disable focus mode
             duration: Duration in frames (default ~2s)
@@ -132,7 +131,7 @@ class BoidsController:
             self.focus_mode_active = True
             self.update_interval = self.focus_interval
             if hasattr(self.bot, "iteration"):
-                 self.focus_mode_end_frame = self.bot.iteration + duration
+                self.focus_mode_end_frame = self.bot.iteration + duration
         else:
             self.focus_mode_active = False
             self.update_interval = self.default_interval
@@ -151,7 +150,7 @@ class BoidsController:
         # Global update rate limiter (use dynamic interval)
         if iteration - self.last_update < self.update_interval:
             return
-            
+
         self.last_update = iteration
 
         # Update terrain cache (less frequent)
@@ -176,38 +175,43 @@ class BoidsController:
             # Check if any enemy is within 15 units of our center (approx)
             center = self._centroid(units)
             if enemy_units.closer_than(20, center).exists:
-               if not self.focus_mode_active:
-                   self.set_focus_mode(True, duration=44) # Enable for ~2 seconds
-            
+                if not self.focus_mode_active:
+                    self.set_focus_mode(True, duration=44)  # Enable for ~2 seconds
+
             # Also extend focus mode if already active and fighting continues
             elif self.focus_mode_active:
-                self.focus_mode_end_frame = iteration + 22 # Keep alive
+                self.focus_mode_end_frame = iteration + 22  # Keep alive
 
-        
         # ★ NEW: Priority-based Unit Selection ★
         # 1. Identify high-priority units (near enemies or in danger)
         high_priority_units = []
         low_priority_units = []
-        
+
         # Quick check for combat status
         if enemy_units:
             # Spatial query would be better here, but requires building it first
             # We'll use a simple heuristic: if bad guys exist, check proximity
             # Optimization: check distance to nearest enemy center? No, too risky.
-            
+
             # Use spatial index if available
             if self._spatial_index and self._spatial_available:
                 # Find units near any enemy
-                pass # Complex to query for all enemies efficiently
-            
+                pass  # Complex to query for all enemies efficiently
+
             # Fallback: simple proximity check (optimized)
             for unit in units:
                 # If unit was attacked recently or is attacking -> High Priority
-                if (unit.is_attacking or unit.weapon_cooldown > 0 or 
-                    (hasattr(unit, "shield_health_percentage") and unit.shield_health_percentage < 1.0)):
+                if (
+                    unit.is_attacking
+                    or unit.weapon_cooldown > 0
+                    or (
+                        hasattr(unit, "shield_health_percentage")
+                        and unit.shield_health_percentage < 1.0
+                    )
+                ):
                     high_priority_units.append(unit)
                     continue
-                    
+
                 # Check proximity to closest enemy (expensive O(N*M)) -> Optimize?
                 # Rely on cached "closest_enemy_dist" if available, or just check briefly
                 # Here we assume units in combat set a flag or we check a subset
@@ -216,7 +220,11 @@ class BoidsController:
                 # For now, let's treat ALL units as candidates, but simple filter
                 # Check if any enemy is in range (safer than target_in_range with Units collection)
                 try:
-                    in_range = any(unit.distance_to(e) <= unit.ground_range + 3 for e in enemy_units if hasattr(unit, 'ground_range'))
+                    in_range = any(
+                        unit.distance_to(e) <= unit.ground_range + 3
+                        for e in enemy_units
+                        if hasattr(unit, "ground_range")
+                    )
                     if in_range:
                         high_priority_units.append(unit)
                     else:
@@ -234,19 +242,21 @@ class BoidsController:
         start_idx = rollover_idx * chunk_size
         end_idx = start_idx + chunk_size
         active_low_priority = low_priority_units[start_idx:end_idx]
-        
+
         # Combine lists
         active_units = high_priority_units + active_low_priority
-        
+
         # 전투 중 처리 유닛 수 증가 (기본 30 → 전투 시 80, 종료 후 복원)
         frame_limit = 80 if high_priority_units else self.max_units_per_frame
         if len(active_units) > frame_limit:
-             # Keep all high priority, trim low priority
-             if len(high_priority_units) >= frame_limit:
-                 active_units = high_priority_units[:frame_limit]
-             else:
-                 remaining_slots = frame_limit - len(high_priority_units)
-                 active_units = high_priority_units + active_low_priority[:remaining_slots]
+            # Keep all high priority, trim low priority
+            if len(high_priority_units) >= frame_limit:
+                active_units = high_priority_units[:frame_limit]
+            else:
+                remaining_slots = frame_limit - len(high_priority_units)
+                active_units = (
+                    high_priority_units + active_low_priority[:remaining_slots]
+                )
 
         try:
             # Handle burrow abilities
@@ -263,7 +273,11 @@ class BoidsController:
 
                     # 카이팅 가능 유닛은 Stutter-Step으로 처리
                     if self.stutter_step.should_kite(unit):
-                        target = enemy_units.closest_to(unit.position) if enemy_units else None
+                        target = (
+                            enemy_units.closest_to(unit.position)
+                            if enemy_units
+                            else None
+                        )
                         if self.stutter_step.execute_kiting(unit, target, enemy_units):
                             kiting_handled.add(unit.tag)
 
@@ -396,7 +410,8 @@ class BoidsController:
             if (
                 target
                 and hasattr(unit, "distance_to")
-                and unit.distance_to(target) <= (unit.ground_range + 1.0) # Attack range buffer
+                and unit.distance_to(target)
+                <= (unit.ground_range + 1.0)  # Attack range buffer
                 and unit.weapon_cooldown == 0
             ):
                 actions.append(unit.attack(target))
@@ -475,7 +490,9 @@ class BoidsController:
         if self._spatial_index and self._spatial_available:
             try:
                 pos = (unit.position.x, unit.position.y)
-                results = self._spatial_index.query_radius(pos, radius, exclude_data=unit)
+                results = self._spatial_index.query_radius(
+                    pos, radius, exclude_data=unit
+                )
                 # results: List of ((x, y), unit, distance)
                 return [r[1] for r in results if r[1].tag != unit.tag]
             except Exception:
@@ -489,9 +506,7 @@ class BoidsController:
                 pass
 
         # Fallback: brute force O(N)
-        return [
-            u for u in units if u.tag != unit.tag and unit.distance_to(u) <= radius
-        ]
+        return [u for u in units if u.tag != unit.tag and unit.distance_to(u) <= radius]
 
     def _get_enemy_center(self, enemy_units):
         """Calculate centroid of enemy units."""
@@ -524,5 +539,3 @@ class BoidsController:
                 result = self.bot.do(action)
                 if hasattr(result, "__await__"):
                     await result
-
-

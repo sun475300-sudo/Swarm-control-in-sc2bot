@@ -9,13 +9,14 @@ Unit Helpers - 유닛 관련 공통 유틸리티 함수
 - calculate_unit_supply: Supply 계산
 """
 
-from typing import List, Optional, Callable, Any
+from typing import Any, Callable, List, Optional
+
 from utils.logger import get_logger
 
 try:
+    from sc2.position import Point2
     from sc2.unit import Unit
     from sc2.units import Units
-    from sc2.position import Point2
 except ImportError:
     Unit = None
     Units = None
@@ -97,7 +98,9 @@ def get_shield_ratio(unit: Unit) -> float:
         return 0.0
 
 
-def filter_workers_by_task(workers: Units, task_filter: Callable[[Unit], bool]) -> Units:
+def filter_workers_by_task(
+    workers: Units, task_filter: Callable[[Unit], bool]
+) -> Units:
     """
     작업 조건에 따라 일꾼 필터링
 
@@ -207,7 +210,9 @@ def is_unit_attacking(unit: Unit) -> bool:
         # 폴백: order 체크
         if hasattr(unit, "orders") and unit.orders:
             attack_abilities = {"ATTACK", "ATTACKATTACK"}
-            return any(order.ability.button_name in attack_abilities for order in unit.orders)
+            return any(
+                order.ability.button_name in attack_abilities for order in unit.orders
+            )
         return False
     except (AttributeError, TypeError):
         return False

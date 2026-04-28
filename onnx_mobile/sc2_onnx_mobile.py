@@ -60,26 +60,30 @@ logger = logging.getLogger(__name__)
 # Enums and constants
 # ===================================================================
 
+
 class ExecutionProvider(Enum):
     """Supported mobile execution providers."""
+
     CPU = "CPUExecutionProvider"
-    NNAPI = "NnapiExecutionProvider"          # Android
-    COREML = "CoreMlExecutionProvider"        # iOS / macOS
-    WASM = "WasmExecutionProvider"            # Browser / WebAssembly
-    XNNPACK = "XnnpackExecutionProvider"      # Cross-platform XNNPACK
-    QNN = "QnnExecutionProvider"              # Qualcomm AI Engine
+    NNAPI = "NnapiExecutionProvider"  # Android
+    COREML = "CoreMlExecutionProvider"  # iOS / macOS
+    WASM = "WasmExecutionProvider"  # Browser / WebAssembly
+    XNNPACK = "XnnpackExecutionProvider"  # Cross-platform XNNPACK
+    QNN = "QnnExecutionProvider"  # Qualcomm AI Engine
 
 
 class OptimizationLevel(Enum):
     """ONNX graph optimization levels."""
+
     NONE = 0
-    BASIC = 1         # Constant folding, redundant node elimination
-    EXTENDED = 2      # Operator fusion (Conv+BN+ReLU)
-    FULL = 99         # All optimizations including layout transforms
+    BASIC = 1  # Constant folding, redundant node elimination
+    EXTENDED = 2  # Operator fusion (Conv+BN+ReLU)
+    FULL = 99  # All optimizations including layout transforms
 
 
 class QuantizationMode(Enum):
     """Model quantization modes for mobile."""
+
     NONE = "none"
     DYNAMIC_INT8 = "dynamic_int8"
     STATIC_INT8 = "static_int8"
@@ -117,10 +121,18 @@ SC2_MOBILE_MODELS: Dict[str, Dict[str, Any]] = {
 
 # Operator fusion patterns for mobile optimization
 FUSION_PATTERNS: List[Dict[str, Any]] = [
-    {"name": "ConvBnRelu", "ops": ["Conv", "BatchNormalization", "Relu"], "speedup": 1.4},
+    {
+        "name": "ConvBnRelu",
+        "ops": ["Conv", "BatchNormalization", "Relu"],
+        "speedup": 1.4,
+    },
     {"name": "MatMulAdd", "ops": ["MatMul", "Add"], "speedup": 1.2},
     {"name": "GemmRelu", "ops": ["Gemm", "Relu"], "speedup": 1.3},
-    {"name": "LayerNormFusion", "ops": ["ReduceMean", "Sub", "Mul", "Add"], "speedup": 1.5},
+    {
+        "name": "LayerNormFusion",
+        "ops": ["ReduceMean", "Sub", "Mul", "Add"],
+        "speedup": 1.5,
+    },
     {"name": "AttentionFusion", "ops": ["MatMul", "Softmax", "MatMul"], "speedup": 1.6},
     {"name": "GeluApprox", "ops": ["Mul", "Tanh", "Add", "Mul"], "speedup": 1.3},
 ]
@@ -130,9 +142,11 @@ FUSION_PATTERNS: List[Dict[str, Any]] = [
 # Data classes
 # ===================================================================
 
+
 @dataclass
 class MobileModelSpec:
     """Specification for a mobile-optimized SC2 model."""
+
     name: str
     input_dim: int
     hidden_dim: int
@@ -148,6 +162,7 @@ class MobileModelSpec:
 @dataclass
 class ExportResult:
     """Result of ONNX model export."""
+
     model_path: str
     model_size_bytes: int
     num_nodes: int
@@ -162,6 +177,7 @@ class ExportResult:
 @dataclass
 class BenchmarkResult:
     """Result of inference benchmark for a single provider."""
+
     provider: str
     model_name: str
     avg_latency_ms: float
@@ -177,6 +193,7 @@ class BenchmarkResult:
 @dataclass
 class OptimizationReport:
     """Summary report after mobile optimization."""
+
     original_size_bytes: int
     optimized_size_bytes: int
     compression_ratio: float
@@ -189,6 +206,7 @@ class OptimizationReport:
 # ===================================================================
 # ONNXMobileExporter
 # ===================================================================
+
 
 class ONNXMobileExporter:
     """Exports SC2 neural network models to mobile-optimized ONNX format.
@@ -236,9 +254,7 @@ class ONNXMobileExporter:
         b3 = np.zeros(spec.output_dim, dtype=np.float32)
         layers.append({"weight": w3, "bias": b3, "activation": "none"})
 
-        total_params = sum(
-            l["weight"].size + l["bias"].size for l in layers
-        )
+        total_params = sum(l["weight"].size + l["bias"].size for l in layers)
         return {"layers": layers, "total_params": total_params}
 
     def export_model(self, spec: MobileModelSpec) -> ExportResult:
@@ -251,7 +267,9 @@ class ONNXMobileExporter:
             ExportResult with metadata about the exported model.
         """
         start_time = time.time()
-        logger.info("Exporting model '%s' to ONNX (opset=%d)", spec.name, self.opset_version)
+        logger.info(
+            "Exporting model '%s' to ONNX (opset=%d)", spec.name, self.opset_version
+        )
 
         graph_def = self._build_simple_graph(spec)
         num_nodes = len(graph_def["layers"]) * 2  # matmul + activation per layer
@@ -328,6 +346,7 @@ class ONNXMobileExporter:
 # MobileOptimizer
 # ===================================================================
 
+
 class MobileOptimizer:
     """Applies mobile-specific optimizations to ONNX models.
 
@@ -372,7 +391,7 @@ class MobileOptimizer:
                 fusions_applied.append(pattern["name"])
                 eliminated += pattern_len - 1
                 speedup_product *= pattern["speedup"]
-                node_count -= (pattern_len - 1)
+                node_count -= pattern_len - 1
 
         # Fused ops are typically smaller in serialized form
         size_reduction = int(model_size * 0.05 * len(fusions_applied))
@@ -380,9 +399,7 @@ class MobileOptimizer:
 
         return node_count, model_size, fusions_applied
 
-    def _apply_quantization(
-        self, model_size: int, num_params: int
-    ) -> Tuple[int, str]:
+    def _apply_quantization(self, model_size: int, num_params: int) -> Tuple[int, str]:
         """Apply quantization to reduce model size and improve latency."""
         mode = self.quantization_mode
 
@@ -402,9 +419,7 @@ class MobileOptimizer:
         else:
             return model_size, "none"
 
-    def _apply_pruning(
-        self, num_params: int, model_size: int
-    ) -> Tuple[int, int]:
+    def _apply_pruning(self, num_params: int, model_size: int) -> Tuple[int, int]:
         """Remove near-zero weights below the pruning threshold."""
         if not self.enable_pruning:
             return num_params, model_size
@@ -426,28 +441,36 @@ class MobileOptimizer:
         opts: List[str] = []
 
         if provider == ExecutionProvider.NNAPI:
-            opts.extend([
-                "nnapi_partition_delegation",
-                "nnapi_fp16_relaxation",
-                "nnapi_burst_computation",
-            ])
+            opts.extend(
+                [
+                    "nnapi_partition_delegation",
+                    "nnapi_fp16_relaxation",
+                    "nnapi_burst_computation",
+                ]
+            )
         elif provider == ExecutionProvider.COREML:
-            opts.extend([
-                "coreml_neural_engine_dispatch",
-                "coreml_fp16_weights",
-                "coreml_image_preprocessing_fusion",
-            ])
+            opts.extend(
+                [
+                    "coreml_neural_engine_dispatch",
+                    "coreml_fp16_weights",
+                    "coreml_image_preprocessing_fusion",
+                ]
+            )
         elif provider == ExecutionProvider.WASM:
-            opts.extend([
-                "wasm_simd128_vectorization",
-                "wasm_threading_support",
-                "wasm_memory_growth_optimization",
-            ])
+            opts.extend(
+                [
+                    "wasm_simd128_vectorization",
+                    "wasm_threading_support",
+                    "wasm_memory_growth_optimization",
+                ]
+            )
         elif provider == ExecutionProvider.XNNPACK:
-            opts.extend([
-                "xnnpack_delegate_partition",
-                "xnnpack_sparse_inference",
-            ])
+            opts.extend(
+                [
+                    "xnnpack_delegate_partition",
+                    "xnnpack_sparse_inference",
+                ]
+            )
 
         return opts
 
@@ -517,6 +540,7 @@ class MobileOptimizer:
 # ONNXMobileRunner
 # ===================================================================
 
+
 class ONNXMobileRunner:
     """Runs ONNX inference sessions optimized for mobile execution providers.
 
@@ -545,11 +569,17 @@ class ONNXMobileRunner:
             num_threads,
         )
 
-    def _create_mock_session(self, model_name: str, spec: MobileModelSpec) -> Dict[str, Any]:
+    def _create_mock_session(
+        self, model_name: str, spec: MobileModelSpec
+    ) -> Dict[str, Any]:
         """Create a mock inference session when ORT is not available."""
-        weights_hidden = np.random.randn(spec.input_dim, spec.hidden_dim).astype(np.float32) * 0.02
+        weights_hidden = (
+            np.random.randn(spec.input_dim, spec.hidden_dim).astype(np.float32) * 0.02
+        )
         bias_hidden = np.zeros(spec.hidden_dim, dtype=np.float32)
-        weights_out = np.random.randn(spec.hidden_dim, spec.output_dim).astype(np.float32) * 0.02
+        weights_out = (
+            np.random.randn(spec.hidden_dim, spec.output_dim).astype(np.float32) * 0.02
+        )
         bias_out = np.zeros(spec.output_dim, dtype=np.float32)
 
         return {
@@ -569,7 +599,9 @@ class ONNXMobileRunner:
             model_name: Unique identifier for the model session.
             spec: Model specification.
         """
-        logger.info("Loading model '%s' for provider %s", model_name, self.provider.value)
+        logger.info(
+            "Loading model '%s' for provider %s", model_name, self.provider.value
+        )
         session = self._create_mock_session(model_name, spec)
         self._sessions[model_name] = session
         logger.info("Model '%s' loaded successfully", model_name)
@@ -607,12 +639,14 @@ class ONNXMobileRunner:
         self._total_latency_ms += latency_ms
 
         if self.enable_profiling:
-            self._profiling_data.append({
-                "model": model_name,
-                "latency_ms": latency_ms,
-                "input_shape": list(input_data.shape),
-                "timestamp": time.time(),
-            })
+            self._profiling_data.append(
+                {
+                    "model": model_name,
+                    "latency_ms": latency_ms,
+                    "input_shape": list(input_data.shape),
+                    "timestamp": time.time(),
+                }
+            )
 
         return output
 
@@ -673,6 +707,7 @@ class ONNXMobileRunner:
 # ===================================================================
 # BenchmarkSuite
 # ===================================================================
+
 
 class BenchmarkSuite:
     """Cross-platform benchmark suite for comparing ONNX execution providers.
@@ -768,7 +803,11 @@ class BenchmarkSuite:
         throughput = 1000.0 / avg_lat if avg_lat > 0 else 0.0
 
         # Simulated memory usage
-        param_size_mb = (spec.input_dim * spec.hidden_dim + spec.hidden_dim * spec.output_dim) * 4 / (1024 * 1024)
+        param_size_mb = (
+            (spec.input_dim * spec.hidden_dim + spec.hidden_dim * spec.output_dim)
+            * 4
+            / (1024 * 1024)
+        )
         memory_peak = param_size_mb * 2.5  # overhead for activations
 
         result = BenchmarkResult(
@@ -788,9 +827,7 @@ class BenchmarkSuite:
         runner.unload_all()
         return result
 
-    def benchmark_all_providers(
-        self, spec: MobileModelSpec
-    ) -> List[BenchmarkResult]:
+    def benchmark_all_providers(self, spec: MobileModelSpec) -> List[BenchmarkResult]:
         """Benchmark a model across all configured providers.
 
         Args:
@@ -858,7 +895,9 @@ class BenchmarkSuite:
         lines.append("Best providers:")
         for model_name, results in by_model.items():
             best = min(results, key=lambda x: x.avg_latency_ms)
-            lines.append(f"  {model_name}: {best.provider} ({best.avg_latency_ms:.2f}ms)")
+            lines.append(
+                f"  {model_name}: {best.provider} ({best.avg_latency_ms:.2f}ms)"
+            )
 
         lines.append("")
         lines.append(f"Total benchmarks: {len(self._results)}")
@@ -874,6 +913,7 @@ class BenchmarkSuite:
 # ===================================================================
 # Demo
 # ===================================================================
+
 
 def demo() -> None:
     """Demonstrate ONNX Mobile Runtime for SC2 inference.
@@ -892,10 +932,14 @@ def demo() -> None:
     export_results = exporter.export_all_sc2_models()
 
     for name, result in export_results.items():
-        print(f"  {name}: {result.num_parameters} params, {result.model_size_bytes} bytes")
+        print(
+            f"  {name}: {result.num_parameters} params, {result.model_size_bytes} bytes"
+        )
 
     summary = exporter.get_export_summary()
-    print(f"  Total: {summary['num_models']} models, {summary['total_size_bytes']} bytes")
+    print(
+        f"  Total: {summary['num_models']} models, {summary['total_size_bytes']} bytes"
+    )
     print()
 
     # --- Step 2: Optimize for mobile ---
@@ -951,7 +995,9 @@ def demo() -> None:
     print(f"  Streaming: processed {len(stream_results)} frames")
 
     stats = runner.get_stats()
-    print(f"  Stats: {stats['total_inferences']} inferences, avg {stats['avg_latency_ms']:.3f}ms")
+    print(
+        f"  Stats: {stats['total_inferences']} inferences, avg {stats['avg_latency_ms']:.3f}ms"
+    )
     print()
 
     # --- Step 4: Benchmark ---
@@ -984,7 +1030,9 @@ def demo() -> None:
 
 
 if __name__ == "__main__":
-    logging.basicConfig(level=logging.INFO, format="%(levelname)s | %(name)s | %(message)s")
+    logging.basicConfig(
+        level=logging.INFO, format="%(levelname)s | %(name)s | %(message)s"
+    )
     demo()
 
 # Phase 638: ONNX Mobile registered
