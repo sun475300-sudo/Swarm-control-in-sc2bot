@@ -10,13 +10,13 @@ included for environments without torch).
 import math
 import random
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional, Tuple
 from enum import Enum
-
+from typing import Any, Dict, List, Optional, Tuple
 
 # ---------------------------------------------------------------------------
 # Lightweight tensor helpers (numpy-free, pure Python fallback)
 # ---------------------------------------------------------------------------
+
 
 class Vector:
     """Minimal 1-D float vector with basic linear-algebra ops."""
@@ -66,7 +66,9 @@ class Vector:
         return Vector([math.tanh(v) for v in self.data])
 
     def sigmoid(self) -> "Vector":
-        return Vector([1.0 / (1.0 + math.exp(-max(-500, min(500, v)))) for v in self.data])
+        return Vector(
+            [1.0 / (1.0 + math.exp(-max(-500, min(500, v)))) for v in self.data]
+        )
 
     @staticmethod
     def zeros(dim: int) -> "Vector":
@@ -96,11 +98,15 @@ class Matrix:
             self.data = [list(r) for r in data]
         else:
             std = math.sqrt(2.0 / (rows + cols))
-            self.data = [[random.gauss(0, std) for _ in range(cols)] for _ in range(rows)]
+            self.data = [
+                [random.gauss(0, std) for _ in range(cols)] for _ in range(rows)
+            ]
 
     def forward(self, x: Vector) -> Vector:
         """Matrix-vector multiply: y = Wx."""
-        assert len(x) == self.cols, f"Shape mismatch: matrix cols={self.cols}, vec dim={len(x)}"
+        assert (
+            len(x) == self.cols
+        ), f"Shape mismatch: matrix cols={self.cols}, vec dim={len(x)}"
         out = []
         for row in self.data:
             out.append(sum(r * v for r, v in zip(row, x.data)))
@@ -110,6 +116,7 @@ class Matrix:
 # ---------------------------------------------------------------------------
 # Linear layer with optional bias
 # ---------------------------------------------------------------------------
+
 
 class LinearLayer:
     """Fully-connected layer: y = Wx + b."""
@@ -128,6 +135,7 @@ class LinearLayer:
 # ---------------------------------------------------------------------------
 # Activation helpers
 # ---------------------------------------------------------------------------
+
 
 def relu(v: Vector) -> Vector:
     return v.relu()
@@ -154,6 +162,7 @@ def layer_norm(v: Vector, eps: float = 1e-5) -> Vector:
 # ---------------------------------------------------------------------------
 # Vision Encoder
 # ---------------------------------------------------------------------------
+
 
 class VisionEncoder:
     """
@@ -196,7 +205,9 @@ class VisionEncoder:
             Vector of dimension *output_dim*.
         """
         flat: List[float] = []
-        if isinstance(pixel_grid[0], (list, tuple)) and isinstance(pixel_grid[0][0], (list, tuple)):
+        if isinstance(pixel_grid[0], (list, tuple)) and isinstance(
+            pixel_grid[0][0], (list, tuple)
+        ):
             for row in pixel_grid:
                 for pixel in row:
                     flat.extend(pixel)
@@ -226,6 +237,7 @@ class VisionEncoder:
 # ---------------------------------------------------------------------------
 # Text Encoder
 # ---------------------------------------------------------------------------
+
 
 class TextEncoder:
     """
@@ -291,6 +303,7 @@ class TextEncoder:
 # Structured (Numeric) Encoder
 # ---------------------------------------------------------------------------
 
+
 class StructuredEncoder:
     """
     Encodes numeric SC2 game state (resources, supply, army composition, etc.)
@@ -311,30 +324,30 @@ class StructuredEncoder:
         "enemy_worker_estimate",
         "bases_count",
         "enemy_bases_count",
-        "tech_progress",          # 0..1
-        "upgrade_progress",       # 0..1
+        "tech_progress",  # 0..1
+        "upgrade_progress",  # 0..1
         "game_time_seconds",
         "idle_workers",
     ]
 
     # normalization ranges (min, max) for each field
     FIELD_RANGES: Dict[str, Tuple[float, float]] = {
-        "minerals":                    (0.0, 5000.0),
-        "vespene":                     (0.0, 5000.0),
-        "supply_used":                 (0.0, 200.0),
-        "supply_cap":                  (0.0, 200.0),
-        "worker_count":                (0.0, 90.0),
-        "army_supply":                 (0.0, 200.0),
-        "army_value_minerals":         (0.0, 15000.0),
-        "army_value_gas":              (0.0, 10000.0),
-        "enemy_army_supply_estimate":  (0.0, 200.0),
-        "enemy_worker_estimate":       (0.0, 90.0),
-        "bases_count":                 (0.0, 8.0),
-        "enemy_bases_count":           (0.0, 8.0),
-        "tech_progress":               (0.0, 1.0),
-        "upgrade_progress":            (0.0, 1.0),
-        "game_time_seconds":           (0.0, 1800.0),
-        "idle_workers":                (0.0, 30.0),
+        "minerals": (0.0, 5000.0),
+        "vespene": (0.0, 5000.0),
+        "supply_used": (0.0, 200.0),
+        "supply_cap": (0.0, 200.0),
+        "worker_count": (0.0, 90.0),
+        "army_supply": (0.0, 200.0),
+        "army_value_minerals": (0.0, 15000.0),
+        "army_value_gas": (0.0, 10000.0),
+        "enemy_army_supply_estimate": (0.0, 200.0),
+        "enemy_worker_estimate": (0.0, 90.0),
+        "bases_count": (0.0, 8.0),
+        "enemy_bases_count": (0.0, 8.0),
+        "tech_progress": (0.0, 1.0),
+        "upgrade_progress": (0.0, 1.0),
+        "game_time_seconds": (0.0, 1800.0),
+        "idle_workers": (0.0, 30.0),
     }
 
     def __init__(self, hidden_dim: int = 64, output_dim: int = 64):
@@ -370,6 +383,7 @@ class StructuredEncoder:
 # ---------------------------------------------------------------------------
 # Late Fusion Network
 # ---------------------------------------------------------------------------
+
 
 class FusionNetwork:
     """
@@ -432,6 +446,7 @@ class FusionNetwork:
 # Action Head
 # ---------------------------------------------------------------------------
 
+
 class ActionHead:
     """Maps a fused representation to SC2 action probabilities."""
 
@@ -462,13 +477,18 @@ class ActionHead:
         logits = self.fc.forward(fused)
         probs = softmax(logits)
         best_idx = max(range(self.num_actions), key=lambda i: probs[i])
-        name = self.SC2_ACTIONS[best_idx] if best_idx < len(self.SC2_ACTIONS) else f"action_{best_idx}"
+        name = (
+            self.SC2_ACTIONS[best_idx]
+            if best_idx < len(self.SC2_ACTIONS)
+            else f"action_{best_idx}"
+        )
         return probs, best_idx, name
 
 
 # ---------------------------------------------------------------------------
 # Multimodal Agent
 # ---------------------------------------------------------------------------
+
 
 class MultimodalAgent:
     """
@@ -563,7 +583,9 @@ class MultimodalAgent:
         Fallback: decide with only structured state (no vision/text).
         Zero vectors are used for missing modalities.
         """
-        dummy_minimap = [[[0.0] * self.vision_encoder.channels] * self.vision_encoder.grid_width] * self.vision_encoder.grid_height
+        dummy_minimap = [
+            [[0.0] * self.vision_encoder.channels] * self.vision_encoder.grid_width
+        ] * self.vision_encoder.grid_height
         return self.decide(dummy_minimap, "", game_state)
 
     def get_history(self) -> List[Dict[str, Any]]:
@@ -576,6 +598,7 @@ class MultimodalAgent:
 # ---------------------------------------------------------------------------
 # Utility: generate a fake minimap for testing
 # ---------------------------------------------------------------------------
+
 
 def _generate_fake_minimap(
     height: int = 16,
@@ -609,6 +632,7 @@ def _generate_fake_minimap(
 # ---------------------------------------------------------------------------
 # Demo
 # ---------------------------------------------------------------------------
+
 
 def demo() -> None:
     """Demonstrate the Multimodal Agent with synthetic SC2 data."""
@@ -703,11 +727,21 @@ def demo() -> None:
 
     # --- Show encoder details ---
     print("\n--- Encoder dimensions ---")
-    print(f"  Vision:     input={agent.vision_encoder.input_dim} -> {agent.vision_encoder.output_dim}")
-    print(f"  Text:       vocab={agent.text_encoder.vocab_size}, embed={agent.text_encoder.embed_dim} -> {agent.text_encoder.output_dim}")
-    print(f"  Structured: fields={agent.state_encoder.input_dim} -> {agent.state_encoder.output_dim}")
-    print(f"  Fusion:     concat={agent.fusion.concat_dim} -> {agent.fusion.output_dim}")
-    print(f"  Actions:    {agent.action_head.num_actions} ({', '.join(ActionHead.SC2_ACTIONS)})")
+    print(
+        f"  Vision:     input={agent.vision_encoder.input_dim} -> {agent.vision_encoder.output_dim}"
+    )
+    print(
+        f"  Text:       vocab={agent.text_encoder.vocab_size}, embed={agent.text_encoder.embed_dim} -> {agent.text_encoder.output_dim}"
+    )
+    print(
+        f"  Structured: fields={agent.state_encoder.input_dim} -> {agent.state_encoder.output_dim}"
+    )
+    print(
+        f"  Fusion:     concat={agent.fusion.concat_dim} -> {agent.fusion.output_dim}"
+    )
+    print(
+        f"  Actions:    {agent.action_head.num_actions} ({', '.join(ActionHead.SC2_ACTIONS)})"
+    )
 
     # --- Decision history ---
     print(f"\n--- Decision history: {len(agent.get_history())} decisions recorded ---")
@@ -722,10 +756,14 @@ def demo() -> None:
 def _print_decision(result: Dict[str, Any], label: str) -> None:
     """Pretty-print a decision result."""
     print(f"  Decision: {result['action_name']} (idx={result['action_index']})")
-    print(f"  Feature norms -- vision: {result['vision_norm']}, text: {result['text_norm']}, "
-          f"state: {result['state_norm']}, fused: {result['fused_norm']}")
+    print(
+        f"  Feature norms -- vision: {result['vision_norm']}, text: {result['text_norm']}, "
+        f"state: {result['state_norm']}, fused: {result['fused_norm']}"
+    )
     print("  Top-3 action probabilities:")
-    sorted_probs = sorted(result["probabilities"].items(), key=lambda kv: kv[1], reverse=True)
+    sorted_probs = sorted(
+        result["probabilities"].items(), key=lambda kv: kv[1], reverse=True
+    )
     for name, prob in sorted_probs[:3]:
         bar = "#" * int(prob * 40)
         print(f"    {name:25s} {prob:.4f} {bar}")

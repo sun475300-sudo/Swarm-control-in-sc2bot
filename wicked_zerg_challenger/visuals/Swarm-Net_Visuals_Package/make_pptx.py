@@ -5,13 +5,14 @@ HTML 슬라이드를 Playwright로 캡처 → python-pptx로 .pptx 생성
 캡처 이미지를 슬라이드 배경으로 사용 + 발표자 노트 삽입
 """
 
+import logging
 import os
 import sys
 import tempfile
 from pathlib import Path
-import logging
 
 logger = logging.getLogger("MakePptx")
+
 
 def main():
     # --- 1) Playwright로 HTML 슬라이드 8장 캡처 ---
@@ -66,8 +67,8 @@ def main():
                 "'Swarm-Net' 프로젝트의 발표를 시작하겠습니다. "
                 "저희는 게임 AI에서 검증된 군집 제어 알고리즘을, "
                 "실제 드론 공역 관제 시스템으로 전이하는 프로젝트를 진행했습니다.\n\n"
-                "→ 전환: \"먼저, 왜 이 시스템이 필요한지 말씀드리겠습니다.\""
-            )
+                '→ 전환: "먼저, 왜 이 시스템이 필요한지 말씀드리겠습니다."'
+            ),
         },
         {
             "title": "문제 제기 — 고정형 레이더의 한계",
@@ -79,8 +80,8 @@ def main():
                 "첫째, 산악 지형이나 빌딩 숲에서 사각지대가 발생합니다. "
                 "둘째, 긴급 상황에 특정 지역으로 신속하게 관제망을 전개하기 어렵습니다. "
                 "셋째, 저고도에서 운용되는 소형 드론은 기존 레이더의 탐지 범위 밖에 있습니다.\n\n"
-                "→ 전환: \"그래서 저희는 발상을 전환했습니다.\""
-            )
+                '→ 전환: "그래서 저희는 발상을 전환했습니다."'
+            ),
         },
         {
             "title": "핵심 솔루션 — 드론이 직접 관제탑이 되다",
@@ -92,8 +93,8 @@ def main():
                 "핵심은 세 가지입니다. 6~12대의 드론이 다각형 대형을 이루고, "
                 "상호 간 LiDAR와 RF 통신으로 Mesh Radar를 구축하며, "
                 "탐지된 드론에 체공 시간을 자동 할당합니다.\n\n"
-                "→ 전환: \"그렇다면 이 군집 제어 알고리즘은 어디서 온 것일까요?\""
-            )
+                '→ 전환: "그렇다면 이 군집 제어 알고리즘은 어디서 온 것일까요?"'
+            ),
         },
         {
             "title": "핵심 기술 — Sim-to-Real",
@@ -106,8 +107,8 @@ def main():
                 "현실의 완벽한 다이내믹 레이더망으로 재탄생한 것입니다.\n\n"
                 "SC2의 2D 알고리즘에 고도(Altitude) 차원만 추가하면, "
                 "드론 편대 비행의 핵심 제어 로직으로 직접 전이가 가능합니다.\n\n"
-                "→ 전환: \"이제 실제 시스템이 어떻게 동작하는지 시뮬레이션으로 보여드리겠습니다.\""
-            )
+                '→ 전환: "이제 실제 시스템이 어떻게 동작하는지 시뮬레이션으로 보여드리겠습니다."'
+            ),
         },
         {
             "title": "3D 라이브 시뮬레이션",
@@ -119,8 +120,8 @@ def main():
                 "각 드론 머리 위의 라벨에서 잔여 비행 시간이 카운트다운되고 있는 것을 확인하실 수 있습니다.\n\n"
                 "초록색은 정상, 노란색은 시간 임박, 빨간색으로 깜빡이는 드론은 "
                 "시간이 초과되어 즉시 복귀 명령이 발령된 상태입니다.\n\n"
-                "→ 전환: \"이 데이터가 관제관에게 어떻게 보이는지, 대시보드를 보여드리겠습니다.\""
-            )
+                '→ 전환: "이 데이터가 관제관에게 어떻게 보이는지, 대시보드를 보여드리겠습니다."'
+            ),
         },
         {
             "title": "실시간 관제 대시보드",
@@ -133,8 +134,8 @@ def main():
                 "관리자의 개입 없이도, 시간이 임박하면 주황색 주의 알림이, "
                 "제한 시간이 초과되면 즉각적인 붉은색 경고와 함께 "
                 "해당 드론의 조종자에게 강제 복귀 명령이 자동으로 푸시 전송됩니다.\n\n"
-                "→ 전환: \"이 시스템이 실제로 어디에 쓰일 수 있을까요?\""
-            )
+                '→ 전환: "이 시스템이 실제로 어디에 쓰일 수 있을까요?"'
+            ),
         },
         {
             "title": "기대 효과 및 활용 분야",
@@ -146,8 +147,8 @@ def main():
                 "신속한 방어망 구축, 주요 시설물의 불법 드론 접근 차단, "
                 "대형 드론 쇼에서의 충돌 방지, 그리고 재난 현장에서의 긴급 공역 통제까지 — "
                 "기동성과 통신망 운용 효율성을 극대화한 실전형 솔루션입니다.\n\n"
-                "→ 전환: \"마지막으로 이 프로젝트의 미래 비전을 공유드리겠습니다.\""
-            )
+                '→ 전환: "마지막으로 이 프로젝트의 미래 비전을 공유드리겠습니다."'
+            ),
         },
         {
             "title": "결론 & Q&A",
@@ -158,17 +159,17 @@ def main():
                 "실제 드론 5대를 활용한 편대 비행 테스트를 준비하고 있습니다. "
                 "Swarm-Net이 만들어갈 체계적인 공역의 미래에 많은 기대 부탁드립니다.\n\n"
                 "감사합니다. 질문 받겠습니다."
-            )
-        }
+            ),
+        },
     ]
 
     # --- 3) python-pptx로 PPTX 생성 ---
     logger.info("[3/3] Building PPTX with python-pptx...")
 
     from pptx import Presentation
-    from pptx.util import Inches, Pt, Emu
     from pptx.dml.color import RGBColor
     from pptx.enum.text import PP_ALIGN
+    from pptx.util import Emu, Inches, Pt
 
     prs = Presentation()
     # 16:9 비율 설정
@@ -185,9 +186,7 @@ def main():
         img_path = screenshot_paths[i]
         if os.path.exists(img_path):
             slide.shapes.add_picture(
-                img_path,
-                Emu(0), Emu(0),
-                prs.slide_width, prs.slide_height
+                img_path, Emu(0), Emu(0), prs.slide_width, prs.slide_height
             )
 
         # 발표자 노트 추가
@@ -211,8 +210,10 @@ def main():
 
     # 임시 파일 정리
     import shutil
+
     shutil.rmtree(tmp_dir, ignore_errors=True)
     logger.info(f"  Temp files cleaned up")
+
 
 if __name__ == "__main__":
     main()

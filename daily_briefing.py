@@ -3,9 +3,10 @@ JARVIS 종합 일일 브리핑 (Daily Briefing)
 
 날씨 + 운세 + 캘린더 + 뉴스 + 포트폴리오 + SC2 전적 + 시스템 상태
 """
+
 import json
-import os
 import logging
+import os
 from datetime import datetime
 from pathlib import Path
 
@@ -27,6 +28,7 @@ class DailyBriefing:
         """날씨 섹션"""
         try:
             from morning_briefing_helper import get_weather
+
             w = get_weather(self._city)
             if not w or "error" in w:
                 err = w.get("error", "알 수 없음") if w else "모듈 오류"
@@ -45,6 +47,7 @@ class DailyBriefing:
         """운세 섹션"""
         try:
             from morning_briefing_helper import get_fortune
+
             f = get_fortune(self._birth_year)
             if not f:
                 return "🔮 **오늘의 운세** — 조회 실패"
@@ -67,6 +70,7 @@ class DailyBriefing:
         """캘린더 섹션 (비동기 - 실제 조회)"""
         try:
             from calendar_integration import CalendarIntegration
+
             cal = CalendarIntegration()
             result = await cal.get_today_events()
             return f"📅 **일정**\n{result}"
@@ -80,6 +84,7 @@ class DailyBriefing:
         """뉴스 섹션"""
         try:
             from morning_briefing_helper import get_google_news
+
             headlines = get_google_news(limit=3)
             if not headlines:
                 return "📰 **뉴스** — 조회 실패"
@@ -94,7 +99,12 @@ class DailyBriefing:
     def _get_portfolio_section(self) -> str:
         """암호화폐 포트폴리오 섹션"""
         try:
-            portfolio_file = self._project_root / "crypto_trading" / "data" / "portfolio_history.json"
+            portfolio_file = (
+                self._project_root
+                / "crypto_trading"
+                / "data"
+                / "portfolio_history.json"
+            )
             if not portfolio_file.exists():
                 return "💰 **포트폴리오** — 데이터 없음"
 
@@ -123,7 +133,9 @@ class DailyBriefing:
                     pnl = total - prev_total
                     pnl_pct = (pnl / prev_total) * 100
                     sign = "+" if pnl >= 0 else ""
-                    lines.append(f"  일일 손익: {sign}{pnl:,.0f} KRW ({sign}{pnl_pct:.2f}%)")
+                    lines.append(
+                        f"  일일 손익: {sign}{pnl:,.0f} KRW ({sign}{pnl_pct:.2f}%)"
+                    )
 
             # 보유 종목
             if isinstance(holdings, dict) and holdings:
@@ -136,14 +148,21 @@ class DailyBriefing:
                 lines.append(f"  보유 종목: {len(holdings)}개")
 
             # 오늘 거래 수
-            trade_log_file = self._project_root / "crypto_trading" / "data" / "trade_log.json"
+            trade_log_file = (
+                self._project_root / "crypto_trading" / "data" / "trade_log.json"
+            )
             if trade_log_file.exists():
                 with open(trade_log_file, "r", encoding="utf-8") as f:
                     try:
                         trades = json.load(f)
                         today = datetime.now().strftime("%Y-%m-%d")
                         if isinstance(trades, list):
-                            cnt = sum(1 for t in trades if isinstance(t, dict) and t.get("timestamp", "").startswith(today))
+                            cnt = sum(
+                                1
+                                for t in trades
+                                if isinstance(t, dict)
+                                and t.get("timestamp", "").startswith(today)
+                            )
                             lines.append(f"  오늘 거래: {cnt}건")
                     except json.JSONDecodeError as je:
                         # P3-9: 파싱 실패 경고 — 브리핑에 표시
@@ -190,8 +209,13 @@ class DailyBriefing:
         """시스템 상태 섹션"""
         try:
             import platform
+
             crypto_init = self._project_root / "crypto_trading" / "__init__.py"
-            sc2_bot = self._project_root / "wicked_zerg_challenger" / "wicked_zerg_bot_pro_impl.py"
+            sc2_bot = (
+                self._project_root
+                / "wicked_zerg_challenger"
+                / "wicked_zerg_bot_pro_impl.py"
+            )
             lines = [
                 "🖥️ **시스템**",
                 f"  {platform.node()} | {platform.system()} | Python {platform.python_version()}",
@@ -263,8 +287,10 @@ class DailyBriefing:
         # ★ WorkflowOrchestrator 기반 병렬 실행 ★
         try:
             from jarvis_features.workflow_orchestrator import (
-                WorkflowOrchestrator, PipelineStep,
+                PipelineStep,
+                WorkflowOrchestrator,
             )
+
             orchestrator = WorkflowOrchestrator()
 
             steps = [
@@ -282,6 +308,7 @@ class DailyBriefing:
 
             # 실행 보고서 로깅
             import logging
+
             logging.getLogger("jarvis.briefing").info(
                 orchestrator.get_execution_report(results)
             )

@@ -13,10 +13,10 @@ class RollbackManager:
     def process(self, data):
         """
         Process data.
-        
+
         Args:
             data: Input data
-            
+
         Returns:
             Processed result
         """

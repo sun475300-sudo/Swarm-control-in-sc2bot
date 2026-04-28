@@ -75,9 +75,7 @@ def ensure_migrations_table(conn: sqlite3.Connection) -> None:
 def get_applied_migrations(conn: sqlite3.Connection) -> List[str]:
     """이미 적용된 마이그레이션 ID 목록을 반환한다."""
     ensure_migrations_table(conn)
-    cursor = conn.execute(
-        "SELECT migration_id FROM migrations ORDER BY id ASC"
-    )
+    cursor = conn.execute("SELECT migration_id FROM migrations ORDER BY id ASC")
     return [row[0] for row in cursor.fetchall()]
 
 
@@ -232,9 +230,11 @@ def show_status(conn: sqlite3.Connection) -> None:
         print(f"  {marker} {migration_id:30s} ({status})")
 
     print("-" * 60)
-    print(f"  전체: {len(all_migrations)}개 | "
-          f"적용: {len(applied)}개 | "
-          f"미적용: {len(all_migrations) - len(applied)}개")
+    print(
+        f"  전체: {len(all_migrations)}개 | "
+        f"적용: {len(applied)}개 | "
+        f"미적용: {len(all_migrations) - len(applied)}개"
+    )
     print("=" * 60)
 
 

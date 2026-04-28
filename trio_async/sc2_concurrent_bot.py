@@ -10,11 +10,11 @@
 
 from __future__ import annotations
 
+import dataclasses
 import enum
+import logging
 import math
 import time
-import logging
-import dataclasses
 from typing import Any, Optional
 
 import trio
@@ -32,22 +32,25 @@ logger = logging.getLogger("sc2_concurrent_bot")
 # Enums & Data Classes
 # ---------------------------------------------------------------------------
 
+
 class TaskPriority(enum.IntEnum):
     """Priority levels — lower value == higher priority."""
-    COMBAT   = 0
-    ECONOMY  = 1
+
+    COMBAT = 0
+    ECONOMY = 1
     SCOUTING = 2
 
 
 class GamePhase(enum.Enum):
-    EARLY  = "early"
-    MID    = "mid"
-    LATE   = "late"
+    EARLY = "early"
+    MID = "mid"
+    LATE = "late"
 
 
 @dataclasses.dataclass
 class GameState:
     """Shared mutable game state snapshot."""
+
     minerals: int = 50
     gas: int = 0
     supply_used: int = 12
@@ -67,6 +70,7 @@ class GameState:
 @dataclasses.dataclass
 class BotCommand:
     """A command produced by a subsystem and consumed by the executor."""
+
     priority: TaskPriority
     action: str
     target: str | None = None
@@ -80,6 +84,7 @@ class BotCommand:
 @dataclasses.dataclass
 class ScoutReport:
     """Intel gathered by the scouting subsystem."""
+
     location: tuple[float, float]
     enemy_units: dict[str, int]
     enemy_structures: list[str]
@@ -89,6 +94,7 @@ class ScoutReport:
 @dataclasses.dataclass
 class PerformanceMetrics:
     """Tracks subsystem timing for comparison with asyncio."""
+
     task_name: str
     iterations: int = 0
     total_time: float = 0.0
@@ -110,11 +116,12 @@ class PerformanceMetrics:
 # Rate Limiter
 # ---------------------------------------------------------------------------
 
+
 class TrioRateLimiter:
     """Token-bucket rate limiter built on trio.sleep."""
 
     def __init__(self, rate: float, burst: int = 1) -> None:
-        self._rate = rate          # tokens per second
+        self._rate = rate  # tokens per second
         self._burst = burst
         self._tokens = float(burst)
         self._last = time.monotonic()
@@ -136,6 +143,7 @@ class TrioRateLimiter:
 # SC2ConcurrentBot
 # ---------------------------------------------------------------------------
 
+
 class SC2ConcurrentBot:
     """
     Trio-based StarCraft II Zerg bot with structured concurrency.
@@ -154,8 +162,8 @@ class SC2ConcurrentBot:
     """
 
     # -- configuration -------------------------------------------------------
-    TICK_INTERVAL: float = 0.05          # 20 Hz game loop
-    TICK_DEADLINE: float = 0.04          # 40 ms hard deadline per tick
+    TICK_INTERVAL: float = 0.05  # 20 Hz game loop
+    TICK_DEADLINE: float = 0.04  # 40 ms hard deadline per tick
     API_PORT: int = 7600
     COMMAND_CHANNEL_BUFFER: int = 256
     SCOUT_CHANNEL_BUFFER: int = 64
@@ -194,11 +202,11 @@ class SC2ConcurrentBot:
 
         # Performance tracking
         self._metrics: dict[str, PerformanceMetrics] = {
-            "combat":   PerformanceMetrics("combat"),
-            "economy":  PerformanceMetrics("economy"),
+            "combat": PerformanceMetrics("combat"),
+            "economy": PerformanceMetrics("economy"),
             "scouting": PerformanceMetrics("scouting"),
             "executor": PerformanceMetrics("executor"),
-            "tick":     PerformanceMetrics("tick"),
+            "tick": PerformanceMetrics("tick"),
         }
 
     # ── helpers ─────────────────────────────────────────────────────────────
@@ -221,7 +229,9 @@ class SC2ConcurrentBot:
         eco_factor = min(self.state.worker_count / 70.0, 1.0) * 0.3
         base_factor = min(self.state.base_count / 4.0, 1.0) * 0.2
         threat_penalty = self.state.threat_level / 100.0 * 0.2
-        return max(0.0, min(1.0, army_factor + eco_factor + base_factor - threat_penalty))
+        return max(
+            0.0, min(1.0, army_factor + eco_factor + base_factor - threat_penalty)
+        )
 
     # ── game loop tick ──────────────────────────────────────────────────────
 
@@ -232,7 +242,11 @@ class SC2ConcurrentBot:
 
         # Simulate income
         income_minerals = self.state.worker_count * 1.2
-        income_gas = max(0, (self.state.worker_count - 16) * 0.8) if self.state.base_count > 0 else 0
+        income_gas = (
+            max(0, (self.state.worker_count - 16) * 0.8)
+            if self.state.base_count > 0
+            else 0
+        )
         self.state.minerals += int(income_minerals)
         self.state.gas += int(income_gas)
 
@@ -256,19 +270,25 @@ class SC2ConcurrentBot:
             t0 = time.monotonic()
 
             async with self._combat_limiter:
-                with trio.CancelScope(deadline=trio.current_time() + self.TICK_DEADLINE):
+                with trio.CancelScope(
+                    deadline=trio.current_time() + self.TICK_DEADLINE
+                ):
                     # Decide combat actions based on game state
                     if self.state.is_under_attack:
-                        await self._cmd_send.send(BotCommand(
-                            priority=TaskPriority.COMBAT,
-                            action="defend_base",
-                            target="main_base",
-                        ))
+                        await self._cmd_send.send(
+                            BotCommand(
+                                priority=TaskPriority.COMBAT,
+                                action="defend_base",
+                                target="main_base",
+                            )
+                        )
                         # Pull back scouting units
-                        await self._cmd_send.send(BotCommand(
-                            priority=TaskPriority.COMBAT,
-                            action="recall_scouts",
-                        ))
+                        await self._cmd_send.send(
+                            BotCommand(
+                                priority=TaskPriority.COMBAT,
+                                action="recall_scouts",
+                            )
+                        )
 
                     # Army composition decisions
                     if self.state.phase == GamePhase.EARLY:
@@ -292,11 +312,13 @@ class SC2ConcurrentBot:
                         and self.state.threat_level < 40
                         and not self.state.is_under_attack
                     ):
-                        await self._cmd_send.send(BotCommand(
-                            priority=TaskPriority.COMBAT,
-                            action="attack_move",
-                            target="enemy_natural",
-                        ))
+                        await self._cmd_send.send(
+                            BotCommand(
+                                priority=TaskPriority.COMBAT,
+                                action="attack_move",
+                                target="enemy_natural",
+                            )
+                        )
 
             elapsed = time.monotonic() - t0
             self._metrics["combat"].record(elapsed)
@@ -305,12 +327,14 @@ class SC2ConcurrentBot:
         """Early game: speedlings + queens."""
         await self._build_rate.acquire()
         if self.state.minerals >= 50 and self.state.supply_used < self.state.supply_cap:
-            await self._cmd_send.send(BotCommand(
-                priority=TaskPriority.COMBAT,
-                action="train_unit",
-                target="zergling",
-                amount=2,
-            ))
+            await self._cmd_send.send(
+                BotCommand(
+                    priority=TaskPriority.COMBAT,
+                    action="train_unit",
+                    target="zergling",
+                    amount=2,
+                )
+            )
             self.state.minerals -= 50
             self.state.supply_used += 1
 
@@ -318,23 +342,27 @@ class SC2ConcurrentBot:
         """Mid game: roach/ravager + hydra."""
         await self._build_rate.acquire()
         if self.state.minerals >= 75 and self.state.gas >= 25:
-            await self._cmd_send.send(BotCommand(
-                priority=TaskPriority.COMBAT,
-                action="train_unit",
-                target="roach",
-                amount=1,
-            ))
+            await self._cmd_send.send(
+                BotCommand(
+                    priority=TaskPriority.COMBAT,
+                    action="train_unit",
+                    target="roach",
+                    amount=1,
+                )
+            )
             self.state.minerals -= 75
             self.state.gas -= 25
             self.state.supply_used += 2
 
         if self.state.minerals >= 100 and self.state.gas >= 50:
-            await self._cmd_send.send(BotCommand(
-                priority=TaskPriority.COMBAT,
-                action="train_unit",
-                target="hydralisk",
-                amount=1,
-            ))
+            await self._cmd_send.send(
+                BotCommand(
+                    priority=TaskPriority.COMBAT,
+                    action="train_unit",
+                    target="hydralisk",
+                    amount=1,
+                )
+            )
             self.state.minerals -= 100
             self.state.gas -= 50
             self.state.supply_used += 2
@@ -343,22 +371,26 @@ class SC2ConcurrentBot:
         """Late game: brood lords + corruptors + vipers."""
         await self._build_rate.acquire()
         if self.state.minerals >= 300 and self.state.gas >= 250:
-            await self._cmd_send.send(BotCommand(
-                priority=TaskPriority.COMBAT,
-                action="train_unit",
-                target="brood_lord",
-                amount=1,
-            ))
+            await self._cmd_send.send(
+                BotCommand(
+                    priority=TaskPriority.COMBAT,
+                    action="train_unit",
+                    target="brood_lord",
+                    amount=1,
+                )
+            )
             self.state.minerals -= 300
             self.state.gas -= 250
             self.state.supply_used += 4
         elif self.state.minerals >= 150 and self.state.gas >= 100:
-            await self._cmd_send.send(BotCommand(
-                priority=TaskPriority.COMBAT,
-                action="train_unit",
-                target="corruptor",
-                amount=1,
-            ))
+            await self._cmd_send.send(
+                BotCommand(
+                    priority=TaskPriority.COMBAT,
+                    action="train_unit",
+                    target="corruptor",
+                    amount=1,
+                )
+            )
             self.state.minerals -= 150
             self.state.gas -= 100
             self.state.supply_used += 2
@@ -384,7 +416,9 @@ class SC2ConcurrentBot:
             t0 = time.monotonic()
 
             async with self._economy_limiter:
-                with trio.CancelScope(deadline=trio.current_time() + self.TICK_DEADLINE):
+                with trio.CancelScope(
+                    deadline=trio.current_time() + self.TICK_DEADLINE
+                ):
                     # Worker production
                     await self._manage_workers()
                     # Supply management
@@ -402,12 +436,14 @@ class SC2ConcurrentBot:
         ideal = self.state.base_count * 22
         if self.state.worker_count < ideal and self.state.minerals >= 50:
             await self._build_rate.acquire()
-            await self._cmd_send.send(BotCommand(
-                priority=TaskPriority.ECONOMY,
-                action="train_unit",
-                target="drone",
-                amount=1,
-            ))
+            await self._cmd_send.send(
+                BotCommand(
+                    priority=TaskPriority.ECONOMY,
+                    action="train_unit",
+                    target="drone",
+                    amount=1,
+                )
+            )
             self.state.minerals -= 50
             self.state.worker_count += 1
             self.state.supply_used += 1
@@ -416,12 +452,14 @@ class SC2ConcurrentBot:
         """Build overlords before getting supply blocked."""
         headroom = self.state.supply_cap - self.state.supply_used
         if headroom < 4 and self.state.supply_cap < 200 and self.state.minerals >= 100:
-            await self._cmd_send.send(BotCommand(
-                priority=TaskPriority.ECONOMY,
-                action="train_unit",
-                target="overlord",
-                amount=1,
-            ))
+            await self._cmd_send.send(
+                BotCommand(
+                    priority=TaskPriority.ECONOMY,
+                    action="train_unit",
+                    target="overlord",
+                    amount=1,
+                )
+            )
             self.state.minerals -= 100
             self.state.supply_cap += 8
 
@@ -432,11 +470,13 @@ class SC2ConcurrentBot:
             and self.state.minerals >= 350
             and self.state.threat_level < 50
         ):
-            await self._cmd_send.send(BotCommand(
-                priority=TaskPriority.ECONOMY,
-                action="build_structure",
-                target="hatchery",
-            ))
+            await self._cmd_send.send(
+                BotCommand(
+                    priority=TaskPriority.ECONOMY,
+                    action="build_structure",
+                    target="hatchery",
+                )
+            )
             self.state.minerals -= 350
             self.state.base_count += 1
             logger.info("Expanding to base #%d", self.state.base_count)
@@ -444,17 +484,21 @@ class SC2ConcurrentBot:
     async def _manage_tech(self) -> None:
         """Progress tech tree based on game phase."""
         if self.state.phase == GamePhase.EARLY and self.state.minerals >= 200:
-            await self._cmd_send.send(BotCommand(
-                priority=TaskPriority.ECONOMY,
-                action="build_structure",
-                target="spawning_pool",
-            ))
+            await self._cmd_send.send(
+                BotCommand(
+                    priority=TaskPriority.ECONOMY,
+                    action="build_structure",
+                    target="spawning_pool",
+                )
+            )
         elif self.state.phase == GamePhase.MID and self.state.gas >= 100:
-            await self._cmd_send.send(BotCommand(
-                priority=TaskPriority.ECONOMY,
-                action="research_upgrade",
-                target="metabolic_boost",
-            ))
+            await self._cmd_send.send(
+                BotCommand(
+                    priority=TaskPriority.ECONOMY,
+                    action="research_upgrade",
+                    target="metabolic_boost",
+                )
+            )
 
     # ── subsystem: Scouting Manager ─────────────────────────────────────────
 
@@ -477,25 +521,32 @@ class SC2ConcurrentBot:
             t0 = time.monotonic()
 
             async with self._scout_limiter:
-                with trio.CancelScope(deadline=trio.current_time() + self.TICK_DEADLINE):
+                with trio.CancelScope(
+                    deadline=trio.current_time() + self.TICK_DEADLINE
+                ):
                     await self._scout_rate.acquire()
 
                     target = patrol_points[idx % len(patrol_points)]
                     idx += 1
 
-                    await self._cmd_send.send(BotCommand(
-                        priority=TaskPriority.SCOUTING,
-                        action="move_unit",
-                        target=f"scout_to_{target[0]}_{target[1]}",
-                    ))
+                    await self._cmd_send.send(
+                        BotCommand(
+                            priority=TaskPriority.SCOUTING,
+                            action="move_unit",
+                            target=f"scout_to_{target[0]}_{target[1]}",
+                        )
+                    )
 
                     # Simulated scout result
                     import random
+
                     if random.random() < 0.3:
                         report = ScoutReport(
                             location=target,
-                            enemy_units={"marine": random.randint(0, 8),
-                                         "siege_tank": random.randint(0, 3)},
+                            enemy_units={
+                                "marine": random.randint(0, 8),
+                                "siege_tank": random.randint(0, 3),
+                            },
                             enemy_structures=["command_center"],
                             timestamp=self.state.game_time,
                         )
@@ -545,9 +596,13 @@ class SC2ConcurrentBot:
             case "research_upgrade":
                 logger.debug("Researching %s", cmd.target)
             case "attack_move":
-                logger.info("Attack-moving to %s (army=%d)", cmd.target, self.state.army_value)
+                logger.info(
+                    "Attack-moving to %s (army=%d)", cmd.target, self.state.army_value
+                )
             case "defend_base":
-                logger.info("Defending %s! (threat=%.1f)", cmd.target, self.state.threat_level)
+                logger.info(
+                    "Defending %s! (threat=%.1f)", cmd.target, self.state.threat_level
+                )
             case "recall_scouts":
                 logger.debug("Recalling scouts for defense")
             case "move_unit":
@@ -557,7 +612,9 @@ class SC2ConcurrentBot:
 
     # ── API Server ──────────────────────────────────────────────────────────
 
-    async def _api_server(self, task_status: trio.TaskStatus = trio.TASK_STATUS_IGNORED) -> None:
+    async def _api_server(
+        self, task_status: trio.TaskStatus = trio.TASK_STATUS_IGNORED
+    ) -> None:
         """
         Lightweight TCP API server exposing game state.
         Accepts connections and responds with JSON state snapshots.
@@ -600,10 +657,12 @@ class SC2ConcurrentBot:
                         self._shutdown_event.set()
                         response = json.dumps({"status": "shutting_down"})
                     else:
-                        response = json.dumps({
-                            "error": "unknown_command",
-                            "commands": ["STATE", "METRICS", "SHUTDOWN"],
-                        })
+                        response = json.dumps(
+                            {
+                                "error": "unknown_command",
+                                "commands": ["STATE", "METRICS", "SHUTDOWN"],
+                            }
+                        )
 
                     await stream.send_all(response.encode("utf-8"))
                 except trio.BrokenResourceError:
@@ -611,32 +670,39 @@ class SC2ConcurrentBot:
 
     def _build_state_json(self) -> str:
         import json
-        return json.dumps({
-            "bot": self.name,
-            "tick": self.state.tick,
-            "game_time": round(self.state.game_time, 2),
-            "phase": self.state.phase.value,
-            "minerals": self.state.minerals,
-            "gas": self.state.gas,
-            "supply": f"{self.state.supply_used}/{self.state.supply_cap}",
-            "army_value": self.state.army_value,
-            "workers": self.state.worker_count,
-            "bases": self.state.base_count,
-            "threat_level": round(self.state.threat_level, 2),
-            "win_probability": round(self.state.win_probability, 4),
-            "is_under_attack": self.state.is_under_attack,
-            "enemy_composition": self.state.enemy_composition,
-        }, indent=2)
+
+        return json.dumps(
+            {
+                "bot": self.name,
+                "tick": self.state.tick,
+                "game_time": round(self.state.game_time, 2),
+                "phase": self.state.phase.value,
+                "minerals": self.state.minerals,
+                "gas": self.state.gas,
+                "supply": f"{self.state.supply_used}/{self.state.supply_cap}",
+                "army_value": self.state.army_value,
+                "workers": self.state.worker_count,
+                "bases": self.state.base_count,
+                "threat_level": round(self.state.threat_level, 2),
+                "win_probability": round(self.state.win_probability, 4),
+                "is_under_attack": self.state.is_under_attack,
+                "enemy_composition": self.state.enemy_composition,
+            },
+            indent=2,
+        )
 
     def _build_metrics_json(self) -> str:
         import json
+
         out: dict[str, Any] = {}
         for name, m in self._metrics.items():
             out[name] = {
                 "iterations": m.iterations,
                 "avg_ms": round(m.avg_time * 1000, 3),
                 "max_ms": round(m.max_time * 1000, 3),
-                "min_ms": round(m.min_time * 1000, 3) if m.min_time != float("inf") else None,
+                "min_ms": (
+                    round(m.min_time * 1000, 3) if m.min_time != float("inf") else None
+                ),
                 "total_ms": round(m.total_time * 1000, 3),
             }
         return json.dumps({"performance_metrics": out}, indent=2)
@@ -776,6 +842,7 @@ class SC2ConcurrentBot:
 # Performance Comparison: Trio vs asyncio
 # ---------------------------------------------------------------------------
 
+
 class AsyncioComparisonBenchmark:
     """
     Side-by-side performance comparison of Trio structured concurrency
@@ -834,6 +901,7 @@ class AsyncioComparisonBenchmark:
 # ---------------------------------------------------------------------------
 # CLI entry point
 # ---------------------------------------------------------------------------
+
 
 async def main() -> None:
     """Run the bot with a finite number of ticks for demonstration."""

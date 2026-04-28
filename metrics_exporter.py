@@ -37,19 +37,20 @@ import json
 import threading
 import time
 from contextlib import contextmanager
-from http.server import HTTPServer, BaseHTTPRequestHandler
+from http.server import BaseHTTPRequestHandler, HTTPServer
 from typing import Dict, List, Optional
 
 # prometheus_client 라이브러리 사용 시도
 try:
     from prometheus_client import (
+        CONTENT_TYPE_LATEST,
         Counter,
         Gauge,
         Histogram,
-        start_http_server,
         generate_latest,
-        CONTENT_TYPE_LATEST,
+        start_http_server,
     )
+
     _HAS_PROMETHEUS = True
 except ImportError:
     _HAS_PROMETHEUS = False
@@ -58,6 +59,7 @@ except ImportError:
 # ═══════════════════════════════════════════════════════
 # 직접 구현 메트릭 클래스 (prometheus_client 없을 때)
 # ═══════════════════════════════════════════════════════
+
 
 class _SimpleCounter:
     """간단한 카운터 메트릭 (증가만 가능)."""
@@ -86,7 +88,10 @@ class _SimpleCounter:
 
     def _collect(self) -> str:
         """Prometheus 텍스트 형식으로 출력한다."""
-        lines = [f"# HELP {self.name} {self.description}", f"# TYPE {self.name} counter"]
+        lines = [
+            f"# HELP {self.name} {self.description}",
+            f"# TYPE {self.name} counter",
+        ]
         with self._lock:
             for key, val in self._values.items():
                 if key:
@@ -209,9 +214,7 @@ class _SimpleHistogram:
                     lines.append(
                         f'{self.name}_bucket{{{label_prefix}le="{bucket}"}} {bucket_count}'
                     )
-                lines.append(
-                    f'{self.name}_bucket{{{label_prefix}le="+Inf"}} {count}'
-                )
+                lines.append(f'{self.name}_bucket{{{label_prefix}le="+Inf"}} {count}')
                 lines.append(f"{self.name}_sum{{{label_prefix.rstrip(',')}}} {total}")
                 lines.append(f"{self.name}_count{{{label_prefix.rstrip(',')}}} {count}")
         return "\n".join(lines)
@@ -220,6 +223,7 @@ class _SimpleHistogram:
 # ═══════════════════════════════════════════════════════
 # 메트릭 익스포터 메인 클래스
 # ═══════════════════════════════════════════════════════
+
 
 class MetricsExporter:
     """
@@ -292,16 +296,23 @@ class MetricsExporter:
     def _init_simple_metrics(self) -> None:
         """자체 구현 메트릭을 초기화한다."""
         self.trade_total = _SimpleCounter(
-            "jarvis_trade_total", "총 거래 횟수", ["symbol", "side"],
+            "jarvis_trade_total",
+            "총 거래 횟수",
+            ["symbol", "side"],
         )
         self.trade_success = _SimpleCounter(
-            "jarvis_trade_success_total", "성공한 거래 횟수", ["symbol"],
+            "jarvis_trade_success_total",
+            "성공한 거래 횟수",
+            ["symbol"],
         )
         self.trade_failure = _SimpleCounter(
-            "jarvis_trade_failure_total", "실패한 거래 횟수", ["symbol", "reason"],
+            "jarvis_trade_failure_total",
+            "실패한 거래 횟수",
+            ["symbol", "reason"],
         )
         self.portfolio_value = _SimpleGauge(
-            "jarvis_portfolio_value_krw", "포트폴리오 총 가치 (KRW)",
+            "jarvis_portfolio_value_krw",
+            "포트폴리오 총 가치 (KRW)",
         )
         self.api_request_duration = _SimpleHistogram(
             "jarvis_api_request_duration_seconds",
@@ -310,19 +321,27 @@ class MetricsExporter:
             buckets=(0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1.0, 2.5, 5.0, 10.0),
         )
         self.api_request_total = _SimpleCounter(
-            "jarvis_api_request_total", "API 요청 총 횟수",
+            "jarvis_api_request_total",
+            "API 요청 총 횟수",
             ["service", "endpoint", "status"],
         )
         self.active_positions = _SimpleGauge(
-            "jarvis_active_positions", "현재 활성 포지션 수",
+            "jarvis_active_positions",
+            "현재 활성 포지션 수",
         )
         self.uptime = _SimpleGauge(
-            "jarvis_uptime_seconds", "서비스 가동 시간 (초)",
+            "jarvis_uptime_seconds",
+            "서비스 가동 시간 (초)",
         )
         self._simple_metrics = [
-            self.trade_total, self.trade_success, self.trade_failure,
-            self.portfolio_value, self.api_request_duration,
-            self.api_request_total, self.active_positions, self.uptime,
+            self.trade_total,
+            self.trade_success,
+            self.trade_failure,
+            self.portfolio_value,
+            self.api_request_duration,
+            self.api_request_total,
+            self.active_positions,
+            self.uptime,
         ]
 
     # ── 메트릭 기록 메서드 ──
@@ -372,10 +391,13 @@ class MetricsExporter:
             duration: 응답 시간 (초)
         """
         self.api_request_total.labels(
-            service=service, endpoint=endpoint, status=status,
+            service=service,
+            endpoint=endpoint,
+            status=status,
         ).inc()
         self.api_request_duration.labels(
-            service=service, endpoint=endpoint,
+            service=service,
+            endpoint=endpoint,
         ).observe(duration)
 
     @contextmanager
@@ -419,8 +441,10 @@ class MetricsExporter:
         """메트릭 HTTP 서버를 백그라운드에서 시작한다."""
         if _HAS_PROMETHEUS:
             start_http_server(self.port, addr=self.host)
-            print(f"Prometheus 메트릭 서버 시작 (prometheus_client): "
-                  f"http://{self.host}:{self.port}/metrics")
+            print(
+                f"Prometheus 메트릭 서버 시작 (prometheus_client): "
+                f"http://{self.host}:{self.port}/metrics"
+            )
         else:
             exporter = self
 
@@ -441,9 +465,7 @@ class MetricsExporter:
                         self.send_response(200)
                         self.send_header("Content-Type", "application/json")
                         self.end_headers()
-                        self.wfile.write(
-                            json.dumps({"status": "ok"}).encode("utf-8")
-                        )
+                        self.wfile.write(json.dumps({"status": "ok"}).encode("utf-8"))
                     else:
                         self.send_response(404)
                         self.end_headers()
@@ -458,8 +480,10 @@ class MetricsExporter:
                 daemon=True,
             )
             self._server_thread.start()
-            print(f"Prometheus 메트릭 서버 시작 (자체 구현): "
-                  f"http://{self.host}:{self.port}/metrics")
+            print(
+                f"Prometheus 메트릭 서버 시작 (자체 구현): "
+                f"http://{self.host}:{self.port}/metrics"
+            )
 
     def stop(self) -> None:
         """메트릭 HTTP 서버를 중지한다."""
@@ -506,9 +530,7 @@ if __name__ == "__main__":
                 side=random.choice(["buy", "sell"]),
                 reason="" if success else "insufficient_balance",
             )
-            exporter.update_portfolio_value(
-                random.uniform(10_000_000, 20_000_000)
-            )
+            exporter.update_portfolio_value(random.uniform(10_000_000, 20_000_000))
             exporter.update_active_positions(random.randint(0, 5))
             exporter.record_api_request(
                 service="upbit",

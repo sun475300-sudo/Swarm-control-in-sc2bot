@@ -3,14 +3,15 @@
 Quick creep test - 1분 빠른 점막 검증
 """
 
-from sc2 import maps
-from sc2.player import Bot, Computer
-from sc2.main import run_game
-from sc2.data import Race, Difficulty
-from wicked_zerg_bot_pro_impl import WickedZergBotProImpl as WickedZergBotPro
-import sys
-import os
 import logging
+import os
+import sys
+
+from sc2 import maps
+from sc2.data import Difficulty, Race
+from sc2.main import run_game
+from sc2.player import Bot, Computer
+from wicked_zerg_bot_pro_impl import WickedZergBotProImpl as WickedZergBotPro
 
 logger = logging.getLogger("QuickCreepTest")
 
@@ -28,8 +29,10 @@ def _ensure_sc2_path():
 
     try:
         import winreg
-        key = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE,
-                             r"SOFTWARE\Blizzard Entertainment\StarCraft II")
+
+        key = winreg.OpenKey(
+            winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\Blizzard Entertainment\StarCraft II"
+        )
         install_path, _ = winreg.QueryValueEx(key, "InstallPath")
         winreg.CloseKey(key)
 
@@ -84,9 +87,7 @@ def main():
     # Run game
     try:
         run_game(
-            map_instance,
-            [bot, Computer(opponent_race, difficulty)],
-            realtime=False
+            map_instance, [bot, Computer(opponent_race, difficulty)], realtime=False
         )
         logger.info("\n[TEST FINISHED]")
     except Exception as e:

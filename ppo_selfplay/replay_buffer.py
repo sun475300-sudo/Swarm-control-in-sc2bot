@@ -5,9 +5,10 @@ Prioritized experience replay buffer for SC2 training data with SumTree.
 
 import os
 import pickle
-import numpy as np
 from dataclasses import dataclass
-from typing import Tuple, Optional, List
+from typing import List, Optional, Tuple
+
+import numpy as np
 
 
 @dataclass
@@ -70,10 +71,16 @@ class SumTree:
 class PrioritizedReplayBuffer:
     """Prioritized Experience Replay buffer supporting n-step TD returns."""
 
-    def __init__(self, capacity: int = 100_000, alpha: float = 0.6,
-                 beta: float = 0.4, beta_increment: float = 1e-5,
-                 n_step: int = 3, gamma: float = 0.99,
-                 epsilon: float = 1e-6):
+    def __init__(
+        self,
+        capacity: int = 100_000,
+        alpha: float = 0.6,
+        beta: float = 0.4,
+        beta_increment: float = 1e-5,
+        n_step: int = 3,
+        gamma: float = 0.99,
+        epsilon: float = 1e-6,
+    ):
         self.capacity = capacity
         self.alpha = alpha
         self.beta = beta
@@ -89,16 +96,23 @@ class PrioritizedReplayBuffer:
         """Compute n-step return for the oldest transition in the buffer."""
         n_return = 0.0
         for i, t in enumerate(self.n_step_buffer):
-            n_return += (self.gamma ** i) * t.reward
+            n_return += (self.gamma**i) * t.reward
             if t.done:
                 return n_return, t.next_obs, True
         last = self.n_step_buffer[-1]
         return n_return, last.next_obs, last.done
 
-    def add(self, obs: np.ndarray, action: int, reward: float,
-            next_obs: np.ndarray, done: bool) -> None:
-        transition = Transition(obs=obs, action=action, reward=reward,
-                                next_obs=next_obs, done=done)
+    def add(
+        self,
+        obs: np.ndarray,
+        action: int,
+        reward: float,
+        next_obs: np.ndarray,
+        done: bool,
+    ) -> None:
+        transition = Transition(
+            obs=obs, action=action, reward=reward, next_obs=next_obs, done=done
+        )
         self.n_step_buffer.append(transition)
         if len(self.n_step_buffer) < self.n_step and not done:
             return
@@ -106,17 +120,24 @@ class PrioritizedReplayBuffer:
         first = self.n_step_buffer.pop(0)
         first.n_step_return = n_return
         first.n_step_next_obs = n_next_obs
-        priority = self.max_priority ** self.alpha
+        priority = self.max_priority**self.alpha
         self.tree.add(priority, first)
         if done:
             self.n_step_buffer.clear()
 
-    def sample(self, batch_size: int) -> Tuple[List[Transition], np.ndarray, np.ndarray]:
+    def sample(
+        self, batch_size: int
+    ) -> Tuple[List[Transition], np.ndarray, np.ndarray]:
         transitions, indices, weights = [], [], []
         total = self.tree.total_priority()
         segment = total / batch_size
         self.beta = min(1.0, self.beta + self.beta_increment)
-        min_prob = np.min(self.tree.tree[-self.capacity:][self.tree.tree[-self.capacity:] > 0]) / total
+        min_prob = (
+            np.min(
+                self.tree.tree[-self.capacity :][self.tree.tree[-self.capacity :] > 0]
+            )
+            / total
+        )
         max_weight = (min_prob * self.tree.size) ** (-self.beta)
         for i in range(batch_size):
             val = np.random.uniform(segment * i, segment * (i + 1))
@@ -137,8 +158,14 @@ class PrioritizedReplayBuffer:
     def save_to_disk(self, path: str) -> None:
         os.makedirs(os.path.dirname(path), exist_ok=True)
         with open(path, "wb") as f:
-            pickle.dump({"tree": self.tree, "beta": self.beta,
-                         "max_priority": self.max_priority}, f)
+            pickle.dump(
+                {
+                    "tree": self.tree,
+                    "beta": self.beta,
+                    "max_priority": self.max_priority,
+                },
+                f,
+            )
 
     def load_from_disk(self, path: str) -> None:
         with open(path, "rb") as f:

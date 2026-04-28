@@ -4,13 +4,13 @@ Tests complete game flow from start to end
 """
 
 import json
-import time
 import random
-from pathlib import Path
-from datetime import datetime
-from typing import Dict, List, Any
+import time
 from dataclasses import dataclass, field
+from datetime import datetime
 from enum import Enum
+from pathlib import Path
+from typing import Any, Dict, List
 
 
 class GamePhase(Enum):

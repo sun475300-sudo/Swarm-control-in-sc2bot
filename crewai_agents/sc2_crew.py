@@ -1,11 +1,12 @@
 # Phase 412: CrewAI - SC2 Agent Crew
 # CrewAI agent crew for collaborative SC2 bot strategy management
 
-from crewai import Agent, Task, Crew, Process
-from crewai.tools import tool
-from langchain_anthropic import ChatAnthropic
 import json
 from typing import Optional
+
+from crewai import Agent, Crew, Process, Task
+from crewai.tools import tool
+from langchain_anthropic import ChatAnthropic
 
 # ============================================================
 # LLM
@@ -21,26 +22,32 @@ claude_llm = ChatAnthropic(
 # Tools (crewai @tool decorator)
 # ============================================================
 
+
 @tool("analyze_game_state")
 def analyze_game_state_tool(game_state_json: str) -> str:
     """Analyze the current SC2 game state from JSON input.
     Input: JSON with minerals, vespene, supply_used, supply_cap, game_loop, enemy_race.
     Returns: structured analysis of economy, threats, and phase."""
-    state  = json.loads(game_state_json)
+    state = json.loads(game_state_json)
     minute = state.get("game_loop", 0) / 22.4 / 60
-    phase  = "early" if minute < 5 else "mid" if minute < 12 else "late"
+    phase = "early" if minute < 5 else "mid" if minute < 12 else "late"
 
     mineral_sat = "sufficient" if state.get("minerals", 0) > 300 else "low"
-    supply_pct  = state.get("supply_used", 0) / max(state.get("supply_cap", 1), 1)
+    supply_pct = state.get("supply_used", 0) / max(state.get("supply_cap", 1), 1)
 
-    return json.dumps({
-        "phase": phase,
-        "game_minute": round(minute, 1),
-        "economy_status": mineral_sat,
-        "supply_blocked": supply_pct > 0.92,
-        "supply_pct": round(supply_pct * 100, 1),
-        "recommended_workers": 66 if phase == "late" else 44 if phase == "mid" else 20,
-    })
+    return json.dumps(
+        {
+            "phase": phase,
+            "game_minute": round(minute, 1),
+            "economy_status": mineral_sat,
+            "supply_blocked": supply_pct > 0.92,
+            "supply_pct": round(supply_pct * 100, 1),
+            "recommended_workers": (
+                66 if phase == "late" else 44 if phase == "mid" else 20
+            ),
+        }
+    )
+
 
 @tool("suggest_strategy")
 def suggest_strategy_tool(matchup: str, phase: str, army_supply: int) -> str:
@@ -48,22 +55,25 @@ def suggest_strategy_tool(matchup: str, phase: str, army_supply: int) -> str:
     Input: matchup (ZvT/ZvP/ZvZ), phase (early/mid/late), army_supply.
     Returns: strategy recommendation with unit composition."""
     strategies = {
-        "ZvT_early":  "Speedling expand, deny scouting, prepare roach warren",
-        "ZvT_mid":    "Roach-Hydra with +1/+1, attack at 9 min with 12R+8H",
-        "ZvT_late":   "Brood Lord + Infestor + Corruptor vs mech, Ultra+ling vs bio",
-        "ZvP_early":  "Safe 3-hatch opener, roach warren for defense",
-        "ZvP_mid":    "Roach-Ravager-Hydra, deny forcefield, corruptors for colossus",
-        "ZvP_late":   "Zerg deathball: Ultra+BL+Infestor, deny 4th base",
-        "ZvZ_early":  "Pool-first or standard 3-hatch, match zergling production",
-        "ZvZ_mid":    "Mutalisk race - get 12+ mutas before engaging",
-        "ZvZ_late":   "Brood Lord control, deny bases with spine crawlers",
+        "ZvT_early": "Speedling expand, deny scouting, prepare roach warren",
+        "ZvT_mid": "Roach-Hydra with +1/+1, attack at 9 min with 12R+8H",
+        "ZvT_late": "Brood Lord + Infestor + Corruptor vs mech, Ultra+ling vs bio",
+        "ZvP_early": "Safe 3-hatch opener, roach warren for defense",
+        "ZvP_mid": "Roach-Ravager-Hydra, deny forcefield, corruptors for colossus",
+        "ZvP_late": "Zerg deathball: Ultra+BL+Infestor, deny 4th base",
+        "ZvZ_early": "Pool-first or standard 3-hatch, match zergling production",
+        "ZvZ_mid": "Mutalisk race - get 12+ mutas before engaging",
+        "ZvZ_late": "Brood Lord control, deny bases with spine crawlers",
     }
     key = f"{matchup}_{phase}"
-    return json.dumps({
-        "strategy": strategies.get(key, "Macro up and scout more"),
-        "army_priority": "attack" if army_supply >= 40 else "build_up",
-        "attack_threshold_supply": 40,
-    })
+    return json.dumps(
+        {
+            "strategy": strategies.get(key, "Macro up and scout more"),
+            "army_priority": "attack" if army_supply >= 40 else "build_up",
+            "attack_threshold_supply": 40,
+        }
+    )
+
 
 @tool("optimize_build_order")
 def optimize_build_order_tool(enemy_race: str, opener: str) -> str:
@@ -71,31 +81,62 @@ def optimize_build_order_tool(enemy_race: str, opener: str) -> str:
     Input: enemy_race (Zerg/Terran/Protoss), opener (fast_expand/pool_first/hatch_first).
     Returns: step-by-step build order."""
     builds = {
-        ("Terran", "hatch_first"): ["17 Hatch", "17 Gas", "16 Pool", "21 Hatch", "Speedling", "Roach Warren 4:30"],
-        ("Protoss", "pool_first"): ["16 Pool", "18 Hatch", "18 Gas x2", "Roach Warren 4:00", "Lair 5:00"],
-        ("Zerg", "hatch_first"):   ["17 Hatch", "17 Gas", "16 Pool", "Zergling speed", "3rd hatch 5:00"],
+        ("Terran", "hatch_first"): [
+            "17 Hatch",
+            "17 Gas",
+            "16 Pool",
+            "21 Hatch",
+            "Speedling",
+            "Roach Warren 4:30",
+        ],
+        ("Protoss", "pool_first"): [
+            "16 Pool",
+            "18 Hatch",
+            "18 Gas x2",
+            "Roach Warren 4:00",
+            "Lair 5:00",
+        ],
+        ("Zerg", "hatch_first"): [
+            "17 Hatch",
+            "17 Gas",
+            "16 Pool",
+            "Zergling speed",
+            "3rd hatch 5:00",
+        ],
     }
     key = (enemy_race, opener)
     steps = builds.get(key, ["17 Hatch", "17 Gas", "16 Pool", "Standard macro"])
     return json.dumps({"build_order": steps, "vs": enemy_race, "opener": opener})
 
+
 @tool("coordinate_attack")
-def coordinate_attack_tool(army_supply: int, game_minute: float, enemy_base_x: float, enemy_base_y: float) -> str:
+def coordinate_attack_tool(
+    army_supply: int, game_minute: float, enemy_base_x: float, enemy_base_y: float
+) -> str:
     """Coordinate an army attack with timing and positioning.
     Input: army_supply, game_minute, enemy base coordinates.
     Returns: attack order with rally point and timing."""
     if army_supply < 30:
-        return json.dumps({"action": "wait", "reason": "Army too small", "min_supply": 30})
+        return json.dumps(
+            {"action": "wait", "reason": "Army too small", "min_supply": 30}
+        )
 
-    attack_type = "timing_push" if game_minute < 10 else "all_in" if game_minute < 15 else "deathball"
-    return json.dumps({
-        "action":       "attack",
-        "type":         attack_type,
-        "target":       {"x": enemy_base_x, "y": enemy_base_y},
-        "army_supply":  army_supply,
-        "timing":       f"{game_minute:.1f} min",
-        "formation":    "surround" if attack_type == "deathball" else "frontal",
-    })
+    attack_type = (
+        "timing_push"
+        if game_minute < 10
+        else "all_in" if game_minute < 15 else "deathball"
+    )
+    return json.dumps(
+        {
+            "action": "attack",
+            "type": attack_type,
+            "target": {"x": enemy_base_x, "y": enemy_base_y},
+            "army_supply": army_supply,
+            "timing": f"{game_minute:.1f} min",
+            "formation": "surround" if attack_type == "deathball" else "frontal",
+        }
+    )
+
 
 # ============================================================
 # Agents
@@ -154,6 +195,7 @@ combat_director = Agent(
 # Tasks
 # ============================================================
 
+
 def create_tasks(game_state_json: str) -> list:
     analyze_game = Task(
         description=f"""Analyze the current SC2 game state: {game_state_json}
@@ -192,9 +234,11 @@ def create_tasks(game_state_json: str) -> list:
 
     return [analyze_game, suggest_strategy, optimize_build, coordinate_attack]
 
+
 # ============================================================
 # Crew
 # ============================================================
+
 
 def run_sc2_crew(game_state: dict) -> str:
     game_state_json = json.dumps(game_state)
@@ -210,26 +254,29 @@ def run_sc2_crew(game_state: dict) -> str:
     result = crew.kickoff()
     return result
 
+
 # ============================================================
 # Main
 # ============================================================
+
 
 def main():
     print("[CrewAI] SC2 strategy crew initializing...")
 
     game_state = {
-        "minerals":    380,
-        "vespene":     175,
+        "minerals": 380,
+        "vespene": 175,
         "supply_used": 44,
-        "supply_cap":  54,
-        "game_loop":   5376,
-        "enemy_race":  "Terran",
-        "workers":     32,
+        "supply_cap": 54,
+        "game_loop": 5376,
+        "enemy_race": "Terran",
+        "workers": 32,
         "army_supply": 24,
     }
 
     result = run_sc2_crew(game_state)
     print(f"\n[CrewAI] Final crew decision:\n{result}")
+
 
 if __name__ == "__main__":
     main()

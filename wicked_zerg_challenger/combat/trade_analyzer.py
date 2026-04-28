@@ -14,8 +14,9 @@ Features:
 - Statistics tracking
 """
 
-from typing import Dict, List, Optional
 from collections import defaultdict
+from typing import Dict, List, Optional
+
 from utils.logger import get_logger
 
 try:
@@ -23,10 +24,13 @@ try:
     from sc2.ids.unit_typeid import UnitTypeId
     from sc2.unit import Unit
 except ImportError:
+
     class BotAI:
         pass
+
     class UnitTypeId:
         pass
+
     Unit = None
 
 

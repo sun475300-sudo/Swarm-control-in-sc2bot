@@ -4,23 +4,26 @@ PCollection transforms for replay analysis with ParDo and GroupByKey.
 """
 
 import logging
-import apache_beam as beam
-from apache_beam.options.pipeline_options import PipelineOptions, StandardOptions
-from apache_beam.transforms.window import SlidingWindows, FixedWindows
-from apache_beam.transforms.trigger import AfterWatermark, AfterProcessingTime
-from apache_beam.io import ReadFromText, WriteToText
 from typing import Iterator
+
+import apache_beam as beam
+from apache_beam.io import ReadFromText, WriteToText
+from apache_beam.options.pipeline_options import PipelineOptions, StandardOptions
+from apache_beam.transforms.trigger import AfterProcessingTime, AfterWatermark
+from apache_beam.transforms.window import FixedWindows, SlidingWindows
 
 logger = logging.getLogger(__name__)
 
 
 # ---- DoFn Transforms ----
 
+
 class ParseReplayFn(beam.DoFn):
     """Parse raw replay JSON into structured event records."""
 
     def process(self, element: str) -> Iterator[dict]:
         import json
+
         try:
             record = json.loads(element)
             yield {
@@ -77,20 +80,24 @@ class FormatOutputFn(beam.DoFn):
 
 # ---- Pipeline Definitions ----
 
-def build_batch_pipeline(input_path: str, output_path: str, runner: str = "DirectRunner"):
+
+def build_batch_pipeline(
+    input_path: str, output_path: str, runner: str = "DirectRunner"
+):
     """Batch pipeline for replay archive analysis."""
     options = PipelineOptions(runner=runner)
 
     with beam.Pipeline(options=options) as p:
         results = (
             p
-            | "ReadReplays"     >> ReadFromText(input_path)
-            | "ParseReplays"    >> beam.ParDo(ParseReplayFn())
+            | "ReadReplays" >> ReadFromText(input_path)
+            | "ParseReplays" >> beam.ParDo(ParseReplayFn())
             | "ExtractFeatures" >> beam.ParDo(ExtractFeaturesFn())
-            | "GroupByRace"     >> beam.GroupByKey()
-            | "ComputeWinRate"  >> beam.ParDo(ComputeWinRateFn())
-            | "FormatOutput"    >> beam.ParDo(FormatOutputFn())
-            | "WriteResults"    >> WriteToText(output_path, header="race,games,win_rate,avg_apm")
+            | "GroupByRace" >> beam.GroupByKey()
+            | "ComputeWinRate" >> beam.ParDo(ComputeWinRateFn())
+            | "FormatOutput" >> beam.ParDo(FormatOutputFn())
+            | "WriteResults"
+            >> WriteToText(output_path, header="race,games,win_rate,avg_apm")
         )
     logger.info(f"Batch pipeline complete. Results at {output_path}")
 
@@ -125,20 +132,50 @@ def run_sample_batch():
     import json
 
     sample_data = [
-        json.dumps({"game_id": "g1", "race": "Zerg", "result": "win", "apm": 185, "duration": 420, "map": "Solaris", "units": ["Zergling", "Roach"]}),
-        json.dumps({"game_id": "g2", "race": "Zerg", "result": "loss", "apm": 140, "duration": 360, "map": "Solaris", "units": ["Zergling"]}),
-        json.dumps({"game_id": "g3", "race": "Terran", "result": "win", "apm": 220, "duration": 500, "map": "Altitude", "units": ["Marine", "Marauder"]}),
+        json.dumps(
+            {
+                "game_id": "g1",
+                "race": "Zerg",
+                "result": "win",
+                "apm": 185,
+                "duration": 420,
+                "map": "Solaris",
+                "units": ["Zergling", "Roach"],
+            }
+        ),
+        json.dumps(
+            {
+                "game_id": "g2",
+                "race": "Zerg",
+                "result": "loss",
+                "apm": 140,
+                "duration": 360,
+                "map": "Solaris",
+                "units": ["Zergling"],
+            }
+        ),
+        json.dumps(
+            {
+                "game_id": "g3",
+                "race": "Terran",
+                "result": "win",
+                "apm": 220,
+                "duration": 500,
+                "map": "Altitude",
+                "units": ["Marine", "Marauder"],
+            }
+        ),
     ]
 
     with beam.Pipeline() as p:
         results = (
             p
-            | "CreateData"      >> beam.Create(sample_data)
-            | "ParseReplays"    >> beam.ParDo(ParseReplayFn())
+            | "CreateData" >> beam.Create(sample_data)
+            | "ParseReplays" >> beam.ParDo(ParseReplayFn())
             | "ExtractFeatures" >> beam.ParDo(ExtractFeaturesFn())
-            | "GroupByRace"     >> beam.GroupByKey()
-            | "ComputeWinRate"  >> beam.ParDo(ComputeWinRateFn())
-            | "Print"           >> beam.Map(print)
+            | "GroupByRace" >> beam.GroupByKey()
+            | "ComputeWinRate" >> beam.ParDo(ComputeWinRateFn())
+            | "Print" >> beam.Map(print)
         )
 
 

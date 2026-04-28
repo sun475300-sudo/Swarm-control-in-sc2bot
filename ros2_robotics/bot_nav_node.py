@@ -4,12 +4,12 @@ SC2 Bot mapped to ROS2 paradigm — spatial navigation & unit coordination
 """
 
 from __future__ import annotations
-from dataclasses import dataclass, field
-from typing import Optional, Callable
-import math
-import time
-import threading
 
+import math
+import threading
+import time
+from dataclasses import dataclass, field
+from typing import Callable, Optional
 
 # ─────────────────────────────────────────────
 # ROS2 interface stubs (for testing without ROS2)
@@ -17,10 +17,11 @@ import threading
 
 try:
     import rclpy
-    from rclpy.node import Node
-    from geometry_msgs.msg import Twist, PoseStamped, Point
-    from std_msgs.msg import Float32MultiArray, String
+    from geometry_msgs.msg import Point, PoseStamped, Twist
     from nav_msgs.msg import OccupancyGrid, Path
+    from rclpy.node import Node
+    from std_msgs.msg import Float32MultiArray, String
+
     ROS2_AVAILABLE = True
 except ImportError:
     ROS2_AVAILABLE = False
@@ -38,6 +39,7 @@ except ImportError:
 # ─────────────────────────────────────────────
 # SC2 Spatial types
 # ─────────────────────────────────────────────
+
 
 @dataclass
 class SC2Position:
@@ -83,6 +85,7 @@ class SC2Unit:
 # Occupancy grid (ROS2 OccupancyGrid analog)
 # ─────────────────────────────────────────────
 
+
 @dataclass
 class MapGrid:
     width: int
@@ -111,11 +114,14 @@ class MapGrid:
 # A* pathfinding (ROS2 nav2 analog)
 # ─────────────────────────────────────────────
 
-def astar(grid: MapGrid, start: tuple[int, int], goal: tuple[int, int]) -> list[tuple[int, int]]:
-    from heapq import heappush, heappop
+
+def astar(
+    grid: MapGrid, start: tuple[int, int], goal: tuple[int, int]
+) -> list[tuple[int, int]]:
+    from heapq import heappop, heappush
 
     def heuristic(a, b):
-        return math.sqrt((a[0]-b[0])**2 + (a[1]-b[1])**2)
+        return math.sqrt((a[0] - b[0]) ** 2 + (a[1] - b[1]) ** 2)
 
     open_set: list[tuple[float, tuple[int, int]]] = []
     heappush(open_set, (0.0, start))
@@ -155,6 +161,7 @@ def astar(grid: MapGrid, start: tuple[int, int], goal: tuple[int, int]) -> list[
 # ─────────────────────────────────────────────
 # SC2 Bot Node (ROS2 Node equivalent)
 # ─────────────────────────────────────────────
+
 
 class SC2BotNode:
     """ROS2-style node for SC2 bot control."""
@@ -241,7 +248,7 @@ if __name__ == "__main__":
 
     node.map_grid = grid
     node.add_unit(SC2Unit(1, "zergling", SC2Position(5, 5), 35, 35))
-    node.add_unit(SC2Unit(2, "roach",    SC2Position(7, 5), 145, 145))
+    node.add_unit(SC2Unit(2, "roach", SC2Position(7, 5), 145, 145))
 
     # Subscribe to retreat events
     retreated = []

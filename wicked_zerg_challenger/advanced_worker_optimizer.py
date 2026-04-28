@@ -10,15 +10,15 @@ Advanced Worker Optimizer - 고급 일꾼 최적화 시스템
 5. 동적 자원 밸런싱
 """
 
-from typing import Dict, List, Optional, Set, Tuple
 from collections import defaultdict
 from dataclasses import dataclass
+from typing import Dict, List, Optional, Set, Tuple
 
 try:
+    from sc2.ids.unit_typeid import UnitTypeId
+    from sc2.position import Point2
     from sc2.unit import Unit
     from sc2.units import Units
-    from sc2.position import Point2
-    from sc2.ids.unit_typeid import UnitTypeId
 except ImportError:
     Unit = object
     Units = object
@@ -31,6 +31,7 @@ from utils.logger import get_logger
 @dataclass
 class MineralPatchState:
     """미네랄 패치 상태"""
+
     tag: int
     position: Point2
     remaining_minerals: int
@@ -43,6 +44,7 @@ class MineralPatchState:
 @dataclass
 class BaseEconomy:
     """기지 경제 상태"""
+
     base_tag: int
     position: Point2
     mineral_patches: List[MineralPatchState]
@@ -150,15 +152,17 @@ class AdvancedWorkerOptimizer:
                 # 미네랄이 적으면 고갈 중으로 표시
                 is_depleting = mineral.mineral_contents < 200
 
-                mineral_patches.append(MineralPatchState(
-                    tag=mineral.tag,
-                    position=mineral.position,
-                    remaining_minerals=mineral.mineral_contents,
-                    assigned_workers=assigned_workers,
-                    optimal_workers=self.optimal_workers_per_mineral,
-                    distance_from_base=distance,
-                    is_depleting=is_depleting
-                ))
+                mineral_patches.append(
+                    MineralPatchState(
+                        tag=mineral.tag,
+                        position=mineral.position,
+                        remaining_minerals=mineral.mineral_contents,
+                        assigned_workers=assigned_workers,
+                        optimal_workers=self.optimal_workers_per_mineral,
+                        distance_from_base=distance,
+                        is_depleting=is_depleting,
+                    )
+                )
 
             # 가스 건물 분석
             gas_geysers = []
@@ -173,13 +177,17 @@ class AdvancedWorkerOptimizer:
             )
 
             # 최적 일꾼 수 계산
-            optimal_mineral_workers = len(mineral_patches) * self.optimal_workers_per_mineral
+            optimal_mineral_workers = (
+                len(mineral_patches) * self.optimal_workers_per_mineral
+            )
             optimal_gas_workers = len(gas_geysers) * self.optimal_workers_per_gas
 
             # 포화도 계산
             total_assigned = assigned_mineral_workers + assigned_gas_workers
             total_optimal = optimal_mineral_workers + optimal_gas_workers
-            saturation_ratio = total_assigned / total_optimal if total_optimal > 0 else 0.0
+            saturation_ratio = (
+                total_assigned / total_optimal if total_optimal > 0 else 0.0
+            )
 
             # BaseEconomy 업데이트
             self.base_economies[base.tag] = BaseEconomy(
@@ -191,7 +199,7 @@ class AdvancedWorkerOptimizer:
                 assigned_gas_workers=assigned_gas_workers,
                 optimal_mineral_workers=optimal_mineral_workers,
                 optimal_gas_workers=optimal_gas_workers,
-                saturation_ratio=saturation_ratio
+                saturation_ratio=saturation_ratio,
             )
 
     async def _optimize_worker_distribution(self) -> None:
@@ -211,12 +219,14 @@ class AdvancedWorkerOptimizer:
     async def _transfer_excess_workers(self) -> None:
         """과포화 기지에서 일꾼 이전"""
         oversaturated_bases = [
-            base for base in self.base_economies.values()
+            base
+            for base in self.base_economies.values()
             if base.saturation_ratio > 1.2  # 120% 초과
         ]
 
         undersaturated_bases = [
-            base for base in self.base_economies.values()
+            base
+            for base in self.base_economies.values()
             if base.saturation_ratio < 0.8  # 80% 미만
         ]
 
@@ -228,14 +238,18 @@ class AdvancedWorkerOptimizer:
         target_base = min(undersaturated_bases, key=lambda b: b.saturation_ratio)
 
         # 이전할 일꾼 수 계산
-        excess_workers = int((source_base.saturation_ratio - 1.0) * source_base.optimal_mineral_workers)
+        excess_workers = int(
+            (source_base.saturation_ratio - 1.0) * source_base.optimal_mineral_workers
+        )
         transfer_count = min(excess_workers, 3)  # 한 번에 최대 3명
 
         if transfer_count <= 0:
             return
 
         # 일꾼 이전
-        workers_near_source = self.bot.workers.closer_than(10, Point2(source_base.position))
+        workers_near_source = self.bot.workers.closer_than(
+            10, Point2(source_base.position)
+        )
         transferred = 0
 
         for worker in workers_near_source:
@@ -245,7 +259,9 @@ class AdvancedWorkerOptimizer:
             # 미네랄 채광 중인 일꾼만 이전
             if worker.is_gathering or worker.is_carrying_minerals:
                 # 목표 기지로 이전
-                target_minerals = self.bot.mineral_field.closer_than(10, Point2(target_base.position))
+                target_minerals = self.bot.mineral_field.closer_than(
+                    10, Point2(target_base.position)
+                )
                 if target_minerals:
                     self.bot.do(worker.gather(target_minerals.closest_to(worker)))
                     transferred += 1
@@ -268,8 +284,7 @@ class AdvancedWorkerOptimizer:
 
         # 가장 과소한 기지 찾기
         undersaturated_bases = [
-            base for base in self.base_economies.values()
-            if base.saturation_ratio < 0.5
+            base for base in self.base_economies.values() if base.saturation_ratio < 0.5
         ]
 
         if not undersaturated_bases:
@@ -279,7 +294,9 @@ class AdvancedWorkerOptimizer:
 
         # 여유 일꾼을 해당 기지로 배치
         for worker in idle_workers:
-            target_minerals = self.bot.mineral_field.closer_than(10, Point2(target_base.position))
+            target_minerals = self.bot.mineral_field.closer_than(
+                10, Point2(target_base.position)
+            )
             if target_minerals:
                 self.bot.do(worker.gather(target_minerals.closest_to(worker)))
                 self.total_worker_moves += 1
@@ -289,8 +306,16 @@ class AdvancedWorkerOptimizer:
         """미네랄 패치별 일꾼 밸런싱"""
         for base_economy in self.base_economies.values():
             # 과할당된 패치와 과소 패치 찾기
-            overassigned = [p for p in base_economy.mineral_patches if p.assigned_workers > p.optimal_workers]
-            underassigned = [p for p in base_economy.mineral_patches if p.assigned_workers < p.optimal_workers and not p.is_depleting]
+            overassigned = [
+                p
+                for p in base_economy.mineral_patches
+                if p.assigned_workers > p.optimal_workers
+            ]
+            underassigned = [
+                p
+                for p in base_economy.mineral_patches
+                if p.assigned_workers < p.optimal_workers and not p.is_depleting
+            ]
 
             if not overassigned or not underassigned:
                 continue
@@ -312,7 +337,9 @@ class AdvancedWorkerOptimizer:
                     # 과소 패치로 이동
                     if underassigned:
                         target_patch_state = underassigned[0]
-                        target_mineral = self._get_mineral_by_tag(target_patch_state.tag)
+                        target_mineral = self._get_mineral_by_tag(
+                            target_patch_state.tag
+                        )
 
                         if target_mineral:
                             self.bot.do(worker.gather(target_mineral))
@@ -321,7 +348,10 @@ class AdvancedWorkerOptimizer:
 
                             # 과소 패치 업데이트
                             target_patch_state.assigned_workers += 1
-                            if target_patch_state.assigned_workers >= target_patch_state.optimal_workers:
+                            if (
+                                target_patch_state.assigned_workers
+                                >= target_patch_state.optimal_workers
+                            ):
                                 underassigned.pop(0)
 
     async def _balance_gas_workers(self) -> None:
@@ -333,7 +363,7 @@ class AdvancedWorkerOptimizer:
         if current_gas > 0:
             current_ratio = current_minerals / current_gas
         else:
-            current_ratio = float('inf')
+            current_ratio = float("inf")
 
         # 비율이 목표보다 너무 낮으면 (미네랄 부족) 가스 일꾼 줄이기
         if current_ratio < self.target_mineral_gas_ratio * 0.5:
@@ -354,12 +384,15 @@ class AdvancedWorkerOptimizer:
             if gas_building.assigned_harvesters > 1:  # 최소 1명은 유지
                 # 가스 일꾼 1명을 미네랄로 이동
                 workers = self.bot.workers.filter(
-                    lambda w: w.order_target == gas_building.tag or w.is_carrying_vespene
+                    lambda w: w.order_target == gas_building.tag
+                    or w.is_carrying_vespene
                 )
 
                 if workers:
                     worker = workers.first
-                    nearby_minerals = self.bot.mineral_field.closer_than(10, gas_building)
+                    nearby_minerals = self.bot.mineral_field.closer_than(
+                        10, gas_building
+                    )
                     if nearby_minerals:
                         self.bot.do(worker.gather(nearby_minerals.closest_to(worker)))
                         self.total_worker_moves += 1
@@ -427,7 +460,9 @@ class AdvancedWorkerOptimizer:
                 # 가까운 미네랄로 재할당
                 nearby_minerals = self.bot.mineral_field.closer_than(10, closest_base)
                 if nearby_minerals:
-                    best_mineral = self._find_best_mineral_patch(nearby_minerals, closest_base)
+                    best_mineral = self._find_best_mineral_patch(
+                        nearby_minerals, closest_base
+                    )
                     if best_mineral:
                         self.bot.do(worker.gather(best_mineral))
                         self.total_worker_moves += 1
@@ -464,9 +499,14 @@ class AdvancedWorkerOptimizer:
             return
 
         for mineral in self.bot.mineral_field:
-            if mineral.mineral_contents < 200 and mineral.tag not in self.depleting_patches:
+            if (
+                mineral.mineral_contents < 200
+                and mineral.tag not in self.depleting_patches
+            ):
                 self.depleting_patches.add(mineral.tag)
-                self.logger.info(f"[WORKER] Mineral patch {mineral.tag} is depleting (<200)")
+                self.logger.info(
+                    f"[WORKER] Mineral patch {mineral.tag} is depleting (<200)"
+                )
 
     def _count_workers_on_mineral(self, mineral_tag: int) -> int:
         """특정 미네랄 패치에 할당된 일꾼 수"""
@@ -474,9 +514,13 @@ class AdvancedWorkerOptimizer:
             return 0
 
         return sum(
-            1 for w in self.bot.workers
-            if w.order_target == mineral_tag or
-            (w.is_carrying_minerals and w.distance_to(self._get_mineral_position(mineral_tag)) < 2)
+            1
+            for w in self.bot.workers
+            if w.order_target == mineral_tag
+            or (
+                w.is_carrying_minerals
+                and w.distance_to(self._get_mineral_position(mineral_tag)) < 2
+            )
         )
 
     def _count_workers_on_gas(self, gas_tag: int) -> int:
@@ -496,8 +540,8 @@ class AdvancedWorkerOptimizer:
             return Units([], self.bot)
 
         return self.bot.workers.filter(
-            lambda w: w.order_target == mineral_tag or
-            (w.is_carrying_minerals and w.distance_to(mineral_pos) < 2)
+            lambda w: w.order_target == mineral_tag
+            or (w.is_carrying_minerals and w.distance_to(mineral_pos) < 2)
         )
 
     def _get_mineral_by_tag(self, mineral_tag: int) -> Optional[Unit]:
@@ -535,7 +579,9 @@ class AdvancedWorkerOptimizer:
         mineral_income = getattr(self.bot, "minerals", 0)
         gas_income = getattr(self.bot, "vespene", 0)
 
-        self.income_history.append((game_time, mineral_income, gas_income, worker_count))
+        self.income_history.append(
+            (game_time, mineral_income, gas_income, worker_count)
+        )
 
         # 효율성 점수 계산
         if worker_count > 0:
@@ -556,7 +602,10 @@ class AdvancedWorkerOptimizer:
         report += f"Active Bases: {total_bases}\n"
 
         if self.base_economies:
-            avg_saturation = sum(b.saturation_ratio for b in self.base_economies.values()) / total_bases
+            avg_saturation = (
+                sum(b.saturation_ratio for b in self.base_economies.values())
+                / total_bases
+            )
             report += f"Avg Saturation: {avg_saturation:.1%}\n"
 
         report += f"Worker Moves: {self.total_worker_moves}\n"

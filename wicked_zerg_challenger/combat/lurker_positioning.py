@@ -13,8 +13,8 @@ Feature #95: 럴커 포지셔닝 매니저
 - LurkerPositionManager: 초크 포인트 방어 배치 (방어적/전략적)
 """
 
-from typing import Dict, List, Optional, Set, Tuple
 from enum import Enum
+from typing import Dict, List, Optional, Set, Tuple
 
 try:
     from sc2.ids.ability_id import AbilityId
@@ -36,11 +36,12 @@ from utils.logger import get_logger
 
 class LurkerRole(Enum):
     """럴커 역할"""
+
     UNASSIGNED = "unassigned"
-    CHOKE_GUARD = "choke_guard"      # 초크포인트 방어
+    CHOKE_GUARD = "choke_guard"  # 초크포인트 방어
     EXPANSION_GUARD = "expansion_guard"  # 확장 기지 방어
-    FORWARD_POSITION = "forward"     # 전진 배치
-    RETREATING = "retreating"        # 후퇴 중
+    FORWARD_POSITION = "forward"  # 전진 배치
+    RETREATING = "retreating"  # 후퇴 중
 
 
 class LurkerPositionManager:
@@ -91,9 +92,12 @@ class LurkerPositionManager:
         self.detector_types = set()
         if UnitTypeId:
             self.detector_types = {
-                UnitTypeId.OBSERVER, UnitTypeId.OBSERVERSIEGEMODE,
-                UnitTypeId.RAVEN, UnitTypeId.OVERSEER,
-                UnitTypeId.MISSILETURRET, UnitTypeId.PHOTONCANNON,
+                UnitTypeId.OBSERVER,
+                UnitTypeId.OBSERVERSIEGEMODE,
+                UnitTypeId.RAVEN,
+                UnitTypeId.OVERSEER,
+                UnitTypeId.MISSILETURRET,
+                UnitTypeId.PHOTONCANNON,
                 UnitTypeId.SPORECRAWLER,
             }
 
@@ -246,7 +250,8 @@ class LurkerPositionManager:
         # 초크포인트 방어 필요 확인
         for choke in self._choke_points:
             lurkers_at_choke = sum(
-                1 for t, r in self.lurker_assignments.items()
+                1
+                for t, r in self.lurker_assignments.items()
                 if r == LurkerRole.CHOKE_GUARD
                 and t in self.lurker_positions
                 and self.lurker_positions[t].distance_to(choke) < 8
@@ -263,7 +268,8 @@ class LurkerPositionManager:
         # 확장 기지 방어
         for guard_pos in self._expansion_guard_positions:
             lurkers_at_guard = sum(
-                1 for t, r in self.lurker_assignments.items()
+                1
+                for t, r in self.lurker_assignments.items()
                 if r == LurkerRole.EXPANSION_GUARD
                 and t in self.lurker_positions
                 and self.lurker_positions[t].distance_to(guard_pos) < 8

@@ -7,21 +7,22 @@ bandwidth constraints, emergent protocol analysis, and ablation support.
 from __future__ import annotations
 
 import math
-import random
-import time
 import os
+import random
 import sys
-from dataclasses import dataclass, field
-from typing import Optional, List, Tuple, Dict, Any
+import time
 from collections import defaultdict
+from dataclasses import dataclass, field
+from typing import Any, Dict, List, Optional, Tuple
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 try:
+    import numpy as np
     import torch
     import torch.nn as nn
     import torch.nn.functional as F
-    import numpy as np
+
     TORCH_AVAILABLE = True
 except ImportError:
     TORCH_AVAILABLE = False
@@ -32,19 +33,21 @@ except ImportError:
 # Configuration
 # ============================================================
 
+
 @dataclass
 class CommConfig:
     """Hyperparameters for the communication learning agent."""
+
     # Observation / entity
-    obs_dim: int = 48            # Per-agent observation dimension
-    max_agents: int = 16         # Max agents communicating
-    hidden_dim: int = 128        # Internal hidden state dimension
+    obs_dim: int = 48  # Per-agent observation dimension
+    max_agents: int = 16  # Max agents communicating
+    hidden_dim: int = 128  # Internal hidden state dimension
 
     # Communication
-    message_dim: int = 32        # Size of each communicated message
-    comm_rounds: int = 2         # Communication rounds per step
-    bandwidth_limit: int = 8     # Max messages an agent can send per round
-    comm_mode: str = "tarmac"    # "commnet", "tarmac", "broadcast", "hierarchical"
+    message_dim: int = 32  # Size of each communicated message
+    comm_rounds: int = 2  # Communication rounds per step
+    bandwidth_limit: int = 8  # Max messages an agent can send per round
+    comm_mode: str = "tarmac"  # "commnet", "tarmac", "broadcast", "hierarchical"
 
     # Gating
     gate_threshold: float = 0.5  # Message gate activation threshold
@@ -70,6 +73,7 @@ class CommConfig:
 # NumPy Helpers
 # ============================================================
 
+
 def np_softmax(x: np.ndarray, axis: int = -1) -> np.ndarray:
     e = np.exp(x - np.max(x, axis=axis, keepdims=True))
     return e / (e.sum(axis=axis, keepdims=True) + 1e-12)
@@ -93,7 +97,9 @@ def np_layer_norm(x: np.ndarray, eps: float = 1e-5) -> np.ndarray:
     return (x - mu) / (sigma + eps)
 
 
-def np_linear(x: np.ndarray, W: np.ndarray, b: Optional[np.ndarray] = None) -> np.ndarray:
+def np_linear(
+    x: np.ndarray, W: np.ndarray, b: Optional[np.ndarray] = None
+) -> np.ndarray:
     out = x @ W.T
     if b is not None:
         out = out + b
@@ -103,6 +109,7 @@ def np_linear(x: np.ndarray, W: np.ndarray, b: Optional[np.ndarray] = None) -> n
 # ============================================================
 # Protocol Analyzer (NumPy-based, works with both backends)
 # ============================================================
+
 
 class ProtocolAnalyzer:
     """Analyze emergent communication protocols from message logs."""
@@ -115,8 +122,12 @@ class ProtocolAnalyzer:
         self.action_log: List[int] = []
         self.max_log_size = 5000
 
-    def log_messages(self, messages: np.ndarray, gates: Optional[np.ndarray] = None,
-                     actions: Optional[np.ndarray] = None):
+    def log_messages(
+        self,
+        messages: np.ndarray,
+        gates: Optional[np.ndarray] = None,
+        actions: Optional[np.ndarray] = None,
+    ):
         """Log messages for analysis. messages: (N, msg_dim) or (B, N, msg_dim)."""
         flat = messages.reshape(-1, self.message_dim)
         self.message_log.append(flat)
@@ -126,9 +137,9 @@ class ProtocolAnalyzer:
             self.action_log.extend(actions.flatten().tolist())
         # Truncate
         if len(self.message_log) > self.max_log_size:
-            self.message_log = self.message_log[-self.max_log_size // 2:]
-            self.gate_log = self.gate_log[-self.max_log_size // 2:]
-            self.action_log = self.action_log[-self.max_log_size // 2:]
+            self.message_log = self.message_log[-self.max_log_size // 2 :]
+            self.gate_log = self.gate_log[-self.max_log_size // 2 :]
+            self.action_log = self.action_log[-self.max_log_size // 2 :]
 
     def message_entropy(self) -> float:
         """Estimate entropy of the message distribution (higher = more diverse)."""
@@ -169,7 +180,10 @@ class ProtocolAnalyzer:
         for a in unique_actions:
             mask = acts == a
             if mask.sum() > 1:
-                between_var += mask.sum() * ((msgs[mask].mean(axis=0) - msgs.mean(axis=0)) ** 2).sum()
+                between_var += (
+                    mask.sum()
+                    * ((msgs[mask].mean(axis=0) - msgs.mean(axis=0)) ** 2).sum()
+                )
         between_var /= n
         if total_var < 1e-8:
             return 0.0
@@ -188,6 +202,7 @@ class ProtocolAnalyzer:
 # NumPy Fallback Communication Networks
 # ============================================================
 
+
 class NumpyCommNet:
     """CommNet-style continuous communication (NumPy fallback)."""
 
@@ -198,7 +213,9 @@ class NumpyCommNet:
         scale_m = 1.0 / math.sqrt(m)
 
         # Observation encoder
-        self.W_enc = rng.randn(d, cfg.obs_dim).astype(np.float32) * (1.0 / math.sqrt(cfg.obs_dim))
+        self.W_enc = rng.randn(d, cfg.obs_dim).astype(np.float32) * (
+            1.0 / math.sqrt(cfg.obs_dim)
+        )
         self.b_enc = np.zeros(d, dtype=np.float32)
 
         # Message encoder / decoder per round
@@ -206,18 +223,25 @@ class NumpyCommNet:
         self.msg_decoders = []
         self.gates = []
         for _ in range(cfg.comm_rounds):
-            self.msg_encoders.append({
-                "W": rng.randn(m, d).astype(np.float32) * scale_d,
-                "b": np.zeros(m, dtype=np.float32),
-            })
-            self.msg_decoders.append({
-                "W": rng.randn(d, m).astype(np.float32) * scale_m,
-                "b": np.zeros(d, dtype=np.float32),
-            })
-            self.gates.append({
-                "W": rng.randn(1, d + m).astype(np.float32) * (1.0 / math.sqrt(d + m)),
-                "b": np.zeros(1, dtype=np.float32),
-            })
+            self.msg_encoders.append(
+                {
+                    "W": rng.randn(m, d).astype(np.float32) * scale_d,
+                    "b": np.zeros(m, dtype=np.float32),
+                }
+            )
+            self.msg_decoders.append(
+                {
+                    "W": rng.randn(d, m).astype(np.float32) * scale_m,
+                    "b": np.zeros(d, dtype=np.float32),
+                }
+            )
+            self.gates.append(
+                {
+                    "W": rng.randn(1, d + m).astype(np.float32)
+                    * (1.0 / math.sqrt(d + m)),
+                    "b": np.zeros(1, dtype=np.float32),
+                }
+            )
 
         # Action head
         self.W_action = rng.randn(cfg.n_actions, d).astype(np.float32) * scale_d
@@ -229,8 +253,9 @@ class NumpyCommNet:
         self.W_val2 = rng.randn(1, d).astype(np.float32) * scale_d
         self.b_val2 = np.zeros(1, dtype=np.float32)
 
-    def forward(self, obs: np.ndarray,
-                comm_enabled: bool = True) -> Dict[str, np.ndarray]:
+    def forward(
+        self, obs: np.ndarray, comm_enabled: bool = True
+    ) -> Dict[str, np.ndarray]:
         """obs: (B, N, obs_dim) -> action_logits, values, messages, gate_values."""
         B, N, _ = obs.shape
 
@@ -250,7 +275,9 @@ class NumpyCommNet:
 
             # Compute gate
             gate_input = np.concatenate([h, messages], axis=-1)  # (B, N, d+m)
-            gate_val = np_sigmoid(np_linear(gate_input, gate_params["W"], gate_params["b"]))
+            gate_val = np_sigmoid(
+                np_linear(gate_input, gate_params["W"], gate_params["b"])
+            )
             gate_val = gate_val.squeeze(-1)  # (B, N)
 
             all_messages.append(messages)
@@ -258,13 +285,17 @@ class NumpyCommNet:
 
             if comm_enabled:
                 # Apply gate
-                gated_msgs = messages * (gate_val > self.cfg.gate_threshold)[..., None].astype(np.float32)
+                gated_msgs = messages * (gate_val > self.cfg.gate_threshold)[
+                    ..., None
+                ].astype(np.float32)
 
                 # Bandwidth constraint: top-K messages per agent
                 if self.cfg.bandwidth_limit < N:
                     msg_norms = np.linalg.norm(gated_msgs, axis=-1)  # (B, N)
                     for b_idx in range(B):
-                        top_k = np.argsort(msg_norms[b_idx])[-self.cfg.bandwidth_limit:]
+                        top_k = np.argsort(msg_norms[b_idx])[
+                            -self.cfg.bandwidth_limit :
+                        ]
                         mask = np.zeros(N, dtype=np.float32)
                         mask[top_k] = 1.0
                         gated_msgs[b_idx] *= mask[:, None]
@@ -303,24 +334,29 @@ class NumpyTarMAC:
         scale_d = 1.0 / math.sqrt(d)
 
         # Observation encoder
-        self.W_enc = rng.randn(d, cfg.obs_dim).astype(np.float32) * (1.0 / math.sqrt(cfg.obs_dim))
+        self.W_enc = rng.randn(d, cfg.obs_dim).astype(np.float32) * (
+            1.0 / math.sqrt(cfg.obs_dim)
+        )
         self.b_enc = np.zeros(d, dtype=np.float32)
 
         # Per-round query/key/value for targeted communication
         self.rounds = []
         for _ in range(cfg.comm_rounds):
-            self.rounds.append({
-                "W_msg": rng.randn(m, d).astype(np.float32) * scale_d,
-                "b_msg": np.zeros(m, dtype=np.float32),
-                "W_key": rng.randn(m, d).astype(np.float32) * scale_d,
-                "b_key": np.zeros(m, dtype=np.float32),
-                "W_query": rng.randn(m, d).astype(np.float32) * scale_d,
-                "b_query": np.zeros(m, dtype=np.float32),
-                "W_integrate": rng.randn(d, d + m).astype(np.float32) * (1.0 / math.sqrt(d + m)),
-                "b_integrate": np.zeros(d, dtype=np.float32),
-                "W_gate": rng.randn(1, d).astype(np.float32) * scale_d,
-                "b_gate": np.zeros(1, dtype=np.float32),
-            })
+            self.rounds.append(
+                {
+                    "W_msg": rng.randn(m, d).astype(np.float32) * scale_d,
+                    "b_msg": np.zeros(m, dtype=np.float32),
+                    "W_key": rng.randn(m, d).astype(np.float32) * scale_d,
+                    "b_key": np.zeros(m, dtype=np.float32),
+                    "W_query": rng.randn(m, d).astype(np.float32) * scale_d,
+                    "b_query": np.zeros(m, dtype=np.float32),
+                    "W_integrate": rng.randn(d, d + m).astype(np.float32)
+                    * (1.0 / math.sqrt(d + m)),
+                    "b_integrate": np.zeros(d, dtype=np.float32),
+                    "W_gate": rng.randn(1, d).astype(np.float32) * scale_d,
+                    "b_gate": np.zeros(1, dtype=np.float32),
+                }
+            )
 
         # Action / value heads
         self.W_action = rng.randn(cfg.n_actions, d).astype(np.float32) * scale_d
@@ -330,8 +366,9 @@ class NumpyTarMAC:
         self.W_val2 = rng.randn(1, d).astype(np.float32) * scale_d
         self.b_val2 = np.zeros(1, dtype=np.float32)
 
-    def forward(self, obs: np.ndarray,
-                comm_enabled: bool = True) -> Dict[str, np.ndarray]:
+    def forward(
+        self, obs: np.ndarray, comm_enabled: bool = True
+    ) -> Dict[str, np.ndarray]:
         B, N, _ = obs.shape
         h = np_relu(np_linear(obs, self.W_enc, self.b_enc))
 
@@ -352,7 +389,9 @@ class NumpyTarMAC:
 
             if comm_enabled:
                 # Targeted attention: each agent queries all others
-                attn_scores = (queries @ keys.transpose(0, 2, 1)) / math.sqrt(keys.shape[-1])
+                attn_scores = (queries @ keys.transpose(0, 2, 1)) / math.sqrt(
+                    keys.shape[-1]
+                )
                 # Mask self-attention
                 eye_mask = np.eye(N, dtype=np.float32)[None, :, :]
                 attn_scores = attn_scores - eye_mask * 1e9
@@ -365,7 +404,9 @@ class NumpyTarMAC:
                 if self.cfg.bandwidth_limit < N:
                     for b_idx in range(B):
                         for i in range(N):
-                            top_k_idx = np.argsort(attn_scores[b_idx, i])[-self.cfg.bandwidth_limit:]
+                            top_k_idx = np.argsort(attn_scores[b_idx, i])[
+                                -self.cfg.bandwidth_limit :
+                            ]
                             drop_mask = np.ones(N, dtype=np.float32) * (-1e9)
                             drop_mask[top_k_idx] = 0.0
                             attn_scores[b_idx, i] += drop_mask
@@ -374,8 +415,13 @@ class NumpyTarMAC:
                 incoming = attn_weights @ messages  # (B, N, m)
 
                 combined = np.concatenate([h, incoming], axis=-1)
-                h = np_layer_norm(np_relu(np_linear(combined, r_params["W_integrate"],
-                                                     r_params["b_integrate"])))
+                h = np_layer_norm(
+                    np_relu(
+                        np_linear(
+                            combined, r_params["W_integrate"], r_params["b_integrate"]
+                        )
+                    )
+                )
 
         action_logits = np_linear(h, self.W_action, self.b_action)
         v_h = np_relu(np_linear(h, self.W_val1, self.b_val1))
@@ -432,17 +478,24 @@ if TORCH_AVAILABLE:
             self.norms = nn.ModuleList()
 
             for _ in range(cfg.comm_rounds):
-                self.msg_encoders.append(nn.Sequential(
-                    nn.Linear(d, m), nn.Tanh(),
-                ))
-                self.msg_decoders.append(nn.Sequential(
-                    nn.Linear(m, d), nn.ReLU(),
-                ))
+                self.msg_encoders.append(
+                    nn.Sequential(
+                        nn.Linear(d, m),
+                        nn.Tanh(),
+                    )
+                )
+                self.msg_decoders.append(
+                    nn.Sequential(
+                        nn.Linear(m, d),
+                        nn.ReLU(),
+                    )
+                )
                 self.gates.append(MessageGate(d))
                 self.norms.append(nn.LayerNorm(d))
 
-        def forward(self, obs: torch.Tensor,
-                    comm_enabled: bool = True) -> Dict[str, torch.Tensor]:
+        def forward(
+            self, obs: torch.Tensor, comm_enabled: bool = True
+        ) -> Dict[str, torch.Tensor]:
             B, N, _ = obs.shape
             h = self.encoder(obs)
 
@@ -451,7 +504,7 @@ if TORCH_AVAILABLE:
 
             for r in range(self.cfg.comm_rounds):
                 messages = self.msg_encoders[r](h)  # (B, N, m)
-                gate_val = self.gates[r](h)          # (B, N, 1)
+                gate_val = self.gates[r](h)  # (B, N, 1)
 
                 all_messages.append(messages.detach())
                 all_gates.append(gate_val.squeeze(-1).detach())
@@ -495,18 +548,25 @@ if TORCH_AVAILABLE:
 
             self.rounds = nn.ModuleList()
             for _ in range(cfg.comm_rounds):
-                self.rounds.append(nn.ModuleDict({
-                    "msg": nn.Sequential(nn.Linear(d, m), nn.Tanh()),
-                    "key": nn.Linear(d, m),
-                    "query": nn.Linear(d, m),
-                    "integrate": nn.Sequential(
-                        nn.Linear(d + m, d), nn.ReLU(), nn.LayerNorm(d),
-                    ),
-                    "gate": MessageGate(d),
-                }))
+                self.rounds.append(
+                    nn.ModuleDict(
+                        {
+                            "msg": nn.Sequential(nn.Linear(d, m), nn.Tanh()),
+                            "key": nn.Linear(d, m),
+                            "query": nn.Linear(d, m),
+                            "integrate": nn.Sequential(
+                                nn.Linear(d + m, d),
+                                nn.ReLU(),
+                                nn.LayerNorm(d),
+                            ),
+                            "gate": MessageGate(d),
+                        }
+                    )
+                )
 
-        def forward(self, obs: torch.Tensor,
-                    comm_enabled: bool = True) -> Dict[str, torch.Tensor]:
+        def forward(
+            self, obs: torch.Tensor, comm_enabled: bool = True
+        ) -> Dict[str, torch.Tensor]:
             B, N, _ = obs.shape
             h = self.encoder(obs)
             device = obs.device
@@ -524,7 +584,9 @@ if TORCH_AVAILABLE:
                 all_gates.append(gate_val.squeeze(-1).detach())
 
                 if comm_enabled:
-                    attn_scores = (queries @ keys.transpose(-2, -1)) / math.sqrt(keys.size(-1))
+                    attn_scores = (queries @ keys.transpose(-2, -1)) / math.sqrt(
+                        keys.size(-1)
+                    )
                     # Mask self
                     self_mask = torch.eye(N, device=device).unsqueeze(0) * (-1e9)
                     attn_scores = attn_scores + self_mask
@@ -560,7 +622,9 @@ if TORCH_AVAILABLE:
             d, m = cfg.hidden_dim, cfg.message_dim
 
             self.encoder = nn.Sequential(
-                nn.Linear(cfg.obs_dim, d), nn.ReLU(), nn.LayerNorm(d),
+                nn.Linear(cfg.obs_dim, d),
+                nn.ReLU(),
+                nn.LayerNorm(d),
             )
 
             # Intra-squad communication
@@ -568,7 +632,9 @@ if TORCH_AVAILABLE:
             self.intra_attn_q = nn.Linear(d, m)
             self.intra_attn_k = nn.Linear(d, m)
             self.intra_integrate = nn.Sequential(
-                nn.Linear(d + m, d), nn.ReLU(), nn.LayerNorm(d),
+                nn.Linear(d + m, d),
+                nn.ReLU(),
+                nn.LayerNorm(d),
             )
 
             # Leader selection
@@ -579,18 +645,23 @@ if TORCH_AVAILABLE:
             self.inter_attn_q = nn.Linear(d, m)
             self.inter_attn_k = nn.Linear(d, m)
             self.inter_integrate = nn.Sequential(
-                nn.Linear(d + m, d), nn.ReLU(), nn.LayerNorm(d),
+                nn.Linear(d + m, d),
+                nn.ReLU(),
+                nn.LayerNorm(d),
             )
 
             # Broadcast from leader to squad
             self.broadcast_proj = nn.Sequential(
-                nn.Linear(d + d, d), nn.ReLU(), nn.LayerNorm(d),
+                nn.Linear(d + d, d),
+                nn.ReLU(),
+                nn.LayerNorm(d),
             )
 
             self.gate = MessageGate(d)
 
-        def forward(self, obs: torch.Tensor,
-                    comm_enabled: bool = True) -> Dict[str, torch.Tensor]:
+        def forward(
+            self, obs: torch.Tensor, comm_enabled: bool = True
+        ) -> Dict[str, torch.Tensor]:
             B, N, _ = obs.shape
             h = self.encoder(obs)
             device = obs.device
@@ -613,7 +684,9 @@ if TORCH_AVAILABLE:
 
             attn_scores = (queries @ keys.transpose(-2, -1)) / math.sqrt(msgs.size(-1))
             # Mask agents not in same squad
-            squad_mask = (squad_assignments.unsqueeze(0) != squad_assignments.unsqueeze(1)).float() * (-1e9)
+            squad_mask = (
+                squad_assignments.unsqueeze(0) != squad_assignments.unsqueeze(1)
+            ).float() * (-1e9)
             # Mask self
             self_mask = torch.eye(N, device=device) * (-1e9)
             attn_scores = attn_scores + squad_mask.unsqueeze(0) + self_mask.unsqueeze(0)
@@ -627,13 +700,13 @@ if TORCH_AVAILABLE:
             leader_h_list = []
             leader_indices = []
             for s in range(n_squads):
-                s_mask = (squad_assignments == s)
+                s_mask = squad_assignments == s
                 s_scores = leader_scores[:, s_mask]  # (B, squad_size)
-                _, best = s_scores.max(dim=-1)       # (B,)
+                _, best = s_scores.max(dim=-1)  # (B,)
                 s_indices = torch.where(s_mask)[0]
-                l_idx = s_indices[best[0]]           # simplified: same leader across batch
+                l_idx = s_indices[best[0]]  # simplified: same leader across batch
                 leader_indices.append(l_idx.item())
-                leader_h_list.append(h[:, l_idx])    # (B, d)
+                leader_h_list.append(h[:, l_idx])  # (B, d)
 
             if len(leader_h_list) > 1:
                 leader_h = torch.stack(leader_h_list, dim=1)  # (B, n_squads, d)
@@ -645,15 +718,21 @@ if TORCH_AVAILABLE:
                 all_messages.append(l_msgs.detach())
 
                 l_attn = (l_q @ l_k.transpose(-2, -1)) / math.sqrt(l_msgs.size(-1))
-                l_attn = l_attn + torch.eye(n_squads, device=device).unsqueeze(0) * (-1e9)
+                l_attn = l_attn + torch.eye(n_squads, device=device).unsqueeze(0) * (
+                    -1e9
+                )
                 l_weights = F.softmax(l_attn, dim=-1)
                 l_incoming = l_weights @ l_msgs
-                leader_h = self.inter_integrate(torch.cat([leader_h, l_incoming], dim=-1))
+                leader_h = self.inter_integrate(
+                    torch.cat([leader_h, l_incoming], dim=-1)
+                )
 
                 # Broadcast back to squads
                 for s in range(n_squads):
-                    s_mask = (squad_assignments == s)
-                    leader_broadcast = leader_h[:, s:s+1].expand(-1, s_mask.sum(), -1)
+                    s_mask = squad_assignments == s
+                    leader_broadcast = leader_h[:, s : s + 1].expand(
+                        -1, s_mask.sum(), -1
+                    )
                     h_squad = h[:, s_mask]
                     h[:, s_mask] = self.broadcast_proj(
                         torch.cat([h_squad, leader_broadcast], dim=-1)
@@ -690,15 +769,16 @@ if TORCH_AVAILABLE:
                 nn.Linear(cfg.hidden_dim, 1),
             )
 
-        def forward(self, obs: torch.Tensor,
-                    comm_enabled: Optional[bool] = None) -> Dict[str, torch.Tensor]:
+        def forward(
+            self, obs: torch.Tensor, comm_enabled: Optional[bool] = None
+        ) -> Dict[str, torch.Tensor]:
             if comm_enabled is None:
                 comm_enabled = self.cfg.communication_enabled
 
             comm_out = self.comm(obs, comm_enabled=comm_enabled)
             h = comm_out["hidden"]
 
-            action_logits = self.action_head(h)   # (B, N, n_actions)
+            action_logits = self.action_head(h)  # (B, N, n_actions)
             values = self.value_head(h).squeeze(-1)  # (B, N)
 
             return {
@@ -713,6 +793,7 @@ if TORCH_AVAILABLE:
 # SC2 Communication Agent
 # ============================================================
 
+
 class SC2CommAgent:
     """Multi-agent SC2 bot with learned communication.
 
@@ -721,8 +802,16 @@ class SC2CommAgent:
     """
 
     ACTION_NAMES = [
-        "no_op", "attack", "move", "hold", "patrol",
-        "gather", "build", "ability", "retreat", "regroup",
+        "no_op",
+        "attack",
+        "move",
+        "hold",
+        "patrol",
+        "gather",
+        "build",
+        "ability",
+        "retreat",
+        "regroup",
     ]
 
     def __init__(self, cfg: Optional[CommConfig] = None, seed: int = 42):
@@ -755,8 +844,9 @@ class SC2CommAgent:
     # ---- observation helpers ----
 
     @staticmethod
-    def _dummy_observation(batch_size: int, n_agents: int,
-                           cfg: CommConfig) -> np.ndarray:
+    def _dummy_observation(
+        batch_size: int, n_agents: int, cfg: CommConfig
+    ) -> np.ndarray:
         rng = np.random.RandomState(0)
         return rng.randn(batch_size, n_agents, cfg.obs_dim).astype(np.float32)
 
@@ -782,8 +872,12 @@ class SC2CommAgent:
 
     # ---- action selection ----
 
-    def act(self, obs: np.ndarray, deterministic: bool = False,
-            comm_enabled: Optional[bool] = None) -> Dict[str, Any]:
+    def act(
+        self,
+        obs: np.ndarray,
+        deterministic: bool = False,
+        comm_enabled: Optional[bool] = None,
+    ) -> Dict[str, Any]:
         """Select actions for all agents.
         obs: (B, N, obs_dim)
         """
@@ -814,7 +908,11 @@ class SC2CommAgent:
                 if out["messages"]:
                     self.analyzer.log_messages(
                         out["messages"][-1].cpu().numpy(),
-                        gates=out["gate_values"][-1].cpu().numpy() if out["gate_values"] else None,
+                        gates=(
+                            out["gate_values"][-1].cpu().numpy()
+                            if out["gate_values"]
+                            else None
+                        ),
                         actions=result["actions"],
                     )
         else:
@@ -847,8 +945,9 @@ class SC2CommAgent:
         self.step_count += 1
         return result
 
-    def act_on_game_state(self, game_state: Dict[str, Any],
-                          deterministic: bool = False) -> List[Dict[str, Any]]:
+    def act_on_game_state(
+        self, game_state: Dict[str, Any], deterministic: bool = False
+    ) -> List[Dict[str, Any]]:
         """Raw game state -> per-unit action decisions."""
         units = game_state.get("units", [])
         friendly = [u for u in units if u.get("is_friendly", True)]
@@ -859,22 +958,23 @@ class SC2CommAgent:
         n = min(len(friendly), self.cfg.max_agents)
         for i in range(n):
             action_idx = int(result["actions"][0, i])
-            decisions.append({
-                "unit_tag": friendly[i].get("tag", i),
-                "action_type": self.ACTION_NAMES[action_idx],
-                "action_idx": action_idx,
-                "value_estimate": float(result["values"][0, i]),
-                "action_probs": {
-                    name: float(result["action_probs"][0, i, j])
-                    for j, name in enumerate(self.ACTION_NAMES)
-                },
-            })
+            decisions.append(
+                {
+                    "unit_tag": friendly[i].get("tag", i),
+                    "action_type": self.ACTION_NAMES[action_idx],
+                    "action_idx": action_idx,
+                    "value_estimate": float(result["values"][0, i]),
+                    "action_probs": {
+                        name: float(result["action_probs"][0, i, j])
+                        for j, name in enumerate(self.ACTION_NAMES)
+                    },
+                }
+            )
         return decisions
 
     # ---- ablation ----
 
-    def run_ablation(self, obs: np.ndarray, n_trials: int = 20
-                     ) -> Dict[str, Any]:
+    def run_ablation(self, obs: np.ndarray, n_trials: int = 20) -> Dict[str, Any]:
         """Compare performance with and without communication."""
         results_comm = {"values": [], "entropy": []}
         results_no_comm = {"values": [], "entropy": []}
@@ -903,24 +1003,43 @@ class SC2CommAgent:
                 "mean_value": float(np.mean(results_no_comm["values"])),
                 "mean_entropy": float(np.mean(results_no_comm["entropy"])),
             },
-            "value_diff": float(np.mean(results_comm["values"]) - np.mean(results_no_comm["values"])),
-            "entropy_diff": float(np.mean(results_comm["entropy"]) - np.mean(results_no_comm["entropy"])),
+            "value_diff": float(
+                np.mean(results_comm["values"]) - np.mean(results_no_comm["values"])
+            ),
+            "entropy_diff": float(
+                np.mean(results_comm["entropy"]) - np.mean(results_no_comm["entropy"])
+            ),
         }
 
     # ---- PPO training ----
 
-    def store_transition(self, obs: np.ndarray, actions: np.ndarray,
-                         rewards: np.ndarray, dones: np.ndarray,
-                         log_probs: np.ndarray, values: np.ndarray):
-        self._trajectory.append({
-            "obs": obs.copy(), "actions": actions.copy(),
-            "rewards": rewards.copy(), "dones": dones.copy(),
-            "log_probs": log_probs.copy(), "values": values.copy(),
-        })
+    def store_transition(
+        self,
+        obs: np.ndarray,
+        actions: np.ndarray,
+        rewards: np.ndarray,
+        dones: np.ndarray,
+        log_probs: np.ndarray,
+        values: np.ndarray,
+    ):
+        self._trajectory.append(
+            {
+                "obs": obs.copy(),
+                "actions": actions.copy(),
+                "rewards": rewards.copy(),
+                "dones": dones.copy(),
+                "log_probs": log_probs.copy(),
+                "values": values.copy(),
+            }
+        )
 
-    def _compute_gae(self, rewards: np.ndarray, values: np.ndarray,
-                     dones: np.ndarray, last_values: np.ndarray
-                     ) -> Tuple[np.ndarray, np.ndarray]:
+    def _compute_gae(
+        self,
+        rewards: np.ndarray,
+        values: np.ndarray,
+        dones: np.ndarray,
+        last_values: np.ndarray,
+    ) -> Tuple[np.ndarray, np.ndarray]:
         """GAE computation for multi-agent: rewards/values shape (T, N)."""
         T, N = rewards.shape
         advantages = np.zeros((T, N), dtype=np.float32)
@@ -946,7 +1065,7 @@ class SC2CommAgent:
         N = self._trajectory[0]["actions"].shape[-1]
 
         # Stack trajectory
-        obs_all = np.stack([t["obs"] for t in self._trajectory])       # (T, B, N, obs_dim)
+        obs_all = np.stack([t["obs"] for t in self._trajectory])  # (T, B, N, obs_dim)
         actions_all = np.stack([t["actions"] for t in self._trajectory])  # (T, B, N)
         rewards_all = np.stack([t["rewards"] for t in self._trajectory])  # (T, B, N)
         dones_all = np.stack([t["dones"] for t in self._trajectory])
@@ -980,7 +1099,9 @@ class SC2CommAgent:
                 obs_batch = torch.from_numpy(obs_all[sl, b])  # (bs, N, obs_dim)
                 out = self.network(obs_batch)
 
-                action_dist = torch.distributions.Categorical(logits=out["action_logits"])
+                action_dist = torch.distributions.Categorical(
+                    logits=out["action_logits"]
+                )
                 acts = torch.from_numpy(actions_all[sl, b])  # (bs, N)
                 new_lp = action_dist.log_prob(acts).flatten()
 
@@ -990,17 +1111,28 @@ class SC2CommAgent:
                 adv_slice = adv_t[flat_start:flat_end]
 
                 surr1 = ratio * adv_slice
-                surr2 = torch.clamp(ratio, 1 - self.cfg.clip_eps, 1 + self.cfg.clip_eps) * adv_slice
+                surr2 = (
+                    torch.clamp(ratio, 1 - self.cfg.clip_eps, 1 + self.cfg.clip_eps)
+                    * adv_slice
+                )
                 policy_loss = -torch.min(surr1, surr2).mean()
 
-                value_loss = F.mse_loss(out["values"].flatten(), ret_t[flat_start:flat_end])
+                value_loss = F.mse_loss(
+                    out["values"].flatten(), ret_t[flat_start:flat_end]
+                )
                 entropy = action_dist.entropy().mean()
 
-                loss = policy_loss + self.cfg.value_coef * value_loss - self.cfg.entropy_coef * entropy
+                loss = (
+                    policy_loss
+                    + self.cfg.value_coef * value_loss
+                    - self.cfg.entropy_coef * entropy
+                )
 
                 self.optimizer.zero_grad()
                 loss.backward()
-                nn.utils.clip_grad_norm_(self.network.parameters(), self.cfg.max_grad_norm)
+                nn.utils.clip_grad_norm_(
+                    self.network.parameters(), self.cfg.max_grad_norm
+                )
                 self.optimizer.step()
 
                 total_pl += policy_loss.item()
@@ -1020,12 +1152,15 @@ class SC2CommAgent:
 
     def save(self, path: str):
         if self.use_torch:
-            torch.save({
-                "network": self.network.state_dict(),
-                "optimizer": self.optimizer.state_dict(),
-                "cfg": self.cfg,
-                "step_count": self.step_count,
-            }, path)
+            torch.save(
+                {
+                    "network": self.network.state_dict(),
+                    "optimizer": self.optimizer.state_dict(),
+                    "cfg": self.cfg,
+                    "step_count": self.step_count,
+                },
+                path,
+            )
 
     def load(self, path: str):
         if self.use_torch:
@@ -1063,13 +1198,20 @@ class SC2CommAgent:
 # CLI Demo
 # ============================================================
 
+
 def _demo_numpy_commnet():
     print("=" * 60)
     print("NumPy CommNet Demo")
     print("=" * 60)
 
-    cfg = CommConfig(max_agents=8, hidden_dim=64, message_dim=16,
-                     comm_rounds=2, obs_dim=48, bandwidth_limit=4)
+    cfg = CommConfig(
+        max_agents=8,
+        hidden_dim=64,
+        message_dim=16,
+        comm_rounds=2,
+        obs_dim=48,
+        bandwidth_limit=4,
+    )
     rng = np.random.RandomState(42)
     net = NumpyCommNet(cfg, rng)
 
@@ -1099,9 +1241,15 @@ def _demo_numpy_tarmac():
     print("NumPy TarMAC Demo")
     print("=" * 60)
 
-    cfg = CommConfig(max_agents=8, hidden_dim=64, message_dim=16,
-                     comm_rounds=2, obs_dim=48, bandwidth_limit=4,
-                     comm_mode="tarmac")
+    cfg = CommConfig(
+        max_agents=8,
+        hidden_dim=64,
+        message_dim=16,
+        comm_rounds=2,
+        obs_dim=48,
+        bandwidth_limit=4,
+        comm_mode="tarmac",
+    )
     rng = np.random.RandomState(42)
     net = NumpyTarMAC(cfg, rng)
 
@@ -1124,9 +1272,15 @@ def _demo_torch_comm():
     print("=" * 60)
 
     for mode in ["commnet", "tarmac", "hierarchical"]:
-        cfg = CommConfig(max_agents=12, hidden_dim=128, message_dim=32,
-                         comm_rounds=2, obs_dim=48, comm_mode=mode,
-                         bandwidth_limit=6)
+        cfg = CommConfig(
+            max_agents=12,
+            hidden_dim=128,
+            message_dim=32,
+            comm_rounds=2,
+            obs_dim=48,
+            comm_mode=mode,
+            bandwidth_limit=6,
+        )
         agent = SC2CommAgent(cfg, seed=42)
         print(f"\n  --- Mode: {mode} ---")
         print(agent.summary())
@@ -1143,7 +1297,9 @@ def _demo_torch_comm():
 
         print(f"  Avg latency:   {dt*1000:.1f} ms")
         print(f"  Actions shape: {result['actions'].shape}")
-        print(f"  Values range:  [{result['values'].min():.3f}, {result['values'].max():.3f}]")
+        print(
+            f"  Values range:  [{result['values'].min():.3f}, {result['values'].max():.3f}]"
+        )
 
     print()
 
@@ -1153,8 +1309,14 @@ def _demo_protocol_analysis():
     print("Emergent Protocol Analysis Demo")
     print("=" * 60)
 
-    cfg = CommConfig(max_agents=8, hidden_dim=128, message_dim=32,
-                     comm_rounds=2, obs_dim=48, comm_mode="tarmac")
+    cfg = CommConfig(
+        max_agents=8,
+        hidden_dim=128,
+        message_dim=32,
+        comm_rounds=2,
+        obs_dim=48,
+        comm_mode="tarmac",
+    )
     agent = SC2CommAgent(cfg, seed=42)
 
     # Run many steps to build up message log
@@ -1175,17 +1337,27 @@ def _demo_ablation():
     print("Communication Ablation Demo")
     print("=" * 60)
 
-    cfg = CommConfig(max_agents=8, hidden_dim=128, message_dim=32,
-                     comm_rounds=2, obs_dim=48, comm_mode="tarmac")
+    cfg = CommConfig(
+        max_agents=8,
+        hidden_dim=128,
+        message_dim=32,
+        comm_rounds=2,
+        obs_dim=48,
+        comm_mode="tarmac",
+    )
     agent = SC2CommAgent(cfg, seed=42)
 
     obs = SC2CommAgent._dummy_observation(1, 8, cfg)
     ablation = agent.run_ablation(obs, n_trials=30)
 
-    print(f"  With comm    - value: {ablation['comm_enabled']['mean_value']:.4f}, "
-          f"entropy: {ablation['comm_enabled']['mean_entropy']:.4f}")
-    print(f"  Without comm - value: {ablation['comm_disabled']['mean_value']:.4f}, "
-          f"entropy: {ablation['comm_disabled']['mean_entropy']:.4f}")
+    print(
+        f"  With comm    - value: {ablation['comm_enabled']['mean_value']:.4f}, "
+        f"entropy: {ablation['comm_enabled']['mean_entropy']:.4f}"
+    )
+    print(
+        f"  Without comm - value: {ablation['comm_disabled']['mean_value']:.4f}, "
+        f"entropy: {ablation['comm_disabled']['mean_entropy']:.4f}"
+    )
     print(f"  Value diff:    {ablation['value_diff']:.4f}")
     print(f"  Entropy diff:  {ablation['entropy_diff']:.4f}")
     print()
@@ -1196,27 +1368,71 @@ def _demo_game_state():
     print("Game State Integration Demo")
     print("=" * 60)
 
-    cfg = CommConfig(max_agents=8, hidden_dim=128, message_dim=32,
-                     comm_rounds=2, obs_dim=48, comm_mode="tarmac")
+    cfg = CommConfig(
+        max_agents=8,
+        hidden_dim=128,
+        message_dim=32,
+        comm_rounds=2,
+        obs_dim=48,
+        comm_mode="tarmac",
+    )
     agent = SC2CommAgent(cfg, seed=42)
 
     game_state = {
         "units": [
-            {"type_id": 84, "x": 50, "y": 50, "health": 45, "shield": 0,
-             "energy": 0, "is_friendly": True, "is_visible": True, "tag": 1001},
-            {"type_id": 84, "x": 52, "y": 48, "health": 40, "shield": 0,
-             "energy": 0, "is_friendly": True, "is_visible": True, "tag": 1002},
-            {"type_id": 105, "x": 55, "y": 53, "health": 35, "shield": 0,
-             "energy": 0, "is_friendly": True, "is_visible": True, "tag": 1003},
-            {"type_id": 48, "x": 80, "y": 60, "health": 150, "shield": 50,
-             "energy": 0, "is_friendly": True, "is_visible": True, "tag": 1004},
+            {
+                "type_id": 84,
+                "x": 50,
+                "y": 50,
+                "health": 45,
+                "shield": 0,
+                "energy": 0,
+                "is_friendly": True,
+                "is_visible": True,
+                "tag": 1001,
+            },
+            {
+                "type_id": 84,
+                "x": 52,
+                "y": 48,
+                "health": 40,
+                "shield": 0,
+                "energy": 0,
+                "is_friendly": True,
+                "is_visible": True,
+                "tag": 1002,
+            },
+            {
+                "type_id": 105,
+                "x": 55,
+                "y": 53,
+                "health": 35,
+                "shield": 0,
+                "energy": 0,
+                "is_friendly": True,
+                "is_visible": True,
+                "tag": 1003,
+            },
+            {
+                "type_id": 48,
+                "x": 80,
+                "y": 60,
+                "health": 150,
+                "shield": 50,
+                "energy": 0,
+                "is_friendly": True,
+                "is_visible": True,
+                "tag": 1004,
+            },
         ],
     }
 
     decisions = agent.act_on_game_state(game_state)
     for d in decisions:
-        print(f"  Unit {d['unit_tag']}: {d['action_type']} "
-              f"(value={d['value_estimate']:.3f})")
+        print(
+            f"  Unit {d['unit_tag']}: {d['action_type']} "
+            f"(value={d['value_estimate']:.3f})"
+        )
     print()
 
 
@@ -1225,20 +1441,29 @@ def _demo_ppo_smoke():
     print("PPO Training Smoke Test")
     print("=" * 60)
 
-    cfg = CommConfig(max_agents=4, hidden_dim=64, message_dim=16,
-                     comm_rounds=1, obs_dim=48, comm_mode="commnet")
+    cfg = CommConfig(
+        max_agents=4,
+        hidden_dim=64,
+        message_dim=16,
+        comm_rounds=1,
+        obs_dim=48,
+        comm_mode="commnet",
+    )
     agent = SC2CommAgent(cfg, seed=42)
 
     for step in range(16):
         obs = SC2CommAgent._dummy_observation(1, 4, cfg)
         result = agent.act(obs)
-        log_probs = np.log(result["action_probs"][0, np.arange(4), result["actions"][0]] + 1e-8)
+        log_probs = np.log(
+            result["action_probs"][0, np.arange(4), result["actions"][0]] + 1e-8
+        )
         rewards = np.random.uniform(-1, 1, (1, 4)).astype(np.float32)
         dones = np.zeros((1, 4), dtype=np.float32)
         if step == 15:
             dones[:] = 1.0
-        agent.store_transition(obs, result["actions"], rewards, dones,
-                               log_probs[None], result["values"])
+        agent.store_transition(
+            obs, result["actions"], rewards, dones, log_probs[None], result["values"]
+        )
 
     metrics = agent.update()
     print(f"  Policy loss: {metrics['policy_loss']:.4f}")
@@ -1264,8 +1489,9 @@ def main():
     else:
         print("PyTorch not available; torch demos skipped.")
         print()
-        cfg = CommConfig(max_agents=8, hidden_dim=64, message_dim=16,
-                         comm_rounds=2, obs_dim=48)
+        cfg = CommConfig(
+            max_agents=8, hidden_dim=64, message_dim=16, comm_rounds=2, obs_dim=48
+        )
         agent = SC2CommAgent(cfg, seed=42)
         obs = SC2CommAgent._dummy_observation(1, 8, cfg)
         result = agent.act(obs)

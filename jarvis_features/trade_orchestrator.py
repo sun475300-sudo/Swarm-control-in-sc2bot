@@ -43,13 +43,13 @@ class TradeAction(Enum):
 
 
 class ApprovalStatus(Enum):
-    PENDING = "pending"          # 승인 대기
-    APPROVED = "approved"        # 승인됨
-    REJECTED = "rejected"        # 거부됨
+    PENDING = "pending"  # 승인 대기
+    APPROVED = "approved"  # 승인됨
+    REJECTED = "rejected"  # 거부됨
     AUTO_APPROVED = "auto_approved"  # 소액 자동 승인
-    EXPIRED = "expired"          # 타임아웃 만료
-    EXECUTED = "executed"        # 실행 완료
-    FAILED = "failed"            # 실행 실패
+    EXPIRED = "expired"  # 타임아웃 만료
+    EXECUTED = "executed"  # 실행 완료
+    FAILED = "failed"  # 실행 실패
 
 
 # ── 승인 정책 설정 ──
@@ -73,10 +73,11 @@ MAX_PENDING_REQUESTS = 50
 @dataclass
 class TradeRequest:
     """거래 승인 요청"""
+
     request_id: str
     action: TradeAction
-    symbol: str                # "BTC", "ETH" 등
-    amount_krw: float          # 거래 금액 (원)
+    symbol: str  # "BTC", "ETH" 등
+    amount_krw: float  # 거래 금액 (원)
     sell_percent: float = 100.0  # 매도 비율 (매도 시)
     status: ApprovalStatus = ApprovalStatus.PENDING
     needs_approval: bool = True
@@ -109,7 +110,12 @@ class TradeRequest:
             TradeAction.AUTO_SELL: "자동매도",
         }
         action_str = action_kr.get(self.action, str(self.action.value))
-        risk_emoji = {"low": "", "normal": "", "high": " **[주의]**", "critical": " **[위험]**"}
+        risk_emoji = {
+            "low": "",
+            "normal": "",
+            "high": " **[주의]**",
+            "critical": " **[위험]**",
+        }
 
         lines = [
             f"**{action_str} 승인 요청**{risk_emoji.get(self.risk_level, '')}",
@@ -243,17 +249,23 @@ class TradeOrchestrator:
         """거래 요청 승인"""
         req = self._requests.get(request_id)
         if not req:
-            logger.warning(f"[TRADE_ORCH] Approve failed: request {request_id[:8]} not found")
+            logger.warning(
+                f"[TRADE_ORCH] Approve failed: request {request_id[:8]} not found"
+            )
             return False
 
         if req.is_expired:
             req.status = ApprovalStatus.EXPIRED
             req.resolved_at = time.time()
-            logger.info(f"[TRADE_ORCH] Request {request_id[:8]} expired before approval")
+            logger.info(
+                f"[TRADE_ORCH] Request {request_id[:8]} expired before approval"
+            )
             return False
 
         if req.status != ApprovalStatus.PENDING:
-            logger.warning(f"[TRADE_ORCH] Request {request_id[:8]} already {req.status.value}")
+            logger.warning(
+                f"[TRADE_ORCH] Request {request_id[:8]} already {req.status.value}"
+            )
             return False
 
         req.status = ApprovalStatus.APPROVED
@@ -293,7 +305,9 @@ class TradeOrchestrator:
             req.status = ApprovalStatus.EXPIRED
             req.resolved_at = time.time()
             self._record_history(req)
-            return f"거래 요청이 만료되었습니다 ({req.timeout_seconds / 60:.0f}분 초과)."
+            return (
+                f"거래 요청이 만료되었습니다 ({req.timeout_seconds / 60:.0f}분 초과)."
+            )
 
         # 승인 상태 확인
         if req.status not in (ApprovalStatus.APPROVED, ApprovalStatus.AUTO_APPROVED):
@@ -345,7 +359,8 @@ class TradeOrchestrator:
         """보류 중인 거래 요청 조회"""
         self.cleanup_expired()
         pending = [
-            r for r in self._requests.values()
+            r
+            for r in self._requests.values()
             if r.status == ApprovalStatus.PENDING
             and (not user_id or r.user_id == user_id)
         ]
@@ -367,7 +382,7 @@ class TradeOrchestrator:
         # 전체 크기 제한
         if len(self._requests) > MAX_PENDING_REQUESTS:
             oldest = sorted(self._requests.values(), key=lambda r: r.created_at)
-            for req in oldest[:len(self._requests) - MAX_PENDING_REQUESTS]:
+            for req in oldest[: len(self._requests) - MAX_PENDING_REQUESTS]:
                 if req.status == ApprovalStatus.PENDING:
                     req.status = ApprovalStatus.EXPIRED
                     self._record_history(req)
@@ -404,16 +419,18 @@ class TradeOrchestrator:
 
     def _record_history(self, req: TradeRequest):
         """완료된 요청을 히스토리에 기록"""
-        self._history.append({
-            "request_id": req.request_id[:8],
-            "action": req.action.value,
-            "symbol": req.symbol,
-            "amount_krw": req.amount_krw,
-            "status": req.status.value,
-            "risk_level": req.risk_level,
-            "created_at": req.created_at,
-            "resolved_at": req.resolved_at,
-        })
+        self._history.append(
+            {
+                "request_id": req.request_id[:8],
+                "action": req.action.value,
+                "symbol": req.symbol,
+                "amount_krw": req.amount_krw,
+                "status": req.status.value,
+                "risk_level": req.risk_level,
+                "created_at": req.created_at,
+                "resolved_at": req.resolved_at,
+            }
+        )
         # 최근 100건만 유지
         if len(self._history) > 100:
             self._history = self._history[-100:]

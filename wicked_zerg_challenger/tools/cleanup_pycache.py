@@ -10,11 +10,11 @@ __pycache__ 디렉토리 정리 스크립트
 3. 임시 파일 (.tmp, .bak, .old, .swp)
 """
 
+import logging
 import os
 import shutil
 from pathlib import Path
 from typing import List, Tuple
-import logging
 
 logger = logging.getLogger("CleanupPycache")
 

@@ -18,6 +18,7 @@ from typing import Any, Callable, Dict, List, Optional, Tuple
 
 try:
     import numpy as np
+
     NP_AVAILABLE = True
 except ImportError:
     NP_AVAILABLE = False
@@ -56,6 +57,7 @@ def _np_percentile(values: list, pct: float) -> float:
 # Enums for Chaos types and severities
 # ============================================================
 
+
 class ChaosSeverity(Enum):
     LOW = "low"
     MEDIUM = "medium"
@@ -76,9 +78,11 @@ class ChaosCategory(Enum):
 # SteadyStateHypothesis: Define expected behavior
 # ============================================================
 
+
 @dataclass
 class SteadyStateHypothesis:
     """Define what 'normal' looks like so we can measure degradation."""
+
     name: str
     description: str = ""
 
@@ -105,7 +109,8 @@ class SteadyStateHypothesis:
                 metrics.get("actions_per_second", 0) >= self.min_actions_per_second
             ),
             "observation_miss_rate": (
-                metrics.get("observation_miss_rate", 0) <= self.max_observation_miss_rate
+                metrics.get("observation_miss_rate", 0)
+                <= self.max_observation_miss_rate
             ),
             "decision_error_rate": (
                 metrics.get("decision_error_rate", 0) <= self.max_decision_error_rate
@@ -140,9 +145,11 @@ class SteadyStateHypothesis:
 # ChaosExperiment: Base class for chaos experiments
 # ============================================================
 
+
 @dataclass
 class ChaosExperiment:
     """A single chaos experiment with fault injection parameters."""
+
     experiment_id: str = field(default_factory=lambda: uuid.uuid4().hex[:12])
     name: str = "unnamed"
     category: ChaosCategory = ChaosCategory.NETWORK
@@ -190,14 +197,18 @@ class ChaosExperiment:
             baseline_val = self.baseline_metrics[key]
             chaos_val = self.chaos_metrics.get(key, baseline_val)
             if abs(baseline_val) > 1e-9:
-                impact[key] = round((chaos_val - baseline_val) / abs(baseline_val) * 100, 2)
+                impact[key] = round(
+                    (chaos_val - baseline_val) / abs(baseline_val) * 100, 2
+                )
             else:
                 impact[key] = 0.0
         self.impact_scores = impact
         return impact
 
     def summary(self) -> str:
-        status = "RUNNING" if self.is_running else ("DONE" if self.completed else "PENDING")
+        status = (
+            "RUNNING" if self.is_running else ("DONE" if self.completed else "PENDING")
+        )
         return (
             f"[{self.experiment_id}] {self.name} ({self.category.value}/{self.severity.value}) "
             f"status={status} elapsed={self.elapsed():.1f}s"
@@ -226,6 +237,7 @@ class ChaosExperiment:
 # NetworkChaos: Simulate network issues
 # ============================================================
 
+
 class NetworkChaos:
     """Simulate network faults: packet loss, reordering, corruption."""
 
@@ -241,7 +253,9 @@ class NetworkChaos:
         self.packet_loss_rate = max(0.0, min(1.0, loss_rate))
         self.corruption_rate = max(0.0, min(1.0, corruption_rate))
 
-    def process_observation(self, observation: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+    def process_observation(
+        self, observation: Dict[str, Any]
+    ) -> Optional[Dict[str, Any]]:
         """
         Simulate network effects on an observation.
         Returns None if packet is dropped, corrupted dict otherwise.
@@ -306,6 +320,7 @@ class NetworkChaos:
 # LatencyChaos: Simulate latency spikes
 # ============================================================
 
+
 class LatencyChaos:
     """Simulate latency spikes and jitter for SC2 actions and observations."""
 
@@ -359,7 +374,9 @@ class LatencyChaos:
         delayed_action["_chaos_delay_ms"] = delay
         return delayed_action, delay
 
-    def delay_observation(self, observation: Dict[str, Any]) -> Tuple[Dict[str, Any], float]:
+    def delay_observation(
+        self, observation: Dict[str, Any]
+    ) -> Tuple[Dict[str, Any], float]:
         """Return the observation with its simulated delay in ms."""
         delay = self.sample_latency()
         delayed_obs = copy.deepcopy(observation)
@@ -388,6 +405,7 @@ class LatencyChaos:
 # ============================================================
 # ResourceChaos: Simulate CPU/memory pressure
 # ============================================================
+
 
 class ResourceChaos:
     """Simulate CPU throttle, memory pressure, and decision budget constraints."""
@@ -431,7 +449,9 @@ class ResourceChaos:
 
         # Memory pressure adds random overhead
         if self.memory_pressure_mb > 0:
-            gc_pause = self._rng.expovariate(1.0 / max(self.memory_pressure_mb * 0.1, 0.1))
+            gc_pause = self._rng.expovariate(
+                1.0 / max(self.memory_pressure_mb * 0.1, 0.1)
+            )
             actual += gc_pause
 
         # Jitter
@@ -489,9 +509,11 @@ class ResourceChaos:
 # BlastRadius: Control scope of chaos injection
 # ============================================================
 
+
 @dataclass
 class BlastRadius:
     """Controls which modules and what fraction of traffic is affected by chaos."""
+
     allowed_modules: List[str] = field(default_factory=list)
     excluded_modules: List[str] = field(default_factory=list)
     affected_fraction: float = 1.0
@@ -520,9 +542,11 @@ class BlastRadius:
 # ExperimentResult: Detailed result of a chaos experiment
 # ============================================================
 
+
 @dataclass
 class ExperimentResult:
     """Detailed result of a completed chaos experiment."""
+
     experiment: ChaosExperiment
     hypothesis: SteadyStateHypothesis
     hypothesis_result: Dict[str, Any] = field(default_factory=dict)
@@ -559,7 +583,9 @@ class ExperimentResult:
                 self.recommendations.append(rec_map[check_name])
 
         if not self.recommendations:
-            self.recommendations.append("Bot passed all checks -- resilience is adequate.")
+            self.recommendations.append(
+                "Bot passed all checks -- resilience is adequate."
+            )
 
         return self.recommendations
 
@@ -583,6 +609,7 @@ class ExperimentResult:
 # ============================================================
 # ChaosMonkey: Main orchestrator
 # ============================================================
+
 
 class ChaosMonkey:
     """
@@ -639,7 +666,10 @@ class ChaosMonkey:
         return exp
 
     def create_network_experiment(
-        self, loss_rate: float = 0.1, corruption_rate: float = 0.02, duration: float = 30.0
+        self,
+        loss_rate: float = 0.1,
+        corruption_rate: float = 0.02,
+        duration: float = 30.0,
     ) -> ChaosExperiment:
         exp = self.create_experiment(
             name=f"NetworkChaos_loss{loss_rate:.0%}",
@@ -676,7 +706,9 @@ class ChaosMonkey:
         exp = self.create_experiment(
             name=f"ResourceChaos_cpu{cpu_factor:.1f}x",
             category=ChaosCategory.RESOURCE,
-            severity=ChaosSeverity.CRITICAL if cpu_factor > 3.0 else ChaosSeverity.MEDIUM,
+            severity=(
+                ChaosSeverity.CRITICAL if cpu_factor > 3.0 else ChaosSeverity.MEDIUM
+            ),
             duration=duration,
             description=f"CPU throttle={cpu_factor:.1f}x, memory pressure={memory_mb:.0f}MB",
         )
@@ -705,7 +737,7 @@ class ChaosMonkey:
 
         # Phase 1: Collect baseline metrics (no chaos)
         baseline_metrics_list: List[Dict[str, float]] = []
-        for obs in observations[:len(observations) // 2]:
+        for obs in observations[: len(observations) // 2]:
             metrics = bot_tick_fn(obs)
             baseline_metrics_list.append(metrics)
 
@@ -716,7 +748,7 @@ class ChaosMonkey:
         experiment.start()
         chaos_metrics_list: List[Dict[str, float]] = []
 
-        for obs in observations[len(observations) // 2:]:
+        for obs in observations[len(observations) // 2 :]:
             # Apply chaos based on category
             processed_obs = obs
             extra_latency = 0.0
@@ -741,9 +773,9 @@ class ChaosMonkey:
             # Run bot tick
             metrics = bot_tick_fn(processed_obs)
             if extra_latency > 0:
-                metrics["avg_action_latency_ms"] = metrics.get(
-                    "avg_action_latency_ms", 10.0
-                ) + extra_latency
+                metrics["avg_action_latency_ms"] = (
+                    metrics.get("avg_action_latency_ms", 10.0) + extra_latency
+                )
             chaos_metrics_list.append(metrics)
 
         experiment.stop()
@@ -765,7 +797,9 @@ class ChaosMonkey:
 
         return result
 
-    def _average_metrics(self, metrics_list: List[Dict[str, float]]) -> Dict[str, float]:
+    def _average_metrics(
+        self, metrics_list: List[Dict[str, float]]
+    ) -> Dict[str, float]:
         if not metrics_list:
             return {}
         all_keys = set()
@@ -825,7 +859,9 @@ class ChaosMonkey:
             all_recs.extend(r.recommendations)
         unique_recs = list(dict.fromkeys(all_recs))
 
-        passed = sum(1 for r in self._results if r.hypothesis_result.get("passed", False))
+        passed = sum(
+            1 for r in self._results if r.hypothesis_result.get("passed", False)
+        )
         failed = len(self._results) - passed
 
         return {
@@ -846,7 +882,10 @@ class ChaosMonkey:
     def save_report(self, filepath: str) -> str:
         """Save resilience report to JSON file."""
         report = self.resilience_report()
-        os.makedirs(os.path.dirname(filepath) if os.path.dirname(filepath) else ".", exist_ok=True)
+        os.makedirs(
+            os.path.dirname(filepath) if os.path.dirname(filepath) else ".",
+            exist_ok=True,
+        )
         with open(filepath, "w", encoding="utf-8") as f:
             json.dump(report, f, indent=2, default=str)
         return filepath
@@ -870,6 +909,7 @@ class ChaosMonkey:
 # ============================================================
 # Utility: Simulated bot tick function for testing
 # ============================================================
+
 
 def _simulated_bot_tick(observation: Dict[str, Any]) -> Dict[str, float]:
     """A mock SC2 bot tick function that returns performance metrics."""
@@ -913,23 +953,34 @@ def _generate_test_observations(count: int = 100) -> List[Dict[str, Any]]:
                 "max_health": 150,
                 "is_alive": True,
             }
-        observations.append({
-            "game_loop": loop,
-            "resources": {
-                "1": {"minerals": 400 + loop * 1.5, "vespene": 200 + loop * 0.8,
-                       "supply_used": num_units // 2, "supply_cap": num_units // 2 + 10},
-                "2": {"minerals": 380 + loop * 1.4, "vespene": 180 + loop * 0.7,
-                       "supply_used": num_units // 2, "supply_cap": num_units // 2 + 8},
-            },
-            "units": units,
-            "map_name": "Equilibrium",
-        })
+        observations.append(
+            {
+                "game_loop": loop,
+                "resources": {
+                    "1": {
+                        "minerals": 400 + loop * 1.5,
+                        "vespene": 200 + loop * 0.8,
+                        "supply_used": num_units // 2,
+                        "supply_cap": num_units // 2 + 10,
+                    },
+                    "2": {
+                        "minerals": 380 + loop * 1.4,
+                        "vespene": 180 + loop * 0.7,
+                        "supply_used": num_units // 2,
+                        "supply_cap": num_units // 2 + 8,
+                    },
+                },
+                "units": units,
+                "map_name": "Equilibrium",
+            }
+        )
     return observations
 
 
 # ============================================================
 # Demo
 # ============================================================
+
 
 def demo() -> None:
     """Demonstrate the Phase 651 Chaos Engineering system."""
@@ -984,8 +1035,10 @@ def demo() -> None:
     r3 = monkey.run_experiment(exp3, _simulated_bot_tick, observations)
     print(f"    {r3.summary()}")
     lat_stats = monkey.latency_chaos.stats()
-    print(f"    Latency p95: {lat_stats.get('p95_ms', 0):.1f}ms, "
-          f"p99: {lat_stats.get('p99_ms', 0):.1f}ms")
+    print(
+        f"    Latency p95: {lat_stats.get('p95_ms', 0):.1f}ms, "
+        f"p99: {lat_stats.get('p99_ms', 0):.1f}ms"
+    )
 
     # --- [5] CPU throttle ---
     print("\n[5] Running resource chaos (2.5x CPU throttle, 200MB memory pressure)...")
@@ -1023,7 +1076,9 @@ def demo() -> None:
     net = NetworkChaos(packet_loss_rate=0.25, corruption_rate=0.10)
     dropped = 0
     for i in range(20):
-        result = net.process_observation({"game_loop": i * 100, "units": {"1": {}, "2": {}}})
+        result = net.process_observation(
+            {"game_loop": i * 100, "units": {"1": {}, "2": {}}}
+        )
         if result is None:
             dropped += 1
     print(f"    Dropped: {dropped}/20")
@@ -1031,7 +1086,9 @@ def demo() -> None:
 
     # --- [9] Individual LatencyChaos test ---
     print("\n[9] Direct LatencyChaos sampling (50 samples)...")
-    lat = LatencyChaos(base_latency_ms=15.0, spike_probability=0.20, spike_magnitude_ms=300.0)
+    lat = LatencyChaos(
+        base_latency_ms=15.0, spike_probability=0.20, spike_magnitude_ms=300.0
+    )
     for _ in range(50):
         lat.sample_latency()
     print(f"    Stats: {lat.stats()}")

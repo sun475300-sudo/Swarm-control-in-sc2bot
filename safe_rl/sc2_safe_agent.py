@@ -98,16 +98,19 @@ except ImportError:
                     return random.gauss(0, 1)
                 if len(shape) == 1:
                     return [random.gauss(0, 1) for _ in range(shape[0])]
-                return [[random.gauss(0, 1) for _ in range(shape[1])]
-                        for _ in range(shape[0])]
+                return [
+                    [random.gauss(0, 1) for _ in range(shape[1])]
+                    for _ in range(shape[0])
+                ]
 
             def rand(self, *shape):
                 if len(shape) == 0:
                     return random.random()
                 if len(shape) == 1:
                     return [random.random() for _ in range(shape[0])]
-                return [[random.random() for _ in range(shape[1])]
-                        for _ in range(shape[0])]
+                return [
+                    [random.random() for _ in range(shape[1])] for _ in range(shape[0])
+                ]
 
         random = _Random()
 
@@ -118,6 +121,7 @@ logger = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------
 # SC2 Game State representation
 # ---------------------------------------------------------------------------
+
 
 @dataclass
 class SC2GameState:
@@ -141,6 +145,7 @@ class SC2GameState:
 # ---------------------------------------------------------------------------
 # SafetyConstraint
 # ---------------------------------------------------------------------------
+
 
 class SafetyConstraint:
     """
@@ -199,6 +204,7 @@ class SafetyConstraint:
 # ---------------------------------------------------------------------------
 # SC2 Safety Constraint Factories
 # ---------------------------------------------------------------------------
+
 
 def _make_worker_constraint(min_workers: int = 16) -> SafetyConstraint:
     """Workers should not drop below a minimum count."""
@@ -266,7 +272,9 @@ def _make_army_commitment_constraint(
             return 0.0
         attack_frac = state.army_attacking / total
         if attack_frac > max_attack_fraction:
-            return (attack_frac - max_attack_fraction) / (1.0 - max_attack_fraction + 1e-8)
+            return (attack_frac - max_attack_fraction) / (
+                1.0 - max_attack_fraction + 1e-8
+            )
         return 0.0
 
     return SafetyConstraint(
@@ -311,6 +319,7 @@ def create_default_constraints() -> List[SafetyConstraint]:
 # ---------------------------------------------------------------------------
 # LagrangianOptimizer
 # ---------------------------------------------------------------------------
+
 
 class LagrangianOptimizer:
     """
@@ -378,24 +387,28 @@ class LagrangianOptimizer:
             )
             updates[constraint.name] = self._lambdas[i]
 
-        self._update_history.append({
-            "lambdas": list(self._lambdas),
-            "timestamp": time.time(),
-        })
+        self._update_history.append(
+            {
+                "lambdas": list(self._lambdas),
+                "timestamp": time.time(),
+            }
+        )
         return updates
 
     def get_constraint_status(self) -> List[Dict[str, Any]]:
         """Return status of all constraints with current multipliers."""
         statuses = []
         for i, c in enumerate(self.constraints):
-            statuses.append({
-                "name": c.name,
-                "threshold": c.threshold,
-                "avg_cost": c.average_cost,
-                "lambda": self._lambdas[i],
-                "satisfied": c.is_satisfied,
-                "description": c.description,
-            })
+            statuses.append(
+                {
+                    "name": c.name,
+                    "threshold": c.threshold,
+                    "avg_cost": c.average_cost,
+                    "lambda": self._lambdas[i],
+                    "satisfied": c.is_satisfied,
+                    "description": c.description,
+                }
+            )
         return statuses
 
     def reset(self) -> None:
@@ -408,6 +421,7 @@ class LagrangianOptimizer:
 # ---------------------------------------------------------------------------
 # SafePPO
 # ---------------------------------------------------------------------------
+
 
 @dataclass
 class PPOConfig:
@@ -449,9 +463,7 @@ class SafePPO:
         self._episode_count: int = 0
 
         # Simple linear policy weights (numpy-based)
-        self._policy_weights = np.zeros(
-            (config.state_dim, config.action_dim)
-        )
+        self._policy_weights = np.zeros((config.state_dim, config.action_dim))
         self._value_weights = np.zeros(config.state_dim)
 
         # Trajectory buffer
@@ -559,16 +571,18 @@ class SafePPO:
         # Compute safety-augmented reward
         safe_reward = self.lagrangian.augmented_reward(reward, costs)
 
-        self._buffer.append({
-            "state": state,
-            "action": action,
-            "reward": reward,
-            "safe_reward": safe_reward,
-            "costs": costs,
-            "next_state": next_state,
-            "done": done,
-            "log_prob": log_prob,
-        })
+        self._buffer.append(
+            {
+                "state": state,
+                "action": action,
+                "reward": reward,
+                "safe_reward": safe_reward,
+                "costs": costs,
+                "next_state": next_state,
+                "done": done,
+                "log_prob": log_prob,
+            }
+        )
         self._step_count += 1
 
     def update(self) -> Dict[str, float]:
@@ -682,6 +696,7 @@ class SafePPO:
 # SafetyMonitor
 # ---------------------------------------------------------------------------
 
+
 @dataclass
 class ViolationRecord:
     """Record of a single constraint violation."""
@@ -717,9 +732,7 @@ class SafetyMonitor:
         self.emergency_threshold = emergency_threshold
         self._violations: List[ViolationRecord] = []
         self._total_checks: int = 0
-        self._consecutive_violations: Dict[str, int] = {
-            c.name: 0 for c in constraints
-        }
+        self._consecutive_violations: Dict[str, int] = {c.name: 0 for c in constraints}
 
     def check_safety(
         self,
@@ -820,6 +833,7 @@ class SafetyMonitor:
 # Demo / CLI
 # ---------------------------------------------------------------------------
 
+
 def _simulate_game_state(step: int) -> SC2GameState:
     """Generate a simulated SC2 game state for demo purposes."""
     t = float(step * 10)
@@ -893,7 +907,9 @@ def demo() -> None:
         next_state = _simulate_game_state(step + 1)
 
         # Store transition
-        agent.store_transition(state, action, reward, costs, next_state, False, log_prob)
+        agent.store_transition(
+            state, action, reward, costs, next_state, False, log_prob
+        )
 
         if (step + 1) % 10 == 0:
             # PPO update every 10 steps
@@ -937,9 +953,7 @@ def main() -> None:
     parser = argparse.ArgumentParser(
         description="Phase 620: Safe RL with Constrained Optimization for SC2",
     )
-    parser.add_argument(
-        "--demo", action="store_true", default=True, help="Run demo"
-    )
+    parser.add_argument("--demo", action="store_true", default=True, help="Run demo")
     parser.parse_args()
     demo()
 

@@ -8,14 +8,19 @@ Queen의 Creep Tumor를 활용하여 맵 전체에 점막 확산:
 3. 맵 전체 점막 네트워크 구축
 """
 
-from typing import Dict, Set, List
-from sc2.ids.unit_typeid import UnitTypeId
+from typing import Dict, List, Set
+
 from sc2.ids.ability_id import AbilityId
+from sc2.ids.unit_typeid import UnitTypeId
 from sc2.position import Point2
+
 from utils.logger import get_logger
 
 try:
-    from wicked_zerg_challenger.rust_accel import nearest_point_index, points_to_xy_tuples
+    from wicked_zerg_challenger.rust_accel import (
+        nearest_point_index,
+        points_to_xy_tuples,
+    )
 except Exception:
     from rust_accel import nearest_point_index, points_to_xy_tuples
 
@@ -87,10 +92,12 @@ class CreepExpansionSystem:
             for angle in [0, 90, 180, 270]:
                 rad = math.radians(angle)
                 for distance in [8, 12, 16]:
-                    pos = Point2((
-                        base.position.x + distance * math.cos(rad),
-                        base.position.y + distance * math.sin(rad)
-                    ))
+                    pos = Point2(
+                        (
+                            base.position.x + distance * math.cos(rad),
+                            base.position.y + distance * math.sin(rad),
+                        )
+                    )
                     if self.bot.in_map_bounds(pos):
                         self.target_creep_positions.append(pos)
 
@@ -110,15 +117,19 @@ class CreepExpansionSystem:
         for angle in [0, 45, 90, 135, 180, 225, 270, 315]:
             rad = math.radians(angle)
             for distance in [10, 15, 20]:
-                pos = Point2((
-                    map_center.x + distance * math.cos(rad),
-                    map_center.y + distance * math.sin(rad)
-                ))
+                pos = Point2(
+                    (
+                        map_center.x + distance * math.cos(rad),
+                        map_center.y + distance * math.sin(rad),
+                    )
+                )
                 if self.bot.in_map_bounds(pos):
                     self.target_creep_positions.append(pos)
 
         # ★ Phase 45: 중복 제거 + 우선순위 정렬(안전/확장 효율 기반) ★
-        self.target_creep_positions = self._prioritize_targets(self.target_creep_positions)
+        self.target_creep_positions = self._prioritize_targets(
+            self.target_creep_positions
+        )
 
     def _prioritize_targets(self, positions: List[Point2]) -> List[Point2]:
         """Deduplicate and prioritize creep targets for safer/faster spread."""
@@ -136,19 +147,30 @@ class CreepExpansionSystem:
 
         # 적 시작 위치를 기준으로 너무 위험한 지점 제외
         enemy_start = None
-        if hasattr(self.bot, "enemy_start_locations") and self.bot.enemy_start_locations:
+        if (
+            hasattr(self.bot, "enemy_start_locations")
+            and self.bot.enemy_start_locations
+        ):
             enemy_start = self.bot.enemy_start_locations[0]
 
         safe_candidates: List[Point2] = []
         for p in candidates:
-            if enemy_start and p.distance_to(enemy_start) < self.enemy_avoid_radius and self.bot.time < 420:
+            if (
+                enemy_start
+                and p.distance_to(enemy_start) < self.enemy_avoid_radius
+                and self.bot.time < 420
+            ):
                 continue
             safe_candidates.append(p)
 
         if not safe_candidates:
             safe_candidates = candidates
 
-        anchor = self.bot.townhalls.first.position if self.bot.townhalls.exists else self.bot.start_location
+        anchor = (
+            self.bot.townhalls.first.position
+            if self.bot.townhalls.exists
+            else self.bot.start_location
+        )
         map_center = self.bot.game_info.map_center
         expansion_points = list(getattr(self.bot, "expansion_locations_list", []))
 
@@ -190,7 +212,9 @@ class CreepExpansionSystem:
         safety_score = 1.0
         if enemy_start is not None and self.bot.time < 480:
             enemy_dist = target.distance_to(enemy_start)
-            safety_score = min(1.0, enemy_dist / max(1.0, self.enemy_avoid_radius * 2.0))
+            safety_score = min(
+                1.0, enemy_dist / max(1.0, self.enemy_avoid_radius * 2.0)
+            )
 
         return (
             expansion_lane_score * self.expansion_lane_weight
@@ -215,7 +239,9 @@ class CreepExpansionSystem:
 
             # 가장 가까운 목표 위치 (Rust 가속 fallback)
             target_xy = points_to_xy_tuples(self.target_creep_positions)
-            idx = nearest_point_index((float(queen.position.x), float(queen.position.y)), target_xy)
+            idx = nearest_point_index(
+                (float(queen.position.x), float(queen.position.y)), target_xy
+            )
             if idx is None:
                 break
             closest_target = self.target_creep_positions[idx]
@@ -247,7 +273,9 @@ class CreepExpansionSystem:
 
             # 가장 가까운 목표 위치 (Rust 가속 fallback)
             target_xy = points_to_xy_tuples(self.target_creep_positions)
-            idx = nearest_point_index((float(tumor.position.x), float(tumor.position.y)), target_xy)
+            idx = nearest_point_index(
+                (float(tumor.position.x), float(tumor.position.y)), target_xy
+            )
             if idx is None:
                 break
             closest_target = self.target_creep_positions[idx]

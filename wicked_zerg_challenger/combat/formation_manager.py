@@ -45,7 +45,7 @@ class FormationManager:
     @staticmethod
     def _check_exists(units) -> bool:
         """Check if units exist, handling both Units objects and plain lists."""
-        if hasattr(units, 'exists'):
+        if hasattr(units, "exists"):
             return bool(units.exists)
         return bool(units)
 
@@ -65,7 +65,7 @@ class FormationManager:
         Returns:
             (유닛, 목표 위치) 튜플 리스트
         """
-        if hasattr(units, 'exists'):
+        if hasattr(units, "exists"):
             if not units.exists:
                 return []
         elif not units:
@@ -146,8 +146,8 @@ class FormationManager:
         """단일 길목 찾기 (CombatManager 호환용)"""
         # 적군과 아군 본진 사이의 중간 지점
         if self._check_exists(enemy_units):
-             enemy_center = enemy_units.center
-             return our_base.towards(enemy_center, 15.0)
+            enemy_center = enemy_units.center
+            return our_base.towards(enemy_center, 15.0)
         return None
 
     def should_avoid_choke(self, units: Units, enemy_units: Units) -> bool:
@@ -192,11 +192,15 @@ class FormationManager:
 
         return False
 
-    def should_avoid_chokepoint(self, units: Units, chokepoint: Point2, enemy_units: Units) -> bool:
+    def should_avoid_chokepoint(
+        self, units: Units, chokepoint: Point2, enemy_units: Units
+    ) -> bool:
         """Alias for should_avoid_choke"""
         return self.should_avoid_choke(units, enemy_units)
 
-    def get_retreat_position(self, units: Units, enemy_units: Units, our_base: Point2) -> Optional[Point2]:
+    def get_retreat_position(
+        self, units: Units, enemy_units: Units, our_base: Point2
+    ) -> Optional[Point2]:
         """후퇴 위치 계산 (넓은 곳으로)"""
         # 단순히 본진 쪽으로 후퇴
         return our_base

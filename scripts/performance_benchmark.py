@@ -7,13 +7,13 @@ Rust 가속 vs Python 폴백 성능 비교
 """
 
 import json
-import subprocess
-import time
 import statistics
+import subprocess
 import sys
-from pathlib import Path
+import time
 from datetime import datetime
-from typing import Dict, List, Tuple, Optional
+from pathlib import Path
+from typing import Dict, List, Optional, Tuple
 
 
 class PerformanceBenchmark:
@@ -67,8 +67,8 @@ class PerformanceBenchmark:
 
     def benchmark_python_syntax(self, iterations: int = 10) -> Dict:
         """Python 구문 검증 성능 측정"""
-        import py_compile
         import glob
+        import py_compile
 
         py_files = list(self.project_root.glob("wicked_zerg_challenger/**/*.py"))
 

@@ -100,6 +100,7 @@ MOCK_MATCH_HISTORY = [
 # Enums & data classes
 # ---------------------------------------------------------------------------
 
+
 class BrowserKind(Enum):
     CHROMIUM = "chromium"
     FIREFOX = "firefox"
@@ -109,11 +110,12 @@ class BrowserKind(Enum):
 @dataclass
 class PerformanceMetrics:
     """Core Web Vitals and custom performance measurements."""
-    lcp_ms: Optional[float] = None         # Largest Contentful Paint
-    fid_ms: Optional[float] = None         # First Input Delay
-    cls_score: Optional[float] = None      # Cumulative Layout Shift
-    fcp_ms: Optional[float] = None         # First Contentful Paint
-    ttfb_ms: Optional[float] = None        # Time to First Byte
+
+    lcp_ms: Optional[float] = None  # Largest Contentful Paint
+    fid_ms: Optional[float] = None  # First Input Delay
+    cls_score: Optional[float] = None  # Cumulative Layout Shift
+    fcp_ms: Optional[float] = None  # First Contentful Paint
+    ttfb_ms: Optional[float] = None  # Time to First Byte
     dom_content_loaded_ms: Optional[float] = None
     load_event_ms: Optional[float] = None
     total_js_heap_mb: Optional[float] = None
@@ -207,6 +209,7 @@ class TestSuiteResult:
 # ---------------------------------------------------------------------------
 # Network interceptor
 # ---------------------------------------------------------------------------
+
 
 class SC2APIInterceptor:
     """Intercepts network requests and serves mock SC2 API responses."""
@@ -315,6 +318,7 @@ class SC2APIInterceptor:
 # Assertion helpers
 # ---------------------------------------------------------------------------
 
+
 class DashboardAssertions:
     """Specialised assertion methods for SC2 dashboard elements."""
 
@@ -343,9 +347,7 @@ class DashboardAssertions:
         self.assert_metric_value("[data-testid='vespene']", str(expected))
 
     def assert_supply(self, used: int, cap: int) -> None:
-        self.assert_metric_value(
-            "[data-testid='supply']", f"{used}/{cap}"
-        )
+        self.assert_metric_value("[data-testid='supply']", f"{used}/{cap}")
 
     def assert_win_probability(self, min_value: float = 0.0) -> None:
         """Assert win probability is rendered and above a minimum."""
@@ -358,9 +360,9 @@ class DashboardAssertions:
             value = float(numeric) / 100.0 if float(numeric) > 1 else float(numeric)
         except ValueError:
             raise AssertionError(f"Cannot parse win probability: '{text}'")
-        assert value >= min_value, (
-            f"Win probability {value:.2f} below minimum {min_value:.2f}"
-        )
+        assert (
+            value >= min_value
+        ), f"Win probability {value:.2f} below minimum {min_value:.2f}"
 
     def assert_unit_count(self, unit_name: str, expected: int) -> None:
         selector = f"[data-testid='unit-{unit_name.lower()}']"
@@ -374,14 +376,12 @@ class DashboardAssertions:
         locator = self.page.locator(selector)
         locator.wait_for(state="hidden", timeout=timeout_ms)
 
-    def assert_table_row_count(
-        self, table_selector: str, expected_rows: int
-    ) -> None:
+    def assert_table_row_count(self, table_selector: str, expected_rows: int) -> None:
         rows = self.page.locator(f"{table_selector} tbody tr")
         actual = rows.count()
-        assert actual == expected_rows, (
-            f"Table '{table_selector}' has {actual} rows, expected {expected_rows}"
-        )
+        assert (
+            actual == expected_rows
+        ), f"Table '{table_selector}' has {actual} rows, expected {expected_rows}"
 
     def assert_chart_rendered(self, chart_selector: str) -> None:
         """Assert a chart (canvas or SVG) has rendered within its container."""
@@ -390,20 +390,19 @@ class DashboardAssertions:
         # Check for canvas or SVG child
         has_canvas = container.locator("canvas").count() > 0
         has_svg = container.locator("svg").count() > 0
-        assert has_canvas or has_svg, (
-            f"No chart (canvas/svg) found in '{chart_selector}'"
-        )
+        assert (
+            has_canvas or has_svg
+        ), f"No chart (canvas/svg) found in '{chart_selector}'"
 
     def assert_no_console_errors(self, errors: List[str]) -> None:
         """Assert no JavaScript errors were logged to console."""
-        assert len(errors) == 0, (
-            f"Console errors detected: {errors}"
-        )
+        assert len(errors) == 0, f"Console errors detected: {errors}"
 
 
 # ---------------------------------------------------------------------------
 # SC2DashboardTest
 # ---------------------------------------------------------------------------
+
 
 class SC2DashboardTest:
     """End-to-end test framework for the SC2 Zerg bot web dashboard.
@@ -469,8 +468,7 @@ class SC2DashboardTest:
             "viewport": self.viewport,
             "ignore_https_errors": True,
             "user_agent": (
-                "Mozilla/5.0 SC2DashboardTest/1.0 "
-                "(Playwright; Zerg Bot QA)"
+                "Mozilla/5.0 SC2DashboardTest/1.0 " "(Playwright; Zerg Bot QA)"
             ),
         }
 
@@ -494,9 +492,7 @@ class SC2DashboardTest:
         self._page.on(
             "console",
             lambda msg: (
-                self._console_errors.append(msg.text)
-                if msg.type == "error"
-                else None
+                self._console_errors.append(msg.text) if msg.type == "error" else None
             ),
         )
 
@@ -710,9 +706,7 @@ class SC2DashboardTest:
             )
 
         # Pixel-level comparison using raw bytes
-        diff_pixels, total_pixels = self._compare_images(
-            baseline_path, current_path
-        )
+        diff_pixels, total_pixels = self._compare_images(baseline_path, current_path)
         diff_pct = (diff_pixels / max(total_pixels, 1)) * 100.0
 
         result = VisualRegressionResult(
@@ -737,16 +731,17 @@ class SC2DashboardTest:
         or per-pixel diff when PIL is installed.
         """
         try:
-            from PIL import Image
             import numpy as np
+            from PIL import Image
 
             img_a = np.array(Image.open(path_a).convert("RGBA"))
             img_b = np.array(Image.open(path_b).convert("RGBA"))
 
             if img_a.shape != img_b.shape:
                 # Sizes differ — treat everything as a diff
-                total = max(img_a.shape[0] * img_a.shape[1],
-                            img_b.shape[0] * img_b.shape[1])
+                total = max(
+                    img_a.shape[0] * img_a.shape[1], img_b.shape[0] * img_b.shape[1]
+                )
                 return total, total
 
             diff = np.any(img_a != img_b, axis=-1)
@@ -897,17 +892,13 @@ class SC2DashboardTest:
         self.fill("[data-testid='aggression-input']", str(aggression))
         self.fill("[data-testid='expansion-input']", str(expansion_priority))
         self.click("[data-testid='save-config-btn']")
-        self.page.wait_for_selector(
-            "[data-testid='save-success']", timeout=5000
-        )
+        self.page.wait_for_selector("[data-testid='save-success']", timeout=5000)
 
     def search_replays(self, query: str) -> int:
         """Use the replay search box and return the number of results."""
         self.fill("[data-testid='replay-search']", query)
         self.page.keyboard.press("Enter")
-        self.page.wait_for_selector(
-            "[data-testid='replay-results']", timeout=5000
-        )
+        self.page.wait_for_selector("[data-testid='replay-results']", timeout=5000)
         return self.page.locator("[data-testid='replay-result-row']").count()
 
     # ------------------------------------------------------------------
@@ -956,9 +947,7 @@ class SC2DashboardTest:
             result = self.run_test(name, fn)
             suite_result.results.append(result)
 
-        suite_result.total_duration_ms = (
-            (time.perf_counter() - suite_start) * 1000.0
-        )
+        suite_result.total_duration_ms = (time.perf_counter() - suite_start) * 1000.0
         logger.info("Suite complete: %s", suite_result.summary())
         return suite_result
 
@@ -993,15 +982,11 @@ class SC2DashboardTest:
                 headless=True,
             )
             with tester.session():
-                suite = tester.run_suite(
-                    f"E2E ({browser_kind.value})", tests
-                )
+                suite = tester.run_suite(f"E2E ({browser_kind.value})", tests)
             return browser_kind.value, suite
 
         with ProcessPoolExecutor(max_workers=max_workers) as executor:
-            futures = {
-                executor.submit(_run_in_browser, bk): bk for bk in browsers
-            }
+            futures = {executor.submit(_run_in_browser, bk): bk for bk in browsers}
             for future in as_completed(futures):
                 try:
                     browser_name, suite = future.result()
@@ -1016,6 +1001,7 @@ class SC2DashboardTest:
 # ---------------------------------------------------------------------------
 # Predefined test cases
 # ---------------------------------------------------------------------------
+
 
 def test_dashboard_loads(t: SC2DashboardTest) -> None:
     """Verify the main dashboard page loads and renders key elements."""
@@ -1050,9 +1036,9 @@ def test_build_order_timeline(t: SC2DashboardTest) -> None:
     t.navigate("/build-order")
     t.assertions.assert_element_visible("[data-testid='build-timeline']")
     entries = t.page.locator("[data-testid='build-entry']")
-    assert entries.count() == len(MOCK_BUILD_ORDER), (
-        f"Expected {len(MOCK_BUILD_ORDER)} build entries, got {entries.count()}"
-    )
+    assert entries.count() == len(
+        MOCK_BUILD_ORDER
+    ), f"Expected {len(MOCK_BUILD_ORDER)} build entries, got {entries.count()}"
 
 
 def test_match_history(t: SC2DashboardTest) -> None:
@@ -1109,9 +1095,9 @@ def test_performance_thresholds(t: SC2DashboardTest) -> None:
     # Allow time for layout to stabilise
     t.page.wait_for_timeout(2000)
     metrics = t.collect_performance_metrics()
-    assert metrics.passes_thresholds(), (
-        f"Performance thresholds not met: {metrics.summary()}"
-    )
+    assert (
+        metrics.passes_thresholds()
+    ), f"Performance thresholds not met: {metrics.summary()}"
 
 
 def test_visual_regression_home(t: SC2DashboardTest) -> None:
@@ -1168,8 +1154,12 @@ def main() -> None:
         default="chromium",
         help="Browser engine",
     )
-    parser.add_argument("--headed", action="store_true", help="Run with visible browser")
-    parser.add_argument("--video", action="store_true", help="Record video of test runs")
+    parser.add_argument(
+        "--headed", action="store_true", help="Run with visible browser"
+    )
+    parser.add_argument(
+        "--video", action="store_true", help="Record video of test runs"
+    )
     parser.add_argument("--trace", action="store_true", help="Capture Playwright trace")
     parser.add_argument("--slow-mo", type=int, default=0, help="Slow down actions (ms)")
     parser.add_argument(

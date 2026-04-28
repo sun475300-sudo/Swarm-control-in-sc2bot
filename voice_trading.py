@@ -4,6 +4,7 @@
 음성 -> 텍스트 -> 명령 파싱 파이프라인의 기본 구조.
 실제 음성 인식은 향후 SpeechRecognition / Whisper 통합 예정.
 """
+
 import logging
 from datetime import datetime
 
@@ -113,11 +114,16 @@ class VoiceTradeInterface:
 
         # 종목 코드 추출 시도 (예: "비트코인", "BTC", "KRW-BTC")
         ticker_map = {
-            "비트코인": "KRW-BTC", "btc": "KRW-BTC",
-            "이더리움": "KRW-ETH", "eth": "KRW-ETH",
-            "리플": "KRW-XRP", "xrp": "KRW-XRP",
-            "솔라나": "KRW-SOL", "sol": "KRW-SOL",
-            "도지": "KRW-DOGE", "doge": "KRW-DOGE",
+            "비트코인": "KRW-BTC",
+            "btc": "KRW-BTC",
+            "이더리움": "KRW-ETH",
+            "eth": "KRW-ETH",
+            "리플": "KRW-XRP",
+            "xrp": "KRW-XRP",
+            "솔라나": "KRW-SOL",
+            "sol": "KRW-SOL",
+            "도지": "KRW-DOGE",
+            "doge": "KRW-DOGE",
         }
         for name, ticker in ticker_map.items():
             if name in text_lower:
@@ -126,6 +132,7 @@ class VoiceTradeInterface:
 
         # 금액 추출 시도 (숫자 + 만/원)
         import re
+
         amount_match = re.search(r"(\d+(?:\.\d+)?)\s*만\s*원?", text_lower)
         if amount_match:
             result["amount"] = float(amount_match.group(1)) * 10000
@@ -188,5 +195,7 @@ if __name__ == "__main__":
     for cmd in test_commands:
         result = vi.process_voice_command(text=cmd)
         print(f"입력: '{cmd}'")
-        print(f"  -> action={result['action']}, ticker={result['ticker']}, amount={result['amount']}")
+        print(
+            f"  -> action={result['action']}, ticker={result['ticker']}, amount={result['amount']}"
+        )
         print()

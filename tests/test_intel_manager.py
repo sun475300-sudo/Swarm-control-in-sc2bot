@@ -4,8 +4,9 @@ Unit Tests for Intel Manager
 Tests threat detection, build pattern recognition, and confidence scoring.
 """
 
+from unittest.mock import MagicMock, Mock
+
 import pytest
-from unittest.mock import Mock, MagicMock
 
 
 class MockUnit:
@@ -33,6 +34,7 @@ class TestIntelManager:
         """Setup before each test"""
         try:
             from wicked_zerg_challenger.intel_manager import IntelManager
+
             self.bot = MockBot()
             self.intel = IntelManager(self.bot)
         except ImportError:

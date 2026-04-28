@@ -21,23 +21,27 @@ try:
     from sc2.ids.unit_typeid import UnitTypeId
     from sc2.position import Point2
 except ImportError:
+
     class AbilityId:
         EFFECT_INJECTLARVA = "EFFECT_INJECTLARVA"
         BUILD_CREEPTUMOR_QUEEN = "BUILD_CREEPTUMOR_QUEEN"
         TRANSFUSION_TRANSFUSION = "TRANSFUSION_TRANSFUSION"
+
     class UnitTypeId:
         QUEEN = "QUEEN"
         HATCHERY = "HATCHERY"
         LAIR = "LAIR"
         HIVE = "HIVE"
+
     Point2 = tuple
 
 
 class QueenSpecialization(Enum):
     """여왕 전문 역할 - 한번 배정되면 절대 벗어나지 않음"""
-    PUMP = "pump"       # 인젝트 전담 (에너지 25 예약)
-    CREEP = "creep"     # 점막 확장 전담 (A* 고속도로)
-    COMBAT = "combat"   # 본대 호위 + 수혈
+
+    PUMP = "pump"  # 인젝트 전담 (에너지 25 예약)
+    CREEP = "creep"  # 점막 확장 전담 (A* 고속도로)
+    COMBAT = "combat"  # 본대 호위 + 수혈
 
 
 class QueenSpecializationManager:
@@ -127,8 +131,11 @@ class QueenSpecializationManager:
 
         # 기존 CREEP 퀸 유지
         existing_creep = [
-            qt for qt, spec in self.specializations.items()
-            if spec == QueenSpecialization.CREEP and qt in current_tags and qt not in assigned
+            qt
+            for qt, spec in self.specializations.items()
+            if spec == QueenSpecialization.CREEP
+            and qt in current_tags
+            and qt not in assigned
         ]
         for qt in existing_creep[:creep_count]:
             assigned.add(qt)
@@ -229,7 +236,9 @@ class QueenSpecializationManager:
         try:
             if self.bot.has_creep(queen.position):
                 # 타겟 방향으로 9거리에 종양 설치
-                tumor_pos = queen.position.towards(target, min(9.0, queen.distance_to(target)))
+                tumor_pos = queen.position.towards(
+                    target, min(9.0, queen.distance_to(target))
+                )
                 self.bot.do(queen(AbilityId.BUILD_CREEPTUMOR_QUEEN, tumor_pos))
                 self.last_creep_time[queen.tag] = current_time
             else:
@@ -276,9 +285,15 @@ class QueenSpecializationManager:
 
         # 우선순위 가중치 (높을수록 우선)
         UNIT_VALUE = {
-            "ULTRALISK": 100, "BROODLORD": 90, "QUEEN": 85,
-            "RAVAGER": 70, "LURKER": 65, "ROACH": 50,
-            "HYDRALISK": 45, "MUTALISK": 40, "ZERGLING": 30,
+            "ULTRALISK": 100,
+            "BROODLORD": 90,
+            "QUEEN": 85,
+            "RAVAGER": 70,
+            "LURKER": 65,
+            "ROACH": 50,
+            "HYDRALISK": 45,
+            "MUTALISK": 40,
+            "ZERGLING": 30,
         }
 
         best_target = None

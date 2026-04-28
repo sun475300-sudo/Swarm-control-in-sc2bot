@@ -36,50 +36,105 @@ DEFAULT_DIM = 64
 MAX_CANDIDATES = 500
 
 ZERG_UNITS = [
-    "zergling", "baneling", "roach", "ravager", "hydralisk",
-    "lurker", "mutalisk", "corruptor", "brood_lord", "viper",
-    "infestor", "ultralisk", "queen", "overlord", "overseer",
+    "zergling",
+    "baneling",
+    "roach",
+    "ravager",
+    "hydralisk",
+    "lurker",
+    "mutalisk",
+    "corruptor",
+    "brood_lord",
+    "viper",
+    "infestor",
+    "ultralisk",
+    "queen",
+    "overlord",
+    "overseer",
     "swarm_host",
 ]
 
 TERRAN_UNITS = [
-    "marine", "marauder", "reaper", "ghost", "hellion",
-    "hellbat", "widow_mine", "siege_tank", "cyclone", "thor",
-    "viking", "medivac", "liberator", "banshee", "battlecruiser",
+    "marine",
+    "marauder",
+    "reaper",
+    "ghost",
+    "hellion",
+    "hellbat",
+    "widow_mine",
+    "siege_tank",
+    "cyclone",
+    "thor",
+    "viking",
+    "medivac",
+    "liberator",
+    "banshee",
+    "battlecruiser",
     "raven",
 ]
 
 PROTOSS_UNITS = [
-    "zealot", "stalker", "sentry", "adept", "high_templar",
-    "dark_templar", "archon", "immortal", "colossus", "disruptor",
-    "warp_prism", "observer", "phoenix", "void_ray", "oracle",
-    "carrier", "tempest", "mothership",
+    "zealot",
+    "stalker",
+    "sentry",
+    "adept",
+    "high_templar",
+    "dark_templar",
+    "archon",
+    "immortal",
+    "colossus",
+    "disruptor",
+    "warp_prism",
+    "observer",
+    "phoenix",
+    "void_ray",
+    "oracle",
+    "carrier",
+    "tempest",
+    "mothership",
 ]
 
 ALL_UNITS = ZERG_UNITS + TERRAN_UNITS + PROTOSS_UNITS
 
 RESOURCE_KEYS = [
-    "minerals", "vespene", "supply_used", "supply_cap",
-    "worker_count", "base_count",
+    "minerals",
+    "vespene",
+    "supply_used",
+    "supply_cap",
+    "worker_count",
+    "base_count",
 ]
 
 TECH_KEYS = [
-    "has_lair", "has_hive", "has_spire", "has_greater_spire",
-    "has_infestation_pit", "has_ultra_cavern", "has_lurker_den",
-    "has_bane_nest", "has_roach_warren", "has_hydra_den",
-    "melee_upgrades", "ranged_upgrades", "armor_upgrades",
+    "has_lair",
+    "has_hive",
+    "has_spire",
+    "has_greater_spire",
+    "has_infestation_pit",
+    "has_ultra_cavern",
+    "has_lurker_den",
+    "has_bane_nest",
+    "has_roach_warren",
+    "has_hydra_den",
+    "melee_upgrades",
+    "ranged_upgrades",
+    "armor_upgrades",
     "air_upgrades",
 ]
 
 MAP_CONTROL_KEYS = [
-    "creep_coverage", "vision_coverage", "enemy_bases_scouted",
-    "expansions_taken", "watchtower_count",
+    "creep_coverage",
+    "vision_coverage",
+    "enemy_bases_scouted",
+    "expansions_taken",
+    "watchtower_count",
 ]
 
 
 # ---------------------------------------------------------------------------
 # Enums
 # ---------------------------------------------------------------------------
+
 
 class IndexType(Enum):
     BRUTE_FORCE = auto()
@@ -96,6 +151,7 @@ class DistanceMetric(Enum):
 # ---------------------------------------------------------------------------
 # Vector math helpers
 # ---------------------------------------------------------------------------
+
 
 def _vec_dot(a: List[float], b: List[float]) -> float:
     s = 0.0
@@ -137,7 +193,9 @@ def _manhattan_dist(a: List[float], b: List[float]) -> float:
     return sum(abs(a[i] - b[i]) for i in range(len(a)))
 
 
-def _get_distance_fn(metric: DistanceMetric) -> Callable[[List[float], List[float]], float]:
+def _get_distance_fn(
+    metric: DistanceMetric,
+) -> Callable[[List[float], List[float]], float]:
     if metric == DistanceMetric.EUCLIDEAN:
         return _euclidean_dist
     elif metric == DistanceMetric.COSINE:
@@ -151,9 +209,11 @@ def _get_distance_fn(metric: DistanceMetric) -> Callable[[List[float], List[floa
 # Data classes
 # ---------------------------------------------------------------------------
 
+
 @dataclass
 class VectorEntry:
     """A single entry in the vector store."""
+
     entry_id: str
     vector: List[float]
     metadata: Dict[str, Any] = field(default_factory=dict)
@@ -163,7 +223,9 @@ class VectorEntry:
     def dim(self) -> int:
         return len(self.vector)
 
-    def distance_to(self, other: List[float], metric: DistanceMetric = DistanceMetric.EUCLIDEAN) -> float:
+    def distance_to(
+        self, other: List[float], metric: DistanceMetric = DistanceMetric.EUCLIDEAN
+    ) -> float:
         fn = _get_distance_fn(metric)
         return fn(self.vector, other)
 
@@ -171,6 +233,7 @@ class VectorEntry:
 @dataclass
 class SearchResult:
     """One result from a nearest-neighbor search."""
+
     entry_id: str
     distance: float
     metadata: Dict[str, Any] = field(default_factory=dict)
@@ -182,6 +245,7 @@ class SearchResult:
 # ---------------------------------------------------------------------------
 # LSHIndex
 # ---------------------------------------------------------------------------
+
 
 class LSHIndex:
     """
@@ -225,7 +289,7 @@ class LSHIndex:
         h = 0
         for bit_idx, plane in enumerate(self._planes[table_idx]):
             if _vec_dot(vec, plane) >= 0:
-                h |= (1 << bit_idx)
+                h |= 1 << bit_idx
         return h
 
     def insert(self, entry_id: str, vector: List[float]) -> None:
@@ -290,6 +354,7 @@ class LSHIndex:
 # ---------------------------------------------------------------------------
 # HNSWIndex
 # ---------------------------------------------------------------------------
+
 
 class HNSWIndex:
     """
@@ -491,6 +556,7 @@ class HNSWIndex:
 # GameStateEncoder
 # ---------------------------------------------------------------------------
 
+
 class GameStateEncoder:
     """
     Encode a raw SC2 game state dictionary into a fixed-dimension dense vector.
@@ -583,9 +649,15 @@ class GameStateEncoder:
         """
         # Simple synthetic encoding
         matchup_map = {
-            "ZvT": 0.1, "ZvP": 0.2, "ZvZ": 0.3,
-            "TvZ": 0.4, "TvT": 0.5, "TvP": 0.6,
-            "PvZ": 0.7, "PvT": 0.8, "PvP": 0.9,
+            "ZvT": 0.1,
+            "ZvP": 0.2,
+            "ZvZ": 0.3,
+            "TvZ": 0.4,
+            "TvT": 0.5,
+            "TvP": 0.6,
+            "PvZ": 0.7,
+            "PvT": 0.8,
+            "PvP": 0.9,
         }
         phase_map = {"early": 0.2, "mid": 0.5, "late": 0.9}
 
@@ -602,6 +674,7 @@ class GameStateEncoder:
 # ---------------------------------------------------------------------------
 # VectorStore
 # ---------------------------------------------------------------------------
+
 
 class VectorStore:
     """
@@ -661,9 +734,7 @@ class VectorStore:
     ) -> None:
         """Insert or update a vector entry."""
         if len(vector) != self.dim:
-            raise ValueError(
-                f"Vector dim {len(vector)} != store dim {self.dim}"
-            )
+            raise ValueError(f"Vector dim {len(vector)} != store dim {self.dim}")
         entry = VectorEntry(entry_id=entry_id, vector=vector, metadata=metadata or {})
         self._entries[entry_id] = entry
 
@@ -728,11 +799,13 @@ class VectorStore:
         scored.sort()
         results = []
         for d, eid in scored[:k]:
-            results.append(SearchResult(
-                entry_id=eid,
-                distance=d,
-                metadata=self._entries[eid].metadata,
-            ))
+            results.append(
+                SearchResult(
+                    entry_id=eid,
+                    distance=d,
+                    metadata=self._entries[eid].metadata,
+                )
+            )
         return results
 
     def _lsh_search(
@@ -748,11 +821,13 @@ class VectorStore:
             raw = [(eid, d) for eid, d in raw if eid in allowed]
         results = []
         for eid, d in raw[:k]:
-            results.append(SearchResult(
-                entry_id=eid,
-                distance=d,
-                metadata=self._entries[eid].metadata,
-            ))
+            results.append(
+                SearchResult(
+                    entry_id=eid,
+                    distance=d,
+                    metadata=self._entries[eid].metadata,
+                )
+            )
         return results
 
     def _hnsw_search(
@@ -768,15 +843,18 @@ class VectorStore:
             raw = [(eid, d) for eid, d in raw if eid in allowed]
         results = []
         for eid, d in raw[:k]:
-            results.append(SearchResult(
-                entry_id=eid,
-                distance=d,
-                metadata=self._entries[eid].metadata,
-            ))
+            results.append(
+                SearchResult(
+                    entry_id=eid,
+                    distance=d,
+                    metadata=self._entries[eid].metadata,
+                )
+            )
         return results
 
     def _filter_entries(
-        self, filter_metadata: Optional[Dict[str, Any]],
+        self,
+        filter_metadata: Optional[Dict[str, Any]],
     ) -> Set[str]:
         if not filter_metadata:
             return set(self._entries.keys())
@@ -824,6 +902,7 @@ class VectorStore:
 # ---------------------------------------------------------------------------
 # Helper: generate synthetic game states for testing
 # ---------------------------------------------------------------------------
+
 
 def _make_random_state(rng: random.Random, race: str = "Zerg") -> Dict[str, Any]:
     """Generate a plausible random game state for benchmarking."""
@@ -873,6 +952,7 @@ def _make_random_state(rng: random.Random, race: str = "Zerg") -> Dict[str, Any]
 # ---------------------------------------------------------------------------
 # Demo
 # ---------------------------------------------------------------------------
+
 
 def demo() -> None:
     """Demonstrate Phase 629 Vector Database with benchmarks."""
@@ -926,7 +1006,9 @@ def demo() -> None:
         print(f"    Query time: {avg_query_ms:.2f} ms avg ({num_queries} queries)")
         print(f"    Top-5 results:")
         for r in results:
-            print(f"      {r.entry_id}  dist={r.distance:.4f}  race={r.metadata.get('race')}")
+            print(
+                f"      {r.entry_id}  dist={r.distance:.4f}  race={r.metadata.get('race')}"
+            )
 
         print(f"    Stats: {store.stats()}")
 
@@ -948,14 +1030,17 @@ def demo() -> None:
         for phase in ("early", "mid", "late"):
             ref = encoder.matchup_phase_vector(matchup, phase)
             norm = _vec_norm(ref)
-            print(f"    {matchup}/{phase}: norm={norm:.3f}, first3={[round(x,3) for x in ref[:3]]}")
+            print(
+                f"    {matchup}/{phase}: norm={norm:.3f}, first3={[round(x,3) for x in ref[:3]]}"
+            )
 
     # --- Metadata-filtered search ---
     print("\n[5] Metadata-filtered search (Zerg only):")
     store_bf = VectorStore(dim=DEFAULT_DIM, index_type=IndexType.BRUTE_FORCE)
     for i, vec in enumerate(vectors):
         store_bf.add(
-            f"game_{i:04d}", vec,
+            f"game_{i:04d}",
+            vec,
             metadata={"race": states[i]["race"]},
         )
     filtered = store_bf.search(

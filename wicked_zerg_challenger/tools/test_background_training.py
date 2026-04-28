@@ -4,12 +4,13 @@ Background Training System Test
 백그라운드 학습 시스템 테스트 스크립트
 """
 
+import logging
 import sys
 import time
-import numpy as np
-from pathlib import Path
 from datetime import datetime
-import logging
+from pathlib import Path
+
+import numpy as np
 
 logger = logging.getLogger("TestBackgroundTraining")
 
@@ -19,8 +20,10 @@ project_root = script_dir.parent.parent
 if str(project_root) not in sys.path:
     sys.path.insert(0, str(project_root))
 
-from wicked_zerg_challenger.tools.background_parallel_learner import BackgroundParallelLearner
 from wicked_zerg_challenger.local_training.rl_agent import RLAgent
+from wicked_zerg_challenger.tools.background_parallel_learner import (
+    BackgroundParallelLearner,
+)
 
 
 def create_dummy_experience_data(path: Path, num_steps: int = 50) -> None:

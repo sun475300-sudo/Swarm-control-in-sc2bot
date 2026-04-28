@@ -5,9 +5,9 @@ Generates HTML dashboard for visualizing test results
 
 import json
 import os
-from pathlib import Path
 from datetime import datetime
-from typing import Dict, List, Any
+from pathlib import Path
+from typing import Any, Dict, List
 
 
 class TestDashboard:

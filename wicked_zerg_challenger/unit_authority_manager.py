@@ -4,26 +4,29 @@ Unit Authority Manager - 유닛 제어 권한 관리 시스템
 여러 시스템이 같은 유닛을 제어하려 할 때 충돌을 방지합니다
 """
 
-from typing import Dict, Set, Optional, List
-from enum import IntEnum
 from collections import defaultdict
+from enum import IntEnum
+from typing import Dict, List, Optional, Set
+
 from utils.logger import get_logger
 
 try:
     from sc2.bot_ai import BotAI
 except ImportError:
+
     class BotAI:
         pass
 
 
 class AuthorityLevel(IntEnum):
     """유닛 제어 권한 레벨"""
+
     WORKER_PROTECTED = 125  # ★ 일꾼 보호: 경제 일꾼은 전투 시스템에 빼앗기지 않음
     DEFENSE = 100
     WORKER_COMBAT = 90
     SPELL_UNIT = 80
     COMBAT = 70
-    TACTICAL = 65       # ★ 견제/드랍 등 전술적 제어 (COMBAT과 HARASSMENT 사이)
+    TACTICAL = 65  # ★ 견제/드랍 등 전술적 제어 (COMBAT과 HARASSMENT 사이)
     HARASSMENT = 60
     MULTI_PRONG = 50
     ECONOMY = 40
@@ -33,7 +36,9 @@ class AuthorityLevel(IntEnum):
 
 
 class UnitAuthority:
-    def __init__(self, unit_tag: int, owner: str, level: AuthorityLevel, request_time: float):
+    def __init__(
+        self, unit_tag: int, owner: str, level: AuthorityLevel, request_time: float
+    ):
         self.unit_tag = unit_tag
         self.owner = owner
         self.level = level
@@ -69,7 +74,9 @@ class UnitAuthorityManager:
         for worker in self.bot.workers:
             if worker.is_gathering or worker.is_returning:
                 # 자원 채취 중인 일꾼은 보호
-                self.request_unit(worker.tag, "EconomyManager", AuthorityLevel.WORKER_PROTECTED)
+                self.request_unit(
+                    worker.tag, "EconomyManager", AuthorityLevel.WORKER_PROTECTED
+                )
                 protected_count += 1
             if protected_count >= min_protected:
                 break
@@ -79,11 +86,16 @@ class UnitAuthorityManager:
         if unit_tag not in self.authorities:
             return False
         auth = self.authorities[unit_tag]
-        return auth.level == AuthorityLevel.WORKER_PROTECTED and auth.owner == "EconomyManager"
+        return (
+            auth.level == AuthorityLevel.WORKER_PROTECTED
+            and auth.owner == "EconomyManager"
+        )
 
-    def request_unit(self, unit_tag: int, requester: str, level: AuthorityLevel) -> bool:
+    def request_unit(
+        self, unit_tag: int, requester: str, level: AuthorityLevel
+    ) -> bool:
         game_time = getattr(self.bot, "time", 0)
-        
+
         if unit_tag in self.authorities:
             current = self.authorities[unit_tag]
             if current.owner == requester:
@@ -94,8 +106,10 @@ class UnitAuthorityManager:
                 self.total_conflicts += 1
                 return True
             return False
-        
-        self.authorities[unit_tag] = UnitAuthority(unit_tag, requester, level, game_time)
+
+        self.authorities[unit_tag] = UnitAuthority(
+            unit_tag, requester, level, game_time
+        )
         self.system_units[requester].add(unit_tag)
         return True
 
@@ -109,15 +123,24 @@ class UnitAuthorityManager:
         return True
 
     def has_authority(self, unit_tag: int, requester: str) -> bool:
-        return unit_tag in self.authorities and self.authorities[unit_tag].owner == requester
+        return (
+            unit_tag in self.authorities
+            and self.authorities[unit_tag].owner == requester
+        )
 
-    def _transfer_authority(self, unit_tag: int, new_owner: str, level: AuthorityLevel, game_time: float):
+    def _transfer_authority(
+        self, unit_tag: int, new_owner: str, level: AuthorityLevel, game_time: float
+    ):
         old = self.authorities[unit_tag]
         self.system_units[old.owner].discard(unit_tag)
-        self.authorities[unit_tag] = UnitAuthority(unit_tag, new_owner, level, game_time)
+        self.authorities[unit_tag] = UnitAuthority(
+            unit_tag, new_owner, level, game_time
+        )
         self.system_units[new_owner].add(unit_tag)
 
-    def request_authority(self, unit_tags, level: AuthorityLevel, requester: str, game_loop: int = 0) -> set:
+    def request_authority(
+        self, unit_tags, level: AuthorityLevel, requester: str, game_loop: int = 0
+    ) -> set:
         """호환 메서드: 여러 유닛에 대해 권한 요청 (set 기반)"""
         granted = set()
         for tag in unit_tags:
@@ -133,7 +156,10 @@ class UnitAuthorityManager:
 
     def _cleanup_expired_authorities(self):
         game_time = getattr(self.bot, "time", 0)
-        expired = [(tag, auth.owner) for tag, auth in self.authorities.items()
-                   if game_time - auth.last_command_time > self.AUTHORITY_TIMEOUT]
+        expired = [
+            (tag, auth.owner)
+            for tag, auth in self.authorities.items()
+            if game_time - auth.last_command_time > self.AUTHORITY_TIMEOUT
+        ]
         for tag, owner in expired:
             self.release_unit(tag, owner)

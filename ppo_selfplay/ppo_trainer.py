@@ -3,13 +3,14 @@ Phase 348: PPO Trainer
 PyTorch PPO (Proximal Policy Optimization) trainer for SC2 bot self-play.
 """
 
+from dataclasses import dataclass, field
+from typing import Dict, List, Optional, Tuple
+
+import numpy as np
 import torch
 import torch.nn as nn
 import torch.optim as optim
 from torch.distributions import Categorical
-import numpy as np
-from dataclasses import dataclass, field
-from typing import List, Dict, Optional, Tuple
 
 
 @dataclass
@@ -125,12 +126,21 @@ class PPOTrainer:
             with torch.no_grad():
                 action, log_prob, value = self.model.get_action(obs_tensor, mask)
             next_obs, reward, done, _ = env.step(action.item())
-            self.buffer.add(obs_tensor.squeeze(0), action.item(), reward,
-                            value.item(), log_prob.item(), done, mask)
+            self.buffer.add(
+                obs_tensor.squeeze(0),
+                action.item(),
+                reward,
+                value.item(),
+                log_prob.item(),
+                done,
+                mask,
+            )
             obs = env.reset() if done else next_obs
         self.total_steps += self.cfg.n_steps
 
-    def compute_gae(self, rewards, values, dones, last_value: float = 0.0) -> Tuple[torch.Tensor, torch.Tensor]:
+    def compute_gae(
+        self, rewards, values, dones, last_value: float = 0.0
+    ) -> Tuple[torch.Tensor, torch.Tensor]:
         """Generalized Advantage Estimation."""
         n = len(rewards)
         advantages = torch.zeros(n)
@@ -146,7 +156,12 @@ class PPOTrainer:
         returns = advantages + values
         return advantages, returns
 
-    def update_policy(self, batch: Dict[str, torch.Tensor], advantages: torch.Tensor, returns: torch.Tensor) -> Dict[str, float]:
+    def update_policy(
+        self,
+        batch: Dict[str, torch.Tensor],
+        advantages: torch.Tensor,
+        returns: torch.Tensor,
+    ) -> Dict[str, float]:
         """Single PPO update step on a minibatch."""
         logits, values = self.model(batch["obs"])
         dist = Categorical(logits=logits)
@@ -159,23 +174,37 @@ class PPOTrainer:
         surr2 = torch.clamp(ratio, 1 - self.cfg.clip_eps, 1 + self.cfg.clip_eps) * adv
         policy_loss = -torch.min(surr1, surr2).mean()
         value_loss = nn.functional.mse_loss(values, returns)
-        loss = policy_loss + self.cfg.value_coef * value_loss - self.cfg.entropy_coef * entropy
+        loss = (
+            policy_loss
+            + self.cfg.value_coef * value_loss
+            - self.cfg.entropy_coef * entropy
+        )
 
         self.optimizer.zero_grad()
         loss.backward()
         nn.utils.clip_grad_norm_(self.model.parameters(), self.cfg.max_grad_norm)
         self.optimizer.step()
-        return {"policy_loss": policy_loss.item(), "value_loss": value_loss.item(), "entropy": entropy.item()}
+        return {
+            "policy_loss": policy_loss.item(),
+            "value_loss": value_loss.item(),
+            "entropy": entropy.item(),
+        }
 
     def train_epoch(self) -> Dict[str, float]:
         """Run n_epochs of PPO updates over the buffer."""
         data = self.buffer.get_tensors()
-        advantages, returns = self.compute_gae(data["rewards"], data["values"], data["dones"])
-        metrics: Dict[str, List[float]] = {"policy_loss": [], "value_loss": [], "entropy": []}
+        advantages, returns = self.compute_gae(
+            data["rewards"], data["values"], data["dones"]
+        )
+        metrics: Dict[str, List[float]] = {
+            "policy_loss": [],
+            "value_loss": [],
+            "entropy": [],
+        }
         indices = torch.randperm(self.cfg.n_steps)
         for epoch in range(self.cfg.n_epochs):
             for start in range(0, self.cfg.n_steps, self.cfg.batch_size):
-                idx = indices[start: start + self.cfg.batch_size]
+                idx = indices[start : start + self.cfg.batch_size]
                 batch = {k: v[idx] for k, v in data.items()}
                 step_metrics = self.update_policy(batch, advantages[idx], returns[idx])
                 for k, v in step_metrics.items():

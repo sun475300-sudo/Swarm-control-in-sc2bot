@@ -16,20 +16,20 @@ Run Training Pipeline - 독립 실행 훈련 스크립트
 """
 
 import argparse
+import logging
 import os
 import sys
 import time
 from pathlib import Path
 
 import numpy as np
-import logging
 
 logger = logging.getLogger("RunTrainingPipeline")
 
 # 프로젝트 루트 경로 설정
 SCRIPT_DIR = Path(__file__).resolve().parent
 PROJECT_ROOT = SCRIPT_DIR.parent  # wicked_zerg_challenger/local_training
-BOT_ROOT = PROJECT_ROOT.parent    # wicked_zerg_challenger/
+BOT_ROOT = PROJECT_ROOT.parent  # wicked_zerg_challenger/
 
 sys.path.insert(0, str(BOT_ROOT))
 sys.path.insert(0, str(PROJECT_ROOT))
@@ -87,9 +87,7 @@ def run_training_cycle(pipeline, rl_agent, cycle_num):
     )
 
     # 4. 메트릭 계산 (경험 기반 추정)
-    avg_reward = float(
-        np.mean([np.sum(e["rewards"]) for e in experiences])
-    )
+    avg_reward = float(np.mean([np.sum(e["rewards"]) for e in experiences]))
     # Win rate 추정: 최종 reward > 0 이면 승리로 간주
     wins = sum(1 for e in experiences if np.sum(e["rewards"]) > 0)
     win_rate = wins / len(experiences) if experiences else 0.0
@@ -123,30 +121,31 @@ def run_training_cycle(pipeline, rl_agent, cycle_num):
 def main():
     parser = argparse.ArgumentParser(description="SC2 Bot Training Pipeline")
     parser.add_argument(
-        "--cycles", type=int, default=1,
-        help="Number of training cycles (default: 1)"
+        "--cycles", type=int, default=1, help="Number of training cycles (default: 1)"
     )
     parser.add_argument(
-        "--learning-rate", type=float, default=0.001,
-        help="Learning rate (default: 0.001)"
+        "--learning-rate",
+        type=float,
+        default=0.001,
+        help="Learning rate (default: 0.001)",
     )
     parser.add_argument(
-        "--model-path", type=str, default=None,
-        help="Base model path to start from"
+        "--model-path", type=str, default=None, help="Base model path to start from"
     )
     parser.add_argument(
-        "--summary", action="store_true",
-        help="Show training summary and exit"
+        "--summary", action="store_true", help="Show training summary and exit"
     )
     parser.add_argument(
-        "--buffer-dir", type=str, default=None,
-        help="Override experience buffer directory"
+        "--buffer-dir",
+        type=str,
+        default=None,
+        help="Override experience buffer directory",
     )
     args = parser.parse_args()
 
     # Pipeline & Agent 초기화
-    from training_pipeline import TrainingPipeline
     from rl_agent import RLAgent
+    from training_pipeline import TrainingPipeline
 
     pipeline = TrainingPipeline()
 

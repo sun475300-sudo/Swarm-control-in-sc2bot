@@ -4,6 +4,7 @@
 REST API 엔드포인트 정의.
 실제 서버 구현은 향후 aiohttp/FastAPI 통합 예정.
 """
+
 import json
 import logging
 from datetime import datetime
@@ -38,7 +39,12 @@ class MobileAPI:
             "description": "포트폴리오 히스토리 조회",
             "auth_required": True,
             "params": [
-                {"name": "days", "type": "int", "default": 7, "description": "조회 기간 (일)"},
+                {
+                    "name": "days",
+                    "type": "int",
+                    "default": 7,
+                    "description": "조회 기간 (일)",
+                },
             ],
             "response": {"history": "list of snapshots"},
         },
@@ -46,8 +52,18 @@ class MobileAPI:
             "description": "거래 내역 조회",
             "auth_required": True,
             "params": [
-                {"name": "limit", "type": "int", "default": 50, "description": "최대 건수"},
-                {"name": "ticker", "type": "str", "default": None, "description": "종목 필터"},
+                {
+                    "name": "limit",
+                    "type": "int",
+                    "default": 50,
+                    "description": "최대 건수",
+                },
+                {
+                    "name": "ticker",
+                    "type": "str",
+                    "default": None,
+                    "description": "종목 필터",
+                },
             ],
             "response": {"trades": "list"},
         },
@@ -55,8 +71,18 @@ class MobileAPI:
             "description": "매수 주문",
             "auth_required": True,
             "params": [
-                {"name": "ticker", "type": "str", "required": True, "description": "종목 코드"},
-                {"name": "amount_krw", "type": "float", "required": True, "description": "주문 금액"},
+                {
+                    "name": "ticker",
+                    "type": "str",
+                    "required": True,
+                    "description": "종목 코드",
+                },
+                {
+                    "name": "amount_krw",
+                    "type": "float",
+                    "required": True,
+                    "description": "주문 금액",
+                },
             ],
             "response": {"order_id": "str", "status": "str"},
         },
@@ -64,8 +90,18 @@ class MobileAPI:
             "description": "매도 주문",
             "auth_required": True,
             "params": [
-                {"name": "ticker", "type": "str", "required": True, "description": "종목 코드"},
-                {"name": "volume", "type": "float", "required": True, "description": "매도 수량"},
+                {
+                    "name": "ticker",
+                    "type": "str",
+                    "required": True,
+                    "description": "종목 코드",
+                },
+                {
+                    "name": "volume",
+                    "type": "float",
+                    "required": True,
+                    "description": "매도 수량",
+                },
             ],
             "response": {"order_id": "str", "status": "str"},
         },
@@ -79,7 +115,12 @@ class MobileAPI:
             "description": "특정 종목 현재가",
             "auth_required": False,
             "params": [
-                {"name": "ticker", "type": "str", "required": True, "description": "종목 코드 (URL path)"},
+                {
+                    "name": "ticker",
+                    "type": "str",
+                    "required": True,
+                    "description": "종목 코드 (URL path)",
+                },
             ],
             "response": {"ticker": "str", "price": "float", "change_pct": "float"},
         },
@@ -109,7 +150,12 @@ class MobileAPI:
             "auth_required": True,
             "params": [
                 {"name": "device_token", "type": "str", "required": True},
-                {"name": "platform", "type": "str", "required": True, "description": "ios / android"},
+                {
+                    "name": "platform",
+                    "type": "str",
+                    "required": True,
+                    "description": "ios / android",
+                },
             ],
             "response": {"registered": "bool"},
         },
@@ -138,13 +184,15 @@ class MobileAPI:
         endpoints = []
         for route, spec in self.ENDPOINTS.items():
             method, path = route.split(" ", 1)
-            endpoints.append({
-                "method": method,
-                "path": path,
-                "description": spec["description"],
-                "auth_required": spec["auth_required"],
-                "params": spec.get("params", []),
-            })
+            endpoints.append(
+                {
+                    "method": method,
+                    "path": path,
+                    "description": spec["description"],
+                    "auth_required": spec["auth_required"],
+                    "params": spec.get("params", []),
+                }
+            )
         return endpoints
 
     def get_api_spec(self) -> dict:
@@ -166,8 +214,9 @@ class MobileAPI:
             "generated_at": datetime.now().isoformat(),
         }
 
-    def handle_request(self, method: str, path: str, params: dict = None,
-                       auth_token: str = None) -> dict:
+    def handle_request(
+        self, method: str, path: str, params: dict = None, auth_token: str = None
+    ) -> dict:
         """요청 처리 (스텁)
 
         Args:
@@ -187,7 +236,9 @@ class MobileAPI:
             # 정확 매칭 또는 path param 매칭
             reg_method, reg_path = registered_route.split(" ", 1)
             if reg_method == method.upper():
-                if reg_path == path or ('{' in reg_path and self._match_path(reg_path, path)):
+                if reg_path == path or (
+                    "{" in reg_path and self._match_path(reg_path, path)
+                ):
                     matched_spec = spec
                     break
 

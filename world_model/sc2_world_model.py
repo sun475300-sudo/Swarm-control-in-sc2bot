@@ -62,13 +62,17 @@ except ImportError:
         def mean(arr, axis=None):
             if isinstance(arr, (int, float)):
                 return float(arr)
-            flat = arr if not isinstance(arr[0], list) else [x for row in arr for x in row]
+            flat = (
+                arr if not isinstance(arr[0], list) else [x for row in arr for x in row]
+            )
             return sum(flat) / len(flat) if flat else 0.0
 
         @staticmethod
         def std(arr, axis=None):
             m = _NumpyFallback.mean(arr)
-            flat = arr if not isinstance(arr[0], list) else [x for row in arr for x in row]
+            flat = (
+                arr if not isinstance(arr[0], list) else [x for row in arr for x in row]
+            )
             var = sum((x - m) ** 2 for x in flat) / len(flat) if flat else 0.0
             return math.sqrt(var)
 
@@ -115,8 +119,10 @@ except ImportError:
                     return random.gauss(0, 1)
                 if len(shape) == 1:
                     return [random.gauss(0, 1) for _ in range(shape[0])]
-                return [[random.gauss(0, 1) for _ in range(shape[1])]
-                        for _ in range(shape[0])]
+                return [
+                    [random.gauss(0, 1) for _ in range(shape[1])]
+                    for _ in range(shape[0])
+                ]
 
             @staticmethod
             def uniform(low=0.0, high=1.0, size=None):
@@ -125,8 +131,7 @@ except ImportError:
                 if isinstance(size, int):
                     return [random.uniform(low, high) for _ in range(size)]
                 r, c = size
-                return [[random.uniform(low, high) for _ in range(c)]
-                        for _ in range(r)]
+                return [[random.uniform(low, high) for _ in range(c)] for _ in range(r)]
 
             @staticmethod
             def choice(n, size=1, replace=True):
@@ -141,28 +146,46 @@ except ImportError:
 # SC2 Constants
 # ─────────────────────────────────────────────
 
-OBS_DIM = 16         # observation feature vector
-LATENT_DIM = 32      # stochastic latent size
+OBS_DIM = 16  # observation feature vector
+LATENT_DIM = 32  # stochastic latent size
 DETERMINISTIC_DIM = 64  # deterministic recurrent state size
-HIDDEN_DIM = 64      # MLP hidden layer size
-ACTION_DIM = 7       # discrete actions
+HIDDEN_DIM = 64  # MLP hidden layer size
+ACTION_DIM = 7  # discrete actions
 
 ACTION_NAMES = [
-    "train_drone", "train_zergling", "train_roach",
-    "build_overlord", "expand", "attack_move", "defend_base",
+    "train_drone",
+    "train_zergling",
+    "train_roach",
+    "build_overlord",
+    "expand",
+    "attack_move",
+    "defend_base",
 ]
 
 STATE_FEATURES = [
-    "minerals", "gas", "supply", "max_supply", "workers",
-    "army_supply", "frame", "enemy_army_supply", "threat_level",
-    "tech_level", "hatchery_count", "base_count", "queen_count",
-    "upgrade_speed", "upgrade_carapace", "upgrade_missile",
+    "minerals",
+    "gas",
+    "supply",
+    "max_supply",
+    "workers",
+    "army_supply",
+    "frame",
+    "enemy_army_supply",
+    "threat_level",
+    "tech_level",
+    "hatchery_count",
+    "base_count",
+    "queen_count",
+    "upgrade_speed",
+    "upgrade_carapace",
+    "upgrade_missile",
 ]
 
 
 # ─────────────────────────────────────────────
 # Math Utilities
 # ─────────────────────────────────────────────
+
 
 def _relu(x: float) -> float:
     return max(0.0, x)
@@ -224,14 +247,14 @@ def _vec_scale(a: List[float], s: float) -> List[float]:
 # Dense Layer & MLP
 # ─────────────────────────────────────────────
 
+
 class DenseLayer:
     """Single dense layer with Xavier initialization."""
 
     def __init__(self, in_dim: int, out_dim: int, activation: str = "relu"):
         scale = math.sqrt(2.0 / (in_dim + out_dim))
         self.weights = [
-            [random.gauss(0, scale) for _ in range(in_dim)]
-            for _ in range(out_dim)
+            [random.gauss(0, scale) for _ in range(in_dim)] for _ in range(out_dim)
         ]
         self.biases = [0.0] * out_dim
         self.activation = activation
@@ -241,7 +264,7 @@ class DenseLayer:
     def forward(self, x: List[float]) -> List[float]:
         out = []
         for i in range(self.out_dim):
-            z = _dot(self.weights[i], x[:self.in_dim]) + self.biases[i]
+            z = _dot(self.weights[i], x[: self.in_dim]) + self.biases[i]
             if self.activation == "relu":
                 z = _relu(z)
             elif self.activation == "elu":
@@ -275,6 +298,7 @@ class MLP:
 # Sequence Buffer
 # ─────────────────────────────────────────────
 
+
 @dataclass
 class TimeStep:
     observation: List[float]
@@ -292,8 +316,7 @@ class SequenceBuffer:
         self.episodes: List[List[TimeStep]] = []
         self.current_episode: List[TimeStep] = []
 
-    def add(self, obs: List[float], action: int, reward: float,
-            done: bool) -> None:
+    def add(self, obs: List[float], action: int, reward: float, done: bool) -> None:
         self.current_episode.append(TimeStep(obs, action, reward, done))
         if done:
             if len(self.current_episode) >= 2:
@@ -322,13 +345,15 @@ class SequenceBuffer:
 # RSSM: Recurrent State Space Model
 # ─────────────────────────────────────────────
 
+
 @dataclass
 class RSSMState:
     """Combined deterministic + stochastic state."""
+
     deterministic: List[float]  # h_t (GRU hidden state)
-    stochastic: List[float]    # z_t (sampled latent)
-    mean: List[float]          # mu of posterior/prior
-    log_std: List[float]       # log_sigma of posterior/prior
+    stochastic: List[float]  # z_t (sampled latent)
+    mean: List[float]  # mu of posterior/prior
+    log_std: List[float]  # log_sigma of posterior/prior
 
 
 class RSSM:
@@ -340,10 +365,14 @@ class RSSM:
     Transition: h_t = f(h_{t-1}, z_{t-1}, a_{t-1})
     """
 
-    def __init__(self, obs_dim: int = OBS_DIM, action_dim: int = ACTION_DIM,
-                 latent_dim: int = LATENT_DIM,
-                 deterministic_dim: int = DETERMINISTIC_DIM,
-                 hidden_dim: int = HIDDEN_DIM):
+    def __init__(
+        self,
+        obs_dim: int = OBS_DIM,
+        action_dim: int = ACTION_DIM,
+        latent_dim: int = LATENT_DIM,
+        deterministic_dim: int = DETERMINISTIC_DIM,
+        hidden_dim: int = HIDDEN_DIM,
+    ):
         self.obs_dim = obs_dim
         self.action_dim = action_dim
         self.latent_dim = latent_dim
@@ -353,31 +382,25 @@ class RSSM:
         # GRU-like transition: (h_{t-1}, z_{t-1}, a_{t-1}) -> h_t
         gru_input = deterministic_dim + latent_dim + action_dim
         self.gru_gate = MLP(
-            [gru_input, hidden_dim, deterministic_dim * 2],
-            ["relu", "sigmoid"]
+            [gru_input, hidden_dim, deterministic_dim * 2], ["relu", "sigmoid"]
         )
         self.gru_candidate = MLP(
-            [gru_input, hidden_dim, deterministic_dim],
-            ["relu", "tanh"]
+            [gru_input, hidden_dim, deterministic_dim], ["relu", "tanh"]
         )
 
         # Prior: h_t -> (mu, log_sigma) for z_t
         self.prior_net = MLP(
-            [deterministic_dim, hidden_dim, latent_dim * 2],
-            ["elu", "linear"]
+            [deterministic_dim, hidden_dim, latent_dim * 2], ["elu", "linear"]
         )
 
         # Posterior: (h_t, encoded_obs) -> (mu, log_sigma) for z_t
         self.posterior_net = MLP(
             [deterministic_dim + hidden_dim, hidden_dim, latent_dim * 2],
-            ["elu", "linear"]
+            ["elu", "linear"],
         )
 
         # Observation encoder: obs -> embedded_obs
-        self.obs_encoder = MLP(
-            [obs_dim, hidden_dim, hidden_dim],
-            ["elu", "elu"]
-        )
+        self.obs_encoder = MLP([obs_dim, hidden_dim, hidden_dim], ["elu", "elu"])
 
     def initial_state(self) -> RSSMState:
         """Return zero-initialized RSSM state."""
@@ -388,14 +411,15 @@ class RSSM:
             log_std=[-1.0] * self.latent_dim,
         )
 
-    def _gru_step(self, h_prev: List[float], z_prev: List[float],
-                  action: List[float]) -> List[float]:
+    def _gru_step(
+        self, h_prev: List[float], z_prev: List[float], action: List[float]
+    ) -> List[float]:
         """GRU-like deterministic transition."""
         inp = h_prev + z_prev + action
         gates = self.gru_gate.forward(inp)
 
-        reset_gate = gates[:self.det_dim]
-        update_gate = gates[self.det_dim:]
+        reset_gate = gates[: self.det_dim]
+        update_gate = gates[self.det_dim :]
 
         # Apply reset gate to h_prev
         reset_h = [r * h for r, h in zip(reset_gate, h_prev)]
@@ -404,42 +428,40 @@ class RSSM:
 
         # Update gate
         new_h = [
-            u * h + (1.0 - u) * c
-            for u, h, c in zip(update_gate, h_prev, candidate)
+            u * h + (1.0 - u) * c for u, h, c in zip(update_gate, h_prev, candidate)
         ]
         return new_h
 
-    def _split_mean_logstd(self, params: List[float]
-                           ) -> Tuple[List[float], List[float]]:
+    def _split_mean_logstd(
+        self, params: List[float]
+    ) -> Tuple[List[float], List[float]]:
         """Split network output into mean and log_std."""
         mid = len(params) // 2
         mean = params[:mid]
         log_std = [max(-5.0, min(2.0, v)) for v in params[mid:]]
         return mean, log_std
 
-    def _sample_gaussian(self, mean: List[float],
-                         log_std: List[float]) -> List[float]:
+    def _sample_gaussian(self, mean: List[float], log_std: List[float]) -> List[float]:
         """Reparameterized sampling: z = mu + sigma * epsilon."""
-        return [
-            m + math.exp(ls) * random.gauss(0, 1)
-            for m, ls in zip(mean, log_std)
-        ]
+        return [m + math.exp(ls) * random.gauss(0, 1) for m, ls in zip(mean, log_std)]
 
     def prior(self, h: List[float]) -> Tuple[List[float], List[float]]:
         """Compute prior distribution p(z_t | h_t)."""
         params = self.prior_net.forward(h)
         return self._split_mean_logstd(params)
 
-    def posterior(self, h: List[float],
-                  obs: List[float]) -> Tuple[List[float], List[float]]:
+    def posterior(
+        self, h: List[float], obs: List[float]
+    ) -> Tuple[List[float], List[float]]:
         """Compute posterior distribution q(z_t | h_t, o_t)."""
         embedded = self.obs_encoder.forward(obs)
         inp = h + embedded
         params = self.posterior_net.forward(inp)
         return self._split_mean_logstd(params)
 
-    def observe_step(self, prev_state: RSSMState, action: int,
-                     obs: List[float]) -> RSSMState:
+    def observe_step(
+        self, prev_state: RSSMState, action: int, obs: List[float]
+    ) -> RSSMState:
         """
         One step with observation (training).
         Computes posterior for z_t given h_t and o_t.
@@ -447,8 +469,7 @@ class RSSM:
         action_vec = _one_hot(action, self.action_dim)
 
         # Deterministic transition
-        h = self._gru_step(prev_state.deterministic,
-                           prev_state.stochastic, action_vec)
+        h = self._gru_step(prev_state.deterministic, prev_state.stochastic, action_vec)
 
         # Posterior
         mean, log_std = self.posterior(h, obs)
@@ -461,8 +482,7 @@ class RSSM:
             log_std=log_std,
         )
 
-    def imagine_step(self, prev_state: RSSMState,
-                     action: int) -> RSSMState:
+    def imagine_step(self, prev_state: RSSMState, action: int) -> RSSMState:
         """
         One step without observation (imagination).
         Uses prior for z_t given h_t only.
@@ -470,8 +490,7 @@ class RSSM:
         action_vec = _one_hot(action, self.action_dim)
 
         # Deterministic transition
-        h = self._gru_step(prev_state.deterministic,
-                           prev_state.stochastic, action_vec)
+        h = self._gru_step(prev_state.deterministic, prev_state.stochastic, action_vec)
 
         # Prior (no observation)
         mean, log_std = self.prior(h)
@@ -493,40 +512,47 @@ class RSSM:
 # KL Divergence & Balancing
 # ─────────────────────────────────────────────
 
+
 class KLManager:
     """
     Manages KL divergence computation with free bits and balancing.
     """
 
-    def __init__(self, free_bits: float = 1.0, kl_scale: float = 1.0,
-                 kl_balance: float = 0.8):
+    def __init__(
+        self, free_bits: float = 1.0, kl_scale: float = 1.0, kl_balance: float = 0.8
+    ):
         self.free_bits = free_bits
         self.kl_scale = kl_scale
         self.kl_balance = kl_balance  # alpha: weight on prior vs posterior
         self.kl_history: List[float] = []
 
-    def gaussian_kl(self, post_mean: List[float], post_logstd: List[float],
-                    prior_mean: List[float],
-                    prior_logstd: List[float]) -> float:
+    def gaussian_kl(
+        self,
+        post_mean: List[float],
+        post_logstd: List[float],
+        prior_mean: List[float],
+        prior_logstd: List[float],
+    ) -> float:
         """
         KL(q || p) for diagonal Gaussian distributions.
         KL = sum[ log(s_p/s_q) + (s_q^2 + (m_q - m_p)^2) / (2*s_p^2) - 0.5 ]
         """
         kl = 0.0
-        for mq, lsq, mp, lsp in zip(post_mean, post_logstd,
-                                      prior_mean, prior_logstd):
+        for mq, lsq, mp, lsp in zip(post_mean, post_logstd, prior_mean, prior_logstd):
             sq = math.exp(lsq)
             sp = math.exp(lsp)
-            kl_dim = (lsp - lsq
-                      + (sq ** 2 + (mq - mp) ** 2) / (2 * sp ** 2)
-                      - 0.5)
+            kl_dim = lsp - lsq + (sq**2 + (mq - mp) ** 2) / (2 * sp**2) - 0.5
             kl += max(0.0, kl_dim)
 
         return kl
 
-    def compute_loss(self, post_mean: List[float], post_logstd: List[float],
-                     prior_mean: List[float],
-                     prior_logstd: List[float]) -> Tuple[float, Dict[str, float]]:
+    def compute_loss(
+        self,
+        post_mean: List[float],
+        post_logstd: List[float],
+        prior_mean: List[float],
+        prior_logstd: List[float],
+    ) -> Tuple[float, Dict[str, float]]:
         """
         Compute KL loss with free bits and balancing.
 
@@ -535,22 +561,22 @@ class KLManager:
         - (1-alpha) * KL(posterior || sg(prior)) -> trains the posterior
         where sg = stop_gradient (simulated by using fixed values).
         """
-        raw_kl = self.gaussian_kl(post_mean, post_logstd,
-                                   prior_mean, prior_logstd)
+        raw_kl = self.gaussian_kl(post_mean, post_logstd, prior_mean, prior_logstd)
 
         # Free bits: clamp KL to at least free_bits per dimension
         kl_free = max(raw_kl, self.free_bits)
 
         # KL balancing
         # Forward KL component (trains prior, posterior is fixed)
-        kl_prior = self.gaussian_kl(post_mean, post_logstd,
-                                     prior_mean, prior_logstd)
+        kl_prior = self.gaussian_kl(post_mean, post_logstd, prior_mean, prior_logstd)
         # Reverse KL component (trains posterior, prior is fixed)
-        kl_posterior = self.gaussian_kl(post_mean, post_logstd,
-                                         prior_mean, prior_logstd)
+        kl_posterior = self.gaussian_kl(
+            post_mean, post_logstd, prior_mean, prior_logstd
+        )
 
-        balanced_kl = (self.kl_balance * max(kl_prior, self.free_bits)
-                       + (1 - self.kl_balance) * max(kl_posterior, self.free_bits))
+        balanced_kl = self.kl_balance * max(kl_prior, self.free_bits) + (
+            1 - self.kl_balance
+        ) * max(kl_posterior, self.free_bits)
 
         scaled_kl = self.kl_scale * balanced_kl
         self.kl_history.append(raw_kl)
@@ -585,11 +611,14 @@ FEATURE_DIM = DETERMINISTIC_DIM + LATENT_DIM  # h + z
 class ObservationDecoder:
     """Decodes latent features back to predicted observations."""
 
-    def __init__(self, feature_dim: int = FEATURE_DIM,
-                 obs_dim: int = OBS_DIM, hidden_dim: int = HIDDEN_DIM):
+    def __init__(
+        self,
+        feature_dim: int = FEATURE_DIM,
+        obs_dim: int = OBS_DIM,
+        hidden_dim: int = HIDDEN_DIM,
+    ):
         self.net = MLP(
-            [feature_dim, hidden_dim, hidden_dim, obs_dim],
-            ["elu", "elu", "sigmoid"]
+            [feature_dim, hidden_dim, hidden_dim, obs_dim], ["elu", "elu", "sigmoid"]
         )
 
     def forward(self, feature: List[float]) -> List[float]:
@@ -599,12 +628,8 @@ class ObservationDecoder:
 class RewardPredictor:
     """Predicts reward from latent features."""
 
-    def __init__(self, feature_dim: int = FEATURE_DIM,
-                 hidden_dim: int = HIDDEN_DIM):
-        self.net = MLP(
-            [feature_dim, hidden_dim, 1],
-            ["elu", "linear"]
-        )
+    def __init__(self, feature_dim: int = FEATURE_DIM, hidden_dim: int = HIDDEN_DIM):
+        self.net = MLP([feature_dim, hidden_dim, 1], ["elu", "linear"])
 
     def forward(self, feature: List[float]) -> float:
         return self.net.forward(feature)[0]
@@ -613,12 +638,8 @@ class RewardPredictor:
 class ContinuePredictor:
     """Predicts episode continuation probability from latent features."""
 
-    def __init__(self, feature_dim: int = FEATURE_DIM,
-                 hidden_dim: int = HIDDEN_DIM):
-        self.net = MLP(
-            [feature_dim, hidden_dim, 1],
-            ["elu", "sigmoid"]
-        )
+    def __init__(self, feature_dim: int = FEATURE_DIM, hidden_dim: int = HIDDEN_DIM):
+        self.net = MLP([feature_dim, hidden_dim, 1], ["elu", "sigmoid"])
 
     def forward(self, feature: List[float]) -> float:
         return self.net.forward(feature)[0]
@@ -628,14 +649,18 @@ class ContinuePredictor:
 # Actor-Critic (Dreamer-Style)
 # ─────────────────────────────────────────────
 
+
 class DreamerActor:
     """Actor network: latent features -> action distribution."""
 
-    def __init__(self, feature_dim: int = FEATURE_DIM,
-                 action_dim: int = ACTION_DIM, hidden_dim: int = HIDDEN_DIM):
+    def __init__(
+        self,
+        feature_dim: int = FEATURE_DIM,
+        action_dim: int = ACTION_DIM,
+        hidden_dim: int = HIDDEN_DIM,
+    ):
         self.net = MLP(
-            [feature_dim, hidden_dim, hidden_dim, action_dim],
-            ["elu", "elu", "linear"]
+            [feature_dim, hidden_dim, hidden_dim, action_dim], ["elu", "elu", "linear"]
         )
         self.action_dim = action_dim
         self.entropy_scale = 0.003
@@ -644,8 +669,7 @@ class DreamerActor:
         logits = self.net.forward(feature)
         return _softmax(logits)
 
-    def select_action(self, feature: List[float],
-                      greedy: bool = False) -> int:
+    def select_action(self, feature: List[float], greedy: bool = False) -> int:
         probs = self.get_action_dist(feature)
         if greedy:
             return max(range(self.action_dim), key=lambda i: probs[i])
@@ -664,11 +688,9 @@ class DreamerActor:
 class DreamerCritic:
     """Critic network: latent features -> value estimate."""
 
-    def __init__(self, feature_dim: int = FEATURE_DIM,
-                 hidden_dim: int = HIDDEN_DIM):
+    def __init__(self, feature_dim: int = FEATURE_DIM, hidden_dim: int = HIDDEN_DIM):
         self.net = MLP(
-            [feature_dim, hidden_dim, hidden_dim, 1],
-            ["elu", "elu", "linear"]
+            [feature_dim, hidden_dim, hidden_dim, 1], ["elu", "elu", "linear"]
         )
 
     def forward(self, feature: List[float]) -> float:
@@ -678,6 +700,7 @@ class DreamerCritic:
 # ─────────────────────────────────────────────
 # Latent Space Visualization (PCA / t-SNE)
 # ─────────────────────────────────────────────
+
 
 class LatentVisualizer:
     """
@@ -691,6 +714,7 @@ class LatentVisualizer:
         self._has_sklearn = False
         try:
             from sklearn.manifold import TSNE  # noqa: F401
+
             self._has_sklearn = True
         except ImportError:
             pass
@@ -714,12 +738,11 @@ class LatentVisualizer:
                 means[j] += s[j]
         means = [m / n for m in means]
 
-        centered = [[s[j] - means[j] for j in range(d)]
-                    for s in self.collected_states]
+        centered = [[s[j] - means[j] for j in range(d)] for s in self.collected_states]
 
         # Power iteration for first principal component
         pc1 = [random.gauss(0, 1) for _ in range(d)]
-        norm = math.sqrt(sum(x ** 2 for x in pc1))
+        norm = math.sqrt(sum(x**2 for x in pc1))
         pc1 = [x / max(norm, 1e-10) for x in pc1]
 
         for _ in range(50):
@@ -728,7 +751,7 @@ class LatentVisualizer:
                 proj = _dot(row, pc1)
                 for j in range(d):
                     new_pc[j] += proj * row[j]
-            norm = math.sqrt(sum(x ** 2 for x in new_pc))
+            norm = math.sqrt(sum(x**2 for x in new_pc))
             pc1 = [x / max(norm, 1e-10) for x in new_pc]
 
         # Deflate for second component
@@ -738,7 +761,7 @@ class LatentVisualizer:
             deflated.append([row[j] - proj * pc1[j] for j in range(d)])
 
         pc2 = [random.gauss(0, 1) for _ in range(d)]
-        norm = math.sqrt(sum(x ** 2 for x in pc2))
+        norm = math.sqrt(sum(x**2 for x in pc2))
         pc2 = [x / max(norm, 1e-10) for x in pc2]
 
         for _ in range(50):
@@ -747,7 +770,7 @@ class LatentVisualizer:
                 proj = _dot(row, pc2)
                 for j in range(d):
                     new_pc[j] += proj * row[j]
-            norm = math.sqrt(sum(x ** 2 for x in new_pc))
+            norm = math.sqrt(sum(x**2 for x in new_pc))
             pc2 = [x / max(norm, 1e-10) for x in new_pc]
 
         # Project
@@ -759,18 +782,23 @@ class LatentVisualizer:
 
         return result
 
-    def tsne_2d(self, perplexity: float = 5.0,
-                iterations: int = 300) -> Optional[List[Tuple[float, float]]]:
+    def tsne_2d(
+        self, perplexity: float = 5.0, iterations: int = 300
+    ) -> Optional[List[Tuple[float, float]]]:
         """Simplified t-SNE. Falls back to PCA if sklearn unavailable."""
         if self._has_sklearn and HAS_NUMPY:
             try:
-                from sklearn.manifold import TSNE
                 import numpy as real_np
+                from sklearn.manifold import TSNE
+
                 data = real_np.array(self.collected_states)
                 perp = min(perplexity, len(data) - 1)
-                embedded = TSNE(n_components=2, perplexity=max(perp, 1),
-                                n_iter=iterations,
-                                random_state=42).fit_transform(data)
+                embedded = TSNE(
+                    n_components=2,
+                    perplexity=max(perp, 1),
+                    n_iter=iterations,
+                    random_state=42,
+                ).fit_transform(data)
                 return [(float(row[0]), float(row[1])) for row in embedded]
             except Exception:
                 pass
@@ -790,7 +818,7 @@ class LatentVisualizer:
         x_range = max(x_max - x_min, 1e-6)
         y_range = max(y_max - y_min, 1e-6)
 
-        grid = [[' '] * width for _ in range(height)]
+        grid = [[" "] * width for _ in range(height)]
 
         for i, (x, y) in enumerate(points):
             col = int((x - x_min) / x_range * (width - 1))
@@ -799,18 +827,19 @@ class LatentVisualizer:
             col = max(0, min(width - 1, col))
             row = max(0, min(height - 1, row))
             label = self.collected_labels[i]
-            grid[row][col] = label[0] if label else '*'
+            grid[row][col] = label[0] if label else "*"
 
-        lines = ['    +' + '-' * width + '+']
+        lines = ["    +" + "-" * width + "+"]
         for r in range(height):
             lines.append(f'    |{"".join(grid[r])}|')
-        lines.append('    +' + '-' * width + '+')
-        return '\n'.join(lines)
+        lines.append("    +" + "-" * width + "+")
+        return "\n".join(lines)
 
 
 # ─────────────────────────────────────────────
 # SC2 World Model (Dreamer-style)
 # ─────────────────────────────────────────────
+
 
 class SC2WorldModel:
     """
@@ -825,8 +854,13 @@ class SC2WorldModel:
     6. Actor-Critic: trained purely from imagined trajectories
     """
 
-    def __init__(self, obs_dim: int = OBS_DIM, action_dim: int = ACTION_DIM,
-                 imagination_horizon: int = 15, lr: float = 0.0003):
+    def __init__(
+        self,
+        obs_dim: int = OBS_DIM,
+        action_dim: int = ACTION_DIM,
+        imagination_horizon: int = 15,
+        lr: float = 0.0003,
+    ):
         self.obs_dim = obs_dim
         self.action_dim = action_dim
         self.imagination_horizon = imagination_horizon
@@ -843,8 +877,7 @@ class SC2WorldModel:
         self.critic = DreamerCritic(FEATURE_DIM)
 
         # KL management
-        self.kl_manager = KLManager(free_bits=1.0, kl_scale=0.1,
-                                     kl_balance=0.8)
+        self.kl_manager = KLManager(free_bits=1.0, kl_scale=0.1, kl_balance=0.8)
 
         # Data
         self.buffer = SequenceBuffer(capacity=5_000, seq_len=50)
@@ -873,13 +906,10 @@ class SC2WorldModel:
         if self.current_state is None:
             self.current_state = self.rssm.initial_state()
 
-        self.current_state = self.rssm.observe_step(
-            self.current_state, action, obs
-        )
+        self.current_state = self.rssm.observe_step(self.current_state, action, obs)
         return self.current_state
 
-    def select_action(self, obs: List[float],
-                      greedy: bool = False) -> int:
+    def select_action(self, obs: List[float], greedy: bool = False) -> int:
         """Select action using actor given current latent state."""
         if self.current_state is None:
             self.reset()
@@ -887,9 +917,9 @@ class SC2WorldModel:
         feature = self.rssm.get_feature(self.current_state)
         return self.actor.select_action(feature, greedy=greedy)
 
-    def imagine_rollout(self, start_state: RSSMState,
-                        horizon: Optional[int] = None
-                        ) -> List[Tuple[RSSMState, int, float, float]]:
+    def imagine_rollout(
+        self, start_state: RSSMState, horizon: Optional[int] = None
+    ) -> List[Tuple[RSSMState, int, float, float]]:
         """
         Imagine a trajectory in latent space using the actor.
         Returns: list of (state, action, predicted_reward, continue_prob)
@@ -913,10 +943,9 @@ class SC2WorldModel:
 
         return trajectory
 
-    def compute_lambda_returns(self, rewards: List[float],
-                               values: List[float],
-                               continues: List[float]
-                               ) -> List[float]:
+    def compute_lambda_returns(
+        self, rewards: List[float], values: List[float], continues: List[float]
+    ) -> List[float]:
         """
         Compute lambda-returns for GAE-style advantage estimation.
         V_lambda = r_t + gamma * cont * ((1-lambda)*V_{t+1} + lambda*V_lambda_{t+1})
@@ -936,9 +965,9 @@ class SC2WorldModel:
 
             cont = continues[t]
             td_target = rewards[t] + self.discount * cont * next_val
-            returns[t] = (td_target
-                          + self.discount * cont * self.lambda_gae
-                          * (last_return - next_val))
+            returns[t] = td_target + self.discount * cont * self.lambda_gae * (
+                last_return - next_val
+            )
             last_return = returns[t]
 
         return returns
@@ -1061,13 +1090,10 @@ class SC2WorldModel:
         # Build a starting latent state
         start_state = self.rssm.initial_state()
         for ts in seqs[0][:5]:
-            start_state = self.rssm.observe_step(
-                start_state, ts.action, ts.observation
-            )
+            start_state = self.rssm.observe_step(start_state, ts.action, ts.observation)
 
         # Imagine trajectory
-        trajectory = self.imagine_rollout(start_state,
-                                          self.imagination_horizon)
+        trajectory = self.imagine_rollout(start_state, self.imagination_horizon)
 
         if not trajectory:
             return {"actor_loss": 0.0, "critic_loss": 0.0}
@@ -1078,9 +1104,7 @@ class SC2WorldModel:
         rewards = [r for _, _, r, _ in trajectory]
         continues = [c for _, _, _, c in trajectory]
 
-        lambda_returns = self.compute_lambda_returns(
-            rewards, values, continues
-        )
+        lambda_returns = self.compute_lambda_returns(rewards, values, continues)
 
         # Actor loss: maximize returns (policy gradient)
         actor_loss = 0.0
@@ -1090,8 +1114,7 @@ class SC2WorldModel:
             log_prob = math.log(max(probs[action], 1e-10))
             advantage = lambda_returns[t] - values[t]
             entropy = self.actor.entropy(probs)
-            actor_loss += -(log_prob * advantage
-                            + self.actor.entropy_scale * entropy)
+            actor_loss += -(log_prob * advantage + self.actor.entropy_scale * entropy)
 
         actor_loss /= len(trajectory)
 
@@ -1115,9 +1138,10 @@ class SC2WorldModel:
                     new_probs = self.actor.get_action_dist(f0)
                     new_lp = math.log(max(new_probs[a0], 1e-10))
                     adv = lambda_returns[0] - values[0]
-                    new_loss = -(new_lp * adv
-                                 + self.actor.entropy_scale
-                                 * self.actor.entropy(new_probs))
+                    new_loss = -(
+                        new_lp * adv
+                        + self.actor.entropy_scale * self.actor.entropy(new_probs)
+                    )
                     grad = (new_loss - actor_loss) / eps
 
                     layer.weights[i][j] = orig - self.lr * grad
@@ -1175,6 +1199,7 @@ class SC2WorldModel:
 # SC2 Environment Simulator (for demo)
 # ─────────────────────────────────────────────
 
+
 class SC2EnvSimulator:
     """Lightweight SC2 environment simulator for testing."""
 
@@ -1185,8 +1210,22 @@ class SC2EnvSimulator:
 
     def _initial_state(self) -> List[float]:
         return [
-            0.05, 0.02, 0.06, 0.10, 0.15, 0.0, 0.0, 0.0,
-            0.1, 0.0, 0.2, 0.2, 0.1, 0.0, 0.0, 0.0,
+            0.05,
+            0.02,
+            0.06,
+            0.10,
+            0.15,
+            0.0,
+            0.0,
+            0.0,
+            0.1,
+            0.0,
+            0.2,
+            0.2,
+            0.1,
+            0.0,
+            0.0,
+            0.0,
         ]
 
     def reset(self) -> List[float]:
@@ -1258,8 +1297,10 @@ class SC2EnvSimulator:
 # CLI Demo
 # ─────────────────────────────────────────────
 
-def run_demo(episodes: int = 5, steps_per_ep: int = 100,
-             verbose: bool = True) -> Dict[str, Any]:
+
+def run_demo(
+    episodes: int = 5, steps_per_ep: int = 100, verbose: bool = True
+) -> Dict[str, Any]:
     """Run a full World Model (Dreamer) demo."""
     if verbose:
         print(f"{'=' * 60}")
@@ -1267,8 +1308,7 @@ def run_demo(episodes: int = 5, steps_per_ep: int = 100,
         print(f"{'=' * 60}")
 
     world_model = SC2WorldModel(
-        obs_dim=OBS_DIM, action_dim=ACTION_DIM,
-        imagination_horizon=15
+        obs_dim=OBS_DIM, action_dim=ACTION_DIM, imagination_horizon=15
     )
     env = SC2EnvSimulator(max_steps=steps_per_ep)
     all_rewards: List[float] = []
@@ -1308,15 +1348,23 @@ def run_demo(episodes: int = 5, steps_per_ep: int = 100,
 
         if verbose:
             diag = world_model.get_diagnostics()
-            print(f"\n  Episode {ep + 1}/{episodes} | "
-                  f"Reward: {ep_reward:+.2f} | "
-                  f"Time: {elapsed:.2f}s")
-            print(f"    Buffer: {diag['buffer_episodes']} episodes, "
-                  f"{diag['buffer_transitions']} transitions")
-            print(f"    Recon loss: {diag['recent_recon_loss']:.4f} | "
-                  f"KL: {diag['recent_kl_loss']:.4f}")
-            print(f"    Actor loss: {diag['recent_actor_loss']:.4f} | "
-                  f"Critic loss: {diag['recent_critic_loss']:.4f}")
+            print(
+                f"\n  Episode {ep + 1}/{episodes} | "
+                f"Reward: {ep_reward:+.2f} | "
+                f"Time: {elapsed:.2f}s"
+            )
+            print(
+                f"    Buffer: {diag['buffer_episodes']} episodes, "
+                f"{diag['buffer_transitions']} transitions"
+            )
+            print(
+                f"    Recon loss: {diag['recent_recon_loss']:.4f} | "
+                f"KL: {diag['recent_kl_loss']:.4f}"
+            )
+            print(
+                f"    Actor loss: {diag['recent_actor_loss']:.4f} | "
+                f"Critic loss: {diag['recent_critic_loss']:.4f}"
+            )
 
     # Final diagnostics
     diag = world_model.get_diagnostics()
@@ -1338,9 +1386,11 @@ def run_demo(episodes: int = 5, steps_per_ep: int = 100,
                 world_model.current_state, horizon=10
             )
             for t, (state, action, reward, cont) in enumerate(imagined):
-                print(f"    t={t}: action={ACTION_NAMES[action]}, "
-                      f"pred_reward={reward:+.3f}, "
-                      f"continue={cont:.3f}")
+                print(
+                    f"    t={t}: action={ACTION_NAMES[action]}, "
+                    f"pred_reward={reward:+.3f}, "
+                    f"continue={cont:.3f}"
+                )
 
         # Latent space visualization
         if len(world_model.visualizer.collected_states) >= 5:
@@ -1350,12 +1400,15 @@ def run_demo(episodes: int = 5, steps_per_ep: int = 100,
 
         # KL stats
         kl_stats = world_model.kl_manager.get_stats()
-        print(f"\n  KL Stats: mean={kl_stats['mean_kl']:.4f}, "
-              f"max={kl_stats['max_kl']:.4f}, "
-              f"min={kl_stats['min_kl']:.4f}")
+        print(
+            f"\n  KL Stats: mean={kl_stats['mean_kl']:.4f}, "
+            f"max={kl_stats['max_kl']:.4f}, "
+            f"min={kl_stats['min_kl']:.4f}"
+        )
 
-        print(f"\n  Mean episode reward: "
-              f"{sum(all_rewards) / len(all_rewards):+.2f}")
+        print(
+            f"\n  Mean episode reward: " f"{sum(all_rewards) / len(all_rewards):+.2f}"
+        )
         print(f"{'=' * 60}")
 
     return {
@@ -1370,14 +1423,12 @@ def main():
     parser = argparse.ArgumentParser(
         description="Phase 617: World Model (Dreamer) for SC2"
     )
-    parser.add_argument("--episodes", type=int, default=5,
-                        help="Number of episodes")
-    parser.add_argument("--steps", type=int, default=100,
-                        help="Steps per episode")
-    parser.add_argument("--horizon", type=int, default=15,
-                        help="Imagination rollout horizon")
-    parser.add_argument("--quiet", action="store_true",
-                        help="Suppress output")
+    parser.add_argument("--episodes", type=int, default=5, help="Number of episodes")
+    parser.add_argument("--steps", type=int, default=100, help="Steps per episode")
+    parser.add_argument(
+        "--horizon", type=int, default=15, help="Imagination rollout horizon"
+    )
+    parser.add_argument("--quiet", action="store_true", help="Suppress output")
     args = parser.parse_args()
 
     result = run_demo(

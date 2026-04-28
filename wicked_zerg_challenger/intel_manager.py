@@ -42,10 +42,23 @@ class IntelManager:
 
         # High threat unit types
         self._high_threat_types = {
-            "SIEGETANK", "SIEGETANKSIEGED", "THOR", "BATTLECRUISER",
-            "COLOSSUS", "DISRUPTOR", "IMMORTAL", "ARCHON",
-            "ULTRALISK", "BROODLORD", "RAVAGER", "LURKER", "LURKERMP",
-            "LIBERATOR", "LIBERATORAG", "WIDOWMINE", "HIGHTEMPLAR"
+            "SIEGETANK",
+            "SIEGETANKSIEGED",
+            "THOR",
+            "BATTLECRUISER",
+            "COLOSSUS",
+            "DISRUPTOR",
+            "IMMORTAL",
+            "ARCHON",
+            "ULTRALISK",
+            "BROODLORD",
+            "RAVAGER",
+            "LURKER",
+            "LURKERMP",
+            "LIBERATOR",
+            "LIBERATORAG",
+            "WIDOWMINE",
+            "HIGHTEMPLAR",
         }
 
         # ★ NEW: Hidden tech tracking (정찰로 확인해야 하는 위험 테크)
@@ -125,22 +138,55 @@ class IntelManager:
 
         # ★ Phase 42: supply_cost 속성 없음 — 정확한 룩업 테이블 사용
         _ENEMY_SUPPLY = {
-            'ZERGLING': 0.5, 'BANELING': 0.5, 'ROACH': 2, 'RAVAGER': 3,
-            'HYDRALISK': 2, 'LURKERMP': 3, 'MUTALISK': 2, 'CORRUPTOR': 2,
-            'ULTRALISK': 6, 'BROODLORD': 4, 'INFESTOR': 2, 'VIPER': 3,
-            'MARINE': 1, 'MARAUDER': 2, 'REAPER': 1, 'GHOST': 2,
-            'HELLION': 2, 'HELLIONTANK': 2, 'SIEGETANK': 3, 'SIEGETANKSIEGED': 3,
-            'THOR': 6, 'BATTLECRUISER': 6, 'VIKING': 2, 'MEDIVAC': 2,
-            'BANSHEE': 3, 'RAVEN': 2, 'LIBERATOR': 3, 'CYCLONE': 3,
-            'ZEALOT': 2, 'STALKER': 2, 'ADEPT': 2, 'IMMORTAL': 4,
-            'COLOSSUS': 6, 'DISRUPTOR': 3, 'ARCHON': 4, 'HIGHTEMPLAR': 2,
-            'DARKTEMPLAR': 2, 'PHOENIX': 2, 'VOIDRAY': 4, 'CARRIER': 6,
-            'ORACLE': 3, 'TEMPEST': 4,
+            "ZERGLING": 0.5,
+            "BANELING": 0.5,
+            "ROACH": 2,
+            "RAVAGER": 3,
+            "HYDRALISK": 2,
+            "LURKERMP": 3,
+            "MUTALISK": 2,
+            "CORRUPTOR": 2,
+            "ULTRALISK": 6,
+            "BROODLORD": 4,
+            "INFESTOR": 2,
+            "VIPER": 3,
+            "MARINE": 1,
+            "MARAUDER": 2,
+            "REAPER": 1,
+            "GHOST": 2,
+            "HELLION": 2,
+            "HELLIONTANK": 2,
+            "SIEGETANK": 3,
+            "SIEGETANKSIEGED": 3,
+            "THOR": 6,
+            "BATTLECRUISER": 6,
+            "VIKING": 2,
+            "MEDIVAC": 2,
+            "BANSHEE": 3,
+            "RAVEN": 2,
+            "LIBERATOR": 3,
+            "CYCLONE": 3,
+            "ZEALOT": 2,
+            "STALKER": 2,
+            "ADEPT": 2,
+            "IMMORTAL": 4,
+            "COLOSSUS": 6,
+            "DISRUPTOR": 3,
+            "ARCHON": 4,
+            "HIGHTEMPLAR": 2,
+            "DARKTEMPLAR": 2,
+            "PHOENIX": 2,
+            "VOIDRAY": 4,
+            "CARRIER": 6,
+            "ORACLE": 3,
+            "TEMPEST": 4,
         }
-        worker_names = {'SCV', 'PROBE', 'DRONE'}
+        worker_names = {"SCV", "PROBE", "DRONE"}
         for unit in enemy_units:
             type_name = getattr(unit.type_id, "name", str(unit.type_id))
-            self.enemy_unit_counts[type_name] = self.enemy_unit_counts.get(type_name, 0) + 1
+            self.enemy_unit_counts[type_name] = (
+                self.enemy_unit_counts.get(type_name, 0) + 1
+            )
 
             # ★ Phase 42: 룩업 테이블 우선, 없으면 1
             supply = _ENEMY_SUPPLY.get(type_name.upper(), 1)
@@ -150,21 +196,44 @@ class IntelManager:
                 self.enemy_army_supply += supply
 
         # Count enemy bases
-        base_types = {'COMMANDCENTER', 'COMMANDCENTERFLYING', 'ORBITALCOMMAND',
-                     'ORBITALCOMMANDFLYING', 'PLANETARYFORTRESS',
-                     'NEXUS', 'HATCHERY', 'LAIR', 'HIVE'}
+        base_types = {
+            "COMMANDCENTER",
+            "COMMANDCENTERFLYING",
+            "ORBITALCOMMAND",
+            "ORBITALCOMMANDFLYING",
+            "PLANETARYFORTRESS",
+            "NEXUS",
+            "HATCHERY",
+            "LAIR",
+            "HIVE",
+        }
         self.enemy_base_count = sum(
-            1 for s in enemy_structures
+            1
+            for s in enemy_structures
             if getattr(s.type_id, "name", "").upper() in base_types
         )
 
         # Track tech buildings with detailed categorization
-        tech_buildings = {'FACTORY', 'STARPORT', 'ARMORY', 'FUSIONCORE',
-                         'ROBOTICSFACILITY', 'STARGATE', 'DARKSHRINE',
-                         'TEMPLARARCHIVE', 'FLEETBEACON', 'TWILIGHTCOUNCIL',
-                         'SPIRE', 'GREATERSPIRE', 'INFESTATIONPIT',
-                         'BANELINGNEST', 'ROACHWARREN', 'HYDRALISKDEN',
-                         'NYDUSNETWORK', 'NYDUSCANAL'}
+        tech_buildings = {
+            "FACTORY",
+            "STARPORT",
+            "ARMORY",
+            "FUSIONCORE",
+            "ROBOTICSFACILITY",
+            "STARGATE",
+            "DARKSHRINE",
+            "TEMPLARARCHIVE",
+            "FLEETBEACON",
+            "TWILIGHTCOUNCIL",
+            "SPIRE",
+            "GREATERSPIRE",
+            "INFESTATIONPIT",
+            "BANELINGNEST",
+            "ROACHWARREN",
+            "HYDRALISKDEN",
+            "NYDUSNETWORK",
+            "NYDUSCANAL",
+        }
         self.enemy_tech_buildings = {
             getattr(s.type_id, "name", "").upper()
             for s in enemy_structures
@@ -191,9 +260,17 @@ class IntelManager:
         1. Visible enemy townhalls (closest to known start location)
         2. bot.enemy_start_locations[0] as fallback
         """
-        base_types = {'COMMANDCENTER', 'COMMANDCENTERFLYING', 'ORBITALCOMMAND',
-                      'ORBITALCOMMANDFLYING', 'PLANETARYFORTRESS',
-                      'NEXUS', 'HATCHERY', 'LAIR', 'HIVE'}
+        base_types = {
+            "COMMANDCENTER",
+            "COMMANDCENTERFLYING",
+            "ORBITALCOMMAND",
+            "ORBITALCOMMANDFLYING",
+            "PLANETARYFORTRESS",
+            "NEXUS",
+            "HATCHERY",
+            "LAIR",
+            "HIVE",
+        }
 
         # Try to find from visible enemy structures
         enemy_bases = []
@@ -240,9 +317,19 @@ class IntelManager:
 
         # High-threat unit types (detect earlier)
         high_threat_units = {
-            'ZERGLING', 'MARINE', 'ZEALOT', 'REAPER', 'ADEPT',
-            'BANELING', 'ROACH', 'STALKER', 'MARAUDER',
-            'SIEGETANK', 'SIEGETANKSIEGED', 'LIBERATOR', 'WIDOWMINE'
+            "ZERGLING",
+            "MARINE",
+            "ZEALOT",
+            "REAPER",
+            "ADEPT",
+            "BANELING",
+            "ROACH",
+            "STALKER",
+            "MARAUDER",
+            "SIEGETANK",
+            "SIEGETANKSIEGED",
+            "LIBERATOR",
+            "WIDOWMINE",
         }
 
         # ★ O(n) 최적화: 적 유닛 1회 순회, 타운홀 위치 캐시 ★
@@ -253,8 +340,10 @@ class IntelManager:
         for enemy in enemy_units:
             try:
                 enemy_type = getattr(enemy.type_id, "name", "").upper()
-                detection_range = base_detection_range if current_time < 180 else (
-                    35 if enemy_type in high_threat_units else 30
+                detection_range = (
+                    base_detection_range
+                    if current_time < 180
+                    else (35 if enemy_type in high_threat_units else 30)
                 )
 
                 near_base = any(
@@ -271,11 +360,16 @@ class IntelManager:
                     self._high_threat_units_detected = True
                     self._threat_level = "critical"
                     found_critical = True
-                elif not found_critical and self._threat_level not in ["critical", "heavy"]:
+                elif not found_critical and self._threat_level not in [
+                    "critical",
+                    "heavy",
+                ]:
                     self._threat_level = "medium"
 
                 if current_time < 180 and self.bot.iteration % 100 == 0:
-                    logger.info(f"[{int(current_time)}s] EARLY ATTACK: {enemy_type} detected!")
+                    logger.info(
+                        f"[{int(current_time)}s] EARLY ATTACK: {enemy_type} detected!"
+                    )
 
             except (AttributeError, TypeError) as e:
                 logger.warning(f"[IntelManager] Threat detection suppressed: {e}")
@@ -344,13 +438,13 @@ class IntelManager:
         predicted_attack_time: float = 999.0  # 기본: 매우 늦음 (예측 불가)
 
         # 테크 건물 기반 하한 추정
-        if 'DARKSHRINE' in tech:
+        if "DARKSHRINE" in tech:
             predicted_attack_time = min(predicted_attack_time, 270.0)  # 4:30
-        if 'STARGATE' in tech or 'STARPORT' in tech:
+        if "STARGATE" in tech or "STARPORT" in tech:
             predicted_attack_time = min(predicted_attack_time, 240.0)  # 4:00
-        if 'FACTORY' in tech:
+        if "FACTORY" in tech:
             predicted_attack_time = min(predicted_attack_time, 210.0)  # 3:30
-        if 'ROBOTICSFACILITY' in tech:
+        if "ROBOTICSFACILITY" in tech:
             predicted_attack_time = min(predicted_attack_time, 300.0)  # 5:00
 
         # 적 병력 규모 기반: supply > 20이면 60초 내 공격 가능
@@ -388,10 +482,17 @@ class IntelManager:
         expanding = False
         teching = False
 
-        base_types = {'COMMANDCENTER', 'NEXUS', 'HATCHERY'}
-        expensive_tech = {'STARPORT', 'ROBOTICSFACILITY', 'STARGATE',
-                         'DARKSHRINE', 'FLEETBEACON', 'FUSIONCORE',
-                         'GREATERSPIRE', 'NYDUSNETWORK'}
+        base_types = {"COMMANDCENTER", "NEXUS", "HATCHERY"}
+        expensive_tech = {
+            "STARPORT",
+            "ROBOTICSFACILITY",
+            "STARGATE",
+            "DARKSHRINE",
+            "FLEETBEACON",
+            "FUSIONCORE",
+            "GREATERSPIRE",
+            "NYDUSNETWORK",
+        }
 
         for struct in enemy_structures:
             type_name = getattr(struct.type_id, "name", "").upper()
@@ -498,7 +599,11 @@ class IntelManager:
 
             # 12 pool detection
             pool_count = structure_counts.get("SPAWNINGPOOL", 0)
-            hatch_count = structure_counts.get("HATCHERY", 0) + structure_counts.get("LAIR", 0) + structure_counts.get("HIVE", 0)
+            hatch_count = (
+                structure_counts.get("HATCHERY", 0)
+                + structure_counts.get("LAIR", 0)
+                + structure_counts.get("HIVE", 0)
+            )
             if pool_count >= 1 and hatch_count <= 1 and game_time < 120:
                 detected_pattern = "zerg_12pool"
                 recommended_response = ["zergling", "spine_crawler", "queen"]
@@ -527,11 +632,14 @@ class IntelManager:
         if game_time > 0 and int(game_time) % 30 == 0 and self.bot.iteration % 22 == 0:
             if detected_pattern != "unknown":
                 confidence_pct = int(self._build_pattern_confidence * 100)
-                logger.info(f"[{int(game_time)}s] Enemy build: {detected_pattern} ({self._build_pattern_status}, {confidence_pct}%)")
+                logger.info(
+                    f"[{int(game_time)}s] Enemy build: {detected_pattern} ({self._build_pattern_status}, {confidence_pct}%)"
+                )
                 logger.info(f"Recommended counter: {recommended_response}")
 
-    def _calculate_build_confidence(self, pattern: str, structure_counts: dict,
-                                    enemy_units, game_time: float) -> float:
+    def _calculate_build_confidence(
+        self, pattern: str, structure_counts: dict, enemy_units, game_time: float
+    ) -> float:
         """
         Calculate confidence score for detected build pattern.
 
@@ -551,8 +659,7 @@ class IntelManager:
 
         # Factor 1: Tech building count (0 ~ 0.4)
         tech_building_count = sum(
-            1 for name in structure_counts.keys()
-            if name in self.enemy_tech_buildings
+            1 for name in structure_counts.keys() if name in self.enemy_tech_buildings
         )
         confidence += min(tech_building_count * 0.15, 0.4)
 
@@ -571,8 +678,7 @@ class IntelManager:
 
         pattern_units = related_unit_patterns.get(pattern, [])
         related_unit_count = sum(
-            self.enemy_unit_counts.get(unit_type, 0)
-            for unit_type in pattern_units
+            self.enemy_unit_counts.get(unit_type, 0) for unit_type in pattern_units
         )
         confidence += min(related_unit_count * 0.03, 0.3)
 
@@ -668,9 +774,14 @@ class IntelManager:
         game_time = getattr(self.bot, "time", 0.0)
 
         for tech_name, alert_type in self._hidden_tech_alerts.items():
-            if tech_name in self.enemy_tech_buildings and alert_type not in self._detected_tech_alerts:
+            if (
+                tech_name in self.enemy_tech_buildings
+                and alert_type not in self._detected_tech_alerts
+            ):
                 self._detected_tech_alerts.add(alert_type)
-                logger.info(f"[{int(game_time)}s] [*][*][*] ALERT: {tech_name} detected! -> {alert_type} [*][*][*]")
+                logger.info(
+                    f"[{int(game_time)}s] [*][*][*] ALERT: {tech_name} detected! -> {alert_type} [*][*][*]"
+                )
 
                 # Push to Blackboard
                 blackboard = getattr(self.bot, "blackboard", None)
@@ -680,7 +791,12 @@ class IntelManager:
                     blackboard.set("latest_tech_alert_time", game_time)
 
                     # ★ Phase 17: 위협 테크 감지 시 즉시 방어 플래그 설정 ★
-                    if alert_type in ("DT_INCOMING", "AIR_INCOMING", "BC_INCOMING", "CARRIER_INCOMING"):
+                    if alert_type in (
+                        "DT_INCOMING",
+                        "AIR_INCOMING",
+                        "BC_INCOMING",
+                        "CARRIER_INCOMING",
+                    ):
                         blackboard.set("urgent_spore_all_bases", True)
                     if alert_type == "NYDUS_INCOMING":
                         blackboard.set("urgent_spine_all_bases", True)
@@ -714,9 +830,12 @@ class IntelManager:
 
             # 파괴 가능한 구조물 타입
             destructible_types = {
-                "DESTRUCTIBLEROCK6X6", "DESTRUCTIBLEROCKSVERTICAL",
-                "DESTRUCTIBLEROCKSHORIZONTAL", "DESTRUCTIBLEDEBRIS6X6",
-                "DESTRUCTIBLEDEBRISRAMPLEFT", "DESTRUCTIBLEDEBRISRAMPRIGHT"
+                "DESTRUCTIBLEROCK6X6",
+                "DESTRUCTIBLEROCKSVERTICAL",
+                "DESTRUCTIBLEROCKSHORIZONTAL",
+                "DESTRUCTIBLEDEBRIS6X6",
+                "DESTRUCTIBLEDEBRISRAMPLEFT",
+                "DESTRUCTIBLEDEBRISRAMPRIGHT",
             }
 
             # 모든 중립 유닛에서 파괴 가능한 구조물 찾기
@@ -737,17 +856,27 @@ class IntelManager:
                     if any(dest_type in type_name for dest_type in destructible_types):
                         destructible_list.append(unit)
                 except (AttributeError, TypeError) as e:
-                    logger.warning(f"[IntelManager] Destructible unit check suppressed: {e}")
+                    logger.warning(
+                        f"[IntelManager] Destructible unit check suppressed: {e}"
+                    )
                     continue
 
             self.destructible_rocks = destructible_list
 
             # 로그 (처음 발견 시만)
-            if destructible_list and current_time < 60 and self.bot.iteration % 100 == 0:
-                logger.info(f"[{int(current_time)}s] [*] {len(destructible_list)} destructible rocks detected!")
+            if (
+                destructible_list
+                and current_time < 60
+                and self.bot.iteration % 100 == 0
+            ):
+                logger.info(
+                    f"[{int(current_time)}s] [*] {len(destructible_list)} destructible rocks detected!"
+                )
 
         except (AttributeError, TypeError) as e:
-            logger.warning(f"[IntelManager] Destructible structure scan suppressed: {e}")
+            logger.warning(
+                f"[IntelManager] Destructible structure scan suppressed: {e}"
+            )
 
     def _update_all_enemy_structures(self) -> None:
         """
@@ -764,7 +893,9 @@ class IntelManager:
             # 10초마다 적 구조물 수 로그
             if int(current_time) % 30 == 0 and self.bot.iteration % 22 == 0:
                 if len(self.all_enemy_structures) > 0:
-                    logger.info(f"[{int(current_time)}s] Enemy structures remaining: {len(self.all_enemy_structures)}")
+                    logger.info(
+                        f"[{int(current_time)}s] Enemy structures remaining: {len(self.all_enemy_structures)}"
+                    )
         except (AttributeError, TypeError) as e:
             logger.warning(f"[IntelManager] Enemy structure tracking suppressed: {e}")
 
@@ -778,7 +909,9 @@ class IntelManager:
             return None
 
         try:
-            return min(self.destructible_rocks, key=lambda rock: rock.distance_to(position))
+            return min(
+                self.destructible_rocks, key=lambda rock: rock.distance_to(position)
+            )
         except Exception as e:
             logger.warning(f"[IntelManager] Closest destructible rock suppressed: {e}")
             return None
@@ -827,7 +960,7 @@ class IntelManager:
 
             with open(file_path, "w", encoding="utf-8") as f:
                 json.dump(data, f, indent=2)
-            
+
             logger.info(f"Data saved to {file_path}")
             return True
 
@@ -850,6 +983,7 @@ class IntelManager:
         """
         import json
         import os
+
         from sc2.position import Point2
 
         if not os.path.exists(file_path):
@@ -868,12 +1002,12 @@ class IntelManager:
             # Scouted Locations 복원 (tuple -> Point2)
             scouted = data.get("scouted_locations", [])
             self.scouted_locations = {Point2(loc) for loc in scouted}
-            
+
             logger.info(f"Data loaded from {file_path}")
             logger.info(f"  - Enemy Race: {self.enemy_race_name}")
             logger.info(f"  - Build Pattern: {self._enemy_build_pattern}")
             logger.info(f"  - Scouted Locations: {len(self.scouted_locations)}")
-            
+
             return True
 
         except (IOError, OSError) as e:

@@ -57,8 +57,12 @@ class QueenManager:
 
         # Injection settings - ★ OPTIMIZED ★
         self.inject_energy_threshold = 25
-        self.inject_cooldown = 29.0  # ★ FIXED: SC2 Spawn Larva 쿨다운 28.57초 + 0.43초 여유 ★
-        self.max_inject_distance = 8.0  # ★ 4→8: 인젝트 사거리 여유 (SC2 기본 사거리 + 이동 보정)
+        self.inject_cooldown = (
+            29.0  # ★ FIXED: SC2 Spawn Larva 쿨다운 28.57초 + 0.43초 여유 ★
+        )
+        self.max_inject_distance = (
+            8.0  # ★ 4→8: 인젝트 사거리 여유 (SC2 기본 사거리 + 이동 보정)
+        )
         self.max_queen_travel_distance = 10.0
 
         # Creep settings - ★ OPTIMIZED: 공격적 점막 확장 ★
@@ -68,7 +72,7 @@ class QueenManager:
 
         # Queen production - ★ OPTIMIZED: 더 많은 퀸 ★
         self.max_queens_per_base = 2  # 기지당 2마리
-        self.creep_queen_bonus = 4    # ★ OPTIMIZED: 3 → 4 (점막 전용 퀸 4마리) ★
+        self.creep_queen_bonus = 4  # ★ OPTIMIZED: 3 → 4 (점막 전용 퀸 4마리) ★
 
         # 점막 확장 추적
         self.creep_tumor_count = 0
@@ -81,7 +85,9 @@ class QueenManager:
         self.last_transfuse_time: Dict[int, float] = {}  # queen_tag -> time
         self.assigned_queen_tags: Set[int] = set()
         self.dedicated_creep_queens: Set[int] = set()
-        self.secondary_inject_assignments: Dict[int, int] = {}  # hatchery_tag -> queen_tag (2차)
+        self.secondary_inject_assignments: Dict[int, int] = (
+            {}
+        )  # hatchery_tag -> queen_tag (2차)
 
         # Transfuse settings
         self.transfuse_energy_threshold = 50
@@ -116,7 +122,9 @@ class QueenManager:
             # ★★★ NEW: QueenSpecializationManager가 있으면 전문 분담 시스템 사용 ★★★
             spec_mgr = getattr(self.bot, "queen_specialization", None)
             if spec_mgr:
-                await self._run_specialization_system(spec_mgr, queens, hatcheries, iteration)
+                await self._run_specialization_system(
+                    spec_mgr, queens, hatcheries, iteration
+                )
                 return
 
             # === 기존 로직 (fallback) ===
@@ -126,7 +134,9 @@ class QueenManager:
             under_attack = self._is_base_under_attack()
 
             # ★ Phase 23: 인젝트는 항상 최우선 (방어 중에도) ★
-            if not (hasattr(self.bot, "queen_inject_opt") and self.bot.queen_inject_opt):
+            if not (
+                hasattr(self.bot, "queen_inject_opt") and self.bot.queen_inject_opt
+            ):
                 await self._inject_larva(hatcheries, queens)
 
             if under_attack:
@@ -136,8 +146,12 @@ class QueenManager:
                 pass  # 인젝트는 위에서 이미 실행됨
 
             # Transfuse injured units - skip if specialized manager handles it
-            if not (hasattr(self.bot, "queen_transfusion") and self.bot.queen_transfusion):
-                await self._transfuse_injured_units(queens, iteration, include_structures=under_attack)
+            if not (
+                hasattr(self.bot, "queen_transfusion") and self.bot.queen_transfusion
+            ):
+                await self._transfuse_injured_units(
+                    queens, iteration, include_structures=under_attack
+                )
 
             # ★ Phase 26: 전투 시 크립 퀸도 방어 투입 (크립은 평시에만) ★
             _creep_v2_active = hasattr(self.bot, "creep_v2") and self.bot.creep_v2
@@ -145,7 +159,12 @@ class QueenManager:
             if not _creep_v2_active:
                 if not under_attack:
                     # Other creep queens (non-dedicated)
-                    creep_queens_other = [q for q in queens if q.tag not in self.assigned_queen_tags and q.tag not in self.dedicated_creep_queens]
+                    creep_queens_other = [
+                        q
+                        for q in queens
+                        if q.tag not in self.assigned_queen_tags
+                        and q.tag not in self.dedicated_creep_queens
+                    ]
                     if creep_queens_other:
                         await self._spread_creep(creep_queens_other, iteration)
 
@@ -159,7 +178,9 @@ class QueenManager:
             if iteration % 50 == 0:
                 logger.error(f"Queen manager error: {e}")
 
-    async def _run_specialization_system(self, spec_mgr, queens, hatcheries, iteration: int) -> None:
+    async def _run_specialization_system(
+        self, spec_mgr, queens, hatcheries, iteration: int
+    ) -> None:
         """
         ★ 전문 분담 시스템으로 퀸 관리 ★
 
@@ -220,9 +241,7 @@ class QueenManager:
                 return
 
         queens = (
-            self.bot.units(UnitTypeId.QUEEN).ready
-            if hasattr(self.bot, "units")
-            else []
+            self.bot.units(UnitTypeId.QUEEN).ready if hasattr(self.bot, "units") else []
         )
 
         creep_bonus = self.creep_queen_bonus if hatcheries.amount >= 2 else 0
@@ -291,7 +310,7 @@ class QueenManager:
         }
 
         # ★ 기지당 2마리 배정을 위한 2차 배정 딕셔너리 ★
-        if not hasattr(self, 'secondary_inject_assignments'):
+        if not hasattr(self, "secondary_inject_assignments"):
             self.secondary_inject_assignments = {}
 
         self.secondary_inject_assignments = {
@@ -318,7 +337,9 @@ class QueenManager:
                             del self.inject_assignments[hatch.tag]
                             assigned_queens.discard(queen_tag)
                     except Exception as e:
-                        logger.warning(f"[QueenManager] Inject queen distance check suppressed: {e}")
+                        logger.warning(
+                            f"[QueenManager] Inject queen distance check suppressed: {e}"
+                        )
 
             if hatch.tag not in self.inject_assignments:
                 candidate = self._find_closest_queen(
@@ -340,7 +361,9 @@ class QueenManager:
                             del self.secondary_inject_assignments[hatch.tag]
                             assigned_queens.discard(queen_tag)
                     except Exception as e:
-                        logger.warning(f"[QueenManager] Secondary queen distance check suppressed: {e}")
+                        logger.warning(
+                            f"[QueenManager] Secondary queen distance check suppressed: {e}"
+                        )
 
             if hatch.tag not in self.secondary_inject_assignments:
                 candidate = self._find_closest_queen(
@@ -357,7 +380,9 @@ class QueenManager:
         # ★ Phase 36: print 스팸 제거 → logger.debug (이전: 30초마다 강제 print)
         game_time = getattr(self.bot, "time", 0)
         if int(game_time) % 60 == 0:
-            logger.debug(f"[QUEEN] Queens:{len(queens)} Assigned:{len(assigned_queens)} Unassigned:{len(unassigned)}")
+            logger.debug(
+                f"[QUEEN] Queens:{len(queens)} Assigned:{len(assigned_queens)} Unassigned:{len(unassigned)}"
+            )
 
         # ★ 퀸이 3마리 이상이면 최소 1명은 무조건 점막 전담 ★
         if len(queens) >= 3:
@@ -385,7 +410,10 @@ class QueenManager:
         if target_creep_queens > 0 and unassigned:
             # ★ FIX: enemy_start가 없어도 점막 전담 퀸 배정 ★
             enemy_start = None
-            if hasattr(self.bot, "enemy_start_locations") and self.bot.enemy_start_locations:
+            if (
+                hasattr(self.bot, "enemy_start_locations")
+                and self.bot.enemy_start_locations
+            ):
                 enemy_start = self.bot.enemy_start_locations[0]
 
             if enemy_start:
@@ -439,11 +467,17 @@ class QueenManager:
 
             # ★ 1차 퀸이 에너지 부족하면 2차 퀸 시도 ★
             if not queen or getattr(queen, "energy", 0) < self.inject_energy_threshold:
-                secondary_assignments = getattr(self, 'secondary_inject_assignments', {})
+                secondary_assignments = getattr(
+                    self, "secondary_inject_assignments", {}
+                )
                 secondary_queen = self._find_queen_by_tag(
                     queens, secondary_assignments.get(hatch_tag)
                 )
-                if secondary_queen and getattr(secondary_queen, "energy", 0) >= self.inject_energy_threshold:
+                if (
+                    secondary_queen
+                    and getattr(secondary_queen, "energy", 0)
+                    >= self.inject_energy_threshold
+                ):
                     queen = secondary_queen
 
             # Fallback to closest queen if no assignment
@@ -452,15 +486,16 @@ class QueenManager:
                     nearby = [
                         q
                         for q in queens
-                        if q.distance_to(hatch.position) < self.max_queen_travel_distance
+                        if q.distance_to(hatch.position)
+                        < self.max_queen_travel_distance
                         and getattr(q, "energy", 0) >= self.inject_energy_threshold
                     ]
                     if nearby:
-                        queen = min(
-                            nearby, key=lambda q: q.distance_to(hatch.position)
-                        )
+                        queen = min(nearby, key=lambda q: q.distance_to(hatch.position))
                 except Exception as e:
-                    logger.warning(f"[QueenManager] Nearby queen search suppressed: {e}")
+                    logger.warning(
+                        f"[QueenManager] Nearby queen search suppressed: {e}"
+                    )
                     continue
 
             if not queen:
@@ -499,7 +534,9 @@ class QueenManager:
             # ★ Phase 36: 탐지 거리 하향 — 30/25 → 20/18 (이전: 30 타일 밖 적에 퀸 인젝트 포기)
             detection_range = 20 if game_time < 180 else 18
 
-            nearby_enemies = [e for e in enemy_units if e.distance_to(th.position) < detection_range]
+            nearby_enemies = [
+                e for e in enemy_units if e.distance_to(th.position) < detection_range
+            ]
             if nearby_enemies:
                 return True
 
@@ -540,6 +577,7 @@ class QueenManager:
                 count = len(nearby_enemies)
                 try:
                     from sc2.position import Point2
+
                     threat_position = Point2((x_sum / count, y_sum / count))
                 except ImportError:
                     threat_position = nearby_enemies[0].position
@@ -550,13 +588,17 @@ class QueenManager:
 
         # ★ 공중 유닛 분류 (퀸 대공 우선) ★
         air_enemies = [e for e in nearby_enemies_list if getattr(e, "is_flying", False)]
-        ground_enemies = [e for e in nearby_enemies_list if not getattr(e, "is_flying", False)]
+        ground_enemies = [
+            e for e in nearby_enemies_list if not getattr(e, "is_flying", False)
+        ]
 
         # Log defense activation
         if iteration % 100 == 0:
             air_count = len(air_enemies)
             ground_count = len(ground_enemies)
-            logger.info(f"[{int(game_time)}s] Queens defending! Air: {air_count}, Ground: {ground_count}")
+            logger.info(
+                f"[{int(game_time)}s] Queens defending! Air: {air_count}, Ground: {ground_count}"
+            )
 
         # ★ IMPROVED: Keep 1-2 queens injecting for reinforcement ★
         # 전투 중에도 최소 1명의 퀸은 라바 ���젝트를 계속해야 병력 충원 가능
@@ -568,7 +610,9 @@ class QueenManager:
         num_inject_queens = min(2, max(1, len(hatcheries) // 2))
 
         # 거리 기준으로 분류: 위협에서 먼 퀸은 인젝트 담당
-        sorted_queens = sorted(queens, key=lambda q: q.distance_to(threat_position), reverse=True)
+        sorted_queens = sorted(
+            queens, key=lambda q: q.distance_to(threat_position), reverse=True
+        )
 
         for i, queen in enumerate(sorted_queens):
             if i < num_inject_queens:
@@ -580,7 +624,9 @@ class QueenManager:
         if inject_queens and hatcheries:
             await self._inject_larva(hatcheries, inject_queens)
             if iteration % 50 == 0:
-                logger.info(f"[{int(game_time)}s] {len(inject_queens)} queens still injecting for reinforcement")
+                logger.info(
+                    f"[{int(game_time)}s] {len(inject_queens)} queens still injecting for reinforcement"
+                )
 
         # Send defense queens to defend
         for queen in defense_queens:
@@ -591,26 +637,34 @@ class QueenManager:
                 if dist_to_threat < 12:
                     # ★ 공중 유닛 우선 공격 (퀸은 대공 유닛) ★
                     target = None
-                    
+
                     # 우선순위: 고위협 공중 > 일반 공중 > 지상
                     # 인터셉터(Interceptor)는 최후순위로 미룸
-                    
+
                     # 고위협 공중 유닛 식별
                     high_value_air = []
                     normal_air = []
-                    low_value_air = [] # Interceptors
-                    
-                    high_value_names = {"CARRIER", "BATTLECRUISER", "TEMPEST", "BROODLORD", "VOIDRAY", "LIBERATOR", "LIBERATORAG"}
-                    
+                    low_value_air = []  # Interceptors
+
+                    high_value_names = {
+                        "CARRIER",
+                        "BATTLECRUISER",
+                        "TEMPEST",
+                        "BROODLORD",
+                        "VOIDRAY",
+                        "LIBERATOR",
+                        "LIBERATORAG",
+                    }
+
                     for e in air_enemies:
-                         name = getattr(e.type_id, "name", "").upper()
-                         if name == "INTERCEPTOR":
-                             low_value_air.append(e)
-                         elif name in high_value_names:
-                             high_value_air.append(e)
-                         else:
-                             normal_air.append(e)
-                             
+                        name = getattr(e.type_id, "name", "").upper()
+                        if name == "INTERCEPTOR":
+                            low_value_air.append(e)
+                        elif name in high_value_names:
+                            high_value_air.append(e)
+                        else:
+                            normal_air.append(e)
+
                     # 타겟 선정
                     if high_value_air:
                         target = min(high_value_air, key=lambda e: e.distance_to(queen))
@@ -620,7 +674,7 @@ class QueenManager:
                         # 지상 유닛 중 가장 가까운 적
                         target = min(ground_enemies, key=lambda e: e.distance_to(queen))
                     elif low_value_air:
-                         # 쏠 게 인터셉터밖에 없으면 그거라도 쏨
+                        # 쏠 게 인터셉터밖에 없으면 그거라도 쏨
                         target = min(low_value_air, key=lambda e: e.distance_to(queen))
 
                     if target:
@@ -636,7 +690,9 @@ class QueenManager:
                 logger.warning(f"[QueenManager] Queen combat attack suppressed: {e}")
                 continue
 
-    async def _transfuse_injured_units(self, queens, iteration: int, include_structures: bool = False) -> None:
+    async def _transfuse_injured_units(
+        self, queens, iteration: int, include_structures: bool = False
+    ) -> None:
         """
         Transfuse injured biological units (CreepyBot-inspired priority system).
 
@@ -720,7 +776,9 @@ class QueenManager:
                         priority = 3 + health_ratio * 0.5  # Same as spine priority
                         injured_targets.append((spine, priority))
             except Exception as e:
-                logger.warning(f"[QueenManager] Spine crawler detection suppressed: {e}")
+                logger.warning(
+                    f"[QueenManager] Spine crawler detection suppressed: {e}"
+                )
 
         if not injured_targets:
             return
@@ -757,7 +815,9 @@ class QueenManager:
                         best_distance = dist
                         best_queen = queen
                 except Exception as e:
-                    logger.warning(f"[QueenManager] Transfuse distance check suppressed: {e}")
+                    logger.warning(
+                        f"[QueenManager] Transfuse distance check suppressed: {e}"
+                    )
                     continue
 
             if best_queen:
@@ -793,7 +853,9 @@ class QueenManager:
                 if current_time - last_t < self.transfuse_cooldown:
                     continue
                 for building in self.bot.structures:
-                    if not hasattr(building, "health") or not hasattr(building, "health_max"):
+                    if not hasattr(building, "health") or not hasattr(
+                        building, "health_max"
+                    ):
                         continue
                     if building.health_max == 0:
                         continue
@@ -802,7 +864,9 @@ class QueenManager:
                     try:
                         if queen.distance_to(building) > 7:
                             continue
-                        result = self.bot.do(queen(AbilityId.TRANSFUSION_TRANSFUSION, building))
+                        result = self.bot.do(
+                            queen(AbilityId.TRANSFUSION_TRANSFUSION, building)
+                        )
                         if hasattr(result, "__await__"):
                             await result
                         self.last_transfuse_time[queen.tag] = current_time
@@ -859,7 +923,9 @@ class QueenManager:
                             await result
                         self.last_creep_time[queen.tag] = current_time
                 else:
-                    result = self.bot.do(queen(AbilityId.BUILD_CREEPTUMOR_QUEEN, target))
+                    result = self.bot.do(
+                        queen(AbilityId.BUILD_CREEPTUMOR_QUEEN, target)
+                    )
                     if hasattr(result, "__await__"):
                         await result
                     self.last_creep_time[queen.tag] = current_time
@@ -969,7 +1035,9 @@ class QueenManager:
 
         # 로그 (30초마다)
         if game_time % 30 == 0 and iteration % 22 == 0:
-            logger.info(f"[{game_time}s] {len(available_queens)} idle/high-energy queens spreading creep (Tumors: {tumor_count}/1000)")
+            logger.info(
+                f"[{game_time}s] {len(available_queens)} idle/high-energy queens spreading creep (Tumors: {tumor_count}/1000)"
+            )
 
         # 각 여유 퀸으로 점막 확장 (최대 4개로 증가)
         tumors_placed = 0
@@ -1002,7 +1070,9 @@ class QueenManager:
                         self.last_creep_time[queen.tag] = current_time
                         tumors_placed += 1
                 else:
-                    result = self.bot.do(queen(AbilityId.BUILD_CREEPTUMOR_QUEEN, target))
+                    result = self.bot.do(
+                        queen(AbilityId.BUILD_CREEPTUMOR_QUEEN, target)
+                    )
                     if hasattr(result, "__await__"):
                         await result
                     self.last_creep_time[queen.tag] = current_time
@@ -1023,7 +1093,10 @@ class QueenManager:
 
             # 적 시작 위치
             enemy_start = None
-            if hasattr(self.bot, "enemy_start_locations") and self.bot.enemy_start_locations:
+            if (
+                hasattr(self.bot, "enemy_start_locations")
+                and self.bot.enemy_start_locations
+            ):
                 enemy_start = self.bot.enemy_start_locations[0]
 
             if not enemy_start:
@@ -1038,6 +1111,7 @@ class QueenManager:
 
             # 적 방향으로 8-10 거리 위치 시도 (최대 5회)
             import random
+
             for _ in range(5):
                 distance = random.uniform(7.0, 10.0)
                 target = queen_pos.towards(enemy_start, distance)
@@ -1066,7 +1140,9 @@ class QueenManager:
 
         # 퀸에서 가장 가까운 기지 찾기
         try:
-            closest_base = min(self.bot.townhalls, key=lambda th: queen.distance_to(th.position))
+            closest_base = min(
+                self.bot.townhalls, key=lambda th: queen.distance_to(th.position)
+            )
         except Exception as e:
             logger.warning(f"[QueenManager] Closest base lookup suppressed: {e}")
             return None
@@ -1079,11 +1155,13 @@ class QueenManager:
         # 기지 주변 8방향 중 하나 선택
         base_pos = closest_base.position
         import random
+
         offsets = [(8, 0), (-8, 0), (0, 8), (0, -8), (6, 6), (-6, 6), (6, -6), (-6, -6)]
         random.shuffle(offsets)
 
         try:
             from sc2.position import Point2
+
             for dx, dy in offsets:
                 target = Point2((base_pos.x + dx, base_pos.y + dy))
 
@@ -1167,7 +1245,9 @@ class QueenManager:
                                 max_dist = dist
                                 farthest_tumor = structure
                         except Exception as e:
-                            logger.warning(f"[QueenManager] Tumor distance calc suppressed: {e}")
+                            logger.warning(
+                                f"[QueenManager] Tumor distance calc suppressed: {e}"
+                            )
                             continue
 
             # Move queen toward farthest tumor or enemy base
@@ -1182,7 +1262,9 @@ class QueenManager:
                 if hasattr(result, "__await__"):
                     await result
         except Exception as e:
-            logger.warning(f"[QueenManager] Position creep queen forward suppressed: {e}")
+            logger.warning(
+                f"[QueenManager] Position creep queen forward suppressed: {e}"
+            )
 
     def _get_creep_target_position(self, queen):
         """Pick a creep spread target along the main attack path."""
@@ -1193,7 +1275,9 @@ class QueenManager:
                 if target:
                     return target
             except Exception as e:
-                logger.warning(f"[QueenManager] Creep target from manager suppressed: {e}")
+                logger.warning(
+                    f"[QueenManager] Creep target from manager suppressed: {e}"
+                )
 
         enemy_starts = getattr(self.bot, "enemy_start_locations", [])
         origin = queen.position
@@ -1208,9 +1292,7 @@ class QueenManager:
         if direction_target and candidates:
             best = max(
                 candidates,
-                key=lambda pos: self._score_creep_target(
-                    origin, pos, direction_target
-                ),
+                key=lambda pos: self._score_creep_target(origin, pos, direction_target),
             )
             return best
 

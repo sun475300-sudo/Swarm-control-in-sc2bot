@@ -3,16 +3,18 @@ Phase 440: Replicate - SC2 Model Deployment on Replicate Platform
 Cloud model hosting with custom cog packaging for SC2 strategy inference.
 """
 
-import replicate
 import json
-from pydantic import BaseModel, Field
 from typing import Optional
 
+import replicate
+from pydantic import BaseModel, Field
 
 # ── Input/Output schemas ──────────────────────────────────────────────────────
 
+
 class GameState(BaseModel):
     """Input schema for SC2 model inference on Replicate."""
+
     race: str = Field(..., description="Player race: Zerg, Terran, or Protoss")
     opponent_race: str = Field(..., description="Opponent race")
     game_time: float = Field(..., ge=0, description="Game time in seconds")
@@ -32,6 +34,7 @@ class ActionItem(BaseModel):
 
 class ActionList(BaseModel):
     """Output schema from the SC2 Replicate model."""
+
     actions: list[ActionItem]
     game_phase: str
     model_version: str
@@ -138,15 +141,22 @@ def save_cog_predictor(output_path: str = "replicate_models/predict.py") -> None
 if __name__ == "__main__":
     print("[Replicate] SC2 Model Deployment")
     print(f"  Model ID: {MODEL_ID}")
-    print(f"  Input schema: GameState (race, opponent_race, game_time, supply, minerals, gas)")
+    print(
+        f"  Input schema: GameState (race, opponent_race, game_time, supply, minerals, gas)"
+    )
     print(f"  Output schema: ActionList (actions, game_phase, model_version)")
     print(f"  Deploy: cog push r8.im/sc2-bot/strategy-advisor")
     print(f"  Run: replicate.run('{MODEL_ID}', input={{...}})")
 
     sample = GameState(
-        race="Zerg", opponent_race="Terran",
-        game_time=300.0, supply_used=80, supply_cap=100,
-        minerals=350, gas=150, army_supply=30,
+        race="Zerg",
+        opponent_race="Terran",
+        game_time=300.0,
+        supply_used=80,
+        supply_cap=100,
+        minerals=350,
+        gas=150,
+        army_supply=30,
     )
     print(f"\n[Sample Input]\n{sample.model_dump_json(indent=2)}")
 

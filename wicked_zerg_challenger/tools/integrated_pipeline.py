@@ -9,14 +9,14 @@ This script handles:
 3. Learning tracking and cleanup
 """
 
-import sys
-import subprocess
-import shutil
-import os
-from datetime import datetime
-from pathlib import Path
 import argparse
 import logging
+import os
+import shutil
+import subprocess
+import sys
+from datetime import datetime
+from pathlib import Path
 
 logger = logging.getLogger("IntegratedPipeline")
 

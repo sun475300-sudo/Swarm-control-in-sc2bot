@@ -3,8 +3,6 @@ import logging
 logger = logging.getLogger("WickedZergBotProImpl")
 
 
-
-
 # -*- coding: utf-8 -*-
 """
 WickedZergBotPro Implementation - on_step implementation
@@ -17,23 +15,28 @@ or imported and used separately.
 try:
     from sc2.bot_ai import BotAI
 except ImportError:
+
     class BotAI:
         pass
 
-from bot_step_integration import BotStepIntegrator
-from utils.logger import setup_logger
-from typing import Optional, List, Dict, Any
-from pathlib import Path
-from blackboard import Blackboard
-from difficulty_progression import DifficultyProgression
-from personality_module import PersonalityModule, PersonalityMode
-import traceback
+
+import glob as glob_mod
 import json
-import time
 import os
 import shutil
-import glob as glob_mod
+import time
+import traceback
 from datetime import datetime
+from pathlib import Path
+from typing import Any, Dict, List, Optional
+
+from blackboard import Blackboard
+from bot_step_integration import BotStepIntegrator
+from difficulty_progression import DifficultyProgression
+from personality_module import PersonalityMode, PersonalityModule
+
+from utils.logger import setup_logger
+
 
 class WickedZergBotProImpl(BotAI):
     """
@@ -43,24 +46,34 @@ class WickedZergBotProImpl(BotAI):
     can be integrated into the existing class.
     """
 
-    def __init__(self, train_mode: bool = False, instance_id: int = 0,
-                 personality: str = "serral", opponent_race=None,
-                 game_count: int = 0, learning_rate: Optional[float] = None):
+    def __init__(
+        self,
+        train_mode: bool = False,
+        instance_id: int = 0,
+        personality: str = "serral",
+        opponent_race=None,
+        game_count: int = 0,
+        learning_rate: Optional[float] = None,
+    ):
         """Initialize WickedZergBotPro."""
         super().__init__()
         self.train_mode = train_mode
         self.instance_id = instance_id
-        self.personality_type = personality  # Store the requested personality type (string)
-        self.personality = None              # Will be the actual module instance
+        self.personality_type = (
+            personality  # Store the requested personality type (string)
+        )
+        self.personality = None  # Will be the actual module instance
         self.opponent_race = opponent_race
         self.game_count = game_count
         self.learning_rate = learning_rate
 
         # Initialize managers (lazy loading)
-        self.blackboard = Blackboard()     # ★ Blackboard (Single Source of Truth) ★
-        self.defense_coordinator = None    # ★ DefenseCoordinator (Unified Defense) ★
-        self.early_defense = None          # ★ EarlyDefenseSystem (0-3 min rush defense) ★
-        self.production_controller = None  # ★ ProductionController (Dynamic Authority) ★
+        self.blackboard = Blackboard()  # ★ Blackboard (Single Source of Truth) ★
+        self.defense_coordinator = None  # ★ DefenseCoordinator (Unified Defense) ★
+        self.early_defense = None  # ★ EarlyDefenseSystem (0-3 min rush defense) ★
+        self.production_controller = (
+            None  # ★ ProductionController (Dynamic Authority) ★
+        )
         self.intel = None
         self.economy = None
         self.production = None
@@ -75,12 +88,12 @@ class WickedZergBotProImpl(BotAI):
         self.queen_manager = None
 
         # Advanced managers (initialized in on_start)
-        self.strategy_manager = None       # Race-specific strategies + Emergency Mode
+        self.strategy_manager = None  # Race-specific strategies + Emergency Mode
         self.performance_optimizer = None  # Distance caching + spatial indexing
-        self.formation_controller = None   # PID-based smooth movement
-        self.rogue_tactics = None          # Baneling drop + larva saving
-        self.transformer_model = None      # Transformer decision model
-        self.hierarchical_rl = None        # Hierarchical RL agent
+        self.formation_controller = None  # PID-based smooth movement
+        self.rogue_tactics = None  # Baneling drop + larva saving
+        self.transformer_model = None  # Transformer decision model
+        self.hierarchical_rl = None  # Hierarchical RL agent
         self.aggressive_strategies = None  # Early game aggressive strategies
 
         # Step integrator initialization
@@ -119,37 +132,51 @@ class WickedZergBotProImpl(BotAI):
         # === 0. Blackboard (Central State) ===
         # Already initialized in __init__, but logging here
         if self.blackboard:
-             self.logger.info("[*] Blackboard active")
+            self.logger.info("[*] Blackboard active")
 
         # === 0.1 Resource Manager (Thread-safe resource reservation) ===
         try:
             from core.resource_manager import ResourceManager
+
             self.resource_manager = ResourceManager(self)
-            self.logger.info("[*] ResourceManager initialized (thread-safe reservation system)")
+            self.logger.info(
+                "[*] ResourceManager initialized (thread-safe reservation system)"
+            )
         except ImportError as e:
             self.logger.warning(f"ResourceManager not available: {e}")
             self.resource_manager = None
 
         # === 0.05 Difficulty Progression ===
         try:
-            map_name = self.game_info.map_name if hasattr(self, 'game_info') else "Unknown"
-            opponent_race = self.enemy_race if hasattr(self, 'enemy_race') else None
+            map_name = (
+                self.game_info.map_name if hasattr(self, "game_info") else "Unknown"
+            )
+            opponent_race = self.enemy_race if hasattr(self, "enemy_race") else None
 
             if opponent_race and self.difficulty_progression:
-                self.current_difficulty = self.difficulty_progression.get_recommended_difficulty(
-                    map_name, opponent_race
+                self.current_difficulty = (
+                    self.difficulty_progression.get_recommended_difficulty(
+                        map_name, opponent_race
+                    )
                 )
-                self.logger.info(f"[DIFFICULTY] Map: {map_name}, Opponent: {opponent_race.name}")
-                self.logger.info(f"[DIFFICULTY] Recommended Difficulty: {self.current_difficulty.name}")
+                self.logger.info(
+                    f"[DIFFICULTY] Map: {map_name}, Opponent: {opponent_race.name}"
+                )
+                self.logger.info(
+                    f"[DIFFICULTY] Recommended Difficulty: {self.current_difficulty.name}"
+                )
 
                 # Print stats summary if available
-                stats_summary = self.difficulty_progression.get_stats_summary(map_name, opponent_race)
+                stats_summary = self.difficulty_progression.get_stats_summary(
+                    map_name, opponent_race
+                )
                 if "No stats" not in stats_summary:
                     self.logger.info(stats_summary)
             else:
                 # Fallback
                 try:
                     from sc2.data import Difficulty
+
                     self.current_difficulty = Difficulty.Easy
                     self.logger.info("[DIFFICULTY] Using fallback difficulty: Easy")
                 except ImportError:
@@ -158,6 +185,7 @@ class WickedZergBotProImpl(BotAI):
             self.logger.info(f"[DIFFICULTY] Error getting recommended difficulty: {e}")
             try:
                 from sc2.data import Difficulty
+
                 self.current_difficulty = Difficulty.Easy
             except ImportError:
                 self.current_difficulty = None
@@ -178,12 +206,16 @@ class WickedZergBotProImpl(BotAI):
             # Factory를 bot에 저장 (나중에 매니저 조회용)
             self.manager_factory = factory
 
-            logger.info(f"\n[BOT] [*] Manager initialization complete: {stats['succeeded']}/{stats['total']} succeeded [*]\n")
+            logger.info(
+                f"\n[BOT] [*] Manager initialization complete: {stats['succeeded']}/{stats['total']} succeeded [*]\n"
+            )
 
         except ImportError as e:
             self.logger.error(f"ManagerFactory not available: {e}")
             self.logger.error("ManagerFactory is required! Cannot continue without it.")
-            raise ImportError("ManagerFactory is required for bot initialization") from e
+            raise ImportError(
+                "ManagerFactory is required for bot initialization"
+            ) from e
 
         # === Map Memory System 시작 ===
         if hasattr(self, "map_memory") and self.map_memory:
@@ -207,11 +239,16 @@ class WickedZergBotProImpl(BotAI):
                     mode = PersonalityMode.COCKY
                 elif "silent" in p_type:
                     mode = PersonalityMode.SILENT
-            
-            self.personality = PersonalityModule(self, mode=mode,
-                                               knowledge_manager=getattr(self, 'knowledge_manager', None),
-                                               opponent_modeling=getattr(self, 'opponent_modeling', None))
-            self.logger.info(f"[*] PersonalityModule initialized (Jarvis active, Mode: {mode.value})")
+
+            self.personality = PersonalityModule(
+                self,
+                mode=mode,
+                knowledge_manager=getattr(self, "knowledge_manager", None),
+                opponent_modeling=getattr(self, "opponent_modeling", None),
+            )
+            self.logger.info(
+                f"[*] PersonalityModule initialized (Jarvis active, Mode: {mode.value})"
+            )
         except Exception as e:
             self.logger.warning(f"Failed to initialize PersonalityModule: {e}")
             traceback.print_exc()
@@ -220,14 +257,25 @@ class WickedZergBotProImpl(BotAI):
         self.rl_agent = None
         if self.train_mode:
             try:
-                from local_training.rl_agent import RLAgent
                 import os as _os
+
+                from local_training.rl_agent import RLAgent
+
                 initial_lr = self.learning_rate if self.learning_rate else 0.001
-                model_path = str(Path(__file__).parent / "local_training" / "models" / "rl_agent_model.npz")
+                model_path = str(
+                    Path(__file__).parent
+                    / "local_training"
+                    / "models"
+                    / "rl_agent_model.npz"
+                )
                 self.rl_agent = RLAgent(learning_rate=initial_lr, model_path=model_path)
                 if _os.path.exists(model_path):
-                    self.logger.info(f"[RL_AGENT] Loaded existing model from {model_path}")
-                self.logger.info(f"[RL_AGENT] Initialized (lr={initial_lr}, train_mode=True)")
+                    self.logger.info(
+                        f"[RL_AGENT] Loaded existing model from {model_path}"
+                    )
+                self.logger.info(
+                    f"[RL_AGENT] Initialized (lr={initial_lr}, train_mode=True)"
+                )
             except ImportError as e:
                 self.logger.info(f"[RL_AGENT] Not available: {e}")
             except Exception as e:
@@ -239,8 +287,11 @@ class WickedZergBotProImpl(BotAI):
         if self.rl_agent is not None:
             try:
                 from local_training.hot_reload import ModelHotReloader
+
                 self.hot_reloader = ModelHotReloader(self.rl_agent)
-                self.logger.info("[HOT_RELOAD] [*] ModelHotReloader initialized (30s interval)")
+                self.logger.info(
+                    "[HOT_RELOAD] [*] ModelHotReloader initialized (30s interval)"
+                )
             except ImportError:
                 pass
             except Exception as e:
@@ -249,7 +300,10 @@ class WickedZergBotProImpl(BotAI):
         # === Hierarchical RL System initialization ===
         self.hierarchical_rl = None
         try:
-            from local_training.hierarchical_rl.improved_hierarchical_rl import HierarchicalRLSystem
+            from local_training.hierarchical_rl.improved_hierarchical_rl import (
+                HierarchicalRLSystem,
+            )
+
             self.hierarchical_rl = HierarchicalRLSystem()
             self.logger.info(f"[HIERARCHICAL_RL] Initialized (Shadow Mode Active)")
         except ImportError as e:
@@ -262,8 +316,11 @@ class WickedZergBotProImpl(BotAI):
         self.situational_awareness = None
         try:
             from core.situational_awareness import SituationalAwareness
+
             self.situational_awareness = SituationalAwareness(self)
-            self.logger.info(f"[SITUATIONAL_AWARENESS] Initialized (SITREP Generation Active)")
+            self.logger.info(
+                f"[SITUATIONAL_AWARENESS] Initialized (SITREP Generation Active)"
+            )
         except ImportError as e:
             self.logger.info(f"[SITUATIONAL_AWARENESS] Not available: {e}")
         except Exception as e:
@@ -276,42 +333,56 @@ class WickedZergBotProImpl(BotAI):
         # === Curriculum Manager (reused across on_end calls) ===
         try:
             from local_training.curriculum_manager import CurriculumManager
+
             self.curriculum = CurriculumManager()
         except ImportError:
             self.curriculum = None
 
         # ★★★ 학습된 데이터 적용 (모든 매니저 초기화 완료 후) ★★★
         try:
-            if hasattr(self, 'economy') and hasattr(self.economy, 'balancer'):
+            if hasattr(self, "economy") and hasattr(self.economy, "balancer"):
                 self.economy.balancer.apply_learned_economy_weights()
-                self.logger.info("[OK] Applied learned economy fundamentals to EconomyCombatBalancer")
+                self.logger.info(
+                    "[OK] Applied learned economy fundamentals to EconomyCombatBalancer"
+                )
         except Exception as e:
             self.logger.info(f"[WARNING] Failed to apply learned economy weights: {e}")
             traceback.print_exc()
 
         # ★★★ Opponent Modeling - Load previous data and start tracking ★★★
-        if hasattr(self, 'opponent_modeling') and self.opponent_modeling:
+        if hasattr(self, "opponent_modeling") and self.opponent_modeling:
             try:
                 # Detect opponent ID (player name or ID)
                 opponent_id = None
-                if hasattr(self, 'opponent_id'):
+                if hasattr(self, "opponent_id"):
                     opponent_id = self.opponent_id
-                elif hasattr(self, 'enemy_name'):
+                elif hasattr(self, "enemy_name"):
                     opponent_id = self.enemy_name
                 else:
                     # Fallback: use enemy race as identifier
                     opponent_id = f"AI_{self.enemy_race.name if hasattr(self, 'enemy_race') else 'Unknown'}"
 
                 # Start tracking
-                self.opponent_modeling.on_game_start(opponent_id, self.enemy_race if hasattr(self, 'enemy_race') else None)
-                self.logger.info(f"[OPPONENT_MODELING] Started tracking opponent: {opponent_id}")
+                self.opponent_modeling.on_game_start(
+                    opponent_id,
+                    self.enemy_race if hasattr(self, "enemy_race") else None,
+                )
+                self.logger.info(
+                    f"[OPPONENT_MODELING] Started tracking opponent: {opponent_id}"
+                )
 
                 # Get strategy prediction
-                predicted_strategy, confidence = self.opponent_modeling.get_predicted_strategy()
+                predicted_strategy, confidence = (
+                    self.opponent_modeling.get_predicted_strategy()
+                )
                 if predicted_strategy:
-                    self.logger.info(f"[OPPONENT_MODELING] Predicted strategy: {predicted_strategy} (confidence: {confidence:.2%})")
+                    self.logger.info(
+                        f"[OPPONENT_MODELING] Predicted strategy: {predicted_strategy} (confidence: {confidence:.2%})"
+                    )
                     counter_units = self.opponent_modeling.get_counter_recommendations()
-                    self.logger.info(f"[OPPONENT_MODELING] Recommended counters: {counter_units}")
+                    self.logger.info(
+                        f"[OPPONENT_MODELING] Recommended counters: {counter_units}"
+                    )
             except Exception as e:
                 self.logger.warning(f"OpponentModeling on_start error: {e}")
                 traceback.print_exc()
@@ -319,6 +390,7 @@ class WickedZergBotProImpl(BotAI):
         # === Scoring System + Real-time Awareness Engine ===
         try:
             from scoring_system import ScoringSystem
+
             self.scoring_system = ScoringSystem(self)
             self.logger.info("[*] ScoringSystem initialized (10-domain scoring)")
         except Exception as e:
@@ -326,8 +398,11 @@ class WickedZergBotProImpl(BotAI):
 
         try:
             from realtime_awareness_engine import RealtimeAwarenessEngine
+
             self.awareness_engine = RealtimeAwarenessEngine(self)
-            self.logger.info("[*] RealtimeAwarenessEngine initialized (14-pattern detection)")
+            self.logger.info(
+                "[*] RealtimeAwarenessEngine initialized (14-pattern detection)"
+            )
         except Exception as e:
             self.logger.warning(f"RealtimeAwarenessEngine not available: {e}")
 
@@ -347,9 +422,11 @@ class WickedZergBotProImpl(BotAI):
         """
         # ★★★ 시간 제한: 30분(1800초) 강제 종료 (충분한 학습 시간 확보) - train_mode일 때만 ★★★
         if self.train_mode and self.time > 1800:
-            if not hasattr(self, '_game_ended'):
+            if not hasattr(self, "_game_ended"):
                 self._game_ended = True
-                self.logger.info(f"[GAME] Time limit reached ({int(self.time)}s). Surrendering for fast training.")
+                self.logger.info(
+                    f"[GAME] Time limit reached ({int(self.time)}s). Surrendering for fast training."
+                )
                 await self.client.leave()
             return
 
@@ -358,9 +435,9 @@ class WickedZergBotProImpl(BotAI):
 
         # ★ Feature 86: Cache our unit tags for unit lost tracking ★
         if iteration % 22 == 0:
-            if not hasattr(self, '_known_unit_tags'):
+            if not hasattr(self, "_known_unit_tags"):
                 self._known_unit_tags = {}
-            if hasattr(self, 'units'):
+            if hasattr(self, "units"):
                 # Bug fix #3: Prune tags no longer in self.units to prevent unbounded growth
                 current_tags = {unit.tag for unit in self.units}
                 stale_tags = set(self._known_unit_tags.keys()) - current_tags
@@ -369,15 +446,24 @@ class WickedZergBotProImpl(BotAI):
 
                 for unit in self.units:
                     # Bug fix #1: Check BEFORE assignment so new workers are detected
-                    if unit.type_id.name == "DRONE" and unit.tag not in self._known_unit_tags:
-                        self._workers_created = getattr(self, '_workers_created', 0) + 1
+                    if (
+                        unit.type_id.name == "DRONE"
+                        and unit.tag not in self._known_unit_tags
+                    ):
+                        self._workers_created = getattr(self, "_workers_created", 0) + 1
                     self._known_unit_tags[unit.tag] = {
                         "type": unit.type_id.name,
-                        "position": {"x": round(unit.position.x, 1), "y": round(unit.position.y, 1)},
+                        "position": {
+                            "x": round(unit.position.x, 1),
+                            "y": round(unit.position.y, 1),
+                        },
                     }
 
         # 전략 선택 (한 번만 실행)
-        if self.aggressive_strategies and not self.aggressive_strategies._strategy_decided:
+        if (
+            self.aggressive_strategies
+            and not self.aggressive_strategies._strategy_decided
+        ):
             enemy_race = str(getattr(self, "enemy_race", "Unknown"))
             self.aggressive_strategies.select_strategy(enemy_race)
 
@@ -418,20 +504,28 @@ class WickedZergBotProImpl(BotAI):
         if self.scoring_system:
             try:
                 result_str = str(game_result).upper()
-                result_key = "win" if ("VICTORY" in result_str or "WIN" in result_str) else "loss"
+                result_key = (
+                    "win"
+                    if ("VICTORY" in result_str or "WIN" in result_str)
+                    else "loss"
+                )
                 score_report = self.scoring_system.on_game_end(result_key)
                 logger.info(f"\n{self.scoring_system.get_summary()}")
-                self.logger.info(f"[SCORING] Total: {score_report.get('total_score', 0):.0f} | "
-                      f"Peak Supply: {score_report.get('peak_supply', 0)} | "
-                      f"Engagements: {score_report.get('engagements_won', 0)}W/"
-                      f"{score_report.get('engagements_lost', 0)}L")
+                self.logger.info(
+                    f"[SCORING] Total: {score_report.get('total_score', 0):.0f} | "
+                    f"Peak Supply: {score_report.get('peak_supply', 0)} | "
+                    f"Engagements: {score_report.get('engagements_won', 0)}W/"
+                    f"{score_report.get('engagements_lost', 0)}L"
+                )
             except Exception as e:
                 self.logger.warning(f"ScoringSystem on_end error: {e}")
 
         # ★ Awareness Engine: 최종 상황 요약 ★
         if self.awareness_engine:
             try:
-                self.logger.info(f"[AWARENESS] Final: {self.awareness_engine.get_situation_summary()}")
+                self.logger.info(
+                    f"[AWARENESS] Final: {self.awareness_engine.get_situation_summary()}"
+                )
             except Exception:
                 pass
 
@@ -445,10 +539,10 @@ class WickedZergBotProImpl(BotAI):
 
         # ★ NEW: Save intel data for next game
         if self.intel:
-             self.intel.save_data()
+            self.intel.save_data()
 
         # ★★★ Opponent Modeling - Save game data for learning ★★★
-        if hasattr(self, 'opponent_modeling') and self.opponent_modeling:
+        if hasattr(self, "opponent_modeling") and self.opponent_modeling:
             try:
                 result_str = str(game_result).upper()
                 won = "VICTORY" in result_str or "WIN" in result_str
@@ -456,15 +550,25 @@ class WickedZergBotProImpl(BotAI):
 
                 # Record game outcome
                 self.opponent_modeling.on_game_end(won, lost)
-                self.logger.info(f"[OPPONENT_MODELING] Game data saved. Opponent model updated.")
+                self.logger.info(
+                    f"[OPPONENT_MODELING] Game data saved. Opponent model updated."
+                )
 
                 # Print learning summary every 5 games
                 if self.opponent_modeling.current_opponent:
-                    model = self.opponent_modeling.models.get(self.opponent_modeling.current_opponent)
+                    model = self.opponent_modeling.models.get(
+                        self.opponent_modeling.current_opponent
+                    )
                     if model and model.games_played > 0 and model.games_played % 5 == 0:
-                        self.logger.info(f"[OPPONENT_MODELING] Opponent: {self.opponent_modeling.current_opponent}")
-                        self.logger.info(f"Games: {model.games_played}, Wins: {model.games_won}, Losses: {model.games_lost}")
-                        self.logger.info(f"Win rate: {model.games_won / model.games_played * 100:.1f}%")
+                        self.logger.info(
+                            f"[OPPONENT_MODELING] Opponent: {self.opponent_modeling.current_opponent}"
+                        )
+                        self.logger.info(
+                            f"Games: {model.games_played}, Wins: {model.games_won}, Losses: {model.games_lost}"
+                        )
+                        self.logger.info(
+                            f"Win rate: {model.games_won / model.games_played * 100:.1f}%"
+                        )
             except Exception as e:
                 self.logger.warning(f"OpponentModeling on_end error: {e}")
                 traceback.print_exc()
@@ -487,20 +591,28 @@ class WickedZergBotProImpl(BotAI):
                 game_outcome_reward = 0.0
 
                 # Use VictoryConditionsLearner for detailed analysis
-                if hasattr(self, '_victory_learner') and self._victory_learner:
+                if hasattr(self, "_victory_learner") and self._victory_learner:
                     if game_won:
-                        conditions, reward = self._victory_learner.analyze_game_result(self, "Victory")
+                        conditions, reward = self._victory_learner.analyze_game_result(
+                            self, "Victory"
+                        )
                         game_outcome_reward = reward
-                        logger.info(f"\n[VICTORY] Conditions met: {', '.join(conditions)}")
+                        logger.info(
+                            f"\n[VICTORY] Conditions met: {', '.join(conditions)}"
+                        )
                         self.logger.info(f"[VICTORY] Total reward: {reward:.1f}")
                     elif game_lost:
-                        conditions, penalty = self._victory_learner.analyze_game_result(self, "Defeat")
+                        conditions, penalty = self._victory_learner.analyze_game_result(
+                            self, "Defeat"
+                        )
                         game_outcome_reward = penalty
                         logger.info(f"\n[DEFEAT] Conditions: {', '.join(conditions)}")
                         self.logger.info(f"[DEFEAT] Total penalty: {penalty:.1f}")
 
                     # 통계 출력 (10게임마다)
-                    total_games = len(self._victory_learner.victory_patterns) + len(self._victory_learner.defeat_patterns)
+                    total_games = len(self._victory_learner.victory_patterns) + len(
+                        self._victory_learner.defeat_patterns
+                    )
                     if total_games % 10 == 0 and total_games > 0:
                         self._victory_learner.print_analysis()
                 else:
@@ -514,57 +626,70 @@ class WickedZergBotProImpl(BotAI):
                 self.parameters_updated = 0
 
                 # ★★★ Adaptive Learning Rate Update (최우선) ★★★
-                if hasattr(self, 'adaptive_lr') and self.adaptive_lr:
+                if hasattr(self, "adaptive_lr") and self.adaptive_lr:
                     new_lr = self.adaptive_lr.update(game_won)
 
                     # 학습률이 조정되었으면 RL Agent에 적용
-                    if new_lr and hasattr(self, 'rl_agent') and self.rl_agent:
+                    if new_lr and hasattr(self, "rl_agent") and self.rl_agent:
                         self.rl_agent.learning_rate = new_lr
-                        self.logger.info(f"[ADAPTIVE_LR] [OK] RL Agent 학습률 업데이트: {new_lr:.6f}")
+                        self.logger.info(
+                            f"[ADAPTIVE_LR] [OK] RL Agent 학습률 업데이트: {new_lr:.6f}"
+                        )
 
                     # 10게임마다 통계 출력
                     if self.adaptive_lr.total_games % 10 == 0:
                         self.logger.info(self.adaptive_lr.get_summary())
 
                 # RL agent: end episode and perform learning (CRITICAL!)
-                if hasattr(self, 'rl_agent') and self.rl_agent:
+                if hasattr(self, "rl_agent") and self.rl_agent:
                     # End episode triggers backpropagation and weight update
                     # (경험 데이터는 end_episode 내부에서 자동 저장)
-                    training_stats = self.rl_agent.end_episode(final_reward=game_outcome_reward, save_experience=True)
+                    training_stats = self.rl_agent.end_episode(
+                        final_reward=game_outcome_reward, save_experience=True
+                    )
 
                     # Check if learning occurred (steps > 0 means rewards were collected)
-                    if training_stats.get('steps', 0) > 0:
+                    if training_stats.get("steps", 0) > 0:
                         self.parameters_updated = 1  # Mark that learning occurred
                         self.logger.info(f"[TRAINING] [OK] Neural network updated!")
-                        self.logger.info(f"Loss: {training_stats.get('loss', 0):.4f}, Avg Reward: {training_stats.get('avg_reward', 0):.3f}")
-                        self.logger.info(f"Steps: {training_stats.get('steps', 0)}, ε={training_stats.get('epsilon', 0):.3f}, LR={training_stats.get('learning_rate', 0):.6f}")
+                        self.logger.info(
+                            f"Loss: {training_stats.get('loss', 0):.4f}, Avg Reward: {training_stats.get('avg_reward', 0):.3f}"
+                        )
+                        self.logger.info(
+                            f"Steps: {training_stats.get('steps', 0)}, ε={training_stats.get('epsilon', 0):.3f}, LR={training_stats.get('learning_rate', 0):.6f}"
+                        )
                     else:
-                        self.logger.info(f"[TRAINING] No learning this episode (no rewards collected)")
+                        self.logger.info(
+                            f"[TRAINING] No learning this episode (no rewards collected)"
+                        )
 
                     # 모델 검증 (게임 결과 기록)
-                    game_time = getattr(self, 'time', 0)
+                    game_time = getattr(self, "time", 0)
                     self.rl_agent.validate(game_won, game_time)
 
                     # 배포 가능 여부 확인 (10 게임마다)
                     if self.rl_agent.episode_count % 10 == 0:
                         ready, reason = self.rl_agent.is_ready_for_deployment()
                         if ready:
-                            self.logger.info(f"[RL_AGENT] [*] MODEL READY FOR DEPLOYMENT [*]")
+                            self.logger.info(
+                                f"[RL_AGENT] [*] MODEL READY FOR DEPLOYMENT [*]"
+                            )
                         else:
                             self.logger.info(f"[RL_AGENT] Training progress: {reason}")
 
                     # Save model
-                    if hasattr(self.rl_agent, 'save_model'):
+                    if hasattr(self.rl_agent, "save_model"):
                         model_path = "local_training/models/rl_agent_model.npz"
                         self.rl_agent.save_model(model_path)
 
                 # Reset reward system
-                if hasattr(self, '_reward_system'):
+                if hasattr(self, "_reward_system"):
                     self._reward_system.reset()
 
             except Exception as e:
                 self.logger.info(f"[WARNING] Training end logic error: {e}")
                 import traceback
+
                 traceback.print_exc()
 
         # ★★★ 게임 간 매니저 상태 초기화 (훈련 에피소드 안정성) ★★★
@@ -573,9 +698,10 @@ class WickedZergBotProImpl(BotAI):
         # ★★★ 커리큘럼 매니저: 승리/패배 기록 (종족별 추적 포함) ★★★
         try:
             # Bug fix #2: Reuse self.curriculum instead of creating new instance each game
-            curriculum = getattr(self, 'curriculum', None)
+            curriculum = getattr(self, "curriculum", None)
             if curriculum is None:
                 from local_training.curriculum_manager import CurriculumManager
+
                 curriculum = CurriculumManager()
                 self.curriculum = curriculum
             result_str = str(game_result).upper()
@@ -583,21 +709,23 @@ class WickedZergBotProImpl(BotAI):
             # ★ 상대 종족 감지 ★
             opponent_race = None
             try:
-                if hasattr(self, 'enemy_race') and self.enemy_race:
+                if hasattr(self, "enemy_race") and self.enemy_race:
                     opponent_race = str(self.enemy_race).replace("Race.", "")
-                elif hasattr(self, '_enemy_race'):
+                elif hasattr(self, "_enemy_race"):
                     opponent_race = str(self._enemy_race).replace("Race.", "")
                 # 적 유닛/건물에서 종족 추론
-                elif hasattr(self, 'enemy_units') and self.enemy_units:
+                elif hasattr(self, "enemy_units") and self.enemy_units:
                     enemy_unit = self.enemy_units.first
-                    if hasattr(enemy_unit, 'race'):
+                    if hasattr(enemy_unit, "race"):
                         opponent_race = str(enemy_unit.race).replace("Race.", "")
-                elif hasattr(self, 'enemy_structures') and self.enemy_structures:
+                elif hasattr(self, "enemy_structures") and self.enemy_structures:
                     enemy_struct = self.enemy_structures.first
-                    if hasattr(enemy_struct, 'race'):
+                    if hasattr(enemy_struct, "race"):
                         opponent_race = str(enemy_struct.race).replace("Race.", "")
             except Exception as e:
-                self.logger.warning(f"[WickedZergBot] Opponent race detection suppressed: {e}")
+                self.logger.warning(
+                    f"[WickedZergBot] Opponent race detection suppressed: {e}"
+                )
 
             if opponent_race:
                 self.logger.info(f"[RACE] 상대 종족: {opponent_race}")
@@ -605,7 +733,9 @@ class WickedZergBotProImpl(BotAI):
             if "VICTORY" in result_str or "WIN" in result_str:
                 promoted = curriculum.record_win(opponent_race)
                 if promoted:
-                    self.logger.info("[CURRICULUM] [*][*][*] 다음 단계로 승격! [*][*][*]")
+                    self.logger.info(
+                        "[CURRICULUM] [*][*][*] 다음 단계로 승격! [*][*][*]"
+                    )
             elif "DEFEAT" in result_str or "LOSS" in result_str:
                 demoted = curriculum.record_loss(opponent_race)
                 if demoted:
@@ -613,8 +743,10 @@ class WickedZergBotProImpl(BotAI):
 
             # 현재 진행 상황 출력
             progress = curriculum.get_progress_info()
-            self.logger.info(f"[CURRICULUM] 현재 단계: {progress['level_name']} "
-                  f"({progress['wins_at_current_level']}/{progress['wins_required']}승)")
+            self.logger.info(
+                f"[CURRICULUM] 현재 단계: {progress['level_name']} "
+                f"({progress['wins_at_current_level']}/{progress['wins_required']}승)"
+            )
             self.logger.info(f"[CURRICULUM] 최종 목표: CheatInsane AI 격파!")
 
             # ★ 종족별 승률 출력 ★
@@ -624,52 +756,83 @@ class WickedZergBotProImpl(BotAI):
             self.logger.info(f"[WARNING] Curriculum manager error: {e}")
 
         # ★★★ Game Analytics - 게임 결과 상세 분석 ★★★
-        if hasattr(self, 'game_analytics') and self.game_analytics and self.train_mode:
+        if hasattr(self, "game_analytics") and self.game_analytics and self.train_mode:
             try:
                 # 추가 통계 수집
                 additional_stats = {
-                    "worker_count": self.workers.amount if hasattr(self, 'workers') else 0,
-                    "army_count": self.units.amount if hasattr(self, 'units') else 0,
-                    "base_count": self.townhalls.amount if hasattr(self, 'townhalls') else 0,
-                    "pool_timing": getattr(self, 'pool_timing', 0),
-                    "first_expand_timing": getattr(self, 'first_expand_timing', 0),
-                    "minerals": self.minerals if hasattr(self, 'minerals') else 0,
-                    "vespene": self.vespene if hasattr(self, 'vespene') else 0,
+                    "worker_count": (
+                        self.workers.amount if hasattr(self, "workers") else 0
+                    ),
+                    "army_count": self.units.amount if hasattr(self, "units") else 0,
+                    "base_count": (
+                        self.townhalls.amount if hasattr(self, "townhalls") else 0
+                    ),
+                    "pool_timing": getattr(self, "pool_timing", 0),
+                    "first_expand_timing": getattr(self, "first_expand_timing", 0),
+                    "minerals": self.minerals if hasattr(self, "minerals") else 0,
+                    "vespene": self.vespene if hasattr(self, "vespene") else 0,
                 }
 
                 # 실제 난이도 가져오기
-                difficulty_str = 'Easy'  # 기본값
-                if hasattr(self, 'current_difficulty') and self.current_difficulty:
+                difficulty_str = "Easy"  # 기본값
+                if hasattr(self, "current_difficulty") and self.current_difficulty:
                     difficulty_str = self.current_difficulty.name
 
                 # 게임 분석 기록
                 self.game_analytics.record_game(
-                    game_id=getattr(self, 'game_count', 0),
-                    map_name=str(getattr(self, 'game_info', {}).get('map_name', 'Unknown')) if hasattr(self, 'game_info') else 'Unknown',
-                    opponent_race=str(getattr(self, 'enemy_race', 'Unknown')).replace('Race.', ''),
+                    game_id=getattr(self, "game_count", 0),
+                    map_name=(
+                        str(getattr(self, "game_info", {}).get("map_name", "Unknown"))
+                        if hasattr(self, "game_info")
+                        else "Unknown"
+                    ),
+                    opponent_race=str(getattr(self, "enemy_race", "Unknown")).replace(
+                        "Race.", ""
+                    ),
                     difficulty=difficulty_str,
                     result=str(game_result),
-                    game_time=getattr(self, 'time', 0.0) if hasattr(self, 'time') else 0.0,
-                    additional_stats=additional_stats
+                    game_time=(
+                        getattr(self, "time", 0.0) if hasattr(self, "time") else 0.0
+                    ),
+                    additional_stats=additional_stats,
                 )
 
                 # 난이도 진행도 시스템에도 기록
-                if hasattr(self, 'difficulty_progression') and self.difficulty_progression:
+                if (
+                    hasattr(self, "difficulty_progression")
+                    and self.difficulty_progression
+                ):
                     try:
-                        map_name = str(getattr(self, 'game_info', {}).get('map_name', 'Unknown')) if hasattr(self, 'game_info') else 'Unknown'
-                        opponent_race = getattr(self, 'enemy_race', None)
-                        won = (str(game_result) == "Victory")
+                        map_name = (
+                            str(
+                                getattr(self, "game_info", {}).get(
+                                    "map_name", "Unknown"
+                                )
+                            )
+                            if hasattr(self, "game_info")
+                            else "Unknown"
+                        )
+                        opponent_race = getattr(self, "enemy_race", None)
+                        won = str(game_result) == "Victory"
 
-                        if opponent_race and hasattr(self, 'current_difficulty') and self.current_difficulty:
+                        if (
+                            opponent_race
+                            and hasattr(self, "current_difficulty")
+                            and self.current_difficulty
+                        ):
                             self.difficulty_progression.record_game(
                                 map_name=map_name,
                                 opponent_race=opponent_race,
                                 difficulty=self.current_difficulty,
-                                won=won
+                                won=won,
                             )
-                            self.logger.info(f"[DIFFICULTY] Recorded: {map_name} vs {opponent_race.name} ({self.current_difficulty.name}): {'WIN' if won else 'LOSS'}")
+                            self.logger.info(
+                                f"[DIFFICULTY] Recorded: {map_name} vs {opponent_race.name} ({self.current_difficulty.name}): {'WIN' if won else 'LOSS'}"
+                            )
                     except Exception as e:
-                        self.logger.info(f"[DIFFICULTY] Error recording to progression system: {e}")
+                        self.logger.info(
+                            f"[DIFFICULTY] Error recording to progression system: {e}"
+                        )
 
                 # 10게임마다 통계 요약 출력
                 if self.game_analytics.total_games % 10 == 0:
@@ -677,7 +840,9 @@ class WickedZergBotProImpl(BotAI):
 
                 # 종족별 조언 (20게임마다)
                 if self.game_analytics.total_games % 20 == 0:
-                    opponent_race = str(getattr(self, 'enemy_race', 'Unknown')).replace('Race.', '')
+                    opponent_race = str(getattr(self, "enemy_race", "Unknown")).replace(
+                        "Race.", ""
+                    )
                     advice = self.game_analytics.get_race_specific_advice(opponent_race)
                     if advice:
                         self.logger.info(advice)
@@ -688,12 +853,12 @@ class WickedZergBotProImpl(BotAI):
         # ★★★ Phase 22: Game Result Reporter - 경기 결과 자동 보고서 ★★★
         try:
             # GameDataLogger 종료 처리
-            if hasattr(self, 'game_data_logger') and self.game_data_logger:
+            if hasattr(self, "game_data_logger") and self.game_data_logger:
                 result_str = str(game_result)
                 self.game_data_logger.finalize_game(result_str)
 
                 # GameResultReporter로 보고서 생성
-                if hasattr(self, 'game_result_reporter') and self.game_result_reporter:
+                if hasattr(self, "game_result_reporter") and self.game_result_reporter:
                     report_text = self.game_result_reporter.generate_report(
                         self.game_data_logger.game_data
                     )
@@ -732,10 +897,10 @@ class WickedZergBotProImpl(BotAI):
         # Store training result for run_with_training.py
         self._training_result = {
             "game_result": str(game_result),
-            "game_time": getattr(self, 'time', 0.0) if hasattr(self, 'time') else 0.0,
-            "build_order_score": getattr(self, 'build_order_score', None),
-            "loss_reason": getattr(self, 'loss_reason', None),
-            "parameters_updated": getattr(self, 'parameters_updated', 0)
+            "game_time": getattr(self, "time", 0.0) if hasattr(self, "time") else 0.0,
+            "build_order_score": getattr(self, "build_order_score", None),
+            "loss_reason": getattr(self, "loss_reason", None),
+            "parameters_updated": getattr(self, "parameters_updated", 0),
         }
 
     # =========================================================================
@@ -754,26 +919,30 @@ class WickedZergBotProImpl(BotAI):
         # Gather opponent race
         opp_race = "Unknown"
         try:
-            if hasattr(self, 'enemy_race') and self.enemy_race:
+            if hasattr(self, "enemy_race") and self.enemy_race:
                 opp_race = str(self.enemy_race).replace("Race.", "")
         except Exception as e:
             self.logger.warning(f"[WickedZergBot] Opp race lookup suppressed: {e}")
 
         # Gather stats
-        game_duration = getattr(self, 'time', 0.0) if hasattr(self, 'time') else 0.0
-        final_supply = getattr(self, 'supply_used', 0) if hasattr(self, 'supply_used') else 0
-        final_minerals = getattr(self, 'minerals', 0) if hasattr(self, 'minerals') else 0
-        final_vespene = getattr(self, 'vespene', 0) if hasattr(self, 'vespene') else 0
-        workers_created = getattr(self, '_workers_created', 0)
-        expansions_built = getattr(self, '_expansions_built', 0)
+        game_duration = getattr(self, "time", 0.0) if hasattr(self, "time") else 0.0
+        final_supply = (
+            getattr(self, "supply_used", 0) if hasattr(self, "supply_used") else 0
+        )
+        final_minerals = (
+            getattr(self, "minerals", 0) if hasattr(self, "minerals") else 0
+        )
+        final_vespene = getattr(self, "vespene", 0) if hasattr(self, "vespene") else 0
+        workers_created = getattr(self, "_workers_created", 0)
+        expansions_built = getattr(self, "_expansions_built", 0)
 
         # Units killed / lost counts
         units_killed = 0
-        units_lost_count = len(getattr(self, '_units_lost', []))
+        units_lost_count = len(getattr(self, "_units_lost", []))
         try:
-            if hasattr(self, 'state') and hasattr(self.state, 'score'):
+            if hasattr(self, "state") and hasattr(self.state, "score"):
                 score = self.state.score
-                units_killed = getattr(score, 'killed_value_units', 0)
+                units_killed = getattr(score, "killed_value_units", 0)
         except Exception as e:
             self.logger.warning(f"[WickedZergBot] Units killed stat suppressed: {e}")
 
@@ -789,7 +958,7 @@ class WickedZergBotProImpl(BotAI):
             "units_lost": units_lost_count,
             "workers_created": workers_created,
             "expansions_built": expansions_built,
-            "units_lost_details": getattr(self, '_units_lost', []),
+            "units_lost_details": getattr(self, "_units_lost", []),
         }
 
         logs_dir = Path(__file__).parent / "logs"
@@ -812,7 +981,10 @@ class WickedZergBotProImpl(BotAI):
 
         # 오래된 기록 로테이션
         if len(existing) > MAX_GAME_RESULTS:
-            archive_file = logs_dir / f"game_results_archive_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+            archive_file = (
+                logs_dir
+                / f"game_results_archive_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+            )
             with open(archive_file, "w", encoding="utf-8") as f:
                 json.dump(existing[:-MAX_GAME_RESULTS], f, indent=2, ensure_ascii=False)
             existing = existing[-MAX_GAME_RESULTS:]
@@ -820,7 +992,9 @@ class WickedZergBotProImpl(BotAI):
         with open(results_file, "w", encoding="utf-8") as f:
             json.dump(existing, f, indent=2, ensure_ascii=False)
 
-        self.logger.info(f"[GAME_RESULT] Saved structured result: {result_label} vs {opp_race} ({game_duration:.0f}s)")
+        self.logger.info(
+            f"[GAME_RESULT] Saved structured result: {result_label} vs {opp_race} ({game_duration:.0f}s)"
+        )
 
     # =========================================================================
     # Feature 84: Replay Auto-Organization
@@ -858,11 +1032,13 @@ class WickedZergBotProImpl(BotAI):
 
             # Build destination path
             result_str = str(game_result).upper()
-            result_label = "win" if ("VICTORY" in result_str or "WIN" in result_str) else "loss"
+            result_label = (
+                "win" if ("VICTORY" in result_str or "WIN" in result_str) else "loss"
+            )
 
             opp_race = "Unknown"
             try:
-                if hasattr(self, 'enemy_race') and self.enemy_race:
+                if hasattr(self, "enemy_race") and self.enemy_race:
                     opp_race = str(self.enemy_race).replace("Race.", "")
             except Exception as e:
                 self.logger.warning(f"[WickedZergBot] Replay opp race suppressed: {e}")
@@ -881,25 +1057,38 @@ class WickedZergBotProImpl(BotAI):
 
         except Exception as e:
             # Never crash the bot
-            self.logger.info(f"[REPLAY_WARN] Replay organization failed (non-critical): {e}")
+            self.logger.info(
+                f"[REPLAY_WARN] Replay organization failed (non-critical): {e}"
+            )
 
     # =========================================================================
     # Feature 85: Build Order Timing Log
     # =========================================================================
     def _track_build_order(self) -> None:
         """Track key building/upgrade completions with game time."""
-        if not hasattr(self, 'structures'):
+        if not hasattr(self, "structures"):
             return
 
         # Key structures to track
         key_structures = {
-            "SPAWNINGPOOL", "LAIR", "HIVE", "ROACHWARREN", "BANELINGNEST",
-            "HYDRALISKDEN", "SPIRE", "GREATERSPIRE", "INFESTATIONPIT",
-            "ULTRALISKCAVERN", "LURKERDENMP", "EVOLUTIONCHAMBER",
-            "NYDUSNETWORK", "EXTRACTOR", "HATCHERY",
+            "SPAWNINGPOOL",
+            "LAIR",
+            "HIVE",
+            "ROACHWARREN",
+            "BANELINGNEST",
+            "HYDRALISKDEN",
+            "SPIRE",
+            "GREATERSPIRE",
+            "INFESTATIONPIT",
+            "ULTRALISKCAVERN",
+            "LURKERDENMP",
+            "EVOLUTIONCHAMBER",
+            "NYDUSNETWORK",
+            "EXTRACTOR",
+            "HATCHERY",
         }
 
-        game_time = getattr(self, 'time', 0.0)
+        game_time = getattr(self, "time", 0.0)
 
         for structure in self.structures:
             try:
@@ -912,19 +1101,28 @@ class WickedZergBotProImpl(BotAI):
 
                 if struct_name in key_structures:
                     self._tracked_structure_tags.add(structure.tag)
-                    self._build_order_log.append({
-                        "structure": struct_name,
-                        "game_time_seconds": round(game_time, 1),
-                        "game_time_formatted": f"{int(game_time // 60)}:{int(game_time % 60):02d}",
-                        "position": {"x": round(structure.position.x, 1), "y": round(structure.position.y, 1)},
-                    })
+                    self._build_order_log.append(
+                        {
+                            "structure": struct_name,
+                            "game_time_seconds": round(game_time, 1),
+                            "game_time_formatted": f"{int(game_time // 60)}:{int(game_time % 60):02d}",
+                            "position": {
+                                "x": round(structure.position.x, 1),
+                                "y": round(structure.position.y, 1),
+                            },
+                        }
+                    )
 
                     # Track expansions
                     if struct_name == "HATCHERY":
-                        self._expansions_built = getattr(self, '_expansions_built', 0) + 1
+                        self._expansions_built = (
+                            getattr(self, "_expansions_built", 0) + 1
+                        )
 
             except Exception as e:
-                self.logger.warning(f"[WickedZergBot] Build order tracking suppressed: {e}")
+                self.logger.warning(
+                    f"[WickedZergBot] Build order tracking suppressed: {e}"
+                )
                 continue
 
     def _save_build_order_log(self) -> None:
@@ -935,7 +1133,7 @@ class WickedZergBotProImpl(BotAI):
         logs_dir = Path(__file__).parent / "logs"
         logs_dir.mkdir(parents=True, exist_ok=True)
 
-        game_id = getattr(self, 'game_count', 0)
+        game_id = getattr(self, "game_count", 0)
         timestamp_str = time.strftime("%Y%m%d_%H%M%S")
         filepath = logs_dir / f"build_order_{game_id}_{timestamp_str}.json"
 
@@ -948,7 +1146,9 @@ class WickedZergBotProImpl(BotAI):
         with open(filepath, "w", encoding="utf-8") as f:
             json.dump(build_data, f, indent=2, ensure_ascii=False)
 
-        self.logger.info(f"[BUILD_ORDER] Saved {len(self._build_order_log)} entries to {filepath.name}")
+        self.logger.info(
+            f"[BUILD_ORDER] Saved {len(self._build_order_log)} entries to {filepath.name}"
+        )
 
     # =========================================================================
     # Feature 86: Unit Lost Tracking
@@ -959,11 +1159,11 @@ class WickedZergBotProImpl(BotAI):
             # Check if the destroyed unit was one of ours by checking known tags
             # The bot framework calls this for ALL destroyed units, so we need to
             # filter for our own units only.
-            game_time = getattr(self, 'time', 0.0)
+            game_time = getattr(self, "time", 0.0)
 
             # Try to find unit info from our cached data
             unit_info = None
-            if hasattr(self, '_known_unit_tags') and unit_tag in self._known_unit_tags:
+            if hasattr(self, "_known_unit_tags") and unit_tag in self._known_unit_tags:
                 unit_info = self._known_unit_tags[unit_tag]
 
             # If we don't have cached info, try to identify if it was ours
@@ -973,12 +1173,14 @@ class WickedZergBotProImpl(BotAI):
                 # but we still record the tag loss
                 return
 
-            self._units_lost.append({
-                "unit_type": unit_info.get("type", "UNKNOWN"),
-                "game_time_seconds": round(game_time, 1),
-                "game_time_formatted": f"{int(game_time // 60)}:{int(game_time % 60):02d}",
-                "position": unit_info.get("position", None),
-            })
+            self._units_lost.append(
+                {
+                    "unit_type": unit_info.get("type", "UNKNOWN"),
+                    "game_time_seconds": round(game_time, 1),
+                    "game_time_formatted": f"{int(game_time // 60)}:{int(game_time % 60):02d}",
+                    "position": unit_info.get("position", None),
+                }
+            )
         except Exception as e:
             self.logger.warning(f"[WickedZergBot] on_unit_destroyed suppressed: {e}")
 
@@ -986,24 +1188,24 @@ class WickedZergBotProImpl(BotAI):
         """건물 완성 이벤트 핸들러 — 종속 생산/업그레이드 트리거"""
         try:
             unit_type = unit.type_id
-            game_time = getattr(self, 'time', 0.0)
+            game_time = getattr(self, "time", 0.0)
             self.logger.info(
                 f"[BUILD_COMPLETE] {unit_type.name} at "
                 f"{int(game_time // 60)}:{int(game_time % 60):02d}"
             )
 
             # 전략 매니저에 건물 완성 알림
-            sm = getattr(self, 'strategy_manager', None)
-            if sm and hasattr(sm, 'on_building_complete'):
+            sm = getattr(self, "strategy_manager", None)
+            if sm and hasattr(sm, "on_building_complete"):
                 sm.on_building_complete(unit_type)
 
             # 경제 매니저에 해처리 완성 알림 → 일꾼 분배
-            eco = getattr(self, 'economy', None)
-            if eco and hasattr(eco, 'on_building_complete'):
+            eco = getattr(self, "economy", None)
+            if eco and hasattr(eco, "on_building_complete"):
                 eco.on_building_complete(unit_type)
 
             # Blackboard에 최신 건물 목록 업데이트
-            bb = getattr(self, 'blackboard', None)
+            bb = getattr(self, "blackboard", None)
             if bb:
                 bb.set("last_building_complete", unit_type.name)
                 bb.set("last_building_complete_time", game_time)
@@ -1014,19 +1216,19 @@ class WickedZergBotProImpl(BotAI):
     async def on_upgrade_complete(self, upgrade):
         """업그레이드 완료 이벤트 핸들러 — 전략 전환 및 후속 업그레이드 트리거"""
         try:
-            game_time = getattr(self, 'time', 0.0)
+            game_time = getattr(self, "time", 0.0)
             self.logger.info(
                 f"[UPGRADE_COMPLETE] {upgrade.name} at "
                 f"{int(game_time // 60)}:{int(game_time % 60):02d}"
             )
 
             # 전략 매니저에 업그레이드 완료 알림
-            sm = getattr(self, 'strategy_manager', None)
-            if sm and hasattr(sm, 'on_upgrade_complete'):
+            sm = getattr(self, "strategy_manager", None)
+            if sm and hasattr(sm, "on_upgrade_complete"):
                 sm.on_upgrade_complete(upgrade)
 
             # Blackboard 업데이트
-            bb = getattr(self, 'blackboard', None)
+            bb = getattr(self, "blackboard", None)
             if bb:
                 completed = bb.get("completed_upgrades", [])
                 completed.append(upgrade.name)
@@ -1039,17 +1241,17 @@ class WickedZergBotProImpl(BotAI):
         """적 유닛 시야 진입 — 정찰 정보 업데이트 + 방어 트리거"""
         try:
             # Intel 매니저에 적 유닛 정보 전달
-            intel = getattr(self, 'intel_manager', None)
-            if intel and hasattr(intel, 'on_enemy_spotted'):
+            intel = getattr(self, "intel_manager", None)
+            if intel and hasattr(intel, "on_enemy_spotted"):
                 intel.on_enemy_spotted(unit)
 
             # 방어 시스템에 알림
-            dc = getattr(self, 'defense_coordinator', None)
-            if dc and hasattr(dc, 'on_enemy_spotted'):
+            dc = getattr(self, "defense_coordinator", None)
+            if dc and hasattr(dc, "on_enemy_spotted"):
                 dc.on_enemy_spotted(unit)
 
             # Blackboard에 마지막 발견 적 기록
-            bb = getattr(self, 'blackboard', None)
+            bb = getattr(self, "blackboard", None)
             if bb:
                 bb.set("last_enemy_spotted", unit.type_id.name)
                 bb.set("last_enemy_spotted_pos", (unit.position.x, unit.position.y))
@@ -1060,10 +1262,10 @@ class WickedZergBotProImpl(BotAI):
     def _reset_all_managers(self):
         """★ 게임 간 전체 매니저 상태 초기화 (훈련 에피소드 안정성 확보) ★"""
         # ManagerFactory에 등록된 모든 매니저를 자동 리셋
-        factory = getattr(self, 'manager_factory', None)
-        if factory and hasattr(factory, 'get_all_managers'):
+        factory = getattr(self, "manager_factory", None)
+        if factory and hasattr(factory, "get_all_managers"):
             for name, mgr in factory.get_all_managers().items():
-                if mgr and hasattr(mgr, 'reset'):
+                if mgr and hasattr(mgr, "reset"):
                     try:
                         mgr.reset()
                     except Exception as e:
@@ -1121,6 +1323,7 @@ class WickedZergBotProImpl(BotAI):
         # ★ 로거 핸들러 누적 방지
         try:
             from utils.logger import reset_all_loggers
+
             reset_all_loggers()
         except Exception as e:
             self.logger.warning(f"[WickedZergBot] Logger reset suppressed: {e}")

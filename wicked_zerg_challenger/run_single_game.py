@@ -4,15 +4,16 @@ Run a single game for testing.
 단일 게임 테스트용 스크립트.
 """
 
-from sc2 import maps
-from sc2.player import Bot, Computer
-from sc2.main import run_game
-from sc2.data import Race, Difficulty
-from wicked_zerg_bot_pro_impl import WickedZergBotProImpl as WickedZergBotPro
 import argparse
-import sys
-import os
 import logging
+import os
+import sys
+
+from sc2 import maps
+from sc2.data import Difficulty, Race
+from sc2.main import run_game
+from sc2.player import Bot, Computer
+from wicked_zerg_bot_pro_impl import WickedZergBotProImpl as WickedZergBotPro
 
 logger = logging.getLogger("RunSingleGame")
 
@@ -30,8 +31,10 @@ def _ensure_sc2_path():
 
     try:
         import winreg
-        key = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE,
-                             r"SOFTWARE\Blizzard Entertainment\StarCraft II")
+
+        key = winreg.OpenKey(
+            winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\Blizzard Entertainment\StarCraft II"
+        )
         install_path, _ = winreg.QueryValueEx(key, "InstallPath")
         winreg.CloseKey(key)
 
@@ -55,9 +58,15 @@ def _ensure_sc2_path():
 
 
 def _parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Run a single SC2 game for test/training.")
+    parser = argparse.ArgumentParser(
+        description="Run a single SC2 game for test/training."
+    )
     parser.add_argument("--map", dest="map_name", default="AbyssalReefLE")
-    parser.add_argument("--enemy-race", default="Protoss", choices=["Terran", "Protoss", "Zerg", "Random"])
+    parser.add_argument(
+        "--enemy-race",
+        default="Protoss",
+        choices=["Terran", "Protoss", "Zerg", "Random"],
+    )
     parser.add_argument("--difficulty", default="Easy")
     return parser.parse_args()
 
@@ -110,7 +119,7 @@ def main():
     run_game(
         map_instance,
         [bot, Computer(opponent_race, difficulty)],
-        realtime=False  # False = 빠른 속도로 훈련
+        realtime=False,  # False = 빠른 속도로 훈련
     )
 
     logger.info("\n[GAME FINISHED]")

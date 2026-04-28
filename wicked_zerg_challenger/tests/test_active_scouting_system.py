@@ -17,17 +17,18 @@ Tests:
 11. Changeling management
 """
 
-import unittest
-from unittest.mock import Mock, MagicMock, patch, AsyncMock
-import sys
 import os
+import sys
+import unittest
+from unittest.mock import AsyncMock, MagicMock, Mock, patch
 
 # Add parent directory to path
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 try:
-    from scouting.advanced_scout_system_v2 import AdvancedScoutingSystemV2
     from sc2.position import Point2
+    from scouting.advanced_scout_system_v2 import AdvancedScoutingSystemV2
+
     SCOUT_V2_AVAILABLE = True
 except (ImportError, TypeError):
     SCOUT_V2_AVAILABLE = False
@@ -54,7 +55,9 @@ class TestAdvancedScoutingSystemV2(unittest.TestCase):
         self.bot.blackboard.last_enemy_seen_time = 0
 
         # Mock unit_authority_manager
-        with patch('scouting.advanced_scout_system_v2.UnitAuthorityManager', create=True):
+        with patch(
+            "scouting.advanced_scout_system_v2.UnitAuthorityManager", create=True
+        ):
             self.scout = AdvancedScoutingSystemV2(self.bot)
 
     def test_initialization(self):
@@ -123,9 +126,15 @@ class TestAdvancedScoutingSystemV2(unittest.TestCase):
         """Test get_scout_report returns correct structure"""
         report = self.scout.get_scout_report()
         expected_keys = [
-            "zergling_patrol_count", "overlord_scout_count",
-            "overseer_scout_count", "patrol_units", "watchtowers_held",
-            "total_active", "scouts_sent", "scouts_lost", "priority_targets"
+            "zergling_patrol_count",
+            "overlord_scout_count",
+            "overseer_scout_count",
+            "patrol_units",
+            "watchtowers_held",
+            "total_active",
+            "scouts_sent",
+            "scouts_lost",
+            "priority_targets",
         ]
         for key in expected_keys:
             self.assertIn(key, report)
@@ -154,15 +163,37 @@ class TestScoutReportWithActiveScouts(unittest.TestCase):
         self.bot.blackboard = Mock()
         self.bot.blackboard.last_enemy_seen_time = 290.0
 
-        with patch('scouting.advanced_scout_system_v2.UnitAuthorityManager', create=True):
+        with patch(
+            "scouting.advanced_scout_system_v2.UnitAuthorityManager", create=True
+        ):
             self.scout = AdvancedScoutingSystemV2(self.bot)
 
         # Simulate active scouts
         self.scout.active_scouts = {
-            101: {"type": "ZERGLING", "target": Point2((50, 50)), "start_time": 100.0, "mode": "scout"},
-            102: {"type": "ZERGLING", "target": Point2((80, 80)), "start_time": 110.0, "mode": "scout"},
-            201: {"type": "OVERLORD", "target": Point2((120, 120)), "start_time": 50.0, "mode": "patrol"},
-            301: {"type": "OVERSEER", "target": Point2((150, 150)), "start_time": 200.0, "mode": "scout"},
+            101: {
+                "type": "ZERGLING",
+                "target": Point2((50, 50)),
+                "start_time": 100.0,
+                "mode": "scout",
+            },
+            102: {
+                "type": "ZERGLING",
+                "target": Point2((80, 80)),
+                "start_time": 110.0,
+                "mode": "scout",
+            },
+            201: {
+                "type": "OVERLORD",
+                "target": Point2((120, 120)),
+                "start_time": 50.0,
+                "mode": "patrol",
+            },
+            301: {
+                "type": "OVERSEER",
+                "target": Point2((150, 150)),
+                "start_time": 200.0,
+                "mode": "scout",
+            },
         }
         self.scout.scouts_sent = 10
         self.scout.scouts_lost = 2
@@ -182,5 +213,5 @@ class TestScoutReportWithActiveScouts(unittest.TestCase):
         self.assertEqual(report["scouts_lost"], 2)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

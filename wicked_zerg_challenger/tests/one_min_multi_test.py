@@ -17,9 +17,9 @@ Usage:
 """
 
 import asyncio
-from typing import Dict, List, Optional
-from datetime import datetime
 import logging
+from datetime import datetime
+from typing import Dict, List, Optional
 
 logger = logging.getLogger("OneMinMultiTest")
 
@@ -28,10 +28,13 @@ try:
     from sc2.ids.unit_typeid import UnitTypeId
     from sc2.position import Point2
 except ImportError:
+
     class BotAI:
         pass
+
     class UnitTypeId:
         HATCHERY = "HATCHERY"
+
     Point2 = tuple
 
 
@@ -78,9 +81,15 @@ class OneMinMultiTest:
         self.monitoring_active = True
 
         if self.enable_logging:
-            logger.info(f"[1-MIN-MULTI-TEST] Monitoring started at {self.test_start_time:.1f}s")
-            logger.info(f"[1-MIN-MULTI-TEST] Initial Hatchery count: {self.initial_hatchery_count}")
-            logger.info(f"[1-MIN-MULTI-TEST] Target: Expansion by {self.target_timing:.1f}s")
+            logger.info(
+                f"[1-MIN-MULTI-TEST] Monitoring started at {self.test_start_time:.1f}s"
+            )
+            logger.info(
+                f"[1-MIN-MULTI-TEST] Initial Hatchery count: {self.initial_hatchery_count}"
+            )
+            logger.info(
+                f"[1-MIN-MULTI-TEST] Target: Expansion by {self.target_timing:.1f}s"
+            )
 
     async def on_step(self, iteration: int):
         """매 프레임 체크"""
@@ -104,7 +113,9 @@ class OneMinMultiTest:
         # ★ 1:05 시점에 테스트 종료 (1분 + 5초 허용) ★
         if game_time > (self.target_timing + self.timing_tolerance):
             if not self.expansion_placed_time:
-                self._fail_test(f"Expansion not placed by {self.target_timing + self.timing_tolerance:.1f}s")
+                self._fail_test(
+                    f"Expansion not placed by {self.target_timing + self.timing_tolerance:.1f}s"
+                )
             else:
                 # 이미 확장을 했으면 성공
                 if not self.test_completed:
@@ -125,7 +136,9 @@ class OneMinMultiTest:
             if hasattr(self.bot, "already_pending"):
                 pending_hatcheries = self.bot.already_pending(UnitTypeId.HATCHERY)
             else:
-                pending_hatcheries = len([h for h in current_hatcheries if not h.is_ready])
+                pending_hatcheries = len(
+                    [h for h in current_hatcheries if not h.is_ready]
+                )
 
             total_hatcheries = len(current_hatcheries)
 
@@ -136,22 +149,33 @@ class OneMinMultiTest:
                 self.minerals_at_placement = self.bot.minerals
 
                 # 확장 위치 찾기
-                new_hatcheries = [h for h in current_hatcheries
-                                 if h.position.distance_to(self.bot.start_location) > 20]
+                new_hatcheries = [
+                    h
+                    for h in current_hatcheries
+                    if h.position.distance_to(self.bot.start_location) > 20
+                ]
 
                 if new_hatcheries:
                     self.expansion_location = new_hatcheries[0].position
 
                 if self.enable_logging:
-                    logger.info(f"[1-MIN-MULTI-TEST] [*] EXPANSION PLACED at {game_time:.1f}s [*]")
-                    logger.info(f"[1-MIN-MULTI-TEST] Minerals at placement: {self.minerals_at_placement}")
-                    logger.info(f"[1-MIN-MULTI-TEST] Location: {self.expansion_location}")
+                    logger.info(
+                        f"[1-MIN-MULTI-TEST] [*] EXPANSION PLACED at {game_time:.1f}s [*]"
+                    )
+                    logger.info(
+                        f"[1-MIN-MULTI-TEST] Minerals at placement: {self.minerals_at_placement}"
+                    )
+                    logger.info(
+                        f"[1-MIN-MULTI-TEST] Location: {self.expansion_location}"
+                    )
 
                 # ★ 타이밍 체크 ★
                 if game_time <= (self.target_timing + self.timing_tolerance):
                     self._complete_test()
                 else:
-                    self._fail_test(f"Expansion too late: {game_time:.1f}s > {self.target_timing + self.timing_tolerance:.1f}s")
+                    self._fail_test(
+                        f"Expansion too late: {game_time:.1f}s > {self.target_timing + self.timing_tolerance:.1f}s"
+                    )
 
         except Exception as e:
             if self.enable_logging:
@@ -166,7 +190,9 @@ class OneMinMultiTest:
             logger.info("=" * 60)
             logger.info("[1-MIN-MULTI-TEST] [*][*][*] TEST PASSED [*][*][*]")
             logger.info(f"  Expansion placed at: {self.expansion_placed_time:.1f}s")
-            logger.info(f"  Target timing: {self.target_timing:.1f}s (±{self.timing_tolerance:.1f}s)")
+            logger.info(
+                f"  Target timing: {self.target_timing:.1f}s (±{self.timing_tolerance:.1f}s)"
+            )
             logger.info(f"  Minerals at placement: {self.minerals_at_placement}")
             logger.info(f"  Location: {self.expansion_location}")
             logger.info("=" * 60)
@@ -206,17 +232,19 @@ class OneMinMultiTest:
         logger.info("1-MINUTE MULTI TIMING TEST RESULTS")
         logger.info("=" * 60)
         logger.info(f"Status: {'PASS [OK]' if results['test_passed'] else 'FAIL [X]'}")
-        logger.info(f"Target Timing: {results['target_timing']:.1f}s (±{results['timing_tolerance']:.1f}s)")
+        logger.info(
+            f"Target Timing: {results['target_timing']:.1f}s (±{results['timing_tolerance']:.1f}s)"
+        )
 
-        if results['expansion_placed_time']:
+        if results["expansion_placed_time"]:
             logger.info(f"Actual Timing: {results['expansion_placed_time']:.1f}s")
-            timing_diff = results['expansion_placed_time'] - results['target_timing']
+            timing_diff = results["expansion_placed_time"] - results["target_timing"]
             logger.info(f"Difference: {timing_diff:+.1f}s")
             logger.info(f"Minerals at Placement: {results['minerals_at_placement']}")
         else:
             logger.info("Expansion: NOT PLACED")
 
-        if results['failure_reason']:
+        if results["failure_reason"]:
             logger.error(f"Failure Reason: {results['failure_reason']}")
 
         logger.info("=" * 60 + "\n")
@@ -225,6 +253,7 @@ class OneMinMultiTest:
 # ========================================
 # Standalone Test Runner
 # ========================================
+
 
 async def run_standalone_test():
     """
@@ -244,7 +273,9 @@ if __name__ == "__main__":
     print("  2. Has sufficient minerals (300+) at placement")
     print("  3. Only expands when safe (no early aggression)")
     print("\nTo use this test:")
-    print("  1. Import into your bot: from tests.one_min_multi_test import OneMinMultiTest")
+    print(
+        "  1. Import into your bot: from tests.one_min_multi_test import OneMinMultiTest"
+    )
     print("  2. Initialize in bot __init__: self.multi_test = OneMinMultiTest(self)")
     print("  3. Call in on_step: await self.multi_test.on_step(iteration)")
     print("  4. Check results after game: self.multi_test.print_results()")

@@ -8,9 +8,12 @@ complex strategy pipelines from simple, reusable agent nodes.
 
 from __future__ import annotations
 
-import time
 import logging
+import time
+from abc import ABC, abstractmethod
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass, field
+from enum import Enum
 from typing import (
     Any,
     Callable,
@@ -20,17 +23,16 @@ from typing import (
     Tuple,
     Union,
 )
-from enum import Enum
-from abc import ABC, abstractmethod
-from concurrent.futures import ThreadPoolExecutor, as_completed
 
 logger = logging.getLogger(__name__)
 
 
 # ── Game Phase Enumeration ───────────────────────────────────────────────────
 
+
 class GamePhase(Enum):
     """SC2 game phases for conditional routing."""
+
     EARLY = "early"
     MID = "mid"
     LATE = "late"
@@ -39,6 +41,7 @@ class GamePhase(Enum):
 
 # ── Chain Context ────────────────────────────────────────────────────────────
 
+
 @dataclass
 class ChainContext:
     """Shared mutable state passed through the chain pipeline.
@@ -46,6 +49,7 @@ class ChainContext:
     Every AgentNode receives this context, reads what it needs, and writes
     its results back so downstream nodes can consume them.
     """
+
     # Core game state
     game_loop: int = 0
     game_phase: GamePhase = GamePhase.EARLY
@@ -91,6 +95,7 @@ class ChainContext:
 
 
 # ── Agent Node ───────────────────────────────────────────────────────────────
+
 
 class AgentNode(ABC):
     """Base class for a single processing node in an agent chain.
@@ -152,6 +157,7 @@ class FunctionNode(AgentNode):
 
 # ── Agent Chain (sequential) ────────────────────────────────────────────────
 
+
 class AgentChain:
     """Sequential chain: nodes execute one after another.
 
@@ -183,6 +189,7 @@ class AgentChain:
 
 # ── Parallel Chain ───────────────────────────────────────────────────────────
 
+
 class ParallelChain(AgentNode):
     """Runs multiple nodes/chains concurrently and merges results.
 
@@ -195,7 +202,9 @@ class ParallelChain(AgentNode):
         name: str,
         branches: Optional[List[AgentNode]] = None,
         max_workers: int = 4,
-        merge_fn: Optional[Callable[[ChainContext, List[ChainContext]], ChainContext]] = None,
+        merge_fn: Optional[
+            Callable[[ChainContext, List[ChainContext]], ChainContext]
+        ] = None,
     ) -> None:
         super().__init__(name, "Parallel execution of independent branches")
         self.branches: List[AgentNode] = list(branches) if branches else []
@@ -272,6 +281,7 @@ class ParallelChain(AgentNode):
 
 # ── Conditional Chain ────────────────────────────────────────────────────────
 
+
 class ConditionalChain(AgentNode):
     """Routes to different sub-chains based on a condition function.
 
@@ -301,16 +311,21 @@ class ConditionalChain(AgentNode):
     def process(self, ctx: ChainContext) -> ChainContext:
         for cond, node in self._routes:
             if cond(ctx):
-                logger.info("ConditionalChain '%s' routed to '%s'.", self.name, node.name)
+                logger.info(
+                    "ConditionalChain '%s' routed to '%s'.", self.name, node.name
+                )
                 return node.run(ctx)
         if self._default is not None:
             logger.info("ConditionalChain '%s' using default route.", self.name)
             return self._default.run(ctx)
-        logger.warning("ConditionalChain '%s': no route matched, passing through.", self.name)
+        logger.warning(
+            "ConditionalChain '%s': no route matched, passing through.", self.name
+        )
         return ctx
 
 
 # ── Chain Router (multi-key routing) ─────────────────────────────────────────
+
 
 class ChainRouter:
     """Routes to named chains by key (e.g., game phase string).
@@ -344,13 +359,16 @@ class ChainRouter:
         if node is None:
             logger.warning("ChainRouter '%s': no chain for key '%s'.", self.name, key)
             return ctx
-        logger.info("ChainRouter '%s' selected '%s' -> '%s'.", self.name, key, node.name)
+        logger.info(
+            "ChainRouter '%s' selected '%s' -> '%s'.", self.name, key, node.name
+        )
         return node.run(ctx)
 
 
 # ============================================================================
 # SC2-Specific Agent Nodes
 # ============================================================================
+
 
 class ScoutAnalyzerNode(AgentNode):
     """Processes raw scouting data into structured threat intelligence."""
@@ -360,7 +378,12 @@ class ScoutAnalyzerNode(AgentNode):
 
     def process(self, ctx: ChainContext) -> ChainContext:
         # Detect aggressive openings
-        aggressive_buildings = {"BanelingNest", "DarkShrine", "ProxyBarracks", "NydusNetwork"}
+        aggressive_buildings = {
+            "BanelingNest",
+            "DarkShrine",
+            "ProxyBarracks",
+            "NydusNetwork",
+        }
         detected = set(ctx.enemy_buildings) & aggressive_buildings
         if detected:
             ctx.threat_level = max(ctx.threat_level, 0.8)
@@ -450,9 +473,7 @@ class StrategyDeciderNode(AgentNode):
     def process(self, ctx: ChainContext) -> ChainContext:
         # Weighted composite score
         composite = (
-            ctx.economy_score * 0.3
-            + ctx.military_score * 0.4
-            + ctx.tech_score * 0.3
+            ctx.economy_score * 0.3 + ctx.military_score * 0.4 + ctx.tech_score * 0.3
         )
 
         if ctx.threat_level > 0.8:
@@ -504,6 +525,7 @@ class ExecutionPlannerNode(AgentNode):
 
 # ── Emergency Response Chain ─────────────────────────────────────────────────
 
+
 class EmergencyDetectorNode(AgentNode):
     """Detects emergency situations that override normal decision flow."""
 
@@ -549,6 +571,7 @@ class EmergencyResponseNode(AgentNode):
 
 
 # ── Game-Phase Specific Chains ───────────────────────────────────────────────
+
 
 def build_early_game_chain() -> AgentChain:
     """Chain optimized for the first 5 minutes."""
@@ -632,11 +655,13 @@ def build_emergency_chain() -> AgentChain:
 
 # ── Master Strategy Chain ────────────────────────────────────────────────────
 
+
 def build_master_chain() -> ChainRouter:
     """Compose all sub-chains into a master strategy router.
 
     Selects the appropriate chain based on current game phase.
     """
+
     def phase_selector(ctx: ChainContext) -> str:
         # Emergency overrides everything
         if ctx.threat_level > 0.85:
@@ -679,6 +704,7 @@ def _set_strategy(ctx: ChainContext, strategy: str) -> ChainContext:
 # ============================================================================
 # Demo
 # ============================================================================
+
 
 def demo() -> None:
     """Demonstrate agent chain orchestration with sample game states."""
@@ -774,8 +800,10 @@ def demo() -> None:
             expansion_count=2,
         )
         result_r = master.run(ctx_r)
-        print(f"  {phase.value:10s} -> strategy={result_r.strategy:25s} "
-              f"trace={' -> '.join(result_r.chain_trace)}")
+        print(
+            f"  {phase.value:10s} -> strategy={result_r.strategy:25s} "
+            f"trace={' -> '.join(result_r.chain_trace)}"
+        )
 
     # ── Demo 5: Emergency chain ──────────────────────────────────────────
     print("\n--- Demo 5: Emergency Response ---")

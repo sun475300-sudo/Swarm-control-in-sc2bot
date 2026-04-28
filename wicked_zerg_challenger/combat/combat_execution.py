@@ -9,17 +9,17 @@ Combat Execution - 전투 실행 시스템
 """
 
 import inspect
-from typing import Optional, TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional
 
 if TYPE_CHECKING:
-    from sc2.units import Units
-    from sc2.unit import Unit
     from sc2.position import Point2
+    from sc2.unit import Unit
+    from sc2.units import Units
 else:
     try:
-        from sc2.units import Units
-        from sc2.unit import Unit
         from sc2.position import Point2
+        from sc2.unit import Unit
+        from sc2.units import Units
     except ImportError:
         Units = object
         Unit = object
@@ -72,8 +72,12 @@ class CombatExecution:
             # 1. 오버킬 분산 타겟 할당
             if self.targeting and self.micro_combat:
                 assignments = self.targeting.assign_targets(units, enemy_units)
-                if assignments and hasattr(self.micro_combat, "attack_assigned_targets"):
-                    result = self.micro_combat.attack_assigned_targets(units, assignments)
+                if assignments and hasattr(
+                    self.micro_combat, "attack_assigned_targets"
+                ):
+                    result = self.micro_combat.attack_assigned_targets(
+                        units, assignments
+                    )
                     if inspect.isawaitable(result):
                         await result
                     return
@@ -82,9 +86,13 @@ class CombatExecution:
             if self.targeting:
                 focus_target = None
                 if hasattr(self.targeting, "get_focus_fire_target"):
-                    focus_target = self.targeting.get_focus_fire_target(units, enemy_units)
+                    focus_target = self.targeting.get_focus_fire_target(
+                        units, enemy_units
+                    )
                 elif hasattr(self.targeting, "select_focus_fire_target"):
-                    focus_target = self.targeting.select_focus_fire_target(units, enemy_units)
+                    focus_target = self.targeting.select_focus_fire_target(
+                        units, enemy_units
+                    )
                 if focus_target:
                     if self.micro_combat:
                         result = self.micro_combat.focus_fire(units, focus_target)
@@ -102,7 +110,7 @@ class CombatExecution:
                 await self.basic_attack(units, enemy_units)
 
         except Exception as e:
-            if hasattr(self.bot, 'iteration') and self.bot.iteration % 50 == 0:
+            if hasattr(self.bot, "iteration") and self.bot.iteration % 50 == 0:
                 self.logger.warning(f"Combat execution error: {e}")
             # 에러 발생 시 기본 공격
             await self.basic_attack(units, enemy_units)
@@ -156,9 +164,13 @@ class CombatExecution:
                 our_base = self.bot.townhalls.first.position
                 chokepoint = formation_manager.find_chokepoint(enemy_units, our_base)
 
-                if chokepoint and formation_manager.should_avoid_chokepoint(units, chokepoint, enemy_units):
+                if chokepoint and formation_manager.should_avoid_chokepoint(
+                    units, chokepoint, enemy_units
+                ):
                     # 넓은 곳으로 후퇴
-                    retreat_pos = formation_manager.get_retreat_position(units, enemy_units, our_base)
+                    retreat_pos = formation_manager.get_retreat_position(
+                        units, enemy_units, our_base
+                    )
                     if retreat_pos:
                         for unit in units[:30]:  # ★ Phase 22: 10 -> 30 ★
                             try:
@@ -167,7 +179,7 @@ class CombatExecution:
                                 pass
 
         except Exception as e:
-            if hasattr(self.bot, 'iteration') and self.bot.iteration % 50 == 0:
+            if hasattr(self.bot, "iteration") and self.bot.iteration % 50 == 0:
                 self.logger.warning(f"Formation error: {e}")
 
     async def basic_attack(self, units, enemy_units):
@@ -194,16 +206,18 @@ class CombatExecution:
 
         # 대공 가능 유닛 타입
         can_shoot_up = {
-            UnitTypeId.QUEEN, UnitTypeId.HYDRALISK,
-            UnitTypeId.CORRUPTOR, UnitTypeId.MUTALISK,
-            UnitTypeId.SPORECRAWLER
+            UnitTypeId.QUEEN,
+            UnitTypeId.HYDRALISK,
+            UnitTypeId.CORRUPTOR,
+            UnitTypeId.MUTALISK,
+            UnitTypeId.SPORECRAWLER,
         }
 
         for unit in list(units)[:30]:  # 최대 30개만 처리
             target = None
 
             # 대공 가능 유닛은 공중 유닛 우선 타겟팅
-            if hasattr(unit, 'type_id') and unit.type_id in can_shoot_up:
+            if hasattr(unit, "type_id") and unit.type_id in can_shoot_up:
                 air_enemies = [e for e in enemy_units if getattr(e, "is_flying", False)]
                 if air_enemies:
                     target = min(air_enemies, key=lambda e: e.distance_to(unit))
@@ -250,6 +264,7 @@ class CombatExecution:
 
         try:
             from sc2.position import Point2
+
             return Point2((x_sum / count, y_sum / count))
         except ImportError:
             return items[0].position

@@ -11,8 +11,9 @@ Data Cache Manager - 자주 사용되는 데이터 캐싱
 효과: CPU 사용량 30% 감소
 """
 
-from typing import Any, Dict, Optional, Callable, List
 import time
+from typing import Any, Callable, Dict, List, Optional
+
 from utils.logger import get_logger
 
 
@@ -52,10 +53,10 @@ class DataCacheManager:
 
         # ★ 기본 TTL (Time To Live) ★
         self.default_ttl = {
-            "QUICK": 0.5,     # 0.5초 (빠르게 변함)
-            "NORMAL": 1.0,    # 1초 (보통)
-            "SLOW": 2.0,      # 2초 (천천히 변함)
-            "VERY_SLOW": 5.0, # 5초 (거의 안 변함)
+            "QUICK": 0.5,  # 0.5초 (빠르게 변함)
+            "NORMAL": 1.0,  # 1초 (보통)
+            "SLOW": 2.0,  # 2초 (천천히 변함)
+            "VERY_SLOW": 5.0,  # 5초 (거의 안 변함)
         }
 
         # ★ 통계 ★
@@ -68,10 +69,7 @@ class DataCacheManager:
         self.cleanup_interval = 5.0  # 5초마다 정리
 
     def get(
-        self,
-        key: str,
-        compute_func: Optional[Callable] = None,
-        ttl: float = 1.0
+        self, key: str, compute_func: Optional[Callable] = None, ttl: float = 1.0
     ) -> Optional[Any]:
         """
         캐시에서 값 가져오기 (없으면 계산)
@@ -140,8 +138,7 @@ class DataCacheManager:
             pattern: 키 패턴 (예: "enemy_*")
         """
         keys_to_delete = [
-            key for key in self.cache.keys()
-            if pattern.replace("*", "") in key
+            key for key in self.cache.keys() if pattern.replace("*", "") in key
         ]
 
         for key in keys_to_delete:
@@ -168,8 +165,7 @@ class DataCacheManager:
     def _cleanup_expired(self):
         """만료된 캐시 정리"""
         expired_keys = [
-            key for key, entry in self.cache.items()
-            if not entry.is_valid()
+            key for key, entry in self.cache.items() if not entry.is_valid()
         ]
 
         for key in expired_keys:
@@ -190,7 +186,7 @@ class DataCacheManager:
         return self.get(
             "enemy_build_pattern",
             self._compute_enemy_build_pattern,
-            self.default_ttl["SLOW"]
+            self.default_ttl["SLOW"],
         )
 
     def get_threat_level(self) -> Optional[str]:
@@ -201,9 +197,7 @@ class DataCacheManager:
             위협 수준 ("NONE", "LOW", "MEDIUM", "HIGH", "CRITICAL")
         """
         return self.get(
-            "threat_level",
-            self._compute_threat_level,
-            self.default_ttl["NORMAL"]
+            "threat_level", self._compute_threat_level, self.default_ttl["NORMAL"]
         )
 
     def get_resource_ratio(self) -> Optional[float]:
@@ -214,9 +208,7 @@ class DataCacheManager:
             미네랄/가스 비율
         """
         return self.get(
-            "resource_ratio",
-            self._compute_resource_ratio,
-            self.default_ttl["NORMAL"]
+            "resource_ratio", self._compute_resource_ratio, self.default_ttl["NORMAL"]
         )
 
     def get_army_composition(self) -> Optional[Dict[str, int]]:
@@ -229,7 +221,7 @@ class DataCacheManager:
         return self.get(
             "army_composition",
             self._compute_army_composition,
-            self.default_ttl["NORMAL"]
+            self.default_ttl["NORMAL"],
         )
 
     def get_enemy_army_composition(self) -> Optional[Dict[str, int]]:
@@ -242,7 +234,7 @@ class DataCacheManager:
         return self.get(
             "enemy_army_composition",
             self._compute_enemy_army_composition,
-            self.default_ttl["SLOW"]
+            self.default_ttl["SLOW"],
         )
 
     # ===== 계산 함수들 =====
@@ -306,9 +298,18 @@ class DataCacheManager:
             return composition
 
         army_types = {
-            "ZERGLING", "BANELING", "ROACH", "RAVAGER",
-            "HYDRALISK", "LURKER", "MUTALISK", "CORRUPTOR",
-            "ULTRALISK", "BROODLORD", "VIPER", "INFESTOR"
+            "ZERGLING",
+            "BANELING",
+            "ROACH",
+            "RAVAGER",
+            "HYDRALISK",
+            "LURKER",
+            "MUTALISK",
+            "CORRUPTOR",
+            "ULTRALISK",
+            "BROODLORD",
+            "VIPER",
+            "INFESTOR",
         }
 
         for unit in self.bot.units:
@@ -361,12 +362,14 @@ class DataCacheManager:
             elapsed = time.time() - entry.created_at
             remaining = max(0, entry.ttl - elapsed)
 
-            info.append({
-                "key": key,
-                "age": f"{elapsed:.2f}s",
-                "remaining": f"{remaining:.2f}s",
-                "access_count": entry.access_count,
-                "valid": entry.is_valid(),
-            })
+            info.append(
+                {
+                    "key": key,
+                    "age": f"{elapsed:.2f}s",
+                    "remaining": f"{remaining:.2f}s",
+                    "access_count": entry.access_count,
+                    "valid": entry.is_valid(),
+                }
+            )
 
         return info

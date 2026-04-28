@@ -4,28 +4,38 @@ Register S3 locations, grant column-level permissions, fine-grained access contr
 """
 
 import logging
+
 import boto3
 from botocore.exceptions import ClientError
 
 logger = logging.getLogger(__name__)
 
-REGION          = "us-east-1"
-ACCOUNT_ID      = "123456789012"
+REGION = "us-east-1"
+ACCOUNT_ID = "123456789012"
 DATA_LAKE_ADMIN = f"arn:aws:iam::{ACCOUNT_ID}:role/SC2DataLakeAdmin"
-ANALYST_ROLE    = f"arn:aws:iam::{ACCOUNT_ID}:role/SC2Analyst"
-BOT_ROLE        = f"arn:aws:iam::{ACCOUNT_ID}:role/SC2BotService"
+ANALYST_ROLE = f"arn:aws:iam::{ACCOUNT_ID}:role/SC2Analyst"
+BOT_ROLE = f"arn:aws:iam::{ACCOUNT_ID}:role/SC2BotService"
 
-S3_BUCKET       = "sc2-data-lake"
-S3_BASE_PATH    = f"arn:aws:s3:::{S3_BUCKET}"
+S3_BUCKET = "sc2-data-lake"
+S3_BASE_PATH = f"arn:aws:s3:::{S3_BUCKET}"
 
-DATABASE_NAME   = "sc2_games_db"
-TABLE_GAMES     = "games"
-TABLE_PLAYERS   = "players"
-TABLE_REPLAYS   = "replays"
+DATABASE_NAME = "sc2_games_db"
+TABLE_GAMES = "games"
+TABLE_PLAYERS = "players"
+TABLE_REPLAYS = "replays"
 
 # Columns considered PII - analysts see anonymized versions
-PII_COLUMNS     = ["player_id", "opponent_id", "ip_address"]
-OPEN_COLUMNS    = ["game_id", "player_race", "map_name", "result", "apm", "mmr", "duration_sec", "game_date"]
+PII_COLUMNS = ["player_id", "opponent_id", "ip_address"]
+OPEN_COLUMNS = [
+    "game_id",
+    "player_race",
+    "map_name",
+    "result",
+    "apm",
+    "mmr",
+    "duration_sec",
+    "game_date",
+]
 
 
 def get_lakeformation_client():
@@ -83,7 +93,9 @@ def grant_bot_full_table_access(lf_client):
             Resource={"Table": {"DatabaseName": DATABASE_NAME, "Name": table}},
             Permissions=["SELECT", "INSERT", "DELETE", "ALTER"],
         )
-    logger.info(f"Bot service granted full access to {[TABLE_GAMES, TABLE_PLAYERS, TABLE_REPLAYS]}.")
+    logger.info(
+        f"Bot service granted full access to {[TABLE_GAMES, TABLE_PLAYERS, TABLE_REPLAYS]}."
+    )
 
 
 def apply_data_filter_for_analysts(lf_client):
@@ -109,11 +121,15 @@ def list_permissions(lf_client, table_name: str) -> list:
     )
     perms = response.get("PrincipalResourcePermissions", [])
     for p in perms:
-        logger.info(f"  {p['Principal']['DataLakePrincipalIdentifier']}: {p['Permissions']}")
+        logger.info(
+            f"  {p['Principal']['DataLakePrincipalIdentifier']}: {p['Permissions']}"
+        )
     return perms
 
 
-def revoke_permissions(lf_client, principal_arn: str, table_name: str, permissions: list):
+def revoke_permissions(
+    lf_client, principal_arn: str, table_name: str, permissions: list
+):
     """Revoke specific permissions from a principal."""
     lf_client.revoke_permissions(
         Principal={"DataLakePrincipalIdentifier": principal_arn},

@@ -10,8 +10,8 @@ Consolidated version combining original and improved features:
 - Robust error handling
 """
 
-from typing import Dict
 import logging
+from typing import Dict
 
 logger = logging.getLogger("EconomyCombatBalancer")
 
@@ -57,9 +57,9 @@ class EconomyCombatBalancer:
         # ★★★ FIX: 현실적 일꾼 목표 (이전값은 군대 생산을 완전히 차단) ★★★
         # Drone targets by game phase (base values)
         self.base_drone_targets = {
-            "early": 22,   # 0-6 min (1-2베이스: 16+6=22 → 이후 군대 전환)
-            "mid": 44,     # 6-12 min (3베이스 포화: 16*3=48, 가스 포함 ~44)
-            "late": 66,    # 12+ min (4베이스 포화: 16*4=64, 가스 포함 ~66)
+            "early": 22,  # 0-6 min (1-2베이스: 16+6=22 → 이후 군대 전환)
+            "mid": 44,  # 6-12 min (3베이스 포화: 16*3=48, 가스 포함 ~44)
+            "late": 66,  # 12+ min (4베이스 포화: 16*4=64, 가스 포함 ~66)
         }
 
         # ★★★ 학습된 데이터 반영: 동적 조정 ★★★
@@ -95,7 +95,9 @@ class EconomyCombatBalancer:
             if not strategy:
                 return
 
-            economy_weight = strategy.get_learned_economy_weight()  # Drone priority (0.0~1.0)
+            economy_weight = (
+                strategy.get_learned_economy_weight()
+            )  # Drone priority (0.0~1.0)
 
             if economy_weight <= 0:
                 return
@@ -121,10 +123,14 @@ class EconomyCombatBalancer:
 
             self.learned_weights_applied = True
 
-            logger.info(f"[LEARNING] Applied learned economy weight: {economy_weight:.2%}")
+            logger.info(
+                f"[LEARNING] Applied learned economy weight: {economy_weight:.2%}"
+            )
             logger.info(f"[LEARNING] Drone targets adjusted {adjustment_desc}")
-            logger.info(f"[LEARNING] New targets: Early={self.drone_targets['early']}, "
-                  f"Mid={self.drone_targets['mid']}, Late={self.drone_targets['late']}")
+            logger.info(
+                f"[LEARNING] New targets: Early={self.drone_targets['early']}, "
+                f"Mid={self.drone_targets['mid']}, Late={self.drone_targets['late']}"
+            )
 
         except Exception as e:
             logger.error(f"[WARNING] Failed to apply learned economy weights: {e}")
@@ -237,7 +243,9 @@ class EconomyCombatBalancer:
             base_count = 0
             if hasattr(self.bot, "townhalls"):
                 bases = self.bot.townhalls
-                base_count = bases.amount if hasattr(bases, "amount") else len(list(bases))
+                base_count = (
+                    bases.amount if hasattr(bases, "amount") else len(list(bases))
+                )
 
             if base_count <= 1 and drones < 22:
                 return True  # 1베이스는 expansion 비용 확보를 위해 생산
@@ -252,6 +260,7 @@ class EconomyCombatBalancer:
                     return True  # Still need drones badly
                 # With 22+ drones and not severely under, favor army 80% of the time
                 import random
+
                 return random.random() < 0.20  # Only 20% chance to make drone
 
             # Priority 1: ★ 기지 포화도 체크 ★
@@ -281,6 +290,7 @@ class EconomyCombatBalancer:
             if saturation_status == "NEAR_SATURATED":
                 # 60% 확률로 드론 생산 스킵 (군대 우선)
                 import random
+
                 if random.random() < 0.6:
                     return False
 

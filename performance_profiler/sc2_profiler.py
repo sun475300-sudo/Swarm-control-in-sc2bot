@@ -5,19 +5,19 @@ from __future__ import annotations
 
 import gc
 import os
-import sys
-import time
-import threading
 import statistics
+import sys
+import threading
+import time
 from collections import defaultdict
 from contextlib import contextmanager
 from dataclasses import dataclass, field
 from typing import Any, Callable, Dict, Generator, List, Optional, Tuple
 
-
 # ============================================================
 # Timer (High-Resolution Timing)
 # ============================================================
+
 
 class Timer:
     """High-resolution timer for measuring code execution time.
@@ -127,9 +127,11 @@ class Timer:
 # Memory Tracker
 # ============================================================
 
+
 @dataclass
 class MemorySnapshot:
     """A single memory measurement point."""
+
     timestamp: float
     label: str
     rss_bytes: int
@@ -174,12 +176,14 @@ class MemoryTracker:
         """Estimate RSS memory usage in bytes (cross-platform)."""
         try:
             import resource
+
             usage = resource.getrusage(resource.RUSAGE_SELF)
             return usage.ru_maxrss * 1024
         except ImportError:
             pass
         try:
             import psutil
+
             process = psutil.Process(os.getpid())
             return process.memory_info().rss
         except ImportError:
@@ -231,20 +235,30 @@ class MemoryTracker:
             "gc_enabled": gc.isenabled(),
             "thresholds": thresholds,
             "current_counts": counts,
-            "collections": [
-                {"generation": i, "collected": s.get("collected", 0), "uncollectable": s.get("uncollectable", 0)}
-                for i, s in enumerate(gc_stats)
-            ] if gc_stats else [],
+            "collections": (
+                [
+                    {
+                        "generation": i,
+                        "collected": s.get("collected", 0),
+                        "uncollectable": s.get("uncollectable", 0),
+                    }
+                    for i, s in enumerate(gc_stats)
+                ]
+                if gc_stats
+                else []
+            ),
         }
 
     def track_allocation(self, label: str, size_bytes: int) -> None:
         """Manually log an allocation event."""
-        self._allocation_log.append({
-            "timestamp": time.time(),
-            "label": label,
-            "size_bytes": size_bytes,
-            "size_mb": round(size_bytes / (1024 * 1024), 4),
-        })
+        self._allocation_log.append(
+            {
+                "timestamp": time.time(),
+                "label": label,
+                "size_bytes": size_bytes,
+                "size_mb": round(size_bytes / (1024 * 1024), 4),
+            }
+        )
 
     def allocation_summary(self) -> Dict[str, Any]:
         """Summarize tracked allocations by label."""
@@ -274,9 +288,11 @@ class MemoryTracker:
 # CPU Profiler
 # ============================================================
 
+
 @dataclass
 class CallRecord:
     """Record of a single function call for profiling."""
+
     func_name: str
     module: str
     start_time: float
@@ -339,18 +355,18 @@ class CPUProfiler:
 
     def profile_function(self, func: Callable) -> Callable:
         """Decorator to profile a function."""
+
         def wrapper(*args: Any, **kwargs: Any) -> Any:
             with self.profile(func.__qualname__, func.__module__):
                 return func(*args, **kwargs)
+
         wrapper.__name__ = func.__name__
         wrapper.__qualname__ = func.__qualname__
         return wrapper
 
     def hot_paths(self, top_n: int = 10) -> List[Dict[str, Any]]:
         """Return the most time-consuming functions."""
-        sorted_paths = sorted(
-            self._hot_paths.items(), key=lambda x: x[1], reverse=True
-        )
+        sorted_paths = sorted(self._hot_paths.items(), key=lambda x: x[1], reverse=True)
         return [
             {
                 "function": name,
@@ -363,6 +379,7 @@ class CPUProfiler:
 
     def call_graph(self, max_depth: int = 5) -> List[Dict[str, Any]]:
         """Generate a call graph from root calls."""
+
         def _build(record: CallRecord, depth: int) -> Optional[Dict[str, Any]]:
             if depth > max_depth:
                 return None
@@ -379,11 +396,7 @@ class CPUProfiler:
                     node["children"].append(child_node)
             return node
 
-        return [
-            _build(root, 0)
-            for root in self._root_calls[-20:]
-            if root is not None
-        ]
+        return [_build(root, 0) for root in self._root_calls[-20:] if root is not None]
 
     def summary(self) -> Dict[str, Any]:
         return {
@@ -412,9 +425,11 @@ class CPUProfiler:
 # Frame Analyzer (SC2-Specific)
 # ============================================================
 
+
 @dataclass
 class FrameBudget:
     """Time budget breakdown for a single SC2 game frame."""
+
     frame_id: int
     total_ms: float
     economy_ms: float = 0.0
@@ -428,8 +443,13 @@ class FrameBudget:
     @property
     def accounted_ms(self) -> float:
         return (
-            self.economy_ms + self.combat_ms + self.micro_ms +
-            self.macro_ms + self.scouting_ms + self.planning_ms + self.other_ms
+            self.economy_ms
+            + self.combat_ms
+            + self.micro_ms
+            + self.macro_ms
+            + self.scouting_ms
+            + self.planning_ms
+            + self.other_ms
         )
 
     @property
@@ -533,7 +553,9 @@ class FrameAnalyzer:
             "total_frames": len(self._frames),
             "mean_ms": round(statistics.mean(totals), 4),
             "median_ms": round(statistics.median(totals), 4),
-            "std_dev_ms": round(statistics.stdev(totals), 4) if len(totals) >= 2 else 0.0,
+            "std_dev_ms": (
+                round(statistics.stdev(totals), 4) if len(totals) >= 2 else 0.0
+            ),
             "min_ms": round(min(totals), 4),
             "max_ms": round(max(totals), 4),
             "slow_frames": len(self._slow_frames),
@@ -545,7 +567,15 @@ class FrameAnalyzer:
         """Average time per subsystem across all frames."""
         if not self._frames:
             return {}
-        categories = ["economy", "combat", "micro", "macro", "scouting", "planning", "other"]
+        categories = [
+            "economy",
+            "combat",
+            "micro",
+            "macro",
+            "scouting",
+            "planning",
+            "other",
+        ]
         breakdown = {}
         for cat in categories:
             attr = f"{cat}_ms"
@@ -577,6 +607,7 @@ class FrameAnalyzer:
 # ============================================================
 # Flame Graph Generator (Text-Based)
 # ============================================================
+
 
 class FlameGraphGenerator:
     """Generate text-based flame graph visualizations.
@@ -613,7 +644,9 @@ class FlameGraphGenerator:
                 f"{record.duration*1000:.2f}ms ({pct:.1f}%) "
                 f"[self: {record.self_time*1000:.2f}ms ({self_pct:.1f}%)]"
             )
-            for child in sorted(record.children, key=lambda c: c.duration, reverse=True):
+            for child in sorted(
+                record.children, key=lambda c: c.duration, reverse=True
+            ):
                 _render(child, depth + 1, record.duration)
 
         for root in records:
@@ -661,12 +694,16 @@ class FlameGraphGenerator:
         total_mean = sum(v["mean_ms"] for v in breakdown.values())
         if total_mean <= 0:
             return "(no data)"
-        for name, data in sorted(breakdown.items(), key=lambda x: x[1]["mean_ms"], reverse=True):
+        for name, data in sorted(
+            breakdown.items(), key=lambda x: x[1]["mean_ms"], reverse=True
+        ):
             mean = data["mean_ms"]
             pct = data["pct_of_frame"]
             bar_len = max(int(mean / max(total_mean, 0.001) * max_bar), 0)
             bar = "#" * bar_len
-            lines.append(f"  {name:>12s} |{bar:<{max_bar}s}| {mean:6.2f}ms ({pct:5.1f}%)")
+            lines.append(
+                f"  {name:>12s} |{bar:<{max_bar}s}| {mean:6.2f}ms ({pct:5.1f}%)"
+            )
         lines.append("=" * 55)
         return "\n".join(lines)
 
@@ -674,6 +711,7 @@ class FlameGraphGenerator:
 # ============================================================
 # SC2 Profiler (Main Facade)
 # ============================================================
+
 
 class SC2Profiler:
     """Main profiler facade for SC2 bot optimization.
@@ -741,19 +779,23 @@ class SC2Profiler:
         lbl = label or f"step_{self._step_count}"
         return self.memory.snapshot(lbl)
 
-    def identify_slow_modules(self, threshold_pct: float = 20.0) -> List[Dict[str, Any]]:
+    def identify_slow_modules(
+        self, threshold_pct: float = 20.0
+    ) -> List[Dict[str, Any]]:
         """Identify subsystems that exceed the threshold percentage of frame time."""
         breakdown = self.frames.subsystem_breakdown()
         slow = []
         for name, data in breakdown.items():
             if data["pct_of_frame"] >= threshold_pct:
-                slow.append({
-                    "subsystem": name,
-                    "pct_of_frame": data["pct_of_frame"],
-                    "mean_ms": data["mean_ms"],
-                    "max_ms": data["max_ms"],
-                    "recommendation": self._recommend(name, data),
-                })
+                slow.append(
+                    {
+                        "subsystem": name,
+                        "pct_of_frame": data["pct_of_frame"],
+                        "mean_ms": data["mean_ms"],
+                        "max_ms": data["max_ms"],
+                        "recommendation": self._recommend(name, data),
+                    }
+                )
         return sorted(slow, key=lambda x: x["pct_of_frame"], reverse=True)
 
     def _recommend(self, name: str, data: Dict[str, Any]) -> str:
@@ -789,7 +831,9 @@ class SC2Profiler:
             "session": {
                 "duration_s": round(session_time, 2),
                 "total_steps": self._step_count,
-                "steps_per_second": round(self._step_count / max(session_time, 0.001), 2),
+                "steps_per_second": round(
+                    self._step_count / max(session_time, 0.001), 2
+                ),
                 "profiling_enabled": self._enabled,
             },
             "frames": self.frames.frame_stats(),
@@ -811,6 +855,7 @@ class SC2Profiler:
 # ============================================================
 # Demo
 # ============================================================
+
 
 def _simulate_work(duration_ms: float) -> None:
     """Simulate CPU work for a given duration in milliseconds."""
@@ -871,7 +916,9 @@ def demo() -> None:
     hot = profiler.cpu.hot_paths(5)
     print("    Hot paths:")
     for entry in hot:
-        print(f"      {entry['function']}: {entry['total_time_ms']:.3f}ms ({entry['call_count']} calls)")
+        print(
+            f"      {entry['function']}: {entry['total_time_ms']:.3f}ms ({entry['call_count']} calls)"
+        )
 
     # --- Frame Analysis ---
     print("\n[4] Frame Analysis (simulating 20 on_step frames)")
@@ -915,33 +962,45 @@ def demo() -> None:
     print("\n[7] Slow Module Identification")
     slow_modules = profiler.identify_slow_modules(threshold_pct=10.0)
     for mod in slow_modules:
-        print(f"    {mod['subsystem']}: {mod['pct_of_frame']:.1f}% "
-              f"(mean={mod['mean_ms']:.2f}ms, max={mod['max_ms']:.2f}ms)")
+        print(
+            f"    {mod['subsystem']}: {mod['pct_of_frame']:.1f}% "
+            f"(mean={mod['mean_ms']:.2f}ms, max={mod['max_ms']:.2f}ms)"
+        )
         print(f"      -> {mod['recommendation'][:80]}")
 
     # --- Slow Frames ---
     print("\n[8] Slowest Frames Report")
     slow_frames = profiler.frames.slow_frame_report(3)
     for sf in slow_frames:
-        print(f"    Frame #{int(sf['frame_id'])}: {sf['total_ms']:.2f}ms "
-              f"(combat={sf['combat_ms']:.2f}, micro={sf['micro_ms']:.2f})")
+        print(
+            f"    Frame #{int(sf['frame_id'])}: {sf['total_ms']:.2f}ms "
+            f"(combat={sf['combat_ms']:.2f}, micro={sf['micro_ms']:.2f})"
+        )
 
     # --- Full Report ---
     print("\n[9] Full Report Summary")
     report = profiler.full_report()
-    print(f"    Session: {report['session']['duration_s']:.2f}s, "
-          f"{report['session']['total_steps']} steps")
-    print(f"    CPU: {report['cpu']['profiled_functions']} functions, "
-          f"{report['cpu']['total_calls']} total calls")
-    print(f"    Memory: {report['memory']['snapshots']} snapshots, "
-          f"leak={report['memory']['leak_check']['leak_detected']}")
+    print(
+        f"    Session: {report['session']['duration_s']:.2f}s, "
+        f"{report['session']['total_steps']} steps"
+    )
+    print(
+        f"    CPU: {report['cpu']['profiled_functions']} functions, "
+        f"{report['cpu']['total_calls']} total calls"
+    )
+    print(
+        f"    Memory: {report['memory']['snapshots']} snapshots, "
+        f"leak={report['memory']['leak_check']['leak_detected']}"
+    )
 
     # --- Memory Leak Detection ---
     print("\n[10] Memory Leak Detection")
     leak_info = profiler.memory.detect_leak()
     print(f"    Leak detected: {leak_info['leak_detected']}")
-    print(f"    Growth: {leak_info['growth_mb']:.2f}MB "
-          f"(threshold: {leak_info['threshold_mb']:.1f}MB)")
+    print(
+        f"    Growth: {leak_info['growth_mb']:.2f}MB "
+        f"(threshold: {leak_info['threshold_mb']:.1f}MB)"
+    )
 
     print("\n" + "=" * 70)
     print("Phase 659 demo complete.")

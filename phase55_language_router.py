@@ -153,7 +153,14 @@ def classify_files(files: list[str]) -> dict[str, list[str]]:
 def route_python(files: list[str], execute: bool) -> CommandResult:
     files = existing_files(files)
     if not files:
-        return CommandResult("python -m py_compile <changed .py>", str(ROOT), True, True, "", "no_python_changes")
+        return CommandResult(
+            "python -m py_compile <changed .py>",
+            str(ROOT),
+            True,
+            True,
+            "",
+            "no_python_changes",
+        )
 
     cmd = [sys.executable, "-m", "py_compile", *files]
     if not execute:
@@ -166,15 +173,26 @@ def route_python(files: list[str], execute: bool) -> CommandResult:
 def route_typescript(files: list[str], execute: bool) -> CommandResult:
     files = existing_files(files)
     if not files:
-        return CommandResult("npm run check", str(ROOT / "sc2-ai-dashboard"), True, True, "", "no_typescript_changes")
+        return CommandResult(
+            "npm run check",
+            str(ROOT / "sc2-ai-dashboard"),
+            True,
+            True,
+            "",
+            "no_typescript_changes",
+        )
 
     dash_dir = ROOT / "sc2-ai-dashboard"
     if not (dash_dir / "package.json").exists():
-        return CommandResult("npm run check", str(dash_dir), True, True, "", "dashboard_not_found")
+        return CommandResult(
+            "npm run check", str(dash_dir), True, True, "", "dashboard_not_found"
+        )
 
     npm_exe = find_executable(["npm", "npm.cmd"])
     if npm_exe is None:
-        return CommandResult("npm run check", str(dash_dir), True, False, "", "npm_not_found")
+        return CommandResult(
+            "npm run check", str(dash_dir), True, False, "", "npm_not_found"
+        )
 
     cmd = [npm_exe, "run", "check"]
     if not execute:
@@ -187,15 +205,21 @@ def route_typescript(files: list[str], execute: bool) -> CommandResult:
 def route_rust(files: list[str], execute: bool) -> CommandResult:
     files = existing_files(files)
     if not files:
-        return CommandResult("cargo check", str(ROOT / "rust_accel"), True, True, "", "no_rust_changes")
+        return CommandResult(
+            "cargo check", str(ROOT / "rust_accel"), True, True, "", "no_rust_changes"
+        )
 
     rust_dir = ROOT / "rust_accel"
     if not (rust_dir / "Cargo.toml").exists():
-        return CommandResult("cargo check", str(rust_dir), True, True, "", "cargo_toml_not_found")
+        return CommandResult(
+            "cargo check", str(rust_dir), True, True, "", "cargo_toml_not_found"
+        )
 
     cargo_exe = find_executable(["cargo", "cargo.exe"])
     if cargo_exe is None:
-        return CommandResult("cargo check", str(rust_dir), True, False, "", "cargo_not_found")
+        return CommandResult(
+            "cargo check", str(rust_dir), True, False, "", "cargo_not_found"
+        )
 
     cmd = [cargo_exe, "check"]
     if not execute:
@@ -206,16 +230,31 @@ def route_rust(files: list[str], execute: bool) -> CommandResult:
 
 
 def route_shell(files: list[str], execute: bool) -> CommandResult:
-    files = [f for f in existing_files(files) if Path(f).suffix.lower() in {".sh", ".bash", ".zsh"}]
+    files = [
+        f
+        for f in existing_files(files)
+        if Path(f).suffix.lower() in {".sh", ".bash", ".zsh"}
+    ]
     if not files:
-        return CommandResult("bash -n <changed shell>", str(ROOT), True, True, "", "no_shell_script_changes")
+        return CommandResult(
+            "bash -n <changed shell>",
+            str(ROOT),
+            True,
+            True,
+            "",
+            "no_shell_script_changes",
+        )
 
     shell_exe = find_executable(["bash", "sh"])
     if shell_exe is None:
-        return CommandResult("bash -n <changed shell>", str(ROOT), True, True, "", "shell_not_found")
+        return CommandResult(
+            "bash -n <changed shell>", str(ROOT), True, True, "", "shell_not_found"
+        )
 
     if not execute:
-        return CommandResult(f"{shell_exe} -n <changed shell>", str(ROOT), True, True, "", "dry_run")
+        return CommandResult(
+            f"{shell_exe} -n <changed shell>", str(ROOT), True, True, "", "dry_run"
+        )
 
     outputs: list[str] = []
     ok = True
@@ -227,20 +266,28 @@ def route_shell(files: list[str], execute: bool) -> CommandResult:
         if out:
             outputs.append(f"[{f}]\n{out}")
 
-    return CommandResult(f"{shell_exe} -n <changed shell>", str(ROOT), False, ok, "\n\n".join(outputs))
+    return CommandResult(
+        f"{shell_exe} -n <changed shell>", str(ROOT), False, ok, "\n\n".join(outputs)
+    )
 
 
 def route_perl(files: list[str], execute: bool) -> CommandResult:
     files = existing_files(files)
     if not files:
-        return CommandResult("perl -c <changed perl>", str(ROOT), True, True, "", "no_perl_changes")
+        return CommandResult(
+            "perl -c <changed perl>", str(ROOT), True, True, "", "no_perl_changes"
+        )
 
     perl_exe = find_executable(["perl", "perl.exe"])
     if perl_exe is None:
-        return CommandResult("perl -c <changed perl>", str(ROOT), True, True, "", "perl_not_found")
+        return CommandResult(
+            "perl -c <changed perl>", str(ROOT), True, True, "", "perl_not_found"
+        )
 
     if not execute:
-        return CommandResult(f"{perl_exe} -c <changed perl>", str(ROOT), True, True, "", "dry_run")
+        return CommandResult(
+            f"{perl_exe} -c <changed perl>", str(ROOT), True, True, "", "dry_run"
+        )
 
     outputs: list[str] = []
     ok = True
@@ -252,17 +299,23 @@ def route_perl(files: list[str], execute: bool) -> CommandResult:
         if out:
             outputs.append(f"[{f}]\n{out}")
 
-    return CommandResult(f"{perl_exe} -c <changed perl>", str(ROOT), False, ok, "\n\n".join(outputs))
+    return CommandResult(
+        f"{perl_exe} -c <changed perl>", str(ROOT), False, ok, "\n\n".join(outputs)
+    )
 
 
 def route_go(files: list[str], execute: bool) -> CommandResult:
     files = existing_files(files)
     if not files:
-        return CommandResult("gofmt -l <changed go>", str(ROOT), True, True, "", "no_go_changes")
+        return CommandResult(
+            "gofmt -l <changed go>", str(ROOT), True, True, "", "no_go_changes"
+        )
 
     gofmt_exe = find_executable(["gofmt", "gofmt.exe"])
     if gofmt_exe is None:
-        return CommandResult("gofmt -l <changed go>", str(ROOT), True, True, "", "gofmt_not_found")
+        return CommandResult(
+            "gofmt -l <changed go>", str(ROOT), True, True, "", "gofmt_not_found"
+        )
 
     cmd = [gofmt_exe, "-l", *[str(ROOT / f) for f in files]]
     if not execute:
@@ -278,14 +331,30 @@ def route_go(files: list[str], execute: bool) -> CommandResult:
 def route_protobuf(files: list[str], execute: bool) -> CommandResult:
     files = existing_files(files)
     if not files:
-        return CommandResult("protoc --descriptor_set_out", str(ROOT), True, True, "", "no_protobuf_changes")
+        return CommandResult(
+            "protoc --descriptor_set_out",
+            str(ROOT),
+            True,
+            True,
+            "",
+            "no_protobuf_changes",
+        )
 
     protoc_exe = find_executable(["protoc", "protoc.exe"])
     if protoc_exe is None:
-        return CommandResult("protoc --descriptor_set_out", str(ROOT), True, True, "", "protoc_not_found")
+        return CommandResult(
+            "protoc --descriptor_set_out", str(ROOT), True, True, "", "protoc_not_found"
+        )
 
     if not execute:
-        return CommandResult(f"{protoc_exe} --proto_path {ROOT} ...", str(ROOT), True, True, "", "dry_run")
+        return CommandResult(
+            f"{protoc_exe} --proto_path {ROOT} ...",
+            str(ROOT),
+            True,
+            True,
+            "",
+            "dry_run",
+        )
 
     outputs: list[str] = []
     ok = True
@@ -303,21 +372,47 @@ def route_protobuf(files: list[str], execute: bool) -> CommandResult:
         if out:
             outputs.append(f"[{f}]\n{out}")
 
-    return CommandResult(f"{protoc_exe} --proto_path {ROOT} <changed proto>", str(ROOT), False, ok, "\n\n".join(outputs))
+    return CommandResult(
+        f"{protoc_exe} --proto_path {ROOT} <changed proto>",
+        str(ROOT),
+        False,
+        ok,
+        "\n\n".join(outputs),
+    )
 
 
 def route_java(files: list[str], execute: bool) -> CommandResult:
     files = existing_files(files)
     if not files:
-        return CommandResult("javac -d <tmp> <changed java>", str(ROOT), True, True, "", "no_java_changes")
+        return CommandResult(
+            "javac -d <tmp> <changed java>",
+            str(ROOT),
+            True,
+            True,
+            "",
+            "no_java_changes",
+        )
 
     javac_exe = find_executable(["javac", "javac.exe"])
     if javac_exe is None:
-        return CommandResult("javac -d <tmp> <changed java>", str(ROOT), True, True, "", "javac_not_found")
+        return CommandResult(
+            "javac -d <tmp> <changed java>",
+            str(ROOT),
+            True,
+            True,
+            "",
+            "javac_not_found",
+        )
 
     out_dir = REPORT_DIR / "java_classes"
     out_dir.mkdir(parents=True, exist_ok=True)
-    cmd = [javac_exe, "-Xlint:none", "-d", str(out_dir), *[str(ROOT / f) for f in files]]
+    cmd = [
+        javac_exe,
+        "-Xlint:none",
+        "-d",
+        str(out_dir),
+        *[str(ROOT / f) for f in files],
+    ]
     if not execute:
         return CommandResult(" ".join(cmd), str(ROOT), True, True, "", "dry_run")
 
@@ -328,11 +423,25 @@ def route_java(files: list[str], execute: bool) -> CommandResult:
 def route_kotlin(files: list[str], execute: bool) -> CommandResult:
     files = existing_files(files)
     if not files:
-        return CommandResult("kotlinc -d <tmp.jar> <changed kotlin>", str(ROOT), True, True, "", "no_kotlin_changes")
+        return CommandResult(
+            "kotlinc -d <tmp.jar> <changed kotlin>",
+            str(ROOT),
+            True,
+            True,
+            "",
+            "no_kotlin_changes",
+        )
 
     kotlinc_exe = find_executable(["kotlinc", "kotlinc.bat", "kotlinc.cmd"])
     if kotlinc_exe is None:
-        return CommandResult("kotlinc -d <tmp.jar> <changed kotlin>", str(ROOT), True, True, "", "kotlinc_not_found")
+        return CommandResult(
+            "kotlinc -d <tmp.jar> <changed kotlin>",
+            str(ROOT),
+            True,
+            True,
+            "",
+            "kotlinc_not_found",
+        )
 
     out_jar = REPORT_DIR / "kotlin_check.jar"
     cmd = [kotlinc_exe, *[str(ROOT / f) for f in files], "-d", str(out_jar)]
@@ -346,11 +455,20 @@ def route_kotlin(files: list[str], execute: bool) -> CommandResult:
 def route_sql(files: list[str], execute: bool) -> CommandResult:
     files = existing_files(files)
     if not files:
-        return CommandResult("sqlfluff lint <changed sql>", str(ROOT), True, True, "", "no_sql_changes")
+        return CommandResult(
+            "sqlfluff lint <changed sql>", str(ROOT), True, True, "", "no_sql_changes"
+        )
 
     sqlfluff_exe = find_executable(["sqlfluff", "sqlfluff.exe"])
     if sqlfluff_exe is None:
-        return CommandResult("sqlfluff lint <changed sql>", str(ROOT), True, True, "", "sqlfluff_not_found")
+        return CommandResult(
+            "sqlfluff lint <changed sql>",
+            str(ROOT),
+            True,
+            True,
+            "",
+            "sqlfluff_not_found",
+        )
 
     cmd = [sqlfluff_exe, "lint", *[str(ROOT / f) for f in files]]
     if not execute:
@@ -363,7 +481,9 @@ def route_sql(files: list[str], execute: bool) -> CommandResult:
 def route_policy_stub(language: str, files: list[str], execute: bool) -> CommandResult:
     files = existing_files(files)
     if not files:
-        return CommandResult(f"policy:{language}", str(ROOT), True, True, "", f"no_{language}_changes")
+        return CommandResult(
+            f"policy:{language}", str(ROOT), True, True, "", f"no_{language}_changes"
+        )
 
     reason = "phase56_policy_stub_execute_pending" if execute else "dry_run"
     return CommandResult(f"policy:{language}", str(ROOT), True, True, "", reason)
@@ -371,7 +491,9 @@ def route_policy_stub(language: str, files: list[str], execute: bool) -> Command
 
 def main() -> int:
     parser = argparse.ArgumentParser(description="Phase 55 language-aware router")
-    parser.add_argument("--base-ref", default="HEAD~1", help="Git base ref for changed-file detection")
+    parser.add_argument(
+        "--base-ref", default="HEAD~1", help="Git base ref for changed-file detection"
+    )
     parser.add_argument(
         "--change-mode",
         choices=["range", "staged", "worktree", "local"],
@@ -427,7 +549,9 @@ def main() -> int:
     REPORT_DIR.mkdir(parents=True, exist_ok=True)
     ts = datetime.now(tz=timezone.utc).strftime("%Y%m%d_%H%M%S")
     report_path = REPORT_DIR / f"phase55_language_router_{ts}.json"
-    report_path.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
+    report_path.write_text(
+        json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8"
+    )
 
     print("=" * 70)
     print("Phase 56 Language Router")

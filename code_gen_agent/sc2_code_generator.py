@@ -19,51 +19,127 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any, Optional
 
-
 # ── Constants ───────────────────────────────────────────────────────────────────
 
 SC2_UNIT_TYPES: dict[str, list[str]] = {
     "zerg": [
-        "Zergling", "Baneling", "Roach", "Ravager", "Hydralisk", "Lurker",
-        "Mutalisk", "Corruptor", "BroodLord", "Infestor", "Viper",
-        "SwarmHost", "Ultralisk", "Overseer", "Queen",
+        "Zergling",
+        "Baneling",
+        "Roach",
+        "Ravager",
+        "Hydralisk",
+        "Lurker",
+        "Mutalisk",
+        "Corruptor",
+        "BroodLord",
+        "Infestor",
+        "Viper",
+        "SwarmHost",
+        "Ultralisk",
+        "Overseer",
+        "Queen",
     ],
     "terran": [
-        "Marine", "Marauder", "Reaper", "Ghost", "Hellion", "Hellbat",
-        "SiegeTank", "Cyclone", "Thor", "Viking", "Medivac", "Liberator",
-        "Raven", "Banshee", "Battlecruiser", "WidowMine",
+        "Marine",
+        "Marauder",
+        "Reaper",
+        "Ghost",
+        "Hellion",
+        "Hellbat",
+        "SiegeTank",
+        "Cyclone",
+        "Thor",
+        "Viking",
+        "Medivac",
+        "Liberator",
+        "Raven",
+        "Banshee",
+        "Battlecruiser",
+        "WidowMine",
     ],
     "protoss": [
-        "Zealot", "Stalker", "Sentry", "Adept", "HighTemplar", "DarkTemplar",
-        "Immortal", "Colossus", "Disruptor", "Phoenix", "VoidRay", "Oracle",
-        "Carrier", "Tempest", "Archon", "WarpPrism",
+        "Zealot",
+        "Stalker",
+        "Sentry",
+        "Adept",
+        "HighTemplar",
+        "DarkTemplar",
+        "Immortal",
+        "Colossus",
+        "Disruptor",
+        "Phoenix",
+        "VoidRay",
+        "Oracle",
+        "Carrier",
+        "Tempest",
+        "Archon",
+        "WarpPrism",
     ],
 }
 
 SC2_BUILDINGS: dict[str, list[str]] = {
     "zerg": [
-        "Hatchery", "SpawningPool", "RoachWarren", "BanelingNest",
-        "EvolutionChamber", "HydraliskDen", "LurkerDen", "Spire",
-        "InfestationPit", "UltraliskCavern", "Lair", "Hive",
-        "Extractor", "NydusNetwork",
+        "Hatchery",
+        "SpawningPool",
+        "RoachWarren",
+        "BanelingNest",
+        "EvolutionChamber",
+        "HydraliskDen",
+        "LurkerDen",
+        "Spire",
+        "InfestationPit",
+        "UltraliskCavern",
+        "Lair",
+        "Hive",
+        "Extractor",
+        "NydusNetwork",
     ],
     "terran": [
-        "CommandCenter", "Barracks", "Factory", "Starport",
-        "EngineeringBay", "Armory", "GhostAcademy", "FusionCore",
-        "Refinery", "SupplyDepot", "Bunker", "SensorTower",
+        "CommandCenter",
+        "Barracks",
+        "Factory",
+        "Starport",
+        "EngineeringBay",
+        "Armory",
+        "GhostAcademy",
+        "FusionCore",
+        "Refinery",
+        "SupplyDepot",
+        "Bunker",
+        "SensorTower",
     ],
     "protoss": [
-        "Nexus", "Gateway", "CyberneticsCore", "RoboticsFacility",
-        "Stargate", "TwilightCouncil", "TemplarArchives", "DarkShrine",
-        "RoboticsBay", "FleetBeacon", "Forge", "PhotonCannon",
-        "Assimilator", "Pylon",
+        "Nexus",
+        "Gateway",
+        "CyberneticsCore",
+        "RoboticsFacility",
+        "Stargate",
+        "TwilightCouncil",
+        "TemplarArchives",
+        "DarkShrine",
+        "RoboticsBay",
+        "FleetBeacon",
+        "Forge",
+        "PhotonCannon",
+        "Assimilator",
+        "Pylon",
     ],
 }
 
 FORBIDDEN_IMPORTS: set[str] = {
-    "os", "sys", "subprocess", "shutil", "signal",
-    "ctypes", "socket", "http", "urllib", "requests",
-    "pickle", "shelve", "multiprocessing",
+    "os",
+    "sys",
+    "subprocess",
+    "shutil",
+    "signal",
+    "ctypes",
+    "socket",
+    "http",
+    "urllib",
+    "requests",
+    "pickle",
+    "shelve",
+    "multiprocessing",
 }
 
 MAX_CODE_LENGTH = 10_000
@@ -71,6 +147,7 @@ MAX_FUNCTION_COUNT = 50
 
 
 # ── Enums ───────────────────────────────────────────────────────────────────────
+
 
 class TemplateCategory(Enum):
     BUILD_ORDER = "build_order"
@@ -90,6 +167,7 @@ class ValidationLevel(Enum):
 
 
 # ── Data Classes ────────────────────────────────────────────────────────────────
+
 
 @dataclass
 class CodeTemplate:
@@ -163,6 +241,7 @@ class GeneratedCode:
 
 # ── Code Validator ──────────────────────────────────────────────────────────────
 
+
 class CodeValidator:
     """Validates generated Python code for syntax, safety, and correctness."""
 
@@ -180,9 +259,7 @@ class CodeValidator:
             )
         except SyntaxError as exc:
             result.valid = False
-            result.errors.append(
-                f"SyntaxError at line {exc.lineno}: {exc.msg}"
-            )
+            result.errors.append(f"SyntaxError at line {exc.lineno}: {exc.msg}")
         return result
 
     def validate_safety(self, code: str) -> ValidationResult:
@@ -203,17 +280,13 @@ class CodeValidator:
                     module_root = alias.name.split(".")[0]
                     if module_root in self.forbidden_imports:
                         result.valid = False
-                        result.errors.append(
-                            f"Forbidden import: {alias.name}"
-                        )
+                        result.errors.append(f"Forbidden import: {alias.name}")
             elif isinstance(node, ast.ImportFrom):
                 if node.module:
                     module_root = node.module.split(".")[0]
                     if module_root in self.forbidden_imports:
                         result.valid = False
-                        result.errors.append(
-                            f"Forbidden import from: {node.module}"
-                        )
+                        result.errors.append(f"Forbidden import from: {node.module}")
 
         # Check for exec/eval calls
         for node in ast.walk(tree):
@@ -221,9 +294,7 @@ class CodeValidator:
                 func = node.func
                 if isinstance(func, ast.Name) and func.id in ("exec", "eval"):
                     result.valid = False
-                    result.errors.append(
-                        f"Forbidden builtin call: {func.id}()"
-                    )
+                    result.errors.append(f"Forbidden builtin call: {func.id}()")
 
         # Check code length
         if len(code) > MAX_CODE_LENGTH:
@@ -233,7 +304,8 @@ class CodeValidator:
 
         # Check function count
         func_count = sum(
-            1 for n in ast.walk(tree)
+            1
+            for n in ast.walk(tree)
             if isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef))
         )
         result.function_count = func_count
@@ -291,6 +363,7 @@ class CodeValidator:
 
 # ── Strategy Code Generator ────────────────────────────────────────────────────
 
+
 class StrategyCodeGen:
     """Generates Python code for SC2 bot strategies from descriptions."""
 
@@ -302,12 +375,13 @@ class StrategyCodeGen:
     def _load_builtin_templates(self) -> None:
         """Load the built-in template library."""
         # Build order template
-        self.register_template(CodeTemplate(
-            name="basic_build_order",
-            category=TemplateCategory.BUILD_ORDER,
-            description="Simple supply-based build order executor",
-            parameters={"steps": "list of (supply, action) tuples"},
-            code=textwrap.dedent("""\
+        self.register_template(
+            CodeTemplate(
+                name="basic_build_order",
+                category=TemplateCategory.BUILD_ORDER,
+                description="Simple supply-based build order executor",
+                parameters={"steps": "list of (supply, action) tuples"},
+                code=textwrap.dedent("""\
                 async def execute_build_order(bot) -> None:
                     \"\"\"Execute a supply-based build order.\"\"\"
                     build_steps: list[tuple[int, str]] = {{ steps }}
@@ -329,16 +403,18 @@ class StrategyCodeGen:
                     if handler is not None:
                         await handler()
             """),
-            tags=["build_order", "macro", "basic"],
-        ))
+                tags=["build_order", "macro", "basic"],
+            )
+        )
 
         # Micro control template
-        self.register_template(CodeTemplate(
-            name="kiting_micro",
-            category=TemplateCategory.MICRO_CONTROL,
-            description="Kiting logic for ranged units against melee",
-            parameters={"unit_type": "unit type tag", "range_buffer": "float"},
-            code=textwrap.dedent("""\
+        self.register_template(
+            CodeTemplate(
+                name="kiting_micro",
+                category=TemplateCategory.MICRO_CONTROL,
+                description="Kiting logic for ranged units against melee",
+                parameters={"unit_type": "unit type tag", "range_buffer": "float"},
+                code=textwrap.dedent("""\
                 async def kite_units(bot, unit_tag: int, enemies: list) -> None:
                     \"\"\"Kite enemy melee units with ranged {{ unit_type }}.\"\"\"
                     unit = bot.units.by_tag(unit_tag)
@@ -369,16 +445,18 @@ class StrategyCodeGen:
                         # Approach
                         unit.attack(closest_enemy)
             """),
-            tags=["micro", "kiting", "ranged"],
-        ))
+                tags=["micro", "kiting", "ranged"],
+            )
+        )
 
         # Macro management template
-        self.register_template(CodeTemplate(
-            name="inject_larvae",
-            category=TemplateCategory.MACRO_MANAGEMENT,
-            description="Queen inject larvae macro cycle",
-            parameters={},
-            code=textwrap.dedent("""\
+        self.register_template(
+            CodeTemplate(
+                name="inject_larvae",
+                category=TemplateCategory.MACRO_MANAGEMENT,
+                description="Queen inject larvae macro cycle",
+                parameters={},
+                code=textwrap.dedent("""\
                 async def inject_larvae(bot) -> None:
                     \"\"\"Inject larvae at all hatcheries with available queens.\"\"\"
                     queens = bot.units.of_type("Queen").idle
@@ -406,19 +484,21 @@ class StrategyCodeGen:
                             queen(AbilityId.EFFECT_INJECTLARVA, closest_hatch)
                             injected_hatch_tags.add(closest_hatch.tag)
             """),
-            tags=["macro", "inject", "queen", "zerg"],
-        ))
+                tags=["macro", "inject", "queen", "zerg"],
+            )
+        )
 
         # Timing attack template
-        self.register_template(CodeTemplate(
-            name="timing_attack",
-            category=TemplateCategory.TIMING_ATTACK,
-            description="Launch a timing attack at a supply threshold",
-            parameters={
-                "supply_threshold": "int",
-                "unit_composition": "dict of unit_type: count",
-            },
-            code=textwrap.dedent("""\
+        self.register_template(
+            CodeTemplate(
+                name="timing_attack",
+                category=TemplateCategory.TIMING_ATTACK,
+                description="Launch a timing attack at a supply threshold",
+                parameters={
+                    "supply_threshold": "int",
+                    "unit_composition": "dict of unit_type: count",
+                },
+                code=textwrap.dedent("""\
                 async def execute_timing_attack(bot) -> None:
                     \"\"\"Launch a timing push when army reaches threshold.\"\"\"
                     supply_threshold: int = {{ supply_threshold }}
@@ -442,16 +522,18 @@ class StrategyCodeGen:
                     for unit in army_units:
                         unit.attack(target)
             """),
-            tags=["timing", "attack", "aggressive"],
-        ))
+                tags=["timing", "attack", "aggressive"],
+            )
+        )
 
         # Scouting template
-        self.register_template(CodeTemplate(
-            name="overlord_scout",
-            category=TemplateCategory.SCOUTING,
-            description="Overlord scouting pattern for Zerg",
-            parameters={"scout_positions": "list of (x, y) positions"},
-            code=textwrap.dedent("""\
+        self.register_template(
+            CodeTemplate(
+                name="overlord_scout",
+                category=TemplateCategory.SCOUTING,
+                description="Overlord scouting pattern for Zerg",
+                parameters={"scout_positions": "list of (x, y) positions"},
+                code=textwrap.dedent("""\
                 async def overlord_scout(bot, step: int) -> None:
                     \"\"\"Send overlords to scout positions on a schedule.\"\"\"
                     scout_positions: list[tuple[float, float]] = {{ scout_positions }}
@@ -467,16 +549,18 @@ class StrategyCodeGen:
                     scout = overlords.first
                     scout.move(target)
             """),
-            tags=["scout", "overlord", "zerg", "info"],
-        ))
+                tags=["scout", "overlord", "zerg", "info"],
+            )
+        )
 
         # Defense template
-        self.register_template(CodeTemplate(
-            name="spine_wall",
-            category=TemplateCategory.DEFENSE,
-            description="Build spine crawlers at natural for defense",
-            parameters={"count": "int number of spines"},
-            code=textwrap.dedent("""\
+        self.register_template(
+            CodeTemplate(
+                name="spine_wall",
+                category=TemplateCategory.DEFENSE,
+                description="Build spine crawlers at natural for defense",
+                parameters={"count": "int number of spines"},
+                code=textwrap.dedent("""\
                 async def build_spine_wall(bot) -> None:
                     \"\"\"Build spine crawlers at the natural expansion.\"\"\"
                     target_count: int = {{ count }}
@@ -498,19 +582,21 @@ class StrategyCodeGen:
                             if placement is not None:
                                 await bot.build("SpineCrawler", placement)
             """),
-            tags=["defense", "spine", "zerg", "structure"],
-        ))
+                tags=["defense", "spine", "zerg", "structure"],
+            )
+        )
 
         # Transition template
-        self.register_template(CodeTemplate(
-            name="tech_transition",
-            category=TemplateCategory.TRANSITION,
-            description="Transition to a new tech path mid-game",
-            parameters={
-                "tech_building": "structure type to build",
-                "new_units": "list of unit types to produce",
-            },
-            code=textwrap.dedent("""\
+        self.register_template(
+            CodeTemplate(
+                name="tech_transition",
+                category=TemplateCategory.TRANSITION,
+                description="Transition to a new tech path mid-game",
+                parameters={
+                    "tech_building": "structure type to build",
+                    "new_units": "list of unit types to produce",
+                },
+                code=textwrap.dedent("""\
                 async def tech_transition(bot) -> None:
                     \"\"\"Transition to new tech path by building required structures.\"\"\"
                     tech_building: str = "{{ tech_building }}"
@@ -528,8 +614,9 @@ class StrategyCodeGen:
                         if larvae.exists and bot.can_afford(unit_type):
                             larvae.random.train(unit_type)
             """),
-            tags=["transition", "tech", "mid_game"],
-        ))
+                tags=["transition", "tech", "mid_game"],
+            )
+        )
 
     def register_template(self, template: CodeTemplate) -> None:
         """Register a code template in the library."""
@@ -637,33 +724,41 @@ class StrategyCodeGen:
         ]
 
         if behavior == "focus_fire":
-            lines.extend([
-                f"        lowest_hp = min(enemies, key=lambda e: e.health)",
-                f"        unit.attack(lowest_hp)",
-            ])
+            lines.extend(
+                [
+                    f"        lowest_hp = min(enemies, key=lambda e: e.health)",
+                    f"        unit.attack(lowest_hp)",
+                ]
+            )
         elif behavior == "retreat":
             retreat_hp = params.get("retreat_hp_pct", 0.3)
-            lines.extend([
-                f"        if unit.health_percentage < {retreat_hp}:",
-                f"            safe_pos = bot.start_location",
-                f"            unit.move(safe_pos)",
-                f"        else:",
-                f"            unit.attack(enemies.closest_to(unit))",
-            ])
+            lines.extend(
+                [
+                    f"        if unit.health_percentage < {retreat_hp}:",
+                    f"            safe_pos = bot.start_location",
+                    f"            unit.move(safe_pos)",
+                    f"        else:",
+                    f"            unit.attack(enemies.closest_to(unit))",
+                ]
+            )
         elif behavior == "surround":
-            lines.extend([
-                f"        target = enemies.closest_to(unit)",
-                f"        offset_angle = hash(unit.tag) % 360",
-                f"        surround_pos = target.position.towards_with_random_angle(",
-                f"            unit.position, -2.0, max_difference=(offset_angle % 60)",
-                f"        )",
-                f"        unit.move(surround_pos)",
-            ])
+            lines.extend(
+                [
+                    f"        target = enemies.closest_to(unit)",
+                    f"        offset_angle = hash(unit.tag) % 360",
+                    f"        surround_pos = target.position.towards_with_random_angle(",
+                    f"            unit.position, -2.0, max_difference=(offset_angle % 60)",
+                    f"        )",
+                    f"        unit.move(surround_pos)",
+                ]
+            )
         else:
-            lines.extend([
-                f"        # Default: attack closest enemy",
-                f"        unit.attack(enemies.closest_to(unit))",
-            ])
+            lines.extend(
+                [
+                    f"        # Default: attack closest enemy",
+                    f"        unit.attack(enemies.closest_to(unit))",
+                ]
+            )
 
         return "\n".join(lines)
 
@@ -700,13 +795,15 @@ class StrategyCodeGen:
         else:
             lines.append(f"    target = bot.game_info.map_center")
 
-        lines.extend([
-            f"",
-            f"    army = bot.units.filter(lambda u: u.type_id in bot.army_unit_types)",
-            f"    for unit in army:",
-            f"        unit.attack(target)",
-            f"    return True",
-        ])
+        lines.extend(
+            [
+                f"",
+                f"    army = bot.units.filter(lambda u: u.type_id in bot.army_unit_types)",
+                f"    for unit in army:",
+                f"        unit.attack(target)",
+                f"    return True",
+            ]
+        )
 
         code = "\n".join(lines)
         elapsed = (time.time() - t0) * 1000
@@ -765,9 +862,7 @@ class StrategyCodeGen:
         result.generation_time_ms = (time.time() - t0) * 1000
         return result
 
-    def _parse_build_order_description(
-        self, desc: str
-    ) -> list[tuple[int, str]]:
+    def _parse_build_order_description(self, desc: str) -> list[tuple[int, str]]:
         """Extract supply/action pairs from a text description."""
         steps: list[tuple[int, str]] = []
         # Try to find patterns like "17 hatch" or "at 20 pool"
@@ -821,6 +916,7 @@ class StrategyCodeGen:
 
 # ── Code Generation Agent ──────────────────────────────────────────────────────
 
+
 class CodeGenAgent:
     """Top-level agent orchestrating code generation, validation, and storage."""
 
@@ -873,13 +969,9 @@ class CodeGenAgent:
         self.history.append(generated)
         return generated
 
-    def generate_unit_micro(
-        self, unit_type: str, behavior: str
-    ) -> GeneratedCode:
+    def generate_unit_micro(self, unit_type: str, behavior: str) -> GeneratedCode:
         """Generate and validate unit micro control code."""
-        generated = self.generator.generate_unit_control_code(
-            unit_type, behavior
-        )
+        generated = self.generator.generate_unit_control_code(unit_type, behavior)
         generated.validation = self.validator.validate_full(generated.code)
         self.history.append(generated)
         return generated
@@ -916,6 +1008,7 @@ class CodeGenAgent:
 
 
 # ── Demo ────────────────────────────────────────────────────────────────────────
+
 
 def demo() -> None:
     """Demonstrate the Code Generation Agent capabilities."""

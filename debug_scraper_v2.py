@@ -1,5 +1,7 @@
-import requests
 import sys
+
+import requests
+
 
 def fetch_and_save(url, filename):
     headers = {

@@ -3,19 +3,21 @@ Phase 437: Pydantic AI - SC2 Strategy Agent
 Type-safe AI agent with tools and structured output for SC2 decision making.
 """
 
+import asyncio
+from dataclasses import dataclass
+from typing import Optional
+
 from pydantic import BaseModel, Field
 from pydantic_ai import Agent, RunContext
 from pydantic_ai.models.openai import OpenAIModel
-from dataclasses import dataclass
-from typing import Optional
-import asyncio
-
 
 # ── Dependency injection models ───────────────────────────────────────────────
+
 
 @dataclass
 class SC2GameDeps:
     """Injected game state dependencies for the SC2 agent."""
+
     game_time: float
     race: str
     opponent_race: str
@@ -32,16 +34,26 @@ class SC2GameDeps:
 
 # ── Structured output model ───────────────────────────────────────────────────
 
+
 class ActionRecommendation(BaseModel):
     """Structured action recommendation from the SC2 agent."""
-    primary_action: str = Field(..., description="The single most important action right now")
-    action_category: str = Field(..., pattern="^(economy|military|tech|scouting|macro)$")
+
+    primary_action: str = Field(
+        ..., description="The single most important action right now"
+    )
+    action_category: str = Field(
+        ..., pattern="^(economy|military|tech|scouting|macro)$"
+    )
     urgency: str = Field(..., pattern="^(low|medium|high|critical)$")
-    units_to_build: list[str] = Field(default_factory=list, description="Units to prioritize")
+    units_to_build: list[str] = Field(
+        default_factory=list, description="Units to prioritize"
+    )
     buildings_to_construct: list[str] = Field(default_factory=list)
     confidence: float = Field(..., ge=0.0, le=1.0)
     explanation: str = Field(..., max_length=300)
-    estimated_impact: str = Field(..., description="Expected outcome if action is followed")
+    estimated_impact: str = Field(
+        ..., description="Expected outcome if action is followed"
+    )
 
 
 # ── Agent definition ──────────────────────────────────────────────────────────
@@ -60,6 +72,7 @@ sc2_agent = Agent(
 
 
 # ── Agent tools ───────────────────────────────────────────────────────────────
+
 
 @sc2_agent.tool
 async def analyze_game_state(ctx: RunContext[SC2GameDeps]) -> str:
@@ -81,11 +94,36 @@ async def analyze_game_state(ctx: RunContext[SC2GameDeps]) -> str:
 async def get_unit_stats(ctx: RunContext[SC2GameDeps], unit_name: str) -> str:
     """Get stats for a specific SC2 unit."""
     UNIT_DB = {
-        "Zergling": {"cost": "25m", "supply": 0.5, "role": "harassment/swarm", "counter": "Banelings vs bio"},
-        "Roach": {"cost": "75m/25g", "supply": 2, "role": "ground assault", "counter": "Immortals, Marauders"},
-        "Hydralisk": {"cost": "100m/50g", "supply": 2, "role": "anti-air/ground", "counter": "Banelings, Storms"},
-        "Marine": {"cost": "50m", "supply": 1, "role": "general purpose", "counter": "Banelings, Zealots"},
-        "Stalker": {"cost": "125m/50g", "supply": 2, "role": "ranged/anti-air", "counter": "Immortals"},
+        "Zergling": {
+            "cost": "25m",
+            "supply": 0.5,
+            "role": "harassment/swarm",
+            "counter": "Banelings vs bio",
+        },
+        "Roach": {
+            "cost": "75m/25g",
+            "supply": 2,
+            "role": "ground assault",
+            "counter": "Immortals, Marauders",
+        },
+        "Hydralisk": {
+            "cost": "100m/50g",
+            "supply": 2,
+            "role": "anti-air/ground",
+            "counter": "Banelings, Storms",
+        },
+        "Marine": {
+            "cost": "50m",
+            "supply": 1,
+            "role": "general purpose",
+            "counter": "Banelings, Zealots",
+        },
+        "Stalker": {
+            "cost": "125m/50g",
+            "supply": 2,
+            "role": "ranged/anti-air",
+            "counter": "Immortals",
+        },
     }
     stats = UNIT_DB.get(unit_name, {"note": "Unit not in local database."})
     return f"{unit_name}: {stats}"
@@ -98,7 +136,9 @@ async def recommend_action(
 ) -> str:
     """Generate a raw action recommendation based on current game phase."""
     deps = ctx.deps
-    game_phase = "early" if deps.game_time < 300 else "mid" if deps.game_time < 600 else "late"
+    game_phase = (
+        "early" if deps.game_time < 300 else "mid" if deps.game_time < 600 else "late"
+    )
     supply_blocked = deps.supply_used >= deps.supply_cap
 
     if supply_blocked:
@@ -111,10 +151,13 @@ async def recommend_action(
     if game_phase == "early" and deps.minerals > 400:
         return "Macro: Expand to new base - floating too many minerals in early game."
 
-    return f"Continue {focus} play in {game_phase} game. Army supply: {deps.army_supply}."
+    return (
+        f"Continue {focus} play in {game_phase} game. Army supply: {deps.army_supply}."
+    )
 
 
 # ── Runner ────────────────────────────────────────────────────────────────────
+
 
 async def run_sc2_agent(game_state: SC2GameDeps) -> ActionRecommendation:
     """Run the SC2 agent with a game state and return structured recommendation."""

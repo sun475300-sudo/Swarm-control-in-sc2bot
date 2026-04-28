@@ -25,9 +25,15 @@ class ExceptionAuditor:
             List of (file_path, line_number, issue_description)
         """
         patterns = {
-            "bare_except": (r'except\s*:', "Bare except block (catches all exceptions)"),
-            "pass_only": (r'except.*:\s*pass', "Exception silently ignored with pass"),
-            "generic_exception": (r'except\s+Exception\s*:', "Generic Exception catch (too broad)"),
+            "bare_except": (
+                r"except\s*:",
+                "Bare except block (catches all exceptions)",
+            ),
+            "pass_only": (r"except.*:\s*pass", "Exception silently ignored with pass"),
+            "generic_exception": (
+                r"except\s+Exception\s*:",
+                "Generic Exception catch (too broad)",
+            ),
         }
 
         for py_file in self.root_dir.rglob("*.py"):
@@ -36,13 +42,15 @@ class ExceptionAuditor:
                 continue
 
             try:
-                with open(py_file, 'r', encoding='utf-8') as f:
+                with open(py_file, "r", encoding="utf-8") as f:
                     lines = f.readlines()
 
                 for line_num, line in enumerate(lines, start=1):
                     for pattern_name, (pattern, description) in patterns.items():
                         if re.search(pattern, line):
-                            self.issues.append((py_file, line_num, description, line.strip()))
+                            self.issues.append(
+                                (py_file, line_num, description, line.strip())
+                            )
 
             except Exception as e:
                 print(f"Error reading {py_file}: {e}")
@@ -55,7 +63,7 @@ class ExceptionAuditor:
             print("No exception handling issues found!")
             return
 
-        with open(output_file, 'w', encoding='utf-8') as f:
+        with open(output_file, "w", encoding="utf-8") as f:
             f.write("=" * 80 + "\n")
             f.write("Exception Handling Audit Report\n")
             f.write("=" * 80 + "\n\n")

@@ -12,12 +12,12 @@
 8. ���÷��� �н� ������ �� �м� �� �н� ����
 """
 
+import logging
 import subprocess
 import sys
 import time
 from pathlib import Path
-from typing import List, Tuple, Dict, Any
-import logging
+from typing import Any, Dict, List, Tuple
 
 logger = logging.getLogger("ComprehensiveAutoFixWorkflow")
 

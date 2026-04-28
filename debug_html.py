@@ -1,5 +1,6 @@
 import requests
 
+
 def test_html():
     url = "https://lotv.spawningtool.com/replays/?race=1" # Zerg?
     headers = {

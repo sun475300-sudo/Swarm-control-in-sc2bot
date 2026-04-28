@@ -3,10 +3,10 @@ Phase 439: Modal - Serverless Cloud SC2 Training
 GPU-accelerated serverless training and inference on Modal's cloud.
 """
 
-import modal
-from modal import App, Volume, Image, Period, web_endpoint
 from pathlib import Path
 
+import modal
+from modal import App, Image, Period, Volume, web_endpoint
 
 # ── Modal App and infrastructure ──────────────────────────────────────────────
 
@@ -16,20 +16,18 @@ app = App("sc2-bot-training")
 checkpoint_volume = Volume.from_name("sc2-checkpoints", create_if_missing=True)
 
 # Docker image with ML dependencies
-sc2_image = (
-    Image.debian_slim(python_version="3.11")
-    .pip_install(
-        "torch>=2.2.0",
-        "numpy",
-        "pandas",
-        "scikit-learn",
-        "mlflow",
-        "pydantic",
-    )
+sc2_image = Image.debian_slim(python_version="3.11").pip_install(
+    "torch>=2.2.0",
+    "numpy",
+    "pandas",
+    "scikit-learn",
+    "mlflow",
+    "pydantic",
 )
 
 
 # ── Training function (GPU) ───────────────────────────────────────────────────
+
 
 @app.function(
     image=sc2_image,
@@ -49,10 +47,11 @@ def train_sc2_model(
     Train SC2 strategy model on Modal A100 GPU.
     Checkpoints are saved to the persistent volume.
     """
-    import torch
-    import numpy as np
     import json
     from datetime import datetime
+
+    import numpy as np
+    import torch
 
     print(f"[Modal] Training SC2 model on GPU: {torch.cuda.get_device_name(0)}")
 
@@ -72,7 +71,9 @@ def train_sc2_model(
             torch.save({"epoch": epoch, "val_loss": val_loss}, checkpoint_path)
 
         if epoch % 10 == 0:
-            print(f"  Epoch {epoch}/{n_epochs}: train={train_loss:.4f}, val={val_loss:.4f}")
+            print(
+                f"  Epoch {epoch}/{n_epochs}: train={train_loss:.4f}, val={val_loss:.4f}"
+            )
 
     checkpoint_volume.commit()
 
@@ -90,6 +91,7 @@ def train_sc2_model(
 
 # ── Scheduled periodic training ───────────────────────────────────────────────
 
+
 @app.function(
     image=sc2_image,
     schedule=Period(days=1),
@@ -99,6 +101,7 @@ def train_sc2_model(
 def daily_sc2_training() -> None:
     """Automated daily retraining of the SC2 model on fresh replay data."""
     import datetime
+
     print(f"[Modal] Daily training triggered at {datetime.datetime.now().isoformat()}")
     result = train_sc2_model.remote(
         n_epochs=50,
@@ -109,6 +112,7 @@ def daily_sc2_training() -> None:
 
 
 # ── Web endpoint for inference ────────────────────────────────────────────────
+
 
 @app.function(
     image=sc2_image,
@@ -123,14 +127,17 @@ def predict_action(game_state: dict) -> dict:
     """
     import numpy as np
 
-    features = np.array([
-        game_state.get("game_time", 0) / 1800,
-        game_state.get("supply_used", 0) / 200,
-        game_state.get("minerals", 0) / 5000,
-        game_state.get("gas", 0) / 2000,
-        game_state.get("army_supply", 0) / 100,
-        game_state.get("worker_count", 0) / 80,
-    ], dtype=np.float32)
+    features = np.array(
+        [
+            game_state.get("game_time", 0) / 1800,
+            game_state.get("supply_used", 0) / 200,
+            game_state.get("minerals", 0) / 5000,
+            game_state.get("gas", 0) / 2000,
+            game_state.get("army_supply", 0) / 100,
+            game_state.get("worker_count", 0) / 80,
+        ],
+        dtype=np.float32,
+    )
 
     # Simulate inference
     action_scores = np.random.softmax = lambda x: np.exp(x) / np.exp(x).sum()

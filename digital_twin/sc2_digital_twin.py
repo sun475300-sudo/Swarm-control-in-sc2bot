@@ -17,6 +17,7 @@ from typing import Any, Callable, Dict, List, Optional, Tuple
 
 try:
     import numpy as np
+
     NP_AVAILABLE = True
 except ImportError:
     NP_AVAILABLE = False
@@ -59,9 +60,11 @@ def _cosine_similarity(vec_a: List[float], vec_b: List[float]) -> float:
 # UnitSnapshot: Snapshot of a single SC2 unit
 # ============================================================
 
+
 @dataclass
 class UnitSnapshot:
     """Snapshot of a single unit at a given game tick."""
+
     unit_id: int
     unit_type: str
     owner: int  # player id
@@ -102,9 +105,11 @@ class UnitSnapshot:
 # TwinState: Full mirrored game state
 # ============================================================
 
+
 @dataclass
 class TwinState:
     """Complete mirrored state of an SC2 game at a point in time."""
+
     game_loop: int = 0
     timestamp: float = 0.0
     twin_id: str = field(default_factory=lambda: uuid.uuid4().hex[:12])
@@ -133,12 +138,16 @@ class TwinState:
     player_races: Dict[int, str] = field(default_factory=dict)
 
     def unit_count(self, player_id: int) -> int:
-        return sum(1 for u in self.units.values()
-                   if u.owner == player_id and u.is_alive)
+        return sum(
+            1 for u in self.units.values() if u.owner == player_id and u.is_alive
+        )
 
     def army_value(self, player_id: int) -> float:
-        return sum(u.health + u.shield for u in self.units.values()
-                   if u.owner == player_id and u.is_alive)
+        return sum(
+            u.health + u.shield
+            for u in self.units.values()
+            if u.owner == player_id and u.is_alive
+        )
 
     def deep_copy(self) -> "TwinState":
         return copy.deepcopy(self)
@@ -148,15 +157,19 @@ class TwinState:
         features: List[float] = [float(self.game_loop)]
         for pid in sorted(self.resources.keys()):
             res = self.resources[pid]
-            features.extend([
-                res.get("minerals", 0.0),
-                res.get("vespene", 0.0),
-            ])
+            features.extend(
+                [
+                    res.get("minerals", 0.0),
+                    res.get("vespene", 0.0),
+                ]
+            )
             sup = self.supply.get(pid, {})
-            features.extend([
-                float(sup.get("used", 0)),
-                float(sup.get("cap", 0)),
-            ])
+            features.extend(
+                [
+                    float(sup.get("used", 0)),
+                    float(sup.get("cap", 0)),
+                ]
+            )
             features.append(float(self.unit_count(pid)))
             features.append(self.army_value(pid))
         return features
@@ -195,6 +208,7 @@ class TwinState:
 # StateSync: Synchronize live game data into the twin
 # ============================================================
 
+
 class StateSync:
     """Handles real-time synchronization between the live SC2 game and the twin."""
 
@@ -212,7 +226,9 @@ class StateSync:
         """Register callback to be notified on each sync."""
         self._callbacks.append(cb)
 
-    def push_observation(self, observation: Dict[str, Any], ts: Optional[float] = None) -> TwinState:
+    def push_observation(
+        self, observation: Dict[str, Any], ts: Optional[float] = None
+    ) -> TwinState:
         """Convert a raw SC2 observation dict into a TwinState snapshot."""
         ts = ts or time.time()
         lag = (ts - self.last_sync_time) * 1000 if self.last_sync_time > 0 else 0.0
@@ -304,6 +320,7 @@ class StateSync:
 # PredictionEngine: Simulate future game states
 # ============================================================
 
+
 class PredictionEngine:
     """Predict future game states using learned dynamics and simple extrapolation."""
 
@@ -330,7 +347,9 @@ class PredictionEngine:
             vel = self._resource_velocity.get(pid, {"minerals": 0.0, "vespene": 0.0})
             for key in ("minerals", "vespene"):
                 delta = (curr_res.get(key, 0) - prev_res.get(key, 0)) / dt
-                vel[key] = vel[key] * (1 - self.learning_rate) + delta * self.learning_rate
+                vel[key] = (
+                    vel[key] * (1 - self.learning_rate) + delta * self.learning_rate
+                )
             self._resource_velocity[pid] = vel
 
         for pid in state.resources:
@@ -338,14 +357,20 @@ class PredictionEngine:
             curr_count = state.unit_count(pid)
             delta = (curr_count - prev_count) / dt
             old_rate = self._unit_growth_rate.get(pid, 0.0)
-            self._unit_growth_rate[pid] = old_rate * (1 - self.learning_rate) + delta * self.learning_rate
+            self._unit_growth_rate[pid] = (
+                old_rate * (1 - self.learning_rate) + delta * self.learning_rate
+            )
 
-    def predict(self, current: TwinState, steps_ahead: Optional[int] = None) -> TwinState:
+    def predict(
+        self, current: TwinState, steps_ahead: Optional[int] = None
+    ) -> TwinState:
         """Predict a future state by extrapolating current dynamics."""
         steps = steps_ahead or self.horizon_steps
         predicted = current.deep_copy()
         predicted.game_loop = current.game_loop + steps
-        predicted.timestamp = current.timestamp + steps * 0.045  # approximate seconds per loop
+        predicted.timestamp = (
+            current.timestamp + steps * 0.045
+        )  # approximate seconds per loop
 
         for pid in predicted.resources:
             vel = self._resource_velocity.get(pid, {"minerals": 0.0, "vespene": 0.0})
@@ -357,12 +382,16 @@ class PredictionEngine:
         for pid in list(predicted.supply.keys()):
             growth = self._unit_growth_rate.get(pid, 0.0)
             estimated_new = max(0, int(growth * steps))
-            predicted.supply[pid]["used"] = predicted.supply[pid].get("used", 0) + estimated_new
+            predicted.supply[pid]["used"] = (
+                predicted.supply[pid].get("used", 0) + estimated_new
+            )
 
         self.prediction_count += 1
         return predicted
 
-    def predict_trajectory(self, current: TwinState, num_points: int = 5) -> List[TwinState]:
+    def predict_trajectory(
+        self, current: TwinState, num_points: int = 5
+    ) -> List[TwinState]:
         """Predict multiple future states forming a trajectory."""
         step_size = self.horizon_steps // max(num_points, 1)
         trajectory: List[TwinState] = []
@@ -379,7 +408,9 @@ class PredictionEngine:
             pid = modifications["resource_boost"].get("player", 1)
             amount = modifications["resource_boost"].get("minerals", 0)
             if pid in modified.resources:
-                modified.resources[pid]["minerals"] = modified.resources[pid].get("minerals", 0) + amount
+                modified.resources[pid]["minerals"] = (
+                    modified.resources[pid].get("minerals", 0) + amount
+                )
 
         if "remove_units" in modifications:
             target_pid = modifications["remove_units"].get("player", 2)
@@ -415,8 +446,7 @@ class PredictionEngine:
                 for k, v in self._resource_velocity.items()
             },
             "unit_growth_rate": {
-                str(k): round(v, 6)
-                for k, v in self._unit_growth_rate.items()
+                str(k): round(v, 6) for k, v in self._unit_growth_rate.items()
             },
         }
 
@@ -424,6 +454,7 @@ class PredictionEngine:
 # ============================================================
 # AnomalyDetector: Detect unusual opponent behaviors
 # ============================================================
+
 
 class AnomalyDetector:
     """Detect anomalies in the game state that indicate unusual opponent strategies."""
@@ -494,17 +525,21 @@ class AnomalyDetector:
         names = ["game_loop"]
         for pid in sorted(state.resources.keys()):
             prefix = f"P{pid}_"
-            names.extend([
-                prefix + "minerals",
-                prefix + "vespene",
-                prefix + "supply_used",
-                prefix + "supply_cap",
-                prefix + "unit_count",
-                prefix + "army_value",
-            ])
+            names.extend(
+                [
+                    prefix + "minerals",
+                    prefix + "vespene",
+                    prefix + "supply_used",
+                    prefix + "supply_cap",
+                    prefix + "unit_count",
+                    prefix + "army_value",
+                ]
+            )
         return names
 
-    def detect_timing_attack(self, states: List[TwinState], opponent_id: int = 2) -> Optional[Dict[str, Any]]:
+    def detect_timing_attack(
+        self, states: List[TwinState], opponent_id: int = 2
+    ) -> Optional[Dict[str, Any]]:
         """Detect if opponent is massing army for a timing attack."""
         if len(states) < 10:
             return None
@@ -529,10 +564,20 @@ class AnomalyDetector:
             }
         return None
 
-    def detect_expansion_anomaly(self, state: TwinState, opponent_id: int = 2) -> Optional[Dict[str, Any]]:
+    def detect_expansion_anomaly(
+        self, state: TwinState, opponent_id: int = 2
+    ) -> Optional[Dict[str, Any]]:
         """Detect if opponent is expanding unusually fast or slow."""
         opp_structs = state.structures.get(opponent_id, [])
-        base_types = {"Nexus", "CommandCenter", "Hatchery", "OrbitalCommand", "PlanetaryFortress", "Lair", "Hive"}
+        base_types = {
+            "Nexus",
+            "CommandCenter",
+            "Hatchery",
+            "OrbitalCommand",
+            "PlanetaryFortress",
+            "Lair",
+            "Hive",
+        }
         base_count = sum(1 for s in opp_structs if s in base_types)
         expected_bases = max(1, state.game_loop // 3000)  # rough heuristic
 
@@ -567,6 +612,7 @@ class AnomalyDetector:
 # ============================================================
 # DigitalTwin: Main orchestrator
 # ============================================================
+
 
 class DigitalTwin:
     """
@@ -662,12 +708,10 @@ class DigitalTwin:
             "baseline": baseline.summary(),
             "counterfactual": counterfactual.summary(),
             "baseline_army": {
-                pid: baseline.army_value(pid)
-                for pid in baseline.resources
+                pid: baseline.army_value(pid) for pid in baseline.resources
             },
             "counterfactual_army": {
-                pid: counterfactual.army_value(pid)
-                for pid in counterfactual.resources
+                pid: counterfactual.army_value(pid) for pid in counterfactual.resources
             },
         }
 
@@ -690,7 +734,7 @@ class DigitalTwin:
             os.makedirs(self.snapshot_dir, exist_ok=True)
             path = os.path.join(
                 self.snapshot_dir,
-                filename or f"twin_snapshot_{self._current_state.game_loop}.json"
+                filename or f"twin_snapshot_{self._current_state.game_loop}.json",
             )
         else:
             path = filename or f"twin_snapshot_{self._current_state.game_loop}.json"
@@ -722,7 +766,9 @@ class DigitalTwin:
                 "minerals": res_b.get("minerals", 0) - res_a.get("minerals", 0),
                 "vespene": res_b.get("vespene", 0) - res_a.get("vespene", 0),
             }
-            diff["unit_count_diff"][pid] = state_b.unit_count(pid) - state_a.unit_count(pid)
+            diff["unit_count_diff"][pid] = state_b.unit_count(pid) - state_a.unit_count(
+                pid
+            )
             diff["army_value_diff"][pid] = round(
                 state_b.army_value(pid) - state_a.army_value(pid), 1
             )
@@ -736,7 +782,9 @@ class DigitalTwin:
             "active": self._active,
             "uptime_seconds": round(time.time() - self._creation_time, 1),
             "history_size": len(self._state_history),
-            "current_loop": self._current_state.game_loop if self._current_state else None,
+            "current_loop": (
+                self._current_state.game_loop if self._current_state else None
+            ),
             "sync": self.sync.stats(),
             "prediction": self.predictor.stats(),
             "anomaly": self.detector.stats(),
@@ -747,7 +795,10 @@ class DigitalTwin:
 # Utility: Generate synthetic SC2 observations for testing
 # ============================================================
 
-def _generate_synthetic_observation(game_loop: int, rng: random.Random) -> Dict[str, Any]:
+
+def _generate_synthetic_observation(
+    game_loop: int, rng: random.Random
+) -> Dict[str, Any]:
     """Generate a synthetic SC2 observation for testing purposes."""
     mineral_base = 500 + game_loop * 2 + rng.gauss(0, 30)
     vespene_base = 200 + game_loop * 1.2 + rng.gauss(0, 20)
@@ -838,6 +889,7 @@ def _generate_synthetic_observation(game_loop: int, rng: random.Random) -> Dict[
 # Demo
 # ============================================================
 
+
 def demo() -> None:
     """Demonstrate the Phase 650 Digital Twin system."""
     print("=" * 70)
@@ -873,26 +925,36 @@ def demo() -> None:
     # --- [3] Trajectory ---
     print("\n[3] Generating prediction trajectory (5 points)...")
     if twin._current_state:
-        trajectory = twin.predictor.predict_trajectory(twin._current_state, num_points=5)
+        trajectory = twin.predictor.predict_trajectory(
+            twin._current_state, num_points=5
+        )
         for idx, ts in enumerate(trajectory):
-            print(f"    T+{idx+1}: loop={ts.game_loop} "
-                  f"P1_army={ts.army_value(1):.0f} P2_army={ts.army_value(2):.0f}")
+            print(
+                f"    T+{idx+1}: loop={ts.game_loop} "
+                f"P1_army={ts.army_value(1):.0f} P2_army={ts.army_value(2):.0f}"
+            )
 
     # --- [4] What-if analysis ---
     print("\n[4] What-if analysis: boost P1 minerals by 1000...")
-    wi_result = twin.what_if_analysis({
-        "resource_boost": {"player": 1, "minerals": 1000},
-    })
+    wi_result = twin.what_if_analysis(
+        {
+            "resource_boost": {"player": 1, "minerals": 1000},
+        }
+    )
     print(f"    Baseline: {wi_result.get('baseline', 'N/A')[:80]}...")
     print(f"    Counterfactual: {wi_result.get('counterfactual', 'N/A')[:80]}...")
 
     # --- [5] What-if: remove enemy units ---
     print("\n[5] What-if analysis: remove 5 enemy units...")
-    wi2 = twin.what_if_analysis({
-        "remove_units": {"player": 2, "count": 5},
-    })
+    wi2 = twin.what_if_analysis(
+        {
+            "remove_units": {"player": 2, "count": 5},
+        }
+    )
     print(f"    Baseline army P2: {wi2.get('baseline_army', {}).get(2, 'N/A')}")
-    print(f"    Counterfactual army P2: {wi2.get('counterfactual_army', {}).get(2, 'N/A')}")
+    print(
+        f"    Counterfactual army P2: {wi2.get('counterfactual_army', {}).get(2, 'N/A')}"
+    )
 
     # --- [6] Anomaly detection ---
     print("\n[6] Running anomaly detection on current state...")
@@ -907,8 +969,10 @@ def demo() -> None:
     states = list(twin._state_history)
     timing = twin.detector.detect_timing_attack(states, opponent_id=2)
     if timing:
-        print(f"    Timing attack detected! Growth={timing['army_growth']:.0f} "
-              f"Confidence={timing['confidence']:.2f}")
+        print(
+            f"    Timing attack detected! Growth={timing['army_growth']:.0f} "
+            f"Confidence={timing['confidence']:.2f}"
+        )
     else:
         print("    No timing attack detected.")
 
@@ -917,8 +981,10 @@ def demo() -> None:
     if twin._current_state:
         exp_anomaly = twin.detector.detect_expansion_anomaly(twin._current_state)
         if exp_anomaly:
-            print(f"    Expansion anomaly: {exp_anomaly['type']} "
-                  f"bases={exp_anomaly['bases']} expected={exp_anomaly['expected']}")
+            print(
+                f"    Expansion anomaly: {exp_anomaly['type']} "
+                f"bases={exp_anomaly['bases']} expected={exp_anomaly['expected']}"
+            )
         else:
             print("    No expansion anomaly detected.")
 
@@ -929,9 +995,11 @@ def demo() -> None:
         print(f"    Loops compared: {diff['loop_a']} vs {diff['loop_b']}")
         for pid in sorted(diff.get("resource_diff", {}).keys()):
             rd = diff["resource_diff"][pid]
-            print(f"    P{pid} mineral delta: {rd['minerals']:.0f}, "
-                  f"vespene delta: {rd['vespene']:.0f}, "
-                  f"unit delta: {diff['unit_count_diff'].get(pid, 0)}")
+            print(
+                f"    P{pid} mineral delta: {rd['minerals']:.0f}, "
+                f"vespene delta: {rd['vespene']:.0f}, "
+                f"unit delta: {diff['unit_count_diff'].get(pid, 0)}"
+            )
 
     # --- [10] Full report ---
     print("\n[10] Full twin report:")

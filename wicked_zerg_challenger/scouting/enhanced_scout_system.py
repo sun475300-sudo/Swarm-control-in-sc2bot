@@ -14,7 +14,8 @@ Features:
 - 적 빌드 분석 (Gas 타이밍, Pool 타이밍, 확장 타이밍)
 """
 
-from typing import Optional, List, Set, Dict, Tuple
+from typing import Dict, List, Optional, Set, Tuple
+
 from utils.logger import get_logger
 
 try:
@@ -23,12 +24,15 @@ try:
     from sc2.position import Point2
     from sc2.unit import Unit
 except ImportError:
+
     class BotAI:
         pass
+
     class UnitTypeId:
         DRONE = "DRONE"
         ZERGLING = "ZERGLING"
         OVERLORD = "OVERLORD"
+
     Point2 = tuple
     Unit = None
 
@@ -85,7 +89,10 @@ class EnhancedScoutSystem:
         """매 프레임 실행"""
         try:
             # 1. Worker Scout (13 supply)
-            if not self.worker_scout_sent and self.bot.supply_used >= self.worker_scout_threshold:
+            if (
+                not self.worker_scout_sent
+                and self.bot.supply_used >= self.worker_scout_threshold
+            ):
                 await self._send_worker_scout()
 
             # 2. Overlord Scout (2분부터)
@@ -157,7 +164,7 @@ class EnhancedScoutSystem:
         if hasattr(self.bot, "expansion_locations_list"):
             natural_pos = min(
                 self.bot.expansion_locations_list,
-                key=lambda pos: pos.distance_to(enemy_start)
+                key=lambda pos: pos.distance_to(enemy_start),
             )
             waypoints.append(natural_pos)
 
@@ -249,9 +256,18 @@ class EnhancedScoutSystem:
         # ★ 맵 4개 코너 정찰 (프록시 탐지) ★
         waypoints = [
             Point2((playable_area.x, playable_area.y)),  # Top-left
-            Point2((playable_area.x + playable_area.width, playable_area.y)),  # Top-right
-            Point2((playable_area.x + playable_area.width, playable_area.y + playable_area.height)),  # Bottom-right
-            Point2((playable_area.x, playable_area.y + playable_area.height)),  # Bottom-left
+            Point2(
+                (playable_area.x + playable_area.width, playable_area.y)
+            ),  # Top-right
+            Point2(
+                (
+                    playable_area.x + playable_area.width,
+                    playable_area.y + playable_area.height,
+                )
+            ),  # Bottom-right
+            Point2(
+                (playable_area.x, playable_area.y + playable_area.height)
+            ),  # Bottom-left
             map_center,  # Map center
         ]
 
@@ -388,9 +404,8 @@ class EnhancedScoutSystem:
         # ★ 1. Gas Timing ★
         if self.enemy_gas_timing is None:
             gas_buildings = self.bot.enemy_structures.filter(
-                lambda s: getattr(s.type_id, "name", "").upper() in {
-                    "EXTRACTOR", "ASSIMILATOR", "REFINERY"
-                }
+                lambda s: getattr(s.type_id, "name", "").upper()
+                in {"EXTRACTOR", "ASSIMILATOR", "REFINERY"}
             )
             if gas_buildings:
                 self.enemy_gas_timing = game_time
@@ -399,56 +414,78 @@ class EnhancedScoutSystem:
         # ★ 2. Pool/Barracks/Gateway Timing ★
         if self.enemy_pool_timing is None:
             production = self.bot.enemy_structures.filter(
-                lambda s: getattr(s.type_id, "name", "").upper() in {
-                    "SPAWNINGPOOL", "BARRACKS", "GATEWAY"
-                }
+                lambda s: getattr(s.type_id, "name", "").upper()
+                in {"SPAWNINGPOOL", "BARRACKS", "GATEWAY"}
             )
             if production:
                 self.enemy_pool_timing = game_time
                 building_type = getattr(production.first.type_id, "name", "PRODUCTION")
-                self.logger.info(f"[{int(game_time)}s] [*] ENEMY {building_type} detected! [*]")
+                self.logger.info(
+                    f"[{int(game_time)}s] [*] ENEMY {building_type} detected! [*]"
+                )
 
         # ★ 3. Natural Expansion Timing ★
-        if self.enemy_natural_timing is None and hasattr(self.bot, "enemy_start_locations"):
+        if self.enemy_natural_timing is None and hasattr(
+            self.bot, "enemy_start_locations"
+        ):
             enemy_start = self.bot.enemy_start_locations[0]
 
             # Find natural expansion near enemy start
             natural_pos = None
             if hasattr(self.bot, "expansion_locations_list"):
                 expansions = [
-                    pos for pos in self.bot.expansion_locations_list
+                    pos
+                    for pos in self.bot.expansion_locations_list
                     if 5 < pos.distance_to(enemy_start) < 30
                 ]
                 if expansions:
-                    natural_pos = min(expansions, key=lambda p: p.distance_to(enemy_start))
+                    natural_pos = min(
+                        expansions, key=lambda p: p.distance_to(enemy_start)
+                    )
 
             if natural_pos:
-                enemy_natural_bases = self.bot.enemy_structures.closer_than(10, natural_pos).filter(
-                    lambda s: getattr(s.type_id, "name", "").upper() in {
-                        "COMMANDCENTER", "NEXUS", "HATCHERY"
-                    }
+                enemy_natural_bases = self.bot.enemy_structures.closer_than(
+                    10, natural_pos
+                ).filter(
+                    lambda s: getattr(s.type_id, "name", "").upper()
+                    in {"COMMANDCENTER", "NEXUS", "HATCHERY"}
                 )
                 if enemy_natural_bases:
                     self.enemy_natural_timing = game_time
-                    self.logger.info(f"[{int(game_time)}s] [*] ENEMY NATURAL EXPANSION detected! [*]")
+                    self.logger.info(
+                        f"[{int(game_time)}s] [*] ENEMY NATURAL EXPANSION detected! [*]"
+                    )
 
         # ★ 4. Tech Buildings ★
         tech_buildings = {
-            "FACTORY", "STARPORT", "TWILIGHTCOUNCIL", "STARGATE",
-            "ROBOTICSFACILITY", "SPIRE", "HYDRALISKDEN", "ROACHWARREN"
+            "FACTORY",
+            "STARPORT",
+            "TWILIGHTCOUNCIL",
+            "STARGATE",
+            "ROBOTICSFACILITY",
+            "SPIRE",
+            "HYDRALISKDEN",
+            "ROACHWARREN",
         }
 
         for building in self.bot.enemy_structures:
             building_type = getattr(building.type_id, "name", "").upper()
-            if building_type in tech_buildings and building_type not in self.enemy_tech_buildings:
+            if (
+                building_type in tech_buildings
+                and building_type not in self.enemy_tech_buildings
+            ):
                 self.enemy_tech_buildings[building_type] = game_time
-                self.logger.info(f"[{int(game_time)}s] [*] ENEMY TECH: {building_type} [*]")
+                self.logger.info(
+                    f"[{int(game_time)}s] [*] ENEMY TECH: {building_type} [*]"
+                )
 
         # ★ 5. Army Composition ★
         if hasattr(self.bot, "enemy_units"):
             for unit in self.bot.enemy_units:
                 unit_type = getattr(unit.type_id, "name", "").upper()
-                self.enemy_army_units[unit_type] = self.enemy_army_units.get(unit_type, 0) + 1
+                self.enemy_army_units[unit_type] = (
+                    self.enemy_army_units.get(unit_type, 0) + 1
+                )
 
     # ========================================
     # Scout Data Analysis
@@ -463,7 +500,9 @@ class EnhancedScoutSystem:
         if self.enemy_gas_timing and self.enemy_gas_timing < 90:
             if self.enemy_natural_timing is None or self.enemy_natural_timing > 150:
                 self.is_cheese = True
-                self.logger.warning(f"[{int(game_time)}s] [*][*][*] CHEESE SUSPECTED! [*][*][*]")
+                self.logger.warning(
+                    f"[{int(game_time)}s] [*][*][*] CHEESE SUSPECTED! [*][*][*]"
+                )
 
         # ★ 2. Fast Expand Detection ★
         # Natural이 1:30 전에 있음 = Fast Expand

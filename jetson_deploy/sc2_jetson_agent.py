@@ -47,8 +47,8 @@ except ImportError:
     HAS_TRT = False
 
 try:
-    import pycuda.driver as cuda
     import pycuda.autoinit
+    import pycuda.driver as cuda
 
     HAS_CUDA = True
 except ImportError:
@@ -61,31 +61,36 @@ logger = logging.getLogger(__name__)
 # Enums and constants
 # ===================================================================
 
+
 class PowerMode(Enum):
     """Jetson Nano power modes."""
-    MODE_5W = "5W"        # 2-core ARM @ 918 MHz, GPU @ 640 MHz
-    MODE_10W = "10W"      # 4-core ARM @ 1.43 GHz, GPU @ 921 MHz
-    MAXN = "MAXN"         # No power limit, max clocks
+
+    MODE_5W = "5W"  # 2-core ARM @ 918 MHz, GPU @ 640 MHz
+    MODE_10W = "10W"  # 4-core ARM @ 1.43 GHz, GPU @ 921 MHz
+    MAXN = "MAXN"  # No power limit, max clocks
 
 
 class PrecisionMode(Enum):
     """TensorRT precision modes."""
+
     FP32 = "fp32"
     FP16 = "fp16"
     INT8 = "int8"
-    MIXED = "mixed"       # FP16 backbone + INT8 policy head
+    MIXED = "mixed"  # FP16 backbone + INT8 policy head
 
 
 class ThermalState(Enum):
     """Jetson thermal throttling states."""
-    COOL = "cool"                # < 50C
-    WARM = "warm"                # 50-70C
-    HOT = "hot"                  # 70-85C
-    THROTTLING = "throttling"    # > 85C, clock reduction active
+
+    COOL = "cool"  # < 50C
+    WARM = "warm"  # 50-70C
+    HOT = "hot"  # 70-85C
+    THROTTLING = "throttling"  # > 85C, clock reduction active
 
 
 class InferenceMode(Enum):
     """Inference execution modes."""
+
     SYNC = "synchronous"
     ASYNC = "asynchronous"
     PIPELINED = "pipelined"
@@ -168,6 +173,7 @@ SC2_JETSON_MODELS: Dict[str, Dict[str, Any]] = {
 # Data classes
 # ===================================================================
 
+
 @dataclass
 class JetsonConfig:
     """Configuration for Jetson Nano deployment.
@@ -175,6 +181,7 @@ class JetsonConfig:
     Encapsulates all deployment parameters including power mode,
     precision, thermal limits, and inference targets.
     """
+
     power_mode: PowerMode = PowerMode.MODE_10W
     precision: PrecisionMode = PrecisionMode.FP16
     max_batch_size: int = 1
@@ -182,7 +189,7 @@ class JetsonConfig:
     inference_mode: InferenceMode = InferenceMode.ASYNC
     target_latency_ms: float = 10.0
     thermal_limit_c: float = 80.0
-    enable_dla: bool = False           # Deep Learning Accelerator (Xavier only)
+    enable_dla: bool = False  # Deep Learning Accelerator (Xavier only)
     num_cuda_streams: int = 2
     calibration_batches: int = 100
     enable_profiling: bool = False
@@ -210,6 +217,7 @@ class JetsonConfig:
 @dataclass
 class TRTEngineInfo:
     """Metadata about a built TensorRT engine."""
+
     name: str
     precision: str
     input_shape: Tuple[int, ...]
@@ -224,6 +232,7 @@ class TRTEngineInfo:
 @dataclass
 class CUDAStreamContext:
     """Represents a CUDA stream for async inference."""
+
     stream_id: int
     is_busy: bool = False
     queued_requests: int = 0
@@ -240,6 +249,7 @@ class CUDAStreamContext:
 @dataclass
 class ThermalSnapshot:
     """Snapshot of Jetson thermal state."""
+
     cpu_temp_c: float
     gpu_temp_c: float
     board_temp_c: float
@@ -251,6 +261,7 @@ class ThermalSnapshot:
 @dataclass
 class InferenceResult:
     """Result from a single inference execution."""
+
     output: np.ndarray
     latency_ms: float
     stream_id: int
@@ -262,6 +273,7 @@ class InferenceResult:
 # ===================================================================
 # TensorRTOptimizer
 # ===================================================================
+
 
 class TensorRTOptimizer:
     """Builds and optimizes TensorRT engines for Jetson Nano deployment.
@@ -284,7 +296,9 @@ class TensorRTOptimizer:
         self, input_dim: int, hidden_dim: int, output_dim: int
     ) -> int:
         """Estimate serialized TensorRT engine size in bytes."""
-        param_count = input_dim * hidden_dim + hidden_dim + hidden_dim * output_dim + output_dim
+        param_count = (
+            input_dim * hidden_dim + hidden_dim + hidden_dim * output_dim + output_dim
+        )
         bytes_per_param = {
             PrecisionMode.FP32: 4,
             PrecisionMode.FP16: 2,
@@ -325,7 +339,9 @@ class TensorRTOptimizer:
         )
         batches = []
         for _ in range(num_batches):
-            batch = np.random.randn(self.config.max_batch_size, input_dim).astype(np.float32)
+            batch = np.random.randn(self.config.max_batch_size, input_dim).astype(
+                np.float32
+            )
             batches.append(batch)
         return batches
 
@@ -366,7 +382,9 @@ class TensorRTOptimizer:
             # Compute per-layer activation ranges for calibration
             activation_ranges = []
             for batch in cal_data[:10]:
-                hidden = batch @ (np.random.randn(input_dim, hidden_dim).astype(np.float32) * 0.01)
+                hidden = batch @ (
+                    np.random.randn(input_dim, hidden_dim).astype(np.float32) * 0.01
+                )
                 activation_ranges.append((hidden.min(), hidden.max()))
             self._calibration_cache[model_name] = np.array(activation_ranges)
             logger.info("INT8 calibration complete for '%s'", model_name)
@@ -448,6 +466,7 @@ class TensorRTOptimizer:
 # JetsonInferenceEngine
 # ===================================================================
 
+
 class JetsonInferenceEngine:
     """Manages CUDA-accelerated inference on Jetson Nano.
 
@@ -515,7 +534,9 @@ class JetsonInferenceEngine:
         self._current_thermal = state
         return snapshot
 
-    def load_model(self, name: str, input_dim: int, hidden_dim: int, output_dim: int) -> None:
+    def load_model(
+        self, name: str, input_dim: int, hidden_dim: int, output_dim: int
+    ) -> None:
         """Load model weights into GPU memory (simulated).
 
         Args:
@@ -671,12 +692,17 @@ class JetsonInferenceEngine:
             encoded = enc_result.output
         else:
             # Fallback: use observation directly (truncated/padded)
-            encoded = observation[:, :64] if observation.shape[1] >= 64 else np.pad(
-                observation, ((0, 0), (0, 64 - observation.shape[1]))
+            encoded = (
+                observation[:, :64]
+                if observation.shape[1] >= 64
+                else np.pad(observation, ((0, 0), (0, 64 - observation.shape[1])))
             )
             results["observation_encoder"] = InferenceResult(
-                output=encoded, latency_ms=0.0, stream_id=0,
-                batch_size=observation.shape[0], precision="skip",
+                output=encoded,
+                latency_ms=0.0,
+                stream_id=0,
+                batch_size=observation.shape[0],
+                precision="skip",
             )
 
         # Stage 2: Policy head
@@ -716,7 +742,8 @@ class JetsonInferenceEngine:
             "gpu_temp_min_c": round(min(gpu_temps), 1),
             "current_state": self._current_thermal.value,
             "throttle_events": sum(
-                1 for t in self._thermal_history
+                1
+                for t in self._thermal_history
                 if t.thermal_state == ThermalState.THROTTLING
             ),
         }
@@ -734,11 +761,21 @@ class JetsonInferenceEngine:
             "total_inferences": n,
             "avg_latency_ms": round(sum(latencies) / n, 3),
             "p50_latency_ms": round(sorted_lat[n // 2], 3),
-            "p95_latency_ms": round(sorted_lat[int(n * 0.95)], 3) if n >= 20 else round(sorted_lat[-1], 3),
-            "p99_latency_ms": round(sorted_lat[int(n * 0.99)], 3) if n >= 100 else round(sorted_lat[-1], 3),
+            "p95_latency_ms": (
+                round(sorted_lat[int(n * 0.95)], 3)
+                if n >= 20
+                else round(sorted_lat[-1], 3)
+            ),
+            "p99_latency_ms": (
+                round(sorted_lat[int(n * 0.99)], 3)
+                if n >= 100
+                else round(sorted_lat[-1], 3)
+            ),
             "min_latency_ms": round(sorted_lat[0], 3),
             "max_latency_ms": round(sorted_lat[-1], 3),
-            "under_target": sum(1 for l in latencies if l < self.config.target_latency_ms),
+            "under_target": sum(
+                1 for l in latencies if l < self.config.target_latency_ms
+            ),
             "target_ms": self.config.target_latency_ms,
         }
 
@@ -757,6 +794,7 @@ class JetsonInferenceEngine:
 # ===================================================================
 # JetsonAgent
 # ===================================================================
+
 
 class JetsonAgent:
     """High-level SC2 agent running on Jetson Nano edge hardware.
@@ -866,9 +904,21 @@ class JetsonAgent:
 
         # Determine SC2 action label
         action_labels = [
-            "attack", "defend", "expand", "scout", "build_army",
-            "tech_up", "harass", "retreat", "flank", "siege",
-            "air_switch", "all_in", "contain", "drop", "split",
+            "attack",
+            "defend",
+            "expand",
+            "scout",
+            "build_army",
+            "tech_up",
+            "harass",
+            "retreat",
+            "flank",
+            "siege",
+            "air_switch",
+            "all_in",
+            "contain",
+            "drop",
+            "split",
             "regroup",
         ]
         action_label = action_labels[action_idx % len(action_labels)]
@@ -901,7 +951,11 @@ class JetsonAgent:
         Returns:
             Episode summary with performance metrics.
         """
-        logger.info("Running %d-step episode on Jetson (%s mode)", num_steps, self.config.power_mode.value)
+        logger.info(
+            "Running %d-step episode on Jetson (%s mode)",
+            num_steps,
+            self.config.power_mode.value,
+        )
 
         decisions = []
         for step in range(num_steps):
@@ -985,6 +1039,7 @@ class JetsonAgent:
 # Demo
 # ===================================================================
 
+
 def demo() -> None:
     """Demonstrate Jetson Nano edge deployment for SC2 inference.
 
@@ -1029,7 +1084,9 @@ def demo() -> None:
 
     engine_summary = agent.optimizer.summary()
     for name, info in engine_summary["engines"].items():
-        print(f"    {name}: ~{info['latency_ms']}ms, {info['size_bytes']} bytes, {info['layers']} layers")
+        print(
+            f"    {name}: ~{info['latency_ms']}ms, {info['size_bytes']} bytes, {info['layers']} layers"
+        )
     print()
 
     # --- Step 3: Run inference ---
@@ -1051,8 +1108,10 @@ def demo() -> None:
     print(f"  Avg latency: {episode['avg_latency_ms']}ms")
     print(f"  Max latency: {episode['max_latency_ms']}ms")
     print(f"  Target met: {episode['target_met_pct']}%")
-    print(f"  Thermal: avg GPU {episode['thermal']['gpu_temp_avg_c']}C, "
-          f"max {episode['thermal']['gpu_temp_max_c']}C")
+    print(
+        f"  Thermal: avg GPU {episode['thermal']['gpu_temp_avg_c']}C, "
+        f"max {episode['thermal']['gpu_temp_max_c']}C"
+    )
     print()
 
     # --- Step 5: Power mode comparison ---
@@ -1078,7 +1137,9 @@ def demo() -> None:
 
 
 if __name__ == "__main__":
-    logging.basicConfig(level=logging.INFO, format="%(levelname)s | %(name)s | %(message)s")
+    logging.basicConfig(
+        level=logging.INFO, format="%(levelname)s | %(name)s | %(message)s"
+    )
     demo()
 
 # Phase 639: Jetson registered

@@ -4,10 +4,11 @@ Neural network observation encoder for SC2 game state.
 Combines spatial (minimap), entity (units), and scalar (resources) encodings.
 """
 
+from typing import Dict, Optional
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from typing import Dict, Optional
 
 
 class SpatialEncoder(nn.Module):
@@ -36,18 +37,29 @@ class SpatialEncoder(nn.Module):
 class EntityEncoder(nn.Module):
     """Transformer encoder for unit/entity features."""
 
-    def __init__(self, entity_dim: int = 64, n_heads: int = 4,
-                 n_layers: int = 2, out_dim: int = 128, max_entities: int = 512):
+    def __init__(
+        self,
+        entity_dim: int = 64,
+        n_heads: int = 4,
+        n_layers: int = 2,
+        out_dim: int = 128,
+        max_entities: int = 512,
+    ):
         super().__init__()
         self.input_proj = nn.Linear(entity_dim, out_dim)
         encoder_layer = nn.TransformerEncoderLayer(
-            d_model=out_dim, nhead=n_heads, dim_feedforward=out_dim * 4,
-            dropout=0.0, batch_first=True)
+            d_model=out_dim,
+            nhead=n_heads,
+            dim_feedforward=out_dim * 4,
+            dropout=0.0,
+            batch_first=True,
+        )
         self.transformer = nn.TransformerEncoder(encoder_layer, num_layers=n_layers)
         self.pool = nn.Linear(out_dim, out_dim)
 
-    def forward(self, entities: torch.Tensor,
-                mask: Optional[torch.Tensor] = None) -> torch.Tensor:
+    def forward(
+        self, entities: torch.Tensor, mask: Optional[torch.Tensor] = None
+    ) -> torch.Tensor:
         # entities: (B, N, entity_dim)
         x = F.relu(self.input_proj(entities))
         x = self.transformer(x, src_key_padding_mask=mask)
@@ -64,8 +76,14 @@ class ScalarEncoder(nn.Module):
     """MLP encoder for scalar game state features (resources, supply, time)."""
 
     SCALAR_FIELDS = [
-        "minerals", "vespene", "supply_used", "supply_cap",
-        "army_count", "worker_count", "game_loop", "enemy_visible_units",
+        "minerals",
+        "vespene",
+        "supply_used",
+        "supply_cap",
+        "army_count",
+        "worker_count",
+        "game_loop",
+        "enemy_visible_units",
     ]
 
     def __init__(self, in_dim: int = 8, out_dim: int = 64):
@@ -88,15 +106,22 @@ class SC2ObsEncoder(nn.Module):
     Output: encoded tensor of shape (B, encoding_dim)
     """
 
-    def __init__(self, spatial_channels: int = 17, entity_dim: int = 64,
-                 scalar_dim: int = 8, encoding_dim: int = 512):
+    def __init__(
+        self,
+        spatial_channels: int = 17,
+        entity_dim: int = 64,
+        scalar_dim: int = 8,
+        encoding_dim: int = 512,
+    ):
         super().__init__()
         spatial_out = 128
         entity_out = 128
         scalar_out = 64
         combined = spatial_out + entity_out + scalar_out
 
-        self.spatial_enc = SpatialEncoder(in_channels=spatial_channels, out_dim=spatial_out)
+        self.spatial_enc = SpatialEncoder(
+            in_channels=spatial_channels, out_dim=spatial_out
+        )
         self.entity_enc = EntityEncoder(entity_dim=entity_dim, out_dim=entity_out)
         self.scalar_enc = ScalarEncoder(in_dim=scalar_dim, out_dim=scalar_out)
         self.fusion = nn.Sequential(
@@ -120,8 +145,9 @@ class SC2ObsEncoder(nn.Module):
         return self.fusion(combined)
 
     @staticmethod
-    def dummy_obs(batch_size: int = 1, n_entities: int = 64,
-                  map_size: int = 64) -> Dict[str, torch.Tensor]:
+    def dummy_obs(
+        batch_size: int = 1, n_entities: int = 64, map_size: int = 64
+    ) -> Dict[str, torch.Tensor]:
         return {
             "minimap": torch.zeros(batch_size, 17, map_size, map_size),
             "entities": torch.zeros(batch_size, n_entities, 64),

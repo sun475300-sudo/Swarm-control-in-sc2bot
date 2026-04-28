@@ -5,8 +5,8 @@ Generates random inputs to find bugs and edge cases
 
 import random
 import string
-from typing import Any, List, Dict
 from dataclasses import dataclass
+from typing import Any, Dict, List
 
 
 @dataclass

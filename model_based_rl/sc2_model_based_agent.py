@@ -49,14 +49,20 @@ STATE_DIM = 16
 ACTION_DIM = 7
 ENSEMBLE_SIZE = 5
 ACTION_NAMES = [
-    "train_drone", "train_zergling", "train_roach",
-    "build_overlord", "expand", "attack_move", "defend_base",
+    "train_drone",
+    "train_zergling",
+    "train_roach",
+    "build_overlord",
+    "expand",
+    "attack_move",
+    "defend_base",
 ]
 
 
 # ===================================================================
 # Pure-Python math helpers
 # ===================================================================
+
 
 def _relu(x: float) -> float:
     return max(0.0, x)
@@ -96,6 +102,7 @@ def _mse(pred: List[float], target: List[float]) -> float:
 # Dense layer
 # ===================================================================
 
+
 class DenseLayer:
     """Single fully-connected layer with optional activation."""
 
@@ -105,8 +112,7 @@ class DenseLayer:
         self.activation = activation
         scale = math.sqrt(2.0 / in_dim)
         self.weights: List[List[float]] = [
-            [random.gauss(0, scale) for _ in range(in_dim)]
-            for _ in range(out_dim)
+            [random.gauss(0, scale) for _ in range(in_dim)] for _ in range(out_dim)
         ]
         self.biases: List[float] = [0.0] * out_dim
 
@@ -141,9 +147,11 @@ class MLP:
 # PlanningBuffer
 # ===================================================================
 
+
 @dataclass
 class Transition:
     """A single (s, a, r, s', done) transition."""
+
     state: List[float]
     action: int
     reward: float
@@ -207,6 +215,7 @@ class PlanningBuffer:
 # DynamicsModel
 # ===================================================================
 
+
 class DynamicsModel:
     """
     Learned dynamics model: predicts next state and reward given
@@ -255,9 +264,7 @@ class DynamicsModel:
     def _encode_input(self, state: List[float], action: int) -> List[float]:
         return state + _one_hot(action, self.action_dim)
 
-    def predict(
-        self, state: List[float], action: int
-    ) -> Tuple[List[float], float]:
+    def predict(self, state: List[float], action: int) -> Tuple[List[float], float]:
         """Return (predicted_next_state, predicted_reward)."""
         inp = self._encode_input(state, action)
         delta = self.state_net.forward(inp)
@@ -323,8 +330,7 @@ class DynamicsEnsemble:
         action_dim: int = ACTION_DIM,
     ):
         self.models = [
-            DynamicsModel(state_dim, action_dim, model_id=i)
-            for i in range(n_models)
+            DynamicsModel(state_dim, action_dim, model_id=i) for i in range(n_models)
         ]
 
     def predict(
@@ -342,10 +348,7 @@ class DynamicsEnsemble:
         dim = len(predictions[0][0])
 
         # Mean next state
-        mean_ns = [
-            sum(predictions[k][0][d] for k in range(n)) / n
-            for d in range(dim)
-        ]
+        mean_ns = [sum(predictions[k][0][d] for k in range(n)) / n for d in range(dim)]
         # Mean reward
         mean_r = sum(p[1] for p in predictions) / n
 
@@ -360,9 +363,7 @@ class DynamicsEnsemble:
 
         return mean_ns, mean_r, uncertainty
 
-    def train_step(
-        self, buffer: PlanningBuffer, batch_size: int = 32
-    ) -> List[float]:
+    def train_step(self, buffer: PlanningBuffer, batch_size: int = 32) -> List[float]:
         """Train each model on an independent sample from the buffer."""
         losses = []
         for model in self.models:
@@ -375,6 +376,7 @@ class DynamicsEnsemble:
 # ===================================================================
 # ModelPredictiveControl
 # ===================================================================
+
 
 class ModelPredictiveControl:
     """
@@ -408,9 +410,7 @@ class ModelPredictiveControl:
         self.uncertainty_penalty = uncertainty_penalty
         self.last_plan: List[int] = []
 
-    def _evaluate_sequence(
-        self, state: List[float], actions: List[int]
-    ) -> float:
+    def _evaluate_sequence(self, state: List[float], actions: List[int]) -> float:
         """Rollout action sequence in the learned model."""
         total_reward = 0.0
         gamma = 1.0
@@ -426,10 +426,7 @@ class ModelPredictiveControl:
         """Run CEM optimisation and return the best action sequence."""
         action_dim = ACTION_DIM
         # Initialise uniform action distribution per timestep
-        probs = [
-            [1.0 / action_dim] * action_dim
-            for _ in range(self.horizon)
-        ]
+        probs = [[1.0 / action_dim] * action_dim for _ in range(self.horizon)]
 
         best_seq: List[int] = []
         best_val = float("-inf")
@@ -466,10 +463,7 @@ class ModelPredictiveControl:
                 for seq, _ in elites:
                     counts[seq[t]] += 1.0
                 total = sum(counts)
-                probs[t] = [
-                    0.9 * (c / total) + 0.1 / action_dim
-                    for c in counts
-                ]
+                probs[t] = [0.9 * (c / total) + 0.1 / action_dim for c in counts]
 
         self.last_plan = best_seq
         return best_seq
@@ -483,6 +477,7 @@ class ModelPredictiveControl:
 # ===================================================================
 # SC2-specific prediction helpers
 # ===================================================================
+
 
 class SC2ResourcePredictor:
     """Wrapper for resource/army/tech predictions using the ensemble."""
@@ -506,9 +501,7 @@ class SC2ResourcePredictor:
             "supply_delta": ns[self.SUPPLY_IDX] - state[self.SUPPLY_IDX],
         }
 
-    def predict_army_outcome(
-        self, state: List[float], action: int
-    ) -> Dict[str, float]:
+    def predict_army_outcome(self, state: List[float], action: int) -> Dict[str, float]:
         ns, reward, unc = self.ensemble.predict(state, action)
         return {
             "army_delta": ns[self.ARMY_IDX] - state[self.ARMY_IDX],
@@ -516,9 +509,7 @@ class SC2ResourcePredictor:
             "uncertainty": unc,
         }
 
-    def predict_tech_progression(
-        self, state: List[float], action: int
-    ) -> float:
+    def predict_tech_progression(self, state: List[float], action: int) -> float:
         ns, _, _ = self.ensemble.predict(state, action)
         return ns[self.TECH_IDX] - state[self.TECH_IDX]
 
@@ -527,9 +518,11 @@ class SC2ResourcePredictor:
 # Adaptive Trust Region
 # ===================================================================
 
+
 @dataclass
 class ModelAccuracy:
     """Rolling accuracy tracker for model predictions."""
+
     state_errors: List[float] = field(default_factory=list)
     reward_errors: List[float] = field(default_factory=list)
     uncertainties: List[float] = field(default_factory=list)
@@ -557,9 +550,7 @@ class ModelAccuracy:
             "state_mse": sum(self.state_errors) / n,
             "reward_mae": sum(self.reward_errors) / n,
             "mean_uncertainty": sum(self.uncertainties) / n,
-            "hallucination_rate": sum(
-                1 for e in self.state_errors if e > 0.1
-            ) / n,
+            "hallucination_rate": sum(1 for e in self.state_errors if e > 0.1) / n,
         }
 
     def model_is_reliable(self) -> bool:
@@ -594,6 +585,7 @@ class AdaptiveTrustRegion:
 # ===================================================================
 # Policy (for MBPO-style training)
 # ===================================================================
+
 
 class SimplePolicy:
     """Lightweight policy network for model-based policy optimisation."""
@@ -632,6 +624,7 @@ class SimplePolicy:
 # ===================================================================
 # ModelBasedAgent
 # ===================================================================
+
 
 class ModelBasedAgent:
     """
@@ -750,8 +743,10 @@ class ModelBasedAgent:
         """One training iteration (call after each observation)."""
         info: Dict[str, Any] = {}
 
-        if (self.total_steps % self.model_train_interval == 0
-                and len(self.real_buffer) >= 32):
+        if (
+            self.total_steps % self.model_train_interval == 0
+            and len(self.real_buffer) >= 32
+        ):
             losses = self._train_dynamics()
             info["model_losses"] = losses
             info["avg_model_loss"] = sum(losses) / len(losses)
@@ -787,7 +782,8 @@ class ModelBasedAgent:
             "hallucination_rate": m["hallucination_rate"],
             "mean_uncertainty": m["mean_uncertainty"],
             "avg_episode_reward": (
-                sum(self.episode_rewards[-20:]) / max(len(self.episode_rewards[-20:]), 1)
+                sum(self.episode_rewards[-20:])
+                / max(len(self.episode_rewards[-20:]), 1)
             ),
         }
 
@@ -795,6 +791,7 @@ class ModelBasedAgent:
 # ===================================================================
 # SC2 Environment Simulator (for demo)
 # ===================================================================
+
 
 class SC2EnvSim:
     """Lightweight SC2 environment simulator for testing."""
@@ -806,11 +803,22 @@ class SC2EnvSim:
 
     def _init_state(self) -> List[float]:
         return [
-            0.05, 0.02, 0.06, 0.10, 0.15,  # minerals, gas, supply, max_supply, workers
-            0.0, 0.0, 0.0,                   # army, frame, enemy_army
-            0.1, 0.0,                         # threat, tech
-            0.2, 0.2, 0.1,                    # hatch, bases, queens
-            0.0, 0.0, 0.0,                    # upgrades (speed, carapace, missile)
+            0.05,
+            0.02,
+            0.06,
+            0.10,
+            0.15,  # minerals, gas, supply, max_supply, workers
+            0.0,
+            0.0,
+            0.0,  # army, frame, enemy_army
+            0.1,
+            0.0,  # threat, tech
+            0.2,
+            0.2,
+            0.1,  # hatch, bases, queens
+            0.0,
+            0.0,
+            0.0,  # upgrades (speed, carapace, missile)
         ]
 
     def reset(self) -> List[float]:
@@ -829,20 +837,37 @@ class SC2EnvSim:
         s[7] = min(1.0, 0.01 * self.step_count / self.max_steps)
 
         if action == 0 and s[0] > 0.05 and s[2] < s[3]:
-            s[0] -= 0.05; s[4] = min(1.0, s[4] + 0.0125); s[2] += 0.005; reward = 0.3
+            s[0] -= 0.05
+            s[4] = min(1.0, s[4] + 0.0125)
+            s[2] += 0.005
+            reward = 0.3
         elif action == 1 and s[0] > 0.025:
-            s[0] -= 0.025; s[5] = min(1.0, s[5] + 0.005); s[2] += 0.005; reward = 0.2
+            s[0] -= 0.025
+            s[5] = min(1.0, s[5] + 0.005)
+            s[2] += 0.005
+            reward = 0.2
         elif action == 2 and s[0] > 0.075 and s[1] > 0.025:
-            s[0] -= 0.075; s[1] -= 0.025; s[5] = min(1.0, s[5] + 0.01); s[2] += 0.01; reward = 0.4
+            s[0] -= 0.075
+            s[1] -= 0.025
+            s[5] = min(1.0, s[5] + 0.01)
+            s[2] += 0.01
+            reward = 0.4
         elif action == 3 and s[0] > 0.1:
-            s[0] -= 0.1; s[3] = min(1.0, s[3] + 0.04); reward = 0.1 if s[2] > s[3] * 0.8 else -0.05
+            s[0] -= 0.1
+            s[3] = min(1.0, s[3] + 0.04)
+            reward = 0.1 if s[2] > s[3] * 0.8 else -0.05
         elif action == 4 and s[0] > 0.3:
-            s[0] -= 0.3; s[10] = min(1.0, s[10] + 0.2); s[11] = min(1.0, s[11] + 0.2); reward = 0.5
+            s[0] -= 0.3
+            s[10] = min(1.0, s[10] + 0.2)
+            s[11] = min(1.0, s[11] + 0.2)
+            reward = 0.5
         elif action == 5:
             if s[5] > s[7]:
-                reward = 1.0 * (s[5] - s[7]); s[5] = max(0.0, s[5] - 0.02)
+                reward = 1.0 * (s[5] - s[7])
+                s[5] = max(0.0, s[5] - 0.02)
             else:
-                reward = -0.5; s[5] = max(0.0, s[5] - 0.05)
+                reward = -0.5
+                s[5] = max(0.0, s[5] - 0.05)
         elif action == 6:
             reward = 0.3 if s[8] > 0.5 else 0.05
             s[8] = max(0.0, s[8] - 0.1) if s[8] > 0.5 else s[8]
@@ -855,6 +880,7 @@ class SC2EnvSim:
 # ===================================================================
 # Demo
 # ===================================================================
+
 
 def demo(
     mode: str = "mbpo",
@@ -906,14 +932,22 @@ def demo(
 
         if verbose:
             m = agent.accuracy.summary()
-            print(f"\n  Episode {ep + 1}/{episodes}  |  "
-                  f"Reward: {ep_reward:+.2f}  |  {elapsed:.2f}s")
-            print(f"    Buffers: {len(agent.real_buffer)} real, "
-                  f"{len(agent.imagined_buffer)} imagined")
-            print(f"    Model MSE: {m['state_mse']:.4f}  |  "
-                  f"Halluc: {m['hallucination_rate']:.2%}")
-            print(f"    Horizon: {agent.trust.horizon}  |  "
-                  f"Ratio: {agent.trust.model_ratio:.2f}")
+            print(
+                f"\n  Episode {ep + 1}/{episodes}  |  "
+                f"Reward: {ep_reward:+.2f}  |  {elapsed:.2f}s"
+            )
+            print(
+                f"    Buffers: {len(agent.real_buffer)} real, "
+                f"{len(agent.imagined_buffer)} imagined"
+            )
+            print(
+                f"    Model MSE: {m['state_mse']:.4f}  |  "
+                f"Halluc: {m['hallucination_rate']:.2%}"
+            )
+            print(
+                f"    Horizon: {agent.trust.horizon}  |  "
+                f"Ratio: {agent.trust.model_ratio:.2f}"
+            )
 
     diag = agent.diagnostics()
 

@@ -36,12 +36,12 @@ class FlankingCoordinator:
     """
 
     # 설정
-    MIN_ARMY_SUPPLY = 15       # 포위 최소 보급
-    NUM_GROUPS = 2             # 분할 그룹 수 (2 = 양각, 3 = 삼각)
-    ANGLE_OFFSET_DEG = 60      # 기본 벡터에서의 편향 각도
-    APPROACH_DISTANCE = 15.0   # 적으로부터 접근 웨이포인트 거리
-    SYNC_TOLERANCE = 8.0       # 동시 돌격 허용 거리
-    COOLDOWN = 30.0            # 포위 재시도 쿨다운(초)
+    MIN_ARMY_SUPPLY = 15  # 포위 최소 보급
+    NUM_GROUPS = 2  # 분할 그룹 수 (2 = 양각, 3 = 삼각)
+    ANGLE_OFFSET_DEG = 60  # 기본 벡터에서의 편향 각도
+    APPROACH_DISTANCE = 15.0  # 적으로부터 접근 웨이포인트 거리
+    SYNC_TOLERANCE = 8.0  # 동시 돌격 허용 거리
+    COOLDOWN = 30.0  # 포위 재시도 쿨다운(초)
 
     def __init__(self, bot):
         self.bot = bot
@@ -161,7 +161,9 @@ class FlankingCoordinator:
                     if unit.distance_to(target) > self.SYNC_TOLERANCE:
                         self.bot.do(unit.move(target))
                 except Exception as e:
-                    logger.warning(f"[FlankingCoordinator] approach move suppressed: {e}")
+                    logger.warning(
+                        f"[FlankingCoordinator] approach move suppressed: {e}"
+                    )
                     continue
 
     def _all_groups_in_position(self) -> bool:
@@ -182,7 +184,9 @@ class FlankingCoordinator:
                     if unit.distance_to(target) <= self.SYNC_TOLERANCE:
                         units_in_pos += 1
                 except Exception as e:
-                    logger.warning(f"[FlankingCoordinator] position check suppressed: {e}")
+                    logger.warning(
+                        f"[FlankingCoordinator] position check suppressed: {e}"
+                    )
                     continue
 
             # 그룹의 60% 이상이 도착해야 함
@@ -213,8 +217,12 @@ class FlankingCoordinator:
         if not hasattr(self.bot, "units") or not UnitTypeId:
             return []
 
-        exclude = {UnitTypeId.DRONE, UnitTypeId.OVERLORD, UnitTypeId.QUEEN,
-                    UnitTypeId.LARVA}
+        exclude = {
+            UnitTypeId.DRONE,
+            UnitTypeId.OVERLORD,
+            UnitTypeId.QUEEN,
+            UnitTypeId.LARVA,
+        }
 
         # locked_units 존중 (harassment 등에 잠긴 유닛 제외)
         locked = set()

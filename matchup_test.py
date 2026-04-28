@@ -5,11 +5,11 @@ Tests bot performance against different opponent types and races
 
 import json
 import random
-from pathlib import Path
-from datetime import datetime
-from typing import Dict, List, Any
 from dataclasses import dataclass, field
+from datetime import datetime
 from enum import Enum
+from pathlib import Path
+from typing import Any, Dict, List
 
 
 class OpponentRace(Enum):

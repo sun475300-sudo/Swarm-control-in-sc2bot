@@ -7,13 +7,15 @@ Supports gRPC async inference and dynamic batching.
 
 import asyncio
 import json
-import numpy as np
 from dataclasses import dataclass, field
-from typing import Dict, List, Optional, Tuple, Any
+from typing import Any, Dict, List, Optional, Tuple
+
+import numpy as np
 
 try:
     import tritonclient.grpc.aio as grpcclient
     from tritonclient.utils import InferenceServerException, triton_to_np_dtype
+
     TRITON_AVAILABLE = True
 except ImportError:
     TRITON_AVAILABLE = False
@@ -22,9 +24,10 @@ except ImportError:
 
 # --- Configuration ---
 
+
 @dataclass
 class TritonConfig:
-    url: str = "localhost:8001"        # gRPC endpoint
+    url: str = "localhost:8001"  # gRPC endpoint
     model_name: str = "sc2_ensemble"
     obs_encoder_model: str = "sc2_obs_encoder"
     policy_model: str = "sc2_policy"
@@ -36,13 +39,13 @@ class TritonConfig:
 
 @dataclass
 class InferenceRequest:
-    obs: np.ndarray              # (B, obs_dim) float32
+    obs: np.ndarray  # (B, obs_dim) float32
     action_mask: Optional[np.ndarray] = None  # (B, action_dim) bool
 
 
 @dataclass
 class InferenceResponse:
-    action_type: np.ndarray      # (B,) int32
+    action_type: np.ndarray  # (B,) int32
     action_args: Dict[str, np.ndarray] = field(default_factory=dict)
     value: np.ndarray = field(default_factory=lambda: np.zeros(1))
     latency_ms: float = 0.0
@@ -50,22 +53,26 @@ class InferenceResponse:
 
 # --- Model Repository Config Generator ---
 
-def generate_model_config(model_name: str, input_shapes: List[Tuple],
-                          output_shapes: List[Tuple],
-                          max_batch_size: int = 32,
-                          backend: str = "onnxruntime") -> Dict:
+
+def generate_model_config(
+    model_name: str,
+    input_shapes: List[Tuple],
+    output_shapes: List[Tuple],
+    max_batch_size: int = 32,
+    backend: str = "onnxruntime",
+) -> Dict:
     """Generate Triton model config dict."""
     config = {
         "name": model_name,
         "backend": backend,
         "max_batch_size": max_batch_size,
         "input": [
-            {"name": f"input_{i}", "data_type": "TYPE_FP32",
-             "dims": list(shape)} for i, shape in enumerate(input_shapes)
+            {"name": f"input_{i}", "data_type": "TYPE_FP32", "dims": list(shape)}
+            for i, shape in enumerate(input_shapes)
         ],
         "output": [
-            {"name": f"output_{i}", "data_type": "TYPE_FP32",
-             "dims": list(shape)} for i, shape in enumerate(output_shapes)
+            {"name": f"output_{i}", "data_type": "TYPE_FP32", "dims": list(shape)}
+            for i, shape in enumerate(output_shapes)
         ],
         "dynamic_batching": {
             "preferred_batch_size": [8, 16, 32],
@@ -108,6 +115,7 @@ def generate_ensemble_config(cfg: TritonConfig) -> Dict:
 
 # --- Triton SC2 Client ---
 
+
 class TritonSC2Client:
     """
     Async gRPC client for SC2 model inference via Triton Inference Server.
@@ -120,9 +128,12 @@ class TritonSC2Client:
 
     async def connect(self) -> None:
         if not TRITON_AVAILABLE:
-            raise RuntimeError("tritonclient not installed. pip install tritonclient[grpc]")
+            raise RuntimeError(
+                "tritonclient not installed. pip install tritonclient[grpc]"
+            )
         self._client = grpcclient.InferenceServerClient(
-            url=self.cfg.url, verbose=self.cfg.verbose)
+            url=self.cfg.url, verbose=self.cfg.verbose
+        )
         is_live = await self._client.is_server_live()
         print(f"[Triton] Server live: {is_live} at {self.cfg.url}")
 
@@ -135,6 +146,7 @@ class TritonSC2Client:
     async def infer(self, request: InferenceRequest) -> InferenceResponse:
         """Send async inference request and return decoded response."""
         import time
+
         t0 = time.perf_counter()
         if self._client is None:
             raise RuntimeError("Not connected. Call connect() first.")
@@ -157,10 +169,13 @@ class TritonSC2Client:
         value = response.as_numpy("value")
         action_type = np.argmax(policy_logits, axis=-1).astype(np.int32)
         latency_ms = (time.perf_counter() - t0) * 1000
-        return InferenceResponse(action_type=action_type, value=value,
-                                 latency_ms=round(latency_ms, 2))
+        return InferenceResponse(
+            action_type=action_type, value=value, latency_ms=round(latency_ms, 2)
+        )
 
-    async def batch_infer(self, requests: List[InferenceRequest]) -> List[InferenceResponse]:
+    async def batch_infer(
+        self, requests: List[InferenceRequest]
+    ) -> List[InferenceResponse]:
         """Run multiple requests concurrently."""
         tasks = [self.infer(r) for r in requests]
         return await asyncio.gather(*tasks)
@@ -174,5 +189,8 @@ class TritonSC2Client:
         if self._client is None:
             return {}
         meta = await self._client.get_model_metadata(self.cfg.model_name)
-        return {"name": meta.name, "versions": list(meta.versions),
-                "platform": meta.platform}
+        return {
+            "name": meta.name,
+            "versions": list(meta.versions),
+            "platform": meta.platform,
+        }

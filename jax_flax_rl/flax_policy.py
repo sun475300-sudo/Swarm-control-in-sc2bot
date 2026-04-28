@@ -4,23 +4,24 @@ SC2 Bot policy network with JAX JIT, Flax, Optax
 """
 
 from __future__ import annotations
-from typing import Any, Callable, Optional, Tuple
+
 import math
-import random
 import os
+import random
 import sys
+from typing import Any, Callable, Optional, Tuple
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from gymnasium_env.sc2_gym_env import SC2ZergEnv, OBS_DIM, ACT_DIM
-
+from gymnasium_env.sc2_gym_env import ACT_DIM, OBS_DIM, SC2ZergEnv
 
 try:
+    import flax.linen as nn
     import jax
     import jax.numpy as jnp
-    from jax import jit, grad, vmap, value_and_grad
-    import flax.linen as nn
-    from flax.training import train_state
     import optax
+    from flax.training import train_state
+    from jax import grad, jit, value_and_grad, vmap
+
     JAX_AVAILABLE = True
 except ImportError:
     JAX_AVAILABLE = False
@@ -31,6 +32,7 @@ except ImportError:
 # ─────────────────────────────────────────────
 
 if JAX_AVAILABLE:
+
     class SC2PolicyNet(nn.Module):
         hidden_dim: int = 256
         n_actions: int = ACT_DIM
@@ -68,6 +70,7 @@ if JAX_AVAILABLE:
 # ─────────────────────────────────────────────
 
 if JAX_AVAILABLE:
+
     def create_train_state(model, rng, obs_dim: int, lr: float = 3e-4):
         """Initialize Flax TrainState."""
         params = model.init(rng, jnp.ones((1, obs_dim)))
@@ -89,8 +92,10 @@ if JAX_AVAILABLE:
     @jit
     def compute_loss(params, apply_fn, batch):
         obs, actions, returns, advantages = (
-            batch["obs"], batch["actions"],
-            batch["returns"], batch["advantages"]
+            batch["obs"],
+            batch["actions"],
+            batch["returns"],
+            batch["advantages"],
         )
         logits, values = apply_fn(params, obs)
 
@@ -112,9 +117,7 @@ if JAX_AVAILABLE:
     @jit
     def train_step(state, batch):
         grad_fn = value_and_grad(compute_loss, has_aux=True)
-        (loss, metrics), grads = grad_fn(
-            state.params, state.apply_fn, batch
-        )
+        (loss, metrics), grads = grad_fn(state.params, state.apply_fn, batch)
         new_state = state.apply_gradients(grads=grads)
         return new_state, loss, metrics
 
@@ -122,6 +125,7 @@ if JAX_AVAILABLE:
 # ─────────────────────────────────────────────
 # Training loop (JAX)
 # ─────────────────────────────────────────────
+
 
 def train_jax_agent(total_steps: int = 20_000) -> dict:
     if not JAX_AVAILABLE:
@@ -187,8 +191,10 @@ def train_jax_agent(total_steps: int = 20_000) -> dict:
 
         if episodes % 20 == 0:
             avg = sum(all_rewards[-20:]) / min(20, len(all_rewards))
-            print(f"  Ep {episodes:4d} | Steps: {steps:6d} | "
-                  f"Avg reward: {avg:.2f} | Loss: {float(loss):.4f}")
+            print(
+                f"  Ep {episodes:4d} | Steps: {steps:6d} | "
+                f"Avg reward: {avg:.2f} | Loss: {float(loss):.4f}"
+            )
 
     return {
         "total_steps": steps,
@@ -202,12 +208,10 @@ def _python_fallback(total_steps: int) -> dict:
     import math
 
     # Simple softmax policy with weight table
-    W = [[random.gauss(0, 0.1) for _ in range(ACT_DIM)]
-         for _ in range(OBS_DIM)]
+    W = [[random.gauss(0, 0.1) for _ in range(ACT_DIM)] for _ in range(OBS_DIM)]
 
     def forward(obs):
-        scores = [sum(W[j][a] * obs[j] for j in range(OBS_DIM))
-                  for a in range(ACT_DIM)]
+        scores = [sum(W[j][a] * obs[j] for j in range(OBS_DIM)) for a in range(ACT_DIM)]
         max_s = max(scores)
         exp_s = [math.exp(s - max_s) for s in scores]
         total = sum(exp_s)

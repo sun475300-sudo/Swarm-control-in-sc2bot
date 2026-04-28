@@ -11,8 +11,10 @@
 """
 
 from typing import List, Optional, Set
-from sc2.position import Point2
+
 from sc2.ids.unit_typeid import UnitTypeId
+from sc2.position import Point2
+
 from utils.logger import get_logger
 
 
@@ -111,7 +113,7 @@ class IdleUnitManager:
         main_base = self.bot.townhalls.first.position
 
         # 맵 중심 방향으로 집결
-        if hasattr(self.bot, 'game_info'):
+        if hasattr(self.bot, "game_info"):
             map_center = self.bot.game_info.map_center
             self.rally_point = main_base.towards(map_center, 10)
         else:
@@ -245,7 +247,7 @@ class IdleUnitManager:
                     self.bot.do(unit.move(closest_base.position))
 
                     # 퀸 트랜스퓨전 요청
-                    if hasattr(self.bot, 'queen_manager'):
+                    if hasattr(self.bot, "queen_manager"):
                         # 퀸 힐 우선순위 추가 (구현 필요)
                         pass
 
@@ -263,7 +265,9 @@ class IdleUnitManager:
         )
 
         idle_units = combat_units.filter(lambda u: u.is_idle)
-        wounded_units = combat_units.filter(lambda u: u.health_max > 0 and u.health / u.health_max < 0.5)
+        wounded_units = combat_units.filter(
+            lambda u: u.health_max > 0 and u.health / u.health_max < 0.5
+        )
 
         return {
             "total_combat_units": combat_units.amount,
@@ -274,6 +278,7 @@ class IdleUnitManager:
 
 
 # ==================== 확장: 소수 병력 자동 견제 ====================
+
 
 class HarassmentManager:
     """
@@ -344,7 +349,8 @@ class HarassmentManager:
         """견제 목표 찾기"""
         # 1순위: 적 확장 기지
         enemy_expansions = self.bot.enemy_structures.filter(
-            lambda s: s.type_id in {UnitTypeId.NEXUS, UnitTypeId.COMMANDCENTER, UnitTypeId.HATCHERY}
+            lambda s: s.type_id
+            in {UnitTypeId.NEXUS, UnitTypeId.COMMANDCENTER, UnitTypeId.HATCHERY}
         )
 
         if enemy_expansions.exists:

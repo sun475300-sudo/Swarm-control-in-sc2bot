@@ -4,6 +4,7 @@ JARVIS Crypto HTTP Service (Port 8766)
 - 시세 조회, 잔고, 매매, 차트 생성 API 제공
 - 차트 이미지를 base64로 반환하여 디스코드에서 바로 표시 가능
 """
+
 import asyncio
 import base64
 import gzip
@@ -22,12 +23,12 @@ from aiohttp import web
 # 프로젝트 루트를 path에 추가
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from crypto_trading.upbit_client import UpbitClient
-from crypto_trading.auto_trader import AutoTrader
-from crypto_trading.portfolio_tracker import PortfolioTracker
-from crypto_trading.market_analyzer import MarketAnalyzer
 from crypto_trading import config
+from crypto_trading.auto_trader import AutoTrader
+from crypto_trading.market_analyzer import MarketAnalyzer
+from crypto_trading.portfolio_tracker import PortfolioTracker
 from crypto_trading.security import trade_safety
+from crypto_trading.upbit_client import UpbitClient
 from crypto_trading.utils import normalize_ticker
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(name)s] %(message)s")
@@ -57,7 +58,9 @@ _pending_trades = {}
 # ── Discord Webhook (#176-178) ──
 DISCORD_WEBHOOK_URL = os.environ.get("CRYPTO_WEBHOOK_URL", "")
 if DISCORD_WEBHOOK_URL:
-    _masked_url = DISCORD_WEBHOOK_URL[:20] + "***" if len(DISCORD_WEBHOOK_URL) > 20 else "***"
+    _masked_url = (
+        DISCORD_WEBHOOK_URL[:20] + "***" if len(DISCORD_WEBHOOK_URL) > 20 else "***"
+    )
     logger.info(f"Discord Webhook URL 설정됨: {_masked_url}")
 else:
     logger.info("Discord Webhook URL 미설정 (CRYPTO_WEBHOOK_URL 환경변수 없음)")
@@ -69,15 +72,21 @@ async def send_discord_notification(title: str, message: str, color: int = 0x219
         return
     try:
         payload = {
-            "embeds": [{
-                "title": title,
-                "description": message,
-                "color": color,
-                "timestamp": datetime.now().isoformat()
-            }]
+            "embeds": [
+                {
+                    "title": title,
+                    "description": message,
+                    "color": color,
+                    "timestamp": datetime.now().isoformat(),
+                }
+            ]
         }
         async with aiohttp.ClientSession() as _session:
-            await _session.post(DISCORD_WEBHOOK_URL, json=payload, timeout=aiohttp.ClientTimeout(total=5))
+            await _session.post(
+                DISCORD_WEBHOOK_URL,
+                json=payload,
+                timeout=aiohttp.ClientTimeout(total=5),
+            )
     except Exception as e:
         logger.warning(f"Discord 알림 실패: {e}")
 
@@ -87,6 +96,7 @@ async def send_discord_notification(title: str, message: str, color: int = 0x219
 # ═══════════════════════════════════════════════════
 
 # ── #67: CORS 미들웨어 ──
+
 
 @web.middleware
 async def cors_middleware(request, handler):
@@ -100,12 +110,15 @@ async def cors_middleware(request, handler):
     _allowed_origin = os.environ.get("CORS_ALLOWED_ORIGIN", "http://localhost:3000")
     response.headers["Access-Control-Allow-Origin"] = _allowed_origin
     response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS"
-    response.headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization, X-Requested-With"
+    response.headers["Access-Control-Allow-Headers"] = (
+        "Content-Type, Authorization, X-Requested-With"
+    )
     response.headers["Access-Control-Max-Age"] = "3600"
     return response
 
 
 # ── #68: 요청 로깅 미들웨어 ──
+
 
 @web.middleware
 async def request_logging_middleware(request, handler):
@@ -134,6 +147,7 @@ async def request_logging_middleware(request, handler):
 
 # ── #69: 통합 에러 핸들러 미들웨어 ──
 
+
 @web.middleware
 async def error_handler_middleware(request, handler):
     """모든 예외를 JSON 응답으로 변환하는 통합 에러 핸들러."""
@@ -153,6 +167,7 @@ async def error_handler_middleware(request, handler):
 
 
 # ── #73: Gzip 압축 미들웨어 ──
+
 
 @web.middleware
 async def gzip_middleware(request, handler):
@@ -190,10 +205,10 @@ async def gzip_middleware(request, handler):
 
 # 캐시 가능 경로 패턴 -> max-age 초
 _CACHE_RULES = {
-    "/api-docs": 3600,           # API 문서: 1시간
-    "/market/fear-greed": 300,   # 공포/탐욕: 5분
-    "/market/summary": 120,      # 시장 요약: 2분
-    "/chart/analysis": 60,       # 분석 차트: 1분
+    "/api-docs": 3600,  # API 문서: 1시간
+    "/market/fear-greed": 300,  # 공포/탐욕: 5분
+    "/market/summary": 120,  # 시장 요약: 2분
+    "/chart/analysis": 60,  # 분석 차트: 1분
     "/settings/chart-theme": 86400,  # 테마 설정: 하루
 }
 
@@ -214,6 +229,7 @@ async def cache_header_middleware(request, handler):
 
 
 # ── Bug #1 Fix: API Key 인증 미들웨어 ──
+
 
 @web.middleware
 async def api_key_auth_middleware(request, handler):
@@ -277,10 +293,13 @@ _chart_theme: dict = {
 #  차트 생성 유틸리티
 # ═══════════════════════════════════════════════════
 
+
 def _fig_to_base64(fig) -> str:
     """matplotlib Figure → base64 PNG 문자열"""
     buf = io.BytesIO()
-    fig.savefig(buf, format="png", dpi=150, bbox_inches="tight", facecolor=fig.get_facecolor())
+    fig.savefig(
+        buf, format="png", dpi=150, bbox_inches="tight", facecolor=fig.get_facecolor()
+    )
     buf.seek(0)
     b64 = base64.b64encode(buf.read()).decode("utf-8")
     buf.close()
@@ -290,7 +309,9 @@ def _fig_to_base64(fig) -> str:
 def _fig_to_bytes(fig) -> bytes:
     """matplotlib Figure → PNG bytes"""
     buf = io.BytesIO()
-    fig.savefig(buf, format="png", dpi=150, bbox_inches="tight", facecolor=fig.get_facecolor())
+    fig.savefig(
+        buf, format="png", dpi=150, bbox_inches="tight", facecolor=fig.get_facecolor()
+    )
     buf.seek(0)
     data = buf.read()
     buf.close()
@@ -300,9 +321,10 @@ def _fig_to_bytes(fig) -> bytes:
 def generate_trade_result_chart(trade_info: dict) -> str:
     """매매 결과를 시각적 차트로 생성"""
     import matplotlib
+
     matplotlib.use("Agg")
-    import matplotlib.pyplot as plt
     import matplotlib.patches as mpatches
+    import matplotlib.pyplot as plt
 
     plt.rcParams["font.family"] = "Malgun Gothic"
     plt.rcParams["axes.unicode_minus"] = False
@@ -326,7 +348,9 @@ def generate_trade_result_chart(trade_info: dict) -> str:
     text_color = "#e8e8e8"
     accent = buy_color if side == "buy" else sell_color
 
-    fig, axes = plt.subplots(1, 2, figsize=(14, 6), gridspec_kw={"width_ratios": [1.2, 1]})
+    fig, axes = plt.subplots(
+        1, 2, figsize=(14, 6), gridspec_kw={"width_ratios": [1.2, 1]}
+    )
     fig.set_facecolor(bg_color)
 
     # ── 왼쪽: 매매 정보 카드 ──
@@ -339,10 +363,25 @@ def generate_trade_result_chart(trade_info: dict) -> str:
     # 헤더
     mode_tag = "[모의매매]" if dry_run else "[실전매매]"
     side_kr = "매수" if side == "buy" else "매도"
-    ax1.text(5, 9.3, f"JARVIS {side_kr} 리포트", fontsize=20, fontweight="bold",
-             color=accent, ha="center", va="center")
-    ax1.text(5, 8.6, f"{mode_tag}  |  {timestamp}", fontsize=11,
-             color="#888", ha="center", va="center")
+    ax1.text(
+        5,
+        9.3,
+        f"JARVIS {side_kr} 리포트",
+        fontsize=20,
+        fontweight="bold",
+        color=accent,
+        ha="center",
+        va="center",
+    )
+    ax1.text(
+        5,
+        8.6,
+        f"{mode_tag}  |  {timestamp}",
+        fontsize=11,
+        color="#888",
+        ha="center",
+        va="center",
+    )
 
     # 구분선
     ax1.plot([1, 9], [8.1, 8.1], color=accent, linewidth=2, alpha=0.5)
@@ -361,8 +400,16 @@ def generate_trade_result_chart(trade_info: dict) -> str:
     y = 7.3
     for label, value in info_items:
         ax1.text(1.5, y, label, fontsize=13, color="#999", va="center")
-        ax1.text(8.5, y, value, fontsize=13, color=text_color, ha="right", va="center",
-                 fontweight="bold")
+        ax1.text(
+            8.5,
+            y,
+            value,
+            fontsize=13,
+            color=text_color,
+            ha="right",
+            va="center",
+            fontweight="bold",
+        )
         y -= 0.9
 
     # 스코어 표시 (있으면)
@@ -370,8 +417,16 @@ def generate_trade_result_chart(trade_info: dict) -> str:
         y -= 0.3
         score_color = "#4caf50" if score > 0 else "#f44336" if score < 0 else "#999"
         ax1.text(1.5, y, "AI 스코어", fontsize=13, color="#999", va="center")
-        ax1.text(8.5, y, f"{score:+d} / 100", fontsize=15, color=score_color,
-                 ha="right", va="center", fontweight="bold")
+        ax1.text(
+            8.5,
+            y,
+            f"{score:+d} / 100",
+            fontsize=15,
+            color=score_color,
+            ha="right",
+            va="center",
+            fontweight="bold",
+        )
 
     # ── 오른쪽: 스코어 게이지 + 판단 근거 ──
     ax2 = axes[1]
@@ -380,8 +435,16 @@ def generate_trade_result_chart(trade_info: dict) -> str:
     ax2.set_ylim(0, 10)
     ax2.axis("off")
 
-    ax2.text(5, 9.3, "AI 분석 근거", fontsize=16, fontweight="bold",
-             color=text_color, ha="center", va="center")
+    ax2.text(
+        5,
+        9.3,
+        "AI 분석 근거",
+        fontsize=16,
+        fontweight="bold",
+        color=text_color,
+        ha="center",
+        va="center",
+    )
     ax2.plot([1, 9], [8.7, 8.7], color="#444", linewidth=1)
 
     if reasons:
@@ -397,8 +460,9 @@ def generate_trade_result_chart(trade_info: dict) -> str:
             ax2.text(1.8, y, reason, fontsize=10, color=text_color, va="center")
             y -= 0.7
     else:
-        ax2.text(5, 5, "분석 근거 없음", fontsize=12, color="#666",
-                 ha="center", va="center")
+        ax2.text(
+            5, 5, "분석 근거 없음", fontsize=12, color="#666", ha="center", va="center"
+        )
 
     # 스코어 바 (하단)
     bar_y = 1.0
@@ -406,9 +470,22 @@ def generate_trade_result_chart(trade_info: dict) -> str:
     # 스코어에 따른 바 위치 (0~8 범위에 매핑, -100~+100)
     bar_pos = 5 + (score / 100) * 4  # 1~9 범위
     bar_color = "#4caf50" if score >= 30 else "#f44336" if score <= -30 else "#ff9800"
-    ax2.plot([5, bar_pos], [bar_y, bar_y], color=bar_color, linewidth=8, solid_capstyle="round")
-    ax2.text(bar_pos, bar_y + 0.5, f"{score:+d}", fontsize=12, fontweight="bold",
-             color=bar_color, ha="center")
+    ax2.plot(
+        [5, bar_pos],
+        [bar_y, bar_y],
+        color=bar_color,
+        linewidth=8,
+        solid_capstyle="round",
+    )
+    ax2.text(
+        bar_pos,
+        bar_y + 0.5,
+        f"{score:+d}",
+        fontsize=12,
+        fontweight="bold",
+        color=bar_color,
+        ha="center",
+    )
     ax2.text(1, bar_y - 0.5, "-100", fontsize=8, color="#666", ha="center")
     ax2.text(9, bar_y - 0.5, "+100", fontsize=8, color="#666", ha="center")
     ax2.text(5, bar_y - 0.5, "0", fontsize=8, color="#666", ha="center")
@@ -422,6 +499,7 @@ def generate_trade_result_chart(trade_info: dict) -> str:
 def generate_portfolio_chart_image(balances: list, prices: dict) -> str:
     """포트폴리오 현황을 시각적 차트로 생성 (파이 + 바)"""
     import matplotlib
+
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
 
@@ -467,17 +545,35 @@ def generate_portfolio_chart_image(balances: list, prices: dict) -> str:
 
     # ── 왼쪽: 파이차트 ──
     ax1.set_facecolor(card_color)
-    colors = ["#00d2ff", "#4caf50", "#ff9800", "#f44336", "#9c27b0",
-              "#00bcd4", "#ffeb3b", "#795548", "#607d8b", "#e91e63"]
+    colors = [
+        "#00d2ff",
+        "#4caf50",
+        "#ff9800",
+        "#f44336",
+        "#9c27b0",
+        "#00bcd4",
+        "#ffeb3b",
+        "#795548",
+        "#607d8b",
+        "#e91e63",
+    ]
     wedges, texts, autotexts = ax1.pie(
-        values, labels=labels, autopct="%1.1f%%",
-        colors=colors[:len(values)], startangle=90,
-        textprops={"fontsize": 11, "color": text_color}
+        values,
+        labels=labels,
+        autopct="%1.1f%%",
+        colors=colors[: len(values)],
+        startangle=90,
+        textprops={"fontsize": 11, "color": text_color},
     )
     for at in autotexts:
         at.set_color(text_color)
-    ax1.set_title(f"보유 비중  |  총 {total_krw:,.0f}원",
-                  fontsize=14, fontweight="bold", color=text_color, pad=15)
+    ax1.set_title(
+        f"보유 비중  |  총 {total_krw:,.0f}원",
+        fontsize=14,
+        fontweight="bold",
+        color=text_color,
+        pad=15,
+    )
 
     # ── 오른쪽: 수익률 바 차트 ──
     ax2.set_facecolor(card_color)
@@ -491,14 +587,30 @@ def generate_portfolio_chart_image(balances: list, prices: dict) -> str:
         ax2.tick_params(colors=text_color)
         for bar, pnl in zip(bars, bar_pnl):
             sign = "+" if pnl >= 0 else ""
-            ax2.text(bar.get_width() + (0.5 if pnl >= 0 else -0.5), bar.get_y() + bar.get_height() / 2,
-                     f"{sign}{pnl:.1f}%", va="center",
-                     ha="left" if pnl >= 0 else "right",
-                     color=text_color, fontsize=11, fontweight="bold")
+            ax2.text(
+                bar.get_width() + (0.5 if pnl >= 0 else -0.5),
+                bar.get_y() + bar.get_height() / 2,
+                f"{sign}{pnl:.1f}%",
+                va="center",
+                ha="left" if pnl >= 0 else "right",
+                color=text_color,
+                fontsize=11,
+                fontweight="bold",
+            )
     else:
-        ax2.text(0.5, 0.5, "코인 보유 없음", transform=ax2.transAxes,
-                 ha="center", va="center", color="#666", fontsize=14)
-    ax2.set_title("종목별 수익률", fontsize=14, fontweight="bold", color=text_color, pad=15)
+        ax2.text(
+            0.5,
+            0.5,
+            "코인 보유 없음",
+            transform=ax2.transAxes,
+            ha="center",
+            va="center",
+            color="#666",
+            fontsize=14,
+        )
+    ax2.set_title(
+        "종목별 수익률", fontsize=14, fontweight="bold", color=text_color, pad=15
+    )
     ax2.spines["top"].set_visible(False)
     ax2.spines["right"].set_visible(False)
     ax2.spines["bottom"].set_color("#444")
@@ -513,6 +625,7 @@ def generate_portfolio_chart_image(balances: list, prices: dict) -> str:
 def generate_analysis_chart(analyses: list) -> str:
     """시장 분석 결과를 차트로 생성"""
     import matplotlib
+
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
     import numpy as np
@@ -534,12 +647,19 @@ def generate_analysis_chart(analyses: list) -> str:
 
     fig, (ax1, ax2, ax3) = plt.subplots(1, 3, figsize=(18, 6))
     fig.set_facecolor(bg_color)
-    fig.suptitle("JARVIS 시장 종합 분석", fontsize=18, fontweight="bold",
-                 color=text_color, y=0.98)
+    fig.suptitle(
+        "JARVIS 시장 종합 분석",
+        fontsize=18,
+        fontweight="bold",
+        color=text_color,
+        y=0.98,
+    )
 
     # ── 종합 스코어 ──
     ax1.set_facecolor(card_color)
-    colors = ["#4caf50" if s >= 30 else "#f44336" if s <= -30 else "#ff9800" for s in scores]
+    colors = [
+        "#4caf50" if s >= 30 else "#f44336" if s <= -30 else "#ff9800" for s in scores
+    ]
     bars = ax1.barh(coins, scores, color=colors, height=0.6)
     ax1.axvline(x=0, color="#666", linewidth=0.8)
     ax1.axvline(x=30, color="#4caf50", linewidth=0.5, linestyle="--", alpha=0.5)
@@ -552,13 +672,22 @@ def generate_analysis_chart(analyses: list) -> str:
     ax1.spines["bottom"].set_color("#444")
     ax1.spines["left"].set_color("#444")
     for bar, s in zip(bars, scores):
-        ax1.text(bar.get_width() + (2 if s >= 0 else -2), bar.get_y() + bar.get_height() / 2,
-                 f"{s:+d}", va="center", ha="left" if s >= 0 else "right",
-                 color=text_color, fontsize=10, fontweight="bold")
+        ax1.text(
+            bar.get_width() + (2 if s >= 0 else -2),
+            bar.get_y() + bar.get_height() / 2,
+            f"{s:+d}",
+            va="center",
+            ha="left" if s >= 0 else "right",
+            color=text_color,
+            fontsize=10,
+            fontweight="bold",
+        )
 
     # ── RSI ──
     ax2.set_facecolor(card_color)
-    rsi_colors = ["#f44336" if r > 70 else "#4caf50" if r < 30 else "#ff9800" for r in rsi_vals]
+    rsi_colors = [
+        "#f44336" if r > 70 else "#4caf50" if r < 30 else "#ff9800" for r in rsi_vals
+    ]
     ax2.barh(coins, rsi_vals, color=rsi_colors, height=0.6)
     ax2.axvline(x=30, color="#4caf50", linewidth=1, linestyle="--", alpha=0.7)
     ax2.axvline(x=70, color="#f44336", linewidth=1, linestyle="--", alpha=0.7)
@@ -584,10 +713,15 @@ def generate_analysis_chart(analyses: list) -> str:
     ax3.spines["left"].set_color("#444")
     for i, c in enumerate(changes):
         sign = "+" if c >= 0 else ""
-        ax3.text(c + (0.2 if c >= 0 else -0.2), i,
-                 f"{sign}{c:.1f}%", va="center",
-                 ha="left" if c >= 0 else "right",
-                 color=text_color, fontsize=10)
+        ax3.text(
+            c + (0.2 if c >= 0 else -0.2),
+            i,
+            f"{sign}{c:.1f}%",
+            va="center",
+            ha="left" if c >= 0 else "right",
+            color=text_color,
+            fontsize=10,
+        )
 
     plt.tight_layout(pad=2, rect=[0, 0, 1, 0.95])
     b64 = _fig_to_base64(fig)
@@ -599,11 +733,13 @@ def generate_analysis_chart(analyses: list) -> str:
 #  HTTP 핸들러
 # ═══════════════════════════════════════════════════
 
+
 async def handle_health(request):
     return web.json_response({"status": "ok", "service": "jarvis-crypto", "port": PORT})
 
 
 # ── 시세 ──
+
 
 async def handle_price(request):
     """GET /market/price/<symbol>"""
@@ -640,6 +776,7 @@ async def handle_prices(request):
 
 async def handle_top_movers(request):
     """GET /market/top-movers"""
+
     def _fetch_top_movers():
         tickers = client.get_tickers(fiat="KRW")
         prices_data = []
@@ -649,18 +786,20 @@ async def handle_top_movers(request):
                 prev = float(df["close"].iloc[-2])
                 cur = float(df["close"].iloc[-1])
                 chg = ((cur - prev) / prev * 100) if prev > 0 else 0
-                prices_data.append({"ticker": t, "price": cur, "change_pct": round(chg, 2)})
+                prices_data.append(
+                    {"ticker": t, "price": cur, "change_pct": round(chg, 2)}
+                )
         prices_data.sort(key=lambda x: x["change_pct"], reverse=True)
         return prices_data
 
     prices_data = await asyncio.to_thread(_fetch_top_movers)
-    return web.json_response({
-        "gainers": prices_data[:5],
-        "losers": prices_data[-5:][::-1]
-    })
+    return web.json_response(
+        {"gainers": prices_data[:5], "losers": prices_data[-5:][::-1]}
+    )
 
 
 # ── 잔고 ──
+
 
 async def handle_balance(request):
     """GET /portfolio/balance"""
@@ -669,8 +808,12 @@ async def handle_balance(request):
         if not balances:
             has_keys = bool(config.UPBIT_ACCESS_KEY and config.UPBIT_SECRET_KEY)
             if not has_keys:
-                return web.json_response({"error": "API 키 미설정. .env 파일을 확인하세요."}, status=500)
-            return web.json_response({"error": "잔고 조회 실패. API 키가 유효한지 확인하세요."}, status=500)
+                return web.json_response(
+                    {"error": "API 키 미설정. .env 파일을 확인하세요."}, status=500
+                )
+            return web.json_response(
+                {"error": "잔고 조회 실패. API 키가 유효한지 확인하세요."}, status=500
+            )
 
         assets = []
         total_krw = 0
@@ -689,34 +832,45 @@ async def handle_balance(request):
                 continue
             if currency == "KRW":
                 total_krw += balance
-                assets.append({"currency": "KRW", "balance": balance, "value_krw": balance})
+                assets.append(
+                    {"currency": "KRW", "balance": balance, "value_krw": balance}
+                )
             else:
                 tickers_for_price.append(normalize_ticker(currency))
                 try:
-                    avg_pay_price = float(b.get("avg_buy_price") or b.get("avg_buy_price_unit") or 0)
+                    avg_pay_price = float(
+                        b.get("avg_buy_price") or b.get("avg_buy_price_unit") or 0
+                    )
                 except (ValueError, TypeError):
                     avg_pay_price = 0
                 coin_data.append((currency, balance, avg_pay_price))
 
-        prices = (await asyncio.to_thread(client.get_prices, tickers_for_price)) if tickers_for_price else {}
+        prices = (
+            (await asyncio.to_thread(client.get_prices, tickers_for_price))
+            if tickers_for_price
+            else {}
+        )
         for currency, balance, avg_price in coin_data:
             ticker = normalize_ticker(currency)
             price = prices.get(ticker, 0)
             value = balance * price
             total_krw += value
             pnl_pct = ((price - avg_price) / avg_price * 100) if avg_price > 0 else 0
-            assets.append({
-                "currency": currency,
-                "balance": balance,
-                "price": price,
-                "avg_price": avg_price,
-                "value_krw": value,
-                "pnl_pct": round(pnl_pct, 2),
-            })
+            assets.append(
+                {
+                    "currency": currency,
+                    "balance": balance,
+                    "price": price,
+                    "avg_price": avg_price,
+                    "value_krw": value,
+                    "pnl_pct": round(pnl_pct, 2),
+                }
+            )
 
         return web.json_response({"total_krw": total_krw, "assets": assets})
     except Exception as e:
         import traceback
+
         logger.error(f"handle_balance error: {traceback.format_exc()}")
         return web.json_response({"error": str(e)}, status=500)
 
@@ -728,11 +882,13 @@ async def handle_summary(request):
         return web.json_response(summary)
     except Exception as e:
         import traceback
+
         logger.error(f"handle_summary error: {traceback.format_exc()}")
         return web.json_response({"error": str(e)}, status=500)
 
 
 # ── 매매 ──
+
 
 async def handle_trade(request):
     """POST /trade/buy or /trade/sell"""
@@ -751,13 +907,19 @@ async def handle_trade(request):
     if side == "buy":
         amount_krw = float(data.get("amount_krw", 0))
         if amount_krw <= 0:
-            return web.json_response({"error": "주문 금액은 0보다 커야 합니다."}, status=400)
+            return web.json_response(
+                {"error": "주문 금액은 0보다 커야 합니다."}, status=400
+            )
         if amount_krw < config.MIN_ORDER_AMOUNT:
-            return web.json_response({"error": f"최소 주문 금액: {config.MIN_ORDER_AMOUNT}원"}, status=400)
+            return web.json_response(
+                {"error": f"최소 주문 금액: {config.MIN_ORDER_AMOUNT}원"}, status=400
+            )
 
         safe, safe_msg = trade_safety.check_trade(amount_krw)
         if not safe:
-            return web.json_response({"error": f"안전 가드 차단: {safe_msg}"}, status=403)
+            return web.json_response(
+                {"error": f"안전 가드 차단: {safe_msg}"}, status=403
+            )
 
         volume = amount_krw / current_price if current_price > 0 else 0
         result = await asyncio.to_thread(client.buy_market_order, market, amount_krw)
@@ -767,30 +929,43 @@ async def handle_trade(request):
             analysis = await asyncio.to_thread(analyzer.analyze_coin, market)
 
             trade_info = {
-                "side": "buy", "ticker": market,
-                "amount_krw": amount_krw, "price": current_price,
-                "volume": volume, "dry_run": config.DRY_RUN,
+                "side": "buy",
+                "ticker": market,
+                "amount_krw": amount_krw,
+                "price": current_price,
+                "volume": volume,
+                "dry_run": config.DRY_RUN,
                 "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M"),
                 "score": analysis.score,
                 "reasons": analysis.reasons,
             }
-            tracker.log_trade("buy", market, amount_krw, current_price, "디스코드 매수", result)
+            tracker.log_trade(
+                "buy", market, amount_krw, current_price, "디스코드 매수", result
+            )
 
             # Discord 알림 (#176)
-            await send_discord_notification("매수 완료", f"{market} {amount_krw:,.0f}원", 0x4CAF50)
+            await send_discord_notification(
+                "매수 완료", f"{market} {amount_krw:,.0f}원", 0x4CAF50
+            )
 
             # 차트 생성
             chart_b64 = generate_trade_result_chart(trade_info)
 
-            return web.json_response({
-                "trade_id": trade_id, "market": market, "side": "buy",
-                "amount_krw": amount_krw, "price": current_price,
-                "volume": volume, "dry_run": config.DRY_RUN,
-                "score": analysis.score,
-                "recommendation": analysis.recommendation,
-                "reasons": analysis.reasons[:5],
-                "chart_base64": chart_b64,
-            })
+            return web.json_response(
+                {
+                    "trade_id": trade_id,
+                    "market": market,
+                    "side": "buy",
+                    "amount_krw": amount_krw,
+                    "price": current_price,
+                    "volume": volume,
+                    "dry_run": config.DRY_RUN,
+                    "score": analysis.score,
+                    "recommendation": analysis.recommendation,
+                    "reasons": analysis.reasons[:5],
+                    "chart_base64": chart_b64,
+                }
+            )
         return web.json_response({"error": "매수 실패"}, status=500)
 
     elif side == "sell":
@@ -809,7 +984,9 @@ async def handle_trade(request):
         value_krw = volume * current_price
         safe, safe_msg = trade_safety.check_trade(value_krw)
         if not safe:
-            return web.json_response({"error": f"안전 가드 차단: {safe_msg}"}, status=403)
+            return web.json_response(
+                {"error": f"안전 가드 차단: {safe_msg}"}, status=403
+            )
 
         result = await asyncio.to_thread(client.sell_market_order, market, volume)
         if result:
@@ -817,25 +994,36 @@ async def handle_trade(request):
             analysis = await asyncio.to_thread(analyzer.analyze_coin, market)
 
             trade_info = {
-                "side": "sell", "ticker": market,
-                "amount_krw": value_krw, "price": current_price,
-                "volume": volume, "dry_run": config.DRY_RUN,
+                "side": "sell",
+                "ticker": market,
+                "amount_krw": value_krw,
+                "price": current_price,
+                "volume": volume,
+                "dry_run": config.DRY_RUN,
                 "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M"),
                 "score": analysis.score,
                 "reasons": analysis.reasons,
             }
-            tracker.log_trade("sell", market, value_krw, current_price, "디스코드 매도", result)
+            tracker.log_trade(
+                "sell", market, value_krw, current_price, "디스코드 매도", result
+            )
 
             chart_b64 = generate_trade_result_chart(trade_info)
 
-            return web.json_response({
-                "trade_id": trade_id, "market": market, "side": "sell",
-                "volume": volume, "price": current_price,
-                "value_krw": value_krw, "dry_run": config.DRY_RUN,
-                "score": analysis.score,
-                "reasons": analysis.reasons[:5],
-                "chart_base64": chart_b64,
-            })
+            return web.json_response(
+                {
+                    "trade_id": trade_id,
+                    "market": market,
+                    "side": "sell",
+                    "volume": volume,
+                    "price": current_price,
+                    "value_krw": value_krw,
+                    "dry_run": config.DRY_RUN,
+                    "score": analysis.score,
+                    "reasons": analysis.reasons[:5],
+                    "chart_base64": chart_b64,
+                }
+            )
         return web.json_response({"error": "매도 실패"}, status=500)
 
     return web.json_response({"error": f"Unknown side: {side}"}, status=400)
@@ -848,6 +1036,7 @@ async def handle_trade_confirm(request):
 
 
 # ── 자동매매 ──
+
 
 async def handle_auto_start(request):
     """POST /auto/start - 자동매매 시작"""
@@ -871,39 +1060,45 @@ async def handle_auto_start(request):
 
     msg = trader.start()
     st = trader.get_status()
-    return web.json_response({
-        "message": msg,
-        "status": "started" if trader.is_running else "error",
-        "dry_run": st["dry_run"],
-        "config": st,
-    })
+    return web.json_response(
+        {
+            "message": msg,
+            "status": "started" if trader.is_running else "error",
+            "dry_run": st["dry_run"],
+            "config": st,
+        }
+    )
 
 
 async def handle_auto_stop(request):
     """POST /auto/stop - 자동매매 중지"""
     msg = trader.stop()
     st = trader.get_status()
-    return web.json_response({
-        "message": msg,
-        "status": "stopped",
-        "dry_run": st["dry_run"],
-        "config": st,
-    })
+    return web.json_response(
+        {
+            "message": msg,
+            "status": "stopped",
+            "dry_run": st["dry_run"],
+            "config": st,
+        }
+    )
 
 
 async def handle_auto_status(request):
     """GET /auto/status - 자동매매 상태 조회"""
     st = trader.get_status()
-    return web.json_response({
-        "is_running": st["is_running"],
-        "dry_run": st["dry_run"],
-        "cycle_count": st["cycle_count"],
-        "last_cycle": st["last_cycle"],
-        "last_actions": st["last_actions"],
-        "last_analysis": st["last_analysis"],
-        "recent_trades": st["recent_trades"],
-        "config": st
-    })
+    return web.json_response(
+        {
+            "is_running": st["is_running"],
+            "dry_run": st["dry_run"],
+            "cycle_count": st["cycle_count"],
+            "last_cycle": st["last_cycle"],
+            "last_actions": st["last_actions"],
+            "last_analysis": st["last_analysis"],
+            "recent_trades": st["recent_trades"],
+            "config": st,
+        }
+    )
 
 
 async def handle_auto_cycle(request):
@@ -920,6 +1115,7 @@ async def handle_trade_history(request):
 
 
 # ── 새 엔드포인트 (#29-#42) ──
+
 
 async def handle_kimchi_premium(request):
     """GET /market/premium/<symbol> - 김치 프리미엄"""
@@ -980,7 +1176,7 @@ async def handle_export_csv(request):
         return web.Response(
             body=content.encode("utf-8-sig"),
             content_type="text/csv",
-            headers={"Content-Disposition": f"attachment; filename=trades.csv"}
+            headers={"Content-Disposition": f"attachment; filename=trades.csv"},
         )
     except Exception as e:
         return web.json_response({"error": str(e)}, status=500)
@@ -1040,14 +1236,18 @@ async def handle_trailing_stop(request):
 
 # ── 차트 전용 엔드포인트 ──
 
+
 async def handle_chart_portfolio(request):
     """GET /chart/portfolio - 포트폴리오 차트 이미지 생성"""
     balances = await asyncio.to_thread(client.get_balances)
     if not balances:
         return web.json_response({"error": "잔고 조회 실패"}, status=500)
 
-    tickers = [normalize_ticker(b['currency']) for b in balances
-               if b.get("currency") != "KRW" and float(b.get("balance", 0)) > 0]
+    tickers = [
+        normalize_ticker(b["currency"])
+        for b in balances
+        if b.get("currency") != "KRW" and float(b.get("balance", 0)) > 0
+    ]
     prices = await asyncio.to_thread(client.get_prices, tickers) if tickers else {}
 
     chart_b64 = generate_portfolio_chart_image(balances, prices)
@@ -1064,8 +1264,11 @@ async def handle_chart_portfolio_png(request):
     if not balances:
         return web.Response(text="잔고 조회 실패", status=500)
 
-    tickers = [normalize_ticker(b['currency']) for b in balances
-               if b.get("currency") != "KRW" and float(b.get("balance", 0)) > 0]
+    tickers = [
+        normalize_ticker(b["currency"])
+        for b in balances
+        if b.get("currency") != "KRW" and float(b.get("balance", 0)) > 0
+    ]
     prices = await asyncio.to_thread(client.get_prices, tickers) if tickers else {}
 
     chart_b64 = generate_portfolio_chart_image(balances, prices)
@@ -1091,20 +1294,32 @@ async def handle_chart_analysis(request):
     summary = []
     for a in analyses:
         coin = a.ticker.replace("KRW-", "")
-        rec_kr = {"STRONG_BUY": "강력매수", "BUY": "매수", "HOLD": "관망",
-                  "SELL": "매도", "STRONG_SELL": "강력매도"}.get(a.recommendation, "관망")
-        summary.append({
-            "coin": coin, "ticker": a.ticker,
-            "score": a.score, "recommendation": rec_kr,
-            "rsi": a.rsi_14, "change_24h": a.price_change_24h_pct,
-            "price": a.current_price,
-        })
+        rec_kr = {
+            "STRONG_BUY": "강력매수",
+            "BUY": "매수",
+            "HOLD": "관망",
+            "SELL": "매도",
+            "STRONG_SELL": "강력매도",
+        }.get(a.recommendation, "관망")
+        summary.append(
+            {
+                "coin": coin,
+                "ticker": a.ticker,
+                "score": a.score,
+                "recommendation": rec_kr,
+                "rsi": a.rsi_14,
+                "change_24h": a.price_change_24h_pct,
+                "price": a.current_price,
+            }
+        )
 
-    return web.json_response({
-        "chart_base64": chart_b64,
-        "type": "analysis",
-        "summary": summary,
-    })
+    return web.json_response(
+        {
+            "chart_base64": chart_b64,
+            "type": "analysis",
+            "summary": summary,
+        }
+    )
 
 
 async def handle_chart_analysis_png(request):
@@ -1134,10 +1349,12 @@ async def handle_get_log_level(request):
     """GET /admin/log-level - 현재 로그 레벨 반환"""
     current_level = logging.getLogger().getEffectiveLevel()
     level_name = logging.getLevelName(current_level)
-    return web.json_response({
-        "level": level_name,
-        "available_levels": sorted(VALID_LOG_LEVELS),
-    })
+    return web.json_response(
+        {
+            "level": level_name,
+            "available_levels": sorted(VALID_LOG_LEVELS),
+        }
+    )
 
 
 async def handle_set_log_level(request):
@@ -1164,10 +1381,13 @@ async def handle_set_log_level(request):
     ALLOWED_ADMIN_LEVELS = {"DEBUG", "INFO", "WARNING", "ERROR"}
     level = data.get("level", "").upper()
     if level not in ALLOWED_ADMIN_LEVELS:
-        return web.json_response({
-            "error": f"유효하지 않은 로그 레벨: {level}",
-            "available_levels": sorted(ALLOWED_ADMIN_LEVELS),
-        }, status=400)
+        return web.json_response(
+            {
+                "error": f"유효하지 않은 로그 레벨: {level}",
+                "available_levels": sorted(ALLOWED_ADMIN_LEVELS),
+            },
+            status=400,
+        )
 
     previous_level = logging.getLevelName(logging.getLogger().getEffectiveLevel())
     logging.getLogger().setLevel(getattr(logging, level))
@@ -1177,11 +1397,13 @@ async def handle_set_log_level(request):
         child_logger.setLevel(getattr(logging, level))
 
     logger.info(f"로그 레벨 변경: {previous_level} -> {level}")
-    return web.json_response({
-        "message": f"로그 레벨이 {level}(으)로 변경되었습니다.",
-        "previous_level": previous_level,
-        "current_level": level,
-    })
+    return web.json_response(
+        {
+            "message": f"로그 레벨이 {level}(으)로 변경되었습니다.",
+            "previous_level": previous_level,
+            "current_level": level,
+        }
+    )
 
 
 # ═══════════════════════════════════════════════════
@@ -1189,6 +1411,7 @@ async def handle_set_log_level(request):
 # ═══════════════════════════════════════════════════
 
 # ── #70: 캔들 차트 엔드포인트 ──
+
 
 async def handle_candle_chart(request):
     """GET /chart/candle/{symbol}?count=100 - pyupbit OHLCV 캔들 데이터를 반환한다."""
@@ -1206,26 +1429,31 @@ async def handle_candle_chart(request):
 
         candles = []
         for idx, row in df.iterrows():
-            candles.append({
-                "timestamp": str(idx),
-                "open": float(row["open"]),
-                "high": float(row["high"]),
-                "low": float(row["low"]),
-                "close": float(row["close"]),
-                "volume": float(row["volume"]),
-            })
+            candles.append(
+                {
+                    "timestamp": str(idx),
+                    "open": float(row["open"]),
+                    "high": float(row["high"]),
+                    "low": float(row["low"]),
+                    "close": float(row["close"]),
+                    "volume": float(row["volume"]),
+                }
+            )
 
-        return web.json_response({
-            "ticker": ticker,
-            "interval": interval,
-            "count": len(candles),
-            "candles": candles,
-        })
+        return web.json_response(
+            {
+                "ticker": ticker,
+                "interval": interval,
+                "count": len(candles),
+                "candles": candles,
+            }
+        )
     except Exception as e:
         return web.json_response({"error": str(e)}, status=500)
 
 
 # ── #71: RSI 차트 데이터 ──
+
 
 async def handle_rsi_chart(request):
     """GET /chart/rsi/{symbol}?period=14 - RSI 값 시계열을 반환한다."""
@@ -1257,79 +1485,202 @@ async def handle_rsi_chart(request):
 
         rsi_data = []
         for idx, val in rsi.dropna().items():
-            rsi_data.append({
-                "timestamp": str(idx),
-                "rsi": round(float(val), 2),
-                "close": float(close.loc[idx]),
-            })
+            rsi_data.append(
+                {
+                    "timestamp": str(idx),
+                    "rsi": round(float(val), 2),
+                    "close": float(close.loc[idx]),
+                }
+            )
 
         current_rsi = rsi_data[-1]["rsi"] if rsi_data else None
-        signal = "과매수" if current_rsi and current_rsi > 70 else \
-                 "과매도" if current_rsi and current_rsi < 30 else "중립"
+        signal = (
+            "과매수"
+            if current_rsi and current_rsi > 70
+            else "과매도" if current_rsi and current_rsi < 30 else "중립"
+        )
 
-        return web.json_response({
-            "ticker": ticker,
-            "period": period,
-            "current_rsi": current_rsi,
-            "signal": signal,
-            "count": len(rsi_data),
-            "rsi_series": rsi_data,
-        })
+        return web.json_response(
+            {
+                "ticker": ticker,
+                "period": period,
+                "current_rsi": current_rsi,
+                "signal": signal,
+                "count": len(rsi_data),
+                "rsi_series": rsi_data,
+            }
+        )
     except Exception as e:
         return web.json_response({"error": str(e)}, status=500)
 
 
 # ── #72: API 문서 엔드포인트 ──
 
+
 async def handle_api_docs(request):
     """GET /api-docs - 모든 엔드포인트 목록과 설명을 JSON으로 반환한다."""
     docs = [
-        {"method": "GET",  "path": "/health",                    "description": "서비스 헬스체크"},
-        {"method": "GET",  "path": "/market/price/{symbol}",     "description": "개별 코인 현재가 조회"},
-        {"method": "GET",  "path": "/market/prices",             "description": "전체 코인 시세 목록 (?limit=20)"},
-        {"method": "GET",  "path": "/market/top-movers",         "description": "상승/하락 상위 5종목"},
-        {"method": "GET",  "path": "/market/premium/{symbol}",   "description": "김치 프리미엄 조회"},
-        {"method": "GET",  "path": "/market/fear-greed",         "description": "공포/탐욕 지수"},
-        {"method": "GET",  "path": "/market/summary",            "description": "시장 전체 요약"},
-        {"method": "GET",  "path": "/market/spread/{symbol}",    "description": "스프레드 분석"},
-        {"method": "GET",  "path": "/portfolio/balance",         "description": "보유 자산 잔고 조회"},
-        {"method": "GET",  "path": "/portfolio/summary",         "description": "포트폴리오 요약"},
-        {"method": "GET",  "path": "/portfolio/statistics",      "description": "거래 통계 (?period=all)"},
-        {"method": "GET",  "path": "/portfolio/export-csv",      "description": "거래 내역 CSV 다운로드"},
-        {"method": "GET",  "path": "/portfolio/returns",         "description": "기간별 수익률 (?period=7d)"},
-        {"method": "POST", "path": "/trade/{side}",              "description": "매수/매도 주문 (side=buy|sell)"},
-        {"method": "POST", "path": "/trade/confirm/{trade_id}",  "description": "매매 확인"},
-        {"method": "GET",  "path": "/trade/history",             "description": "거래 내역 (?limit=10)"},
-        {"method": "POST", "path": "/trade/queue",               "description": "거래 큐에 주문 추가"},
-        {"method": "POST", "path": "/auto/start",                "description": "자동매매 시작"},
-        {"method": "POST", "path": "/auto/stop",                 "description": "자동매매 중지"},
-        {"method": "GET",  "path": "/auto/status",               "description": "자동매매 상태 조회"},
-        {"method": "POST", "path": "/auto/cycle",                "description": "자동매매 1회 수동 사이클"},
-        {"method": "POST", "path": "/auto/dca",                  "description": "DCA(분할매수) 시작"},
-        {"method": "POST", "path": "/auto/trailing-stop",        "description": "트레일링 스탑 설정"},
-        {"method": "POST", "path": "/alert/set",                 "description": "가격 알림 설정"},
-        {"method": "GET",  "path": "/alert/list",                "description": "활성 알림 목록"},
-        {"method": "GET",  "path": "/chart/portfolio",           "description": "포트폴리오 차트 (base64 JSON)"},
-        {"method": "GET",  "path": "/chart/portfolio.png",       "description": "포트폴리오 차트 PNG 이미지"},
-        {"method": "GET",  "path": "/chart/analysis",            "description": "시장 분석 차트 (base64 JSON)"},
-        {"method": "GET",  "path": "/chart/analysis.png",        "description": "시장 분석 차트 PNG 이미지"},
-        {"method": "GET",  "path": "/chart/candle/{symbol}",     "description": "캔들 OHLCV 데이터 (?count=100&interval=day)"},
-        {"method": "GET",  "path": "/chart/rsi/{symbol}",        "description": "RSI 시계열 데이터 (?period=14&count=200)"},
-        {"method": "GET",  "path": "/stream/prices",             "description": "SSE 실시간 시세 스트림"},
-        {"method": "GET",  "path": "/settings/chart-theme",      "description": "차트 테마 설정 조회"},
-        {"method": "PUT",  "path": "/settings/chart-theme",      "description": "차트 테마 설정 변경"},
-        {"method": "GET",  "path": "/api-docs",                  "description": "API 문서 (이 엔드포인트)"},
-        {"method": "GET",  "path": "/admin/log-level",           "description": "로그 레벨 변경 (?level=INFO)"},
+        {"method": "GET", "path": "/health", "description": "서비스 헬스체크"},
+        {
+            "method": "GET",
+            "path": "/market/price/{symbol}",
+            "description": "개별 코인 현재가 조회",
+        },
+        {
+            "method": "GET",
+            "path": "/market/prices",
+            "description": "전체 코인 시세 목록 (?limit=20)",
+        },
+        {
+            "method": "GET",
+            "path": "/market/top-movers",
+            "description": "상승/하락 상위 5종목",
+        },
+        {
+            "method": "GET",
+            "path": "/market/premium/{symbol}",
+            "description": "김치 프리미엄 조회",
+        },
+        {
+            "method": "GET",
+            "path": "/market/fear-greed",
+            "description": "공포/탐욕 지수",
+        },
+        {"method": "GET", "path": "/market/summary", "description": "시장 전체 요약"},
+        {
+            "method": "GET",
+            "path": "/market/spread/{symbol}",
+            "description": "스프레드 분석",
+        },
+        {
+            "method": "GET",
+            "path": "/portfolio/balance",
+            "description": "보유 자산 잔고 조회",
+        },
+        {
+            "method": "GET",
+            "path": "/portfolio/summary",
+            "description": "포트폴리오 요약",
+        },
+        {
+            "method": "GET",
+            "path": "/portfolio/statistics",
+            "description": "거래 통계 (?period=all)",
+        },
+        {
+            "method": "GET",
+            "path": "/portfolio/export-csv",
+            "description": "거래 내역 CSV 다운로드",
+        },
+        {
+            "method": "GET",
+            "path": "/portfolio/returns",
+            "description": "기간별 수익률 (?period=7d)",
+        },
+        {
+            "method": "POST",
+            "path": "/trade/{side}",
+            "description": "매수/매도 주문 (side=buy|sell)",
+        },
+        {
+            "method": "POST",
+            "path": "/trade/confirm/{trade_id}",
+            "description": "매매 확인",
+        },
+        {
+            "method": "GET",
+            "path": "/trade/history",
+            "description": "거래 내역 (?limit=10)",
+        },
+        {
+            "method": "POST",
+            "path": "/trade/queue",
+            "description": "거래 큐에 주문 추가",
+        },
+        {"method": "POST", "path": "/auto/start", "description": "자동매매 시작"},
+        {"method": "POST", "path": "/auto/stop", "description": "자동매매 중지"},
+        {"method": "GET", "path": "/auto/status", "description": "자동매매 상태 조회"},
+        {
+            "method": "POST",
+            "path": "/auto/cycle",
+            "description": "자동매매 1회 수동 사이클",
+        },
+        {"method": "POST", "path": "/auto/dca", "description": "DCA(분할매수) 시작"},
+        {
+            "method": "POST",
+            "path": "/auto/trailing-stop",
+            "description": "트레일링 스탑 설정",
+        },
+        {"method": "POST", "path": "/alert/set", "description": "가격 알림 설정"},
+        {"method": "GET", "path": "/alert/list", "description": "활성 알림 목록"},
+        {
+            "method": "GET",
+            "path": "/chart/portfolio",
+            "description": "포트폴리오 차트 (base64 JSON)",
+        },
+        {
+            "method": "GET",
+            "path": "/chart/portfolio.png",
+            "description": "포트폴리오 차트 PNG 이미지",
+        },
+        {
+            "method": "GET",
+            "path": "/chart/analysis",
+            "description": "시장 분석 차트 (base64 JSON)",
+        },
+        {
+            "method": "GET",
+            "path": "/chart/analysis.png",
+            "description": "시장 분석 차트 PNG 이미지",
+        },
+        {
+            "method": "GET",
+            "path": "/chart/candle/{symbol}",
+            "description": "캔들 OHLCV 데이터 (?count=100&interval=day)",
+        },
+        {
+            "method": "GET",
+            "path": "/chart/rsi/{symbol}",
+            "description": "RSI 시계열 데이터 (?period=14&count=200)",
+        },
+        {
+            "method": "GET",
+            "path": "/stream/prices",
+            "description": "SSE 실시간 시세 스트림",
+        },
+        {
+            "method": "GET",
+            "path": "/settings/chart-theme",
+            "description": "차트 테마 설정 조회",
+        },
+        {
+            "method": "PUT",
+            "path": "/settings/chart-theme",
+            "description": "차트 테마 설정 변경",
+        },
+        {
+            "method": "GET",
+            "path": "/api-docs",
+            "description": "API 문서 (이 엔드포인트)",
+        },
+        {
+            "method": "GET",
+            "path": "/admin/log-level",
+            "description": "로그 레벨 변경 (?level=INFO)",
+        },
     ]
-    return web.json_response({
-        "service": "jarvis-crypto",
-        "version": "2.0",
-        "total_endpoints": len(docs),
-        "endpoints": docs,
-    })
+    return web.json_response(
+        {
+            "service": "jarvis-crypto",
+            "version": "2.0",
+            "total_endpoints": len(docs),
+            "endpoints": docs,
+        }
+    )
 
 
 # ── #75: SSE 실시간 가격 스트림 ──
+
 
 async def handle_sse_prices(request):
     """GET /stream/prices - Server-Sent Events로 실시간 시세를 스트리밍한다.
@@ -1375,6 +1726,7 @@ async def handle_sse_prices(request):
 
 
 # ── #76: 거래 큐 ──
+
 
 async def _trade_queue_worker():
     """거래 큐 워커 - 큐에서 주문을 꺼내 순차적으로 실행한다."""
@@ -1457,7 +1809,9 @@ async def handle_trade_queue(request):
 
     side = data.get("side", "").lower()
     if side not in ("buy", "sell"):
-        return web.json_response({"error": "side는 buy 또는 sell이어야 합니다."}, status=400)
+        return web.json_response(
+            {"error": "side는 buy 또는 sell이어야 합니다."}, status=400
+        )
 
     market = data.get("market", "").upper()
     if not market:
@@ -1476,15 +1830,18 @@ async def handle_trade_queue(request):
     await _trade_queue.put(order)
     queue_size = _trade_queue.qsize()
 
-    return web.json_response({
-        "order_id": order_id,
-        "status": "queued",
-        "position": queue_size,
-        "message": f"주문이 큐에 등록되었습니다. (대기: {queue_size}건)",
-    })
+    return web.json_response(
+        {
+            "order_id": order_id,
+            "status": "queued",
+            "position": queue_size,
+            "message": f"주문이 큐에 등록되었습니다. (대기: {queue_size}건)",
+        }
+    )
 
 
 # ── #77: 차트 테마 설정 ──
+
 
 async def handle_get_chart_theme(request):
     """GET /settings/chart-theme - 현재 차트 테마 설정을 반환한다."""
@@ -1517,13 +1874,16 @@ async def handle_put_chart_theme(request):
         if key in data:
             _chart_theme[key] = str(data[key])
 
-    return web.json_response({
-        "message": "테마 설정이 업데이트되었습니다.",
-        "theme": _chart_theme,
-    })
+    return web.json_response(
+        {
+            "message": "테마 설정이 업데이트되었습니다.",
+            "theme": _chart_theme,
+        }
+    )
 
 
 # ── #78: 기간별 수익률 ──
+
 
 async def handle_portfolio_returns(request):
     """GET /portfolio/returns?period=7d - 일간/주간/월간/연간 수익률을 반환한다.
@@ -1581,8 +1941,10 @@ async def handle_portfolio_returns(request):
                 coin_data_list.append((currency, balance, avg_price))
 
         prices = (
-            await asyncio.to_thread(client.get_prices, tickers_for_price)
-        ) if tickers_for_price else {}
+            (await asyncio.to_thread(client.get_prices, tickers_for_price))
+            if tickers_for_price
+            else {}
+        )
 
         for currency, balance, avg_price in coin_data_list:
             ticker = normalize_ticker(currency)
@@ -1593,9 +1955,7 @@ async def handle_portfolio_returns(request):
             total_invested += invested_value
 
             pnl_pct = (
-                ((cur_price - avg_price) / avg_price * 100)
-                if avg_price > 0
-                else 0
+                ((cur_price - avg_price) / avg_price * 100) if avg_price > 0 else 0
             )
 
             # 기간 내 가격 변동 (OHLCV 기반)
@@ -1611,17 +1971,21 @@ async def handle_portfolio_returns(request):
                             (cur_price - past_price) / past_price * 100, 2
                         )
                 except Exception as e:
-                    logger.debug(f"Failed to fetch OHLCV for period return ({ticker}): {e}")
+                    logger.debug(
+                        f"Failed to fetch OHLCV for period return ({ticker}): {e}"
+                    )
                     period_return = None
 
-            coin_returns.append({
-                "currency": currency,
-                "current_price": cur_price,
-                "avg_buy_price": avg_price,
-                "total_return_pct": round(pnl_pct, 2),
-                "period_return_pct": period_return,
-                "value_krw": round(cur_value, 0),
-            })
+            coin_returns.append(
+                {
+                    "currency": currency,
+                    "current_price": cur_price,
+                    "avg_buy_price": avg_price,
+                    "total_return_pct": round(pnl_pct, 2),
+                    "period_return_pct": period_return,
+                    "value_krw": round(cur_value, 0),
+                }
+            )
 
         overall_return = (
             ((total_current - total_invested) / total_invested * 100)
@@ -1629,17 +1993,20 @@ async def handle_portfolio_returns(request):
             else 0
         )
 
-        return web.json_response({
-            "period": period,
-            "days": days,
-            "total_current_krw": round(total_current, 0),
-            "total_invested_krw": round(total_invested, 0),
-            "overall_return_pct": round(overall_return, 2),
-            "coin_returns": coin_returns,
-            "calculated_at": datetime.now().isoformat(),
-        })
+        return web.json_response(
+            {
+                "period": period,
+                "days": days,
+                "total_current_krw": round(total_current, 0),
+                "total_invested_krw": round(total_invested, 0),
+                "overall_return_pct": round(overall_return, 2),
+                "coin_returns": coin_returns,
+                "calculated_at": datetime.now().isoformat(),
+            }
+        )
     except Exception as e:
         import traceback
+
         logger.error(f"handle_portfolio_returns error: {traceback.format_exc()}")
         return web.json_response({"error": str(e)}, status=500)
 
@@ -1648,16 +2015,17 @@ async def handle_portfolio_returns(request):
 #  앱 설정 및 실행
 # ═══════════════════════════════════════════════════
 
+
 def create_app():
     """aiohttp 앱을 생성하고 미들웨어와 라우트를 등록한다."""
     app = web.Application(
         middlewares=[
-            cors_middleware,              # #67: CORS
-            request_logging_middleware,   # #68: 요청 로깅
-            error_handler_middleware,     # #69: 통합 에러 핸들러
-            api_key_auth_middleware,      # Bug #1: API 키 인증
-            gzip_middleware,              # #73: Gzip 압축
-            cache_header_middleware,      # #74: 캐시 헤더
+            cors_middleware,  # #67: CORS
+            request_logging_middleware,  # #68: 요청 로깅
+            error_handler_middleware,  # #69: 통합 에러 핸들러
+            api_key_auth_middleware,  # Bug #1: API 키 인증
+            gzip_middleware,  # #73: Gzip 압축
+            cache_header_middleware,  # #74: 캐시 헤더
         ]
     )
 
@@ -1676,13 +2044,13 @@ def create_app():
     # Portfolio
     app.router.add_get("/portfolio/balance", handle_balance)
     app.router.add_get("/portfolio/summary", handle_summary)
-    app.router.add_get("/portfolio/returns", handle_portfolio_returns)   # #78
+    app.router.add_get("/portfolio/returns", handle_portfolio_returns)  # #78
 
     # Trade
     app.router.add_post("/trade/{side}", handle_trade)
     app.router.add_post("/trade/confirm/{trade_id}", handle_trade_confirm)
     app.router.add_get("/trade/history", handle_trade_history)
-    app.router.add_post("/trade/queue", handle_trade_queue)             # #76
+    app.router.add_post("/trade/queue", handle_trade_queue)  # #76
 
     # Auto Trading
     app.router.add_post("/auto/start", handle_auto_start)
@@ -1693,8 +2061,8 @@ def create_app():
     # Charts (JSON with base64)
     app.router.add_get("/chart/portfolio", handle_chart_portfolio)
     app.router.add_get("/chart/analysis", handle_chart_analysis)
-    app.router.add_get("/chart/candle/{symbol}", handle_candle_chart)    # #70
-    app.router.add_get("/chart/rsi/{symbol}", handle_rsi_chart)          # #71
+    app.router.add_get("/chart/candle/{symbol}", handle_candle_chart)  # #70
+    app.router.add_get("/chart/rsi/{symbol}", handle_rsi_chart)  # #71
 
     # Charts (Direct PNG)
     app.router.add_get("/chart/portfolio.png", handle_chart_portfolio_png)

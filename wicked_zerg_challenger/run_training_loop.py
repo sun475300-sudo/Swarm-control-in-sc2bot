@@ -4,16 +4,17 @@
 연속 학습 루프 - 단일 창에서 반복 실행
 """
 
-from sc2 import maps
-from sc2.player import Bot, Computer
-from sc2.main import run_game
-from sc2.data import Race, Difficulty
-from wicked_zerg_bot_pro_impl import WickedZergBotProImpl as WickedZergBotPro
-from difficulty_progression import DifficultyProgression
-import sys
-import os
-import time
 import logging
+import os
+import sys
+import time
+
+from difficulty_progression import DifficultyProgression
+from sc2 import maps
+from sc2.data import Difficulty, Race
+from sc2.main import run_game
+from sc2.player import Bot, Computer
+from wicked_zerg_bot_pro_impl import WickedZergBotProImpl as WickedZergBotPro
 
 logger = logging.getLogger("RunTrainingLoop")
 
@@ -31,8 +32,10 @@ def _ensure_sc2_path():
 
     try:
         import winreg
-        key = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE,
-                             r"SOFTWARE\Blizzard Entertainment\StarCraft II")
+
+        key = winreg.OpenKey(
+            winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\Blizzard Entertainment\StarCraft II"
+        )
         install_path, _ = winreg.QueryValueEx(key, "InstallPath")
         winreg.CloseKey(key)
 
@@ -86,13 +89,11 @@ def run_single_game(game_num, progression_system):
             return (False, None)
 
         result = run_game(
-            map_instance,
-            [bot, Computer(opponent_race, difficulty)],
-            realtime=False
+            map_instance, [bot, Computer(opponent_race, difficulty)], realtime=False
         )
 
         # Record result
-        won = (result == Race.Zerg)  # Assuming Zerg is player 1
+        won = result == Race.Zerg  # Assuming Zerg is player 1
         progression_system.record_game(map_name, opponent_race, difficulty, won)
 
         # Show stats
@@ -127,7 +128,9 @@ def print_block_summary(block_num, block_wins, block_losses, total_wins, total_l
     logger.info("\n" + "=" * 70)
     logger.info(f"  [*][*][*] BLOCK #{block_num} COMPLETE (10 GAMES) [*][*][*]")
     logger.info(f"  Block Record: {block_wins}W / {block_losses}L ({block_wr:.0f}%)")
-    logger.info(f"  Block Score: {'+' if block_score >= 0 else ''}{block_score} (Grade: {grade})")
+    logger.info(
+        f"  Block Score: {'+' if block_score >= 0 else ''}{block_score} (Grade: {grade})"
+    )
     logger.info(f"  Cumulative: {total_wins}W / {total_losses}L ({total_wr:.1f}%)")
     logger.info("=" * 70 + "\n")
 
@@ -173,8 +176,12 @@ def main():
         logger.info(f"  Total Duration: {total_duration/60:.1f} min")
         logger.info(f"  Games Completed: {games_completed}/{game_num}")
         if won is not None:
-            current_win_rate = (wins / (wins + losses) * 100) if (wins + losses) > 0 else 0
-            logger.info(f"  Session Win Rate: {wins}W/{losses}L ({current_win_rate:.1f}%)")
+            current_win_rate = (
+                (wins / (wins + losses) * 100) if (wins + losses) > 0 else 0
+            )
+            logger.info(
+                f"  Session Win Rate: {wins}W/{losses}L ({current_win_rate:.1f}%)"
+            )
         logger.info("-" * 70)
         # Break if 60 minutes passed
         if total_duration > 3600:  # 60 minutes

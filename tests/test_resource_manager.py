@@ -4,9 +4,10 @@ Unit Tests for Resource Manager
 Tests the thread-safe resource reservation system.
 """
 
-import pytest
 import asyncio
 from unittest.mock import Mock
+
+import pytest
 
 
 class MockBot:
@@ -22,6 +23,7 @@ class TestResourceManager:
         """Setup before each test"""
         try:
             from wicked_zerg_challenger.core.resource_manager import ResourceManager
+
             self.bot = MockBot()
             self.manager = ResourceManager(self.bot)
         except ImportError:
@@ -114,10 +116,7 @@ class TestResourceManager:
     async def test_concurrent_reservations(self):
         """Test concurrent reservation requests"""
         # Create multiple managers trying to reserve simultaneously
-        tasks = [
-            self.manager.try_reserve(200, 50, f"Manager{i}")
-            for i in range(5)
-        ]
+        tasks = [self.manager.try_reserve(200, 50, f"Manager{i}") for i in range(5)]
 
         results = await asyncio.gather(*tasks)
 

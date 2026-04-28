@@ -18,6 +18,7 @@ from typing import Any, Dict, List, Optional, Set, Tuple
 
 try:
     import numpy as np
+
     NP_AVAILABLE = True
 except ImportError:
     NP_AVAILABLE = False
@@ -176,7 +177,11 @@ class LeagueAgent:
     rating_history: List[Tuple[int, float]] = field(default_factory=list)
 
     # Win rates against specific opponents
-    opponent_records: Dict[str, Dict[str, int]] = field(default_factory=lambda: defaultdict(lambda: {"wins": 0, "losses": 0, "draws": 0}))
+    opponent_records: Dict[str, Dict[str, int]] = field(
+        default_factory=lambda: defaultdict(
+            lambda: {"wins": 0, "losses": 0, "draws": 0}
+        )
+    )
 
     @property
     def win_rate(self) -> float:
@@ -269,8 +274,11 @@ class ELORatingSystem:
 
     @classmethod
     def update_ratings(
-        cls, agent_a: LeagueAgent, agent_b: LeagueAgent,
-        score_a: float, score_b: float,
+        cls,
+        agent_a: LeagueAgent,
+        agent_b: LeagueAgent,
+        score_a: float,
+        score_b: float,
     ) -> Tuple[float, float]:
         ea = cls.expected_score(agent_a.elo, agent_b.elo)
         eb = cls.expected_score(agent_b.elo, agent_a.elo)
@@ -317,7 +325,9 @@ class MatchHistoryDB:
         self._by_agent[record.agent_a_id].append(idx)
         self._by_agent[record.agent_b_id].append(idx)
 
-    def get_agent_matches(self, agent_id: str, last_n: Optional[int] = None) -> List[MatchRecord]:
+    def get_agent_matches(
+        self, agent_id: str, last_n: Optional[int] = None
+    ) -> List[MatchRecord]:
         indices = self._by_agent.get(agent_id, [])
         if last_n is not None:
             indices = indices[-last_n:]
@@ -376,7 +386,9 @@ class SC2MatchSimulator:
         return base + step_bonus + type_mod
 
     @classmethod
-    def simulate(cls, a: LeagueAgent, b: LeagueAgent) -> Tuple[Optional[str], float, float]:
+    def simulate(
+        cls, a: LeagueAgent, b: LeagueAgent
+    ) -> Tuple[Optional[str], float, float]:
         """Returns (winner_id or None, score_a, score_b)."""
         str_a = cls.agent_strength(a) + random.gauss(0, 0.15)
         str_b = cls.agent_strength(b) + random.gauss(0, 0.15)
@@ -406,7 +418,9 @@ class PFSPMatchmaker:
         self.temperature = pfsp_temperature
 
     def select_opponent(
-        self, agent: LeagueAgent, candidates: List[LeagueAgent],
+        self,
+        agent: LeagueAgent,
+        candidates: List[LeagueAgent],
         mode: str = "pfsp",
     ) -> LeagueAgent:
         """
@@ -438,8 +452,11 @@ class PFSPMatchmaker:
         return _weighted_choice(candidates, weights)
 
     def select_matches(
-        self, agents: List[LeagueAgent], all_league: List[LeagueAgent],
-        matches_per_agent: int = 2, mode: str = "pfsp",
+        self,
+        agents: List[LeagueAgent],
+        all_league: List[LeagueAgent],
+        matches_per_agent: int = 2,
+        mode: str = "pfsp",
     ) -> List[Tuple[str, str]]:
         """Select matchups for a batch of agents."""
         matches: List[Tuple[str, str]] = []
@@ -468,14 +485,18 @@ class NashEquilibriumTracker:
     """
 
     def __init__(self):
-        self.payoff_matrix: Dict[str, Dict[str, float]] = defaultdict(lambda: defaultdict(float))
-        self.game_counts: Dict[str, Dict[str, int]] = defaultdict(lambda: defaultdict(int))
+        self.payoff_matrix: Dict[str, Dict[str, float]] = defaultdict(
+            lambda: defaultdict(float)
+        )
+        self.game_counts: Dict[str, Dict[str, int]] = defaultdict(
+            lambda: defaultdict(int)
+        )
         self.nash_history: List[Dict[str, float]] = []
 
     def update(self, a_id: str, b_id: str, score_a: float) -> None:
         """Record match outcome in payoff matrix."""
         self.payoff_matrix[a_id][b_id] += score_a
-        self.payoff_matrix[b_id][a_id] += (1.0 - score_a)
+        self.payoff_matrix[b_id][a_id] += 1.0 - score_a
         self.game_counts[a_id][b_id] += 1
         self.game_counts[b_id][a_id] += 1
 
@@ -569,7 +590,9 @@ class LeagueDashboard:
         return "\n".join(lines)
 
     @staticmethod
-    def elo_history_chart(agents: List[LeagueAgent], width: int = 60, height: int = 15) -> str:
+    def elo_history_chart(
+        agents: List[LeagueAgent], width: int = 60, height: int = 15
+    ) -> str:
         """ASCII chart of ELO ratings over time."""
         all_data: List[Tuple[str, List[Tuple[int, float]]]] = []
         for agent in agents:
@@ -604,7 +627,8 @@ class LeagueDashboard:
 
         lines = ["  ELO Ratings Over Training Steps"]
         legend = "  Legend: " + ", ".join(
-            f"{symbols[i % len(symbols)]}={aid[:10]}" for i, (aid, _) in enumerate(all_data[:10])
+            f"{symbols[i % len(symbols)]}={aid[:10]}"
+            for i, (aid, _) in enumerate(all_data[:10])
         )
         lines.append(legend)
         lines.append(f"  {hi:.0f} |")
@@ -624,8 +648,10 @@ class LeagueDashboard:
                 active_counts[a.agent_type.value] += 1
         lines = ["  Agent Type Distribution:"]
         for t in AgentType:
-            lines.append(f"    {t.value:>20s}: {counts[t.value]:3d} total, "
-                         f"{active_counts[t.value]:3d} active")
+            lines.append(
+                f"    {t.value:>20s}: {counts[t.value]:3d} total, "
+                f"{active_counts[t.value]:3d} active"
+            )
         return "\n".join(lines)
 
     @staticmethod
@@ -700,28 +726,33 @@ class SC2LeagueSystem:
         self.total_promotions = 0
 
         # Initialize population
-        self._init_population(num_main_agents, num_main_exploiters, num_league_exploiters)
+        self._init_population(
+            num_main_agents, num_main_exploiters, num_league_exploiters
+        )
 
     def _init_population(self, n_main: int, n_mexpl: int, n_lexpl: int) -> None:
         idx = 0
         for _ in range(n_main):
             aid = f"main_{idx:03d}"
             self.agents[aid] = LeagueAgent(
-                agent_id=aid, agent_type=AgentType.MAIN_AGENT,
+                agent_id=aid,
+                agent_type=AgentType.MAIN_AGENT,
                 weights=PolicyWeights(self.weight_dim),
             )
             idx += 1
         for _ in range(n_mexpl):
             aid = f"mexpl_{idx:03d}"
             self.agents[aid] = LeagueAgent(
-                agent_id=aid, agent_type=AgentType.MAIN_EXPLOITER,
+                agent_id=aid,
+                agent_type=AgentType.MAIN_EXPLOITER,
                 weights=PolicyWeights(self.weight_dim),
             )
             idx += 1
         for _ in range(n_lexpl):
             aid = f"lexpl_{idx:03d}"
             self.agents[aid] = LeagueAgent(
-                agent_id=aid, agent_type=AgentType.LEAGUE_EXPLOITER,
+                agent_id=aid,
+                agent_type=AgentType.LEAGUE_EXPLOITER,
                 weights=PolicyWeights(self.weight_dim),
             )
             idx += 1
@@ -740,8 +771,11 @@ class SC2LeagueSystem:
 
     @property
     def main_agents(self) -> List[LeagueAgent]:
-        return [a for a in self.agents.values()
-                if a.agent_type == AgentType.MAIN_AGENT and a.status == AgentStatus.ACTIVE]
+        return [
+            a
+            for a in self.agents.values()
+            if a.agent_type == AgentType.MAIN_AGENT and a.status == AgentStatus.ACTIVE
+        ]
 
     @property
     def all_league_agents(self) -> List[LeagueAgent]:
@@ -810,11 +844,15 @@ class SC2LeagueSystem:
         # Record to match DB
         record = MatchRecord(
             match_id=f"match_{uuid.uuid4().hex[:8]}",
-            agent_a_id=a_id, agent_b_id=b_id,
+            agent_a_id=a_id,
+            agent_b_id=b_id,
             winner_id=winner_id,
-            score_a=score_a, score_b=score_b,
-            elo_a_before=elo_a_before, elo_b_before=elo_b_before,
-            elo_a_after=a.elo, elo_b_after=b.elo,
+            score_a=score_a,
+            score_b=score_b,
+            elo_a_before=elo_a_before,
+            elo_b_before=elo_b_before,
+            elo_a_after=a.elo,
+            elo_b_after=b.elo,
         )
         self.match_db.add(record)
         return record
@@ -835,7 +873,9 @@ class SC2LeagueSystem:
                 mode = "pfsp"
             elif agent.agent_type == AgentType.MAIN_EXPLOITER:
                 # Main exploiters target only active main agents
-                candidates = [a for a in self.main_agents if a.agent_id != agent.agent_id]
+                candidates = [
+                    a for a in self.main_agents if a.agent_id != agent.agent_id
+                ]
                 if not candidates:
                     candidates = [a for a in league if a.agent_id != agent.agent_id]
                 mode = "hard"
@@ -914,7 +954,10 @@ class SC2LeagueSystem:
         promoted: List[str] = []
 
         for agent in self.active_agents:
-            if agent.agent_type not in (AgentType.MAIN_EXPLOITER, AgentType.LEAGUE_EXPLOITER):
+            if agent.agent_type not in (
+                AgentType.MAIN_EXPLOITER,
+                AgentType.LEAGUE_EXPLOITER,
+            ):
                 continue
             if agent.games_played < 20:
                 continue
@@ -951,7 +994,9 @@ class SC2LeagueSystem:
     # Full Training Iteration
     # --------------------------------------------------------
 
-    def train_iteration(self, train_steps: int = 100, matches_per_agent: int = 2) -> Dict[str, Any]:
+    def train_iteration(
+        self, train_steps: int = 100, matches_per_agent: int = 2
+    ) -> Dict[str, Any]:
         """One full league training iteration."""
         self.iteration += 1
         results: Dict[str, Any] = {"iteration": self.iteration}
@@ -998,8 +1043,12 @@ class SC2LeagueSystem:
 
         return results
 
-    def run(self, num_iterations: int = 50, train_steps: int = 100,
-            matches_per_agent: int = 2) -> List[Dict[str, Any]]:
+    def run(
+        self,
+        num_iterations: int = 50,
+        train_steps: int = 100,
+        matches_per_agent: int = 2,
+    ) -> List[Dict[str, Any]]:
         """Run full league training."""
         all_results = []
         for _ in range(num_iterations):
@@ -1025,8 +1074,10 @@ class SC2LeagueSystem:
 
     def league_summary(self) -> str:
         lines = ["=" * 100]
-        lines.append(f"  SC2 League System  |  Iteration: {self.iteration}  |  "
-                      f"Freezes: {self.total_freezes}  Promotions: {self.total_promotions}")
+        lines.append(
+            f"  SC2 League System  |  Iteration: {self.iteration}  |  "
+            f"Freezes: {self.total_freezes}  Promotions: {self.total_promotions}"
+        )
         lines.append("=" * 100)
         lines.append("")
         lines.append(self.dashboard.agent_summary_table(list(self.agents.values())))
@@ -1115,7 +1166,9 @@ def run_league_demo() -> None:
         result = league.train_iteration(train_steps=100, matches_per_agent=2)
         if (i + 1) % 5 == 0:
             frozen_str = f", frozen={result['frozen']}" if result["frozen"] else ""
-            promoted_str = f", promoted={result['promoted']}" if result["promoted"] else ""
+            promoted_str = (
+                f", promoted={result['promoted']}" if result["promoted"] else ""
+            )
             print(
                 f"  Iter {result['iteration']:3d}: "
                 f"matches={result['matches_played']:3d}  "
@@ -1166,7 +1219,9 @@ def run_league_demo() -> None:
         a, b = agents_list[0], agents_list[1]
         h2h = league.match_db.head_to_head(a, b)
         print(f"--- Head-to-Head: {a} vs {b} ---")
-        print(f"  {a} wins: {h2h['a_wins']}, {b} wins: {h2h['b_wins']}, draws: {h2h['draws']}")
+        print(
+            f"  {a} wins: {h2h['a_wins']}, {b} wins: {h2h['b_wins']}, draws: {h2h['draws']}"
+        )
     print()
 
     # Checkpoint save/load test
@@ -1176,7 +1231,9 @@ def run_league_demo() -> None:
 
     league2 = SC2LeagueSystem(num_main_agents=1, seed=99)
     league2.load_checkpoint(ckpt_path)
-    print(f"[Checkpoint] Loaded {len(league2.agents)} agents, iteration={league2.iteration}")
+    print(
+        f"[Checkpoint] Loaded {len(league2.agents)} agents, iteration={league2.iteration}"
+    )
 
     # Clean up
     try:

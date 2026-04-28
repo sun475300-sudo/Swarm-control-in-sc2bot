@@ -5,10 +5,19 @@ Upsert (merge), time travel, and schema evolution for ML feature data.
 
 import logging
 from datetime import datetime
+
+from delta.tables import DeltaTable
 from pyspark.sql import SparkSession
 from pyspark.sql.functions import col, current_timestamp, lit
-from pyspark.sql.types import StructType, StructField, StringType, IntegerType, DoubleType, TimestampType, BooleanType
-from delta.tables import DeltaTable
+from pyspark.sql.types import (
+    BooleanType,
+    DoubleType,
+    IntegerType,
+    StringType,
+    StructField,
+    StructType,
+    TimestampType,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -19,29 +28,33 @@ DELTA_CHECKPOINTS = "s3a://sc2-data-lake/delta/_checkpoints/"
 def get_spark() -> SparkSession:
     """Initialize Spark with Delta Lake extensions."""
     return (
-        SparkSession.builder
-        .appName("SC2DeltaLake")
+        SparkSession.builder.appName("SC2DeltaLake")
         .config("spark.sql.extensions", "io.delta.sql.DeltaSparkSessionExtension")
-        .config("spark.sql.catalog.spark_catalog", "org.apache.spark.sql.delta.catalog.DeltaCatalog")
+        .config(
+            "spark.sql.catalog.spark_catalog",
+            "org.apache.spark.sql.delta.catalog.DeltaCatalog",
+        )
         .config("spark.databricks.delta.retentionDurationCheck.enabled", "false")
         .getOrCreate()
     )
 
 
 def get_schema() -> StructType:
-    return StructType([
-        StructField("game_id",       StringType(),   False),
-        StructField("player_id",     StringType(),   True),
-        StructField("player_race",   StringType(),   True),
-        StructField("map_name",      StringType(),   True),
-        StructField("result",        StringType(),   True),
-        StructField("apm",           IntegerType(),  True),
-        StructField("mmr",           IntegerType(),  True),
-        StructField("duration_sec",  IntegerType(),  True),
-        StructField("win_rate",      DoubleType(),   True),
-        StructField("processed",     BooleanType(),  True),
-        StructField("updated_at",    TimestampType(), True),
-    ])
+    return StructType(
+        [
+            StructField("game_id", StringType(), False),
+            StructField("player_id", StringType(), True),
+            StructField("player_race", StringType(), True),
+            StructField("map_name", StringType(), True),
+            StructField("result", StringType(), True),
+            StructField("apm", IntegerType(), True),
+            StructField("mmr", IntegerType(), True),
+            StructField("duration_sec", IntegerType(), True),
+            StructField("win_rate", DoubleType(), True),
+            StructField("processed", BooleanType(), True),
+            StructField("updated_at", TimestampType(), True),
+        ]
+    )
 
 
 def create_delta_table(spark: SparkSession):
@@ -61,18 +74,19 @@ def merge_game_records(spark: SparkSession, new_records: list[dict]):
 
     delta_table = DeltaTable.forPath(spark, DELTA_PATH)
     delta_table.alias("target").merge(
-        new_df.alias("source"),
-        "target.game_id = source.game_id"
-    ).whenMatchedUpdate(set={
-        "player_race":  "source.player_race",
-        "map_name":     "source.map_name",
-        "result":       "source.result",
-        "apm":          "source.apm",
-        "mmr":          "source.mmr",
-        "win_rate":     "source.win_rate",
-        "processed":    "source.processed",
-        "updated_at":   "source.updated_at",
-    }).whenNotMatchedInsertAll().execute()
+        new_df.alias("source"), "target.game_id = source.game_id"
+    ).whenMatchedUpdate(
+        set={
+            "player_race": "source.player_race",
+            "map_name": "source.map_name",
+            "result": "source.result",
+            "apm": "source.apm",
+            "mmr": "source.mmr",
+            "win_rate": "source.win_rate",
+            "processed": "source.processed",
+            "updated_at": "source.updated_at",
+        }
+    ).whenNotMatchedInsertAll().execute()
 
     logger.info(f"Merged {len(new_records)} game records into Delta table.")
 
@@ -125,9 +139,19 @@ if __name__ == "__main__":
     create_delta_table(spark)
 
     sample_records = [
-        {"game_id": "g001", "player_id": "ZergBot", "player_race": "Zerg",
-         "map_name": "Solaris", "result": "win", "apm": 185, "mmr": 4200,
-         "duration_sec": 420, "win_rate": 0.62, "processed": False, "updated_at": datetime.now()},
+        {
+            "game_id": "g001",
+            "player_id": "ZergBot",
+            "player_race": "Zerg",
+            "map_name": "Solaris",
+            "result": "win",
+            "apm": 185,
+            "mmr": 4200,
+            "duration_sec": 420,
+            "win_rate": 0.62,
+            "processed": False,
+            "updated_at": datetime.now(),
+        },
     ]
     merge_game_records(spark, sample_records)
 

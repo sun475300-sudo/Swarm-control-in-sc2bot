@@ -3,6 +3,7 @@
 
 게임 로그를 분석하여 개선 제안을 생성하는 코칭 시스템.
 """
+
 import logging
 import re
 from datetime import datetime
@@ -43,70 +44,70 @@ class SC2Coach:
                 "pattern": r"supply.?block|supply.?cap|인구.?부족",
                 "category": "macro",
                 "advice": "인구수(Supply) 차단이 감지되었습니다. 오버로드를 미리 생산하세요. "
-                          "50인구 이후에는 2~3마리씩 선행 생산이 필요합니다.",
+                "50인구 이후에는 2~3마리씩 선행 생산이 필요합니다.",
                 "severity": "high",
             },
             {
                 "pattern": r"idle.?worker|유휴.?일꾼|일꾼.?대기",
                 "category": "economy",
                 "advice": "유휴 일꾼이 발견되었습니다. 일꾼은 항상 미네랄/가스 채취에 배정하세요. "
-                          "할당키(F1)로 유휴 일꾼을 빠르게 확인할 수 있습니다.",
+                "할당키(F1)로 유휴 일꾼을 빠르게 확인할 수 있습니다.",
                 "severity": "medium",
             },
             {
                 "pattern": r"float.?mineral|미네랄.?과잉|mineral.?bank",
                 "category": "economy",
                 "advice": "미네랄이 과잉 축적되고 있습니다. 추가 해처리 확장 또는 "
-                          "유닛 생산 시설을 늘려 자원을 효율적으로 사용하세요.",
+                "유닛 생산 시설을 늘려 자원을 효율적으로 사용하세요.",
                 "severity": "high",
             },
             {
                 "pattern": r"late.?expand|확장.?지연|늦은.?확장",
                 "category": "expansion",
                 "advice": "확장 타이밍이 늦습니다. 저그는 빠른 확장이 생명입니다. "
-                          "해처리 퍼스트 또는 풀 후 해처리를 고려하세요.",
+                "해처리 퍼스트 또는 풀 후 해처리를 고려하세요.",
                 "severity": "high",
             },
             {
                 "pattern": r"no.?scout|정찰.?없|정찰.?부족",
                 "category": "scouting",
                 "advice": "정찰이 부족합니다. 오버로드와 저글링으로 상대 빌드를 반드시 확인하세요. "
-                          "정보 없이는 올바른 대응이 불가능합니다.",
+                "정보 없이는 올바른 대응이 불가능합니다.",
                 "severity": "high",
             },
             {
                 "pattern": r"army.?wipe|전멸|전군.?손실|all.?dead",
                 "category": "army",
                 "advice": "군대가 전멸했습니다. 전투 전 상대 구성을 확인하고, "
-                          "불리한 교전은 피하세요. 소규모 견제 후 후퇴하는 전략을 연습하세요.",
+                "불리한 교전은 피하세요. 소규모 견제 후 후퇴하는 전략을 연습하세요.",
                 "severity": "critical",
             },
             {
                 "pattern": r"drone.?rush|일꾼.?돌진",
                 "category": "defense",
                 "advice": "일꾼 러시에 대비하세요. 초반 저글링 2마리로 정찰하고 "
-                          "스포닝 풀 완성 시점을 확인하세요.",
+                "스포닝 풀 완성 시점을 확인하세요.",
                 "severity": "low",
             },
             {
                 "pattern": r"miss.?inject|인젝트.?빠뜨|주입.?놓침",
                 "category": "macro",
                 "advice": "퀸 인젝트를 놓치고 있습니다. 라바 인젝트는 저그의 핵심 매크로입니다. "
-                          "카메라 핫키 + 인젝트 단축키를 연습하세요.",
+                "카메라 핫키 + 인젝트 단축키를 연습하세요.",
                 "severity": "high",
             },
             {
                 "pattern": r"bad.?engagement|잘못된.?교전|불리.?교전",
                 "category": "micro",
                 "advice": "불리한 교전이 감지되었습니다. 지형(초크포인트)을 활용하고 "
-                          "서라운드가 가능한 위치에서 싸우세요.",
+                "서라운드가 가능한 위치에서 싸우세요.",
                 "severity": "medium",
             },
             {
                 "pattern": r"gas.?float|가스.?과잉",
                 "category": "economy",
                 "advice": "가스가 과잉 축적되고 있습니다. 뮤탈/울트라 같은 "
-                          "가스 집약 유닛 테크로 전환하거나, 일꾼을 가스에서 빼세요.",
+                "가스 집약 유닛 테크로 전환하거나, 일꾼을 가스에서 빼세요.",
                 "severity": "medium",
             },
         ]
@@ -122,7 +123,13 @@ class SC2Coach:
                 [{'category': str, 'advice': str, 'severity': str}, ...]
         """
         if not game_log:
-            return [{"category": "general", "advice": "게임 로그가 비어있습니다.", "severity": "info"}]
+            return [
+                {
+                    "category": "general",
+                    "advice": "게임 로그가 비어있습니다.",
+                    "severity": "info",
+                }
+            ]
 
         advices = []
         log_lower = game_log.lower()
@@ -130,12 +137,16 @@ class SC2Coach:
         # 패턴 매칭 기반 조언
         for pattern_info in self._known_patterns:
             if re.search(pattern_info["pattern"], log_lower, re.IGNORECASE):
-                advices.append({
-                    "category": pattern_info["category"],
-                    "category_name": self.CATEGORIES.get(pattern_info["category"], pattern_info["category"]),
-                    "advice": pattern_info["advice"],
-                    "severity": pattern_info["severity"],
-                })
+                advices.append(
+                    {
+                        "category": pattern_info["category"],
+                        "category_name": self.CATEGORIES.get(
+                            pattern_info["category"], pattern_info["category"]
+                        ),
+                        "advice": pattern_info["advice"],
+                        "severity": pattern_info["severity"],
+                    }
+                )
 
         # 통계 기반 조언 추가
         stat_advices = self._analyze_statistics(game_log)
@@ -143,24 +154,28 @@ class SC2Coach:
 
         # 조언이 없으면 기본 조언
         if not advices:
-            advices.append({
-                "category": "general",
-                "category_name": "일반",
-                "advice": "특별한 문제 패턴이 감지되지 않았습니다. "
-                          "기본기를 꾸준히 연습하세요: 인젝트, 일꾼 생산, 확장 타이밍.",
-                "severity": "info",
-            })
+            advices.append(
+                {
+                    "category": "general",
+                    "category_name": "일반",
+                    "advice": "특별한 문제 패턴이 감지되지 않았습니다. "
+                    "기본기를 꾸준히 연습하세요: 인젝트, 일꾼 생산, 확장 타이밍.",
+                    "severity": "info",
+                }
+            )
 
         # 심각도 순 정렬
         severity_order = {"critical": 0, "high": 1, "medium": 2, "low": 3, "info": 4}
         advices.sort(key=lambda a: severity_order.get(a["severity"], 99))
 
         # 코칭 기록
-        self._coaching_history.append({
-            "timestamp": datetime.now().isoformat(),
-            "advice_count": len(advices),
-            "categories": list(set(a["category"] for a in advices)),
-        })
+        self._coaching_history.append(
+            {
+                "timestamp": datetime.now().isoformat(),
+                "advice_count": len(advices),
+                "categories": list(set(a["category"] for a in advices)),
+            }
+        )
 
         return advices
 
@@ -169,31 +184,37 @@ class SC2Coach:
         advices = []
 
         # 게임 시간 분석
-        time_match = re.search(r"game.?time[:\s]+(\d+)[:\s]*(\d+)?", game_log, re.IGNORECASE)
+        time_match = re.search(
+            r"game.?time[:\s]+(\d+)[:\s]*(\d+)?", game_log, re.IGNORECASE
+        )
         if time_match:
             minutes = int(time_match.group(1))
             if minutes < 5:
-                advices.append({
-                    "category": "timing",
-                    "category_name": "타이밍",
-                    "advice": f"게임이 {minutes}분 만에 종료되었습니다. "
-                              "초반 러시에 취약한 빌드를 사용 중일 수 있습니다. "
-                              "안전한 오프닝을 고려하세요.",
-                    "severity": "high",
-                })
+                advices.append(
+                    {
+                        "category": "timing",
+                        "category_name": "타이밍",
+                        "advice": f"게임이 {minutes}분 만에 종료되었습니다. "
+                        "초반 러시에 취약한 빌드를 사용 중일 수 있습니다. "
+                        "안전한 오프닝을 고려하세요.",
+                        "severity": "high",
+                    }
+                )
 
         # 유닛 손실 분석
         lost_match = re.findall(r"lost[:\s]+(\d+)", game_log, re.IGNORECASE)
         if lost_match:
             total_lost = sum(int(x) for x in lost_match)
             if total_lost > 50:
-                advices.append({
-                    "category": "army",
-                    "category_name": "군대 운용",
-                    "advice": f"총 {total_lost}유닛이 손실되었습니다. "
-                              "무리한 교전을 피하고, 유닛 보존을 우선시하세요.",
-                    "severity": "medium",
-                })
+                advices.append(
+                    {
+                        "category": "army",
+                        "category_name": "군대 운용",
+                        "advice": f"총 {total_lost}유닛이 손실되었습니다. "
+                        "무리한 교전을 피하고, 유닛 보존을 우선시하세요.",
+                        "severity": "medium",
+                    }
+                )
 
         return advices
 
@@ -203,16 +224,30 @@ class SC2Coach:
         Returns:
             list: 코칭 조언 리스트
         """
-        bot_log_path = self._project_root / "wicked_zerg_challenger" / "logs" / "bot.log"
+        bot_log_path = (
+            self._project_root / "wicked_zerg_challenger" / "logs" / "bot.log"
+        )
         if not bot_log_path.exists():
-            return [{"category": "general", "advice": "봇 로그를 찾을 수 없습니다.", "severity": "info"}]
+            return [
+                {
+                    "category": "general",
+                    "advice": "봇 로그를 찾을 수 없습니다.",
+                    "severity": "info",
+                }
+            ]
 
         try:
             with open(bot_log_path, "r", encoding="utf-8", errors="replace") as f:
                 log_content = f.read()
             return self.get_coaching_advice(log_content)
         except Exception as e:
-            return [{"category": "error", "advice": f"봇 로그 분석 실패: {e}", "severity": "high"}]
+            return [
+                {
+                    "category": "error",
+                    "advice": f"봇 로그 분석 실패: {e}",
+                    "severity": "high",
+                }
+            ]
 
     def get_coaching_history(self) -> list:
         """코칭 히스토리"""

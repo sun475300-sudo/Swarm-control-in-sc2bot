@@ -5,12 +5,12 @@
 일반적인 에러 패턴을 자동으로 감지하고 수정
 """
 
+import logging
 import os
 import re
 import time
 from pathlib import Path
-from typing import List, Dict, Tuple, Any, Optional
-import logging
+from typing import Any, Dict, List, Optional, Tuple
 
 logger = logging.getLogger("AutoErrorFixer")
 

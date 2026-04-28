@@ -32,6 +32,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class Vec3:
     """Lightweight 3-D vector."""
+
     x: float = 0.0
     y: float = 0.0
     z: float = 0.0
@@ -49,7 +50,7 @@ class Vec3:
         return self.__mul__(s)
 
     def magnitude(self) -> float:
-        return math.sqrt(self.x ** 2 + self.y ** 2 + self.z ** 2)
+        return math.sqrt(self.x**2 + self.y**2 + self.z**2)
 
     def normalized(self) -> "Vec3":
         m = self.magnitude()
@@ -77,6 +78,7 @@ class Vec3:
 @dataclass
 class Quaternion:
     """Rotation quaternion (w, x, y, z)."""
+
     w: float = 1.0
     x: float = 0.0
     y: float = 0.0
@@ -96,13 +98,13 @@ class Quaternion:
 
     def to_euler(self) -> Tuple[float, float, float]:
         sinr_cosp = 2.0 * (self.w * self.x + self.y * self.z)
-        cosr_cosp = 1.0 - 2.0 * (self.x ** 2 + self.y ** 2)
+        cosr_cosp = 1.0 - 2.0 * (self.x**2 + self.y**2)
         roll = math.atan2(sinr_cosp, cosr_cosp)
         sinp = 2.0 * (self.w * self.y - self.z * self.x)
         sinp = max(-1.0, min(1.0, sinp))
         pitch = math.asin(sinp)
         siny_cosp = 2.0 * (self.w * self.z + self.x * self.y)
-        cosy_cosp = 1.0 - 2.0 * (self.y ** 2 + self.z ** 2)
+        cosy_cosp = 1.0 - 2.0 * (self.y**2 + self.z**2)
         yaw = math.atan2(siny_cosp, cosy_cosp)
         return roll, pitch, yaw
 
@@ -113,16 +115,21 @@ class Quaternion:
 @dataclass
 class Pose:
     """Position + orientation."""
+
     position: Vec3 = field(default_factory=Vec3)
     orientation: Quaternion = field(default_factory=Quaternion)
 
     def to_dict(self) -> Dict[str, Any]:
-        return {"position": self.position.to_dict(), "orientation": self.orientation.to_dict()}
+        return {
+            "position": self.position.to_dict(),
+            "orientation": self.orientation.to_dict(),
+        }
 
 
 # ============================================================
 # Enums
 # ============================================================
+
 
 class SC2UnitType(Enum):
     ZERGLING = "zergling"
@@ -159,6 +166,7 @@ class TopicDirection(Enum):
 @dataclass
 class SensorReading:
     """Generic sensor reading container."""
+
     sensor_type: SensorType
     timestamp: float
     data: Dict[str, Any] = field(default_factory=dict)
@@ -167,8 +175,13 @@ class SensorReading:
 class LidarSensor:
     """Simulated 2-D LIDAR (planar scan)."""
 
-    def __init__(self, num_rays: int = 360, max_range: float = 30.0,
-                 fov_deg: float = 360.0, noise_std: float = 0.02):
+    def __init__(
+        self,
+        num_rays: int = 360,
+        max_range: float = 30.0,
+        fov_deg: float = 360.0,
+        noise_std: float = 0.02,
+    ):
         self.num_rays = num_rays
         self.max_range = max_range
         self.fov_deg = fov_deg
@@ -185,13 +198,15 @@ class LidarSensor:
             dy = math.sin(angle)
             min_r = self.max_range
             for obs_center, obs_radius in obstacles:
-                oc = Vec3(obs_center.x - pose.position.x, obs_center.y - pose.position.y, 0)
+                oc = Vec3(
+                    obs_center.x - pose.position.x, obs_center.y - pose.position.y, 0
+                )
                 proj = oc.x * dx + oc.y * dy
                 if proj < 0:
                     continue
-                perp2 = oc.x ** 2 + oc.y ** 2 - proj ** 2
-                if perp2 < obs_radius ** 2:
-                    hit = proj - math.sqrt(max(0, obs_radius ** 2 - perp2))
+                perp2 = oc.x**2 + oc.y**2 - proj**2
+                if perp2 < obs_radius**2:
+                    hit = proj - math.sqrt(max(0, obs_radius**2 - perp2))
                     if 0 < hit < min_r:
                         min_r = hit
             min_r += random.gauss(0, self.noise_std)
@@ -202,8 +217,13 @@ class LidarSensor:
 class DepthCameraSensor:
     """Simulated depth camera returning a depth image (as a flat list)."""
 
-    def __init__(self, width: int = 64, height: int = 48,
-                 hfov_deg: float = 70.0, max_depth: float = 20.0):
+    def __init__(
+        self,
+        width: int = 64,
+        height: int = 48,
+        hfov_deg: float = 70.0,
+        max_depth: float = 20.0,
+    ):
         self.width = width
         self.height = height
         self.hfov_deg = hfov_deg
@@ -224,14 +244,20 @@ class DepthCameraSensor:
                     proj = rel.x * dx + rel.y * dy
                     if proj < 0:
                         continue
-                    perp2 = rel.x ** 2 + rel.y ** 2 - proj ** 2
-                    if perp2 < orad ** 2:
-                        hit = proj - math.sqrt(max(0, orad ** 2 - perp2))
+                    perp2 = rel.x**2 + rel.y**2 - proj**2
+                    if perp2 < orad**2:
+                        hit = proj - math.sqrt(max(0, orad**2 - perp2))
                         d = min(d, max(0.0, hit))
                 depth_map.append(round(d, 3))
-        return SensorReading(SensorType.DEPTH_CAMERA, time.time(), {
-            "width": self.width, "height": self.height, "depth": depth_map,
-        })
+        return SensorReading(
+            SensorType.DEPTH_CAMERA,
+            time.time(),
+            {
+                "width": self.width,
+                "height": self.height,
+                "depth": depth_map,
+            },
+        )
 
 
 class IMUSensor:
@@ -242,18 +268,22 @@ class IMUSensor:
         self.gyro_noise = gyro_noise
 
     def read(self, linear_accel: Vec3, angular_vel: Vec3) -> SensorReading:
-        return SensorReading(SensorType.IMU, time.time(), {
-            "linear_acceleration": {
-                "x": linear_accel.x + random.gauss(0, self.accel_noise),
-                "y": linear_accel.y + random.gauss(0, self.accel_noise),
-                "z": linear_accel.z + random.gauss(0, self.accel_noise) + 9.81,
+        return SensorReading(
+            SensorType.IMU,
+            time.time(),
+            {
+                "linear_acceleration": {
+                    "x": linear_accel.x + random.gauss(0, self.accel_noise),
+                    "y": linear_accel.y + random.gauss(0, self.accel_noise),
+                    "z": linear_accel.z + random.gauss(0, self.accel_noise) + 9.81,
+                },
+                "angular_velocity": {
+                    "x": angular_vel.x + random.gauss(0, self.gyro_noise),
+                    "y": angular_vel.y + random.gauss(0, self.gyro_noise),
+                    "z": angular_vel.z + random.gauss(0, self.gyro_noise),
+                },
             },
-            "angular_velocity": {
-                "x": angular_vel.x + random.gauss(0, self.gyro_noise),
-                "y": angular_vel.y + random.gauss(0, self.gyro_noise),
-                "z": angular_vel.z + random.gauss(0, self.gyro_noise),
-            },
-        })
+        )
 
 
 class ContactSensor:
@@ -262,16 +292,19 @@ class ContactSensor:
     def __init__(self, threshold: float = 0.1):
         self.threshold = threshold
 
-    def check(self, pose: Pose, obstacles: List[Tuple[Vec3, float]],
-              robot_radius: float = 0.5) -> SensorReading:
+    def check(
+        self, pose: Pose, obstacles: List[Tuple[Vec3, float]], robot_radius: float = 0.5
+    ) -> SensorReading:
         contacts: List[Dict[str, Any]] = []
         for oc, orad in obstacles:
             dist = pose.position.distance_to(oc)
             if dist < (robot_radius + orad + self.threshold):
-                contacts.append({
-                    "obstacle": oc.to_dict(),
-                    "depth": round(robot_radius + orad - dist, 4),
-                })
+                contacts.append(
+                    {
+                        "obstacle": oc.to_dict(),
+                        "depth": round(robot_radius + orad - dist, 4),
+                    }
+                )
         return SensorReading(SensorType.CONTACT, time.time(), {"contacts": contacts})
 
 
@@ -282,28 +315,58 @@ class ContactSensor:
 # SC2 unit -> robot mapping reference
 SC2_ROBOT_SPECS: Dict[str, Dict[str, Any]] = {
     SC2UnitType.ZERGLING.value: {
-        "mass": 5.0, "radius": 0.3, "max_speed": 4.7,
-        "hp": 35, "armor": 0, "attack_range": 0.5, "dps": 10,
+        "mass": 5.0,
+        "radius": 0.3,
+        "max_speed": 4.7,
+        "hp": 35,
+        "armor": 0,
+        "attack_range": 0.5,
+        "dps": 10,
     },
     SC2UnitType.ROACH.value: {
-        "mass": 20.0, "radius": 0.6, "max_speed": 2.25,
-        "hp": 145, "armor": 1, "attack_range": 4.0, "dps": 8,
+        "mass": 20.0,
+        "radius": 0.6,
+        "max_speed": 2.25,
+        "hp": 145,
+        "armor": 1,
+        "attack_range": 4.0,
+        "dps": 8,
     },
     SC2UnitType.STALKER.value: {
-        "mass": 15.0, "radius": 0.5, "max_speed": 3.15,
-        "hp": 160, "armor": 1, "attack_range": 6.0, "dps": 10,
+        "mass": 15.0,
+        "radius": 0.5,
+        "max_speed": 3.15,
+        "hp": 160,
+        "armor": 1,
+        "attack_range": 6.0,
+        "dps": 10,
     },
     SC2UnitType.MARINE.value: {
-        "mass": 10.0, "radius": 0.4, "max_speed": 2.81,
-        "hp": 45, "armor": 0, "attack_range": 5.0, "dps": 9.8,
+        "mass": 10.0,
+        "radius": 0.4,
+        "max_speed": 2.81,
+        "hp": 45,
+        "armor": 0,
+        "attack_range": 5.0,
+        "dps": 9.8,
     },
     SC2UnitType.SIEGE_TANK.value: {
-        "mass": 80.0, "radius": 1.2, "max_speed": 2.25,
-        "hp": 175, "armor": 1, "attack_range": 7.0, "dps": 20,
+        "mass": 80.0,
+        "radius": 1.2,
+        "max_speed": 2.25,
+        "hp": 175,
+        "armor": 1,
+        "attack_range": 7.0,
+        "dps": 20,
     },
     SC2UnitType.IMMORTAL.value: {
-        "mass": 50.0, "radius": 0.9, "max_speed": 2.81,
-        "hp": 300, "armor": 1, "attack_range": 6.0, "dps": 19,
+        "mass": 50.0,
+        "radius": 0.9,
+        "max_speed": 2.81,
+        "hp": 300,
+        "armor": 1,
+        "attack_range": 6.0,
+        "dps": 19,
     },
 }
 
@@ -328,8 +391,12 @@ class RobotModel:
     sensors: Dict[SensorType, Any] = field(default_factory=dict)
 
     @classmethod
-    def from_sc2_unit(cls, unit_type: SC2UnitType, position: Optional[Vec3] = None) -> "RobotModel":
-        spec = SC2_ROBOT_SPECS.get(unit_type.value, SC2_ROBOT_SPECS[SC2UnitType.MARINE.value])
+    def from_sc2_unit(
+        cls, unit_type: SC2UnitType, position: Optional[Vec3] = None
+    ) -> "RobotModel":
+        spec = SC2_ROBOT_SPECS.get(
+            unit_type.value, SC2_ROBOT_SPECS[SC2UnitType.MARINE.value]
+        )
         pose = Pose(position=position or Vec3())
         robot = cls(
             unit_type=unit_type.value,
@@ -408,13 +475,20 @@ class ROSBridge:
     # ---- topics ----
 
     def create_publisher(self, topic: str, msg_type: str = "std_msgs/String") -> str:
-        self._topics[topic] = {"direction": TopicDirection.PUBLISH.value, "msg_type": msg_type}
+        self._topics[topic] = {
+            "direction": TopicDirection.PUBLISH.value,
+            "msg_type": msg_type,
+        }
         logger.info("Publisher created: %s [%s]", topic, msg_type)
         return topic
 
-    def create_subscription(self, topic: str, callback: Callable,
-                            msg_type: str = "std_msgs/String") -> str:
-        self._topics[topic] = {"direction": TopicDirection.SUBSCRIBE.value, "msg_type": msg_type}
+    def create_subscription(
+        self, topic: str, callback: Callable, msg_type: str = "std_msgs/String"
+    ) -> str:
+        self._topics[topic] = {
+            "direction": TopicDirection.SUBSCRIBE.value,
+            "msg_type": msg_type,
+        }
         if topic not in self._subscribers:
             self._subscribers[topic] = []
         self._subscribers[topic].append(callback)
@@ -424,9 +498,13 @@ class ROSBridge:
         if topic not in self._topics:
             logger.warning("Topic %s not registered", topic)
             return False
-        self._message_log.append({
-            "ts": time.time(), "topic": topic, "msg": str(message)[:200],
-        })
+        self._message_log.append(
+            {
+                "ts": time.time(),
+                "topic": topic,
+                "msg": str(message)[:200],
+            }
+        )
         for cb in self._subscribers.get(topic, []):
             try:
                 cb(message)
@@ -482,9 +560,13 @@ class ROSBridge:
 class PhysicsEngine:
     """Simple rigid-body physics engine for ground robot simulation."""
 
-    def __init__(self, solver: PhysicsSolver = PhysicsSolver.ODE,
-                 gravity: float = -9.81, time_step: float = 0.01,
-                 friction: float = 0.5):
+    def __init__(
+        self,
+        solver: PhysicsSolver = PhysicsSolver.ODE,
+        gravity: float = -9.81,
+        time_step: float = 0.01,
+        friction: float = 0.5,
+    ):
         self.solver = solver
         self.gravity = gravity
         self.time_step = time_step
@@ -507,7 +589,9 @@ class PhysicsEngine:
     def _apply_friction(self, robot: RobotModel) -> None:
         speed = robot.velocity.magnitude()
         if speed > 1e-6:
-            friction_force = robot.velocity.normalized() * (-self.friction * robot.mass * abs(self.gravity))
+            friction_force = robot.velocity.normalized() * (
+                -self.friction * robot.mass * abs(self.gravity)
+            )
             friction_decel = friction_force * (1.0 / robot.mass) * self.time_step
             if friction_decel.magnitude() > speed:
                 robot.velocity = Vec3()
@@ -528,8 +612,12 @@ class PhysicsEngine:
                     overlap = min_dist - dist
                     normal = (a.pose.position - b.pose.position).normalized()
                     total_mass = a.mass + b.mass
-                    a.pose.position = a.pose.position + normal * (overlap * b.mass / total_mass)
-                    b.pose.position = b.pose.position - normal * (overlap * a.mass / total_mass)
+                    a.pose.position = a.pose.position + normal * (
+                        overlap * b.mass / total_mass
+                    )
+                    b.pose.position = b.pose.position - normal * (
+                        overlap * a.mass / total_mass
+                    )
                     # elastic bounce
                     rel_v = a.velocity - b.velocity
                     vn = rel_v.dot(normal)
@@ -594,28 +682,45 @@ class GazeboWorld:
         self.ground_plane_size: float = 200.0
         self._spawn_log: List[Dict[str, Any]] = []
 
-    def set_physics(self, solver: PhysicsSolver = PhysicsSolver.ODE,
-                    gravity: float = -9.81, time_step: float = 0.01,
-                    friction: float = 0.5) -> None:
+    def set_physics(
+        self,
+        solver: PhysicsSolver = PhysicsSolver.ODE,
+        gravity: float = -9.81,
+        time_step: float = 0.01,
+        friction: float = 0.5,
+    ) -> None:
         self.physics = PhysicsEngine(solver, gravity, time_step, friction)
-        logger.info("Physics: solver=%s, gravity=%.2f, dt=%.4f", solver.value, gravity, time_step)
+        logger.info(
+            "Physics: solver=%s, gravity=%.2f, dt=%.4f",
+            solver.value,
+            gravity,
+            time_step,
+        )
 
-    def spawn_robot(self, unit_type: SC2UnitType,
-                    position: Optional[Vec3] = None,
-                    robot_id: Optional[str] = None) -> RobotModel:
+    def spawn_robot(
+        self,
+        unit_type: SC2UnitType,
+        position: Optional[Vec3] = None,
+        robot_id: Optional[str] = None,
+    ) -> RobotModel:
         robot = RobotModel.from_sc2_unit(unit_type, position)
         if robot_id:
             robot.robot_id = robot_id
         self.models[robot.robot_id] = robot
         self.physics.add_body(robot)
-        self._spawn_log.append({
-            "ts": time.time(), "id": robot.robot_id, "type": unit_type.value,
-            "pos": (position or Vec3()).to_dict(),
-        })
+        self._spawn_log.append(
+            {
+                "ts": time.time(),
+                "id": robot.robot_id,
+                "type": unit_type.value,
+                "pos": (position or Vec3()).to_dict(),
+            }
+        )
         return robot
 
-    def spawn_squad(self, unit_type: SC2UnitType, count: int,
-                    center: Vec3, spread: float = 3.0) -> List[RobotModel]:
+    def spawn_squad(
+        self, unit_type: SC2UnitType, count: int, center: Vec3, spread: float = 3.0
+    ) -> List[RobotModel]:
         robots: List[RobotModel] = []
         for i in range(count):
             angle = 2 * math.pi * i / max(count, 1)
@@ -628,11 +733,14 @@ class GazeboWorld:
         return robots
 
     def add_obstacle(self, center: Vec3, radius: float, label: str = "rock") -> None:
-        self.obstacles.append({"center": center.to_dict(), "radius": radius, "label": label})
+        self.obstacles.append(
+            {"center": center.to_dict(), "radius": radius, "label": label}
+        )
         self.physics.add_obstacle(center, radius)
 
-    def add_wall(self, start: Vec3, end: Vec3, thickness: float = 0.5,
-                 segment_count: int = 10) -> int:
+    def add_wall(
+        self, start: Vec3, end: Vec3, thickness: float = 0.5, segment_count: int = 10
+    ) -> int:
         """Approximate a wall as a series of sphere obstacles."""
         added = 0
         for i in range(segment_count):
@@ -644,10 +752,13 @@ class GazeboWorld:
             added += 1
         return added
 
-    def add_random_obstacles(self, count: int, bounds: float = 80.0,
-                             min_r: float = 0.5, max_r: float = 3.0) -> int:
+    def add_random_obstacles(
+        self, count: int, bounds: float = 80.0, min_r: float = 0.5, max_r: float = 3.0
+    ) -> int:
         for _ in range(count):
-            c = Vec3(random.uniform(-bounds, bounds), random.uniform(-bounds, bounds), 0)
+            c = Vec3(
+                random.uniform(-bounds, bounds), random.uniform(-bounds, bounds), 0
+            )
             r = random.uniform(min_r, max_r)
             self.add_obstacle(c, r, "random")
         return count
@@ -739,9 +850,13 @@ class GazeboSimulator:
                         continue
                     if attacker.can_attack(target):
                         dmg = attacker.attack(target, dt)
-                        total_damage[attacker.robot_id] = total_damage.get(attacker.robot_id, 0) + dmg
+                        total_damage[attacker.robot_id] = (
+                            total_damage.get(attacker.robot_id, 0) + dmg
+                        )
                         if not target.alive:
-                            kills.append({"killer": attacker.robot_id, "victim": target.robot_id})
+                            kills.append(
+                                {"killer": attacker.robot_id, "victim": target.robot_id}
+                            )
             # physics step
             for r in robots:
                 r.step(dt)
@@ -777,7 +892,9 @@ class GazeboSimulator:
 
     # ---- convenience ----
 
-    def spawn(self, unit_type: SC2UnitType, position: Optional[Vec3] = None) -> RobotModel:
+    def spawn(
+        self, unit_type: SC2UnitType, position: Optional[Vec3] = None
+    ) -> RobotModel:
         return self.world.spawn_robot(unit_type, position)
 
     def fleet_status(self) -> List[Dict[str, Any]]:
@@ -812,22 +929,32 @@ def demo() -> None:
 
     # --- configure physics ---
     print("\n[1] Configure Physics Engine")
-    sim.world.set_physics(solver=PhysicsSolver.ODE, gravity=-9.81, time_step=0.01, friction=0.4)
+    sim.world.set_physics(
+        solver=PhysicsSolver.ODE, gravity=-9.81, time_step=0.01, friction=0.4
+    )
     print(f"    Solver: {sim.world.physics.solver.value}")
 
     # --- spawn SC2 units as robots ---
     print("\n[2] Spawn SC2 Unit Robots")
-    zerglings = sim.world.spawn_squad(SC2UnitType.ZERGLING, count=6, center=Vec3(-20, 0, 0), spread=3.0)
-    marines = sim.world.spawn_squad(SC2UnitType.MARINE, count=4, center=Vec3(20, 0, 0), spread=2.5)
+    zerglings = sim.world.spawn_squad(
+        SC2UnitType.ZERGLING, count=6, center=Vec3(-20, 0, 0), spread=3.0
+    )
+    marines = sim.world.spawn_squad(
+        SC2UnitType.MARINE, count=4, center=Vec3(20, 0, 0), spread=2.5
+    )
     tank = sim.spawn(SC2UnitType.SIEGE_TANK, Vec3(25, 5, 0))
     stalker = sim.spawn(SC2UnitType.STALKER, Vec3(0, 20, 0))
-    print(f"    Spawned {len(zerglings)} zerglings, {len(marines)} marines, 1 tank, 1 stalker")
+    print(
+        f"    Spawned {len(zerglings)} zerglings, {len(marines)} marines, 1 tank, 1 stalker"
+    )
     print(f"    Total models: {sim.world.world_summary()['models']}")
 
     # --- add obstacles ---
     print("\n[3] Add Obstacles")
     sim.world.add_obstacle(Vec3(0, 0, 0), radius=2.0, label="mineral_patch")
-    sim.world.add_wall(Vec3(-30, -30, 0), Vec3(30, -30, 0), thickness=0.5, segment_count=12)
+    sim.world.add_wall(
+        Vec3(-30, -30, 0), Vec3(30, -30, 0), thickness=0.5, segment_count=12
+    )
     rnd = sim.world.add_random_obstacles(count=8, bounds=40.0)
     print(f"    Added mineral patch, wall (12 segments), {rnd} random obstacles")
     print(f"    Total obstacles: {len(sim.world.obstacles)}")

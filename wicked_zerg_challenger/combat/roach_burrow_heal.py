@@ -9,17 +9,17 @@ Roach Burrow Heal - 바퀴 잠복 회복 시스템
 4. 잠복 중 안전 확인
 """
 
-from typing import Dict, Set, TYPE_CHECKING
+from typing import TYPE_CHECKING, Dict, Set
 
 if TYPE_CHECKING:
-    from sc2.units import Units
-    from sc2.unit import Unit
     from sc2.position import Point2
+    from sc2.unit import Unit
+    from sc2.units import Units
 else:
     try:
-        from sc2.units import Units
-        from sc2.unit import Unit
         from sc2.position import Point2
+        from sc2.unit import Unit
+        from sc2.units import Units
     except ImportError:
         Units = object
         Unit = object
@@ -108,7 +108,9 @@ class RoachBurrowHeal:
             if not self._tunneling_claws_available:
                 self._tunneling_claws_available = True
                 game_time = getattr(self.bot, "time", 0)
-                self.logger.info(f"[{int(game_time)}s] Tunneling Claws upgrade completed!")
+                self.logger.info(
+                    f"[{int(game_time)}s] Tunneling Claws upgrade completed!"
+                )
 
     async def manage_roach_healing(self, iteration: int):
         """
@@ -122,8 +124,8 @@ class RoachBurrowHeal:
             return
 
         try:
-            from sc2.ids.unit_typeid import UnitTypeId
             from sc2.ids.ability_id import AbilityId
+            from sc2.ids.unit_typeid import UnitTypeId
         except ImportError:
             return
 
@@ -140,9 +142,15 @@ class RoachBurrowHeal:
                 # 체력이 30% 이하면 잠복
                 if roach.health_percentage <= self._burrow_hp_threshold:
                     # 적이 근처에 있는지 확인 (설정값 사용)
-                    detection_range = self.config.ENEMY_DETECTION_RANGE if self.config else 10
+                    detection_range = (
+                        self.config.ENEMY_DETECTION_RANGE if self.config else 10
+                    )
                     enemy_units = getattr(self.bot, "enemy_units", [])
-                    nearby_enemies = [e for e in enemy_units if e.distance_to(roach.position) < detection_range]
+                    nearby_enemies = [
+                        e
+                        for e in enemy_units
+                        if e.distance_to(roach.position) < detection_range
+                    ]
 
                     # 적이 근처에 있으면 잠복 (안전)
                     if nearby_enemies or roach.health_percentage <= 0.3:
@@ -151,10 +159,15 @@ class RoachBurrowHeal:
             # === 2. 회복 중인 바퀴 관리 ===
             else:
                 # 잠복 중인 바퀴
-                burrow_duration = game_time - self._burrow_start_time.get(roach_tag, game_time)
+                burrow_duration = game_time - self._burrow_start_time.get(
+                    roach_tag, game_time
+                )
 
                 # 회복 완료 조건: 80% 이상 체력 + 최소 5초 경과
-                if roach.health_percentage >= self._return_hp_threshold and burrow_duration >= self._min_heal_time:
+                if (
+                    roach.health_percentage >= self._return_hp_threshold
+                    and burrow_duration >= self._min_heal_time
+                ):
                     await self.unburrow_roach(roach, game_time)
 
                 # 위험 감지: 디텍터가 근처에 있으면 이동 (Tunneling Claws 필요)
@@ -183,7 +196,9 @@ class RoachBurrowHeal:
             self._burrow_start_time[roach.tag] = game_time
 
             if self.bot.iteration % 22 == 0:  # 1초마다 로그
-                self.logger.info(f"[{int(game_time)}s] Roach burrowing to heal ({int(roach.health_percentage * 100)}% HP)")
+                self.logger.info(
+                    f"[{int(game_time)}s] Roach burrowing to heal ({int(roach.health_percentage * 100)}% HP)"
+                )
 
         except AttributeError as e:
             self.logger.warning(f"Failed to burrow roach: {e}")
@@ -212,8 +227,10 @@ class RoachBurrowHeal:
                 del self._burrow_start_time[roach.tag]
 
                 if self.bot.iteration % 22 == 0:
-                    self.logger.info(f"[{int(game_time)}s] Roach healed and returning to combat! "
-                          f"({int(roach.health_percentage * 100)}% HP, {int(heal_duration)}s heal time)")
+                    self.logger.info(
+                        f"[{int(game_time)}s] Roach healed and returning to combat! "
+                        f"({int(roach.health_percentage * 100)}% HP, {int(heal_duration)}s heal time)"
+                    )
 
         except AttributeError as e:
             self.logger.warning(f"Failed to unburrow roach: {e}")
@@ -232,11 +249,20 @@ class RoachBurrowHeal:
             return
 
         # 디텍터 유닛 타입 (설정값 사용)
-        detector_types = self.config.DETECTOR_TYPES if self.config else {
-            "OBSERVER", "RAVEN", "OVERSEER", "OBSERVERSIEGEMODE",
-            "MISSILETURRET", "SPORECRAWLER", "PHOTONCANNON",
-            "SCAN"
-        }
+        detector_types = (
+            self.config.DETECTOR_TYPES
+            if self.config
+            else {
+                "OBSERVER",
+                "RAVEN",
+                "OVERSEER",
+                "OBSERVERSIEGEMODE",
+                "MISSILETURRET",
+                "SPORECRAWLER",
+                "PHOTONCANNON",
+                "SCAN",
+            }
+        )
 
         # 디텍터 감지 거리 (설정값 사용)
         detector_range = self.config.DETECTOR_THREAT_RANGE if self.config else 15
@@ -249,12 +275,18 @@ class RoachBurrowHeal:
 
         for enemy in enemy_units:
             enemy_type = getattr(enemy.type_id, "name", "").upper()
-            if enemy_type in detector_types and enemy.distance_to(roach.position) < detector_range:
+            if (
+                enemy_type in detector_types
+                and enemy.distance_to(roach.position) < detector_range
+            ):
                 nearby_detectors.append(enemy)
 
         for struct in enemy_structures:
             struct_type = getattr(struct.type_id, "name", "").upper()
-            if struct_type in detector_types and struct.distance_to(roach.position) < detector_range:
+            if (
+                struct_type in detector_types
+                and struct.distance_to(roach.position) < detector_range
+            ):
                 nearby_detectors.append(struct)
 
         # 디텍터가 근처에 있으면 이동
@@ -268,7 +300,9 @@ class RoachBurrowHeal:
                     game_time = getattr(self.bot, "time", 0)
 
                     if self.bot.iteration % 22 == 0:
-                        self.logger.warning(f"[{int(game_time)}s] Detector detected! Roach retreating while burrowed")
+                        self.logger.warning(
+                            f"[{int(game_time)}s] Detector detected! Roach retreating while burrowed"
+                        )
 
                 except AttributeError as e:
                     self.logger.warning(f"Failed to move burrowed roach: {e}")

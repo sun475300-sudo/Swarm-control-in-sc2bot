@@ -4,6 +4,7 @@
 - 수수료/슬리피지 반영
 - 수익률, MDD(Maximum Drawdown), Sharpe Ratio 계산
 """
+
 import logging
 from dataclasses import dataclass, field
 from datetime import datetime
@@ -12,7 +13,7 @@ from typing import Optional
 import numpy as np
 import pandas as pd
 
-from .strategies import _calc_rsi, Signal
+from .strategies import Signal, _calc_rsi
 
 logger = logging.getLogger("crypto.backtester")
 
@@ -20,6 +21,7 @@ logger = logging.getLogger("crypto.backtester")
 @dataclass
 class BacktestResult:
     """백테스트 결과"""
+
     strategy_name: str = ""
     ticker: str = ""
     period: str = ""
@@ -104,8 +106,10 @@ class BacktestEngine:
                 signals.append(Signal.HOLD)
 
         return self._execute_backtest(
-            df, signals, ticker,
-            strategy_name=f"RSI({rsi_period}, {oversold}/{overbought})"
+            df,
+            signals,
+            ticker,
+            strategy_name=f"RSI({rsi_period}, {oversold}/{overbought})",
         )
 
     def run_ma_crossover_strategy(
@@ -160,8 +164,10 @@ class BacktestEngine:
                 signals.append(Signal.HOLD)
 
         return self._execute_backtest(
-            df, signals, ticker,
-            strategy_name=f"MA_Crossover({short_period}/{long_period})"
+            df,
+            signals,
+            ticker,
+            strategy_name=f"MA_Crossover({short_period}/{long_period})",
         )
 
     def _execute_backtest(
@@ -184,8 +190,8 @@ class BacktestEngine:
             BacktestResult: 백테스트 결과
         """
         capital = self.initial_capital
-        position = 0.0          # 보유 수량
-        avg_buy_price = 0.0     # 평균 매수가
+        position = 0.0  # 보유 수량
+        avg_buy_price = 0.0  # 평균 매수가
         equity_curve = []
         trades = []
         fee_total = 0.0
@@ -214,14 +220,16 @@ class BacktestEngine:
                 slippage_total += slippage_cost
                 capital = 0
 
-                trades.append({
-                    "index": i,
-                    "side": "buy",
-                    "price": exec_price,
-                    "volume": position,
-                    "fee": fee,
-                    "slippage": slippage_cost,
-                })
+                trades.append(
+                    {
+                        "index": i,
+                        "side": "buy",
+                        "price": exec_price,
+                        "volume": position,
+                        "fee": fee,
+                        "slippage": slippage_cost,
+                    }
+                )
 
             elif signal == Signal.SELL and position > 0:
                 # 전량 매도 — Bug #6 Fix: 슬리피지는 exec_price에만 반영, 이중 적용 제거
@@ -232,17 +240,23 @@ class BacktestEngine:
                 fee_total += fee
                 slippage_total += slippage_cost
 
-                pnl_pct = ((exec_price - avg_buy_price) / avg_buy_price * 100) if avg_buy_price > 0 else 0
+                pnl_pct = (
+                    ((exec_price - avg_buy_price) / avg_buy_price * 100)
+                    if avg_buy_price > 0
+                    else 0
+                )
 
-                trades.append({
-                    "index": i,
-                    "side": "sell",
-                    "price": exec_price,
-                    "volume": position,
-                    "fee": fee,
-                    "slippage": slippage_cost,
-                    "pnl_pct": round(pnl_pct, 2),
-                })
+                trades.append(
+                    {
+                        "index": i,
+                        "side": "sell",
+                        "price": exec_price,
+                        "volume": position,
+                        "fee": fee,
+                        "slippage": slippage_cost,
+                        "pnl_pct": round(pnl_pct, 2),
+                    }
+                )
 
                 position = 0
                 avg_buy_price = 0
@@ -261,7 +275,11 @@ class BacktestEngine:
             fee_total += fee
             position = 0
 
-        final_capital = capital if capital > 0 else equity_curve[-1] if equity_curve else self.initial_capital
+        final_capital = (
+            capital
+            if capital > 0
+            else equity_curve[-1] if equity_curve else self.initial_capital
+        )
 
         # 결과 통계 계산
         result = BacktestResult(
@@ -281,7 +299,7 @@ class BacktestEngine:
         )
 
         # 기간 정보
-        if len(df) >= 2 and hasattr(df.index, 'dtype'):
+        if len(df) >= 2 and hasattr(df.index, "dtype"):
             try:
                 start_date = pd.Timestamp(df.index[0])
                 end_date = pd.Timestamp(df.index[-1])
@@ -289,7 +307,9 @@ class BacktestEngine:
                 days = (end_date - start_date).days
                 if days > 0:
                     result.annualized_return_pct = round(
-                        ((final_capital / self.initial_capital) ** (365 / days) - 1) * 100, 2
+                        ((final_capital / self.initial_capital) ** (365 / days) - 1)
+                        * 100,
+                        2,
                     )
             except Exception:
                 result.period = f"{len(df)}캔들"
@@ -321,7 +341,7 @@ class BacktestEngine:
         gross_profit = sum(t["pnl_pct"] for t in wins) if wins else 0
         gross_loss = abs(sum(t["pnl_pct"] for t in losses)) if losses else 0
         result.profit_factor = round(
-            (gross_profit / gross_loss) if gross_loss > 0 else float('inf'), 2
+            (gross_profit / gross_loss) if gross_loss > 0 else float("inf"), 2
         )
 
         logger.info(

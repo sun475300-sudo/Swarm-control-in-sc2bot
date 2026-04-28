@@ -4,6 +4,7 @@ Portfolio Tracker
 - 자산 추이 그래프 생성 (matplotlib)
 - 거래 내역 로깅
 """
+
 import csv
 import json
 import logging
@@ -46,6 +47,7 @@ class PortfolioTracker:
                 corrupted_path = path.with_suffix(path.suffix + ".corrupted")
                 try:
                     import shutil
+
                     shutil.copy2(path, corrupted_path)
                     logger.info(f"손상 파일 보존: {corrupted_path}")
                 except Exception as copy_err:
@@ -59,7 +61,9 @@ class PortfolioTracker:
                         logger.info(f"백업 파일에서 복구 성공: {backup_path}")
                         return data
                     except Exception as bak_err:
-                        logger.error(f"백업 파일 복구도 실패 ({backup_path}): {bak_err}. 빈 기본값 사용.")
+                        logger.error(
+                            f"백업 파일 복구도 실패 ({backup_path}): {bak_err}. 빈 기본값 사용."
+                        )
                 else:
                     logger.warning(f"백업 파일 없음 ({backup_path}). 빈 기본값 사용.")
         return default
@@ -71,12 +75,13 @@ class PortfolioTracker:
             backup_path = filepath.with_suffix(filepath.suffix + ".bak")
             try:
                 import shutil
+
                 shutil.copy2(filepath, backup_path)
             except Exception as bak_err:
                 logger.warning(f"백업 파일 생성 실패 ({backup_path}): {bak_err}")
-        tmp_fd, tmp_path = tempfile.mkstemp(dir=filepath.parent, suffix='.tmp')
+        tmp_fd, tmp_path = tempfile.mkstemp(dir=filepath.parent, suffix=".tmp")
         try:
-            with os.fdopen(tmp_fd, 'w', encoding='utf-8') as f:
+            with os.fdopen(tmp_fd, "w", encoding="utf-8") as f:
                 json.dump(data, f, ensure_ascii=False, indent=2)
             os.replace(tmp_path, filepath)  # 원자적 교체
         except Exception as e:
@@ -133,11 +138,20 @@ class PortfolioTracker:
         if len(self._history) > 10000:
             self._history = self._history[-10000:]
         self._save_history()
-        logger.info(f"포트폴리오 스냅샷: 총 {total_krw:,.0f}원 ({len(holdings)}개 자산)")
+        logger.info(
+            f"포트폴리오 스냅샷: 총 {total_krw:,.0f}원 ({len(holdings)}개 자산)"
+        )
         return snapshot
 
-    def log_trade(self, side: str, ticker: str, amount: float,
-                  price: float = 0, reason: str = "", order_result: dict = None):
+    def log_trade(
+        self,
+        side: str,
+        ticker: str,
+        amount: float,
+        price: float = 0,
+        reason: str = "",
+        order_result: dict = None,
+    ):
         """거래 내역 기록"""
         trade = {
             "timestamp": datetime.now().isoformat(),
@@ -162,9 +176,10 @@ class PortfolioTracker:
         """
         try:
             import matplotlib
+
             matplotlib.use("Agg")
-            import matplotlib.pyplot as plt
             import matplotlib.dates as mdates
+            import matplotlib.pyplot as plt
         except ImportError:
             logger.error("matplotlib가 설치되지 않았습니다: pip install matplotlib")
             return None
@@ -202,7 +217,9 @@ class PortfolioTracker:
         plt.rcParams["axes.unicode_minus"] = False
 
         fig, ax = plt.subplots(figsize=(12, 6))
-        ax.plot(ts_list, val_list, linewidth=2, color="#2196F3", marker="o", markersize=3)
+        ax.plot(
+            ts_list, val_list, linewidth=2, color="#2196F3", marker="o", markersize=3
+        )
         ax.fill_between(ts_list, val_list, alpha=0.1, color="#2196F3")
 
         # 시작/끝 값 표시
@@ -214,7 +231,9 @@ class PortfolioTracker:
 
         ax.set_title(
             f"보유 자산 추이  |  현재: {end_val:,.0f}원  ({sign}{change_pct:.1f}%)",
-            fontsize=14, fontweight="bold", color=color
+            fontsize=14,
+            fontweight="bold",
+            color=color,
         )
         ax.set_ylabel("총 자산 (KRW)", fontsize=11)
         ax.xaxis.set_major_formatter(mdates.DateFormatter("%m/%d"))
@@ -240,6 +259,7 @@ class PortfolioTracker:
         """보유 자산 비중 파이차트 생성"""
         try:
             import matplotlib
+
             matplotlib.use("Agg")
             import matplotlib.pyplot as plt
         except ImportError:
@@ -268,17 +288,31 @@ class PortfolioTracker:
         plt.rcParams["axes.unicode_minus"] = False
 
         fig, ax = plt.subplots(figsize=(8, 8))
-        colors = ["#2196F3", "#4CAF50", "#FF9800", "#F44336", "#9C27B0",
-                   "#00BCD4", "#FFEB3B", "#795548", "#607D8B", "#E91E63"]
+        colors = [
+            "#2196F3",
+            "#4CAF50",
+            "#FF9800",
+            "#F44336",
+            "#9C27B0",
+            "#00BCD4",
+            "#FFEB3B",
+            "#795548",
+            "#607D8B",
+            "#E91E63",
+        ]
 
         wedges, texts, autotexts = ax.pie(
-            sizes, labels=labels, autopct="%1.1f%%",
-            colors=colors[:len(sizes)], startangle=90,
-            textprops={"fontsize": 11}
+            sizes,
+            labels=labels,
+            autopct="%1.1f%%",
+            colors=colors[: len(sizes)],
+            startangle=90,
+            textprops={"fontsize": 11},
         )
         ax.set_title(
             f"보유 자산 비중  |  총: {sum(sizes):,.0f}원",
-            fontsize=14, fontweight="bold"
+            fontsize=14,
+            fontweight="bold",
         )
         plt.tight_layout()
 
@@ -340,10 +374,16 @@ class PortfolioTracker:
 
         trades = self._trades
         if cutoff:
-            trades = [t for t in trades if datetime.fromisoformat(t["timestamp"]) >= cutoff]
+            trades = [
+                t for t in trades if datetime.fromisoformat(t["timestamp"]) >= cutoff
+            ]
 
         if not trades:
-            return {"period": period, "total_trades": 0, "message": "해당 기간 거래 없음"}
+            return {
+                "period": period,
+                "total_trades": 0,
+                "message": "해당 기간 거래 없음",
+            }
 
         buys = [t for t in trades if t.get("side") == "buy"]
         sells = [t for t in trades if t.get("side") == "sell"]
@@ -368,7 +408,11 @@ class PortfolioTracker:
                     # Estimate: positive if we assume average scenario
                     sell_profits.append(0.5)
 
-        win_rate = (profitable_sells / total_sells_with_info * 100) if total_sells_with_info > 0 else 0
+        win_rate = (
+            (profitable_sells / total_sells_with_info * 100)
+            if total_sells_with_info > 0
+            else 0
+        )
 
         # Consecutive wins/losses
         max_wins = 0
@@ -432,7 +476,7 @@ class PortfolioTracker:
                     "value_krw": value,
                     "weight_pct": round(weight_pct, 1),
                     "max_weight_pct": max_weight_pct,
-                    "message": f"{currency} 비중 {weight_pct:.1f}% > 기준 {max_weight_pct}%"
+                    "message": f"{currency} 비중 {weight_pct:.1f}% > 기준 {max_weight_pct}%",
                 }
                 warnings.append(warning)
                 logger.warning(f"포트폴리오 비중 경고: {warning['message']}")
@@ -447,7 +491,15 @@ class PortfolioTracker:
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
             filepath = config.DATA_DIR / f"trades_{timestamp}.csv"
 
-        columns = ["timestamp", "side", "ticker", "amount", "price", "reason", "dry_run"]
+        columns = [
+            "timestamp",
+            "side",
+            "ticker",
+            "amount",
+            "price",
+            "reason",
+            "dry_run",
+        ]
 
         with open(filepath, "w", newline="", encoding="utf-8-sig") as f:
             writer = csv.DictWriter(f, fieldnames=columns, extrasaction="ignore")
@@ -487,16 +539,14 @@ class PortfolioTracker:
         snapshots = self._history
         if cutoff:
             snapshots = [
-                s for s in snapshots
-                if datetime.fromisoformat(s["timestamp"]) >= cutoff
+                s for s in snapshots if datetime.fromisoformat(s["timestamp"]) >= cutoff
             ]
 
         # 거래 내역 필터링
         trades = self._trades
         if cutoff:
             trades = [
-                t for t in trades
-                if datetime.fromisoformat(t["timestamp"]) >= cutoff
+                t for t in trades if datetime.fromisoformat(t["timestamp"]) >= cutoff
             ]
 
         report = {
@@ -553,7 +603,9 @@ class PortfolioTracker:
                 next_values = values_arr[1:]
                 nonzero_mask = prev_values != 0
                 if nonzero_mask.sum() >= 2:
-                    returns = (next_values[nonzero_mask] - prev_values[nonzero_mask]) / prev_values[nonzero_mask]
+                    returns = (
+                        next_values[nonzero_mask] - prev_values[nonzero_mask]
+                    ) / prev_values[nonzero_mask]
                     daily_rf = (1.035) ** (1 / 365) - 1  # 연간 3.5% 무위험수익률
                     excess_returns = returns - daily_rf
                     mean_excess = float(np.mean(excess_returns))
@@ -569,7 +621,9 @@ class PortfolioTracker:
                     daily_vol = float(np.std(returns, ddof=1))
                     annual_vol = daily_vol * np.sqrt(365)
                     report["risk"]["daily_volatility_pct"] = round(daily_vol * 100, 4)
-                    report["risk"]["annual_volatility_pct"] = round(float(annual_vol) * 100, 2)
+                    report["risk"]["annual_volatility_pct"] = round(
+                        float(annual_vol) * 100, 2
+                    )
                 else:
                     report["risk"]["sharpe_ratio"] = 0.0
                     report["risk"]["daily_volatility_pct"] = 0.0
@@ -588,8 +642,14 @@ class PortfolioTracker:
             sells = [t for t in trades if t.get("side") == "sell"]
 
             # 종목별 거래 분석
-            by_ticker = defaultdict(lambda: {"buy_count": 0, "sell_count": 0,
-                                              "buy_total": 0, "sell_total": 0})
+            by_ticker = defaultdict(
+                lambda: {
+                    "buy_count": 0,
+                    "sell_count": 0,
+                    "buy_total": 0,
+                    "sell_total": 0,
+                }
+            )
             for t in trades:
                 ticker = t.get("ticker", "unknown")
                 side = t.get("side", "")
@@ -604,14 +664,16 @@ class PortfolioTracker:
             ticker_stats = []
             for ticker, stats in by_ticker.items():
                 net_pnl = stats["sell_total"] - stats["buy_total"]
-                ticker_stats.append({
-                    "ticker": ticker,
-                    "buy_count": stats["buy_count"],
-                    "sell_count": stats["sell_count"],
-                    "buy_total_krw": round(stats["buy_total"], 0),
-                    "sell_total_krw": round(stats["sell_total"], 0),
-                    "net_pnl_krw": round(net_pnl, 0),
-                })
+                ticker_stats.append(
+                    {
+                        "ticker": ticker,
+                        "buy_count": stats["buy_count"],
+                        "sell_count": stats["sell_count"],
+                        "buy_total_krw": round(stats["buy_total"], 0),
+                        "sell_total_krw": round(stats["sell_total"], 0),
+                        "net_pnl_krw": round(net_pnl, 0),
+                    }
+                )
             ticker_stats.sort(key=lambda x: x["net_pnl_krw"], reverse=True)
 
             # 승률 분석
@@ -625,7 +687,11 @@ class PortfolioTracker:
                 elif "손절" in reason or "stop_loss" in reason:
                     total_sells_analyzed += 1
 
-            win_rate = (profitable_sells / total_sells_analyzed * 100) if total_sells_analyzed > 0 else 0
+            win_rate = (
+                (profitable_sells / total_sells_analyzed * 100)
+                if total_sells_analyzed > 0
+                else 0
+            )
 
             # 시간대별 거래 분포
             hourly_dist = defaultdict(int)
@@ -637,7 +703,9 @@ class PortfolioTracker:
                     logger.debug(f"Skipping malformed trade timestamp: {e}")
 
             # 가장 활발한 시간대
-            most_active_hour = max(hourly_dist, key=hourly_dist.get) if hourly_dist else 0
+            most_active_hour = (
+                max(hourly_dist, key=hourly_dist.get) if hourly_dist else 0
+            )
 
             buy_total = sum(t.get("amount", 0) for t in buys)
             sell_total = sum(t.get("amount", 0) for t in sells)
@@ -666,12 +734,14 @@ class PortfolioTracker:
             for currency, info in holdings.items():
                 value = info.get("value_krw", 0)
                 weight = (value / total_val * 100) if total_val > 0 else 0
-                holdings_summary.append({
-                    "currency": currency,
-                    "amount": info.get("amount", 0),
-                    "value_krw": round(value, 0),
-                    "weight_pct": round(weight, 1),
-                })
+                holdings_summary.append(
+                    {
+                        "currency": currency,
+                        "amount": info.get("amount", 0),
+                        "value_krw": round(value, 0),
+                        "weight_pct": round(weight, 1),
+                    }
+                )
             holdings_summary.sort(key=lambda x: x["value_krw"], reverse=True)
 
             report["current_holdings"] = holdings_summary
@@ -697,42 +767,48 @@ class PortfolioTracker:
         if "initial_value" in portfolio:
             pnl = portfolio["pnl_krw"]
             sign = "+" if pnl >= 0 else ""
-            lines.extend([
-                "[포트폴리오 성과]",
-                f"  초기 자산: {portfolio['initial_value']:>15,.0f} 원",
-                f"  최종 자산: {portfolio['final_value']:>15,.0f} 원",
-                f"  손익:      {sign}{pnl:>14,.0f} 원 ({sign}{portfolio['pnl_pct']:.2f}%)",
-                f"  최고점:    {portfolio['peak_value']:>15,.0f} 원",
-                f"  최저점:    {portfolio['trough_value']:>15,.0f} 원",
-                "",
-            ])
+            lines.extend(
+                [
+                    "[포트폴리오 성과]",
+                    f"  초기 자산: {portfolio['initial_value']:>15,.0f} 원",
+                    f"  최종 자산: {portfolio['final_value']:>15,.0f} 원",
+                    f"  손익:      {sign}{pnl:>14,.0f} 원 ({sign}{portfolio['pnl_pct']:.2f}%)",
+                    f"  최고점:    {portfolio['peak_value']:>15,.0f} 원",
+                    f"  최저점:    {portfolio['trough_value']:>15,.0f} 원",
+                    "",
+                ]
+            )
 
         # 위험 지표
         risk = report.get("risk", {})
         if "max_drawdown_pct" in risk:
-            lines.extend([
-                "[위험 지표]",
-                f"  최대 낙폭(MDD): {risk['max_drawdown_pct']:>10.2f} %",
-                f"  Sharpe Ratio:   {risk.get('sharpe_ratio', 0):>10.4f}",
-                f"  일간 변동성:    {risk.get('daily_volatility_pct', 0):>10.4f} %",
-                f"  연간 변동성:    {risk.get('annual_volatility_pct', 0):>10.2f} %",
-                "",
-            ])
+            lines.extend(
+                [
+                    "[위험 지표]",
+                    f"  최대 낙폭(MDD): {risk['max_drawdown_pct']:>10.2f} %",
+                    f"  Sharpe Ratio:   {risk.get('sharpe_ratio', 0):>10.4f}",
+                    f"  일간 변동성:    {risk.get('daily_volatility_pct', 0):>10.4f} %",
+                    f"  연간 변동성:    {risk.get('annual_volatility_pct', 0):>10.2f} %",
+                    "",
+                ]
+            )
 
         # 거래 통계
         trades_info = report.get("trades", {})
         if "total" in trades_info:
             net = trades_info["net_pnl_krw"]
             sign = "+" if net >= 0 else ""
-            lines.extend([
-                "[거래 통계]",
-                f"  총 거래: {trades_info['total']}건 (매수 {trades_info['buy_count']} / 매도 {trades_info['sell_count']})",
-                f"  매수 총액:   {trades_info['buy_total_krw']:>15,.0f} 원",
-                f"  매도 총액:   {trades_info['sell_total_krw']:>15,.0f} 원",
-                f"  순 손익:     {sign}{net:>14,.0f} 원",
-                f"  승률:        {trades_info['win_rate_pct']:>10.1f} %",
-                "",
-            ])
+            lines.extend(
+                [
+                    "[거래 통계]",
+                    f"  총 거래: {trades_info['total']}건 (매수 {trades_info['buy_count']} / 매도 {trades_info['sell_count']})",
+                    f"  매수 총액:   {trades_info['buy_total_krw']:>15,.0f} 원",
+                    f"  매도 총액:   {trades_info['sell_total_krw']:>15,.0f} 원",
+                    f"  순 손익:     {sign}{net:>14,.0f} 원",
+                    f"  승률:        {trades_info['win_rate_pct']:>10.1f} %",
+                    "",
+                ]
+            )
 
             # 종목별 성과
             by_ticker = trades_info.get("by_ticker", [])

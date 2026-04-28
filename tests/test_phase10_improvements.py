@@ -11,15 +11,26 @@ Tests for:
 7. OverlordVisionNetwork faster update cycle
 """
 
-import pytest
-from unittest.mock import Mock, MagicMock, patch, PropertyMock
+from unittest.mock import MagicMock, Mock, PropertyMock, patch
 
+import pytest
 
 # ===== Shared Mock Helpers =====
 
+
 class MockUnit:
-    def __init__(self, type_id, position=None, supply_cost=1, is_flying=False,
-                 energy=0, tag=None, can_attack=True, is_idle=False, is_burrowed=False):
+    def __init__(
+        self,
+        type_id,
+        position=None,
+        supply_cost=1,
+        is_flying=False,
+        energy=0,
+        tag=None,
+        can_attack=True,
+        is_idle=False,
+        is_burrowed=False,
+    ):
         self.type_id = Mock()
         self.type_id.name = type_id
         self.supply_cost = supply_cost
@@ -36,10 +47,15 @@ class MockUnit:
         return MockPoint2(self._position)
 
     def distance_to(self, other):
-        if hasattr(other, 'x'):
-            return ((self._position[0] - other.x) ** 2 + (self._position[1] - other.y) ** 2) ** 0.5
-        if hasattr(other, '_position'):
-            return ((self._position[0] - other._position[0]) ** 2 + (self._position[1] - other._position[1]) ** 2) ** 0.5
+        if hasattr(other, "x"):
+            return (
+                (self._position[0] - other.x) ** 2 + (self._position[1] - other.y) ** 2
+            ) ** 0.5
+        if hasattr(other, "_position"):
+            return (
+                (self._position[0] - other._position[0]) ** 2
+                + (self._position[1] - other._position[1]) ** 2
+            ) ** 0.5
         return 10.0
 
     def move(self, target, queue=False):
@@ -54,14 +70,14 @@ class MockPoint2:
         if isinstance(pos, tuple):
             self.x, self.y = pos
         else:
-            self.x = getattr(pos, 'x', 50)
-            self.y = getattr(pos, 'y', 50)
+            self.x = getattr(pos, "x", 50)
+            self.y = getattr(pos, "y", 50)
 
     def towards(self, other, distance):
         return MockPoint2((self.x, self.y))
 
     def distance_to(self, other):
-        if hasattr(other, 'x'):
+        if hasattr(other, "x"):
             return ((self.x - other.x) ** 2 + (self.y - other.y) ** 2) ** 0.5
         return 10.0
 
@@ -78,8 +94,10 @@ class MockStructure:
         return MockPoint2(self._position)
 
     def distance_to(self, other):
-        if hasattr(other, 'x'):
-            return ((self._position[0] - other.x) ** 2 + (self._position[1] - other.y) ** 2) ** 0.5
+        if hasattr(other, "x"):
+            return (
+                (self._position[0] - other.x) ** 2 + (self._position[1] - other.y) ** 2
+            ) ** 0.5
         return 10.0
 
 
@@ -112,12 +130,14 @@ class MockBot:
 
 # ===== 1. IntelManager Hidden Tech Alert Tests =====
 
+
 class TestIntelManagerTechAlerts:
     """Test IntelManager hidden tech alert system"""
 
     def setup_method(self):
         try:
             from wicked_zerg_challenger.intel_manager import IntelManager
+
             self.bot = MockBot()
             self.bot.blackboard = Mock()
             self.bot.blackboard.set = Mock()
@@ -128,7 +148,7 @@ class TestIntelManagerTechAlerts:
 
     def test_hidden_tech_alerts_initialized(self):
         """hidden tech alert dict should be initialized"""
-        assert hasattr(self.intel, '_hidden_tech_alerts')
+        assert hasattr(self.intel, "_hidden_tech_alerts")
         assert "DARKSHRINE" in self.intel._hidden_tech_alerts
         assert "STARGATE" in self.intel._hidden_tech_alerts
         assert "FUSIONCORE" in self.intel._hidden_tech_alerts
@@ -160,7 +180,11 @@ class TestIntelManagerTechAlerts:
         self.intel.enemy_tech_buildings = {"DARKSHRINE"}
         self.intel._check_hidden_tech_alerts()
         self.intel._check_hidden_tech_alerts()  # second call
-        assert self.intel._detected_tech_alerts.count("DT_INCOMING") if hasattr(self.intel._detected_tech_alerts, 'count') else True
+        assert (
+            self.intel._detected_tech_alerts.count("DT_INCOMING")
+            if hasattr(self.intel._detected_tech_alerts, "count")
+            else True
+        )
 
     def test_blackboard_updated_on_alert(self):
         """Blackboard should be updated when alert fires"""
@@ -200,12 +224,18 @@ class TestIntelManagerTechAlerts:
 
 # ===== 2. Strategy Manager ZvZ Counter Tests =====
 
+
 class TestStrategyManagerZvZCounter:
     """Test ZvZ counter unit logic"""
 
     def setup_method(self):
         try:
-            from wicked_zerg_challenger.strategy_manager import StrategyManager, EnemyRace, GamePhase
+            from wicked_zerg_challenger.strategy_manager import (
+                EnemyRace,
+                GamePhase,
+                StrategyManager,
+            )
+
             self.EnemyRace = EnemyRace
             self.GamePhase = GamePhase
             self.bot = MockBot()
@@ -221,14 +251,17 @@ class TestStrategyManagerZvZCounter:
                 self.strategy.race_unit_ratios[EnemyRace.ZERG] = {}
             if GamePhase.MID not in self.strategy.race_unit_ratios[EnemyRace.ZERG]:
                 self.strategy.race_unit_ratios[EnemyRace.ZERG][GamePhase.MID] = {
-                    "zergling": 0.3, "roach": 0.3, "baneling": 0.2, "hydra": 0.2
+                    "zergling": 0.3,
+                    "roach": 0.3,
+                    "baneling": 0.2,
+                    "hydra": 0.2,
                 }
         except ImportError:
             pytest.skip("StrategyManager not available")
 
     def test_counter_zerg_units_exists(self):
         """_counter_zerg_units method should exist"""
-        assert hasattr(self.strategy, '_counter_zerg_units')
+        assert hasattr(self.strategy, "_counter_zerg_units")
 
     def test_counter_zerg_only_runs_vs_zerg(self):
         """Should only run when enemy is Zerg"""
@@ -263,12 +296,14 @@ class TestStrategyManagerZvZCounter:
 
 # ===== 3. Economy Manager Gas Banking Prevention Tests =====
 
+
 class TestEconomyGasBanking:
     """Test gas banking prevention improvements"""
 
     def setup_method(self):
         try:
             from wicked_zerg_challenger.economy_manager import EconomyManager
+
             self.bot = MockBot()
             self.bot.larva = []
             self.bot.workers = Mock()
@@ -286,12 +321,14 @@ class TestEconomyGasBanking:
 
 # ===== 4. IntelManager NYDUSCANAL in Tech Buildings =====
 
+
 class TestIntelManagerTechBuildings:
     """Test that NYDUSCANAL is tracked"""
 
     def setup_method(self):
         try:
             from wicked_zerg_challenger.intel_manager import IntelManager
+
             self.bot = MockBot()
             self.intel = IntelManager(self.bot)
         except ImportError:
@@ -308,12 +345,16 @@ class TestIntelManagerTechBuildings:
 
 # ===== 5. Overlord Vision Network Faster Update =====
 
+
 class TestOverlordVisionNetwork:
     """Test overlord vision update frequency"""
 
     def setup_method(self):
         try:
-            from wicked_zerg_challenger.overlord_vision_network import OverlordVisionNetwork
+            from wicked_zerg_challenger.overlord_vision_network import (
+                OverlordVisionNetwork,
+            )
+
             self.bot = MockBot()
             self.bot.units = Mock(return_value=Mock(idle=Mock(exists=False)))
             self.bot.expansion_locations_list = [MockPoint2((50, 50))]
@@ -341,12 +382,14 @@ class TestOverlordVisionNetwork:
 
 # ===== 6. EarlyScoutSystem Mid-Game Rescouting =====
 
+
 class TestEarlyScoutSystemMidGame:
     """Test mid-game rescouting feature"""
 
     def setup_method(self):
         try:
             from wicked_zerg_challenger.early_scout_system import EarlyScoutSystem
+
             self.bot = MockBot()
 
             # Mock units method
@@ -357,18 +400,22 @@ class TestEarlyScoutSystemMidGame:
             mock_zerglings.idle.closest_to = Mock(return_value=MockUnit("ZERGLING"))
             mock_zerglings.amount = 5
             mock_zerglings.take = Mock(return_value=[])
-            mock_zerglings.tags_in = Mock(return_value=Mock(__iter__=lambda s: iter([])))
+            mock_zerglings.tags_in = Mock(
+                return_value=Mock(__iter__=lambda s: iter([]))
+            )
 
             mock_overlords = Mock()
             mock_overlords.exists = True
             mock_overlords.first = MockUnit("OVERLORD")
-            mock_overlords.tags_in = Mock(return_value=Mock(exists=False, __iter__=lambda s: iter([])))
+            mock_overlords.tags_in = Mock(
+                return_value=Mock(exists=False, __iter__=lambda s: iter([]))
+            )
 
             def mock_units(unit_type):
-                name = getattr(unit_type, 'name', str(unit_type))
-                if 'ZERGLING' in str(name):
+                name = getattr(unit_type, "name", str(unit_type))
+                if "ZERGLING" in str(name):
                     return mock_zerglings
-                if 'OVERLORD' in str(name):
+                if "OVERLORD" in str(name):
                     return mock_overlords
                 return Mock(exists=False, amount=0, ready=Mock(exists=False))
 
@@ -383,7 +430,7 @@ class TestEarlyScoutSystemMidGame:
 
     def test_mid_game_rescouting_method_exists(self):
         """_mid_game_rescouting method should exist"""
-        assert hasattr(self.scout, '_mid_game_rescouting')
+        assert hasattr(self.scout, "_mid_game_rescouting")
 
     @pytest.mark.asyncio
     async def test_mid_game_rescouting_sends_zergling(self):
@@ -398,12 +445,18 @@ class TestEarlyScoutSystemMidGame:
 
 # ===== 7. Strategy Manager DT Response =====
 
+
 class TestStrategyManagerDTResponse:
     """Test DarkShrine/Oracle tech alert response in strategy"""
 
     def setup_method(self):
         try:
-            from wicked_zerg_challenger.strategy_manager import StrategyManager, EnemyRace, GamePhase
+            from wicked_zerg_challenger.strategy_manager import (
+                EnemyRace,
+                GamePhase,
+                StrategyManager,
+            )
+
             self.bot = MockBot()
             self.bot.enemy_race = Mock()
             self.bot.enemy_race.name = "Protoss"
@@ -445,12 +498,14 @@ class TestStrategyManagerDTResponse:
 
 # ===== 8. Upgrade Manager Hydra Range Priority =====
 
+
 class TestUpgradeManagerHydraRange:
     """Test that hydra range upgrade is researched early"""
 
     def setup_method(self):
         try:
             from wicked_zerg_challenger.upgrade_manager import EvolutionUpgradeManager
+
             self.bot = MockBot()
             self.bot.structures = Mock(return_value=Mock(ready=Mock(exists=False)))
             self.bot.units = Mock(return_value=Mock(amount=0))
@@ -467,5 +522,5 @@ class TestUpgradeManagerHydraRange:
         """Hydra range (Grooved Spines) should be researched before speed"""
         # The order in _research_critical_upgrades should call range before speed
         # We verify by checking the code structure exists
-        assert hasattr(self.manager, '_research_hydra_range')
-        assert hasattr(self.manager, '_research_hydra_speed')
+        assert hasattr(self.manager, "_research_hydra_range")
+        assert hasattr(self.manager, "_research_hydra_speed")

@@ -14,16 +14,18 @@ Defeat Detection System - 패배 직감 로직
 
 import logging
 from typing import Dict, Optional, Tuple
+
 from sc2.position import Point2
 
 
 class DefeatLevel:
     """패배 가능성 수준"""
-    SAFE = 0           # 안전
-    DISADVANTAGE = 1   # 불리한 상황
-    CRITICAL = 2       # 위기 상황
-    IMMINENT = 3       # 패배 직전
-    INEVITABLE = 4     # 패배 불가피
+
+    SAFE = 0  # 안전
+    DISADVANTAGE = 1  # 불리한 상황
+    CRITICAL = 2  # 위기 상황
+    IMMINENT = 3  # 패배 직전
+    INEVITABLE = 4  # 패배 불가피
 
 
 class DefeatDetection:
@@ -54,11 +56,13 @@ class DefeatDetection:
         # 2026-02-15: 승률 0% 이슈 해결을 위해 조건 대폭 완화
         self.military_ratio_critical = 4.0  # 적 병력이 아군의 4.0배 이상 (2.5 -> 4.0)
         self.military_ratio_imminent = 8.0  # 적 병력이 아군의 8.0배 이상 (4.5 -> 8.0)
-        self.min_workers_for_recovery = 5   # 최소 일꾼 수 (8 -> 5)
+        self.min_workers_for_recovery = 5  # 최소 일꾼 수 (8 -> 5)
         self.min_minerals_for_recovery = 100  # 최소 미네랄 (200 -> 100)
 
         # ★★★ 추가: 빠른 포기를 위한 새로운 조건 ★★★
-        self.max_critical_duration = 60  # 위기 상태 최대 지속 시간 (120초 -> 60초, 훈련 효율 향상)
+        self.max_critical_duration = (
+            60  # 위기 상태 최대 지속 시간 (120초 -> 60초, 훈련 효율 향상)
+        )
         self.critical_start_time = None  # 위기 상태 시작 시간
 
         # 통계
@@ -167,7 +171,10 @@ class DefeatDetection:
 
         # 위기 상태 시작 시간 추적
         game_time = getattr(self.bot, "time", 0)
-        if military_status[0] >= DefeatLevel.CRITICAL or economy_status[0] >= DefeatLevel.CRITICAL:
+        if (
+            military_status[0] >= DefeatLevel.CRITICAL
+            or economy_status[0] >= DefeatLevel.CRITICAL
+        ):
             if self.critical_start_time is None:
                 self.critical_start_time = game_time
         else:
@@ -191,7 +198,8 @@ class DefeatDetection:
             # 건설 중인 해처리도 없으면 패배
             if hasattr(self.bot, "structures"):
                 building_hatcheries = self.bot.structures.filter(
-                    lambda s: s.type_id.name in ["HATCHERY", "LAIR", "HIVE"] and not s.is_ready
+                    lambda s: s.type_id.name in ["HATCHERY", "LAIR", "HIVE"]
+                    and not s.is_ready
                 )
                 if not building_hatcheries.exists:
                     return True
@@ -214,7 +222,9 @@ class DefeatDetection:
         # 스포닝 풀도 없고 일꾼도 없으면 생산 불가
         if hasattr(self.bot, "workers"):
             workers = self.bot.workers
-            spawning_pools = structures.filter(lambda s: s.type_id.name == "SPAWNINGPOOL")
+            spawning_pools = structures.filter(
+                lambda s: s.type_id.name == "SPAWNINGPOOL"
+            )
 
             if not spawning_pools.exists and not workers.exists:
                 return True
@@ -267,7 +277,10 @@ class DefeatDetection:
         duration = game_time - self.critical_start_time
 
         if duration > self.max_critical_duration:
-            return DefeatLevel.INEVITABLE, f"위기 상태 {int(duration)}초 지속 (회복 불가)"
+            return (
+                DefeatLevel.INEVITABLE,
+                f"위기 상태 {int(duration)}초 지속 (회복 불가)",
+            )
 
         return DefeatLevel.SAFE, None
 
@@ -284,7 +297,9 @@ class DefeatDetection:
         # 아군 병력 가치 계산
         our_military_value = 0
         our_units = self.bot.units.filter(
-            lambda u: u.can_attack and not u.is_structure and u.type_id.name != "OVERLORD"
+            lambda u: u.can_attack
+            and not u.is_structure
+            and u.type_id.name != "OVERLORD"
         )
 
         for unit in our_units:
@@ -302,13 +317,21 @@ class DefeatDetection:
         # 비율 계산
         if our_military_value == 0:
             if enemy_military_value > 1500:  # 적 병력이 1500 이상 (500 -> 1500)
-                return DefeatLevel.IMMINENT, f"병력 0 vs 적 병력 {enemy_military_value:.0f}"
-            elif enemy_military_value > 800: # (200 -> 800)
-                return DefeatLevel.CRITICAL, f"병력 0 vs 적 병력 {enemy_military_value:.0f}"
+                return (
+                    DefeatLevel.IMMINENT,
+                    f"병력 0 vs 적 병력 {enemy_military_value:.0f}",
+                )
+            elif enemy_military_value > 800:  # (200 -> 800)
+                return (
+                    DefeatLevel.CRITICAL,
+                    f"병력 0 vs 적 병력 {enemy_military_value:.0f}",
+                )
             else:
                 return DefeatLevel.DISADVANTAGE, "병력 없음"
 
-        ratio = enemy_military_value / max(our_military_value, 1)  # ★ FIX: division by zero 방어
+        ratio = enemy_military_value / max(
+            our_military_value, 1
+        )  # ★ FIX: division by zero 방어
 
         if ratio >= self.military_ratio_imminent:
             return DefeatLevel.IMMINENT, f"병력 비율 1:{ratio:.1f} (적 압도적 우세)"
@@ -331,9 +354,15 @@ class DefeatDetection:
         if workers.amount < self.min_workers_for_recovery:
             if minerals < self.min_minerals_for_recovery:
                 if not self.bot.townhalls.exists:
-                    return DefeatLevel.IMMINENT, f"경제 붕괴 (일꾼 {workers.amount}, 미네랄 {minerals}, 해처리 0)"
+                    return (
+                        DefeatLevel.IMMINENT,
+                        f"경제 붕괴 (일꾼 {workers.amount}, 미네랄 {minerals}, 해처리 0)",
+                    )
                 else:
-                    return DefeatLevel.CRITICAL, f"경제 위기 (일꾼 {workers.amount}, 미네랄 {minerals})"
+                    return (
+                        DefeatLevel.CRITICAL,
+                        f"경제 위기 (일꾼 {workers.amount}, 미네랄 {minerals})",
+                    )
 
         # 일꾼 0명 (모든 일꾼 사망)
         if workers.amount == 0:
@@ -391,7 +420,10 @@ class DefeatDetection:
 
         # 3가지 모두 해당하면 위기
         if crisis_count >= 3:
-            return DefeatLevel.CRITICAL, f"복합 위기 (일꾼 {workers.amount}, 해처리 {townhalls.amount}, 미네랄 {minerals})"
+            return (
+                DefeatLevel.CRITICAL,
+                f"복합 위기 (일꾼 {workers.amount}, 해처리 {townhalls.amount}, 미네랄 {minerals})",
+            )
 
         return DefeatLevel.SAFE, None
 
@@ -406,28 +438,61 @@ class DefeatDetection:
         # 기본 가치 (대략적인 비용)
         base_values = {
             # 저그
-            "DRONE": 50, "ZERGLING": 25, "ROACH": 75, "HYDRALISK": 100,
-            "MUTALISK": 100, "BANELING": 50, "RAVAGER": 100, "ULTRALISK": 300,
-            "BROODLORD": 250, "CORRUPTOR": 150, "INFESTOR": 150,
-            "QUEEN": 150, "SWARMHOST": 200, "VIPER": 200, "LURKER": 200,
-
+            "DRONE": 50,
+            "ZERGLING": 25,
+            "ROACH": 75,
+            "HYDRALISK": 100,
+            "MUTALISK": 100,
+            "BANELING": 50,
+            "RAVAGER": 100,
+            "ULTRALISK": 300,
+            "BROODLORD": 250,
+            "CORRUPTOR": 150,
+            "INFESTOR": 150,
+            "QUEEN": 150,
+            "SWARMHOST": 200,
+            "VIPER": 200,
+            "LURKER": 200,
             # 테란
-            "MARINE": 50, "MARAUDER": 100, "SIEGETANK": 150, "THOR": 300,
-            "BATTLECRUISER": 400, "MEDIVAC": 100, "LIBERATOR": 150,
-            "CYCLONE": 125, "HELLION": 100, "BANSHEE": 150, "RAVEN": 100,
-
+            "MARINE": 50,
+            "MARAUDER": 100,
+            "SIEGETANK": 150,
+            "THOR": 300,
+            "BATTLECRUISER": 400,
+            "MEDIVAC": 100,
+            "LIBERATOR": 150,
+            "CYCLONE": 125,
+            "HELLION": 100,
+            "BANSHEE": 150,
+            "RAVEN": 100,
             # 프로토스
-            "ZEALOT": 100, "STALKER": 125, "IMMORTAL": 275, "COLOSSUS": 300,
-            "ARCHON": 175, "HIGHTEMPLAR": 50, "DARKTEMPLAR": 125,
-            "PHOENIX": 150, "VOIDRAY": 250, "CARRIER": 350, "TEMPEST": 300,
-            "DISRUPTOR": 150, "ORACLE": 150, "OBSERVER": 25,
+            "ZEALOT": 100,
+            "STALKER": 125,
+            "IMMORTAL": 275,
+            "COLOSSUS": 300,
+            "ARCHON": 175,
+            "HIGHTEMPLAR": 50,
+            "DARKTEMPLAR": 125,
+            "PHOENIX": 150,
+            "VOIDRAY": 250,
+            "CARRIER": 350,
+            "TEMPEST": 300,
+            "DISRUPTOR": 150,
+            "ORACLE": 150,
+            "OBSERVER": 25,
         }
 
         # 고위협 유닛 가중치
         high_threat_multiplier = {
-            "SIEGETANK": 2.0, "SIEGETANKSIEGED": 2.0, "COLOSSUS": 2.0,
-            "IMMORTAL": 1.5, "THOR": 2.0, "BATTLECRUISER": 2.5,
-            "ULTRALISK": 2.0, "BROODLORD": 2.0, "CARRIER": 2.5,
+            "SIEGETANK": 2.0,
+            "SIEGETANKSIEGED": 2.0,
+            "COLOSSUS": 2.0,
+            "IMMORTAL": 1.5,
+            "THOR": 2.0,
+            "BATTLECRUISER": 2.5,
+            "ULTRALISK": 2.0,
+            "BROODLORD": 2.0,
+            "CARRIER": 2.5,
         }
 
         base_value = base_values.get(unit_name, 50)
@@ -456,7 +521,7 @@ class DefeatDetection:
         if self.defeat_level >= DefeatLevel.IMMINENT:
             # 패배 직전 상태가 threshold 이상 지속되면 항복
             # ★ Feature 90: Use dynamic threshold (default 112 ticks ~40s) ★
-            surrender_ticks = getattr(self, '_surrender_threshold_ticks', 112)
+            surrender_ticks = getattr(self, "_surrender_threshold_ticks", 112)
             game_time = getattr(self.bot, "time", 0)
             if self.critical_moments > surrender_ticks:
                 should_surrender = True
@@ -491,12 +556,16 @@ class DefeatDetection:
         tick_duration = 0.36
         new_threshold = max(1, int(seconds / tick_duration))
 
-        old_threshold_seconds = getattr(self, '_surrender_threshold_ticks', 112) * tick_duration
+        old_threshold_seconds = (
+            getattr(self, "_surrender_threshold_ticks", 112) * tick_duration
+        )
         self._surrender_threshold_ticks = new_threshold
 
         self.logger.info(
             "[DEFEAT] Surrender threshold changed: %.0fs -> %.0fs (%d ticks)",
-            old_threshold_seconds, seconds, new_threshold
+            old_threshold_seconds,
+            seconds,
+            new_threshold,
         )
 
     def get_defeat_level_name(self) -> str:

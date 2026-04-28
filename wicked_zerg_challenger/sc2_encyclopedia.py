@@ -8,14 +8,17 @@ DynamicCounterSystem, ProtossCounterSystem 등에서 참조합니다.
 
 from typing import Dict, List, Optional, Tuple
 
-
 # ================================================================
 # === Zerg Units (아군 유닛 정보) ===
 # ================================================================
 ZERG_UNITS = {
     "ZERGLING": {
-        "name": "저글링", "cost": (25, 0, 0.5),  # minerals, gas, supply
-        "hp": 35, "armor": 0, "dps": 5.9, "speed": 4.13,
+        "name": "저글링",
+        "cost": (25, 0, 0.5),  # minerals, gas, supply
+        "hp": 35,
+        "armor": 0,
+        "dps": 5.9,
+        "speed": 4.13,
         "attributes": ["light", "biological"],
         "strong_vs": ["MARINE", "ZEALOT", "STALKER", "IMMORTAL", "REAPER"],
         "weak_vs": ["HELLION", "COLOSSUS", "BANELING", "ARCHON", "ADEPT"],
@@ -23,8 +26,12 @@ ZERG_UNITS = {
         "upgrade_path": "대사촉진(speed), 부신(adrenal)",
     },
     "BANELING": {
-        "name": "맹독충", "cost": (25, 25, 0),  # morph from zergling
-        "hp": 30, "armor": 0, "dps": 0, "speed": 3.5,
+        "name": "맹독충",
+        "cost": (25, 25, 0),  # morph from zergling
+        "hp": 30,
+        "armor": 0,
+        "dps": 0,
+        "speed": 3.5,
         "attributes": ["biological"],
         "strong_vs": ["MARINE", "ZEALOT", "ZERGLING", "SCV", "PROBE"],
         "weak_vs": ["MARAUDER", "STALKER", "ROACH", "SIEGE_TANK"],
@@ -32,8 +39,12 @@ ZERG_UNITS = {
         "upgrade_path": "원심분리기(speed), 점막생성(creep)",
     },
     "ROACH": {
-        "name": "바퀴", "cost": (75, 25, 2),
-        "hp": 145, "armor": 1, "dps": 8.4, "speed": 3.15,
+        "name": "바퀴",
+        "cost": (75, 25, 2),
+        "hp": 145,
+        "armor": 1,
+        "dps": 8.4,
+        "speed": 3.15,
         "attributes": ["armored", "biological"],
         "strong_vs": ["ZEALOT", "MARINE", "HELLION", "REAPER"],
         "weak_vs": ["IMMORTAL", "MARAUDER", "VOID_RAY", "STALKER"],
@@ -41,8 +52,12 @@ ZERG_UNITS = {
         "upgrade_path": "글리얼재생(burrow regen), 땅굴발톱(tunneling)",
     },
     "RAVAGER": {
-        "name": "파멸충", "cost": (25, 75, 1),  # morph from roach
-        "hp": 120, "armor": 1, "dps": 12.6, "speed": 3.85,
+        "name": "파멸충",
+        "cost": (25, 75, 1),  # morph from roach
+        "hp": 120,
+        "armor": 1,
+        "dps": 12.6,
+        "speed": 3.85,
         "attributes": ["biological"],
         "strong_vs": ["FORCE_FIELD", "LIBERATOR_ZONE", "SIEGED_TANK"],
         "weak_vs": ["IMMORTAL", "MARAUDER", "VOID_RAY"],
@@ -50,8 +65,12 @@ ZERG_UNITS = {
         "upgrade_path": "없음",
     },
     "HYDRALISK": {
-        "name": "히드라리스크", "cost": (100, 50, 2),
-        "hp": 90, "armor": 0, "dps": 12.0, "speed": 3.15,
+        "name": "히드라리스크",
+        "cost": (100, 50, 2),
+        "hp": 90,
+        "armor": 0,
+        "dps": 12.0,
+        "speed": 3.15,
         "attributes": ["light", "biological"],
         "strong_vs": ["VOID_RAY", "PHOENIX", "BANSHEE", "MUTALISK", "STALKER"],
         "weak_vs": ["COLOSSUS", "SIEGE_TANK", "HIGH_TEMPLAR", "DISRUPTOR"],
@@ -59,8 +78,12 @@ ZERG_UNITS = {
         "upgrade_path": "근육강화(speed), 가시솟음(range)",
     },
     "MUTALISK": {
-        "name": "뮤탈리스크", "cost": (100, 100, 2),
-        "hp": 120, "armor": 0, "dps": 6.2, "speed": 5.6,
+        "name": "뮤탈리스크",
+        "cost": (100, 100, 2),
+        "hp": 120,
+        "armor": 0,
+        "dps": 6.2,
+        "speed": 5.6,
         "attributes": ["light", "biological"],
         "strong_vs": ["WORKER", "TANK_UNSIEGED", "LIBERATOR_UNSIEGED", "OVERLORD"],
         "weak_vs": ["MARINE", "ARCHON", "PHOENIX", "THOR", "CORRUPTOR"],
@@ -68,8 +91,12 @@ ZERG_UNITS = {
         "upgrade_path": "없음 (공격/방어 업그레이드)",
     },
     "CORRUPTOR": {
-        "name": "타락귀", "cost": (150, 100, 2),
-        "hp": 200, "armor": 2, "dps": 10.7, "speed": 4.72,
+        "name": "타락귀",
+        "cost": (150, 100, 2),
+        "hp": 200,
+        "armor": 2,
+        "dps": 10.7,
+        "speed": 4.72,
         "attributes": ["armored", "biological"],
         "strong_vs": ["CARRIER", "BATTLECRUISER", "TEMPEST", "VOID_RAY", "COLOSSUS"],
         "weak_vs": ["MARINE", "HYDRALISK", "STALKER", "PHOENIX"],
@@ -77,8 +104,12 @@ ZERG_UNITS = {
         "upgrade_path": "없음 → 귀부인 변태",
     },
     "BROODLORD": {
-        "name": "귀부인", "cost": (150, 150, 2),  # morph from corruptor
-        "hp": 225, "armor": 1, "dps": 11.2, "speed": 1.97,
+        "name": "귀부인",
+        "cost": (150, 150, 2),  # morph from corruptor
+        "hp": 225,
+        "armor": 1,
+        "dps": 11.2,
+        "speed": 1.97,
         "attributes": ["armored", "biological", "massive"],
         "strong_vs": ["GROUND_ARMY", "STALKER", "ROACH", "MARINE"],
         "weak_vs": ["VIKING", "CORRUPTOR", "VOID_RAY", "TEMPEST"],
@@ -86,8 +117,12 @@ ZERG_UNITS = {
         "upgrade_path": "없음",
     },
     "LURKER": {
-        "name": "가시지옥", "cost": (50, 100, 1),  # morph from hydra
-        "hp": 200, "armor": 1, "dps": 20.0, "speed": 4.13,
+        "name": "가시지옥",
+        "cost": (50, 100, 1),  # morph from hydra
+        "hp": 200,
+        "armor": 1,
+        "dps": 20.0,
+        "speed": 4.13,
         "attributes": ["armored", "biological"],
         "strong_vs": ["MARINE", "ZEALOT", "ZERGLING", "GROUND_ARMY"],
         "weak_vs": ["SIEGE_TANK", "DISRUPTOR", "AIR_UNITS", "OBSERVER"],
@@ -95,8 +130,12 @@ ZERG_UNITS = {
         "upgrade_path": "적응형 외피(range), 지중잠복(deep burrow)",
     },
     "INFESTOR": {
-        "name": "감염충", "cost": (100, 150, 2),
-        "hp": 90, "armor": 0, "dps": 0, "speed": 3.15,
+        "name": "감염충",
+        "cost": (100, 150, 2),
+        "hp": 90,
+        "armor": 0,
+        "dps": 0,
+        "speed": 3.15,
         "attributes": ["armored", "biological", "psionic"],
         "strong_vs": ["MARINE_BALL", "GATEWAY_ARMY", "MECH"],
         "weak_vs": ["EMP", "FEEDBACK", "DETECTION"],
@@ -104,8 +143,12 @@ ZERG_UNITS = {
         "upgrade_path": "없음",
     },
     "VIPER": {
-        "name": "살모사", "cost": (100, 200, 3),
-        "hp": 150, "armor": 1, "dps": 0, "speed": 4.13,
+        "name": "살모사",
+        "cost": (100, 200, 3),
+        "hp": 150,
+        "armor": 1,
+        "dps": 0,
+        "speed": 4.13,
         "attributes": ["armored", "biological", "psionic"],
         "strong_vs": ["SIEGE_TANK", "COLOSSUS", "BATTLECRUISER", "CARRIER"],
         "weak_vs": ["FEEDBACK", "SNIPE", "MASS_AIR"],
@@ -113,8 +156,12 @@ ZERG_UNITS = {
         "upgrade_path": "없음",
     },
     "ULTRALISK": {
-        "name": "울트라리스크", "cost": (300, 200, 6),
-        "hp": 500, "armor": 2, "dps": 35.7, "speed": 4.13,
+        "name": "울트라리스크",
+        "cost": (300, 200, 6),
+        "hp": 500,
+        "armor": 2,
+        "dps": 35.7,
+        "speed": 4.13,
         "attributes": ["armored", "biological", "massive"],
         "strong_vs": ["MARINE", "ZEALOT", "ZERGLING", "LIGHT_GROUND"],
         "weak_vs": ["IMMORTAL", "MARAUDER", "VOID_RAY", "NEURAL_PARASITE"],
@@ -122,8 +169,12 @@ ZERG_UNITS = {
         "upgrade_path": "키틴질 외피(armor+2), 조직 동화",
     },
     "QUEEN": {
-        "name": "여왕", "cost": (150, 0, 2),
-        "hp": 175, "armor": 1, "dps": 11.2, "speed": 1.31,
+        "name": "여왕",
+        "cost": (150, 0, 2),
+        "hp": 175,
+        "armor": 1,
+        "dps": 11.2,
+        "speed": 1.31,
         "attributes": ["biological", "psionic"],
         "strong_vs": ["BANSHEE", "ORACLE", "HELLION", "REAPER"],
         "weak_vs": ["STALKER", "MARINE_BALL", "IMMORTAL"],
@@ -131,8 +182,12 @@ ZERG_UNITS = {
         "upgrade_path": "없음",
     },
     "OVERSEER": {
-        "name": "감시군주", "cost": (50, 50, 0),  # morph from overlord
-        "hp": 200, "armor": 1, "dps": 0, "speed": 2.62,
+        "name": "감시군주",
+        "cost": (50, 50, 0),  # morph from overlord
+        "hp": 200,
+        "armor": 1,
+        "dps": 0,
+        "speed": 2.62,
         "attributes": ["armored", "biological", "detector"],
         "strong_vs": ["CLOAKED_UNITS", "BURROWED_UNITS", "DT"],
         "weak_vs": ["VIKING", "PHOENIX", "MARINE"],
@@ -148,43 +203,83 @@ ZERG_UNITS = {
 COUNTER_MATRIX = {
     # === vs Terran ===
     "MARINE": {"counter": ["BANELING", "LURKER", "ULTRALISK"], "priority": "HIGH"},
-    "MARAUDER": {"counter": ["ZERGLING_SURROUND", "BROODLORD", "ULTRALISK"], "priority": "MEDIUM"},
-    "HELLION": {"counter": ["ROACH", "QUEEN", "ZERGLING_SURROUND"], "priority": "MEDIUM"},
+    "MARAUDER": {
+        "counter": ["ZERGLING_SURROUND", "BROODLORD", "ULTRALISK"],
+        "priority": "MEDIUM",
+    },
+    "HELLION": {
+        "counter": ["ROACH", "QUEEN", "ZERGLING_SURROUND"],
+        "priority": "MEDIUM",
+    },
     "SIEGE_TANK": {"counter": ["RAVAGER", "MUTALISK", "VIPER"], "priority": "CRITICAL"},
     "THOR": {"counter": ["ZERGLING_SURROUND", "ROACH", "VIPER"], "priority": "HIGH"},
-    "BATTLECRUISER": {"counter": ["CORRUPTOR", "QUEEN", "VIPER"], "priority": "CRITICAL"},
+    "BATTLECRUISER": {
+        "counter": ["CORRUPTOR", "QUEEN", "VIPER"],
+        "priority": "CRITICAL",
+    },
     "LIBERATOR": {"counter": ["CORRUPTOR", "RAVAGER", "VIPER"], "priority": "HIGH"},
     "BANSHEE": {"counter": ["QUEEN", "HYDRALISK", "CORRUPTOR"], "priority": "HIGH"},
-    "WIDOW_MINE": {"counter": ["OVERSEER", "ROACH", "OVERLORD_BAIT"], "priority": "MEDIUM"},
+    "WIDOW_MINE": {
+        "counter": ["OVERSEER", "ROACH", "OVERLORD_BAIT"],
+        "priority": "MEDIUM",
+    },
     "CYCLONE": {"counter": ["ZERGLING", "ROACH", "BANELING"], "priority": "MEDIUM"},
-    "GHOST": {"counter": ["ZERGLING_SURROUND", "ULTRALISK", "BANELING"], "priority": "HIGH"},
+    "GHOST": {
+        "counter": ["ZERGLING_SURROUND", "ULTRALISK", "BANELING"],
+        "priority": "HIGH",
+    },
     "RAVEN": {"counter": ["CORRUPTOR", "HYDRALISK"], "priority": "MEDIUM"},
-    "MEDIVAC": {"counter": ["CORRUPTOR", "HYDRALISK", "MUTALISK"], "priority": "MEDIUM"},
+    "MEDIVAC": {
+        "counter": ["CORRUPTOR", "HYDRALISK", "MUTALISK"],
+        "priority": "MEDIUM",
+    },
     "VIKING": {"counter": ["HYDRALISK", "CORRUPTOR", "QUEEN"], "priority": "LOW"},
-
     # === vs Protoss ===
     "ZEALOT": {"counter": ["ROACH", "LURKER", "BANELING"], "priority": "MEDIUM"},
-    "STALKER": {"counter": ["ZERGLING_SURROUND", "HYDRALISK", "ROACH"], "priority": "MEDIUM"},
+    "STALKER": {
+        "counter": ["ZERGLING_SURROUND", "HYDRALISK", "ROACH"],
+        "priority": "MEDIUM",
+    },
     "ADEPT": {"counter": ["ROACH", "QUEEN", "ZERGLING"], "priority": "MEDIUM"},
     "SENTRY": {"counter": ["RAVAGER", "ZERGLING_SURROUND"], "priority": "LOW"},
-    "IMMORTAL": {"counter": ["ZERGLING_SURROUND", "HYDRALISK", "BROODLORD"], "priority": "CRITICAL"},
+    "IMMORTAL": {
+        "counter": ["ZERGLING_SURROUND", "HYDRALISK", "BROODLORD"],
+        "priority": "CRITICAL",
+    },
     "COLOSSUS": {"counter": ["CORRUPTOR", "VIPER", "RAVAGER"], "priority": "CRITICAL"},
     "DISRUPTOR": {"counter": ["SPLIT_MICRO", "MUTALISK", "LURKER"], "priority": "HIGH"},
-    "HIGH_TEMPLAR": {"counter": ["ZERGLING_FLANK", "GHOST_SNIPE", "ABDUCT"], "priority": "CRITICAL"},
+    "HIGH_TEMPLAR": {
+        "counter": ["ZERGLING_FLANK", "GHOST_SNIPE", "ABDUCT"],
+        "priority": "CRITICAL",
+    },
     "ARCHON": {"counter": ["HYDRALISK", "BROODLORD", "LURKER"], "priority": "HIGH"},
-    "DARK_TEMPLAR": {"counter": ["OVERSEER", "QUEEN", "SPORE_CRAWLER"], "priority": "CRITICAL"},
+    "DARK_TEMPLAR": {
+        "counter": ["OVERSEER", "QUEEN", "SPORE_CRAWLER"],
+        "priority": "CRITICAL",
+    },
     "VOID_RAY": {"counter": ["HYDRALISK", "CORRUPTOR", "QUEEN"], "priority": "HIGH"},
     "PHOENIX": {"counter": ["HYDRALISK", "QUEEN", "CORRUPTOR"], "priority": "MEDIUM"},
     "CARRIER": {"counter": ["CORRUPTOR", "VIPER", "HYDRALISK"], "priority": "CRITICAL"},
-    "TEMPEST": {"counter": ["CORRUPTOR", "VIPER_ABDUCT", "MUTALISK"], "priority": "HIGH"},
+    "TEMPEST": {
+        "counter": ["CORRUPTOR", "VIPER_ABDUCT", "MUTALISK"],
+        "priority": "HIGH",
+    },
     "ORACLE": {"counter": ["QUEEN", "SPORE_CRAWLER", "HYDRALISK"], "priority": "HIGH"},
     "PRISM": {"counter": ["HYDRALISK", "QUEEN", "CORRUPTOR"], "priority": "HIGH"},
-
     # === vs Zerg (Mirror) ===
-    "ZERGLING_ENEMY": {"counter": ["BANELING", "ROACH", "LURKER"], "priority": "MEDIUM"},
+    "ZERGLING_ENEMY": {
+        "counter": ["BANELING", "ROACH", "LURKER"],
+        "priority": "MEDIUM",
+    },
     "ROACH_ENEMY": {"counter": ["HYDRALISK", "RAVAGER", "ROACH"], "priority": "MEDIUM"},
-    "MUTALISK_ENEMY": {"counter": ["HYDRALISK", "CORRUPTOR", "QUEEN"], "priority": "HIGH"},
-    "BROODLORD_ENEMY": {"counter": ["CORRUPTOR", "VIPER", "INFESTOR"], "priority": "CRITICAL"},
+    "MUTALISK_ENEMY": {
+        "counter": ["HYDRALISK", "CORRUPTOR", "QUEEN"],
+        "priority": "HIGH",
+    },
+    "BROODLORD_ENEMY": {
+        "counter": ["CORRUPTOR", "VIPER", "INFESTOR"],
+        "priority": "CRITICAL",
+    },
     "LURKER_ENEMY": {"counter": ["RAVAGER", "VIPER", "AIR_UNITS"], "priority": "HIGH"},
 }
 
@@ -201,7 +296,11 @@ TECH_REQUIREMENTS = {
     "LURKER": {"building": "LURKERDEN", "morph_from": "HYDRALISK", "requires": "LAIR"},
     "MUTALISK": {"building": "SPIRE", "requires": "LAIR"},
     "CORRUPTOR": {"building": "SPIRE", "requires": "LAIR"},
-    "BROODLORD": {"building": "GREATERSPIRE", "morph_from": "CORRUPTOR", "requires": "HIVE"},
+    "BROODLORD": {
+        "building": "GREATERSPIRE",
+        "morph_from": "CORRUPTOR",
+        "requires": "HIVE",
+    },
     "INFESTOR": {"building": "INFESTATIONPIT", "requires": "LAIR"},
     "VIPER": {"building": "INFESTATIONPIT", "requires": "HIVE"},
     "ULTRALISK": {"building": "ULTRALISKCAVERN", "requires": "HIVE"},
@@ -300,7 +399,7 @@ def get_encyclopedia_report(unit_name: str) -> str:
 
     if tech:
         report += f"\n기술 요구: {tech.get('building', '-')} | 상위건물: {tech.get('requires', '-')}"
-        if tech.get('morph_from'):
+        if tech.get("morph_from"):
             report += f" | 변태원본: {tech['morph_from']}"
 
     return report

@@ -3,7 +3,9 @@
 UTF-8 인코딩 복구 스크립트
 한글이 깨진 마크다운 파일을 UTF-8로 재저장합니다.
 """
+
 import sys
+
 
 def fix_encoding(file_path: str, output_path: str = None):
     """
@@ -17,7 +19,7 @@ def fix_encoding(file_path: str, output_path: str = None):
         output_path = file_path
 
     # 시도할 인코딩 목록 (한국어 파일 우선)
-    encodings = ['cp949', 'euc-kr', 'utf-8', 'iso-8859-1', 'latin1']
+    encodings = ["cp949", "euc-kr", "utf-8", "iso-8859-1", "latin1"]
 
     content = None
     used_encoding = None
@@ -25,7 +27,7 @@ def fix_encoding(file_path: str, output_path: str = None):
     # 각 인코딩으로 파일 읽기 시도
     for encoding in encodings:
         try:
-            with open(file_path, 'r', encoding=encoding) as f:
+            with open(file_path, "r", encoding=encoding) as f:
                 content = f.read()
                 used_encoding = encoding
                 print(f"[OK] Successfully read with {encoding} encoding")
@@ -40,7 +42,7 @@ def fix_encoding(file_path: str, output_path: str = None):
 
     # UTF-8로 저장
     try:
-        with open(output_path, 'w', encoding='utf-8', newline='\n') as f:
+        with open(output_path, "w", encoding="utf-8", newline="\n") as f:
             f.write(content)
         print(f"[OK] Successfully saved as UTF-8: {output_path}")
         print(f"   Original encoding: {used_encoding}")
@@ -57,10 +59,7 @@ if __name__ == "__main__":
     print("=" * 70)
     print()
 
-    files_to_fix = [
-        "프로젝트_전체_진행_보고서.md",
-        "부모님_연구보고서.md"
-    ]
+    files_to_fix = ["프로젝트_전체_진행_보고서.md", "부모님_연구보고서.md"]
 
     success_count = 0
     for file_path in files_to_fix:

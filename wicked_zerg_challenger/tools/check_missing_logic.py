@@ -6,11 +6,11 @@
 """
 
 import ast
+import logging
 import re
+from collections import defaultdict
 from pathlib import Path
 from typing import Dict, List, Set, Tuple
-from collections import defaultdict
-import logging
 
 logger = logging.getLogger("CheckMissingLogic")
 
