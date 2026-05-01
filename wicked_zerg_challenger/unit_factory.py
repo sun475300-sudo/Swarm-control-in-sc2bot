@@ -294,7 +294,6 @@ class UnitFactory:
 
         # 1. Try Blackboard first
         if self.blackboard:
-            strategy_mode = self.blackboard.get("strategy_mode", "NORMAL")
             emergency_active = self.blackboard.get("is_rush_detected", False)
 
         # 2. Fallback to direct access if Blackboard missing (Backward Compat)

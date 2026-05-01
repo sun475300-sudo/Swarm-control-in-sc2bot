@@ -1501,7 +1501,6 @@ class StrategyManager:
         roach_count = comp.get("ROACH", 0)
         mutalisk_count = comp.get("MUTALISK", 0)
         hydra_count = comp.get("HYDRALISK", 0)
-        ravager_count = comp.get("RAVAGER", 0)
 
         # 저글링 10+ → 바퀴 + 맹독충으로 전환 (저글링 미러는 불리)
         # ★ Phase 34: game_time < 300 제한 제거 — 5분 이후에도 저글링 러시 대응
@@ -2133,6 +2132,7 @@ class StrategyManager:
         """
         프로토스 테크 전환 감지: 게이트웨이/로보틱스/공중 전환 패턴 분석
         """
+        gateway_count = 0  # FIX: previously missing init caused UnboundLocalError
         robo_count = 0
         stargate_count = 0
         templar_archives = False
@@ -2157,6 +2157,7 @@ class StrategyManager:
             "to_tech": "unknown",
             "confidence": 0.0,
             "recommended_comp": "balanced",
+            "gateway_count": gateway_count,
         }
 
         # 게이트웨이 -> 로보틱스 전환 (콜로서스/불멸자)

@@ -3025,18 +3025,6 @@ class CombatManager:
         }
 
         # 비전투 유닛 (정찰용, 위협이 낮음)
-        non_combat_names = {
-            "SCV",
-            "PROBE",
-            "DRONE",
-            "MULE",
-            "OBSERVER",
-            "OVERLORD",
-            "OVERSEER",
-            "WARPPRISM",
-            "RAVEN",
-            "CHANGELING",
-        }
 
         for th in self.bot.townhalls:
             # 일반 감지 거리
