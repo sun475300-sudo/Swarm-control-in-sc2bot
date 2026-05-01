@@ -690,6 +690,85 @@ class QueenManager:
                 logger.warning(f"[QueenManager] Queen combat attack suppressed: {e}")
                 continue
 
+    # CreepyBot-inspired Transfusion priority (lower = higher priority).
+    # Class-level: built once, shared across all calls. Uses string keys so the
+    # table is well-defined even when sc2's UnitTypeId stub is in use.
+    _TRANSFUSE_PRIORITY_NAMES = {
+        "QUEEN": 0,
+        "BROODLORD": 1,
+        "CORRUPTOR": 2,
+        "VIPER": 2,  # Spell utility; tied with corruptors
+        "SPINECRAWLER": 3,
+        "OVERSEER": 4,
+        "ULTRALISK": 5,
+        "RAVAGER": 6,
+        "ROACH": 7,
+        "HYDRALISK": 8,
+        "LURKERMP": 9,
+        "INFESTOR": 10,
+        "SWARMHOSTMP": 11,
+        "MUTALISK": 12,
+    }
+    _TRANSFUSE_DEFAULT_PRIORITY = 15
+    _UNHEALABLE_NAMES = ("BANELING", "BROODLING", "LOCUSTMP")
+
+    # Injury detection thresholds (CreepyBot heuristic).
+    TRANSFUSE_DEFICIT_HP_THRESHOLD = 125  # raw HP missing
+    TRANSFUSE_RATIO_THRESHOLD = 0.25  # health_pct below this also triggers
+
+    @classmethod
+    def _build_transfuse_priority_map(cls):
+        """Resolve string priority keys against the live UnitTypeId enum.
+
+        Returns a {unit_type_id: priority_int} mapping, omitting any
+        unit-type names that aren't present in the imported UnitTypeId.
+        """
+        priority_map = {}
+        for name, prio in cls._TRANSFUSE_PRIORITY_NAMES.items():
+            unit_type = getattr(UnitTypeId, name, None)
+            if unit_type is not None:
+                priority_map[unit_type] = prio
+        return priority_map
+
+    @classmethod
+    def _build_unhealable_set(cls):
+        """Resolve unhealable unit names against the live UnitTypeId enum."""
+        return {
+            getattr(UnitTypeId, name)
+            for name in cls._UNHEALABLE_NAMES
+            if hasattr(UnitTypeId, name)
+        }
+
+    @classmethod
+    def _is_injured_for_transfuse(cls, health, health_max):
+        """Return True if a unit qualifies as injured by Transfusion criteria.
+
+        Mirrors CreepyBot: trigger if missing >= TRANSFUSE_DEFICIT_HP_THRESHOLD HP
+        OR current ratio < TRANSFUSE_RATIO_THRESHOLD.
+        Defensive against zero/negative health_max.
+        """
+        if health_max <= 0:
+            return False
+        deficit = health_max - health
+        ratio = health / health_max
+        return (
+            deficit >= cls.TRANSFUSE_DEFICIT_HP_THRESHOLD
+            or ratio < cls.TRANSFUSE_RATIO_THRESHOLD
+        )
+
+    @classmethod
+    def _transfuse_score(cls, unit_type, health, health_max, priority_map=None):
+        """Combined priority score (lower = heal first).
+
+        Type priority dominates; health urgency adds a small tie-breaker so
+        more wounded units of the same class are healed first.
+        """
+        if priority_map is None:
+            priority_map = cls._build_transfuse_priority_map()
+        type_prio = priority_map.get(unit_type, cls._TRANSFUSE_DEFAULT_PRIORITY)
+        ratio = health / health_max if health_max > 0 else 1.0
+        return type_prio + ratio * 0.5
+
     async def _transfuse_injured_units(
         self, queens, iteration: int, include_structures: bool = False
     ) -> None:
@@ -700,39 +779,15 @@ class QueenManager:
         Priority order (from CreepyBot):
         1. Queens (self-preservation)
         2. Broodlords (highest value army unit)
-        3. Corruptors (air support)
+        3. Corruptors / Vipers (air support, spells)
         4. Spine Crawlers (defense structures)
         5. Overseers (detection)
         6. Ultralisks / Roaches / Ravagers
         """
         current_time = getattr(self.bot, "time", 0.0)
 
-        # CreepyBot-style priority map (lower = higher priority)
-        TRANSFUSE_PRIORITY = {}
-        priority_defs = [
-            ("QUEEN", 0),
-            ("BROODLORD", 1),
-            ("CORRUPTOR", 2),
-            ("SPINECRAWLER", 3),
-            ("OVERSEER", 4),
-            ("ULTRALISK", 5),
-            ("RAVAGER", 6),
-            ("ROACH", 7),
-            ("HYDRALISK", 8),
-            ("LURKERMP", 9),
-            ("INFESTOR", 10),
-            ("SWARMHOSTMP", 11),
-            ("MUTALISK", 12),
-            ("VIPER", 2),  # Vipers same priority as corruptors (spell utility)
-        ]
-        for name, prio in priority_defs:
-            unit_type = getattr(UnitTypeId, name, None)
-            if unit_type is not None:
-                TRANSFUSE_PRIORITY[unit_type] = prio
-
-        UNHEALABLE_UNITS = {UnitTypeId.BANELING, UnitTypeId.BROODLING}
-        if hasattr(UnitTypeId, "LOCUSTMP"):
-            UNHEALABLE_UNITS.add(UnitTypeId.LOCUSTMP)
+        TRANSFUSE_PRIORITY = self._build_transfuse_priority_map()
+        UNHEALABLE_UNITS = self._build_unhealable_set()
 
         # Find injured units to heal
         injured_targets = []
@@ -740,13 +795,7 @@ class QueenManager:
             for unit in self.bot.units:
                 if not hasattr(unit, "health") or not hasattr(unit, "health_max"):
                     continue
-                if unit.health_max == 0:
-                    continue
-
-                # CreepyBot condition: health_max - health >= 125 OR health < 25%
-                health_deficit = unit.health_max - unit.health
-                health_ratio = unit.health / unit.health_max
-                if health_deficit < 125 and health_ratio >= 0.25:
+                if not self._is_injured_for_transfuse(unit.health, unit.health_max):
                     continue
 
                 if not getattr(unit, "is_biological", True):
@@ -754,10 +803,9 @@ class QueenManager:
                 if unit.type_id in UNHEALABLE_UNITS:
                     continue
 
-                # Priority from table, fallback to health ratio
-                type_priority = TRANSFUSE_PRIORITY.get(unit.type_id, 15)
-                # Combine type priority with health urgency
-                priority = type_priority + health_ratio * 0.5
+                priority = self._transfuse_score(
+                    unit.type_id, unit.health, unit.health_max, TRANSFUSE_PRIORITY
+                )
                 injured_targets.append((unit, priority))
 
         # Include Spine Crawlers during defense
@@ -767,14 +815,17 @@ class QueenManager:
                 for spine in spines:
                     if not hasattr(spine, "health") or not hasattr(spine, "health_max"):
                         continue
-                    if spine.health_max == 0:
+                    if not self._is_injured_for_transfuse(
+                        spine.health, spine.health_max
+                    ):
                         continue
-
-                    health_deficit = spine.health_max - spine.health
-                    health_ratio = spine.health / spine.health_max
-                    if health_deficit >= 125 or health_ratio < 0.25:
-                        priority = 3 + health_ratio * 0.5  # Same as spine priority
-                        injured_targets.append((spine, priority))
+                    priority = self._transfuse_score(
+                        UnitTypeId.SPINECRAWLER,
+                        spine.health,
+                        spine.health_max,
+                        TRANSFUSE_PRIORITY,
+                    )
+                    injured_targets.append((spine, priority))
             except Exception as e:
                 logger.warning(
                     f"[QueenManager] Spine crawler detection suppressed: {e}"
