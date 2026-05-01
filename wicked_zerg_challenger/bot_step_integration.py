@@ -922,55 +922,48 @@ class BotStepIntegrator:
                 try:
                     await self.bot.spatial_optimizer.on_step(iteration)
                 except Exception as e:
-                    if error_handler.debug_mode:
-                        raise
+                    error_handler.track_step_error("SpatialOptimizer", e)
 
             if hasattr(self.bot, "data_cache") and self.bot.data_cache:
                 try:
                     await self.bot.data_cache.on_step(iteration)
                 except Exception as e:
-                    if error_handler.debug_mode:
-                        raise
+                    error_handler.track_step_error("DataCache", e)
 
             # ★★★ Base Destruction Coordinator (모든 적 기지 파괴) ★★★
             if hasattr(self.bot, "base_destruction") and self.bot.base_destruction:
                 try:
                     await self.bot.base_destruction.on_step(iteration)
                 except Exception as e:
-                    if error_handler.debug_mode:
-                        raise
+                    error_handler.track_step_error("BaseDestruction", e)
 
             # ★★★ Building Destroyer (건물 파괴 전문) ★★★
             if hasattr(self.bot, "building_destroyer") and self.bot.building_destroyer:
                 try:
                     await self.bot.building_destroyer.on_step(iteration)
                 except Exception as e:
-                    if error_handler.debug_mode:
-                        raise
+                    error_handler.track_step_error("BuildingDestroyer", e)
 
             # ★★★ Runtime Self-Healing (실행 중 자동 복구) ★★★
             if hasattr(self.bot, "self_healing") and self.bot.self_healing:
                 try:
                     await self.bot.self_healing.on_step(iteration)
                 except Exception as e:
-                    if error_handler.debug_mode:
-                        raise
+                    error_handler.track_step_error("SelfHealing", e)
 
             # ★★★ Personality Module (채팅/성격) ★★★
             if hasattr(self.bot, "personality") and self.bot.personality:
                 try:
                     await self.bot.personality.on_step(iteration)
                 except Exception as e:
-                    if error_handler.debug_mode:
-                        raise
+                    error_handler.track_step_error("Personality", e)
 
             # ★★★ Battle Preparation System (교전 대비) ★★★
             if hasattr(self.bot, "battle_prep") and self.bot.battle_prep:
                 try:
                     await self.bot.battle_prep.on_step(iteration)
                 except Exception as e:
-                    if error_handler.debug_mode:
-                        raise
+                    error_handler.track_step_error("BattlePrep", e)
 
             # ★★★ Destructible Awareness System (파괴 가능 구조물) ★★★
             if hasattr(self.bot, "destructible_aware") and self.bot.destructible_aware:
@@ -981,24 +974,21 @@ class BotStepIntegrator:
 
                     await self.bot.destructible_aware.on_step(iteration)
                 except Exception as e:
-                    if error_handler.debug_mode:
-                        raise
+                    error_handler.track_step_error("DestructibleAware", e)
 
             # ★★★ Nydus Network Trainer (땅굴망 학습) ★★★
             if hasattr(self.bot, "nydus_trainer") and self.bot.nydus_trainer:
                 try:
                     await self.bot.nydus_trainer.on_step(iteration)
                 except Exception as e:
-                    if error_handler.debug_mode:
-                        raise
+                    error_handler.track_step_error("NydusTrainer", e)
 
             # ★★★ Overlord Safety Manager (대군주 안전) ★★★
             if hasattr(self.bot, "overlord_safety") and self.bot.overlord_safety:
                 try:
                     await self.bot.overlord_safety.on_step(iteration)
                 except Exception as e:
-                    if error_handler.debug_mode:
-                        raise
+                    error_handler.track_step_error("OverlordSafety", e)
 
             # 0.03 ★★★ Build Order System (빌드 오더 - 최최우선) ★★★
             if self.bot.time < 300.0:  # 5분 이내 (Roach Rush 지원)

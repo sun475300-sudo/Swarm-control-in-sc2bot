@@ -140,6 +140,31 @@ class ErrorHandler:
 
         return decorator
 
+    def track_step_error(self, key: str, exc: Exception) -> None:
+        """
+        on_step 등 비차단(non-fatal) 호출 안에서 잡힌 예외를 일관되게 처리한다.
+
+        debug_mode=True 면 다시 raise 하여 즉시 크래시하고,
+        debug_mode=False 면 같은 키의 첫 max_error_logs 회까지 로그를 남기고
+        스택 트레이스는 debug 레벨로 남겨 디버깅을 돕는다. 이후 호출은 카운트만
+        증가시켜 로그 스팸을 방지한다.
+
+        기존에 ``except Exception as e: if error_handler.debug_mode: raise`` 형태로
+        작성된 silent-swallow 블록을 대체하기 위한 단일 진입점이다.
+        """
+        if self.debug_mode:
+            raise exc
+
+        self.error_counts[key] += 1
+        count = self.error_counts[key]
+        if count <= self.max_error_logs:
+            logger.error(f"{key} failed: {exc}")
+            logger.debug(traceback.format_exc())
+            if count == self.max_error_logs:
+                logger.error(
+                    f"{key}: Suppressing further error logs for this key"
+                )
+
     def get_error_summary(self) -> dict:
         """에러 통계 반환"""
         return dict(self.error_counts)
