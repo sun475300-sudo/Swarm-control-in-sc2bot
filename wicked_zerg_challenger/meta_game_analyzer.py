@@ -35,15 +35,20 @@ class MetaGameAnalyzer:
         """Record a game result for analysis"""
         self.game_history.append({**result, "timestamp": datetime.now().isoformat()})
 
+        win = result.get("win", 0)
+        loss = 1 - win
+
         strategy = result.get("strategy", "unknown")
-        self.strategy_performance[strategy]["wins"] += result.get("win", 0)
-        self.strategy_performance[strategy]["losses"] += 1 - result.get("win", 0)
+        self.strategy_performance[strategy]["wins"] += win
+        self.strategy_performance[strategy]["losses"] += loss
 
         race = result.get("enemy_race", "unknown")
-        self.race_performance[race]["wins"] += result.get("win", 0)
+        self.race_performance[race]["wins"] += win
+        self.race_performance[race]["losses"] += loss
 
         map_name = result.get("map", "unknown")
-        self.map_performance[map_name]["wins"] += result.get("win", 0)
+        self.map_performance[map_name]["wins"] += win
+        self.map_performance[map_name]["losses"] += loss
 
     def get_current_meta_strategies(self) -> List[MetaStrategy]:
         """Get current meta strategies based on win rates"""
@@ -95,9 +100,26 @@ class MetaGameAnalyzer:
         return (perf["wins"] / total) * 100
 
     def recommend_strategy(self, enemy_race: str, map_name: str) -> Dict[str, Any]:
-        """Recommend best strategy based on current meta"""
-        race_perf = self.race_performance.get(enemy_race, {"wins": 0})
-        map_perf = self.map_performance.get(map_name, {"wins": 0})
+        """Recommend best strategy based on current meta + historical performance.
+
+        Confidence is the geometric blend of a 0.75 prior and the historical
+        win rate against this race / on this map. With no history the result
+        equals the prior; with a strong record it shifts toward the observed
+        win rate. Falls back to a static (race, map_size) lookup table.
+        """
+        race_perf = self.race_performance.get(enemy_race, {"wins": 0, "losses": 0})
+        map_perf = self.map_performance.get(map_name, {"wins": 0, "losses": 0})
+
+        def _win_rate(perf):
+            total = perf.get("wins", 0) + perf.get("losses", 0)
+            return (perf.get("wins", 0) / total) if total else None
+
+        race_wr = _win_rate(race_perf)
+        map_wr = _win_rate(map_perf)
+        signals = [s for s in (race_wr, map_wr) if s is not None]
+        confidence = (
+            0.75 if not signals else 0.5 * 0.75 + 0.5 * (sum(signals) / len(signals))
+        )
 
         best_strategies = {
             ("terran", "small"): "RUSH",
@@ -111,10 +133,16 @@ class MetaGameAnalyzer:
         map_size = "small" if map_name in ["GroundZero", "Corridor"] else "large"
         recommended = best_strategies.get((enemy_race.lower(), map_size), "MACRO")
 
+        reasoning_parts = [f"vs {enemy_race} on {map_name}"]
+        if race_wr is not None:
+            reasoning_parts.append(f"race win rate {race_wr:.0%}")
+        if map_wr is not None:
+            reasoning_parts.append(f"map win rate {map_wr:.0%}")
+
         return {
             "recommended_strategy": recommended,
-            "confidence": 0.75,
-            "reasoning": f"Based on vs {enemy_race} on {map_name}",
+            "confidence": round(confidence, 3),
+            "reasoning": "; ".join(reasoning_parts),
             "alternatives": ["RUSH", "MACRO", "TIMING"],
             "meta_analysis": self.get_current_meta_strategies()[:3],
         }

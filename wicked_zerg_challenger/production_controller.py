@@ -423,6 +423,11 @@ class ProductionController:
                 try:
                     larva = larvae.first
                     self.bot.do(larva.train(best_uid))
+                    if getattr(self.bot, "iteration", 0) % 220 == 0:
+                        self.logger.debug(
+                            f"[PRODUCTION] composition pick: {best_unit} "
+                            f"(deficit={max_deficit:+.2f})"
+                        )
                 except Exception:
                     pass
 
