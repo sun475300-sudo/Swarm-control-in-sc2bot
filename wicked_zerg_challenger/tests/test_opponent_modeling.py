@@ -25,7 +25,6 @@ from opponent_modeling import (  # noqa: E402
     OpponentModel,
     OpponentModeling,
     OpponentStyle,
-    StrategySignal,
 )
 from sc2.position import Point2  # noqa: E402
 

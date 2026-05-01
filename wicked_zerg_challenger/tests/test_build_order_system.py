@@ -20,7 +20,6 @@ from unittest.mock import Mock
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 from build_order_system import (  # noqa: E402
-    BuildOrderStep,
     BuildOrderSystem,
     BuildOrderType,
 )

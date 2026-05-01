@@ -20,10 +20,7 @@ from blackboard import (  # noqa: E402
     Blackboard,
     GamePhase,
     GameStateBlackboard,
-    ResourceState,
-    ThreatInfo,
     ThreatLevel,
-    UnitCounts,
 )
 
 

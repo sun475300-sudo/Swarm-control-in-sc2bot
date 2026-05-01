@@ -20,7 +20,6 @@ from unittest.mock import Mock, patch
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 from economy_manager import EconomyManager  # noqa: E402
-from sc2.ids.unit_typeid import UnitTypeId  # noqa: E402
 from sc2.position import Point2  # noqa: E402
 
 
@@ -186,6 +185,8 @@ class TestEconomyManager(unittest.TestCase):
 
         # Cache time should be set
         self.assertGreaterEqual(self.manager._gold_cache_time, 0)
+        # Cached call should return identical results within the TTL window
+        self.assertEqual(result1, result2)
 
     # ==================== Supply Management Tests ====================
 
