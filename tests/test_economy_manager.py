@@ -559,6 +559,27 @@ class TestMacroHatchery:
         # Function should complete
         assert True
 
+    def test_gas_banking_trigger_constants(self):
+        """매크로 해처리용 가스-뱅킹 트리거 상수가 합리적 범위에 있는지 검증.
+
+        Worker-redirect threshold (`gas_overflow_prevention_threshold`)
+        kicks in earlier; the macro-hatchery trigger must be strictly
+        higher so we don't double-react to mild gas surpluses.
+        """
+        bot = MockBot()
+        manager = EconomyManager(bot)
+        assert hasattr(manager, "gas_banking_macro_hatch_trigger")
+        assert hasattr(manager, "gas_banking_larva_floor")
+        assert (
+            manager.gas_banking_macro_hatch_trigger
+            > manager.gas_overflow_prevention_threshold
+        ), "macro-hatchery trigger must exceed worker-redirect threshold"
+        assert manager.gas_banking_macro_hatch_trigger <= 1500, (
+            "macro-hatchery trigger should be tightened (<=1500); "
+            "wider gaps mean we sit on banked gas before reacting"
+        )
+        assert 1 <= manager.gas_banking_larva_floor <= 8
+
 
 class TestWorkerRedistribution:
     """테스트 16: 일꾼 재분배"""
