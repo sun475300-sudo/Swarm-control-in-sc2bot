@@ -17,7 +17,7 @@ Features:
 import json
 from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, Optional
 
 from config.config_loader import ConfigLoader
 from racial_counter_manager import RacialCounterManager
@@ -1569,7 +1569,6 @@ class StrategyManager:
 
     def _request_spire_build(self) -> None:
         """스파이어 긴급 건설 요청 - 제거됨 (AggressiveTechBuilder로 통합)"""
-        pass
 
     def should_force_hydra(self) -> bool:
         """히드라 강제 생산 여부"""

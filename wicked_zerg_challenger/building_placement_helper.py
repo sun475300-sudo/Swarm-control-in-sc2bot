@@ -5,7 +5,6 @@
 
 import logging
 import math
-import random
 from typing import List, Optional
 
 from sc2.ids.unit_typeid import UnitTypeId

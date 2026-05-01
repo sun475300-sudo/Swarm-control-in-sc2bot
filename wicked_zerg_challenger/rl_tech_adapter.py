@@ -14,7 +14,7 @@ Features:
 
 import json
 from pathlib import Path
-from typing import Dict, List, Optional, Set, Tuple
+from typing import Dict, List, Optional, Set
 
 from utils.logger import get_logger
 

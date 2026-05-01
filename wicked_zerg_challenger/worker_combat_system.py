@@ -9,7 +9,7 @@ Worker Combat System - 일꾼 전투 시스템
 - 적이 물러나면 다시 채광으로 복귀
 """
 
-from typing import Dict, Optional, Set
+from typing import Dict, Set
 
 from sc2.ids.unit_typeid import UnitTypeId
 from sc2.position import Point2
