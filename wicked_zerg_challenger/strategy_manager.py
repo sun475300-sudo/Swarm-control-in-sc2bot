@@ -1521,6 +1521,12 @@ class StrategyManager:
             self._adjust_unit_ratio("hydra", 0.3)
             self._adjust_unit_ratio("roach", 0.3)
 
+        # ★ NEW: 적 레이바저 4+ → 저글링 + 맹독 (느린 레이바저는 빠른 swarm에 약함)
+        if ravager_count >= 4:
+            self._adjust_unit_ratio("zergling", 0.4)
+            self._adjust_unit_ratio("baneling", 0.3)
+            self._adjust_unit_ratio("roach", 0.2)
+
         # 뮤탈리스크 → 히드라 + 스포어
         if mutalisk_count >= 3:
             # ★ Phase 34: "hydralisk" 오타 수정 → "hydra" (내부 키 통일)
@@ -1881,6 +1887,14 @@ class StrategyManager:
         if self.game_phase == GamePhase.EARLY and base_count >= 3 and supply_used >= 40:
             self.game_phase = GamePhase.MID
             return f"3기지 + 서플라이 {supply_used} -> 중반 전환"
+
+        # ★ NEW: 시간 기반 안전망 (상황 트리거가 모두 미스되는 경우 대비)
+        if self.game_phase == GamePhase.EARLY and game_time >= 540:  # 9분
+            self.game_phase = GamePhase.MID
+            return f"시간 {int(game_time)}s -> 중반 강제 전환 (안전망)"
+        if self.game_phase == GamePhase.MID and game_time >= 900:  # 15분
+            self.game_phase = GamePhase.LATE
+            return f"시간 {int(game_time)}s -> 후반 강제 전환 (안전망)"
 
         return None
 
