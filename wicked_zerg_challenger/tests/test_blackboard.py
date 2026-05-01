@@ -10,20 +10,17 @@ import os
 
 os.environ["PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION"] = "python"
 
-import sys
-import unittest
+import sys  # noqa: E402
+import unittest  # noqa: E402
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
-from blackboard import (
+from blackboard import (  # noqa: E402
     AuthorityMode,
     Blackboard,
     GamePhase,
     GameStateBlackboard,
-    ResourceState,
-    ThreatInfo,
     ThreatLevel,
-    UnitCounts,
 )
 
 

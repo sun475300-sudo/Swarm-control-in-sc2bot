@@ -27,8 +27,6 @@ def setup_logger(
         level: Logging level (default: INFO)
         log_to_console: Whether to print to stdout
     """
-    global _LOGGER_INITIALIZED
-
     logger = logging.getLogger(name)
     logger.setLevel(level)
 
@@ -57,7 +55,7 @@ def setup_logger(
         try:
             # Windows 콘솔에서 UTF-8 출력 지원
             if sys.platform == "win32":
-                import io
+                pass
 
                 sys.stdout.reconfigure(encoding="utf-8", errors="replace")
         except (AttributeError, Exception):
@@ -66,7 +64,6 @@ def setup_logger(
         console_handler.setFormatter(formatter)
         logger.addHandler(console_handler)
 
-    _LOGGER_INITIALIZED = True
     return logger
 
 
@@ -79,8 +76,6 @@ def get_logger(name: str = "WickedZergBot") -> logging.Logger:
 
 def reset_all_loggers():
     """★ 게임 간 로거 핸들러 초기화 (훈련 시 핸들러 누적 방지) ★"""
-    global _LOGGER_INITIALIZED
     for name in list(logging.Logger.manager.loggerDict.keys()):
         logger = logging.getLogger(name)
         logger.handlers.clear()
-    _LOGGER_INITIALIZED = False

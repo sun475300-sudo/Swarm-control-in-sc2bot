@@ -13,11 +13,10 @@ Replay Build Order Learner
 
 import json
 import logging
-import os
 import sys
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger("ReplayBuildOrderLearner")
 
@@ -177,7 +176,6 @@ class ReplayBuildOrderLearner:
 
         try:
             logger.debug(f"Total events: {len(replay.events)}")  # DEBUG
-            debug_count = 0
 
             # 이벤트에서 유닛/건물 생산 추출
             for event in replay.events:

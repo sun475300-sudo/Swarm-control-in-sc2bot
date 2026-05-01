@@ -3,7 +3,6 @@ Proxy Detection System - Detects and counters proxy strategies
 HIGH PRIORITY FEATURE
 """
 
-from dataclasses import dataclass
 from enum import Enum
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -47,7 +46,6 @@ class ProxyDetector:
 
         is_near_expansion = self._is_near_expansion(position)
         is_near_start = self._is_near_start(position)
-        distance_to_base = self._distance_to_enemy_base(position)
 
         if building_type.lower() in ["pylon", "gateway", "forge", "barracks"]:
             if not is_near_expansion and not is_near_start:

@@ -11,24 +11,22 @@ Tests cover:
 - Integration with IntelManager
 """
 
-import json
 import os
 import sys
 import tempfile
 import unittest
-from unittest.mock import MagicMock, Mock, patch
+from unittest.mock import Mock
 
 # Add parent directory to path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from opponent_modeling import (
+from opponent_modeling import (  # noqa: E402
     GameHistory,
     OpponentModel,
     OpponentModeling,
     OpponentStyle,
-    StrategySignal,
 )
-from sc2.position import Point2
+from sc2.position import Point2  # noqa: E402
 
 
 class TestOpponentModel(unittest.TestCase):

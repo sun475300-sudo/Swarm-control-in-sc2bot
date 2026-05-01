@@ -10,18 +10,16 @@ Tests DifficultyProgression system:
 - Stats persistence
 """
 
-import json
 import os
 import sys
 import tempfile
 import unittest
 from io import StringIO
-from unittest.mock import Mock, patch
 
 # Add parent directory to path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from difficulty_progression import DifficultyProgression
+from difficulty_progression import DifficultyProgression  # noqa: E402
 
 # Mock sc2.data imports
 try:

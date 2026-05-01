@@ -28,7 +28,8 @@ project_root = Path(__file__).parent
 if str(project_root) not in sys.path:
     sys.path.insert(0, str(project_root))
 
-from wicked_zerg_bot_pro_impl import WickedZergBotProImpl
+# Import below depends on the sys.path insert above.
+from wicked_zerg_bot_pro_impl import WickedZergBotProImpl  # noqa: E402
 
 # 사용 가능한 맵 리스트 (확실히 있는 맵만)
 AVAILABLE_MAPS = [
@@ -67,7 +68,7 @@ def main():
         logger.info(f"\n{'='*70}")
         logger.info(f"게임 {game_num}/{total_games} 시작")
         logger.info(f"맵: {selected_map}")
-        logger.info(f"상대: Random 종족 (Easy)")
+        logger.info("상대: Random 종족 (Easy)")
         logger.info(f"{'='*70}\n")
 
         try:

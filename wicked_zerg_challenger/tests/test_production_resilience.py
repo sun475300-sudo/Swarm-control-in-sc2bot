@@ -14,7 +14,7 @@ Tests cover:
 import os
 import sys
 import unittest
-from unittest.mock import AsyncMock, MagicMock, Mock, patch
+from unittest.mock import Mock
 
 # Add parent directory to path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
@@ -22,9 +22,9 @@ sys.path.insert(
     0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "local_training"))
 )
 
-from local_training.production_resilience import ProductionResilience
-from sc2.ids.unit_typeid import UnitTypeId
-from sc2.position import Point2
+from local_training.production_resilience import ProductionResilience  # noqa: E402
+from sc2.ids.unit_typeid import UnitTypeId  # noqa: E402
+from sc2.position import Point2  # noqa: E402
 
 
 class TestProductionResilience(unittest.TestCase):

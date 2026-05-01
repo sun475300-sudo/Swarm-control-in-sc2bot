@@ -14,14 +14,13 @@ Tests cover:
 import os
 import sys
 import unittest
-from unittest.mock import MagicMock, Mock, patch
+from unittest.mock import Mock, patch
 
 # Add parent directory to path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from economy_manager import EconomyManager
-from sc2.ids.unit_typeid import UnitTypeId
-from sc2.position import Point2
+from economy_manager import EconomyManager  # noqa: E402
+from sc2.position import Point2  # noqa: E402
 
 
 class TestEconomyManager(unittest.TestCase):
@@ -186,6 +185,8 @@ class TestEconomyManager(unittest.TestCase):
 
         # Cache time should be set
         self.assertGreaterEqual(self.manager._gold_cache_time, 0)
+        # Cached call should return identical results within the TTL window
+        self.assertEqual(result1, result2)
 
     # ==================== Supply Management Tests ====================
 
@@ -222,10 +223,18 @@ class TestEconomyManager(unittest.TestCase):
     # ==================== Configuration Tests ====================
 
     def test_config_none_defaults(self):
-        """Test default values when config is None"""
-        # Manager initialized with config=None in setUp
-        self.assertEqual(self.manager.macro_hatchery_mineral_threshold, 600)
-        self.assertEqual(self.manager.macro_hatchery_larva_threshold, 3)
+        """Test default fallback values when game_config import fails."""
+        # Force the fallback branch by simulating ImportError on game_config.
+        with patch.dict(sys.modules, {"game_config": None}):
+            fallback_manager = EconomyManager(self.bot)
+        self.assertIsNone(fallback_manager.config)
+        self.assertEqual(fallback_manager.macro_hatchery_mineral_threshold, 600)
+        self.assertEqual(fallback_manager.macro_hatchery_larva_threshold, 3)
+
+    def test_config_loaded_uses_phase16_threshold(self):
+        """When game_config is available, Phase 16 lowered the threshold to 550."""
+        # setUp creates self.manager with a real config import succeeding.
+        self.assertEqual(self.manager.macro_hatchery_mineral_threshold, 550)
 
     def test_blackboard_integration(self):
         """Test blackboard integration is set up"""

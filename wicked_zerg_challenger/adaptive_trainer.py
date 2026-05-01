@@ -25,7 +25,8 @@ project_root = Path(__file__).parent
 if str(project_root) not in sys.path:
     sys.path.insert(0, str(project_root))
 
-from wicked_zerg_bot_pro_impl import WickedZergBotProImpl
+# Import below depends on the sys.path insert above resolving the project root.
+from wicked_zerg_bot_pro_impl import WickedZergBotProImpl  # noqa: E402
 
 # Lock 파일
 LOCK_FILE = Path("game_running.lock")
@@ -132,8 +133,6 @@ def run_single_game(
 
 def calculate_win_rate(stats: GameStatistics, difficulty_name: str, race_name: str):
     """특정 난이도/종족 조합의 승률 계산"""
-    key = f"{difficulty_name}_{race_name}"
-
     # 난이도별 통계 확인
     if difficulty_name in stats.stats["by_difficulty"]:
         diff_stats = stats.stats["by_difficulty"][difficulty_name]

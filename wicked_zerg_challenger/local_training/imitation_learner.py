@@ -13,7 +13,6 @@ SC2Replay 파일에서 전문가 행동을 추출하고 모방 학습합니다.
 
 import json
 import logging
-import os
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -106,7 +105,7 @@ class ReplayActionExtractor:
 
             except ImportError:
                 # sc2reader 미설치 시 - 기본 파싱 시도
-                logger.info(f"sc2reader 미설치, 기본 파싱 모드 사용")
+                logger.info("sc2reader 미설치, 기본 파싱 모드 사용")
                 frames = self._basic_parse(replay_path)
 
         except Exception as e:
@@ -345,7 +344,7 @@ class ImitationLearner:
         self._load_model()
 
         logger.info(
-            f"ImitationLearner 초기화 완료 "
+            "ImitationLearner 초기화 완료 "
             f"(state_dim={state_dim}, action_dim={self.action_dim}, device={self.device})"
         )
 

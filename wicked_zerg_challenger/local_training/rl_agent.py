@@ -387,7 +387,7 @@ class RLAgent:
         # 역전파 (엔트로피 정규화 포함)
         entropy_coeff = 0.01
         total_loss = 0.0
-        total_entropy = 0.0
+        total_entropy = 0.0  # FIX: was previously used with += without init
         for cache, action, advantage in zip(self.caches, self.actions, advantages):
             probs = cache["probs"]
             # 엔트로피 보너스: 정책 붕괴 방지
@@ -410,6 +410,7 @@ class RLAgent:
             "avg_reward": float(np.mean(self.rewards)),
             "episode_return": float(np.sum(self.rewards)),
             "loss": float(total_loss / len(self.rewards)),
+            "avg_entropy": float(total_entropy / max(1, len(self.rewards))),
             "steps": len(self.rewards),
             "epsilon": float(self.epsilon),
             "learning_rate": float(current_lr),
@@ -430,7 +431,7 @@ class RLAgent:
                         f"[OK] Experience data saved: {exp_path.name} (Size: {len(self.states)})"
                     )
                 else:
-                    logger.error(f"[ERROR] Failed to save experience data")
+                    logger.error("[ERROR] Failed to save experience data")
             except Exception as e:
                 logger.error(f"[ERROR] Exception during save: {e}")
 

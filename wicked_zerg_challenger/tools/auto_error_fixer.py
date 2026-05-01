@@ -35,7 +35,6 @@ class AutoErrorFixer:
             original_content = content
             modified = False
             # lines 변수는 사용하지 않지만 향후 확장성을 위해 유지
-            _ = lines  # noqa: F841
 
             # 1. loguru_logger 미정의 에러 수정
             if 'loguru_logger' in content and 'from loguru import logger' not in content:

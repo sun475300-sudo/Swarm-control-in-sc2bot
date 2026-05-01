@@ -10,13 +10,13 @@ import os
 
 os.environ["PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION"] = "python"
 
-import sys
-import unittest
-from unittest.mock import MagicMock, PropertyMock, patch
+import sys  # noqa: E402
+import unittest  # noqa: E402
+from unittest.mock import MagicMock  # noqa: E402
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
-from unit_factory import UnitFactory
+from unit_factory import UnitFactory  # noqa: E402
 
 
 class FakeBot:

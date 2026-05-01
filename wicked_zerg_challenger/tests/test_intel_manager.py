@@ -14,12 +14,12 @@ Tests:
 import os
 import sys
 import unittest
-from unittest.mock import MagicMock, Mock
+from unittest.mock import Mock
 
 # Add parent directory to path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from intel_manager import IntelManager
+from intel_manager import IntelManager  # noqa: E402
 
 
 class TestIntelManager(unittest.TestCase):

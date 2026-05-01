@@ -10,7 +10,7 @@
 4. 소수 병력 → 자동 견제
 """
 
-from typing import List, Optional, Set
+from typing import Optional, Set
 
 from sc2.ids.unit_typeid import UnitTypeId
 from sc2.position import Point2
@@ -225,8 +225,6 @@ class IdleUnitManager:
         """
         if not self.bot.townhalls.exists:
             return
-
-        main_base = self.bot.townhalls.first.position
 
         combat_units = self.bot.units.filter(
             lambda u: u.type_id in self.combat_unit_types

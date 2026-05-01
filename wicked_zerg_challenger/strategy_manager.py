@@ -17,7 +17,7 @@ Features:
 import json
 from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, Optional
 
 from config.config_loader import ConfigLoader
 from racial_counter_manager import RacialCounterManager
@@ -1501,7 +1501,6 @@ class StrategyManager:
         roach_count = comp.get("ROACH", 0)
         mutalisk_count = comp.get("MUTALISK", 0)
         hydra_count = comp.get("HYDRALISK", 0)
-        ravager_count = comp.get("RAVAGER", 0)
 
         # 저글링 10+ → 바퀴 + 맹독충으로 전환 (저글링 미러는 불리)
         # ★ Phase 34: game_time < 300 제한 제거 — 5분 이후에도 저글링 러시 대응
@@ -1569,7 +1568,6 @@ class StrategyManager:
 
     def _request_spire_build(self) -> None:
         """스파이어 긴급 건설 요청 - 제거됨 (AggressiveTechBuilder로 통합)"""
-        pass
 
     def should_force_hydra(self) -> bool:
         """히드라 강제 생산 여부"""
@@ -1863,7 +1861,6 @@ class StrategyManager:
         Returns:
             전환 설명 문자열 (전환 없으면 None)
         """
-        game_time = getattr(self.bot, "time", 0.0)
         supply_used = getattr(self.bot, "supply_used", 0)
 
         # 강제 전환 조건 (시간보다 상황 우선)
@@ -2135,7 +2132,7 @@ class StrategyManager:
         """
         프로토스 테크 전환 감지: 게이트웨이/로보틱스/공중 전환 패턴 분석
         """
-        gateway_count = 0
+        gateway_count = 0  # FIX: previously missing init caused UnboundLocalError
         robo_count = 0
         stargate_count = 0
         templar_archives = False
@@ -2160,6 +2157,7 @@ class StrategyManager:
             "to_tech": "unknown",
             "confidence": 0.0,
             "recommended_comp": "balanced",
+            "gateway_count": gateway_count,
         }
 
         # 게이트웨이 -> 로보틱스 전환 (콜로서스/불멸자)

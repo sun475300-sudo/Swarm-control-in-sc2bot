@@ -18,8 +18,7 @@ Usage:
 
 import asyncio
 import logging
-from datetime import datetime
-from typing import Dict, List, Optional
+from typing import Dict, Optional
 
 logger = logging.getLogger("OneMinMultiTest")
 
@@ -132,7 +131,7 @@ class OneMinMultiTest:
             # ★ 현재 Hatchery 수 확인 ★
             current_hatcheries = self.bot.structures(UnitTypeId.HATCHERY)
 
-            # 건설 중인 Hatchery도 포함
+            # 건설 중인 Hatchery도 포함 (FIX: previously computed but ignored)
             if hasattr(self.bot, "already_pending"):
                 pending_hatcheries = self.bot.already_pending(UnitTypeId.HATCHERY)
             else:
@@ -140,7 +139,7 @@ class OneMinMultiTest:
                     [h for h in current_hatcheries if not h.is_ready]
                 )
 
-            total_hatcheries = len(current_hatcheries)
+            total_hatcheries = len(current_hatcheries) + pending_hatcheries
 
             # ★ 확장이 배치되었는지 확인 ★
             if total_hatcheries > self.initial_hatchery_count:

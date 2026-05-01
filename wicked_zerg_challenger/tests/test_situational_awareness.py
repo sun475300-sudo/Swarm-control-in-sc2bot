@@ -6,10 +6,9 @@ from unittest.mock import MagicMock
 # Add project root to path
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from core.situational_awareness import (
+from core.situational_awareness import (  # noqa: E402
     OpportunityIndex,
     SituationalAwareness,
-    ThreatLevel,
 )
 
 

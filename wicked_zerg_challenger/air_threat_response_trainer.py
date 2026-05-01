@@ -9,7 +9,7 @@ Air Threat Response Trainer - 공중 위협 대응 학습 시스템
 4. 동적 카운터: 히드라, 퀸, 감염충, 타락귀
 """
 
-from typing import Dict, List, Optional, Set
+from typing import Dict
 
 from sc2.ids.unit_typeid import UnitTypeId
 
@@ -119,7 +119,6 @@ class AirThreatResponseTrainer:
 
         light_count = light_air.amount
         heavy_count = heavy_air.amount
-        total_air = light_count + heavy_count
 
         # 위협 가중치 (중형 공중은 2배)
         threat_score = light_count + (heavy_count * 2)
@@ -165,7 +164,7 @@ class AirThreatResponseTrainer:
             if self.current_strategy != "IGNORE_AIR":
                 self.current_strategy = "IGNORE_AIR"
                 self.logger.info(
-                    f"[STRATEGY] IGNORE_AIR - "
+                    "[STRATEGY] IGNORE_AIR - "
                     f"Ground: {ground_count}, Enemy Air: Low threat"
                 )
 
@@ -174,7 +173,7 @@ class AirThreatResponseTrainer:
             if self.current_strategy != "COUNTER_AIR":
                 self.current_strategy = "COUNTER_AIR"
                 self.logger.info(
-                    f"[STRATEGY] COUNTER_AIR - "
+                    "[STRATEGY] COUNTER_AIR - "
                     f"Enemy Air: {threat_level}, Anti-air: {anti_air_count}"
                 )
 

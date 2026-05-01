@@ -18,12 +18,12 @@ Tests all 11 utility functions:
 import os
 import sys
 import unittest
-from unittest.mock import MagicMock, Mock, patch
+from unittest.mock import Mock, patch
 
 # Add parent directory to path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from utils.unit_helpers import (
+from utils.unit_helpers import (  # noqa: E402
     calculate_unit_supply,
     can_unit_attack,
     execute_unit_action,
@@ -386,6 +386,48 @@ class TestCanUnitAttack(unittest.TestCase):
         """Test with None target"""
         unit = MockUnit()
         self.assertFalse(can_unit_attack(unit, None))
+
+
+class TestEmptyUnitsFallback(unittest.TestCase):
+    """Regression test: when sc2.units.Units is unavailable, helpers must
+    not crash when constructing an empty Units stand-in.
+
+    Previously, the ImportError fallback set `Units = None`, which caused
+    `Units([], None)` calls inside helpers like `find_nearby_enemies` and
+    `filter_workers_by_task` to raise TypeError('NoneType not callable').
+    """
+
+    def _force_fallback_helpers(self):
+        """Re-import unit_helpers as if sc2 were missing."""
+        import importlib
+
+        with patch.dict(
+            sys.modules,
+            {"sc2": None, "sc2.unit": None, "sc2.units": None, "sc2.position": None},
+        ):
+            from utils import unit_helpers as fresh
+
+            importlib.reload(fresh)
+            return fresh
+
+    def test_find_nearby_enemies_empty_does_not_crash_without_sc2(self):
+        helpers = self._force_fallback_helpers()
+        # Empty enemies in the no-sc2 path: helper short-circuits to Units([], None)
+        result = helpers.find_nearby_enemies(MockUnit(), MockUnits([]), 5.0)
+        self.assertEqual(len(result), 0)
+
+    def test_filter_workers_none_does_not_crash_without_sc2(self):
+        helpers = self._force_fallback_helpers()
+        result = helpers.filter_workers_by_task(None, lambda w: True)
+        self.assertEqual(len(result), 0)
+
+    def test_fallback_units_supports_closer_than_and_filter(self):
+        helpers = self._force_fallback_helpers()
+        # The shipped _EmptyUnits stand-in should mirror the small Units API
+        # used by helpers: closer_than() and filter().
+        empty = helpers.Units([])
+        self.assertEqual(len(empty.closer_than(5.0, MockUnit())), 0)
+        self.assertEqual(len(empty.filter(lambda u: True)), 0)
 
 
 if __name__ == "__main__":

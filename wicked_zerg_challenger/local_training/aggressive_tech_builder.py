@@ -12,7 +12,7 @@ This module does when resources overflow:
 """
 
 import logging
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Tuple
 
 logger = logging.getLogger("AggressiveTechBuilder")
 try:
@@ -257,7 +257,6 @@ class AggressiveTechBuilder:
             return []
 
         recommendations = []
-        supply_used = getattr(self.bot, "supply_used", 0)
 
         # Spawning Pool (�⺻ ��ũ)
         if not self.bot.structures(UnitTypeId.SPAWNINGPOOL).exists:

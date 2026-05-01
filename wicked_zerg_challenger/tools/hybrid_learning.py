@@ -12,7 +12,6 @@ Features:
 """
 
 import logging
-import os
 import re
 import shutil
 import sys
@@ -32,7 +31,9 @@ project_root = script_dir.parent
 if str(project_root) not in sys.path:
     sys.path.insert(0, str(project_root))
 
-from local_training.scripts.replay_build_order_learner import ReplayBuildOrderLearner
+from local_training.scripts.replay_build_order_learner import (  # noqa: E402
+    ReplayBuildOrderLearner,
+)
 
 
 class ReplayPipeline:
@@ -220,8 +221,6 @@ class ReplayPipeline:
 def main():
     # Disable HTTPS warnings for verify=False
     import argparse
-
-    import urllib3
 
     # SSL verification is now enabled; no need to suppress warnings
     

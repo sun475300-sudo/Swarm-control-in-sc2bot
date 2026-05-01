@@ -1,6 +1,5 @@
 import io
 import logging
-import os
 import random
 import re
 import time
@@ -58,7 +57,6 @@ def download_and_extract(replay_id):
             return
 
         # Check content type
-        content_type = response.headers.get('content-type', '')
         
         # Try to unzip
         try:

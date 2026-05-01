@@ -11,7 +11,6 @@ import sys
 import time
 from pathlib import Path
 
-import sc2
 from sc2 import maps
 from sc2.data import Difficulty, Race
 from sc2.main import run_game
@@ -24,8 +23,9 @@ project_root = Path(__file__).parent
 if str(project_root) not in sys.path:
     sys.path.insert(0, str(project_root))
 
-from game_statistics import GameStatistics
-from wicked_zerg_bot_pro_impl import WickedZergBotProImpl
+# Imports below depend on the sys.path insert above.
+from game_statistics import GameStatistics  # noqa: E402
+from wicked_zerg_bot_pro_impl import WickedZergBotProImpl  # noqa: E402
 
 # Lock 파일
 LOCK_FILE = Path("game_running.lock")
@@ -112,7 +112,7 @@ def main():
         logger.info("=" * 70)
         logger.info(f"Map: {selected_map}")
         logger.info(f"Enemy: {enemy_race.name}")
-        logger.info(f"Difficulty: Easy")
+        logger.info("Difficulty: Easy")
         logger.info("=" * 70 + "\n")
 
         # ★ 5. 게임 실행 (하나만) ★

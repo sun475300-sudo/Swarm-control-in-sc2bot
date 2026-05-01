@@ -12,10 +12,10 @@ import numpy as np
 
 logger = logging.getLogger("GenerateVisuals")
 matplotlib.use("Agg")
-from pathlib import Path
+from pathlib import Path  # noqa: E402
 
-import matplotlib.pyplot as plt
-from matplotlib.patches import FancyBboxPatch, Polygon
+import matplotlib.pyplot as plt  # noqa: E402
+from matplotlib.patches import FancyBboxPatch, Polygon  # noqa: E402
 
 # ===== Color constants (matching PPTX theme) =====
 BG_DARK = "#0B101F"

@@ -9,7 +9,7 @@ Unit Helpers - 유닛 관련 공통 유틸리티 함수
 - calculate_unit_supply: Supply 계산
 """
 
-from typing import Any, Callable, List, Optional
+from typing import Callable
 
 from utils.logger import get_logger
 
@@ -19,8 +19,26 @@ try:
     from sc2.units import Units
 except ImportError:
     Unit = None
-    Units = None
     Point2 = None
+
+    class _EmptyUnits(list):
+        """Lightweight Units stand-in for tooling/test environments without sc2.
+
+        Mirrors the small subset of the real `Units` API the helpers below need:
+        truthiness, len(), iteration, .closer_than() and .filter().
+        Any real Units instance passed in by tests is used directly.
+        """
+
+        def __init__(self, items=None, _bot_object=None):
+            super().__init__(items or [])
+
+        def closer_than(self, distance, unit):
+            return _EmptyUnits([u for u in self if u.distance_to(unit) < distance])
+
+        def filter(self, predicate):
+            return _EmptyUnits([u for u in self if predicate(u)])
+
+    Units = _EmptyUnits
 
 logger = get_logger("UnitHelpers")
 

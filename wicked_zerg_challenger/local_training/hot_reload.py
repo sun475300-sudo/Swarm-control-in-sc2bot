@@ -102,7 +102,7 @@ class ModelHotReloader:
             required_keys = {"W1", "b1", "W2", "b2", "W3", "b3"}
             if not required_keys.issubset(set(data.files)):
                 logger.info(
-                    f"[HOT_RELOAD] Invalid model file: missing keys "
+                    "[HOT_RELOAD] Invalid model file: missing keys "
                     f"{required_keys - set(data.files)}"
                 )
                 return False
@@ -111,7 +111,7 @@ class ModelHotReloader:
             policy = self.rl_agent.policy
             if data["W1"].shape != (policy.input_dim, policy.hidden_dim):
                 logger.info(
-                    f"[HOT_RELOAD] Shape mismatch W1: "
+                    "[HOT_RELOAD] Shape mismatch W1: "
                     f"expected {(policy.input_dim, policy.hidden_dim)}, "
                     f"got {data['W1'].shape}"
                 )

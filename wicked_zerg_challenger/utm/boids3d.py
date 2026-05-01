@@ -11,12 +11,11 @@ Origin: wicked_zerg_challenger/combat/boids_swarm_control.py
 
 from __future__ import annotations
 
-import math
-from typing import List, Optional, Tuple
+from typing import List, Optional
 
 import numpy as np
 
-from wicked_zerg_challenger.utm.types3d import DroneState, Point3D, _get_pos3d
+from wicked_zerg_challenger.utm.types3d import DroneState, Point3D
 
 
 class Boids3DController:
