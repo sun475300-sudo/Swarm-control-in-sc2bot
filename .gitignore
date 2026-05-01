@@ -243,6 +243,7 @@ _*.log
 _*.txt
 _*.ps1
 .coverage
+coverage.xml
 htmlcov/
 .pytest_cache/
 pytest-cache-files-*/

@@ -1863,7 +1863,6 @@ class StrategyManager:
         Returns:
             전환 설명 문자열 (전환 없으면 None)
         """
-        game_time = getattr(self.bot, "time", 0.0)
         supply_used = getattr(self.bot, "supply_used", 0)
 
         # 강제 전환 조건 (시간보다 상황 우선)
