@@ -1521,6 +1521,19 @@ class StrategyManager:
             self._adjust_unit_ratio("hydra", 0.3)
             self._adjust_unit_ratio("roach", 0.3)
 
+        # 라바저 3+ → 히드라(out-range bile) + 저글링(spread vs splash)
+        # 라바저의 부식 즙은 9 사거리 광역 → 사거리 밖에서 점사하거나 분산 필요
+        if ravager_count >= 3:
+            self._adjust_unit_ratio("hydra", 0.45)
+            self._adjust_unit_ratio("zergling", 0.25)
+            self._adjust_unit_ratio("roach", 0.20)
+            if game_time - getattr(self, "_last_zvz_ravager_log", 0) > 15:
+                self._last_zvz_ravager_log = game_time
+                self.logger.info(
+                    f"[{int(game_time)}s] ZvZ: Ravager threat ({ravager_count}) "
+                    f"-> Hydra+Zergling spread"
+                )
+
         # 뮤탈리스크 → 히드라 + 스포어
         if mutalisk_count >= 3:
             # ★ Phase 34: "hydralisk" 오타 수정 → "hydra" (내부 키 통일)
