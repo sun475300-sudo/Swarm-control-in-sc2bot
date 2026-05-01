@@ -270,12 +270,15 @@ class EconomyManager:
             self.blackboard.get("early_scout_cheese_suspected", False)
         )
         fresh = last_report > 0 and (game_time - last_report) <= 75.0
+        # Cheese / fast-gas pressure response is only relevant in the first
+        # 4 minutes; past that the player is into mid-game and shouldn't
+        # be economy-suppressed by a stale opening signal.
         early_window = game_time <= 240.0
         cheese_active = fresh and cheese_suspected
         fast_gas = fresh and gas_time is not None and gas_time < 90.0
         # ★ FIX: natural_confirmed=False만으로 확장 차단 금지
         # 실제 치즈 의심이나 빠른 가스 같은 구체적 위협 시에만 지연
-        pressure_active = cheese_active or fast_gas
+        pressure_active = early_window and (cheese_active or fast_gas)
 
         state.update(
             {
