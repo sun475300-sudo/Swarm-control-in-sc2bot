@@ -117,5 +117,76 @@ class TestTrackBuildOrderExpansionCount(unittest.TestCase):
         self.assertEqual(entry["game_time_formatted"], "2:05")
 
 
+def _unit(tag, name, x=0.0, y=0.0):
+    u = Mock()
+    u.tag = tag
+    type_id = Mock()
+    type_id.name = name
+    u.type_id = type_id
+    pos = Mock()
+    pos.x = x
+    pos.y = y
+    u.position = pos
+    return u
+
+
+class _UnitBotStub:
+    """Stub for `_track_known_units` tests."""
+
+    def __init__(self, units):
+        self.units = units
+        self._workers_created = 0
+
+
+class TestTrackKnownUnitsWorkerCounter(unittest.TestCase):
+    def test_starting_drones_do_not_count_as_created(self):
+        # Zerg starts with 12 drones — none are "created" yet.
+        bot = _UnitBotStub([_unit(i, "DRONE") for i in range(12)])
+        WickedZergBotProImpl._track_known_units(bot)
+        self.assertEqual(bot._workers_created, 0)
+        self.assertEqual(len(bot._known_unit_tags), 12)
+
+    def test_drone_built_after_seed_counts_as_created(self):
+        bot = _UnitBotStub([_unit(i, "DRONE") for i in range(12)])
+        WickedZergBotProImpl._track_known_units(bot)  # seed
+        # Now 13 drones (one new)
+        bot.units = [_unit(i, "DRONE") for i in range(13)]
+        WickedZergBotProImpl._track_known_units(bot)
+        self.assertEqual(bot._workers_created, 1)
+
+    def test_two_new_drones_counted(self):
+        bot = _UnitBotStub([_unit(i, "DRONE") for i in range(12)])
+        WickedZergBotProImpl._track_known_units(bot)  # seed
+        bot.units = [_unit(i, "DRONE") for i in range(14)]
+        WickedZergBotProImpl._track_known_units(bot)
+        self.assertEqual(bot._workers_created, 2)
+
+    def test_destroyed_drone_pruned_from_known_tags(self):
+        bot = _UnitBotStub([_unit(i, "DRONE") for i in range(12)])
+        WickedZergBotProImpl._track_known_units(bot)
+        # Lose drone tag 5
+        bot.units = [_unit(i, "DRONE") for i in range(12) if i != 5]
+        WickedZergBotProImpl._track_known_units(bot)
+        self.assertNotIn(5, bot._known_unit_tags)
+        self.assertEqual(len(bot._known_unit_tags), 11)
+
+    def test_same_drone_seen_twice_only_seeds_once(self):
+        d1 = _unit(1, "DRONE")
+        bot = _UnitBotStub([d1])
+        WickedZergBotProImpl._track_known_units(bot)
+        WickedZergBotProImpl._track_known_units(bot)
+        self.assertEqual(bot._workers_created, 0)
+
+    def test_non_drone_units_do_not_increment_workers(self):
+        bot = _UnitBotStub([_unit(1, "DRONE")])
+        WickedZergBotProImpl._track_known_units(bot)  # seed
+        bot.units = [_unit(1, "DRONE"), _unit(2, "ZERGLING"), _unit(3, "ZERGLING")]
+        WickedZergBotProImpl._track_known_units(bot)
+        # Two new zerglings, but no drones built
+        self.assertEqual(bot._workers_created, 0)
+        self.assertIn(2, bot._known_unit_tags)
+        self.assertIn(3, bot._known_unit_tags)
+
+
 if __name__ == "__main__":
     unittest.main()
