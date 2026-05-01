@@ -73,18 +73,27 @@ jobs:
           cache: pip
 
       - name: Install dependencies
-        run: pip install -r requirements.txt pytest pytest-cov pytest-asyncio
+        run: pip install -r requirements.txt pytest pytest-cov pytest-asyncio pytest-timeout
 
-      - name: Run unit tests
-        run: pytest tests/unit -v --cov=. --cov-report=xml --cov-report=term
+      - name: Run wicked_zerg_challenger unit tests (SC2 bot core)
+        env:
+          PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION: python
+        # The pytest.ini at repo root scopes testpaths to "tests" of the
+        # wicked_zerg_challenger package; running from that directory makes
+        # it resolve correctly. Coverage is scoped to the bot package only.
+        working-directory: wicked_zerg_challenger
+        run: pytest tests -v --cov=. --cov-report=xml --cov-report=term
 
       - name: Run integration tests
+        if: ${{ hashFiles('tests/integration/test_*.py') != '' }}
+        env:
+          PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION: python
         run: pytest tests/integration -v --timeout=120
 
       - name: Upload coverage
         uses: codecov/codecov-action@v4
         with:
-          file: coverage.xml
+          file: wicked_zerg_challenger/coverage.xml
           fail_ci_if_error: false
 
   # ── Build Docker ──────────────────────────────────────────────────────────
