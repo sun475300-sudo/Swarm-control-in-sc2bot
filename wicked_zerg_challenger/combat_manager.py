@@ -2288,8 +2288,6 @@ class CombatManager:
         3. Enemy air units
         4. Ground army units
         """
-        game_time = getattr(self.bot, "time", 0)
-
         # Check if our base is under attack
         base_threatened = self._is_base_under_attack()
 
@@ -3102,13 +3100,21 @@ class CombatManager:
                 for e in nearby_enemies
                 if getattr(e.type_id, "name", "").upper() in combat_unit_names
             ]
+            nearby_non_combat = [
+                e
+                for e in nearby_enemies
+                if getattr(e.type_id, "name", "").upper() in non_combat_names
+            ]
 
             # 전투 유닛이 1기 이상이면 위협 (실제 공격 의도)
             if len(nearby_combat) >= 1:
                 return True
 
             # 비전투 유닛만 있는 경우 (정찰 등) - 3기 이상이어야 위협
-            if len(nearby_enemies) >= 3:
+            # (workers/overlords signal a scout rush, but lone scouts shouldn't
+            # trip defense alarms. Require 3+ of the explicit non-combat list
+            # rather than the total nearby count.)
+            if len(nearby_non_combat) >= 3:
                 return True
 
         return False
