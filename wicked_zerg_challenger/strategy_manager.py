@@ -1862,7 +1862,6 @@ class StrategyManager:
         Returns:
             전환 설명 문자열 (전환 없으면 None)
         """
-        game_time = getattr(self.bot, "time", 0.0)
         supply_used = getattr(self.bot, "supply_used", 0)
 
         # 강제 전환 조건 (시간보다 상황 우선)
@@ -2134,7 +2133,6 @@ class StrategyManager:
         """
         프로토스 테크 전환 감지: 게이트웨이/로보틱스/공중 전환 패턴 분석
         """
-        gateway_count = 0
         robo_count = 0
         stargate_count = 0
         templar_archives = False
