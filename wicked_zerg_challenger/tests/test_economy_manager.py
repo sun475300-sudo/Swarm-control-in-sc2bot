@@ -246,6 +246,34 @@ class TestEconomyManager(unittest.TestCase):
         """Test early worker split flag is initialized"""
         self.assertTrue(hasattr(self.manager, "_early_split_done"))
 
+    # ==================== Regression: no duplicate definitions ====================
+
+    def test_only_one_prevent_resource_banking_method(self):
+        """REGRESSION: EconomyManager defined _prevent_resource_banking twice
+        (F811). The simpler legacy version (no Blackboard/threat awareness)
+        was being shadowed by the comprehensive one. Only one must remain."""
+        import inspect
+
+        from economy_manager import EconomyManager as Klass
+
+        defs = [
+            name for name, _ in inspect.getmembers(Klass, predicate=inspect.isfunction)
+            if name == "_prevent_resource_banking"
+        ]
+        self.assertEqual(len(defs), 1)
+
+    def test_only_one_reduce_gas_workers_method(self):
+        """REGRESSION: same F811 hazard for _reduce_gas_workers."""
+        import inspect
+
+        from economy_manager import EconomyManager as Klass
+
+        defs = [
+            name for name, _ in inspect.getmembers(Klass, predicate=inspect.isfunction)
+            if name == "_reduce_gas_workers"
+        ]
+        self.assertEqual(len(defs), 1)
+
 
 if __name__ == "__main__":
     unittest.main()

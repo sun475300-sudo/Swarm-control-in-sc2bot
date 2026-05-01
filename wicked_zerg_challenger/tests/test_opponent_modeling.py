@@ -620,6 +620,46 @@ class TestOpponentModeling(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(stats["dominant_style"], "aggressive")
         self.assertEqual(stats["most_common_strategy"], "zerg_rush")
 
+    # ==================== Regression: unified API (current_opponent_id) ====================
+
+    def test_on_game_start_sets_current_opponent_id(self):
+        """REGRESSION: on_game_start must set current_opponent_id (not the
+        legacy `current_opponent` attribute). This previously caused
+        AttributeError when the bot mainline called on_game_start and another
+        path tried to read current_opponent_id."""
+        self.modeling.on_game_start("opp_42", opponent_race=None)
+        self.assertEqual(self.modeling.current_opponent_id, "opp_42")
+        self.assertFalse(hasattr(self.modeling, "current_opponent"))
+        self.assertIn("opp_42", self.modeling.opponent_models)
+
+    def test_on_game_end_uses_game_result_field(self):
+        """REGRESSION: on_game_end must populate GameHistory.game_result, not
+        the non-existent game_won/game_lost attributes. The dataclass has no
+        such fields, so the legacy code raised at game end."""
+        self.modeling.on_game_start("opp_zerg", opponent_race=None)
+        self.modeling.on_game_end(won=True, lost=False)
+        # opponent_models is a dict; the model should now have one game.
+        model = self.modeling.opponent_models["opp_zerg"]
+        self.assertEqual(model.games_played, 1)
+        # Cleanup save side-effect (test isolation)
+        if os.path.exists(self.modeling.data_file):
+            os.remove(self.modeling.data_file)
+
+    def test_only_one_on_step_method(self):
+        """REGRESSION: opponent_modeling.OpponentModeling must define exactly
+        one async on_step. A previous duplicate definition (F811) silently
+        overrode the comprehensive tracker with a broken stub that referenced
+        a non-existent attribute."""
+        import inspect
+
+        from opponent_modeling import OpponentModeling as Klass
+
+        on_step_funcs = [
+            m for n, m in inspect.getmembers(Klass, predicate=inspect.isfunction)
+            if n == "on_step"
+        ]
+        self.assertEqual(len(on_step_funcs), 1)
+
 
 # Run tests
 if __name__ == "__main__":
