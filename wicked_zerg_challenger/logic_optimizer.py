@@ -561,9 +561,14 @@ class LogicOptimizer:
         if hasattr(self.bot, "economy_manager"):
             # 가스 채취 효율 최적화
             self.bot.economy_manager.gas_worker_adjustment_interval = 22  # 더 자주 조정
-            # 매크로 해처리 타이밍 최적화
-            self.bot.economy_manager.macro_hatchery_mineral_threshold = (
-                500  # 더 공격적인 인프라 확장
+            # 매크로 해처리 타이밍 최적화: 베이스라인보다 더 공격적으로 (낮을수록 빠른 확장).
+            # Phase 16 베이스라인이 550으로 내려갔으므로 고정 500을 쓰면 갭이 좁아진다.
+            # 항상 베이스라인 대비 50만큼 더 공격적으로 유지하되, 최소 400 바닥.
+            current = getattr(
+                self.bot.economy_manager, "macro_hatchery_mineral_threshold", 600
+            )
+            self.bot.economy_manager.macro_hatchery_mineral_threshold = max(
+                400, current - 50
             )
 
     def apply_strategy_improvements(self, difficulty):
