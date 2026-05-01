@@ -435,29 +435,7 @@ class WickedZergBotProImpl(BotAI):
 
         # ★ Feature 86: Cache our unit tags for unit lost tracking ★
         if iteration % 22 == 0:
-            if not hasattr(self, "_known_unit_tags"):
-                self._known_unit_tags = {}
-            if hasattr(self, "units"):
-                # Bug fix #3: Prune tags no longer in self.units to prevent unbounded growth
-                current_tags = {unit.tag for unit in self.units}
-                stale_tags = set(self._known_unit_tags.keys()) - current_tags
-                for stale_tag in stale_tags:
-                    del self._known_unit_tags[stale_tag]
-
-                for unit in self.units:
-                    # Bug fix #1: Check BEFORE assignment so new workers are detected
-                    if (
-                        unit.type_id.name == "DRONE"
-                        and unit.tag not in self._known_unit_tags
-                    ):
-                        self._workers_created = getattr(self, "_workers_created", 0) + 1
-                    self._known_unit_tags[unit.tag] = {
-                        "type": unit.type_id.name,
-                        "position": {
-                            "x": round(unit.position.x, 1),
-                            "y": round(unit.position.y, 1),
-                        },
-                    }
+            self._track_known_units()
 
         # 전략 선택 (한 번만 실행)
         if (
@@ -1064,6 +1042,44 @@ class WickedZergBotProImpl(BotAI):
     # =========================================================================
     # Feature 85: Build Order Timing Log
     # =========================================================================
+    def _track_known_units(self) -> None:
+        """Maintain `_known_unit_tags` and `_workers_created`.
+
+        Bug fix #3 (existing): prune tags no longer in self.units to prevent
+        unbounded growth (units that were destroyed since last call).
+
+        Bug fix #4 (new): don't count starting workers as "created" — on the
+        first seeding of `_known_unit_tags`, only record tags; only NEW drones
+        seen on subsequent calls increment `_workers_created`.
+        """
+        if not hasattr(self, "_known_unit_tags"):
+            self._known_unit_tags = {}
+        if not hasattr(self, "units"):
+            return
+
+        # Prune tags no longer present (units destroyed since last sweep).
+        current_tags = {unit.tag for unit in self.units}
+        stale_tags = set(self._known_unit_tags.keys()) - current_tags
+        for stale_tag in stale_tags:
+            del self._known_unit_tags[stale_tag]
+
+        is_first_seed = not self._known_unit_tags
+
+        for unit in self.units:
+            if (
+                not is_first_seed
+                and unit.type_id.name == "DRONE"
+                and unit.tag not in self._known_unit_tags
+            ):
+                self._workers_created = getattr(self, "_workers_created", 0) + 1
+            self._known_unit_tags[unit.tag] = {
+                "type": unit.type_id.name,
+                "position": {
+                    "x": round(unit.position.x, 1),
+                    "y": round(unit.position.y, 1),
+                },
+            }
+
     def _track_build_order(self) -> None:
         """Track key building/upgrade completions with game time."""
         if not hasattr(self, "structures"):
@@ -1113,11 +1129,16 @@ class WickedZergBotProImpl(BotAI):
                         }
                     )
 
-                    # Track expansions
+                    # Track expansions — the FIRST HATCHERY we see is the
+                    # starting main base (already standing at game_time≈0); only
+                    # subsequent hatcheries count as expansions.
                     if struct_name == "HATCHERY":
-                        self._expansions_built = (
-                            getattr(self, "_expansions_built", 0) + 1
-                        )
+                        if not getattr(self, "_main_hatchery_tracked", False):
+                            self._main_hatchery_tracked = True
+                        else:
+                            self._expansions_built = (
+                                getattr(self, "_expansions_built", 0) + 1
+                            )
 
             except Exception as e:
                 self.logger.warning(
