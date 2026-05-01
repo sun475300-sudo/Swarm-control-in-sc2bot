@@ -1113,11 +1113,16 @@ class WickedZergBotProImpl(BotAI):
                         }
                     )
 
-                    # Track expansions
+                    # Track expansions — the FIRST HATCHERY we see is the
+                    # starting main base (already standing at game_time≈0); only
+                    # subsequent hatcheries count as expansions.
                     if struct_name == "HATCHERY":
-                        self._expansions_built = (
-                            getattr(self, "_expansions_built", 0) + 1
-                        )
+                        if not getattr(self, "_main_hatchery_tracked", False):
+                            self._main_hatchery_tracked = True
+                        else:
+                            self._expansions_built = (
+                                getattr(self, "_expansions_built", 0) + 1
+                            )
 
             except Exception as e:
                 self.logger.warning(
