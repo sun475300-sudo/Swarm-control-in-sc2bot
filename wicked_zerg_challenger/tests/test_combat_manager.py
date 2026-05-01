@@ -590,6 +590,23 @@ class TestCombatManager(unittest.TestCase):
         # Should count army units (implementation may vary)
         self.assertGreaterEqual(result, 0)
 
+    # ==================== Regression: no duplicate function defs ====================
+
+    def test_only_one_find_harass_target_method(self):
+        """REGRESSION: CombatManager defined _find_harass_target twice (F811);
+        the simpler legacy version was sliently overridden by the worker/tech-
+        priority version. Only one definition must remain."""
+        import inspect
+
+        from combat_manager import CombatManager as Klass
+
+        defs = [
+            name
+            for name, _ in inspect.getmembers(Klass, predicate=inspect.isfunction)
+            if name == "_find_harass_target"
+        ]
+        self.assertEqual(len(defs), 1)
+
 
 if __name__ == "__main__":
     unittest.main()
