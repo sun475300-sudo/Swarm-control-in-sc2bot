@@ -14,8 +14,6 @@ integrating separate modules for:
 import logging
 from typing import List, Set
 
-logger = logging.getLogger("MicroController")
-
 try:
     from sc2.ids.unit_typeid import UnitTypeId
     from sc2.position import Point2
@@ -31,6 +29,8 @@ from combat.stutter_step_kiting import StutterStepKiting
 from combat.targeting import select_target
 from combat.terrain_analysis import ChokePointDetector
 from combat.threat_response import SplashThreatHandler
+
+logger = logging.getLogger("MicroController")
 
 
 class BoidsController:

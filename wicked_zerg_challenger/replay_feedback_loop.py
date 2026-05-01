@@ -8,13 +8,13 @@ Reads replay summary JSON files and creates a prioritized training focus report.
 from __future__ import annotations
 
 import argparse
-import logging
-
-logger = logging.getLogger("ReplayFeedbackLoop")
 import json
+import logging
 from collections import Counter
 from pathlib import Path
 from typing import Any
+
+logger = logging.getLogger("ReplayFeedbackLoop")
 
 
 def _safe_load_json(path: Path) -> dict[str, Any] | None:
