@@ -601,7 +601,8 @@ class TestCombatManager(unittest.TestCase):
         from combat_manager import CombatManager as Klass
 
         defs = [
-            name for name, _ in inspect.getmembers(Klass, predicate=inspect.isfunction)
+            name
+            for name, _ in inspect.getmembers(Klass, predicate=inspect.isfunction)
             if name == "_find_harass_target"
         ]
         self.assertEqual(len(defs), 1)

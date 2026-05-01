@@ -655,7 +655,8 @@ class TestOpponentModeling(unittest.IsolatedAsyncioTestCase):
         from opponent_modeling import OpponentModeling as Klass
 
         on_step_funcs = [
-            m for n, m in inspect.getmembers(Klass, predicate=inspect.isfunction)
+            m
+            for n, m in inspect.getmembers(Klass, predicate=inspect.isfunction)
             if n == "on_step"
         ]
         self.assertEqual(len(on_step_funcs), 1)

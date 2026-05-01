@@ -257,7 +257,8 @@ class TestEconomyManager(unittest.TestCase):
         from economy_manager import EconomyManager as Klass
 
         defs = [
-            name for name, _ in inspect.getmembers(Klass, predicate=inspect.isfunction)
+            name
+            for name, _ in inspect.getmembers(Klass, predicate=inspect.isfunction)
             if name == "_prevent_resource_banking"
         ]
         self.assertEqual(len(defs), 1)
@@ -269,7 +270,8 @@ class TestEconomyManager(unittest.TestCase):
         from economy_manager import EconomyManager as Klass
 
         defs = [
-            name for name, _ in inspect.getmembers(Klass, predicate=inspect.isfunction)
+            name
+            for name, _ in inspect.getmembers(Klass, predicate=inspect.isfunction)
             if name == "_reduce_gas_workers"
         ]
         self.assertEqual(len(defs), 1)

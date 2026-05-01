@@ -777,8 +777,7 @@ class OpponentModeling:
             self.current_game_history.game_result = "unknown"
 
         self.current_game_history.early_signals = [
-            s.value if hasattr(s, "value") else str(s)
-            for s in self.observed_signals
+            s.value if hasattr(s, "value") else str(s) for s in self.observed_signals
         ]
 
         # Detect strategy (placeholder - would need more logic)

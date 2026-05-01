@@ -2505,7 +2505,9 @@ class ProductionResilience:
                     if b.can_afford(UnitTypeId.DRONE):
                         if await self._safe_train(larva, UnitTypeId.DRONE):
                             total_produced += 1
-                            larvae_list = [lv for lv in larvae_list if lv.tag != larva.tag]
+                            larvae_list = [
+                                lv for lv in larvae_list if lv.tag != larva.tag
+                            ]
 
         # Priority 3: Zerglings (25 minerals each, very cost-effective)
         if b.minerals > 200 and b.structures(UnitTypeId.SPAWNINGPOOL).ready.exists:
