@@ -202,7 +202,7 @@ class BackgroundParallelLearner:
                         # ★ FIX: 오래된 파일 아카이브 보존 (삭제하지 않음, 초기 학습 데이터 유지)
                         try:
                             archive_path = self.archive_dir / f"old_{file_path.name}"
-                            import shutil
+                            # shutil imported at module level
                             shutil.copy2(str(file_path), str(archive_path))
                         except Exception:
                             pass
