@@ -624,6 +624,7 @@ class StrategyManager:
             return False
 
         # 고위협 유닛 목록 (중후반 푸쉬의 핵심)
+        # ★ EXTENDED: 잠복 위닛/캐스터/이동유닛/은폐유닛 추가 (intel_manager 와 일관성)
         high_threat_units = {
             # 테란
             "SIEGETANK",
@@ -634,6 +635,9 @@ class StrategyManager:
             "LIBERATORAG",
             "CYCLONE",
             "WIDOWMINE",
+            "WIDOWMINEBURROWED",
+            "BANSHEE",
+            "GHOST",
             # 프로토스
             "COLOSSUS",
             "DISRUPTOR",
@@ -643,12 +647,20 @@ class StrategyManager:
             "TEMPEST",
             "VOIDRAY",
             "HIGHTEMPLAR",
+            "DARKTEMPLAR",
+            "ORACLE",
+            "MOTHERSHIP",
             # 저그
             "ULTRALISK",
             "BROODLORD",
             "RAVAGER",
             "LURKER",
             "LURKERMP",
+            "LURKERMPBURROWED",
+            "VIPER",
+            "INFESTOR",
+            "INFESTORBURROWED",
+            "SWARMHOSTMP",
         }
 
         total_threat_score = 0
