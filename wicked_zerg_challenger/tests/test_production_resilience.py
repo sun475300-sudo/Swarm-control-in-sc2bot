@@ -28,7 +28,15 @@ from sc2.position import Point2
 
 
 class TestProductionResilience(unittest.TestCase):
-    """Test suite for ProductionResilience"""
+    """Test suite for ProductionResilience.
+
+    NOTE: async test_* methods here are not awaited under plain
+    unittest.TestCase (they return coroutines, which Python's unittest
+    flags with DeprecationWarning since 3.11). Switching to
+    IsolatedAsyncioTestCase exposes pre-existing API drift in
+    test_get_counter_unit_*; that real fix is tracked separately. The
+    DeprecationWarning is filtered in pytest.ini for now.
+    """
 
     def setUp(self):
         """Set up test fixtures"""
@@ -260,7 +268,7 @@ if __name__ == "__main__":
                 def make_sync_wrapper(async_func):
                     def sync_wrapper(self):
                         loop = asyncio.get_event_loop()
-                        return loop.run_until_complete(async_func(self))
+                        loop.run_until_complete(async_func(self))
 
                     return sync_wrapper
 
