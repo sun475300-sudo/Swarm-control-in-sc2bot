@@ -73,10 +73,14 @@ jobs:
           cache: pip
 
       - name: Install dependencies
-        run: pip install -r requirements.txt pytest pytest-cov pytest-asyncio
+        # pytest-timeout is needed for the integration step's --timeout flag.
+        run: pip install -r requirements.txt pytest pytest-cov pytest-asyncio pytest-timeout
 
       - name: Run unit tests
-        run: pytest tests/unit -v --cov=. --cov-report=xml --cov-report=term
+        # tests/unit/ does not exist — flat layout under tests/. Exclude
+        # tests/integration so that step has its own coverage scope and the
+        # `--timeout` option (from pytest-timeout) only applies there.
+        run: pytest tests/ --ignore=tests/integration -v --cov=. --cov-report=xml --cov-report=term
 
       - name: Run integration tests
         run: pytest tests/integration -v --timeout=120
