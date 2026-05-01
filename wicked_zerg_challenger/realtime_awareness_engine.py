@@ -572,6 +572,16 @@ class RealtimeAwarenessEngine:
         if s.minerals > 1500 and s.larva_count > 3:
             self._flush_minerals()
 
+    def _train_from_larva(self, larva_unit, unit_type) -> bool:
+        """
+        Submit a single train order for the given larva.
+
+        burnysc2 7.x의 BotAI.do()는 동기 호출이며 bool을 반환한다.
+        과거 fork에서 코루틴을 반환하던 시기에 작성된 fire-and-forget
+        ensure_future 분기는 더 이상 도달하지 않는 죽은 코드였으므로 제거.
+        """
+        return self.bot.do(larva_unit.train(unit_type))
+
     def _force_produce_gas_units(self) -> None:
         """가스 유닛 강제 생산"""
         try:
@@ -582,34 +592,19 @@ class RealtimeAwarenessEngine:
             # 히드라굴 있으면 히드라
             if self.bot.structures(UnitTypeId.HYDRALISKDEN).ready.exists:
                 if self.bot.can_afford(UnitTypeId.HYDRALISK):
-                    l = larva.random
-                    result = self.bot.do(l.train(UnitTypeId.HYDRALISK))
-                    if hasattr(result, "__await__"):
-                        import asyncio
-
-                        asyncio.ensure_future(result)
+                    self._train_from_larva(larva.random, UnitTypeId.HYDRALISK)
                     return
 
             # 바퀴굴 있으면 바퀴
             if self.bot.structures(UnitTypeId.ROACHWARREN).ready.exists:
                 if self.bot.can_afford(UnitTypeId.ROACH):
-                    l = larva.random
-                    result = self.bot.do(l.train(UnitTypeId.ROACH))
-                    if hasattr(result, "__await__"):
-                        import asyncio
-
-                        asyncio.ensure_future(result)
+                    self._train_from_larva(larva.random, UnitTypeId.ROACH)
                     return
 
             # 스파이어 있으면 뮤탈
             if self.bot.structures(UnitTypeId.SPIRE).ready.exists:
                 if self.bot.can_afford(UnitTypeId.MUTALISK):
-                    l = larva.random
-                    result = self.bot.do(l.train(UnitTypeId.MUTALISK))
-                    if hasattr(result, "__await__"):
-                        import asyncio
-
-                        asyncio.ensure_future(result)
+                    self._train_from_larva(larva.random, UnitTypeId.MUTALISK)
                     return
         except Exception:
             pass
@@ -631,22 +626,14 @@ class RealtimeAwarenessEngine:
                     if self.bot.structures(
                         UnitTypeId.ROACHWARREN
                     ).ready.exists and self.bot.can_afford(UnitTypeId.ROACH):
-                        result = self.bot.do(l.train(UnitTypeId.ROACH))
-                        if hasattr(result, "__await__"):
-                            import asyncio
-
-                            asyncio.ensure_future(result)
+                        self._train_from_larva(l, UnitTypeId.ROACH)
                         continue
 
                 # 저글링
                 if self.bot.structures(
                     UnitTypeId.SPAWNINGPOOL
                 ).ready.exists and self.bot.can_afford(UnitTypeId.ZERGLING):
-                    result = self.bot.do(l.train(UnitTypeId.ZERGLING))
-                    if hasattr(result, "__await__"):
-                        import asyncio
-
-                        asyncio.ensure_future(result)
+                    self._train_from_larva(l, UnitTypeId.ZERGLING)
         except Exception:
             pass
 
@@ -655,12 +642,7 @@ class RealtimeAwarenessEngine:
         try:
             larva = self.bot.larva
             if larva.exists and self.bot.can_afford(UnitTypeId.OVERLORD):
-                l = larva.first
-                result = self.bot.do(l.train(UnitTypeId.OVERLORD))
-                if hasattr(result, "__await__"):
-                    import asyncio
-
-                    asyncio.ensure_future(result)
+                self._train_from_larva(larva.first, UnitTypeId.OVERLORD)
         except Exception:
             pass
 
@@ -675,13 +657,8 @@ class RealtimeAwarenessEngine:
             for _ in range(min(larva.amount, 8)):
                 if not larva.exists or not self.bot.can_afford(UnitTypeId.ZERGLING):
                     break
-                l = larva.first
                 if self.bot.structures(UnitTypeId.SPAWNINGPOOL).ready.exists:
-                    result = self.bot.do(l.train(UnitTypeId.ZERGLING))
-                    if hasattr(result, "__await__"):
-                        import asyncio
-
-                        asyncio.ensure_future(result)
+                    self._train_from_larva(larva.first, UnitTypeId.ZERGLING)
         except Exception:
             pass
 
