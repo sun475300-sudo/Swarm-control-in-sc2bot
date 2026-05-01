@@ -10,8 +10,7 @@ Runtime Self-Healing System - 실행 중 자동 복구
 5. 자동 복구 조치
 """
 
-import time
-from typing import Dict, List, Optional, Set
+from typing import Dict, List
 
 from utils.logger import get_logger
 
@@ -100,12 +99,6 @@ class RuntimeSelfHealing:
 
     async def _check_economy_health(self, game_time: float):
         """경제 건강 체크"""
-        # 일꾼 수 확인
-        try:
-            from sc2.ids.unit_typeid import UnitTypeId
-        except ImportError:
-            return
-
         workers = self.bot.workers
         current_worker_count = len(workers)
 

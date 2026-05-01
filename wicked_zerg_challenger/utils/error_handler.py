@@ -10,7 +10,7 @@ Error Handler - 예외 처리 유틸리티
 
 import functools
 import traceback
-from typing import Any, Callable, Optional
+from typing import Callable
 
 from utils.logger import get_logger
 
@@ -127,13 +127,10 @@ def retry_on_failure(max_retries=3, delay=0.1):
         async def async_wrapper(*args, **kwargs):
             import asyncio
 
-            last_exception = None
-
             for attempt in range(max_retries):
                 try:
                     return await func(*args, **kwargs)
                 except (AttributeError, KeyError, IndexError) as e:
-                    last_exception = e
                     if attempt < max_retries - 1:
                         logger.debug(
                             f"{func.__name__} attempt {attempt + 1} failed: {e}, retrying..."
@@ -150,13 +147,10 @@ def retry_on_failure(max_retries=3, delay=0.1):
         def sync_wrapper(*args, **kwargs):
             import time
 
-            last_exception = None
-
             for attempt in range(max_retries):
                 try:
                     return func(*args, **kwargs)
                 except (AttributeError, KeyError, IndexError) as e:
-                    last_exception = e
                     if attempt < max_retries - 1:
                         logger.debug(
                             f"{func.__name__} attempt {attempt + 1} failed: {e}, retrying..."
