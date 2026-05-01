@@ -13,12 +13,11 @@ Self-Play Trainer - 자기 대전 학습 시스템 (#102)
 
 import json
 import logging
-import os
 import random
 import shutil
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional
 
 import numpy as np
 
@@ -354,7 +353,7 @@ class SelfPlayTrainer:
                         self.opponent_pool.append(snapshot)
 
                 logger.info(
-                    f"메타데이터 로드 완료: "
+                    "메타데이터 로드 완료: "
                     f"pool_size={len(self.opponent_pool)}, elo={self.current_elo:.0f}"
                 )
         except Exception as e:

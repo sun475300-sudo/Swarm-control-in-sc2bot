@@ -229,7 +229,7 @@ class QueenTransfusionManager:
         ):  # Every 100 seconds
             stats = self.get_statistics()
             self.logger.info(
-                f"[TRANSFUSION STATS] "
+                "[TRANSFUSION STATS] "
                 f"Total: {stats['total_transfusions']}, "
                 f"HP Healed: {stats['total_hp_healed']:.0f}, "
                 f"Avg: {stats['avg_hp_per_transfusion']:.1f} HP/cast"
@@ -243,6 +243,6 @@ class QueenTransfusionManager:
                     reverse=True,
                 )[:3]
                 self.logger.info(
-                    f"[TRANSFUSION] Top healed: "
+                    "[TRANSFUSION] Top healed: "
                     + ", ".join(f"{ut.name}: {count}" for ut, count in top_healed)
                 )

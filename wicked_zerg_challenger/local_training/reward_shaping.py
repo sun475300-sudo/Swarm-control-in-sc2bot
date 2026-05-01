@@ -14,7 +14,7 @@ Reward Shaping - 보상 셰이핑 시스템 (#113)
 
 import logging
 from enum import Enum
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional
 
 import numpy as np
 
@@ -169,7 +169,6 @@ class RewardShaper:
         army = state.get("army_supply", 0)
         enemy_army = state.get("enemy_army", 0)
         minerals = state.get("minerals", 0)
-        gas = state.get("vespene", 0)
         tech = state.get("tech_level", 0.0)
         bases = state.get("bases", 1)
         threat = state.get("threat", 0.0)
