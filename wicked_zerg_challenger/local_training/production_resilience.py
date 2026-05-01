@@ -1,5 +1,4 @@
 import logging
-import random
 from typing import Any, Dict
 
 from config.unit_configs import EconomyConfig
@@ -97,17 +96,7 @@ except ImportError:
     BuildingPlacementHelper = None
 
 # Import production modules
-from local_training.production import (
-    balanced_production,
-    can_expand_safely,
-    cleanup_build_reservations,
-    emergency_zergling_production,
-    get_counter_unit,
-    log_expand_block,
-    produce_army_unit,
-    safe_train,
-    try_expand,
-)
+from local_training.production import can_expand_safely, safe_train
 
 
 class ProductionResilience:
