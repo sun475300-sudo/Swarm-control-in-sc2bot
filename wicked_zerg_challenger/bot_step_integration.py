@@ -1137,6 +1137,9 @@ class BotStepIntegrator:
                     self._logic_tracker.end_logic("RLTechAdapter", start_time)
 
             # 0.057 ★★★ Micro Focus Mode (전투 우선순위 동적 할당) ★★★
+            # MicroFocusMode.update() returns a frame interval that
+            # other systems (e.g. micro / micro_v3) can read off the bot
+            # to throttle their own on_step pacing under combat focus.
             micro_interval = 8  # 기본 간격
             if hasattr(self.bot, "micro_focus") and self.bot.micro_focus:
                 start_time = self._logic_tracker.start_logic("MicroFocusMode")
@@ -1146,6 +1149,7 @@ class BotStepIntegrator:
                     error_handler.track_step_error("MicroFocusMode", e)
                 finally:
                     self._logic_tracker.end_logic("MicroFocusMode", start_time)
+            self.bot.micro_focus_interval = micro_interval
 
             # 0.058 ★★★ Dynamic Resource Balancer (자원 불균형 조정) ★★★
             if hasattr(self.bot, "resource_balancer") and self.bot.resource_balancer:
@@ -2438,7 +2442,6 @@ class BotStepIntegrator:
             # 전략 모드 적용 (StrategyManager에게 전달)
             if result and "strategy_mode" in result:
                 new_mode = result["strategy_mode"]
-                current_mode_str = "Unknown"
 
                 # StrategyManager에 모드 적용
                 if hasattr(self.bot, "strategy_manager") and self.bot.strategy_manager:
