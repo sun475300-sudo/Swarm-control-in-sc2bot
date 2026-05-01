@@ -336,6 +336,8 @@ class EarlyScoutSystem:
         structures = getattr(self.bot, "enemy_structures", None)
         if structures:
             enemy_natural = self._get_enemy_natural_location()
+            # ★ NEW: Proxy 빌딩 감지 - 우리 베이스 근처 적 건물 = 치즈
+            our_start = getattr(self.bot, "start_location", None)
             for structure in structures:
                 type_id = getattr(structure, "type_id", None)
                 type_name = getattr(type_id, "name", str(type_id)).upper()
@@ -353,6 +355,32 @@ class EarlyScoutSystem:
                 ):
                     self.enemy_gas_timing = self.bot.time
                     logger.info(f"Enemy gas spotted at {int(self.bot.time)}s")
+
+                # ★ NEW: Proxy 건물 감지 — 적 군사 건물이 우리 시작점에서 가까우면 치즈 확정
+                if (
+                    our_start is not None
+                    and self.bot.time < 240
+                    and not self.cheese_suspected
+                    and type_name
+                    in {
+                        "BARRACKS",
+                        "GATEWAY",
+                        "PYLON",
+                        "FORGE",
+                        "ROBOTICSFACILITY",
+                        "STARGATE",
+                        "PHOTONCANNON",
+                        "BUNKER",
+                    }
+                ):
+                    try:
+                        if structure.distance_to(our_start) < 50:
+                            self.cheese_suspected = True
+                            logger.info(
+                                f"Proxy {type_name} at {int(structure.distance_to(our_start))} from main — cheese confirmed"
+                            )
+                    except (AttributeError, TypeError):
+                        pass
 
                 if (
                     enemy_natural is not None
