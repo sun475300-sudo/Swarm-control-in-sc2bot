@@ -46,6 +46,25 @@ try:
 except ImportError:
     HAS_TORCH = False
 
+    # Stub namespace so torch-dependent class definitions still parse
+    # at import time when PyTorch is missing.  These classes are guarded
+    # by `if HAS_TORCH` checks before instantiation.
+    class _NNStubModule:
+        def __init__(self, *args, **kwargs):
+            raise RuntimeError("PyTorch is required for this class")
+
+    class _NNStub:
+        Module = _NNStubModule
+        ModuleList = _NNStubModule
+
+        def __getattr__(self, _name):
+            return _NNStubModule
+
+    nn = _NNStub()
+    F = _NNStub()
+    optim = _NNStub()
+    torch = None  # type: ignore[assignment]
+
 # ===================================================================
 # NumPy fallback primitives
 # ===================================================================

@@ -13,7 +13,7 @@ import sys
 import time
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Set, Tuple, Union
+from typing import Optional
 
 from sc2 import maps  # type: ignore
 from sc2.data import Difficulty, Race  # type: ignore
@@ -100,9 +100,6 @@ def main():
     Main entry point for bot execution with training enabled.
     IMPROVED: Continuous training mode - games will run continuously without stopping.
     """
-    import random
-    import time
-
     logger.info("\n" + "=" * 70)
     logger.info("? NEURAL NETWORK TRAINING MODE (CONTINUOUS)")
     logger.info("=" * 70)
@@ -882,8 +879,6 @@ def main():
             if str(script_dir) not in sys.path:
                 sys.path.insert(0, str(script_dir))
 
-            from datetime import datetime
-
             from tools.extract_and_train_from_training import TrainingDataExtractor
 
             extractor = TrainingDataExtractor()
@@ -892,7 +887,7 @@ def main():
             logger.info("\n[STEP 1] Extracting training data...")
             training_data = extractor.extract_training_stats()
             comparisons = extractor.extract_build_order_comparisons()
-            session_stats = extractor.extract_session_stats()
+            extractor.extract_session_stats()
 
             if training_data or comparisons:
                 # Analyze data

@@ -1,5 +1,4 @@
 import logging
-import random
 from typing import Any, Dict
 
 from config.unit_configs import EconomyConfig
@@ -97,17 +96,7 @@ except ImportError:
     BuildingPlacementHelper = None
 
 # Import production modules
-from local_training.production import (
-    balanced_production,
-    can_expand_safely,
-    cleanup_build_reservations,
-    emergency_zergling_production,
-    get_counter_unit,
-    log_expand_block,
-    produce_army_unit,
-    safe_train,
-    try_expand,
-)
+from local_training.production import can_expand_safely, safe_train
 
 
 class ProductionResilience:
@@ -708,14 +697,10 @@ class ProductionResilience:
         if b.minerals > 1500:
             ignore_caps = True
 
-        # Get current unit counts
+        # Get current unit counts (zergling drives the early-defense gate;
+        # other unit-type counts are reserved for future composition logic)
         zergling_count = (
             b.units(UnitTypeId.ZERGLING).amount if hasattr(b, "units") else 0
-        )
-        roach_count = b.units(UnitTypeId.ROACH).amount if hasattr(b, "units") else 0
-        hydra_count = b.units(UnitTypeId.HYDRALISK).amount if hasattr(b, "units") else 0
-        mutalisk_count = (
-            b.units(UnitTypeId.MUTALISK).amount if hasattr(b, "units") else 0
         )
 
         # Check available tech
@@ -1175,8 +1160,6 @@ class ProductionResilience:
                     except Exception:
                         pass
                 can_afford_zergling = b.can_afford(UnitTypeId.ZERGLING)
-                can_afford_roach = b.can_afford(UnitTypeId.ROACH)
-                can_afford_hydralisk = b.can_afford(UnitTypeId.HYDRALISK)
 
                 # IMPROVED: Use DEBUG level for detailed logs during training
                 # Only print critical issues at INFO level
@@ -1374,28 +1357,9 @@ class ProductionResilience:
                         await self._safe_train(larva, UnitTypeId.ZERGLING)
 
     # Defense methods moved to DefenseCoordinator
-
-    async def build_terran_counters(self) -> None:
-        b = self.bot
-        if not b.production:
-            return
-        baneling_nests = [
-            s for s in b.units(UnitTypeId.BANELINGNEST).structure if s.is_ready
-        ]
-        if (
-            not baneling_nests
-            and b.already_pending(UnitTypeId.BANELINGNEST) == 0
-            and b.can_afford(UnitTypeId.BANELINGNEST)
-        ):
-            # CRITICAL: Check for duplicate construction before building
-            if not b.structures(UnitTypeId.BANELINGNEST).exists:
-                spawning_pools = [
-                    s for s in b.units(UnitTypeId.SPAWNINGPOOL).structure if s.is_ready
-                ]
-                if spawning_pools:
-                    await b.build(UnitTypeId.BANELINGNEST, near=spawning_pools[0])
-        # NOTE: Roach Warren building is now handled by _auto_build_tech_structures()
-        # Removed duplicate code to prevent building spam
+    # NOTE: legacy `build_terran_counters` was removed here - the
+    # TechCoordinator-aware version later in this file is the active
+    # implementation (the previous duplicate was dead code).
 
     async def _auto_build_tech_structures(self) -> None:
         """
@@ -2397,7 +2361,7 @@ class ProductionResilience:
                 if b.can_afford(UnitTypeId.OVERLORD):
                     if await self._safe_train(larva, UnitTypeId.OVERLORD):
                         overlords_produced += 1
-                        larvae_list = [l for l in larvae_list if l.tag != larva.tag]
+                        larvae_list = [lv for lv in larvae_list if lv.tag != larva.tag]
             if overlords_produced > 0:
                 logger.info(
                     f"Produced {overlords_produced} Overlords (supply: {int(b.supply_left)} -> {int(b.supply_left + overlords_produced * 8)})"
@@ -2422,7 +2386,7 @@ class ProductionResilience:
                 if b.can_afford(UnitTypeId.MUTALISK):
                     if await self._safe_train(larva, UnitTypeId.MUTALISK):
                         produced += 1
-                        larvae_list = [l for l in larvae_list if l.tag != larva.tag]
+                        larvae_list = [lv for lv in larvae_list if lv.tag != larva.tag]
             if produced > 0:
                 total_produced += produced
                 logger.info(f"Produced {produced} Mutalisks")
@@ -2439,7 +2403,7 @@ class ProductionResilience:
                 if b.can_afford(UnitTypeId.HYDRALISK):
                     if await self._safe_train(larva, UnitTypeId.HYDRALISK):
                         produced += 1
-                        larvae_list = [l for l in larvae_list if l.tag != larva.tag]
+                        larvae_list = [lv for lv in larvae_list if lv.tag != larva.tag]
             if produced > 0:
                 total_produced += produced
                 logger.info(f"Produced {produced} Hydralisks")
@@ -2456,7 +2420,7 @@ class ProductionResilience:
                 if b.can_afford(UnitTypeId.ROACH):
                     if await self._safe_train(larva, UnitTypeId.ROACH):
                         produced += 1
-                        larvae_list = [l for l in larvae_list if l.tag != larva.tag]
+                        larvae_list = [lv for lv in larvae_list if lv.tag != larva.tag]
             if produced > 0:
                 total_produced += produced
                 logger.info(f"Produced {produced} Roaches")
@@ -2489,9 +2453,6 @@ class ProductionResilience:
         if minerals <= 600:
             return
 
-        # Calculate how much to spend
-        excess = minerals - 600
-
         larvae = b.units(UnitTypeId.LARVA)
         if not larvae.exists:
             # No larvae - try to build hatchery or queens
@@ -2509,7 +2470,7 @@ class ProductionResilience:
                 if b.can_afford(UnitTypeId.OVERLORD):
                     if await self._safe_train(larva, UnitTypeId.OVERLORD):
                         total_produced += 1
-                        larvae_list = [l for l in larvae_list if l.tag != larva.tag]
+                        larvae_list = [lv for lv in larvae_list if lv.tag != larva.tag]
 
         # Priority 2: Drones if under saturation
         if b.minerals > 150:
@@ -2525,7 +2486,9 @@ class ProductionResilience:
                     if b.can_afford(UnitTypeId.DRONE):
                         if await self._safe_train(larva, UnitTypeId.DRONE):
                             total_produced += 1
-                            larvae_list = [l for l in larvae_list if l.tag != larva.tag]
+                            larvae_list = [
+                                lv for lv in larvae_list if lv.tag != larva.tag
+                            ]
 
         # Priority 3: Zerglings (25 minerals each, very cost-effective)
         if b.minerals > 200 and b.structures(UnitTypeId.SPAWNINGPOOL).ready.exists:
@@ -2536,7 +2499,7 @@ class ProductionResilience:
                 if b.can_afford(UnitTypeId.ZERGLING):
                     if await self._safe_train(larva, UnitTypeId.ZERGLING):
                         total_produced += 1
-                        larvae_list = [l for l in larvae_list if l.tag != larva.tag]
+                        larvae_list = [lv for lv in larvae_list if lv.tag != larva.tag]
 
         if total_produced > 0 and b.iteration % 100 == 0:
             logger.info(
