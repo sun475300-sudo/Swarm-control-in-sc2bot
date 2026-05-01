@@ -298,7 +298,13 @@ class TestOpponentModel(unittest.TestCase):
 
 
 class TestOpponentModeling(unittest.TestCase):
-    """Test suite for OpponentModeling system"""
+    """Test suite for OpponentModeling system.
+
+    NOTE: like TestProductionResilience, async test_* methods here return
+    un-awaited coroutines under plain unittest.TestCase. Promoting to
+    IsolatedAsyncioTestCase reveals API drift in test_full_game_flow that
+    needs a separate fix; the DeprecationWarning is filtered in pytest.ini.
+    """
 
     def setUp(self):
         """Set up test fixtures"""
