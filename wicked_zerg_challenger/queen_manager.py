@@ -520,7 +520,11 @@ class QueenManager:
                 continue
 
     def _is_base_under_attack(self) -> bool:
-        """Check if any base is under attack."""
+        """Check if any base is under attack.
+
+        ★ IMPROVED: 전투 가능 적군(can_attack=True)만 카운트 - 정찰 일꾼/오버로드는 무시.
+        이전 로직은 일꾼 정찰 1마리만 와도 퀸 인젝트를 포기해 라바 손실 발생.
+        """
         if not hasattr(self.bot, "townhalls") or not hasattr(self.bot, "enemy_units"):
             return False
 
@@ -529,15 +533,28 @@ class QueenManager:
             return False
 
         game_time = getattr(self.bot, "time", 0)
+        # 정찰/유틸리티 유닛 (위협으로 카운트하지 않음)
+        scout_only = {
+            "OBSERVER",
+            "OVERLORD",
+            "OVERSEER",
+            "CHANGELING",
+            "WARPPRISM",
+            "RAVEN",
+        }
 
         for th in self.bot.townhalls:
             # ★ Phase 36: 탐지 거리 하향 — 30/25 → 20/18 (이전: 30 타일 밖 적에 퀸 인젝트 포기)
             detection_range = 20 if game_time < 180 else 18
 
-            nearby_enemies = [
-                e for e in enemy_units if e.distance_to(th.position) < detection_range
+            nearby_threats = [
+                e
+                for e in enemy_units
+                if e.distance_to(th.position) < detection_range
+                and getattr(e, "can_attack", True)
+                and getattr(e.type_id, "name", "").upper() not in scout_only
             ]
-            if nearby_enemies:
+            if nearby_threats:
                 return True
 
         return False
