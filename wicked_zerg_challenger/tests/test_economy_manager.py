@@ -234,9 +234,7 @@ class TestEconomyManager(unittest.TestCase):
         self.assertEqual(
             self.manager.macro_hatchery_mineral_threshold, expected_threshold
         )
-        self.assertEqual(
-            self.manager.macro_hatchery_larva_threshold, expected_larva
-        )
+        self.assertEqual(self.manager.macro_hatchery_larva_threshold, expected_larva)
 
     def test_blackboard_integration(self):
         """Test blackboard integration is set up"""
