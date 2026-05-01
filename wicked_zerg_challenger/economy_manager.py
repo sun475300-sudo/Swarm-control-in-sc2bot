@@ -900,7 +900,8 @@ class EconomyManager:
                         else "normal"
                     )
                     self.logger.info(
-                        f"[ECONOMY] [{int(game_time)}s] Building MACRO HATCHERY ({reason}, gas: {gas}, larva: {total_larva})"
+                        "[ECONOMY] [%ds] Building MACRO HATCHERY (%s, gas: %s, larva: %s)"
+                        % (int(game_time), reason, gas, total_larva)
                     )
             except (AttributeError, TypeError, ValueError) as e:
                 self.logger.warning(
@@ -1622,7 +1623,8 @@ class EconomyManager:
                     force_expand = True
                     reason = f"{time_req}s Force Expand (Target: {target_bases} bases)"
                     # Keep checking later triggers? No, finding one valid trigger is enough logic-wise?
-                    # The original code prioritized later (stricter) conditions, so we iterate all and keep the last one or just break?
+                    # Original code prioritized later (stricter) conditions:
+                    # iterate all and keep the last match, or break early.
                     # Actually, if any trigger matches, we force expand. The specific reason might matter for logging.
                     # We can pick the most urgent one. Since the list is sorted by time, later ones are more advanced.
                     # Let's use the matching one.
@@ -1901,7 +1903,8 @@ class EconomyManager:
                 if nearby_enemies.amount >= 15:
                     if int(game_time) % 30 == 0:  # 30초마다만 로그
                         self.logger.info(
-                            f"[EXPANSION] [{int(game_time)}s] [*] SEVERE THREAT: {nearby_enemies.amount} enemies - expansion blocked [*]"
+                            "[EXPANSION] [%ds] [*] SEVERE THREAT: %d enemies - expansion blocked [*]"
+                            % (int(game_time), nearby_enemies.amount)
                         )
                     return  # 심각한 위협: 확장 중단
 
@@ -2190,7 +2193,8 @@ class EconomyManager:
             # 1.5분 지났는데 앞마당 없으면 즉시 확장 (미네랄 350+ - 공격적 확장)
             if townhalls.amount < 2 and game_time > 90 and minerals >= 350:
                 self.logger.error(
-                    f"[ECONOMY] [*] CRITICAL EXPANSION: Forcing natural expansion @ {int(game_time)}s (minerals: {minerals}) [*]"
+                    "[ECONOMY] [*] CRITICAL EXPANSION: Forcing natural expansion @ %ds (minerals: %s) [*]"
+                    % (int(game_time), minerals)
                 )
                 if hasattr(self.bot, "expand_now"):
                     try:
@@ -2877,7 +2881,8 @@ class EconomyManager:
 
                     await self.bot.build(UnitTypeId.HATCHERY, exp_pos)
                     self.logger.info(
-                        f"[ECONOMY RECOVERY] [{int(game_time)}s] [*] Expanding for growth ({gold_marker}, bases: {base_count}) [*]"
+                        "[ECONOMY RECOVERY] [%ds] [*] Expanding for growth (%s, bases: %d) [*]"
+                        % (int(game_time), gold_marker, base_count)
                     )
         except (AttributeError, TypeError, ValueError) as e:
             self.logger.warning(f"[ECONOMY_WARN] Expansion for growth failed: {e}")
@@ -3331,7 +3336,8 @@ class EconomyManager:
 
         if moved > 0:
             self.logger.info(
-                f"[ECONOMY] Reduced {moved} gas workers (Gas: {gas}, Min: {self.bot.minerals}, min_per_ext: {min_workers})"
+                "[ECONOMY] Reduced %d gas workers (Gas: %s, Min: %s, min_per_ext: %s)"
+                % (moved, gas, self.bot.minerals, min_workers)
             )
 
     async def _prevent_gas_overflow(self):

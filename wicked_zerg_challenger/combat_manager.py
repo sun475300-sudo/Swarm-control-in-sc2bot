@@ -218,7 +218,8 @@ class CombatManager:
 
                 # CRITICAL FIX: Do NOT return here!
                 # We want to use MicroController for micro, but CombatManager for macro/strategy (assignments)
-                # The logic below will assign units to tasks, and then _execute_combat will use MicroController if available.
+                # The logic below assigns units to tasks; _execute_combat
+                # then dispatches via MicroController when available.
                 # return
 
             # 아군 유닛과 적 유닛 확인
@@ -501,7 +502,8 @@ class CombatManager:
                         tasks_to_execute.append(("major_timing_attack", enemy_base, 75))
                         if iteration % 50 == 0:
                             self.logger.info(
-                                f"[{int(game_time)}s] [*][*][*] MAJOR TIMING ATTACK: {army_supply} supply army! [*][*][*]"
+                                "[%ds] [*][*][*] MAJOR TIMING ATTACK: %d supply army! [*][*][*]"
+                                % (int(game_time), army_supply)
                             )
             except ImportError:
                 pass
@@ -777,7 +779,8 @@ class CombatManager:
                             self._harass_worker_kills += kills
                             if iteration % 50 == 0:
                                 self.logger.info(
-                                    f"[EARLY HARASS] Worker kills tracked: +{kills} (total: {self._harass_worker_kills})"
+                                    "[EARLY HARASS] Worker kills tracked: +%d (total: %d)"
+                                    % (kills, self._harass_worker_kills)
                                 )
                         self._harass_last_enemy_workers = current_enemy_workers
 
@@ -1099,7 +1102,13 @@ class CombatManager:
             else:
                 threat_level = "light"
             self.logger.info(
-                f"[{int(game_time)}s] Base threat: {highest_threat_count} enemies ({threat_level}, score={highest_threat_score})"
+                "[%ds] Base threat: %d enemies (%s, score=%s)"
+                % (
+                    int(game_time),
+                    highest_threat_count,
+                    threat_level,
+                    highest_threat_score,
+                )
             )
 
         return highest_threat
@@ -1665,7 +1674,11 @@ class CombatManager:
 
             if iteration % 100 == 0:
                 self.logger.info(
-                    f"[{int(game_time)}s] OFFENSIVE ATTACK: {len(army_units)} units, {army_supply} supply, {len(attack_targets)} targets"
+                    "[%ds] OFFENSIVE ATTACK: %d units, %d supply, %d targets",
+                    int(game_time),
+                    len(army_units),
+                    army_supply,
+                    len(attack_targets),
                 )
 
             # ★ Phase 20: 멀티프롱 공격 — 80서플+ 시 저글링 견제팀 분리 ★
@@ -2045,7 +2058,8 @@ class CombatManager:
 
             if self.bot.iteration % 100 == 0:
                 self.logger.info(
-                    f"[SEARCH] [{int(game_time)}s] Searching map location {self._search_index + 1}/{len(search_locations)}"
+                    "[SEARCH] [%ds] Searching map location %d/%d"
+                    % (int(game_time), self._search_index + 1, len(search_locations))
                 )
 
         return search_locations[self._search_index]
@@ -2603,7 +2617,10 @@ class CombatManager:
                     continue
             if iteration % 50 == 0:
                 self.logger.info(
-                    f"[EARLY HARASS] [{int(game_time)}s] {len(fight_units)} Zerglings harassing workers (kills: {self._harass_worker_kills})"
+                    "[EARLY HARASS] [%ds] %d Zerglings harassing workers (kills: %d)",
+                    int(game_time),
+                    len(fight_units),
+                    self._harass_worker_kills,
                 )
         else:
             # 일꾼이 없으면 적 기지로 이동 (attack-move)
@@ -3532,7 +3549,12 @@ class CombatManager:
 
                 if iteration % 220 == 0:
                     self.logger.warning(
-                        f"[LAST STAND] [{int(game_time)}s] {len(army_units)} units - FOCUS FIRE on {getattr(main_target.type_id, 'name', 'enemy')}"
+                        "[LAST STAND] [%ds] %d units - FOCUS FIRE on %s"
+                        % (
+                            int(game_time),
+                            len(army_units),
+                            getattr(main_target.type_id, "name", "enemy"),
+                        )
                     )
                 return
 
@@ -3879,7 +3901,8 @@ class CombatManager:
 
                 # 로그 출력
                 self.logger.warning(
-                    f"[EXPANSION DESTROYED] [{int(current_time)}s] [WARNING] Expansion base destroyed after {int(current_time - attack_start_time)}s of attack!"
+                    "[EXPANSION DESTROYED] [%ds] [WARNING] Expansion base destroyed after %ds of attack!"
+                    % (int(current_time), int(current_time - attack_start_time))
                 )
 
                 # 파괴된 기지 정보 제거
@@ -3912,7 +3935,8 @@ class CombatManager:
                     # 처음 공격받음
                     self._expansion_under_attack[expansion_tag] = current_time
                     self.logger.warning(
-                        f"[EXPANSION DEFENSE] [{int(current_time)}s] [WARNING] Expansion under attack! {len(nearby_enemies)} enemies detected"
+                        "[EXPANSION DEFENSE] [%ds] [WARNING] Expansion under attack! %d enemies detected"
+                        % (int(current_time), len(nearby_enemies))
                     )
 
                 # ★ 대응: 방어 병력 파견
@@ -3925,7 +3949,8 @@ class CombatManager:
                         current_time - self._expansion_under_attack[expansion_tag]
                     )
                     self.logger.info(
-                        f"[EXPANSION DEFENSE] [{int(current_time)}s] [OK] Expansion secured after {int(attack_duration)}s"
+                        "[EXPANSION DEFENSE] [%ds] [OK] Expansion secured after %ds"
+                        % (int(current_time), int(attack_duration))
                     )
                     del self._expansion_under_attack[expansion_tag]
 
@@ -4020,7 +4045,12 @@ class CombatManager:
         if iteration % 220 == 0:
             current_time = getattr(self.bot, "time", 0)
             self.logger.info(
-                f"[EXPANSION DEFENSE] [{int(current_time)}s] {len(defense_force)} units defending expansion (enemies: {len(nearby_enemies)})"
+                "[EXPANSION DEFENSE] [%ds] %d units defending expansion (enemies: %d)"
+                % (
+                    int(current_time),
+                    len(defense_force),
+                    len(nearby_enemies),
+                )
             )
 
     async def _counterattack_after_base_loss(self, destroyed_base_tags, iteration: int):
@@ -4067,7 +4097,8 @@ class CombatManager:
                     continue
 
             self.logger.info(
-                f"[COUNTERATTACK] [{int(current_time)}s] {len(counterattack_force)} units attacking enemy structure for revenge!"
+                "[COUNTERATTACK] [%ds] %d units attacking enemy structure for revenge!"
+                % (int(current_time), len(counterattack_force))
             )
         else:
             # 적 시작 위치로 공격
