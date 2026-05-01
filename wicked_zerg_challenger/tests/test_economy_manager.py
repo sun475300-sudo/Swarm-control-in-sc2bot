@@ -222,10 +222,18 @@ class TestEconomyManager(unittest.TestCase):
     # ==================== Configuration Tests ====================
 
     def test_config_none_defaults(self):
-        """Test default values when config is None"""
-        # Manager initialized with config=None in setUp
-        self.assertEqual(self.manager.macro_hatchery_mineral_threshold, 600)
-        self.assertEqual(self.manager.macro_hatchery_larva_threshold, 3)
+        """Test default fallback values when game_config import fails."""
+        # Force the fallback branch by simulating ImportError on game_config.
+        with patch.dict(sys.modules, {"game_config": None}):
+            fallback_manager = EconomyManager(self.bot)
+        self.assertIsNone(fallback_manager.config)
+        self.assertEqual(fallback_manager.macro_hatchery_mineral_threshold, 600)
+        self.assertEqual(fallback_manager.macro_hatchery_larva_threshold, 3)
+
+    def test_config_loaded_uses_phase16_threshold(self):
+        """When game_config is available, Phase 16 lowered the threshold to 550."""
+        # setUp creates self.manager with a real config import succeeding.
+        self.assertEqual(self.manager.macro_hatchery_mineral_threshold, 550)
 
     def test_blackboard_integration(self):
         """Test blackboard integration is set up"""

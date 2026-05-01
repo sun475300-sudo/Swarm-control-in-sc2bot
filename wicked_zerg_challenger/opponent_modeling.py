@@ -606,7 +606,7 @@ class OpponentModeling:
         self.save_models()
 
         self.logger.info(
-            f"[GAME_END] Opponent model updated:\n"
+            "[GAME_END] Opponent model updated:\n"
             f"  Opponent: {self.current_opponent_id}\n"
             f"  Style: {self.current_game_history.opponent_style}\n"
             f"  Strategy: {self.current_game_history.detected_strategy}\n"
@@ -763,7 +763,7 @@ class OpponentModeling:
                 f"[OPPONENT_MODELING] Known opponent: {opponent_id} ({self.opponent_models[opponent_id].games_played} games)"
             )
 
-    async def on_step(self, iteration: int):
+    async def on_step(self, iteration: int):  # noqa: F811
         """매 프레임 호출 - 신호 감지"""
         if not self.current_opponent or not self.bot:
             return

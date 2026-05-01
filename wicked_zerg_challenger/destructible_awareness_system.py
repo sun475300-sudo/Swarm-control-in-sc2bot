@@ -329,7 +329,7 @@ class DestructibleAwarenessSystem:
             )
 
             self.logger.info(
-                f"[DESTRUCTIBLE_STATUS] "
+                "[DESTRUCTIBLE_STATUS] "
                 f"Active: {active_count}, High Priority: {high_priority}, "
                 f"Destroyed: {self.total_destroyed}/{self.total_discovered}"
             )

@@ -136,7 +136,7 @@ class BaseDestructionCoordinator:
                         self.total_bases_discovered += 1
                         self.logger.info(
                             f"[{int(game_time)}s] REMEMBERED ENEMY BASE from Map Memory at {base_pos} "
-                            f"(Not visible, but recorded)"
+                            "(Not visible, but recorded)"
                         )
 
             except Exception as e:
@@ -187,7 +187,7 @@ class BaseDestructionCoordinator:
             nearby_army = [
                 u
                 for u in self.bot.enemy_units
-                if u.distance_to(base.position) < 20 and not u.type_id in worker_types
+                if u.distance_to(base.position) < 20 and u.type_id not in worker_types
             ]
 
             base.defense_strength = len(nearby_defense) * 10 + len(nearby_army)
@@ -236,7 +236,7 @@ class BaseDestructionCoordinator:
                 if elapsed > self.attack_timeout:
                     self.logger.warning(
                         f"[{int(game_time)}s] Attack timeout on base at {current_base.position}. "
-                        f"Switching target..."
+                        "Switching target..."
                     )
                     self.current_target_base = None
                 else:

@@ -664,7 +664,7 @@ class CombatManager:
             if locked_units and iteration % 220 == 0:  # Log every 10 seconds
                 self.logger.info(
                     f"[CombatManager] {len(locked_units)} units locked in harassment missions "
-                    f"(excluded from combat reassignment)"
+                    "(excluded from combat reassignment)"
                 )
 
         # Assign units to tasks (exclude locked units)
@@ -2380,35 +2380,11 @@ class CombatManager:
             if self._has_units(enemy_units):
                 await self._mutalisk_attack(mutalisks, enemy_units)
 
-    def _find_harass_target(self):
-        """Find best harassment target (enemy base with workers)."""
-        # Try enemy main base
-        if (
-            hasattr(self.bot, "enemy_start_locations")
-            and self.bot.enemy_start_locations
-        ):
-            return self.bot.enemy_start_locations[0]
+    # NOTE: The older simple `_find_harass_target` previously defined here was
+    # shadowed by the richer implementation later in the class (workers ->
+    # tech buildings -> enemy main). Removed to silence F811 and avoid
+    # confusion; the active definition lives near the end of the class.
 
-        # Try known enemy structures
-        enemy_structures = getattr(self.bot, "enemy_structures", [])
-        if enemy_structures:
-            # Find townhalls
-            townhall_names = [
-                "NEXUS",
-                "COMMANDCENTER",
-                "ORBITALCOMMAND",
-                "PLANETARYFORTRESS",
-                "HATCHERY",
-                "LAIR",
-                "HIVE",
-            ]
-            for struct in enemy_structures:
-                if getattr(struct.type_id, "name", "") in townhall_names:
-                    return struct.position
-            # Any structure as fallback
-            return enemy_structures[0].position
-
-        return None
 
     async def _execute_harass(self, mutalisks, enemy_units):
         """
@@ -3783,7 +3759,7 @@ class CombatManager:
             current_structure_count > 10 or our_army_supply < 20
         ):
             self._victory_push_active = False
-            self.logger.info(f"[VICTORY PUSH] Deactivated - regroup needed")
+            self.logger.info("[VICTORY PUSH] Deactivated - regroup needed")
 
         # 승리 푸시 모드일 때 공격 강도 증가
         if self._victory_push_active:
