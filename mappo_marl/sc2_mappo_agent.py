@@ -44,6 +44,24 @@ try:
 except ImportError:
     HAS_TORCH = False
 
+    # Stub namespaces so torch-dependent class definitions still parse.
+    # Guarded by `if HAS_TORCH` checks before instantiation.
+    class _NNStubModule:
+        def __init__(self, *args, **kwargs):
+            raise RuntimeError("PyTorch is required for this class")
+
+    class _NNStub:
+        Module = _NNStubModule
+        ModuleList = _NNStubModule
+
+        def __getattr__(self, _name):
+            return _NNStubModule
+
+    nn = _NNStub()
+    optim = _NNStub()
+    Categorical = _NNStubModule
+    torch = None  # type: ignore[assignment]
+
 # ===================================================================
 # NumPy fallback helpers
 # ===================================================================

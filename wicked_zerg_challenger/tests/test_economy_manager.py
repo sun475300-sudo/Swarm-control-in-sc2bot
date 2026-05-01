@@ -222,10 +222,21 @@ class TestEconomyManager(unittest.TestCase):
     # ==================== Configuration Tests ====================
 
     def test_config_none_defaults(self):
-        """Test default values when config is None"""
-        # Manager initialized with config=None in setUp
-        self.assertEqual(self.manager.macro_hatchery_mineral_threshold, 600)
-        self.assertEqual(self.manager.macro_hatchery_larva_threshold, 3)
+        """Test default macro hatchery thresholds.
+
+        When game_config import succeeds, the optimized threshold (550)
+        from Phase 16 is used; otherwise the legacy fallback (600) applies.
+        """
+        expected_threshold = 550 if self.manager.config else 600
+        expected_larva = (
+            self.manager.config.LARVA_CRITICAL if self.manager.config else 3
+        )
+        self.assertEqual(
+            self.manager.macro_hatchery_mineral_threshold, expected_threshold
+        )
+        self.assertEqual(
+            self.manager.macro_hatchery_larva_threshold, expected_larva
+        )
 
     def test_blackboard_integration(self):
         """Test blackboard integration is set up"""
