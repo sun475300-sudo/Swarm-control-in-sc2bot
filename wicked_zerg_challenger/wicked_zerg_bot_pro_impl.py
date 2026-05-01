@@ -20,7 +20,6 @@ except ImportError:
         pass
 
 
-import glob as glob_mod
 import json
 import os
 import shutil
@@ -257,8 +256,6 @@ class WickedZergBotProImpl(BotAI):
         self.rl_agent = None
         if self.train_mode:
             try:
-                import os as _os
-
                 from local_training.rl_agent import RLAgent
 
                 initial_lr = self.learning_rate if self.learning_rate else 0.001
@@ -269,7 +266,7 @@ class WickedZergBotProImpl(BotAI):
                     / "rl_agent_model.npz"
                 )
                 self.rl_agent = RLAgent(learning_rate=initial_lr, model_path=model_path)
-                if _os.path.exists(model_path):
+                if os.path.exists(model_path):
                     self.logger.info(
                         f"[RL_AGENT] Loaded existing model from {model_path}"
                     )
