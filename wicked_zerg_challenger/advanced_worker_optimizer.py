@@ -10,9 +10,8 @@ Advanced Worker Optimizer - 고급 일꾼 최적화 시스템
 5. 동적 자원 밸런싱
 """
 
-from collections import defaultdict
 from dataclasses import dataclass
-from typing import Dict, List, Optional, Set, Tuple
+from typing import Dict, List, Optional, Set
 
 try:
     from sc2.ids.unit_typeid import UnitTypeId

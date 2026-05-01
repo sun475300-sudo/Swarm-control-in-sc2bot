@@ -8,7 +8,7 @@ Creep Highway Manager - 기지 간 연결 우선 점막 확장
 - 빠른 증원 및 재배치
 """
 
-from typing import Dict, List, Optional, Set, Tuple
+from typing import Dict, List, Set, Tuple
 
 from utils.logger import get_logger
 

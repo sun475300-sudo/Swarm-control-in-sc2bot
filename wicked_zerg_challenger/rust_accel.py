@@ -3,7 +3,7 @@
 
 from __future__ import annotations
 
-from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple
+from typing import Dict, Iterable, List, Optional, Sequence, Tuple
 
 try:
     from swarm_rust_accel import batch_nearest_points as _batch_nearest_points_rust

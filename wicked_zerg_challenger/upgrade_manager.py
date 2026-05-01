@@ -11,7 +11,7 @@ Evolution Chamber upgrade manager.
 Chooses upgrades based on unit composition and opponent race.
 """
 
-from typing import Dict, List, Optional, Set
+from typing import Dict, List, Optional
 
 try:
     from sc2.ids.unit_typeid import UnitTypeId
@@ -269,34 +269,47 @@ class EvolutionUpgradeManager:
         # ★★★ Phase 18: 종족별 우선순위 조정 ★★★
         race_modifiers = self.race_priority_modifiers.get(enemy_race, {})
 
+        # Race-specific tiebreak: when our composition gives us two candidate
+        # lanes (attack vs armor), pick the one race_modifiers prefers first.
+        # Fixes the case where race_modifiers was looked up but never applied.
+        if is_ranged_main:
+            attack_lane = "missile"
+        else:
+            attack_lane = "melee"
+        armor_lane = "armor"
+        if race_modifiers.get(armor_lane, 1.0) > race_modifiers.get(attack_lane, 1.0):
+            primary, secondary = armor_lane, attack_lane
+        else:
+            primary, secondary = attack_lane, armor_lane
+
         if is_ranged_main:
             # ★ 바퀴/히드라 체제: 원거리 공격 올인 (사용자 요청)
             # 원거리 공1 -> 공2 -> 공3 -> 방어1...
             # 테크가 막혀있으면(예: 레어 없음) 방어 업그레이드로 넘어감
             # ★★★ NEW: 바퀴 사용 시 지상 갑피 2단계까지 우선 연구 ★★★
             if roach_count >= 8:  # 바퀴 8기 이상
-                # 원거리 공1 -> 방어1 -> 방어2 -> 원거리 공2
+                # primary 1 -> secondary 1 -> secondary 2 -> primary 2 ...
                 priorities = [
-                    "missile",
-                    "armor",
-                    "armor",
-                    "missile",
-                    "missile",
-                    "armor",
+                    primary,
+                    secondary,
+                    secondary,
+                    primary,
+                    primary,
+                    secondary,
                 ]
             else:
                 priorities = [
-                    "missile",
-                    "missile",
-                    "missile",
-                    "armor",
-                    "armor",
-                    "armor",
+                    primary,
+                    primary,
+                    primary,
+                    secondary,
+                    secondary,
+                    secondary,
                 ]
         else:
             # ★ 저글링/맹독충 체제: 근접 공격 + 방어 균형
-            # 근접1 -> 방어1 -> 근접2 -> 방어2...
-            priorities = ["melee", "armor", "melee", "armor", "melee", "armor"]
+            # primary 1 -> secondary 1 -> primary 2 -> secondary 2 ...
+            priorities = [primary, secondary, primary, secondary, primary, secondary]
 
         # ★★★ 공중 유닛이 있으면 공중 업그레이드 추가 ★★★
         corruptor_count = composition.get("corruptor", 0)
