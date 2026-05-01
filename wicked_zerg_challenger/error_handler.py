@@ -161,9 +161,7 @@ class ErrorHandler:
             logger.error(f"{key} failed: {exc}")
             logger.debug(traceback.format_exc())
             if count == self.max_error_logs:
-                logger.error(
-                    f"{key}: Suppressing further error logs for this key"
-                )
+                logger.error(f"{key}: Suppressing further error logs for this key")
 
     def get_error_summary(self) -> dict:
         """에러 통계 반환"""

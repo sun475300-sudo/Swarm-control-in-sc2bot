@@ -898,17 +898,7 @@ class BotStepIntegrator:
                         report = self.bot.creep_denial.get_creep_denial_report()
                         self.logger.info(report)
                 except Exception as e:
-                    if error_handler.debug_mode:
-                        raise
-                    else:
-                        error_handler.error_counts["CreepDenial"] = (
-                            error_handler.error_counts.get("CreepDenial", 0) + 1
-                        )
-                        if (
-                            error_handler.error_counts["CreepDenial"]
-                            <= error_handler.max_error_logs
-                        ):
-                            self.logger.error(f"[ERROR] CreepDenial error: {e}")
+                    error_handler.track_step_error("CreepDenial", e)
                 finally:
                     self._logic_tracker.end_logic("CreepDenial", start_time)
 
@@ -1056,17 +1046,7 @@ class BotStepIntegrator:
                                     )
 
                         except Exception as e:
-                            if error_handler.debug_mode:
-                                raise
-                            else:
-                                error_handler.error_counts["BuildOrderInit"] += 1
-                                if (
-                                    error_handler.error_counts["BuildOrderInit"]
-                                    <= error_handler.max_error_logs
-                                ):
-                                    self.logger.error(
-                                        f"[ERROR] Build Order initialization error: {e}"
-                                    )
+                            error_handler.track_step_error("BuildOrderInit", e)
                             self.bot.build_order_system = None
                     else:
                         # BuildOrderSystem not available
@@ -1084,15 +1064,7 @@ class BotStepIntegrator:
                             progress = self.bot.build_order_system.get_progress()
                             self.logger.info(f"[BUILD_ORDER] {progress}")
                     except Exception as e:
-                        if error_handler.debug_mode:
-                            raise
-                        else:
-                            error_handler.error_counts["BuildOrder"] += 1
-                            if (
-                                error_handler.error_counts["BuildOrder"]
-                                <= error_handler.max_error_logs
-                            ):
-                                self.logger.error(f"[ERROR] Build Order error: {e}")
+                        error_handler.track_step_error("BuildOrder", e)
                     finally:
                         self._logic_tracker.end_logic("BuildOrder", start_time)
 
@@ -1116,15 +1088,7 @@ class BotStepIntegrator:
                             f"[DEFENSE] Threat: {threat}, Status: {status}"
                         )
                 except Exception as e:
-                    if error_handler.debug_mode:
-                        raise
-                    else:
-                        error_handler.error_counts["DefenseCoordinator"] += 1
-                        if (
-                            error_handler.error_counts["DefenseCoordinator"]
-                            <= error_handler.max_error_logs
-                        ):
-                            self.logger.error(f"[ERROR] DefenseCoordinator error: {e}")
+                    error_handler.track_step_error("DefenseCoordinator", e)
                 finally:
                     self._logic_tracker.end_logic("DefenseCoordinator", start_time)
 
@@ -1138,17 +1102,7 @@ class BotStepIntegrator:
                 try:
                     await self.bot.early_defense.on_step(iteration)
                 except Exception as e:
-                    if error_handler.debug_mode:
-                        raise
-                    else:
-                        error_handler.error_counts["EarlyDefense"] = (
-                            error_handler.error_counts.get("EarlyDefense", 0) + 1
-                        )
-                        if (
-                            error_handler.error_counts["EarlyDefense"]
-                            <= error_handler.max_error_logs
-                        ):
-                            self.logger.error(f"[ERROR] EarlyDefense error: {e}")
+                    error_handler.track_step_error("EarlyDefense", e)
                 finally:
                     self._logic_tracker.end_logic("EarlyDefense", start_time)
 
@@ -1158,17 +1112,7 @@ class BotStepIntegrator:
                 try:
                     await self.bot.worker_combat.on_step()
                 except Exception as e:
-                    if error_handler.debug_mode:
-                        raise
-                    else:
-                        error_handler.error_counts["WorkerCombat"] = (
-                            error_handler.error_counts.get("WorkerCombat", 0) + 1
-                        )
-                        if (
-                            error_handler.error_counts["WorkerCombat"]
-                            <= error_handler.max_error_logs
-                        ):
-                            self.logger.error(f"[ERROR] WorkerCombat error: {e}")
+                    error_handler.track_step_error("WorkerCombat", e)
                 finally:
                     self._logic_tracker.end_logic("WorkerCombat", start_time)
 
@@ -1178,17 +1122,7 @@ class BotStepIntegrator:
                 try:
                     await self.bot.upgrade_priority.on_step()
                 except Exception as e:
-                    if error_handler.debug_mode:
-                        raise
-                    else:
-                        error_handler.error_counts["UpgradePriority"] = (
-                            error_handler.error_counts.get("UpgradePriority", 0) + 1
-                        )
-                        if (
-                            error_handler.error_counts["UpgradePriority"]
-                            <= error_handler.max_error_logs
-                        ):
-                            self.logger.error(f"[ERROR] UpgradePriority error: {e}")
+                    error_handler.track_step_error("UpgradePriority", e)
                 finally:
                     self._logic_tracker.end_logic("UpgradePriority", start_time)
 
@@ -1198,15 +1132,7 @@ class BotStepIntegrator:
                 try:
                     await self.bot.rl_tech_adapter.on_step(iteration)
                 except Exception as e:
-                    if error_handler.debug_mode:
-                        raise
-                    else:
-                        error_handler.error_counts["RLTechAdapter"] += 1
-                        if (
-                            error_handler.error_counts["RLTechAdapter"]
-                            <= error_handler.max_error_logs
-                        ):
-                            self.logger.error(f"[ERROR] RLTechAdapter error: {e}")
+                    error_handler.track_step_error("RLTechAdapter", e)
                 finally:
                     self._logic_tracker.end_logic("RLTechAdapter", start_time)
 
@@ -1217,15 +1143,7 @@ class BotStepIntegrator:
                 try:
                     micro_interval = self.bot.micro_focus.update(iteration)
                 except Exception as e:
-                    if error_handler.debug_mode:
-                        raise
-                    else:
-                        error_handler.error_counts["MicroFocusMode"] += 1
-                        if (
-                            error_handler.error_counts["MicroFocusMode"]
-                            <= error_handler.max_error_logs
-                        ):
-                            self.logger.error(f"[ERROR] MicroFocusMode error: {e}")
+                    error_handler.track_step_error("MicroFocusMode", e)
                 finally:
                     self._logic_tracker.end_logic("MicroFocusMode", start_time)
 
@@ -1251,15 +1169,7 @@ class BotStepIntegrator:
                             self.bot.current_gas_ratio
                         )
                 except Exception as e:
-                    if error_handler.debug_mode:
-                        raise
-                    else:
-                        error_handler.error_counts["ResourceBalancer"] += 1
-                        if (
-                            error_handler.error_counts["ResourceBalancer"]
-                            <= error_handler.max_error_logs
-                        ):
-                            self.logger.error(f"[ERROR] ResourceBalancer error: {e}")
+                    error_handler.track_step_error("ResourceBalancer", e)
                 finally:
                     self._logic_tracker.end_logic("ResourceBalancer", start_time)
 
@@ -1269,15 +1179,7 @@ class BotStepIntegrator:
                 try:
                     await self.bot.smart_balancer.on_step(iteration)
                 except Exception as e:
-                    if error_handler.debug_mode:
-                        raise
-                    else:
-                        error_handler.error_counts["SmartBalancer"] += 1
-                        if (
-                            error_handler.error_counts["SmartBalancer"]
-                            <= error_handler.max_error_logs
-                        ):
-                            self.logger.error(f"[ERROR] SmartBalancer error: {e}")
+                    error_handler.track_step_error("SmartBalancer", e)
                 finally:
                     self._logic_tracker.end_logic("SmartBalancer", start_time)
 
@@ -1365,8 +1267,7 @@ class BotStepIntegrator:
                     elif iteration % 110 == 0:
                         astar_hw.update_progress()
                 except Exception as e:
-                    if error_handler.debug_mode:
-                        raise
+                    error_handler.track_step_error("CreepHighwayAStar", e)
 
             # 0.061 ★★★ Creep Highway Manager (기지 간 연결) ★★★
             if hasattr(self.bot, "creep_highway") and self.bot.creep_highway:
@@ -1374,15 +1275,7 @@ class BotStepIntegrator:
                 try:
                     await self.bot.creep_highway.on_step(iteration)
                 except Exception as e:
-                    if error_handler.debug_mode:
-                        raise
-                    else:
-                        error_handler.error_counts["CreepHighway"] += 1
-                        if (
-                            error_handler.error_counts["CreepHighway"]
-                            <= error_handler.max_error_logs
-                        ):
-                            self.logger.error(f"[ERROR] CreepHighway error: {e}")
+                    error_handler.track_step_error("CreepHighway", e)
                 finally:
                     self._logic_tracker.end_logic("CreepHighway", start_time)
 
@@ -1392,17 +1285,7 @@ class BotStepIntegrator:
                 try:
                     await self.bot.flanking_coord.on_step(iteration)
                 except Exception as e:
-                    if error_handler.debug_mode:
-                        raise
-                    else:
-                        error_handler.error_counts["FlankingCoord"] = (
-                            error_handler.error_counts.get("FlankingCoord", 0) + 1
-                        )
-                        if (
-                            error_handler.error_counts["FlankingCoord"]
-                            <= error_handler.max_error_logs
-                        ):
-                            self.logger.error(f"[ERROR] FlankingCoord error: {e}")
+                    error_handler.track_step_error("FlankingCoord", e)
                 finally:
                     self._logic_tracker.end_logic("FlankingCoord", start_time)
 
@@ -1412,15 +1295,7 @@ class BotStepIntegrator:
                 try:
                     await self.bot.spellcaster.on_step(iteration)
                 except Exception as e:
-                    if error_handler.debug_mode:
-                        raise
-                    else:
-                        error_handler.error_counts["SpellCaster"] += 1
-                        if (
-                            error_handler.error_counts["SpellCaster"]
-                            <= error_handler.max_error_logs
-                        ):
-                            self.logger.error(f"[ERROR] SpellCaster error: {e}")
+                    error_handler.track_step_error("SpellCaster", e)
                 finally:
                     self._logic_tracker.end_logic("SpellCaster", start_time)
 
@@ -1446,15 +1321,7 @@ class BotStepIntegrator:
                 try:
                     await self.bot.upgrade_coord.on_step(iteration)
                 except Exception as e:
-                    if error_handler.debug_mode:
-                        raise
-                    else:
-                        error_handler.error_counts["UpgradeCoord"] += 1
-                        if (
-                            error_handler.error_counts["UpgradeCoord"]
-                            <= error_handler.max_error_logs
-                        ):
-                            self.logger.error(f"[ERROR] UpgradeCoord error: {e}")
+                    error_handler.track_step_error("UpgradeCoord", e)
                 finally:
                     self._logic_tracker.end_logic("UpgradeCoord", start_time)
 
@@ -1483,15 +1350,7 @@ class BotStepIntegrator:
                             status = self.bot.early_scout.get_scout_status()
                             self.logger.info(f"[EARLY_SCOUT] {status}")
                     except Exception as e:
-                        if error_handler.debug_mode:
-                            raise
-                        else:
-                            error_handler.error_counts["EarlyScout"] += 1
-                            if (
-                                error_handler.error_counts["EarlyScout"]
-                                <= error_handler.max_error_logs
-                            ):
-                                self.logger.error(f"[ERROR] Early Scout error: {e}")
+                        error_handler.track_step_error("EarlyScout", e)
                     finally:
                         self._logic_tracker.end_logic("EarlyScout", start_time)
 
@@ -1512,17 +1371,7 @@ class BotStepIntegrator:
                             f"Lost:{report.get('scouts_lost',0)}"
                         )
                 except Exception as e:
-                    if error_handler.debug_mode:
-                        raise
-                    else:
-                        error_handler.error_counts["AdvancedScoutV2"] = (
-                            error_handler.error_counts.get("AdvancedScoutV2", 0) + 1
-                        )
-                        if (
-                            error_handler.error_counts["AdvancedScoutV2"]
-                            <= error_handler.max_error_logs
-                        ):
-                            self.logger.error(f"[ERROR] AdvancedScoutV2 error: {e}")
+                    error_handler.track_step_error("AdvancedScoutV2", e)
                 finally:
                     self._logic_tracker.end_logic("AdvancedScoutV2", start_time)
 
@@ -1532,17 +1381,7 @@ class BotStepIntegrator:
                 try:
                     await self.bot.build_order_opt.on_step(iteration)
                 except Exception as e:
-                    if error_handler.debug_mode:
-                        raise
-                    else:
-                        error_handler.error_counts["BuildOrderOpt"] = (
-                            error_handler.error_counts.get("BuildOrderOpt", 0) + 1
-                        )
-                        if (
-                            error_handler.error_counts["BuildOrderOpt"]
-                            <= error_handler.max_error_logs
-                        ):
-                            self.logger.error(f"[ERROR] BuildOrderOpt error: {e}")
+                    error_handler.track_step_error("BuildOrderOpt", e)
                 finally:
                     self._logic_tracker.end_logic("BuildOrderOpt", start_time)
 
@@ -1552,17 +1391,7 @@ class BotStepIntegrator:
                 try:
                     await self.bot.multi_test.on_step(iteration)
                 except Exception as e:
-                    if error_handler.debug_mode:
-                        raise
-                    else:
-                        error_handler.error_counts["MultiTest"] = (
-                            error_handler.error_counts.get("MultiTest", 0) + 1
-                        )
-                        if (
-                            error_handler.error_counts["MultiTest"]
-                            <= error_handler.max_error_logs
-                        ):
-                            self.logger.error(f"[ERROR] MultiTest error: {e}")
+                    error_handler.track_step_error("MultiTest", e)
                 finally:
                     self._logic_tracker.end_logic("MultiTest", start_time)
 
@@ -1591,15 +1420,7 @@ class BotStepIntegrator:
                             return
 
                 except Exception as e:
-                    if error_handler.debug_mode:
-                        raise
-                    else:
-                        error_handler.error_counts["StrategyManager"] += 1
-                        if (
-                            error_handler.error_counts["StrategyManager"]
-                            <= error_handler.max_error_logs
-                        ):
-                            self.logger.error(f"[ERROR] Strategy Manager error: {e}")
+                    error_handler.track_step_error("StrategyManager", e)
                 finally:
                     self._logic_tracker.end_logic("Strategy", start_time)
             else:
@@ -1618,20 +1439,7 @@ class BotStepIntegrator:
                 try:
                     self.bot.situational_awareness.on_step(iteration)
                 except Exception as e:
-                    if error_handler.debug_mode:
-                        raise
-                    else:
-                        error_handler.error_counts["SituationalAwareness"] = (
-                            error_handler.error_counts.get("SituationalAwareness", 0)
-                            + 1
-                        )
-                        if (
-                            error_handler.error_counts["SituationalAwareness"]
-                            <= error_handler.max_error_logs
-                        ):
-                            self.logger.error(
-                                f"[ERROR] SituationalAwareness error: {e}"
-                            )
+                    error_handler.track_step_error("SituationalAwareness", e)
                 finally:
                     self._logic_tracker.end_logic("SituationalAwareness", start_time)
 
@@ -1720,17 +1528,7 @@ class BotStepIntegrator:
                                 f"[OPPONENT_MODELING] Strategy: {predicted_strategy} ({confidence:.1%} confidence)"
                             )
                 except Exception as e:
-                    if error_handler.debug_mode:
-                        raise
-                    else:
-                        error_handler.error_counts["OpponentModeling"] = (
-                            error_handler.error_counts.get("OpponentModeling", 0) + 1
-                        )
-                        if (
-                            error_handler.error_counts["OpponentModeling"]
-                            <= error_handler.max_error_logs
-                        ):
-                            self.logger.error(f"[ERROR] OpponentModeling error: {e}")
+                    error_handler.track_step_error("OpponentModeling", e)
                 finally:
                     self._logic_tracker.end_logic("OpponentModeling", start_time)
 
@@ -1777,17 +1575,7 @@ class BotStepIntegrator:
                             f"[PRODUCTION] Authority: {stats['authority_mode']}, Queue: {stats['queue_size']}"
                         )
                 except Exception as e:
-                    if error_handler.debug_mode:
-                        raise
-                    else:
-                        error_handler.error_counts["ProductionController"] += 1
-                        if (
-                            error_handler.error_counts["ProductionController"]
-                            <= error_handler.max_error_logs
-                        ):
-                            self.logger.error(
-                                f"[ERROR] ProductionController error: {e}"
-                            )
+                    error_handler.track_step_error("ProductionController", e)
                 finally:
                     self._logic_tracker.end_logic("ProductionController", start_time)
 
@@ -1851,17 +1639,7 @@ class BotStepIntegrator:
                         report = self.bot.worker_optimizer.get_efficiency_report()
                         self.logger.info(report)
                 except Exception as e:
-                    if error_handler.debug_mode:
-                        raise
-                    else:
-                        error_handler.error_counts["WorkerOptimizer"] = (
-                            error_handler.error_counts.get("WorkerOptimizer", 0) + 1
-                        )
-                        if (
-                            error_handler.error_counts["WorkerOptimizer"]
-                            <= error_handler.max_error_logs
-                        ):
-                            self.logger.error(f"[ERROR] WorkerOptimizer error: {e}")
+                    error_handler.track_step_error("WorkerOptimizer", e)
                 finally:
                     self._logic_tracker.end_logic("WorkerOptimizer", start_time)
 
@@ -1901,17 +1679,7 @@ class BotStepIntegrator:
                             f"Queens: {stats['queens_assigned']}"
                         )
                 except Exception as e:
-                    if error_handler.debug_mode:
-                        raise
-                    else:
-                        error_handler.error_counts["QueenInjectOpt"] = (
-                            error_handler.error_counts.get("QueenInjectOpt", 0) + 1
-                        )
-                        if (
-                            error_handler.error_counts["QueenInjectOpt"]
-                            <= error_handler.max_error_logs
-                        ):
-                            self.logger.error(f"[ERROR] QueenInjectOpt error: {e}")
+                    error_handler.track_step_error("QueenInjectOpt", e)
                 finally:
                     self._logic_tracker.end_logic("QueenInjectOpt", start_time)
 
@@ -1938,17 +1706,7 @@ class BotStepIntegrator:
                     self.bot.queen_transfusion.log_statistics(iteration)
 
                 except Exception as e:
-                    if error_handler.debug_mode:
-                        raise
-                    else:
-                        error_handler.error_counts["QueenTransfusion"] = (
-                            error_handler.error_counts.get("QueenTransfusion", 0) + 1
-                        )
-                        if (
-                            error_handler.error_counts["QueenTransfusion"]
-                            <= error_handler.max_error_logs
-                        ):
-                            self.logger.error(f"[ERROR] QueenTransfusion error: {e}")
+                    error_handler.track_step_error("QueenTransfusion", e)
                 finally:
                     self._logic_tracker.end_logic("QueenTransfusion", start_time)
 
@@ -1965,17 +1723,7 @@ class BotStepIntegrator:
                         )
 
                 except Exception as e:
-                    if error_handler.debug_mode:
-                        raise
-                    else:
-                        error_handler.error_counts["ResourceManager"] = (
-                            error_handler.error_counts.get("ResourceManager", 0) + 1
-                        )
-                        if (
-                            error_handler.error_counts["ResourceManager"]
-                            <= error_handler.max_error_logs
-                        ):
-                            self.logger.error(f"[ERROR] ResourceManager error: {e}")
+                    error_handler.track_step_error("ResourceManager", e)
 
             # 5.4 ★★★ Spatial Query Optimizer (Phase 21 - Performance) ★★★
             if hasattr(self.bot, "spatial_query") and self.bot.spatial_query:
@@ -1987,17 +1735,7 @@ class BotStepIntegrator:
                     self.bot.spatial_query.log_statistics(iteration)
 
                 except Exception as e:
-                    if error_handler.debug_mode:
-                        raise
-                    else:
-                        error_handler.error_counts["SpatialQuery"] = (
-                            error_handler.error_counts.get("SpatialQuery", 0) + 1
-                        )
-                        if (
-                            error_handler.error_counts["SpatialQuery"]
-                            <= error_handler.max_error_logs
-                        ):
-                            self.logger.error(f"[ERROR] SpatialQuery error: {e}")
+                    error_handler.track_step_error("SpatialQuery", e)
 
             # 5.5 ★★★ Overlord Vision Network (Phase 8 - 시야 네트워크) ★★★
             if hasattr(self.bot, "vision_network") and self.bot.vision_network:
@@ -2005,17 +1743,7 @@ class BotStepIntegrator:
                 try:
                     await self.bot.vision_network.on_step(iteration)
                 except Exception as e:
-                    if error_handler.debug_mode:
-                        raise
-                    else:
-                        error_handler.error_counts["VisionNetwork"] = (
-                            error_handler.error_counts.get("VisionNetwork", 0) + 1
-                        )
-                        if (
-                            error_handler.error_counts["VisionNetwork"]
-                            <= error_handler.max_error_logs
-                        ):
-                            self.logger.error(f"[ERROR] VisionNetwork error: {e}")
+                    error_handler.track_step_error("VisionNetwork", e)
                 finally:
                     self._logic_tracker.end_logic("VisionNetwork", start_time)
 
@@ -2025,17 +1753,7 @@ class BotStepIntegrator:
                 try:
                     await self.bot.creep_v2.on_step(iteration)
                 except Exception as e:
-                    if error_handler.debug_mode:
-                        raise
-                    else:
-                        error_handler.error_counts["CreepV2"] = (
-                            error_handler.error_counts.get("CreepV2", 0) + 1
-                        )
-                        if (
-                            error_handler.error_counts["CreepV2"]
-                            <= error_handler.max_error_logs
-                        ):
-                            self.logger.error(f"[ERROR] CreepV2 error: {e}")
+                    error_handler.track_step_error("CreepV2", e)
                 finally:
                     self._logic_tracker.end_logic("CreepV2", start_time)
 
@@ -2057,17 +1775,7 @@ class BotStepIntegrator:
                         report = self.bot.upgrade_planner.get_upgrade_progress_report()
                         self.logger.info(report)
                 except Exception as e:
-                    if error_handler.debug_mode:
-                        raise
-                    else:
-                        error_handler.error_counts["UpgradePlanner"] = (
-                            error_handler.error_counts.get("UpgradePlanner", 0) + 1
-                        )
-                        if (
-                            error_handler.error_counts["UpgradePlanner"]
-                            <= error_handler.max_error_logs
-                        ):
-                            self.logger.error(f"[ERROR] UpgradePlanner error: {e}")
+                    error_handler.track_step_error("UpgradePlanner", e)
                 finally:
                     self._logic_tracker.end_logic("UpgradePlanner", start_time)
 
@@ -2155,17 +1863,7 @@ class BotStepIntegrator:
                 try:
                     await self.bot.idle_units.on_step(iteration)
                 except Exception as e:
-                    if error_handler.debug_mode:
-                        raise
-                    else:
-                        error_handler.error_counts["IdleUnits"] = (
-                            error_handler.error_counts.get("IdleUnits", 0) + 1
-                        )
-                        if (
-                            error_handler.error_counts["IdleUnits"]
-                            <= error_handler.max_error_logs
-                        ):
-                            self.logger.error(f"[ERROR] IdleUnits error: {e}")
+                    error_handler.track_step_error("IdleUnits", e)
                 finally:
                     self._logic_tracker.end_logic("IdleUnits", start_time)
 
@@ -2180,17 +1878,7 @@ class BotStepIntegrator:
                         report = self.bot.combat_phase.get_combat_report()
                         self.logger.info(report)
                 except Exception as e:
-                    if error_handler.debug_mode:
-                        raise
-                    else:
-                        error_handler.error_counts["CombatPhase"] = (
-                            error_handler.error_counts.get("CombatPhase", 0) + 1
-                        )
-                        if (
-                            error_handler.error_counts["CombatPhase"]
-                            <= error_handler.max_error_logs
-                        ):
-                            self.logger.error(f"[ERROR] CombatPhase error: {e}")
+                    error_handler.track_step_error("CombatPhase", e)
                 finally:
                     self._logic_tracker.end_logic("CombatPhase", start_time)
 
@@ -2200,17 +1888,7 @@ class BotStepIntegrator:
                 try:
                     await self.bot.harassment_coord.on_step(iteration)
                 except Exception as e:
-                    if error_handler.debug_mode:
-                        raise
-                    else:
-                        error_handler.error_counts["HarassmentCoord"] = (
-                            error_handler.error_counts.get("HarassmentCoord", 0) + 1
-                        )
-                        if (
-                            error_handler.error_counts["HarassmentCoord"]
-                            <= error_handler.max_error_logs
-                        ):
-                            self.logger.error(f"[ERROR] HarassmentCoord error: {e}")
+                    error_handler.track_step_error("HarassmentCoord", e)
                 finally:
                     self._logic_tracker.end_logic("HarassmentCoord", start_time)
 
@@ -2220,17 +1898,7 @@ class BotStepIntegrator:
                 try:
                     await self.bot.multi_prong.on_step(iteration)
                 except Exception as e:
-                    if error_handler.debug_mode:
-                        raise
-                    else:
-                        error_handler.error_counts["MultiProng"] = (
-                            error_handler.error_counts.get("MultiProng", 0) + 1
-                        )
-                        if (
-                            error_handler.error_counts["MultiProng"]
-                            <= error_handler.max_error_logs
-                        ):
-                            self.logger.error(f"[ERROR] MultiProng error: {e}")
+                    error_handler.track_step_error("MultiProng", e)
                 finally:
                     self._logic_tracker.end_logic("MultiProng", start_time)
 
@@ -2240,17 +1908,7 @@ class BotStepIntegrator:
                 try:
                     await self.bot.trade_analyzer.on_step(iteration)
                 except Exception as e:
-                    if error_handler.debug_mode:
-                        raise
-                    else:
-                        error_handler.error_counts["TradeAnalyzer"] = (
-                            error_handler.error_counts.get("TradeAnalyzer", 0) + 1
-                        )
-                        if (
-                            error_handler.error_counts["TradeAnalyzer"]
-                            <= error_handler.max_error_logs
-                        ):
-                            self.logger.error(f"[ERROR] TradeAnalyzer error: {e}")
+                    error_handler.track_step_error("TradeAnalyzer", e)
                 finally:
                     self._logic_tracker.end_logic("TradeAnalyzer", start_time)
 
@@ -2327,22 +1985,12 @@ class BotStepIntegrator:
                             f"Focus fire: {status.get('focus_fire_assignments', 0)} assignments"
                         )
                 except Exception as e:
-                    if error_handler.debug_mode:
-                        raise
-                    else:
-                        error_handler.error_counts["MicroV3"] = (
-                            error_handler.error_counts.get("MicroV3", 0) + 1
+                    error_handler.track_step_error("MicroV3", e)
+                    if error_handler.error_counts.get("MicroV3", 0) >= 5:
+                        self.logger.info(
+                            "[RECOVERY] MicroV3 disabled after 5 consecutive errors"
                         )
-                        if (
-                            error_handler.error_counts["MicroV3"]
-                            <= error_handler.max_error_logs
-                        ):
-                            self.logger.error(f"[ERROR] MicroV3 error: {e}")
-                        if error_handler.error_counts.get("MicroV3", 0) >= 5:
-                            self.logger.info(
-                                "[RECOVERY] MicroV3 disabled after 5 consecutive errors"
-                            )
-                            self.bot.micro_v3 = None
+                        self.bot.micro_v3 = None
                 finally:
                     self._logic_tracker.end_logic("MicroV3", start_time)
 
@@ -2370,17 +2018,7 @@ class BotStepIntegrator:
                 try:
                     await self.bot.late_game_opt.on_step(iteration)
                 except Exception as e:
-                    if error_handler.debug_mode:
-                        raise
-                    else:
-                        error_handler.error_counts["LateGameOpt"] = (
-                            error_handler.error_counts.get("LateGameOpt", 0) + 1
-                        )
-                        if (
-                            error_handler.error_counts["LateGameOpt"]
-                            <= error_handler.max_error_logs
-                        ):
-                            self.logger.error(f"[ERROR] LateGameOpt error: {e}")
+                    error_handler.track_step_error("LateGameOpt", e)
                 finally:
                     self._logic_tracker.end_logic("LateGameOpt", start_time)
 
@@ -2390,17 +2028,7 @@ class BotStepIntegrator:
                 try:
                     await self.bot.adaptive_build.on_step(iteration)
                 except Exception as e:
-                    if error_handler.debug_mode:
-                        raise
-                    else:
-                        error_handler.error_counts["AdaptiveBuild"] = (
-                            error_handler.error_counts.get("AdaptiveBuild", 0) + 1
-                        )
-                        if (
-                            error_handler.error_counts["AdaptiveBuild"]
-                            <= error_handler.max_error_logs
-                        ):
-                            self.logger.error(f"[ERROR] AdaptiveBuild error: {e}")
+                    error_handler.track_step_error("AdaptiveBuild", e)
                 finally:
                     self._logic_tracker.end_logic("AdaptiveBuild", start_time)
 
@@ -2410,17 +2038,7 @@ class BotStepIntegrator:
                 try:
                     await self.bot.timing_attacks.on_step(iteration)
                 except Exception as e:
-                    if error_handler.debug_mode:
-                        raise
-                    else:
-                        error_handler.error_counts["TimingAttacks"] = (
-                            error_handler.error_counts.get("TimingAttacks", 0) + 1
-                        )
-                        if (
-                            error_handler.error_counts["TimingAttacks"]
-                            <= error_handler.max_error_logs
-                        ):
-                            self.logger.error(f"[ERROR] TimingAttacks error: {e}")
+                    error_handler.track_step_error("TimingAttacks", e)
                 finally:
                     self._logic_tracker.end_logic("TimingAttacks", start_time)
 
@@ -2430,17 +2048,7 @@ class BotStepIntegrator:
                 try:
                     await self.bot.proxy_hatch.on_step(iteration)
                 except Exception as e:
-                    if error_handler.debug_mode:
-                        raise
-                    else:
-                        error_handler.error_counts["ProxyHatch"] = (
-                            error_handler.error_counts.get("ProxyHatch", 0) + 1
-                        )
-                        if (
-                            error_handler.error_counts["ProxyHatch"]
-                            <= error_handler.max_error_logs
-                        ):
-                            self.logger.error(f"[ERROR] ProxyHatch error: {e}")
+                    error_handler.track_step_error("ProxyHatch", e)
                 finally:
                     self._logic_tracker.end_logic("ProxyHatch", start_time)
 
@@ -2476,16 +2084,7 @@ class BotStepIntegrator:
                 await self.draw_debug_info()
 
         except Exception as e:
-            if error_handler.debug_mode:
-                self.logger.error(f"\n[ERROR] Game logic execution error in DEBUG_MODE")
-                raise
-            else:
-                error_handler.error_counts["GameLogic"] += 1
-                if (
-                    error_handler.error_counts["GameLogic"]
-                    <= error_handler.max_error_logs
-                ):
-                    self.logger.error(f"[ERROR] Game logic execution error: {e}")
+            error_handler.track_step_error("GameLogic", e)
         finally:
             # Performance Optimizer 프레임 종료
             if (
@@ -2654,25 +2253,7 @@ class BotStepIntegrator:
                 method(iteration)
         except Exception as e:
             success = False
-            if error_handler.debug_mode:
-                # DEBUG_MODE: 즉시 크래시
-                self.logger.error(
-                    f"\n[ERROR] {label} failed in DEBUG_MODE - crashing for debugging"
-                )
-                self.logger.error(f"[ERROR] Exception: {e}")
-                raise
-            else:
-                # 프로덕션 모드: 로그 후 계속
-                error_handler.error_counts[label] += 1
-                if error_handler.error_counts[label] <= error_handler.max_error_logs:
-                    self.logger.error(f"[ERROR] {label} error: {e}")
-                    if (
-                        error_handler.error_counts[label]
-                        == error_handler.max_error_logs
-                    ):
-                        self.logger.error(
-                            f"[ERROR] {label}: Suppressing further error logs"
-                        )
+            error_handler.track_step_error(label, e)
         finally:
             self._logic_tracker.end_logic(label, start_time, success)
 
@@ -2846,16 +2427,7 @@ class BotStepIntegrator:
                         rl_decision_used = True
 
                 except Exception as e:
-                    if error_handler.debug_mode:
-                        self.logger.error(f"[ERROR] RLAgent error in DEBUG_MODE: {e}")
-                        raise
-                    else:
-                        error_handler.error_counts["RLAgent"] += 1
-                        if (
-                            error_handler.error_counts["RLAgent"]
-                            <= error_handler.max_error_logs
-                        ):
-                            self.logger.error(f"[ERROR] RLAgent error: {e}")
+                    error_handler.track_step_error("RLAgent", e)
 
             # ★★★ HierarchicalRL 실행 (RL Override 강제 적용) ★★★
             # 이제 순수하게 전략적 결정만 반환함

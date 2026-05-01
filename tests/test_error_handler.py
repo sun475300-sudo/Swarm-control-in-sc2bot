@@ -9,7 +9,6 @@ ErrorHandler 단위 테스트
 import logging
 
 import pytest
-
 from wicked_zerg_challenger.error_handler import ErrorHandler
 
 
