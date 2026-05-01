@@ -95,8 +95,10 @@ except ImportError:
     PLACEMENT_HELPER_AVAILABLE = False
     BuildingPlacementHelper = None
 
-# Import production modules
-from local_training.production import (
+# Import production modules — kept after the optional placement_helper import
+# above so the latter's ImportError fallback can run before this module's hard
+# dependency resolves.
+from local_training.production import (  # noqa: E402
     can_expand_safely,
     safe_train,
 )

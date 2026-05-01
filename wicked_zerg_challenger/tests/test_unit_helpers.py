@@ -18,12 +18,12 @@ Tests all 11 utility functions:
 import os
 import sys
 import unittest
-from unittest.mock import MagicMock, Mock, patch
+from unittest.mock import Mock, patch
 
 # Add parent directory to path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from utils.unit_helpers import (
+from utils.unit_helpers import (  # noqa: E402
     calculate_unit_supply,
     can_unit_attack,
     execute_unit_action,

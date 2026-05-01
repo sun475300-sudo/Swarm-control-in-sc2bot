@@ -14,9 +14,12 @@ Fundamentals Manager - 기본기 학습 단계 관리
 
 import json
 import sys
+from pathlib import Path
 from pathlib import Path as _Path
+from typing import Dict, List
 
-# logger 설정
+# logger 설정 — depends on the parent path being on sys.path so we can fall
+# back to utils.logger when this module is imported standalone.
 sys.path.insert(0, str(_Path(__file__).parent.parent.parent))
 try:
     from wicked_zerg_challenger.utils.logger import get_logger as _get_logger
@@ -31,8 +34,6 @@ except ImportError:
 
 
 logger = _get_logger("FundamentalsManager")
-from pathlib import Path
-from typing import Dict, List
 
 
 class FundamentalSkill:

@@ -9,12 +9,16 @@ Tests the factory pattern for manager initialization
 import os
 import sys
 import unittest
-from unittest.mock import MagicMock, Mock, patch
+from unittest.mock import Mock
 
 # Add parent directory to path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from core.manager_factory import ManagerConfig, ManagerFactory, ManagerPriority
+from core.manager_factory import (  # noqa: E402
+    ManagerConfig,
+    ManagerFactory,
+    ManagerPriority,
+)
 
 
 class TestManagerFactory(unittest.TestCase):

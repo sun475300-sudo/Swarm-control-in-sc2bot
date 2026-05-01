@@ -9,19 +9,19 @@ import logging
 import sc2reader
 
 logger = logging.getLogger("ReplayToRlTrainer")
-import os
-import sys
-from pathlib import Path
+import os  # noqa: E402
+import sys  # noqa: E402
+from pathlib import Path  # noqa: E402
 
 # from sc2reader.events.game import UnitBornEvent, UnitInitEvent, UnitDiedEvent, PlayerStatsEvent
-import numpy as np
+import numpy as np  # noqa: E402
 
 # Add project root to path
 script_dir = Path(__file__).parent
 project_root = script_dir.parent.parent
 sys.path.append(str(project_root))
 
-from local_training.rl_agent import RLAgent
+from local_training.rl_agent import RLAgent  # noqa: E402
 
 
 class ReplayStateTracker:

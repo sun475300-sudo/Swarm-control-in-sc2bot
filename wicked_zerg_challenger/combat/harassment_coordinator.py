@@ -690,9 +690,6 @@ class HarassmentCoordinator:
 
         # ★ 포킹 실행 ★
         for unit in active_pokes:
-            # 안전 거리 유지하며 건물 공격
-            distance = unit.distance_to(target)
-
             if threat_level > 10:  # 위협이 너무 크면 후퇴
                 self.bot.do(unit.move(self.bot.start_location))
                 continue

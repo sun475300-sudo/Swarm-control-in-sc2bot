@@ -19,7 +19,11 @@ from unittest.mock import Mock
 # Add bot directory to path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from build_order_system import BuildOrderStep, BuildOrderSystem, BuildOrderType
+from build_order_system import (  # noqa: E402
+    BuildOrderStep,
+    BuildOrderSystem,
+    BuildOrderType,
+)
 
 
 class MockBot:

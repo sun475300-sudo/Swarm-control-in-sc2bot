@@ -14,14 +14,14 @@ Tests cover:
 import os
 import sys
 import unittest
-from unittest.mock import MagicMock, Mock, patch
+from unittest.mock import Mock, patch
 
 # Add parent directory to path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from economy_manager import EconomyManager
-from sc2.ids.unit_typeid import UnitTypeId
-from sc2.position import Point2
+from economy_manager import EconomyManager  # noqa: E402
+from sc2.ids.unit_typeid import UnitTypeId  # noqa: E402
+from sc2.position import Point2  # noqa: E402
 
 
 class TestEconomyManager(unittest.TestCase):
