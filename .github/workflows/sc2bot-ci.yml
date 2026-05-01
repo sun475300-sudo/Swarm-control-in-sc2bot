@@ -73,7 +73,9 @@ jobs:
           cache: pip
 
       - name: Install dependencies
-        run: pip install -r requirements.txt pytest pytest-cov pytest-asyncio
+        # pytest-timeout is required by pytest.ini (timeout = 60) and by the
+        # explicit --timeout=120 used in the integration step below.
+        run: pip install -r requirements.txt pytest pytest-cov pytest-asyncio pytest-timeout
 
       - name: Run unit tests
         # tests/unit/ doesn't exist; the actual unit suite is at the
