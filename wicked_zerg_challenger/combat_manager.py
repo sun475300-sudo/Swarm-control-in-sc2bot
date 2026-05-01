@@ -2368,7 +2368,6 @@ class CombatManager:
     # tech buildings -> enemy main). Removed to silence F811 and avoid
     # confusion; the active definition lives near the end of the class.
 
-
     async def _execute_harass(self, mutalisks, enemy_units):
         """
         Execute harassment - attack workers, retreat from anti-air.
@@ -4297,4 +4296,6 @@ class CombatManager:
             pass
 
         return None
+
+
 # Improved micro management for VeryHard difficulty

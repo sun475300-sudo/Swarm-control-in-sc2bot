@@ -33,9 +33,7 @@ except ImportError:
             super().__init__(items or [])
 
         def closer_than(self, distance, unit):
-            return _EmptyUnits(
-                [u for u in self if u.distance_to(unit) < distance]
-            )
+            return _EmptyUnits([u for u in self if u.distance_to(unit) < distance])
 
         def filter(self, predicate):
             return _EmptyUnits([u for u in self if predicate(u)])
