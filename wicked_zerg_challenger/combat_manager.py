@@ -2425,12 +2425,11 @@ class CombatManager:
         # ★ REGEN DANCE: Separate damaged units during harassment ★
         if self.mutalisk_micro:
             current_time = getattr(self.bot, "time", 0)
-            combat_ready, regenerating = await self.mutalisk_micro.execute_regen_dance(
+            combat_ready, _regenerating = await self.mutalisk_micro.execute_regen_dance(
                 mutalisks, current_time, self.bot
             )
         else:
             combat_ready = list(mutalisks)
-            regenerating = []
 
         if not combat_ready:
             return  # All units regenerating
@@ -2869,14 +2868,16 @@ class CombatManager:
             return
 
         # ★ REGEN DANCE: Separate damaged units ★
+        # NOTE: the second tuple element (units currently regenerating) is
+        # intentionally ignored here -- those units should remain idle until
+        # the next iteration; only combat_ready units engage.
         if self.mutalisk_micro:
             current_time = getattr(self.bot, "time", 0)
-            combat_ready, regenerating = await self.mutalisk_micro.execute_regen_dance(
+            combat_ready, _regenerating = await self.mutalisk_micro.execute_regen_dance(
                 mutalisks, current_time, self.bot
             )
         else:
             combat_ready = list(mutalisks)
-            regenerating = []
 
         if not combat_ready:
             return  # All units regenerating
