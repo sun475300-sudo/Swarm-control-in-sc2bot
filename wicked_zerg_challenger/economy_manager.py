@@ -270,9 +270,11 @@ class EconomyManager:
             self.blackboard.get("early_scout_cheese_suspected", False)
         )
         fresh = last_report > 0 and (game_time - last_report) <= 75.0
+        # Only honor early-game scout pressure within the first 4 minutes.
+        # Late-game stale cheese flags shouldn't suppress drone production.
         early_window = game_time <= 240.0
-        cheese_active = fresh and cheese_suspected
-        fast_gas = fresh and gas_time is not None and gas_time < 90.0
+        cheese_active = fresh and cheese_suspected and early_window
+        fast_gas = fresh and gas_time is not None and gas_time < 90.0 and early_window
         # ★ FIX: natural_confirmed=False만으로 확장 차단 금지
         # 실제 치즈 의심이나 빠른 가스 같은 구체적 위협 시에만 지연
         pressure_active = cheese_active or fast_gas
@@ -1448,9 +1450,6 @@ class EconomyManager:
             return
 
         game_time = self.bot.time
-        base_count = (
-            self.bot.townhalls.amount if hasattr(self.bot.townhalls, "amount") else 1
-        )
 
         # ★ 공통 쿨다운 체크 (모든 확장 시스템 공유) ★
         time_since_last = game_time - self._last_expansion_attempt_time
@@ -1875,10 +1874,14 @@ class EconomyManager:
         if not available_bases:
             return None
 
-        # Score: Distance from enemy start + Distance from our start (to be "hidden" usually means far from action)
-        # But for Rogue style, maybe just far from enemy?
-        # Let's prioritize: Furthest from Enemy Start
-        best_loc = max(available_bases, key=lambda p: p.distance_to(enemy_start))
+        # Score: distance from enemy (primary, safety) + 0.3 * distance from our start
+        # (secondary, prefer truly off-the-beaten-path locations over our natural/third).
+        # This matches the docstring's "hidden" intent — somewhere the enemy is unlikely
+        # to scout on a direct path between the two mains.
+        best_loc = max(
+            available_bases,
+            key=lambda p: p.distance_to(enemy_start) + 0.3 * p.distance_to(start_loc),
+        )
 
         return best_loc
 
