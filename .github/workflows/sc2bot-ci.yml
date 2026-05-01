@@ -73,7 +73,16 @@ jobs:
           cache: pip
 
       - name: Install dependencies
-        run: pip install -r requirements.txt pytest pytest-cov pytest-asyncio pytest-timeout
+        # burnysc2 7.x pulls in `mpyq` (replay parser) which fails to build
+        # wheels on Python 3.10+. Replays aren't needed for unit tests, so
+        # we install burnysc2 without its deps and then add the actually-needed
+        # transitive packages manually.
+        run: |
+          pip install --no-deps burnysc2
+          pip install \
+            numpy scipy aiohttp loguru s2clientprotocol \
+            portpicker matplotlib psutil pyyaml \
+            pytest pytest-cov pytest-asyncio pytest-timeout
 
       - name: Run wicked_zerg_challenger unit tests (SC2 bot core)
         env:
