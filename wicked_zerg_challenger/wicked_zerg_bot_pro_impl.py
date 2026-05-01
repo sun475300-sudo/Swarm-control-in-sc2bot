@@ -20,9 +20,7 @@ except ImportError:
         pass
 
 
-import glob as glob_mod
 import json
-import os
 import shutil
 import time
 import traceback

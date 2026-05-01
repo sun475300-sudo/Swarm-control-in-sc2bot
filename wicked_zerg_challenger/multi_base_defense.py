@@ -9,7 +9,7 @@ Multi-Base Defense System - Automatic defense for multiple expansions
 4. 공격 받는 기지 우선 방어
 """
 
-from typing import Dict, List, Optional
+from typing import Dict
 
 from utils.logger import get_logger
 

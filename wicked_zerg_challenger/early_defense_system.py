@@ -8,7 +8,7 @@ Purpose: Counter early rushes and improve initial survival rate
 """
 
 import logging
-from typing import Optional, Set
+from typing import Set
 
 logger = logging.getLogger("EarlyDefenseSystem")
 try:
