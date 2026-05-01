@@ -277,9 +277,7 @@ class EvolutionUpgradeManager:
         else:
             attack_lane = "melee"
         armor_lane = "armor"
-        if race_modifiers.get(armor_lane, 1.0) > race_modifiers.get(
-            attack_lane, 1.0
-        ):
+        if race_modifiers.get(armor_lane, 1.0) > race_modifiers.get(attack_lane, 1.0):
             primary, secondary = armor_lane, attack_lane
         else:
             primary, secondary = attack_lane, armor_lane
@@ -291,9 +289,23 @@ class EvolutionUpgradeManager:
             # ★★★ NEW: 바퀴 사용 시 지상 갑피 2단계까지 우선 연구 ★★★
             if roach_count >= 8:  # 바퀴 8기 이상
                 # primary 1 -> secondary 1 -> secondary 2 -> primary 2 ...
-                priorities = [primary, secondary, secondary, primary, primary, secondary]
+                priorities = [
+                    primary,
+                    secondary,
+                    secondary,
+                    primary,
+                    primary,
+                    secondary,
+                ]
             else:
-                priorities = [primary, primary, primary, secondary, secondary, secondary]
+                priorities = [
+                    primary,
+                    primary,
+                    primary,
+                    secondary,
+                    secondary,
+                    secondary,
+                ]
         else:
             # ★ 저글링/맹독충 체제: 근접 공격 + 방어 균형
             # primary 1 -> secondary 1 -> primary 2 -> secondary 2 ...

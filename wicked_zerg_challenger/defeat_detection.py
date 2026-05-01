@@ -16,7 +16,6 @@ import logging
 from typing import Dict, Optional, Tuple
 
 
-
 class DefeatLevel:
     """패배 가능성 수준"""
 
