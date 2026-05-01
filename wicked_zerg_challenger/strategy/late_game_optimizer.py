@@ -14,7 +14,7 @@ Features:
 - 가스 집약 유닛 비율 관리
 """
 
-from typing import Dict, Set
+from typing import Set
 
 from utils.logger import get_logger
 

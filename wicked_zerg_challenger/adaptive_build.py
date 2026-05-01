@@ -15,7 +15,7 @@ Adaptive Build Order Manager - 적응형 빌드오더 시스템 (#104)
 
 import logging
 from enum import Enum
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger("AdaptiveBuild")
 

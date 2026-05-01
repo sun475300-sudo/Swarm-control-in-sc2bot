@@ -14,9 +14,8 @@ Real-time Awareness Engine — 실시간 상황 인식 + 자동 대응 시스템
 """
 
 import logging
-import time
 from dataclasses import dataclass
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List
 
 logger = logging.getLogger("RealtimeAwarenessEngine")
 
@@ -698,7 +697,7 @@ class RealtimeAwarenessEngine:
             logger.info(f"{len(critical)} CRITICAL problems:")
             for p in critical[:3]:
                 logger.info(f"  [{p.severity.upper()}] {p.description}")
-                logger.info(f"    → action required (see logs)")
+                logger.info("    → action required (see logs)")
 
     def get_situation_summary(self) -> str:
         """현재 상황 요약"""

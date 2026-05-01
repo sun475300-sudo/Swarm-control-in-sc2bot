@@ -8,7 +8,6 @@ import logging
 from datetime import datetime
 from pathlib import Path
 
-from sc2.data import Difficulty, Race
 
 logger = logging.getLogger("GameStatistics")
 

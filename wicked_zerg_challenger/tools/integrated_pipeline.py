@@ -191,7 +191,7 @@ def main():
     logger.info(f"{'='*80}")
 
     # Step 1: Prepare Replays
-    logger.info(f"\n[STEP 1] PREPARE REPLAYS")
+    logger.info("\n[STEP 1] PREPARE REPLAYS")
     LOCAL_REPLAY_DIR.mkdir(parents=True, exist_ok=True)
 
     source_folder = Path(args.source_replays).resolve()
@@ -205,7 +205,7 @@ def main():
     logger.info(f"   [TARGET] Total validated replays ready for training: {len(current_replays)}")
 
     if len(current_replays) == 0:
-        logger.error(f"   [ERROR] No valid replays found!")
+        logger.error("   [ERROR] No valid replays found!")
         if not args.validate_only:
             sys.exit(1)
 
@@ -216,10 +216,10 @@ def main():
         logger.info(f"{'='*80}")
 
         if not run_training(args.epochs):
-            logger.error(f"\n   [ERROR] TRAINING FAILED!")
+            logger.error("\n   [ERROR] TRAINING FAILED!")
             sys.exit(1)
         else:
-            logger.info(f"\n   [OK] TRAINING COMPLETED SUCCESSFULLY")
+            logger.info("\n   [OK] TRAINING COMPLETED SUCCESSFULLY")
 
     # Step 3: Cleanup
     if args.cleanup:
