@@ -2,6 +2,7 @@
 """ModelSelector 단위 테스트 — 모델 캐스케이드, full_cascade, 메트릭 기록 검증."""
 
 import pytest
+
 from jarvis_features.model_selector import (
     CLAUDE_CASCADE,
     GEMINI_CASCADE,
