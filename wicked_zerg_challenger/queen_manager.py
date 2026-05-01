@@ -94,6 +94,39 @@ class QueenManager:
         self.transfuse_cooldown = 1.0  # 1 second minimum between transfuses
         self.transfuse_health_threshold = 0.5  # Target health ratio
 
+    @staticmethod
+    def _build_unhealable_units() -> Set:
+        """Return the set of UnitTypeIds that should not be transfused.
+
+        Includes:
+        - Self-destructing units (BANELING)
+        - Auto-expiring spawned units (BROODLING, LOCUSTMP*, CHANGELING*)
+
+        Transfusing these is a strict waste of queen energy because the
+        unit is already on a short death timer or one-shot suicide path.
+        """
+        unhealable: Set = set()
+        for name in (
+            # Self-destructs on attack
+            "BANELING",
+            # Broodlord-spawned, ~12s lifespan
+            "BROODLING",
+            # Swarm host locusts (auto-expire after ~18s active)
+            "LOCUSTMP",
+            "LOCUSTMPFLYING",
+            # Overseer changelings (auto-expire after ~150s)
+            "CHANGELING",
+            "CHANGELINGZERGLING",
+            "CHANGELINGZERGLINGWINGS",
+            "CHANGELINGMARINE",
+            "CHANGELINGMARINESHIELD",
+            "CHANGELINGZEALOT",
+        ):
+            t = getattr(UnitTypeId, name, None)
+            if t is not None:
+                unhealable.add(t)
+        return unhealable
+
     async def on_step(self, iteration: int) -> None:
         """
         Main queen management loop.
@@ -730,9 +763,7 @@ class QueenManager:
             if unit_type is not None:
                 TRANSFUSE_PRIORITY[unit_type] = prio
 
-        UNHEALABLE_UNITS = {UnitTypeId.BANELING, UnitTypeId.BROODLING}
-        if hasattr(UnitTypeId, "LOCUSTMP"):
-            UNHEALABLE_UNITS.add(UnitTypeId.LOCUSTMP)
+        UNHEALABLE_UNITS = self._build_unhealable_units()
 
         # Find injured units to heal
         injured_targets = []
