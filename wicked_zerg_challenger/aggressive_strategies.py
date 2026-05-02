@@ -981,7 +981,7 @@ class AggressiveStrategyExecutor:
                             )
                             self._ventral_sacs_started = True
                             logger.info("Ventral Sacs upgrade started!")
-                    except Exception as e:
+                    except Exception:
                         pass
 
         # 2. 드랍용 대군주 지정
@@ -1039,7 +1039,7 @@ class AggressiveStrategyExecutor:
                             # 또는 유닛이 대군주에 타도록 (AbilityId.SMART)
                             # 여기서는 대군주가 태우는 방식 사용
                             self.bot.do(overlord(AbilityId.LOAD, ling))
-                        except (AttributeError, TypeError) as e:
+                        except (AttributeError, TypeError):
                             # Overlord transport may fail if unit is busy or ability unavailable
                             pass
                 else:
