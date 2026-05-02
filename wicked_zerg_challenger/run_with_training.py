@@ -11,9 +11,8 @@ import os
 import random
 import sys
 import time
-from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Set, Tuple, Union
+from typing import Optional
 
 from sc2 import maps  # type: ignore
 from sc2.data import Difficulty, Race  # type: ignore
