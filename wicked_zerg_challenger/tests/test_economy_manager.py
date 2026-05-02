@@ -76,6 +76,55 @@ class TestEconomyManager(unittest.TestCase):
         """Test emergency mode defaults to False"""
         self.assertFalse(self.manager._emergency_mode)
 
+    def test_is_emergency_mode_default(self):
+        """is_emergency_mode() should report False by default."""
+        self.assertFalse(self.manager.is_emergency_mode())
+
+    def test_is_emergency_mode_after_toggle(self):
+        """is_emergency_mode() round-trips through set_emergency_mode()."""
+        self.manager.set_emergency_mode(True)
+        self.assertTrue(self.manager.is_emergency_mode())
+        self.manager.set_emergency_mode(False)
+        self.assertFalse(self.manager.is_emergency_mode())
+
+    def test_set_emergency_mode_coerces_truthy(self):
+        """Truthy non-bool inputs are coerced to True."""
+        self.manager.set_emergency_mode("yes")  # type: ignore[arg-type]
+        self.assertIs(self.manager._emergency_mode, True)
+        self.manager.set_emergency_mode(1)  # type: ignore[arg-type]
+        self.assertIs(self.manager._emergency_mode, True)
+
+    def test_set_emergency_mode_coerces_falsy(self):
+        """Falsy non-bool inputs (None, '', 0, []) are coerced to False."""
+        self.manager.set_emergency_mode(True)
+        self.manager.set_emergency_mode(None)  # type: ignore[arg-type]
+        self.assertIs(self.manager._emergency_mode, False)
+        self.manager.set_emergency_mode(True)
+        self.manager.set_emergency_mode("")  # type: ignore[arg-type]
+        self.assertIs(self.manager._emergency_mode, False)
+        self.manager.set_emergency_mode(True)
+        self.manager.set_emergency_mode(0)  # type: ignore[arg-type]
+        self.assertIs(self.manager._emergency_mode, False)
+
+    def test_dynamic_gas_workers_default_enabled(self):
+        """Dynamic gas-worker rebalancing is on by default."""
+        self.assertTrue(self.manager.is_dynamic_gas_workers_enabled())
+
+    def test_set_dynamic_gas_workers_round_trip(self):
+        """Setter and getter agree across both directions."""
+        self.manager.set_dynamic_gas_workers(False)
+        self.assertFalse(self.manager.is_dynamic_gas_workers_enabled())
+        self.assertIs(self.manager.dynamic_gas_workers_enabled, False)
+        self.manager.set_dynamic_gas_workers(True)
+        self.assertTrue(self.manager.is_dynamic_gas_workers_enabled())
+
+    def test_set_dynamic_gas_workers_coerces(self):
+        """Truthy/falsy inputs are coerced to bool."""
+        self.manager.set_dynamic_gas_workers("on")  # type: ignore[arg-type]
+        self.assertIs(self.manager.dynamic_gas_workers_enabled, True)
+        self.manager.set_dynamic_gas_workers(0)  # type: ignore[arg-type]
+        self.assertIs(self.manager.dynamic_gas_workers_enabled, False)
+
     def test_gold_mineral_threshold_constant(self):
         """Test GOLD_MINERAL_THRESHOLD is properly defined"""
         self.assertEqual(EconomyManager.GOLD_MINERAL_THRESHOLD, 1200)

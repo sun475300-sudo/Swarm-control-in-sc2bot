@@ -205,8 +205,26 @@ class EconomyManager:
             self._last_redistribute_time = 0  # 즉시 재분배
 
     def set_emergency_mode(self, active: bool) -> None:
-        """Set emergency mode validation."""
-        self._emergency_mode = active
+        """Toggle emergency mode. Input is coerced to bool so callers can
+        pass any truthy/falsy value safely (e.g. dict.get(...) -> None)."""
+        self._emergency_mode = bool(active)
+
+    def is_emergency_mode(self) -> bool:
+        """Whether emergency mode is currently active."""
+        return bool(getattr(self, "_emergency_mode", False))
+
+    def set_dynamic_gas_workers(self, enabled: bool) -> None:
+        """Enable/disable production-queue-driven gas worker rebalancing.
+
+        Disabling pins gas workers to whatever count is currently set,
+        which is useful when an outer planner is doing its own gas
+        scheduling (e.g. forced gas-rush during an early all-in).
+        """
+        self.dynamic_gas_workers_enabled = bool(enabled)
+
+    def is_dynamic_gas_workers_enabled(self) -> bool:
+        """Whether dynamic gas-worker rebalancing is on."""
+        return bool(getattr(self, "dynamic_gas_workers_enabled", True))
 
     # ── Gas overflow tuning ────────────────────────────────────────────
     # Lower threshold = re-invest gas into army/macro sooner (more aggressive
