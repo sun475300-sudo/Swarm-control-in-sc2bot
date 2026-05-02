@@ -141,6 +141,33 @@ class TestEconomyManager(unittest.TestCase):
         result = self.manager.get_target_drone_count()
         self.assertEqual(result, 80)
 
+    def test_set_target_drone_count_within_bounds(self):
+        """Setter accepts in-range value and returns it."""
+        applied = self.manager.set_target_drone_count(70)
+        self.assertEqual(applied, 70)
+        self.assertEqual(self.manager.get_target_drone_count(), 70)
+
+    def test_set_target_drone_count_clamps_low(self):
+        """Below-floor values clamp up to DRONE_TARGET_MIN."""
+        applied = self.manager.set_target_drone_count(0)
+        self.assertEqual(applied, EconomyManager.DRONE_TARGET_MIN)
+
+    def test_set_target_drone_count_clamps_high(self):
+        """Above-ceiling values clamp down to DRONE_TARGET_MAX."""
+        applied = self.manager.set_target_drone_count(500)
+        self.assertEqual(applied, EconomyManager.DRONE_TARGET_MAX)
+
+    def test_set_target_drone_count_invalid_input_no_op(self):
+        """Non-numeric input leaves the target untouched."""
+        before = self.manager.get_target_drone_count()
+        applied = self.manager.set_target_drone_count("oops")  # type: ignore[arg-type]
+        self.assertEqual(applied, before)
+
+    def test_drone_target_bounds_invariant(self):
+        """Bounds are sane (positive, min < max)."""
+        self.assertLess(EconomyManager.DRONE_TARGET_MIN, EconomyManager.DRONE_TARGET_MAX)
+        self.assertGreater(EconomyManager.DRONE_TARGET_MIN, 0)
+
     # ==================== Gold Base Detection Tests ====================
 
     def test_is_gold_expansion_with_gold_minerals(self):

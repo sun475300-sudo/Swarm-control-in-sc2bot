@@ -2973,9 +2973,27 @@ class EconomyManager:
         """경제 회복 모드 여부"""
         return getattr(self, "_economy_recovery_mode", False)
 
+    # ── Target drone count tuning ──────────────────────────────────────
+    DRONE_TARGET_MIN: int = 12  # at least one full mineral line on main
+    DRONE_TARGET_MAX: int = 90  # absolute supply ceiling for workers
+
     def get_target_drone_count(self) -> int:
         """목표 드론 수"""
         return getattr(self, "_target_drone_count", 66)
+
+    def set_target_drone_count(self, value: int) -> int:
+        """Set the target drone count, clamped to bounds.
+
+        Returns the *applied* value after clamping. Non-int / non-finite
+        inputs are no-ops (returns current value).
+        """
+        try:
+            v = int(value)
+        except (TypeError, ValueError):
+            return self.get_target_drone_count()
+        clamped = max(self.DRONE_TARGET_MIN, min(self.DRONE_TARGET_MAX, v))
+        self._target_drone_count = clamped
+        return clamped
 
     async def _check_air_threat_response(self) -> None:
         """
