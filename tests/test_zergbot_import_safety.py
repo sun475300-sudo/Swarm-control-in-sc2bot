@@ -25,7 +25,6 @@ from pathlib import Path
 
 import pytest
 
-
 REPO_ROOT = Path(__file__).resolve().parent.parent
 BOT_ROOT = REPO_ROOT / "wicked_zerg_challenger"
 
