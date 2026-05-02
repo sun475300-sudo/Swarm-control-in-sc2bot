@@ -127,12 +127,13 @@ def retry_on_failure(max_retries=3, delay=0.1):
         async def async_wrapper(*args, **kwargs):
             import asyncio
 
-            last_exception = None
+            last_exception: Optional[BaseException] = None
 
             for attempt in range(max_retries):
                 try:
                     return await func(*args, **kwargs)
                 except (AttributeError, KeyError, IndexError) as e:
+                    last_exception = e
                     if attempt < max_retries - 1:
                         logger.debug(
                             f"{func.__name__} attempt {attempt + 1} failed: {e}, retrying..."
@@ -143,18 +144,22 @@ def retry_on_failure(max_retries=3, delay=0.1):
                             f"{func.__name__} failed after {max_retries} attempts: {e}"
                         )
 
+            # 모든 재시도 실패 시 마지막 예외를 재발생시켜 silent 실패를 방지한다.
+            if last_exception is not None:
+                raise last_exception
             return None
 
         @functools.wraps(func)
         def sync_wrapper(*args, **kwargs):
             import time
 
-            last_exception = None
+            last_exception: Optional[BaseException] = None
 
             for attempt in range(max_retries):
                 try:
                     return func(*args, **kwargs)
                 except (AttributeError, KeyError, IndexError) as e:
+                    last_exception = e
                     if attempt < max_retries - 1:
                         logger.debug(
                             f"{func.__name__} attempt {attempt + 1} failed: {e}, retrying..."
@@ -165,6 +170,9 @@ def retry_on_failure(max_retries=3, delay=0.1):
                             f"{func.__name__} failed after {max_retries} attempts: {e}"
                         )
 
+            # 모든 재시도 실패 시 마지막 예외를 재발생시켜 silent 실패를 방지한다.
+            if last_exception is not None:
+                raise last_exception
             return None
 
         # 비동기 함수인지 확인
