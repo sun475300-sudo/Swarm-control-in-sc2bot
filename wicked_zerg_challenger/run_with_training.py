@@ -100,8 +100,8 @@ def main():
     Main entry point for bot execution with training enabled.
     IMPROVED: Continuous training mode - games will run continuously without stopping.
     """
-    import random
-    import time
+    # NOTE: random / time / datetime 은 모듈 상단에서 이미 import 되므로
+    # 함수 내부의 중복 import (F811) 를 제거.
 
     logger.info("\n" + "=" * 70)
     logger.info("? NEURAL NETWORK TRAINING MODE (CONTINUOUS)")
@@ -882,8 +882,7 @@ def main():
             if str(script_dir) not in sys.path:
                 sys.path.insert(0, str(script_dir))
 
-            from datetime import datetime
-
+            # NOTE: datetime 은 모듈 상단에서 이미 import 됨 (F811 회피)
             from tools.extract_and_train_from_training import TrainingDataExtractor
 
             extractor = TrainingDataExtractor()

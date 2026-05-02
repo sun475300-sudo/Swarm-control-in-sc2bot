@@ -359,8 +359,11 @@ class EconomyManager:
             self._update_resource_reservations()
 
         # ★ NEW: 자원 낭비 방지 (미네랄/가스 과잉 시 대응) ★
+        # 두 분기 모두 실행: 경제확장(_prevent_resource_banking) +
+        # 방어/퀸(_prevent_resource_banking_defense)
         if iteration % 44 == 0:  # ~2초마다
             await self._prevent_resource_banking()
+            await self._prevent_resource_banking_defense()
 
         # ★ NEW: 가스 타이밍 최적화 ★
         if iteration % 33 == 0:  # ~1.5초마다
@@ -1295,14 +1298,20 @@ class EconomyManager:
             if self.bot.iteration % 50 == 0:
                 self.logger.warning(f"[ECONOMY_WARN] Worker redistribution failed: {e}")
 
-    async def _prevent_resource_banking(self) -> None:
+    async def _prevent_resource_banking_defense(self) -> None:
         """
-        ★ Prevent resource banking by spending excess minerals ★
+        ★ Prevent resource banking by spending excess minerals (DEFENSE branch) ★
 
         Logic:
         1. If Minerals > Config.Threshold and Larva < Config.Threshold:
            - Build Extra Queens (Injects/Defense)
            - Build Static Defense (Spines/Spores) - ONLY AFTER 3+ BASES
+
+        NOTE: 같은 클래스 내에 동일한 이름의 _prevent_resource_banking 가
+        두 번 정의되어 있어(F811) 이 메서드는 silently 덮어쓰여 사용되지
+        않았다. 정확히는 line ~2507 의 경제확장 분기가 활성화되어 있어
+        본 메서드(방어/퀸 분기)가 실행되지 않는 회귀가 있었다.
+        rename 하여 on_step 에서 두 분기 모두 실행되도록 분리.
         """
         if not hasattr(self.bot, "minerals"):
             return
@@ -2627,32 +2636,10 @@ class EconomyManager:
                 self._reserved_minerals = 150
                 self._reserved_gas = 100
 
-    async def _reduce_gas_workers(self) -> None:
-        """가스 일꾼 감소 (과잉 가스 방지)"""
-        try:
-            if (
-                not hasattr(self.bot, "gas_buildings")
-                or not self.bot.gas_buildings.ready
-            ):
-                return
-
-            for extractor in self.bot.gas_buildings.ready:
-                if extractor.assigned_harvesters >= 3:
-                    # 가스에서 일꾼 1명 이동
-                    workers_on_gas = self.bot.workers.filter(
-                        lambda w: w.is_gathering and w.order_target == extractor.tag
-                    )
-                    if workers_on_gas:
-                        worker = workers_on_gas.first
-                        # 가까운 미네랄로 이동
-                        closest_mineral = self.bot.mineral_field.closest_to(worker)
-                        if closest_mineral:
-                            self.bot.do(worker.gather(closest_mineral))
-                            return  # 한 번에 하나만
-
-        except (AttributeError, TypeError) as e:
-            if self.bot.iteration % 50 == 0:
-                self.logger.warning(f"[ECONOMY_WARN] Gas worker reduction failed: {e}")
+    # NOTE: 두 번째(line ~3295) _reduce_gas_workers 가 가스 뱅킹
+    # 심각도에 따른 동적 최소유지수(0/1/2) 와 다중 워커 회수 로직을
+    # 가지고 있어 그쪽을 단일 진실로 사용한다. (이전엔 동일 클래스 내
+    # 중복 정의로 F811 발생, 단순 1명 회수 버전이 silently 무시됨)
 
     async def _build_extractors(self) -> None:
         """가스 익스트랙터 건설 (가스 부족 시)"""
