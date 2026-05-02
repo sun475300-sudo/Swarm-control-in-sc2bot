@@ -9,7 +9,7 @@ Unit Helpers - 유닛 관련 공통 유틸리티 함수
 - calculate_unit_supply: Supply 계산
 """
 
-from typing import Any, Callable, List, Optional
+from typing import Callable
 
 from utils.logger import get_logger
 
@@ -28,7 +28,7 @@ logger = get_logger("UnitHelpers")
 def _empty_units():
     """sc2가 없는 환경(테스트 등)에서도 안전하게 동작하는 빈 컬렉션을 반환."""
     if Units is not None:
-        return _empty_units()
+        return Units([], None)
     return []
 
 

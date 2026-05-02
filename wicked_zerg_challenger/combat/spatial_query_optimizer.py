@@ -11,7 +11,6 @@ Performance improvements:
 - Expected speedup: 3-10x for large unit counts
 """
 
-from functools import lru_cache
 from typing import TYPE_CHECKING, Dict, Optional, Tuple
 
 if TYPE_CHECKING:

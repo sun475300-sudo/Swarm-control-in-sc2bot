@@ -14,13 +14,11 @@ sc2reader를 사용한 부정확한 리플레이 분석 대신,
 """
 
 import logging
-import os
-import shutil
 import sys
 import threading
 import time
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, Optional
 
 import numpy as np
 
@@ -42,11 +40,11 @@ class BackgroundParallelLearner:
 
     def __init__(
         self,
-        max_workers: int = 1, # 단일 모델 업데이트이므로 1개면 충분
-        enable_replay_analysis: bool = False, # 더 이상 사용 안 함
+        max_workers: int = 1,  # 단일 모델 업데이트이므로 1개면 충분
+        enable_replay_analysis: bool = False,  # 더 이상 사용 안 함
         enable_model_training: bool = True,
         verbose: bool = True,  # 상세 로깅 활성화
-        max_file_age: int = 3600  # 최대 파일 나이 (초) - 1시간
+        max_file_age: int = 3600,  # 최대 파일 나이 (초) - 1시간
     ):
         self.running = False
         self.enable_model_training = enable_model_training
@@ -56,7 +54,9 @@ class BackgroundParallelLearner:
         # 경로 설정
         self.data_dir = project_root / "local_training" / "data" / "buffer"
         self.archive_dir = project_root / "local_training" / "data" / "archive"
-        self.model_path = project_root / "local_training" / "models" / "rl_agent_model.npz"
+        self.model_path = (
+            project_root / "local_training" / "models" / "rl_agent_model.npz"
+        )
         self.log_dir = project_root / "local_training" / "logs"
 
         # 통계
@@ -74,14 +74,16 @@ class BackgroundParallelLearner:
             "buffer_file_count": 0,
             "archive_file_count": 0,
             "files_skipped_old": 0,  # 너무 오래된 파일로 건너뛴 개수
-            "last_adjusted_lr": 0.0  # 마지막 조정된 learning rate
+            "last_adjusted_lr": 0.0,  # 마지막 조정된 learning rate
         }
 
         self.worker_thread: Optional[threading.Thread] = None
         self.rl_agent = None
         self._last_report_time = 0.0
 
-    def _safe_file_op(self, operation: callable, retries: int = 5, delay: float = 0.5) -> Any:
+    def _safe_file_op(
+        self, operation: callable, retries: int = 5, delay: float = 0.5
+    ) -> Any:
         """파일 작업 재시도 래퍼"""
         msg = ""
         for i in range(retries):
@@ -94,7 +96,7 @@ class BackgroundParallelLearner:
                     raise
             except OSError as e:
                 # WinError 32: The process cannot access the file because it is being used by another process
-                if getattr(e, 'winerror', 0) == 32:
+                if getattr(e, "winerror", 0) == 32:
                     if i < retries - 1:
                         time.sleep(delay)
                     else:
@@ -112,17 +114,17 @@ class BackgroundParallelLearner:
 
         try:
             self.running = True
-            
+
             # 디렉토리 생성
             self.data_dir.mkdir(parents=True, exist_ok=True)
             self.archive_dir.mkdir(parents=True, exist_ok=True)
-            
+
             # RLAgent 초기화 (모델 로드)
             self.rl_agent = RLAgent(model_path=str(self.model_path))
-            
+
             self.worker_thread = threading.Thread(target=self._worker_loop, daemon=True)
             self.worker_thread.start()
-            
+
             logger.info(f"Started (Monitoring {self.data_dir})")
             return True
 
@@ -189,7 +191,9 @@ class BackgroundParallelLearner:
             files_skipped = 0
 
             if self.verbose:
-                logger.info(f"\n[BG_LEARNER] > Processing batch: {len(files)} files available")
+                logger.info(
+                    f"\n[BG_LEARNER] > Processing batch: {len(files)} files available"
+                )
 
             for file_path in files[:10]:  # 한 번에 최대 10개 처리
                 try:
@@ -197,12 +201,15 @@ class BackgroundParallelLearner:
                     file_age = current_time - file_path.stat().st_mtime
                     if file_age > self.max_file_age:
                         if self.verbose:
-                            logger.info(f"  [-] Skipped (too old): {file_path.name} (Age: {file_age/60:.1f} min)")
+                            logger.info(
+                                f"  [-] Skipped (too old): {file_path.name} (Age: {file_age/60:.1f} min)"
+                            )
                         files_skipped += 1
                         # ★ FIX: 오래된 파일 아카이브 보존 (삭제하지 않음, 초기 학습 데이터 유지)
                         try:
                             archive_path = self.archive_dir / f"old_{file_path.name}"
                             import shutil
+
                             shutil.copy2(str(file_path), str(archive_path))
                         except Exception:
                             pass
@@ -211,26 +218,38 @@ class BackgroundParallelLearner:
                     # ★ FIX: Use context manager to ensure file is closed ★
                     loaded_data = {}
                     with np.load(str(file_path)) as data:
-                        loaded_data["states"] = np.copy(data['states'])
-                        loaded_data["actions"] = np.copy(data['actions'])
-                        loaded_data["rewards"] = np.copy(data['rewards'])
-                    
+                        loaded_data["states"] = np.copy(data["states"])
+                        loaded_data["actions"] = np.copy(data["actions"])
+                        loaded_data["rewards"] = np.copy(data["rewards"])
+
                     # ★ FIX: NaN/Inf 검증 (오염 데이터 학습 방지)
-                    if (np.any(np.isnan(loaded_data["states"])) or np.any(np.isinf(loaded_data["states"]))
-                            or np.any(np.isnan(loaded_data["rewards"])) or np.any(np.isinf(loaded_data["rewards"]))):
-                        logger.warning(f"[WARN] Corrupted data (NaN/Inf): {file_path.name} - skipped")
+                    if (
+                        np.any(np.isnan(loaded_data["states"]))
+                        or np.any(np.isinf(loaded_data["states"]))
+                        or np.any(np.isnan(loaded_data["rewards"]))
+                        or np.any(np.isinf(loaded_data["rewards"]))
+                    ):
+                        logger.warning(
+                            f"[WARN] Corrupted data (NaN/Inf): {file_path.name} - skipped"
+                        )
                         continue
                     # 액션 인덱스 범위 검증 (0-4)
-                    if np.any(loaded_data["actions"] < 0) or np.any(loaded_data["actions"] > 4):
-                        logger.warning(f"[WARN] Invalid action indices in {file_path.name} - skipped")
+                    if np.any(loaded_data["actions"] < 0) or np.any(
+                        loaded_data["actions"] > 4
+                    ):
+                        logger.warning(
+                            f"[WARN] Invalid action indices in {file_path.name} - skipped"
+                        )
                         continue
 
                     experiences.append(loaded_data)
                     files_to_archive.append(file_path)
-                    
+
                     if self.verbose:
-                        total_reward = np.sum(loaded_data['rewards'])
-                        logger.info(f"  [OK] Loaded: {file_path.name} (Steps: {len(loaded_data['states'])}, Reward: {total_reward:.2f})")
+                        total_reward = np.sum(loaded_data["rewards"])
+                        logger.info(
+                            f"  [OK] Loaded: {file_path.name} (Steps: {len(loaded_data['states'])}, Reward: {total_reward:.2f})"
+                        )
                 except Exception as e:
                     logger.error(f"[ERROR] Corrupt file {file_path.name}: {e}")
                     # 손상된 파일은 별도 이동 또는 삭제
@@ -247,8 +266,10 @@ class BackgroundParallelLearner:
 
             # 학습 수행
             if self.verbose:
-                total_steps = sum(len(exp['states']) for exp in experiences)
-                logger.info(f"~ Training on {len(experiences)} games ({total_steps} total steps)...")
+                total_steps = sum(len(exp["states"]) for exp in experiences)
+                logger.info(
+                    f"~ Training on {len(experiences)} games ({total_steps} total steps)..."
+                )
 
             # RLAgent 리로드 (최신 모델 반영)
             self.rl_agent = RLAgent(model_path=str(self.model_path))
@@ -264,7 +285,9 @@ class BackgroundParallelLearner:
                 for file_path in files_to_archive:
                     try:
                         archive_path = self.archive_dir / file_path.name
-                        self._safe_file_op(lambda: shutil.move(str(file_path), str(archive_path)))
+                        self._safe_file_op(
+                            lambda: shutil.move(str(file_path), str(archive_path))
+                        )
                         archived_count += 1
                     except Exception as e:
                         logger.error(f"[ERROR] Archive error: {e}")
@@ -283,12 +306,16 @@ class BackgroundParallelLearner:
                     logger.info(f"[OK] Training complete!")
                     logger.info(f"  - Loss: {train_stats.get('loss', 0):.4f}")
                     logger.info(f"  - Games trained: {train_stats.get('games', 0)}")
-                    logger.info(f"  - Adjusted LR: {train_stats.get('adjusted_lr', 0):.6f}")
+                    logger.info(
+                        f"  - Adjusted LR: {train_stats.get('adjusted_lr', 0):.6f}"
+                    )
                     logger.info(f"  - Files archived: {archived_count}")
                     logger.info(f"  - Processing time: {processing_time:.2f}s")
 
                 # 로그 파일에 기록
-                self._log_training_result(len(experiences), train_stats, processing_time)
+                self._log_training_result(
+                    len(experiences), train_stats, processing_time
+                )
 
                 return True
             else:
@@ -298,6 +325,7 @@ class BackgroundParallelLearner:
         except Exception as e:
             logger.error(f"[ERROR] Processing error: {e}")
             import traceback
+
             traceback.print_exc()
             self.stats["errors"] += 1
             return False
@@ -324,9 +352,9 @@ class BackgroundParallelLearner:
         if not self.verbose:
             return
 
-        logger.info("\n" + "="*70)
+        logger.info("\n" + "=" * 70)
         logger.info("? [BACKGROUND LEARNER] STATUS REPORT")
-        logger.info("="*70)
+        logger.info("=" * 70)
         logger.info(f"? Training Statistics:")
         logger.info(f"  Files Processed:      {self.stats['files_processed']}")
         logger.info(f"  Files Skipped (Old):  {self.stats['files_skipped_old']}")
@@ -340,27 +368,37 @@ class BackgroundParallelLearner:
         logger.info(f"  Archived Files:       {self.stats['archive_file_count']}")
         logger.info(f"  Max File Age:         {self.max_file_age/60:.1f} min")
         logger.info(f"? System Status:")
-        logger.info(f"  Active Workers:       {self.stats['active_workers']}/{self.stats['max_workers']}")
-        logger.info(f"  Total Process Time:   {self.stats['total_processing_time']:.2f}s")
+        logger.info(
+            f"  Active Workers:       {self.stats['active_workers']}/{self.stats['max_workers']}"
+        )
+        logger.info(
+            f"  Total Process Time:   {self.stats['total_processing_time']:.2f}s"
+        )
         logger.error(f"  Errors:               {self.stats['errors']}")
 
-        if self.stats['last_batch_time']:
+        if self.stats["last_batch_time"]:
             import datetime
-            last_time = datetime.datetime.fromtimestamp(self.stats['last_batch_time'])
-            logger.info(f"  Last Training:        {last_time.strftime('%Y-%m-%d %H:%M:%S')}")
 
-        logger.info("="*70 + "\n")
+            last_time = datetime.datetime.fromtimestamp(self.stats["last_batch_time"])
+            logger.info(
+                f"  Last Training:        {last_time.strftime('%Y-%m-%d %H:%M:%S')}"
+            )
 
-    def _log_training_result(self, batch_size: int, train_stats: Dict, processing_time: float) -> None:
+        logger.info("=" * 70 + "\n")
+
+    def _log_training_result(
+        self, batch_size: int, train_stats: Dict, processing_time: float
+    ) -> None:
         """학습 결과를 로그 파일에 기록"""
         try:
             self.log_dir.mkdir(parents=True, exist_ok=True)
             log_file = self.log_dir / "background_training.log"
 
             import datetime
+
             timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-            with open(log_file, 'a', encoding='utf-8') as f:
+            with open(log_file, "a", encoding="utf-8") as f:
                 f.write(f"\n[{timestamp}] Batch Training Complete\n")
                 f.write(f"  Batch Size:      {batch_size} games\n")
                 f.write(f"  Total Steps:     {train_stats.get('steps', 0)}\n")
@@ -368,15 +406,19 @@ class BackgroundParallelLearner:
                 f.write(f"  Adjusted LR:     {train_stats.get('adjusted_lr', 0):.6f}\n")
                 f.write(f"  Processing Time: {processing_time:.2f}s\n")
                 f.write(f"  Total Processed: {self.stats['files_processed']} files\n")
-                f.write(f"  Total Skipped:   {self.stats['files_skipped_old']} files (too old)\n")
+                f.write(
+                    f"  Total Skipped:   {self.stats['files_skipped_old']} files (too old)\n"
+                )
                 f.write(f"  Total Batches:   {self.stats['batches_trained']}\n")
                 f.write("-" * 60 + "\n")
         except Exception as e:
             if self.verbose:
                 logger.warning(f"Warning: Could not write log: {e}")
 
+
 # 싱글톤 및 헬퍼
 _instance: Optional[BackgroundParallelLearner] = None
+
 
 def get_background_learner(**kwargs) -> BackgroundParallelLearner:
     """
@@ -393,12 +435,14 @@ def get_background_learner(**kwargs) -> BackgroundParallelLearner:
         _instance = BackgroundParallelLearner(**kwargs)
     return _instance
 
+
 def main():
     logger.info("Testing Background Learner...")
     learner = BackgroundParallelLearner()
     learner.start()
     time.sleep(5)
     learner.stop()
+
 
 if __name__ == "__main__":
     main()

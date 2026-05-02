@@ -14,7 +14,7 @@ Feature #95: 럴커 포지셔닝 매니저
 """
 
 from enum import Enum
-from typing import Dict, List, Optional, Set, Tuple
+from typing import Dict, List, Optional
 
 try:
     from sc2.ids.ability_id import AbilityId

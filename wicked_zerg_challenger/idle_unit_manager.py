@@ -10,7 +10,7 @@
 4. 소수 병력 → 자동 견제
 """
 
-from typing import List, Optional, Set
+from typing import Optional, Set
 
 from sc2.ids.unit_typeid import UnitTypeId
 from sc2.position import Point2

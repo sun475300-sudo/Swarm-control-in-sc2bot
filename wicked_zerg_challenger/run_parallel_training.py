@@ -12,7 +12,6 @@ GPU 가속 활용 + 빠른 게임 전환.
 
 import json
 import logging
-import multiprocessing
 import os
 import random
 import sys

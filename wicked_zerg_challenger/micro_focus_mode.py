@@ -5,8 +5,6 @@ Micro Focus Mode - Combat 우선순위 동적 할당
 전투 상황 감지 시 MicroController에 더 많은 연산 자원과 우선순위를 할당합니다.
 """
 
-from typing import Optional
-
 from utils.logger import get_logger
 
 

@@ -11,12 +11,11 @@ Tests cover:
 - Integration with IntelManager
 """
 
-import json
 import os
 import sys
 import tempfile
 import unittest
-from unittest.mock import MagicMock, Mock, patch
+from unittest.mock import Mock
 
 import pytest
 
@@ -31,7 +30,6 @@ from opponent_modeling import (
     OpponentModel,
     OpponentModeling,
     OpponentStyle,
-    StrategySignal,
 )
 from sc2.position import Point2
 

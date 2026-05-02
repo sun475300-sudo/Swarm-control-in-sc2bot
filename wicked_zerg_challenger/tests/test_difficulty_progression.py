@@ -10,21 +10,18 @@ Tests DifficultyProgression system:
 - Stats persistence
 """
 
-import json
 import os
 import sys
 import tempfile
 import unittest
 from io import StringIO
-from unittest.mock import Mock, patch
 
 # Add parent directory to path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from difficulty_progression import DifficultyProgression
 # 항상 difficulty_progression 모듈이 실제로 사용하는 enum을 재사용해야
 # 동일성 비교(==/in)가 일치한다. (sc2 미설치 시 모듈 자체에 fallback이 정의돼 있음)
-from difficulty_progression import Difficulty, Race  # noqa: E402
+from difficulty_progression import Difficulty, DifficultyProgression, Race  # noqa: E402
 
 
 class TestDifficultyProgressionBasics(unittest.TestCase):

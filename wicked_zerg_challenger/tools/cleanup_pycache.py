@@ -11,7 +11,6 @@ __pycache__ 디렉토리 정리 스크립트
 """
 
 import logging
-import os
 import shutil
 from pathlib import Path
 from typing import List, Tuple
@@ -138,7 +137,9 @@ def cleanup_all(root_dir: str, dry_run: bool = True) -> Tuple[int, int, int]:
     logger.info(f"{'='*60}")
     logger.info(f"  Directories to delete: {len(pycache_dirs)}")
     logger.info(f"  Files to delete: {len(standalone_pyc) + len(temp_files)}")
-    logger.info(f"  Total space to free: {total_bytes:,} bytes ({total_bytes/1024/1024:.2f} MB)")
+    logger.info(
+        f"  Total space to free: {total_bytes:,} bytes ({total_bytes/1024/1024:.2f} MB)"
+    )
 
     if dry_run:
         logger.info(f"\n[DRY RUN] No files were actually deleted.")
@@ -154,17 +155,19 @@ def cleanup_all(root_dir: str, dry_run: bool = True) -> Tuple[int, int, int]:
 def main():
     import argparse
 
-    parser = argparse.ArgumentParser(description="Cleanup __pycache__ and temporary files")
+    parser = argparse.ArgumentParser(
+        description="Cleanup __pycache__ and temporary files"
+    )
     parser.add_argument(
         "--execute",
         action="store_true",
-        help="Actually delete files (default is dry run)"
+        help="Actually delete files (default is dry run)",
     )
     parser.add_argument(
         "--path",
         type=str,
         default=None,
-        help="Root path to cleanup (default: parent of this script)"
+        help="Root path to cleanup (default: parent of this script)",
     )
 
     args = parser.parse_args()
