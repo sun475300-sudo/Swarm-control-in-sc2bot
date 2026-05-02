@@ -5,8 +5,14 @@ Generated 2026-05-02 from a fresh test run + TODO.md review.
 ## Test snapshot (top-level repo)
 
 ```
-410 tests collected | 382 passed | 13 failed | 15 skipped
+Batch 0 (start):  410 collected | 382 passed | 13 failed | 15 skipped
+Batch 1 (PR#67):  410 collected | 387 passed |  8 failed | 15 skipped
+Batch 2:          411 collected | 411 passed (wicked) | 387 + same 8 env (top)
+Batch 3 (this):   419 collected | 396 passed |  8 failed | 15 skipped
 ```
+
+The 8 remaining failures are all pyo3 / `_cffi_backend` environmental
+issues from the test sandbox — not bot bugs.
 
 The 13 failures break down into:
 - 5 × `tests/test_security.py` — environment issue (`_cffi_backend` missing in sandbox); not bot bugs
