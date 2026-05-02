@@ -110,6 +110,76 @@ class SC2Coach:
                 "가스 집약 유닛 테크로 전환하거나, 일꾼을 가스에서 빼세요.",
                 "severity": "medium",
             },
+            {
+                "pattern": r"no.?creep|creep.?spread.?low|크립.?확산.?부족",
+                "category": "macro",
+                "advice": "크립 확산이 부족합니다. 크립 종양은 저그의 시야와 이동속도 핵심입니다. "
+                "퀸으로 본진/확장에서 정기적으로 종양을 펼치세요.",
+                "severity": "medium",
+            },
+            {
+                "pattern": r"no.?queen|퀸.?부족|queen.?missing",
+                "category": "macro",
+                "advice": "퀸 수가 부족합니다. 해처리당 1퀸은 최소 기준입니다. "
+                "인젝트와 크립 종양, 방공 모두에 퀸이 필요합니다.",
+                "severity": "high",
+            },
+            {
+                "pattern": r"no.?upgrade|upgrade.?missing|업그레이드.?누락",
+                "category": "macro",
+                "advice": "업그레이드가 누락되었습니다. 진화소(Evolution Chamber) 활용으로 "
+                "공격/방어 업그레이드를 꾸준히 돌리세요. 미드게임 이후 +1/+1 필수.",
+                "severity": "medium",
+            },
+            {
+                "pattern": r"no.?anti.?air|anti.?air.?missing|대공.?부족",
+                "category": "army",
+                "advice": "대공 유닛/구조가 부족합니다. 하이드라/스포어 크롤러로 공중 견제에 대비하세요. "
+                "의료선 드랍, 뮤탈, 보이드 레이 등에 모두 취약해질 수 있습니다.",
+                "severity": "high",
+            },
+            {
+                "pattern": r"late.?natural|자연확장.?지연|부자연.?늦",
+                "category": "expansion",
+                "advice": "자연 확장(Natural)이 늦습니다. 저그는 자연 확장을 12풀 또는 15풀 후 "
+                "빠르게 가져가야 일꾼 펌핑 속도를 따라잡을 수 있습니다.",
+                "severity": "high",
+            },
+            {
+                "pattern": r"cannon.?rush|벙커.?러시|초반.?건물.?러시",
+                "category": "defense",
+                "advice": "건물 러시(캐논/벙커)가 감지되었습니다. 드론으로 방해하고 "
+                "스포닝 풀 빠르게, 저글링으로 일꾼 견제로 응수하세요.",
+                "severity": "critical",
+            },
+            {
+                "pattern": r"proxy|프록시.?건물|프록시.?병영",
+                "category": "scouting",
+                "advice": "프록시 빌드가 감지되었습니다. 본진 외곽도 정찰하고 "
+                "스포닝 풀 타이밍을 빠르게 가져가세요.",
+                "severity": "high",
+            },
+            {
+                "pattern": r"overlord.?lost|오버로드.?사망|오버로드.?손실",
+                "category": "scouting",
+                "advice": "오버로드가 사망했습니다. 적 진영 부근에서 후퇴 경로를 미리 잡고, "
+                "스피드 업그레이드(Pneumatized Carapace) 후 안전하게 운용하세요.",
+                "severity": "medium",
+            },
+            {
+                "pattern": r"low.?apm|apm.?낮|action.?per.?minute.?low",
+                "category": "macro",
+                "advice": "APM이 낮습니다. 인젝트, 일꾼 생산, 정찰을 동시에 수행하는 "
+                "기본 매크로 사이클을 연습해 손이 비지 않게 하세요.",
+                "severity": "low",
+            },
+            {
+                "pattern": r"unit.?clump|뭉침|focus.?fired",
+                "category": "micro",
+                "advice": "유닛이 뭉쳐서 광역 피해(베인링/탱크/콜로서스)에 취약합니다. "
+                "산개(Spread)와 어택땅 대신 위치 지정 이동으로 분산시키세요.",
+                "severity": "high",
+            },
         ]
 
     def get_coaching_advice(self, game_log: str) -> list:
@@ -200,6 +270,17 @@ class SC2Coach:
                         "severity": "high",
                     }
                 )
+            elif minutes > 25:
+                advices.append(
+                    {
+                        "category": "timing",
+                        "category_name": "타이밍",
+                        "advice": f"게임이 {minutes}분으로 길어졌습니다. "
+                        "후반 운영 시 가스 자원 관리, 다중 확장(4-5베이스), "
+                        "T3 유닛 활용을 점검하세요.",
+                        "severity": "low",
+                    }
+                )
 
         # 유닛 손실 분석
         lost_match = re.findall(r"lost[:\s]+(\d+)", game_log, re.IGNORECASE)
@@ -212,6 +293,40 @@ class SC2Coach:
                         "category_name": "군대 운용",
                         "advice": f"총 {total_lost}유닛이 손실되었습니다. "
                         "무리한 교전을 피하고, 유닛 보존을 우선시하세요.",
+                        "severity": "medium",
+                    }
+                )
+
+        # 일꾼 수 분석 (drone count 패턴)
+        worker_match = re.search(
+            r"(?:drone|worker)[s]?[:\s]+(\d+)", game_log, re.IGNORECASE
+        )
+        if worker_match:
+            worker_count = int(worker_match.group(1))
+            if worker_count < 16:
+                advices.append(
+                    {
+                        "category": "economy",
+                        "category_name": "경제 관리",
+                        "advice": f"일꾼 수가 {worker_count}로 매우 적습니다. "
+                        "최소 미네랄 라인당 16일꾼, 가스당 3일꾼이 효율적입니다.",
+                        "severity": "high",
+                    }
+                )
+
+        # 미네랄 잔고 분석
+        mineral_match = re.search(
+            r"mineral[s]?[:\s]+(\d+)", game_log, re.IGNORECASE
+        )
+        if mineral_match:
+            minerals = int(mineral_match.group(1))
+            if minerals > 1500:
+                advices.append(
+                    {
+                        "category": "economy",
+                        "category_name": "경제 관리",
+                        "advice": f"미네랄 잔고 {minerals}이 너무 높습니다. "
+                        "확장 또는 추가 생산 시설로 자원을 활용하세요.",
                         "severity": "medium",
                     }
                 )
