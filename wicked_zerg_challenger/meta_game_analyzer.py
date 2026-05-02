@@ -4,9 +4,9 @@ HIGH PRIORITY FEATURE
 """
 
 from collections import defaultdict
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
 
 @dataclass
@@ -96,8 +96,8 @@ class MetaGameAnalyzer:
 
     def recommend_strategy(self, enemy_race: str, map_name: str) -> Dict[str, Any]:
         """Recommend best strategy based on current meta"""
-        race_perf = self.race_performance.get(enemy_race, {"wins": 0})
-        map_perf = self.map_performance.get(map_name, {"wins": 0})
+        race_perf = self.race_performance.get(enemy_race, {"wins": 0, "losses": 0})
+        map_perf = self.map_performance.get(map_name, {"wins": 0, "losses": 0})
 
         best_strategies = {
             ("terran", "small"): "RUSH",
@@ -111,10 +111,18 @@ class MetaGameAnalyzer:
         map_size = "small" if map_name in ["GroundZero", "Corridor"] else "large"
         recommended = best_strategies.get((enemy_race.lower(), map_size), "MACRO")
 
+        # Confidence reflects historical sample size: more games = higher trust.
+        race_total = race_perf.get("wins", 0) + race_perf.get("losses", 0)
+        map_total = map_perf.get("wins", 0) + map_perf.get("losses", 0)
+        confidence = min(0.95, 0.5 + 0.05 * min(race_total + map_total, 9))
+
         return {
             "recommended_strategy": recommended,
-            "confidence": 0.75,
-            "reasoning": f"Based on vs {enemy_race} on {map_name}",
+            "confidence": confidence,
+            "reasoning": (
+                f"Based on vs {enemy_race} ({race_total} games) on {map_name} "
+                f"({map_total} games)"
+            ),
             "alternatives": ["RUSH", "MACRO", "TIMING"],
             "meta_analysis": self.get_current_meta_strategies()[:3],
         }

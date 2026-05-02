@@ -297,8 +297,14 @@ class TestOpponentModel(unittest.TestCase):
         self.assertEqual(model.dominant_style, OpponentStyle.AGGRESSIVE)
 
 
-class TestOpponentModeling(unittest.TestCase):
-    """Test suite for OpponentModeling system"""
+class TestOpponentModeling(unittest.IsolatedAsyncioTestCase):
+    """Test suite for OpponentModeling system.
+
+    Uses ``IsolatedAsyncioTestCase`` so ``async def test_*`` methods are awaited
+    natively. Plain ``unittest.TestCase`` would let pytest-asyncio see a
+    coroutine return from a test function, which is a deprecation error in
+    pytest 9+.
+    """
 
     def setUp(self):
         """Set up test fixtures"""

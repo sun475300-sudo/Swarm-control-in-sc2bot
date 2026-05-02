@@ -15,7 +15,7 @@ from __future__ import annotations
 import json
 import os
 from collections import defaultdict
-from dataclasses import asdict, dataclass
+from dataclasses import dataclass
 from enum import Enum
 from typing import Dict, List, Optional, Set, Tuple
 
@@ -23,7 +23,6 @@ from utils.logger import get_logger
 
 try:
     from sc2.bot_ai import BotAI
-    from sc2.position import Point2
 except ImportError:
     pass
 
@@ -273,6 +272,8 @@ class OpponentModeling:
         # Opponent models
         self.opponent_models: Dict[str, OpponentModel] = {}
         self.current_opponent_id: Optional[str] = None
+        # Legacy alias used by integration paths (wicked_zerg_bot_pro_impl).
+        self.current_opponent: Optional[str] = None
         self.current_game_history: Optional[GameHistory] = None
 
         # Current game tracking
@@ -305,6 +306,7 @@ class OpponentModeling:
             # In real games, opponent_id would be player name/ID
             # For now, use race as identifier
             self.current_opponent_id = f"opponent_{race_name}"
+            self.current_opponent = self.current_opponent_id
 
             # Load or create model
             if self.current_opponent_id not in self.opponent_models:
@@ -492,7 +494,7 @@ class OpponentModeling:
         if not hasattr(self.bot, "strategy_manager"):
             return
 
-        strategy_manager = self.bot.strategy_manager
+        self.bot.strategy_manager
 
         # Set blackboard recommendations
         if hasattr(self.bot, "blackboard") and self.bot.blackboard:
@@ -732,7 +734,10 @@ class OpponentModeling:
 
     def on_game_start(self, opponent_id: str, opponent_race=None):
         """게임 시작 시 호출 - 적 추적 시작"""
+        # current_opponent / current_opponent_id are kept in sync so the
+        # legacy and async lifecycle APIs share the same identity.
         self.current_opponent = opponent_id
+        self.current_opponent_id = opponent_id
         # ★ FIX: GameHistory dataclass에 맞는 필드로 초기화
         race_name = (
             opponent_race.name
@@ -762,17 +767,6 @@ class OpponentModeling:
             self.logger.info(
                 f"[OPPONENT_MODELING] Known opponent: {opponent_id} ({self.opponent_models[opponent_id].games_played} games)"
             )
-
-    async def on_step(self, iteration: int):
-        """매 프레임 호출 - 신호 감지"""
-        if not self.current_opponent or not self.bot:
-            return
-
-        game_time = self.bot.time
-
-        # Only detect signals in early game (0-180s)
-        if game_time <= 180.0:
-            await self._detect_early_signals(game_time)
 
     def on_game_end(self, won: bool, lost: bool):
         """게임 종료 시 호출 - 데이터 저장"""

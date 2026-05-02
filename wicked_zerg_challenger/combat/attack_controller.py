@@ -9,7 +9,7 @@ Attack Controller - 공격 제어 시스템
 4. 맵 수색
 """
 
-from typing import TYPE_CHECKING, List, Optional
+from typing import TYPE_CHECKING, List
 
 if TYPE_CHECKING:
     from sc2.position import Point2
@@ -247,7 +247,7 @@ class AttackController:
         Returns:
             공격 타겟 위치 또는 유닛
         """
-        game_time = getattr(self.bot, "time", 0)
+        getattr(self.bot, "time", 0)
         enemy_structures = getattr(self.bot, "enemy_structures", None)
 
         # 적 건물이 있으면 우선 공격

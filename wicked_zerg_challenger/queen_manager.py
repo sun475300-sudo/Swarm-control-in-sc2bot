@@ -707,23 +707,25 @@ class QueenManager:
         """
         current_time = getattr(self.bot, "time", 0.0)
 
-        # CreepyBot-style priority map (lower = higher priority)
+        # Cost-value-aware priority map (lower number = heal first).
+        # Reordered per REMAINING_ISSUES #3: 300/200 Ultralisk and high-impact
+        # spellcasters (Lurker/Viper/Infestor) outrank cheap structures.
         TRANSFUSE_PRIORITY = {}
         priority_defs = [
             ("QUEEN", 0),
-            ("BROODLORD", 1),
-            ("CORRUPTOR", 2),
-            ("SPINECRAWLER", 3),
-            ("OVERSEER", 4),
-            ("ULTRALISK", 5),
-            ("RAVAGER", 6),
-            ("ROACH", 7),
+            ("ULTRALISK", 1),  # 300/200/6 — most expensive ground unit
+            ("BROODLORD", 2),  # 150/150/2 + spawns broodlings
+            ("LURKERMP", 3),  # 200/100, high splash value
+            ("VIPER", 3),  # 200/100, game-changing spells
+            ("INFESTOR", 4),  # 150/150 spellcaster
+            ("CORRUPTOR", 4),  # primary anti-air
+            ("SPINECRAWLER", 5),
+            ("OVERSEER", 6),
+            ("RAVAGER", 7),
             ("HYDRALISK", 8),
-            ("LURKERMP", 9),
-            ("INFESTOR", 10),
-            ("SWARMHOSTMP", 11),
-            ("MUTALISK", 12),
-            ("VIPER", 2),  # Vipers same priority as corruptors (spell utility)
+            ("SWARMHOSTMP", 9),
+            ("ROACH", 10),
+            ("MUTALISK", 11),
         ]
         for name, prio in priority_defs:
             unit_type = getattr(UnitTypeId, name, None)
@@ -844,10 +846,12 @@ class QueenManager:
                         logger.error(f"Transfuse error: {e}")
                     continue
 
-        # CreepyBot: Queens with 190+ energy also transfuse damaged buildings
+        # Queens with 150+ energy may also transfuse damaged buildings.
+        # 190 was overly conservative — it blocked structure heals even when a
+        # queen still had room for one inject (25E) plus a transfuse (50E).
         if hasattr(self.bot, "structures"):
             for queen in queens:
-                if getattr(queen, "energy", 0) < 190:
+                if getattr(queen, "energy", 0) < 150:
                     continue
                 last_t = self.last_transfuse_time.get(queen.tag, 0.0)
                 if current_time - last_t < self.transfuse_cooldown:
@@ -1089,7 +1093,7 @@ class QueenManager:
         기지 근처가 아닌 적 방향으로 점막 확장
         """
         try:
-            from sc2.position import Point2
+            pass
 
             # 적 시작 위치
             enemy_start = None

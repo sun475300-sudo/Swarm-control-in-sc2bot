@@ -11,7 +11,7 @@ Evolution Chamber upgrade manager.
 Chooses upgrades based on unit composition and opponent race.
 """
 
-from typing import Dict, List, Optional, Set
+from typing import Dict, List, Optional
 
 try:
     from sc2.ids.unit_typeid import UnitTypeId
@@ -269,6 +269,16 @@ class EvolutionUpgradeManager:
         # ★★★ Phase 18: 종족별 우선순위 조정 ★★★
         race_modifiers = self.race_priority_modifiers.get(enemy_race, {})
 
+        def _apply_race_priority(lanes: List[str]) -> List[str]:
+            """Reorder lanes by race-specific weight (stable, descending)."""
+            if not race_modifiers:
+                return lanes
+            return sorted(
+                lanes,
+                key=lambda lane: race_modifiers.get(lane, 1.0),
+                reverse=True,
+            )
+
         if is_ranged_main:
             # ★ 바퀴/히드라 체제: 원거리 공격 올인 (사용자 요청)
             # 원거리 공1 -> 공2 -> 공3 -> 방어1...
@@ -297,6 +307,9 @@ class EvolutionUpgradeManager:
             # ★ 저글링/맹독충 체제: 근접 공격 + 방어 균형
             # 근접1 -> 방어1 -> 근접2 -> 방어2...
             priorities = ["melee", "armor", "melee", "armor", "melee", "armor"]
+
+        # Phase 18: race-aware reordering (e.g. vs Terran armor weighted higher)
+        priorities = _apply_race_priority(priorities)
 
         # ★★★ 공중 유닛이 있으면 공중 업그레이드 추가 ★★★
         corruptor_count = composition.get("corruptor", 0)
