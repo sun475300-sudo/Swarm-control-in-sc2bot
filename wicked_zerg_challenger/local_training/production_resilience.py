@@ -2361,7 +2361,7 @@ class ProductionResilience:
                 if b.can_afford(UnitTypeId.OVERLORD):
                     if await self._safe_train(larva, UnitTypeId.OVERLORD):
                         overlords_produced += 1
-                        larvae_list = [l for l in larvae_list if l.tag != larva.tag]
+                        larvae_list = [lv for lv in larvae_list if lv.tag != larva.tag]
             if overlords_produced > 0:
                 logger.info(
                     f"Produced {overlords_produced} Overlords (supply: {int(b.supply_left)} -> {int(b.supply_left + overlords_produced * 8)})"
@@ -2386,7 +2386,7 @@ class ProductionResilience:
                 if b.can_afford(UnitTypeId.MUTALISK):
                     if await self._safe_train(larva, UnitTypeId.MUTALISK):
                         produced += 1
-                        larvae_list = [l for l in larvae_list if l.tag != larva.tag]
+                        larvae_list = [lv for lv in larvae_list if lv.tag != larva.tag]
             if produced > 0:
                 total_produced += produced
                 logger.info(f"Produced {produced} Mutalisks")
@@ -2403,7 +2403,7 @@ class ProductionResilience:
                 if b.can_afford(UnitTypeId.HYDRALISK):
                     if await self._safe_train(larva, UnitTypeId.HYDRALISK):
                         produced += 1
-                        larvae_list = [l for l in larvae_list if l.tag != larva.tag]
+                        larvae_list = [lv for lv in larvae_list if lv.tag != larva.tag]
             if produced > 0:
                 total_produced += produced
                 logger.info(f"Produced {produced} Hydralisks")
@@ -2420,7 +2420,7 @@ class ProductionResilience:
                 if b.can_afford(UnitTypeId.ROACH):
                     if await self._safe_train(larva, UnitTypeId.ROACH):
                         produced += 1
-                        larvae_list = [l for l in larvae_list if l.tag != larva.tag]
+                        larvae_list = [lv for lv in larvae_list if lv.tag != larva.tag]
             if produced > 0:
                 total_produced += produced
                 logger.info(f"Produced {produced} Roaches")
@@ -2473,7 +2473,7 @@ class ProductionResilience:
                 if b.can_afford(UnitTypeId.OVERLORD):
                     if await self._safe_train(larva, UnitTypeId.OVERLORD):
                         total_produced += 1
-                        larvae_list = [l for l in larvae_list if l.tag != larva.tag]
+                        larvae_list = [lv for lv in larvae_list if lv.tag != larva.tag]
 
         # Priority 2: Drones if under saturation
         if b.minerals > 150:
@@ -2489,7 +2489,7 @@ class ProductionResilience:
                     if b.can_afford(UnitTypeId.DRONE):
                         if await self._safe_train(larva, UnitTypeId.DRONE):
                             total_produced += 1
-                            larvae_list = [l for l in larvae_list if l.tag != larva.tag]
+                            larvae_list = [lv for lv in larvae_list if lv.tag != larva.tag]
 
         # Priority 3: Zerglings (25 minerals each, very cost-effective)
         if b.minerals > 200 and b.structures(UnitTypeId.SPAWNINGPOOL).ready.exists:
@@ -2500,7 +2500,7 @@ class ProductionResilience:
                 if b.can_afford(UnitTypeId.ZERGLING):
                     if await self._safe_train(larva, UnitTypeId.ZERGLING):
                         total_produced += 1
-                        larvae_list = [l for l in larvae_list if l.tag != larva.tag]
+                        larvae_list = [lv for lv in larvae_list if lv.tag != larva.tag]
 
         if total_produced > 0 and b.iteration % 100 == 0:
             logger.info(
