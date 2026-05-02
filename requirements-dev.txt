@@ -1,0 +1,16 @@
+# ═══════════════════════════════════════════════
+# Dev / Test dependencies (Wicked Zerg Challenger)
+# ═══════════════════════════════════════════════
+# Install with:  pip install -r requirements-dev.txt
+# These are required to run the test suite (`pytest`).
+# Production runtime does NOT need them — keep them out of requirements.txt
+# to avoid bloating the bot's deployment image.
+
+-r requirements.txt
+
+# Test runner + plugins matched to pytest.ini (asyncio_mode = auto)
+pytest>=8.0
+pytest-asyncio>=0.23
+# pytest-timeout enables per-test timeouts. Re-enable `timeout = 60` in
+# pytest.ini once this is installed in CI.
+pytest-timeout>=2.2
