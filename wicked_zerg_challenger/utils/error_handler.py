@@ -133,7 +133,6 @@ def retry_on_failure(max_retries=3, delay=0.1):
                 try:
                     return await func(*args, **kwargs)
                 except (AttributeError, KeyError, IndexError) as e:
-                    last_exception = e
                     if attempt < max_retries - 1:
                         logger.debug(
                             f"{func.__name__} attempt {attempt + 1} failed: {e}, retrying..."
@@ -156,7 +155,6 @@ def retry_on_failure(max_retries=3, delay=0.1):
                 try:
                     return func(*args, **kwargs)
                 except (AttributeError, KeyError, IndexError) as e:
-                    last_exception = e
                     if attempt < max_retries - 1:
                         logger.debug(
                             f"{func.__name__} attempt {attempt + 1} failed: {e}, retrying..."
