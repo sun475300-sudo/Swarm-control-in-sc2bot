@@ -17,14 +17,19 @@ from typing import Any, Dict
 
 logger = logging.getLogger("VisualizeLearning")
 
-# matplotlib 설치 확인
+# matplotlib 설치 확인 - keep import side-effect-free so this module can be
+# imported by tests/CI even when matplotlib is missing. The CLI entry point
+# (`if __name__ == "__main__":` at the bottom) re-checks before plotting.
 try:
     import matplotlib.gridspec as gridspec
     import matplotlib.pyplot as plt
 except ImportError:
-    logger.error("matplotlib is not installed.")
-    logger.info("Please install it using: pip install matplotlib")
-    sys.exit(1)
+    gridspec = None  # type: ignore[assignment]
+    plt = None  # type: ignore[assignment]
+    logger.warning(
+        "matplotlib is not installed; install with `pip install matplotlib` "
+        "before running the CLI."
+    )
 
 
 class TrainingVisualizer:
@@ -172,13 +177,19 @@ class TrainingVisualizer:
         plt.close()
 
 def main():
+    if plt is None:
+        logger.error(
+            "matplotlib is not installed; install with `pip install matplotlib`."
+        )
+        sys.exit(1)
+
     logger.info("="*60)
     logger.info(" Learning Progress Visualizer")
     logger.info("="*60)
-    
+
     visualizer = TrainingVisualizer()
     visualizer.plot_progress()
-    
+
     logger.info("\nVisualization Complete.")
 
 if __name__ == "__main__":
