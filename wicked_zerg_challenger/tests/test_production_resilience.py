@@ -16,11 +16,16 @@ import sys
 import unittest
 from unittest.mock import AsyncMock, MagicMock, Mock, patch
 
+import pytest
+
 # Add parent directory to path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 sys.path.insert(
     0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "local_training"))
 )
+
+# Skip the entire module if sc2 isn't installed (CI/local without burnysc2).
+pytest.importorskip("sc2", reason="burnysc2 not installed")
 
 from local_training.production_resilience import ProductionResilience
 from sc2.ids.unit_typeid import UnitTypeId

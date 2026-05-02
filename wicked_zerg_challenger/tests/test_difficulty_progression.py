@@ -22,30 +22,9 @@ from unittest.mock import Mock, patch
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 from difficulty_progression import DifficultyProgression
-
-# Mock sc2.data imports
-try:
-    from sc2.data import Difficulty, Race
-except ImportError:
-    # Create mock enums for testing
-    from enum import Enum
-
-    class Difficulty(Enum):
-        VeryEasy = 1
-        Easy = 2
-        Medium = 3
-        MediumHard = 4
-        Hard = 5
-        Harder = 6
-        VeryHard = 7
-        CheatVision = 8
-        CheatMoney = 9
-        CheatInsane = 10
-
-    class Race(Enum):
-        Terran = 1
-        Protoss = 2
-        Zerg = 3
+# 항상 difficulty_progression 모듈이 실제로 사용하는 enum을 재사용해야
+# 동일성 비교(==/in)가 일치한다. (sc2 미설치 시 모듈 자체에 fallback이 정의돼 있음)
+from difficulty_progression import Difficulty, Race  # noqa: E402
 
 
 class TestDifficultyProgressionBasics(unittest.TestCase):
