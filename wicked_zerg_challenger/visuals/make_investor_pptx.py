@@ -88,7 +88,7 @@ def card(slide, left, t, w, h, border=None):
 
 def tag(slide, left, t, txt, bg_c=CYAN, txt_c=BG):
     s = slide.shapes.add_shape(
-        MSO_SHAPE.ROUNDED_RECTANGLE, l, t, Inches(3.2), Inches(0.34)
+        MSO_SHAPE.ROUNDED_RECTANGLE, left, t, Inches(3.2), Inches(0.34)
     )
     s.fill.solid()
     s.fill.fore_color.rgb = bg_c
