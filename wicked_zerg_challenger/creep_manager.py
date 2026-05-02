@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import logging
 import math
+from collections import deque
 from typing import Dict, Iterable, List, Optional, Set, Tuple
 
 logger = logging.getLogger(__name__)
@@ -584,8 +585,6 @@ class CreepManager:
 # =============================================================================
 # Feature #97: CreepSpreadManager - BFS/그리드 기반 크립 스프레드 최적화
 # =============================================================================
-
-from collections import deque
 
 
 class CreepSpreadManager:
