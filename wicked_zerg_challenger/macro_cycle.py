@@ -303,7 +303,11 @@ class MacroCycleManager:
             optimal_larva = base_count * 3
             max_larva = base_count * 19  # 기지당 최대 19라바
 
-            if current_larva > optimal_larva * 2:
+            if current_larva >= max_larva:
+                # 절대 한도 도달: 라바가 사실상 100% 낭비 중
+                self.larva_wasted += current_larva - optimal_larva
+                self.larva_efficiency = 0.0
+            elif current_larva > optimal_larva * 2:
                 # 라바가 너무 많이 쌓이면 효율 감소
                 self.larva_wasted += current_larva - optimal_larva
                 self.larva_efficiency = optimal_larva / max(current_larva, 1)
