@@ -322,9 +322,9 @@ class TestEconomyGasBanking:
         than a specific value.
         """
         threshold = self.economy.gas_overflow_prevention_threshold
-        assert 200 <= threshold <= 1000, (
-            f"gas_overflow_prevention_threshold={threshold} outside [200, 1000]"
-        )
+        assert (
+            200 <= threshold <= 1000
+        ), f"gas_overflow_prevention_threshold={threshold} outside [200, 1000]"
 
 
 # ===== 4. IntelManager NYDUSCANAL in Tech Buildings =====

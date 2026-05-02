@@ -52,7 +52,9 @@ class TestMARLSubmoduleImports:
     def test_qmix_submodule_imports(self):
         mod = _import("qmix_marl.sc2_qmix_agent")
         assert hasattr(mod, "QMIXConfig")
-        assert hasattr(mod, "AgentQNetTorch")  # class defined; instantiation may need torch
+        assert hasattr(
+            mod, "AgentQNetTorch"
+        )  # class defined; instantiation may need torch
         assert hasattr(mod, "AgentQNetNumpy")  # always works
         assert hasattr(mod, "SC2QMIXAgent")
 

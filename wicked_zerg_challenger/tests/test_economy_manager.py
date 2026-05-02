@@ -125,7 +125,9 @@ class TestEconomyManager(unittest.TestCase):
 
     def test_gas_threshold_bounds_invariant(self):
         """Bounds make sense (min < max, both positive)."""
-        self.assertLess(EconomyManager.GAS_THRESHOLD_MIN, EconomyManager.GAS_THRESHOLD_MAX)
+        self.assertLess(
+            EconomyManager.GAS_THRESHOLD_MIN, EconomyManager.GAS_THRESHOLD_MAX
+        )
         self.assertGreater(EconomyManager.GAS_THRESHOLD_MIN, 0)
 
     # ==================== Resource Status & Drone Count Tests ====================
@@ -165,7 +167,9 @@ class TestEconomyManager(unittest.TestCase):
 
     def test_drone_target_bounds_invariant(self):
         """Bounds are sane (positive, min < max)."""
-        self.assertLess(EconomyManager.DRONE_TARGET_MIN, EconomyManager.DRONE_TARGET_MAX)
+        self.assertLess(
+            EconomyManager.DRONE_TARGET_MIN, EconomyManager.DRONE_TARGET_MAX
+        )
         self.assertGreater(EconomyManager.DRONE_TARGET_MIN, 0)
 
     # ==================== Gold Base Detection Tests ====================
