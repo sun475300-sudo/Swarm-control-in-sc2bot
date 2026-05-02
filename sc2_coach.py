@@ -315,9 +315,7 @@ class SC2Coach:
                 )
 
         # 미네랄 잔고 분석
-        mineral_match = re.search(
-            r"mineral[s]?[:\s]+(\d+)", game_log, re.IGNORECASE
-        )
+        mineral_match = re.search(r"mineral[s]?[:\s]+(\d+)", game_log, re.IGNORECASE)
         if mineral_match:
             minerals = int(mineral_match.group(1))
             if minerals > 1500:

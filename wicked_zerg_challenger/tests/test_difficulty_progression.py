@@ -26,7 +26,9 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")
 try:
     from difficulty_progression import DifficultyProgression
 except ImportError:
-    pytest.skip("difficulty_progression dependency not installed", allow_module_level=True)
+    pytest.skip(
+        "difficulty_progression dependency not installed", allow_module_level=True
+    )
 
 # Mock sc2.data imports
 try:
