@@ -43,14 +43,25 @@
       `test_prevent_gas_overflow_noop_below_threshold` (임계 미만 시
       `bot.do` 호출 0회) 추가. sc2 미설치 환경에서는 자동 skip.
 
-## 🚧 Cycle 4 — 추가 후보
+## ✅ Cycle 4 — `_prevent_gas_overflow` 견고성 강화
 
-- [ ] `queen_manager._heal_with_transfusion` 빌딩 수혈 루프 — 한 프레임
-      내 같은 큐가 여러 빌딩 후보에 대해 distance 검사를 도는데, 시도
-      실패 후에도 `last_transfuse_time` 갱신이 누락되지 않는지 확인.
-- [ ] CI lint(black) 사전 디트레인 — main 브랜치의 다수 파일이 black
-      포맷에서 어긋나 있어 PR마다 lint 실패가 비결정적. 이건 별도
-      대규모 PR 필요 (현재 PR 범위 밖).
+- [x] `economy_manager._prevent_gas_overflow`: `workers` /
+      `townhalls` / `mineral_field` 셋 중 하나라도 누락된 비정상
+      상태(예: 게임 재시작, 테스트 셋업)에서 `AttributeError` 가
+      터지던 가능성 제거 — 조기 종료 가드 추가.
+- [x] `Units.filter` 에 전달되는 람다가 루프 변수 `extractor` 를
+      포착하던 잠재적 closure 함정 제거 (`_t=extractor.tag` 디폴트
+      인자로 값 캡쳐, B023 회피). 동작 변경 없음.
+- [x] `tests/test_phase10_improvements::test_prevent_gas_overflow_safe_with_missing_attrs`
+      신규 — 임계 초과 + 누락 어트리뷰트 조합에서 `bot.do` 호출이
+      0회임을 검증.
+
+## 🔭 Cycle 5+ — 다음 후보
+
+- [ ] `queen_manager._heal_with_transfusion` 빌딩 수혈 루프의
+      `used_queen_tags` 미공유 검토 (큐가 한 프레임에 unit + building
+      양쪽 시도하는 상황 회귀 방지).
+- [ ] CI 전체 black 디트레인 (대규모, 본 PR 범위 밖).
 
 ## 📦 Cycle 4 — Code quality / DRY
 

@@ -3350,6 +3350,14 @@ class EconomyManager:
         if gas < self.gas_overflow_prevention_threshold:
             return
 
+        # 일꾼 재배치에 필요한 외부 자원이 모두 존재하지 않으면 조기 종료
+        # (테스트 / 게임 초반 특수 상태에서 None 또는 누락될 수 있음)
+        if not all(
+            hasattr(self.bot, attr)
+            for attr in ("workers", "townhalls", "mineral_field")
+        ):
+            return
+
         # 가스가 넘침 - 가스 일꾼을 미네랄로 이동
         self.logger.info(
             f"[ECONOMY] [*] GAS OVERFLOW: {gas} (moving gas workers to minerals) [*]"
@@ -3366,8 +3374,9 @@ class EconomyManager:
 
             if extractor.assigned_harvesters > 0:
                 # 가스 일꾼을 미네랄로 이동
+                extractor_tag = extractor.tag  # closure에서 안전하게 캡쳐 (B023 회피)
                 workers = self.bot.workers.filter(
-                    lambda w: w.order_target == extractor.tag
+                    lambda w, _t=extractor_tag: w.order_target == _t
                 )
 
                 for worker in workers:

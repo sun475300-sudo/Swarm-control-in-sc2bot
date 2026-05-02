@@ -337,6 +337,19 @@ class TestEconomyGasBanking:
         )
         assert do_calls == []
 
+    def test_prevent_gas_overflow_safe_with_missing_attrs(self):
+        """Above threshold but bot missing workers/townhalls/mineral_field → safe early return."""
+        import asyncio
+
+        do_calls = []
+        self.bot.do = lambda action: do_calls.append(action)
+        self.bot.vespene = self.economy.gas_overflow_prevention_threshold + 500
+        # MockBot has no mineral_field; the new guard must return without raising.
+        asyncio.get_event_loop().run_until_complete(
+            self.economy._prevent_gas_overflow()
+        )
+        assert do_calls == []
+
 
 # ===== 4. IntelManager NYDUSCANAL in Tech Buildings =====
 
