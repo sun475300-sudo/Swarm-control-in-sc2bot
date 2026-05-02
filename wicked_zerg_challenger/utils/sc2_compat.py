@@ -88,8 +88,10 @@ class _AnyAttr(type):
         return cache[name]
 
     def __getitem__(cls, key):
-        # Route Race["Zerg"] / Difficulty["Easy"] through attribute lookup
-        return cls.__getattr__(str(key))
+        # Route Race["Zerg"] / Difficulty["Easy"] through attribute lookup.
+        # `cls.__getattr__` resolves to the metaclass's unbound function
+        # so we have to pass `cls` explicitly.
+        return type(cls).__getattr__(cls, str(key))
 
 
 class _StubBase(metaclass=_AnyAttr):
