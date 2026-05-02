@@ -318,6 +318,25 @@ class TestEconomyGasBanking:
         """Gas overflow threshold should be 800 (further lowered from 1000 for stronger prevention)"""
         assert self.economy.gas_overflow_prevention_threshold == 800
 
+    def test_gas_overflow_threshold_in_sane_range(self):
+        """Threshold must remain between 500 (too aggressive) and 2000 (banking)."""
+        threshold = self.economy.gas_overflow_prevention_threshold
+        assert 500 <= threshold <= 2000
+
+    def test_prevent_gas_overflow_noop_below_threshold(self):
+        """Below threshold, _prevent_gas_overflow must not move any workers."""
+        import asyncio
+
+        # Sentinel: any worker movement would call self.bot.do(...).
+        do_calls = []
+        self.bot.do = lambda action: do_calls.append(action)
+        self.bot.vespene = self.economy.gas_overflow_prevention_threshold - 1
+        # Run the coroutine; it should return early without touching gas_buildings.
+        asyncio.get_event_loop().run_until_complete(
+            self.economy._prevent_gas_overflow()
+        )
+        assert do_calls == []
+
 
 # ===== 4. IntelManager NYDUSCANAL in Tech Buildings =====
 

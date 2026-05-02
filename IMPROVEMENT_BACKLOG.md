@@ -31,15 +31,26 @@
 - [x] `position_utils.py` 가 sc2 미설치 환경에서도 import 되도록
       `Point2` 경량 폴백 추가 — 단위 테스트가 sc2 없이 실행 가능.
 
-## 🚧 Cycle 3 — Manager robustness
+## ✅ Cycle 3 — Manager robustness & code hygiene
 
-- [ ] `queen_manager._heal_with_transfusion` 의 빌딩 수혈 루프가
-      `current_time - last_t < transfuse_cooldown` 가드만 가지고 있어
-      한 프레임 내 같은 큐가 여러 빌딩에 대해 distance 검사 후
-      첫 시도 실패 시에도 `last_transfuse_time` 업데이트가 안 됨.
-      성공 시점에서만 갱신되는지 재확인 + 테스트.
-- [ ] `economy_manager._prevent_gas_overflow`: gas threshold 진입 시
-      행동 단위 테스트 (현재 임계값 상수만 검증되고 동작 미검증).
+- [x] `economy_manager.py`: 두 곳의 stale 한국어 docstring (`3000+ 가스`)
+      현재 임계값(800)과 동기화. `_prevent_gas_overflow` docstring을
+      `gas_overflow_prevention_threshold` 변수 + 한 호출당 6명 캡 명시.
+- [x] `utils/unit_helpers.find_nearby_enemies`: 인자 `range`(builtin
+      shadow) → `radius` 로 교체. 호출부 모두 positional이므로 무영향.
+- [x] `tests/test_phase10_improvements.py`:
+      `test_gas_overflow_threshold_in_sane_range` (500 ≤ T ≤ 2000) +
+      `test_prevent_gas_overflow_noop_below_threshold` (임계 미만 시
+      `bot.do` 호출 0회) 추가. sc2 미설치 환경에서는 자동 skip.
+
+## 🚧 Cycle 4 — 추가 후보
+
+- [ ] `queen_manager._heal_with_transfusion` 빌딩 수혈 루프 — 한 프레임
+      내 같은 큐가 여러 빌딩 후보에 대해 distance 검사를 도는데, 시도
+      실패 후에도 `last_transfuse_time` 갱신이 누락되지 않는지 확인.
+- [ ] CI lint(black) 사전 디트레인 — main 브랜치의 다수 파일이 black
+      포맷에서 어긋나 있어 PR마다 lint 실패가 비결정적. 이건 별도
+      대규모 PR 필요 (현재 PR 범위 밖).
 
 ## 📦 Cycle 4 — Code quality / DRY
 
