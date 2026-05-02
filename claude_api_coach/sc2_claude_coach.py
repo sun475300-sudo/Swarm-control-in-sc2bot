@@ -20,7 +20,6 @@ Supports 260+ language localisation via label keys.
 
 from __future__ import annotations
 
-import json
 import logging
 import os
 import time
@@ -28,14 +27,10 @@ from dataclasses import dataclass, field
 from enum import Enum, auto
 from typing import (
     Any,
-    Callable,
     Dict,
-    Generator,
     List,
     Optional,
-    Sequence,
     Tuple,
-    Union,
 )
 
 import numpy as np
@@ -352,7 +347,7 @@ class StrategyPromptBuilder:
             self.serializer.serialize(state),
             "",
             f"[TIMING ALERT] Expected {attack_type} in ~{eta_min}:{eta_sec:02d}!",
-            f"What should I build and where should I position to defend?",
+            "What should I build and where should I position to defend?",
         ]
         return "\n".join(parts)
 
@@ -874,7 +869,7 @@ def demo() -> None:
     print("[9] Session summary:")
     print(f"    {coach.session.get_context_summary()}")
     print(f"    Messages: {len(coach.session.messages)}")
-    print(f"    API format preview:")
+    print("    API format preview:")
     api_msgs = coach.get_history()
     for m in api_msgs[:4]:
         preview = m["content"][:80].replace("\n", " ")

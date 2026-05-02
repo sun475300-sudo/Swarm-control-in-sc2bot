@@ -10,7 +10,7 @@ Feature #92: Queen Walk 러시 매니저
 """
 
 from enum import Enum
-from typing import Dict, List, Optional, Set
+from typing import Dict, Optional, Set
 
 try:
     from sc2.ids.ability_id import AbilityId

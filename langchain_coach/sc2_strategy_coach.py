@@ -30,32 +30,24 @@ import re
 import time
 from dataclasses import dataclass, field
 from enum import Enum, auto
-from pathlib import Path
 from typing import (
     Any,
-    Callable,
     Dict,
     Generator,
     List,
     Optional,
-    Sequence,
     Tuple,
-    Union,
 )
 
 import numpy as np
-from numpy.typing import NDArray
 
 # ---------------------------------------------------------------------------
 # Optional LangChain imports
 # ---------------------------------------------------------------------------
 _LANGCHAIN_AVAILABLE = False
 try:
-    from langchain.chains import LLMChain, SequentialChain
-    from langchain.memory import ConversationBufferMemory, ConversationSummaryMemory
+    from langchain.chains import LLMChain
     from langchain.prompts import PromptTemplate
-    from langchain.schema import AIMessage, BaseMessage, HumanMessage
-    from langchain.tools import BaseTool
 
     _LANGCHAIN_AVAILABLE = True
 except ImportError:
@@ -447,7 +439,6 @@ class BuildOrderDB:
     def recommend(self, state: SC2GameState) -> List[Dict[str, Any]]:
         """Recommend builds based on current game state."""
         matchup = state.matchup.value
-        phase = state.phase.name
         candidates = self.search(matchup=matchup)
         # Prefer builds matching current or next phase
         phase_order = [
@@ -601,7 +592,6 @@ class ReplayAnalyser:
         # Derived metrics
         resource_efficiency = army_created / max(minerals_collected + gas_collected, 1)
         army_trade = army_created / max(army_lost, 1)
-        worker_saturation = workers_created / max(workers_created - workers_lost, 1)
 
         issues: List[str] = []
         strengths: List[str] = []
@@ -1425,7 +1415,7 @@ def run_demo(verbose: bool = True) -> None:
 
         # Show game state
         if verbose:
-            print(f"\nGame State:")
+            print("\nGame State:")
             for line in state.to_description().split("\n"):
                 print(f"  {line}")
             print()
@@ -1438,7 +1428,7 @@ def run_demo(verbose: bool = True) -> None:
         # Show counters if enemy army known
         if state.enemy_army_scouted:
             counters = coach.get_counters(state.enemy_army_scouted)
-            print(f"Counter Analysis:")
+            print("Counter Analysis:")
             print(f"  Recommended: {', '.join(counters['recommended_units'][:4])}")
             print()
 
@@ -1447,7 +1437,7 @@ def run_demo(verbose: bool = True) -> None:
             matchup=state.matchup.value, phase=state.phase.name
         )
         if builds:
-            print(f"Matching Build Orders:")
+            print("Matching Build Orders:")
             for b in builds[:2]:
                 print(f"  [{b['name']}] {b['description']}")
             print()

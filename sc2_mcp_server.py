@@ -1,8 +1,8 @@
-import asyncio
 import json
 import logging
 import os
 import subprocess
+import sys
 import urllib.error
 import urllib.parse
 import urllib.request
@@ -68,11 +68,28 @@ async def read_log_content(filename: str) -> str:
 
 @mcp.tool()
 async def run_sc2_test_game() -> str:
-    """Runs a quick test game to verify bot stability."""
+    """Runs a quick test game to verify bot stability.
+
+    Cross-platform: Windows uses cmd start, others use shell script.
+    """
     try:
-        # Run in background via CMD to avoid blocking the MCP server
-        subprocess.Popen(["cmd", "/c", "start", "run_combat_tests.bat"], cwd=SC2_DIR)
-        return "Started combat tests in a new window."
+        if sys.platform == "win32":
+            script_path = os.path.join(SC2_DIR, "run_combat_tests.bat")
+            if not os.path.isfile(script_path):
+                return f"Test script not found: {script_path}"
+            subprocess.Popen(
+                ["cmd", "/c", "start", "run_combat_tests.bat"], cwd=SC2_DIR
+            )
+            return "Started combat tests in a new window."
+        else:
+            script_path = os.path.join(SC2_DIR, "run_combat_tests.sh")
+            if not os.path.isfile(script_path):
+                return (
+                    f"Test script not found: {script_path}. "
+                    "On Linux/Mac, create run_combat_tests.sh."
+                )
+            subprocess.Popen(["bash", script_path], cwd=SC2_DIR)
+            return "Started combat tests in background."
     except Exception as e:
         return f"Failed to start game: {str(e)}"
 
@@ -361,8 +378,8 @@ async def analyze_replay(replay_path: str = "") -> str:
                 f"맵: {replay.map_name}\n"
                 f"게임 길이: {replay.game_length}\n"
                 f"카테고리: {replay.category}\n"
-                f"플레이어:\n" + "\n".join(players) + "\n"
-                f"━━━━━━━━━━━━━━━━━━━━"
+                "플레이어:\n" + "\n".join(players) + "\n"
+                "━━━━━━━━━━━━━━━━━━━━"
             )
             # 유닛 생산 통계 (가능한 경우)
             if hasattr(replay, "tracker_events"):
@@ -500,10 +517,10 @@ async def sc2_coaching_check() -> str:
             )
             if warnings:
                 status += (
-                    f"\n⚠️ 경고:\n" + "\n".join(f"  - {w}" for w in warnings) + "\n"
+                    "\n⚠️ 경고:\n" + "\n".join(f"  - {w}" for w in warnings) + "\n"
                 )
             if tips:
-                status += f"\n💡 팁:\n" + "\n".join(f"  - {t}" for t in tips) + "\n"
+                status += "\n💡 팁:\n" + "\n".join(f"  - {t}" for t in tips) + "\n"
             if not warnings and not tips:
                 status += "\n✅ 현재 상태 양호!\n"
 
@@ -596,7 +613,11 @@ async def track_ladder(player_name: str, server: str = "kr") -> str:
 
             result = "\n".join(lines)
         else:
-            result = f"'{player_name}'을(를) SC2Pulse에서 찾을 수 없습니다.\n직접 확인: https://sc2pulse.nephest.com/sc2/?type=search&name={encoded_name}"
+            result = (
+                f"'{player_name}'을(를) SC2Pulse에서 찾을 수 없습니다.\n"
+                f"직접 확인: https://sc2pulse.nephest.com/sc2/"
+                f"?type=search&name={encoded_name}"
+            )
 
         # 추적 기록 저장
         os.makedirs(os.path.dirname(_LADDER_CACHE_FILE), exist_ok=True)

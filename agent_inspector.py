@@ -4,12 +4,11 @@ Inspects all agent modules for bugs, issues, and improvements
 """
 
 import ast
-import os
 import re
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Tuple
+from typing import List
 
 
 @dataclass
@@ -73,7 +72,7 @@ class AgentInspector:
                                             line_number=child.lineno,
                                             issue_type="BUG",
                                             severity="HIGH",
-                                            description=f"Potential unwrapped self.bot.do() call",
+                                            description="Potential unwrapped self.bot.do() call",
                                             code_snippet=ast.get_source_segment(
                                                 content, child
                                             )
@@ -91,7 +90,7 @@ class AgentInspector:
                             line_number=i,
                             issue_type="TODO" if "TODO" in line else "FIXME",
                             severity=severity,
-                            description=f"Marked as TODO/FIXME",
+                            description="Marked as TODO/FIXME",
                             code_snippet=line.strip(),
                         )
                     )
@@ -175,7 +174,7 @@ class AgentInspector:
             "AGENT INSPECTION REPORT",
             "=" * 80,
             f"Generated: {datetime.now().isoformat()}",
-            f"",
+            "",
             f"Total Agents Scanned: {len(self.reports)}",
             f"Total Issues Found: {total_issues}",
             "",

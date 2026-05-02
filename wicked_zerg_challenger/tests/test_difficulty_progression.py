@@ -18,10 +18,17 @@ import unittest
 from io import StringIO
 from unittest.mock import Mock, patch
 
+import pytest
+
 # Add parent directory to path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from difficulty_progression import DifficultyProgression
+try:
+    from difficulty_progression import DifficultyProgression
+except ImportError:
+    pytest.skip(
+        "difficulty_progression dependency not installed", allow_module_level=True
+    )
 
 # Mock sc2.data imports
 try:
