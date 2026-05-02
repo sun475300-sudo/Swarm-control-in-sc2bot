@@ -338,7 +338,7 @@ class MultiprongAttackManager:
 
         # 집결 지점 설정
         if hasattr(self.bot, "start_location") and hasattr(self.bot, "game_info"):
-            map_center = self.bot.game_info.map_center
+            self.bot.game_info.map_center
             for prong in self.prongs.values():
                 if prong.target:
                     prong.rally_point = self.bot.start_location.towards(

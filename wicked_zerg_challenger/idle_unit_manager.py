@@ -226,7 +226,7 @@ class IdleUnitManager:
         if not self.bot.townhalls.exists:
             return
 
-        main_base = self.bot.townhalls.first.position
+        self.bot.townhalls.first.position
 
         combat_units = self.bot.units.filter(
             lambda u: u.type_id in self.combat_unit_types
