@@ -407,10 +407,9 @@ class MicroCombat:
             # OPTIMIZED: 4 → 2 (more aggressive surround)
             if len(nearby_allies) >= 2:
                 # ★ Enhanced Surround: Calculate optimal surround position ★
-                # NOTE: math 은 모듈 상단(line 10) 에서 이미 import 됨 (F811 제거)
-
-                # Count allies to determine surround angle
-                ally_count = len(nearby_allies)
+                # NOTE: math 은 모듈 상단(line 10) 에서 이미 import 됨.
+                # Surround offset 은 zergling.tag % 8 로 8방향에 분산하므로
+                # ally_count 자체는 더 이상 필요하지 않음.
 
                 # Calculate angle based on zergling's position relative to target
                 dx = zergling.position.x - target.position.x

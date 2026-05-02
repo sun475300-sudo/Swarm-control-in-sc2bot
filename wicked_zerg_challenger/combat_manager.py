@@ -2397,14 +2397,15 @@ class CombatManager:
             return
 
         # ★ REGEN DANCE: Separate damaged units during harassment ★
+        # _regenerating: regen_dance 가 자체적으로 후퇴 명령 — 호출자
+        # 추가 처리 불필요. underscore prefix 로 의도 명시.
         if self.mutalisk_micro:
             current_time = getattr(self.bot, "time", 0)
-            combat_ready, regenerating = await self.mutalisk_micro.execute_regen_dance(
+            combat_ready, _regenerating = await self.mutalisk_micro.execute_regen_dance(
                 mutalisks, current_time, self.bot
             )
         else:
             combat_ready = list(mutalisks)
-            regenerating = []
 
         if not combat_ready:
             return  # All units regenerating
@@ -2842,15 +2843,15 @@ class CombatManager:
         if not mutalisks:
             return
 
-        # ★ REGEN DANCE: Separate damaged units ★
+        # ★ REGEN DANCE: Separate damaged units ★ (_regenerating 은
+        # regen_dance 가 자체 후퇴 처리)
         if self.mutalisk_micro:
             current_time = getattr(self.bot, "time", 0)
-            combat_ready, regenerating = await self.mutalisk_micro.execute_regen_dance(
+            combat_ready, _regenerating = await self.mutalisk_micro.execute_regen_dance(
                 mutalisks, current_time, self.bot
             )
         else:
             combat_ready = list(mutalisks)
-            regenerating = []
 
         if not combat_ready:
             return  # All units regenerating
@@ -3043,19 +3044,9 @@ class CombatManager:
             "PHOENIX",
         }
 
-        # 비전투 유닛 (정찰용, 위협이 낮음)
-        non_combat_names = {
-            "SCV",
-            "PROBE",
-            "DRONE",
-            "MULE",
-            "OBSERVER",
-            "OVERLORD",
-            "OVERSEER",
-            "WARPPRISM",
-            "RAVEN",
-            "CHANGELING",
-        }
+        # NOTE: 이전에 non_combat_names 집합이 정의돼 있었지만, 위협
+        # 판정 로직은 combat_unit_names 만 사용한다 (비전투 유닛은
+        # 단순 카운트로 처리). 미사용 집합을 제거하여 오해 소지 제거.
 
         for th in self.bot.townhalls:
             # 일반 감지 거리
