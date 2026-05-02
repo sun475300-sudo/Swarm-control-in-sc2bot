@@ -9,7 +9,7 @@ Unit Helpers - 유닛 관련 공통 유틸리티 함수
 - calculate_unit_supply: Supply 계산
 """
 
-from typing import Any, Callable, List, Optional
+from typing import Callable
 
 from utils.logger import get_logger
 
@@ -25,6 +25,13 @@ except ImportError:
 logger = get_logger("UnitHelpers")
 
 
+def _empty_units():
+    """sc2가 없는 환경(테스트 등)에서도 안전하게 동작하는 빈 컬렉션을 반환."""
+    if Units is not None:
+        return Units([], None)
+    return []
+
+
 def find_nearby_enemies(unit: Unit, enemy_units: Units, range: float) -> Units:
     """
     특정 거리 내의 적 유닛 찾기
@@ -38,7 +45,7 @@ def find_nearby_enemies(unit: Unit, enemy_units: Units, range: float) -> Units:
         거리 내의 적 유닛 컬렉션
     """
     if not unit or not enemy_units:
-        return Units([], None)
+        return _empty_units()
 
     try:
         # closer_than 메서드 사용 (최적화)
@@ -46,10 +53,11 @@ def find_nearby_enemies(unit: Unit, enemy_units: Units, range: float) -> Units:
             return enemy_units.closer_than(range, unit)
         else:
             # 폴백: 직접 필터링
-            return Units([e for e in enemy_units if e.distance_to(unit) < range], None)
+            filtered = [e for e in enemy_units if e.distance_to(unit) < range]
+            return Units(filtered, None) if Units is not None else filtered
     except Exception as e:
         logger.debug(f"find_nearby_enemies error: {e}")
-        return Units([], None)
+        return _empty_units()
 
 
 def get_health_ratio(unit: Unit) -> float:
@@ -112,13 +120,13 @@ def filter_workers_by_task(
         필터링된 일꾼 컬렉션
     """
     if not workers:
-        return Units([], None)
+        return _empty_units()
 
     try:
         return workers.filter(task_filter)
     except Exception as e:
         logger.debug(f"filter_workers_by_task error: {e}")
-        return Units([], None)
+        return _empty_units()
 
 
 def execute_unit_action(unit: Unit, action: Callable, *args, **kwargs) -> bool:

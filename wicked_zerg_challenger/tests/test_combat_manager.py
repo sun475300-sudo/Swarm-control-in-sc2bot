@@ -14,10 +14,15 @@ Tests cover:
 import os
 import sys
 import unittest
-from unittest.mock import MagicMock, Mock, patch
+from unittest.mock import Mock
+
+import pytest
 
 # Add parent directory to path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+
+# Skip the entire module if sc2 isn't installed (CI/local without burnysc2).
+pytest.importorskip("sc2", reason="burnysc2 not installed")
 
 from combat_manager import CombatManager
 from sc2.ids.unit_typeid import UnitTypeId

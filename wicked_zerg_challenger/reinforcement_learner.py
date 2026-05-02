@@ -10,7 +10,7 @@ import logging
 import os
 import statistics
 from collections import defaultdict
-from typing import Any, Dict, List
+from typing import Dict, List
 
 logger = logging.getLogger("ReinforcementLearner")
 

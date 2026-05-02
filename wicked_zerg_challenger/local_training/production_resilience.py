@@ -1,5 +1,4 @@
 import logging
-import random
 from typing import Any, Dict
 
 from config.unit_configs import EconomyConfig
@@ -98,15 +97,8 @@ except ImportError:
 
 # Import production modules
 from local_training.production import (
-    balanced_production,
     can_expand_safely,
-    cleanup_build_reservations,
-    emergency_zergling_production,
-    get_counter_unit,
-    log_expand_block,
-    produce_army_unit,
     safe_train,
-    try_expand,
 )
 
 
@@ -708,14 +700,10 @@ class ProductionResilience:
         if b.minerals > 1500:
             ignore_caps = True
 
-        # Get current unit counts
+        # Get current unit counts (현재는 Zergling cap만 사용; 다른 유닛 비율
+        # 캡 로직은 미구현 — docstring의 비율은 향후 작업 항목)
         zergling_count = (
             b.units(UnitTypeId.ZERGLING).amount if hasattr(b, "units") else 0
-        )
-        roach_count = b.units(UnitTypeId.ROACH).amount if hasattr(b, "units") else 0
-        hydra_count = b.units(UnitTypeId.HYDRALISK).amount if hasattr(b, "units") else 0
-        mutalisk_count = (
-            b.units(UnitTypeId.MUTALISK).amount if hasattr(b, "units") else 0
         )
 
         # Check available tech
@@ -1013,7 +1001,6 @@ class ProductionResilience:
                         logger.warning(
                             f"TechCoordinator not available, Spawning Pool build skipped"
                         )
-                        pass
 
             # Natural Expansion timing
             if self.strategy_manager:
@@ -1175,8 +1162,6 @@ class ProductionResilience:
                     except Exception:
                         pass
                 can_afford_zergling = b.can_afford(UnitTypeId.ZERGLING)
-                can_afford_roach = b.can_afford(UnitTypeId.ROACH)
-                can_afford_hydralisk = b.can_afford(UnitTypeId.HYDRALISK)
 
                 # IMPROVED: Use DEBUG level for detailed logs during training
                 # Only print critical issues at INFO level

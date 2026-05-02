@@ -11,22 +11,25 @@ Tests cover:
 - Integration with IntelManager
 """
 
-import json
 import os
 import sys
 import tempfile
 import unittest
-from unittest.mock import MagicMock, Mock, patch
+from unittest.mock import Mock
+
+import pytest
 
 # Add parent directory to path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+
+# Skip the entire module if sc2 isn't installed (CI/local without burnysc2).
+pytest.importorskip("sc2", reason="burnysc2 not installed")
 
 from opponent_modeling import (
     GameHistory,
     OpponentModel,
     OpponentModeling,
     OpponentStyle,
-    StrategySignal,
 )
 from sc2.position import Point2
 
