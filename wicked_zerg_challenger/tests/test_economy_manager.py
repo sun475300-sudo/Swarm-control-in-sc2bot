@@ -76,6 +76,55 @@ class TestEconomyManager(unittest.TestCase):
         """Test emergency mode defaults to False"""
         self.assertFalse(self.manager._emergency_mode)
 
+    def test_is_emergency_mode_default(self):
+        """is_emergency_mode() should report False by default."""
+        self.assertFalse(self.manager.is_emergency_mode())
+
+    def test_is_emergency_mode_after_toggle(self):
+        """is_emergency_mode() round-trips through set_emergency_mode()."""
+        self.manager.set_emergency_mode(True)
+        self.assertTrue(self.manager.is_emergency_mode())
+        self.manager.set_emergency_mode(False)
+        self.assertFalse(self.manager.is_emergency_mode())
+
+    def test_set_emergency_mode_coerces_truthy(self):
+        """Truthy non-bool inputs are coerced to True."""
+        self.manager.set_emergency_mode("yes")  # type: ignore[arg-type]
+        self.assertIs(self.manager._emergency_mode, True)
+        self.manager.set_emergency_mode(1)  # type: ignore[arg-type]
+        self.assertIs(self.manager._emergency_mode, True)
+
+    def test_set_emergency_mode_coerces_falsy(self):
+        """Falsy non-bool inputs (None, '', 0, []) are coerced to False."""
+        self.manager.set_emergency_mode(True)
+        self.manager.set_emergency_mode(None)  # type: ignore[arg-type]
+        self.assertIs(self.manager._emergency_mode, False)
+        self.manager.set_emergency_mode(True)
+        self.manager.set_emergency_mode("")  # type: ignore[arg-type]
+        self.assertIs(self.manager._emergency_mode, False)
+        self.manager.set_emergency_mode(True)
+        self.manager.set_emergency_mode(0)  # type: ignore[arg-type]
+        self.assertIs(self.manager._emergency_mode, False)
+
+    def test_dynamic_gas_workers_default_enabled(self):
+        """Dynamic gas-worker rebalancing is on by default."""
+        self.assertTrue(self.manager.is_dynamic_gas_workers_enabled())
+
+    def test_set_dynamic_gas_workers_round_trip(self):
+        """Setter and getter agree across both directions."""
+        self.manager.set_dynamic_gas_workers(False)
+        self.assertFalse(self.manager.is_dynamic_gas_workers_enabled())
+        self.assertIs(self.manager.dynamic_gas_workers_enabled, False)
+        self.manager.set_dynamic_gas_workers(True)
+        self.assertTrue(self.manager.is_dynamic_gas_workers_enabled())
+
+    def test_set_dynamic_gas_workers_coerces(self):
+        """Truthy/falsy inputs are coerced to bool."""
+        self.manager.set_dynamic_gas_workers("on")  # type: ignore[arg-type]
+        self.assertIs(self.manager.dynamic_gas_workers_enabled, True)
+        self.manager.set_dynamic_gas_workers(0)  # type: ignore[arg-type]
+        self.assertIs(self.manager.dynamic_gas_workers_enabled, False)
+
     def test_gold_mineral_threshold_constant(self):
         """Test GOLD_MINERAL_THRESHOLD is properly defined"""
         self.assertEqual(EconomyManager.GOLD_MINERAL_THRESHOLD, 1200)
@@ -83,6 +132,52 @@ class TestEconomyManager(unittest.TestCase):
     def test_balancer_initialization(self):
         """Test EconomyCombatBalancer is initialized"""
         self.assertIsNotNone(self.manager.balancer)
+
+    # ==================== Gas Overflow Threshold Tests ====================
+
+    def test_get_gas_overflow_threshold_default(self):
+        """Default gas threshold should be the post-tightening 800."""
+        self.assertEqual(self.manager.get_gas_overflow_threshold(), 800)
+
+    def test_set_gas_overflow_threshold_within_bounds(self):
+        """Setter accepts in-range value and returns it."""
+        applied = self.manager.set_gas_overflow_threshold(600)
+        self.assertEqual(applied, 600)
+        self.assertEqual(self.manager.get_gas_overflow_threshold(), 600)
+
+    def test_set_gas_overflow_threshold_clamps_low(self):
+        """Below-floor values clamp up to GAS_THRESHOLD_MIN."""
+        applied = self.manager.set_gas_overflow_threshold(-50)
+        self.assertEqual(applied, EconomyManager.GAS_THRESHOLD_MIN)
+        self.assertEqual(
+            self.manager.get_gas_overflow_threshold(),
+            EconomyManager.GAS_THRESHOLD_MIN,
+        )
+
+    def test_set_gas_overflow_threshold_clamps_high(self):
+        """Above-ceiling values clamp down to GAS_THRESHOLD_MAX."""
+        applied = self.manager.set_gas_overflow_threshold(99999)
+        self.assertEqual(applied, EconomyManager.GAS_THRESHOLD_MAX)
+
+    def test_set_gas_overflow_threshold_invalid_input_no_op(self):
+        """Non-numeric input leaves the threshold untouched."""
+        before = self.manager.get_gas_overflow_threshold()
+        applied = self.manager.set_gas_overflow_threshold("nope")  # type: ignore[arg-type]
+        self.assertEqual(applied, before)
+        self.assertEqual(self.manager.get_gas_overflow_threshold(), before)
+
+    def test_set_gas_overflow_threshold_none_input_no_op(self):
+        """None input leaves the threshold untouched."""
+        before = self.manager.get_gas_overflow_threshold()
+        applied = self.manager.set_gas_overflow_threshold(None)  # type: ignore[arg-type]
+        self.assertEqual(applied, before)
+
+    def test_gas_threshold_bounds_invariant(self):
+        """Bounds make sense (min < max, both positive)."""
+        self.assertLess(
+            EconomyManager.GAS_THRESHOLD_MIN, EconomyManager.GAS_THRESHOLD_MAX
+        )
+        self.assertGreater(EconomyManager.GAS_THRESHOLD_MIN, 0)
 
     # ==================== Resource Status & Drone Count Tests ====================
 
@@ -96,6 +191,35 @@ class TestEconomyManager(unittest.TestCase):
         self.manager._target_drone_count = 80
         result = self.manager.get_target_drone_count()
         self.assertEqual(result, 80)
+
+    def test_set_target_drone_count_within_bounds(self):
+        """Setter accepts in-range value and returns it."""
+        applied = self.manager.set_target_drone_count(70)
+        self.assertEqual(applied, 70)
+        self.assertEqual(self.manager.get_target_drone_count(), 70)
+
+    def test_set_target_drone_count_clamps_low(self):
+        """Below-floor values clamp up to DRONE_TARGET_MIN."""
+        applied = self.manager.set_target_drone_count(0)
+        self.assertEqual(applied, EconomyManager.DRONE_TARGET_MIN)
+
+    def test_set_target_drone_count_clamps_high(self):
+        """Above-ceiling values clamp down to DRONE_TARGET_MAX."""
+        applied = self.manager.set_target_drone_count(500)
+        self.assertEqual(applied, EconomyManager.DRONE_TARGET_MAX)
+
+    def test_set_target_drone_count_invalid_input_no_op(self):
+        """Non-numeric input leaves the target untouched."""
+        before = self.manager.get_target_drone_count()
+        applied = self.manager.set_target_drone_count("oops")  # type: ignore[arg-type]
+        self.assertEqual(applied, before)
+
+    def test_drone_target_bounds_invariant(self):
+        """Bounds are sane (positive, min < max)."""
+        self.assertLess(
+            EconomyManager.DRONE_TARGET_MIN, EconomyManager.DRONE_TARGET_MAX
+        )
+        self.assertGreater(EconomyManager.DRONE_TARGET_MIN, 0)
 
     # ==================== Gold Base Detection Tests ====================
 

@@ -205,8 +205,55 @@ class EconomyManager:
             self._last_redistribute_time = 0  # 즉시 재분배
 
     def set_emergency_mode(self, active: bool) -> None:
-        """Set emergency mode validation."""
-        self._emergency_mode = active
+        """Toggle emergency mode. Input is coerced to bool so callers can
+        pass any truthy/falsy value safely (e.g. dict.get(...) -> None)."""
+        self._emergency_mode = bool(active)
+
+    def is_emergency_mode(self) -> bool:
+        """Whether emergency mode is currently active."""
+        return bool(getattr(self, "_emergency_mode", False))
+
+    def set_dynamic_gas_workers(self, enabled: bool) -> None:
+        """Enable/disable production-queue-driven gas worker rebalancing.
+
+        Disabling pins gas workers to whatever count is currently set,
+        which is useful when an outer planner is doing its own gas
+        scheduling (e.g. forced gas-rush during an early all-in).
+        """
+        self.dynamic_gas_workers_enabled = bool(enabled)
+
+    def is_dynamic_gas_workers_enabled(self) -> bool:
+        """Whether dynamic gas-worker rebalancing is on."""
+        return bool(getattr(self, "dynamic_gas_workers_enabled", True))
+
+    # ── Gas overflow tuning ────────────────────────────────────────────
+    # Lower threshold = re-invest gas into army/macro sooner (more aggressive
+    # banking prevention). 200 is a hard floor (always need a small reserve);
+    # 3000 mirrors the historical "loose" baseline. Values outside the range
+    # are clamped — the setter never raises so callers can safely pass user
+    # input without try/except.
+
+    GAS_THRESHOLD_MIN: int = 200
+    GAS_THRESHOLD_MAX: int = 3000
+
+    def get_gas_overflow_threshold(self) -> int:
+        """Current vespene-banking prevention threshold (gas units)."""
+        return int(self.gas_overflow_prevention_threshold)
+
+    def set_gas_overflow_threshold(self, value: int) -> int:
+        """Set the vespene-banking prevention threshold, clamped to bounds.
+
+        Returns the *applied* value after clamping so the caller can verify
+        what actually took effect. Non-int / non-finite inputs fall back to
+        the existing value (no-op).
+        """
+        try:
+            v = int(value)
+        except (TypeError, ValueError):
+            return self.get_gas_overflow_threshold()
+        clamped = max(self.GAS_THRESHOLD_MIN, min(self.GAS_THRESHOLD_MAX, v))
+        self.gas_overflow_prevention_threshold = clamped
+        return clamped
 
     def safeguard_resources(self) -> tuple:
         """
@@ -2944,9 +2991,27 @@ class EconomyManager:
         """경제 회복 모드 여부"""
         return getattr(self, "_economy_recovery_mode", False)
 
+    # ── Target drone count tuning ──────────────────────────────────────
+    DRONE_TARGET_MIN: int = 12  # at least one full mineral line on main
+    DRONE_TARGET_MAX: int = 90  # absolute supply ceiling for workers
+
     def get_target_drone_count(self) -> int:
         """목표 드론 수"""
         return getattr(self, "_target_drone_count", 66)
+
+    def set_target_drone_count(self, value: int) -> int:
+        """Set the target drone count, clamped to bounds.
+
+        Returns the *applied* value after clamping. Non-int / non-finite
+        inputs are no-ops (returns current value).
+        """
+        try:
+            v = int(value)
+        except (TypeError, ValueError):
+            return self.get_target_drone_count()
+        clamped = max(self.DRONE_TARGET_MIN, min(self.DRONE_TARGET_MAX, v))
+        self._target_drone_count = clamped
+        return clamped
 
     async def _check_air_threat_response(self) -> None:
         """
