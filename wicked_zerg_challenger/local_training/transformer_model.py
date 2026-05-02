@@ -12,7 +12,7 @@ AlphaStar 스타일의 트랜스포머 기반 의사결정 모델입니다.
 """
 
 import math
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional
 
 import numpy as np
 

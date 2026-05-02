@@ -36,7 +36,6 @@ class BehaviorNode(ABC):
     @abstractmethod
     async def tick(self, bot: Any) -> NodeStatus:
         """노드 실행"""
-        pass
 
     def reset(self):
         """노드 상태 초기화"""

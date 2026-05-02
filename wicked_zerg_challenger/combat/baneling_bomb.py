@@ -13,7 +13,7 @@ Feature #93: 바네 폭탄 전술 매니저
 """
 
 from enum import Enum
-from typing import Dict, List, Optional, Set, Tuple
+from typing import Dict, Optional, Set
 
 try:
     from sc2.ids.ability_id import AbilityId
