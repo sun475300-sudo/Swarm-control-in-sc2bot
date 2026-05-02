@@ -268,9 +268,7 @@ if HAS_TORCH:
             B = agent_qs.size(0)
 
             # First mixing layer
-            w1 = torch.abs(self.hyper_w1(state)).view(
-                B, self.n_agents, self.embed_dim
-            )
+            w1 = torch.abs(self.hyper_w1(state)).view(B, self.n_agents, self.embed_dim)
             b1 = self.hyper_b1(state).view(B, 1, self.embed_dim)
             hidden = F.elu(torch.bmm(agent_qs.unsqueeze(1), w1) + b1)  # (B, 1, embed)
 

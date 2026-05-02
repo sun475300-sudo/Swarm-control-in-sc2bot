@@ -708,14 +708,10 @@ class ProductionResilience:
         if b.minerals > 1500:
             ignore_caps = True
 
-        # Get current unit counts
+        # Get current unit counts (zergling_count 만 하단 분기에서 사용 —
+        # roach/hydra/mutalisk 카운트는 사용처 없음)
         zergling_count = (
             b.units(UnitTypeId.ZERGLING).amount if hasattr(b, "units") else 0
-        )
-        roach_count = b.units(UnitTypeId.ROACH).amount if hasattr(b, "units") else 0
-        hydra_count = b.units(UnitTypeId.HYDRALISK).amount if hasattr(b, "units") else 0
-        mutalisk_count = (
-            b.units(UnitTypeId.MUTALISK).amount if hasattr(b, "units") else 0
         )
 
         # Check available tech
@@ -1174,9 +1170,10 @@ class ProductionResilience:
                             hydralisk_den_ready = True
                     except Exception:
                         pass
+                # NOTE: 진단 로그용으로 만든 can_afford_* 가 실제로
+                # 참조되지 않아 zergling 만 남기고 정리. 나머지는 필요 시
+                # b.can_afford(UnitTypeId.X) 로 직접 호출.
                 can_afford_zergling = b.can_afford(UnitTypeId.ZERGLING)
-                can_afford_roach = b.can_afford(UnitTypeId.ROACH)
-                can_afford_hydralisk = b.can_afford(UnitTypeId.HYDRALISK)
 
                 # IMPROVED: Use DEBUG level for detailed logs during training
                 # Only print critical issues at INFO level
@@ -2471,8 +2468,8 @@ class ProductionResilience:
         if minerals <= 600:
             return
 
-        # Calculate how much to spend
-        excess = minerals - 600
+        # NOTE: excess = minerals - 600 은 분기내에서 사용되지 않아 제거.
+        # 실제 사용처는 larvae 분기별 b.minerals 직접 비교(line 2486 등).
 
         larvae = b.units(UnitTypeId.LARVA)
         if not larvae.exists:

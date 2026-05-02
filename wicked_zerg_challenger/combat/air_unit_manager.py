@@ -187,14 +187,15 @@ class AirUnitManager:
             return
 
         # Regen Dance: 손상된 유닛 분리
+        # _regenerating: regen_dance 가 후퇴 명령을 자체적으로 내리므로
+        # 호출자는 별도 처리 불필요(접두 underscore 로 의도 명시).
         if self.mutalisk_micro:
             current_time = getattr(self.bot, "time", 0)
-            combat_ready, regenerating = await self.mutalisk_micro.execute_regen_dance(
+            combat_ready, _regenerating = await self.mutalisk_micro.execute_regen_dance(
                 mutalisks, current_time, self.bot
             )
         else:
             combat_ready = list(mutalisks)
-            regenerating = []
 
         if not combat_ready:
             return
@@ -320,15 +321,14 @@ class AirUnitManager:
         if not mutalisks:
             return
 
-        # Regen Dance
+        # Regen Dance — _regenerating 은 regen_dance 가 자체 처리.
         if self.mutalisk_micro:
             current_time = getattr(self.bot, "time", 0)
-            combat_ready, regenerating = await self.mutalisk_micro.execute_regen_dance(
+            combat_ready, _regenerating = await self.mutalisk_micro.execute_regen_dance(
                 mutalisks, current_time, self.bot
             )
         else:
             combat_ready = list(mutalisks)
-            regenerating = []
 
         if not combat_ready:
             return

@@ -267,7 +267,10 @@ class EvolutionUpgradeManager:
         priorities = []
 
         # ★★★ Phase 18: 종족별 우선순위 조정 ★★★
-        race_modifiers = self.race_priority_modifiers.get(enemy_race, {})
+        # TODO(upgrade-race-weight): race_priority_modifiers 가 정의되어
+        # 있지만 priorities 정렬에 적용되지 않아 dead 였다 (F841). 향후
+        # priorities 결정 후 modifier 로 가중 정렬 적용 필요. 지금은
+        # 미사용 변수만 제거하여 회귀 없이 lint 통과시킨다.
 
         if is_ranged_main:
             # ★ 바퀴/히드라 체제: 원거리 공격 올인 (사용자 요청)

@@ -1221,11 +1221,14 @@ class BotStepIntegrator:
                     self._logic_tracker.end_logic("RLTechAdapter", start_time)
 
             # 0.057 ★★★ Micro Focus Mode (전투 우선순위 동적 할당) ★★★
-            micro_interval = 8  # 기본 간격
+            # MicroFocusMode.update() 반환값(전투 강도별 동적 micro 간격)을
+            # bot 속성으로 노출하여 다른 시스템(MicroController 등)이 참조
+            # 가능하게 한다. (이전엔 지역 변수만 받고 버려져 효과 없음)
+            self.bot.micro_interval = getattr(self.bot, "micro_interval", 8)
             if hasattr(self.bot, "micro_focus") and self.bot.micro_focus:
                 start_time = self._logic_tracker.start_logic("MicroFocusMode")
                 try:
-                    micro_interval = self.bot.micro_focus.update(iteration)
+                    self.bot.micro_interval = self.bot.micro_focus.update(iteration)
                 except Exception as e:
                     if error_handler.debug_mode:
                         raise
@@ -2876,7 +2879,6 @@ class BotStepIntegrator:
             # 전략 모드 적용 (StrategyManager에게 전달)
             if result and "strategy_mode" in result:
                 new_mode = result["strategy_mode"]
-                current_mode_str = "Unknown"
 
                 # StrategyManager에 모드 적용
                 if hasattr(self.bot, "strategy_manager") and self.bot.strategy_manager:

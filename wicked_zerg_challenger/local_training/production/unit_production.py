@@ -206,7 +206,7 @@ async def balanced_production(resilience, larvae) -> None:
         resilience: ProductionResilience 인스턴스
         larvae: 애벌레 리스트
     """
-    b = resilience.bot
+    # NOTE: 이전엔 `b = resilience.bot` 로 바인딩만 하고 사용처 없음 → 제거.
 
     # Production logic based on balancer
     if resilience.balancer:
