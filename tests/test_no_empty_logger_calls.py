@@ -19,9 +19,7 @@ SCRIPT = REPO_ROOT / "scripts" / "check_no_empty_logger_calls.py"
 
 
 def _load_module():
-    spec = importlib.util.spec_from_file_location(
-        "check_no_empty_logger_calls", SCRIPT
-    )
+    spec = importlib.util.spec_from_file_location("check_no_empty_logger_calls", SCRIPT)
     assert spec and spec.loader, "could not load CI guard script"
     mod = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(mod)
@@ -37,14 +35,14 @@ def regex():
     "line",
     [
         # Original 131-call regression class
-        'logger.info()',
-        'logger.debug()',
-        'logger.warning()',
-        'logger.warn()',
-        'logger.error()',
-        'logger.critical()',
-        'logger.exception()',
-        'logger.info(  )',
+        "logger.info()",
+        "logger.debug()",
+        "logger.warning()",
+        "logger.warn()",
+        "logger.error()",
+        "logger.critical()",
+        "logger.exception()",
+        "logger.info(  )",
         # Cycle 2 follow-up: empty-string calls
         'logger.info("")',
         "logger.info('')",
@@ -53,7 +51,7 @@ def regex():
         'logger.warning("")',
         # Indented contexts (real code is indented)
         '            logger.info("")',
-        '\tlogger.debug()',
+        "\tlogger.debug()",
     ],
 )
 def test_offenders_are_caught(regex, line):
@@ -69,10 +67,10 @@ def test_offenders_are_caught(regex, line):
         'logger.error("failed: %s", err)',
         'logger.info("Game finished: %s", result)',
         # Other identifiers ending in "logger" must not match
-        'mylogger.info()',
-        'self.logger.info()',  # `self.logger` is a separate convention; out of scope
+        "mylogger.info()",
+        "self.logger.info()",  # `self.logger` is a separate convention; out of scope
         # An empty-arg call that's clearly not a logger
-        'foo.info()',
+        "foo.info()",
         # Format-string with content
         'logger.info(f"score={s}")',
     ],
@@ -99,7 +97,6 @@ def test_repo_is_currently_clean():
     """The wicked_zerg_challenger tree must contain zero offenders right now."""
     mod = _load_module()
     offenders = mod.find_offenders([REPO_ROOT / "wicked_zerg_challenger"])
-    assert offenders == [], (
-        "Empty logger calls reappeared:\n"
-        + "\n".join(f"  {p}:{ln}: {src}" for p, ln, src in offenders)
+    assert offenders == [], "Empty logger calls reappeared:\n" + "\n".join(
+        f"  {p}:{ln}: {src}" for p, ln, src in offenders
     )
