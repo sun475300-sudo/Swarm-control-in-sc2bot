@@ -20,14 +20,16 @@
 
 ---
 
-## 🚧 Cycle 2 — Coverage backfill (utils)
+## ✅ Cycle 2 — Coverage backfill (utils)
 
-- [ ] `wicked_zerg_challenger/utils/game_constants.py` 단위 테스트 부재.
-      값/타입/관계 검증 (예: `MELEE_RANGE < DETECTOR_THREAT_RANGE`,
-      `SECOND == GAME_FPS`).
-- [ ] `wicked_zerg_challenger/utils/position_utils.py` 의
-      `get_center_position` / `get_weighted_center` 회귀 테스트 추가
-      (빈 입력, 단일 유닛, 다중 유닛, health=0 분모 보호).
+- [x] `wicked_zerg_challenger/tests/test_game_constants.py` 추가 — 23 케이스
+      (FPS, supply 우선순위, 인젝트 쿨다운 = 640/22.4, 거리/HP 임계값
+      순서, 변환 함수 round-trip 등 관계 검증).
+- [x] `wicked_zerg_challenger/tests/test_position_utils.py` 추가 — 26 케이스
+      (빈 입력 / 단일 / 다수, health=0 분모 보호, supply 가중,
+      perimeter, clamp, bounding box 등).
+- [x] `position_utils.py` 가 sc2 미설치 환경에서도 import 되도록
+      `Point2` 경량 폴백 추가 — 단위 테스트가 sc2 없이 실행 가능.
 
 ## 🚧 Cycle 3 — Manager robustness
 
