@@ -377,9 +377,8 @@ class ProductionController:
         if total_army < 1:
             total_army = 1  # 0으로 나누기 방지
 
-        # 가장 부족한 유닛 찾기
+        # 가장 부족한 유닛 찾기 — 실제 생산엔 best_uid 만 필요.
         max_deficit = -1.0
-        best_unit = None
         best_uid = None
 
         for name, target_ratio in ratios.items():
@@ -414,7 +413,6 @@ class ProductionController:
 
             if deficit > max_deficit:
                 max_deficit = deficit
-                best_unit = name
                 best_uid = uid
 
         # 가장 부족한 유닛 생산

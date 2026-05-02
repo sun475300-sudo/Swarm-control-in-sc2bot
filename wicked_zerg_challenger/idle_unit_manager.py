@@ -226,7 +226,8 @@ class IdleUnitManager:
         if not self.bot.townhalls.exists:
             return
 
-        main_base = self.bot.townhalls.first.position
+        # NOTE: 후퇴 분기에서 closest_to(unit) 으로 직접 가까운 기지를
+        # 찾으므로 main_base 미리 캐싱 불필요 (F841 dead local 제거).
 
         combat_units = self.bot.units.filter(
             lambda u: u.type_id in self.combat_unit_types

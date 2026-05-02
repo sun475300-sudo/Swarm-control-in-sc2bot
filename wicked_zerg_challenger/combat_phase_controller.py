@@ -160,8 +160,9 @@ class CombatPhaseController:
         if not group_units:
             return
 
+        # NOTE: group_center 는 어디에서도 사용되지 않아 제거. group_health_ratio
+        # 는 _check_phase_transitions 에 전달되므로 유지.
         nearby_enemies = self._get_nearby_enemies(group_units)
-        group_center = self._get_group_center(group_units)
         group_health_ratio = self._get_group_health_ratio(group_units)
 
         # === 단계별 행동 ===
