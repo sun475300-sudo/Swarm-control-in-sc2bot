@@ -708,14 +708,10 @@ class ProductionResilience:
         if b.minerals > 1500:
             ignore_caps = True
 
-        # Get current unit counts
+        # Get current unit counts (zergling_count 만 하단 분기에서 사용 —
+        # roach/hydra/mutalisk 카운트는 사용처 없음)
         zergling_count = (
             b.units(UnitTypeId.ZERGLING).amount if hasattr(b, "units") else 0
-        )
-        roach_count = b.units(UnitTypeId.ROACH).amount if hasattr(b, "units") else 0
-        hydra_count = b.units(UnitTypeId.HYDRALISK).amount if hasattr(b, "units") else 0
-        mutalisk_count = (
-            b.units(UnitTypeId.MUTALISK).amount if hasattr(b, "units") else 0
         )
 
         # Check available tech
@@ -1174,9 +1170,10 @@ class ProductionResilience:
                             hydralisk_den_ready = True
                     except Exception:
                         pass
+                # NOTE: 진단 로그용으로 만든 can_afford_* 가 실제로
+                # 참조되지 않아 zergling 만 남기고 정리. 나머지는 필요 시
+                # b.can_afford(UnitTypeId.X) 로 직접 호출.
                 can_afford_zergling = b.can_afford(UnitTypeId.ZERGLING)
-                can_afford_roach = b.can_afford(UnitTypeId.ROACH)
-                can_afford_hydralisk = b.can_afford(UnitTypeId.HYDRALISK)
 
                 # IMPROVED: Use DEBUG level for detailed logs during training
                 # Only print critical issues at INFO level
@@ -1375,27 +1372,9 @@ class ProductionResilience:
 
     # Defense methods moved to DefenseCoordinator
 
-    async def build_terran_counters(self) -> None:
-        b = self.bot
-        if not b.production:
-            return
-        baneling_nests = [
-            s for s in b.units(UnitTypeId.BANELINGNEST).structure if s.is_ready
-        ]
-        if (
-            not baneling_nests
-            and b.already_pending(UnitTypeId.BANELINGNEST) == 0
-            and b.can_afford(UnitTypeId.BANELINGNEST)
-        ):
-            # CRITICAL: Check for duplicate construction before building
-            if not b.structures(UnitTypeId.BANELINGNEST).exists:
-                spawning_pools = [
-                    s for s in b.units(UnitTypeId.SPAWNINGPOOL).structure if s.is_ready
-                ]
-                if spawning_pools:
-                    await b.build(UnitTypeId.BANELINGNEST, near=spawning_pools[0])
-        # NOTE: Roach Warren building is now handled by _auto_build_tech_structures()
-        # Removed duplicate code to prevent building spam
+    # NOTE: 두 번째(line ~1875) build_terran_counters 가 TechCoordinator
+    # 통합과 중복 건설 방지가 포함된 정교한 버전 — 그쪽을 단일 진실로
+    # 사용한다. (이전엔 동일 클래스 내 중복 정의로 F811 발생)
 
     async def _auto_build_tech_structures(self) -> None:
         """
@@ -2489,8 +2468,8 @@ class ProductionResilience:
         if minerals <= 600:
             return
 
-        # Calculate how much to spend
-        excess = minerals - 600
+        # NOTE: excess = minerals - 600 은 분기내에서 사용되지 않아 제거.
+        # 실제 사용처는 larvae 분기별 b.minerals 직접 비교(line 2486 등).
 
         larvae = b.units(UnitTypeId.LARVA)
         if not larvae.exists:

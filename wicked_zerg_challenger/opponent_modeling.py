@@ -341,6 +341,11 @@ class OpponentModeling:
 
     async def on_step(self, iteration: int):
         """매 프레임 실행"""
+        # ★ FIX: 두 번째 on_step 정의가 이 메서드를 덮어쓰던 F811 회귀를
+        # 통합. 안전 가드(self.current_opponent / self.bot 미설정)도 합침.
+        if not self.bot or not self.current_opponent:
+            return
+
         if iteration - self.last_update < self.update_interval:
             return
 
@@ -762,17 +767,6 @@ class OpponentModeling:
             self.logger.info(
                 f"[OPPONENT_MODELING] Known opponent: {opponent_id} ({self.opponent_models[opponent_id].games_played} games)"
             )
-
-    async def on_step(self, iteration: int):
-        """매 프레임 호출 - 신호 감지"""
-        if not self.current_opponent or not self.bot:
-            return
-
-        game_time = self.bot.time
-
-        # Only detect signals in early game (0-180s)
-        if game_time <= 180.0:
-            await self._detect_early_signals(game_time)
 
     def on_game_end(self, won: bool, lost: bool):
         """게임 종료 시 호출 - 데이터 저장"""

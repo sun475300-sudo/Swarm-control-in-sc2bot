@@ -2380,35 +2380,9 @@ class CombatManager:
             if self._has_units(enemy_units):
                 await self._mutalisk_attack(mutalisks, enemy_units)
 
-    def _find_harass_target(self):
-        """Find best harassment target (enemy base with workers)."""
-        # Try enemy main base
-        if (
-            hasattr(self.bot, "enemy_start_locations")
-            and self.bot.enemy_start_locations
-        ):
-            return self.bot.enemy_start_locations[0]
-
-        # Try known enemy structures
-        enemy_structures = getattr(self.bot, "enemy_structures", [])
-        if enemy_structures:
-            # Find townhalls
-            townhall_names = [
-                "NEXUS",
-                "COMMANDCENTER",
-                "ORBITALCOMMAND",
-                "PLANETARYFORTRESS",
-                "HATCHERY",
-                "LAIR",
-                "HIVE",
-            ]
-            for struct in enemy_structures:
-                if getattr(struct.type_id, "name", "") in townhall_names:
-                    return struct.position
-            # Any structure as fallback
-            return enemy_structures[0].position
-
-        return None
+    # NOTE: 두 번째(line ~4284) 의 _find_harass_target 가 더 정교한
+    # 워커→테크빌딩→본진 우선순위 로직을 가지고 있어 그쪽을 단일 진실로
+    # 사용한다. (이전엔 동일 클래스 내 중복 정의로 F811 발생)
 
     async def _execute_harass(self, mutalisks, enemy_units):
         """
@@ -2423,14 +2397,15 @@ class CombatManager:
             return
 
         # ★ REGEN DANCE: Separate damaged units during harassment ★
+        # _regenerating: regen_dance 가 자체적으로 후퇴 명령 — 호출자
+        # 추가 처리 불필요. underscore prefix 로 의도 명시.
         if self.mutalisk_micro:
             current_time = getattr(self.bot, "time", 0)
-            combat_ready, regenerating = await self.mutalisk_micro.execute_regen_dance(
+            combat_ready, _regenerating = await self.mutalisk_micro.execute_regen_dance(
                 mutalisks, current_time, self.bot
             )
         else:
             combat_ready = list(mutalisks)
-            regenerating = []
 
         if not combat_ready:
             return  # All units regenerating
@@ -2868,15 +2843,15 @@ class CombatManager:
         if not mutalisks:
             return
 
-        # ★ REGEN DANCE: Separate damaged units ★
+        # ★ REGEN DANCE: Separate damaged units ★ (_regenerating 은
+        # regen_dance 가 자체 후퇴 처리)
         if self.mutalisk_micro:
             current_time = getattr(self.bot, "time", 0)
-            combat_ready, regenerating = await self.mutalisk_micro.execute_regen_dance(
+            combat_ready, _regenerating = await self.mutalisk_micro.execute_regen_dance(
                 mutalisks, current_time, self.bot
             )
         else:
             combat_ready = list(mutalisks)
-            regenerating = []
 
         if not combat_ready:
             return  # All units regenerating
@@ -3069,19 +3044,9 @@ class CombatManager:
             "PHOENIX",
         }
 
-        # 비전투 유닛 (정찰용, 위협이 낮음)
-        non_combat_names = {
-            "SCV",
-            "PROBE",
-            "DRONE",
-            "MULE",
-            "OBSERVER",
-            "OVERLORD",
-            "OVERSEER",
-            "WARPPRISM",
-            "RAVEN",
-            "CHANGELING",
-        }
+        # NOTE: 이전에 non_combat_names 집합이 정의돼 있었지만, 위협
+        # 판정 로직은 combat_unit_names 만 사용한다 (비전투 유닛은
+        # 단순 카운트로 처리). 미사용 집합을 제거하여 오해 소지 제거.
 
         for th in self.bot.townhalls:
             # 일반 감지 거리
@@ -4338,4 +4303,6 @@ class CombatManager:
             pass
 
         return None
+
+
 # Improved micro management for VeryHard difficulty
