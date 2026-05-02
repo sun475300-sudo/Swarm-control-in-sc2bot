@@ -84,6 +84,50 @@ class TestEconomyManager(unittest.TestCase):
         """Test EconomyCombatBalancer is initialized"""
         self.assertIsNotNone(self.manager.balancer)
 
+    # ==================== Gas Overflow Threshold Tests ====================
+
+    def test_get_gas_overflow_threshold_default(self):
+        """Default gas threshold should be the post-tightening 800."""
+        self.assertEqual(self.manager.get_gas_overflow_threshold(), 800)
+
+    def test_set_gas_overflow_threshold_within_bounds(self):
+        """Setter accepts in-range value and returns it."""
+        applied = self.manager.set_gas_overflow_threshold(600)
+        self.assertEqual(applied, 600)
+        self.assertEqual(self.manager.get_gas_overflow_threshold(), 600)
+
+    def test_set_gas_overflow_threshold_clamps_low(self):
+        """Below-floor values clamp up to GAS_THRESHOLD_MIN."""
+        applied = self.manager.set_gas_overflow_threshold(-50)
+        self.assertEqual(applied, EconomyManager.GAS_THRESHOLD_MIN)
+        self.assertEqual(
+            self.manager.get_gas_overflow_threshold(),
+            EconomyManager.GAS_THRESHOLD_MIN,
+        )
+
+    def test_set_gas_overflow_threshold_clamps_high(self):
+        """Above-ceiling values clamp down to GAS_THRESHOLD_MAX."""
+        applied = self.manager.set_gas_overflow_threshold(99999)
+        self.assertEqual(applied, EconomyManager.GAS_THRESHOLD_MAX)
+
+    def test_set_gas_overflow_threshold_invalid_input_no_op(self):
+        """Non-numeric input leaves the threshold untouched."""
+        before = self.manager.get_gas_overflow_threshold()
+        applied = self.manager.set_gas_overflow_threshold("nope")  # type: ignore[arg-type]
+        self.assertEqual(applied, before)
+        self.assertEqual(self.manager.get_gas_overflow_threshold(), before)
+
+    def test_set_gas_overflow_threshold_none_input_no_op(self):
+        """None input leaves the threshold untouched."""
+        before = self.manager.get_gas_overflow_threshold()
+        applied = self.manager.set_gas_overflow_threshold(None)  # type: ignore[arg-type]
+        self.assertEqual(applied, before)
+
+    def test_gas_threshold_bounds_invariant(self):
+        """Bounds make sense (min < max, both positive)."""
+        self.assertLess(EconomyManager.GAS_THRESHOLD_MIN, EconomyManager.GAS_THRESHOLD_MAX)
+        self.assertGreater(EconomyManager.GAS_THRESHOLD_MIN, 0)
+
     # ==================== Resource Status & Drone Count Tests ====================
 
     def test_get_target_drone_count_default(self):

@@ -208,6 +208,35 @@ class EconomyManager:
         """Set emergency mode validation."""
         self._emergency_mode = active
 
+    # ── Gas overflow tuning ────────────────────────────────────────────
+    # Lower threshold = re-invest gas into army/macro sooner (more aggressive
+    # banking prevention). 200 is a hard floor (always need a small reserve);
+    # 3000 mirrors the historical "loose" baseline. Values outside the range
+    # are clamped — the setter never raises so callers can safely pass user
+    # input without try/except.
+
+    GAS_THRESHOLD_MIN: int = 200
+    GAS_THRESHOLD_MAX: int = 3000
+
+    def get_gas_overflow_threshold(self) -> int:
+        """Current vespene-banking prevention threshold (gas units)."""
+        return int(self.gas_overflow_prevention_threshold)
+
+    def set_gas_overflow_threshold(self, value: int) -> int:
+        """Set the vespene-banking prevention threshold, clamped to bounds.
+
+        Returns the *applied* value after clamping so the caller can verify
+        what actually took effect. Non-int / non-finite inputs fall back to
+        the existing value (no-op).
+        """
+        try:
+            v = int(value)
+        except (TypeError, ValueError):
+            return self.get_gas_overflow_threshold()
+        clamped = max(self.GAS_THRESHOLD_MIN, min(self.GAS_THRESHOLD_MAX, v))
+        self.gas_overflow_prevention_threshold = clamped
+        return clamped
+
     def safeguard_resources(self) -> tuple:
         """
         Phase 17: Centralized Resource Safety Check
