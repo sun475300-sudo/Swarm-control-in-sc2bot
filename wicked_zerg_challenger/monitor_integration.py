@@ -13,11 +13,10 @@ Usage:
 import argparse
 import json
 import logging
-import os
 import time
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Dict
 
 logger = logging.getLogger(__name__)
 

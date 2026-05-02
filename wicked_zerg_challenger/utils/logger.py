@@ -57,7 +57,7 @@ def setup_logger(
         try:
             # Windows 콘솔에서 UTF-8 출력 지원
             if sys.platform == "win32":
-                import io
+                pass
 
                 sys.stdout.reconfigure(encoding="utf-8", errors="replace")
         except (AttributeError, Exception):

@@ -15,7 +15,7 @@ from __future__ import annotations
 import json
 import os
 from collections import defaultdict
-from dataclasses import asdict, dataclass
+from dataclasses import dataclass
 from enum import Enum
 from typing import Dict, List, Optional, Set, Tuple
 
@@ -23,7 +23,6 @@ from utils.logger import get_logger
 
 try:
     from sc2.bot_ai import BotAI
-    from sc2.position import Point2
 except ImportError:
     pass
 
