@@ -905,12 +905,19 @@ class AdvancedScoutingSystemV2:
         return None
 
     def _assign_patrol(
-        self, route_name: str, unit_type: UnitTypeId = UnitTypeId.OVERLORD
+        self, route_name: str, unit_type: Optional[UnitTypeId] = None
     ) -> bool:
         """
         특정 순찰 경로에 유닛 배정.
         중반 이후 오버로드/감시군주를 적진 순환 순찰에 투입.
+
+        Note: ``unit_type`` defaults to ``UnitTypeId.OVERLORD`` at call time
+        (not import time) so module import does not blow up when the ``sc2``
+        package is unavailable and ``UnitTypeId`` is just the local stub.
         """
+        if unit_type is None:
+            unit_type = UnitTypeId.OVERLORD
+
         route = self._patrol_routes.get(route_name)
         if not route:
             return False

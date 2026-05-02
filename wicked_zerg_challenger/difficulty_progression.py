@@ -13,7 +13,32 @@ import logging
 from pathlib import Path
 from typing import Dict, Optional
 
-from sc2.data import Difficulty, Race
+try:
+    from sc2.data import Difficulty, Race
+except ImportError:  # pragma: no cover - sc2 not installed (CI / linting)
+    # Lightweight stand-ins so the module is importable without the runtime.
+    # Real games still need the actual sc2 package; these stubs only let the
+    # tooling (tests, linters, docs) import the module.
+    from enum import Enum
+
+    class Difficulty(Enum):
+        VeryEasy = "VeryEasy"
+        Easy = "Easy"
+        Medium = "Medium"
+        MediumHard = "MediumHard"
+        Hard = "Hard"
+        Harder = "Harder"
+        VeryHard = "VeryHard"
+        CheatVision = "CheatVision"
+        CheatMoney = "CheatMoney"
+        CheatInsane = "CheatInsane"
+
+    class Race(Enum):
+        Zerg = "Zerg"
+        Terran = "Terran"
+        Protoss = "Protoss"
+        Random = "Random"
+
 
 logger = logging.getLogger("DifficultyProgression")
 
