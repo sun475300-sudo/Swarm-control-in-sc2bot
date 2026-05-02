@@ -41,8 +41,13 @@ try:
     from torch.distributions import Categorical
 
     HAS_TORCH = True
+    _TorchModule = nn.Module
 except ImportError:
     HAS_TORCH = False
+    # Sentinel base class so module-level `class XxxTorch(_TorchModule)`
+    # declarations parse cleanly when PyTorch is unavailable. The Torch
+    # variants are only ever *instantiated* under `if HAS_TORCH:` guards.
+    _TorchModule = object  # type: ignore[assignment,misc]
 
 # ===================================================================
 # NumPy fallback helpers
@@ -169,7 +174,7 @@ class NumpyMLP:
 # ===================================================================
 
 
-class SharedObsEncoderTorch(nn.Module):
+class SharedObsEncoderTorch(_TorchModule):
     """Encodes per-agent local observations into a latent vector."""
 
     def __init__(self, obs_dim: int, encoder_dim: int, hidden_dim: int):
@@ -204,7 +209,7 @@ class SharedObsEncoderNumpy:
 # ===================================================================
 
 
-class CentralizedCriticTorch(nn.Module):
+class CentralizedCriticTorch(_TorchModule):
     """Value network that takes the global state and outputs V(s)."""
 
     def __init__(self, state_dim: int, hidden_dim: int):
@@ -239,7 +244,7 @@ class CentralizedCriticNumpy:
 # ===================================================================
 
 
-class DecentralizedActorTorch(nn.Module):
+class DecentralizedActorTorch(_TorchModule):
     """Per-agent policy network with action masking support."""
 
     def __init__(self, encoder_dim: int, action_dim: int, hidden_dim: int):

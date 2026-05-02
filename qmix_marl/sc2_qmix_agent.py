@@ -43,8 +43,14 @@ try:
     import torch.optim as optim
 
     HAS_TORCH = True
+    _TorchModule = nn.Module
 except ImportError:
     HAS_TORCH = False
+    # Sentinel base class so module-level `class XxxTorch(_TorchModule)`
+    # declarations parse cleanly when PyTorch is unavailable. The Torch
+    # variants are only ever *instantiated* under `if HAS_TORCH:` guards,
+    # so the class bodies never execute on this fallback path.
+    _TorchModule = object  # type: ignore[assignment,misc]
 
 # ===================================================================
 # NumPy fallback primitives
@@ -169,7 +175,7 @@ class NpMLP:
 # ===================================================================
 
 
-class AgentQNetTorch(nn.Module):
+class AgentQNetTorch(_TorchModule):
     """Individual agent's Q-network: obs -> Q(obs, a) for all actions."""
 
     def __init__(self, obs_dim: int, action_dim: int, hidden_dim: int):
@@ -204,7 +210,7 @@ class AgentQNetNumpy:
 # ===================================================================
 
 
-class QMIXMixingNetTorch(nn.Module):
+class QMIXMixingNetTorch(_TorchModule):
     """QMIX mixing network with hyper-network producing state-dependent weights.
 
     The mixing network computes:
@@ -318,7 +324,7 @@ class QMIXMixingNetNumpy:
         return out2
 
 
-class VDNMixerTorch(nn.Module):
+class VDNMixerTorch(_TorchModule):
     """Value Decomposition Network: Q_tot = sum(q_i)."""
 
     def forward(self, agent_qs: torch.Tensor, state: torch.Tensor) -> torch.Tensor:
