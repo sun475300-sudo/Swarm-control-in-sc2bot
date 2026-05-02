@@ -38,6 +38,38 @@ Modules should import these as a group:
 from __future__ import annotations
 
 
+class _Sentinel:
+    """Enum-like sentinel: has `.name`, value-based equality, and is hashable.
+
+    Production code does things like `unit.type_id.name in {"ZERGLING", ...}`
+    or `unit.type_id == UnitTypeId.ZERGLING`. A bare string sentinel breaks
+    the `.name` lookup; an object sentinel handles both shapes.
+    """
+
+    __slots__ = ("name", "_owner")
+
+    def __init__(self, name: str, owner: str):
+        self.name = name
+        self._owner = owner
+
+    def __repr__(self):
+        return f"<{self._owner}.{self.name}>"
+
+    def __str__(self):
+        return self.name
+
+    def __eq__(self, other):
+        if isinstance(other, _Sentinel):
+            return self._owner == other._owner and self.name == other.name
+        # Allow comparison with raw strings ("ZERGLING") for legacy code
+        if isinstance(other, str):
+            return self.name == other or repr(self) == other
+        return NotImplemented
+
+    def __hash__(self):
+        return hash((self._owner, self.name))
+
+
 class _AnyAttr(type):
     """Metaclass that returns a sentinel for any unknown class attribute.
 
@@ -52,7 +84,7 @@ class _AnyAttr(type):
             cache = {}
             type.__setattr__(cls, "_sentinel_cache_per_class", cache)
         if name not in cache:
-            cache[name] = f"<{cls.__name__}.{name}>"
+            cache[name] = _Sentinel(name, cls.__name__)
         return cache[name]
 
     def __getitem__(cls, key):
@@ -115,6 +147,18 @@ class Point2:
     def __iter__(self):
         yield self.x
         yield self.y
+
+    def __eq__(self, other):
+        # Value-based equality so Point2((1,2)) == Point2((1,2)) is true,
+        # matching production sc2.position.Point2 semantics.
+        if isinstance(other, Point2):
+            return self.x == other.x and self.y == other.y
+        if isinstance(other, tuple) and len(other) == 2:
+            return self.x == other[0] and self.y == other[1]
+        return NotImplemented
+
+    def __hash__(self):
+        return hash((self.x, self.y))
 
     def __repr__(self):
         return f"Point2(({self.x}, {self.y}))"
