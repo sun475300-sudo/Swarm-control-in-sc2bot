@@ -228,26 +228,34 @@ def is_unit_attacking(unit: Unit) -> bool:
         return False
 
 
-def get_unit_range(unit: Unit) -> float:
+def get_unit_range(unit: Unit, target: Optional[Unit] = None) -> float:
     """
-    유닛의 공격 사거리 가져오기
+    유닛의 공격 사거리 가져오기.
+
+    target이 주어지면 target.is_flying 여부에 따라 air/ground range를 선택한다.
+    target이 없으면 두 사거리 중 큰 값을 반환한다 (하이드라처럼 둘 다 가진 유닛 대응).
 
     Args:
-        unit: 대상 유닛
+        unit: 대상 유닛 (공격자)
+        target: 선택적 타겟 — flying 여부에 맞는 사거리 선택용
 
     Returns:
-        공격 사거리, 없으면 0
+        공격 사거리, 없으면 0.0
     """
     if not unit:
         return 0.0
 
     try:
-        if hasattr(unit, "ground_range"):
-            return unit.ground_range
-        elif hasattr(unit, "air_range"):
-            return unit.air_range
-        return 0.0
-    except AttributeError:
+        ground = float(getattr(unit, "ground_range", 0.0) or 0.0)
+        air = float(getattr(unit, "air_range", 0.0) or 0.0)
+
+        if target is not None:
+            if getattr(target, "is_flying", False):
+                return air
+            return ground
+
+        return max(ground, air)
+    except (AttributeError, TypeError, ValueError):
         return 0.0
 
 
@@ -266,8 +274,8 @@ def can_unit_attack(unit: Unit, target: Unit) -> bool:
         return False
 
     try:
-        # 거리 체크
-        attack_range = get_unit_range(unit)
+        # 타겟의 flying 여부에 맞는 사거리 사용
+        attack_range = get_unit_range(unit, target)
         if attack_range <= 0:
             return False
 
