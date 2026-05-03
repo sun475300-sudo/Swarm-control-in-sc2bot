@@ -1782,7 +1782,7 @@ def main():
 
     logger.info(f"\n{'='*60}")
     logger.info(f"PPTX CREATED: {out}")
-    logger.info(f"  Slides: 20  |  Theme: Dark Navy + Cyan/Green")
+    logger.info("  Slides: 20  |  Theme: Dark Navy + Cyan/Green")
     logger.info(f"{'='*60}")
 
 
