@@ -94,6 +94,11 @@ except ImportError:
     HELPERS_AVAILABLE = False
 
 try:
+    from utils.position_utils import get_center_position
+except ImportError:
+    get_center_position = None
+
+try:
     from combat.formation_manager import FormationManager as _FormationManager
 
     _FORMATION_MANAGER_AVAILABLE = True
@@ -3140,6 +3145,11 @@ class CombatManager:
     def _get_enemy_center(self, enemy_units):
         if HELPERS_AVAILABLE:
             return centroid(enemy_units)
+        if get_center_position is not None:
+            items = list(enemy_units)
+            if not items:
+                return None
+            return get_center_position(items)
         if not Point2:
             return None
         items = list(enemy_units)

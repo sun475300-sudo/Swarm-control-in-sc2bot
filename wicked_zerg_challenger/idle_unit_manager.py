@@ -16,6 +16,7 @@ from sc2.ids.unit_typeid import UnitTypeId
 from sc2.position import Point2
 
 from utils.logger import get_logger
+from utils.position_utils import get_center_position
 
 
 class IdleUnitManager:
@@ -175,14 +176,7 @@ class IdleUnitManager:
         if not combat_units.exists:
             return None
 
-        # 병력 중심 계산
-        total_x = sum(u.position.x for u in combat_units)
-        total_y = sum(u.position.y for u in combat_units)
-
-        center_x = total_x / combat_units.amount
-        center_y = total_y / combat_units.amount
-
-        return Point2((center_x, center_y))
+        return get_center_position(combat_units)
 
     async def _recall_isolated_units(self):
         """
