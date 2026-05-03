@@ -29,7 +29,18 @@ except ImportError:  # Fallbacks for tooling environments
 from config.unit_configs import EconomyConfig
 from local_training.economy_combat_balancer import EconomyCombatBalancer
 
+from utils.game_constants import GameFrequencies
 from utils.logger import get_logger
+
+# Cache module-level frequency aliases — economy_manager.on_step uses these
+# every step; the dotted lookup adds zero value to readers.
+_F_HALF_SEC = GameFrequencies.EVERY_HALF_SECOND  # 11
+_F_1_SEC = GameFrequencies.EVERY_SECOND  # 22
+_F_1_5_SEC = GameFrequencies.EVERY_1_5_SECONDS  # 33
+_F_2_SEC = GameFrequencies.EVERY_2_SECONDS  # 44
+_F_3_SEC = GameFrequencies.EVERY_3_SECONDS  # 66
+_F_5_SEC = GameFrequencies.EVERY_5_SECONDS  # 110
+_F_15_SEC = GameFrequencies.EVERY_15_SECONDS  # 330
 
 
 class EconomyManager:
@@ -323,11 +334,11 @@ class EconomyManager:
             await self._optimize_early_worker_split()
 
         # ★★★ UNIFIED EXPANSION CHECK: 단일 진입점으로 모든 확장 의사결정 ★★★
-        if iteration % 33 == 0:  # ~1.5초마다
+        if iteration % _F_1_5_SEC == 0:
             await self._unified_expansion_check(iteration)
 
         # ★ Phase 19: 기지 파괴 시 자동 재확장 ★
-        if iteration % 66 == 0:  # ~3초마다
+        if iteration % _F_3_SEC == 0:
             await self._auto_re_expand_if_lost()
 
         # 확장 체크 후 드론/오버로드 생산 (자원 확보 후 생산)
@@ -337,16 +348,16 @@ class EconomyManager:
         # ★ CRITICAL: 대기 일꾼 즉시 할당 (매 프레임 체크) ★
         await self._assign_idle_workers()
 
-        # Distribute workers to gas (every 11 frames = ~0.5 seconds) - IMPROVED: 더 자주 재분배
-        if iteration % 11 == 0:
+        # Distribute workers to gas (every ~0.5s) — IMPROVED: 더 자주 재분배
+        if iteration % _F_HALF_SEC == 0:
             await self._distribute_workers_to_gas()
 
-        # Redistribute mineral workers between bases (every 22 frames = ~1 second) - IMPROVED: 더 자주 재분배
-        if iteration % 22 == 0:
+        # Redistribute mineral workers between bases (every ~1s) — IMPROVED: 더 자주 재분배
+        if iteration % _F_1_SEC == 0:
             await self._redistribute_mineral_workers()
 
         # ★ Distance Mining: 프로급 거리 기반 채굴 최적화 (15초마다) ★
-        if iteration % 330 == 0:
+        if iteration % _F_15_SEC == 0:
             await self._optimize_mineral_assignments()
 
         # Check for macro hatchery needs periodically
@@ -355,15 +366,15 @@ class EconomyManager:
             await self._build_macro_hatchery_if_needed()
 
         # ★ NEW: 자원 예약 관리 (스포어/레어 등) ★
-        if iteration % 22 == 0:  # ~1초마다
+        if iteration % _F_1_SEC == 0:
             self._update_resource_reservations()
 
         # ★ NEW: 자원 낭비 방지 (미네랄/가스 과잉 시 대응) ★
-        if iteration % 44 == 0:  # ~2초마다
+        if iteration % _F_2_SEC == 0:
             await self._prevent_resource_banking()
 
         # ★ NEW: 가스 타이밍 최적화 ★
-        if iteration % 33 == 0:  # ~1.5초마다
+        if iteration % _F_1_5_SEC == 0:
             await self._optimize_gas_timing()
 
         # ★★★ Phase 18: Dynamic gas worker adjustment ★★★
@@ -375,23 +386,23 @@ class EconomyManager:
             self.last_gas_worker_adjustment = iteration
 
         # ★★★ Phase 18: Gas overflow prevention ★★★
-        if iteration % 110 == 0:  # ~5초마다
+        if iteration % _F_5_SEC == 0:
             await self._prevent_gas_overflow()
 
         # ★ NEW: Maynarding (일꾼 미리 보내기) - Issue 7 ★
-        if iteration % 22 == 0:
+        if iteration % _F_1_SEC == 0:
             await self._check_maynarding()
 
         # ★ NEW: 경제 회복 시스템 가동 (병력 생산 후 재건) ★
-        if iteration % 22 == 0:
+        if iteration % _F_1_SEC == 0:
             await self.check_economic_recovery()
 
         # ★ NEW: 공중 위협 대응 시스템 (Anti-Air Response) ★
-        if iteration % 44 == 0:
+        if iteration % _F_2_SEC == 0:
             await self._check_air_threat_response()
 
         # ★ NEW: Expansion Blocking (Phase 17) ★
-        if iteration % 22 == 0:
+        if iteration % _F_1_SEC == 0:
             await self._manage_expansion_blocking()
 
         # ★ NEW: Expansion Telemetry (Phase 17) ★

@@ -32,6 +32,11 @@ from combat.targeting import select_target
 from combat.terrain_analysis import ChokePointDetector
 from combat.threat_response import SplashThreatHandler
 
+try:
+    from utils.position_utils import get_center_position
+except ImportError:
+    get_center_position = None
+
 
 class BoidsController:
     """
@@ -520,7 +525,11 @@ class BoidsController:
     @staticmethod
     def _centroid(units):
         """Calculate center of mass for a group of units."""
-        if not units or not Point2:
+        if not Point2:
+            return Point2((0, 0)) if Point2 else None
+        if get_center_position is not None:
+            return get_center_position(units)
+        if not units:
             return Point2((0, 0))
         total_x = sum(u.position.x for u in units)
         total_y = sum(u.position.y for u in units)

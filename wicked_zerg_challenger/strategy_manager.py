@@ -22,7 +22,11 @@ from typing import Any, Dict, List, Optional, Tuple
 from config.config_loader import ConfigLoader
 from racial_counter_manager import RacialCounterManager
 
+from utils.game_constants import GameFrequencies
 from utils.logger import get_logger
+
+# Cached cadence aliases — see utils/game_constants.GameFrequencies.
+_F_1_SEC = GameFrequencies.EVERY_SECOND  # 22 frames @ 22.4 FPS
 
 try:
     from knowledge_manager import KnowledgeManager
@@ -373,7 +377,7 @@ class StrategyManager:
 
     def _check_jarvis_commands(self) -> None:
         """자비스로부터 받은 외부 명령어 체크 (aggression_level, target_priority, etc.)"""
-        if self.bot.iteration % 22 != 0:  # 1초마다만 체크
+        if self.bot.iteration % _F_1_SEC != 0:
             return
 
         cmd_path = Path("jarvis_command.json")
@@ -871,7 +875,7 @@ class StrategyManager:
                 current_ratios[u_key] = current_ratios.get(u_key, 0) + adjusted_boost
 
                 # ★ 로그 출력 (10초마다만) ★
-                if int(game_time) % 10 == 0 and self.bot.iteration % 22 == 0:
+                if int(game_time) % 10 == 0 and self.bot.iteration % _F_1_SEC == 0:
                     self.logger.info(
                         f"[{int(game_time)}s] Counter boost: {u_key} +{adjusted_boost:.2f} "
                         f"({build_status}, confidence={build_confidence:.0%})"
@@ -910,7 +914,7 @@ class StrategyManager:
         self._request_defensive_building(spine=True)
 
         # 로그 출력 (30초마다)
-        if int(game_time) % 30 == 0 and self.bot.iteration % 22 == 0:
+        if int(game_time) % 30 == 0 and self.bot.iteration % _F_1_SEC == 0:
             self.logger.info(f"[{int(game_time)}s] Counter build for {enemy_pattern}")
 
     def _handle_air_threat(self) -> None:
@@ -1021,7 +1025,7 @@ class StrategyManager:
                 pass
         else:
             # Fallback: 로그만 남기고, BotStepIntegrator/AggressiveTechBuilder가 처리
-            if int(game_time) % 30 == 0 and self.bot.iteration % 22 == 0:
+            if int(game_time) % 30 == 0 and self.bot.iteration % _F_1_SEC == 0:
                 self.logger.info(
                     f"[{int(game_time)}s] Spire needed for anti-air (no BuildingCoord)"
                 )
@@ -1110,7 +1114,7 @@ class StrategyManager:
             self._request_defensive_building(spore=True)
 
             # 30초마다 로그
-            if int(game_time) % 30 == 0 and self.bot.iteration % 22 == 0:
+            if int(game_time) % 30 == 0 and self.bot.iteration % _F_1_SEC == 0:
                 self.logger.warning(
                     f"[{int(game_time)}s] [*][*][*] AIR THREAT ACTIVE: {air_unit_count} air units detected! [*][*][*]"
                 )

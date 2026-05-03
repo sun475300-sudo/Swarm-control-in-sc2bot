@@ -12,7 +12,12 @@ Consolidated version combining features from original and improved versions:
 import logging
 from typing import Dict, Optional, Set
 
+from utils.game_constants import GameFrequencies
+
 logger = logging.getLogger(__name__)
+
+# Cached cadence alias.
+_F_1_SEC = GameFrequencies.EVERY_SECOND  # 22 frames @ 22.4 FPS
 
 try:
     from sc2.ids.ability_id import AbilityId
@@ -216,7 +221,7 @@ class QueenManager:
 
         # 30초마다 역할 분포 로그
         game_time = getattr(self.bot, "time", 0)
-        if int(game_time) % 30 == 0 and iteration % 22 == 0:
+        if int(game_time) % 30 == 0 and iteration % _F_1_SEC == 0:
             counts = spec_mgr.get_role_counts()
             progress = f"{highway.get_highway_progress():.0%}" if highway else "N/A"
             logger.info(
@@ -1034,7 +1039,7 @@ class QueenManager:
             return
 
         # 로그 (30초마다)
-        if game_time % 30 == 0 and iteration % 22 == 0:
+        if game_time % 30 == 0 and iteration % _F_1_SEC == 0:
             logger.info(
                 f"[{game_time}s] {len(available_queens)} idle/high-energy queens spreading creep (Tumors: {tumor_count}/1000)"
             )
