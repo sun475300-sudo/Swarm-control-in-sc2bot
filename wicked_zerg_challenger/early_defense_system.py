@@ -59,6 +59,14 @@ class EarlyDefenseSystem:
         # Early threat detection
         self.early_threats: Set = set()
 
+        # ★ Optional fixes (FIX 3/4/5): initialized so the helper methods
+        #   below don't AttributeError when called from external coordinators.
+        self._zergling_speed_researched = False
+        self._spine_crawler_built = False
+        self._spine_crawler_ordered = False
+        self._workers_pulled = False
+        self._pulled_worker_tags: Set[int] = set()
+
     async def execute(self, iteration: int) -> None:
         """
         Execute early defense logic every step
