@@ -387,3 +387,40 @@ if iteration % SECOND == 0:
 
 **검토 완료일**: 2026-01-29
 **상태**: 추가 개선 사항 문서화 완료
+
+---
+
+## 🟠 HIGH Priority (게임 동작 영향, 별도 PR 필요) — 2026-05-03 추가
+
+### Issue: 동일 클래스 내 동명 메서드 silent shadow
+
+Python에서는 같은 클래스에 같은 이름의 메서드를 두 번 정의하면
+**나중에 정의된 쪽만** 활성이 된다. 다음 두 케이스는 의도와 달리
+"앞쪽(더 풍부한 구현)이 죽어있고 뒤쪽(빈약한 구현)이 활성"인 상태:
+
+#### 1. `OpponentModeling.on_step` (opponent_modeling.py L342 vs L766)
+
+- **L342 (DEAD)**: 초반 시그널 감지 + 전략 예측 + 빌드오더 추적
+  + 타이밍 공격 감지 + 테크 진척 추적 + Blackboard 업데이트.
+- **L766 (ACTIVE)**: 초반 시그널 감지만.
+
+→ 봇이 매 프레임 호출하는 `opponent_modeling.on_step()`은 빈약한
+   버전이라 빌드오더/타이밍/테크 추적이 모두 사라진 상태.
+   **수정안**: L766을 제거하면 L342의 풍부한 구현이 노출됨.
+   **위험**: 추가 추적 로직이 활성화되면서 다른 컴포넌트에 새로운
+   Blackboard 키를 노출 → 게임 동작이 변할 수 있음. 별도 PR + 게임 검증.
+
+#### 2. `EconomyManager._prevent_resource_banking` (economy_manager.py L1298 vs L2507)
+
+- **L1298 (DEAD)**: `EconomyConfig.BANKING_DEFENSE_TIME_REQ` 등
+  Config-driven 임계값 사용. 페이즈 인식.
+- **L2507 (ACTIVE)**: 하드코딩 임계값 사용. 더 단순.
+
+→ 활성 버전이 의도된 Config 시스템을 못 쓰고 있음.
+   **수정안**: 두 구현 머지 후 L1298 단일화.
+   **위험**: 구식 활성 버전과 신식 dead 버전이 다른 임계값을 가지므로,
+   교체 시 게임 자원 운영 동작이 측정 가능하게 변함. 별도 PR + 시나리오
+   재현 후 적용.
+
+이 두 케이스는 자동 fixer가 잡지 못하는(런타임 동작 보존이 안 되는)
+F811이라 일반 lint cleanup 배치(2026-05-03)에서는 제외됨.
