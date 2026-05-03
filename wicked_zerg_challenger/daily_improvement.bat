@@ -54,6 +54,11 @@ if exist "tools\code_quality_improver.py" (
     echo [WARNING] tools\code_quality_improver.py not found
 )
 
+REM 4. Run black/isort to prevent CI lint drift on auto-edited files
+echo [4/4] Running black + isort to prevent CI lint drift...
+python -m black . 2>nul
+python -m isort . 2>nul
+
 echo.
 echo ======================================================================
 echo Daily improvement completed!
