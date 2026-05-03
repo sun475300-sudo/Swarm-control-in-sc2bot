@@ -98,6 +98,13 @@ try:
 except ImportError:
     get_center_position = None
 
+from utils.game_constants import GameFrequencies
+
+# Cached cadence aliases — see utils/game_constants.GameFrequencies.
+_F_1_SEC = GameFrequencies.EVERY_SECOND  # 22 frames
+_F_10_SEC = GameFrequencies.EVERY_10_SECONDS  # 220 frames
+_F_30_SEC = GameFrequencies.EVERY_30_SECONDS  # 660 frames
+
 try:
     from combat.formation_manager import FormationManager as _FormationManager
 
@@ -188,7 +195,7 @@ class CombatManager:
                 self._last_victory_check = iteration
 
             # ★★★ 6분 Roach Rush 타이밍 공격 체크 ★★★
-            if iteration % 22 == 0 and not self._roach_rush_sent:
+            if iteration % _F_1_SEC == 0 and not self._roach_rush_sent:
                 await self._check_roach_rush_timing(iteration)
 
             # ★ 필수 기지 방어 체크 - 항상 최우선 ★
@@ -203,7 +210,7 @@ class CombatManager:
                 self._last_expansion_defense_check = iteration
 
             # ★★★ Phase 23: 불리한 전투 후퇴 판단 ★★★
-            if iteration % 22 == 0:
+            if iteration % _F_1_SEC == 0:
                 await self._evaluate_army_retreat(iteration)
 
             # ★★★ INTEGRATED: MicroController handles all ground combat ★★★
@@ -341,8 +348,7 @@ class CombatManager:
                         ("complete_destruction", primary_target, 95)
                     )
 
-                    # 로그 (30초마다)
-                    if iteration % 660 == 0:  # 30초
+                    if iteration % _F_30_SEC == 0:
                         remaining = len(self.bot.complete_destruction.target_buildings)
                         self.logger.info(
                             f"[{int(game_time)}s] ★ COMPLETE DESTRUCTION MODE: "
@@ -666,7 +672,7 @@ class CombatManager:
             and self.bot.harassment_coordinator
         ):
             locked_units = self.bot.harassment_coordinator.locked_units.copy()
-            if locked_units and iteration % 220 == 0:  # Log every 10 seconds
+            if locked_units and iteration % _F_10_SEC == 0:
                 self.logger.info(
                     f"[CombatManager] {len(locked_units)} units locked in harassment missions "
                     f"(excluded from combat reassignment)"
@@ -1657,7 +1663,7 @@ class CombatManager:
                 # 적의 60% 미만이면 공격하지 않음 (재집결)
                 if self._rally_point:
                     await self._gather_at_rally_point(army_units, iteration)
-                if iteration % 220 == 0:
+                if iteration % _F_10_SEC == 0:
                     self.logger.info(
                         f"[{int(game_time)}s] HOLD: army {army_supply:.0f} < enemy {visible_enemy_supply:.0f}*0.6"
                     )

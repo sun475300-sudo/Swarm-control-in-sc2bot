@@ -26,21 +26,40 @@ Result: 306 passed, 34 skipped, 0 failed (was: 84 failed before plugin fix +
 
 ---
 
-## Batch 1 — Code Quality: Centroid Deduplication (IN PROGRESS)
+## Batch 1 — Code Quality: Centroid Deduplication (DONE — f59e318)
 
 `utils/position_utils.get_center_position` already exists but 5 modules still
 hand-roll the same `sum(u.position.x for u in units) / len(units)` pattern.
 Replacing them shrinks the surface area for bugs (e.g. empty-list crashes,
 single-unit fast-path) and standardises behaviour.
 
-- [ ] `battle_preparation_system.py:167` — cluster center calc
-- [ ] `combat_phase_controller.py:585-594` — `_get_group_center`
-- [ ] `micro_controller.py:520-527` — `_centroid` static helper
-- [ ] `combat_manager.py:3140-3151` — `_get_enemy_center` fallback
-- [ ] `idle_unit_manager.py:178-185` — army center calculation
+- [x] `battle_preparation_system.py:167` — cluster center calc
+- [x] `combat_phase_controller.py:585-594` — `_get_group_center`
+- [x] `micro_controller.py:520-527` — `_centroid` static helper
+- [x] `combat_manager.py:3140-3151` — `_get_enemy_center` fallback
+- [x] `idle_unit_manager.py:178-185` — army center calculation
+- [x] CI lint fix follow-up (combat_manager.py PEP 8) — ddb7458
 
-Validation: existing tests (`test_combat_manager.py`,
-`test_combat_components.py`) cover the call sites; full suite must stay green.
+## Batch 1.5 — Magic number sweep: economy_manager.py (DONE — 06b97cb)
+
+Replaced 14 `iteration % NN` cadences in `economy_manager.on_step` with
+module-level aliases bound to `utils.game_constants.GameFrequencies`. The
+cadence is now named (`_F_5_SEC`) rather than commented (`% 110  # ~5초`).
+
+- [x] hot-loop modulo replacements
+- Outstanding (intentional, no natural constant): `% 100`/`% 88`/`% 50`
+  log-throttle and rare-event sites
+
+## Batch 1.6 — Magic number sweep: strategy_manager + combat_manager (IN PROGRESS)
+
+Same idea, applied to the next two hottest modules:
+
+- [x] `strategy_manager.py`: 5x `% 22` (~1s) → `_F_1_SEC`
+- [x] `combat_manager.py`: 2x `% 22` (~1s) + 2x `% 220` (~10s) + 1x `% 660`
+      (30s) → named `_F_*_SEC` aliases
+- Skipped (intentional): the 30+ `% 50` and `% 100` log-throttle sites in
+  combat_manager — these aren't tied to a natural cadence, only to log-spam
+  control. Touching them would add noise without making the code clearer.
 
 ---
 
