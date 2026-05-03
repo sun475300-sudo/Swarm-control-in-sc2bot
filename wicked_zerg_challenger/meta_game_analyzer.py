@@ -39,11 +39,16 @@ class MetaGameAnalyzer:
         self.strategy_performance[strategy]["wins"] += result.get("win", 0)
         self.strategy_performance[strategy]["losses"] += 1 - result.get("win", 0)
 
+        win_inc = result.get("win", 0)
+        loss_inc = 1 - win_inc
+
         race = result.get("enemy_race", "unknown")
-        self.race_performance[race]["wins"] += result.get("win", 0)
+        self.race_performance[race]["wins"] += win_inc
+        self.race_performance[race]["losses"] += loss_inc
 
         map_name = result.get("map", "unknown")
-        self.map_performance[map_name]["wins"] += result.get("win", 0)
+        self.map_performance[map_name]["wins"] += win_inc
+        self.map_performance[map_name]["losses"] += loss_inc
 
     def get_current_meta_strategies(self) -> List[MetaStrategy]:
         """Get current meta strategies based on win rates"""
@@ -96,8 +101,10 @@ class MetaGameAnalyzer:
 
     def recommend_strategy(self, enemy_race: str, map_name: str) -> Dict[str, Any]:
         """Recommend best strategy based on current meta"""
-        race_perf = self.race_performance.get(enemy_race, {"wins": 0})
-        map_perf = self.map_performance.get(map_name, {"wins": 0})
+        race_perf = self.race_performance.get(
+            enemy_race, {"wins": 0, "losses": 0}
+        )
+        map_perf = self.map_performance.get(map_name, {"wins": 0, "losses": 0})
 
         best_strategies = {
             ("terran", "small"): "RUSH",
@@ -111,10 +118,27 @@ class MetaGameAnalyzer:
         map_size = "small" if map_name in ["GroundZero", "Corridor"] else "large"
         recommended = best_strategies.get((enemy_race.lower(), map_size), "MACRO")
 
+        # ★ 신뢰도 보정: 과거 동일 종족/맵 데이터가 충분(>=10판)할수록
+        #   기본 0.75에서 ±0.20 범위로 조정
+        race_total = race_perf.get("wins", 0) + race_perf.get("losses", 0)
+        map_total = map_perf.get("wins", 0) + map_perf.get("losses", 0)
+
+        confidence = 0.75
+        if race_total >= 10:
+            race_wr = race_perf["wins"] / race_total
+            confidence += 0.10 * (race_wr - 0.5) * 2  # -0.10 ~ +0.10
+        if map_total >= 10:
+            map_wr = map_perf["wins"] / map_total
+            confidence += 0.10 * (map_wr - 0.5) * 2  # -0.10 ~ +0.10
+        confidence = max(0.0, min(1.0, confidence))
+
         return {
             "recommended_strategy": recommended,
-            "confidence": 0.75,
-            "reasoning": f"Based on vs {enemy_race} on {map_name}",
+            "confidence": confidence,
+            "reasoning": (
+                f"Based on vs {enemy_race} on {map_name} "
+                f"(race n={race_total}, map n={map_total})"
+            ),
             "alternatives": ["RUSH", "MACRO", "TIMING"],
             "meta_analysis": self.get_current_meta_strategies()[:3],
         }

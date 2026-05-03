@@ -340,7 +340,18 @@ class OpponentModeling:
         )
 
     async def on_step(self, iteration: int):
-        """매 프레임 실행"""
+        """매 프레임 실행 (메인 봇 루프 진입점)."""
+        # 봇 핸들이 없으면 조용히 종료. 적 식별자(`current_opponent_id`는
+        # `on_start()` 흐름, `current_opponent`는 `on_game_start()` 흐름에서
+        # 설정됨)는 둘 중 하나라도 있으면 진행한다.
+        if not self.bot:
+            return
+        if not (
+            getattr(self, "current_opponent_id", None)
+            or getattr(self, "current_opponent", None)
+        ):
+            return
+
         if iteration - self.last_update < self.update_interval:
             return
 
@@ -493,6 +504,12 @@ class OpponentModeling:
             return
 
         strategy_manager = self.bot.strategy_manager
+        # ★ StrategyManager가 직접 참조할 수 있도록 예측 데이터를 부착.
+        #   이 곳에 attribute를 set해 두면 Phase 56 (router_modes) 이후 단계에서
+        #   blackboard 폴백이 비활성화된 환경에서도 예측을 활용할 수 있다.
+        if strategy_manager is not None:
+            strategy_manager.predicted_opponent_strategy = strategy
+            strategy_manager.predicted_opponent_confidence = confidence
 
         # Set blackboard recommendations
         if hasattr(self.bot, "blackboard") and self.bot.blackboard:
@@ -762,17 +779,6 @@ class OpponentModeling:
             self.logger.info(
                 f"[OPPONENT_MODELING] Known opponent: {opponent_id} ({self.opponent_models[opponent_id].games_played} games)"
             )
-
-    async def on_step(self, iteration: int):
-        """매 프레임 호출 - 신호 감지"""
-        if not self.current_opponent or not self.bot:
-            return
-
-        game_time = self.bot.time
-
-        # Only detect signals in early game (0-180s)
-        if game_time <= 180.0:
-            await self._detect_early_signals(game_time)
 
     def on_game_end(self, won: bool, lost: bool):
         """게임 종료 시 호출 - 데이터 저장"""

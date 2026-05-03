@@ -2288,8 +2288,6 @@ class CombatManager:
         3. Enemy air units
         4. Ground army units
         """
-        game_time = getattr(self.bot, "time", 0)
-
         # Check if our base is under attack
         base_threatened = self._is_base_under_attack()
 
@@ -2379,36 +2377,6 @@ class CombatManager:
             # No harass target, attack normally
             if self._has_units(enemy_units):
                 await self._mutalisk_attack(mutalisks, enemy_units)
-
-    def _find_harass_target(self):
-        """Find best harassment target (enemy base with workers)."""
-        # Try enemy main base
-        if (
-            hasattr(self.bot, "enemy_start_locations")
-            and self.bot.enemy_start_locations
-        ):
-            return self.bot.enemy_start_locations[0]
-
-        # Try known enemy structures
-        enemy_structures = getattr(self.bot, "enemy_structures", [])
-        if enemy_structures:
-            # Find townhalls
-            townhall_names = [
-                "NEXUS",
-                "COMMANDCENTER",
-                "ORBITALCOMMAND",
-                "PLANETARYFORTRESS",
-                "HATCHERY",
-                "LAIR",
-                "HIVE",
-            ]
-            for struct in enemy_structures:
-                if getattr(struct.type_id, "name", "") in townhall_names:
-                    return struct.position
-            # Any structure as fallback
-            return enemy_structures[0].position
-
-        return None
 
     async def _execute_harass(self, mutalisks, enemy_units):
         """
@@ -3069,20 +3037,8 @@ class CombatManager:
             "PHOENIX",
         }
 
-        # 비전투 유닛 (정찰용, 위협이 낮음)
-        non_combat_names = {
-            "SCV",
-            "PROBE",
-            "DRONE",
-            "MULE",
-            "OBSERVER",
-            "OVERLORD",
-            "OVERSEER",
-            "WARPPRISM",
-            "RAVEN",
-            "CHANGELING",
-        }
-
+        # 비전투 유닛은 별도 분류하지 않는다. nearby_combat이 비어있는
+        # 경로에서는 nearby_enemies가 곧 비전투 유닛 집합이므로 length 비교만으로 충분.
         for th in self.bot.townhalls:
             # 일반 감지 거리
             base_range = 25 if game_time >= 180 else 30  # 초반 더 민감

@@ -235,6 +235,9 @@ class ProductionController:
 
             except Exception as e:
                 self.production_failures += 1
+                self.logger.debug(
+                    f"[Production] train({unit_type}) by {requester} failed: {e}"
+                )
                 break
 
         return produced
@@ -254,7 +257,6 @@ class ProductionController:
             return
 
         # ★ Phase 23: 서플라이 블록 완전 제거 — 선행 생산 ★
-        game_time = getattr(self.bot, "time", 0)
         supply_used = supply_cap - supply_left
 
         # 동적 버퍼: 서플라이 사용량에 비례
@@ -294,6 +296,7 @@ class ProductionController:
 
         except Exception as e:
             self.production_failures += 1
+            self.logger.debug(f"[Production] Overlord auto-train failed: {e}")
 
     # ========== ★ Phase 13: 비율 기반 군대 자동 생산 ★ ==========
 
@@ -379,8 +382,8 @@ class ProductionController:
 
         # 가장 부족한 유닛 찾기
         max_deficit = -1.0
-        best_unit = None
         best_uid = None
+        best_name = None
 
         for name, target_ratio in ratios.items():
             if name not in unit_type_map or target_ratio <= 0:
@@ -414,8 +417,8 @@ class ProductionController:
 
             if deficit > max_deficit:
                 max_deficit = deficit
-                best_unit = name
                 best_uid = uid
+                best_name = name
 
         # 가장 부족한 유닛 생산
         if best_uid and max_deficit > -0.05:
@@ -423,8 +426,10 @@ class ProductionController:
                 try:
                     larva = larvae.first
                     self.bot.do(larva.train(best_uid))
-                except Exception:
-                    pass
+                except Exception as e:
+                    self.logger.debug(
+                        f"[Production] ratio-based train({best_name}) failed: {e}"
+                    )
 
     async def _consume_mineral_bank(self):
         """

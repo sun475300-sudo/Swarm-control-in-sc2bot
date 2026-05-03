@@ -307,6 +307,14 @@ class UnitFactory:
         strategy = getattr(
             self.bot, "strategy_manager", None
         )  # Still needed for get_unit_ratios until that is moved to Blackboard
+
+        # ★ ALL_IN/RUSH 전략 모드에서는 emergency_active와 동일하게 처리:
+        #   가스 유닛을 최소화하고 저글링 등 미네랄 유닛 위주 생산.
+        #   strategy_mode는 enum 또는 문자열일 수 있어 양쪽을 모두 처리.
+        sm_str = getattr(strategy_mode, "name", str(strategy_mode)).upper()
+        if sm_str in {"ALL_IN", "RUSH"}:
+            emergency_active = True
+
         if strategy:
             # Emergency Mode에서는 저글링 위주 생산 (가스 비율 낮춤)
             if emergency_active or getattr(strategy, "emergency_active", False):

@@ -277,9 +277,9 @@ class CreepManager:
             return None
 
         origin = tumor.position
-        spread_range = self.TUMOR_SPREAD_RANGE
 
         # Generate circle positions (CreepyBot: trigonometric sampling)
+        # 거리 링 [7.0, 9.0]은 TUMOR_SPREAD_RANGE(10.0) 이내로 보수적 샘플링.
         candidates = []
         for angle_deg in range(0, 360, 20):  # 18 candidate positions
             rad = math.radians(angle_deg)
@@ -585,9 +585,7 @@ class CreepManager:
 # Feature #97: CreepSpreadManager - BFS/그리드 기반 크립 스프레드 최적화
 # =============================================================================
 
-import math
 from collections import deque
-from typing import Set, Tuple
 
 
 class CreepSpreadManager:

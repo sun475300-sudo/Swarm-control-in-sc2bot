@@ -160,8 +160,6 @@ class HarassmentCoordinator:
     async def on_step(self, iteration: int):
         """매 프레임 실행"""
         try:
-            current_time = self.bot.time
-
             # 1. Update harassment targets
             if iteration % 110 == 0:  # ~5초마다
                 self._update_harassment_targets()
@@ -691,9 +689,8 @@ class HarassmentCoordinator:
 
         # ★ 포킹 실행 ★
         for unit in active_pokes:
-            # 안전 거리 유지하며 건물 공격
-            distance = unit.distance_to(target)
-
+            # 안전 거리 유지하며 건물 공격 (현재 거리 체크는 threat_level
+            # 기반 후퇴로 일원화되어 있음)
             if threat_level > 10:  # 위협이 너무 크면 후퇴
                 self.bot.do(unit.move(self.bot.start_location))
                 continue
