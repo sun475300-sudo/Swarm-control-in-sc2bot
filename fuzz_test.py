@@ -71,16 +71,10 @@ class Fuzzer:
             safe_gas = max(0, gas)
             safe_supply = max(0, min(supply, 200))
 
-            in_range = (
-                safe_minerals >= 0
-                and safe_gas >= 0
-                and 0 <= safe_supply <= 200
-            )
+            in_range = safe_minerals >= 0 and safe_gas >= 0 and 0 <= safe_supply <= 200
             preserves_legal_minerals = minerals < 0 or safe_minerals == minerals
             preserves_legal_gas = gas < 0 or safe_gas == gas
-            preserves_legal_supply = (
-                not (0 <= supply <= 200) or safe_supply == supply
-            )
+            preserves_legal_supply = not (0 <= supply <= 200) or safe_supply == supply
 
             passed = (
                 in_range
