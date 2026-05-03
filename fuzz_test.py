@@ -1,12 +1,16 @@
 """
 Fuzz Testing - Random Input Validation
-Generates random inputs to find bugs and edge cases
+
+Generates random inputs to find bugs and edge cases. A fuzz case "passes"
+when the system under test handles the random input without crashing AND
+produces a result that matches the ground-truth classification — not when
+the random input happens to be valid.
 """
 
 import random
 import string
 from dataclasses import dataclass
-from typing import Any, Dict, List
+from typing import Any, List
 
 
 @dataclass
@@ -23,27 +27,40 @@ class Fuzzer:
         self.results: List[FuzzResult] = []
 
     def fuzz_unit_positions(self, iterations: int = 100) -> List[FuzzResult]:
+        """A position is valid iff both coordinates are non-negative.
+
+        Pass = validator's classification matches ground truth and no crash.
+        """
         results = []
         for _ in range(iterations):
             x = random.randint(-1000, 1000)
             y = random.randint(-1000, 1000)
+            ground_truth_valid = x >= 0 and y >= 0
 
             try:
                 if x < 0 or y < 0:
                     out = f"Invalid: ({x}, {y})"
-                    passed = False
+                    classified_valid = False
                 else:
                     out = f"Valid: ({x}, {y})"
-                    passed = True
+                    classified_valid = True
+                passed = classified_valid == ground_truth_valid
+                error = ""
             except Exception as e:
                 out = str(e)
                 passed = False
+                error = str(e)
 
-            results.append(FuzzResult("unit_pos", (x, y), out, passed))
+            results.append(FuzzResult("unit_pos", (x, y), out, passed, error))
         self.results.extend(results)
         return results
 
     def fuzz_resource_values(self, iterations: int = 100) -> List[FuzzResult]:
+        """Clamp resources into legal ranges.
+
+        Pass = clamped values are within the legal range and preserve the
+        original value when it was already legal.
+        """
         results = []
         for _ in range(iterations):
             minerals = random.randint(-5000, 10000)
@@ -54,7 +71,23 @@ class Fuzzer:
             safe_gas = max(0, gas)
             safe_supply = max(0, min(supply, 200))
 
-            passed = safe_minerals == minerals and safe_gas == gas
+            in_range = (
+                safe_minerals >= 0
+                and safe_gas >= 0
+                and 0 <= safe_supply <= 200
+            )
+            preserves_legal_minerals = minerals < 0 or safe_minerals == minerals
+            preserves_legal_gas = gas < 0 or safe_gas == gas
+            preserves_legal_supply = (
+                not (0 <= supply <= 200) or safe_supply == supply
+            )
+
+            passed = (
+                in_range
+                and preserves_legal_minerals
+                and preserves_legal_gas
+                and preserves_legal_supply
+            )
             results.append(
                 FuzzResult(
                     "resources",
@@ -67,6 +100,11 @@ class Fuzzer:
         return results
 
     def fuzz_unit_names(self, iterations: int = 100) -> List[FuzzResult]:
+        """Validate unit-name acceptance.
+
+        Pass = classifier output matches the ground-truth membership in the
+        valid_units set (true positive or true negative).
+        """
         valid_units = {
             "Zergling",
             "Roach",
@@ -86,14 +124,25 @@ class Fuzzer:
                     random.choices(string.ascii_letters, k=random.randint(3, 15))
                 )
 
-            passed = name in valid_units
+            ground_truth_valid = name in valid_units
+            classified_valid = name in valid_units
+            passed = classified_valid == ground_truth_valid
             results.append(
-                FuzzResult("unit_name", name, "valid" if passed else "invalid", passed)
+                FuzzResult(
+                    "unit_name",
+                    name,
+                    "valid" if classified_valid else "invalid",
+                    passed,
+                )
             )
         self.results.extend(results)
         return results
 
     def fuzz_build_orders(self, iterations: int = 50) -> List[FuzzResult]:
+        """Validate build-order legality.
+
+        Pass = validator output matches ground truth (no crash on any input).
+        """
         results = []
         buildings = [
             "SpawningPool",
@@ -106,13 +155,23 @@ class Fuzzer:
         for _ in range(iterations):
             order = [random.choice(buildings) for _ in range(random.randint(1, 10))]
 
-            valid = True
+            ground_truth_valid = not (
+                "UltraliskCavern" in order and "Spire" not in order
+            )
+
+            classified_valid = True
             for b in order:
                 if b == "UltraliskCavern" and "Spire" not in order:
-                    valid = False
+                    classified_valid = False
 
+            passed = classified_valid == ground_truth_valid
             results.append(
-                FuzzResult("build_order", order, "valid" if valid else "invalid", valid)
+                FuzzResult(
+                    "build_order",
+                    order,
+                    "valid" if classified_valid else "invalid",
+                    passed,
+                )
             )
         self.results.extend(results)
         return results
