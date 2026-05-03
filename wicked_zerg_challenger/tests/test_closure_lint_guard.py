@@ -85,6 +85,31 @@ def test_no_f811_redefined_unused():
 
 
 @pytest.mark.skipif(not _has_ruff(), reason="ruff not installed")
+def test_no_f821_undefined_name():
+    """정의되지 않은 이름 사용 차단.
+
+    리팩터링 중 변수명 오타나 잘못된 이름 변경(예: `var` → `_var`로
+    바꿨는데 사용처를 못 찾은 경우)을 즉시 감지.
+    """
+    result = subprocess.run(
+        [
+            "ruff",
+            "check",
+            "--select=F821",
+            "--no-fix",
+            # ursina/star-import 외부 라이브러리는 제외
+            "--exclude=visuals/swarm_3d_ursina.py",
+            str(REPO_ROOT),
+        ],
+        capture_output=True,
+        text=True,
+    )
+    assert result.returncode == 0, (
+        f"F821 (undefined-name) 위반 발견:\n{result.stdout}\n{result.stderr}"
+    )
+
+
+@pytest.mark.skipif(not _has_ruff(), reason="ruff not installed")
 def test_no_b007_unused_loop_control_variable():
     """루프 변수가 사용되지 않을 경우 `_var` 패턴 강제.
 

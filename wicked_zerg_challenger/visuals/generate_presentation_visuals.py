@@ -1946,7 +1946,7 @@ def section2_approval_flow():
 
     # 현행 프로세스 바
     x_pos = 0
-    for _i, (label, _days, color) in enumerate(current_steps):
+    for _i, (label, days, color) in enumerate(current_steps):
         width = max(days * 0.8, 3)
         fig.add_trace(
             go.Bar(

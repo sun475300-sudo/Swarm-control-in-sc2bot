@@ -778,7 +778,7 @@ class AdvancedScoutingSystemV2:
             self.bot.expansion_locations_list, key=lambda p: p.distance_to(enemy_base)
         )
         # 적 본진 + 가까운 확장 3개를 순환
-        enemy_patrol = [loc for loc in enemy_expansions[:4]]
+        enemy_patrol = list(enemy_expansions[:4])
         if enemy_patrol:
             self._patrol_routes["enemy_bases"] = enemy_patrol
 

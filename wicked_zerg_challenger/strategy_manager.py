@@ -879,7 +879,7 @@ class StrategyManager:
 
         # 3. Scan enemy units and adjust ratios (Reactive)
         if hasattr(self.bot, "enemy_units"):
-            detected_types = set(u.type_id.name.upper() for u in self.bot.enemy_units)
+            detected_types = {u.type_id.name.upper() for u in self.bot.enemy_units}
 
             for e_type in detected_types:
                 counter_rule = self.knowledge_manager.get_counter_unit(e_type)

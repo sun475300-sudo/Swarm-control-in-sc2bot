@@ -117,7 +117,7 @@ def show_rl_agent():
                     ]
 
                     # Simply count max actions
-                    action_counts = {label: 0 for label in action_labels}
+                    action_counts = dict.fromkeys(action_labels, 0)
                     for state_idx in range(len(q_table)):
                         row = q_table[state_idx]
                         if np.sum(row) != 0:  # Ignroe unvisited

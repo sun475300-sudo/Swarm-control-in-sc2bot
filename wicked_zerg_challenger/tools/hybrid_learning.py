@@ -132,8 +132,7 @@ class ReplayPipeline:
             save_path = self.download_dir / filename
 
             with open(save_path, 'wb') as f:
-                for chunk in response.iter_content(chunk_size=8192):
-                    f.write(chunk)
+                f.writelines(response.iter_content(chunk_size=8192))
 
             return save_path
         except Exception as e:
