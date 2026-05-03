@@ -35,14 +35,14 @@ def _empty_units():
     return []
 
 
-def find_nearby_enemies(unit: Unit, enemy_units: Units, range: float) -> Units:
+def find_nearby_enemies(unit: Unit, enemy_units: Units, radius: float) -> Units:
     """
-    특정 거리 내의 적 유닛 찾기
+    특정 거리 내의 적 유닛 찾기.
 
     Args:
         unit: 기준 유닛
         enemy_units: 적 유닛 컬렉션
-        range: 검색 거리
+        radius: 검색 거리 (이전 인자명 ``range`` 는 빌트인을 가렸음 — 동일 시그니처)
 
     Returns:
         거리 내의 적 유닛 컬렉션
@@ -53,10 +53,9 @@ def find_nearby_enemies(unit: Unit, enemy_units: Units, range: float) -> Units:
     try:
         # closer_than 메서드 사용 (최적화)
         if hasattr(enemy_units, "closer_than"):
-            return enemy_units.closer_than(range, unit)
-        else:
-            # 폴백: 직접 필터링
-            return Units([e for e in enemy_units if e.distance_to(unit) < range], None)
+            return enemy_units.closer_than(radius, unit)
+        # 폴백: 직접 필터링
+        return Units([e for e in enemy_units if e.distance_to(unit) < radius], None)
     except Exception as e:
         logger.debug(f"find_nearby_enemies error: {e}")
         return _empty_units()
