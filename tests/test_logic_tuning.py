@@ -8,7 +8,6 @@ logic_tuning 모듈 단위 테스트.
 from types import SimpleNamespace
 
 import pytest
-
 from wicked_zerg_challenger.logic_tuning import (
     tune_combat_params,
     tune_economy_params,

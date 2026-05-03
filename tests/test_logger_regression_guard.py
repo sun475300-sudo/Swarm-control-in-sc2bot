@@ -39,6 +39,5 @@ def test_no_empty_logger_calls_in_bot_source():
                 offenders.append(f"{path}:{lineno}: {line.strip()}")
     assert not offenders, (
         "Empty logger calls re-introduced — these were cleaned up by the "
-        "print->logger migration fix-up. Offending sites:\n  "
-        + "\n  ".join(offenders)
+        "print->logger migration fix-up. Offending sites:\n  " + "\n  ".join(offenders)
     )
