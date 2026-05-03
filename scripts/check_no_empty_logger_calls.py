@@ -24,9 +24,12 @@ import re
 import sys
 from pathlib import Path
 
-# logger.<level>(   <whitespace>   )       — and only on a single line
+# Catches both bug variants from the print->logger migration:
+#   1) `logger.info()`            — empty parens, the original 131-call regression.
+#   2) `logger.info("")` / `('')` / `(f"")` — a no-op blank line, equally useless.
 EMPTY_CALL_RE = re.compile(
-    r"\blogger\.(?:debug|info|warning|warn|error|critical|exception)\(\s*\)"
+    r"\blogger\.(?:debug|info|warning|warn|error|critical|exception)"
+    r"\(\s*(?:[fF]?[\"\']\s*[\"\'])?\s*\)"
 )
 
 

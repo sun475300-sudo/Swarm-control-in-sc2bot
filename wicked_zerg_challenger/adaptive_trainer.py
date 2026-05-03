@@ -113,12 +113,13 @@ def run_single_game(
 
         victory = result == sc2.Result.Victory
         stats.record_game(map_name, difficulty_name, enemy_race.name, victory)
-
-        if victory:
-            logger.info("")
-        else:
-            logger.info("")
-
+        logger.info(
+            "Game finished: map=%s difficulty=%s enemy=%s result=%s",
+            map_name,
+            difficulty_name,
+            enemy_race.name,
+            "VICTORY" if victory else "DEFEAT",
+        )
         return victory
 
     except Exception as e:

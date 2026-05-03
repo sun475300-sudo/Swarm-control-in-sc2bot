@@ -350,7 +350,7 @@ class ProtossCounterSystem:
             for e in self.bot.enemy_units
             if getattr(e.type_id, "name", "").upper() == "PHOENIX"
         ]
-        if not phoenixes or len(phoenixes) == 0:
+        if not phoenixes:
             self.phoenix_detected = False
             return
 

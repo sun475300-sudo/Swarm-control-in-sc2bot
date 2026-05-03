@@ -195,7 +195,6 @@ def show_rl_agent():
 
 
 def main():
-    logger.info("")
     show_build_orders()
     show_rl_agent()
     logger.info("\n" + "=" * 60)
