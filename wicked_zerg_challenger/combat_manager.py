@@ -604,7 +604,7 @@ class CombatManager:
                         if hasattr(self.bot, "start_location"):
                             start = self.bot.start_location
                             exp_locs = sorted(
-                                list(self.bot.expansion_locations.keys()),
+                                self.bot.expansion_locations.keys(),
                                 key=lambda p: p.distance_to(start),
                             )
                         else:
@@ -671,17 +671,17 @@ class CombatManager:
         # ★ FIX: locked_units 스냅샷 복사 (레이스 컨디션 방지)
         locked_snapshot = frozenset(locked_units) if locked_units else frozenset()
         available_ground = (
-            set(u.tag for u in ground_army if u.tag not in locked_snapshot)
+            {u.tag for u in ground_army if u.tag not in locked_snapshot}
             if ground_army
             else set()
         )
         available_air = (
-            set(u.tag for u in air_units if u.tag not in locked_snapshot)
+            {u.tag for u in air_units if u.tag not in locked_snapshot}
             if air_units
             else set()
         )
 
-        for task_name, target, priority in tasks_to_execute:
+        for task_name, target, _priority in tasks_to_execute:
             if task_name == "complete_destruction":
                 # ★ Complete Destruction: 모든 병력을 건물 파괴에 투입 (전투 없을 때)
                 # Complete Destruction Trainer가 자체적으로 병력 할당 처리
@@ -3783,7 +3783,7 @@ class CombatManager:
             current_structure_count > 10 or our_army_supply < 20
         ):
             self._victory_push_active = False
-            self.logger.info(f"[VICTORY PUSH] Deactivated - regroup needed")
+            self.logger.info("[VICTORY PUSH] Deactivated - regroup needed")
 
         # 승리 푸시 모드일 때 공격 강도 증가
         if self._victory_push_active:
@@ -3890,7 +3890,7 @@ class CombatManager:
 
         # === STEP 1: 확장 기지 파괴 감지 ===
         # 이전에 있던 기지가 사라졌는지 확인
-        current_bases = set(th.tag for th in townhalls)
+        current_bases = {th.tag for th in townhalls}
         previous_bases = set(self._expansion_under_attack.keys())
 
         destroyed_bases = previous_bases - current_bases

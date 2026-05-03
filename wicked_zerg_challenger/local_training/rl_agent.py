@@ -388,7 +388,7 @@ class RLAgent:
         entropy_coeff = 0.01
         total_loss = 0.0
         total_entropy = 0.0
-        for cache, action, advantage in zip(self.caches, self.actions, advantages):
+        for cache, action, advantage in zip(self.caches, self.actions, advantages, strict=False):
             probs = cache["probs"]
             # 엔트로피 보너스: 정책 붕괴 방지
             entropy = -np.sum(probs * np.log(probs + 1e-10))
@@ -430,7 +430,7 @@ class RLAgent:
                         f"[OK] Experience data saved: {exp_path.name} (Size: {len(self.states)})"
                     )
                 else:
-                    logger.error(f"[ERROR] Failed to save experience data")
+                    logger.error("[ERROR] Failed to save experience data")
             except Exception as e:
                 logger.error(f"[ERROR] Exception during save: {e}")
 

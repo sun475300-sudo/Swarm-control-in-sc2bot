@@ -223,7 +223,7 @@ class ThreatAssessment:
             unit_type = getattr(unit.type_id, "name", "").upper()
             if unit_type in ["ULTRALISK", "BROODLORD"]:
                 unit_power *= 1.5  # 고급 유닛
-            elif unit_type in ["BANELING"]:
+            elif unit_type == "BANELING":
                 unit_power *= 1.2  # 특수 유닛
 
             power += unit_power

@@ -96,7 +96,7 @@ class LogicChecker:
                 line_hashes[block_hash].append(i + 1)
 
             # Flag if the same block appears 2+ times.
-            for block_hash, line_numbers in line_hashes.items():
+            for _block_hash, line_numbers in line_hashes.items():
                 if len(line_numbers) >= 2:
                     issues.append(
                         {
@@ -138,11 +138,11 @@ class LogicChecker:
                         )
 
             # Pattern 2: missing await in async functions (heuristic).
-            for i, line in enumerate(lines, 1):
+            for _i, line in enumerate(lines, 1):
                 if "async def" in content:
                     # Heuristic only; intentionally skipped for now.
                     if re.search(r"\b\w+\(.*\)", line) and "await" not in line:
-                        # �̰� ��Ȯ���� �����Ƿ� �����
+                        # 정확하지 않으므로 스킵
                         pass
 
             # Pattern 3: file/network operations without try/except.

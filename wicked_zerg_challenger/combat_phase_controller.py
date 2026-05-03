@@ -265,7 +265,7 @@ class CombatPhaseController:
         )
 
         # 유닛들을 진형 위치로 이동
-        for unit, target_pos in zip(group_units, formation_positions):
+        for unit, target_pos in zip(group_units, formation_positions, strict=False):
             if unit.distance_to(target_pos) > 2:
                 self.bot.do(unit.move(target_pos))
 
@@ -478,7 +478,7 @@ class CombatPhaseController:
         group_id = f"group_{len(self.combat_groups)}"
 
         group = CombatGroup(
-            units=set(u.tag for u in units),
+            units={u.tag for u in units},
             phase=CombatPhase.IDLE,
             rally_point=None,
             target_position=None,
@@ -509,7 +509,7 @@ class CombatPhaseController:
 
         if formation_type == "concave":
             # 오목 진형 (적을 감싸는 형태)
-            for i, unit in enumerate(units):
+            for i, _unit in enumerate(units):
                 angle = (i / len(units)) * 3.14 - 1.57  # -90도 ~ +90도
                 offset = Point2((direction.x * 3, direction.y * 3))
                 offset = offset.rotated(angle)
@@ -518,7 +518,7 @@ class CombatPhaseController:
         elif formation_type == "line":
             # 일직선 진형
             perpendicular = Point2((-direction.y, direction.x))
-            for i, unit in enumerate(units):
+            for i, _unit in enumerate(units):
                 offset = perpendicular * (i - len(units) / 2) * 2
                 positions.append(center + offset)
 
@@ -611,7 +611,7 @@ class CombatPhaseController:
 
     def _collect_learning_data(self, game_time: float) -> None:
         """학습 데이터 수집"""
-        for group_id, group in self.combat_groups.items():
+        for _group_id, group in self.combat_groups.items():
             group_units = self._get_group_units(group)
             nearby_enemies = self._get_nearby_enemies(group_units)
 

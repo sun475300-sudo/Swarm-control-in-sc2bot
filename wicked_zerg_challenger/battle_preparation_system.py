@@ -107,7 +107,7 @@ class BattlePreparationSystem:
         for cluster_center, enemy_units in clusters:
             # 근처 아군 확인
             our_units = self.bot.units.filter(
-                lambda u: u.distance_to(cluster_center)
+                lambda u, cc=cluster_center: u.distance_to(cc)
                 < self.ENGAGEMENT_DETECTION_RADIUS
                 and u.type_id
                 not in {
@@ -177,7 +177,7 @@ class BattlePreparationSystem:
 
     async def _prepare_for_battles(self, game_time: float):
         """교전 준비"""
-        for zone_key, zone in list(self.battle_zones.items()):
+        for _zone_key, zone in list(self.battle_zones.items()):
             if not zone.is_active:
                 continue
 
@@ -280,8 +280,9 @@ class BattlePreparationSystem:
         """활성 교전 관리"""
         for zone_key, zone in list(self.battle_zones.items()):
             # 교전 종료 확인 (적이 사라짐)
+            zc = zone.center
             enemy_nearby = self.bot.enemy_units.filter(
-                lambda u: u.distance_to(zone.center) < self.ENGAGEMENT_DETECTION_RADIUS
+                lambda u, c=zc: u.distance_to(c) < self.ENGAGEMENT_DETECTION_RADIUS
                 and not u.is_structure
             )
 

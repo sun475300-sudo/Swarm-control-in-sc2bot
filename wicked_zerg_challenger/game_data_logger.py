@@ -172,7 +172,7 @@ class GameDataLogger:
         # 새로운 확장 발견
         for townhall in self.bot.townhalls:
             if townhall.tag not in self._tracked_structures:
-                expansion_number = len([e for e in self.game_data["expansions"]]) + 1
+                expansion_number = len(list(self.game_data["expansions"])) + 1
 
                 self.game_data["expansions"].append(
                     {
@@ -489,7 +489,7 @@ class GameDataLogger:
             total_supply += supply
 
         # 비율 계산
-        for unit_type, data in composition.items():
+        for _unit_type, data in composition.items():
             data["ratio"] = (
                 round(data["supply"] / total_supply, 3) if total_supply > 0 else 0
             )

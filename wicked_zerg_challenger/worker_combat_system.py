@@ -91,9 +91,10 @@ class WorkerCombatSystem:
 
         # 각 본진/확장 기지 근처 위협 탐지
         for base in self.bot.townhalls.ready:
+            bpos = base.position
             nearby_enemies = self.bot.enemy_units.filter(
-                lambda u: u.type_id in self.EARLY_THREATS
-                and u.position.distance_to(base.position) < self.engagement_range
+                lambda u, p=bpos: u.type_id in self.EARLY_THREATS
+                and u.position.distance_to(p) < self.engagement_range
             )
             all_threats.extend(nearby_enemies)
 
@@ -130,7 +131,7 @@ class WorkerCombatSystem:
             if time_since_threat > self.combat_mode_cooldown:
                 self.combat_mode = False
                 self.combat_workers.clear()
-                self.logger.info(f"[WORKER_COMBAT] 전투 모드 해제")
+                self.logger.info("[WORKER_COMBAT] 전투 모드 해제")
 
     async def _execute_combat_mode(self, threats: Units) -> None:
         """전투 모드 실행"""

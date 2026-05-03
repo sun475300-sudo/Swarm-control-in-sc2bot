@@ -120,7 +120,7 @@ class KnowledgeUpdater:
                 map_stats[map_name]["losses"] += 1
 
         # 승률 계산
-        for map_name, stats in map_stats.items():
+        for _map_name, stats in map_stats.items():
             if stats["games"] > 0:
                 stats["winrate"] = round(stats["wins"] / stats["games"] * 100, 1)
             else:

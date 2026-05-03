@@ -383,8 +383,9 @@ class AdvancedWorkerOptimizer:
         for gas_building in gas_buildings:
             if gas_building.assigned_harvesters > 1:  # 최소 1명은 유지
                 # 가스 일꾼 1명을 미네랄로 이동
+                gb_tag = gas_building.tag
                 workers = self.bot.workers.filter(
-                    lambda w: w.order_target == gas_building.tag
+                    lambda w, tag=gb_tag: w.order_target == tag
                     or w.is_carrying_vespene
                 )
 

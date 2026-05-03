@@ -33,7 +33,7 @@ class TrainingVisualizer:
         self.data_path = self.project_root / "local_training" / "adaptive_lr_stats.json"
         self.output_dir = self.project_root / "local_training" / "plots"
         self.output_dir.mkdir(parents=True, exist_ok=True)
-        
+
     def load_data(self) -> Dict[str, Any]:
         """데이터 로드 (없으면 목업 데이터 생성)"""
         if self.data_path.exists():
@@ -45,7 +45,7 @@ class TrainingVisualizer:
                 logger.error(f"Failed to load data: {e}")
         else:
             logger.warning(f"Data file not found: {self.data_path}")
-            
+
         logger.info("Generating mock data for demonstration...")
         return self._generate_mock_data()
 
@@ -55,14 +55,14 @@ class TrainingVisualizer:
         history = []
         recent_win_rates = []
         current_lr = 0.001
-        
+
         # 가짜 학습 이력 생성
         for i in range(0, games, 10):
             # 승률이 점진적으로 오르는 시나리오
             win_rate = 0.2 + (i / games) * 0.5 + random.uniform(-0.1, 0.1)
             win_rate = max(0.0, min(1.0, win_rate))
             recent_win_rates.append(win_rate)
-            
+
             # 학습률 조정 시뮬레이션
             if i % 20 == 0:
                 old_lr = current_lr
@@ -72,7 +72,7 @@ class TrainingVisualizer:
                 else:
                     current_lr /= 1.2 # 감소
                     action = "decrease"
-                    
+
                 history.append({
                     "game": i,
                     "action": action,
@@ -80,7 +80,7 @@ class TrainingVisualizer:
                     "new_lr": current_lr,
                     "win_rate": win_rate
                 })
-                
+
         return {
             "learning_rate": current_lr,
             "best_learning_rate": 0.002,
@@ -93,33 +93,33 @@ class TrainingVisualizer:
     def plot_progress(self):
         """그래프 그리기"""
         data = self.load_data()
-        
+
         # 데이터 추출
         history = data.get("adjustment_history", [])
         recent_win_rates = data.get("recent_win_rates", [])
-        
+
         # 캔버스 설정
         fig = plt.figure(figsize=(12, 8))
         gs = gridspec.GridSpec(2, 1, height_ratios=[1, 1])
-        
+
         # 1. 학습률 변화 (Step Chart)
         ax1 = plt.subplot(gs[0])
         ax1.set_title("Self-Evolution System: Learning Rate Adjustment", fontsize=14, fontweight='bold')
-        
+
         if history:
             games = [h["game"] for h in history]
             lrs = [h["new_lr"] for h in history]
             # step chart를 위해 시작점 추가
             games.insert(0, 0)
             lrs.insert(0, history[0]["old_lr"])
-            
+
             ax1.step(games, lrs, where='post', color='purple', linewidth=2, label='Learning Rate')
             ax1.scatter(games[1:], lrs[1:], color='red', s=30, zorder=5) # 조정 포인트
-            
+
             # 주석 추가
             for h in history:
                 icon = "▲" if h["action"] == "increase" else "▼"
-                ax1.annotate(f"{icon}", (h["game"], h["new_lr"]), 
+                ax1.annotate(f"{icon}", (h["game"], h["new_lr"]),
                              xytext=(0, 5), textcoords='offset points', ha='center',
                              fontsize=8, color='blue' if h["action"]=="increase" else 'red')
         else:
@@ -129,56 +129,56 @@ class TrainingVisualizer:
         ax1.set_yscale('log')
         ax1.grid(True, which="both", ls="-", alpha=0.2)
         ax1.legend(loc='upper left')
-        
+
         # 2. 승률 추이 (Line Chart)
         ax2 = plt.subplot(gs[1])
         ax2.set_title("Training Performance: Win Rate Trend", fontsize=14, fontweight='bold')
-        
+
         if recent_win_rates:
             # 실제 데이터 구조에 따라 X축 생성 (단순 인덱스 or 게임 수 추정)
-            x_axis = range(len(recent_win_rates)) 
-            
+            x_axis = range(len(recent_win_rates))
+
             ax2.plot(x_axis, recent_win_rates, color='green', marker='o', linestyle='-', linewidth=1.5, markersize=4, label='Win Rate')
-            
+
             # 추세선 (Trend Line)
             if len(recent_win_rates) > 1:
                 z = __import__('numpy').polyfit(x_axis, recent_win_rates, 1)
                 p = __import__('numpy').poly1d(z)
                 ax2.plot(x_axis, p(x_axis), "r--", alpha=0.6, label='Trend')
-                
+
         else:
             ax2.text(0.5, 0.5, "No Win Rate Data Yet", ha='center', va='center')
-            
+
         ax2.set_xlabel("Measurement Points (Recent Games Window)", fontsize=10)
         ax2.set_ylabel("Win Rate (0.0 - 1.0)", fontsize=10)
         ax2.set_ylim(0, 1.1)
         ax2.grid(True, linestyle='--', alpha=0.5)
         ax2.legend(loc='upper left')
-        
+
         # 레이아웃 조정 및 저장
         plt.tight_layout()
-        
+
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         output_path = self.output_dir / f"learning_progress_{timestamp}.png"
         latest_path = self.output_dir / "learning_progress_latest.png"
-        
+
         plt.savefig(output_path, dpi=100)
         plt.savefig(latest_path, dpi=100) # 덮어쓰기용 최신 파일
-        
-        logger.info(f"Charts saved to:")
+
+        logger.info("Charts saved to:")
         logger.info(f"  - {output_path}")
         logger.info(f"  - {latest_path}")
-        
+
         plt.close()
 
 def main():
     logger.info("="*60)
     logger.info(" Learning Progress Visualizer")
     logger.info("="*60)
-    
+
     visualizer = TrainingVisualizer()
     visualizer.plot_progress()
-    
+
     logger.info("\nVisualization Complete.")
 
 if __name__ == "__main__":

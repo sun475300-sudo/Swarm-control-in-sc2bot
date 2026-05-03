@@ -339,7 +339,7 @@ class MacroCycleManager:
                 continue
 
         # 인젝트 배정된 퀸 중 에너지가 충분한 퀸으로도 크립 확산
-        for queen_tag, assignment in self.queen_assignments.items():
+        for queen_tag, _assignment in self.queen_assignments.items():
             try:
                 if not UnitTypeId or not AbilityId:
                     break

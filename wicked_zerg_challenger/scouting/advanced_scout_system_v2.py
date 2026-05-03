@@ -778,7 +778,7 @@ class AdvancedScoutingSystemV2:
             self.bot.expansion_locations_list, key=lambda p: p.distance_to(enemy_base)
         )
         # 적 본진 + 가까운 확장 3개를 순환
-        enemy_patrol = [loc for loc in enemy_expansions[:4]]
+        enemy_patrol = list(enemy_expansions[:4])
         if enemy_patrol:
             self._patrol_routes["enemy_bases"] = enemy_patrol
 
@@ -1197,8 +1197,9 @@ class AdvancedScoutingSystemV2:
                         15, base.position
                     )
                     if not nearby_overseers:
+                        bpos = base.position
                         available = overseers.filter(
-                            lambda u: u.distance_to(base.position) > 15
+                            lambda u, p=bpos: u.distance_to(p) > 15
                         )
                         if available:
                             closest = available.closest_to(base.position)

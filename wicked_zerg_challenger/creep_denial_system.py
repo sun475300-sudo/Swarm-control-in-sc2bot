@@ -364,7 +364,7 @@ class CreepDenialSystem:
         # 우선순위 순으로 종양 처리
         sorted_tumors = self._get_prioritized_tumors()
 
-        for tumor_id, tumor in sorted_tumors:
+        for _tumor_id, tumor in sorted_tumors:
             # 이미 충분한 유닛이 할당되었으면 스킵
             if len(tumor.assigned_units) >= GameConfig.CREEP_DENIAL_MAX_UNITS_PER_TUMOR:
                 continue

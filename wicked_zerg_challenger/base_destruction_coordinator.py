@@ -149,7 +149,7 @@ class BaseDestructionCoordinator:
 
     def _update_base_info(self):
         """기지 정보 업데이트 (건물 수, 일꾼 수, 방어력)"""
-        for key, base in self.enemy_bases.items():
+        for _key, base in self.enemy_bases.items():
             if base.is_destroyed:
                 continue
 
@@ -187,7 +187,7 @@ class BaseDestructionCoordinator:
             nearby_army = [
                 u
                 for u in self.bot.enemy_units
-                if u.distance_to(base.position) < 20 and not u.type_id in worker_types
+                if u.distance_to(base.position) < 20 and u.type_id not in worker_types
             ]
 
             base.defense_strength = len(nearby_defense) * 10 + len(nearby_army)

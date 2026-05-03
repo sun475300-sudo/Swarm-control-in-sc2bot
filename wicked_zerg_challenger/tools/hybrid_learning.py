@@ -6,7 +6,7 @@ Web Scraping + Automated Learning Pipeline for SC2 Bot
 
 Features:
 1. [Collect] Scrape Spawning Tool for latest Zerg pro replays (bypassing API limits)
-2. [Extract] Download and unzip replays automatically 
+2. [Extract] Download and unzip replays automatically
 3. [Place] Organize files into learning directories
 4. [Learn] Trigger iterative learning cycles
 """
@@ -52,7 +52,7 @@ class ReplayPipeline:
             "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
             "Referer": "https://lotv.spawningtool.com/replays/?race=1&tag=9"
         }
-        
+
     def _log(self, msg: str):
         timestamp = datetime.now().strftime("%H:%M:%S")
         logger.info(f"[{timestamp}] [MLOps] {msg}")
@@ -61,42 +61,42 @@ class ReplayPipeline:
         """Scrape replay detail URLs from Spawning Tool"""
         url = "https://lotv.spawningtool.com/replays/?race=1&tag=9" # Zerg (1) + Pro (9)
         self._log(f"Scraping {url}...")
-        
+
         links = []
         try:
             response = requests.get(url, headers=self.headers, verify=True, timeout=30)
             if response.status_code != 200:
                 self._log(f"Scraping failed: Status {response.status_code}")
                 return []
-            
+
             # Regex to find replay links
             # Pattern 1: <a href="/replays/12345/">
             # Pattern 2: <a href="/replays/download/12345/"> (Direct download)
             # Pattern 3: <a href="/12345/"> (Short)
-            
+
             # Try finding digits inside hrefs that look like replay paths
             links_found = re.findall(r'href=["\'](/replays/download/\d+/|/replays/\d+/|/\d+/)["\']', response.text)
-            
+
             ids = set()
             for link in links_found:
                 # Extract digits
                 match = re.search(r'(\d+)', link)
                 if match:
                     ids.add(match.group(1))
-            
+
             ids = list(ids)
             self._log(f"Found {len(ids)} replay IDs: {ids[:5]}...")
-            
+
             # Convert to full download URLs (Spawning Tool convention)
             # Link format: https://lotv.spawningtool.com/{rid}/download/
             for rid in ids[:limit]:
                 # rid might contain slashes if extracted poorly, ensure it's clean
                 clean_rid = rid.strip("/")
                 links.append(f"https://lotv.spawningtool.com/{clean_rid}/download/")
-                
+
         except Exception as e:
             self._log(f"Error scraping links: {e}")
-            
+
         return links
 
     def download_file(self, url: str) -> Optional[Path]:
@@ -108,13 +108,13 @@ class ReplayPipeline:
             filename = f"replay_{rid}.zip" # Spawning tool usually gives zips? Or .SC2Replay directly?
             # Actually spawning tool download often returns the .SC2Replay file directly with content-disposition
             # safely assume it might be a file. We'll inspect headers.
-            
+
             save_path = self.download_dir / filename
-            
+
             self._log(f"Downloading {url}...")
             response = requests.get(url, headers=self.headers, verify=True, stream=True, timeout=60)
             response.raise_for_status()
-            
+
             # Use final URL (after redirects) to guess extension
             final_url = response.url
             if final_url.lower().endswith('.sc2replay') or '.sc2replay?' in final_url.lower():
@@ -130,11 +130,10 @@ class ReplayPipeline:
                     filename = f"replay_{rid}.zip"
 
             save_path = self.download_dir / filename
-            
+
             with open(save_path, 'wb') as f:
-                for chunk in response.iter_content(chunk_size=8192):
-                    f.write(chunk)
-                    
+                f.writelines(response.iter_content(chunk_size=8192))
+
             return save_path
         except Exception as e:
             self._log(f"Download failed for {url}: {e}")
@@ -143,7 +142,7 @@ class ReplayPipeline:
     def extract_and_organize(self, file_path: Path) -> List[Path]:
         """Extract if zip, move to replays dir"""
         extracted_files = []
-        
+
         try:
             if str(file_path).lower().endswith('.zip'):
                 with zipfile.ZipFile(file_path, 'r') as zip_ref:
@@ -152,7 +151,7 @@ class ReplayPipeline:
                         if name.lower().endswith('.sc2replay'):
                             extracted_files.append(self.download_dir / name)
                 # Remove zip
-                file_path.unlink() 
+                file_path.unlink()
             elif str(file_path).lower().endswith('.sc2replay'):
                 extracted_files.append(file_path)
             else:
@@ -167,7 +166,7 @@ class ReplayPipeline:
                 shutil.move(str(p), str(target_path))
                 final_paths.append(target_path)
                 self._log(f"Staged for learning: {target_name}")
-                
+
             return final_paths
 
         except Exception as e:
@@ -176,7 +175,7 @@ class ReplayPipeline:
 
     def run_pipeline(self, num_replays=5, epochs=5):
         self._log("=== Starting MLOps Pipeline ===")
-        
+
         # 1. Collect
         links = self.scrape_replay_links(limit=num_replays)
         if not links:
@@ -190,7 +189,7 @@ class ReplayPipeline:
             if fpath:
                 batch = self.extract_and_organize(fpath)
                 new_replays.extend(batch)
-        
+
         self._log(f"Successfully collected {len(new_replays)} new replays.")
         if not new_replays:
             return
@@ -201,11 +200,11 @@ class ReplayPipeline:
             replay_dir=str(self.replays_dir),
             output_dir=None # Use default
         )
-        
+
         for i in range(epochs):
             self._log(f"--- Epoch {i+1}/{epochs} ---")
             learner.learn_from_replays()
-            
+
         # 4. Cleanup/Archive
         self._log("run_pipeline completed. Archiving processed replays...")
         for p in new_replays:
@@ -214,7 +213,7 @@ class ReplayPipeline:
                     shutil.move(str(p), str(self.processed_dir / p.name))
             except Exception as e:
                 self._log(f"Archive failed for {p.name}: {e}")
-                
+
         self._log("=== Pipeline Finished Successfully ===")
 
 def main():
@@ -224,12 +223,12 @@ def main():
     import urllib3
 
     # SSL verification is now enabled; no need to suppress warnings
-    
+
     parser = argparse.ArgumentParser(description="MLOps Pipeline for SC2 Bot")
     parser.add_argument("--limit", type=int, default=10, help="Number of replays to download")
     parser.add_argument("--epochs", type=int, default=5, help="Number of training epochs")
     args = parser.parse_args()
-    
+
     pipeline = ReplayPipeline()
     pipeline.run_pipeline(num_replays=args.limit, epochs=args.epochs)
 
