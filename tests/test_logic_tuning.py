@@ -117,3 +117,34 @@ class TestRealManagerCompat:
         # The real manager has both attributes, so both should be applied.
         assert "gas_overflow_prevention_threshold" in applied
         assert 700 <= em.gas_overflow_prevention_threshold <= 1000
+
+
+class TestStartupWireUp:
+    """logic_tuning이 wicked_zerg_bot_pro_impl on_start에 실제로 호출되는지 정적 검증."""
+
+    def test_on_start_imports_logic_tuning(self):
+        from pathlib import Path
+
+        bot_impl = (
+            Path(__file__).parent.parent
+            / "wicked_zerg_challenger"
+            / "wicked_zerg_bot_pro_impl.py"
+        )
+        text = bot_impl.read_text(encoding="utf-8")
+        assert "from wicked_zerg_challenger.logic_tuning import" in text
+        assert "tune_combat_params" in text
+        assert "tune_economy_params" in text
+
+    def test_on_start_guards_missing_managers(self):
+        """If self.combat / self.economy is None, logic_tuning must not be called."""
+        from pathlib import Path
+
+        bot_impl = (
+            Path(__file__).parent.parent
+            / "wicked_zerg_challenger"
+            / "wicked_zerg_bot_pro_impl.py"
+        )
+        text = bot_impl.read_text(encoding="utf-8")
+        # Guard pattern presence - protects against tune_*(None) -> AttributeError.
+        assert 'getattr(self, "combat", None) is not None' in text
+        assert 'getattr(self, "economy", None) is not None' in text

@@ -210,6 +210,27 @@ class WickedZergBotProImpl(BotAI):
                 f"\n[BOT] [*] Manager initialization complete: {stats['succeeded']}/{stats['total']} succeeded [*]\n"
             )
 
+            # === Daily logic tuning (combat / economy parameter touch-up) ===
+            # Safe: each tune_* function is a no-op if attributes are missing.
+            try:
+                from wicked_zerg_challenger.logic_tuning import (
+                    tune_combat_params,
+                    tune_economy_params,
+                )
+
+                if getattr(self, "combat", None) is not None:
+                    combat_diff = tune_combat_params(self.combat)
+                    if combat_diff:
+                        self.logger.info(
+                            f"[LOGIC_TUNING] combat applied: {combat_diff}"
+                        )
+                if getattr(self, "economy", None) is not None:
+                    eco_diff = tune_economy_params(self.economy)
+                    if eco_diff:
+                        self.logger.info(f"[LOGIC_TUNING] economy applied: {eco_diff}")
+            except Exception as e:  # pragma: no cover - defensive
+                self.logger.warning(f"[LOGIC_TUNING] skipped: {e}")
+
         except ImportError as e:
             self.logger.error(f"ManagerFactory not available: {e}")
             self.logger.error("ManagerFactory is required! Cannot continue without it.")
