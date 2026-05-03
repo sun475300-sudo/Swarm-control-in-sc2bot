@@ -265,7 +265,7 @@ class CombatPhaseController:
         )
 
         # 유닛들을 진형 위치로 이동
-        for unit, target_pos in zip(group_units, formation_positions):
+        for unit, target_pos in zip(group_units, formation_positions, strict=False):
             if unit.distance_to(target_pos) > 2:
                 self.bot.do(unit.move(target_pos))
 

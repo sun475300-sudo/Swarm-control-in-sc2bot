@@ -58,7 +58,7 @@ def part1_fsm_3d():
     fig = go.Figure()
 
     # 메인 타임라인 (3D 파이프)
-    for _i, (phase, t, col) in enumerate(zip(phases, times, colors)):
+    for _i, (phase, t, col) in enumerate(zip(phases, times, colors, strict=False)):
         # 메인 노드 (큰 구)
         fig.add_trace(
             go.Scatter3d(
@@ -351,7 +351,7 @@ def part1_hybrid_3d():
     ]
     line_colors = ["#666", "#666", "#2E7D32", "#1565C0", "#E65100"]
 
-    for (x1, y1, z1, x2, y2, z2), col in zip(connections, line_colors):
+    for (x1, y1, z1, x2, y2, z2), col in zip(connections, line_colors, strict=False):
         fig.add_trace(
             go.Scatter3d(
                 x=[x1, x2],
@@ -932,7 +932,7 @@ def part3_forces_3d():
     # 최종 합벡터
     total = np.array([0.0, 0.0, 0.0])
     weights = [1.5, 1.0, 1.0, 1.0, 1.0]
-    for (_, fvec, _), w in zip(forces, weights):
+    for (_, fvec, _), w in zip(forces, weights, strict=False):
         total += np.array(fvec) * w
 
     total_norm = total / (np.linalg.norm(total) + 1e-6) * 1.5

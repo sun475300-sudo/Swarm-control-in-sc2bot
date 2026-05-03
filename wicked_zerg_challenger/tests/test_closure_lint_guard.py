@@ -82,3 +82,20 @@ def test_no_f811_redefined_unused():
     assert result.returncode == 0, (
         f"F811 (redefined-while-unused) 위반 발견:\n{result.stdout}\n{result.stderr}"
     )
+
+
+@pytest.mark.skipif(not _has_ruff(), reason="ruff not installed")
+def test_no_b905_zip_without_strict():
+    """`zip(...)` 호출 시 `strict=` 키워드 명시 강제 (Python 3.10+).
+
+    길이가 다른 iterable을 silently 절단하는 버그를 차단.
+    """
+    result = subprocess.run(
+        ["ruff", "check", "--select=B905", "--no-fix", str(REPO_ROOT)],
+        capture_output=True,
+        text=True,
+    )
+    assert result.returncode == 0, (
+        f"B905 (zip-without-explicit-strict) 위반 발견:\n{result.stdout}\n{result.stderr}\n"
+        "수정법: `zip(a, b)` → `zip(a, b, strict=False)` 또는 `strict=True`"
+    )
