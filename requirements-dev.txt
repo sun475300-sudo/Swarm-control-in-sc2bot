@@ -1,0 +1,23 @@
+# ═══════════════════════════════════════════════
+# Developer / Test Dependencies
+# ═══════════════════════════════════════════════
+# Install with:
+#   pip install -r requirements-dev.txt
+#
+# Pinned floors keep the test suite reproducible while allowing
+# patch-level upgrades from upstream.
+# ═══════════════════════════════════════════════
+
+# Core test runner
+pytest>=8.0.0
+
+# Async test support (required: tests use `async def`,
+# pytest.ini sets `asyncio_mode = auto`).
+pytest-asyncio>=0.23.0
+
+# Per-test timeouts (pytest.ini sets `timeout = 60`).
+pytest-timeout>=2.3.0
+
+# Optional but commonly used during local dev:
+# pytest-cov>=4.1.0
+# pytest-xdist>=3.5.0
