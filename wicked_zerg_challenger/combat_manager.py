@@ -301,8 +301,10 @@ class CombatManager:
         if strategy:
             current_mode = strategy.current_mode.value
 
-        # 기본 우선순위
-        self.task_priorities["base_defense"] = 100
+        # 기본 우선순위 (logic_tuning.tune_combat_params로 외부 조정 가능)
+        self.task_priorities["base_defense"] = getattr(
+            self, "_default_base_defense_priority", 100
+        )
         self.task_priorities["main_attack"] = 40
 
         # 공격 모드면 공격 우선순위 대폭 상향

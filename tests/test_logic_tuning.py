@@ -34,20 +34,22 @@ class TestTuneCombatParams:
         # 5*0.95 ~= 5, but floor is 8
         assert cm._min_army_for_attack == 8
 
-    def test_raises_base_defense_priority(self):
+    def test_sets_default_base_defense_priority(self):
+        """tune sets a *durable* default that per-step reset re-reads."""
         cm = SimpleNamespace(
             _min_army_for_attack=12,
             task_priorities={"base_defense": 100, "main_attack": 40},
         )
-        tune_combat_params(cm)
-        assert cm.task_priorities["base_defense"] == 110
-        # other keys preserved
-        assert cm.task_priorities["main_attack"] == 40
+        applied = tune_combat_params(cm)
+        assert cm._default_base_defense_priority == 110
+        assert applied["_default_base_defense_priority"] == (100, 110)
 
     def test_skips_when_attributes_missing(self):
         cm = SimpleNamespace()  # nothing set
         applied = tune_combat_params(cm)
-        assert applied == {}
+        # Even with no other attributes, _default_base_defense_priority is set.
+        assert applied == {"_default_base_defense_priority": (100, 110)}
+        assert cm._default_base_defense_priority == 110
 
 
 class TestTuneEconomyParams:
@@ -147,3 +149,23 @@ class TestStartupWireUp:
         # Guard pattern presence - protects against tune_*(None) -> AttributeError.
         assert 'getattr(self, "combat", None) is not None' in text
         assert 'getattr(self, "economy", None) is not None' in text
+
+
+class TestCombatManagerReadsDefaultPriority:
+    """combat_manager._execute_multitasking이 _default_base_defense_priority를 읽는지 정적 검증."""
+
+    def test_per_step_reset_reads_default(self):
+        from pathlib import Path
+
+        cm_path = (
+            Path(__file__).parent.parent
+            / "wicked_zerg_challenger"
+            / "combat_manager.py"
+        )
+        text = cm_path.read_text(encoding="utf-8")
+        # 매 step의 priority reset이 외부에서 조정 가능한 default를 읽도록 만들었는지.
+        assert (
+            'getattr(\n            self, "_default_base_defense_priority", 100\n        )'
+            in text
+            or 'getattr(self, "_default_base_defense_priority", 100)' in text
+        )

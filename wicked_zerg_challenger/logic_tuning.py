@@ -20,10 +20,10 @@ def tune_combat_params(combat_manager: Any) -> Dict[str, Any]:
     전투 파라미터 미세 조정.
 
     - `_min_army_for_attack`: 공격 진출에 필요한 최소 병력 수치를 5% 하향(공격성 강화).
-      너무 낮아지지 않도록 하한을 두 자리 정수로 클램프한다.
-    - `task_priorities["base_defense"]`: 일반 모드 방어 우선순위를 110으로 상향.
-      전략 모드 변경 시 동적 우선순위가 매 step에서 재계산되므로
-      여기서는 초기 dict에만 영향을 준다.
+      너무 낮아지지 않도록 하한을 8로 클램프한다.
+    - `_default_base_defense_priority`: 일반 모드 방어 우선순위 기본값을 110으로
+      상향. 매 step에서 `_execute_multitasking`이 이 값을 읽어
+      `task_priorities["base_defense"]`에 적용한다(per-step reset에도 살아남음).
     """
     applied: Dict[str, Any] = {}
 
@@ -33,15 +33,10 @@ def tune_combat_params(combat_manager: Any) -> Dict[str, Any]:
         combat_manager._min_army_for_attack = new_value
         applied["_min_army_for_attack"] = (before, new_value)
 
-    if hasattr(combat_manager, "task_priorities") and isinstance(
-        combat_manager.task_priorities, dict
-    ):
-        before_dict = dict(combat_manager.task_priorities)
-        combat_manager.task_priorities["base_defense"] = 110
-        applied["task_priorities.base_defense"] = (
-            before_dict.get("base_defense"),
-            110,
-        )
+    # task_priorities는 매 step 재계산되므로 default를 별도 속성으로 관리.
+    before_default = getattr(combat_manager, "_default_base_defense_priority", 100)
+    combat_manager._default_base_defense_priority = 110
+    applied["_default_base_defense_priority"] = (before_default, 110)
 
     return applied
 
