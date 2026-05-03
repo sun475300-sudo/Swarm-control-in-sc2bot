@@ -2694,7 +2694,7 @@ class EconomyManager:
         - vs Zerg: 1분 45초 (느림 - 드론 펌핑 우선)
 
         가스 부스트 모드: 빠른 테크가 필요할 때 (뮤탈, 히드라 등)
-        가스 오버플로우 방지: 3000+ 가스 시 일꾼 회수
+        가스 오버플로우 방지: gas_overflow_prevention_threshold(800) 초과 시 일꾼 회수
         """
         if not hasattr(self.bot, "townhalls") or not self.bot.townhalls.ready:
             return
@@ -3338,7 +3338,9 @@ class EconomyManager:
         """
         ★ Phase 18: 가스 오버플로우 방지 ★
 
-        가스가 3000+ 이상이면 가스 일꾼을 미네랄로 이동
+        가스 비축량이 ``self.gas_overflow_prevention_threshold`` (기본 800) 이상
+        이면 추출장의 가스 일꾼을 가까운 미네랄 패치로 재배치한다.
+        한 번 호출당 최대 6명까지 옮긴다.
         """
         if not hasattr(self.bot, "vespene") or not hasattr(self.bot, "gas_buildings"):
             return
@@ -3346,6 +3348,14 @@ class EconomyManager:
         gas = self.bot.vespene
 
         if gas < self.gas_overflow_prevention_threshold:
+            return
+
+        # 일꾼 재배치에 필요한 외부 자원이 모두 존재하지 않으면 조기 종료
+        # (테스트 / 게임 초반 특수 상태에서 None 또는 누락될 수 있음)
+        if not all(
+            hasattr(self.bot, attr)
+            for attr in ("workers", "townhalls", "mineral_field")
+        ):
             return
 
         # 가스가 넘침 - 가스 일꾼을 미네랄로 이동
@@ -3364,8 +3374,9 @@ class EconomyManager:
 
             if extractor.assigned_harvesters > 0:
                 # 가스 일꾼을 미네랄로 이동
+                extractor_tag = extractor.tag  # closure에서 안전하게 캡쳐 (B023 회피)
                 workers = self.bot.workers.filter(
-                    lambda w: w.order_target == extractor.tag
+                    lambda w, _t=extractor_tag: w.order_target == _t
                 )
 
                 for worker in workers:

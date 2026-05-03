@@ -7,7 +7,34 @@ across the codebase. Uses efficient algorithms and consistent interfaces.
 
 from typing import TYPE_CHECKING, List, Optional, Union
 
-from sc2.position import Point2
+try:
+    from sc2.position import Point2
+except (
+    ImportError
+):  # sc2가 설치되지 않은 환경 (단위 테스트, 도구 등)에서도 import 가능하도록 폴백
+
+    class Point2(tuple):  # type: ignore[no-redef]
+        """Lightweight (x, y) fallback compatible with sc2.position.Point2."""
+
+        __slots__ = ()
+
+        def __new__(cls, xy):
+            x, y = xy
+            return tuple.__new__(cls, (float(x), float(y)))
+
+        @property
+        def x(self) -> float:  # noqa: D401
+            return self[0]
+
+        @property
+        def y(self) -> float:  # noqa: D401
+            return self[1]
+
+        def distance_to(self, other) -> float:
+            ox = other[0] if isinstance(other, tuple) else other.x
+            oy = other[1] if isinstance(other, tuple) else other.y
+            return ((self.x - ox) ** 2 + (self.y - oy) ** 2) ** 0.5
+
 
 if TYPE_CHECKING:
     from sc2.unit import Unit
