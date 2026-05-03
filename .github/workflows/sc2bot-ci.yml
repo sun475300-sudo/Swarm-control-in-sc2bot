@@ -76,7 +76,7 @@ jobs:
         # 테스트 실행에 꼭 필요한 패키지만 보장 설치한다.
         run: |
           python -m pip install --upgrade pip
-          pip install pytest pytest-cov pytest-asyncio pyyaml
+          pip install pytest pytest-cov pytest-asyncio pytest-timeout pyyaml
 
       - name: Install production dependencies (best-effort)
         # requirements.txt 의 일부 패키지(예: torch, pyautogui, claude-code-sdk
@@ -89,12 +89,15 @@ jobs:
       - name: Run unit tests
         # tests/unit 디렉터리는 존재하지 않으며, 단위 테스트는 tests/ 루트에 있다.
         # tests/integration 은 별도 단계에서 실행한다.
-        # 커버리지 범위는 봇 코드(wicked_zerg_challenger)로 한정 — '.' 로
-        # 잡으면 800+개 부수 파일까지 instrumentation 대상이 되어 깨질 수 있다.
-        run: pytest tests --ignore=tests/integration -v --cov=wicked_zerg_challenger --cov-report=xml --cov-report=term
+        # 커버리지 측정은 별도 단계로 분리해 best-effort 로 돌린다.
+        run: pytest tests --ignore=tests/integration --tb=short -q
+
+      - name: Generate coverage report (best-effort)
+        continue-on-error: true
+        run: pytest tests --ignore=tests/integration --cov=wicked_zerg_challenger --cov-report=xml --cov-report=term -q
 
       - name: Run integration tests
-        run: pytest tests/integration -v --timeout=120
+        run: pytest tests/integration --tb=short --timeout=120 -q
 
       - name: Upload coverage
         uses: codecov/codecov-action@v4
