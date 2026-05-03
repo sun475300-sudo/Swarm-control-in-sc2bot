@@ -232,10 +232,10 @@ class IntegratedReplayLearningWorkflow:
         duration = (end_time - start_time).total_seconds()
         
         logger.info("\n" + "=" * 70)
-        logger.info("")
+        logger.info("Integrated Replay Learning Workflow — DONE")
         logger.info("=" * 70)
         logger.info(f"Integrated replay learning workflow completed in {duration:.1f} seconds")
-        logger.info("")
+        logger.info("Next steps:")
         logger.info("1. Learned parameters are saved to: local_training/scripts/learned_build_orders.json")
         logger.info("2. These parameters are automatically used in production_resilience.py")
         logger.info("3. Start game training to apply the learned build orders:")
