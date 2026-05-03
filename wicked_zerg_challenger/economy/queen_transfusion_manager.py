@@ -72,6 +72,13 @@ class QueenTransfusionManager:
         self.transfusions_per_unit_type: Dict[UnitTypeId, int] = {}
         self.hp_healed_total = 0
 
+        # Deduplication: track tags targeted this iteration to avoid double-healing
+        self._targeted_this_iter: set = set()
+        # Per-queen cooldown: tag → game-time of last cast
+        self._queen_last_cast: Dict[int, float] = {}
+        # Minimum seconds between successive casts from the same queen
+        self.QUEEN_CAST_COOLDOWN = 1.5
+
     async def execute_transfusions(
         self, queens: Units, damaged_units: Units, iteration: int
     ) -> None:
@@ -83,12 +90,17 @@ class QueenTransfusionManager:
             damaged_units: Friendly units that are damaged
             iteration: Current game iteration
         """
+        # Clear deduplication set for this iteration (even on early return
+        # so stale tags don't carry over to the next call)
+        self._targeted_this_iter.clear()
+
         if not queens or not damaged_units:
             return
 
         # Filter queens with sufficient energy
         available_queens = queens.filter(
-            lambda q: q.energy >= self.TRANSFUSION_ENERGY_COST and q.is_idle
+            lambda q: q.energy >= self.TRANSFUSION_ENERGY_COST
+            and not q.is_flying  # transfusion is a ground-only cast
         )
 
         if not available_queens:
@@ -96,11 +108,22 @@ class QueenTransfusionManager:
 
         # Perform transfusions
         for queen in available_queens:
+            # Skip queen if it cast too recently (avoid energy double-spend on lag)
+            now = self.bot.time
+            if self._queen_last_cast.get(queen.tag, 0.0) + self.QUEEN_CAST_COOLDOWN > now:
+                continue
+
             target = self._find_best_transfusion_target(queen, damaged_units)
 
             if target:
                 # Execute transfusion
                 self.bot.do(queen(AbilityId.TRANSFUSION_TRANSFUSION, target))
+
+                # Mark as targeted so other queens don't double-heal it
+                self._targeted_this_iter.add(target.tag)
+
+                # Record cast time for this queen
+                self._queen_last_cast[queen.tag] = now
 
                 # Track statistics
                 self._record_transfusion(target)
@@ -129,9 +152,12 @@ class QueenTransfusionManager:
         Returns:
             Best unit to heal, or None if no valid target
         """
-        # Filter valid targets
+        # Filter valid targets (exclude units already queued for healing this iteration)
         valid_targets = [
-            u for u in damaged_units if self._is_valid_transfusion_target(u, queen)
+            u
+            for u in damaged_units
+            if u.tag not in self._targeted_this_iter
+            and self._is_valid_transfusion_target(u, queen)
         ]
 
         if not valid_targets:
