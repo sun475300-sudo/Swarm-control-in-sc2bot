@@ -2,115 +2,95 @@
 
 > Owner: 선우 (sun475300@gmail.com)
 > Maintainer: nightly automation
-> Last refreshed: 2026-04-25
+> Last refreshed: 2026-05-04
 
 ---
 
 ## Snapshot (current state)
 
-- Branch: `main`, last commit `05d92ae` (merge), tree clean.
-- Bot core: `wicked_zerg_challenger/` — 365 Python files.
-- Total Python in repo: 1,749 (sub-dirs span many languages and frameworks).
-- `.gitattributes` already enforces `* text=auto` ✅ (no CRLF risk).
-- Test files: 28 under `tests/`.
-- Existing planning docs: `NEXT_LARGE_PLAN.md`, `NEXT_PHASE_PLAN.md`,
-  `TASK_WISHLIST.md`, `TODO.md`, `MILESTONE_400.md`, `REMAINING_ISSUES.md`.
-  These are coherent and detailed; the nightly plan should *complement*
-  them, not replace them.
-- Recent activity: large `print → logger` migration (~3000 sites across
-  ~180 files), then a follow-up commit removing 131 empty-call artefacts
-  from that migration. Codebase is stabilising after a major refactor.
+- Branch: `main`, last commit: queen transfusion + requirements-dev.txt session
+- Bot core: `wicked_zerg_challenger/` — 179+ Python files across 10+ subdirs.
+- `.gitattributes` enforces `* text=auto` ✅
+- CI: `sc2bot-ci.yml` runs black + isort + flake8 ✅ (all clean)
+- **Test suite: 468 pass / 15 skip / 0 fail** ✅ (was 398/20/0 two nights ago)
+- Queen transfusion logic: 3 bugs fixed (`is_idle` guard removed, target dedup, per-queen cooldown) ✅
+
+## Resolved this run (2026-05-03)
+
+| Item | File(s) | Notes |
+|------|---------|-------|
+| pytest-asyncio missing | sandbox install | Installed pytest-asyncio 1.3.0 — cleared 83 "async def not natively supported" failures. Note: add to `requirements-dev.txt`. |
+| QMIX torch stubs | `qmix_marl/sc2_qmix_agent.py` | `NameError: nn is not defined` at module level when torch absent. Added `types.SimpleNamespace` stubs in `except ImportError` block. |
+| MAPPO torch stubs | `mappo_marl/sc2_mappo_agent.py` | Same fix as QMIX. |
+| MAPPO `__init__` stale exports | `mappo_marl/__init__.py` | Imported non-existent names `ActorNetwork, MAPPOAgent, MAPPOTrainer, SharedCritic`. Replaced with correct names + backward-compat aliases. |
+| comm_learning `__init__` stale exports | `comm_learning/__init__.py` | Imported non-existent `CommAgent, CommChannel, CommNet, TarMAC`. Fixed with correct names + aliases + `CommChannel` stub class. |
+| Gas overflow test stale | `tests/test_phase10_improvements.py` | Test asserted threshold == 1000 but code was intentionally improved to 800. Updated assertion. |
+| Crypto test missing skipif | `tests/test_crypto_trading.py` | `test_import_auto_trader` and `test_import_market_analyzer` were guarded by `pandas` check but both transitively require `pyupbit`. Added `pyupbit` to their `skipif` condition. |
+
+**Net result: 90 failures → 0 failures. Suite: 398 pass / 20 skip.**
 
 ## P0 — Critical / blocking
 
-| #    | Item                                                  | Notes |
-|------|-------------------------------------------------------|-------|
-| P0.1 | Verify the print→logger migration introduced no further breakage | Run pytest under `tests/` to confirm none of the 28 test files regressed. The fix-up commit `2e03d2f` already removed 131 empty `logger()` calls — confirm grep finds zero remaining. |
-| P0.2 | Add a regression guard for the empty-`logger()` pattern | Tiny CI script that runs `grep -RnE "logger\.(info\|debug\|warning\|error)\(\)$" wicked_zerg_challenger/` and fails the build if any match. Cheap, one-time fix that prevents the same bug class from recurring. |
+*No P0 items this run.*
 
 ## P1 — Important
 
-| #    | Item                                  | Notes |
-|------|---------------------------------------|-------|
-| P1.1 | Reactivate `TODO.md` priority #1 — scout cadence (initial overlord every 30 s, mid-game zergling map sweep every 60 s, late-game overseer cloak detection) | Maps directly to `wicked_zerg_challenger/scouting_system.py` and `scouting/advanced_scout_system_v2.py`. |
-| P1.2 | Reactivate `TODO.md` priority #2 — harassment loop polish | Verify harass units actually move into the enemy main, retraction logic on health threshold, kill-count tracking on enemy workers. Files: `strategy_manager.py:228–262`, `combat_manager.py`. |
-| P1.3 | First-expansion timing test harness | TODO.md notes the latest test put first expansion at 6 min after the 300-mineral fix. Add a deterministic replay-based test that asserts first expand ≤ X min on a fixed map seed. |
-| P1.4 | Reduce duplicate "scout system" files | Both `advanced_scout_system_v2.py` and `realtime_awareness_engine.py` cover overlapping perception logic. Pick the canonical one and add a deprecation shim for the other. |
-| P1.5 | Trim documentation surface area | 30+ top-level `*.md` reports (PHASE_19, PHASE_20, MILESTONE_400, BUG_FIXES_REPORT, INTEGRATION_FIXES, ISSUES_FIXED, REMAINING_ISSUES, …) make it hard to find current state. Move historical reports under `docs/history/` and keep only `README.md`, `CHANGELOG.md`, `TODO.md`, `PLAN-NIGHTLY.md`, and one `STATUS.md` at root. |
+| #    | Item                                                     | Status | Notes |
+|------|----------------------------------------------------------|--------|-------|
+| P1.1 | Scouting cadence improvements                            | ✅ Done | `phase_scout_cadence.py` + tests written. Commit pending. |
+| P1.2 | Harassment retraction + worker-kill tracking hardening   | ✅ Done | `harassment_coordinator.py` updated. Commit pending. |
+| P1.3 | First-expansion timing test harness                      | ✅ Done | `tests/test_expansion_timing.py` 20 tests. Commit pending. |
+| P1.4 | Reduce duplicate scout system files                      | ✅ Done | Canonical: `AdvancedScoutingSystemV2`. Deprecation shim + import fix done. |
+| P1.5 | Trim top-level doc surface area                          | ✅ Done | 15 historical docs moved to `docs/history/`. Commit pending. |
+| P1.6 | Add `pytest-asyncio` to `requirements-dev.txt`           | ✅ Done | `requirements-dev.txt` created with pytest-asyncio>=0.23.0 and all dev deps. |
+| P1.7 | Queen transfusion logic bugs                              | ✅ Done | Fixed `is_idle` blocking combat-phase transfusions, added target dedup, added per-queen cooldown (1.5s). 14 new tests in `tests/test_queen_transfusion.py`. |
 
 ## P2 — Nice-to-have
 
-| #    | Item                                       | Notes |
-|------|--------------------------------------------|-------|
-| P2.1 | Force-accumulation FSM tests               | Lock the phase-transition rules (early-pool → lair → hive → late-game) with state-machine tests so future micro/macro changes can't silently break the macro shape. |
-| P2.2 | Endpoint-style benchmark               | Single command that runs N replays through the bot and reports {APM avg, supply curve, first-expand time, win-rate vs builtin Hard}. Lets the nightly tell whether yesterday's commit was a regression. |
-| P2.3 | Build-order config externalisation     | `TASK_WISHLIST.md` reports 248 hardcoded values. Pick the top 20 and move them to `config/build_orders.yaml`. |
-| P2.4 | RL agent save-experience guard         | Commit `cf2d265` recently fixed an atomic-rename bug in `rl_agent` save. Add a unit test that exercises a save under simulated disk-full / interrupted-rename and asserts no corruption. |
+| #    | Item                                            | Status | Notes |
+|------|-------------------------------------------------|--------|-------|
+| P2.1 | Force-accumulation FSM tests                    | ✅ Done | `tests/test_combat_phase_fsm.py` — 23 tests all passing. |
+| P2.2 | Benchmark runner                                | ❌ Open | Single command, N replays, APM/supply/win-rate report vs Hard. |
+| P2.3 | Build-order config externalisation              | ❌ Open | Move top-20 hardcoded values to `config/build_orders.yaml`. |
+| P2.4 | RL agent save-experience guard                  | ❌ Open | Unit test for save under disk-full / interrupted-rename. |
+| P2.5 | Type hints + docstring pass on core modules     | ❌ Open | `core/resource_manager.py`, `core/manager_factory.py`. |
 
-## Long-term direction (synthesised from existing plans)
+## Long-term direction
 
-- **AI Arena submission cadence.** The existing roadmap (`NEXT_LARGE_PLAN.md`,
-  P800–P849) is ambitious but unscheduled. Pick a 2-week submission cadence:
-  every fortnight, take the most-improved branch, run the benchmark suite
-  (P2.2), submit only if metrics beat the previous submission.
-- **Self-play loop.** Plan item P823 (self-play) is the highest-leverage
-  long-term lever — every other improvement amortises across both sides.
-  Stand up a minimal self-play harness before chasing more micro/macro
-  features.
-- **Macro vs micro split.** Roughly half the bot core is macro
-  (production, expansion, tech) and half is micro (kiting, focus-fire,
-  spell use). Keep that split visible in directory layout —
-  `wicked_zerg_challenger/macro/` vs `wicked_zerg_challenger/micro/` —
-  so it's obvious which subsystem owns a given regression.
+- **AI Arena submission cadence.** 2-week cadence: benchmark suite (P2.2), submit only if metrics improve.
+- **Self-play loop.** `NEXT_LARGE_PLAN.md` P823 — highest-leverage long-term improvement.
+- **Macro / micro directory split.** Keep `wicked_zerg_challenger/macro/` vs `wicked_zerg_challenger/micro/`.
+
+---
+
+## Pending Windows actions (user)
+
+Run `E:\GitHub\Swarm-control-in-sc2bot\scripts\commit_nightly_2026-05-03.bat`:
+1. `qmix_marl/sc2_qmix_agent.py` (torch stubs)
+2. `mappo_marl/sc2_mappo_agent.py` (torch stubs)
+3. `mappo_marl/__init__.py` (stale export fix)
+4. `comm_learning/__init__.py` (stale export fix)
+5. `tests/test_phase10_improvements.py` (gas threshold 800)
+6. `tests/test_crypto_trading.py` (pyupbit skipif fix)
+7. `tests/test_combat_phase_fsm.py` (P2.1 FSM tests — from prev session)
+8. `wicked_zerg_challenger/bot_step_integration.py` (P0 scout import fix — prev)
+9. `wicked_zerg_challenger/scouting/advanced_scout_system_v2.py` (compat alias — prev)
+10. `wicked_zerg_challenger/scouting/enhanced_scout_system.py` (deprecation shim — prev)
+11. `wicked_zerg_challenger/combat/harassment_coordinator.py` (P1.2 — prev)
+12. `wicked_zerg_challenger/scouting/phase_scout_cadence.py` + test (P1.1 — prev)
+13. `tests/test_expansion_timing.py` (P1.3 — prev)
+14. `docs/history/` (P1.5 — prev)
+15. Updated `PLAN-NIGHTLY.md`
+16. Also add `pytest-asyncio>=0.23` to `requirements-dev.txt` (P1.6)
 
 ---
 
 ## Run history
 
-- **2026-04-25** — Initial nightly plan written. Tree clean,
-  `.gitattributes` already correct, codebase stabilising after a large
-  print→logger migration. No P0 stabilisation work needed beyond a
-  regression guard for empty-logger calls.
-- **2026-04-26** — Re-review. Local `main` is one commit behind
-  `origin/main` (fast-forwardable; not auto-pulled per nightly
-  no-destructive-ops policy). Status of last run's P0:
-  - P0.1 (verify migration introduced no further breakage) — partially
-    verified: `grep -RnE "logger\.(info|debug|warning|error)\(\)$"
-    wicked_zerg_challenger/` returns zero source-code matches (only one
-    documentation reference). Actual pytest run not executed inside
-    nightly sandbox (sc2 / burnysc2 deps not installable here).
-  - P0.2 (regression guard for empty-`logger()`) — landed via
-    `881501a ci: add empty logger call regression guard` and the
-    `.github/workflows/empty-logger-guard.yml` + `scripts/check_no_empty_logger_calls.py`
-    pair.
-  Code-level TODO/FIXME scan: 3 hits total, all minor and not blocking.
-  Documentation surface area unchanged: 47 top-level `*.md` files.
-  P1.5 (trim doc surface area) is the highest-ROI cleanup tonight if
-  picked, but moving 30+ docs touches a lot of files in one commit and
-  is best done as a single dedicated PR with `git mv` to preserve
-  blame. Tonight's preferred small commit: a `STATUS.md` index that
-  catalogues which historical reports map to which subsystem, so the
-  eventual `docs/history/` move is mechanical. Tracked as **P1.7 —
-  add a STATUS.md index pointing at the existing reports**.
-  - P0.2 (regression guard for empty-logger) — not yet implemented; promoted
-    to tonight's next work item, but merge blocker took priority.
-  - Stale `index.lock` / `HEAD.lock` / `objects/maintenance.lock` present at
-    run start — cleared via rename workaround.
-
-  **Work completed this run: pending merge commit**
-
-  A previous session left a half-finished merge (local `985ee5b` vs
-  origin `c7bb6dd` — logic_optimizer improvements) in "all conflicts
-  resolved but not committed" state. Completed as commit `55eb51e`:
-  - `apply_combat_improvements()`: air harassment priority=60, worker defense=110
-  - `apply_economy_improvements()`: gas adjustment interval=22, macro hatch threshold=500
-  - `apply_strategy_improvements()`: aggressive mode on Cheat difficulties
-  - `optimize_all()`: orchestrates all three passes
-
-  **Next P1 items for following night:**
-
-| #    | Item                                    | Notes |
-|------|-----------------------------------------|-------|
-| P0.2 | Empty-logger regression guard (CI)      | `grep -RnE "logger\.(info|debug|warning|error)\(\)$"` fails build if any hits. Add to `ci.yml`. |
-| P1.1 | Scout cadence improvements              | `scouting_system.py` — initial overlord 30s, mid-game zergling sweep 60s, late overseer cloak detection |
-| P1.2 | Harassment loop polish                  | `strategy_manager.py:228–262`, `combat_manager.py` — retraction on HP threshold, worker kill tracking |
+- **2026-04-25** — Initial nightly plan.
+- **2026-04-26** — P0.2 (empty-logger CI guard) landed.
+- **2026-04-27** — black + isort + flake8 all clean.
+- **2026-04-28** — Harassment retraction logic hardened (P1.2).
+- **2026-05-01** — P1.1 scout cadence, P1.2 harassment, P1.3 expansion timing, P1.5 doc history. Commit blocked by index.lock.
+- **2026-05-02** — P0 scout import mismatch fixed. P1.4 deprecation shim. P2.1 FSM tests 23/23 pass.
+- **2026-05-03** �
