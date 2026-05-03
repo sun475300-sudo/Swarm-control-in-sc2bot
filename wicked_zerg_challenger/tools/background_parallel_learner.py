@@ -264,7 +264,11 @@ class BackgroundParallelLearner:
                 for file_path in files_to_archive:
                     try:
                         archive_path = self.archive_dir / file_path.name
-                        self._safe_file_op(lambda: shutil.move(str(file_path), str(archive_path)))
+                        self._safe_file_op(
+                            lambda fp=file_path, ap=archive_path: shutil.move(
+                                str(fp), str(ap)
+                            )
+                        )
                         archived_count += 1
                     except Exception as e:
                         logger.error(f"[ERROR] Archive error: {e}")

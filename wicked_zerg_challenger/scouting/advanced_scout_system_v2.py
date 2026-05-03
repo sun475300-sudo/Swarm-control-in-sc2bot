@@ -1197,8 +1197,9 @@ class AdvancedScoutingSystemV2:
                         15, base.position
                     )
                     if not nearby_overseers:
+                        bpos = base.position
                         available = overseers.filter(
-                            lambda u: u.distance_to(base.position) > 15
+                            lambda u, p=bpos: u.distance_to(p) > 15
                         )
                         if available:
                             closest = available.closest_to(base.position)

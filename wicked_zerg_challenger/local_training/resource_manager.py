@@ -186,24 +186,26 @@ class ResourceManager:
                 workers_needed = ideal - assigned
 
                 # Find nearby workers on minerals
+                ext = extractor
                 nearby_workers = workers.filter(
-                    lambda w: (
+                    lambda w, e=ext: (
                         w.is_gathering
                         and not w.is_carrying_vespene
-                        and w.distance_to(extractor) < 15
+                        and w.distance_to(e) < 15
                     )
                 )
 
                 for _ in range(min(workers_needed, len(nearby_workers))):
                     if not nearby_workers:
                         break
-                    worker = nearby_workers.closest_to(extractor)
+                    worker = nearby_workers.closest_to(ext)
                     try:
-                        result = self.bot.do(worker.gather(extractor))
+                        result = self.bot.do(worker.gather(ext))
                         if hasattr(result, "__await__"):
                             await result
+                        wtag = worker.tag
                         nearby_workers = nearby_workers.filter(
-                            lambda w: w.tag != worker.tag
+                            lambda w, t=wtag: w.tag != t
                         )
                     except Exception as e:
                         logger.error(f"Gas worker assign failed: {e}")

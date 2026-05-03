@@ -91,9 +91,10 @@ class WorkerCombatSystem:
 
         # 각 본진/확장 기지 근처 위협 탐지
         for base in self.bot.townhalls.ready:
+            bpos = base.position
             nearby_enemies = self.bot.enemy_units.filter(
-                lambda u: u.type_id in self.EARLY_THREATS
-                and u.position.distance_to(base.position) < self.engagement_range
+                lambda u, p=bpos: u.type_id in self.EARLY_THREATS
+                and u.position.distance_to(p) < self.engagement_range
             )
             all_threats.extend(nearby_enemies)
 
