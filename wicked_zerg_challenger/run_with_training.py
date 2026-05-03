@@ -100,9 +100,6 @@ def main():
     Main entry point for bot execution with training enabled.
     IMPROVED: Continuous training mode - games will run continuously without stopping.
     """
-    import random
-    import time
-
     logger.info("\n" + "=" * 70)
     logger.info("? NEURAL NETWORK TRAINING MODE (CONTINUOUS)")
     logger.info("=" * 70)
@@ -131,7 +128,7 @@ def main():
             if arena_server_manager:
                 logger.info("[OK] Arena monitoring server started")
                 logger.info(f"     Server URL: {arena_server_manager.get_server_url()}")
-                logger.info(f"     Mobile/Web Access: Available")
+                logger.info("     Mobile/Web Access: Available")
             else:
                 logger.warning("[WARNING] Failed to start arena monitoring server")
         except Exception as e:
@@ -187,7 +184,7 @@ def main():
         if local_server_manager:
             logger.info("[OK] Local monitoring server started")
             logger.info(f"     Server URL: {local_server_manager.get_server_url()}")
-            logger.info(f"     Mobile/Web Access: Available")
+            logger.info("     Mobile/Web Access: Available")
             logger.info(f"     Web UI: {local_server_manager.get_server_url()}/ui")
             logger.info(f"     API Docs: {local_server_manager.get_server_url()}/docs")
         else:
@@ -233,7 +230,7 @@ def main():
         auto_replay_learner = AutoReplayLearner()
         logger.info("[OK] Auto replay learner initialized")
         logger.info("[INFO] Will automatically download and learn from pro replays")
-        logger.info(f"[INFO] Replay learning every 10 games")
+        logger.info("[INFO] Replay learning every 10 games")
     except ImportError as e:
         logger.warning(f"[WARNING] Auto replay learner not available: {e}")
     except Exception as e:
@@ -292,16 +289,16 @@ def main():
                 race_str = sys.argv[i + 1].lower()
                 if race_str == "zerg":
                     opponent_race_filter = [Race.Zerg]
-                    logger.info(f"[CONFIG] Opponent race filter: Zerg only (ZvZ)")
+                    logger.info("[CONFIG] Opponent race filter: Zerg only (ZvZ)")
                 elif race_str == "protoss":
                     opponent_race_filter = [Race.Protoss]
-                    logger.info(f"[CONFIG] Opponent race filter: Protoss only (ZvP)")
+                    logger.info("[CONFIG] Opponent race filter: Protoss only (ZvP)")
                 elif race_str == "terran":
                     opponent_race_filter = [Race.Terran]
-                    logger.info(f"[CONFIG] Opponent race filter: Terran only (ZvT)")
+                    logger.info("[CONFIG] Opponent race filter: Terran only (ZvT)")
                 elif race_str == "all":
                     opponent_race_filter = None
-                    logger.info(f"[CONFIG] Opponent race filter: All races")
+                    logger.info("[CONFIG] Opponent race filter: All races")
                 else:
                     logger.warning(
                         f"[WARNING] Unknown race '{race_str}'. Using all races."
@@ -317,7 +314,7 @@ def main():
                 personality_setting = sys.argv[i + 1].lower()
                 logger.info(f"[CONFIG] Bot Personality set to: {personality_setting}")
             except IndexError:
-                logger.warning(f"[WARNING] Missing value for --personality")
+                logger.warning("[WARNING] Missing value for --personality")
 
     while True:
         try:
@@ -452,7 +449,7 @@ def main():
                     map_instance = maps.get(map_name)
 
                 if map_instance is None:
-                    logger.error(f"[ERROR] Default map not found. Skipping this game.")
+                    logger.error("[ERROR] Default map not found. Skipping this game.")
                     consecutive_failures += 1
                     time.sleep(5)
                     continue
@@ -511,7 +508,7 @@ def main():
                         if hasattr(bot.ai, "time"):
                             game_time = float(bot.ai.time)
                         logger.info(
-                            f"[WARNING] _training_result not found, using fallback values"
+                            "[WARNING] _training_result not found, using fallback values"
                         )
 
                 # Record game result in session manager
@@ -531,7 +528,7 @@ def main():
                             loss_reason=loss_reason,
                             parameters_updated=parameters_updated,
                         )
-                        logger.info(f"[TRAINING] Game result recorded successfully")
+                        logger.info("[TRAINING] Game result recorded successfully")
                     except Exception as e:
                         logger.error(f"[ERROR] Failed to record game result: {e}")
                         import traceback
@@ -552,7 +549,7 @@ def main():
                     f"[NEXT] Automatically starting next game in {wait_between_games} seconds..."
                 )
                 logger.info(
-                    f"[INFO] Waiting for SC2 client to fully close before next game"
+                    "[INFO] Waiting for SC2 client to fully close before next game"
                 )
                 logger.info("=" * 70)
 
@@ -579,7 +576,7 @@ def main():
                         time.sleep(1)
                         # Force kill if still running (Windows only)
                         logger.warning(
-                            f"[WARNING] SC2 process stuck. Forcing termination..."
+                            "[WARNING] SC2 process stuck. Forcing termination..."
                         )
                         try:
                             import subprocess
@@ -672,7 +669,7 @@ def main():
 
                 # ★ CRITICAL FIX: Save experience data even when game fails ★
                 logger.info(
-                    f"\n[RECOVERY] Attempting to save experience data from failed game..."
+                    "\n[RECOVERY] Attempting to save experience data from failed game..."
                 )
                 try:
                     if (
@@ -690,7 +687,7 @@ def main():
                         )
                     else:
                         logger.info(
-                            f"[RECOVERY] [FAILED] No RLAgent found - cannot save experience data"
+                            "[RECOVERY] [FAILED] No RLAgent found - cannot save experience data"
                         )
                 except Exception as save_error:
                     logger.info(
@@ -721,17 +718,17 @@ def main():
                         f"\n[ERROR] Game #{game_count} failed: Connection error"
                     )
                     logger.error(
-                        f"[ERROR] StarCraft II client connection was closed unexpectedly"
+                        "[ERROR] StarCraft II client connection was closed unexpectedly"
                     )
-                    logger.info(f"[INFO] This usually happens when:")
-                    logger.info(f"   - Previous game session didn't fully close")
-                    logger.info(f"   - SC2 client crashed or was terminated")
-                    logger.info(f"   - Network/WebSocket connection was interrupted")
+                    logger.info("[INFO] This usually happens when:")
+                    logger.info("   - Previous game session didn't fully close")
+                    logger.info("   - SC2 client crashed or was terminated")
+                    logger.info("   - Network/WebSocket connection was interrupted")
                     logger.info(
                         f"[RETRY] Waiting {wait_time} seconds for SC2 client to fully close..."
                     )
                     logger.info(
-                        f"[INFO] Please ensure no SC2 game windows are still open"
+                        "[INFO] Please ensure no SC2 game windows are still open"
                     )
                 else:
                     wait_time = 10  # Standard wait for other errors
@@ -761,7 +758,7 @@ def main():
                             f"[WARNING] Found {len(sc2_processes)} SC2 process(es) still running"
                         )
                         logger.info(
-                            f"[INFO] Waiting additional 5 seconds for processes to close..."
+                            "[INFO] Waiting additional 5 seconds for processes to close..."
                         )
                         time.sleep(5)
                 except ImportError:
@@ -832,7 +829,7 @@ def main():
                 session_manager.record_error(error_type, error_message)
 
             logger.error(f"\n[ERROR] Unexpected error in training loop: {e}")
-            logger.info(f"[RETRY] Will retry after 5 seconds...")
+            logger.info("[RETRY] Will retry after 5 seconds...")
             import traceback
 
             traceback.print_exc()
@@ -844,7 +841,7 @@ def main():
         logger.info("\n[INFO] Stopping background parallel learner...")
         background_learner.stop()
         stats = background_learner.get_stats()
-        logger.info(f"[BACKGROUND LEARNER] Final stats:")
+        logger.info("[BACKGROUND LEARNER] Final stats:")
         logger.info(f"  - Experience Files Processed: {stats['files_processed']}")
         logger.info(f"  - Batch Training Runs: {stats['batches_trained']}")
         logger.info(f"  - Total Training Samples: {stats['total_samples']}")
@@ -881,8 +878,6 @@ def main():
             script_dir = Path(__file__).parent
             if str(script_dir) not in sys.path:
                 sys.path.insert(0, str(script_dir))
-
-            from datetime import datetime
 
             from tools.extract_and_train_from_training import TrainingDataExtractor
 

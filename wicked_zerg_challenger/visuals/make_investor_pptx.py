@@ -44,8 +44,8 @@ def bg(slide):
     f.fore_color.rgb = BG
 
 
-def tb(slide, l, t, w, h, txt, sz=18, c=WHITE, b=False, al=PP_ALIGN.LEFT, fn=FONT):
-    box = slide.shapes.add_textbox(l, t, w, h)
+def tb(slide, left, t, w, h, txt, sz=18, c=WHITE, b=False, al=PP_ALIGN.LEFT, fn=FONT):
+    box = slide.shapes.add_textbox(left, t, w, h)
     tf = box.text_frame
     tf.word_wrap = True
     p = tf.paragraphs[0]
@@ -58,8 +58,8 @@ def tb(slide, l, t, w, h, txt, sz=18, c=WHITE, b=False, al=PP_ALIGN.LEFT, fn=FON
     return box
 
 
-def bullets(slide, l, t, w, h, items, sz=14, c=LIGHT):
-    box = slide.shapes.add_textbox(l, t, w, h)
+def bullets(slide, left, t, w, h, items, sz=14, c=LIGHT):
+    box = slide.shapes.add_textbox(left, t, w, h)
     tf = box.text_frame
     tf.word_wrap = True
     for i, item in enumerate(items):
@@ -76,8 +76,8 @@ def bullets(slide, l, t, w, h, items, sz=14, c=LIGHT):
         p.space_after = Pt(5)
 
 
-def card(slide, l, t, w, h, border=None):
-    s = slide.shapes.add_shape(MSO_SHAPE.ROUNDED_RECTANGLE, l, t, w, h)
+def card(slide, left, t, w, h, border=None):
+    s = slide.shapes.add_shape(MSO_SHAPE.ROUNDED_RECTANGLE, left, t, w, h)
     s.fill.solid()
     s.fill.fore_color.rgb = BG_CARD
     if border:
@@ -88,9 +88,9 @@ def card(slide, l, t, w, h, border=None):
     return s
 
 
-def tag(slide, l, t, txt, bg_c=CYAN, txt_c=BG):
+def tag(slide, left, t, txt, bg_c=CYAN, txt_c=BG):
     s = slide.shapes.add_shape(
-        MSO_SHAPE.ROUNDED_RECTANGLE, l, t, Inches(3.2), Inches(0.34)
+        MSO_SHAPE.ROUNDED_RECTANGLE, left, t, Inches(3.2), Inches(0.34)
     )
     s.fill.solid()
     s.fill.fore_color.rgb = bg_c
@@ -106,8 +106,8 @@ def tag(slide, l, t, txt, bg_c=CYAN, txt_c=BG):
     p.alignment = PP_ALIGN.CENTER
 
 
-def accent_line(slide, l, t):
-    s = slide.shapes.add_shape(MSO_SHAPE.RECTANGLE, l, t, Inches(0.8), Pt(3))
+def accent_line(slide, left, t):
+    s = slide.shapes.add_shape(MSO_SHAPE.RECTANGLE, left, t, Inches(0.8), Pt(3))
     s.fill.solid()
     s.fill.fore_color.rgb = CYAN
     s.line.fill.background()
@@ -1782,7 +1782,7 @@ def main():
 
     logger.info(f"\n{'='*60}")
     logger.info(f"PPTX CREATED: {out}")
-    logger.info(f"  Slides: 20  |  Theme: Dark Navy + Cyan/Green")
+    logger.info("  Slides: 20  |  Theme: Dark Navy + Cyan/Green")
     logger.info(f"{'='*60}")
 
 

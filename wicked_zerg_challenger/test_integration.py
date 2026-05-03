@@ -229,7 +229,7 @@ class IntegrationTester:
                 if line.startswith("Ran "):
                     logger.info(f"  [OK] {line}")
                 if line.startswith("OK"):
-                    logger.info(f"  [OK] All tests passed!")
+                    logger.info("  [OK] All tests passed!")
                     self.results["performance"]["unit_tests"] = "all_passed"
                     return True
                 if "FAILED" in line:
