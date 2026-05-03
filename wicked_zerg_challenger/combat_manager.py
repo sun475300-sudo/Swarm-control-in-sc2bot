@@ -102,6 +102,68 @@ except ImportError:
     _FORMATION_MANAGER_AVAILABLE = False
 
 
+# ★ 핫패스 위협 분류 상수: `_is_base_under_attack` 와 `_evaluate_base_threat`
+# 가 매 step (혹은 주기적) 호출될 때마다 set 을 재생성하지 않도록 모듈
+# 레벨로 고정. frozenset 은 의도된 불변성을 명시하고, 동일한 객체를
+# 재사용하므로 멤버십 검사 (`x in S`) 의 캐시 친화성도 좋아집니다.
+_COMBAT_UNIT_NAMES = frozenset(
+    {
+        "ZERGLING",
+        "MARINE",
+        "ZEALOT",
+        "REAPER",
+        "ADEPT",
+        "BANELING",
+        "ROACH",
+        "STALKER",
+        "MARAUDER",
+        "SIEGETANK",
+        "SIEGETANKSIEGED",
+        "WIDOWMINE",
+        "HYDRALISK",
+        "MUTALISK",
+        "CORRUPTOR",
+        "BROODLORD",
+        "RAVAGER",
+        "LURKER",
+        "ULTRALISK",
+        "INFESTOR",
+        "COLOSSUS",
+        "DISRUPTOR",
+        "IMMORTAL",
+        "ARCHON",
+        "THOR",
+        "HELLION",
+        "HELLIONTANK",
+        "CYCLONE",
+        "BATTLECRUISER",
+        "LIBERATOR",
+        "VIKING",
+        "MEDIVAC",
+        "VOIDRAY",
+        "CARRIER",
+        "TEMPEST",
+        "PHOENIX",
+    }
+)
+_HIGH_THREAT_UNITS = frozenset(
+    {
+        "SIEGETANK",
+        "SIEGETANKSIEGED",
+        "THOR",
+        "BATTLECRUISER",
+        "COLOSSUS",
+        "DISRUPTOR",
+        "IMMORTAL",
+        "ARCHON",
+        "ULTRALISK",
+        "BROODLORD",
+        "RAVAGER",
+        "LURKER",
+    }
+)
+
+
 class CombatManager:
     """
     전투 관리자
@@ -1050,21 +1112,7 @@ class CombatManager:
 
         game_time = getattr(self.bot, "time", 0)
 
-        # 고위협 유닛 (중후반 푸쉬의 핵심)
-        high_threat_units = {
-            "SIEGETANK",
-            "SIEGETANKSIEGED",
-            "THOR",
-            "BATTLECRUISER",
-            "COLOSSUS",
-            "DISRUPTOR",
-            "IMMORTAL",
-            "ARCHON",
-            "ULTRALISK",
-            "BROODLORD",
-            "RAVAGER",
-            "LURKER",
-        }
+        # 고위협 유닛 set 은 모듈 레벨 상수 (_HIGH_THREAT_UNITS) 사용.
 
         # 위협 수준: light (1-2), medium (3-5), heavy (6+), critical (고위협 유닛 포함)
         highest_threat = None
@@ -1094,7 +1142,7 @@ class CombatManager:
             local_high_threat = False
             for enemy in nearby_enemies:
                 enemy_type = getattr(enemy.type_id, "name", "").upper()
-                if enemy_type in high_threat_units:
+                if enemy_type in _HIGH_THREAT_UNITS:
                     threat_score += 5
                     local_high_threat = True
                 else:
@@ -3029,59 +3077,9 @@ class CombatManager:
 
         game_time = getattr(self.bot, "time", 0)
 
-        # 전투 유닛 목록 (실제 위협이 되는 유닛)
-        combat_unit_names = {
-            "ZERGLING",
-            "MARINE",
-            "ZEALOT",
-            "REAPER",
-            "ADEPT",
-            "BANELING",
-            "ROACH",
-            "STALKER",
-            "MARAUDER",
-            "SIEGETANK",
-            "SIEGETANKSIEGED",
-            "WIDOWMINE",
-            "HYDRALISK",
-            "MUTALISK",
-            "CORRUPTOR",
-            "BROODLORD",
-            "RAVAGER",
-            "LURKER",
-            "ULTRALISK",
-            "INFESTOR",
-            "COLOSSUS",
-            "DISRUPTOR",
-            "IMMORTAL",
-            "ARCHON",
-            "THOR",
-            "HELLION",
-            "HELLIONTANK",
-            "CYCLONE",
-            "BATTLECRUISER",
-            "LIBERATOR",
-            "VIKING",
-            "MEDIVAC",
-            "VOIDRAY",
-            "CARRIER",
-            "TEMPEST",
-            "PHOENIX",
-        }
-
-        # 비전투 유닛 (정찰용, 위협이 낮음)
-        non_combat_names = {
-            "SCV",
-            "PROBE",
-            "DRONE",
-            "MULE",
-            "OBSERVER",
-            "OVERLORD",
-            "OVERSEER",
-            "WARPPRISM",
-            "RAVEN",
-            "CHANGELING",
-        }
+        # 전투 분류 set 은 모듈 레벨 상수 (_COMBAT_UNIT_NAMES) 사용.
+        # (원본의 non_combat_names set 은 함수 내에서 실제로 참조된 적이
+        # 없는 dead allocation 이었으므로 함께 제거했습니다.)
 
         for th in self.bot.townhalls:
             # 일반 감지 거리
@@ -3099,7 +3097,7 @@ class CombatManager:
             nearby_combat = [
                 e
                 for e in nearby_enemies
-                if getattr(e.type_id, "name", "").upper() in combat_unit_names
+                if getattr(e.type_id, "name", "").upper() in _COMBAT_UNIT_NAMES
             ]
 
             # 전투 유닛이 1기 이상이면 위협 (실제 공격 의도)
