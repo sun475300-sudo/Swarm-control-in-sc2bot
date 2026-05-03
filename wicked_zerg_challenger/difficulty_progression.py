@@ -13,7 +13,32 @@ import logging
 from pathlib import Path
 from typing import Dict, Optional
 
-from sc2.data import Difficulty, Race
+try:
+    from sc2.data import Difficulty, Race
+except ImportError:  # pragma: no cover - sc2 not installed (CI / linting)
+    # Lightweight stand-ins so the module is importable without the runtime.
+    # Real games still need the actual sc2 package; these stubs only let the
+    # tooling (tests, linters, docs) import the module.
+    from enum import Enum
+
+    class Difficulty(Enum):
+        VeryEasy = "VeryEasy"
+        Easy = "Easy"
+        Medium = "Medium"
+        MediumHard = "MediumHard"
+        Hard = "Hard"
+        Harder = "Harder"
+        VeryHard = "VeryHard"
+        CheatVision = "CheatVision"
+        CheatMoney = "CheatMoney"
+        CheatInsane = "CheatInsane"
+
+    class Race(Enum):
+        Zerg = "Zerg"
+        Terran = "Terran"
+        Protoss = "Protoss"
+        Random = "Random"
+
 
 logger = logging.getLogger("DifficultyProgression")
 
@@ -66,7 +91,7 @@ class DifficultyProgression:
                 self.stats = {}
         else:
             self.stats = {}
-            logger.info(f"No existing progression data, starting fresh")
+            logger.info("No existing progression data, starting fresh")
 
     def _save_stats(self) -> None:
         """통계 데이터 저장"""
@@ -76,7 +101,7 @@ class DifficultyProgression:
             serialized = self._serialize_stats(self.stats)
             with open(self.data_file, "w", encoding="utf-8") as f:
                 json.dump(serialized, f, indent=2, ensure_ascii=False)
-            logger.info(f"Saved progression data")
+            logger.info("Saved progression data")
         except Exception as e:
             logger.info(f"Error saving stats: {e}")
 
@@ -158,7 +183,7 @@ class DifficultyProgression:
             next_diff = self._get_next_difficulty(difficulty)
             if next_diff:
                 logger.info(f"\n{'='*70}")
-                logger.info(f"🎉 DIFFICULTY PROGRESSION! 🎉")
+                logger.info("🎉 DIFFICULTY PROGRESSION! 🎉")
                 logger.info(f"{'='*70}")
                 logger.info(f"  Map: {map_name}")
                 logger.info(f"  Opponent: {opponent_race.name}")

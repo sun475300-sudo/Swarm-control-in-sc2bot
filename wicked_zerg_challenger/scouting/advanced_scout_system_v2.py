@@ -14,7 +14,7 @@ Phase 10 기반, Phase 22 고도화:
 """
 
 import math
-from typing import Dict, List, Optional, Set, Tuple
+from typing import Dict, List, Optional, Set
 
 from utils.logger import get_logger
 
@@ -46,7 +46,7 @@ except ImportError:
         pass
 
 
-from unit_authority_manager import AuthorityLevel, UnitAuthorityManager
+from unit_authority_manager import AuthorityLevel
 
 # 백과사전 임포트 (상성 데이터 활용)
 try:
@@ -905,12 +905,19 @@ class AdvancedScoutingSystemV2:
         return None
 
     def _assign_patrol(
-        self, route_name: str, unit_type: UnitTypeId = UnitTypeId.OVERLORD
+        self, route_name: str, unit_type: Optional[UnitTypeId] = None
     ) -> bool:
         """
         특정 순찰 경로에 유닛 배정.
         중반 이후 오버로드/감시군주를 적진 순환 순찰에 투입.
+
+        Note: ``unit_type`` defaults to ``UnitTypeId.OVERLORD`` at call time
+        (not import time) so module import does not blow up when the ``sc2``
+        package is unavailable and ``UnitTypeId`` is just the local stub.
         """
+        if unit_type is None:
+            unit_type = UnitTypeId.OVERLORD
+
         route = self._patrol_routes.get(route_name)
         if not route:
             return False

@@ -10,7 +10,7 @@ import logging
 import os
 import statistics
 from collections import defaultdict
-from typing import Dict, List, Tuple
+from typing import Dict
 
 logger = logging.getLogger("KnowledgeUpdater")
 

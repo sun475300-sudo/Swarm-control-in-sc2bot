@@ -9,12 +9,11 @@ Roach Tactics Trainer - 바퀴 전술 학습 시스템
 4. 탱킹 포지셔닝 (앞줄에서 피해 흡수)
 """
 
-from typing import Dict, List, Optional, Set
+from typing import Dict
 
 from sc2.ids.ability_id import AbilityId
 from sc2.ids.unit_typeid import UnitTypeId
 from sc2.ids.upgrade_id import UpgradeId
-from sc2.position import Point2
 
 from utils.logger import get_logger
 

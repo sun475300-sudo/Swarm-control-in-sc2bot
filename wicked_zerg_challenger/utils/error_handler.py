@@ -10,7 +10,7 @@ Error Handler - 예외 처리 유틸리티
 
 import functools
 import traceback
-from typing import Any, Callable, Optional
+from typing import Callable, Optional
 
 from utils.logger import get_logger
 
@@ -127,7 +127,7 @@ def retry_on_failure(max_retries=3, delay=0.1):
         async def async_wrapper(*args, **kwargs):
             import asyncio
 
-            last_exception = None
+            last_exception: Optional[BaseException] = None
 
             for attempt in range(max_retries):
                 try:
@@ -144,13 +144,16 @@ def retry_on_failure(max_retries=3, delay=0.1):
                             f"{func.__name__} failed after {max_retries} attempts: {e}"
                         )
 
+            # All retries exhausted; expose the last error on the wrapper for
+            # callers that want to inspect it (avoids silently returning None).
+            async_wrapper.last_exception = last_exception  # type: ignore[attr-defined]
             return None
 
         @functools.wraps(func)
         def sync_wrapper(*args, **kwargs):
             import time
 
-            last_exception = None
+            last_exception: Optional[BaseException] = None
 
             for attempt in range(max_retries):
                 try:
@@ -167,6 +170,7 @@ def retry_on_failure(max_retries=3, delay=0.1):
                             f"{func.__name__} failed after {max_retries} attempts: {e}"
                         )
 
+            sync_wrapper.last_exception = last_exception  # type: ignore[attr-defined]
             return None
 
         # 비동기 함수인지 확인

@@ -15,11 +15,10 @@ Comprehensive Unit Abilities - 모든 유닛 스킬 통합 관리
 10. Hydralisk: Lurker morph
 """
 
-from typing import Dict, List, Optional, Set
+from typing import Dict, Set
 
 from sc2.ids.ability_id import AbilityId
 from sc2.ids.unit_typeid import UnitTypeId
-from sc2.position import Point2
 
 from utils.logger import get_logger
 
@@ -490,7 +489,7 @@ class ComprehensiveUnitAbilities:
 
         # === 1. LURKER: 적 근처에서 잠복 (공격 전 필수) ===
         lurkers = self.bot.units(UnitTypeId.LURKERMP).filter(
-            lambda l: not l.is_burrowed
+            lambda u: not u.is_burrowed
         )
         for lurker in lurkers:
             # 적이 사거리 내에 있거나 근처에 있으면 잠복

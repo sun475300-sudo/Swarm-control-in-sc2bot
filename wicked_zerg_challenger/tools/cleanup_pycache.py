@@ -11,7 +11,6 @@ __pycache__ 디렉토리 정리 스크립트
 """
 
 import logging
-import os
 import shutil
 from pathlib import Path
 from typing import List, Tuple
@@ -141,10 +140,10 @@ def cleanup_all(root_dir: str, dry_run: bool = True) -> Tuple[int, int, int]:
     logger.info(f"  Total space to free: {total_bytes:,} bytes ({total_bytes/1024/1024:.2f} MB)")
 
     if dry_run:
-        logger.info(f"\n[DRY RUN] No files were actually deleted.")
-        logger.info(f"Run with --execute to perform actual cleanup.")
+        logger.info("\n[DRY RUN] No files were actually deleted.")
+        logger.info("Run with --execute to perform actual cleanup.")
     else:
-        logger.info(f"\n[COMPLETED] Cleanup finished!")
+        logger.info("\n[COMPLETED] Cleanup finished!")
         logger.info(f"  Directories deleted: {dirs_deleted}")
         logger.info(f"  Files deleted: {files_deleted}")
 

@@ -1089,7 +1089,6 @@ class QueenManager:
         기지 근처가 아닌 적 방향으로 점막 확장
         """
         try:
-            from sc2.position import Point2
 
             # 적 시작 위치
             enemy_start = None

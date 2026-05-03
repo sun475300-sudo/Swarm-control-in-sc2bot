@@ -9,7 +9,7 @@ Air Unit Manager - 공중 유닛 전용 관리
 4. Regen Dance, Magic Box 마이크로
 """
 
-from typing import TYPE_CHECKING, List, Optional
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from sc2.position import Point2
@@ -189,12 +189,11 @@ class AirUnitManager:
         # Regen Dance: 손상된 유닛 분리
         if self.mutalisk_micro:
             current_time = getattr(self.bot, "time", 0)
-            combat_ready, regenerating = await self.mutalisk_micro.execute_regen_dance(
+            combat_ready, _regenerating = await self.mutalisk_micro.execute_regen_dance(
                 mutalisks, current_time, self.bot
             )
         else:
             combat_ready = list(mutalisks)
-            regenerating = []
 
         if not combat_ready:
             return
@@ -323,12 +322,11 @@ class AirUnitManager:
         # Regen Dance
         if self.mutalisk_micro:
             current_time = getattr(self.bot, "time", 0)
-            combat_ready, regenerating = await self.mutalisk_micro.execute_regen_dance(
+            combat_ready, _regenerating = await self.mutalisk_micro.execute_regen_dance(
                 mutalisks, current_time, self.bot
             )
         else:
             combat_ready = list(mutalisks)
-            regenerating = []
 
         if not combat_ready:
             return
