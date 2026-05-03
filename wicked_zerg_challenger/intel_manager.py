@@ -41,34 +41,62 @@ class IntelManager:
         self.enemy_unit_counts = {}
 
         # High threat unit types
+        # ★ EXTENDED: 잠복 럴커, 바이퍼/인페스터 (캐스터), 카리에/템페스트, 다크템플러/오라클, 고스트 추가
         self._high_threat_types = {
+            # Terran heavy
             "SIEGETANK",
             "SIEGETANKSIEGED",
             "THOR",
             "BATTLECRUISER",
+            "LIBERATOR",
+            "LIBERATORAG",
+            "WIDOWMINE",
+            "WIDOWMINEBURROWED",
+            "GHOST",
+            "BANSHEE",
+            # Protoss heavy
             "COLOSSUS",
             "DISRUPTOR",
             "IMMORTAL",
             "ARCHON",
+            "HIGHTEMPLAR",
+            "DARKTEMPLAR",
+            "ORACLE",
+            "CARRIER",
+            "TEMPEST",
+            "MOTHERSHIP",
+            "VOIDRAY",
+            # Zerg heavy / casters
             "ULTRALISK",
             "BROODLORD",
             "RAVAGER",
             "LURKER",
             "LURKERMP",
-            "LIBERATOR",
-            "LIBERATORAG",
-            "WIDOWMINE",
-            "HIGHTEMPLAR",
+            "LURKERMPBURROWED",
+            "VIPER",
+            "INFESTOR",
+            "INFESTORBURROWED",
+            "SWARMHOSTMP",
         }
 
         # ★ NEW: Hidden tech tracking (정찰로 확인해야 하는 위험 테크)
+        # ★ EXTENDED: 럴커덴(잠복), 그리니드/스파이어(공중), 로보틱스 베이(콜로서스/디스럽터), 고스트아카데미 추가
         self._hidden_tech_alerts = {
+            # Protoss
             "DARKSHRINE": "DT_INCOMING",
             "STARGATE": "AIR_INCOMING",
-            "FUSIONCORE": "BC_INCOMING",
             "TEMPLARARCHIVE": "HT_INCOMING",
-            "NYDUSNETWORK": "NYDUS_INCOMING",
             "FLEETBEACON": "CARRIER_INCOMING",
+            "ROBOTICSBAY": "COLOSSUS_INCOMING",
+            # Terran
+            "FUSIONCORE": "BC_INCOMING",
+            "STARPORTTECHLAB": "BANSHEE_INCOMING",
+            "GHOSTACADEMY": "GHOST_INCOMING",
+            # Zerg
+            "NYDUSNETWORK": "NYDUS_INCOMING",
+            "LURKERDEN": "LURKER_INCOMING",
+            "LURKERDENMP": "LURKER_INCOMING",
+            "GREATERSPIRE": "BROODLORD_INCOMING",
         }
         self._detected_tech_alerts: set = set()  # 이미 경고한 테크
 
@@ -214,25 +242,38 @@ class IntelManager:
         )
 
         # Track tech buildings with detailed categorization
+        # ★ EXTENDED: 럴커덴(Zerg 잠복), 사이버네틱스코어(Protoss 핵심), 고스트아카데미(Terran), 테크랩들(Terran 진화 단계)
         tech_buildings = {
+            # Terran
+            "BARRACKSTECHLAB",
             "FACTORY",
+            "FACTORYTECHLAB",
             "STARPORT",
+            "STARPORTTECHLAB",
             "ARMORY",
             "FUSIONCORE",
+            "GHOSTACADEMY",
+            # Protoss
+            "CYBERNETICSCORE",
             "ROBOTICSFACILITY",
+            "ROBOTICSBAY",
             "STARGATE",
             "DARKSHRINE",
             "TEMPLARARCHIVE",
             "FLEETBEACON",
             "TWILIGHTCOUNCIL",
+            # Zerg
             "SPIRE",
             "GREATERSPIRE",
             "INFESTATIONPIT",
             "BANELINGNEST",
             "ROACHWARREN",
             "HYDRALISKDEN",
+            "LURKERDEN",
+            "LURKERDENMP",
             "NYDUSNETWORK",
             "NYDUSCANAL",
+            "ULTRALISKCAVERN",
         }
         self.enemy_tech_buildings = {
             getattr(s.type_id, "name", "").upper()
@@ -316,7 +357,9 @@ class IntelManager:
                 self._threat_level = cached_threat.lower()
 
         # High-threat unit types (detect earlier)
+        # ★ EXTENDED: 견제/중후반 위협 유닛 추가 (헬리온/콜로서스/다크템플러/임모탈/뮤탈/히드라/볼트레이)
         high_threat_units = {
+            # 초반 견제/러시
             "ZERGLING",
             "MARINE",
             "ZEALOT",
@@ -326,10 +369,35 @@ class IntelManager:
             "ROACH",
             "STALKER",
             "MARAUDER",
+            "HELLION",
+            "HELLIONTANK",
+            "ORACLE",
+            "DARKTEMPLAR",
+            # 중후반 위협
             "SIEGETANK",
             "SIEGETANKSIEGED",
             "LIBERATOR",
+            "LIBERATORAG",
             "WIDOWMINE",
+            "WIDOWMINEBURROWED",
+            "COLOSSUS",
+            "IMMORTAL",
+            "DISRUPTOR",
+            "GHOST",
+            "THOR",
+            # Zerg vs Zerg 위협
+            "HYDRALISK",
+            "MUTALISK",
+            "RAVAGER",
+            "LURKERMP",
+            "LURKERMPBURROWED",
+            # Air 위협
+            "VOIDRAY",
+            "BANSHEE",
+            "BATTLECRUISER",
+            "CARRIER",
+            "TEMPEST",
+            "BROODLORD",
         }
 
         # ★ O(n) 최적화: 적 유닛 1회 순회, 타운홀 위치 캐시 ★

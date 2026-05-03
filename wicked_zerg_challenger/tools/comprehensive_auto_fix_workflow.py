@@ -17,7 +17,7 @@ import subprocess
 import sys
 import time
 from pathlib import Path
-from typing import Any, Dict, List, Tuple
+from typing import List, Tuple
 
 logger = logging.getLogger("ComprehensiveAutoFixWorkflow")
 
@@ -205,9 +205,9 @@ def main():
     )
     
     # 5-2. ���� �н� ����
-    logger.info(f"\n[INFO] ���� �н��� �����մϴ�...")
-    logger.info(f"������ ���� �۵��ϴ��� Ȯ���ϼ���.")
-    logger.info(f"Ctrl+C�� ���� �ߴ��� �� �ֽ��ϴ�.")
+    logger.info("\n[INFO] ���� �н��� �����մϴ�...")
+    logger.info("������ ���� �۵��ϴ��� Ȯ���ϼ���.")
+    logger.info("Ctrl+C�� ���� �ߴ��� �� �ֽ��ϴ�.")
     success_training, _ = run_command(
         [sys.executable, str(run_training)],
         project_root,
@@ -259,8 +259,8 @@ def main():
     
     # 7-2. ������ ���� �� �Ʒ� ����
     if success_replay2:
-        logger.info(f"\n[INFO] �н��� �����Ͱ� �ڵ� ����Ǿ����ϴ�.")
-        logger.info(f"�߰� �Ʒ��� �����մϴ�...")
+        logger.info("\n[INFO] �н��� �����Ͱ� �ڵ� ����Ǿ����ϴ�.")
+        logger.info("�߰� �Ʒ��� �����մϴ�...")
         
         success_training2, _ = run_command(
             [sys.executable, str(run_training)],
