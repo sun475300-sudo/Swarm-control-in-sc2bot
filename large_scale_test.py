@@ -23,8 +23,11 @@ class ExtendedTestResult:
 
 
 class LargeScaleTestRunner:
-    def __init__(self):
+    def __init__(self, seed: int = None):
         self.results: List[ExtendedTestResult] = []
+        # 시드를 지정하면 결과가 재현 가능해진다 (CI 신뢰성).
+        if seed is not None:
+            random.seed(seed)
 
     def test_unit_combinations_extended(self) -> ExtendedTestResult:
         """Extended unit combination tests"""
