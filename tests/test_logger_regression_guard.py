@@ -15,9 +15,10 @@ BOT_ROOT = PROJECT_ROOT / "wicked_zerg_challenger"
 
 # 빈 인자 호출 — logger.info() / logger.debug(  ) 등.
 EMPTY_LOGGER_RE = re.compile(r"\blogger\.(info|debug|warning|error)\(\s*\)")
-# 빈 문자열 호출 — logger.info("") / logger.debug('') 등 (효과상 노이즈).
+# 빈 문자열 호출 — logger.info("") / logger.debug('') / logger.info(f"") 등.
+# f / r / b 접두 + 단일/쌍따옴표 조합을 모두 커버.
 EMPTY_STRING_LOGGER_RE = re.compile(
-    r"""\blogger\.(info|debug|warning|error)\(\s*(['"])\2\s*\)"""
+    r"""\blogger\.(info|debug|warning|error)\(\s*[fFrRbB]?(['"])\2\s*\)"""
 )
 
 
