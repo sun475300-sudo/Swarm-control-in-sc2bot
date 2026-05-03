@@ -681,7 +681,7 @@ class CombatManager:
             else set()
         )
 
-        for task_name, target, priority in tasks_to_execute:
+        for task_name, target, _priority in tasks_to_execute:
             if task_name == "complete_destruction":
                 # ★ Complete Destruction: 모든 병력을 건물 파괴에 투입 (전투 없을 때)
                 # Complete Destruction Trainer가 자체적으로 병력 할당 처리

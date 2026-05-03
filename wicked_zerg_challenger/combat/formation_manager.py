@@ -104,7 +104,7 @@ class FormationManager:
 
         # 근접 유닛: 전면 전방에 배치
         if melee and enemy_center:
-            for i, unit in enumerate(melee):
+            for unit in melee:
                 # 전면 전방에 배치
                 if self.bot.townhalls.exists:
                     our_base = self.bot.townhalls.first

@@ -1946,7 +1946,7 @@ def section2_approval_flow():
 
     # 현행 프로세스 바
     x_pos = 0
-    for _i, (label, days, color) in enumerate(current_steps):
+    for _i, (label, _days, color) in enumerate(current_steps):
         width = max(days * 0.8, 3)
         fig.add_trace(
             go.Bar(
@@ -1967,7 +1967,7 @@ def section2_approval_flow():
 
     # Swarm-Net 바
     x_pos_auto = 0
-    for _i, (label, days, color) in enumerate(auto_steps):
+    for _i, (label, _days, color) in enumerate(auto_steps):
         width = max(20, 20)
         fig.add_trace(
             go.Bar(

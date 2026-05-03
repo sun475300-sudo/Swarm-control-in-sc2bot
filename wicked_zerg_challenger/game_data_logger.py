@@ -489,7 +489,7 @@ class GameDataLogger:
             total_supply += supply
 
         # 비율 계산
-        for unit_type, data in composition.items():
+        for _unit_type, data in composition.items():
             data["ratio"] = (
                 round(data["supply"] / total_supply, 3) if total_supply > 0 else 0
             )

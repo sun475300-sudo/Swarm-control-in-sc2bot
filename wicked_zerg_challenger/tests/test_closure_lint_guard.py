@@ -85,6 +85,23 @@ def test_no_f811_redefined_unused():
 
 
 @pytest.mark.skipif(not _has_ruff(), reason="ruff not installed")
+def test_no_b007_unused_loop_control_variable():
+    """루프 변수가 사용되지 않을 경우 `_var` 패턴 강제.
+
+    enumerate 등으로 받은 인덱스를 안 쓰면 루프 자체를 단순화할
+    수 있다는 신호이므로 명시적으로 표시.
+    """
+    result = subprocess.run(
+        ["ruff", "check", "--select=B007", "--no-fix", str(REPO_ROOT)],
+        capture_output=True,
+        text=True,
+    )
+    assert result.returncode == 0, (
+        f"B007 (unused-loop-control-variable) 위반 발견:\n{result.stdout}\n{result.stderr}"
+    )
+
+
+@pytest.mark.skipif(not _has_ruff(), reason="ruff not installed")
 def test_no_b905_zip_without_strict():
     """`zip(...)` 호출 시 `strict=` 키워드 명시 강제 (Python 3.10+).
 
