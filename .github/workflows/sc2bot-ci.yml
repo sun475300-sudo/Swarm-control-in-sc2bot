@@ -76,7 +76,9 @@ jobs:
         run: pip install -r requirements.txt pytest pytest-cov pytest-asyncio
 
       - name: Run unit tests
-        run: pytest tests/unit -v --cov=. --cov-report=xml --cov-report=term
+        # tests/unit 디렉터리는 존재하지 않으며, 단위 테스트는 tests/ 루트에 있다.
+        # tests/integration 은 별도 단계에서 실행한다.
+        run: pytest tests --ignore=tests/integration -v --cov=. --cov-report=xml --cov-report=term
 
       - name: Run integration tests
         run: pytest tests/integration -v --timeout=120
