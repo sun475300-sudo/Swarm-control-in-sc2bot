@@ -2288,8 +2288,6 @@ class CombatManager:
         3. Enemy air units
         4. Ground army units
         """
-        game_time = getattr(self.bot, "time", 0)
-
         # Check if our base is under attack
         base_threatened = self._is_base_under_attack()
 
@@ -2425,12 +2423,11 @@ class CombatManager:
         # ★ REGEN DANCE: Separate damaged units during harassment ★
         if self.mutalisk_micro:
             current_time = getattr(self.bot, "time", 0)
-            combat_ready, regenerating = await self.mutalisk_micro.execute_regen_dance(
+            combat_ready, _regenerating = await self.mutalisk_micro.execute_regen_dance(
                 mutalisks, current_time, self.bot
             )
         else:
             combat_ready = list(mutalisks)
-            regenerating = []
 
         if not combat_ready:
             return  # All units regenerating
@@ -2869,14 +2866,16 @@ class CombatManager:
             return
 
         # ★ REGEN DANCE: Separate damaged units ★
+        # NOTE: the second tuple element (units currently regenerating) is
+        # intentionally ignored here -- those units should remain idle until
+        # the next iteration; only combat_ready units engage.
         if self.mutalisk_micro:
             current_time = getattr(self.bot, "time", 0)
-            combat_ready, regenerating = await self.mutalisk_micro.execute_regen_dance(
+            combat_ready, _regenerating = await self.mutalisk_micro.execute_regen_dance(
                 mutalisks, current_time, self.bot
             )
         else:
             combat_ready = list(mutalisks)
-            regenerating = []
 
         if not combat_ready:
             return  # All units regenerating
@@ -3101,13 +3100,21 @@ class CombatManager:
                 for e in nearby_enemies
                 if getattr(e.type_id, "name", "").upper() in combat_unit_names
             ]
+            nearby_non_combat = [
+                e
+                for e in nearby_enemies
+                if getattr(e.type_id, "name", "").upper() in non_combat_names
+            ]
 
             # 전투 유닛이 1기 이상이면 위협 (실제 공격 의도)
             if len(nearby_combat) >= 1:
                 return True
 
             # 비전투 유닛만 있는 경우 (정찰 등) - 3기 이상이어야 위협
-            if len(nearby_enemies) >= 3:
+            # (workers/overlords signal a scout rush, but lone scouts shouldn't
+            # trip defense alarms. Require 3+ of the explicit non-combat list
+            # rather than the total nearby count.)
+            if len(nearby_non_combat) >= 3:
                 return True
 
         return False
@@ -4338,4 +4345,3 @@ class CombatManager:
             pass
 
         return None
-# Improved micro management for VeryHard difficulty

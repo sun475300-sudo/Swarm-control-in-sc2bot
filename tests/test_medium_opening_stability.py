@@ -261,3 +261,34 @@ async def test_economy_manager_suppresses_drone_greed_under_pressure():
 
     assert manager._should_delay_opening_expansion(1) is True
     assert all(len(queue) == 0 for queue in blackboard.production_queue.values())
+
+
+@pytest.mark.asyncio
+async def test_economy_pressure_window_closes_after_4_minutes():
+    """A stale or freshly-arrived cheese signal past the early window must
+    not keep economy logic suppressed indefinitely. Beyond game_time=240s,
+    pressure_active should be False even with cheese_suspected + fresh gas."""
+    blackboard = GameStateBlackboard()
+    # Report just received (fresh) and would normally trigger pressure...
+    blackboard.set("early_scout_last_report_time", 290.0)
+    blackboard.set("early_scout_cheese_suspected", True)
+    blackboard.set("early_scout_gas_time", 80.0)
+    blackboard.set("early_scout_natural_confirmed", False)
+
+    bot = SimpleNamespace(
+        blackboard=blackboard,
+        time=300.0,  # past the 240s early-window cutoff
+        iteration=66,
+        workers=UnitGroup([MockUnit("DRONE") for _ in range(40)]),
+        townhalls=SimpleNamespace(
+            ready=UnitGroup([MockStructure("HATCHERY")]), amount=2
+        ),
+        supply_left=8,
+        production=None,
+    )
+
+    manager = EconomyManager(bot)
+    state = manager._get_early_scout_pressure_state()
+    assert state["fresh"] is True  # signal was reported within 75s
+    assert state["pressure_active"] is False  # but the early window has closed
+    assert manager._should_suppress_drone_greed(40) is False

@@ -1,0 +1,40 @@
+# ─────────────────────────────────────────────────────────────────────────
+# config.example.yaml — sample configuration template
+#
+# Copy this file to config.yaml and fill in values (or set the matching
+# environment variables; ${VAR} references and FOO_BAR_BAZ env overrides
+# are supported by config_loader.py).
+#
+# DO NOT commit config.yaml — it is gitignored. Real API keys should
+# come from environment variables, never from this file.
+# ─────────────────────────────────────────────────────────────────────────
+
+project:
+  name: "JARVIS / Swarm SC2 Bot"
+  version: "0.1.0"
+  environment: "development"
+
+proxy:
+  port: 3456
+  host: "127.0.0.1"
+
+crypto:
+  upbit:
+    # API keys must come from env vars; never hardcode them here.
+    access_key: "${UPBIT_ACCESS_KEY}"
+    secret_key: "${UPBIT_SECRET_KEY}"
+  trading:
+    dry_run: true
+    min_order_amount: 5000
+    default_fiat: "KRW"
+
+logging:
+  level: "INFO"
+  json_format: false
+
+# Database / cache (optional; only needed if those features are enabled)
+database:
+  password: "${DB_PASSWORD}"
+
+anthropic:
+  api_key: "${ANTHROPIC_API_KEY}"
