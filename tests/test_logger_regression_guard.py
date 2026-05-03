@@ -13,8 +13,12 @@ from pathlib import Path
 PROJECT_ROOT = Path(__file__).parent.parent
 BOT_ROOT = PROJECT_ROOT / "wicked_zerg_challenger"
 
-# 빈 인자 호출만 잡는다 (logger.info() / logger.debug(  ) 등).
+# 빈 인자 호출 — logger.info() / logger.debug(  ) 등.
 EMPTY_LOGGER_RE = re.compile(r"\blogger\.(info|debug|warning|error)\(\s*\)")
+# 빈 문자열 호출 — logger.info("") / logger.debug('') 등 (효과상 노이즈).
+EMPTY_STRING_LOGGER_RE = re.compile(
+    r"""\blogger\.(info|debug|warning|error)\(\s*(['"])\2\s*\)"""
+)
 
 
 def _python_files():
@@ -40,4 +44,22 @@ def test_no_empty_logger_calls_in_bot_source():
     assert not offenders, (
         "Empty logger calls re-introduced — these were cleaned up by the "
         "print->logger migration fix-up. Offending sites:\n  " + "\n  ".join(offenders)
+    )
+
+
+def test_no_empty_string_logger_calls_in_bot_source():
+    """logger.info(\"\") 같은 의미 없는 빈-문자열 호출도 회귀 방지."""
+    offenders = []
+    for path in _python_files():
+        try:
+            text = path.read_text(encoding="utf-8")
+        except (UnicodeDecodeError, OSError):
+            continue
+        for lineno, line in enumerate(text.splitlines(), start=1):
+            if EMPTY_STRING_LOGGER_RE.search(line):
+                offenders.append(f"{path}:{lineno}: {line.strip()}")
+    assert not offenders, (
+        'Empty-string logger calls (e.g. logger.info("")) found. They produce '
+        "blank log lines and add no information. Offending sites:\n  "
+        + "\n  ".join(offenders)
     )
