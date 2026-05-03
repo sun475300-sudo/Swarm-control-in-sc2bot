@@ -1,54 +1,54 @@
 {
   "unit_tests": {
     "tests": 7,
-    "passed": 7,
-    "duration": 125
+    "passed": 6,
+    "duration": 12
   },
   "stress_tests": {
-    "tests": 5,
-    "passed": 5,
-    "duration": 89
+    "tests": 1200,
+    "passed": 594,
+    "duration": 6
   },
   "edge_case_tests": {
     "tests": 10,
     "passed": 10,
-    "duration": 45
+    "duration": 1
   },
   "integration_tests": {
     "tests": 5,
     "passed": 5,
-    "duration": 12
+    "duration": 1
   },
   "benchmark_tests": {
-    "tests": 6,
-    "passed": 6,
-    "duration": 234
+    "tests": 300,
+    "passed": 300,
+    "duration": 0
   },
   "multi_env_tests": {
     "tests": 6,
     "passed": 6,
-    "duration": 89
+    "duration": 1
   },
   "matchup_tests": {
     "tests": 15,
-    "passed": 15,
-    "duration": 156
+    "passed": 13,
+    "duration": 1
   },
   "fuzz_tests": {
     "tests": 700,
-    "passed": 300,
-    "duration": 234
+    "passed": 700,
+    "duration": 3
   },
   "regression_tests": {
     "tests": 5,
     "passed": 5,
-    "duration": 23
+    "duration": 0
   },
   "summary": {
-    "total_tests": 759,
-    "total_passed": 359,
-    "total_failed": 400,
-    "pass_rate": 47.299077733860344,
-    "total_duration_ms": 0.0
+    "total_tests": 2248,
+    "total_passed": 1639,
+    "total_failed": 609,
+    "pass_rate": 72.90925266903915,
+    "total_duration_ms": 29.12139892578125
   }
 }

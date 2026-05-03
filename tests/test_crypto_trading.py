@@ -8,6 +8,7 @@
   - unified_logger 기본 기능 테스트
 """
 
+import importlib.util
 import os
 import sys
 from pathlib import Path
@@ -16,6 +17,14 @@ import pytest
 
 # 프로젝트 루트를 path에 추가
 sys.path.insert(0, str(Path(__file__).parent.parent))
+
+# crypto_trading.security 는 cryptography(Fernet)에 의존하며,
+# cryptography 는 cffi 의 _cffi_backend 가 없으면 pyo3 PanicException 으로
+# 프로세스가 죽는다. 따라서 모듈 단위로 graceful skip 한다.
+pytestmark = pytest.mark.skipif(
+    importlib.util.find_spec("_cffi_backend") is None,
+    reason="_cffi_backend not available (cryptography panics without it)",
+)
 
 
 class TestCryptoImports:
