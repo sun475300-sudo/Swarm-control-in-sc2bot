@@ -14,7 +14,7 @@ from __future__ import annotations
 
 import logging
 import math
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List
 
 logger = logging.getLogger(__name__)
 
@@ -201,7 +201,7 @@ class FlankingCoordinator:
         if not enemy_center:
             return
 
-        for group_id, tags in self._groups.items():
+        for _group_id, tags in self._groups.items():
             for tag in tags:
                 unit = self._find_by_tag(tag)
                 if not unit:

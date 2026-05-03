@@ -492,8 +492,6 @@ class OpponentModeling:
         if not hasattr(self.bot, "strategy_manager"):
             return
 
-        strategy_manager = self.bot.strategy_manager
-
         # Set blackboard recommendations
         if hasattr(self.bot, "blackboard") and self.bot.blackboard:
             # Recommend counter strategy
@@ -763,16 +761,11 @@ class OpponentModeling:
                 f"[OPPONENT_MODELING] Known opponent: {opponent_id} ({self.opponent_models[opponent_id].games_played} games)"
             )
 
-    async def on_step(self, iteration: int):
-        """매 프레임 호출 - 신호 감지"""
-        if not self.current_opponent or not self.bot:
-            return
-
-        game_time = self.bot.time
-
-        # Only detect signals in early game (0-180s)
-        if game_time <= 180.0:
-            await self._detect_early_signals(game_time)
+    # NOTE: A second on_step that only ran _detect_early_signals used to live
+    # here and silently shadowed the comprehensive on_step defined earlier in
+    # this class (line ~342). It was removed — the earlier definition handles
+    # early/mid-game signal detection, build-order tracking, timing detection,
+    # tech progression, and blackboard updates.
 
     def on_game_end(self, won: bool, lost: bool):
         """게임 종료 시 호출 - 데이터 저장"""

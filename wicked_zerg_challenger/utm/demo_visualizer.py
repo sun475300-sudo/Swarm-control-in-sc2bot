@@ -62,7 +62,7 @@ def run_simulation(
     predictor = CollisionPredictor()
     trajectories: List[List[Point3D]] = [[] for _ in drones]
 
-    for step in range(steps):
+    for _step in range(steps):
         # 충돌 검사
         alerts = predictor.check_all_pairs(drones)
         for alert in alerts:
@@ -163,7 +163,7 @@ def visualize(
 
     xlim = ax.get_xlim()
     ylim = ax.get_ylim()
-    for name, (z_min, z_max) in ALTITUDE_LAYERS.items():
+    for _name, (z_min, _z_max) in ALTITUDE_LAYERS.items():
         xx, yy = np.meshgrid(
             np.linspace(xlim[0], xlim[1], 2),
             np.linspace(ylim[0], ylim[1], 2),

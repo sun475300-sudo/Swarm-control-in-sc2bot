@@ -11,7 +11,7 @@ import os
 import re
 from collections import defaultdict
 from pathlib import Path
-from typing import Any, Dict, List, Set, Tuple
+from typing import Any, Dict, List
 
 logger = logging.getLogger("LogicChecker")
 
@@ -31,7 +31,7 @@ class LogicChecker:
         try:
             with open(file_path, "r", encoding="utf-8", errors="replace") as f:
                 content = f.read()
-                lines = content.splitlines()
+                content.splitlines()
 
             # Track repeated attribute calls in a short span.
             function_calls: Dict[str, List[int]] = defaultdict(list)

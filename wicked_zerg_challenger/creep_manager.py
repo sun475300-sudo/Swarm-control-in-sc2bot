@@ -277,7 +277,6 @@ class CreepManager:
             return None
 
         origin = tumor.position
-        spread_range = self.TUMOR_SPREAD_RANGE
 
         # Generate circle positions (CreepyBot: trigonometric sampling)
         candidates = []
@@ -360,7 +359,11 @@ class CreepManager:
                     self.bot.can_place, AbilityId.ZERGBUILD_CREEPTUMOR, valid
                 )
                 if placement_results and len(placement_results) == len(valid):
-                    valid = [pos for pos, ok in zip(valid, placement_results) if ok]
+                    valid = [
+                        pos
+                        for pos, ok in zip(valid, placement_results, strict=False)
+                        if ok
+                    ]
         except Exception:
             pass  # Fall through to distance-based selection if batch query fails
 
@@ -585,9 +588,7 @@ class CreepManager:
 # Feature #97: CreepSpreadManager - BFS/그리드 기반 크립 스프레드 최적화
 # =============================================================================
 
-import math
 from collections import deque
-from typing import Set, Tuple
 
 
 class CreepSpreadManager:

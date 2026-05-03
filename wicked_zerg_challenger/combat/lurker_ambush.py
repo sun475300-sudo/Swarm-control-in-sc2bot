@@ -16,7 +16,7 @@ Features:
 - Target prioritization
 """
 
-from typing import Dict, List, Optional, Set
+from typing import Dict, Optional, Set
 
 from utils.logger import get_logger
 
@@ -362,7 +362,7 @@ class LurkerAmbushSystem:
 
         # Count by state
         states = {}
-        for tag, state in self.lurker_states.items():
+        for _tag, state in self.lurker_states.items():
             states[state] = states.get(state, 0) + 1
 
         self.logger.info(f"[{int(game_time)}s] === LURKER AMBUSH REPORT ===")

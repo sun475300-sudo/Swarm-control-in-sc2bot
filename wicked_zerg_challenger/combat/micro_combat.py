@@ -7,7 +7,6 @@ Micro combat utilities with anti-splash awareness.
 from __future__ import annotations
 
 import asyncio
-import math
 from typing import Iterable, List, Optional, Tuple
 
 try:
@@ -410,7 +409,7 @@ class MicroCombat:
                 import math
 
                 # Count allies to determine surround angle
-                ally_count = len(nearby_allies)
+                len(nearby_allies)
 
                 # Calculate angle based on zergling's position relative to target
                 dx = zergling.position.x - target.position.x

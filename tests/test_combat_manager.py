@@ -12,7 +12,6 @@ Unit Tests for CombatManager
 """
 
 from typing import List
-from unittest.mock import MagicMock, Mock, patch
 
 import pytest
 
@@ -380,8 +379,8 @@ class TestCombatStatistics:
         # 기본 전투 관련 필드 확인
         assert hasattr(combat, "_base_defense_active")
         assert hasattr(combat, "_victory_push_active")
-        assert combat._base_defense_active == False
-        assert combat._victory_push_active == False
+        assert not combat._base_defense_active
+        assert not combat._victory_push_active
 
     def test_kd_ratio_tracking(self):
         """전투 추적 시스템 테스트"""

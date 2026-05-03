@@ -11,7 +11,7 @@ Tests for:
 7. OverlordVisionNetwork faster update cycle
 """
 
-from unittest.mock import MagicMock, Mock, PropertyMock, patch
+from unittest.mock import Mock
 
 import pytest
 
@@ -315,8 +315,13 @@ class TestEconomyGasBanking:
             pytest.skip("EconomyManager not available (sc2 dependency)")
 
     def test_gas_overflow_threshold_lowered(self):
-        """Gas overflow threshold should be 1000 (not 3000)"""
-        assert self.economy.gas_overflow_prevention_threshold == 1000
+        """Gas overflow threshold should be lowered from the legacy 3000 default.
+
+        Originally relaxed to 1000, then tightened further to 800 in a later
+        iteration (1000→800, 가스 뱅킹 방지 강화). Assert it stays at the
+        currently-tightened value to catch regressions in either direction.
+        """
+        assert self.economy.gas_overflow_prevention_threshold == 800
 
 
 # ===== 4. IntelManager NYDUSCANAL in Tech Buildings =====

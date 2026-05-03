@@ -1501,7 +1501,7 @@ class StrategyManager:
         roach_count = comp.get("ROACH", 0)
         mutalisk_count = comp.get("MUTALISK", 0)
         hydra_count = comp.get("HYDRALISK", 0)
-        ravager_count = comp.get("RAVAGER", 0)
+        comp.get("RAVAGER", 0)
 
         # 저글링 10+ → 바퀴 + 맹독충으로 전환 (저글링 미러는 불리)
         # ★ Phase 34: game_time < 300 제한 제거 — 5분 이후에도 저글링 러시 대응
@@ -1863,7 +1863,7 @@ class StrategyManager:
         Returns:
             전환 설명 문자열 (전환 없으면 None)
         """
-        game_time = getattr(self.bot, "time", 0.0)
+        getattr(self.bot, "time", 0.0)
         supply_used = getattr(self.bot, "supply_used", 0)
 
         # 강제 전환 조건 (시간보다 상황 우선)

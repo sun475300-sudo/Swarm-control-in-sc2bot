@@ -4,7 +4,7 @@ Unit Tests for Advanced Scout System V2
 Tests dynamic scouting intervals, scout assignment, and intel reporting.
 """
 
-from unittest.mock import MagicMock, Mock, patch
+from unittest.mock import Mock, patch
 
 import pytest
 
@@ -197,7 +197,7 @@ class TestAdvancedScoutSystemV2:
         # Should not crash when called
         try:
             await self.scout_system._manage_changelings()
-        except Exception as e:
+        except Exception:
             # Expected to fail in test env, just verify it exists
             pass
 

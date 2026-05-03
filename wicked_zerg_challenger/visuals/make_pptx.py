@@ -6,15 +6,13 @@ python-pptx로 텍스트 + 도형 기반의 편집 가능한 슬라이드 생성
 """
 
 import logging
-import os
 from pathlib import Path
 
 from pptx import Presentation
 from pptx.dml.color import RGBColor
 from pptx.enum.shapes import MSO_SHAPE
 from pptx.enum.text import MSO_ANCHOR, PP_ALIGN
-from pptx.oxml.ns import qn
-from pptx.util import Cm, Emu, Inches, Pt
+from pptx.util import Inches, Pt
 
 logger = logging.getLogger("MakePptx")
 
@@ -345,7 +343,7 @@ def build_slide_2(prs):
     for i, (title, desc, accent) in enumerate(cards):
         x = Inches(0.8 + i * 4.1)
         y = Inches(3.0)
-        card = add_rounded_rect(slide, x, y, Inches(3.7), Inches(2.2), BG_CARD, accent)
+        add_rounded_rect(slide, x, y, Inches(3.7), Inches(2.2), BG_CARD, accent)
 
         add_text_box(
             slide,
@@ -499,7 +497,7 @@ def build_slide_3(prs):
         y = Inches(3.7)
 
         # Gradient-ish card
-        card = add_rounded_rect(slide, x, y, Inches(3.7), Inches(2.4), BG_CARD, accent)
+        add_rounded_rect(slide, x, y, Inches(3.7), Inches(2.4), BG_CARD, accent)
 
         # Icon circle
         circle = slide.shapes.add_shape(
@@ -582,7 +580,7 @@ def build_slide_4(prs):
     )
 
     # Left box: SC2
-    sc2_card = add_rounded_rect(
+    add_rounded_rect(
         slide, Inches(0.6), Inches(2.5), Inches(4.8), Inches(1.8), BG_CARD, PURPLE
     )
     add_text_box(
@@ -646,7 +644,7 @@ def build_slide_4(prs):
     )
 
     # Right box: Drone ATC
-    atc_card = add_rounded_rect(
+    add_rounded_rect(
         slide, Inches(7.3), Inches(2.5), Inches(4.8), Inches(1.8), BG_CARD, CYAN
     )
     add_text_box(
@@ -817,7 +815,7 @@ def build_slide_5(prs):
         x = Inches(0.5 + i * 3.1)
         y = Inches(2.8)
 
-        card = add_rounded_rect(slide, x, y, Inches(2.8), Inches(2.0), BG_CARD, accent)
+        add_rounded_rect(slide, x, y, Inches(2.8), Inches(2.0), BG_CARD, accent)
 
         add_text_box(
             slide,
@@ -886,7 +884,7 @@ def build_slide_5(prs):
     for i, (name, file, tech) in enumerate(demos):
         x = Inches(0.8 + i * 5.5)
         y = Inches(5.5)
-        card = add_rounded_rect(slide, x, y, Inches(5.0), Inches(0.9), BG_CARD)
+        add_rounded_rect(slide, x, y, Inches(5.0), Inches(0.9), BG_CARD)
         add_text_box(
             slide,
             x + Inches(0.3),
@@ -985,7 +983,7 @@ def build_slide_6(prs):
         x = Inches(0.5 + i * 3.1)
         y = Inches(2.8)
 
-        card = add_rounded_rect(slide, x, y, Inches(2.8), Inches(2.8), BG_CARD, accent)
+        add_rounded_rect(slide, x, y, Inches(2.8), Inches(2.8), BG_CARD, accent)
 
         # Status circle
         circle = slide.shapes.add_shape(
@@ -1162,7 +1160,7 @@ def build_slide_7(prs):
         x = Inches(7.3 + col * 2.8)
         y = Inches(2.2 + row * 1.5)
 
-        card = add_rounded_rect(slide, x, y, Inches(2.4), Inches(1.2), BG_CARD)
+        add_rounded_rect(slide, x, y, Inches(2.4), Inches(1.2), BG_CARD)
         add_text_box(
             slide,
             x + Inches(0.2),
@@ -1392,14 +1390,14 @@ def main():
     except PermissionError:
         output_path = Path(__file__).parent / "Swarm_Net_Presentation_v2.pptx"
         prs.save(str(output_path))
-        logger.info(f"  (Original locked, saved as v2)")
+        logger.info("  (Original locked, saved as v2)")
 
     logger.info(f"\n{'='*60}")
-    logger.info(f"PPTX CREATED SUCCESSFULLY!")
+    logger.info("PPTX CREATED SUCCESSFULLY!")
     logger.info(f"   File: {output_path}")
-    logger.info(f"   Slides: 8")
-    logger.info(f"   Speaker notes: included")
-    logger.info(f"   Theme: Dark Navy + Cyan/Green accents")
+    logger.info("   Slides: 8")
+    logger.info("   Speaker notes: included")
+    logger.info("   Theme: Dark Navy + Cyan/Green accents")
     logger.info(f"{'='*60}")
 
 

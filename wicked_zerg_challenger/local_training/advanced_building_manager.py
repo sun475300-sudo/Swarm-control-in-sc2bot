@@ -507,7 +507,7 @@ class AdvancedBuildingManager:
         main_base = self.bot.townhalls.first
 
         # 건설 실행
-        for tech_type, mineral_cost, gas_cost, priority in tech_buildings:
+        for tech_type, mineral_cost, gas_cost, _priority in tech_buildings:
             if self.bot.minerals >= mineral_cost and self.bot.vespene >= gas_cost:
 
                 try:

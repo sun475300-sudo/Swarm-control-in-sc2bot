@@ -1,0 +1,23 @@
+# ═══════════════════════════════════════════════
+# Development & Test Dependencies
+# ═══════════════════════════════════════════════
+# Install with: pip install -r requirements-dev.txt
+# (Always installs runtime deps via -r requirements.txt first.)
+
+-r requirements.txt
+
+# Test runner
+# pytest >=7.0 supports the new collection API used by tests/conftest.py
+pytest>=7.0
+# Required by ~80 async tests in tests/. Without it, pytest reports
+# "async def functions are not natively supported" and fails them all.
+# Pin to >=0.21 so `asyncio_mode = auto` (set in pytest.ini) is honored.
+pytest-asyncio>=0.21
+pytest-cov>=4.0
+pytest-timeout>=2.1
+
+# Lint / format (kept aligned with .github/workflows/sc2bot-ci.yml)
+black==26.3.1
+isort>=5.12
+flake8>=6.0
+ruff>=0.5
