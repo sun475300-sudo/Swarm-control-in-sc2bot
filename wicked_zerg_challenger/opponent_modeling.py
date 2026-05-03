@@ -782,9 +782,8 @@ class OpponentModeling:
         # Update game history
         self.current_game_history.game_won = won
         self.current_game_history.game_lost = lost
-        self.current_game_history.early_signals = [
-            s.value for s in self.observed_signals
-        ]
+        # observed_signals stores plain strings (signal.value), not enums.
+        self.current_game_history.early_signals = list(self.observed_signals)
 
         # Detect strategy (placeholder - would need more logic)
         if self.intel:
@@ -812,10 +811,10 @@ class OpponentModeling:
 
         model = self.opponent_models[self.current_opponent]
 
-        # If we have observed signals, use them for prediction
+        # If we have observed signals, use them for prediction.
+        # observed_signals stores plain strings (signal.value), not enums.
         if self.observed_signals:
-            signal_strings = [s.value for s in self.observed_signals]
-            return model.predict_strategy(signal_strings)
+            return model.predict_strategy(list(self.observed_signals))
 
         # Otherwise, return most common strategy
         if model.strategy_frequency:
