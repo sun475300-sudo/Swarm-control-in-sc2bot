@@ -18,9 +18,12 @@ Integration:
 """
 
 from collections import defaultdict
-from typing import Dict, List, Optional, Set, Tuple
+from typing import Dict, Optional, Set
 
 from utils.logger import get_logger
+
+# Module-level logger for use in @staticmethod helpers (no self).
+_module_logger = get_logger("AdvancedMicroController")
 
 try:
     from sc2.bot_ai import BotAI
@@ -330,7 +333,6 @@ class LurkerMicro:
                         continue
                     except (AttributeError, TypeError) as e:
                         self.logger.debug(f"Lurker burrow failed: {e}")
-                        pass
 
             elif self.should_unburrow(lurker, enemy_units) and is_burrowed:
                 # Unburrow
@@ -343,7 +345,6 @@ class LurkerMicro:
                         continue
                     except (AttributeError, TypeError) as e:
                         self.logger.debug(f"Lurker unburrow failed: {e}")
-                        pass
 
             # Reposition if not burrowed and enemies present
             if not is_burrowed and enemy_units:
@@ -359,7 +360,6 @@ class LurkerMicro:
                         acted_tags.add(lurker.tag)
                     except (AttributeError, TypeError) as e:
                         self.logger.debug(f"Lurker reposition failed: {e}")
-                        pass
 
         if actions:
             await AdvancedMicroControllerV3._do_actions(bot, actions)
@@ -475,7 +475,6 @@ class QueenMicro:
                             continue
                         except (AttributeError, TypeError) as e:
                             self.logger.debug(f"Queen transfusion failed: {e}")
-                            pass
 
         if actions:
             await AdvancedMicroControllerV3._do_actions(bot, actions)
@@ -580,7 +579,6 @@ class ViperMicro:
                             continue
                         except (AttributeError, TypeError) as e:
                             self.logger.debug(f"Viper abduct failed: {e}")
-                            pass
 
             # Priority 2: Consume if low energy
             if energy < self.consume_threshold and friendly_units:
@@ -603,7 +601,6 @@ class ViperMicro:
                             continue
                         except (AttributeError, TypeError) as e:
                             self.logger.debug(f"Viper consume failed: {e}")
-                            pass
 
         if actions:
             await AdvancedMicroControllerV3._do_actions(bot, actions)
@@ -1198,8 +1195,9 @@ class AdvancedMicroControllerV3:
                 result = bot.do(action)
                 if hasattr(result, "__await__"):
                     await result
-            except Exception:
-                pass
+            except Exception as e:
+                # @staticmethod has no self; use module-level logger.
+                _module_logger.debug(f"action suppressed: {e}")
 
     async def on_step(self, iteration: int):
         """

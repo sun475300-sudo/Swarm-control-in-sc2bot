@@ -10,7 +10,7 @@ Feature #92: Queen Walk 러시 매니저
 """
 
 from enum import Enum
-from typing import Dict, List, Optional, Set
+from typing import Dict, Optional, Set
 
 try:
     from sc2.ids.ability_id import AbilityId
@@ -341,8 +341,8 @@ class QueenWalkManager:
                             queen(AbilityId.TRANSFUSION_TRANSFUSION, lowest_hp_queen)
                         )
                         self.last_transfusion_time = game_time
-                    except Exception:
-                        pass
+                    except Exception as e:
+                        self.logger.debug(f"action suppressed: {e}")
                     break  # 한 프레임에 하나만
 
         # 저글링은 적 유닛 공격
@@ -397,8 +397,8 @@ class QueenWalkManager:
                         self.bot.do(
                             queen(AbilityId.TRANSFUSION_TRANSFUSION, low_hp_queen)
                         )
-                    except Exception:
-                        pass
+                    except Exception as e:
+                        self.logger.debug(f"action suppressed: {e}")
                     break
 
         # 저글링은 퀸 호위하며 후퇴
@@ -422,8 +422,8 @@ class QueenWalkManager:
                     tumor_pos = queen.position.towards(self.target_point, 3)
                     self.bot.do(queen(AbilityId.BUILD_CREEPTUMOR_QUEEN, tumor_pos))
                     self.last_creep_tumor_time = game_time
-        except Exception:
-            pass
+        except Exception as e:
+            self.logger.debug(f"action suppressed: {e}")
 
     def _detect_nearby_enemies(self) -> bool:
         """퀸 주변 적 유닛 감지"""

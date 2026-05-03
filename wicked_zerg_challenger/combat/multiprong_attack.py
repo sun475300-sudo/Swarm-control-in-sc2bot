@@ -13,7 +13,6 @@ Feature #98: 멀티프롱 공격 매니저
 - MultiprongAttackManager: 타이밍 동기화 + 동적 재편성 + 우선순위 기반 타겟팅
 """
 
-import time as _time
 from enum import Enum
 from typing import Dict, List, Optional, Set, Tuple
 
@@ -337,9 +336,8 @@ class MultiprongAttackManager:
                     flank_prong.unit_tags.add(unit.tag)
                 self.prongs["flank"] = flank_prong
 
-        # 집결 지점 설정
+        # 집결 지점 설정 (start_location → target 방향으로 20)
         if hasattr(self.bot, "start_location") and hasattr(self.bot, "game_info"):
-            map_center = self.bot.game_info.map_center
             for prong in self.prongs.values():
                 if prong.target:
                     prong.rally_point = self.bot.start_location.towards(

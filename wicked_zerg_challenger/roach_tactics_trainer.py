@@ -9,12 +9,11 @@ Roach Tactics Trainer - 바퀴 전술 학습 시스템
 4. 탱킹 포지셔닝 (앞줄에서 피해 흡수)
 """
 
-from typing import Dict, List, Optional, Set
+from typing import Dict
 
 from sc2.ids.ability_id import AbilityId
 from sc2.ids.unit_typeid import UnitTypeId
 from sc2.ids.upgrade_id import UpgradeId
-from sc2.position import Point2
 
 from utils.logger import get_logger
 
@@ -114,8 +113,8 @@ class RoachTacticsTrainer:
             self.has_tunneling_claws = (
                 UpgradeId.TUNNELINGCLAWS in self.bot.state.upgrades
             )
-        except Exception:
-            pass
+        except Exception as e:
+            self.logger.debug(f"action suppressed: {e}")
 
     def _update_roach_tracking(self, roaches, game_time: float):
         """바퀴 추적 업데이트"""
@@ -202,8 +201,8 @@ class RoachTacticsTrainer:
                     self.logger.info(
                         f"[BURROW] Roach {roach.tag} burrowing at {hp_ratio*100:.1f}% HP"
                     )
-                except Exception:
-                    pass
+                except Exception as e:
+                    self.logger.debug(f"action suppressed: {e}")
 
     async def _unburrow_healed_roaches(self, roaches, game_time: float):
         """
@@ -252,8 +251,8 @@ class RoachTacticsTrainer:
                         f"[UNBURROW] Roach {roach.tag} healed {hp_healed:.1f} HP "
                         f"({hp_ratio*100:.1f}% HP) in {burrow_duration:.1f}s"
                     )
-                except Exception:
-                    pass
+                except Exception as e:
+                    self.logger.debug(f"action suppressed: {e}")
 
     def _is_in_combat(self, roach) -> bool:
         """바퀴가 전투 중인지 확인"""

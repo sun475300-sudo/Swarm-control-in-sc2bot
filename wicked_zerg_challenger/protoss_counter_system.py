@@ -12,7 +12,7 @@ Protoss Counter System - Advanced counter logic for Protoss opponents
 7. 파수기/역장 대응 - 파멸충 담즙
 """
 
-from typing import Dict, List, Optional, Set
+from typing import Dict, List
 
 from utils.logger import get_logger
 
@@ -261,8 +261,8 @@ class ProtossCounterSystem:
                             f"[{int(self.bot.time)}s] [*][*][*] EMERGENCY SPORE vs DT! [*][*][*]"
                         )
                         return  # 한 번에 1개씩만
-                    except Exception:
-                        pass
+                    except Exception as e:
+                        self.logger.debug(f"action suppressed: {e}")
 
     async def _pull_workers_from_threat(self):
         """일꾼을 위협 지역에서 대피"""

@@ -44,8 +44,8 @@ def _ensure_sc2_path():
             os.environ["SC2PATH"] = install_path
             logger.info(f"[SC2] Found via Registry: {install_path}")
             return
-    except Exception:
-        pass
+    except Exception as e:
+        logger.debug(f"action suppressed: {e}")
 
     common_paths = [
         "C:\\Program Files (x86)\\StarCraft II",
@@ -117,7 +117,7 @@ def test_difficulty(difficulty, games_per_difficulty=20):
     logger.info(f"  TESTING {difficulty.name} DIFFICULTY")
     logger.info("=" * 70)
     logger.info(f"  Target Games: {games_per_difficulty}")
-    logger.info(f"  Target Win Rate: 90%+")
+    logger.info("  Target Win Rate: 90%+")
     logger.info("=" * 70)
     start_time = time.time()
 
@@ -182,9 +182,9 @@ def main():
     logger.info("  COMPREHENSIVE WIN RATE TEST")
     logger.info("=" * 70)
     logger.info(f"  Total Difficulties: {len(difficulties_to_test)}")
-    logger.info(f"  Games per Difficulty: 20")
+    logger.info("  Games per Difficulty: 20")
     logger.info(f"  Total Games: {sum(count for _, count in difficulties_to_test)}")
-    logger.info(f"  Target: 90%+ win rate on all difficulties")
+    logger.info("  Target: 90%+ win rate on all difficulties")
     logger.info("=" * 70)
     overall_start = time.time()
     results = []

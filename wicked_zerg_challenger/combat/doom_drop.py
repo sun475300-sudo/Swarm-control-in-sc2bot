@@ -15,7 +15,7 @@ Feature #94: Doom Drop 전술 매니저
 """
 
 from enum import Enum
-from typing import Dict, List, Optional, Set, Tuple
+from typing import Dict, List, Optional, Tuple
 
 try:
     from sc2.ids.ability_id import AbilityId
@@ -532,10 +532,10 @@ class DoomDropManager:
                         self.bot.do(overlord(AbilityId.UNLOADALLAT, overlord.position))
                         self.logger.warning(
                             f"[{int(self.bot.time)}s] [DOOM_DROP] "
-                            f"오버로드 위험! 긴급 투하"
+                            "오버로드 위험! 긴급 투하"
                         )
-                    except Exception:
-                        pass
+                    except Exception as e:
+                        self.logger.debug(f"action suppressed: {e}")
 
     def _find_unit(self, tag: int) -> Optional[Unit]:
         """태그로 유닛 찾기"""

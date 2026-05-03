@@ -11,7 +11,7 @@ Evolution Chamber upgrade manager.
 Chooses upgrades based on unit composition and opponent race.
 """
 
-from typing import Dict, List, Optional, Set
+from typing import Dict, List, Optional
 
 try:
     from sc2.ids.unit_typeid import UnitTypeId
@@ -267,7 +267,7 @@ class EvolutionUpgradeManager:
         priorities = []
 
         # ★★★ Phase 18: 종족별 우선순위 조정 ★★★
-        race_modifiers = self.race_priority_modifiers.get(enemy_race, {})
+        self.race_priority_modifiers.get(enemy_race, {})
 
         if is_ranged_main:
             # ★ 바퀴/히드라 체제: 원거리 공격 올인 (사용자 요청)

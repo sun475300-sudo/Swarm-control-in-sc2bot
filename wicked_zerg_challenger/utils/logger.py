@@ -54,14 +54,13 @@ def setup_logger(
 
     # Console Handler (Windows UTF-8 safe)
     if log_to_console:
-        try:
-            # Windows 콘솔에서 UTF-8 출력 지원
-            if sys.platform == "win32":
-                import io
-
+        # Windows 콘솔에서 UTF-8 출력 지원 (Python 3.7+ supports reconfigure)
+        if sys.platform == "win32":
+            try:
                 sys.stdout.reconfigure(encoding="utf-8", errors="replace")
-        except (AttributeError, Exception):
-            pass
+            except (AttributeError, ValueError):
+                # reconfigure may be missing on some streams; non-fatal.
+                pass
         console_handler = logging.StreamHandler(sys.stdout)
         console_handler.setFormatter(formatter)
         logger.addHandler(console_handler)

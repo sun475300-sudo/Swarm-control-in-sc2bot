@@ -14,9 +14,8 @@ Real-time Awareness Engine — 실시간 상황 인식 + 자동 대응 시스템
 """
 
 import logging
-import time
 from dataclasses import dataclass
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List
 
 logger = logging.getLogger("RealtimeAwarenessEngine")
 
@@ -133,8 +132,10 @@ class RealtimeAwarenessEngine:
             if self.active_problems and iteration % 100 == 0:
                 self._log_problems()
 
-        except Exception:
-            pass
+        except Exception as e:
+            # Suppress to keep on_step alive, but surface periodically.
+            if iteration % 220 == 0:
+                logger.warning(f"on_step suppressed: {e}")
 
         return self.active_overrides
 
@@ -218,8 +219,8 @@ class RealtimeAwarenessEngine:
                             break
                     if s.enemy_near_base:
                         break
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug(f"enemy_near_base scan suppressed: {e}")
 
         # Intel
         if hasattr(self.bot, "intel_manager"):
@@ -236,8 +237,8 @@ class RealtimeAwarenessEngine:
                     s.tech_level = "hive"
                 elif structures(UnitTypeId.LAIR).exists:
                     s.tech_level = "lair"
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug(f"tech_level probe suppressed: {e}")
 
     # =========================================================================
     # Step 2: 문제 감지 (14가지 패턴)
@@ -464,8 +465,8 @@ class RealtimeAwarenessEngine:
                     )
                     if roach_count + hydra_count + ravager_count >= 5:
                         has_counter = True
-                except Exception:
-                    pass
+                except Exception as e:
+                    logger.debug(f"air-counter unit count suppressed: {e}")
 
                 if not has_counter:
                     problems.append(
@@ -582,8 +583,8 @@ class RealtimeAwarenessEngine:
             # 히드라굴 있으면 히드라
             if self.bot.structures(UnitTypeId.HYDRALISKDEN).ready.exists:
                 if self.bot.can_afford(UnitTypeId.HYDRALISK):
-                    l = larva.random
-                    result = self.bot.do(l.train(UnitTypeId.HYDRALISK))
+                    lv = larva.random
+                    result = self.bot.do(lv.train(UnitTypeId.HYDRALISK))
                     if hasattr(result, "__await__"):
                         import asyncio
 
@@ -593,8 +594,8 @@ class RealtimeAwarenessEngine:
             # 바퀴굴 있으면 바퀴
             if self.bot.structures(UnitTypeId.ROACHWARREN).ready.exists:
                 if self.bot.can_afford(UnitTypeId.ROACH):
-                    l = larva.random
-                    result = self.bot.do(l.train(UnitTypeId.ROACH))
+                    lv = larva.random
+                    result = self.bot.do(lv.train(UnitTypeId.ROACH))
                     if hasattr(result, "__await__"):
                         import asyncio
 
@@ -604,15 +605,15 @@ class RealtimeAwarenessEngine:
             # 스파이어 있으면 뮤탈
             if self.bot.structures(UnitTypeId.SPIRE).ready.exists:
                 if self.bot.can_afford(UnitTypeId.MUTALISK):
-                    l = larva.random
-                    result = self.bot.do(l.train(UnitTypeId.MUTALISK))
+                    lv = larva.random
+                    result = self.bot.do(lv.train(UnitTypeId.MUTALISK))
                     if hasattr(result, "__await__"):
                         import asyncio
 
                         asyncio.ensure_future(result)
                     return
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug(f"emergency action suppressed: {e}")
 
     def _force_army_production(self) -> None:
         """군대 강제 대량 생산"""
@@ -624,14 +625,14 @@ class RealtimeAwarenessEngine:
             for _ in range(min(larva.amount, 5)):
                 if not larva.exists:
                     break
-                l = larva.first
+                lv = larva.first
 
                 # 가스 유닛 우선
                 if self.bot.vespene >= 100:
                     if self.bot.structures(
                         UnitTypeId.ROACHWARREN
                     ).ready.exists and self.bot.can_afford(UnitTypeId.ROACH):
-                        result = self.bot.do(l.train(UnitTypeId.ROACH))
+                        result = self.bot.do(lv.train(UnitTypeId.ROACH))
                         if hasattr(result, "__await__"):
                             import asyncio
 
@@ -642,27 +643,27 @@ class RealtimeAwarenessEngine:
                 if self.bot.structures(
                     UnitTypeId.SPAWNINGPOOL
                 ).ready.exists and self.bot.can_afford(UnitTypeId.ZERGLING):
-                    result = self.bot.do(l.train(UnitTypeId.ZERGLING))
+                    result = self.bot.do(lv.train(UnitTypeId.ZERGLING))
                     if hasattr(result, "__await__"):
                         import asyncio
 
                         asyncio.ensure_future(result)
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug(f"emergency action suppressed: {e}")
 
     def _force_overlord_production(self) -> None:
         """오버로드 강제 생산"""
         try:
             larva = self.bot.larva
             if larva.exists and self.bot.can_afford(UnitTypeId.OVERLORD):
-                l = larva.first
-                result = self.bot.do(l.train(UnitTypeId.OVERLORD))
+                lv = larva.first
+                result = self.bot.do(lv.train(UnitTypeId.OVERLORD))
                 if hasattr(result, "__await__"):
                     import asyncio
 
                     asyncio.ensure_future(result)
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug(f"emergency action suppressed: {e}")
 
     def _flush_minerals(self) -> None:
         """미네랄 긴급 소비"""
@@ -675,15 +676,15 @@ class RealtimeAwarenessEngine:
             for _ in range(min(larva.amount, 8)):
                 if not larva.exists or not self.bot.can_afford(UnitTypeId.ZERGLING):
                     break
-                l = larva.first
+                lv = larva.first
                 if self.bot.structures(UnitTypeId.SPAWNINGPOOL).ready.exists:
-                    result = self.bot.do(l.train(UnitTypeId.ZERGLING))
+                    result = self.bot.do(lv.train(UnitTypeId.ZERGLING))
                     if hasattr(result, "__await__"):
                         import asyncio
 
                         asyncio.ensure_future(result)
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug(f"emergency action suppressed: {e}")
 
     # =========================================================================
     # 유틸리티
@@ -698,7 +699,7 @@ class RealtimeAwarenessEngine:
             logger.info(f"{len(critical)} CRITICAL problems:")
             for p in critical[:3]:
                 logger.info(f"  [{p.severity.upper()}] {p.description}")
-                logger.info(f"    → action required (see logs)")
+                logger.info("    → action required (see logs)")
 
     def get_situation_summary(self) -> str:
         """현재 상황 요약"""

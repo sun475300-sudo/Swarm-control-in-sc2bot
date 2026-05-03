@@ -98,8 +98,8 @@ class TrainingVisualizer:
         history = data.get("adjustment_history", [])
         recent_win_rates = data.get("recent_win_rates", [])
         
-        # 캔버스 설정
-        fig = plt.figure(figsize=(12, 8))
+        # 캔버스 설정 (plt.figure sets the active figure for subsequent plt.subplot calls)
+        plt.figure(figsize=(12, 8))
         gs = gridspec.GridSpec(2, 1, height_ratios=[1, 1])
         
         # 1. 학습률 변화 (Step Chart)
@@ -165,7 +165,7 @@ class TrainingVisualizer:
         plt.savefig(output_path, dpi=100)
         plt.savefig(latest_path, dpi=100) # 덮어쓰기용 최신 파일
         
-        logger.info(f"Charts saved to:")
+        logger.info("Charts saved to:")
         logger.info(f"  - {output_path}")
         logger.info(f"  - {latest_path}")
         

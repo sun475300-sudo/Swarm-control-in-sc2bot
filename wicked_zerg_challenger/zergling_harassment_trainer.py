@@ -10,7 +10,7 @@ Zergling Harassment Trainer - 저글링 괴롭힘 전술 학습 시스템
 5. 멀티태스킹 공격 (여러 지점 동시 공격)
 """
 
-from typing import Dict, List, Optional, Set
+from typing import Dict, List, Optional
 
 from sc2.ids.unit_typeid import UnitTypeId
 from sc2.ids.upgrade_id import UpgradeId
@@ -121,8 +121,8 @@ class ZerglingHarassmentTrainer:
             self.has_adrenal_glands = (
                 UpgradeId.ZERGLINGATTACKSPEED in self.bot.state.upgrades
             )
-        except Exception:
-            pass
+        except Exception as e:
+            self.logger.debug(f"action suppressed: {e}")
 
     def _update_squads(self, zerglings, game_time: float):
         """
@@ -147,7 +147,7 @@ class ZerglingHarassmentTrainer:
             if hasattr(self.bot, "unit_authority") and self.bot.unit_authority:
                 from unit_authority_manager import AuthorityLevel
 
-                ling_tags = {l.tag for l in squad_lings}
+                ling_tags = {ling.tag for ling in squad_lings}
                 # COMBAT 권한 요청 (괴롭힘 임무)
                 granted = self.bot.unit_authority.request_authority(
                     ling_tags,
@@ -156,7 +156,7 @@ class ZerglingHarassmentTrainer:
                     self.bot.state.game_loop,
                 )
                 # 권한 못 받은 유닛 제외
-                squad_lings = [l for l in squad_lings if l.tag in granted]
+                squad_lings = [ling for ling in squad_lings if ling.tag in granted]
 
             if len(squad_lings) >= 4:  # 최소 4마리
                 squad = ZerglingSquad(self.next_squad_id, squad_lings)

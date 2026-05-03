@@ -229,7 +229,7 @@ class BoidsController:
                         high_priority_units.append(unit)
                     else:
                         low_priority_units.append(unit)
-                except (AttributeError, ValueError) as e:
+                except (AttributeError, ValueError):
                     # Unit has no ground_range or distance calculation failed
                     low_priority_units.append(unit)
         else:
@@ -495,15 +495,15 @@ class BoidsController:
                 )
                 # results: List of ((x, y), unit, distance)
                 return [r[1] for r in results if r[1].tag != unit.tag]
-            except Exception:
-                pass  # Fall through to standard methods
+            except Exception as e:
+                logger.debug(f"action suppressed: {e}")  # Fall through to standard methods
 
         # Try SC2 built-in method (faster than manual iteration)
         if hasattr(units, "closer_than"):
             try:
                 return units.closer_than(radius, unit.position)
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug(f"action suppressed: {e}")
 
         # Fallback: brute force O(N)
         return [u for u in units if u.tag != unit.tag and unit.distance_to(u) <= radius]

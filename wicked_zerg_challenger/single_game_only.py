@@ -11,7 +11,6 @@ import sys
 import time
 from pathlib import Path
 
-import sc2
 from sc2 import maps
 from sc2.data import Difficulty, Race
 from sc2.main import run_game
@@ -65,22 +64,22 @@ def remove_lock():
     try:
         if LOCK_FILE.exists():
             LOCK_FILE.unlink()
-    except Exception:
-        pass
+    except Exception as e:
+        logger.debug(f"action suppressed: {e}")
 
 
 def kill_all_sc2():
     """모든 SC2 프로세스 강제 종료"""
     try:
         subprocess.run(
-            ["taskkill", "/F", "/IM", "SC2_x64.exe"], capture_output=True, timeout=5
+            ["taskkill", "/", "/IM", "SC2_x64.exe"], capture_output=True, timeout=5
         )
         subprocess.run(
-            ["taskkill", "/F", "/IM", "SC2.exe"], capture_output=True, timeout=5
+            ["taskkill", "/", "/IM", "SC2.exe"], capture_output=True, timeout=5
         )
         time.sleep(3)  # 충분한 대기 시간
-    except Exception:
-        pass
+    except Exception as e:
+        logger.debug(f"action suppressed: {e}")
 
 
 def main():
@@ -112,7 +111,7 @@ def main():
         logger.info("=" * 70)
         logger.info(f"Map: {selected_map}")
         logger.info(f"Enemy: {enemy_race.name}")
-        logger.info(f"Difficulty: Easy")
+        logger.info("Difficulty: Easy")
         logger.info("=" * 70 + "\n")
 
         # ★ 5. 게임 실행 (하나만) ★

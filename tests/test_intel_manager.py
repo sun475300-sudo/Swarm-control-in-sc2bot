@@ -4,7 +4,7 @@ Unit Tests for Intel Manager
 Tests threat detection, build pattern recognition, and confidence scoring.
 """
 
-from unittest.mock import MagicMock, Mock
+from unittest.mock import Mock
 
 import pytest
 

@@ -9,7 +9,7 @@ import json
 import logging
 import os
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict
 
 logger = logging.getLogger("GameDataLogger")
 
@@ -165,11 +165,9 @@ class GameDataLogger:
 
     async def _track_expansions(self, game_time: float):
         """확장 기지 추적"""
-        current_bases = (
-            self.bot.townhalls.amount if hasattr(self.bot, "townhalls") else 0
-        )
-
         # 새로운 확장 발견
+        if not hasattr(self.bot, "townhalls"):
+            return
         for townhall in self.bot.townhalls:
             if townhall.tag not in self._tracked_structures:
                 expansion_number = len([e for e in self.game_data["expansions"]]) + 1

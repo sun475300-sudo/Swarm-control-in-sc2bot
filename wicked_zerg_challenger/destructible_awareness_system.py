@@ -9,10 +9,9 @@ Destructible Awareness System - 파괴 가능 구조물 인지 시스템
 4. 우선순위 결정 (중요도)
 """
 
-from typing import Dict, List, Optional, Set
+from typing import Dict, List
 
 from sc2.ids.unit_typeid import UnitTypeId
-from sc2.position import Point2
 
 from utils.logger import get_logger
 
@@ -329,7 +328,7 @@ class DestructibleAwarenessSystem:
             )
 
             self.logger.info(
-                f"[DESTRUCTIBLE_STATUS] "
+                "[DESTRUCTIBLE_STATUS] "
                 f"Active: {active_count}, High Priority: {high_priority}, "
                 f"Destroyed: {self.total_destroyed}/{self.total_discovered}"
             )

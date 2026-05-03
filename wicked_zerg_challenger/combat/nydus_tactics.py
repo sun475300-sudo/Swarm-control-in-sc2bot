@@ -428,7 +428,7 @@ class NydusTacticsManager:
                 self.phase = NydusPhase.UNLOADING_UNITS
                 self.logger.info(
                     f"[{int(game_time)}s] [NYDUS] {len(self.units_in_nydus)}기 투입 완료, "
-                    f"언로딩 개시!"
+                    "언로딩 개시!"
                 )
 
     async def _manage_unloading(self, game_time: float):

@@ -9,7 +9,7 @@ Overlord Safety Manager - 대군주 안전 관리 시스템
 """
 
 import random
-from typing import Dict, List, Optional, Set, Tuple
+from typing import Dict, List, Optional, Set
 
 from sc2.ids.unit_typeid import UnitTypeId
 from sc2.position import Point2
@@ -445,16 +445,16 @@ class OverlordSafetyManager:
                     if len(expansions) >= 3:
                         enemy_third = expansions[2]
                         positions.append(enemy_third)
-                except Exception:
-                    pass
+                except Exception as e:
+                    self.logger.debug(f"action suppressed: {e}")
 
         # 3. Xel'Naga watchtowers
         try:
             if hasattr(self.bot, "watchtowers") and self.bot.watchtowers:
                 for tower in self.bot.watchtowers:
                     positions.append(tower.position)
-        except Exception:
-            pass
+        except Exception as e:
+            self.logger.debug(f"action suppressed: {e}")
 
         # 4. If no watchtowers found, add midpoints between bases
         if len(positions) < 4 and enemy_start:
@@ -473,8 +473,8 @@ class OverlordSafetyManager:
                         )
                     )
                     positions.append(mid)
-            except Exception:
-                pass
+            except Exception as e:
+                self.logger.debug(f"action suppressed: {e}")
 
         self.logger.info(
             f"[SCOUT] Optimal scout positions: {len(positions)} locations identified"

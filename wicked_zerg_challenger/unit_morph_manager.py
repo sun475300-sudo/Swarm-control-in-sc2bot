@@ -14,7 +14,6 @@ Features:
 - 자원 효율 극대화
 """
 
-from typing import Dict, Optional
 
 try:
     from sc2.ids.ability_id import AbilityId
@@ -444,8 +443,8 @@ class UnitMorphManager:
             self.logger.info(
                 f"[{int(self.bot.time)}s] Morphed Overseer (Active: {overseers.amount}/{target_count})"
             )
-        except Exception:
-            pass
+        except Exception as e:
+            self.logger.debug(f"action suppressed: {e}")
 
     def _get_enemy_race(self) -> str:
         """상대 종족 확인"""

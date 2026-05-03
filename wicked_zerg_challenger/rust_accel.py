@@ -2,8 +2,11 @@
 """Rust acceleration bridge with safe Python fallback."""
 
 from __future__ import annotations
+import logging
 
-from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple
+logger = logging.getLogger("rust_accel")
+
+from typing import Dict, Iterable, List, Optional, Sequence, Tuple
 
 try:
     from swarm_rust_accel import batch_nearest_points as _batch_nearest_points_rust
@@ -54,14 +57,14 @@ def nearest_point_index(
     if _nearest_point_index_rust is not None:
         try:
             return _nearest_point_index_rust(ox, oy, list(points))
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug(f"action suppressed: {e}")
 
     if _nearest_point_index_opencl is not None:
         try:
             return _nearest_point_index_opencl((ox, oy), points)
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug(f"action suppressed: {e}")
 
     best_idx = None
     best_dist_sq = float("inf")
@@ -88,8 +91,8 @@ def compute_feedback_priority(
             return _compute_feedback_priority_rust(
                 size_kb, player_count, winner_count, note_count
             )
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug(f"action suppressed: {e}")
 
     score = 1.0
     score += min(size_kb / 1024.0, 1.5)
@@ -107,8 +110,8 @@ def combat_power_comparison(
     if _combat_power_comparison_rust is not None:
         try:
             return _combat_power_comparison_rust(list(my_units), list(enemy_units))
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug(f"action suppressed: {e}")
 
     def calc_power(units):
         return sum(
@@ -129,8 +132,8 @@ def batch_nearest_points(
     if _batch_nearest_points_rust is not None:
         try:
             return _batch_nearest_points_rust(list(origins), list(points))
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug(f"action suppressed: {e}")
 
     return [nearest_point_index(o, points) for o in origins]
 
@@ -140,8 +143,8 @@ def path_distance(x1: float, y1: float, x2: float, y2: float) -> float:
     if _path_distance_rust is not None:
         try:
             return _path_distance_rust(x1, y1, x2, y2)
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug(f"action suppressed: {e}")
     return ((x2 - x1) ** 2 + (y2 - y1) ** 2) ** 0.5
 
 
@@ -150,8 +153,8 @@ def route_distance(steps: Sequence[Tuple[float, float]]) -> float:
     if _route_distance_rust is not None:
         try:
             return _route_distance_rust(list(steps))
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug(f"action suppressed: {e}")
 
     if len(steps) < 2:
         return 0.0
@@ -166,8 +169,8 @@ def cluster_points(
     if _cluster_points_rust is not None:
         try:
             return _cluster_points_rust(list(points), cluster_size)
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug(f"action suppressed: {e}")
 
     import math
 
@@ -195,8 +198,8 @@ def formation_positions(
             return _formation_positions_rust(
                 count, spacing, center_x, center_y, formation_type
             )
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug(f"action suppressed: {e}")
 
     import math
 

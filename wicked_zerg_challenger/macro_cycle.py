@@ -14,7 +14,7 @@ Macro Cycle Manager - 매크로 사이클 매니저 (#108)
 
 import logging
 from enum import Enum
-from typing import Any, Dict, List, Optional, Set, Tuple
+from typing import Any, Dict, List, Set
 
 logger = logging.getLogger("MacroCycle")
 
@@ -163,8 +163,8 @@ class MacroCycleManager:
                 queens = self.bot.units(UnitTypeId.QUEEN)
                 for q in queens:
                     active_queen_tags.add(q.tag)
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug(f"action suppressed: {e}")
 
         # 죽은 퀸/기지 제거
         dead_assignments = []
@@ -273,8 +273,8 @@ class MacroCycleManager:
                 try:
                     if UnitTypeId:
                         already_pending = self.bot.already_pending(UnitTypeId.OVERLORD)
-                except Exception:
-                    pass
+                except Exception as e:
+                    logger.debug(f"action suppressed: {e}")
 
                 # 필요한 오버로드 수 계산
                 needed = max(0, 2 - already_pending)
@@ -301,7 +301,6 @@ class MacroCycleManager:
 
             # 기지당 최적 라바 수: 3 (인젝트 1회당 3라바)
             optimal_larva = base_count * 3
-            max_larva = base_count * 19  # 기지당 최대 19라바
 
             if current_larva > optimal_larva * 2:
                 # 라바가 너무 많이 쌓이면 효율 감소
@@ -312,8 +311,8 @@ class MacroCycleManager:
 
             self.last_larva_count = current_larva
 
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug(f"action suppressed: {e}")
 
     def _execute_creep_spread(self, game_time: float) -> None:
         """크립 확산 실행 (유휴 퀸 사용)"""
@@ -372,8 +371,8 @@ class MacroCycleManager:
                     self.total_creep_tumors += 1
                     return True
 
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug(f"action suppressed: {e}")
         return False
 
     def get_optimal_drone_target(self) -> int:
@@ -414,8 +413,8 @@ class MacroCycleManager:
         try:
             if UnitTypeId and hasattr(self.bot, "units"):
                 drone_count = self.bot.units(UnitTypeId.DRONE).amount
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug(f"action suppressed: {e}")
 
         target_drones = self.get_optimal_drone_target()
         if drone_count < target_drones:

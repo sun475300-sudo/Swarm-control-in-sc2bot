@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 """AgentBuilder 단위 테스트 — 빌드, 정규화, YAML frontmatter, 카운터."""
 
-import pytest
 from jarvis_features.agent_builder import VALID_MODELS, AgentBuilder, AgentDefinition
 
 

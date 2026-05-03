@@ -22,7 +22,7 @@ import sys
 import time
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Dict, List
 
 from sc2 import maps
 from sc2.data import Difficulty, Race
@@ -52,8 +52,8 @@ def _ensure_sc2_path():
         if os.path.exists(install_path):
             os.environ["SC2PATH"] = install_path
             return
-    except Exception:
-        pass
+    except Exception as e:
+        logger.debug(f"action suppressed: {e}")
     for path in [
         "C:\\Program Files (x86)\\StarCraft II",
         "C:\\Program Files\\StarCraft II",
@@ -251,17 +251,17 @@ class TournamentRunner:
                 import subprocess
 
                 subprocess.run(
-                    ["taskkill", "/f", "/im", "SC2_x64.exe"],
+                    ["taskkill", "/", "/im", "SC2_x64.exe"],
                     stdout=subprocess.DEVNULL,
                     stderr=subprocess.DEVNULL,
                 )
                 subprocess.run(
-                    ["taskkill", "/f", "/im", "SC2.exe"],
+                    ["taskkill", "/", "/im", "SC2.exe"],
                     stdout=subprocess.DEVNULL,
                     stderr=subprocess.DEVNULL,
                 )
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug(f"action suppressed: {e}")
 
     def _generate_report(self):
         """텍스트 보고서 생성"""
@@ -286,7 +286,7 @@ class TournamentRunner:
         errors = sum(1 for r in self.results if r.get("error"))
         win_rate = (wins / total * 100) if total > 0 else 0
 
-        lines.append(f"--- OVERALL ---")
+        lines.append("--- OVERALL ---")
         lines.append(f"  Total: {total} games")
         lines.append(f"  Wins: {wins} | Losses: {losses} | Errors: {errors}")
         lines.append(f"  Win Rate: {win_rate:.1f}%")

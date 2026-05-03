@@ -8,7 +8,7 @@ Threat Assessment - 위협 평가 시스템
 3. 적 병력 분석
 """
 
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from sc2.position import Point2

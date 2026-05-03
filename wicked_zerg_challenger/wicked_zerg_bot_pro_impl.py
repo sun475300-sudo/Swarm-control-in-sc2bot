@@ -20,9 +20,7 @@ except ImportError:
         pass
 
 
-import glob as glob_mod
 import json
-import os
 import shutil
 import time
 import traceback
@@ -305,7 +303,7 @@ class WickedZergBotProImpl(BotAI):
             )
 
             self.hierarchical_rl = HierarchicalRLSystem()
-            self.logger.info(f"[HIERARCHICAL_RL] Initialized (Shadow Mode Active)")
+            self.logger.info("[HIERARCHICAL_RL] Initialized (Shadow Mode Active)")
         except ImportError as e:
             self.logger.info(f"[HIERARCHICAL_RL] Not available: {e}")
         except Exception as e:
@@ -319,7 +317,7 @@ class WickedZergBotProImpl(BotAI):
 
             self.situational_awareness = SituationalAwareness(self)
             self.logger.info(
-                f"[SITUATIONAL_AWARENESS] Initialized (SITREP Generation Active)"
+                "[SITUATIONAL_AWARENESS] Initialized (SITREP Generation Active)"
             )
         except ImportError as e:
             self.logger.info(f"[SITUATIONAL_AWARENESS] Not available: {e}")
@@ -481,15 +479,17 @@ class WickedZergBotProImpl(BotAI):
         if self.scoring_system:
             try:
                 self.scoring_system.on_step(iteration)
-            except Exception:
-                pass
+            except Exception as e:
+                if iteration % 220 == 0:  # ~10s, avoid log spam
+                    self.logger.warning(f"[SCORING] on_step suppressed: {e}")
 
         # ★ Awareness Engine: 실시간 상황 인식 + 자동 대응 ★
         if self.awareness_engine:
             try:
                 self.awareness_engine.on_step(iteration)
-            except Exception:
-                pass
+            except Exception as e:
+                if iteration % 220 == 0:  # ~10s, avoid log spam
+                    self.logger.warning(f"[AWARENESS] on_step suppressed: {e}")
 
         # Personality module is called in bot_step_integration.py; do not call here.
 
@@ -526,8 +526,8 @@ class WickedZergBotProImpl(BotAI):
                 self.logger.info(
                     f"[AWARENESS] Final: {self.awareness_engine.get_situation_summary()}"
                 )
-            except Exception:
-                pass
+            except Exception as e:
+                self.logger.warning(f"[AWARENESS] final summary suppressed: {e}")
 
         # ★ NEW: Personality Module - Send GG message
         if hasattr(self, "personality") and self.personality:
@@ -551,7 +551,7 @@ class WickedZergBotProImpl(BotAI):
                 # Record game outcome
                 self.opponent_modeling.on_game_end(won, lost)
                 self.logger.info(
-                    f"[OPPONENT_MODELING] Game data saved. Opponent model updated."
+                    "[OPPONENT_MODELING] Game data saved. Opponent model updated."
                 )
 
                 # Print learning summary every 5 games
@@ -651,7 +651,7 @@ class WickedZergBotProImpl(BotAI):
                     # Check if learning occurred (steps > 0 means rewards were collected)
                     if training_stats.get("steps", 0) > 0:
                         self.parameters_updated = 1  # Mark that learning occurred
-                        self.logger.info(f"[TRAINING] [OK] Neural network updated!")
+                        self.logger.info("[TRAINING] [OK] Neural network updated!")
                         self.logger.info(
                             f"Loss: {training_stats.get('loss', 0):.4f}, Avg Reward: {training_stats.get('avg_reward', 0):.3f}"
                         )
@@ -660,7 +660,7 @@ class WickedZergBotProImpl(BotAI):
                         )
                     else:
                         self.logger.info(
-                            f"[TRAINING] No learning this episode (no rewards collected)"
+                            "[TRAINING] No learning this episode (no rewards collected)"
                         )
 
                     # 모델 검증 (게임 결과 기록)
@@ -672,7 +672,7 @@ class WickedZergBotProImpl(BotAI):
                         ready, reason = self.rl_agent.is_ready_for_deployment()
                         if ready:
                             self.logger.info(
-                                f"[RL_AGENT] [*] MODEL READY FOR DEPLOYMENT [*]"
+                                "[RL_AGENT] [*] MODEL READY FOR DEPLOYMENT [*]"
                             )
                         else:
                             self.logger.info(f"[RL_AGENT] Training progress: {reason}")
@@ -747,7 +747,7 @@ class WickedZergBotProImpl(BotAI):
                 f"[CURRICULUM] 현재 단계: {progress['level_name']} "
                 f"({progress['wins_at_current_level']}/{progress['wins_required']}승)"
             )
-            self.logger.info(f"[CURRICULUM] 최종 목표: CheatInsane AI 격파!")
+            self.logger.info("[CURRICULUM] 최종 목표: CheatInsane AI 격파!")
 
             # ★ 종족별 승률 출력 ★
             curriculum.print_race_stats()

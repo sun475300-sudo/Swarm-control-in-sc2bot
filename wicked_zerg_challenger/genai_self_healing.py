@@ -226,6 +226,7 @@ class GenAISelfHealing:
 
         class LoopDepthVisitor(ast.NodeVisitor):
             def __init__(self):
+                super().__init__()
                 self.max_depth = 0
                 self.current_depth = 0
 
@@ -250,6 +251,7 @@ class GenAISelfHealing:
 
         class ComprehensionVisitor(ast.NodeVisitor):
             def __init__(self):
+                super().__init__()
                 self.inefficient = []
 
             def visit_ListComp(self, node):

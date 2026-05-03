@@ -17,7 +17,7 @@ Features:
 import json
 from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, Optional
 
 from config.config_loader import ConfigLoader
 from racial_counter_manager import RacialCounterManager
@@ -995,8 +995,8 @@ class StrategyManager:
                     building_coord.request_building(
                         UnitTypeId.SPORECRAWLER, "StrategyManager"
                     )
-            except Exception:
-                pass  # Fallback to flag-based system
+            except Exception as e:
+                self.logger.debug(f"action suppressed: {e}")  # Fallback to flag-based system
 
     def _request_spire_via_coordinator(self, game_time: float) -> None:
         """
@@ -1017,8 +1017,8 @@ class StrategyManager:
                     self.logger.info(
                         f"[{int(game_time)}s] Spire build requested via BuildingCoordination"
                     )
-            except Exception:
-                pass
+            except Exception as e:
+                self.logger.debug(f"action suppressed: {e}")
         else:
             # Fallback: 로그만 남기고, BotStepIntegrator/AggressiveTechBuilder가 처리
             if int(game_time) % 30 == 0 and self.bot.iteration % 22 == 0:
@@ -1040,22 +1040,22 @@ class StrategyManager:
         if economy and hasattr(economy, "bot") and hasattr(economy.bot, "workers"):
             try:
                 return economy.bot.workers.amount
-            except Exception:
-                pass
+            except Exception as e:
+                self.logger.debug(f"action suppressed: {e}")
 
         # Fallback: 직접 조회
         if hasattr(self.bot, "workers"):
             try:
                 return self.bot.workers.amount
-            except Exception:
-                pass
+            except Exception as e:
+                self.logger.debug(f"action suppressed: {e}")
 
         if hasattr(self.bot, "units"):
             try:
                 drones = self.bot.units.filter(lambda u: u.type_id.name == "DRONE")
                 return drones.amount if hasattr(drones, "amount") else len(drones)
-            except Exception:
-                pass
+            except Exception as e:
+                self.logger.debug(f"action suppressed: {e}")
 
         return 0
 
@@ -1501,7 +1501,7 @@ class StrategyManager:
         roach_count = comp.get("ROACH", 0)
         mutalisk_count = comp.get("MUTALISK", 0)
         hydra_count = comp.get("HYDRALISK", 0)
-        ravager_count = comp.get("RAVAGER", 0)
+        comp.get("RAVAGER", 0)
 
         # 저글링 10+ → 바퀴 + 맹독충으로 전환 (저글링 미러는 불리)
         # ★ Phase 34: game_time < 300 제한 제거 — 5분 이후에도 저글링 러시 대응
@@ -1566,10 +1566,6 @@ class StrategyManager:
         if total > 0:
             for k in current_ratios:
                 current_ratios[k] /= total
-
-    def _request_spire_build(self) -> None:
-        """스파이어 긴급 건설 요청 - 제거됨 (AggressiveTechBuilder로 통합)"""
-        pass
 
     def should_force_hydra(self) -> bool:
         """히드라 강제 생산 여부"""
@@ -1863,7 +1859,7 @@ class StrategyManager:
         Returns:
             전환 설명 문자열 (전환 없으면 None)
         """
-        game_time = getattr(self.bot, "time", 0.0)
+        getattr(self.bot, "time", 0.0)
         supply_used = getattr(self.bot, "supply_used", 0)
 
         # 강제 전환 조건 (시간보다 상황 우선)

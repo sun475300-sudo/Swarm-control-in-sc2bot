@@ -57,14 +57,14 @@ def kill_all_sc2():
     """모든 SC2 프로세스 강제 종료"""
     try:
         subprocess.run(
-            ["taskkill", "/F", "/IM", "SC2_x64.exe"], capture_output=True, timeout=5
+            ["taskkill", "/", "/IM", "SC2_x64.exe"], capture_output=True, timeout=5
         )
         subprocess.run(
-            ["taskkill", "/F", "/IM", "SC2.exe"], capture_output=True, timeout=5
+            ["taskkill", "/", "/IM", "SC2.exe"], capture_output=True, timeout=5
         )
         time.sleep(3)
-    except Exception:
-        pass
+    except Exception as e:
+        logger.debug(f"action suppressed: {e}")
 
 
 def create_lock():
@@ -78,8 +78,8 @@ def remove_lock():
     try:
         if LOCK_FILE.exists():
             LOCK_FILE.unlink()
-    except Exception:
-        pass
+    except Exception as e:
+        logger.debug(f"action suppressed: {e}")
 
 
 def run_single_game(
@@ -132,7 +132,7 @@ def run_single_game(
 
 def calculate_win_rate(stats: GameStatistics, difficulty_name: str, race_name: str):
     """특정 난이도/종족 조합의 승률 계산"""
-    key = f"{difficulty_name}_{race_name}"
+    f"{difficulty_name}_{race_name}"
 
     # 난이도별 통계 확인
     if difficulty_name in stats.stats["by_difficulty"]:

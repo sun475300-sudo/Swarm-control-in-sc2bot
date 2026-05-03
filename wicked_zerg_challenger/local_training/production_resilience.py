@@ -206,8 +206,8 @@ class ProductionResilience:
                         # Check reservation (5 second cooldown for unique buildings)
                         if ts is not None and now - ts < 5.0:
                             return None
-                    except Exception:
-                        pass
+                    except Exception as e:
+                        logger.debug(f"production action suppressed: {e}")
 
                 # Skip if recently reserved (another manager already issued the build)
                 if ts is not None and now - ts < 30.0:
@@ -297,8 +297,8 @@ class ProductionResilience:
             stale = [sid for sid, ts in reservations.items() if now - ts > 45.0]
             for sid in stale:
                 reservations.pop(sid, None)
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug(f"production action suppressed: {e}")
 
     async def fix_production_bottleneck(self) -> None:
         """
@@ -350,8 +350,8 @@ class ProductionResilience:
                             logger.info(
                                 f"[{int(time)}s] Expanding at 1min+ with {int(b.minerals)} minerals (bases: {bases})"
                             )
-                    except Exception:
-                        pass
+                    except Exception as e:
+                        logger.debug(f"production action suppressed: {e}")
 
         # === MINERAL OVERFLOW PREVENTION: Spend minerals when > 600 ===
         # ★★★ FIX: 임계값 상향 (200->600) + 확장 중엔 소비 금지 ★★★
@@ -538,7 +538,7 @@ class ProductionResilience:
             if b.supply_left < 1:
                 if b.can_afford(UnitTypeId.OVERLORD):
                     if await self._safe_train(larva, UnitTypeId.OVERLORD):
-                        logger.info(f"Produced Overlord for supply")
+                        logger.info("Produced Overlord for supply")
                     break
                 continue
 
@@ -708,14 +708,11 @@ class ProductionResilience:
         if b.minerals > 1500:
             ignore_caps = True
 
-        # Get current unit counts
+        # Get current unit counts (only zergling actually drives the path
+        # below; roach/hydra/mutalisk counts were dead code from a previous
+        # iteration of the composition logic).
         zergling_count = (
             b.units(UnitTypeId.ZERGLING).amount if hasattr(b, "units") else 0
-        )
-        roach_count = b.units(UnitTypeId.ROACH).amount if hasattr(b, "units") else 0
-        hydra_count = b.units(UnitTypeId.HYDRALISK).amount if hasattr(b, "units") else 0
-        mutalisk_count = (
-            b.units(UnitTypeId.MUTALISK).amount if hasattr(b, "units") else 0
         )
 
         # Check available tech
@@ -809,7 +806,7 @@ class ProductionResilience:
             if b.supply_left < 1:
                 if b.can_afford(UnitTypeId.OVERLORD) and larvae_list:
                     if await self._safe_train(larvae_list[0], UnitTypeId.OVERLORD):
-                        logger.info(f"Produced Overlord for supply")
+                        logger.info("Produced Overlord for supply")
                     if not flush_mode:
                         break
                 continue
@@ -909,9 +906,9 @@ class ProductionResilience:
                 if b.townhalls.exists and len(b.townhalls) < 3:
                     try:
                         if await self._try_expand():
-                            logger.info(f"Building expansion to dump minerals")
-                    except Exception:
-                        pass
+                            logger.info("Building expansion to dump minerals")
+                    except Exception as e:
+                        logger.debug(f"production action suppressed: {e}")
 
     async def _boost_early_game(self) -> None:
         """
@@ -1011,7 +1008,7 @@ class ProductionResilience:
                     elif not tech_coordinator:
                         # Fallback only if TechCoordinator not available (should not happen in normal operation)
                         logger.warning(
-                            f"TechCoordinator not available, Spawning Pool build skipped"
+                            "TechCoordinator not available, Spawning Pool build skipped"
                         )
                         pass
 
@@ -1148,8 +1145,8 @@ class ProductionResilience:
                         pool = spawning_pool_query.first
                         if pool.build_progress >= 0.99:
                             spawning_pool_ready = True
-                    except Exception:
-                        pass
+                    except Exception as e:
+                        logger.debug(f"production action suppressed: {e}")
 
                 roach_warren_query = b.structures(UnitTypeId.ROACHWARREN)
                 roach_warren_ready = False
@@ -1160,8 +1157,8 @@ class ProductionResilience:
                         warren = roach_warren_query.first
                         if warren.build_progress >= 0.99:
                             roach_warren_ready = True
-                    except Exception:
-                        pass
+                    except Exception as e:
+                        logger.debug(f"production action suppressed: {e}")
 
                 hydralisk_den_query = b.structures(UnitTypeId.HYDRALISKDEN)
                 hydralisk_den_ready = False
@@ -1172,11 +1169,9 @@ class ProductionResilience:
                         den = hydralisk_den_query.first
                         if den.build_progress >= 0.99:
                             hydralisk_den_ready = True
-                    except Exception:
-                        pass
+                    except Exception as e:
+                        logger.debug(f"production action suppressed: {e}")
                 can_afford_zergling = b.can_afford(UnitTypeId.ZERGLING)
-                can_afford_roach = b.can_afford(UnitTypeId.ROACH)
-                can_afford_hydralisk = b.can_afford(UnitTypeId.HYDRALISK)
 
                 # IMPROVED: Use DEBUG level for detailed logs during training
                 # Only print critical issues at INFO level
@@ -1198,7 +1193,7 @@ class ProductionResilience:
                     # Only log critical issues at INFO level
                     if larvae_count == 0:
                         loguru_logger.warning(
-                            f"[PRODUCTION] NO LARVAE - Production blocked!"
+                            "[PRODUCTION] NO LARVAE - Production blocked!"
                         )
                     elif (
                         larvae_count >= 3
@@ -1208,7 +1203,7 @@ class ProductionResilience:
                         and b.supply_left >= 2
                     ):
                         loguru_logger.warning(
-                            f"[PRODUCTION] Should produce Zerglings but not producing!"
+                            "[PRODUCTION] Should produce Zerglings but not producing!"
                         )
                 else:
                     # Non-training mode or no logger: Use print (for debugging)
@@ -1228,7 +1223,7 @@ class ProductionResilience:
                         )
 
                     if larvae_count == 0:
-                        logger.warning(f"NO LARVAE - Production blocked!")
+                        logger.warning("NO LARVAE - Production blocked!")
                     elif (
                         larvae_count >= 3
                         and b.minerals > 500
@@ -1236,7 +1231,7 @@ class ProductionResilience:
                         and can_afford_zergling
                         and b.supply_left >= 2
                     ):
-                        logger.warning(f"Should produce Zerglings but not producing!")
+                        logger.warning("Should produce Zerglings but not producing!")
         except Exception as e:
             if iteration % 100 == 0:
                 logger.error(f"Production diagnosis error: {e}")
@@ -1318,8 +1313,8 @@ class ProductionResilience:
                         try:
                             roaches_ready.random(AbilityId.MORPHTORAVAGER_RAVAGER)
                             return
-                        except Exception:
-                            pass
+                        except Exception as e:
+                            logger.debug(f"production action suppressed: {e}")
                 elif max_deficit_unit == UnitTypeId.BANELING:
                     zerglings_ready = b.units(UnitTypeId.ZERGLING).ready
                     if (
@@ -1332,8 +1327,8 @@ class ProductionResilience:
                                     AbilityId.MORPHZERGLINGTOBANELING_BANELING
                                 )
                                 return
-                            except Exception:
-                                pass
+                            except Exception as e:
+                                logger.debug(f"production action suppressed: {e}")
                 elif max_deficit_unit == UnitTypeId.ZERGLING:
                     if b.units(UnitTypeId.SPAWNINGPOOL).ready.exists and b.can_afford(
                         UnitTypeId.ZERGLING
@@ -1352,8 +1347,8 @@ class ProductionResilience:
                         if larva.is_ready:
                             if await self._safe_train(larva, unit_to_produce):
                                 break
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug(f"production action suppressed: {e}")
 
     async def force_resource_dump(self) -> None:
         b = self.bot
@@ -1363,8 +1358,8 @@ class ProductionResilience:
         ):
             try:
                 await self._try_expand()
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug(f"production action suppressed: {e}")
         if b.units(UnitTypeId.LARVA).exists:
             larvae = b.units(UnitTypeId.LARVA).ready
             if larvae.exists and b.units(UnitTypeId.SPAWNINGPOOL).ready.exists:
@@ -1474,8 +1469,8 @@ class ProductionResilience:
                                     f"[{int(game_time)}s] Building Roach Warren"
                                 )
                                 return
-                        except Exception:
-                            pass
+                        except Exception as e:
+                            logger.debug(f"production action suppressed: {e}")
 
         # 4:00+ : Lair
         if game_time >= 240:
@@ -1530,8 +1525,8 @@ class ProductionResilience:
                                     f"[{int(game_time)}s] Building Evolution Chamber"
                                 )
                                 return
-                        except Exception:
-                            pass
+                        except Exception as e:
+                            logger.debug(f"production action suppressed: {e}")
 
         # 5:00+ : Hydralisk Den (requires Lair)
         if game_time >= 300:
@@ -1580,8 +1575,8 @@ class ProductionResilience:
                                         f"[{int(game_time)}s] Building Hydralisk Den"
                                     )
                                     return
-                            except Exception:
-                                pass
+                            except Exception as e:
+                                logger.debug(f"production action suppressed: {e}")
 
         # 6:00+ : Spire (requires Lair)
         if game_time >= 360:
@@ -1611,8 +1606,8 @@ class ProductionResilience:
                                 self._last_tech_build_time = game_time
                                 logger.info(f"[{int(game_time)}s] Building Spire")
                                 return
-                            except Exception:
-                                pass
+                            except Exception as e:
+                                logger.debug(f"production action suppressed: {e}")
 
     async def _auto_build_extractors(self, game_time: float) -> None:
         """
@@ -1913,8 +1908,8 @@ class ProductionResilience:
                             await b.build(
                                 UnitTypeId.BANELINGNEST, near=b.townhalls.first.position
                             )
-                        except Exception:
-                            pass
+                        except Exception as e:
+                            logger.debug(f"production action suppressed: {e}")
         # NOTE: Roach Warren building is now handled by _auto_build_tech_structures()
         # Removed duplicate code to prevent building spam
 
@@ -2001,8 +1996,8 @@ class ProductionResilience:
                         await b.build(
                             UnitTypeId.BANELINGNEST, near=b.townhalls.first.position
                         )
-                    except Exception:
-                        pass
+                    except Exception as e:
+                        logger.debug(f"production action suppressed: {e}")
 
     async def _determine_ideal_composition(self) -> Dict[UnitTypeId, float]:
         """Reuses bot's composition logic via in-module call."""
@@ -2284,8 +2279,8 @@ class ProductionResilience:
                 if targets:
                     try:
                         self.bot.do(ling.move(targets[0]))
-                    except Exception:
-                        pass
+                    except Exception as e:
+                        logger.debug(f"production action suppressed: {e}")
 
         # Update detected enemies
         await self._update_detected_enemies()
@@ -2376,8 +2371,8 @@ class ProductionResilience:
                 try:
                     await b.expand_now()
                     logger.info(f"Building Macro Hatchery (no larvae, gas: {int(gas)})")
-                except Exception:
-                    pass
+                except Exception as e:
+                    logger.debug(f"production action suppressed: {e}")
             return
 
         larvae_list = list(larvae.ready) if hasattr(larvae, "ready") else list(larvae)
@@ -2489,9 +2484,6 @@ class ProductionResilience:
         if minerals <= 600:
             return
 
-        # Calculate how much to spend
-        excess = minerals - 600
-
         larvae = b.units(UnitTypeId.LARVA)
         if not larvae.exists:
             # No larvae - try to build hatchery or queens
@@ -2563,16 +2555,16 @@ class ProductionResilience:
                             # bot.do() is NOT async in python-sc2
                             b.do(hatch.train(UnitTypeId.QUEEN))
                             return
-                        except Exception:
-                            pass
+                        except Exception as e:
+                            logger.debug(f"production action suppressed: {e}")
 
         # Build expansion if minerals > 300
         if b.minerals > 300 and b.already_pending(UnitTypeId.HATCHERY) == 0:
             try:
                 if await self._try_expand():
                     return
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug(f"production action suppressed: {e}")
 
         # Build macro hatchery if minerals > 400
         if b.minerals > 400 and b.townhalls.exists:
@@ -2580,8 +2572,8 @@ class ProductionResilience:
             if b.townhalls.amount < 5:
                 try:
                     await b.build(UnitTypeId.HATCHERY, near=b.townhalls.first.position)
-                except Exception:
-                    pass
+                except Exception as e:
+                    logger.debug(f"production action suppressed: {e}")
 
     async def _build_gas_heavy_tech(self) -> None:
         """
@@ -2610,7 +2602,7 @@ class ProductionResilience:
         if has_lair:
             result = await self._build_spire()
             if result:
-                logger.info(f"Building Spire (200 gas)")
+                logger.info("Building Spire (200 gas)")
                 return
 
         # Build Hydralisk Den if don't have one (100 gas)
@@ -2625,10 +2617,10 @@ class ProductionResilience:
                         UnitTypeId.HYDRALISKDEN, near=b.townhalls.first.position
                     )
                     if result is not None:  # Only print if build actually succeeded
-                        logger.info(f"Building Hydralisk Den (100 gas)")
+                        logger.info("Building Hydralisk Den (100 gas)")
                         return
-                except Exception:
-                    pass
+                except Exception as e:
+                    logger.debug(f"production action suppressed: {e}")
 
         # Morph to Hive if we have Lair (150 gas) - need Infestation Pit
         if (
@@ -2645,10 +2637,10 @@ class ProductionResilience:
                             UnitTypeId.INFESTATIONPIT, near=b.townhalls.first.position
                         )
                         if result is not None:
-                            logger.info(f"Building Infestation Pit (100 gas)")
+                            logger.info("Building Infestation Pit (100 gas)")
                             return
-                    except Exception:
-                        pass
+                    except Exception as e:
+                        logger.debug(f"production action suppressed: {e}")
 
         # Morph to Lair if we don't have one (100 gas)
         if not has_lair and b.structures(UnitTypeId.SPAWNINGPOOL).ready.exists:

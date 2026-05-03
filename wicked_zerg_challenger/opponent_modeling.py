@@ -15,7 +15,7 @@ from __future__ import annotations
 import json
 import os
 from collections import defaultdict
-from dataclasses import asdict, dataclass
+from dataclasses import dataclass
 from enum import Enum
 from typing import Dict, List, Optional, Set, Tuple
 
@@ -23,9 +23,11 @@ from utils.logger import get_logger
 
 try:
     from sc2.bot_ai import BotAI
-    from sc2.position import Point2
 except ImportError:
-    pass
+    # `BotAI` is used purely as a type annotation below; provide a
+    # fallback so annotation evaluation (and reflection) doesn't raise
+    # NameError in environments where burnysc2 isn't installed.
+    BotAI = None  # type: ignore[assignment,misc]
 
 
 class OpponentStyle(Enum):
@@ -492,8 +494,6 @@ class OpponentModeling:
         if not hasattr(self.bot, "strategy_manager"):
             return
 
-        strategy_manager = self.bot.strategy_manager
-
         # Set blackboard recommendations
         if hasattr(self.bot, "blackboard") and self.bot.blackboard:
             # Recommend counter strategy
@@ -606,7 +606,7 @@ class OpponentModeling:
         self.save_models()
 
         self.logger.info(
-            f"[GAME_END] Opponent model updated:\n"
+            "[GAME_END] Opponent model updated:\n"
             f"  Opponent: {self.current_opponent_id}\n"
             f"  Style: {self.current_game_history.opponent_style}\n"
             f"  Strategy: {self.current_game_history.detected_strategy}\n"
@@ -762,17 +762,6 @@ class OpponentModeling:
             self.logger.info(
                 f"[OPPONENT_MODELING] Known opponent: {opponent_id} ({self.opponent_models[opponent_id].games_played} games)"
             )
-
-    async def on_step(self, iteration: int):
-        """매 프레임 호출 - 신호 감지"""
-        if not self.current_opponent or not self.bot:
-            return
-
-        game_time = self.bot.time
-
-        # Only detect signals in early game (0-180s)
-        if game_time <= 180.0:
-            await self._detect_early_signals(game_time)
 
     def on_game_end(self, won: bool, lost: bool):
         """게임 종료 시 호출 - 데이터 저장"""

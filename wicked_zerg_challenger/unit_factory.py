@@ -9,7 +9,7 @@ Unit factory - larva production with gas reservation logic.
 Keeps gas-heavy units from being starved by mineral-only spam.
 """
 
-from typing import Iterable, List, Optional
+from typing import List, Optional
 
 try:
     from sc2.ids.unit_typeid import UnitTypeId
@@ -271,8 +271,8 @@ class UnitFactory:
                                 logger.info(
                                     f"[*] Preemptive Overlord (supply_left={self.bot.supply_left}) [*]"
                                 )
-                    except Exception:
-                        pass
+                    except Exception as e:
+                        logger.debug(f"action suppressed: {e}")
 
         # ★ COMBAT REINFORCEMENT: 전투 모드 체크 ★
         in_combat = self._check_combat_mode(iteration)
@@ -290,18 +290,17 @@ class UnitFactory:
 
         # === StrategyManager 실시간 비율 연동 (via Blackboard or Direct) ===
         # 매 스텝마다 전략 매니저의 가스 비율을 가져와서 적용
-        strategy_mode = "NORMAL"
         emergency_active = False
 
         # 1. Try Blackboard first
         if self.blackboard:
-            strategy_mode = self.blackboard.get("strategy_mode", "NORMAL")
+            self.blackboard.get("strategy_mode", "NORMAL")
             emergency_active = self.blackboard.get("is_rush_detected", False)
 
         # 2. Fallback to direct access if Blackboard missing (Backward Compat)
         elif hasattr(self.bot, "strategy_manager") and self.bot.strategy_manager:
             strategy = self.bot.strategy_manager
-            strategy_mode = getattr(strategy, "current_mode", "NORMAL")
+            getattr(strategy, "current_mode", "NORMAL")
             # emergency_active handled below
 
         strategy = getattr(
@@ -364,8 +363,8 @@ class UnitFactory:
                             )
                         else:
                             self.bot.do(larva.first.train(UnitTypeId.OVERLORD))
-                    except Exception:
-                        pass
+                    except Exception as e:
+                        logger.debug(f"action suppressed: {e}")
             return
 
         # 종족별 가스 비율 업데이트 (StrategyManager 없을 때 fallback)

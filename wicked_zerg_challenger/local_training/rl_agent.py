@@ -430,7 +430,7 @@ class RLAgent:
                         f"[OK] Experience data saved: {exp_path.name} (Size: {len(self.states)})"
                     )
                 else:
-                    logger.error(f"[ERROR] Failed to save experience data")
+                    logger.error("[ERROR] Failed to save experience data")
             except Exception as e:
                 logger.error(f"[ERROR] Exception during save: {e}")
 
@@ -671,8 +671,8 @@ class RLAgent:
             if tmp_path.exists():
                 try:
                     tmp_path.unlink()
-                except Exception:
-                    pass
+                except Exception as e:
+                    logger.debug(f"action suppressed: {e}")
             return False
 
     def _update_reward_stats(self, rewards: List[float]) -> None:

@@ -9,7 +9,7 @@ Feature #96: 바이퍼 활용 매니저
 4. 에너지 관리 및 우선순위 타겟팅
 """
 
-from typing import Dict, List, Optional, Set, Tuple
+from typing import Dict, List, Optional
 
 try:
     from sc2.ids.ability_id import AbilityId
@@ -392,8 +392,8 @@ class ViperTacticsManager:
                         AbilityId.VIPERCONSUMESTRUCTURE_YOURBUILDINGS, target_building
                     )
                 )
-            except Exception:
-                pass
+            except Exception as e:
+                self.logger.debug(f"action suppressed: {e}")
 
     async def _maintain_safe_distance(self, viper: Unit, enemy_units):
         """바이퍼 안전 거리 유지"""

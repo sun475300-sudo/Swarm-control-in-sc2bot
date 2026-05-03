@@ -213,7 +213,7 @@ class ResourceManager:
         if iteration % 2200 == 0 and self.total_reservations > 0:  # Every 100 seconds
             stats = self.get_statistics()
             self.logger.info(
-                f"[RESOURCE MANAGER] "
+                "[RESOURCE MANAGER] "
                 f"Reservations: {stats['total_reservations']}, "
                 f"Releases: {stats['total_releases']}, "
                 f"Failed: {stats['failed_reservations']}, "

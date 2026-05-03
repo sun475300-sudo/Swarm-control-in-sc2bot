@@ -83,7 +83,6 @@ class BackgroundParallelLearner:
 
     def _safe_file_op(self, operation: callable, retries: int = 5, delay: float = 0.5) -> Any:
         """파일 작업 재시도 래퍼"""
-        msg = ""
         for i in range(retries):
             try:
                 return operation()
@@ -204,8 +203,8 @@ class BackgroundParallelLearner:
                             archive_path = self.archive_dir / f"old_{file_path.name}"
                             import shutil
                             shutil.copy2(str(file_path), str(archive_path))
-                        except Exception:
-                            pass
+                        except Exception as e:
+                            logger.debug(f"action suppressed: {e}")
                         continue
 
                     # ★ FIX: Use context manager to ensure file is closed ★
@@ -236,8 +235,8 @@ class BackgroundParallelLearner:
                     # 손상된 파일은 별도 이동 또는 삭제
                     try:
                         file_path.rename(file_path.with_suffix(".corrupt"))
-                    except Exception:
-                        pass
+                    except Exception as e:
+                        logger.debug(f"action suppressed: {e}")
 
             # 건너뛴 파일 통계 업데이트
             self.stats["files_skipped_old"] += files_skipped
@@ -280,7 +279,7 @@ class BackgroundParallelLearner:
 
                 processing_time = time.time() - start_time
                 if self.verbose:
-                    logger.info(f"[OK] Training complete!")
+                    logger.info("[OK] Training complete!")
                     logger.info(f"  - Loss: {train_stats.get('loss', 0):.4f}")
                     logger.info(f"  - Games trained: {train_stats.get('games', 0)}")
                     logger.info(f"  - Adjusted LR: {train_stats.get('adjusted_lr', 0):.6f}")
@@ -316,8 +315,8 @@ class BackgroundParallelLearner:
             archive_files = list(self.archive_dir.glob("*.npz"))
             self.stats["buffer_file_count"] = len(buffer_files)
             self.stats["archive_file_count"] = len(archive_files)
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug(f"action suppressed: {e}")
 
     def _print_status_report(self) -> None:
         """주기적 상태 보고"""
@@ -327,7 +326,7 @@ class BackgroundParallelLearner:
         logger.info("\n" + "="*70)
         logger.info("? [BACKGROUND LEARNER] STATUS REPORT")
         logger.info("="*70)
-        logger.info(f"? Training Statistics:")
+        logger.info("? Training Statistics:")
         logger.info(f"  Files Processed:      {self.stats['files_processed']}")
         logger.info(f"  Files Skipped (Old):  {self.stats['files_skipped_old']}")
         logger.info(f"  Batch Training Runs:  {self.stats['batches_trained']}")
@@ -335,11 +334,11 @@ class BackgroundParallelLearner:
         logger.info(f"  Average Loss:         {self.stats['avg_loss']:.4f}")
         logger.info(f"  Last Loss:            {self.stats['last_loss']:.4f}")
         logger.info(f"  Last Adjusted LR:     {self.stats['last_adjusted_lr']:.6f}")
-        logger.info(f"? Directory Status:")
+        logger.info("? Directory Status:")
         logger.info(f"  Buffer Files:         {self.stats['buffer_file_count']}")
         logger.info(f"  Archived Files:       {self.stats['archive_file_count']}")
         logger.info(f"  Max File Age:         {self.max_file_age/60:.1f} min")
-        logger.info(f"? System Status:")
+        logger.info("? System Status:")
         logger.info(f"  Active Workers:       {self.stats['active_workers']}/{self.stats['max_workers']}")
         logger.info(f"  Total Process Time:   {self.stats['total_processing_time']:.2f}s")
         logger.error(f"  Errors:               {self.stats['errors']}")
