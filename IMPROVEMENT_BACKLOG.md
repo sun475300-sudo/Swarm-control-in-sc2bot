@@ -50,16 +50,35 @@ cadence is now named (`_F_5_SEC`) rather than commented (`% 110  # ~5초`).
 - Outstanding (intentional, no natural constant): `% 100`/`% 88`/`% 50`
   log-throttle and rare-event sites
 
-## Batch 1.6 — Magic number sweep: strategy_manager + combat_manager (IN PROGRESS)
+## Batch 1.6 — Magic number sweep: strategy_manager + combat_manager (DONE — e5f2faf)
 
 Same idea, applied to the next two hottest modules:
 
 - [x] `strategy_manager.py`: 5x `% 22` (~1s) → `_F_1_SEC`
 - [x] `combat_manager.py`: 2x `% 22` (~1s) + 2x `% 220` (~10s) + 1x `% 660`
       (30s) → named `_F_*_SEC` aliases
-- Skipped (intentional): the 30+ `% 50` and `% 100` log-throttle sites in
-  combat_manager — these aren't tied to a natural cadence, only to log-spam
-  control. Touching them would add noise without making the code clearer.
+
+## Batch 1.7 — Magic number sweep: intel + queen managers (DONE — fb2c6a8)
+
+- [x] `intel_manager.py`: 2x `% 22` → `_F_1_SEC`
+- [x] `queen_manager.py`: 2x `% 22` → `_F_1_SEC`
+
+## Batch 1.8 — Magic number sweep: bot_step_integration.py (DONE — this batch)
+
+`bot_step_integration.py` is the master orchestration module that wires the
+full bot together — the highest-payoff target after the per-manager files.
+
+- [x] 25 sites covered: 4× `% 22`, 3× `% 44`, 1× `% 110`, 4× `% 220`,
+      8× `% 660`, 5× `% 1320` → `_F_1_SEC`/`_F_2_SEC`/`_F_5_SEC`/
+      `_F_10_SEC`/`_F_30_SEC`/`_F_60_SEC`
+
+## Skipped (intentional)
+
+The remaining `iteration % 50` and `% 100` sites across the codebase are
+log-spam throttles, not cadence — there's no natural FPS constant for "log
+every ~50 frames", so rewriting them would add noise without improving
+readability. Same for the `int(game_time) % 30` second-based gates that
+operate on wall-clock seconds rather than frame iterations.
 
 ---
 

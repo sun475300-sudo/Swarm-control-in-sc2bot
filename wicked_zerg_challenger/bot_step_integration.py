@@ -14,6 +14,16 @@ from typing import Any, Dict, List, Optional
 # Error Handler 통합
 from error_handler import error_handler
 
+from utils.game_constants import GameFrequencies
+
+# Cached cadence aliases for the on_step hot path. See utils/game_constants.
+_F_1_SEC = GameFrequencies.EVERY_SECOND  # 22
+_F_2_SEC = GameFrequencies.EVERY_2_SECONDS  # 44
+_F_5_SEC = GameFrequencies.EVERY_5_SECONDS  # 110
+_F_10_SEC = GameFrequencies.EVERY_10_SECONDS  # 220
+_F_30_SEC = GameFrequencies.EVERY_30_SECONDS  # 660
+_F_60_SEC = GameFrequencies.EVERY_60_SECONDS  # 1320
+
 # Build Order System (lazy import fallback)
 try:
     from build_order_system import BuildOrderSystem
@@ -838,7 +848,7 @@ class BotStepIntegrator:
                 await self.bot.unit_authority.on_step(iteration)
 
             # 0.0065 ★ 죽은 유닛의 권한 해제 (2초마다) ★
-            if iteration % 44 == 0:
+            if iteration % _F_2_SEC == 0:
                 self._cleanup_dead_unit_authorities()
 
             # 0.007 ★★★ Map Memory System (맵 기억 - 적 건물 추적) ★★★
@@ -894,7 +904,7 @@ class BotStepIntegrator:
                     await self.bot.creep_denial.on_step(iteration)
 
                     # 주기적으로 보고서 출력 (1분마다)
-                    if iteration % 1320 == 0:
+                    if iteration % _F_60_SEC == 0:
                         report = self.bot.creep_denial.get_creep_denial_report()
                         self.logger.info(report)
                 except Exception as e:
@@ -1372,7 +1382,7 @@ class BotStepIntegrator:
                                 f"[CREEP_HIGHWAY_ASTAR] A* 경로 계산 완료: "
                                 f"{len(astar_hw.highway_waypoints)} waypoints"
                             )
-                    elif iteration % 110 == 0:
+                    elif iteration % _F_5_SEC == 0:
                         astar_hw.update_progress()
                 except Exception as e:
                     if error_handler.debug_mode:
@@ -1511,7 +1521,7 @@ class BotStepIntegrator:
                 try:
                     await self.bot.advanced_scout_v2.on_step(iteration)
                     # 주기적으로 정찰 리포트 출력
-                    if iteration % 660 == 0:  # ~30초마다
+                    if iteration % _F_30_SEC == 0:  # ~30초마다
                         report = self.bot.advanced_scout_v2.get_scout_report()
                         self.logger.info(
                             f"[ADVANCED_SCOUT_V2] Ling:{report.get('zergling_patrol_count',0)}, "
@@ -1721,7 +1731,7 @@ class BotStepIntegrator:
                     await self.bot.opponent_modeling.on_step(iteration)
 
                     # Log strategy prediction every 30 seconds
-                    if iteration % 660 == 0:  # ~30 seconds at 22 FPS
+                    if iteration % _F_30_SEC == 0:  # ~30 seconds at 22 FPS
                         predicted_strategy, confidence = (
                             self.bot.opponent_modeling.get_predicted_strategy()
                         )
@@ -1857,7 +1867,7 @@ class BotStepIntegrator:
                     await self.bot.worker_optimizer.on_step(iteration)
 
                     # 주기적으로 효율성 보고서 출력 (1분마다)
-                    if iteration % 1320 == 0:
+                    if iteration % _F_60_SEC == 0:
                         report = self.bot.worker_optimizer.get_efficiency_report()
                         self.logger.info(report)
                 except Exception as e:
@@ -1903,7 +1913,7 @@ class BotStepIntegrator:
                 try:
                     await self.bot.queen_inject_opt.on_step(iteration)
                     # 주기적으로 효율성 출력
-                    if iteration % 1320 == 0:  # ~1분마다
+                    if iteration % _F_60_SEC == 0:  # ~1분마다
                         stats = self.bot.queen_inject_opt.get_inject_stats()
                         self.logger.info(
                             f"[QUEEN_INJECT] Efficiency: {stats['inject_efficiency']*100:.1f}%, "
@@ -1969,7 +1979,7 @@ class BotStepIntegrator:
                     self.bot.resource_manager.log_statistics(iteration)
 
                     # Clear stale reservations (safety mechanism)
-                    if iteration % 220 == 0:  # Every 10 seconds
+                    if iteration % _F_10_SEC == 0:  # Every 10 seconds
                         await self.bot.resource_manager.clear_stale_reservations(
                             iteration
                         )
@@ -2063,7 +2073,7 @@ class BotStepIntegrator:
                     await self.bot.upgrade_planner.on_step(iteration)
 
                     # 주기적으로 보고서 출력 (30초마다)
-                    if iteration % 660 == 0:
+                    if iteration % _F_30_SEC == 0:
                         report = self.bot.upgrade_planner.get_upgrade_progress_report()
                         self.logger.info(report)
                 except Exception as e:
@@ -2087,7 +2097,7 @@ class BotStepIntegrator:
                 success = True
                 try:
                     # 자원 적체 시 처리
-                    if iteration % 22 == 0:  # 매 1초마다
+                    if iteration % _F_1_SEC == 0:  # 매 1초마다
                         surplus_results = (
                             await self.bot.advanced_building_manager.handle_resource_surplus()
                         )
@@ -2097,7 +2107,7 @@ class BotStepIntegrator:
                             )
 
                     # 방어 건물 최적 위치에 건설 - ★ 3베이스 이후에만! ★
-                    if iteration % 44 == 0:  # 매 2초마다
+                    if iteration % _F_2_SEC == 0:  # 매 2초마다
                         # ★ CRITICAL: 초반 확장 우선! 3분 이후 + 3베이스 이후에만 방어 건물 건설 ★
                         game_time = getattr(self.bot, "time", 0)
                         base_count = (
@@ -2124,7 +2134,7 @@ class BotStepIntegrator:
                 success = True
                 try:
                     # 자원이 넘칠 때 테크 건설
-                    if iteration % 22 == 0:  # 매 1초마다
+                    if iteration % _F_1_SEC == 0:  # 매 1초마다
                         has_excess, _, _ = (
                             self.bot.aggressive_tech_builder.has_excess_resources()
                         )
@@ -2186,7 +2196,7 @@ class BotStepIntegrator:
                     await self.bot.combat_phase.on_step(iteration)
 
                     # 주기적으로 전투 보고서 출력 (30초마다)
-                    if iteration % 660 == 0:
+                    if iteration % _F_30_SEC == 0:
                         report = self.bot.combat_phase.get_combat_report()
                         self.logger.info(report)
                 except Exception as e:
@@ -2329,7 +2339,7 @@ class BotStepIntegrator:
                     await self.bot.micro_v3.on_step(iteration)
 
                     # Log micro status every 60 seconds
-                    if iteration % 1320 == 0:  # ~60 seconds at 22 FPS
+                    if iteration % _F_60_SEC == 0:  # ~60 seconds at 22 FPS
                         status = self.bot.micro_v3.get_status()
                         self.logger.info(
                             f"[MICRO_V3] Ravagers: {status.get('ravager_cooldowns', 0)}, "
@@ -2371,7 +2381,7 @@ class BotStepIntegrator:
                 )
 
             # 12. Hierarchical RL System (계층적 강화학습 - 전략 결정)
-            if iteration % 22 == 0:  # 매 1초마다 전략 결정
+            if iteration % _F_1_SEC == 0:  # 매 1초마다 전략 결정
                 await self._safe_hierarchical_rl_step(iteration)
 
             # 12.1 ★★★ Late Game Composition Optimizer (Phase 8 - 후반 조합) ★★★
@@ -2455,7 +2465,7 @@ class BotStepIntegrator:
                     self._logic_tracker.end_logic("ProxyHatch", start_time)
 
             # 13. Transformer Decision (트랜스포머 의사결정 - 고급 패턴 인식)
-            if iteration % 44 == 0:  # 매 2초마다
+            if iteration % _F_2_SEC == 0:  # 매 2초마다
                 await self._safe_transformer_step(iteration)
 
             # NOTE: Scouting과 Creep Manager는 이미 위에서 실행됨 (Line 303, 306)
@@ -2472,7 +2482,7 @@ class BotStepIntegrator:
                         self.bot.game_data_logger._meta_initialized = True
                     await self.bot.game_data_logger.on_step(iteration)
                 except Exception as e:
-                    if iteration % 660 == 0:
+                    if iteration % _F_30_SEC == 0:
                         self.logger.warning(f"[WARN] GameDataLogger error: {e}")
 
             # 14. 실시간 로직 활성화 보고
@@ -2787,7 +2797,7 @@ class BotStepIntegrator:
                     )
 
                     # ★ 상태 벡터 로깅 (30초마다) - 실제 값 확인 ★
-                    if iteration % 660 == 0:  # 30초
+                    if iteration % _F_30_SEC == 0:  # 30초
                         self.logger.info(f"[RL_STATE] 게임 상태 벡터 (15차원):")
                         self.logger.info(
                             f"  미네랄: {game_state[0]:.3f}, 가스: {game_state[1]:.3f}"
@@ -2846,7 +2856,7 @@ class BotStepIntegrator:
                     rl_decision_used = False
 
                     if is_shadow_mode:
-                        if iteration % 220 == 0:
+                        if iteration % _F_10_SEC == 0:
                             self.logger.info(
                                 f"[SHADOW_MODE] RLAgent Suggestion: {action_label} (Ignored due to {reason})"
                             )
@@ -2899,7 +2909,7 @@ class BotStepIntegrator:
                         else:
                             # Shadow Mode: 단순히 Commander의 의견을 로그로만 남김 (디버깅용)
                             if self.bot.strategy_manager.current_mode != mode_enum:
-                                if iteration % 220 == 0:
+                                if iteration % _F_10_SEC == 0:
                                     self.logger.info(
                                         f"[SHADOW_CONFLICT] Manager: {self.bot.strategy_manager.current_mode.name} vs Commander: {new_mode}"
                                     )
@@ -2911,7 +2921,7 @@ class BotStepIntegrator:
                     self.bot._current_strategy = new_mode
 
                 # ★ 결정 로깅 (10초마다) ★
-                if iteration % 220 == 0:  # 10초마다
+                if iteration % _F_10_SEC == 0:  # 10초마다
                     if rl_decision_used:
                         self.logger.info(
                             f"[STRATEGY] [*][*][*] RLAgent 결정 적용: {new_mode} [*][*][*]"
@@ -2929,7 +2939,7 @@ class BotStepIntegrator:
                     and self.bot.rl_agent
                     and not rl_decision_used
                 ):
-                    if iteration % 220 == 0:
+                    if iteration % _F_10_SEC == 0:
                         self.logger.warning(
                             f"[WARNING] [*] RLAgent가 있지만 결정이 사용되지 않음! [*]"
                         )
@@ -3049,7 +3059,7 @@ class BotStepIntegrator:
         - 위기 상황: 스파인 크롤러 4개까지 건설
         - 일반: 스파인 크롤러 3개까지 건설
         """
-        if iteration % 22 != 0:  # 1초마다 확인
+        if iteration % _F_1_SEC != 0:
             return
 
         # Strategy Manager 확인
@@ -3367,7 +3377,7 @@ class BotStepIntegrator:
                 self.bot.rl_agent.update_reward(step_reward)
 
                 # ★ 중간 보상: 기지/군대/보급차단 상태 기반 보상 ★
-                if iteration % 44 == 0:  # 2초마다
+                if iteration % _F_2_SEC == 0:  # 2초마다
                     try:
                         base_count = (
                             self.bot.townhalls.ready.amount if self.bot.townhalls else 0
@@ -3398,7 +3408,7 @@ class BotStepIntegrator:
                 self.logger.info(f"[TRAINING] Step reward: {step_reward:.3f}")
 
         # ★★★ Model Hot Reload (30초마다 배포 모델 변경 감지) ★★★
-        if iteration % 660 == 0:  # ~30초
+        if iteration % _F_30_SEC == 0:  # ~30초
             hot_reloader = getattr(self.bot, "hot_reloader", None)
             if hot_reloader:
                 try:
