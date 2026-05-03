@@ -101,7 +101,7 @@ class BuildingDestroyer:
         visible_tags = {s.tag for s in self.bot.enemy_structures}
         destroyed_tags = set(self.known_enemy_buildings.keys()) - visible_tags
 
-        for tag in destroyed_tags:
+        for _tag in destroyed_tags:
             # 실제로 파괴되었는지 확인 (시야 밖일 수도 있음)
             # 일단 보존 (정찰로 재확인 필요)
             pass

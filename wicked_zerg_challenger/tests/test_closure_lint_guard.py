@@ -65,3 +65,20 @@ def test_no_f823_undefined_local():
     assert result.returncode == 0, (
         f"F823 (undefined-local) 위반 발견:\n{result.stdout}\n{result.stderr}"
     )
+
+
+@pytest.mark.skipif(not _has_ruff(), reason="ruff not installed")
+def test_no_f811_redefined_unused():
+    """동일 메서드/함수 재정의로 첫 정의가 가려지는 경우 차단.
+
+    opponent_modeling.py의 on_step 처럼 두 번째 정의가
+    (의도치 않게) 첫 번째의 모든 로직을 덮어쓰는 사례 방지.
+    """
+    result = subprocess.run(
+        ["ruff", "check", "--select=F811", "--no-fix", str(REPO_ROOT)],
+        capture_output=True,
+        text=True,
+    )
+    assert result.returncode == 0, (
+        f"F811 (redefined-while-unused) 위반 발견:\n{result.stdout}\n{result.stderr}"
+    )

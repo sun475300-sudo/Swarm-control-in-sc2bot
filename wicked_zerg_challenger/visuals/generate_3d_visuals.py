@@ -58,7 +58,7 @@ def part1_fsm_3d():
     fig = go.Figure()
 
     # 메인 타임라인 (3D 파이프)
-    for i, (phase, t, col) in enumerate(zip(phases, times, colors)):
+    for _i, (phase, t, col) in enumerate(zip(phases, times, colors)):
         # 메인 노드 (큰 구)
         fig.add_trace(
             go.Scatter3d(
@@ -545,7 +545,7 @@ def part2_engagement_3d():
         ("defeat", "RETREAT", 0, 0, -1, "#F44336", 12),
     ]
 
-    for nid, label, x, y, z, col, sz in nodes:
+    for _nid, label, x, y, z, col, sz in nodes:
         fig.add_trace(
             go.Scatter3d(
                 x=[x],
@@ -656,7 +656,7 @@ def part3_boids_3d():
 
     target = np.array([0, 0, 8])  # 적 기지 방향
 
-    for frame_idx in range(8):
+    for _frame_idx in range(8):
         new_pos = positions.copy()
         for i in range(N):
             # Separation

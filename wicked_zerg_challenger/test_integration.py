@@ -320,7 +320,7 @@ class IntegrationTester:
 
         for category in ["opponent_modeling", "micro_v3", "performance"]:
             if category in self.results:
-                for key, value in self.results[category].items():
+                for _key, value in self.results[category].items():
                     total_checks += 1
                     if (
                         "success" in str(value).lower()

@@ -276,7 +276,7 @@ class TimingAttackPlanner:
 
         army_supply = getattr(self.bot, "supply_army", 0)
 
-        for name, timing in self.timings.items():
+        for _name, timing in self.timings.items():
             # 시간 제한 체크
             if timing.max_time > 0 and game_time > timing.max_time:
                 continue

@@ -523,7 +523,7 @@ def capstone_llm_integration():
         (6, 0, 3, 0, 0, 0, "#1976D2"),
     ]
 
-    for x1, y1, z1, x2, y2, z2, col in connections:
+    for x1, _y1, z1, x2, _y2, z2, col in connections:
         t = np.linspace(0, 1, 20)
         cx = x1 + (x2 - x1) * t
         cy = np.sin(t * math.pi) * 0.8
@@ -1946,7 +1946,7 @@ def section2_approval_flow():
 
     # 현행 프로세스 바
     x_pos = 0
-    for i, (label, days, color) in enumerate(current_steps):
+    for _i, (label, days, color) in enumerate(current_steps):
         width = max(days * 0.8, 3)
         fig.add_trace(
             go.Bar(
@@ -1967,7 +1967,7 @@ def section2_approval_flow():
 
     # Swarm-Net 바
     x_pos_auto = 0
-    for i, (label, days, color) in enumerate(auto_steps):
+    for _i, (label, days, color) in enumerate(auto_steps):
         width = max(20, 20)
         fig.add_trace(
             go.Bar(

@@ -149,7 +149,7 @@ class TournamentRunner:
             for race_name in self.races:
                 race = RACE_MAP.get(race_name, Race.Protoss)
 
-                for game_i in range(self.games_per_combo):
+                for _game_i in range(self.games_per_combo):
                     game_number += 1
                     map_name = random.choice(TOURNAMENT_MAPS)
 
