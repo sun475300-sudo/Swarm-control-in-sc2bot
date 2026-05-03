@@ -3338,7 +3338,10 @@ class EconomyManager:
         """
         ★ Phase 18: 가스 오버플로우 방지 ★
 
-        가스가 3000+ 이상이면 가스 일꾼을 미네랄로 이동
+        가스가 ``self.gas_overflow_prevention_threshold`` 이상이면
+        가스 일꾼을 미네랄로 재배치합니다. 임계값은 phase 진행에
+        따라 튜닝되며 (기본 1000 → 현재 800) 회귀 테스트는
+        ``tests/test_phase10_improvements.py`` 참고.
         """
         if not hasattr(self.bot, "vespene") or not hasattr(self.bot, "gas_buildings"):
             return

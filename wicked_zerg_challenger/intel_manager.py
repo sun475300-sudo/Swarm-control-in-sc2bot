@@ -13,6 +13,91 @@ from typing import Optional
 logger = logging.getLogger(__name__)
 
 
+# ★ Phase 42 / 43: 핫패스 룩업 테이블은 모듈 레벨 상수로 끌어올려
+# `_update_enemy_composition` (8프레임마다 호출, 게임당 수천 회) 마다
+# set/dict 를 재할당하지 않도록 합니다. 의도/카탈로그는 동일.
+_ENEMY_SUPPLY = {
+    "ZERGLING": 0.5,
+    "BANELING": 0.5,
+    "ROACH": 2,
+    "RAVAGER": 3,
+    "HYDRALISK": 2,
+    "LURKERMP": 3,
+    "MUTALISK": 2,
+    "CORRUPTOR": 2,
+    "ULTRALISK": 6,
+    "BROODLORD": 4,
+    "INFESTOR": 2,
+    "VIPER": 3,
+    "MARINE": 1,
+    "MARAUDER": 2,
+    "REAPER": 1,
+    "GHOST": 2,
+    "HELLION": 2,
+    "HELLIONTANK": 2,
+    "SIEGETANK": 3,
+    "SIEGETANKSIEGED": 3,
+    "THOR": 6,
+    "BATTLECRUISER": 6,
+    "VIKING": 2,
+    "MEDIVAC": 2,
+    "BANSHEE": 3,
+    "RAVEN": 2,
+    "LIBERATOR": 3,
+    "CYCLONE": 3,
+    "ZEALOT": 2,
+    "STALKER": 2,
+    "ADEPT": 2,
+    "IMMORTAL": 4,
+    "COLOSSUS": 6,
+    "DISRUPTOR": 3,
+    "ARCHON": 4,
+    "HIGHTEMPLAR": 2,
+    "DARKTEMPLAR": 2,
+    "PHOENIX": 2,
+    "VOIDRAY": 4,
+    "CARRIER": 6,
+    "ORACLE": 3,
+    "TEMPEST": 4,
+}
+_WORKER_NAMES = frozenset({"SCV", "PROBE", "DRONE"})
+_BASE_TYPES = frozenset(
+    {
+        "COMMANDCENTER",
+        "COMMANDCENTERFLYING",
+        "ORBITALCOMMAND",
+        "ORBITALCOMMANDFLYING",
+        "PLANETARYFORTRESS",
+        "NEXUS",
+        "HATCHERY",
+        "LAIR",
+        "HIVE",
+    }
+)
+_TECH_BUILDINGS = frozenset(
+    {
+        "FACTORY",
+        "STARPORT",
+        "ARMORY",
+        "FUSIONCORE",
+        "ROBOTICSFACILITY",
+        "STARGATE",
+        "DARKSHRINE",
+        "TEMPLARARCHIVE",
+        "FLEETBEACON",
+        "TWILIGHTCOUNCIL",
+        "SPIRE",
+        "GREATERSPIRE",
+        "INFESTATIONPIT",
+        "BANELINGNEST",
+        "ROACHWARREN",
+        "HYDRALISKDEN",
+        "NYDUSNETWORK",
+        "NYDUSCANAL",
+    }
+)
+
+
 class IntelManager:
     """Collects intel and bridges update() to on_step()."""
 
@@ -136,108 +221,32 @@ class IntelManager:
         self.enemy_army_supply = 0
         self.enemy_worker_count = 0
 
-        # ★ Phase 42: supply_cost 속성 없음 — 정확한 룩업 테이블 사용
-        _ENEMY_SUPPLY = {
-            "ZERGLING": 0.5,
-            "BANELING": 0.5,
-            "ROACH": 2,
-            "RAVAGER": 3,
-            "HYDRALISK": 2,
-            "LURKERMP": 3,
-            "MUTALISK": 2,
-            "CORRUPTOR": 2,
-            "ULTRALISK": 6,
-            "BROODLORD": 4,
-            "INFESTOR": 2,
-            "VIPER": 3,
-            "MARINE": 1,
-            "MARAUDER": 2,
-            "REAPER": 1,
-            "GHOST": 2,
-            "HELLION": 2,
-            "HELLIONTANK": 2,
-            "SIEGETANK": 3,
-            "SIEGETANKSIEGED": 3,
-            "THOR": 6,
-            "BATTLECRUISER": 6,
-            "VIKING": 2,
-            "MEDIVAC": 2,
-            "BANSHEE": 3,
-            "RAVEN": 2,
-            "LIBERATOR": 3,
-            "CYCLONE": 3,
-            "ZEALOT": 2,
-            "STALKER": 2,
-            "ADEPT": 2,
-            "IMMORTAL": 4,
-            "COLOSSUS": 6,
-            "DISRUPTOR": 3,
-            "ARCHON": 4,
-            "HIGHTEMPLAR": 2,
-            "DARKTEMPLAR": 2,
-            "PHOENIX": 2,
-            "VOIDRAY": 4,
-            "CARRIER": 6,
-            "ORACLE": 3,
-            "TEMPEST": 4,
-        }
-        worker_names = {"SCV", "PROBE", "DRONE"}
+        # ★ Phase 42: supply_cost 속성 없음 — 모듈 레벨 룩업 테이블 사용
         for unit in enemy_units:
             type_name = getattr(unit.type_id, "name", str(unit.type_id))
+            upper_name = type_name.upper()
             self.enemy_unit_counts[type_name] = (
                 self.enemy_unit_counts.get(type_name, 0) + 1
             )
 
             # ★ Phase 42: 룩업 테이블 우선, 없으면 1
-            supply = _ENEMY_SUPPLY.get(type_name.upper(), 1)
-            if type_name.upper() in worker_names:
+            if upper_name in _WORKER_NAMES:
                 self.enemy_worker_count += 1
             else:
-                self.enemy_army_supply += supply
+                self.enemy_army_supply += _ENEMY_SUPPLY.get(upper_name, 1)
 
         # Count enemy bases
-        base_types = {
-            "COMMANDCENTER",
-            "COMMANDCENTERFLYING",
-            "ORBITALCOMMAND",
-            "ORBITALCOMMANDFLYING",
-            "PLANETARYFORTRESS",
-            "NEXUS",
-            "HATCHERY",
-            "LAIR",
-            "HIVE",
-        }
         self.enemy_base_count = sum(
             1
             for s in enemy_structures
-            if getattr(s.type_id, "name", "").upper() in base_types
+            if getattr(s.type_id, "name", "").upper() in _BASE_TYPES
         )
 
         # Track tech buildings with detailed categorization
-        tech_buildings = {
-            "FACTORY",
-            "STARPORT",
-            "ARMORY",
-            "FUSIONCORE",
-            "ROBOTICSFACILITY",
-            "STARGATE",
-            "DARKSHRINE",
-            "TEMPLARARCHIVE",
-            "FLEETBEACON",
-            "TWILIGHTCOUNCIL",
-            "SPIRE",
-            "GREATERSPIRE",
-            "INFESTATIONPIT",
-            "BANELINGNEST",
-            "ROACHWARREN",
-            "HYDRALISKDEN",
-            "NYDUSNETWORK",
-            "NYDUSCANAL",
-        }
         self.enemy_tech_buildings = {
             getattr(s.type_id, "name", "").upper()
             for s in enemy_structures
-            if getattr(s.type_id, "name", "").upper() in tech_buildings
+            if getattr(s.type_id, "name", "").upper() in _TECH_BUILDINGS
         }
 
         # ★ NEW: Hidden tech alert system
