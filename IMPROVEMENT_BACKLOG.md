@@ -39,11 +39,17 @@
 - F811 (중복 정의) 8건
 - E713 (`not x in y` → `x not in y`) 2건
 
-## 🟠 Batch 3 — 테스트 커버리지 확대
+## 🟠 Batch 3 — 테스트 커버리지 확대 (이번 커밋)
 
-- `scouting/advanced_scout_system_v2.py` — 클래스 정의시 default 값 평가에 의존 → 테스트 추가
-- 새로 발견된 closure 캡처 회귀 방지용 단위 테스트
-- 가스/타운홀 일꾼 재분배 시나리오 회귀 테스트
+- ✅ `tests/test_closure_lint_guard.py` 추가 — ruff 기반 회귀 가드 3건
+  - `test_no_b023_loop_closure_bugs` — 클로저 캡처 버그 재유입 차단
+  - `test_no_b004_unreliable_callable_check` — `hasattr("__call__")` 차단
+  - `test_no_f823_undefined_local` — 함수내 모듈 재임포트로 인한 가림 차단
+- 테스트 수: 404 → 407 통과
+- 향후 작업 (Batch 4+):
+  - `scouting/advanced_scout_system_v2.py` — 클래스 정의시 default 값 평가 테스트
+  - 가스/타운홀 일꾼 재분배 시나리오 통합 테스트
+  - F811 잔여 2건 수동 정리 (opponent_modeling.py, production_resilience.py)
 
 ## 🟢 후속 (작업 진행 중 추가)
 
