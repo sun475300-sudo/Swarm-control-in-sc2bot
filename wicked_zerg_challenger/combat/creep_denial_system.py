@@ -55,7 +55,9 @@ class CreepDenialSystem:
                 try:
                     self.killer_types.add(getattr(UnitTypeId, unit_name))
                 except AttributeError:
-                    pass
+                    self.logger.debug(
+                        f"unknown UnitTypeId.{unit_name} (KILLER_UNIT_TYPES) - skipping"
+                    )
         else:
             self.killer_types = {
                 UnitTypeId.QUEEN,
@@ -71,7 +73,9 @@ class CreepDenialSystem:
                 try:
                     self.tumor_types.add(getattr(UnitTypeId, unit_name))
                 except AttributeError:
-                    pass
+                    self.logger.debug(
+                        f"unknown UnitTypeId.{unit_name} (TUMOR_TYPES) - skipping"
+                    )
         else:
             self.tumor_types = {
                 UnitTypeId.CREEPTUMOR,
@@ -230,7 +234,9 @@ class CreepDenialSystem:
                 try:
                     ignore_types.add(getattr(UnitTypeId, unit_name))
                 except AttributeError:
-                    pass
+                    self.logger.debug(
+                        f"unknown UnitTypeId.{unit_name} (IGNORE_UNIT_TYPES) - skipping"
+                    )
             ignore_types.update(self.tumor_types)
         else:
             ignore_types = self.tumor_types | {
@@ -255,7 +261,9 @@ class CreepDenialSystem:
                 try:
                     defense_types.add(getattr(UnitTypeId, unit_name))
                 except AttributeError:
-                    pass
+                    self.logger.debug(
+                        f"unknown UnitTypeId.{unit_name} (STATIC_DEFENSE_TYPES) - skipping"
+                    )
         else:
             defense_types = {
                 UnitTypeId.SIEGETANK,

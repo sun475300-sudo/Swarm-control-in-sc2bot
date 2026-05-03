@@ -9,9 +9,12 @@ Multi-Base Defense System - Automatic defense for multiple expansions
 4. 공격 받는 기지 우선 방어
 """
 
+import logging
 from typing import Dict, List, Optional
 
 from utils.logger import get_logger
+
+_module_logger = logging.getLogger("MultiBaseDefense")
 
 try:
     from sc2.ids.unit_typeid import UnitTypeId
@@ -184,8 +187,8 @@ class MultiBaseDefense:
                     self.logger.info(
                         f"[{int(self.bot.time)}s] Building Spine Crawler at expansion"
                     )
-            except Exception:
-                pass
+            except Exception as e:
+                _module_logger.debug(f"_build_spine_at_base swallow: {e!r}")
 
     async def _build_spore_at_base(self, base_position, iteration: int):
         """기지에 포자 촉수 건설"""
@@ -207,8 +210,8 @@ class MultiBaseDefense:
                 self.logger.info(
                     f"[{int(self.bot.time)}s] Building Spore Crawler at expansion"
                 )
-        except Exception:
-            pass
+        except Exception as e:
+            _module_logger.debug(f"_build_spore_at_base swallow: {e!r}")
 
     async def _redistribute_queens(self):
         """퀸을 각 기지에 재배치"""
@@ -393,5 +396,5 @@ class MultiBaseDefense:
                 f"[{int(game_time)}s] ★ Phase 18: Forward Spine Crawler at "
                 f"({forward_pos.x:.0f}, {forward_pos.y:.0f})"
             )
-        except Exception:
-            pass
+        except Exception as e:
+            _module_logger.debug(f"_build_forward_spine swallow: {e!r}")

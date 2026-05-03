@@ -31,7 +31,11 @@ except ImportError:
     Unit = None
     Units = None
 
+import logging
+
 from utils.logger import get_logger
+
+_module_logger = logging.getLogger("LurkerPositioning")
 
 
 class LurkerRole(Enum):
@@ -397,8 +401,8 @@ class LurkerPositionManager:
             if AbilityId.BURROWDOWN_LURKER in abilities:
                 self.bot.do(lurker(AbilityId.BURROWDOWN_LURKER))
                 self.lurker_burrowed[lurker.tag] = True
-        except Exception:
-            pass
+        except Exception as e:
+            _module_logger.debug(f"_burrow_lurker swallow: {e!r}")
 
     async def _unburrow_lurker(self, lurker: Unit):
         """럴커 언버로우"""
@@ -410,8 +414,8 @@ class LurkerPositionManager:
             if AbilityId.BURROWUP_LURKER in abilities:
                 self.bot.do(lurker(AbilityId.BURROWUP_LURKER))
                 self.lurker_burrowed[lurker.tag] = False
-        except Exception:
-            pass
+        except Exception as e:
+            _module_logger.debug(f"_unburrow_lurker swallow: {e!r}")
 
     def _check_enemies_nearby(self, lurker: Unit, distance: float) -> bool:
         """주변 적 유닛 확인"""

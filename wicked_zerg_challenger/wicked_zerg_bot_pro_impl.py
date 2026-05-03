@@ -481,15 +481,15 @@ class WickedZergBotProImpl(BotAI):
         if self.scoring_system:
             try:
                 self.scoring_system.on_step(iteration)
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug(f"on_step swallow: {e!r}")
 
         # ★ Awareness Engine: 실시간 상황 인식 + 자동 대응 ★
         if self.awareness_engine:
             try:
                 self.awareness_engine.on_step(iteration)
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug(f"on_step swallow: {e!r}")
 
         # Personality module is called in bot_step_integration.py; do not call here.
 
@@ -526,8 +526,8 @@ class WickedZergBotProImpl(BotAI):
                 self.logger.info(
                     f"[AWARENESS] Final: {self.awareness_engine.get_situation_summary()}"
                 )
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug(f"on_end swallow: {e!r}")
 
         # ★ NEW: Personality Module - Send GG message
         if hasattr(self, "personality") and self.personality:

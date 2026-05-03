@@ -995,8 +995,10 @@ class StrategyManager:
                     building_coord.request_building(
                         UnitTypeId.SPORECRAWLER, "StrategyManager"
                     )
-            except Exception:
-                pass  # Fallback to flag-based system
+            except Exception as e:
+                self.logger.debug(
+                    f"crawler request via coordinator failed, falling back: {e!r}"
+                )
 
     def _request_spire_via_coordinator(self, game_time: float) -> None:
         """
@@ -1017,8 +1019,8 @@ class StrategyManager:
                     self.logger.info(
                         f"[{int(game_time)}s] Spire build requested via BuildingCoordination"
                     )
-            except Exception:
-                pass
+            except Exception as e:
+                self.logger.debug(f"spire request via coordinator failed: {e!r}")
         else:
             # Fallback: 로그만 남기고, BotStepIntegrator/AggressiveTechBuilder가 처리
             if int(game_time) % 30 == 0 and self.bot.iteration % 22 == 0:
@@ -1040,22 +1042,22 @@ class StrategyManager:
         if economy and hasattr(economy, "bot") and hasattr(economy.bot, "workers"):
             try:
                 return economy.bot.workers.amount
-            except Exception:
-                pass
+            except Exception as e:
+                self.logger.debug(f"economy.bot.workers.amount failed: {e!r}")
 
         # Fallback: 직접 조회
         if hasattr(self.bot, "workers"):
             try:
                 return self.bot.workers.amount
-            except Exception:
-                pass
+            except Exception as e:
+                self.logger.debug(f"self.bot.workers.amount failed: {e!r}")
 
         if hasattr(self.bot, "units"):
             try:
                 drones = self.bot.units.filter(lambda u: u.type_id.name == "DRONE")
                 return drones.amount if hasattr(drones, "amount") else len(drones)
-            except Exception:
-                pass
+            except Exception as e:
+                self.logger.debug(f"drone unit filter failed: {e!r}")
 
         return 0
 

@@ -122,8 +122,8 @@ class CurriculumManager:
                 data = json.load(f)
             self.wins_at_current_level = data.get("wins_at_current_level", 0)
             self.losses_at_current_level = data.get("losses_at_current_level", 0)
-        except (IOError, json.JSONDecodeError):
-            pass
+        except (IOError, json.JSONDecodeError) as e:
+            logger.warning(f"failed to load win/loss data, starting fresh: {e!r}")
 
     def _load_race_stats(self):
         """★ 종족별 승률 데이터 로드 ★"""
@@ -137,8 +137,8 @@ class CurriculumManager:
             for race in ["Terran", "Protoss", "Zerg"]:
                 if race in data:
                     self.race_stats[race] = data[race]
-        except (IOError, json.JSONDecodeError):
-            pass
+        except (IOError, json.JSONDecodeError) as e:
+            logger.warning(f"failed to load race stats, starting fresh: {e!r}")
 
     def _save_race_stats(self):
         """★ 종족별 승률 데이터 저장 ★"""
@@ -173,8 +173,8 @@ class CurriculumManager:
             }
             with open(self.stats_file, "w", encoding="utf-8") as f:
                 json.dump(data, f, indent=2)
-        except IOError:
-            pass
+        except IOError as e:
+            logger.warning(f"failed to persist curriculum level: {e!r}")
 
     def get_difficulty(self) -> Difficulty:
         """Get current difficulty level."""

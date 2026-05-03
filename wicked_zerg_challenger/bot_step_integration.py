@@ -2904,8 +2904,10 @@ class BotStepIntegrator:
                                         f"[SHADOW_CONFLICT] Manager: {self.bot.strategy_manager.current_mode.name} vs Commander: {new_mode}"
                                     )
 
-                    except KeyError:
-                        pass  # 유효하지 않은 모드 문자열이면 무시
+                    except KeyError as e:
+                        self.logger.debug(
+                            f"unknown commander strategy mode {new_mode!r}, ignoring: {e!r}"
+                        )
 
                 if not is_shadow_mode:
                     self.bot._current_strategy = new_mode
