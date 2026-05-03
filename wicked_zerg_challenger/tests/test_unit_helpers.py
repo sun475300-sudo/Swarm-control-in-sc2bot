@@ -246,6 +246,26 @@ class TestExecuteUnitAction(unittest.TestCase):
         self.assertFalse(result)
         action.assert_not_called()
 
+    def test_runtime_error_swallowed(self):
+        """RuntimeError from sc2 calls should be absorbed, returning False."""
+        unit = MockUnit()
+        action = Mock(side_effect=RuntimeError("game state error"))
+        self.assertFalse(execute_unit_action(unit, action))
+
+    def test_keyboard_interrupt_propagates(self):
+        """KeyboardInterrupt must NOT be swallowed."""
+        unit = MockUnit()
+        action = Mock(side_effect=KeyboardInterrupt())
+        with self.assertRaises(KeyboardInterrupt):
+            execute_unit_action(unit, action)
+
+    def test_unit_without_type_id_does_not_crash_logger(self):
+        """A partial mock without type_id must still return False, not raise."""
+        unit = Mock(spec=[])  # no attrs at all
+        action = Mock(side_effect=ValueError("oops"))
+        # We rely on truthiness of the mock; spec=[] still evaluates truthy.
+        self.assertFalse(execute_unit_action(unit, action))
+
 
 class TestCalculateUnitSupply(unittest.TestCase):
     """Test calculate_unit_supply function"""

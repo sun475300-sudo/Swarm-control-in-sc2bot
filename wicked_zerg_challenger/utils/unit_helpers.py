@@ -133,7 +133,11 @@ def filter_workers_by_task(
 
 def execute_unit_action(unit: Unit, action: Callable, *args, **kwargs) -> bool:
     """
-    안전한 유닛 명령 실행 (try-except 래퍼)
+    안전한 유닛 명령 실행 (try-except 래퍼).
+
+    sc2 라이브러리 호출은 다양한 RuntimeError/AssertionError를 던질 수 있으므로
+    KeyboardInterrupt·SystemExit를 제외한 일반 Exception을 모두 흡수한다.
+    실패 시 로그용 type_id가 없는 mock/partial 유닛에서도 안전하게 처리한다.
 
     Args:
         unit: 대상 유닛
@@ -149,8 +153,11 @@ def execute_unit_action(unit: Unit, action: Callable, *args, **kwargs) -> bool:
     try:
         action(*args, **kwargs)
         return True
-    except (AttributeError, TypeError, ValueError) as e:
-        logger.debug(f"execute_unit_action error for {unit.type_id}: {e}")
+    except (KeyboardInterrupt, SystemExit):
+        raise
+    except Exception as e:
+        unit_id = getattr(unit, "type_id", "?")
+        logger.debug(f"execute_unit_action error for {unit_id}: {e}")
         return False
 
 
