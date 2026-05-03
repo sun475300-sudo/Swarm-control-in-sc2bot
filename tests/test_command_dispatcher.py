@@ -2,6 +2,7 @@
 """CommandDispatcher 단위 테스트 — 등록, 디스패치, 매칭 실패, kwargs 전달."""
 
 import pytest
+
 from jarvis_features.command_dispatcher import CommandDispatcher
 
 

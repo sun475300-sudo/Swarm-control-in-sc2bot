@@ -1,0 +1,26 @@
+# ═══════════════════════════════════════════════
+# Development / Test dependencies
+# ═══════════════════════════════════════════════
+# Install with: pip install -r requirements-dev.txt -r requirements.txt
+#
+# Why a separate file: requirements.txt only has runtime deps. The CI
+# workflows in .github/workflows/ already install pytest-asyncio etc.,
+# but local devs running `pytest tests/` were silently getting 84
+# failures with "async def functions are not natively supported"
+# because pytest.ini sets `asyncio_mode = auto` but pytest-asyncio
+# was not declared anywhere a contributor would normally install from.
+
+-r requirements.txt
+
+# Test runners
+pytest>=8.0.0
+pytest-asyncio>=0.23.0  # required by pytest.ini's asyncio_mode = auto
+pytest-cov>=4.1.0
+pytest-timeout>=2.2.0
+
+# Lint / format (mirrors .github/workflows/sc2bot-ci.yml)
+black>=24.0.0
+isort>=5.13.0
+flake8>=6.0.0
+mypy>=1.8.0
+bandit>=1.7.0

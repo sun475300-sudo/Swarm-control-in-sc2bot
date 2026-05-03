@@ -21,31 +21,14 @@ from unittest.mock import Mock, patch
 # Add parent directory to path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from difficulty_progression import DifficultyProgression
-
-# Mock sc2.data imports
-try:
-    from sc2.data import Difficulty, Race
-except ImportError:
-    # Create mock enums for testing
-    from enum import Enum
-
-    class Difficulty(Enum):
-        VeryEasy = 1
-        Easy = 2
-        Medium = 3
-        MediumHard = 4
-        Hard = 5
-        Harder = 6
-        VeryHard = 7
-        CheatVision = 8
-        CheatMoney = 9
-        CheatInsane = 10
-
-    class Race(Enum):
-        Terran = 1
-        Protoss = 2
-        Zerg = 3
+# Re-export Difficulty / Race from the production module. The module already
+# falls back to its own Enum when burnysc2 isn't installed (see
+# difficulty_progression.py), so reusing those identities keeps equality
+# checks like `assert recommended == Difficulty.Medium` working in both
+# environments. Defining a *separate* fallback here would create two
+# different enum classes whose members compare unequal even with the same
+# name and value.
+from difficulty_progression import Difficulty, DifficultyProgression, Race
 
 
 class TestDifficultyProgressionBasics(unittest.TestCase):
