@@ -1,6 +1,16 @@
 """
 Enhanced Scouting System - 통합 정찰 시스템
 
+.. deprecated::
+    EnhancedScoutSystem is superseded by AdvancedScoutingSystemV2
+    (scouting/advanced_scout_system_v2.py).  AdvancedScoutingSystemV2 provides
+    Overseer/Changeling support, dynamic scouting intervals, watchtower claiming,
+    drop-path monitoring, and a full authority-management integration.
+
+    EnhancedScoutSystem is retained as a lightweight fallback **only** when
+    AdvancedScoutingSystemV2 cannot be imported.  Do not add new features here.
+    New scouting features belong in AdvancedScoutingSystemV2.
+
 다층 정찰 체계로 적의 전략을 조기에 파악합니다:
 1. Worker Scout (13 supply) - 적 자연 확장과 본진 정찰
 2. Overlord Scout - 맵 외곽 및 프록시 탐지
@@ -13,6 +23,15 @@ Features:
 - Zergling 순찰 (확장 위치, 적 이동 경로)
 - 적 빌드 분석 (Gas 타이밍, Pool 타이밍, 확장 타이밍)
 """
+
+import warnings
+
+warnings.warn(
+    "EnhancedScoutSystem is deprecated. Use AdvancedScoutingSystemV2 from "
+    "scouting.advanced_scout_system_v2 instead.",
+    DeprecationWarning,
+    stacklevel=2,
+)
 
 from typing import Dict, List, Optional, Set, Tuple
 

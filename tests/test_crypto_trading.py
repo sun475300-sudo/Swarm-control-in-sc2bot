@@ -45,8 +45,8 @@ class TestCryptoImports:
         assert hasattr(upbit_client, "UpbitClient")
 
     @pytest.mark.skipif(
-        not all(__import__("importlib").util.find_spec(m) for m in ["pandas"]),
-        reason="pandas not installed",
+        not all(__import__("importlib").util.find_spec(m) for m in ["pyupbit", "pandas"]),
+        reason="pyupbit or pandas not installed",
     )
     def test_import_auto_trader(self):
         """crypto_trading.auto_trader 모듈을 import할 수 있는지 확인한다."""
@@ -65,8 +65,8 @@ class TestCryptoImports:
         assert hasattr(portfolio_tracker, "PortfolioTracker")
 
     @pytest.mark.skipif(
-        not all(__import__("importlib").util.find_spec(m) for m in ["pandas"]),
-        reason="pandas not installed",
+        not all(__import__("importlib").util.find_spec(m) for m in ["pyupbit", "pandas"]),
+        reason="pyupbit or pandas not installed",
     )
     def test_import_market_analyzer(self):
         """crypto_trading.market_analyzer 모듈을 import할 수 있는지 확인한다."""

@@ -151,6 +151,7 @@ class HarassmentCoordinator:
         self.workers_killed = 0
         self.raids_executed = 0
         self.last_worker_kill_count = 0  # 시작 시점 적 일꾼 수 스냅샷
+        self._current_raid_workers_killed = 0  # 이번 레이드에서 처치한 일꾼 수
         self._aggro_mode_last_update = 0  # 마지막 공격모드 자동 갱신 시간
         self._mineral_line_defense_cache: Dict[Point2, int] = (
             {}
@@ -314,7 +315,9 @@ class HarassmentCoordinator:
                 continue
 
             # HP 너무 낮으면 안전 후퇴 후 권한 해제
-            if unit.health_percentage < 0.2:
+            # Threshold raised 0.2 → 0.35: retreat earlier to preserve units.
+            # At 20% HP zerglings are nearly dead; 35% gives time to escape.
+            if unit.health_percentage < 0.35:
                 retreat = self._find_safe_retreat_point(unit.position)
                 self.bot.do(unit.move(retreat))
                 self.bot.unit_authority.release_unit(tag, "Harassment_Runby")
@@ -386,6 +389,7 @@ class HarassmentCoordinator:
             self.zergling_runby_active = True
             self.zergling_runby_cooldown = game_time + self.zergling_runby_interval
             self.raids_executed += 1
+            self._current_raid_workers_killed = 0  # Reset per-raid counter
 
             self.logger.info(
                 f"[{int(game_time)}s] ★ ZERGLING RUN-BY activated! ({assigned_count} units) → {len(targets)} targets ★"
@@ -1554,6 +1558,11 @@ class HarassmentCoordinator:
         """
         적 일꾼 수 변화를 추적하여 견제 효과 측정.
         (정확한 킬 카운트는 불가능하므로, 적 일꾼 수 감소량으로 추정)
+
+        Fix (2026-04-28): Always sync the snapshot to the current count,
+        even when it rises (enemy rebuilt workers). Without this, a rebuild
+        followed by further losses would report inflated kills on the next
+        decrease. Also tracks per-raid efficiency.
         """
         intel = getattr(self.bot, "intel", None)
         if not intel:
@@ -1566,21 +1575,39 @@ class HarassmentCoordinator:
             self.last_worker_kill_count = current_enemy_workers
             return
 
-        # 적 일꾼이 감소했으면 (우리 견제 or 자연 감소)
+        harassment_active = (
+            self.zergling_runby_active
+            or self.mutalisk_harass_active
+            or self.drop_play_active
+        )
+
         if current_enemy_workers < self.last_worker_kill_count:
             killed = self.last_worker_kill_count - current_enemy_workers
             # 견제가 활성화된 상태에서만 카운트 (자연 감소 제외)
-            if (
-                self.zergling_runby_active
-                or self.mutalisk_harass_active
-                or self.drop_play_active
-            ):
+            if harassment_active:
                 self.workers_killed += killed
+                self._current_raid_workers_killed += killed
                 if killed >= 3:
                     self.logger.info(
-                        f"[{int(self.bot.time)}s] ★ HARASSMENT EFFECTIVE: ~{killed} workers eliminated! (Total: {self.workers_killed}) ★"
+                        f"[{int(self.bot.time)}s] ★ HARASSMENT EFFECTIVE:"
+                        f" ~{killed} workers eliminated!"
+                        f" (Raid: {self._current_raid_workers_killed},"
                     )
+        elif current_enemy_workers > self.last_worker_kill_count:
+            # Enemy rebuilt workers. Log raid summary if a raid just ended
+            # and reset the per-raid counter so we don't double-count.
+            if (
+                not harassment_active
+                and self._current_raid_workers_killed > 0
+            ):
+                self.logger.info(
+                    f"[{int(self.bot.time)}s] Raid #{self.raids_executed} summary:"
+                    f" {self._current_raid_workers_killed} workers killed."
+                    f" Enemy rebuilt to {current_enemy_workers}."
+                )
+                self._current_raid_workers_killed = 0
 
+        # Always sync snapshot so rebuild → loss cycles measure correctly.
         self.last_worker_kill_count = current_enemy_workers
 
     # ================================================================

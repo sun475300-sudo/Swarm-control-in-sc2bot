@@ -1230,3 +1230,8 @@ class AdvancedScoutingSystemV2:
             "scouts_lost": self.scouts_lost,
             "priority_targets": self._priority_scout_targets[:3],
         }
+
+
+# Backward-compat alias: bot_step_integration imported this as AdvancedScoutSystemV2
+# (missing "ing"). Keep the alias so both names work.
+AdvancedScoutSystemV2 = AdvancedScoutingSystemV2
