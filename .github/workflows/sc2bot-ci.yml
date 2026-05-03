@@ -72,8 +72,19 @@ jobs:
           python-version: ${{ env.PYTHON_DEFAULT }}
           cache: pip
 
-      - name: Install dependencies
-        run: pip install -r requirements.txt pytest pytest-cov pytest-asyncio
+      - name: Install test dependencies
+        # 테스트 실행에 꼭 필요한 패키지만 보장 설치한다.
+        run: |
+          python -m pip install --upgrade pip
+          pip install pytest pytest-cov pytest-asyncio pyyaml
+
+      - name: Install production dependencies (best-effort)
+        # requirements.txt 의 일부 패키지(예: torch, pyautogui, claude-code-sdk
+        # 등)는 CI 러너 환경에서 실패할 수 있다. 단위 테스트는 sc2/numpy 등
+        # 무거운 의존성을 importorskip 으로 우회하므로, 설치 실패는
+        # 비차단으로 처리한다.
+        continue-on-error: true
+        run: pip install -r requirements.txt
 
       - name: Run unit tests
         # tests/unit 디렉터리는 존재하지 않으며, 단위 테스트는 tests/ 루트에 있다.
