@@ -89,7 +89,9 @@ jobs:
       - name: Run unit tests
         # tests/unit 디렉터리는 존재하지 않으며, 단위 테스트는 tests/ 루트에 있다.
         # tests/integration 은 별도 단계에서 실행한다.
-        run: pytest tests --ignore=tests/integration -v --cov=. --cov-report=xml --cov-report=term
+        # 커버리지 범위는 봇 코드(wicked_zerg_challenger)로 한정 — '.' 로
+        # 잡으면 800+개 부수 파일까지 instrumentation 대상이 되어 깨질 수 있다.
+        run: pytest tests --ignore=tests/integration -v --cov=wicked_zerg_challenger --cov-report=xml --cov-report=term
 
       - name: Run integration tests
         run: pytest tests/integration -v --timeout=120
