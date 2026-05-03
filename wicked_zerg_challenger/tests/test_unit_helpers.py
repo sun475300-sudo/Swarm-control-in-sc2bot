@@ -355,6 +355,30 @@ class TestGetUnitRange(unittest.TestCase):
         """Test with None unit"""
         self.assertEqual(get_unit_range(None), 0.0)
 
+    def test_dual_range_returns_max_when_no_target(self):
+        """Hydralisk-style unit with both ranges returns the larger value."""
+        unit = MockUnit(ground_range=5.0, air_range=6.0)
+        self.assertEqual(get_unit_range(unit), 6.0)
+
+    def test_picks_air_range_for_flying_target(self):
+        """Flying target should use air_range, not ground_range."""
+        unit = MockUnit(ground_range=5.0, air_range=7.0)
+        target = MockUnit(is_flying=True)
+        self.assertEqual(get_unit_range(unit, target), 7.0)
+
+    def test_picks_ground_range_for_grounded_target(self):
+        """Ground target should use ground_range, not air_range."""
+        unit = MockUnit(ground_range=5.0, air_range=7.0)
+        target = MockUnit(is_flying=False)
+        self.assertEqual(get_unit_range(unit, target), 5.0)
+
+    def test_none_attribute_value_is_safe(self):
+        """A unit whose ground_range attribute is None must not raise."""
+        unit = Mock(spec=["ground_range", "air_range"])
+        unit.ground_range = None
+        unit.air_range = None
+        self.assertEqual(get_unit_range(unit), 0.0)
+
 
 class TestCanUnitAttack(unittest.TestCase):
     """Test can_unit_attack function"""
