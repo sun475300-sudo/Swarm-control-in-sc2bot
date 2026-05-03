@@ -1,13 +1,81 @@
 """
 Comprehensive Test Suite - Continuous Testing
-Runs all test categories in sequence with detailed logging
+Runs all test categories in sequence with detailed logging.
+
+Each runner now executes the corresponding script as a subprocess and
+parses its summary line, instead of returning hardcoded counts.
 """
 
 import json
+import re
+import subprocess
+import sys
 import time
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional, Tuple
+
+REPO_ROOT = Path(__file__).resolve().parent
+
+# Recognised summary line formats:
+#   "Total: <N> | Passed: <P>"           (edge_case_test, fuzz_test, regression_test)
+#   "[TOTAL] <P>/<N> passed (...)"        (large_scale_test)
+#   "TOTAL ... <P>/<N> (..%)"             (complete_test_summary)
+_SUMMARY_RE = re.compile(
+    r"(?:Total:\s*(\d+)\s*\|\s*Passed:\s*(\d+))"
+    r"|(?:(\d+)\s*/\s*(\d+)\s+passed)"
+    r"|(?:TOTAL[^\d\n]*?(\d+)\s*/\s*(\d+)\s*\()",
+    re.MULTILINE,
+)
+
+
+def _run_script(name: str) -> Tuple[int, int, int]:
+    """Execute a top-level test script and return (tests, passed, duration_ms).
+
+    Falls back to (0, 0, 0) if the script is missing or produces no
+    parseable summary; the empty result is reported as 0/0 rather than
+    silently inflating the pass rate.
+    """
+    script = REPO_ROOT / name
+    if not script.exists():
+        return (0, 0, 0)
+
+    started = time.time()
+    try:
+        proc = subprocess.run(
+            [sys.executable, str(script)],
+            capture_output=True,
+            text=True,
+            timeout=120,
+            cwd=str(REPO_ROOT),
+        )
+        output = proc.stdout + proc.stderr
+    except subprocess.TimeoutExpired:
+        return (0, 0, int((time.time() - started) * 1000))
+
+    duration_ms = int((time.time() - started) * 1000)
+
+    matches = _SUMMARY_RE.findall(output)
+    if not matches:
+        return (0, 0, duration_ms)
+
+    # Sum all matched per-category lines (e.g. large_scale_test.py reports
+    # several "P/N passed" lines plus a TOTAL); take the largest as canonical.
+    totals: List[Tuple[int, int]] = []
+    for groups in matches:
+        total_a, passed_a, passed_b, total_b, passed_c, total_c = groups
+        if total_a and passed_a:
+            totals.append((int(total_a), int(passed_a)))
+        elif total_b and passed_b:
+            totals.append((int(total_b), int(passed_b)))
+        elif total_c and passed_c:
+            totals.append((int(total_c), int(passed_c)))
+
+    if not totals:
+        return (0, 0, duration_ms)
+
+    tests, passed = max(totals, key=lambda t: t[0])
+    return (tests, passed, duration_ms)
 
 
 class ComprehensiveTestSuite:
@@ -15,41 +83,37 @@ class ComprehensiveTestSuite:
         self.results: Dict[str, Any] = {}
         self.start_time = time.time()
 
+    @staticmethod
+    def _result(t: int, p: int, d: int) -> Dict[str, Any]:
+        return {"tests": t, "passed": p, "duration": d}
+
     def run_unit_tests(self) -> Dict[str, Any]:
-        """Run unit combination tests"""
-        return {"tests": 7, "passed": 7, "duration": 125}
+        return self._result(*_run_script("complete_test_summary.py"))
 
     def run_stress_tests(self) -> Dict[str, Any]:
-        """Run stress tests"""
-        return {"tests": 5, "passed": 5, "duration": 89}
+        return self._result(*_run_script("stress_test.py"))
 
     def run_edge_case_tests(self) -> Dict[str, Any]:
-        """Run edge case tests"""
-        return {"tests": 10, "passed": 10, "duration": 45}
+        return self._result(*_run_script("edge_case_test.py"))
 
     def run_integration_tests(self) -> Dict[str, Any]:
-        """Run integration tests"""
-        return {"tests": 5, "passed": 5, "duration": 12}
+        return self._result(*_run_script("integration_test.py"))
 
     def run_benchmark_tests(self) -> Dict[str, Any]:
-        """Run performance benchmarks"""
-        return {"tests": 6, "passed": 6, "duration": 234}
+        # Benchmarks live alongside the dashboard; treat as no-op when absent.
+        return self._result(*_run_script("benchmark_test.py"))
 
     def run_multi_env_tests(self) -> Dict[str, Any]:
-        """Run multi-environment tests"""
-        return {"tests": 6, "passed": 6, "duration": 89}
+        return self._result(*_run_script("multi_env_test.py"))
 
     def run_matchup_tests(self) -> Dict[str, Any]:
-        """Run matchup tests"""
-        return {"tests": 15, "passed": 15, "duration": 156}
+        return self._result(*_run_script("matchup_test.py"))
 
     def run_fuzz_tests(self) -> Dict[str, Any]:
-        """Run fuzz tests"""
-        return {"tests": 700, "passed": 300, "duration": 234}
+        return self._result(*_run_script("fuzz_test.py"))
 
     def run_regression_tests(self) -> Dict[str, Any]:
-        """Run regression tests"""
-        return {"tests": 5, "passed": 5, "duration": 23}
+        return self._result(*_run_script("regression_test.py"))
 
     def run_all_tests(self) -> Dict[str, Any]:
         """Run all test categories"""
@@ -84,7 +148,7 @@ class ComprehensiveTestSuite:
             "total_tests": total_tests,
             "total_passed": total_passed,
             "total_failed": total_tests - total_passed,
-            "pass_rate": total_passed / total_tests * 100,
+            "pass_rate": (total_passed / total_tests * 100) if total_tests else 0.0,
             "total_duration_ms": total_duration,
         }
 
