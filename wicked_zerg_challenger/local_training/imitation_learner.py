@@ -29,8 +29,24 @@ try:
     TORCH_AVAILABLE = True
 except ImportError:
     TORCH_AVAILABLE = False
-    torch = None
-    nn = None
+    # Lightweight stubs so module-level `class X(nn.Module):` declarations
+    # don't fail to import when torch is unavailable.  Runtime usage is
+    # gated on TORCH_AVAILABLE in this module.
+    torch = None  # type: ignore[assignment]
+    optim = None  # type: ignore[assignment]
+
+    class _NNModuleStub:
+        Module = object
+
+        def __getattr__(self, name):
+            def _missing(*_args, **_kwargs):
+                raise RuntimeError(
+                    "torch is not installed; install torch to use this class"
+                )
+
+            return _missing
+
+    nn = _NNModuleStub()  # type: ignore[assignment]
 
 
 class ReplayActionExtractor:
