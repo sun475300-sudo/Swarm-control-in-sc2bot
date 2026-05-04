@@ -52,5 +52,10 @@
   - gas_overflow_prevention_threshold, gas_worker_adjustment_interval,
     macro_hatchery_mineral_threshold, _expansion_cooldown, expansion_block_*
     gas_boost_duration, gas_timing_by_race 룩업
-- **Iter 3** (예정): I-013 매직 넘버 정리 / I-024 REMAINING_ISSUES.md 갱신
+- **Iter 3** (2026-05-04): QueenManager(9건) + IntelManager(5건) 회귀 테스트 추가
+  → 313→327 passed (tests/test_tuned_parameters.py 신설)
+  - inject_cooldown 29.0, max_inject_distance 8.0, creep_energy 20,
+    creep_spread_cooldown 4.0, max_queens_per_base 2, creep_queen_bonus 4,
+    transfuse 임계값, update_interval 8, hidden_tech_alerts 매핑 검증
+- **Iter 4** (예정): I-013 매직 넘버 / I-024 REMAINING_ISSUES.md 갱신
 - **Iter N**: 점진 반복
