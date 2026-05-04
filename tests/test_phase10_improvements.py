@@ -311,12 +311,13 @@ class TestEconomyGasBanking:
             self.bot.gas_buildings = Mock()
             self.bot.gas_buildings.ready = []
             self.economy = EconomyManager(self.bot)
-        except (ImportError, TypeError):
-            pytest.skip("EconomyManager not available (sc2 dependency)")
+        except (ImportError, TypeError) as e:
+            pytest.skip(f"EconomyManager not available (sc2 dependency): {e}")
 
     def test_gas_overflow_threshold_lowered(self):
-        """Gas overflow threshold should be 1000 (not 3000)"""
-        assert self.economy.gas_overflow_prevention_threshold == 1000
+        """Gas overflow threshold should be at most 1000 (improved from 3000; current target 800)."""
+        assert self.economy.gas_overflow_prevention_threshold <= 1000
+        assert self.economy.gas_overflow_prevention_threshold == 800
 
 
 # ===== 4. IntelManager NYDUSCANAL in Tech Buildings =====
