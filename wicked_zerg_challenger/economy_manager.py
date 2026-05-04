@@ -399,7 +399,8 @@ class EconomyManager:
             self._check_first_expansion_timing()
 
         # ★ IMPROVED: Extreme Gas Imbalance Fix (덜 공격적) ★
-        # Gas > 3000 and Minerals < 200 -> 일부 가스 일꾼만 미네랄로 이동
+        # Gas > 1500 and Minerals < 500 -> 일부 가스 일꾼만 미네랄로 이동
+        # (조건은 아래 if 블록에서 확인. 임계값 진화: 3000/200 → 1500/500)
         if iteration % 88 == 0:  # 4초마다 (2초 → 4초, 덜 빈번하게)
             gas = getattr(self.bot, "vespene", 0)
             minerals = getattr(self.bot, "minerals", 0)
@@ -3338,7 +3339,8 @@ class EconomyManager:
         """
         ★ Phase 18: 가스 오버플로우 방지 ★
 
-        가스가 3000+ 이상이면 가스 일꾼을 미네랄로 이동
+        가스가 ``self.gas_overflow_prevention_threshold`` (현재 800) 이상이면
+        가스 일꾼을 미네랄로 이동시켜 가스 뱅킹을 방지한다.
         """
         if not hasattr(self.bot, "vespene") or not hasattr(self.bot, "gas_buildings"):
             return
