@@ -2695,7 +2695,8 @@ class EconomyManager:
         - vs Zerg: 1분 45초 (느림 - 드론 펌핑 우선)
 
         가스 부스트 모드: 빠른 테크가 필요할 때 (뮤탈, 히드라 등)
-        가스 오버플로우 방지: 3000+ 가스 시 일꾼 회수
+        가스 오버플로우 방지: ``self.gas_overflow_prevention_threshold`` (현재
+        800) 이상 가스 시 일꾼 회수
         """
         if not hasattr(self.bot, "townhalls") or not self.bot.townhalls.ready:
             return
