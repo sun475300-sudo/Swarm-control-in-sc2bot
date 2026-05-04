@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-04-05T22:04:34.569549",
+  "timestamp": "2026-05-04T15:34:56.514975",
   "config": {
     "max_units": 500,
     "max_iterations": 1000,
@@ -10,40 +10,40 @@
       "test_name": "unit_spawn",
       "iterations": 500,
       "total_units_processed": 500,
-      "duration_ms": 64.92948532104492,
-      "throughput": 7700.6616874866895,
+      "duration_ms": 40.73023796081543,
+      "throughput": 12275.891942517634,
       "success_rate": 100.0
     },
     {
       "test_name": "pathfinding",
       "iterations": 300,
       "total_units_processed": 15000,
-      "duration_ms": 28.209686279296875,
-      "throughput": 531732.2515212982,
+      "duration_ms": 11.47770881652832,
+      "throughput": 1306881.0369539477,
       "success_rate": 100.0
     },
     {
       "test_name": "combat_calc",
       "iterations": 1000,
       "total_units_processed": 40000,
-      "duration_ms": 92.68689155578613,
-      "throughput": 431560.4863706634,
+      "duration_ms": 37.14394569396973,
+      "throughput": 1076891.5163068944,
       "success_rate": 100.0
     },
     {
       "test_name": "concurrent_decisions",
       "iterations": 200,
       "total_units_processed": 2000,
-      "duration_ms": 4.887104034423828,
-      "throughput": 409240.3161284028,
+      "duration_ms": 3.7364959716796875,
+      "throughput": 535260.8473711078,
       "success_rate": 100.0
     },
     {
       "test_name": "memory_ops",
       "iterations": 1000,
       "total_units_processed": 550,
-      "duration_ms": 3.231048583984375,
-      "throughput": 309497.0484061393,
+      "duration_ms": 5.087137222290039,
+      "throughput": 196574.2138070019,
       "success_rate": 100.0
     }
   ]
