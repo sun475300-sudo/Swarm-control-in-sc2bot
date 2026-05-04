@@ -262,6 +262,14 @@ class TestEconomyManager(unittest.TestCase):
         """Dynamic gas worker scheduling 는 기본 ON."""
         self.assertTrue(self.manager.dynamic_gas_workers_enabled)
 
+    def test_expansion_block_timing_defaults(self):
+        """Phase 17: 적 자연 확장 방해 워커의 출발/체류 시간 기본값."""
+        self.assertEqual(self.manager.expansion_block_start_time, 50)
+        self.assertEqual(self.manager.expansion_block_duration, 45)
+        # 초기에는 비활성, worker tag 없음
+        self.assertFalse(self.manager.expansion_block_active)
+        self.assertIsNone(self.manager.expansion_block_worker_tag)
+
     # ==================== Helper Method Tests ====================
 
     def test_early_split_done_flag_initialization(self):
