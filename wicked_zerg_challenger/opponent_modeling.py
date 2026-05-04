@@ -770,16 +770,11 @@ class OpponentModeling:
                 f"[OPPONENT_MODELING] Known opponent: {opponent_id} ({self.opponent_models[opponent_id].games_played} games)"
             )
 
-    async def on_step(self, iteration: int):
-        """매 프레임 호출 - 신호 감지"""
-        if not self.current_opponent_id or not self.bot:
-            return
-
-        game_time = self.bot.time
-
-        # Only detect signals in early game (0-180s)
-        if game_time <= 180.0:
-            await self._detect_early_signals(game_time)
+    # NOTE: a second async on_step used to live here. It silently shadowed
+    # the richer on_step at the top of this class (build-order tracking,
+    # timing-attack detection, tech-progression tracking, blackboard
+    # publish), so all of that logic was dead code. The duplicate has been
+    # removed; the canonical on_step earlier in the class now runs.
 
     def on_game_end(self, won: bool, lost: bool):
         """게임 종료 시 호출 - 데이터 저장"""

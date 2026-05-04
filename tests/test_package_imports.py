@@ -115,3 +115,67 @@ def test_mappo_torch_classes_present_or_none() -> None:
 def test_check_proxy_safe_to_import() -> None:
     mod = importlib.import_module("wicked_zerg_challenger.check_proxy")
     assert callable(getattr(mod, "main", None))
+
+
+# ---------------------------------------------------------------------------
+# Duplicate-method guard. Python silently keeps only the *last* definition
+# when the same method name appears twice in a class body, which has hidden
+# real bugs in this codebase (e.g. an OpponentModeling.on_step duplicate
+# that dead-coded the rich, intended logic). Walk every .py file and assert
+# no class defines the same non-property method name twice.
+# ---------------------------------------------------------------------------
+
+
+def _find_duplicate_methods():
+    import ast
+    import os
+
+    PROPERTY_DECORATORS = {"setter", "getter", "deleter", "overload"}
+    SKIP_DIR_PARTS = {".git", "node_modules", "__pycache__", ".venv", "venv"}
+
+    hits = []
+    for dirpath, _dirnames, filenames in os.walk("."):
+        if any(part in SKIP_DIR_PARTS for part in dirpath.split(os.sep)):
+            continue
+        for fn in filenames:
+            if not fn.endswith(".py"):
+                continue
+            path = os.path.join(dirpath, fn)
+            try:
+                with open(path, encoding="utf-8", errors="ignore") as f:
+                    tree = ast.parse(f.read())
+            except (OSError, SyntaxError):
+                continue
+            for node in ast.walk(tree):
+                if not isinstance(node, ast.ClassDef):
+                    continue
+                seen: dict = {}
+                for m in node.body:
+                    if not isinstance(m, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                        continue
+                    # Skip property/setter/deleter/overload pairs (legitimate dups).
+                    decorator_names = []
+                    for dec in m.decorator_list:
+                        if isinstance(dec, ast.Name):
+                            decorator_names.append(dec.id)
+                        elif isinstance(dec, ast.Attribute):
+                            decorator_names.append(dec.attr)
+                    if any(d in PROPERTY_DECORATORS for d in decorator_names):
+                        continue
+                    if m.name in seen:
+                        hits.append((path, node.name, m.name, seen[m.name], m.lineno))
+                    seen[m.name] = m.lineno
+    return hits
+
+
+def test_no_duplicate_method_definitions() -> None:
+    """No class should have two non-property methods with the same name.
+
+    Python silently keeps only the second definition, dead-coding the first.
+    This test catches that class of bug at CI time."""
+    duplicates = _find_duplicate_methods()
+    formatted = [
+        f"{path}: {cls}.{name} defined at L{ln1} and L{ln2}"
+        for path, cls, name, ln1, ln2 in duplicates
+    ]
+    assert not duplicates, "Duplicate method definitions:\n  " + "\n  ".join(formatted)
