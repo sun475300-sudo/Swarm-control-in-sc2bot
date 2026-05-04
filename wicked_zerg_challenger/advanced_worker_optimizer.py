@@ -545,11 +545,15 @@ class AdvancedWorkerOptimizer:
         )
 
     def _get_mineral_by_tag(self, mineral_tag: int) -> Optional[Unit]:
-        """태그로 미네랄 찾기"""
-        if not hasattr(self.bot, "mineral_field"):
+        """태그로 미네랄 찾기 — uses burnysc2 Units.find_by_tag (C++ path)
+        instead of a manual Python loop."""
+        mineral_field = getattr(self.bot, "mineral_field", None)
+        if mineral_field is None:
             return None
-
-        for mineral in self.bot.mineral_field:
+        finder = getattr(mineral_field, "find_by_tag", None)
+        if finder is not None:
+            return finder(mineral_tag)
+        for mineral in mineral_field:
             if mineral.tag == mineral_tag:
                 return mineral
         return None
@@ -560,11 +564,14 @@ class AdvancedWorkerOptimizer:
         return mineral.position if mineral else None
 
     def _get_gas_building_by_tag(self, gas_tag: int) -> Optional[Unit]:
-        """태그로 가스 건물 찾기"""
-        if not hasattr(self.bot, "gas_buildings"):
+        """태그로 가스 건물 찾기 — uses burnysc2 Units.find_by_tag."""
+        gas_buildings = getattr(self.bot, "gas_buildings", None)
+        if gas_buildings is None:
             return None
-
-        for gas in self.bot.gas_buildings:
+        finder = getattr(gas_buildings, "find_by_tag", None)
+        if finder is not None:
+            return finder(gas_tag)
+        for gas in gas_buildings:
             if gas.tag == gas_tag:
                 return gas
         return None
