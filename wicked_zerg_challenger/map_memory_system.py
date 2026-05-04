@@ -9,9 +9,7 @@ Map Memory System - 맵 기억 시스템
 4. 맵 전체 탐색 진행도
 """
 
-import json
-import os
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Dict, List, Optional, Set, Tuple
 
 from sc2.ids.unit_typeid import UnitTypeId

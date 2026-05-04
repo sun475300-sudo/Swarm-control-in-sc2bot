@@ -17,7 +17,7 @@ import subprocess
 import sys
 import time
 from pathlib import Path
-from typing import Any, Dict, List, Tuple
+from typing import List, Tuple
 
 logger = logging.getLogger("ComprehensiveAutoFixWorkflow")
 
@@ -38,12 +38,12 @@ def run_command(cmd: List[str], cwd: Path, description: str, timeout: int = 3600
             errors='ignore',
             timeout=timeout
         )
-        
+
         if result.stdout:
             logger.info(result.stdout)
         if result.stderr:
             logger.info(result.stderr, file=sys.stderr)
-        
+
         success = result.returncode == 0
         return success, result.stdout + result.stderr
     except subprocess.TimeoutExpired:
@@ -59,13 +59,13 @@ def fix_errors_iteratively(project_root: Path, max_iterations: int = 10) -> bool
     logger.info(f"\n{'#'*70}")
     logger.info("# PHASE 1: ���� ���� �� ���� ���� (�ݺ�)")
     logger.info(f"{'#'*70}\n")
-    
+
     auto_error_fixer = project_root / "tools" / "auto_error_fixer.py"
     logic_checker = project_root / "tools" / "logic_checker.py"
-    
+
     for iteration in range(1, max_iterations + 1):
         logger.info(f"\n[ITERATION {iteration}/{max_iterations}] ���� ���� ��...")
-        
+
         # 1. �ڵ� ���� ����
         success1, _ = run_command(
             [sys.executable, str(auto_error_fixer), "--all"],
@@ -73,7 +73,7 @@ def fix_errors_iteratively(project_root: Path, max_iterations: int = 10) -> bool
             f"Iteration {iteration} - Auto Error Fixing",
             timeout=600
         )
-        
+
         # 2. ���� �˻�
         success2, output2 = run_command(
             [sys.executable, str(logic_checker), "--all"],
@@ -81,23 +81,23 @@ def fix_errors_iteratively(project_root: Path, max_iterations: int = 10) -> bool
             f"Iteration {iteration} - Logic Check",
             timeout=600
         )
-        
+
         # ���� �˻� ��� �м�
         if "�ߺ� ����: 0��" in output2 and "�ߺ� ����: 0��" in output2 and "���� ����: 0��" in output2:
             logger.info(f"\n[SUCCESS] ��� ������ ���װ� �����Ǿ����ϴ�! (Iteration {iteration})")
             return True
-        
+
         if iteration < max_iterations:
             logger.info(f"\n[INFO] ������ �����ֽ��ϴ�. ��� ���� ��... (Iteration {iteration}/{max_iterations})")
             time.sleep(2)
-    
+
     logger.warning(f"\n[WARNING] �ִ� �ݺ� Ƚ��({max_iterations})�� �����߽��ϴ�.")
     return False
 
 
 def main():
     project_root = Path(__file__).parent.parent
-    
+
     logger.info("=" * 70)
     logger.info("���� �ڵ� ���� �� �Ʒ� ��ũ�÷ο�")
     logger.info("=" * 70)
@@ -111,7 +111,7 @@ def main():
     logger.info("  7. ���÷��� �� �н� ���α׷� ���� �� ������ ���� �� �Ʒ� ����")
     logger.info("  8. ���÷��� �н� ������ �� �м� �� �н� ����")
     logger.info("=" * 70)
-    
+
     # Script paths
     auto_error_fixer = project_root / "tools" / "auto_error_fixer.py"
     code_quality_improver = project_root / "tools" / "code_quality_improver.py"
@@ -119,7 +119,7 @@ def main():
     run_training = project_root / "run_with_training.py"
     replay_learner = project_root / "local_training" / "scripts" / "replay_build_order_learner.py"
     strategy_audit = project_root / "local_training" / "strategy_audit.py"
-    
+
     # Check if scripts exist
     scripts = {
         "Auto Error Fixer": auto_error_fixer,
@@ -129,45 +129,45 @@ def main():
         "Replay Learner": replay_learner,
         "Strategy Audit": strategy_audit
     }
-    
+
     for name, script in scripts.items():
         if not script.exists():
             logger.error(f"{name} script not found: {script}")
             sys.exit(1)
-    
+
     # PHASE 1: ���� ���� �� ���� ���� (�ݺ�)
     if not fix_errors_iteratively(project_root, max_iterations=10):
         logger.warning("�Ϻ� ������ �������� �� �ֽ��ϴ�. ��� �����մϴ�...")
-    
+
     # PHASE 2: ���� �˻�
     logger.info(f"\n{'#'*70}")
     logger.info("# PHASE 2: ���� �˻�")
     logger.info(f"{'#'*70}\n")
-    
+
     success_logic, output_logic = run_command(
         [sys.executable, str(logic_checker), "--all"],
         project_root,
         "Logic Check",
         timeout=600
     )
-    
+
     # PHASE 3: �ڵ� ��Ÿ�� ����ȭ
     logger.info(f"\n{'#'*70}")
     logger.info("# PHASE 3: �ڵ� ��Ÿ�� ����ȭ")
     logger.info(f"{'#'*70}\n")
-    
+
     success_style, _ = run_command(
         [sys.executable, str(code_quality_improver), "--all"],
         project_root,
         "Code Style Unification",
         timeout=600
     )
-    
+
     # PHASE 4: ���÷��� �н� ���� �� ��ü ���� �˻�
     logger.info(f"\n{'#'*70}")
     logger.info("# PHASE 4: ���÷��� �н� ���� �� ��ü ���� �˻�")
     logger.info(f"{'#'*70}\n")
-    
+
     # 4-1. ��ü ���� �˻�
     success_logic2, _ = run_command(
         [sys.executable, str(logic_checker), "--all"],
@@ -175,7 +175,7 @@ def main():
         "Full Logic Check Before Replay Learning",
         timeout=600
     )
-    
+
     # 4-2. ���÷��� �н�
     success_replay1, _ = run_command(
         [sys.executable, str(replay_learner)],
@@ -183,12 +183,12 @@ def main():
         "Replay Build Order Learning",
         timeout=1800
     )
-    
+
     # PHASE 5: ���а˻� �� ���� �н� ����
     logger.info(f"\n{'#'*70}")
     logger.info("# PHASE 5: ���а˻� �� ���� �н� ����")
     logger.info(f"{'#'*70}\n")
-    
+
     # 5-1. ���а˻� (���� ���� + �ڵ� ǰ��)
     success_precise1, _ = run_command(
         [sys.executable, str(auto_error_fixer), "--all"],
@@ -196,30 +196,30 @@ def main():
         "Precise Check - Error Fixing",
         timeout=600
     )
-    
+
     success_precise2, _ = run_command(
         [sys.executable, str(code_quality_improver), "--all"],
         project_root,
         "Precise Check - Code Quality",
         timeout=600
     )
-    
+
     # 5-2. ���� �н� ����
-    logger.info(f"\n[INFO] ���� �н��� �����մϴ�...")
-    logger.info(f"������ ���� �۵��ϴ��� Ȯ���ϼ���.")
-    logger.info(f"Ctrl+C�� ���� �ߴ��� �� �ֽ��ϴ�.")
+    logger.info("\n[INFO] ���� �н��� �����մϴ�...")
+    logger.info("������ ���� �۵��ϴ��� Ȯ���ϼ���.")
+    logger.info("Ctrl+C�� ���� �ߴ��� �� �ֽ��ϴ�.")
     success_training, _ = run_command(
         [sys.executable, str(run_training)],
         project_root,
         "Game Training",
         timeout=3600  # 60 minutes
     )
-    
+
     # PHASE 6: ������ ���� �˻� �� ���� Ȯ�� �� ���� ���� �� ���� Ȯ�� �� ���� ����
     logger.info(f"\n{'#'*70}")
     logger.info("# PHASE 6: ���� �˻� �� ���� Ȯ�� �� ���� ���� �� ���� Ȯ�� �� ���� ����")
     logger.info(f"{'#'*70}\n")
-    
+
     # 6-1. ���� �˻�
     success_logic3, output_logic3 = run_command(
         [sys.executable, str(logic_checker), "--all"],
@@ -227,7 +227,7 @@ def main():
         "Post-Training Logic Check",
         timeout=600
     )
-    
+
     # 6-2. ���� Ȯ�� �� ����
     success_error_fix, _ = run_command(
         [sys.executable, str(auto_error_fixer), "--all"],
@@ -235,7 +235,7 @@ def main():
         "Post-Training Error Fixing",
         timeout=600
     )
-    
+
     # 6-3. ���� Ȯ�� �� ���� (���� �˻� �ٽ�)
     success_bug_fix, _ = run_command(
         [sys.executable, str(logic_checker), "--all"],
@@ -243,12 +243,12 @@ def main():
         "Post-Training Bug Check",
         timeout=600
     )
-    
+
     # PHASE 7: ���÷��� �� �н� ���α׷� ���� �� ������ ���� �� �Ʒ� ����
     logger.info(f"\n{'#'*70}")
     logger.info("# PHASE 7: ���÷��� �� �н� ���α׷� ���� �� ������ ���� �� �Ʒ� ����")
     logger.info(f"{'#'*70}\n")
-    
+
     # 7-1. ���÷��� �� �н�
     success_replay2, _ = run_command(
         [sys.executable, str(replay_learner)],
@@ -256,36 +256,36 @@ def main():
         "Replay Comparison Learning",
         timeout=1800
     )
-    
+
     # 7-2. ������ ���� �� �Ʒ� ����
     if success_replay2:
-        logger.info(f"\n[INFO] �н��� �����Ͱ� �ڵ� ����Ǿ����ϴ�.")
-        logger.info(f"�߰� �Ʒ��� �����մϴ�...")
-        
+        logger.info("\n[INFO] �н��� �����Ͱ� �ڵ� ����Ǿ����ϴ�.")
+        logger.info("�߰� �Ʒ��� �����մϴ�...")
+
         success_training2, _ = run_command(
             [sys.executable, str(run_training)],
             project_root,
             "Additional Training After Replay Learning",
             timeout=3600
         )
-    
+
     # PHASE 8: ���÷��� �н� ������ �� �м� �� �н� ����
     logger.info(f"\n{'#'*70}")
     logger.info("# PHASE 8: ���÷��� �н� ������ �� �м� �� �н� ����")
     logger.info(f"{'#'*70}\n")
-    
+
     success_audit, _ = run_command(
         [sys.executable, str(strategy_audit)],
         project_root,
         "Replay Learning Data Comparison Analysis",
         timeout=1800
     )
-    
+
     # ���� ���
     logger.info(f"\n\n{'#'*70}")
     logger.info("# ��ü ��ũ�÷ο� �Ϸ�")
     logger.info(f"{'#'*70}\n")
-    
+
     logger.info("���� ���:")
     logger.error(f"  - ���� ����: {'?' if success_error_fix else '?'}")
     logger.info(f"  - �ڵ� ��Ÿ�� ����ȭ: {'?' if success_style else '?'}")
@@ -294,7 +294,7 @@ def main():
     logger.info(f"  - ���� �н�: {'?' if success_training else '?'}")
     logger.info(f"  - ���÷��� �� �н�: {'?' if success_replay2 else '?'}")
     logger.info(f"  - �� �м�: {'?' if success_audit else '?'}")
-    
+
     logger.info(f"\n{'#'*70}")
 
 

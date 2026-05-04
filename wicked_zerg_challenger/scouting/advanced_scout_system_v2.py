@@ -14,7 +14,7 @@ Phase 10 기반, Phase 22 고도화:
 """
 
 import math
-from typing import Dict, List, Optional, Set, Tuple
+from typing import Dict, List, Optional, Set
 
 from utils.logger import get_logger
 
@@ -46,7 +46,7 @@ except ImportError:
         pass
 
 
-from unit_authority_manager import AuthorityLevel, UnitAuthorityManager
+from unit_authority_manager import AuthorityLevel
 
 # 백과사전 임포트 (상성 데이터 활용)
 try:

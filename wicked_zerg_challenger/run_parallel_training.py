@@ -12,7 +12,6 @@ GPU 가속 활용 + 빠른 게임 전환.
 
 import json
 import logging
-import multiprocessing
 import os
 import random
 import sys
@@ -132,7 +131,7 @@ def main():
     logger.info(f"  Maps: {len(MAP_POOL)} | Races: {len(RACE_POOL)}")
     logger.info(f"  Difficulty Ladder: {[d.name for d in DIFFICULTY_LADDER]}")
     logger.info(f"  GPU: {GPU_NAME}")
-    logger.info(f"  Mode: Sequential Fast (realtime=False)")
+    logger.info("  Mode: Sequential Fast (realtime=False)")
     logger.info(f"{'='*70}\n")
 
     results = []
@@ -189,7 +188,7 @@ def main():
     )
 
     # Per-race stats
-    logger.info(f"\n  --- By Race ---")
+    logger.info("\n  --- By Race ---")
     for race in RACE_POOL:
         rr = [r for r in results if r.get("race") == race.name]
         rw = sum(1 for r in rr if r.get("won"))
