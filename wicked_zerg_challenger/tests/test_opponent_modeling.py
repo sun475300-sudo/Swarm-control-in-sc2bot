@@ -44,9 +44,7 @@ except ImportError:
     SC2_AVAILABLE = False
 
 
-pytestmark = pytest.mark.skipif(
-    not SC2_AVAILABLE, reason="sc2 library not available"
-)
+pytestmark = pytest.mark.skipif(not SC2_AVAILABLE, reason="sc2 library not available")
 
 
 class TestOpponentModel(unittest.TestCase):

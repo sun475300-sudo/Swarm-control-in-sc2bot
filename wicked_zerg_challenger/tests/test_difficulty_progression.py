@@ -53,9 +53,7 @@ except ImportError:
         Zerg = 3
 
 
-pytestmark = pytest.mark.skipif(
-    not SC2_AVAILABLE, reason="sc2 library not available"
-)
+pytestmark = pytest.mark.skipif(not SC2_AVAILABLE, reason="sc2 library not available")
 
 
 class TestDifficultyProgressionBasics(unittest.TestCase):
