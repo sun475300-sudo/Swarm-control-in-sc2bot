@@ -73,12 +73,23 @@ jobs:
           cache: pip
 
       - name: Install dependencies
-        run: pip install -r requirements.txt pytest pytest-cov pytest-asyncio
+        # Install only the minimum dependencies needed by the bot test suite.
+        # The full requirements.txt pulls in unrelated services (discord,
+        # crypto trading, GCP) whose binary wheels can be flaky on CI runners
+        # and aren't exercised by wicked_zerg_challenger/tests/.
+        # pytest-timeout is needed by the `--timeout=120` flag on the
+        # integration step.
+        run: pip install burnysc2 numpy pytest pytest-cov pytest-asyncio pytest-timeout
 
-      - name: Run unit tests
-        run: pytest tests/unit -v --cov=. --cov-report=xml --cov-report=term
+      - name: Run wicked_zerg_challenger unit tests
+        # The historical `tests/unit` path was never populated; the real bot
+        # unit tests live in `wicked_zerg_challenger/tests/`. Run them with
+        # coverage and treat the integration test_full_pipeline.py as part
+        # of the same pytest invocation.
+        run: pytest wicked_zerg_challenger/tests -v --cov=. --cov-report=xml --cov-report=term
 
       - name: Run integration tests
+        if: ${{ hashFiles('tests/integration/**/*.py') != '' }}
         run: pytest tests/integration -v --timeout=120
 
       - name: Upload coverage

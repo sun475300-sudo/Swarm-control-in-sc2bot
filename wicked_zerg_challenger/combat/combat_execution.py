@@ -258,14 +258,12 @@ class CombatExecution:
         if not items:
             return None
 
-        count = len(items)
-        x_sum = sum(u.position.x for u in items)
-        y_sum = sum(u.position.y for u in items)
-
         try:
-            from sc2.position import Point2
+            from sc2.position import Point2  # noqa: F401
 
-            return Point2((x_sum / count, y_sum / count))
+            from utils.position_utils import get_center_position
+
+            return get_center_position(items)
         except ImportError:
             return items[0].position
 

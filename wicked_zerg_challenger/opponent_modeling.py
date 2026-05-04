@@ -272,7 +272,7 @@ class OpponentModeling:
 
         # Opponent models
         self.opponent_models: Dict[str, OpponentModel] = {}
-        self.current_opponent_id: Optional[str] = None
+        self.current_opponent: Optional[str] = None
         self.current_game_history: Optional[GameHistory] = None
 
         # Current game tracking
@@ -304,20 +304,20 @@ class OpponentModeling:
             race_name = getattr(enemy_race, "name", str(enemy_race))
             # In real games, opponent_id would be player name/ID
             # For now, use race as identifier
-            self.current_opponent_id = f"opponent_{race_name}"
+            self.current_opponent = f"opponent_{race_name}"
 
             # Load or create model
-            if self.current_opponent_id not in self.opponent_models:
-                self.opponent_models[self.current_opponent_id] = OpponentModel(
-                    self.current_opponent_id
+            if self.current_opponent not in self.opponent_models:
+                self.opponent_models[self.current_opponent] = OpponentModel(
+                    self.current_opponent
                 )
                 self.logger.info(
-                    f"[OPPONENT_MODELING] New opponent: {self.current_opponent_id}"
+                    f"[OPPONENT_MODELING] New opponent: {self.current_opponent}"
                 )
             else:
-                model = self.opponent_models[self.current_opponent_id]
+                model = self.opponent_models[self.current_opponent]
                 self.logger.info(
-                    f"[OPPONENT_MODELING] Known opponent: {self.current_opponent_id}\n"
+                    f"[OPPONENT_MODELING] Known opponent: {self.current_opponent}\n"
                     f"  Games: {model.games_played} (W: {model.games_won}, L: {model.games_lost})\n"
                     f"  Dominant Style: {model.dominant_style.value}\n"
                     f"  Expected Timings: {model.get_expected_timing_attacks()}"
@@ -457,15 +457,15 @@ class OpponentModeling:
     async def _make_strategy_prediction(self, game_time: float):
         """전략 예측 수행 (초반 종료 시)"""
         if (
-            not self.current_opponent_id
-            or self.current_opponent_id not in self.opponent_models
+            not self.current_opponent
+            or self.current_opponent not in self.opponent_models
         ):
             self.logger.info(
                 f"[{int(game_time)}s] No opponent model available for prediction"
             )
             return
 
-        model = self.opponent_models[self.current_opponent_id]
+        model = self.opponent_models[self.current_opponent]
 
         # Make prediction
         predicted, confidence = model.predict_strategy(list(self.observed_signals))
@@ -576,7 +576,7 @@ class OpponentModeling:
         Args:
             game_result: "Victory" or "Defeat"
         """
-        if not self.current_game_history or not self.current_opponent_id:
+        if not self.current_game_history or not self.current_opponent:
             return
 
         game_time = self.bot.time
@@ -599,7 +599,7 @@ class OpponentModeling:
         self.current_game_history.tech_progression = self.tech_progression
 
         # Update opponent model
-        model = self.opponent_models[self.current_opponent_id]
+        model = self.opponent_models[self.current_opponent]
         model.update_from_game(self.current_game_history)
 
         # Save to disk
@@ -607,7 +607,7 @@ class OpponentModeling:
 
         self.logger.info(
             f"[GAME_END] Opponent model updated:\n"
-            f"  Opponent: {self.current_opponent_id}\n"
+            f"  Opponent: {self.current_opponent}\n"
             f"  Style: {self.current_game_history.opponent_style}\n"
             f"  Strategy: {self.current_game_history.detected_strategy}\n"
             f"  Result: {self.current_game_history.game_result}\n"
@@ -762,17 +762,6 @@ class OpponentModeling:
             self.logger.info(
                 f"[OPPONENT_MODELING] Known opponent: {opponent_id} ({self.opponent_models[opponent_id].games_played} games)"
             )
-
-    async def on_step(self, iteration: int):
-        """매 프레임 호출 - 신호 감지"""
-        if not self.current_opponent or not self.bot:
-            return
-
-        game_time = self.bot.time
-
-        # Only detect signals in early game (0-180s)
-        if game_time <= 180.0:
-            await self._detect_early_signals(game_time)
 
     def on_game_end(self, won: bool, lost: bool):
         """게임 종료 시 호출 - 데이터 저장"""

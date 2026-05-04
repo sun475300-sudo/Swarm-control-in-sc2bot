@@ -172,7 +172,7 @@ class GameDataLogger:
         # 새로운 확장 발견
         for townhall in self.bot.townhalls:
             if townhall.tag not in self._tracked_structures:
-                expansion_number = len([e for e in self.game_data["expansions"]]) + 1
+                expansion_number = len(self.game_data["expansions"]) + 1
 
                 self.game_data["expansions"].append(
                     {

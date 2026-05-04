@@ -118,10 +118,17 @@ class CombatPhaseController:
 
     def _update_combat_groups(self, game_time: float) -> None:
         """전투 그룹 상태 업데이트"""
+        # Build the alive-tag set ONCE per step. The previous implementation
+        # called `_is_unit_alive(tag)` per group-member, and that function did
+        # `any(u.tag == tag for u in self.bot.units)` — i.e. an O(N) scan
+        # per check, giving O(group_count * group_size * N) per frame.
+        bot_units = getattr(self.bot, "units", None)
+        alive_tags: set = {u.tag for u in bot_units} if bot_units else set()
+
         # 기존 그룹의 유닛들이 존재하는지 확인
         for group_id, group in list(self.combat_groups.items()):
             # 유닛이 모두 죽었거나 사라진 그룹 제거
-            alive_units = [tag for tag in group.units if self._is_unit_alive(tag)]
+            alive_units = [tag for tag in group.units if tag in alive_tags]
 
             if not alive_units:
                 self.logger.info(f"[PHASE] Group {group_id} disbanded (no units)")
@@ -584,14 +591,9 @@ class CombatPhaseController:
 
     def _get_group_center(self, units: Units) -> Point2:
         """그룹 중심점 계산"""
-        if not units:
-            return Point2((0, 0))
-        return Point2(
-            (
-                sum(u.position.x for u in units) / len(units),
-                sum(u.position.y for u in units) / len(units),
-            )
-        )
+        from utils.position_utils import get_center_position
+
+        return get_center_position(units)
 
     def _get_group_health_ratio(self, units: Units) -> float:
         """그룹 체력 비율"""
@@ -602,12 +604,6 @@ class CombatPhaseController:
         max_hp = sum(u.health_max + u.shield_max for u in units)
 
         return total_hp / max_hp if max_hp > 0 else 0.0
-
-    def _is_unit_alive(self, unit_tag: int) -> bool:
-        """유닛이 살아있는지 확인"""
-        if not hasattr(self.bot, "units"):
-            return False
-        return any(u.tag == unit_tag for u in self.bot.units)
 
     def _collect_learning_data(self, game_time: float) -> None:
         """학습 데이터 수집"""

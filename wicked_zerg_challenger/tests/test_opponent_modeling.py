@@ -297,7 +297,7 @@ class TestOpponentModel(unittest.TestCase):
         self.assertEqual(model.dominant_style, OpponentStyle.AGGRESSIVE)
 
 
-class TestOpponentModeling(unittest.TestCase):
+class TestOpponentModeling(unittest.IsolatedAsyncioTestCase):
     """Test suite for OpponentModeling system"""
 
     def setUp(self):
@@ -340,14 +340,14 @@ class TestOpponentModeling(unittest.TestCase):
         """Test opponent modeling system initialization"""
         self.assertIsNotNone(self.modeling)
         self.assertEqual(len(self.modeling.opponent_models), 0)
-        self.assertIsNone(self.modeling.current_opponent_id)
+        self.assertIsNone(self.modeling.current_opponent)
 
     async def test_on_start_new_opponent(self):
         """Test game start with new opponent"""
         await self.modeling.on_start()
 
-        self.assertIsNotNone(self.modeling.current_opponent_id)
-        self.assertEqual(self.modeling.current_opponent_id, "opponent_Zerg")
+        self.assertIsNotNone(self.modeling.current_opponent)
+        self.assertEqual(self.modeling.current_opponent, "opponent_Zerg")
         self.assertIn("opponent_Zerg", self.modeling.opponent_models)
 
     async def test_on_start_known_opponent(self):
@@ -361,7 +361,7 @@ class TestOpponentModeling(unittest.TestCase):
 
         await self.modeling.on_start()
 
-        self.assertEqual(self.modeling.current_opponent_id, "opponent_Zerg")
+        self.assertEqual(self.modeling.current_opponent, "opponent_Zerg")
 
     # ==================== Signal Detection Tests ====================
 
@@ -597,6 +597,75 @@ class TestOpponentModeling(unittest.TestCase):
         # Verify model was updated
         model = self.modeling.opponent_models["opponent_Zerg"]
         self.assertEqual(model.games_played, 1)
+
+    async def test_on_step_runs_comprehensive_logic(self):
+        """Regression: on_step must execute signal detection / build-order
+        tracking / blackboard updates, not the simpler shadowed version that
+        previously override-shadowed it. Specifically verify side effects of
+        the comprehensive implementation: ``last_update`` advances, blackboard
+        gets the prediction keys, and signals get observed when conditions
+        match."""
+        # Simulate a registered game.
+        await self.modeling.on_start()
+
+        # Wire up a blackboard that records sets() calls.
+        recorded = {}
+
+        class _BB:
+            def set(self, k, v):
+                recorded[k] = v
+
+        self.bot.blackboard = _BB()
+
+        # Place the bot far enough into the game that the update_interval
+        # gate (22 frames) lets us through.
+        self.bot.time = 50.0
+        self.bot.iteration = 100
+
+        # Plant an early SPAWNINGPOOL so EARLY_POOL signal is observed.
+        pool = Mock()
+        pool.type_id = Mock()
+        pool.type_id.name = "SPAWNINGPOOL"
+        self.bot.enemy_structures = [pool]
+
+        await self.modeling.on_step(100)
+
+        # Comprehensive on_step writes blackboard prediction keys — the older
+        # shadowing on_step never did. If the dedup ever regresses, these
+        # assertions fail.
+        self.assertIn("predicted_strategy", recorded)
+        self.assertIn("prediction_confidence", recorded)
+        self.assertIn("observed_signals", recorded)
+
+        # And it should have observed the early-pool signal.
+        self.assertIn("early_pool", self.modeling.observed_signals)
+
+        # last_update should have advanced (proves the body actually executed).
+        self.assertEqual(self.modeling.last_update, 100)
+
+    def test_no_duplicate_on_step_method(self):
+        """Regression: there must be exactly one ``on_step`` definition on
+        the class. Prior to the iter-1 fix, a second ``on_step`` later in
+        the file silently shadowed the comprehensive one."""
+        import ast
+        import inspect
+
+        from opponent_modeling import OpponentModeling
+
+        src = inspect.getsource(OpponentModeling)
+        tree = ast.parse(src)
+        on_step_defs = [
+            n
+            for n in ast.walk(tree)
+            if isinstance(n, (ast.AsyncFunctionDef, ast.FunctionDef))
+            and n.name == "on_step"
+        ]
+        self.assertEqual(
+            len(on_step_defs),
+            1,
+            f"OpponentModeling has {len(on_step_defs)} on_step definitions; "
+            "exactly one is required (the comprehensive one).",
+        )
 
     def test_get_opponent_stats(self):
         """Test retrieving opponent statistics"""

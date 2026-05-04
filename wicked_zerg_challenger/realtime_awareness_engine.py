@@ -13,6 +13,7 @@ Real-time Awareness Engine — 실시간 상황 인식 + 자동 대응 시스템
 5. 학습 피드백 (Learning Feedback)
 """
 
+import asyncio
 import logging
 import time
 from dataclasses import dataclass
@@ -585,8 +586,6 @@ class RealtimeAwarenessEngine:
                     l = larva.random
                     result = self.bot.do(l.train(UnitTypeId.HYDRALISK))
                     if hasattr(result, "__await__"):
-                        import asyncio
-
                         asyncio.ensure_future(result)
                     return
 
@@ -596,8 +595,6 @@ class RealtimeAwarenessEngine:
                     l = larva.random
                     result = self.bot.do(l.train(UnitTypeId.ROACH))
                     if hasattr(result, "__await__"):
-                        import asyncio
-
                         asyncio.ensure_future(result)
                     return
 
@@ -607,8 +604,6 @@ class RealtimeAwarenessEngine:
                     l = larva.random
                     result = self.bot.do(l.train(UnitTypeId.MUTALISK))
                     if hasattr(result, "__await__"):
-                        import asyncio
-
                         asyncio.ensure_future(result)
                     return
         except Exception:
@@ -633,8 +628,6 @@ class RealtimeAwarenessEngine:
                     ).ready.exists and self.bot.can_afford(UnitTypeId.ROACH):
                         result = self.bot.do(l.train(UnitTypeId.ROACH))
                         if hasattr(result, "__await__"):
-                            import asyncio
-
                             asyncio.ensure_future(result)
                         continue
 
@@ -644,8 +637,6 @@ class RealtimeAwarenessEngine:
                 ).ready.exists and self.bot.can_afford(UnitTypeId.ZERGLING):
                     result = self.bot.do(l.train(UnitTypeId.ZERGLING))
                     if hasattr(result, "__await__"):
-                        import asyncio
-
                         asyncio.ensure_future(result)
         except Exception:
             pass
@@ -658,8 +649,6 @@ class RealtimeAwarenessEngine:
                 l = larva.first
                 result = self.bot.do(l.train(UnitTypeId.OVERLORD))
                 if hasattr(result, "__await__"):
-                    import asyncio
-
                     asyncio.ensure_future(result)
         except Exception:
             pass
@@ -679,8 +668,6 @@ class RealtimeAwarenessEngine:
                 if self.bot.structures(UnitTypeId.SPAWNINGPOOL).ready.exists:
                     result = self.bot.do(l.train(UnitTypeId.ZERGLING))
                     if hasattr(result, "__await__"):
-                        import asyncio
-
                         asyncio.ensure_future(result)
         except Exception:
             pass
