@@ -164,9 +164,9 @@ class BattlePreparationSystem:
 
             if nearby:
                 # 클러스터 중심 계산
-                center_x = sum(u.position.x for u in nearby) / len(nearby)
-                center_y = sum(u.position.y for u in nearby) / len(nearby)
-                center = Point2((center_x, center_y))
+                from utils.position_utils import get_center_position
+
+                center = get_center_position(nearby)
 
                 clusters.append((center, nearby))
 

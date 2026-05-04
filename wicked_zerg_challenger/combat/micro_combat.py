@@ -604,9 +604,9 @@ class MicroCombat:
     def _find_center_of_mass(self, units) -> Optional[Point2]:
         if not units or not Point2:
             return None
-        total_x = sum(u.position.x for u in units)
-        total_y = sum(u.position.y for u in units)
-        return Point2((total_x / len(units), total_y / len(units)))
+        from utils.position_utils import get_center_position
+
+        return get_center_position(units)
 
     @staticmethod
     def _closest_enemy(unit, enemies: Iterable):

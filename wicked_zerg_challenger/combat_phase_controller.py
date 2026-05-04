@@ -584,14 +584,9 @@ class CombatPhaseController:
 
     def _get_group_center(self, units: Units) -> Point2:
         """그룹 중심점 계산"""
-        if not units:
-            return Point2((0, 0))
-        return Point2(
-            (
-                sum(u.position.x for u in units) / len(units),
-                sum(u.position.y for u in units) / len(units),
-            )
-        )
+        from utils.position_utils import get_center_position
+
+        return get_center_position(units)
 
     def _get_group_health_ratio(self, units: Units) -> float:
         """그룹 체력 비율"""
