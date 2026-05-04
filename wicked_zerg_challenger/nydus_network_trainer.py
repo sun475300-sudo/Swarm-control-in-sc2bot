@@ -98,8 +98,9 @@ class NydusNetworkTrainer:
         # 2. 병력 투입
         await self._load_units_into_network(network)
 
-        # 3. 배치된 유닛 관리
-        await self._command_deployed_units()
+        # 3. 배치된 유닛 관리 — ``_manage_active_worms`` (호출자 측 매 프레임)에서
+        # 이미 ``_command_worm_units`` 루프로 커버됨. 과거 ``_command_deployed_units``
+        # 라는 정의되지 않은 메서드를 호출해 try/except로 무음 실패하던 라인 제거.
 
     async def _plan_new_worm(self, network, game_time: float):
         """새 Worm 계획"""
