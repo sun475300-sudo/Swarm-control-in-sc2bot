@@ -118,10 +118,17 @@ class CombatPhaseController:
 
     def _update_combat_groups(self, game_time: float) -> None:
         """전투 그룹 상태 업데이트"""
+        # Build the alive-tag set ONCE per step. The previous implementation
+        # called `_is_unit_alive(tag)` per group-member, and that function did
+        # `any(u.tag == tag for u in self.bot.units)` — i.e. an O(N) scan
+        # per check, giving O(group_count * group_size * N) per frame.
+        bot_units = getattr(self.bot, "units", None)
+        alive_tags: set = {u.tag for u in bot_units} if bot_units else set()
+
         # 기존 그룹의 유닛들이 존재하는지 확인
         for group_id, group in list(self.combat_groups.items()):
             # 유닛이 모두 죽었거나 사라진 그룹 제거
-            alive_units = [tag for tag in group.units if self._is_unit_alive(tag)]
+            alive_units = [tag for tag in group.units if tag in alive_tags]
 
             if not alive_units:
                 self.logger.info(f"[PHASE] Group {group_id} disbanded (no units)")
