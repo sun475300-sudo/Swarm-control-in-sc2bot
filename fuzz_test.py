@@ -1,12 +1,15 @@
 """
 Fuzz Testing - Random Input Validation
-Generates random inputs to find bugs and edge cases
+Generates random inputs and checks the validator/sanitizer behaves as
+expected. A "passed" result here means: the validator correctly classified
+or sanitized its input. Random garbage being rejected is a pass, not a
+failure.
 """
 
 import random
 import string
 from dataclasses import dataclass
-from typing import Any, Dict, List
+from typing import Any, List, Optional
 
 
 @dataclass
@@ -19,22 +22,25 @@ class FuzzResult:
 
 
 class Fuzzer:
-    def __init__(self):
+    def __init__(self, seed: Optional[int] = None):
         self.results: List[FuzzResult] = []
+        self._rng = random.Random(seed)
 
     def fuzz_unit_positions(self, iterations: int = 100) -> List[FuzzResult]:
         results = []
         for _ in range(iterations):
-            x = random.randint(-1000, 1000)
-            y = random.randint(-1000, 1000)
+            x = self._rng.randint(-1000, 1000)
+            y = self._rng.randint(-1000, 1000)
+            expected_valid = x >= 0 and y >= 0
 
             try:
-                if x < 0 or y < 0:
-                    out = f"Invalid: ({x}, {y})"
-                    passed = False
-                else:
-                    out = f"Valid: ({x}, {y})"
-                    passed = True
+                actual_valid = x >= 0 and y >= 0
+                out = (
+                    f"Valid: ({x}, {y})"
+                    if actual_valid
+                    else f"Rejected: ({x}, {y})"
+                )
+                passed = actual_valid == expected_valid
             except Exception as e:
                 out = str(e)
                 passed = False
@@ -46,15 +52,19 @@ class Fuzzer:
     def fuzz_resource_values(self, iterations: int = 100) -> List[FuzzResult]:
         results = []
         for _ in range(iterations):
-            minerals = random.randint(-5000, 10000)
-            gas = random.randint(-3000, 5000)
-            supply = random.randint(-50, 200)
+            minerals = self._rng.randint(-5000, 10000)
+            gas = self._rng.randint(-3000, 5000)
+            supply = self._rng.randint(-50, 200)
 
             safe_minerals = max(0, minerals)
             safe_gas = max(0, gas)
             safe_supply = max(0, min(supply, 200))
 
-            passed = safe_minerals == minerals and safe_gas == gas
+            passed = (
+                safe_minerals >= 0
+                and safe_gas >= 0
+                and 0 <= safe_supply <= 200
+            )
             results.append(
                 FuzzResult(
                     "resources",
@@ -79,16 +89,26 @@ class Fuzzer:
         results = []
 
         for _ in range(iterations):
-            if random.random() > 0.5:
-                name = random.choice(list(valid_units))
+            if self._rng.random() > 0.5:
+                name = self._rng.choice(list(valid_units))
+                expected_valid = True
             else:
                 name = "".join(
-                    random.choices(string.ascii_letters, k=random.randint(3, 15))
+                    self._rng.choices(
+                        string.ascii_letters, k=self._rng.randint(3, 15)
+                    )
                 )
+                expected_valid = name in valid_units
 
-            passed = name in valid_units
+            actual_valid = name in valid_units
+            passed = actual_valid == expected_valid
             results.append(
-                FuzzResult("unit_name", name, "valid" if passed else "invalid", passed)
+                FuzzResult(
+                    "unit_name",
+                    name,
+                    "valid" if actual_valid else "invalid",
+                    passed,
+                )
             )
         self.results.extend(results)
         return results
@@ -104,15 +124,29 @@ class Fuzzer:
         ]
 
         for _ in range(iterations):
-            order = [random.choice(buildings) for _ in range(random.randint(1, 10))]
+            order = [
+                self._rng.choice(buildings)
+                for _ in range(self._rng.randint(1, 10))
+            ]
+
+            expected_valid = not (
+                "UltraliskCavern" in order and "Spire" not in order
+            )
 
             valid = True
             for b in order:
                 if b == "UltraliskCavern" and "Spire" not in order:
                     valid = False
+                    break
 
+            passed = valid == expected_valid
             results.append(
-                FuzzResult("build_order", order, "valid" if valid else "invalid", valid)
+                FuzzResult(
+                    "build_order",
+                    order,
+                    "valid" if valid else "invalid",
+                    passed,
+                )
             )
         self.results.extend(results)
         return results

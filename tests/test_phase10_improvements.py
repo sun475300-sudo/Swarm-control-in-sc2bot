@@ -315,8 +315,18 @@ class TestEconomyGasBanking:
             pytest.skip("EconomyManager not available (sc2 dependency)")
 
     def test_gas_overflow_threshold_lowered(self):
-        """Gas overflow threshold should be 1000 (not 3000)"""
-        assert self.economy.gas_overflow_prevention_threshold == 1000
+        """Gas overflow threshold should stay at the latest production value.
+
+        History: 3000 → 1000 (Phase 10) → 800 (further improvement). The
+        threshold has only ever been lowered to react to gas banking faster,
+        so this test simply guards against accidental regressions: it must
+        be ≤ 1000 and > 0.
+        """
+        threshold = self.economy.gas_overflow_prevention_threshold
+        assert 0 < threshold <= 1000, (
+            f"가스 뱅킹 방지 임계값이 비정상적입니다: {threshold}. "
+            "1000 이하여야 가스 과잉 적재 방지가 충분히 빠르게 트리거됩니다."
+        )
 
 
 # ===== 4. IntelManager NYDUSCANAL in Tech Buildings =====

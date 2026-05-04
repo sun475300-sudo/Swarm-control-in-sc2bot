@@ -1125,6 +1125,18 @@ class SecretManager:
             )
             self._fernet = None
             self._use_fernet = False
+        except BaseException as exc:
+            # cryptography 의존성(_cffi_backend, openssl 등)이 깨져 있으면
+            # ImportError 가 아닌 pyo3 PanicException 같은 BaseException 이
+            # 올라올 수 있다. 이 경우에도 안전하게 base64 폴백으로 내려간다.
+            logger.warning(
+                "SecretManager: cryptography 초기화 실패(%s: %s) — "
+                "base64 폴백으로 동작합니다. 의존성을 점검하세요.",
+                type(exc).__name__,
+                exc,
+            )
+            self._fernet = None
+            self._use_fernet = False
 
     def _encrypt_value(self, value: str) -> str:
         """값 암호화 — Bug #7 Fix: Fernet 사용, 미설치 시 base64 폴백"""

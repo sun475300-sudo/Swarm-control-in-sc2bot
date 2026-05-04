@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-04-05T22:00:06.796344",
+  "timestamp": "2026-05-04T15:34:52.548611",
   "total_scenarios": 7,
   "results": [
     {
@@ -15,10 +15,10 @@
         "Zergling",
         "Zergling"
       ],
-      "wins": 62,
-      "losses": 38,
-      "win_rate": 62.0,
-      "avg_duration_ms": 0.0,
+      "wins": 53,
+      "losses": 47,
+      "win_rate": 53.0,
+      "avg_duration_ms": 0.00022172927856445312,
       "details": {
         "synergy": {
           "base_win_rate": 43.934760448521914,
@@ -45,10 +45,10 @@
         "Marine",
         "Marauder"
       ],
-      "wins": 53,
-      "losses": 47,
-      "win_rate": 53.0,
-      "avg_duration_ms": 0.0,
+      "wins": 54,
+      "losses": 46,
+      "win_rate": 54.0,
+      "avg_duration_ms": 0.00016689300537109375,
       "details": {
         "synergy": {
           "base_win_rate": 39.19852602487333,
@@ -76,10 +76,10 @@
         "Probe",
         "Pylon"
       ],
-      "wins": 89,
-      "losses": 11,
-      "win_rate": 89.0,
-      "avg_duration_ms": 0.0,
+      "wins": 92,
+      "losses": 8,
+      "win_rate": 92.0,
+      "avg_duration_ms": 0.00016927719116210938,
       "details": {
         "synergy": {
           "base_win_rate": 92.6953981008035,
@@ -105,10 +105,10 @@
         "Thor",
         "Battlecruiser"
       ],
-      "wins": 55,
-      "losses": 45,
-      "win_rate": 55.00000000000001,
-      "avg_duration_ms": 0.0,
+      "wins": 65,
+      "losses": 35,
+      "win_rate": 65.0,
+      "avg_duration_ms": 0.00018358230590820312,
       "details": {
         "synergy": {
           "base_win_rate": 37.6871524311992,
@@ -135,10 +135,10 @@
         "Marauder",
         "Tank"
       ],
-      "wins": 65,
-      "losses": 35,
-      "win_rate": 65.0,
-      "avg_duration_ms": 0.0,
+      "wins": 64,
+      "losses": 36,
+      "win_rate": 64.0,
+      "avg_duration_ms": 0.000171661376953125,
       "details": {
         "synergy": {
           "base_win_rate": 49.18918918918919,
@@ -165,10 +165,10 @@
         "Zealot",
         "Stalker"
       ],
-      "wins": 57,
-      "losses": 43,
-      "win_rate": 56.99999999999999,
-      "avg_duration_ms": 0.0,
+      "wins": 66,
+      "losses": 34,
+      "win_rate": 66.0,
+      "avg_duration_ms": 0.00016689300537109375,
       "details": {
         "synergy": {
           "base_win_rate": 60.2158273381295,
@@ -195,10 +195,10 @@
         "VoidRay",
         "VoidRay"
       ],
-      "wins": 80,
-      "losses": 20,
-      "win_rate": 80.0,
-      "avg_duration_ms": 0.0,
+      "wins": 81,
+      "losses": 19,
+      "win_rate": 81.0,
+      "avg_duration_ms": 0.00017642974853515625,
       "details": {
         "synergy": {
           "base_win_rate": 62.74664561957379,

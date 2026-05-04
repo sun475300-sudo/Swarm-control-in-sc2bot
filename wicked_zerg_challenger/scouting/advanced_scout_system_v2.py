@@ -31,13 +31,29 @@ except ImportError:
         pass
 
     class UnitTypeId:
-        pass
+        # 정찰/감시 유닛
+        OVERLORD = "OVERLORD"
+        OVERSEER = "OVERSEER"
+        ZERGLING = "ZERGLING"
+        # Changeling 변신수
+        CHANGELING = "CHANGELING"
+        CHANGELINGMARINE = "CHANGELINGMARINE"
+        CHANGELINGMARINESHIELD = "CHANGELINGMARINESHIELD"
+        CHANGELINGZEALOT = "CHANGELINGZEALOT"
+        CHANGELINGZERGLING = "CHANGELINGZERGLING"
+        CHANGELINGZERGLINGWINGS = "CHANGELINGZERGLINGWINGS"
+        # 적 정적 방어 시설
+        BUNKER = "BUNKER"
+        MISSILETURRET = "MISSILETURRET"
+        PHOTONCANNON = "PHOTONCANNON"
+        PLANETARYFORTRESS = "PLANETARYFORTRESS"
+        SPORECRAWLER = "SPORECRAWLER"
 
     class AbilityId:
-        pass
+        SPAWNCHANGELING_SPAWNCHANGELING = "SPAWNCHANGELING_SPAWNCHANGELING"
 
     class UpgradeId:
-        pass
+        OVERLORDSPEED = "OVERLORDSPEED"
 
     class Point2:
         pass

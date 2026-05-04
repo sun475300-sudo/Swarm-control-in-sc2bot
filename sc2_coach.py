@@ -8,6 +8,7 @@ import logging
 import re
 from datetime import datetime
 from pathlib import Path
+from typing import Optional
 
 logger = logging.getLogger("sc2_coach")
 
@@ -108,6 +109,62 @@ class SC2Coach:
                 "category": "economy",
                 "advice": "가스가 과잉 축적되고 있습니다. 뮤탈/울트라 같은 "
                 "가스 집약 유닛 테크로 전환하거나, 일꾼을 가스에서 빼세요.",
+                "severity": "medium",
+            },
+            {
+                "pattern": r"queen.?short|queen.?missing|퀸.?부족|여왕.?부족",
+                "category": "macro",
+                "advice": "퀸 수가 부족합니다. 해처리당 최소 1마리(이상적으로 2마리) "
+                "퀸을 유지해야 인젝트와 방어가 모두 가능합니다.",
+                "severity": "high",
+            },
+            {
+                "pattern": r"no.?anti.?air|no.?aa|대공.?없|anti.?air.?missing",
+                "category": "defense",
+                "advice": "대공 유닛/방어가 없습니다. 하이드라/뮤탈/스포어 크롤러로 "
+                "공중 위협(밴시, 뮤탈, 오라클)에 대비하세요.",
+                "severity": "critical",
+            },
+            {
+                "pattern": r"no.?creep|크립.?없|점막.?없|creep.?missing",
+                "category": "macro",
+                "advice": "크립이 충분히 퍼지지 않았습니다. 점막은 저그의 이동/생산 "
+                "속도와 시야를 모두 제공합니다. 퀸으로 적극적으로 종양을 박으세요.",
+                "severity": "medium",
+            },
+            {
+                "pattern": r"low.?worker|worker.?count|일꾼.?적|일꾼.?수.?부족",
+                "category": "economy",
+                "advice": "일꾼 수가 부족합니다. 베이스당 16(미네랄)+6(가스)=22명을 "
+                "목표로 두 개의 베이스에서는 44명까지 채우세요.",
+                "severity": "high",
+            },
+            {
+                "pattern": r"larva.?starv|larva.?short|라바.?부족|애벌레.?부족",
+                "category": "macro",
+                "advice": "라바가 부족합니다. 인젝트를 빠뜨리고 있거나 추가 해처리가 "
+                "필요합니다. 매크로 해처리(미네랄 라인 옆)를 고려하세요.",
+                "severity": "high",
+            },
+            {
+                "pattern": r"worker.?harass|일꾼.?견제|drone.?lost",
+                "category": "defense",
+                "advice": "일꾼이 견제로 손실되고 있습니다. 본진/앞마당에 스포어/스파인 "
+                "크롤러나 퀸을 배치하고, 위험할 때는 일꾼을 미네랄 라인 안쪽으로 대피.",
+                "severity": "high",
+            },
+            {
+                "pattern": r"tech.?behind|테크.?늦|tech.?slow",
+                "category": "macro",
+                "advice": "테크가 뒤쳐져 있습니다. 상대가 한 단계 위 유닛(레이쓰, 콜로서스)을 "
+                "준비할 때 같은 시점에 라이어/하이브로 전환할 준비가 필요합니다.",
+                "severity": "medium",
+            },
+            {
+                "pattern": r"overextend|over.?commit|무리한.?진격",
+                "category": "army",
+                "advice": "전선을 너무 넓게 펼쳤습니다. 후퇴 경로 없는 전진은 위험합니다. "
+                "거점 확보 후 다음 거점으로 천천히 압박하세요.",
                 "severity": "medium",
             },
         ]
@@ -218,20 +275,29 @@ class SC2Coach:
 
         return advices
 
-    def analyze_bot_log(self) -> list:
-        """프로젝트의 봇 로그 자동 분석
+    def analyze_bot_log(self, log_path: Optional[Path] = None) -> list:
+        """프로젝트의 봇 로그 자동 분석.
+
+        Args:
+            log_path: 분석할 로그 파일 경로. 미지정 시 기본
+                ``wicked_zerg_challenger/logs/bot.log``.
 
         Returns:
             list: 코칭 조언 리스트
         """
         bot_log_path = (
-            self._project_root / "wicked_zerg_challenger" / "logs" / "bot.log"
+            Path(log_path)
+            if log_path is not None
+            else self._project_root
+            / "wicked_zerg_challenger"
+            / "logs"
+            / "bot.log"
         )
         if not bot_log_path.exists():
             return [
                 {
                     "category": "general",
-                    "advice": "봇 로그를 찾을 수 없습니다.",
+                    "advice": f"봇 로그를 찾을 수 없습니다: {bot_log_path}",
                     "severity": "info",
                 }
             ]
