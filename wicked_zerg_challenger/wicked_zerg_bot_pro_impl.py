@@ -1,8 +1,3 @@
-import logging
-
-logger = logging.getLogger("WickedZergBotProImpl")
-
-
 # -*- coding: utf-8 -*-
 """
 WickedZergBotPro Implementation - on_step implementation
@@ -12,6 +7,15 @@ It can be integrated into the existing wicked_zerg_bot_pro.py file,
 or imported and used separately.
 """
 
+import json
+import logging
+import shutil
+import time
+import traceback
+from datetime import datetime
+from pathlib import Path
+from typing import Any, Dict, List, Optional
+
 try:
     from sc2.bot_ai import BotAI
 except ImportError:
@@ -20,20 +24,13 @@ except ImportError:
         pass
 
 
-import json
-import shutil
-import time
-import traceback
-from datetime import datetime
-from pathlib import Path
-from typing import Any, Dict, List, Optional
-
 from blackboard import Blackboard
 from bot_step_integration import BotStepIntegrator
 from difficulty_progression import DifficultyProgression
 from personality_module import PersonalityMode, PersonalityModule
-
 from utils.logger import setup_logger
+
+logger = logging.getLogger("WickedZergBotProImpl")
 
 
 class WickedZergBotProImpl(BotAI):
