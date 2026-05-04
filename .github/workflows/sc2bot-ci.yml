@@ -75,10 +75,15 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt pytest pytest-cov pytest-asyncio
 
-      - name: Run unit tests
-        run: pytest tests/unit -v --cov=. --cov-report=xml --cov-report=term
+      - name: Run wicked_zerg_challenger unit tests
+        # The historical `tests/unit` path was never populated; the real bot
+        # unit tests live in `wicked_zerg_challenger/tests/`. Run them with
+        # coverage and treat the integration test_full_pipeline.py as part
+        # of the same pytest invocation.
+        run: pytest wicked_zerg_challenger/tests -v --cov=. --cov-report=xml --cov-report=term
 
       - name: Run integration tests
+        if: ${{ hashFiles('tests/integration/**/*.py') != '' }}
         run: pytest tests/integration -v --timeout=120
 
       - name: Upload coverage
