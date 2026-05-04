@@ -30,13 +30,19 @@ except ImportError:
     class BotAI:
         pass
 
-    class UnitTypeId:
+    class _StubIdMeta(type):
+        # Allow attribute access (e.g. UnitTypeId.OVERLORD) when sc2 is unavailable
+        # so module import / default-arg evaluation does not crash.
+        def __getattr__(cls, name):  # pragma: no cover - sc2-missing fallback
+            return None
+
+    class UnitTypeId(metaclass=_StubIdMeta):
         pass
 
-    class AbilityId:
+    class AbilityId(metaclass=_StubIdMeta):
         pass
 
-    class UpgradeId:
+    class UpgradeId(metaclass=_StubIdMeta):
         pass
 
     class Point2:
