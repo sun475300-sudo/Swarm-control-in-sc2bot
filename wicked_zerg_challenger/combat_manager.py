@@ -6,7 +6,7 @@ Combat Manager - 전투 관리자
 """
 
 import inspect
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from sc2.ids.unit_typeid import UnitTypeId
@@ -40,25 +40,10 @@ else:
             QUEEN = "QUEEN"
 
 
-from combat.assignment_manager import (
-    assign_unit_to_task,
-    cleanup_assignments,
-    clear_task,
-    count_units_in_task,
-    get_all_active_tasks,
-    get_task_target,
-    get_unassigned_units,
-    get_unit_task,
-    get_units_by_task,
-    set_task_target,
-    unassign_unit,
-)
+from combat.assignment_manager import cleanup_assignments
 from combat.enemy_tracking import (
-    detect_nearby_enemies,
     find_densest_enemy_position,
     get_anti_air_threats,
-    get_closest_enemy,
-    track_enemy_army_composition,
     track_enemy_expansions,
 )
 from combat.initialization import (
@@ -68,16 +53,11 @@ from combat.initialization import (
 )
 from combat.rally_point_calculator import (
     calculate_rally_point,
-    clear_rally_position,
     gather_at_rally_point,
-    get_rally_position,
     is_army_gathered,
-    set_rally_position,
     update_rally_point,
 )
-
-from utils.frame_cache import FrameCache, cached_per_frame
-from utils.logger import get_logger
+from utils.frame_cache import FrameCache
 
 # Import common helpers to reduce code duplication
 try:
