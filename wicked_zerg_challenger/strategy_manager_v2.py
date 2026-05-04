@@ -590,13 +590,41 @@ class StrategyManagerV2(StrategyManager):
             }
         )
 
+        # 군사력 추정에서 제외: 일꾼(공격 가능하지만 군대 아님), 보급/감지/일시 소환물.
+        worker_names = {"SCV", "PROBE", "DRONE", "MULE"}
+        non_army_names = {
+            "LARVA",
+            "EGG",
+            "OVERLORD",
+            "OVERLORDTRANSPORT",
+            "OVERLORDCOCOON",
+            "TRANSPORTOVERLORDCOCOON",
+            "OVERSEER",
+            "OVERSEERSIEGEMODE",
+            "BROODLING",
+            "BROODLINGESCORT",
+            "CHANGELING",
+            "CHANGELINGZEALOT",
+            "CHANGELINGMARINE",
+            "CHANGELINGMARINESHIELD",
+            "CHANGELINGZERGLING",
+            "CHANGELINGZERGLINGWINGS",
+            "INFESTEDTERRAN",
+            "LOCUSTMP",
+            "LOCUSTMPFLYING",
+            "AUTOTURRET",
+            "POINTDEFENSEDRONE",
+            "INTERCEPTOR",
+        }
+
         for unit in self.bot.enemy_units:
             try:
-                if unit.can_attack:
-                    unit_name = unit.type_id.name.upper()
-                    supply += supply_costs.get(
-                        unit_name, supply_costs.get("DEFAULT", 2)
-                    )
+                if not unit.can_attack:
+                    continue
+                unit_name = unit.type_id.name.upper()
+                if unit_name in worker_names or unit_name in non_army_names:
+                    continue
+                supply += supply_costs.get(unit_name, supply_costs.get("DEFAULT", 2))
             except AttributeError:
                 continue
 

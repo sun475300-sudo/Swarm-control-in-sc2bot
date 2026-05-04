@@ -281,6 +281,60 @@ class TestStrategyScoring(unittest.TestCase):
         self.assertLessEqual(score, 1.0)
 
 
+class TestEnemyArmySupplyExclusion(unittest.TestCase):
+    """``_estimate_enemy_army_supply``는 일꾼/보급/일시 유닛을 제외해야 한다."""
+
+    def setUp(self):
+        self.bot = MockBot()
+        self.manager = StrategyManagerV2(self.bot)
+
+    def _make_unit(self, name: str, can_attack: bool = True):
+        u = Mock()
+        tid = Mock()
+        tid.name = name
+        u.type_id = tid
+        u.can_attack = can_attack
+        return u
+
+    def test_workers_excluded_from_army_supply(self):
+        """30기 일꾼은 군대 supply에 포함되지 않아야 한다."""
+        # min_supply=10 기본값 때문에 ROACH 0기일 때 10이 floor.
+        units = [self._make_unit("DRONE") for _ in range(30)]
+        self.bot.enemy_units = units
+        # 다른 군사 유닛이 없으면 min_supply만 반환
+        self.assertEqual(self.manager._estimate_enemy_army_supply(), 10)
+
+    def test_only_combat_units_counted(self):
+        units = [
+            self._make_unit("DRONE"),
+            self._make_unit("DRONE"),
+            self._make_unit("OVERLORD", can_attack=False),
+            self._make_unit("LARVA", can_attack=False),
+            self._make_unit("ROACH"),  # 2 supply
+            self._make_unit("ROACH"),  # 2 supply
+            self._make_unit("HYDRALISK"),  # 2 supply
+        ]
+        self.bot.enemy_units = units
+        # 6 supply (2+2+2) + min_supply=10 floor → 10
+        self.assertEqual(self.manager._estimate_enemy_army_supply(), 10)
+
+    def test_strong_army_above_min_supply(self):
+        units = [self._make_unit("ULTRALISK") for _ in range(5)]  # 5 * 6 = 30
+        self.bot.enemy_units = units
+        self.assertEqual(self.manager._estimate_enemy_army_supply(), 30)
+
+    def test_broodling_changeling_excluded(self):
+        units = [
+            self._make_unit("BROODLING"),
+            self._make_unit("CHANGELINGZERGLING"),
+            self._make_unit("LOCUSTMP"),
+            self._make_unit("AUTOTURRET"),
+        ]
+        self.bot.enemy_units = units
+        # 모두 비전투 화이트리스트, 0 supply → min_supply=10 floor
+        self.assertEqual(self.manager._estimate_enemy_army_supply(), 10)
+
+
 class TestMultiStrategyExecution(unittest.TestCase):
     """Test multi-strategy execution system"""
 
