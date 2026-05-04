@@ -245,6 +245,23 @@ class TestEconomyManager(unittest.TestCase):
         # Blackboard is None in setUp
         self.assertIsNone(self.manager.blackboard)
 
+    # ==================== Tunable Parameter Regression Tests ====================
+    #
+    # These guard the "phase improvement" tunables from accidental rollback.
+    # If a tunable is intentionally re-tuned, update the expected value here.
+
+    def test_gas_overflow_prevention_threshold_value(self):
+        """Phase 16/18: 800 으로 하향된 가스 뱅킹 방지 임계값."""
+        self.assertEqual(self.manager.gas_overflow_prevention_threshold, 800)
+
+    def test_gas_worker_adjustment_interval_value(self):
+        """Phase 18: 110 → 33 frame 으로 빨라진 가스 일꾼 재배치 주기."""
+        self.assertEqual(self.manager.gas_worker_adjustment_interval, 33)
+
+    def test_dynamic_gas_workers_enabled_by_default(self):
+        """Dynamic gas worker scheduling 는 기본 ON."""
+        self.assertTrue(self.manager.dynamic_gas_workers_enabled)
+
     # ==================== Helper Method Tests ====================
 
     def test_early_split_done_flag_initialization(self):
