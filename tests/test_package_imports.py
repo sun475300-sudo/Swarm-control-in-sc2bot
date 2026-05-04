@@ -117,6 +117,38 @@ def test_check_proxy_safe_to_import() -> None:
     assert callable(getattr(mod, "main", None))
 
 
+def test_run_py_imports_against_current_burnysc2() -> None:
+    """The AI Arena entry point ``run.py`` must import on the installed
+    burnysc2.  burnysc2 renamed ``ConnectionAlreadyClosed`` →
+    ``ConnectionAlreadyClosedError`` in newer releases; a hard-coded import
+    of the old name silently broke ladder runs.  ``run.py`` now does a
+    try/except import — this test pins that contract.
+    """
+    import importlib.util
+    import sys
+    from pathlib import Path
+
+    repo_root = Path(__file__).parent.parent
+    run_path = repo_root / "run.py"
+    assert run_path.is_file(), "run.py missing at repo root"
+
+    # We don't want to execute main(); just check the module imports cleanly.
+    # Use a spec-based import so we don't pollute sys.modules with 'run'.
+    spec = importlib.util.spec_from_file_location("_run_smoke_import", run_path)
+    assert spec is not None and spec.loader is not None
+    mod = importlib.util.module_from_spec(spec)
+    sys.modules.setdefault("_run_smoke_import", mod)
+    try:
+        spec.loader.exec_module(mod)
+    except SystemExit:
+        # Some CI invocations may sys.exit if no args; that's fine — import passed.
+        pass
+    finally:
+        sys.modules.pop("_run_smoke_import", None)
+    # If we got here without ImportError, the burnysc2 alias works.
+    assert callable(getattr(mod, "main", None))
+
+
 # ---------------------------------------------------------------------------
 # Duplicate-method guard. Python silently keeps only the *last* definition
 # when the same method name appears twice in a class body, which has hidden

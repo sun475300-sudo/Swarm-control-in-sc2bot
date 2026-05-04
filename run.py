@@ -26,7 +26,15 @@ from sc2.data import Race
 from sc2.main import _play_game
 from sc2.player import Bot
 from sc2.portconfig import Portconfig
-from sc2.protocol import ConnectionAlreadyClosed
+
+# burnysc2 renamed `ConnectionAlreadyClosed` → `ConnectionAlreadyClosedError`
+# in newer releases. Support both names so the AI Arena entry point keeps
+# importing on whichever burnysc2 the runner has installed.
+try:
+    from sc2.protocol import ConnectionAlreadyClosedError as ConnectionAlreadyClosed
+except ImportError:  # pragma: no cover - older burnysc2
+    from sc2.protocol import ConnectionAlreadyClosed  # type: ignore[no-redef]
+
 from wicked_zerg_bot_pro_impl import WickedZergBotProImpl
 
 logger = logging.getLogger(__name__)
