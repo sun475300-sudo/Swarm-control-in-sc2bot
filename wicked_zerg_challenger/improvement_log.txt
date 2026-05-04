@@ -1,0 +1,4 @@
+ 전투 로직 개선 완료 (마이크로 컨트롤 수준 상향)
+Economy: Optimal drone count increased for VeryHard
+Strategy: Swarm Host transition priority increased
+Mon May  4 11:10:51 EDT 2026
