@@ -14,7 +14,7 @@ Features:
 - 타이밍 윈도우 감지
 """
 
-from typing import Dict, Optional
+from typing import Optional
 
 from utils.logger import get_logger
 

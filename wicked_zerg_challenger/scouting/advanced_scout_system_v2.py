@@ -14,7 +14,7 @@ Phase 10 기반, Phase 22 고도화:
 """
 
 import math
-from typing import Dict, List, Optional, Set, Tuple
+from typing import Dict, List, Optional, Set
 
 from utils.logger import get_logger
 
@@ -30,13 +30,19 @@ except ImportError:
     class BotAI:
         pass
 
-    class UnitTypeId:
+    class _StubIdMeta(type):
+        # Allow attribute access (e.g. UnitTypeId.OVERLORD) when sc2 is unavailable
+        # so module import / default-arg evaluation does not crash.
+        def __getattr__(cls, name):  # pragma: no cover - sc2-missing fallback
+            return None
+
+    class UnitTypeId(metaclass=_StubIdMeta):
         pass
 
-    class AbilityId:
+    class AbilityId(metaclass=_StubIdMeta):
         pass
 
-    class UpgradeId:
+    class UpgradeId(metaclass=_StubIdMeta):
         pass
 
     class Point2:
@@ -46,7 +52,7 @@ except ImportError:
         pass
 
 
-from unit_authority_manager import AuthorityLevel, UnitAuthorityManager
+from unit_authority_manager import AuthorityLevel
 
 # 백과사전 임포트 (상성 데이터 활용)
 try:

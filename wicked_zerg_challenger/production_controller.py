@@ -233,7 +233,7 @@ class ProductionController:
                 if self.bot.time < 300:
                     self.logger.info(f"{unit_type.name} requested by {requester}")
 
-            except Exception as e:
+            except Exception:
                 self.production_failures += 1
                 break
 
@@ -292,7 +292,7 @@ class ProductionController:
             self.bot.do(larvae.first.train(UnitTypeId.OVERLORD))
             self.logger.info(f"Auto Overlord (supply: {supply_left}/{supply_cap})")
 
-        except Exception as e:
+        except Exception:
             self.production_failures += 1
 
     # ========== ★ Phase 13: 비율 기반 군대 자동 생산 ★ ==========

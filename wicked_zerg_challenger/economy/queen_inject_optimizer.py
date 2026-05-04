@@ -18,7 +18,7 @@ Features:
 
 from collections import defaultdict
 from enum import Enum
-from typing import Dict, Optional, Set, Tuple
+from typing import Dict, Set
 
 from utils.logger import get_logger
 
@@ -575,7 +575,6 @@ class QueenInjectOptimizer:
             # ★ 예상 인젝트 시간 체크 ★
             if hatchery_tag in self.expected_inject_times:
                 expected_time = self.expected_inject_times[hatchery_tag]
-                actual_time = self.inject_cooldowns.get(hatchery_tag, 0)
 
                 # 예상 시간이 지났는데 인젝트가 안 됐으면 미스
                 if game_time >= expected_time + self.inject_miss_threshold:

@@ -14,7 +14,7 @@ Macro Cycle Manager - 매크로 사이클 매니저 (#108)
 
 import logging
 from enum import Enum
-from typing import Any, Dict, List, Optional, Set, Tuple
+from typing import Any, Dict, List, Set
 
 logger = logging.getLogger("MacroCycle")
 

@@ -9,7 +9,7 @@ Features:
 4. Escape: Burrow move away from threats
 """
 
-from typing import Dict, List, Optional, Set
+from typing import Dict, Optional, Set
 
 try:
     from sc2.ids.ability_id import AbilityId
@@ -253,7 +253,7 @@ class InfestorTacticsController:
                 continue
 
             # ★ INFILTRATION MODE: High energy, target available ★
-            if energy >= self.energy_threshold and not unit_tag in self.infiltrating:
+            if energy >= self.energy_threshold and unit_tag not in self.infiltrating:
                 infiltration_target = self.find_infiltration_target(bot)
                 if infiltration_target:
                     # Start infiltration

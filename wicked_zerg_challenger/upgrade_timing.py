@@ -15,7 +15,7 @@ Upgrade Timing Manager - 업그레이드 타이밍 관리자 (#109)
 
 import logging
 from enum import Enum
-from typing import Any, Dict, List, Optional, Set, Tuple
+from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger("UpgradeTiming")
 
