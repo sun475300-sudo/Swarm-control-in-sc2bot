@@ -13,10 +13,30 @@ from unittest.mock import MagicMock
 
 import pytest
 
-# 프로젝트 루트를 sys.path에 추가
+# 프로젝트 루트와 wicked_zerg_challenger 디렉토리를 sys.path에 추가.
+# wicked_zerg_challenger 내부 모듈은 `from config.x`, `from utils.x`,
+# `from local_training.x` 형태로 임포트하므로 봇 디렉토리 자체가 sys.path에
+# 있어야 단독 테스트 실행에서도 임포트가 성공한다. 루트의 `utils/`보다
+# 우선되도록 봇 경로를 먼저(인덱스 0) 위치시킨다.
 PROJECT_ROOT = Path(__file__).parent.parent
+WZC_ROOT = PROJECT_ROOT / "wicked_zerg_challenger"
+
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
+if WZC_ROOT.exists() and str(WZC_ROOT) not in sys.path:
+    sys.path.insert(0, str(WZC_ROOT))
+
+# pytest는 conftest 로드 후 PROJECT_ROOT를 sys.path[0]으로 끌어올린다.
+# 그러면 PROJECT_ROOT/utils/ 가 wicked_zerg_challenger/utils/ 를 가려
+# `from utils.logger import get_logger` 가 ImportError를 일으킨다.
+# conftest 시점에 봇의 utils 패키지를 사전 import해 sys.modules에 못 박아
+# 이후 모든 `utils.*` 요청이 봇 패키지로 해결되도록 한다.
+if WZC_ROOT.exists():
+    try:
+        import utils as _wzc_utils  # noqa: F401  (wicked_zerg_challenger/utils/__init__.py)
+        import utils.logger as _wzc_utils_logger  # noqa: F401
+    except Exception:  # noqa: BLE001 — utils 누락 환경에서는 그냥 진행
+        pass
 
 
 # ═══════════════════════════════════════════════════════

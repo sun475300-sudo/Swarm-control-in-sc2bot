@@ -194,6 +194,54 @@ class TestEconomyManagerInitialization:
         )  # Phase 16: 600으로 낮춤 (더 빠른 매크로 해처리)
 
 
+class TestTunedParameterRegressions:
+    """이전 사이클에서 점진 튜닝된 핵심 파라미터의 회귀 방지.
+
+    각 단언에는 (1) 안전 상한/하한과 (2) 현재 목표값 두 가지를 함께 명시한다.
+    하한/상한은 회귀를 폭넓게 차단하고, 정확값 단언은 의도하지 않은 변경을 즉시
+    드러낸다. 의도된 변경 시에는 두 값 모두 갱신해야 한다.
+    """
+
+    def setup_method(self):
+        self.bot = MockBot()
+        self.manager = EconomyManager(self.bot)
+
+    def test_gas_overflow_threshold(self):
+        """가스 뱅킹 방지 임계값 — 800 (3000→1000→800 으로 강화)"""
+        assert self.manager.gas_overflow_prevention_threshold <= 1000
+        assert self.manager.gas_overflow_prevention_threshold == 800
+
+    def test_gas_worker_adjustment_interval(self):
+        """가스 일꾼 조정 주기 — 33 프레임(~1.5초); 110→33로 단축"""
+        assert self.manager.gas_worker_adjustment_interval <= 110
+        assert self.manager.gas_worker_adjustment_interval == 33
+
+    def test_macro_hatchery_threshold_in_band(self):
+        """매크로 해처리 미네랄 임계값 — 550 (config) 또는 600 (default)"""
+        assert 300 <= self.manager.macro_hatchery_mineral_threshold <= 1000
+        assert self.manager.macro_hatchery_mineral_threshold in (550, 600)
+
+    def test_expansion_cooldown(self):
+        """확장 쿨다운 — 3.0초 (6초→3초로 단축, 확장 타이밍 보장)"""
+        assert self.manager._expansion_cooldown <= 6.0
+        assert self.manager._expansion_cooldown == 3.0
+
+    def test_expansion_block_timings(self):
+        """일꾼 확장 방해 — 50초 출발, 45초 지속"""
+        assert self.manager.expansion_block_start_time == 50
+        assert self.manager.expansion_block_duration == 45
+
+    def test_gas_boost_duration(self):
+        """가스 부스트 — 120초 (2분)"""
+        assert self.manager.gas_boost_duration == 120
+
+    def test_gas_timing_by_race_present(self):
+        """종족별 가스 타이밍 룩업 테이블 누락 방지"""
+        for race in ("Terran", "Protoss", "Zerg", "Random", "Unknown"):
+            assert race in self.manager.gas_timing_by_race
+            assert 0 < self.manager.gas_timing_by_race[race] <= 200
+
+
 class TestEmergencyMode:
     """테스트 2: 긴급 모드 설정"""
 
