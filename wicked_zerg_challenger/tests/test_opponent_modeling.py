@@ -297,7 +297,7 @@ class TestOpponentModel(unittest.TestCase):
         self.assertEqual(model.dominant_style, OpponentStyle.AGGRESSIVE)
 
 
-class TestOpponentModeling(unittest.TestCase):
+class TestOpponentModeling(unittest.IsolatedAsyncioTestCase):
     """Test suite for OpponentModeling system"""
 
     def setUp(self):
@@ -340,14 +340,14 @@ class TestOpponentModeling(unittest.TestCase):
         """Test opponent modeling system initialization"""
         self.assertIsNotNone(self.modeling)
         self.assertEqual(len(self.modeling.opponent_models), 0)
-        self.assertIsNone(self.modeling.current_opponent_id)
+        self.assertIsNone(self.modeling.current_opponent)
 
     async def test_on_start_new_opponent(self):
         """Test game start with new opponent"""
         await self.modeling.on_start()
 
-        self.assertIsNotNone(self.modeling.current_opponent_id)
-        self.assertEqual(self.modeling.current_opponent_id, "opponent_Zerg")
+        self.assertIsNotNone(self.modeling.current_opponent)
+        self.assertEqual(self.modeling.current_opponent, "opponent_Zerg")
         self.assertIn("opponent_Zerg", self.modeling.opponent_models)
 
     async def test_on_start_known_opponent(self):
@@ -361,7 +361,7 @@ class TestOpponentModeling(unittest.TestCase):
 
         await self.modeling.on_start()
 
-        self.assertEqual(self.modeling.current_opponent_id, "opponent_Zerg")
+        self.assertEqual(self.modeling.current_opponent, "opponent_Zerg")
 
     # ==================== Signal Detection Tests ====================
 

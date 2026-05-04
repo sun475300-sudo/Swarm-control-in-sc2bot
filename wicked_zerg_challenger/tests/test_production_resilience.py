@@ -27,7 +27,7 @@ from sc2.ids.unit_typeid import UnitTypeId
 from sc2.position import Point2
 
 
-class TestProductionResilience(unittest.TestCase):
+class TestProductionResilience(unittest.IsolatedAsyncioTestCase):
     """Test suite for ProductionResilience"""
 
     def setUp(self):
@@ -114,50 +114,68 @@ class TestProductionResilience(unittest.TestCase):
 
     # ==================== Counter Unit Selection Tests ====================
 
-    async def test_get_counter_unit_terran_marine(self):
-        """Test counter selection against Terran marines"""
-        # Mock enemy composition with marines
-        mock_marine = Mock()
-        mock_marine.type_id = UnitTypeId.MARINE
-        self.bot.enemy_units = [mock_marine]
+    def _make_enemy_unit(self, unit_type_id):
+        u = Mock()
+        u.type_id = unit_type_id
+        return u
 
-        # Should recommend banelings against marines
-        result = await self.resilience._get_counter_unit("Terran")
+    def _stub_structures_for_counter(self):
+        # _get_counter_unit checks bot.structures(BANELINGNEST).ready.exists and
+        # bot.structures(SPAWNINGPOOL).ready.exists. Provide a callable mock.
+        nest_ready = Mock()
+        nest_ready.exists = False
+        nest = Mock()
+        nest.ready = nest_ready
 
-        # Result could be BANELING, ROACH, or MUTALISK (all valid counters)
-        valid_counters = [
-            UnitTypeId.BANELING,
-            UnitTypeId.ROACH,
-            UnitTypeId.MUTALISK,
-            UnitTypeId.ZERGLING,
-        ]
-        self.assertIn(result, valid_counters)
+        pool_ready = Mock()
+        pool_ready.exists = True
+        pool = Mock()
+        pool.ready = pool_ready
 
-    async def test_get_counter_unit_protoss(self):
-        """Test counter selection against Protoss"""
-        result = await self.resilience._get_counter_unit("Protoss")
+        def structures(type_id):
+            if type_id == UnitTypeId.SPAWNINGPOOL:
+                return pool
+            return nest
 
-        # Common Protoss counters
-        valid_counters = [
-            UnitTypeId.ROACH,
-            UnitTypeId.HYDRALISK,
-            UnitTypeId.MUTALISK,
-            UnitTypeId.ZERGLING,
-        ]
-        self.assertIn(result, valid_counters)
+        self.bot.structures = Mock(side_effect=structures)
 
-    async def test_get_counter_unit_zerg(self):
-        """Test counter selection against Zerg"""
-        result = await self.resilience._get_counter_unit("Zerg")
+    def test_get_counter_unit_terran_marine(self):
+        """Counter selection against Terran marines (light infantry)."""
+        self._stub_structures_for_counter()
+        enemy_units = [self._make_enemy_unit(UnitTypeId.MARINE)]
+        # Roach Warren ready; expect ROACH for light_infantry without baneling nest.
+        result = self.resilience._get_counter_unit(
+            enemy_units, has_roach_warren=True, has_hydra_den=False, has_spire=False
+        )
+        self.assertEqual(result, UnitTypeId.ROACH)
 
-        # Common Zerg counters
-        valid_counters = [
-            UnitTypeId.ROACH,
-            UnitTypeId.MUTALISK,
-            UnitTypeId.ZERGLING,
-            UnitTypeId.HYDRALISK,
-        ]
-        self.assertIn(result, valid_counters)
+    def test_get_counter_unit_protoss(self):
+        """Counter selection against Protoss armored ground (Stalker)."""
+        self._stub_structures_for_counter()
+        enemy_units = [self._make_enemy_unit(UnitTypeId.STALKER)]
+        # Hydra den ready -> HYDRALISK preferred for armored_ground.
+        result = self.resilience._get_counter_unit(
+            enemy_units, has_roach_warren=True, has_hydra_den=True, has_spire=False
+        )
+        self.assertEqual(result, UnitTypeId.HYDRALISK)
+
+    def test_get_counter_unit_zerg(self):
+        """Counter selection against Zerg air (Mutalisk)."""
+        self._stub_structures_for_counter()
+        enemy_units = [self._make_enemy_unit(UnitTypeId.MUTALISK)]
+        # Hydra den ready -> HYDRALISK is preferred anti-air; spire fallback otherwise.
+        result = self.resilience._get_counter_unit(
+            enemy_units, has_roach_warren=False, has_hydra_den=True, has_spire=True
+        )
+        self.assertEqual(result, UnitTypeId.HYDRALISK)
+
+    def test_get_counter_unit_no_enemies(self):
+        """Counter selection returns None when no enemies are detected."""
+        self._stub_structures_for_counter()
+        result = self.resilience._get_counter_unit(
+            [], has_roach_warren=True, has_hydra_den=True, has_spire=True
+        )
+        self.assertIsNone(result)
 
     # ==================== Resource Management Tests ====================
 
@@ -236,36 +254,5 @@ class TestProductionResilience(unittest.TestCase):
         self.assertIsInstance(PLACEMENT_HELPER_AVAILABLE, bool)
 
 
-# Run async tests
 if __name__ == "__main__":
-    # Patch asyncio for unittest
-    import asyncio
-
-    # Get all test methods
-    loader = unittest.TestLoader()
-    suite = loader.loadTestsFromTestCase(TestProductionResilience)
-
-    # Run tests
-    runner = unittest.TextTestRunner(verbosity=2)
-
-    # Wrap async tests
-    for test_group in suite:
-        for test in test_group:
-            test_method_name = test._testMethodName
-            test_method = getattr(test, test_method_name)
-
-            # Check if it's async
-            if asyncio.iscoroutinefunction(test_method):
-                # Wrap it
-                def make_sync_wrapper(async_func):
-                    def sync_wrapper(self):
-                        loop = asyncio.get_event_loop()
-                        return loop.run_until_complete(async_func(self))
-
-                    return sync_wrapper
-
-                setattr(
-                    test.__class__, test_method_name, make_sync_wrapper(test_method)
-                )
-
-    runner.run(suite)
+    unittest.main()
