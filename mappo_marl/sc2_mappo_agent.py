@@ -44,6 +44,23 @@ try:
 except ImportError:
     HAS_TORCH = False
 
+    class _TorchStubModule:
+        def __init__(self, *args, **kwargs):
+            raise RuntimeError(
+                "PyTorch is required for this class but is not installed."
+            )
+
+    class _NnStub:
+        Module = _TorchStubModule
+
+        def __getattr__(self, name):
+            return _TorchStubModule
+
+    nn = _NnStub()  # type: ignore
+    torch = None  # type: ignore
+    optim = None  # type: ignore
+    Categorical = None  # type: ignore
+
 # ===================================================================
 # NumPy fallback helpers
 # ===================================================================

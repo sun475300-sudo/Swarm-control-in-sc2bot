@@ -58,7 +58,23 @@ try:
 
     _TORCH_AVAILABLE = True
 except ImportError:
-    pass
+
+    class _TorchStubModule:
+        def __init__(self, *args, **kwargs):
+            raise RuntimeError(
+                "PyTorch is required for this class but is not installed."
+            )
+
+    class _NnStub:
+        Module = _TorchStubModule
+
+        def __getattr__(self, name):
+            return _TorchStubModule
+
+    nn = _NnStub()  # type: ignore
+    torch = None  # type: ignore
+    F = None  # type: ignore
+    optim = None  # type: ignore
 
 # ---------------------------------------------------------------------------
 # SC2 Zerg unit type identifiers
