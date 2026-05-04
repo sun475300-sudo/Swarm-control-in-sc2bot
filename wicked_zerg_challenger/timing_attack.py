@@ -88,6 +88,7 @@ class AttackPlan:
         """
         self.timing = timing
         self.start_time = start_time
+        self.last_update_time = start_time
         self.phase = AttackPhase.LAUNCHING
         self.army_supply_at_start: int = 0
         self.current_army_supply: int = 0
@@ -96,10 +97,22 @@ class AttackPlan:
         self.damage_dealt: float = 0.0
         self.target_position: Optional[Tuple[float, float]] = None
 
+    def update(self, current_time: float) -> None:
+        """공격 진행 시간 갱신 (caller가 매 tick마다 호출)."""
+        if current_time >= self.start_time:
+            self.last_update_time = current_time
+
     @property
     def duration(self) -> float:
-        """공격 경과 시간"""
-        return 0.0  # 실제 구현에서는 현재 시간 - 시작 시간
+        """공격 개시 후 경과 시간 (초). ``update`` 호출 누적치 사용."""
+        return max(0.0, self.last_update_time - self.start_time)
+
+    def is_timed_out(self) -> bool:
+        """타이밍 윈도우의 ``max_time``을 초과했는지 판단."""
+        max_time = self.timing.max_time
+        if max_time <= 0:
+            return False
+        return self.duration >= max_time
 
     def is_successful(self) -> bool:
         """공격 성공 여부 판단"""

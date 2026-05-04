@@ -590,13 +590,41 @@ class StrategyManagerV2(StrategyManager):
             }
         )
 
+        # 군사력 추정에서 제외: 일꾼(공격 가능하지만 군대 아님), 보급/감지/일시 소환물.
+        worker_names = {"SCV", "PROBE", "DRONE", "MULE"}
+        non_army_names = {
+            "LARVA",
+            "EGG",
+            "OVERLORD",
+            "OVERLORDTRANSPORT",
+            "OVERLORDCOCOON",
+            "TRANSPORTOVERLORDCOCOON",
+            "OVERSEER",
+            "OVERSEERSIEGEMODE",
+            "BROODLING",
+            "BROODLINGESCORT",
+            "CHANGELING",
+            "CHANGELINGZEALOT",
+            "CHANGELINGMARINE",
+            "CHANGELINGMARINESHIELD",
+            "CHANGELINGZERGLING",
+            "CHANGELINGZERGLINGWINGS",
+            "INFESTEDTERRAN",
+            "LOCUSTMP",
+            "LOCUSTMPFLYING",
+            "AUTOTURRET",
+            "POINTDEFENSEDRONE",
+            "INTERCEPTOR",
+        }
+
         for unit in self.bot.enemy_units:
             try:
-                if unit.can_attack:
-                    unit_name = unit.type_id.name.upper()
-                    supply += supply_costs.get(
-                        unit_name, supply_costs.get("DEFAULT", 2)
-                    )
+                if not unit.can_attack:
+                    continue
+                unit_name = unit.type_id.name.upper()
+                if unit_name in worker_names or unit_name in non_army_names:
+                    continue
+                supply += supply_costs.get(unit_name, supply_costs.get("DEFAULT", 2))
             except AttributeError:
                 continue
 
@@ -1690,29 +1718,38 @@ class StrategyManagerV2(StrategyManager):
 
         군대 교환비, 경제 성장률, 테크 달성도를 종합 평가하여 0.0~1.0 점수를 반환합니다.
         """
+
+        def _safe_num(value, default: float = 0.0) -> float:
+            """None/non-numeric을 안전하게 0으로 강제 (Mock 환경 보호)."""
+            if value is None:
+                return default
+            try:
+                return float(value)
+            except (TypeError, ValueError):
+                return default
+
         score = 0.0
         factors = 0
 
         # 1) 군대 교환비 — 아군 vs 적군 서플라이
-        our_army = getattr(self.bot, "supply_army", 0)
-        enemy_army = self._estimate_enemy_army()
-        if our_army + enemy_army > 0:
-            army_ratio = our_army / max(our_army + enemy_army, 1)
-            score += army_ratio
+        our_army = _safe_num(getattr(self.bot, "supply_army", 0))
+        enemy_army = _safe_num(self._estimate_enemy_army_supply())
+        total_army = our_army + enemy_army
+        if total_army > 0:
+            score += our_army / total_army
             factors += 1
 
         # 2) 경제 성장률 — 일꾼 수 / 66 최적
-        workers = self._get_worker_count()
-        worker_score = min(workers / 66.0, 1.0)
-        score += worker_score
+        workers = _safe_num(self._count_workers())
+        score += min(workers / 66.0, 1.0)
         factors += 1
 
         # 3) 테크 달성도 — 기지 수 + 업그레이드
-        bases = 1
-        if hasattr(self.bot, "townhalls"):
-            bases = self.bot.townhalls.amount
-        tech_score = min(bases / 4.0, 1.0)
-        score += tech_score
+        bases = 1.0
+        townhalls = getattr(self.bot, "townhalls", None)
+        if townhalls is not None:
+            bases = _safe_num(getattr(townhalls, "amount", 1), default=1.0)
+        score += min(bases / 4.0, 1.0)
         factors += 1
 
         return round(score / max(factors, 1), 3)
@@ -1778,7 +1815,7 @@ class StrategyManagerV2(StrategyManager):
         tech_pref = "unknown"
         confidence = 0.0
 
-        enemy_army_supply = self._estimate_enemy_army()
+        enemy_army_supply = self._estimate_enemy_army_supply()
         game_time = getattr(self.bot, "time", 0.0)
 
         if game_time > 0:

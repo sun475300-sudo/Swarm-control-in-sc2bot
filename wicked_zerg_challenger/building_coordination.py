@@ -14,7 +14,13 @@ Building Coordination - 건물 중복 방지 시스템
 
 from typing import Dict, Optional, Set
 
-from sc2.ids.unit_typeid import UnitTypeId
+try:
+    from sc2.ids.unit_typeid import UnitTypeId
+except ImportError:  # pragma: no cover - sc2 optional in test envs
+
+    class UnitTypeId:  # type: ignore[no-redef]
+        pass
+
 
 from utils.logger import get_logger
 

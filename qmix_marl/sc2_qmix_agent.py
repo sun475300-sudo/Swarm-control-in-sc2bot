@@ -46,6 +46,21 @@ try:
 except ImportError:
     HAS_TORCH = False
 
+    class _NnStub:
+        """Stub so module-level ``class X(nn.Module)`` definitions don't
+        crash when PyTorch is unavailable. The real torch classes are
+        only constructed when ``HAS_TORCH`` is True at runtime."""
+
+        Module = object
+
+        def __getattr__(self, _name):  # pragma: no cover - never called
+            raise RuntimeError("PyTorch not installed; torch backend disabled")
+
+    nn = _NnStub()  # type: ignore[assignment]
+    torch = None  # type: ignore[assignment]
+    F = None  # type: ignore[assignment]
+    optim = None  # type: ignore[assignment]
+
 # ===================================================================
 # NumPy fallback primitives
 # ===================================================================

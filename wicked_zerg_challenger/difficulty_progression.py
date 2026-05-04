@@ -13,7 +13,23 @@ import logging
 from pathlib import Path
 from typing import Dict, Optional
 
-from sc2.data import Difficulty, Race
+try:
+    from sc2.data import Difficulty, Race
+except ImportError:  # pragma: no cover - sc2 optional in test envs
+
+    class _StubEnumMeta(type):
+        def __getattr__(cls, _name):
+            return cls
+
+        def __getitem__(cls, _name):
+            return cls
+
+    class Difficulty(metaclass=_StubEnumMeta):  # type: ignore[no-redef]
+        pass
+
+    class Race(metaclass=_StubEnumMeta):  # type: ignore[no-redef]
+        pass
+
 
 logger = logging.getLogger("DifficultyProgression")
 

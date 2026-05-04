@@ -11,9 +11,25 @@ Hive Tech Maximizer - 군락 이후 고급 기술 극대화
 
 from typing import Dict, Set
 
-from sc2.ids.ability_id import AbilityId
-from sc2.ids.unit_typeid import UnitTypeId
-from sc2.ids.upgrade_id import UpgradeId
+try:
+    from sc2.ids.ability_id import AbilityId
+    from sc2.ids.unit_typeid import UnitTypeId
+    from sc2.ids.upgrade_id import UpgradeId
+except ImportError:  # pragma: no cover - sc2 optional in test envs
+
+    class _StubIdMeta(type):
+        def __getattr__(cls, _name):
+            return cls
+
+    class AbilityId(metaclass=_StubIdMeta):  # type: ignore[no-redef]
+        pass
+
+    class UnitTypeId(metaclass=_StubIdMeta):  # type: ignore[no-redef]
+        pass
+
+    class UpgradeId(metaclass=_StubIdMeta):  # type: ignore[no-redef]
+        pass
+
 
 from utils.logger import get_logger
 

@@ -181,19 +181,47 @@ class IntelManager:
             "ORACLE": 3,
             "TEMPEST": 4,
         }
-        worker_names = {"SCV", "PROBE", "DRONE"}
+        worker_names = {"SCV", "PROBE", "DRONE", "MULE"}
+        # 적 군사력에서 제외 (래바, 알, 보급/감지 유닛, 일시 소환물 등)
+        non_army_names = {
+            "LARVA",
+            "EGG",
+            "OVERLORD",
+            "OVERLORDTRANSPORT",
+            "OVERLORDCOCOON",
+            "TRANSPORTOVERLORDCOCOON",
+            "OVERSEER",
+            "OVERSEERSIEGEMODE",
+            "BROODLING",
+            "BROODLINGESCORT",
+            "CHANGELING",
+            "CHANGELINGZEALOT",
+            "CHANGELINGMARINE",
+            "CHANGELINGMARINESHIELD",
+            "CHANGELINGZERGLING",
+            "CHANGELINGZERGLINGWINGS",
+            "INFESTEDTERRAN",
+            "LOCUSTMP",
+            "LOCUSTMPFLYING",
+            "AUTOTURRET",
+            "POINTDEFENSEDRONE",
+            "INTERCEPTOR",
+        }
         for unit in enemy_units:
             type_name = getattr(unit.type_id, "name", str(unit.type_id))
             self.enemy_unit_counts[type_name] = (
                 self.enemy_unit_counts.get(type_name, 0) + 1
             )
 
-            # ★ Phase 42: 룩업 테이블 우선, 없으면 1
-            supply = _ENEMY_SUPPLY.get(type_name.upper(), 1)
-            if type_name.upper() in worker_names:
+            upper = type_name.upper()
+            if upper in worker_names:
                 self.enemy_worker_count += 1
-            else:
-                self.enemy_army_supply += supply
+                continue
+            if upper in non_army_names:
+                # 보급/감지/일시 소환물은 군사력 추정에서 제외
+                continue
+            # ★ Phase 42: 룩업 테이블 우선, 알려지지 않은 유닛은 1로 보수 추정
+            self.enemy_army_supply += _ENEMY_SUPPLY.get(upper, 1)
 
         # Count enemy bases
         base_types = {

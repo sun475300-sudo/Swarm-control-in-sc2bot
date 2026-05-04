@@ -13,9 +13,25 @@ import logging
 import math
 from typing import Dict, List, Optional, Set
 
-from sc2.ids.unit_typeid import UnitTypeId
-from sc2.position import Point2
-from sc2.unit import Unit
+try:
+    from sc2.ids.unit_typeid import UnitTypeId
+    from sc2.position import Point2
+    from sc2.unit import Unit
+except ImportError:  # pragma: no cover - sc2 optional in test envs
+
+    class _StubIdMeta(type):
+        def __getattr__(cls, _name):
+            return cls
+
+    class UnitTypeId(metaclass=_StubIdMeta):  # type: ignore[no-redef]
+        pass
+
+    class Point2:  # type: ignore[no-redef]
+        pass
+
+    class Unit:  # type: ignore[no-redef]
+        pass
+
 
 from utils.logger import get_logger
 
