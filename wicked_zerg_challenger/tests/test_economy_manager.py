@@ -16,12 +16,27 @@ import sys
 import unittest
 from unittest.mock import MagicMock, Mock, patch
 
+import pytest
+
 # Add parent directory to path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from economy_manager import EconomyManager
-from sc2.ids.unit_typeid import UnitTypeId
-from sc2.position import Point2
+try:
+    from economy_manager import EconomyManager
+    from sc2.ids.unit_typeid import UnitTypeId
+    from sc2.position import Point2
+
+    SC2_AVAILABLE = True
+except ImportError:
+    EconomyManager = None  # type: ignore[assignment]
+    UnitTypeId = None  # type: ignore[assignment]
+    Point2 = None  # type: ignore[assignment]
+    SC2_AVAILABLE = False
+
+
+pytestmark = pytest.mark.skipif(
+    not SC2_AVAILABLE, reason="sc2 library not available"
+)
 
 
 class TestEconomyManager(unittest.TestCase):

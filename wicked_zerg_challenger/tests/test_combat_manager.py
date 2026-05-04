@@ -19,11 +19,20 @@ from unittest.mock import MagicMock, Mock, patch
 # Add parent directory to path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from combat_manager import CombatManager
-from sc2.ids.unit_typeid import UnitTypeId
-from sc2.position import Point2
+try:
+    from combat_manager import CombatManager
+    from sc2.ids.unit_typeid import UnitTypeId
+    from sc2.position import Point2
+
+    SC2_AVAILABLE = True
+except ImportError:
+    CombatManager = None  # type: ignore[assignment]
+    UnitTypeId = None  # type: ignore[assignment]
+    Point2 = None  # type: ignore[assignment]
+    SC2_AVAILABLE = False
 
 
+@unittest.skipIf(not SC2_AVAILABLE, "sc2 library not available")
 class TestCombatManager(unittest.TestCase):
     """Test suite for CombatManager"""
 

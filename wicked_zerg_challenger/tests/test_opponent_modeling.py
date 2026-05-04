@@ -18,17 +18,35 @@ import tempfile
 import unittest
 from unittest.mock import MagicMock, Mock, patch
 
+import pytest
+
 # Add parent directory to path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from opponent_modeling import (
-    GameHistory,
-    OpponentModel,
-    OpponentModeling,
-    OpponentStyle,
-    StrategySignal,
+try:
+    from opponent_modeling import (
+        GameHistory,
+        OpponentModel,
+        OpponentModeling,
+        OpponentStyle,
+        StrategySignal,
+    )
+    from sc2.position import Point2
+
+    SC2_AVAILABLE = True
+except ImportError:
+    GameHistory = None  # type: ignore[assignment]
+    OpponentModel = None  # type: ignore[assignment]
+    OpponentModeling = None  # type: ignore[assignment]
+    OpponentStyle = None  # type: ignore[assignment]
+    StrategySignal = None  # type: ignore[assignment]
+    Point2 = None  # type: ignore[assignment]
+    SC2_AVAILABLE = False
+
+
+pytestmark = pytest.mark.skipif(
+    not SC2_AVAILABLE, reason="sc2 library not available"
 )
-from sc2.position import Point2
 
 
 class TestOpponentModel(unittest.TestCase):
