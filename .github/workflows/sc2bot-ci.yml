@@ -73,13 +73,25 @@ jobs:
           cache: pip
 
       - name: Install dependencies
-        run: pip install -r requirements.txt pytest pytest-cov pytest-asyncio
+        # Pre-install CPU-only torch to avoid pulling ~5GB of CUDA libraries
+        # (nvidia-cudnn / cublas / cuda-toolkit / triton …). The CI runner has
+        # ~14GB of free disk and the full CUDA torch causes the install step
+        # to exit code 1 (disk-exhausted). Tests don't need GPU support.
+        run: |
+          pip install --no-cache-dir --extra-index-url https://download.pytorch.org/whl/cpu torch
+          pip install --no-cache-dir -r requirements.txt pytest pytest-cov pytest-asyncio
 
       - name: Run unit tests
-        run: pytest tests/unit -v --cov=. --cov-report=xml --cov-report=term
+        # NOTE: tests/unit/ doesn't exist in this repo — unit tests live directly
+        # under tests/ and wicked_zerg_challenger/tests/. The integration suite
+        # is collected separately below via tests/integration/.
+        run: |
+          pytest tests/ wicked_zerg_challenger/tests/ \
+            --ignore=tests/integration \
+            -v --cov=. --cov-report=xml --cov-report=term
 
       - name: Run integration tests
-        run: pytest tests/integration -v --timeout=120
+        run: pytest tests/integration -v
 
       - name: Upload coverage
         uses: codecov/codecov-action@v4
