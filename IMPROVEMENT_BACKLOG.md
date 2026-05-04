@@ -47,7 +47,10 @@
 
 ## 사이클 진행 상황
 
-- **Iter 1** (2026-05-04): I-001/I-002 해결 → 305→306 passed
-- **Iter 2** (예정): I-003/I-014 — sys.path 통합
-- **Iter 3** (예정): I-016 — 가스 오버플로우 회귀 테스트
+- **Iter 1** (2026-05-04): I-001/I-002/I-003/I-014 해결 → 305→306 passed
+- **Iter 2** (2026-05-04): I-016 신규 회귀 테스트 7건 추가 → 306→313 passed
+  - gas_overflow_prevention_threshold, gas_worker_adjustment_interval,
+    macro_hatchery_mineral_threshold, _expansion_cooldown, expansion_block_*
+    gas_boost_duration, gas_timing_by_race 룩업
+- **Iter 3** (예정): I-013 매직 넘버 정리 / I-024 REMAINING_ISSUES.md 갱신
 - **Iter N**: 점진 반복
