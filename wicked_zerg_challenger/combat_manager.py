@@ -102,6 +102,50 @@ except ImportError:
     _FORMATION_MANAGER_AVAILABLE = False
 
 
+# Hot-path target-priority lookup tables. Defined at module scope as
+# frozensets so each membership test is O(1) instead of the O(n) linear
+# scan that ran on every enemy of every frame in the original code
+# (literal-list "in [...]" inside a per-enemy loop).
+_HIGH_PRIORITY_ENEMY_TYPES = frozenset(
+    {
+        "SIEGETANK",
+        "SIEGETANKSIEGED",
+        "COLOSSUS",
+        "DISRUPTOR",
+        "THOR",
+        "BATTLECRUISER",
+        "TEMPEST",
+        "CARRIER",
+    }
+)
+_MEDIUM_PRIORITY_ENEMY_TYPES = frozenset(
+    {
+        "MEDIVAC",
+        "HIGHTEMPLAR",
+        "IMMORTAL",
+        "RAVAGER",
+        "INFESTOR",
+        "VIPER",
+        "ORACLE",
+        "WARPPRISM",
+    }
+)
+_MASSIVE_AIR_TARGETS = frozenset(
+    {
+        "COLOSSUS",
+        "THOR",
+        "BATTLECRUISER",
+        "CARRIER",
+        "TEMPEST",
+        "MOTHERSHIP",
+    }
+)
+_WORKER_UNIT_NAMES = frozenset({"SCV", "PROBE", "DRONE"})
+_SIEGE_TARGETS = frozenset(
+    {"SIEGETANK", "SIEGETANKSIEGED", "COLOSSUS", "LIBERATOR", "WIDOWMINE"}
+)
+
+
 class CombatManager:
     """
     전투 관리자
@@ -2380,36 +2424,6 @@ class CombatManager:
             if self._has_units(enemy_units):
                 await self._mutalisk_attack(mutalisks, enemy_units)
 
-    def _find_harass_target(self):
-        """Find best harassment target (enemy base with workers)."""
-        # Try enemy main base
-        if (
-            hasattr(self.bot, "enemy_start_locations")
-            and self.bot.enemy_start_locations
-        ):
-            return self.bot.enemy_start_locations[0]
-
-        # Try known enemy structures
-        enemy_structures = getattr(self.bot, "enemy_structures", [])
-        if enemy_structures:
-            # Find townhalls
-            townhall_names = [
-                "NEXUS",
-                "COMMANDCENTER",
-                "ORBITALCOMMAND",
-                "PLANETARYFORTRESS",
-                "HATCHERY",
-                "LAIR",
-                "HIVE",
-            ]
-            for struct in enemy_structures:
-                if getattr(struct.type_id, "name", "") in townhall_names:
-                    return struct.position
-            # Any structure as fallback
-            return enemy_structures[0].position
-
-        return None
-
     async def _execute_harass(self, mutalisks, enemy_units):
         """
         Execute harassment - attack workers, retreat from anti-air.
@@ -2934,15 +2948,9 @@ class CombatManager:
         for enemy in enemy_units:
             name = getattr(enemy.type_id, "name", "")
 
-            if name in ["SCV", "PROBE", "DRONE"]:
+            if name in _WORKER_UNIT_NAMES:
                 workers.append(enemy)
-            elif name in [
-                "SIEGETANK",
-                "SIEGETANKSIEGED",
-                "COLOSSUS",
-                "LIBERATOR",
-                "WIDOWMINE",
-            ]:
+            elif name in _SIEGE_TARGETS:
                 siege.append(enemy)
             elif enemy.health_percentage < 0.3:
                 low_hp.append(enemy)
@@ -2972,15 +2980,7 @@ class CombatManager:
             massive_targets = [
                 e
                 for e in enemy_units
-                if getattr(e.type_id, "name", "")
-                in [
-                    "COLOSSUS",
-                    "THOR",
-                    "BATTLECRUISER",
-                    "CARRIER",
-                    "TEMPEST",
-                    "MOTHERSHIP",
-                ]
+                if getattr(e.type_id, "name", "") in _MASSIVE_AIR_TARGETS
             ]
 
             target = None
@@ -3494,29 +3494,12 @@ class CombatManager:
         for enemy in threat_enemies:
             enemy_type = getattr(enemy.type_id, "name", "").upper()
 
-            # 고위협 유닛
-            if enemy_type in [
-                "SIEGETANK",
-                "SIEGETANKSIEGED",
-                "COLOSSUS",
-                "DISRUPTOR",
-                "THOR",
-                "BATTLECRUISER",
-                "TEMPEST",
-                "CARRIER",
-            ]:
+            # 고위협 유닛 / 지원 유닛 priority sets are defined at module
+            # scope as frozensets — O(1) membership instead of the O(n)
+            # linear scan that ran for every enemy on every frame.
+            if enemy_type in _HIGH_PRIORITY_ENEMY_TYPES:
                 high_priority_targets.append(enemy)
-            # 지원 유닛
-            elif enemy_type in [
-                "MEDIVAC",
-                "HIGHTEMPLAR",
-                "IMMORTAL",
-                "RAVAGER",
-                "INFESTOR",
-                "VIPER",
-                "ORACLE",
-                "WARPPRISM",
-            ]:
+            elif enemy_type in _MEDIUM_PRIORITY_ENEMY_TYPES:
                 medium_priority_targets.append(enemy)
             # 일반 유닛
             else:
@@ -4338,4 +4321,6 @@ class CombatManager:
             pass
 
         return None
+
+
 # Improved micro management for VeryHard difficulty

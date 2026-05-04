@@ -169,21 +169,26 @@ class NumpyMLP:
 # ===================================================================
 
 
-class SharedObsEncoderTorch(nn.Module):
-    """Encodes per-agent local observations into a latent vector."""
+if HAS_TORCH:
 
-    def __init__(self, obs_dim: int, encoder_dim: int, hidden_dim: int):
-        super().__init__()
-        self.net = nn.Sequential(
-            nn.Linear(obs_dim, hidden_dim),
-            nn.ReLU(),
-            nn.LayerNorm(hidden_dim),
-            nn.Linear(hidden_dim, encoder_dim),
-            nn.ReLU(),
-        )
+    class SharedObsEncoderTorch(nn.Module):
+        """Encodes per-agent local observations into a latent vector."""
 
-    def forward(self, obs: torch.Tensor) -> torch.Tensor:
-        return self.net(obs)
+        def __init__(self, obs_dim: int, encoder_dim: int, hidden_dim: int):
+            super().__init__()
+            self.net = nn.Sequential(
+                nn.Linear(obs_dim, hidden_dim),
+                nn.ReLU(),
+                nn.LayerNorm(hidden_dim),
+                nn.Linear(hidden_dim, encoder_dim),
+                nn.ReLU(),
+            )
+
+        def forward(self, obs: "torch.Tensor") -> "torch.Tensor":
+            return self.net(obs)
+
+else:
+    SharedObsEncoderTorch = None  # type: ignore[assignment]
 
 
 class SharedObsEncoderNumpy:
@@ -204,21 +209,26 @@ class SharedObsEncoderNumpy:
 # ===================================================================
 
 
-class CentralizedCriticTorch(nn.Module):
-    """Value network that takes the global state and outputs V(s)."""
+if HAS_TORCH:
 
-    def __init__(self, state_dim: int, hidden_dim: int):
-        super().__init__()
-        self.net = nn.Sequential(
-            nn.Linear(state_dim, hidden_dim),
-            nn.ReLU(),
-            nn.Linear(hidden_dim, hidden_dim),
-            nn.ReLU(),
-            nn.Linear(hidden_dim, 1),
-        )
+    class CentralizedCriticTorch(nn.Module):
+        """Value network that takes the global state and outputs V(s)."""
 
-    def forward(self, state: torch.Tensor) -> torch.Tensor:
-        return self.net(state).squeeze(-1)
+        def __init__(self, state_dim: int, hidden_dim: int):
+            super().__init__()
+            self.net = nn.Sequential(
+                nn.Linear(state_dim, hidden_dim),
+                nn.ReLU(),
+                nn.Linear(hidden_dim, hidden_dim),
+                nn.ReLU(),
+                nn.Linear(hidden_dim, 1),
+            )
+
+        def forward(self, state: "torch.Tensor") -> "torch.Tensor":
+            return self.net(state).squeeze(-1)
+
+else:
+    CentralizedCriticTorch = None  # type: ignore[assignment]
 
 
 class CentralizedCriticNumpy:
@@ -239,43 +249,52 @@ class CentralizedCriticNumpy:
 # ===================================================================
 
 
-class DecentralizedActorTorch(nn.Module):
-    """Per-agent policy network with action masking support."""
+if HAS_TORCH:
 
-    def __init__(self, encoder_dim: int, action_dim: int, hidden_dim: int):
-        super().__init__()
-        self.net = nn.Sequential(
-            nn.Linear(encoder_dim, hidden_dim),
-            nn.ReLU(),
-            nn.Linear(hidden_dim, action_dim),
-        )
+    class DecentralizedActorTorch(nn.Module):
+        """Per-agent policy network with action masking support."""
 
-    def forward(
-        self, encoded_obs: torch.Tensor, action_mask: Optional[torch.Tensor] = None
-    ) -> torch.Tensor:
-        """Return masked logits."""
-        logits = self.net(encoded_obs)
-        if action_mask is not None:
-            logits = logits + (1.0 - action_mask) * (-1e8)
-        return logits
+        def __init__(self, encoder_dim: int, action_dim: int, hidden_dim: int):
+            super().__init__()
+            self.net = nn.Sequential(
+                nn.Linear(encoder_dim, hidden_dim),
+                nn.ReLU(),
+                nn.Linear(hidden_dim, action_dim),
+            )
 
-    def get_action_and_log_prob(
-        self, encoded_obs: torch.Tensor, action_mask: Optional[torch.Tensor] = None
-    ) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
-        logits = self.forward(encoded_obs, action_mask)
-        dist = Categorical(logits=logits)
-        action = dist.sample()
-        return action, dist.log_prob(action), dist.entropy()
+        def forward(
+            self,
+            encoded_obs: "torch.Tensor",
+            action_mask: Optional["torch.Tensor"] = None,
+        ) -> "torch.Tensor":
+            """Return masked logits."""
+            logits = self.net(encoded_obs)
+            if action_mask is not None:
+                logits = logits + (1.0 - action_mask) * (-1e8)
+            return logits
 
-    def evaluate_actions(
-        self,
-        encoded_obs: torch.Tensor,
-        actions: torch.Tensor,
-        action_mask: Optional[torch.Tensor] = None,
-    ) -> Tuple[torch.Tensor, torch.Tensor]:
-        logits = self.forward(encoded_obs, action_mask)
-        dist = Categorical(logits=logits)
-        return dist.log_prob(actions), dist.entropy()
+        def get_action_and_log_prob(
+            self,
+            encoded_obs: "torch.Tensor",
+            action_mask: Optional["torch.Tensor"] = None,
+        ) -> Tuple["torch.Tensor", "torch.Tensor", "torch.Tensor"]:
+            logits = self.forward(encoded_obs, action_mask)
+            dist = Categorical(logits=logits)
+            action = dist.sample()
+            return action, dist.log_prob(action), dist.entropy()
+
+        def evaluate_actions(
+            self,
+            encoded_obs: "torch.Tensor",
+            actions: "torch.Tensor",
+            action_mask: Optional["torch.Tensor"] = None,
+        ) -> Tuple["torch.Tensor", "torch.Tensor"]:
+            logits = self.forward(encoded_obs, action_mask)
+            dist = Categorical(logits=logits)
+            return dist.log_prob(actions), dist.entropy()
+
+else:
+    DecentralizedActorTorch = None  # type: ignore[assignment]
 
 
 class DecentralizedActorNumpy:

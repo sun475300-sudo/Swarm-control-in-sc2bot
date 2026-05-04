@@ -27,6 +27,17 @@ else:
 
 from utils.logger import get_logger
 
+# Frozensets used by hot enemy-classification loops — O(1) lookups vs the
+# O(n) literal-list scans that previously ran for every enemy on every
+# air-unit retarget pass.
+_AIR_WORKER_NAMES = frozenset({"SCV", "PROBE", "DRONE"})
+_AIR_SIEGE_TARGETS = frozenset(
+    {"SIEGETANK", "SIEGETANKSIEGED", "COLOSSUS", "LIBERATOR", "WIDOWMINE"}
+)
+_AIR_MASSIVE_TARGETS = frozenset(
+    {"COLOSSUS", "THOR", "BATTLECRUISER", "CARRIER", "TEMPEST", "MOTHERSHIP"}
+)
+
 
 class AirUnitManager:
     """
@@ -384,15 +395,9 @@ class AirUnitManager:
         for enemy in enemy_units:
             name = getattr(enemy.type_id, "name", "")
 
-            if name in ["SCV", "PROBE", "DRONE"]:
+            if name in _AIR_WORKER_NAMES:
                 workers.append(enemy)
-            elif name in [
-                "SIEGETANK",
-                "SIEGETANKSIEGED",
-                "COLOSSUS",
-                "LIBERATOR",
-                "WIDOWMINE",
-            ]:
+            elif name in _AIR_SIEGE_TARGETS:
                 siege.append(enemy)
             elif enemy.health_percentage < 0.3:
                 low_hp.append(enemy)
@@ -422,15 +427,7 @@ class AirUnitManager:
             massive_targets = [
                 e
                 for e in enemy_units
-                if getattr(e.type_id, "name", "")
-                in [
-                    "COLOSSUS",
-                    "THOR",
-                    "BATTLECRUISER",
-                    "CARRIER",
-                    "TEMPEST",
-                    "MOTHERSHIP",
-                ]
+                if getattr(e.type_id, "name", "") in _AIR_MASSIVE_TARGETS
             ]
 
             target = None

@@ -29,6 +29,34 @@ else:
 
 from utils.logger import get_logger
 
+# Hot-path target priority frozensets — same set as the canonical lookups
+# in combat_manager.py. Membership becomes O(1) instead of the O(n)
+# linear scan that ran on every enemy of every defense pass.
+_HIGH_PRIORITY_ENEMY_TYPES = frozenset(
+    {
+        "SIEGETANK",
+        "SIEGETANKSIEGED",
+        "COLOSSUS",
+        "DISRUPTOR",
+        "THOR",
+        "BATTLECRUISER",
+        "TEMPEST",
+        "CARRIER",
+    }
+)
+_MEDIUM_PRIORITY_ENEMY_TYPES = frozenset(
+    {
+        "MEDIVAC",
+        "HIGHTEMPLAR",
+        "IMMORTAL",
+        "RAVAGER",
+        "INFESTOR",
+        "VIPER",
+        "ORACLE",
+        "WARPPRISM",
+    }
+)
+
 
 class BaseDefenseSystem:
     """
@@ -418,27 +446,9 @@ class BaseDefenseSystem:
         for enemy in threat_enemies:
             enemy_type = getattr(enemy.type_id, "name", "").upper()
 
-            if enemy_type in [
-                "SIEGETANK",
-                "SIEGETANKSIEGED",
-                "COLOSSUS",
-                "DISRUPTOR",
-                "THOR",
-                "BATTLECRUISER",
-                "TEMPEST",
-                "CARRIER",
-            ]:
+            if enemy_type in _HIGH_PRIORITY_ENEMY_TYPES:
                 high_priority_targets.append(enemy)
-            elif enemy_type in [
-                "MEDIVAC",
-                "HIGHTEMPLAR",
-                "IMMORTAL",
-                "RAVAGER",
-                "INFESTOR",
-                "VIPER",
-                "ORACLE",
-                "WARPPRISM",
-            ]:
+            elif enemy_type in _MEDIUM_PRIORITY_ENEMY_TYPES:
                 medium_priority_targets.append(enemy)
             else:
                 low_priority_targets.append(enemy)

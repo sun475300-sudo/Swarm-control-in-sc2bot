@@ -73,7 +73,10 @@ jobs:
           cache: pip
 
       - name: Install dependencies
-        run: pip install -r requirements.txt pytest pytest-cov pytest-asyncio
+        # pytest-timeout backs the `--timeout=` flag on the next step and
+        # the `timeout = 60` option in pytest.ini; without it pytest emits
+        # a PytestConfigWarning and the timeout silently doesn't apply.
+        run: pip install -r requirements.txt pytest pytest-cov pytest-asyncio pytest-timeout
 
       - name: Run unit tests
         run: pytest tests/unit -v --cov=. --cov-report=xml --cov-report=term

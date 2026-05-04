@@ -28,6 +28,16 @@ except ImportError:
     pass
 
 
+# Townhall name lookups used inside the per-frame signal-detection loops.
+# Frozensets give O(1) membership instead of the O(n) literal-list scan
+# the previous code did for every enemy structure on every detection
+# pass.
+_BASIC_TOWNHALL_NAMES = frozenset({"HATCHERY", "NEXUS", "COMMANDCENTER"})
+_ENEMY_TOWNHALL_NAMES = frozenset(
+    {"HATCHERY", "NEXUS", "COMMANDCENTER", "LAIR", "HIVE", "ORBITALCOMMAND"}
+)
+
+
 class OpponentStyle(Enum):
     """적 플레이 스타일 분류"""
 
@@ -382,7 +392,7 @@ class OpponentModeling:
 
         # Fast expand detection
         if game_time < 120 and any(
-            base in structure_names for base in ["HATCHERY", "NEXUS", "COMMANDCENTER"]
+            base in structure_names for base in _BASIC_TOWNHALL_NAMES
         ):
             if (
                 len(
@@ -390,7 +400,7 @@ class OpponentModeling:
                         s
                         for s in enemy_structures
                         if getattr(s.type_id, "name", "").upper()
-                        in ["HATCHERY", "NEXUS", "COMMANDCENTER"]
+                        in _BASIC_TOWNHALL_NAMES
                     ]
                 )
                 >= 2
@@ -417,15 +427,7 @@ class OpponentModeling:
                 [
                     s
                     for s in enemy_structures
-                    if getattr(s.type_id, "name", "").upper()
-                    in [
-                        "HATCHERY",
-                        "NEXUS",
-                        "COMMANDCENTER",
-                        "LAIR",
-                        "HIVE",
-                        "ORBITALCOMMAND",
-                    ]
+                    if getattr(s.type_id, "name", "").upper() in _ENEMY_TOWNHALL_NAMES
                 ]
             )
             if base_count <= 1:
@@ -731,8 +733,15 @@ class OpponentModeling:
     # ============================================================
 
     def on_game_start(self, opponent_id: str, opponent_race=None):
-        """게임 시작 시 호출 - 적 추적 시작"""
-        self.current_opponent = opponent_id
+        """게임 시작 시 호출 - 적 추적 시작.
+
+        NOTE: this method writes to ``self.current_opponent_id`` (the
+        canonical attribute used by ``on_start`` above). An older draft of
+        this method used ``self.current_opponent`` (no ``_id``), which was
+        never initialized in ``__init__`` and would AttributeError the
+        moment ``on_step`` ran.
+        """
+        self.current_opponent_id = opponent_id
         # ★ FIX: GameHistory dataclass에 맞는 필드로 초기화
         race_name = (
             opponent_race.name
@@ -763,20 +772,15 @@ class OpponentModeling:
                 f"[OPPONENT_MODELING] Known opponent: {opponent_id} ({self.opponent_models[opponent_id].games_played} games)"
             )
 
-    async def on_step(self, iteration: int):
-        """매 프레임 호출 - 신호 감지"""
-        if not self.current_opponent or not self.bot:
-            return
-
-        game_time = self.bot.time
-
-        # Only detect signals in early game (0-180s)
-        if game_time <= 180.0:
-            await self._detect_early_signals(game_time)
+    # NOTE: a second async on_step used to live here. It silently shadowed
+    # the richer on_step at the top of this class (build-order tracking,
+    # timing-attack detection, tech-progression tracking, blackboard
+    # publish), so all of that logic was dead code. The duplicate has been
+    # removed; the canonical on_step earlier in the class now runs.
 
     def on_game_end(self, won: bool, lost: bool):
         """게임 종료 시 호출 - 데이터 저장"""
-        if not self.current_opponent or not self.current_game_history:
+        if not self.current_opponent_id or not self.current_game_history:
             return
 
         # Update game history
@@ -792,25 +796,25 @@ class OpponentModeling:
             pass
 
         # Update opponent model
-        model = self.opponent_models[self.current_opponent]
+        model = self.opponent_models[self.current_opponent_id]
         model.update_from_game(self.current_game_history)
 
         # Save to disk
         self.save_models()
 
         self.logger.info(
-            f"[OPPONENT_MODELING] Game data saved for {self.current_opponent}"
+            f"[OPPONENT_MODELING] Game data saved for {self.current_opponent_id}"
         )
 
     def get_predicted_strategy(self) -> Tuple[Optional[str], float]:
         """현재 적의 전략 예측"""
         if (
-            not self.current_opponent
-            or self.current_opponent not in self.opponent_models
+            not self.current_opponent_id
+            or self.current_opponent_id not in self.opponent_models
         ):
             return (None, 0.0)
 
-        model = self.opponent_models[self.current_opponent]
+        model = self.opponent_models[self.current_opponent_id]
 
         # If we have observed signals, use them for prediction
         if self.observed_signals:
