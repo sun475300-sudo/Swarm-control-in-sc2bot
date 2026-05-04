@@ -812,7 +812,9 @@ class AdvancedBuildingManager:
                             if iteration - last_iter >= self._stuck_check_interval:
                                 dx = cur[0] - last_pos[0]
                                 dy = cur[1] - last_pos[1]
-                                if (dx * dx + dy * dy) ** 0.5 < self._stuck_position_epsilon:
+                                if (
+                                    dx * dx + dy * dy
+                                ) ** 0.5 < self._stuck_position_epsilon:
                                     is_stuck = True
                                 self._worker_position_history[tag] = (iteration, cur)
                 else:

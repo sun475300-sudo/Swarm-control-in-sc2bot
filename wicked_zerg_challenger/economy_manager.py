@@ -1302,7 +1302,6 @@ class EconomyManager:
     # Python's class-body redefinition rule, so the stub was dead code.
     # Removed.
 
-
     def _get_first_larva(self):
         larva = getattr(self.bot, "larva", None)
         if not larva:

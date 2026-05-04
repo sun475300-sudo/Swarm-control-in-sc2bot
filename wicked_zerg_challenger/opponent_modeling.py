@@ -427,8 +427,7 @@ class OpponentModeling:
                 [
                     s
                     for s in enemy_structures
-                    if getattr(s.type_id, "name", "").upper()
-                    in _ENEMY_TOWNHALL_NAMES
+                    if getattr(s.type_id, "name", "").upper() in _ENEMY_TOWNHALL_NAMES
                 ]
             )
             if base_count <= 1:

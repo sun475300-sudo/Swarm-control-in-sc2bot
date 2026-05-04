@@ -2980,8 +2980,7 @@ class CombatManager:
             massive_targets = [
                 e
                 for e in enemy_units
-                if getattr(e.type_id, "name", "")
-                in _MASSIVE_AIR_TARGETS
+                if getattr(e.type_id, "name", "") in _MASSIVE_AIR_TARGETS
             ]
 
             target = None
@@ -4322,4 +4321,6 @@ class CombatManager:
             pass
 
         return None
+
+
 # Improved micro management for VeryHard difficulty
