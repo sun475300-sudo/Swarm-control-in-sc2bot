@@ -297,8 +297,13 @@ class TestOpponentModel(unittest.TestCase):
         self.assertEqual(model.dominant_style, OpponentStyle.AGGRESSIVE)
 
 
-class TestOpponentModeling(unittest.TestCase):
-    """Test suite for OpponentModeling system"""
+class TestOpponentModeling(unittest.IsolatedAsyncioTestCase):
+    """Test suite for OpponentModeling system.
+
+    Uses IsolatedAsyncioTestCase because several test methods are
+    ``async def`` — plain TestCase silently no-ops them (the coroutine
+    is created and discarded, never awaited).
+    """
 
     def setUp(self):
         """Set up test fixtures"""
