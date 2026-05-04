@@ -339,33 +339,12 @@ class OpponentModeling:
             tech_progression=[],
         )
 
-    async def on_step(self, iteration: int):
-        """매 프레임 실행"""
-        if iteration - self.last_update < self.update_interval:
-            return
-
-        self.last_update = iteration
-        game_time = self.bot.time
-
-        # Early game signal detection (0-180s)
-        if game_time < 180.0:
-            self.early_game_phase = True
-            await self._detect_early_signals(game_time)
-        elif self.early_game_phase:
-            # Transition out of early game
-            self.early_game_phase = False
-            await self._make_strategy_prediction(game_time)
-
-        # Continuous tracking
-        await self._track_build_order(game_time)
-        await self._detect_timing_attacks(game_time)
-        await self._track_tech_progression(game_time)
-
-        # Update blackboard
-        if hasattr(self.bot, "blackboard") and self.bot.blackboard:
-            self.bot.blackboard.set("predicted_strategy", self.predicted_strategy)
-            self.bot.blackboard.set("prediction_confidence", self.prediction_confidence)
-            self.bot.blackboard.set("observed_signals", list(self.observed_signals))
+    # NOTE: A previous broader `on_step` implementation lived here that drove
+    # `_make_strategy_prediction`, `_track_build_order`, `_detect_timing_attacks`
+    # and `_track_tech_progression`. It was shadowed by the simpler
+    # signal-detection `on_step` defined below in this class, so it never
+    # actually ran. The dead duplicate has been removed; the helper methods
+    # are kept for follow-up integration into the live `on_step` (see line ~766).
 
     async def _detect_early_signals(self, game_time: float):
         """초반 시그널 감지 (0-180s)"""
