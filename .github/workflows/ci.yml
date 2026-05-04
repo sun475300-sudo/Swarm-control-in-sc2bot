@@ -47,7 +47,7 @@ jobs:
       - name: Python 의존성 설치
         run: |
           python -m pip install --upgrade pip
-          pip install flake8 pytest pytest-cov
+          pip install flake8 pytest pytest-cov pytest-asyncio pytest-timeout
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
           # 추가 테스트 의존성
           pip install pyyaml aiohttp
@@ -138,7 +138,10 @@ jobs:
       - name: SC2 봇 의존성 설치
         run: |
           python -m pip install --upgrade pip
-          pip install burnysc2 pytest pytest-asyncio pyyaml aiohttp
+          # pytest-timeout backs `timeout = 60` in pytest.ini; without it
+          # pytest emits a config warning and the timeout silently doesn't
+          # apply, so a hung test could stall the whole workflow.
+          pip install burnysc2 pytest pytest-asyncio pytest-timeout pyyaml aiohttp
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
 
       - name: py_compile 전체 구문 검증 (349 파일)
