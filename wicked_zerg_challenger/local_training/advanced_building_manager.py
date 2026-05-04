@@ -86,6 +86,17 @@ class AdvancedBuildingManager:
         else:
             self.placement_helper = None
 
+        # ★ Worker stuck-detection state ★
+        # tag -> (last_check_iteration, last_position) used by
+        # ``rescue_stuck_workers`` to spot workers that are issuing move
+        # orders but failing to advance (pathing wedged behind structures
+        # or inside narrow lanes). One slot per worker; cheap to maintain.
+        self._worker_position_history: Dict[int, Tuple[int, Tuple[float, float]]] = {}
+        # If a moving worker's position changes by less than this many tiles
+        # over ``_stuck_check_interval`` iterations it is considered stuck.
+        self._stuck_position_epsilon = 0.25
+        self._stuck_check_interval = 22  # ~1 second at 22 fps
+
     # ==================== 1. 중복 코드 제거: 공통 변태 로직 ====================
 
     async def morph_unit_safely(
@@ -763,19 +774,51 @@ class AdvancedBuildingManager:
         return False
 
     async def rescue_stuck_workers(self) -> int:
-        """★ 끼인 일꾼 구출 (강화됨) ★"""
+        """★ 끼인 일꾼 구출 (강화됨) ★
+
+        Detects two failure modes:
+          1. Idle workers that should be gathering.
+          2. Workers that are *moving* (carrying an order) but whose
+             position has barely changed for ``_stuck_check_interval``
+             iterations — a sign of pathing wedged in narrow geometry.
+        """
         if not hasattr(self.bot, "workers"):
             return 0
 
+        iteration = getattr(self.bot, "iteration", 0)
+        live_tags = set()
         rescued = 0
         for worker in self.bot.workers:
             try:
+                tag = worker.tag
+                live_tags.add(tag)
+
                 # 1. Idle 상태인 경우
                 is_stuck = False
                 if hasattr(worker, "is_idle") and worker.is_idle:
                     is_stuck = True
 
-                # 2. 움직이지만 제자리인 경우 (TODO: 위치 기록 필요, 여기선 생략)
+                # 2. 움직이지만 제자리인 경우 (position-history tracking)
+                if not is_stuck and getattr(worker, "is_moving", False):
+                    pos = getattr(worker, "position", None)
+                    if pos is not None:
+                        cur = (float(pos.x), float(pos.y))
+                        prev = self._worker_position_history.get(tag)
+                        if prev is None:
+                            # first sighting — record and move on
+                            self._worker_position_history[tag] = (iteration, cur)
+                        else:
+                            last_iter, last_pos = prev
+                            if iteration - last_iter >= self._stuck_check_interval:
+                                dx = cur[0] - last_pos[0]
+                                dy = cur[1] - last_pos[1]
+                                if (dx * dx + dy * dy) ** 0.5 < self._stuck_position_epsilon:
+                                    is_stuck = True
+                                self._worker_position_history[tag] = (iteration, cur)
+                else:
+                    # Drop tracking entry if not moving so a future move-then-
+                    # stop sequence isn't misread as "no progress".
+                    self._worker_position_history.pop(tag, None)
 
                 if is_stuck:
                     if hasattr(self.bot, "structures"):
@@ -802,5 +845,12 @@ class AdvancedBuildingManager:
                                 rescued += 1
             except Exception:
                 continue
+
+        # Garbage-collect history entries for workers that no longer exist
+        # (died, mind-controlled, etc.) so the dict can't grow unbounded.
+        if self._worker_position_history:
+            stale = [t for t in self._worker_position_history if t not in live_tags]
+            for t in stale:
+                del self._worker_position_history[t]
 
         return rescued
