@@ -263,6 +263,23 @@ class TestStrategyScoring(unittest.TestCase):
         # Should have score for the strategy
         self.assertIn("test_strategy", self.manager.strategy_scores)
 
+    def test_evaluate_strategy_effectiveness_handles_none_attrs(self):
+        """``evaluate_strategy_effectiveness`` must not raise on None/Mock
+        bot attributes (e.g. ``supply_army`` unset)."""
+        self.bot.supply_army = None
+        self.bot.townhalls = None
+        score = self.manager.evaluate_strategy_effectiveness()
+        self.assertIsInstance(score, float)
+        self.assertGreaterEqual(score, 0.0)
+        self.assertLessEqual(score, 1.0)
+
+    def test_evaluate_strategy_effectiveness_returns_in_unit_range(self):
+        """The public score must always land in [0.0, 1.0]."""
+        self.bot.supply_army = 999  # extreme army
+        score = self.manager.evaluate_strategy_effectiveness()
+        self.assertGreaterEqual(score, 0.0)
+        self.assertLessEqual(score, 1.0)
+
 
 class TestMultiStrategyExecution(unittest.TestCase):
     """Test multi-strategy execution system"""

@@ -9,7 +9,7 @@ import sys
 # Add parent directory to path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from timing_attack import AttackPlan, AttackPhase, TimingWindow
+from timing_attack import AttackPhase, AttackPlan, TimingWindow
 
 
 def _make_plan(start_time: float = 100.0, max_time: float = 60.0) -> AttackPlan:
