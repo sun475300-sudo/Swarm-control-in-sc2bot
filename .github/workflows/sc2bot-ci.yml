@@ -77,7 +77,9 @@ jobs:
         # The full requirements.txt pulls in unrelated services (discord,
         # crypto trading, GCP) whose binary wheels can be flaky on CI runners
         # and aren't exercised by wicked_zerg_challenger/tests/.
-        run: pip install burnysc2 numpy pytest pytest-cov pytest-asyncio
+        # pytest-timeout is needed by the `--timeout=120` flag on the
+        # integration step.
+        run: pip install burnysc2 numpy pytest pytest-cov pytest-asyncio pytest-timeout
 
       - name: Run wicked_zerg_challenger unit tests
         # The historical `tests/unit` path was never populated; the real bot
