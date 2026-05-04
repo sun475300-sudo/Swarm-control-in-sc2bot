@@ -246,6 +246,51 @@ class TestIntelManager(unittest.TestCase):
         self.assertGreater(confidence_late, confidence_early)
 
 
+class TestIntelManagerNonArmyExclusion(unittest.TestCase):
+    """Verify that LARVA/EGG/OVERLORD/BROODLING etc. don't inflate
+    ``enemy_army_supply``."""
+
+    def setUp(self):
+        self.bot = Mock()
+        self.bot.time = 0.0
+        self.bot.iteration = 0
+        self.bot.enemy_race = Mock()
+        self.bot.enemy_race.name = "Zerg"
+        self.bot.enemy_structures = []
+        self.bot.townhalls = []
+        self.bot.blackboard = Mock()
+        self.bot.data_cache = None
+        self.bot.enemy_start_locations = []
+
+        def _enemy_unit(name: str):
+            u = Mock()
+            tid = Mock()
+            tid.name = name
+            u.type_id = tid
+            return u
+
+        self.bot.enemy_units = [
+            _enemy_unit("LARVA"),
+            _enemy_unit("LARVA"),
+            _enemy_unit("EGG"),
+            _enemy_unit("OVERLORD"),
+            _enemy_unit("OVERSEER"),
+            _enemy_unit("BROODLING"),
+            _enemy_unit("CHANGELING"),
+            _enemy_unit("ROACH"),  # 2 supply
+            _enemy_unit("ROACH"),  # 2 supply
+        ]
+        self.intel = IntelManager(self.bot)
+
+    def test_non_army_units_excluded_from_army_supply(self):
+        # Trigger composition update via internal helper.
+        self.intel._update_enemy_composition()
+        # Only the two ROACH count → 2 + 2 = 4
+        self.assertEqual(self.intel.enemy_army_supply, 4)
+        # Workers stay zero (no DRONE/SCV/PROBE)
+        self.assertEqual(self.intel.enemy_worker_count, 0)
+
+
 class TestIntelManagerIntegration(unittest.TestCase):
     """Integration tests for IntelManager"""
 
