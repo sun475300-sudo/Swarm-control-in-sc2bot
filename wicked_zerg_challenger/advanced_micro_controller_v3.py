@@ -18,7 +18,7 @@ Integration:
 """
 
 from collections import defaultdict
-from typing import Dict, List, Optional, Set, Tuple
+from typing import Dict, Optional, Set
 
 from utils.logger import get_logger
 

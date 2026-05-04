@@ -6,15 +6,13 @@ python-pptx로 텍스트 + 도형 기반의 편집 가능한 슬라이드 생성
 """
 
 import logging
-import os
 from pathlib import Path
 
 from pptx import Presentation
 from pptx.dml.color import RGBColor
 from pptx.enum.shapes import MSO_SHAPE
 from pptx.enum.text import MSO_ANCHOR, PP_ALIGN
-from pptx.oxml.ns import qn
-from pptx.util import Cm, Emu, Inches, Pt
+from pptx.util import Inches, Pt
 
 logger = logging.getLogger("MakePptx")
 
@@ -1392,14 +1390,14 @@ def main():
     except PermissionError:
         output_path = Path(__file__).parent / "Swarm_Net_Presentation_v2.pptx"
         prs.save(str(output_path))
-        logger.info(f"  (Original locked, saved as v2)")
+        logger.info("  (Original locked, saved as v2)")
 
     logger.info(f"\n{'='*60}")
-    logger.info(f"PPTX CREATED SUCCESSFULLY!")
+    logger.info("PPTX CREATED SUCCESSFULLY!")
     logger.info(f"   File: {output_path}")
-    logger.info(f"   Slides: 8")
-    logger.info(f"   Speaker notes: included")
-    logger.info(f"   Theme: Dark Navy + Cyan/Green accents")
+    logger.info("   Slides: 8")
+    logger.info("   Speaker notes: included")
+    logger.info("   Theme: Dark Navy + Cyan/Green accents")
     logger.info(f"{'='*60}")
 
 

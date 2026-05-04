@@ -10,7 +10,7 @@ Advanced Building Manager - 건설 로직 고도화 모듈
 
 import logging
 import math
-from typing import Callable, Dict, List, Optional, Tuple
+from typing import Dict, List, Optional, Tuple
 
 logger = logging.getLogger("AdvancedBuildingManager")
 
