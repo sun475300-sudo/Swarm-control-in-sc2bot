@@ -66,6 +66,26 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Free up disk space
+        # Ubuntu-latest runners ship with ~14GB free + ~17GB consumed by
+        # pre-installed SDKs (.NET, Haskell, Boost, Android tooling). Even
+        # the CPU-only torch + the rest of requirements.txt push install
+        # time over 3 minutes and have been hitting "exit code 1" at
+        # 'Install dependencies'. Reclaim ~30GB up front so the next
+        # `pip install` has room to breathe.
+        run: |
+          echo "::group::Disk space (before)"
+          df -h
+          echo "::endgroup::"
+          sudo rm -rf /usr/share/dotnet || true
+          sudo rm -rf /opt/ghc || true
+          sudo rm -rf /usr/local/share/boost || true
+          sudo rm -rf /usr/local/lib/android || true
+          sudo rm -rf "$AGENT_TOOLSDIRECTORY" || true
+          echo "::group::Disk space (after)"
+          df -h
+          echo "::endgroup::"
+
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
