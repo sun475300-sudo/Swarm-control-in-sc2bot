@@ -30,13 +30,21 @@ except ImportError:
     class BotAI:
         pass
 
-    class UnitTypeId:
+    class _StubIdMeta(type):
+        """Returns a stub member for any attribute access so default
+        arguments like ``UnitTypeId.OVERLORD`` don't crash at class-body
+        evaluation when the real ``sc2`` package is unavailable."""
+
+        def __getattr__(cls, name: str):  # noqa: D401
+            return cls
+
+    class UnitTypeId(metaclass=_StubIdMeta):
         pass
 
-    class AbilityId:
+    class AbilityId(metaclass=_StubIdMeta):
         pass
 
-    class UpgradeId:
+    class UpgradeId(metaclass=_StubIdMeta):
         pass
 
     class Point2:

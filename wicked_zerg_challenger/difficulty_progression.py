@@ -13,7 +13,15 @@ import logging
 from pathlib import Path
 from typing import Dict, Optional
 
-from sc2.data import Difficulty, Race
+try:
+    from sc2.data import Difficulty, Race
+except ImportError:  # pragma: no cover - sc2 optional in test envs
+
+    class Difficulty:  # type: ignore[no-redef]
+        pass
+
+    class Race:  # type: ignore[no-redef]
+        pass
 
 logger = logging.getLogger("DifficultyProgression")
 
