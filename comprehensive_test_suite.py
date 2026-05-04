@@ -103,6 +103,54 @@ def _run_regression_tests() -> Tuple[int, int]:
     return len(results), passed
 
 
+def _run_coach_tests() -> Tuple[int, int]:
+    """sc2_coach 의 패턴 매칭과 통계 분석을 직접 호출하여 검증."""
+    from sc2_coach import SC2Coach
+
+    coach = SC2Coach()
+    cases = [
+        ("supply blocked at 36/36", "macro"),
+        ("idle workers detected: 5", "economy"),
+        ("mineral bank: 2500", "economy"),
+        ("late expand", "expansion"),
+        ("no scout", "scouting"),
+        ("army wipe", "army"),
+        ("drone rush", "defense"),
+        ("miss inject", "macro"),
+        ("bad engagement", "micro"),
+        ("gas float", "economy"),
+        ("queen short", "macro"),
+        ("no anti-air", "defense"),
+        ("no creep", "macro"),
+        ("low worker count", "economy"),
+        ("larva starvation", "macro"),
+        ("worker harass", "defense"),
+        ("tech behind", "macro"),
+        ("overextend", "army"),
+    ]
+
+    passed = 0
+    for log, expected_cat in cases:
+        advices = coach.get_coaching_advice(log)
+        if any(a["category"] == expected_cat for a in advices):
+            passed += 1
+
+    # 빈 로그 + 미매칭 케이스
+    extras = 0
+    if coach.get_coaching_advice("")[0]["severity"] == "info":
+        extras += 1
+    if any(
+        a["category"] == "general"
+        for a in coach.get_coaching_advice("nothing relevant here")
+    ):
+        extras += 1
+    if coach.format_advice([]) == "코칭 조언 없음":
+        extras += 1
+
+    total = len(cases) + 3
+    return total, passed + extras
+
+
 class ComprehensiveTestSuite:
     SUITES: List[Tuple[str, Callable[[], Tuple[int, int]]]] = [
         ("unit_tests", _run_unit_tests),
@@ -114,6 +162,7 @@ class ComprehensiveTestSuite:
         ("matchup_tests", _run_matchup_tests),
         ("fuzz_tests", _run_fuzz_tests),
         ("regression_tests", _run_regression_tests),
+        ("coach_tests", _run_coach_tests),
     ]
 
     def __init__(self):

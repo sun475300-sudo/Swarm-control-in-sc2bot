@@ -7,7 +7,7 @@
   "stress_tests": {
     "tests": 5,
     "passed": 5,
-    "duration": 105
+    "duration": 116
   },
   "edge_case_tests": {
     "tests": 10,
@@ -22,7 +22,7 @@
   "benchmark_tests": {
     "tests": 5,
     "passed": 5,
-    "duration": 99
+    "duration": 100
   },
   "multi_env_tests": {
     "tests": 6,
@@ -42,13 +42,18 @@
   "regression_tests": {
     "tests": 5,
     "passed": 5,
-    "duration": 0
+    "duration": 1
+  },
+  "coach_tests": {
+    "tests": 21,
+    "passed": 21,
+    "duration": 2
   },
   "summary": {
-    "total_tests": 758,
-    "total_passed": 757,
+    "total_tests": 779,
+    "total_passed": 778,
     "total_failed": 1,
-    "pass_rate": 99.86807387862797,
-    "total_duration_ms": 232.47766494750977
+    "pass_rate": 99.87163029525033,
+    "total_duration_ms": 246.35958671569824
   }
 }
