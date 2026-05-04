@@ -70,10 +70,10 @@ class TestUpdateCombatGroups(unittest.TestCase):
         self.assertNotIn("g1", self.controller.combat_groups)
 
     def test_uses_alive_set_only_once_per_call(self):
-        # If we previously called _is_unit_alive per tag, accessing
-        # self.bot.units would happen N*K times. After the optimization it
-        # happens exactly once per _update_combat_groups call regardless of
-        # group count.
+        # The optimized implementation builds the alive-tag set ONCE per call.
+        # Prior to the optimization, self.bot.units was scanned per tag per
+        # group (O(G*K*N)). Verify the iteration count is exactly 1 here so
+        # any future regression that re-introduces per-tag scanning fails.
         self.controller.combat_groups["g1"] = _group({1, 2, 3})
         self.controller.combat_groups["g2"] = _group({4, 5})
         self.controller.combat_groups["g3"] = _group({1, 99})

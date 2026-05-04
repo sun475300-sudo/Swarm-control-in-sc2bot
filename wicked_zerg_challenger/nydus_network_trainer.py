@@ -316,12 +316,13 @@ class NydusNetworkTrainer:
             if worm.is_ready:
                 await self._command_worm_units(worm)
 
-        # 파괴된 Worm 제거
-        destroyed_worms = []
-        for worm_tag in self.active_worms.keys():
-            exists = any(w.tag == worm_tag for w in worms)
-            if not exists:
-                destroyed_worms.append(worm_tag)
+        # 파괴된 Worm 제거 — single O(N) tag-set build instead of O(K·N) any().
+        live_worm_tags = {w.tag for w in worms}
+        destroyed_worms = [
+            worm_tag
+            for worm_tag in self.active_worms.keys()
+            if worm_tag not in live_worm_tags
+        ]
 
         for tag in destroyed_worms:
             spot = self.active_worms[tag]

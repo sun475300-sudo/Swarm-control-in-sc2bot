@@ -999,6 +999,8 @@ class EconomyManager:
                 # 현재 각 패치에 배정된 일꾼 수 집계
                 workers = self.bot.workers.closer_than(10, townhall)
                 patch_assigned = {m.tag: 0 for m in healthy}
+                # Hash-set lookup: O(1) per worker instead of O(len(depleted)).
+                depleted_tags = {d.tag for d in depleted}
 
                 idle_workers = []
                 misassigned_workers = []
@@ -1015,7 +1017,7 @@ class EconomyManager:
                     target_tag = getattr(worker, "order_target", None)
 
                     # 고갈 패치로 가는 드론 → 재배정 대상
-                    if target_tag and any(d.tag == target_tag for d in depleted):
+                    if target_tag and target_tag in depleted_tags:
                         misassigned_workers.append(worker)
                         continue
 

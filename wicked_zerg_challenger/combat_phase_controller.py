@@ -605,12 +605,6 @@ class CombatPhaseController:
 
         return total_hp / max_hp if max_hp > 0 else 0.0
 
-    def _is_unit_alive(self, unit_tag: int) -> bool:
-        """유닛이 살아있는지 확인"""
-        if not hasattr(self.bot, "units"):
-            return False
-        return any(u.tag == unit_tag for u in self.bot.units)
-
     def _collect_learning_data(self, game_time: float) -> None:
         """학습 데이터 수집"""
         for group_id, group in self.combat_groups.items():
