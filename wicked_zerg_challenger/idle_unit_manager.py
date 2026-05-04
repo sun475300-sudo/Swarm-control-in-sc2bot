@@ -12,8 +12,17 @@
 
 from typing import List, Optional, Set
 
-from sc2.ids.unit_typeid import UnitTypeId
-from sc2.position import Point2
+try:
+    from sc2.ids.unit_typeid import UnitTypeId
+    from sc2.position import Point2
+except ImportError:  # pragma: no cover - sc2 optional in test envs
+
+    class UnitTypeId:  # type: ignore[no-redef]
+        pass
+
+    class Point2:  # type: ignore[no-redef]
+        pass
+
 
 from utils.logger import get_logger
 

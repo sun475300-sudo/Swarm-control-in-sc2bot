@@ -23,6 +23,7 @@ except ImportError:  # pragma: no cover - sc2 optional in test envs
     class Race:  # type: ignore[no-redef]
         pass
 
+
 logger = logging.getLogger("DifficultyProgression")
 
 
