@@ -28,6 +28,16 @@ except ImportError:
     pass
 
 
+# Townhall name lookups used inside the per-frame signal-detection loops.
+# Frozensets give O(1) membership instead of the O(n) literal-list scan
+# the previous code did for every enemy structure on every detection
+# pass.
+_BASIC_TOWNHALL_NAMES = frozenset({"HATCHERY", "NEXUS", "COMMANDCENTER"})
+_ENEMY_TOWNHALL_NAMES = frozenset(
+    {"HATCHERY", "NEXUS", "COMMANDCENTER", "LAIR", "HIVE", "ORBITALCOMMAND"}
+)
+
+
 class OpponentStyle(Enum):
     """적 플레이 스타일 분류"""
 
@@ -382,7 +392,7 @@ class OpponentModeling:
 
         # Fast expand detection
         if game_time < 120 and any(
-            base in structure_names for base in ["HATCHERY", "NEXUS", "COMMANDCENTER"]
+            base in structure_names for base in _BASIC_TOWNHALL_NAMES
         ):
             if (
                 len(
@@ -390,7 +400,7 @@ class OpponentModeling:
                         s
                         for s in enemy_structures
                         if getattr(s.type_id, "name", "").upper()
-                        in ["HATCHERY", "NEXUS", "COMMANDCENTER"]
+                        in _BASIC_TOWNHALL_NAMES
                     ]
                 )
                 >= 2
@@ -418,14 +428,7 @@ class OpponentModeling:
                     s
                     for s in enemy_structures
                     if getattr(s.type_id, "name", "").upper()
-                    in [
-                        "HATCHERY",
-                        "NEXUS",
-                        "COMMANDCENTER",
-                        "LAIR",
-                        "HIVE",
-                        "ORBITALCOMMAND",
-                    ]
+                    in _ENEMY_TOWNHALL_NAMES
                 ]
             )
             if base_count <= 1:

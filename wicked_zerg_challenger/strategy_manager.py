@@ -38,6 +38,21 @@ except ImportError:
             return default
 
 
+# Lowercase townhall names used by the surrender heuristic; frozenset for
+# O(1) lookups vs. literal-list scan that ran on every enemy structure.
+_ENEMY_TOWNHALL_NAMES_LOWER = frozenset(
+    {
+        "nexus",
+        "commandcenter",
+        "orbitalcommand",
+        "planetaryfortress",
+        "hatchery",
+        "lair",
+        "hive",
+    }
+)
+
+
 class GamePhase(Enum):
     """게임 페이즈"""
 
@@ -1966,16 +1981,7 @@ class StrategyManager:
                         [
                             s
                             for s in self.bot.enemy_structures
-                            if s.name.lower()
-                            in [
-                                "nexus",
-                                "commandcenter",
-                                "orbitalcommand",
-                                "planetaryfortress",
-                                "hatchery",
-                                "lair",
-                                "hive",
-                            ]
+                            if s.name.lower() in _ENEMY_TOWNHALL_NAMES_LOWER
                         ]
                     )
                     if enemy_bases >= 4:

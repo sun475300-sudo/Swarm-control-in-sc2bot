@@ -17,6 +17,13 @@ except ImportError:  # Fallbacks for tooling environments
     UnitTypeId = None
 
 
+# Frozenset for the air-threat detection inside the enemy-unit loop —
+# O(1) lookup instead of the O(n) literal-list scan that ran per enemy.
+_AIR_THREAT_UNITS = frozenset(
+    {"VOIDRAY", "CARRIER", "TEMPEST", "BATTLECRUISER", "LIBERATOR", "COLOSSUS"}
+)
+
+
 class UnitFactory:
     def __init__(self, bot, blackboard=None, config=None):
         """
@@ -685,14 +692,7 @@ class UnitFactory:
                 name = getattr(enemy.type_id, "name", "").upper()
                 if name in threat_units:
                     unit_counts[name] = unit_counts.get(name, 0) + 1
-                    if name in [
-                        "VOIDRAY",
-                        "CARRIER",
-                        "TEMPEST",
-                        "BATTLECRUISER",
-                        "LIBERATOR",
-                        "COLOSSUS",
-                    ]:
+                    if name in _AIR_THREAT_UNITS:
                         found_air_threat = True
             except Exception:
                 continue

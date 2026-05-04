@@ -140,6 +140,10 @@ _MASSIVE_AIR_TARGETS = frozenset(
         "MOTHERSHIP",
     }
 )
+_WORKER_UNIT_NAMES = frozenset({"SCV", "PROBE", "DRONE"})
+_SIEGE_TARGETS = frozenset(
+    {"SIEGETANK", "SIEGETANKSIEGED", "COLOSSUS", "LIBERATOR", "WIDOWMINE"}
+)
 
 
 class CombatManager:
@@ -2944,15 +2948,9 @@ class CombatManager:
         for enemy in enemy_units:
             name = getattr(enemy.type_id, "name", "")
 
-            if name in ["SCV", "PROBE", "DRONE"]:
+            if name in _WORKER_UNIT_NAMES:
                 workers.append(enemy)
-            elif name in [
-                "SIEGETANK",
-                "SIEGETANKSIEGED",
-                "COLOSSUS",
-                "LIBERATOR",
-                "WIDOWMINE",
-            ]:
+            elif name in _SIEGE_TARGETS:
                 siege.append(enemy)
             elif enemy.health_percentage < 0.3:
                 low_hp.append(enemy)
