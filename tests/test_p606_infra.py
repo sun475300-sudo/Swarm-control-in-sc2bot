@@ -38,22 +38,31 @@ class TestLoadTesting:
 
 class TestFuzzTesting:
     def test_import(self):
-        cls = _safe_import("fuzz_testing.sc2_fuzzer", "FuzzTarget")
-        if cls is None:
-            # try alternate class name
-            mod = _safe_import("fuzz_testing.sc2_fuzzer", "FuzzConfig")
-            if mod is None:
-                pytest.skip("not importable")
+        # The module exposes SC2Fuzzer / FuzzInput rather than the older
+        # FuzzTarget / FuzzConfig names tested for previously.
+        for name in ("FuzzTarget", "FuzzConfig", "SC2Fuzzer", "FuzzInput"):
+            cls = _safe_import("fuzz_testing.sc2_fuzzer", name)
+            if cls is not None:
+                assert cls is not None
+                return
+        pytest.skip("not importable")
 
 
 class TestContractTesting:
     def test_import(self):
-        cls = _safe_import("contract_testing.sc2_contract_tester", "ContractViolation")
-        if cls is None:
-            cls = _safe_import("contract_testing.sc2_contract_tester", "ContractType")
-        if cls is None:
-            pytest.skip("not importable")
-        assert cls is not None
+        for name in (
+            "ContractViolation",
+            "ContractType",
+            "Contract",
+            "ContractStatus",
+            "ContractTester",
+            "SchemaType",
+        ):
+            cls = _safe_import("contract_testing.sc2_contract_tester", name)
+            if cls is not None:
+                assert cls is not None
+                return
+        pytest.skip("not importable")
 
 
 class TestEBPFObservability:
@@ -78,12 +87,18 @@ class TestMTLSSecurity:
 
 class TestSBOMManager:
     def test_import(self):
-        cls = _safe_import("sbom_manager.sc2_sbom_generator", "PackageType")
-        if cls is None:
-            cls = _safe_import("sbom_manager.sc2_sbom_generator", "SBOMFormat")
-        if cls is None:
-            pytest.skip("not importable")
-        assert cls is not None
+        for name in (
+            "PackageType",
+            "SBOMFormat",
+            "Package",
+            "SBOMDocument",
+            "SBOMGenerator",
+        ):
+            cls = _safe_import("sbom_manager.sc2_sbom_generator", name)
+            if cls is not None:
+                assert cls is not None
+                return
+        pytest.skip("not importable")
 
 
 class TestChaosEngineering:
@@ -128,12 +143,17 @@ class TestCQRSPattern:
 
 class TestPerformanceProfiler:
     def test_import(self):
-        cls = _safe_import("performance_profiler.sc2_profiler", "ProfileMetric")
-        if cls is None:
-            cls = _safe_import("performance_profiler.sc2_profiler", "ProfilingConfig")
-        if cls is None:
-            pytest.skip("not importable")
-        assert cls is not None
+        for name in (
+            "ProfileMetric",
+            "ProfilingConfig",
+            "CPUProfiler",
+            "SC2Profiler",
+        ):
+            cls = _safe_import("performance_profiler.sc2_profiler", name)
+            if cls is not None:
+                assert cls is not None
+                return
+        pytest.skip("not importable")
 
 
 class TestGraphQLAPI:

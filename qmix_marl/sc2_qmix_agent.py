@@ -45,6 +45,26 @@ try:
     HAS_TORCH = True
 except ImportError:
     HAS_TORCH = False
+    # Provide minimal stubs so that classes annotated with `nn.Module` can still
+    # be defined at module-level when PyTorch is unavailable.  The numpy fallback
+    # implementations are used at runtime in this case.
+
+    class _TorchStubModule:
+        def __init__(self, *args, **kwargs):
+            raise RuntimeError(
+                "PyTorch is required for this class but is not installed."
+            )
+
+    class _NnStub:
+        Module = _TorchStubModule
+
+        def __getattr__(self, name):  # any attribute access returns the stub
+            return _TorchStubModule
+
+    nn = _NnStub()  # type: ignore
+    torch = None  # type: ignore
+    F = None  # type: ignore
+    optim = None  # type: ignore
 
 # ===================================================================
 # NumPy fallback primitives

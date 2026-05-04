@@ -5,6 +5,11 @@ pytest 공통 fixtures (#171)
 """
 
 import os
+
+# sc2 라이브러리(s2clientprotocol)가 protobuf 4.x+ 와 호환되도록 강제로
+# 순수 파이썬 구현을 사용한다. 반드시 sc2 모듈을 import 하기 전에 설정해야 한다.
+os.environ.setdefault("PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION", "python")
+
 import shutil
 import sys
 import tempfile
