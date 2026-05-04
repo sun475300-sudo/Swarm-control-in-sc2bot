@@ -31,8 +31,23 @@ try:
     TORCH_AVAILABLE = True
 except ImportError:
     TORCH_AVAILABLE = False
-    torch = None
-    nn = None
+
+    class _TorchStubModule:
+        def __init__(self, *args, **kwargs):
+            raise RuntimeError(
+                "PyTorch is required for this class but is not installed."
+            )
+
+    class _NnStub:
+        Module = _TorchStubModule
+
+        def __getattr__(self, name):
+            return _TorchStubModule
+
+    torch = None  # type: ignore
+    nn = _NnStub()  # type: ignore
+    optim = None  # type: ignore
+    Categorical = None  # type: ignore
 
 
 # ============================================================

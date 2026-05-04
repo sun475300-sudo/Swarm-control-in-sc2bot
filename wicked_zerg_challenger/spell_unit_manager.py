@@ -53,9 +53,7 @@ class SpellUnitManager:
         self.last_spell_update_frame: int = 0
         self.spell_update_interval: int = 12  # ★ 16 → 12 프레임 (더 빠른 반응)
 
-        # Spell cooldown tracking
-        from typing import Dict
-
+        # Spell cooldown tracking (Dict imported at module level)
         self.infestor_last_spell: Dict[int, float] = {}  # unit tag -> last spell time
         self.viper_last_spell: Dict[int, float] = {}  # unit tag -> last spell time
         self.viper_last_consume: Dict[int, float] = (

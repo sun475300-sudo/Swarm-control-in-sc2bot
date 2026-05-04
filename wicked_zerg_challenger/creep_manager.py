@@ -585,9 +585,9 @@ class CreepManager:
 # Feature #97: CreepSpreadManager - BFS/그리드 기반 크립 스프레드 최적화
 # =============================================================================
 
-import math
+# math, Set, Tuple are imported at module top; only collections.deque is unique
+# to this section.
 from collections import deque
-from typing import Set, Tuple
 
 
 class CreepSpreadManager:
