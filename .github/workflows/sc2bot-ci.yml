@@ -78,24 +78,25 @@ jobs:
         # ~14GB of free disk and the full CUDA torch causes the install step
         # to exit code 1 (disk-exhausted). Tests don't need GPU support.
         #
-        # WHY --index-url + --extra-index-url BOTH:
-        # - pytorch.org/cpu hosts ONLY torch wheels (not torch's deps such as
-        #   sympy / networkx / jinja2 / fsspec / typing_extensions).
-        # - --index-url alone makes pip fail to find the deps (404 from
-        #   pytorch.org for sympy etc.).
-        # - --extra-index-url alone makes pip prefer the higher-version GPU
-        #   wheel from PyPI ("2.x.0" > "2.x.0+cpu" per PEP 440).
-        # - Combining --index-url=pytorch.org/cpu (primary, has torch only)
-        #   with --extra-index-url=pypi.org (fallback, has the rest) makes
-        #   pip pick CPU torch from pytorch.org and torch's deps from PyPI.
+        # APPROACH: install CPU torch with --no-deps from pytorch.org/cpu, then
+        # install everything else from PyPI. The follow-up install fetches
+        # torch's deps (sympy / networkx / jinja2 / fsspec / typing_extensions)
+        # from PyPI but leaves torch itself alone because the already-installed
+        # CPU torch satisfies `torch>=2.0.0` (pip default strategy is
+        # "only-if-needed" for `-r requirements.txt`).
         #
-        # The follow-up `pip install -r requirements.txt` runs against the
-        # default PyPI index and leaves the already-installed CPU torch in
-        # place because `torch>=2.0.0` is already satisfied.
+        # Why other approaches failed:
+        #   - --extra-index-url alone: pip picks higher-version GPU torch from
+        #     PyPI (2.x.0 vs 2.x.0+cpu PEP 440 ordering can flip).
+        #   - --index-url alone: pytorch.org/cpu has only torch wheels — torch's
+        #     transitive deps 404 since they aren't hosted there.
+        #   - --index-url + --extra-index-url: pip can still prefer the GPU
+        #     wheel during the resolution pass.
+        #   - --no-deps + --index-url: deterministic; torch comes ONLY from
+        #     pytorch.org/cpu, deps come ONLY from PyPI in the next step.
         run: |
-          pip install --no-cache-dir \
+          pip install --no-cache-dir --no-deps \
             --index-url https://download.pytorch.org/whl/cpu \
-            --extra-index-url https://pypi.org/simple \
             torch
           pip install --no-cache-dir -r requirements.txt pytest pytest-cov pytest-asyncio
 
