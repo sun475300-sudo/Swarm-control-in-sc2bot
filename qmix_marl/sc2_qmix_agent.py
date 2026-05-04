@@ -169,21 +169,26 @@ class NpMLP:
 # ===================================================================
 
 
-class AgentQNetTorch(nn.Module):
-    """Individual agent's Q-network: obs -> Q(obs, a) for all actions."""
+if HAS_TORCH:
 
-    def __init__(self, obs_dim: int, action_dim: int, hidden_dim: int):
-        super().__init__()
-        self.net = nn.Sequential(
-            nn.Linear(obs_dim, hidden_dim),
-            nn.ReLU(),
-            nn.Linear(hidden_dim, hidden_dim),
-            nn.ReLU(),
-            nn.Linear(hidden_dim, action_dim),
-        )
+    class AgentQNetTorch(nn.Module):
+        """Individual agent's Q-network: obs -> Q(obs, a) for all actions."""
 
-    def forward(self, obs: torch.Tensor) -> torch.Tensor:
-        return self.net(obs)
+        def __init__(self, obs_dim: int, action_dim: int, hidden_dim: int):
+            super().__init__()
+            self.net = nn.Sequential(
+                nn.Linear(obs_dim, hidden_dim),
+                nn.ReLU(),
+                nn.Linear(hidden_dim, hidden_dim),
+                nn.ReLU(),
+                nn.Linear(hidden_dim, action_dim),
+            )
+
+        def forward(self, obs: "torch.Tensor") -> "torch.Tensor":
+            return self.net(obs)
+
+else:
+    AgentQNetTorch = None  # type: ignore[assignment]
 
 
 class AgentQNetNumpy:
@@ -204,67 +209,58 @@ class AgentQNetNumpy:
 # ===================================================================
 
 
-class QMIXMixingNetTorch(nn.Module):
-    """QMIX mixing network with hyper-network producing state-dependent weights.
+if HAS_TORCH:
 
-    The mixing network computes:
-        Q_tot = f(q_1, ..., q_n; s)
-    where the weights are constrained to be non-negative (monotonicity).
-    """
+    class QMIXMixingNetTorch(nn.Module):
+        """QMIX mixing network with hyper-network producing state-dependent weights.
 
-    def __init__(
-        self, n_agents: int, state_dim: int, embed_dim: int, hyper_hidden: int
-    ):
-        super().__init__()
-        self.n_agents = n_agents
-        self.embed_dim = embed_dim
-
-        # Hyper-network for W1: state -> (n_agents x embed_dim)
-        self.hyper_w1 = nn.Sequential(
-            nn.Linear(state_dim, hyper_hidden),
-            nn.ReLU(),
-            nn.Linear(hyper_hidden, n_agents * embed_dim),
-        )
-        # Hyper-network for b1: state -> embed_dim
-        self.hyper_b1 = nn.Linear(state_dim, embed_dim)
-
-        # Hyper-network for W2: state -> (embed_dim x 1)
-        self.hyper_w2 = nn.Sequential(
-            nn.Linear(state_dim, hyper_hidden),
-            nn.ReLU(),
-            nn.Linear(hyper_hidden, embed_dim),
-        )
-        # Hyper-network for b2: state -> scalar (via 2-layer net)
-        self.hyper_b2 = nn.Sequential(
-            nn.Linear(state_dim, embed_dim),
-            nn.ReLU(),
-            nn.Linear(embed_dim, 1),
-        )
-
-    def forward(self, agent_qs: torch.Tensor, state: torch.Tensor) -> torch.Tensor:
+        The mixing network computes:
+            Q_tot = f(q_1, ..., q_n; s)
+        where the weights are constrained to be non-negative (monotonicity).
         """
-        Parameters
-        ----------
-        agent_qs : (batch, n_agents)
-        state    : (batch, state_dim)
 
-        Returns
-        -------
-        q_tot : (batch, 1)
-        """
-        B = agent_qs.size(0)
+        def __init__(
+            self, n_agents: int, state_dim: int, embed_dim: int, hyper_hidden: int
+        ):
+            super().__init__()
+            self.n_agents = n_agents
+            self.embed_dim = embed_dim
 
-        # First mixing layer
-        w1 = torch.abs(self.hyper_w1(state)).view(B, self.n_agents, self.embed_dim)
-        b1 = self.hyper_b1(state).view(B, 1, self.embed_dim)
-        hidden = F.elu(torch.bmm(agent_qs.unsqueeze(1), w1) + b1)  # (B, 1, embed)
+            self.hyper_w1 = nn.Sequential(
+                nn.Linear(state_dim, hyper_hidden),
+                nn.ReLU(),
+                nn.Linear(hyper_hidden, n_agents * embed_dim),
+            )
+            self.hyper_b1 = nn.Linear(state_dim, embed_dim)
 
-        # Second mixing layer
-        w2 = torch.abs(self.hyper_w2(state)).view(B, self.embed_dim, 1)
-        b2 = self.hyper_b2(state).view(B, 1, 1)
-        q_tot = torch.bmm(hidden, w2) + b2  # (B, 1, 1)
+            self.hyper_w2 = nn.Sequential(
+                nn.Linear(state_dim, hyper_hidden),
+                nn.ReLU(),
+                nn.Linear(hyper_hidden, embed_dim),
+            )
+            self.hyper_b2 = nn.Sequential(
+                nn.Linear(state_dim, embed_dim),
+                nn.ReLU(),
+                nn.Linear(embed_dim, 1),
+            )
 
-        return q_tot.squeeze(-1).squeeze(-1)  # (B,)
+        def forward(
+            self, agent_qs: "torch.Tensor", state: "torch.Tensor"
+        ) -> "torch.Tensor":
+            B = agent_qs.size(0)
+
+            w1 = torch.abs(self.hyper_w1(state)).view(B, self.n_agents, self.embed_dim)
+            b1 = self.hyper_b1(state).view(B, 1, self.embed_dim)
+            hidden = F.elu(torch.bmm(agent_qs.unsqueeze(1), w1) + b1)
+
+            w2 = torch.abs(self.hyper_w2(state)).view(B, self.embed_dim, 1)
+            b2 = self.hyper_b2(state).view(B, 1, 1)
+            q_tot = torch.bmm(hidden, w2) + b2
+
+            return q_tot.squeeze(-1).squeeze(-1)
+
+else:
+    QMIXMixingNetTorch = None  # type: ignore[assignment]
 
 
 class QMIXMixingNetNumpy:
@@ -318,11 +314,18 @@ class QMIXMixingNetNumpy:
         return out2
 
 
-class VDNMixerTorch(nn.Module):
-    """Value Decomposition Network: Q_tot = sum(q_i)."""
+if HAS_TORCH:
 
-    def forward(self, agent_qs: torch.Tensor, state: torch.Tensor) -> torch.Tensor:
-        return agent_qs.sum(dim=-1)
+    class VDNMixerTorch(nn.Module):
+        """Value Decomposition Network: Q_tot = sum(q_i)."""
+
+        def forward(
+            self, agent_qs: "torch.Tensor", state: "torch.Tensor"
+        ) -> "torch.Tensor":
+            return agent_qs.sum(dim=-1)
+
+else:
+    VDNMixerTorch = None  # type: ignore[assignment]
 
 
 class VDNMixerNumpy:
