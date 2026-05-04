@@ -9,7 +9,7 @@ Unit factory - larva production with gas reservation logic.
 Keeps gas-heavy units from being starved by mineral-only spam.
 """
 
-from typing import Iterable, List, Optional
+from typing import List, Optional
 
 try:
     from sc2.ids.unit_typeid import UnitTypeId

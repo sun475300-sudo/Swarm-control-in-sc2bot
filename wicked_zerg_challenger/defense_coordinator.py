@@ -14,7 +14,6 @@ Blackboard 기반 아키텍처:
 참고: LOGIC_IMPROVEMENT_REPORT.md - Section 4 (Defense Consolidation)
 """
 
-import math
 from typing import List, Optional, Set
 
 try:

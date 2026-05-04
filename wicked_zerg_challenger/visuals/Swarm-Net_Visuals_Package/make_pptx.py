@@ -167,8 +167,6 @@ def main():
     logger.info("[3/3] Building PPTX with python-pptx...")
 
     from pptx import Presentation
-    from pptx.dml.color import RGBColor
-    from pptx.enum.text import PP_ALIGN
     from pptx.util import Emu, Inches, Pt
 
     prs = Presentation()

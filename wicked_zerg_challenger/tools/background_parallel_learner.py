@@ -14,13 +14,11 @@ sc2reader를 사용한 부정확한 리플레이 분석 대신,
 """
 
 import logging
-import os
-import shutil
 import sys
 import threading
 import time
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, Optional
 
 import numpy as np
 

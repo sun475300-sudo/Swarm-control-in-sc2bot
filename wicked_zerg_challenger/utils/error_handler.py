@@ -10,7 +10,7 @@ Error Handler - 예외 처리 유틸리티
 
 import functools
 import traceback
-from typing import Any, Callable, Optional
+from typing import Callable
 
 from utils.logger import get_logger
 

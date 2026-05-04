@@ -9,7 +9,7 @@ Combat Execution - 전투 실행 시스템
 """
 
 import inspect
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from sc2.position import Point2
