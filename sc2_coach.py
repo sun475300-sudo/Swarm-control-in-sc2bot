@@ -8,6 +8,7 @@ import logging
 import re
 from datetime import datetime
 from pathlib import Path
+from typing import Optional
 
 logger = logging.getLogger("sc2_coach")
 
@@ -274,20 +275,29 @@ class SC2Coach:
 
         return advices
 
-    def analyze_bot_log(self) -> list:
-        """프로젝트의 봇 로그 자동 분석
+    def analyze_bot_log(self, log_path: Optional[Path] = None) -> list:
+        """프로젝트의 봇 로그 자동 분석.
+
+        Args:
+            log_path: 분석할 로그 파일 경로. 미지정 시 기본
+                ``wicked_zerg_challenger/logs/bot.log``.
 
         Returns:
             list: 코칭 조언 리스트
         """
         bot_log_path = (
-            self._project_root / "wicked_zerg_challenger" / "logs" / "bot.log"
+            Path(log_path)
+            if log_path is not None
+            else self._project_root
+            / "wicked_zerg_challenger"
+            / "logs"
+            / "bot.log"
         )
         if not bot_log_path.exists():
             return [
                 {
                     "category": "general",
-                    "advice": "봇 로그를 찾을 수 없습니다.",
+                    "advice": f"봇 로그를 찾을 수 없습니다: {bot_log_path}",
                     "severity": "info",
                 }
             ]

@@ -10,7 +10,11 @@ import sys
 import time
 import tracemalloc
 
-import psutil
+try:
+    import psutil  # type: ignore
+except ImportError:  # pragma: no cover - 환경에 따라 미설치 가능
+    psutil = None  # type: ignore
+
 from sc2 import maps
 from sc2.data import Difficulty, Race
 from sc2.main import run_game
@@ -84,10 +88,16 @@ def main():
 
     # Start memory tracking
     tracemalloc.start()
-    process = psutil.Process(os.getpid())
-    initial_memory = process.memory_info().rss / 1024 / 1024  # MB
-
-    logger.info(f"Initial: {initial_memory:.1f} MB\n")
+    if psutil is not None:
+        process = psutil.Process(os.getpid())
+        initial_memory = process.memory_info().rss / 1024 / 1024  # MB
+        logger.info(f"Initial: {initial_memory:.1f} MB\n")
+    else:
+        process = None
+        logger.warning(
+            "psutil 미설치 — 메모리 추적이 비활성화됩니다. "
+            "'pip install psutil' 권장."
+        )
 
     for game_num in range(1, total_games + 1):
         logger.info("\n" + "=" * 70)
@@ -98,8 +108,11 @@ def main():
         logger.info(f"  Opponent: {opponent_race.name} {difficulty.name}")
         logger.info("=" * 70)
         # Memory before game
-        mem_before = process.memory_info().rss / 1024 / 1024
-        logger.info(f"Before game {game_num}: {mem_before:.1f} MB")
+        if process is not None:
+            mem_before = process.memory_info().rss / 1024 / 1024
+            logger.info(f"Before game {game_num}: {mem_before:.1f} MB")
+        else:
+            mem_before = 0.0
 
         # Create bot
         bot = Bot(Race.Zerg, WickedZergBotPro(train_mode=False, instance_id=game_num))
@@ -130,11 +143,12 @@ def main():
             losses += 1
 
         # Memory after game
-        mem_after = process.memory_info().rss / 1024 / 1024
-        mem_delta = mem_after - mem_before
-        logger.info(
-            f"After game {game_num}: {mem_after:.1f} MB (delta: {mem_delta:+.1f} MB)"
-        )
+        if process is not None:
+            mem_after = process.memory_info().rss / 1024 / 1024
+            mem_delta = mem_after - mem_before
+            logger.info(
+                f"After game {game_num}: {mem_after:.1f} MB (delta: {mem_delta:+.1f} MB)"
+            )
 
         # Short pause between games
         if game_num < total_games:
@@ -142,8 +156,12 @@ def main():
             time.sleep(5)
 
     # Final memory check
-    final_memory = process.memory_info().rss / 1024 / 1024
-    total_leak = final_memory - initial_memory
+    if process is not None:
+        final_memory = process.memory_info().rss / 1024 / 1024
+        total_leak = final_memory - initial_memory
+    else:
+        final_memory = 0.0
+        total_leak = 0.0
 
     # Print summary
     logger.info("\n" + "=" * 70)

@@ -133,6 +133,33 @@ class TestSC2CoachStatistics:
         assert len(army_loss) == 0
 
 
+class TestSC2CoachAnalyzeBotLog:
+    def setup_method(self) -> None:
+        self.coach = SC2Coach()
+
+    def test_missing_file_returns_info_severity(self, tmp_path) -> None:
+        path = tmp_path / "missing.log"
+        result = self.coach.analyze_bot_log(path)
+        assert result[0]["severity"] == "info"
+        assert "찾을 수 없습니다" in result[0]["advice"]
+
+    def test_file_content_is_analyzed(self, tmp_path) -> None:
+        path = tmp_path / "bot.log"
+        path.write_text(
+            "supply blocked at 36/36\nidle workers detected\n",
+            encoding="utf-8",
+        )
+        result = self.coach.analyze_bot_log(path)
+        cats = {a["category"] for a in result}
+        assert "macro" in cats or "economy" in cats
+
+    def test_default_path_no_log(self) -> None:
+        # 기본 경로에 bot.log 가 없는 환경에서도 안전하게 info 만 반환
+        result = self.coach.analyze_bot_log()
+        assert isinstance(result, list)
+        assert len(result) >= 1
+
+
 class TestSC2CoachEdgeCases:
     def setup_method(self) -> None:
         self.coach = SC2Coach()
