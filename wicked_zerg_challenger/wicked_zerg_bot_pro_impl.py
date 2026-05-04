@@ -28,6 +28,7 @@ from blackboard import Blackboard
 from bot_step_integration import BotStepIntegrator
 from difficulty_progression import DifficultyProgression
 from personality_module import PersonalityMode, PersonalityModule
+
 from utils.logger import setup_logger
 
 logger = logging.getLogger("WickedZergBotProImpl")
