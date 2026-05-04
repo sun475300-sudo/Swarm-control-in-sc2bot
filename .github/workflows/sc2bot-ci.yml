@@ -77,8 +77,16 @@ jobs:
         # (nvidia-cudnn / cublas / cuda-toolkit / triton …). The CI runner has
         # ~14GB of free disk and the full CUDA torch causes the install step
         # to exit code 1 (disk-exhausted). Tests don't need GPU support.
+        #
+        # NOTE: must use --index-url (NOT --extra-index-url) so that pip
+        # resolves torch ONLY from pytorch.org/cpu. With --extra-index-url
+        # pip would still pick the higher-version GPU wheel from PyPI
+        # (`2.x.0` > `2.x.0+cpu` per PEP 440), defeating the optimisation.
+        # The follow-up `pip install -r requirements.txt` runs against the
+        # default PyPI index and leaves the already-installed CPU torch in
+        # place because `torch>=2.0.0` is already satisfied.
         run: |
-          pip install --no-cache-dir --extra-index-url https://download.pytorch.org/whl/cpu torch
+          pip install --no-cache-dir --index-url https://download.pytorch.org/whl/cpu torch
           pip install --no-cache-dir -r requirements.txt pytest pytest-cov pytest-asyncio
 
       - name: Run unit tests
