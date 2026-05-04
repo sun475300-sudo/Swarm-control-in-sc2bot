@@ -36,6 +36,47 @@ except ImportError:
     StrategyConfig = None
 
 
+# Composition-tag classification frozensets used by the hot enemy-counting
+# loop in classify_enemy_composition_v2. Defined once at module load to
+# turn each per-unit "in [...]" literal-list scan into an O(1) set lookup.
+_AIR_CAPITAL_UNITS = frozenset(
+    {"CARRIER", "BATTLECRUISER", "TEMPEST", "BROODLORD", "MOTHERSHIP"}
+)
+_AIR_FIGHTER_UNITS = frozenset(
+    {
+        "VIKINGFIGHTER",
+        "PHOENIX",
+        "VOIDRAY",
+        "MUTALISK",
+        "CORRUPTOR",
+        "LIBERATOR",
+        "BANSHEE",
+    }
+)
+_GROUND_MECH_UNITS = frozenset(
+    {
+        "SIEGETANK",
+        "SIEGETANKSIEGED",
+        "THOR",
+        "COLOSSUS",
+        "IMMORTAL",
+        "STALKER",
+        "DRAGOON",
+    }
+)
+_GROUND_BIO_UNITS = frozenset(
+    {
+        "MARINE",
+        "MARAUDER",
+        "ZEALOT",
+        "ADEPT",
+        "ZERGLING",
+        "ROACH",
+        "HYDRALISK",
+    }
+)
+
+
 class WinCondition(Enum):
     """승리/패배 조건"""
 
@@ -1404,43 +1445,16 @@ class StrategyManagerV2(StrategyManager):
 
         for u in enemy_units:
             name = u.type_id.name.upper()
-            if name in [
-                "CARRIER",
-                "BATTLECRUISER",
-                "TEMPEST",
-                "BROODLORD",
-                "MOTHERSHIP",
-            ]:
+            # Hot loop: each tag is matched against four mutually-exclusive
+            # frozensets defined at module scope (O(1) per check) instead
+            # of the O(n) literal-list scans the previous code performed.
+            if name in _AIR_CAPITAL_UNITS:
                 counts["air_capital"] += 1
-            elif name in [
-                "VIKINGFIGHTER",
-                "PHOENIX",
-                "VOIDRAY",
-                "MUTALISK",
-                "CORRUPTOR",
-                "LIBERATOR",
-                "BANSHEE",
-            ]:
+            elif name in _AIR_FIGHTER_UNITS:
                 counts["air_fighter"] += 1
-            elif name in [
-                "SIEGETANK",
-                "SIEGETANKSIEGED",
-                "THOR",
-                "COLOSSUS",
-                "IMMORTAL",
-                "STALKER",
-                "DRAGOON",
-            ]:
+            elif name in _GROUND_MECH_UNITS:
                 counts["ground_mech"] += 1
-            elif name in [
-                "MARINE",
-                "MARAUDER",
-                "ZEALOT",
-                "ADEPT",
-                "ZERGLING",
-                "ROACH",
-                "HYDRALISK",
-            ]:
+            elif name in _GROUND_BIO_UNITS:
                 counts["ground_bio"] += 1
             elif name in ["ULTRALISK", "ARCHON"]:
                 counts["massive"] += 1
