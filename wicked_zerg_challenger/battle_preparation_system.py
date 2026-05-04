@@ -14,9 +14,25 @@ Battle Preparation System - 교전 대비 시스템
 import time
 from typing import Dict, List, Optional, Set, Tuple
 
-from sc2.ids.ability_id import AbilityId
-from sc2.ids.unit_typeid import UnitTypeId
-from sc2.position import Point2
+try:
+    from sc2.ids.ability_id import AbilityId
+    from sc2.ids.unit_typeid import UnitTypeId
+    from sc2.position import Point2
+except ImportError:  # pragma: no cover - sc2 optional in test envs
+
+    class _StubIdMeta(type):
+        def __getattr__(cls, _name):
+            return cls
+
+    class AbilityId(metaclass=_StubIdMeta):  # type: ignore[no-redef]
+        pass
+
+    class UnitTypeId(metaclass=_StubIdMeta):  # type: ignore[no-redef]
+        pass
+
+    class Point2:  # type: ignore[no-redef]
+        pass
+
 
 from utils.logger import get_logger
 
