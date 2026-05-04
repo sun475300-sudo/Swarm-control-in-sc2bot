@@ -16,15 +16,28 @@ import sys
 import unittest
 from unittest.mock import AsyncMock, MagicMock, Mock, patch
 
+import pytest
+
 # Add parent directory to path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 sys.path.insert(
     0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "local_training"))
 )
 
-from local_training.production_resilience import ProductionResilience
-from sc2.ids.unit_typeid import UnitTypeId
-from sc2.position import Point2
+try:
+    from local_training.production_resilience import ProductionResilience
+    from sc2.ids.unit_typeid import UnitTypeId
+    from sc2.position import Point2
+
+    SC2_AVAILABLE = True
+except ImportError:
+    ProductionResilience = None  # type: ignore[assignment]
+    UnitTypeId = None  # type: ignore[assignment]
+    Point2 = None  # type: ignore[assignment]
+    SC2_AVAILABLE = False
+
+
+pytestmark = pytest.mark.skipif(not SC2_AVAILABLE, reason="sc2 library not available")
 
 
 class TestProductionResilience(unittest.TestCase):

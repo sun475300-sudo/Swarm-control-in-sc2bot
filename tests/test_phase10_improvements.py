@@ -315,8 +315,11 @@ class TestEconomyGasBanking:
             pytest.skip("EconomyManager not available (sc2 dependency)")
 
     def test_gas_overflow_threshold_lowered(self):
-        """Gas overflow threshold should be 1000 (not 3000)"""
-        assert self.economy.gas_overflow_prevention_threshold == 1000
+        """Gas overflow threshold should be lowered from 3000 → 1000 → 800.
+
+        Current target is 800 to prevent gas banking even more aggressively.
+        """
+        assert self.economy.gas_overflow_prevention_threshold == 800
 
 
 # ===== 4. IntelManager NYDUSCANAL in Tech Buildings =====
@@ -367,17 +370,34 @@ class TestOverlordVisionNetwork:
 
     @pytest.mark.asyncio
     async def test_update_frequency_5_seconds(self):
-        """Vision network should update every 110 frames (~5s), not 220"""
-        # Iteration 110 should trigger update
-        # We test that iteration 110 does not skip (no exception)
-        try:
-            await self.vision.on_step(110)
-        except Exception:
-            pass  # May fail due to mock limitations, but shouldn't raise AttributeError from skipping
+        """Vision network should update every 110 frames (~5s), not 220.
 
-        # Iteration 220 was the old frequency - now 110 is the new one
-        # Just verify the method exists and runs at 110
-        assert True  # If we get here, the method signature is correct
+        검증: ``on_step(110)`` 일 때 ``_update_vision_positions`` 가 호출되고,
+        그 외 프레임 (예: 55, 109) 에서는 호출되지 않는다.
+        """
+        # Patch the heavy work so we test the gating logic in isolation
+        self.vision._update_vision_positions = Mock()
+        self.vision._deploy_vision_network = MagicMock(return_value=None)
+
+        # Make the async deploy method a no-op coroutine
+        async def _noop_deploy():
+            return None
+
+        self.vision._deploy_vision_network = _noop_deploy  # type: ignore[assignment]
+
+        # Frames that should NOT trigger an update
+        for non_trigger in (1, 55, 109, 111, 219):
+            await self.vision.on_step(non_trigger)
+        assert (
+            self.vision._update_vision_positions.call_count == 0
+        ), "Update fired on a non-110 multiple frame"
+
+        # Frames that SHOULD trigger an update (multiples of 110)
+        for trigger in (0, 110, 220, 330):
+            await self.vision.on_step(trigger)
+        assert (
+            self.vision._update_vision_positions.call_count == 4
+        ), "Update did not fire on every multiple of 110"
 
 
 # ===== 6. EarlyScoutSystem Mid-Game Rescouting =====

@@ -18,16 +18,21 @@ import unittest
 from io import StringIO
 from unittest.mock import Mock, patch
 
+import pytest
+
 # Add parent directory to path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from difficulty_progression import DifficultyProgression
-
-# Mock sc2.data imports
 try:
+    from difficulty_progression import DifficultyProgression
     from sc2.data import Difficulty, Race
+
+    SC2_AVAILABLE = True
 except ImportError:
-    # Create mock enums for testing
+    DifficultyProgression = None  # type: ignore[assignment]
+    SC2_AVAILABLE = False
+
+    # Create mock enums for testing without sc2 (also used as fallback below)
     from enum import Enum
 
     class Difficulty(Enum):
@@ -46,6 +51,9 @@ except ImportError:
         Terran = 1
         Protoss = 2
         Zerg = 3
+
+
+pytestmark = pytest.mark.skipif(not SC2_AVAILABLE, reason="sc2 library not available")
 
 
 class TestDifficultyProgressionBasics(unittest.TestCase):

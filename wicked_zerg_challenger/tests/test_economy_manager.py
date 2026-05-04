@@ -16,12 +16,25 @@ import sys
 import unittest
 from unittest.mock import MagicMock, Mock, patch
 
+import pytest
+
 # Add parent directory to path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from economy_manager import EconomyManager
-from sc2.ids.unit_typeid import UnitTypeId
-from sc2.position import Point2
+try:
+    from economy_manager import EconomyManager
+    from sc2.ids.unit_typeid import UnitTypeId
+    from sc2.position import Point2
+
+    SC2_AVAILABLE = True
+except ImportError:
+    EconomyManager = None  # type: ignore[assignment]
+    UnitTypeId = None  # type: ignore[assignment]
+    Point2 = None  # type: ignore[assignment]
+    SC2_AVAILABLE = False
+
+
+pytestmark = pytest.mark.skipif(not SC2_AVAILABLE, reason="sc2 library not available")
 
 
 class TestEconomyManager(unittest.TestCase):
@@ -231,6 +244,31 @@ class TestEconomyManager(unittest.TestCase):
         """Test blackboard integration is set up"""
         # Blackboard is None in setUp
         self.assertIsNone(self.manager.blackboard)
+
+    # ==================== Tunable Parameter Regression Tests ====================
+    #
+    # These guard the "phase improvement" tunables from accidental rollback.
+    # If a tunable is intentionally re-tuned, update the expected value here.
+
+    def test_gas_overflow_prevention_threshold_value(self):
+        """Phase 16/18: 800 으로 하향된 가스 뱅킹 방지 임계값."""
+        self.assertEqual(self.manager.gas_overflow_prevention_threshold, 800)
+
+    def test_gas_worker_adjustment_interval_value(self):
+        """Phase 18: 110 → 33 frame 으로 빨라진 가스 일꾼 재배치 주기."""
+        self.assertEqual(self.manager.gas_worker_adjustment_interval, 33)
+
+    def test_dynamic_gas_workers_enabled_by_default(self):
+        """Dynamic gas worker scheduling 는 기본 ON."""
+        self.assertTrue(self.manager.dynamic_gas_workers_enabled)
+
+    def test_expansion_block_timing_defaults(self):
+        """Phase 17: 적 자연 확장 방해 워커의 출발/체류 시간 기본값."""
+        self.assertEqual(self.manager.expansion_block_start_time, 50)
+        self.assertEqual(self.manager.expansion_block_duration, 45)
+        # 초기에는 비활성, worker tag 없음
+        self.assertFalse(self.manager.expansion_block_active)
+        self.assertIsNone(self.manager.expansion_block_worker_tag)
 
     # ==================== Helper Method Tests ====================
 

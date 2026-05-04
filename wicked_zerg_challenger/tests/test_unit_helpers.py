@@ -110,6 +110,49 @@ class MockUnits:
         return self.units[0] if self.units else None
 
 
+class TestEmptyUnitsLike(unittest.TestCase):
+    """Test the internal _empty_units_like helper.
+
+    The helper is used by find_nearby_enemies / filter_workers_by_task to
+    return an empty Units-compatible collection when sc2's real ``Units``
+    class isn't available (test environment without burnysc2 installed).
+    """
+
+    def test_returns_same_class_instance_when_reference_provided(self):
+        """When a reference collection is passed, return the same class with []"""
+        from utils.unit_helpers import _empty_units_like
+
+        reference = MockUnits([MockUnit()])
+        result = _empty_units_like(reference)
+        self.assertIsInstance(result, MockUnits)
+        self.assertEqual(len(result), 0)
+
+    def test_returns_empty_list_when_reference_is_none(self):
+        """Falls back to a plain list when no reference and Units is None"""
+        from utils.unit_helpers import _empty_units_like
+
+        result = _empty_units_like(None)
+        # Result should be len() == 0 — either real Units([]) or plain list
+        self.assertEqual(len(result), 0)
+
+    def test_returns_empty_when_reference_class_rejects_no_args(self):
+        """Reference class that doesn't accept ([]) should still yield empty."""
+        from utils.unit_helpers import _empty_units_like
+
+        class WeirdUnits:
+            def __init__(self, items, parent):  # requires both args
+                self.items = items
+                self.parent = parent
+
+            def __len__(self):
+                return len(self.items)
+
+        reference = WeirdUnits([1, 2, 3], None)
+        result = _empty_units_like(reference)
+        # WeirdUnits([]) raises TypeError → helper falls back to two-arg form
+        self.assertEqual(len(result), 0)
+
+
 class TestFindNearbyEnemies(unittest.TestCase):
     """Test find_nearby_enemies function"""
 
