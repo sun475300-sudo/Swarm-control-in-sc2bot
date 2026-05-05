@@ -43,6 +43,25 @@ try:
     HAS_TORCH = True
 except ImportError:
     HAS_TORCH = False
+    # Lightweight stubs so module-level `class X(nn.Module):` declarations
+    # don't fail to import when torch is unavailable.  Runtime usage of these
+    # Torch-only classes is gated on HAS_TORCH elsewhere in this module.
+    torch = None  # type: ignore[assignment]
+    optim = None  # type: ignore[assignment]
+    Categorical = None  # type: ignore[assignment]
+
+    class _NNModuleStub:
+        Module = object
+
+        def __getattr__(self, name):
+            def _missing(*_args, **_kwargs):
+                raise RuntimeError(
+                    "torch is not installed; install torch to use this class"
+                )
+
+            return _missing
+
+    nn = _NNModuleStub()  # type: ignore[assignment]
 
 # ===================================================================
 # NumPy fallback helpers

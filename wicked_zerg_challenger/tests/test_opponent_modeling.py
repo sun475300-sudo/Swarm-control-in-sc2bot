@@ -297,7 +297,7 @@ class TestOpponentModel(unittest.TestCase):
         self.assertEqual(model.dominant_style, OpponentStyle.AGGRESSIVE)
 
 
-class TestOpponentModeling(unittest.TestCase):
+class TestOpponentModeling(unittest.IsolatedAsyncioTestCase):
     """Test suite for OpponentModeling system"""
 
     def setUp(self):
@@ -570,8 +570,8 @@ class TestOpponentModeling(unittest.TestCase):
 
     async def test_full_game_flow(self):
         """Test complete game flow from start to end"""
-        # Start game
-        await self.modeling.on_start()
+        # Start game (use the active integration API)
+        self.modeling.on_game_start("opponent_Zerg", self.bot.enemy_race)
 
         # Early game - detect signals
         self.bot.time = 100.0
@@ -592,7 +592,7 @@ class TestOpponentModeling(unittest.TestCase):
         self.bot.time = 400.0
         self.intel.get_enemy_composition = Mock(return_value={"zergling": 30})
 
-        await self.modeling.on_end("Defeat")
+        self.modeling.on_game_end(won=False, lost=True)
 
         # Verify model was updated
         model = self.modeling.opponent_models["opponent_Zerg"]

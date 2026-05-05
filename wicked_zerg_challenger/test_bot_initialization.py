@@ -20,63 +20,35 @@ def test_imports():
     logger.info("Testing Module Imports")
     logger.info("=" * 60)
 
-    try:
-        from wicked_zerg_bot_pro_impl import WickedZergBotProImpl
+    # Each import is wrapped so the assertion message identifies the failing
+    # module; pytest collects this as a regular test (must not return a value).
+    from wicked_zerg_bot_pro_impl import WickedZergBotProImpl  # noqa: F401
 
-        logger.info("WickedZergBotProImpl imported successfully")
-    except Exception as e:
-        logger.error(f"Failed to import WickedZergBotProImpl: {e}")
-        return False
+    logger.info("WickedZergBotProImpl imported successfully")
 
-    try:
-        from bot_step_integration import BotStepIntegrator
+    from bot_step_integration import BotStepIntegrator  # noqa: F401
 
-        logger.info("BotStepIntegrator imported successfully")
-    except Exception as e:
-        logger.error(f"Failed to import BotStepIntegrator: {e}")
-        return False
+    logger.info("BotStepIntegrator imported successfully")
 
-    try:
-        from local_training.production_resilience import ProductionResilience
+    from local_training.production_resilience import ProductionResilience  # noqa: F401
 
-        logger.info("ProductionResilience imported successfully")
-    except Exception as e:
-        logger.error(f"Failed to import ProductionResilience: {e}")
-        return False
+    logger.info("ProductionResilience imported successfully")
 
-    try:
-        from strategy_manager import StrategyManager
+    from strategy_manager import StrategyManager  # noqa: F401
 
-        logger.info("StrategyManager imported successfully")
-    except Exception as e:
-        logger.error(f"Failed to import StrategyManager: {e}")
-        return False
+    logger.info("StrategyManager imported successfully")
 
-    try:
-        from rogue_tactics_manager import RogueTacticsManager
+    from rogue_tactics_manager import RogueTacticsManager  # noqa: F401
 
-        logger.info("RogueTacticsManager imported successfully")
-    except Exception as e:
-        logger.error(f"Failed to import RogueTacticsManager: {e}")
-        return False
+    logger.info("RogueTacticsManager imported successfully")
 
-    try:
-        from unit_factory import UnitFactory
+    from unit_factory import UnitFactory  # noqa: F401
 
-        logger.info("UnitFactory imported successfully")
-    except Exception as e:
-        logger.error(f"Failed to import UnitFactory: {e}")
-        return False
+    logger.info("UnitFactory imported successfully")
 
-    try:
-        from combat.boids_swarm_control import BoidsSwarmController
+    from combat.boids_swarm_control import BoidsSwarmController  # noqa: F401
 
-        logger.info("BoidsSwarmController imported successfully")
-    except Exception as e:
-        logger.error(f"Failed to import BoidsSwarmController: {e}")
-        return False
-
-    return True
+    logger.info("BoidsSwarmController imported successfully")
 
 
 def test_bot_structure():
@@ -85,55 +57,38 @@ def test_bot_structure():
     logger.info("Testing Bot Structure")
     logger.info("=" * 60)
 
-    try:
-        from wicked_zerg_bot_pro_impl import WickedZergBotProImpl
+    from wicked_zerg_bot_pro_impl import WickedZergBotProImpl
 
-        # Create a mock bot instance (won't actually initialize game)
-        bot = WickedZergBotProImpl(train_mode=False, instance_id=0)
+    # Create a mock bot instance (won't actually initialize game)
+    bot = WickedZergBotProImpl(train_mode=False, instance_id=0)
 
-        # Check that manager attributes exist
-        managers = [
-            "intel",
-            "economy",
-            "production",
-            "combat",
-            "scout",
-            "micro",
-            "queen_manager",
-            "strategy_manager",
-            "performance_optimizer",
-            "formation_controller",
-            "rogue_tactics",
-            "transformer_model",
-            "hierarchical_rl",
-        ]
+    # Check that manager attributes exist
+    managers = [
+        "intel",
+        "economy",
+        "production",
+        "combat",
+        "scout",
+        "micro",
+        "queen_manager",
+        "strategy_manager",
+        "performance_optimizer",
+        "formation_controller",
+        "rogue_tactics",
+        "transformer_model",
+        "hierarchical_rl",
+    ]
 
-        for manager in managers:
-            if hasattr(bot, manager):
-                logger.info(f"Bot has attribute: {manager}")
-            else:
-                logger.info(f"Bot missing attribute: {manager}")
-
-        # Check that on_step method exists
-        if hasattr(bot, "on_step"):
-            logger.info("Bot has on_step method")
+    for manager in managers:
+        if hasattr(bot, manager):
+            logger.info(f"Bot has attribute: {manager}")
         else:
-            logger.info("Bot missing on_step method")
+            logger.info(f"Bot missing attribute: {manager}")
 
-        # Check that on_start method exists
-        if hasattr(bot, "on_start"):
-            logger.info("Bot has on_start method")
-        else:
-            logger.info("Bot missing on_start method")
-
-        return True
-
-    except Exception as e:
-        logger.error(f"Failed to test bot structure: {e}")
-        import traceback
-
-        traceback.print_exc()
-        return False
+    # Check that on_step / on_start methods exist (these are required by SC2 API)
+    assert hasattr(bot, "on_step"), "Bot missing on_step method"
+    assert hasattr(bot, "on_start"), "Bot missing on_start method"
+    logger.info("Bot has on_step + on_start methods")
 
 
 def verify_code_patterns():
@@ -180,30 +135,29 @@ def verify_code_patterns():
     else:
         logger.info("bot_step_integration.py doesn't call end_frame()")
 
-    return True
-
 
 def main():
-    """Run all tests."""
+    """Run all tests as a CLI smoke check (independent of pytest)."""
     logger.info("\n" + "=" * 60)
     logger.info("WICKED ZERG BOT - INITIALIZATION VERIFICATION")
     logger.info("=" * 60 + "\n")
 
     success = True
 
-    # Test 1: Imports
-    if not test_imports():
-        success = False
+    for name, fn in (
+        ("imports", test_imports),
+        ("bot_structure", test_bot_structure),
+        ("code_patterns", verify_code_patterns),
+    ):
+        try:
+            fn()
+        except Exception as e:
+            logger.error(f"[{name}] failed: {e}")
+            import traceback
 
-    # Test 2: Bot structure
-    if not test_bot_structure():
-        success = False
+            traceback.print_exc()
+            success = False
 
-    # Test 3: Code patterns
-    if not verify_code_patterns():
-        success = False
-
-    # Summary
     logger.info("\n" + "=" * 60)
     if success:
         logger.info("ALL TESTS PASSED")
