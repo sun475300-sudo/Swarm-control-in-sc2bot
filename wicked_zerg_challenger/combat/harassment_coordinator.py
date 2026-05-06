@@ -701,6 +701,10 @@ class HarassmentCoordinator:
             buildings = self._find_buildings_near(target)
             if buildings:
                 self.bot.do(unit.attack(buildings[0]))
+            elif distance > 12:
+                # Out of attack range — move first; switching to attack at
+                # max range avoids the engine's slow attack-move pathing.
+                self.bot.do(unit.move(target))
             else:
                 self.bot.do(unit.attack(target))
 
