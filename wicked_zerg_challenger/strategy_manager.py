@@ -1521,6 +1521,19 @@ class StrategyManager:
             self._adjust_unit_ratio("hydra", 0.3)
             self._adjust_unit_ratio("roach", 0.3)
 
+        # 적 레이바저 3+ → 히드라 위주 (사거리 우위) + 자체 레이바저 미러
+        # Ravagers' Corrosive Bile is AOE; spread out behind longer-range hydras
+        if ravager_count >= 3:
+            self._adjust_unit_ratio("hydra", 0.45)
+            self._adjust_unit_ratio("ravager", 0.30)
+            self._adjust_unit_ratio("roach", 0.20)
+            if game_time - getattr(self, "_last_zvz_ravager_log", 0) > 15:
+                self._last_zvz_ravager_log = game_time
+                self.logger.warning(
+                    f"[{int(game_time)}s] Enemy Ravager x{ravager_count}: "
+                    "Hydra-led counter composition"
+                )
+
         # 뮤탈리스크 → 히드라 + 스포어
         if mutalisk_count >= 3:
             # ★ Phase 34: "hydralisk" 오타 수정 → "hydra" (내부 키 통일)
