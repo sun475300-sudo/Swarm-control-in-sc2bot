@@ -12,7 +12,7 @@ Performance improvements:
 """
 
 from functools import lru_cache
-from typing import TYPE_CHECKING, Dict, Optional, Tuple
+from typing import TYPE_CHECKING, Any, Dict, Optional, Tuple
 
 if TYPE_CHECKING:
     from sc2.bot_ai import BotAI
@@ -260,7 +260,7 @@ class SpatialQueryOptimizer:
             self._query_cache.clear()
             self._last_cache_clear = iteration
 
-    def get_statistics(self) -> Dict[str, any]:
+    def get_statistics(self) -> Dict[str, Any]:
         """
         Get query statistics
 

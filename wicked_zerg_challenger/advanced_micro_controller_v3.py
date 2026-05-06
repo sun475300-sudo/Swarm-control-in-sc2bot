@@ -18,7 +18,7 @@ Integration:
 """
 
 from collections import defaultdict
-from typing import Dict, List, Optional, Set, Tuple
+from typing import Any, Dict, List, Optional, Set, Tuple
 
 from utils.logger import get_logger
 
@@ -1407,7 +1407,7 @@ class AdvancedMicroControllerV3:
         for tag in dead_infestor_tags:
             del self.infestor_micro.last_fungal_time[tag]
 
-    def get_status(self) -> Dict[str, any]:
+    def get_status(self) -> Dict[str, Any]:
         """Get micro controller status."""
         return {
             "ravager_cooldowns": len(self.ravager_micro.last_shot_time),
