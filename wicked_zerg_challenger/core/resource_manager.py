@@ -14,7 +14,12 @@ Features:
 import asyncio
 from typing import TYPE_CHECKING, Dict, Optional, Tuple
 
-from wicked_zerg_challenger.utils.logger import get_logger
+try:
+    # Match the rest of the codebase: import from sibling package when run from
+    # the repo's wicked_zerg_challenger root.
+    from utils.logger import get_logger
+except ImportError:  # pragma: no cover — fallback for absolute-path callers
+    from wicked_zerg_challenger.utils.logger import get_logger
 
 if TYPE_CHECKING:
     from sc2.bot_ai import BotAI
@@ -55,21 +60,18 @@ class ResourceManager:
             True if successful, False if insufficient resources
         """
         async with self._lock:
-            # Calculate currently available resources
-            available_m = self.bot.minerals - self._reserved_minerals
-            available_g = self.bot.vespene - self._reserved_gas
+            # Account for the manager's own existing reservation when computing availability —
+            # otherwise a re-reservation (raise the amount) is rejected even when (current+own_old)
+            # would actually cover it. (Cycle 6 fix.)
+            own_old_m, own_old_g = self._reservations.get(manager_name, (0, 0))
+            available_m = self.bot.minerals - self._reserved_minerals + own_old_m
+            available_g = self.bot.vespene - self._reserved_gas + own_old_g
 
             # Check if we have enough resources
             if available_m >= minerals and available_g >= gas:
-                # Reserve resources
-                self._reserved_minerals += minerals
-                self._reserved_gas += gas
-
-                # Release any previous reservation from this manager
-                if manager_name in self._reservations:
-                    old_m, old_g = self._reservations[manager_name]
-                    self._reserved_minerals -= old_m
-                    self._reserved_gas -= old_g
+                # Atomic swap: subtract previous reservation and add new one
+                self._reserved_minerals = self._reserved_minerals - own_old_m + minerals
+                self._reserved_gas = self._reserved_gas - own_old_g + gas
 
                 # Record new reservation
                 self._reservations[manager_name] = (minerals, gas)
