@@ -491,11 +491,9 @@ class OpponentModeling:
     async def _send_prediction_to_strategy_manager(
         self, strategy: str, confidence: float
     ):
-        """예측을 StrategyManagerV2에 전달"""
+        """예측을 StrategyManagerV2에 전달 (현 구현은 blackboard 경유 추천만 수행)."""
         if not hasattr(self.bot, "strategy_manager"):
             return
-
-        strategy_manager = self.bot.strategy_manager
 
         # Set blackboard recommendations
         if hasattr(self.bot, "blackboard") and self.bot.blackboard:
