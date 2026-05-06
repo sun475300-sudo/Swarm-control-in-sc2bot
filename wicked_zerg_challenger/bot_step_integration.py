@@ -382,6 +382,24 @@ class BotStepIntegrator:
         self._managers_initialized = False
         self._logic_tracker = LogicActivityTracker()
 
+    def _record_step_error(self, name: str, exc: BaseException) -> None:
+        """Funnel non-debug-mode on_step exceptions through error_handler.
+
+        Mirrors the error_handler.error_counts pattern used elsewhere in
+        this file: count occurrences and only emit log lines until we hit
+        max_error_logs, so a chronically broken module doesn't flood the
+        log but the first few failures still surface.
+        """
+        try:
+            error_handler.error_counts[name] = (
+                error_handler.error_counts.get(name, 0) + 1
+            )
+            if error_handler.error_counts[name] <= error_handler.max_error_logs:
+                self.logger.error(f"[ERROR] {name} error: {exc}")
+        except Exception:
+            # Never let the error reporter itself break the step loop.
+            pass
+
         # 건물 배치 헬퍼
         if BuildingPlacementHelper:
             self.placement_helper = BuildingPlacementHelper(bot)
@@ -924,6 +942,7 @@ class BotStepIntegrator:
                 except Exception as e:
                     if error_handler.debug_mode:
                         raise
+                    self._record_step_error("SpatialOptimizer", e)
 
             if hasattr(self.bot, "data_cache") and self.bot.data_cache:
                 try:
@@ -931,6 +950,7 @@ class BotStepIntegrator:
                 except Exception as e:
                     if error_handler.debug_mode:
                         raise
+                    self._record_step_error("DataCache", e)
 
             # ★★★ Base Destruction Coordinator (모든 적 기지 파괴) ★★★
             if hasattr(self.bot, "base_destruction") and self.bot.base_destruction:
@@ -939,6 +959,7 @@ class BotStepIntegrator:
                 except Exception as e:
                     if error_handler.debug_mode:
                         raise
+                    self._record_step_error("BaseDestruction", e)
 
             # ★★★ Building Destroyer (건물 파괴 전문) ★★★
             if hasattr(self.bot, "building_destroyer") and self.bot.building_destroyer:
@@ -947,6 +968,7 @@ class BotStepIntegrator:
                 except Exception as e:
                     if error_handler.debug_mode:
                         raise
+                    self._record_step_error("BuildingDestroyer", e)
 
             # ★★★ Runtime Self-Healing (실행 중 자동 복구) ★★★
             if hasattr(self.bot, "self_healing") and self.bot.self_healing:
@@ -955,6 +977,7 @@ class BotStepIntegrator:
                 except Exception as e:
                     if error_handler.debug_mode:
                         raise
+                    self._record_step_error("SelfHealing", e)
 
             # ★★★ Personality Module (채팅/성격) ★★★
             if hasattr(self.bot, "personality") and self.bot.personality:
@@ -963,6 +986,7 @@ class BotStepIntegrator:
                 except Exception as e:
                     if error_handler.debug_mode:
                         raise
+                    self._record_step_error("Personality", e)
 
             # ★★★ Battle Preparation System (교전 대비) ★★★
             if hasattr(self.bot, "battle_prep") and self.bot.battle_prep:
@@ -971,6 +995,7 @@ class BotStepIntegrator:
                 except Exception as e:
                     if error_handler.debug_mode:
                         raise
+                    self._record_step_error("BattlePrep", e)
 
             # ★★★ Destructible Awareness System (파괴 가능 구조물) ★★★
             if hasattr(self.bot, "destructible_aware") and self.bot.destructible_aware:
@@ -983,6 +1008,7 @@ class BotStepIntegrator:
                 except Exception as e:
                     if error_handler.debug_mode:
                         raise
+                    self._record_step_error("DestructibleAware", e)
 
             # ★★★ Nydus Network Trainer (땅굴망 학습) ★★★
             if hasattr(self.bot, "nydus_trainer") and self.bot.nydus_trainer:
@@ -991,6 +1017,7 @@ class BotStepIntegrator:
                 except Exception as e:
                     if error_handler.debug_mode:
                         raise
+                    self._record_step_error("NydusTrainer", e)
 
             # ★★★ Overlord Safety Manager (대군주 안전) ★★★
             if hasattr(self.bot, "overlord_safety") and self.bot.overlord_safety:
@@ -999,6 +1026,7 @@ class BotStepIntegrator:
                 except Exception as e:
                     if error_handler.debug_mode:
                         raise
+                    self._record_step_error("OverlordSafety", e)
 
             # 0.03 ★★★ Build Order System (빌드 오더 - 최최우선) ★★★
             if self.bot.time < 300.0:  # 5분 이내 (Roach Rush 지원)
