@@ -104,12 +104,22 @@ class StrategyManager:
         self.last_major_attack_log = 0
         self.last_high_templar_log = 0
         self.last_disruptor_log = 0
-        self.log_cooldown = 5.0
+        # ★ A5: 매직 넘버 → utils.game_constants 흡수
+        try:
+            from utils.game_constants import StrategyConstants as _SC
+
+            self.log_cooldown = _SC.LOG_COOLDOWN
+            _harass_interval_default = _SC.EARLY_HARASSMENT_INTERVAL
+        except ImportError:
+            self.log_cooldown = 5.0
+            _harass_interval_default = 15.0
 
         # 4분 이전 견제 시스템
         self.early_harassment_active = False
         self.last_harassment_time = 0
-        self.harassment_interval = 15.0  # ★ 30s → 15s: more aggressive harassment
+        self.harassment_interval = (
+            _harass_interval_default  # ★ 30s → 15s: more aggressive harassment
+        )
 
         # ★ Load Unit Ratios from KnowledgeManager ★
         self.race_unit_ratios = {

@@ -1606,25 +1606,36 @@ class CombatManager:
                 if "Protoss" in _enemy_race_str or "protoss" in _enemy_race_str:
                     _is_vs_protoss = True
 
-            if _is_vs_protoss:
-                # ★ vs Protoss: higher thresholds — shields make small attacks useless
-                if game_time < 240:
-                    min_attack_threshold = 16  # Early game: need 16+ supply vs Protoss
-                elif game_time < 480:
-                    min_attack_threshold = 25  # Mid game: 25+ supply (was 20)
-                elif game_time < 600:
-                    min_attack_threshold = 35  # 10 min: 35+ supply (was 30)
+            # ★ A2/A7: 단(tier) 표를 utils.game_constants 헬퍼로 위임
+            try:
+                from utils.game_constants import get_attack_threshold
+
+                min_attack_threshold = get_attack_threshold(
+                    game_time,
+                    vs_protoss=_is_vs_protoss,
+                    early_game_min=self._early_game_min_attack,
+                    mid_game_min=self._min_army_for_attack,
+                )
+            except ImportError:
+                # Fallback: 기존 인라인 로직
+                if _is_vs_protoss:
+                    if game_time < 240:
+                        min_attack_threshold = 16
+                    elif game_time < 480:
+                        min_attack_threshold = 25
+                    elif game_time < 600:
+                        min_attack_threshold = 35
+                    else:
+                        min_attack_threshold = 45
                 else:
-                    min_attack_threshold = 45  # Late game: 45+ supply (was 40)
-            else:
-                if game_time < 240:
-                    min_attack_threshold = self._early_game_min_attack  # 12
-                elif game_time < 480:
-                    min_attack_threshold = self._min_army_for_attack  # 20
-                elif game_time < 600:
-                    min_attack_threshold = 30  # 10분까지: 30 서플
-                else:
-                    min_attack_threshold = 40  # 10분+: 40 서플 (후반은 강력한 공격)
+                    if game_time < 240:
+                        min_attack_threshold = self._early_game_min_attack
+                    elif game_time < 480:
+                        min_attack_threshold = self._min_army_for_attack
+                    elif game_time < 600:
+                        min_attack_threshold = 30
+                    else:
+                        min_attack_threshold = 40
 
             # ★ Phase 20: 적 약점 감지 시 공격 임계값 하향 ★
             blackboard = getattr(self.bot, "blackboard", None)
@@ -1634,6 +1645,14 @@ class CombatManager:
                 if enemy_expanding or enemy_teching:
                     # 적이 확장/테크 중이면 임계값 70%로 하향 (타이밍 공격)
                     min_attack_threshold = max(12, int(min_attack_threshold * 0.7))
+
+            # ★ A6: 공격 ↔ 집결 토글 방지를 위한 hysteresis ★
+            # 한 번 공격 모드로 진입했다면 임계값 -10% 까지는 공격 유지.
+            # 처음 공격 시작은 원래 임계값을 그대로 사용.
+            if getattr(self, "is_engaging", False):
+                min_attack_threshold = max(
+                    1, int(min_attack_threshold * 0.9)
+                )
 
             # ★★★ FIX Phase 12: 집결 시스템 복원 — 1~2마리 돌격 방지 ★★★
             if army_supply < min_attack_threshold:

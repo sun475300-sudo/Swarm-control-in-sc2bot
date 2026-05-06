@@ -144,6 +144,10 @@ class StrategyConstants:
     SUPPLY_BUFFER = 2  # 보급 버퍼
     OVERLORD_TIMING_THRESHOLD = 2  # 대군주 생산 시점
 
+    # Harassment / log throttling (초 단위)
+    EARLY_HARASSMENT_INTERVAL = 15.0  # 견제 신호 주기
+    LOG_COOLDOWN = 5.0  # 로그 스팸 방지 주기
+
 
 # ============================================================================
 # UNIT PRIORITIES
@@ -217,6 +221,73 @@ def seconds_to_iterations(seconds: float) -> int:
 def iterations_to_seconds(iterations: int) -> float:
     """프레임(iteration)을 초로 변환"""
     return iterations / GameFrequencies.GAME_FPS
+
+
+# ============================================================================
+# ATTACK THRESHOLD HELPERS (B/C tier: 단(tier) 표 분리)
+# ============================================================================
+
+# 게임 시간(초)별 최소 공격 서플라이 단(tier) 표
+# - 일반 (vs Terran/Zerg/Random/Unknown)
+# - vs Protoss (실드 회복 → 더 큰 군대 필요)
+ATTACK_THRESHOLD_TIERS_DEFAULT = (
+    # (game_time 상한 초, 최소 공격 서플라이)
+    (240, 12),   # < 4분: 초반 압박
+    (480, 20),   # < 8분: 중반 진입
+    (600, 30),   # < 10분: 본 게임
+    (float("inf"), 40),  # 10분+: 후반 강력 공격
+)
+
+ATTACK_THRESHOLD_TIERS_VS_PROTOSS = (
+    (240, 16),
+    (480, 25),
+    (600, 35),
+    (float("inf"), 45),
+)
+
+
+def get_attack_threshold(
+    game_time: float,
+    *,
+    vs_protoss: bool = False,
+    early_game_min: int = 12,
+    mid_game_min: int = 20,
+) -> int:
+    """게임 시간에 따른 최소 공격 임계값(서플라이) 반환.
+
+    - vs Protoss는 실드 회복으로 소규모 공격이 무위에 그치므로 더 큰 군대 요구.
+    - early_game_min/mid_game_min은 호출 측(combat_manager)이 동적으로
+      override 한 값(예: 정찰 압박 모드)을 그대로 흘려 보낼 때 사용.
+    """
+    if vs_protoss:
+        for upper, threshold in ATTACK_THRESHOLD_TIERS_VS_PROTOSS:
+            if game_time < upper:
+                return threshold
+        return 45
+
+    # 일반 (default) — 호출 측 override 값을 단(tier)에 반영
+    if game_time < 240:
+        return early_game_min
+    if game_time < 480:
+        return mid_game_min
+    if game_time < 600:
+        return 30
+    return 40
+
+
+def race_gas_timing_seconds(race_name: str) -> int:
+    """종족별 첫 가스 타이밍(초). 기본 90초.
+
+    Protoss(75) < Random/Unknown/Terran(90) < Zerg(105).
+    """
+    table = {
+        "Terran": 90,
+        "Protoss": 75,
+        "Zerg": 105,
+        "Random": 90,
+        "Unknown": 90,
+    }
+    return table.get(race_name, 90)
 
 
 # ============================================================================
