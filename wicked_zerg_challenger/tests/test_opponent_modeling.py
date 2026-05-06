@@ -621,6 +621,62 @@ class TestOpponentModeling(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(stats["most_common_strategy"], "zerg_rush")
 
 
+class TestOpponentModelingRegressions(unittest.IsolatedAsyncioTestCase):
+    """Regression tests for cycle-1/2 fixes."""
+
+    def setUp(self):
+        self.bot = Mock()
+        self.bot.time = 0.0
+        self.bot.iteration = 0
+        self.bot.enemy_race = Mock()
+        self.bot.enemy_race.name = "Zerg"
+        self.bot.enemy_units = []
+        self.bot.enemy_structures = []
+        self.bot.blackboard = None
+
+        self.intel = Mock()
+        self.intel.is_under_attack = Mock(return_value=False)
+        self.intel.enemy_tech_buildings = []
+        self.intel.enemy_unit_history = {}
+
+        self.temp_file = tempfile.NamedTemporaryFile(
+            mode="w", suffix=".json", delete=False
+        )
+        self.temp_file.close()
+
+        self.modeling = OpponentModeling(
+            self.bot, intel_manager=self.intel, data_file=self.temp_file.name
+        )
+
+    def tearDown(self):
+        if os.path.exists(self.temp_file.name):
+            os.unlink(self.temp_file.name)
+
+    async def test_on_step_no_longer_crashes_after_on_game_start(self):
+        """Regression: on_step previously read self.current_opponent (renamed to current_opponent_id)."""
+        self.modeling.on_game_start("opponent_Zerg")
+        self.bot.time = 50.0
+        # Should not raise AttributeError
+        await self.modeling.on_step(50)
+
+    async def test_on_step_runs_full_pipeline_not_only_early_signals(self):
+        """Regression: a duplicated on_step previously shadowed timing/build/tech tracking."""
+        self.modeling.on_game_start("opponent_Zerg")
+        # Force time past early game so prediction transition runs
+        self.bot.time = 200.0
+        # Make sure update interval allows execution
+        self.modeling.last_update = -100
+        await self.modeling.on_step(1000)
+        # early_game_phase should flip to False once we cross 180s
+        self.assertFalse(self.modeling.early_game_phase)
+
+    def test_on_game_end_uses_consistent_attribute(self):
+        """Regression: on_game_end previously referenced self.current_opponent."""
+        self.modeling.on_game_start("opponent_Zerg")
+        # Should not raise AttributeError
+        self.modeling.on_game_end(won=True, lost=False)
+
+
 # Run tests
 if __name__ == "__main__":
     unittest.main(verbosity=2)
