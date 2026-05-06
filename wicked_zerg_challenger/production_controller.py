@@ -423,6 +423,12 @@ class ProductionController:
                 try:
                     larva = larvae.first
                     self.bot.do(larva.train(best_uid))
+                    if best_unit and self.bot.iteration % 220 == 0:
+                        # Log only every ~10s to avoid spam
+                        self.logger.debug(
+                            f"[PRODUCTION] Filling deficit: {best_unit} "
+                            f"(deficit={max_deficit:.2f})"
+                        )
                 except Exception:
                     pass
 

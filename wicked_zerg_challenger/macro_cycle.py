@@ -301,12 +301,15 @@ class MacroCycleManager:
 
             # 기지당 최적 라바 수: 3 (인젝트 1회당 3라바)
             optimal_larva = base_count * 3
-            max_larva = base_count * 19  # 기지당 최대 19라바
+            max_larva = base_count * 19  # 기지당 최대 19라바 (game cap)
 
             if current_larva > optimal_larva * 2:
                 # 라바가 너무 많이 쌓이면 효율 감소
                 self.larva_wasted += current_larva - optimal_larva
                 self.larva_efficiency = optimal_larva / max(current_larva, 1)
+                # Saturated near the engine cap → can't accept more injects
+                if current_larva >= max_larva * 0.9:
+                    self.larva_efficiency = 0.0
             else:
                 self.larva_efficiency = min(1.0, current_larva / max(optimal_larva, 1))
 
