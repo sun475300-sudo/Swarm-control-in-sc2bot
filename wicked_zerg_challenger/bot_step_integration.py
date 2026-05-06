@@ -382,24 +382,6 @@ class BotStepIntegrator:
         self._managers_initialized = False
         self._logic_tracker = LogicActivityTracker()
 
-    def _record_step_error(self, name: str, exc: BaseException) -> None:
-        """Funnel non-debug-mode on_step exceptions through error_handler.
-
-        Mirrors the error_handler.error_counts pattern used elsewhere in
-        this file: count occurrences and only emit log lines until we hit
-        max_error_logs, so a chronically broken module doesn't flood the
-        log but the first few failures still surface.
-        """
-        try:
-            error_handler.error_counts[name] = (
-                error_handler.error_counts.get(name, 0) + 1
-            )
-            if error_handler.error_counts[name] <= error_handler.max_error_logs:
-                self.logger.error(f"[ERROR] {name} error: {exc}")
-        except Exception:
-            # Never let the error reporter itself break the step loop.
-            pass
-
         # 건물 배치 헬퍼
         if BuildingPlacementHelper:
             self.placement_helper = BuildingPlacementHelper(bot)
@@ -696,6 +678,24 @@ class BotStepIntegrator:
             self.logger.info("[INIT] GameResultReporter initialized (Phase 22)")
         else:
             self.bot.game_result_reporter = None
+
+    def _record_step_error(self, name: str, exc: BaseException) -> None:
+        """Funnel non-debug-mode on_step exceptions through error_handler.
+
+        Mirrors the error_handler.error_counts pattern used elsewhere in
+        this file: count occurrences and only emit log lines until we hit
+        max_error_logs, so a chronically broken module doesn't flood the
+        log but the first few failures still surface.
+        """
+        try:
+            error_handler.error_counts[name] = (
+                error_handler.error_counts.get(name, 0) + 1
+            )
+            if error_handler.error_counts[name] <= error_handler.max_error_logs:
+                self.logger.error(f"[ERROR] {name} error: {exc}")
+        except Exception:
+            # Never let the error reporter itself break the step loop.
+            pass
 
     async def initialize_managers(self):
         """
