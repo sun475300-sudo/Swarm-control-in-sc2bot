@@ -1375,28 +1375,6 @@ class ProductionResilience:
 
     # Defense methods moved to DefenseCoordinator
 
-    async def build_terran_counters(self) -> None:
-        b = self.bot
-        if not b.production:
-            return
-        baneling_nests = [
-            s for s in b.units(UnitTypeId.BANELINGNEST).structure if s.is_ready
-        ]
-        if (
-            not baneling_nests
-            and b.already_pending(UnitTypeId.BANELINGNEST) == 0
-            and b.can_afford(UnitTypeId.BANELINGNEST)
-        ):
-            # CRITICAL: Check for duplicate construction before building
-            if not b.structures(UnitTypeId.BANELINGNEST).exists:
-                spawning_pools = [
-                    s for s in b.units(UnitTypeId.SPAWNINGPOOL).structure if s.is_ready
-                ]
-                if spawning_pools:
-                    await b.build(UnitTypeId.BANELINGNEST, near=spawning_pools[0])
-        # NOTE: Roach Warren building is now handled by _auto_build_tech_structures()
-        # Removed duplicate code to prevent building spam
-
     async def _auto_build_tech_structures(self) -> None:
         """
         Automatically build tech structures based on game time.
@@ -2095,12 +2073,9 @@ class ProductionResilience:
                 return UnitTypeId.MUTALISK
 
         elif main_threat == "light_infantry":
-            # vs Light: Banelings > Roaches
-            has_baneling_nest = b.structures(UnitTypeId.BANELINGNEST).ready.exists
-            if has_baneling_nest:
-                # Note: Banelings are morphed from Zerglings, not trained from larvae
-                # Return None here; baneling morphing should be handled separately
-                pass
+            # vs Light: Banelings preferred but they morph from Zerglings (not trained
+            # from larvae) — that is handled by a separate morpher. Fall through to
+            # Roaches as the train-from-larva counter.
             if has_roach_warren and b.can_afford(UnitTypeId.ROACH):
                 return UnitTypeId.ROACH
 

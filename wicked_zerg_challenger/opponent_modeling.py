@@ -340,7 +340,10 @@ class OpponentModeling:
         )
 
     async def on_step(self, iteration: int):
-        """매 프레임 실행"""
+        """매 프레임 실행 - 단일 진입점 (이전에 두 번 정의되어 후자가 전자를 덮어 timing/build/tech 트래킹이 dead code 였음)."""
+        if not self.bot:
+            return
+
         if iteration - self.last_update < self.update_interval:
             return
 
@@ -488,11 +491,9 @@ class OpponentModeling:
     async def _send_prediction_to_strategy_manager(
         self, strategy: str, confidence: float
     ):
-        """예측을 StrategyManagerV2에 전달"""
+        """예측을 StrategyManagerV2에 전달 (현 구현은 blackboard 경유 추천만 수행)."""
         if not hasattr(self.bot, "strategy_manager"):
             return
-
-        strategy_manager = self.bot.strategy_manager
 
         # Set blackboard recommendations
         if hasattr(self.bot, "blackboard") and self.bot.blackboard:
@@ -732,7 +733,7 @@ class OpponentModeling:
 
     def on_game_start(self, opponent_id: str, opponent_race=None):
         """게임 시작 시 호출 - 적 추적 시작"""
-        self.current_opponent = opponent_id
+        self.current_opponent_id = opponent_id
         # ★ FIX: GameHistory dataclass에 맞는 필드로 초기화
         race_name = (
             opponent_race.name
@@ -763,20 +764,9 @@ class OpponentModeling:
                 f"[OPPONENT_MODELING] Known opponent: {opponent_id} ({self.opponent_models[opponent_id].games_played} games)"
             )
 
-    async def on_step(self, iteration: int):
-        """매 프레임 호출 - 신호 감지"""
-        if not self.current_opponent or not self.bot:
-            return
-
-        game_time = self.bot.time
-
-        # Only detect signals in early game (0-180s)
-        if game_time <= 180.0:
-            await self._detect_early_signals(game_time)
-
     def on_game_end(self, won: bool, lost: bool):
         """게임 종료 시 호출 - 데이터 저장"""
-        if not self.current_opponent or not self.current_game_history:
+        if not self.current_opponent_id or not self.current_game_history:
             return
 
         # Update game history
@@ -786,31 +776,31 @@ class OpponentModeling:
             s.value for s in self.observed_signals
         ]
 
-        # Detect strategy (placeholder - would need more logic)
-        if self.intel:
-            # Try to detect strategy from intel data
-            pass
+        # If intel was tracked during the game, snapshot the predicted strategy onto
+        # the history so future predictions can learn from this game's classification.
+        if self.intel and self.predicted_strategy:
+            self.current_game_history.detected_strategy = self.predicted_strategy
 
         # Update opponent model
-        model = self.opponent_models[self.current_opponent]
+        model = self.opponent_models[self.current_opponent_id]
         model.update_from_game(self.current_game_history)
 
         # Save to disk
         self.save_models()
 
         self.logger.info(
-            f"[OPPONENT_MODELING] Game data saved for {self.current_opponent}"
+            f"[OPPONENT_MODELING] Game data saved for {self.current_opponent_id}"
         )
 
     def get_predicted_strategy(self) -> Tuple[Optional[str], float]:
         """현재 적의 전략 예측"""
         if (
-            not self.current_opponent
-            or self.current_opponent not in self.opponent_models
+            not self.current_opponent_id
+            or self.current_opponent_id not in self.opponent_models
         ):
             return (None, 0.0)
 
-        model = self.opponent_models[self.current_opponent]
+        model = self.opponent_models[self.current_opponent_id]
 
         # If we have observed signals, use them for prediction
         if self.observed_signals:
