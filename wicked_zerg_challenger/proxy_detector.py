@@ -51,11 +51,19 @@ class ProxyDetector:
         if building_type.lower() in ["pylon", "gateway", "forge", "barracks"]:
             if not is_near_expansion and not is_near_start:
                 result.is_proxy = True
-                result.confidence = 0.8
                 result.proxy_type = self._classify_proxy(building_type)
                 result.location = position
-                result.threat_level = "HIGH"
-                result.recommendation = f"ATTACK {building_type} IMMEDIATELY"
+                # Far from enemy base => proxy is on the way to OUR base => upgrade to CRITICAL
+                if distance_to_base > 60:
+                    result.confidence = 0.9
+                    result.threat_level = "CRITICAL"
+                    result.recommendation = (
+                        f"ATTACK {building_type} IMMEDIATELY (close proxy)"
+                    )
+                else:
+                    result.confidence = 0.8
+                    result.threat_level = "HIGH"
+                    result.recommendation = f"ATTACK {building_type} IMMEDIATELY"
             elif is_near_expansion:
                 result.is_proxy = False
                 result.confidence = 0.9
