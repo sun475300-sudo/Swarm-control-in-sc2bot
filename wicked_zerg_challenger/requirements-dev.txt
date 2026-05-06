@@ -1,0 +1,11 @@
+-r requirements.txt
+
+# Test infrastructure
+# pytest-asyncio is required because pytest.ini sets asyncio_mode=auto
+pytest>=8.0.0
+pytest-asyncio>=0.23.0
+pytest-cov>=5.0.0
+pytest-timeout>=2.3.0
+
+# Static analysis
+pyflakes>=3.0.0
