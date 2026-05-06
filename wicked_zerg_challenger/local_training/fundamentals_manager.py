@@ -32,7 +32,7 @@ except ImportError:
 
 logger = _get_logger("FundamentalsManager")
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Dict, List
 
 
 class FundamentalSkill:

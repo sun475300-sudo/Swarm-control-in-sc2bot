@@ -18,7 +18,7 @@ Integration:
 """
 
 from collections import defaultdict
-from typing import Any, Dict, List, Optional, Set, Tuple
+from typing import Any, Dict, Optional, Set
 
 from utils.logger import get_logger
 
@@ -330,7 +330,6 @@ class LurkerMicro:
                         continue
                     except (AttributeError, TypeError) as e:
                         self.logger.debug(f"Lurker burrow failed: {e}")
-                        pass
 
             elif self.should_unburrow(lurker, enemy_units) and is_burrowed:
                 # Unburrow
@@ -343,7 +342,6 @@ class LurkerMicro:
                         continue
                     except (AttributeError, TypeError) as e:
                         self.logger.debug(f"Lurker unburrow failed: {e}")
-                        pass
 
             # Reposition if not burrowed and enemies present
             if not is_burrowed and enemy_units:
@@ -359,7 +357,6 @@ class LurkerMicro:
                         acted_tags.add(lurker.tag)
                     except (AttributeError, TypeError) as e:
                         self.logger.debug(f"Lurker reposition failed: {e}")
-                        pass
 
         if actions:
             await AdvancedMicroControllerV3._do_actions(bot, actions)
@@ -475,7 +472,6 @@ class QueenMicro:
                             continue
                         except (AttributeError, TypeError) as e:
                             self.logger.debug(f"Queen transfusion failed: {e}")
-                            pass
 
         if actions:
             await AdvancedMicroControllerV3._do_actions(bot, actions)
@@ -580,7 +576,6 @@ class ViperMicro:
                             continue
                         except (AttributeError, TypeError) as e:
                             self.logger.debug(f"Viper abduct failed: {e}")
-                            pass
 
             # Priority 2: Consume if low energy
             if energy < self.consume_threshold and friendly_units:
@@ -603,7 +598,6 @@ class ViperMicro:
                             continue
                         except (AttributeError, TypeError) as e:
                             self.logger.debug(f"Viper consume failed: {e}")
-                            pass
 
         if actions:
             await AdvancedMicroControllerV3._do_actions(bot, actions)

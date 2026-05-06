@@ -1,5 +1,4 @@
 import logging
-import random
 from typing import Any, Dict
 
 from config.unit_configs import EconomyConfig
@@ -98,15 +97,8 @@ except ImportError:
 
 # Import production modules
 from local_training.production import (
-    balanced_production,
     can_expand_safely,
-    cleanup_build_reservations,
-    emergency_zergling_production,
-    get_counter_unit,
-    log_expand_block,
-    produce_army_unit,
     safe_train,
-    try_expand,
 )
 
 
@@ -1013,7 +1005,6 @@ class ProductionResilience:
                         logger.warning(
                             "TechCoordinator not available, Spawning Pool build skipped"
                         )
-                        pass
 
             # Natural Expansion timing
             if self.strategy_manager:

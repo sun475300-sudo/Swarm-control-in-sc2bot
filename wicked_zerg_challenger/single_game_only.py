@@ -11,7 +11,6 @@ import sys
 import time
 from pathlib import Path
 
-import sc2
 from sc2 import maps
 from sc2.data import Difficulty, Race
 from sc2.main import run_game

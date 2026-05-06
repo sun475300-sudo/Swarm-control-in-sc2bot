@@ -10,7 +10,7 @@ Error Handler - 예외 처리 유틸리티
 
 import functools
 import traceback
-from typing import Any, Callable, Optional
+from typing import Callable
 
 from utils.logger import get_logger
 
@@ -20,31 +20,21 @@ logger = get_logger("ErrorHandler")
 class SC2BotError(Exception):
     """Base exception for SC2 bot errors"""
 
-    pass
-
 
 class UnitCommandError(SC2BotError):
     """Exception for unit command failures"""
-
-    pass
 
 
 class UpgradeError(SC2BotError):
     """Exception for upgrade-related errors"""
 
-    pass
-
 
 class BuildingError(SC2BotError):
     """Exception for building-related errors"""
 
-    pass
-
 
 class ResourceError(SC2BotError):
     """Exception for resource-related errors"""
-
-    pass
 
 
 def safe_execute(default_return=None, log_errors=True):
