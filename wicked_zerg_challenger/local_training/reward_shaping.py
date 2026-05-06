@@ -185,7 +185,12 @@ class RewardShaper:
         # ECONOMY: 일꾼 포화도 (66 최적) + 자원 밸런스
         worker_score = 1.0 - abs(workers - 66) / 66.0
         bank_penalty = -0.1 if minerals > 1000 else 0.0
-        rewards[RewardComponent.ECONOMY.value] = max(worker_score + bank_penalty, -1.0)
+        # Gas banking is just as wasteful — 800+ gas means the bot isn't
+        # spending on tech/abilities; penalize symmetrically with minerals.
+        gas_penalty = -0.1 if gas > 800 else 0.0
+        rewards[RewardComponent.ECONOMY.value] = max(
+            worker_score + bank_penalty + gas_penalty, -1.0
+        )
 
         # TECH: 기술 레벨 진행도
         rewards[RewardComponent.TECH.value] = float(tech)
