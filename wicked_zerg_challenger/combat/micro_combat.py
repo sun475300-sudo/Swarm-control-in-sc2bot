@@ -407,7 +407,7 @@ class MicroCombat:
             # OPTIMIZED: 4 → 2 (more aggressive surround)
             if len(nearby_allies) >= 2:
                 # ★ Enhanced Surround: Calculate optimal surround position ★
-                import math
+                # (math is imported at module level)
 
                 # Count allies to determine surround angle
                 ally_count = len(nearby_allies)

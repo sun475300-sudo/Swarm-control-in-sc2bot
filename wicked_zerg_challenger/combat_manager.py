@@ -6,7 +6,7 @@ Combat Manager - 전투 관리자
 """
 
 import inspect
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from sc2.ids.unit_typeid import UnitTypeId
@@ -76,8 +76,7 @@ from combat.rally_point_calculator import (
     update_rally_point,
 )
 
-from utils.frame_cache import FrameCache, cached_per_frame
-from utils.logger import get_logger
+from utils.frame_cache import FrameCache
 
 # Import common helpers to reduce code duplication
 try:
