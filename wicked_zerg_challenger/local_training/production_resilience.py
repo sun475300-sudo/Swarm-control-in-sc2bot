@@ -735,26 +735,37 @@ class ProductionResilience:
         max_zerglings = self._get_zergling_cap(game_time, ignore_caps)
 
         # === Late/Mid Game Priority ===
-        # Late game (10min+)
+        # Late game (10min+) — comment claims Muta > Hydra > Roach but the
+        # branch currently only trains Hydra. If we have Muta capacity and
+        # are below 15 Mutas, prefer pumping more Mutas (the comment's stated
+        # priority); otherwise fall through to Hydra.
         if game_time > 600 and has_spire:
-            # Priority: Muta > Hydra > Roach > Zergling
+            if (
+                mutalisk_count < 15
+                and b.can_afford(UnitTypeId.MUTALISK)
+                and b.supply_left >= 2
+            ):
+                return await self._safe_train(larva, UnitTypeId.MUTALISK)
             if (
                 has_hydra_den
+                and hydra_count < 25
                 and b.can_afford(UnitTypeId.HYDRALISK)
                 and b.supply_left >= 2
             ):
                 return await self._safe_train(larva, UnitTypeId.HYDRALISK)
 
-        # Mid game (5min+)
+        # Mid game (5min+) — soft caps prevent endless mono-comp dumping
         if game_time > 300:
             if (
                 has_hydra_den
+                and hydra_count < 25
                 and b.can_afford(UnitTypeId.HYDRALISK)
                 and b.supply_left >= 2
             ):
                 return await self._safe_train(larva, UnitTypeId.HYDRALISK)
             if (
                 has_roach_warren
+                and roach_count < 25
                 and b.can_afford(UnitTypeId.ROACH)
                 and b.supply_left >= 2
             ):
