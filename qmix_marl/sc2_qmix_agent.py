@@ -46,6 +46,18 @@ try:
 except ImportError:
     HAS_TORCH = False
 
+    # Stub nn.Module so torch-typed classes below remain importable on the
+    # NumPy fallback path. Only the NumPy variants are ever instantiated when
+    # HAS_TORCH is False (gated via `self.use_torch`).
+    class _NnStub:
+        class Module:
+            pass
+
+    nn = _NnStub()  # type: ignore[assignment]
+    torch = None  # type: ignore[assignment]
+    F = None  # type: ignore[assignment]
+    optim = None  # type: ignore[assignment]
+
 # ===================================================================
 # NumPy fallback primitives
 # ===================================================================
