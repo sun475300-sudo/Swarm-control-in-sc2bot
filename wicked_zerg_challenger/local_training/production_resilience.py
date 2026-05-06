@@ -1212,6 +1212,24 @@ class ProductionResilience:
                         loguru_logger.warning(
                             "[PRODUCTION] Should produce Zerglings but not producing!"
                         )
+                    elif (
+                        larvae_count >= 1
+                        and roach_warren_ready
+                        and can_afford_roach
+                        and b.supply_left >= 2
+                    ):
+                        loguru_logger.warning(
+                            "[PRODUCTION] Should produce Roach but not producing!"
+                        )
+                    elif (
+                        larvae_count >= 1
+                        and hydralisk_den_ready
+                        and can_afford_hydralisk
+                        and b.supply_left >= 2
+                    ):
+                        loguru_logger.warning(
+                            "[PRODUCTION] Should produce Hydralisk but not producing!"
+                        )
                 else:
                     # Non-training mode or no logger: Use print (for debugging)
                     # But reduce frequency - only every 500 iterations instead of 50
@@ -2520,7 +2538,9 @@ class ProductionResilience:
 
         if total_produced > 0 and b.iteration % 100 == 0:
             logger.info(
-                f"Produced {total_produced} units (M: {int(minerals)} -> {int(b.minerals)})"
+                f"Produced {total_produced} units "
+                f"(M: {int(minerals)} -> {int(b.minerals)}, "
+                f"excess was {int(excess)})"
             )
 
     async def _spend_minerals_without_larvae(self) -> None:
