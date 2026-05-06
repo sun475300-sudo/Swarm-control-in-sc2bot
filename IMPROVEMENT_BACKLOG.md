@@ -16,11 +16,11 @@
 
 ## 사이클 2 - 로직 결함 / 죽은 코드
 
-- [ ] **L1**: `economy_manager.py`에서 `_prevent_resource_banking` 함수가 1298행과 2507행에 두 번 정의됨 → Python 메서드 재정의로 첫 번째(스포어/스파인 방어 로직 포함)가 완전히 죽은 코드. 두 번째 버전에 방어 건물 로직을 통합하거나 별도 메서드로 분리.
-- [ ] **L2**: `economy_manager.py`에서 `_reduce_gas_workers`가 2630행과 3286행에 두 번 정의됨 → 동일 문제, 첫 번째가 죽은 코드.
-- [ ] **L3**: `opponent_modeling.py:766` `on_step` 메서드 중복 정의 - 첫 번째가 무시됨, 검증 필요.
-- [ ] **L4**: `combat_manager.py:4284` `_find_harass_target` 중복 정의.
-- [ ] **L5**: `local_training/production_resilience.py:1875` `build_terran_counters` 중복 정의.
+- [x] **L1**: `economy_manager.py` `_prevent_resource_banking` 1298/2507 중복 → 첫 번째(스포어/스파인 방어 로직 포함)는 dead code였음. 새 메서드 `_spend_excess_on_static_defense`로 분리하고 활성 버전에서 호출하여 잃었던 방어 보강 로직 복원.
+- [x] **L2**: `economy_manager.py` `_reduce_gas_workers` 2636/3292 중복 → 단순 버전(첫 번째) 제거. 가스 뱅킹 심각도별 정식 버전만 유지.
+- [x] **L3**: `opponent_modeling.py` `on_step` 342/766 중복 → 단순 후행 버전 제거. 빌드 오더 추적 / 타이밍 공격 감지 / blackboard 예측 갱신을 모두 잃고 있던 종합 버전이 다시 호출됨 (실질적 버그 수정).
+- [x] **L4**: `combat_manager.py` `_find_harass_target` 2382/4283 중복 → 단순 첫 번째 버전 제거. 워커/테크 건물 우선 정교한 버전 유지.
+- [x] **L5**: `local_training/production_resilience.py` `build_terran_counters` 1378/1875 중복 → 단순 첫 번째 버전 제거. TechCoordinator 통합 버전 유지.
 - [ ] **L6**: `combat_manager.py` except 블록의 미사용 `e` 변수 (50+개) → `except Exception:` 또는 로깅 추가.
 - [ ] **L7**: `economy_manager.py` 미사용 로컬 변수 `early_window`, `vespene`, `base_count`, `start_loc`, `minerals` → 의도된 로직 누락 가능성 검토.
 

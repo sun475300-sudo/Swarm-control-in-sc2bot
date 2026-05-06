@@ -1375,27 +1375,9 @@ class ProductionResilience:
 
     # Defense methods moved to DefenseCoordinator
 
-    async def build_terran_counters(self) -> None:
-        b = self.bot
-        if not b.production:
-            return
-        baneling_nests = [
-            s for s in b.units(UnitTypeId.BANELINGNEST).structure if s.is_ready
-        ]
-        if (
-            not baneling_nests
-            and b.already_pending(UnitTypeId.BANELINGNEST) == 0
-            and b.can_afford(UnitTypeId.BANELINGNEST)
-        ):
-            # CRITICAL: Check for duplicate construction before building
-            if not b.structures(UnitTypeId.BANELINGNEST).exists:
-                spawning_pools = [
-                    s for s in b.units(UnitTypeId.SPAWNINGPOOL).structure if s.is_ready
-                ]
-                if spawning_pools:
-                    await b.build(UnitTypeId.BANELINGNEST, near=spawning_pools[0])
-        # NOTE: Roach Warren building is now handled by _auto_build_tech_structures()
-        # Removed duplicate code to prevent building spam
+    # NOTE: Cycle 2 정리 — 동일 이름의 단순 버전 ``build_terran_counters``가 여기에 있었으나,
+    # 클래스 후반부의 TechCoordinator 통합 버전이 메서드 재정의로 모든 호출을 가로채고 있었다.
+    # 단순 버전을 제거하여 dead code 정리 및 정적 분석 노이즈 제거.
 
     async def _auto_build_tech_structures(self) -> None:
         """

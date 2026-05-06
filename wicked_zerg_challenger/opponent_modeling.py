@@ -763,16 +763,10 @@ class OpponentModeling:
                 f"[OPPONENT_MODELING] Known opponent: {opponent_id} ({self.opponent_models[opponent_id].games_played} games)"
             )
 
-    async def on_step(self, iteration: int):
-        """매 프레임 호출 - 신호 감지"""
-        if not self.current_opponent or not self.bot:
-            return
-
-        game_time = self.bot.time
-
-        # Only detect signals in early game (0-180s)
-        if game_time <= 180.0:
-            await self._detect_early_signals(game_time)
+    # NOTE: Cycle 2 정리 — 이 위치에 더 단순한 ``on_step`` 중복 정의가 있어
+    # Python 메서드 재정의로 인해 클래스 상단(line ~342)의 종합적인 on_step이
+    # 통째로 dead code였다. 빌드 오더 추적/타이밍 공격 감지/blackboard 예측 갱신을
+    # 모두 잃고 있던 셈이라 단순 버전을 제거하고 종합 버전만 유지하도록 수정.
 
     def on_game_end(self, won: bool, lost: bool):
         """게임 종료 시 호출 - 데이터 저장"""

@@ -2379,35 +2379,9 @@ class CombatManager:
             if self._has_units(enemy_units):
                 await self._mutalisk_attack(mutalisks, enemy_units)
 
-    def _find_harass_target(self):
-        """Find best harassment target (enemy base with workers)."""
-        # Try enemy main base
-        if (
-            hasattr(self.bot, "enemy_start_locations")
-            and self.bot.enemy_start_locations
-        ):
-            return self.bot.enemy_start_locations[0]
-
-        # Try known enemy structures
-        enemy_structures = getattr(self.bot, "enemy_structures", [])
-        if enemy_structures:
-            # Find townhalls
-            townhall_names = [
-                "NEXUS",
-                "COMMANDCENTER",
-                "ORBITALCOMMAND",
-                "PLANETARYFORTRESS",
-                "HATCHERY",
-                "LAIR",
-                "HIVE",
-            ]
-            for struct in enemy_structures:
-                if getattr(struct.type_id, "name", "") in townhall_names:
-                    return struct.position
-            # Any structure as fallback
-            return enemy_structures[0].position
-
-        return None
+    # NOTE: Cycle 2 정리 — 동일 이름의 단순 버전이 여기에 있었으나, 클래스 후반부의
+    # 더 정교한 ``_find_harass_target`` (워커/테크 건물 우선)가 메서드 재정의로
+    # 이미 모든 호출을 가로채고 있었다. 단순 버전을 제거하여 dead code 정리.
 
     async def _execute_harass(self, mutalisks, enemy_units):
         """
@@ -4337,4 +4311,6 @@ class CombatManager:
             pass
 
         return None
+
+
 # Improved micro management for VeryHard difficulty
