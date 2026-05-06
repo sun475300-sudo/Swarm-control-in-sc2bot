@@ -2271,8 +2271,6 @@ class CombatManager:
         3. Enemy air units
         4. Ground army units
         """
-        game_time = getattr(self.bot, "time", 0)
-
         # Check if our base is under attack
         base_threatened = self._is_base_under_attack()
 
@@ -3022,19 +3020,9 @@ class CombatManager:
             "PHOENIX",
         }
 
-        # 비전투 유닛 (정찰용, 위협이 낮음)
-        non_combat_names = {
-            "SCV",
-            "PROBE",
-            "DRONE",
-            "MULE",
-            "OBSERVER",
-            "OVERLORD",
-            "OVERSEER",
-            "WARPPRISM",
-            "RAVEN",
-            "CHANGELING",
-        }
+        # Non-combat enemies (workers/scouts) trigger the threat threshold
+        # via the >=3 check below — once combat units are excluded, anything
+        # remaining counts as a non-combat probe.
 
         for th in self.bot.townhalls:
             # 일반 감지 거리
