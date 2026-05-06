@@ -269,6 +269,20 @@ class EvolutionUpgradeManager:
         # ★★★ Phase 18: 종족별 우선순위 조정 ★★★
         race_modifiers = self.race_priority_modifiers.get(enemy_race, {})
 
+        def _race_weighted_sort(lanes: List[str]) -> List[str]:
+            """Stable-sort lanes so race-favoured ones come earlier without
+            breaking the within-lane sequencing (a 'missile' that appears
+            twice in lanes still appears twice, just shifted as a block)."""
+            if not race_modifiers:
+                return lanes
+            # Order distinct lanes by race weight (desc); preserve repeats.
+            distinct = list(dict.fromkeys(lanes))
+            distinct.sort(
+                key=lambda lane: -race_modifiers.get(lane, 1.0),
+            )
+            counts: Dict[str, int] = {lane: lanes.count(lane) for lane in distinct}
+            return [lane for lane in distinct for _ in range(counts[lane])]
+
         if is_ranged_main:
             # ★ 바퀴/히드라 체제: 원거리 공격 올인 (사용자 요청)
             # 원거리 공1 -> 공2 -> 공3 -> 방어1...
@@ -313,6 +327,10 @@ class EvolutionUpgradeManager:
         elif total_air >= 3:  # 공중 유닛 3마리 이상이면
             priorities.append("air_attack")
             priorities.append("air_armor")
+
+        # Apply race-specific weighting (Phase 18) — keeps relative
+        # melee/missile/armor ordering intact when no race info available.
+        priorities = _race_weighted_sort(priorities)
 
         # === 업그레이드 순서 생성 (중복 제거) ===
         upgrade_order: List[object] = []
