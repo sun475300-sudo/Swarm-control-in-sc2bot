@@ -1403,7 +1403,7 @@ class BotStepIntegrator:
                             )
                     elif iteration % 110 == 0:
                         astar_hw.update_progress()
-                except Exception as e:
+                except Exception:
                     if error_handler.debug_mode:
                         raise
 
