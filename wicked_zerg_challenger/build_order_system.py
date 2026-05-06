@@ -11,7 +11,7 @@ Purpose: Stable and optimized automated build order execution
 
 import logging
 from enum import Enum
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List
 
 from knowledge_manager import KnowledgeManager  # NEW
 
@@ -523,7 +523,7 @@ class BuildOrderSystem:
         actual = self.expansion_actual_time
 
         if actual == 0:
-            logger.info(f"[!] Expansion timing: NOT RECORDED")
+            logger.info("[!] Expansion timing: NOT RECORDED")
             return
 
         target = self.expansion_timing_target

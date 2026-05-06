@@ -10,7 +10,7 @@
 4. 소수 병력 → 자동 견제
 """
 
-from typing import List, Optional, Set
+from typing import Optional, Set
 
 from sc2.ids.unit_typeid import UnitTypeId
 from sc2.position import Point2
@@ -242,9 +242,15 @@ class IdleUnitManager:
                 nearby_enemies = self.bot.enemy_units.closer_than(10, unit)
 
                 if nearby_enemies.exists:
-                    # 가장 가까운 아군 기지로 후퇴
+                    # 가장 가까운 아군 기지로 후퇴 — 단, 그 기지도 위협받고 있으면 본진으로 후퇴
                     closest_base = self.bot.townhalls.closest_to(unit)
-                    self.bot.do(unit.move(closest_base.position))
+                    base_under_threat = self.bot.enemy_units.closer_than(
+                        15, closest_base
+                    ).exists
+                    retreat_target = (
+                        main_base if base_under_threat else closest_base.position
+                    )
+                    self.bot.do(unit.move(retreat_target))
 
                     # 퀸 트랜스퓨전 요청
                     if hasattr(self.bot, "queen_manager"):

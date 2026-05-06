@@ -9,7 +9,7 @@ Bot Step Integration - on_step 구현 통합 모듈
 import asyncio
 import logging
 import time
-from typing import Any, Dict, List, Optional
+from typing import Dict, List
 
 # Error Handler 통합
 from error_handler import error_handler
@@ -679,6 +679,24 @@ class BotStepIntegrator:
         else:
             self.bot.game_result_reporter = None
 
+    def _record_step_error(self, name: str, exc: BaseException) -> None:
+        """Funnel non-debug-mode on_step exceptions through error_handler.
+
+        Mirrors the error_handler.error_counts pattern used elsewhere in
+        this file: count occurrences and only emit log lines until we hit
+        max_error_logs, so a chronically broken module doesn't flood the
+        log but the first few failures still surface.
+        """
+        try:
+            error_handler.error_counts[name] = (
+                error_handler.error_counts.get(name, 0) + 1
+            )
+            if error_handler.error_counts[name] <= error_handler.max_error_logs:
+                self.logger.error(f"[ERROR] {name} error: {exc}")
+        except Exception:
+            # Never let the error reporter itself break the step loop.
+            pass
+
     async def initialize_managers(self):
         """
         매니저들 초기화 (lazy loading)
@@ -924,6 +942,7 @@ class BotStepIntegrator:
                 except Exception as e:
                     if error_handler.debug_mode:
                         raise
+                    self._record_step_error("SpatialOptimizer", e)
 
             if hasattr(self.bot, "data_cache") and self.bot.data_cache:
                 try:
@@ -931,6 +950,7 @@ class BotStepIntegrator:
                 except Exception as e:
                     if error_handler.debug_mode:
                         raise
+                    self._record_step_error("DataCache", e)
 
             # ★★★ Base Destruction Coordinator (모든 적 기지 파괴) ★★★
             if hasattr(self.bot, "base_destruction") and self.bot.base_destruction:
@@ -939,6 +959,7 @@ class BotStepIntegrator:
                 except Exception as e:
                     if error_handler.debug_mode:
                         raise
+                    self._record_step_error("BaseDestruction", e)
 
             # ★★★ Building Destroyer (건물 파괴 전문) ★★★
             if hasattr(self.bot, "building_destroyer") and self.bot.building_destroyer:
@@ -947,6 +968,7 @@ class BotStepIntegrator:
                 except Exception as e:
                     if error_handler.debug_mode:
                         raise
+                    self._record_step_error("BuildingDestroyer", e)
 
             # ★★★ Runtime Self-Healing (실행 중 자동 복구) ★★★
             if hasattr(self.bot, "self_healing") and self.bot.self_healing:
@@ -955,6 +977,7 @@ class BotStepIntegrator:
                 except Exception as e:
                     if error_handler.debug_mode:
                         raise
+                    self._record_step_error("SelfHealing", e)
 
             # ★★★ Personality Module (채팅/성격) ★★★
             if hasattr(self.bot, "personality") and self.bot.personality:
@@ -963,6 +986,7 @@ class BotStepIntegrator:
                 except Exception as e:
                     if error_handler.debug_mode:
                         raise
+                    self._record_step_error("Personality", e)
 
             # ★★★ Battle Preparation System (교전 대비) ★★★
             if hasattr(self.bot, "battle_prep") and self.bot.battle_prep:
@@ -971,6 +995,7 @@ class BotStepIntegrator:
                 except Exception as e:
                     if error_handler.debug_mode:
                         raise
+                    self._record_step_error("BattlePrep", e)
 
             # ★★★ Destructible Awareness System (파괴 가능 구조물) ★★★
             if hasattr(self.bot, "destructible_aware") and self.bot.destructible_aware:
@@ -983,6 +1008,7 @@ class BotStepIntegrator:
                 except Exception as e:
                     if error_handler.debug_mode:
                         raise
+                    self._record_step_error("DestructibleAware", e)
 
             # ★★★ Nydus Network Trainer (땅굴망 학습) ★★★
             if hasattr(self.bot, "nydus_trainer") and self.bot.nydus_trainer:
@@ -991,6 +1017,7 @@ class BotStepIntegrator:
                 except Exception as e:
                     if error_handler.debug_mode:
                         raise
+                    self._record_step_error("NydusTrainer", e)
 
             # ★★★ Overlord Safety Manager (대군주 안전) ★★★
             if hasattr(self.bot, "overlord_safety") and self.bot.overlord_safety:
@@ -999,6 +1026,7 @@ class BotStepIntegrator:
                 except Exception as e:
                     if error_handler.debug_mode:
                         raise
+                    self._record_step_error("OverlordSafety", e)
 
             # 0.03 ★★★ Build Order System (빌드 오더 - 최최우선) ★★★
             if self.bot.time < 300.0:  # 5분 이내 (Roach Rush 지원)
@@ -1221,11 +1249,12 @@ class BotStepIntegrator:
                     self._logic_tracker.end_logic("RLTechAdapter", start_time)
 
             # 0.057 ★★★ Micro Focus Mode (전투 우선순위 동적 할당) ★★★
-            micro_interval = 8  # 기본 간격
+            # Default interval (consumed by downstream micro systems via self.bot.micro_interval)
+            self.bot.micro_interval = getattr(self.bot, "micro_interval", 8)
             if hasattr(self.bot, "micro_focus") and self.bot.micro_focus:
                 start_time = self._logic_tracker.start_logic("MicroFocusMode")
                 try:
-                    micro_interval = self.bot.micro_focus.update(iteration)
+                    self.bot.micro_interval = self.bot.micro_focus.update(iteration)
                 except Exception as e:
                     if error_handler.debug_mode:
                         raise
@@ -1374,7 +1403,7 @@ class BotStepIntegrator:
                             )
                     elif iteration % 110 == 0:
                         astar_hw.update_progress()
-                except Exception as e:
+                except Exception:
                     if error_handler.debug_mode:
                         raise
 
@@ -1655,7 +1684,7 @@ class BotStepIntegrator:
                     if defeat_status.get("last_stand_required", False):
                         if iteration % 50 == 0:
                             self.logger.info(
-                                f"[DEFEAT DETECTION] [*] 패배 직전! 마지막 방어 시도! [*]"
+                                "[DEFEAT DETECTION] [*] 패배 직전! 마지막 방어 시도! [*]"
                             )
                             self.logger.info(
                                 f"  - 패배 수준: {self.bot.defeat_detection.get_defeat_level_name()}"
@@ -1677,12 +1706,10 @@ class BotStepIntegrator:
                     elif defeat_status.get("should_surrender", False):
                         game_time = getattr(self.bot, "time", 0)
                         reason = defeat_status.get("defeat_reason", "알 수 없음")
-                        self.logger.info(
-                            f"\n[SURRENDER] [*][*][*] 게임 포기! [*][*][*]"
-                        )
+                        self.logger.info("\n[SURRENDER] [*][*][*] 게임 포기! [*][*][*]")
                         self.logger.info(f"  - 게임 시간: {int(game_time)}초")
                         self.logger.info(f"  - 이유: {reason}")
-                        self.logger.info(f"  - 다음 게임으로 이동...\n")
+                        self.logger.info("  - 다음 게임으로 이동...\n")
 
                         await self.bot.chat_send("gg")
 
@@ -2487,7 +2514,7 @@ class BotStepIntegrator:
 
         except Exception as e:
             if error_handler.debug_mode:
-                self.logger.error(f"\n[ERROR] Game logic execution error in DEBUG_MODE")
+                self.logger.error("\n[ERROR] Game logic execution error in DEBUG_MODE")
                 raise
             else:
                 error_handler.error_counts["GameLogic"] += 1
@@ -2788,7 +2815,7 @@ class BotStepIntegrator:
 
                     # ★ 상태 벡터 로깅 (30초마다) - 실제 값 확인 ★
                     if iteration % 660 == 0:  # 30초
-                        self.logger.info(f"[RL_STATE] 게임 상태 벡터 (15차원):")
+                        self.logger.info("[RL_STATE] 게임 상태 벡터 (15차원):")
                         self.logger.info(
                             f"  미네랄: {game_state[0]:.3f}, 가스: {game_state[1]:.3f}"
                         )
@@ -2876,7 +2903,6 @@ class BotStepIntegrator:
             # 전략 모드 적용 (StrategyManager에게 전달)
             if result and "strategy_mode" in result:
                 new_mode = result["strategy_mode"]
-                current_mode_str = "Unknown"
 
                 # StrategyManager에 모드 적용
                 if hasattr(self.bot, "strategy_manager") and self.bot.strategy_manager:
@@ -2921,7 +2947,7 @@ class BotStepIntegrator:
                             f"[STRATEGY] 규칙 기반 결정: {new_mode} (RLAgent 없음)"
                         )
                     else:
-                        self.logger.info(f"[STRATEGY] 현행 유지 (Shadow Mode)")
+                        self.logger.info("[STRATEGY] 현행 유지 (Shadow Mode)")
 
                 # ★ 불일치 경고 (RL이 있는데 사용 안 됨) ★
                 if (
@@ -2931,7 +2957,7 @@ class BotStepIntegrator:
                 ):
                     if iteration % 220 == 0:
                         self.logger.warning(
-                            f"[WARNING] [*] RLAgent가 있지만 결정이 사용되지 않음! [*]"
+                            "[WARNING] [*] RLAgent가 있지만 결정이 사용되지 않음! [*]"
                         )
 
         except Exception as e:

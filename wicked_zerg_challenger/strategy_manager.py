@@ -17,7 +17,7 @@ Features:
 import json
 from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, Optional
 
 from config.config_loader import ConfigLoader
 from racial_counter_manager import RacialCounterManager
@@ -1521,6 +1521,19 @@ class StrategyManager:
             self._adjust_unit_ratio("hydra", 0.3)
             self._adjust_unit_ratio("roach", 0.3)
 
+        # 적 레이바저 3+ → 히드라 위주 (사거리 우위) + 자체 레이바저 미러
+        # Ravagers' Corrosive Bile is AOE; spread out behind longer-range hydras
+        if ravager_count >= 3:
+            self._adjust_unit_ratio("hydra", 0.45)
+            self._adjust_unit_ratio("ravager", 0.30)
+            self._adjust_unit_ratio("roach", 0.20)
+            if game_time - getattr(self, "_last_zvz_ravager_log", 0) > 15:
+                self._last_zvz_ravager_log = game_time
+                self.logger.warning(
+                    f"[{int(game_time)}s] Enemy Ravager x{ravager_count}: "
+                    "Hydra-led counter composition"
+                )
+
         # 뮤탈리스크 → 히드라 + 스포어
         if mutalisk_count >= 3:
             # ★ Phase 34: "hydralisk" 오타 수정 → "hydra" (내부 키 통일)
@@ -1569,7 +1582,6 @@ class StrategyManager:
 
     def _request_spire_build(self) -> None:
         """스파이어 긴급 건설 요청 - 제거됨 (AggressiveTechBuilder로 통합)"""
-        pass
 
     def should_force_hydra(self) -> bool:
         """히드라 강제 생산 여부"""
@@ -1863,7 +1875,6 @@ class StrategyManager:
         Returns:
             전환 설명 문자열 (전환 없으면 None)
         """
-        game_time = getattr(self.bot, "time", 0.0)
         supply_used = getattr(self.bot, "supply_used", 0)
 
         # 강제 전환 조건 (시간보다 상황 우선)

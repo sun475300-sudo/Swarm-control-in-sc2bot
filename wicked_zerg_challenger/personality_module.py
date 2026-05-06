@@ -230,14 +230,24 @@ class PersonalityModule:
         games = stats["games_played"]
         win_rate = stats["win_rate"] * 100
         style = stats["dominant_style"]
+        style_suffix = f" [감지된 스타일: {style}]" if style else ""
 
         # Format message based on win rate
         if win_rate > 70:
-            return f"또 오셨나요? 이번엔 좀 버티시길. (승률: {win_rate:.1f}%) gl hf."
+            return (
+                f"또 오셨나요? 이번엔 좀 버티시길. "
+                f"(승률: {win_rate:.1f}%){style_suffix} gl hf."
+            )
         elif win_rate < 30:
-            return f"지난번의 패배를 분석했습니다. 이번엔 다를 겁니다. (승률: {win_rate:.1f}%) gl hf."
+            return (
+                f"지난번의 패배를 분석했습니다. 이번엔 다를 겁니다. "
+                f"(승률: {win_rate:.1f}%){style_suffix} gl hf."
+            )
         else:
-            return f"{games+1}번째 판이네요. 누가 더 발전했는지 봅시다. (승률: {win_rate:.1f}%) gl hf."
+            return (
+                f"{games+1}번째 판이네요. 누가 더 발전했는지 봅시다. "
+                f"(승률: {win_rate:.1f}%){style_suffix} gl hf."
+            )
 
     async def _check_game_situation(self, game_time: float):
         """게임 상황 체크 및 적절한 메시지"""

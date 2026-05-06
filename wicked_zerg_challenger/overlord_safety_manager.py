@@ -9,7 +9,7 @@ Overlord Safety Manager - 대군주 안전 관리 시스템
 """
 
 import random
-from typing import Dict, List, Optional, Set, Tuple
+from typing import Dict, List, Optional, Set
 
 from sc2.ids.unit_typeid import UnitTypeId
 from sc2.position import Point2

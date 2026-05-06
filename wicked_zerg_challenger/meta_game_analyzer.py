@@ -4,9 +4,9 @@ HIGH PRIORITY FEATURE
 """
 
 from collections import defaultdict
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
 
 @dataclass
@@ -117,6 +117,10 @@ class MetaGameAnalyzer:
             "reasoning": f"Based on vs {enemy_race} on {map_name}",
             "alternatives": ["RUSH", "MACRO", "TIMING"],
             "meta_analysis": self.get_current_meta_strategies()[:3],
+            "history": {
+                "race": race_perf,
+                "map": map_perf,
+            },
         }
 
     def get_counter_picks(self, enemy_strategy: str) -> List[str]:

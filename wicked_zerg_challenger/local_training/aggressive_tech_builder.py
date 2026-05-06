@@ -12,7 +12,7 @@ This module does when resources overflow:
 """
 
 import logging
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Tuple
 
 logger = logging.getLogger("AggressiveTechBuilder")
 try:
@@ -290,5 +290,15 @@ class AggressiveTechBuilder:
                 # Extractor Ȯ�� (���� ���� Ȯ��)
                 if self.bot.structures(UnitTypeId.EXTRACTOR).ready.exists:
                     recommendations.append((UnitTypeId.LAIR, 30.0, 5))
+
+        # Filter: only recommend tech once we've reached the prerequisite
+        # supply gate (each recommendation already declares its base_supply
+        # threshold; supply_used now gates them so we don't try to drop a
+        # Hydra Den when we still only have 12 drones).
+        recommendations = [
+            (tech, base_supply, priority)
+            for (tech, base_supply, priority) in recommendations
+            if supply_used >= base_supply
+        ]
 
         return recommendations

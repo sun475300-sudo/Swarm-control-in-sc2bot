@@ -125,6 +125,27 @@ class TestResourceManager:
         assert success_count == 5
 
     @pytest.mark.asyncio
+    async def test_replacement_under_resource_pressure(self):
+        """A manager upgrading its own reservation should treat its prior
+        reservation as available — under tight resources the previous
+        implementation incorrectly counted the manager's own held resources
+        against itself.
+        """
+        self.bot.minerals = 300
+        self.bot.vespene = 300
+
+        # Initial small reservation
+        ok1 = await self.manager.try_reserve(200, 0, "TestManager")
+        assert ok1
+        assert self.manager._reserved_minerals == 200
+
+        # Upgrade to 250 — total still <= 300, should succeed because the
+        # 200 we already hold gets released as part of the replacement.
+        ok2 = await self.manager.try_reserve(250, 0, "TestManager")
+        assert ok2
+        assert self.manager._reserved_minerals == 250
+
+    @pytest.mark.asyncio
     async def test_race_condition_prevention(self):
         """Test that race conditions are prevented"""
         self.bot.minerals = 500  # Only 500 minerals
