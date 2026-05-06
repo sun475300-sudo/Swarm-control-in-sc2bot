@@ -204,7 +204,7 @@ class IntegrationHub:
         return [(cx, cy)] * count
 
     def generate_test_script(self, output_path: Path) -> str:
-        script = f'''#!/usr/bin/env python3
+        script = '''#!/usr/bin/env python3
 """Phase 66 Integration Test Script"""
 
 import sys
