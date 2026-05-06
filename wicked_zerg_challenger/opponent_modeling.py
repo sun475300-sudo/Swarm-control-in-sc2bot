@@ -776,10 +776,10 @@ class OpponentModeling:
             s.value for s in self.observed_signals
         ]
 
-        # Detect strategy (placeholder - would need more logic)
-        if self.intel:
-            # Try to detect strategy from intel data
-            pass
+        # If intel was tracked during the game, snapshot the predicted strategy onto
+        # the history so future predictions can learn from this game's classification.
+        if self.intel and self.predicted_strategy:
+            self.current_game_history.detected_strategy = self.predicted_strategy
 
         # Update opponent model
         model = self.opponent_models[self.current_opponent_id]

@@ -263,11 +263,7 @@ class RuntimeSelfHealing:
 
         self._last_gas_recovery = game_time
         self.logger.info(f"[RECOVERY] Reducing gas workers or spending gas: {gas}")
-
-        # SmartBalancer가 있으면 사용
-        if hasattr(self.bot, "smart_balancer"):
-            # 이미 자동으로 처리됨
-            pass
+        # SmartBalancer 가 존재하면 그쪽이 이미 자동 처리하므로 별도 동작 없음.
 
     async def _recover_missing_manager(self, game_time: float, manager_name: str):
         """매니저 없음 복구"""

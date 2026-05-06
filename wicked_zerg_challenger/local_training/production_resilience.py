@@ -2073,12 +2073,9 @@ class ProductionResilience:
                 return UnitTypeId.MUTALISK
 
         elif main_threat == "light_infantry":
-            # vs Light: Banelings > Roaches
-            has_baneling_nest = b.structures(UnitTypeId.BANELINGNEST).ready.exists
-            if has_baneling_nest:
-                # Note: Banelings are morphed from Zerglings, not trained from larvae
-                # Return None here; baneling morphing should be handled separately
-                pass
+            # vs Light: Banelings preferred but they morph from Zerglings (not trained
+            # from larvae) — that is handled by a separate morpher. Fall through to
+            # Roaches as the train-from-larva counter.
             if has_roach_warren and b.can_afford(UnitTypeId.ROACH):
                 return UnitTypeId.ROACH
 
