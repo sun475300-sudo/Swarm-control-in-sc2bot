@@ -47,7 +47,7 @@ jobs:
       - name: Python 의존성 설치
         run: |
           python -m pip install --upgrade pip
-          pip install flake8 pytest pytest-cov
+          pip install flake8 pytest pytest-cov pytest-asyncio pytest-timeout pytest-subtests
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
           # 추가 테스트 의존성
           pip install pyyaml aiohttp
