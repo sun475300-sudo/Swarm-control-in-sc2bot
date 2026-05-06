@@ -1650,9 +1650,7 @@ class CombatManager:
             # 한 번 공격 모드로 진입했다면 임계값 -10% 까지는 공격 유지.
             # 처음 공격 시작은 원래 임계값을 그대로 사용.
             if getattr(self, "is_engaging", False):
-                min_attack_threshold = max(
-                    1, int(min_attack_threshold * 0.9)
-                )
+                min_attack_threshold = max(1, int(min_attack_threshold * 0.9))
 
             # ★★★ FIX Phase 12: 집결 시스템 복원 — 1~2마리 돌격 방지 ★★★
             if army_supply < min_attack_threshold:
@@ -4357,4 +4355,6 @@ class CombatManager:
             pass
 
         return None
+
+
 # Improved micro management for VeryHard difficulty

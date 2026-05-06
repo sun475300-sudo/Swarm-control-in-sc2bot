@@ -7,7 +7,37 @@ across the codebase. Uses efficient algorithms and consistent interfaces.
 
 from typing import TYPE_CHECKING, List, Optional, Union
 
-from sc2.position import Point2
+try:
+    from sc2.position import Point2
+except ImportError:  # pragma: no cover — tooling/test-only fallback
+
+    class Point2:  # type: ignore[no-redef]
+        """Minimal Point2 fallback when python-sc2 is not installed."""
+
+        __slots__ = ("x", "y")
+
+        def __init__(self, coords):
+            self.x, self.y = coords[0], coords[1]
+
+        def distance_to(self, other) -> float:
+            import math
+
+            return math.hypot(self.x - other.x, self.y - other.y)
+
+        def towards(self, other, distance):
+            import math
+
+            d = self.distance_to(other)
+            if d == 0:
+                return Point2((self.x, self.y))
+            ratio = distance / d
+            return Point2(
+                (
+                    self.x + (other.x - self.x) * ratio,
+                    self.y + (other.y - self.y) * ratio,
+                )
+            )
+
 
 if TYPE_CHECKING:
     from sc2.unit import Unit
@@ -326,3 +356,33 @@ def get_bounding_box(units: Union[List, "Units"]) -> tuple[Point2, Point2]:
     max_y = max(u.position.y for u in units)
 
     return Point2((min_x, min_y)), Point2((max_x, max_y))
+
+
+def angle_to_target(origin: Point2, target: Point2) -> float:
+    """
+    Compute angle (radians) from origin to target.
+
+    Returns value in [-pi, pi]; 0 = +x axis, pi/2 = +y axis.
+    Useful for facing-checks and arc-based formation logic.
+    """
+    import math
+
+    return math.atan2(target.y - origin.y, target.x - origin.x)
+
+
+def dispersion_score(units: Union[List, "Units"]) -> float:
+    """
+    Compute a unitless dispersion score: average distance from centroid.
+
+    Higher score → army is spread; lower score → tight formation.
+    Returns 0.0 for empty/single-unit collections.
+
+    Example:
+        >>> if dispersion_score(my_army) > 8.0:
+        >>>     # Army is too scattered, regroup
+    """
+    if not units or len(units) <= 1:
+        return 0.0
+
+    center = get_center_position(units)
+    return sum(u.position.distance_to(center) for u in units) / len(units)

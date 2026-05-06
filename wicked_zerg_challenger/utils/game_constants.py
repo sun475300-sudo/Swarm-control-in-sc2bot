@@ -232,9 +232,9 @@ def iterations_to_seconds(iterations: int) -> float:
 # - vs Protoss (실드 회복 → 더 큰 군대 필요)
 ATTACK_THRESHOLD_TIERS_DEFAULT = (
     # (game_time 상한 초, 최소 공격 서플라이)
-    (240, 12),   # < 4분: 초반 압박
-    (480, 20),   # < 8분: 중반 진입
-    (600, 30),   # < 10분: 본 게임
+    (240, 12),  # < 4분: 초반 압박
+    (480, 20),  # < 8분: 중반 진입
+    (600, 30),  # < 10분: 본 게임
     (float("inf"), 40),  # 10분+: 후반 강력 공격
 )
 
