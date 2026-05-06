@@ -43,8 +43,20 @@ try:
     import torch.optim as optim
 
     HAS_TORCH = True
-except ImportError:
+except ImportError:  # pragma: no cover - exercised only when torch is absent
     HAS_TORCH = False
+    # Stubs so the *Torch class declarations below still evaluate at import.
+    # Instantiation of any torch-class is already gated on HAS_TORCH at the
+    # call sites (see SC2QMIXAgent.__init__), so the stubs are never used at
+    # runtime — they only need to make `nn.Module` resolve so that
+    # `class Foo(nn.Module):` does not raise NameError on import.
+    class _TorchNnStub:
+        Module = object
+
+    torch = None  # type: ignore[assignment]
+    nn = _TorchNnStub()  # type: ignore[assignment]
+    F = None  # type: ignore[assignment]
+    optim = None  # type: ignore[assignment]
 
 # ===================================================================
 # NumPy fallback primitives

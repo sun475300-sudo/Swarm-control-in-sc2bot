@@ -18,6 +18,50 @@ PROJECT_ROOT = Path(__file__).parent.parent
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
+# wicked_zerg_challenger/ 도 sys.path 에 추가.
+#
+# 봇 코드는 `from config.unit_configs import ...`, `from utils.logger import
+# get_logger` 처럼 패키지 내부 모듈을 절대 import 한다. 봇 자체는 자기
+# 디렉토리를 cwd 로 실행해서 동작하지만 pytest 가
+# wicked_zerg_challenger.economy_manager 를 import 하면 `config` 와
+# `utils` 가 sys.path 에 없어서 ModuleNotFoundError 가 난다. 그 결과
+# EconomyManager / StrategyManager 를 사용하는 약 30 개 테스트가 조용히 SKIP 된다.
+#
+# 추가로 PROJECT_ROOT 에는 logger.py 가 없는 stub `utils/` 패키지가 있어서
+# `wicked_zerg_challenger/` 보다 먼저 검색되면 import 가 stub 을 만나
+# 실패한다. pytest 는 자기가 알아서 PROJECT_ROOT 를 sys.path 에 prepend 하므로
+# pytest_configure 에서 BOT_PACKAGE_ROOT 를 다시 0번 인덱스로 강제 고정한다.
+BOT_PACKAGE_ROOT = PROJECT_ROOT / "wicked_zerg_challenger"
+if BOT_PACKAGE_ROOT.is_dir() and str(BOT_PACKAGE_ROOT) not in sys.path:
+    sys.path.insert(0, str(BOT_PACKAGE_ROOT))
+
+
+def pytest_configure(config):  # noqa: D401 - pytest hook
+    """`pytest` 가 자체적으로 PROJECT_ROOT 를 sys.path 에 prepend 한 뒤
+    실행되는 훅. BOT_PACKAGE_ROOT 를 다시 0번 인덱스로 강제 고정해서
+    PROJECT_ROOT/utils stub 이 wicked_zerg_challenger/utils 를 가리지 않도록 한다.
+    """
+    bot_root = str(BOT_PACKAGE_ROOT)
+    if bot_root in sys.path:
+        sys.path.remove(bot_root)
+    sys.path.insert(0, bot_root)
+
+    # 단일 파일/단일 테스트 실행 모드에서 pytest 의 자동 rootdir prepend 가
+    # BOT_PACKAGE_ROOT 보다 늦게 일어나는 케이스를 대비해, `utils` /
+    # `config` 가 pytest 실행 시점에 stub 패키지로 해석되어 있으면 강제로
+    # 제거한다. 이후 `from utils.logger import ...` 가 import 될 때
+    # sys.path 의 BOT_PACKAGE_ROOT (wicked_zerg_challenger/) 에서 다시
+    # 찾도록 한다.
+    for _shadowed in ("utils", "config"):
+        mod = sys.modules.get(_shadowed)
+        if mod is None:
+            continue
+        mod_file = getattr(mod, "__file__", "") or ""
+        # bot 패키지의 utils 가 이미 import 됐다면 유지; 그렇지 않고
+        # PROJECT_ROOT 직속 stub 만 import 돼 있다면 제거.
+        if str(BOT_PACKAGE_ROOT) not in mod_file:
+            sys.modules.pop(_shadowed, None)
+
 
 # ═══════════════════════════════════════════════════════
 # 경로 관련 Fixtures
