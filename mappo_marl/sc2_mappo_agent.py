@@ -41,8 +41,19 @@ try:
     from torch.distributions import Categorical
 
     HAS_TORCH = True
-except ImportError:
+except ImportError:  # pragma: no cover - exercised only when torch is absent
     HAS_TORCH = False
+    # Stubs so the *Torch class declarations below still evaluate at import.
+    # Instantiation of any torch-class is gated on HAS_TORCH at the call
+    # sites (SC2MAPPOAgent.__init__), so the stubs are never used at runtime
+    # — they only need to make `nn.Module` resolve.
+    class _TorchNnStub:
+        Module = object
+
+    torch = None  # type: ignore[assignment]
+    nn = _TorchNnStub()  # type: ignore[assignment]
+    optim = None  # type: ignore[assignment]
+    Categorical = None  # type: ignore[assignment]
 
 # ===================================================================
 # NumPy fallback helpers

@@ -25,6 +25,19 @@ except ImportError:
 logger = get_logger("UnitHelpers")
 
 
+def _empty_units():
+    """sc2 가 깔린 환경에서는 진짜 Units([], None) 을, 그렇지 않은 환경
+    (테스트/스크립트) 에서는 list-like 빈 컬렉션을 반환한다.
+
+    Units 가 None 인 채로 `Units([], None)` 을 호출하면 TypeError 가 발생해
+    helper 가 죽는데, 호출자는 보통 `len(result) == 0` 같은 truthy/iterable
+    체크만 하므로 list 로도 충분하다.
+    """
+    if Units is None:
+        return []
+    return Units([], None)
+
+
 def find_nearby_enemies(unit: Unit, enemy_units: Units, range: float) -> Units:
     """
     특정 거리 내의 적 유닛 찾기
@@ -38,18 +51,20 @@ def find_nearby_enemies(unit: Unit, enemy_units: Units, range: float) -> Units:
         거리 내의 적 유닛 컬렉션
     """
     if not unit or not enemy_units:
-        return Units([], None)
+        return _empty_units()
 
     try:
         # closer_than 메서드 사용 (최적화)
         if hasattr(enemy_units, "closer_than"):
             return enemy_units.closer_than(range, unit)
-        else:
+        elif Units is not None:
             # 폴백: 직접 필터링
             return Units([e for e in enemy_units if e.distance_to(unit) < range], None)
+        else:
+            return [e for e in enemy_units if e.distance_to(unit) < range]
     except Exception as e:
         logger.debug(f"find_nearby_enemies error: {e}")
-        return Units([], None)
+        return _empty_units()
 
 
 def get_health_ratio(unit: Unit) -> float:
@@ -112,13 +127,13 @@ def filter_workers_by_task(
         필터링된 일꾼 컬렉션
     """
     if not workers:
-        return Units([], None)
+        return _empty_units()
 
     try:
         return workers.filter(task_filter)
     except Exception as e:
         logger.debug(f"filter_workers_by_task error: {e}")
-        return Units([], None)
+        return _empty_units()
 
 
 def execute_unit_action(unit: Unit, action: Callable, *args, **kwargs) -> bool:

@@ -388,6 +388,36 @@ class TestCanUnitAttack(unittest.TestCase):
         self.assertFalse(can_unit_attack(unit, None))
 
 
+class TestEmptyUnitsFallback(unittest.TestCase):
+    """Regression guard for the cycle-3 fix in unit_helpers._empty_units().
+
+    sc2 가 깔리지 않은 환경에서 `Units = None` 으로 fallback 되었을 때,
+    예전에는 `find_nearby_enemies` / `filter_workers_by_task` 의 빈-반환
+    경로가 `Units([], None)` 을 호출해서 `TypeError: 'NoneType' object is
+    not callable` 로 죽었다. `_empty_units()` 가 list 로 fallback 하면서
+    이 버그가 사라졌으나, 누군가 다시 `Units([], None)` 을 직접 호출하면
+    회귀하므로 잠금."""
+
+    def test_empty_units_returns_iterable_when_sc2_missing(self):
+        from utils import unit_helpers
+
+        result = unit_helpers._empty_units()
+        # iterable + len == 0 이면 호출자가 안전하게 사용 가능.
+        self.assertEqual(len(result), 0)
+        # iterate without error
+        self.assertEqual(list(result), [])
+
+    def test_find_nearby_enemies_handles_none_unit(self):
+        # 사이클 3 회귀 가드: None 유닛 입력에서 TypeError 가 나면 안 된다.
+        result = find_nearby_enemies(None, MockUnits([MockUnit()]), 5.0)
+        self.assertEqual(len(result), 0)
+
+    def test_filter_workers_by_task_handles_none_workers(self):
+        # 사이클 3 회귀 가드: None workers 입력에서 TypeError 가 나면 안 된다.
+        result = filter_workers_by_task(None, lambda w: True)
+        self.assertEqual(len(result), 0)
+
+
 if __name__ == "__main__":
     # Run all tests
     unittest.main(verbosity=2)

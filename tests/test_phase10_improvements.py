@@ -315,8 +315,24 @@ class TestEconomyGasBanking:
             pytest.skip("EconomyManager not available (sc2 dependency)")
 
     def test_gas_overflow_threshold_lowered(self):
-        """Gas overflow threshold should be 1000 (not 3000)"""
-        assert self.economy.gas_overflow_prevention_threshold == 1000
+        """Gas overflow threshold should be 800 (lowered from 1000 → 800 to
+        prevent gas banking even more aggressively)."""
+        assert self.economy.gas_overflow_prevention_threshold == 800
+
+    def test_macro_hatchery_mineral_threshold_locked(self):
+        """매크로 해처리 임계값은 game_config 가 있을 때 550, 없을 때 600 으로
+        조정되어 있어야 한다 (Phase 16 튜닝)."""
+        assert self.economy.macro_hatchery_mineral_threshold in (550, 600)
+
+    def test_gas_worker_adjustment_interval_fast(self):
+        """가스 일꾼 재조정 간격은 ~1.5초 (33 프레임) 로 빨라야 한다.
+        110 프레임으로 회귀하면 가스 뱅킹 대응이 느려진다."""
+        assert self.economy.gas_worker_adjustment_interval == 33
+
+    def test_expansion_cooldown_fast(self):
+        """확장 시도 쿨다운은 3 초 (이전 6초에서 단축).
+        타이밍 놓침을 방지한다."""
+        assert self.economy._expansion_cooldown == 3.0
 
 
 # ===== 4. IntelManager NYDUSCANAL in Tech Buildings =====
