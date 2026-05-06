@@ -840,11 +840,26 @@ class EconomyManager:
 
         # Check resource conditions (전투/가스 과잉 시 낮은 임계값)
         minerals = self.bot.minerals
-        mineral_threshold = (
+        # ★ A4: 종족별 매크로 해처리 임계값 미세 조정 ★
+        # vs Protoss: 실드+게이트웨이 압박이 강해 더 일찍 라바 풀가동 필요
+        # vs Zerg: 같은 종족이라 라바 경쟁이 핵심 → 빠른 매크로 해처리
+        # vs Terran: 기본값 유지 (탱크/메딕 압박은 라바 less 중요)
+        race_modifier = 1.0
+        try:
+            enemy_race_str = str(getattr(self.bot, "enemy_race", "")).lower()
+            if "protoss" in enemy_race_str:
+                race_modifier = 0.92  # 8% 더 일찍
+            elif "zerg" in enemy_race_str:
+                race_modifier = 0.90  # 10% 더 일찍
+        except (AttributeError, TypeError):
+            pass
+
+        base_threshold = (
             800
             if (in_combat or gas_overflow)
             else self.macro_hatchery_mineral_threshold
         )
+        mineral_threshold = max(450, int(base_threshold * race_modifier))
 
         if minerals < mineral_threshold:
             return
@@ -3356,7 +3371,16 @@ class EconomyManager:
         extractors = self.bot.gas_buildings.ready
 
         workers_moved = 0
-        max_workers_to_move = 6  # 최대 6명까지 이동
+        # ★ A3: 가스 잔량에 비례하여 옮길 인원 결정 (4~10명) ★
+        # 가스가 많을수록 더 적극적으로 이동시켜 미네랄 확보 가속.
+        if gas >= 2000:
+            max_workers_to_move = 10
+        elif gas >= 1500:
+            max_workers_to_move = 8
+        elif gas >= 1200:
+            max_workers_to_move = 6
+        else:
+            max_workers_to_move = 4
 
         for extractor in extractors:
             if workers_moved >= max_workers_to_move:

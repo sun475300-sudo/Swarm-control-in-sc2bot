@@ -2,6 +2,17 @@
 
 All notable changes to WickedZergBotPro are documented here.
 
+## [반복 점검 1~3차] - 2026-05-06
+### 봇 점검 → 개선 → 회귀 사이클 (PR #96)
+
+- **tests**: pytest 의존성(pytest-asyncio) 정합 후 stale `test_gas_overflow_threshold_lowered`(800==1000) 한도 비교(<=1000)로 전환. 신규 헬퍼 회귀 42개 추가 (306 → 348 passed).
+- **utils/game_constants**: `get_attack_threshold(game_time, *, vs_protoss, early_game_min, mid_game_min)`, `race_gas_timing_seconds`, `StrategyConstants.EARLY_HARASSMENT_INTERVAL`/`LOG_COOLDOWN`.
+- **utils/position_utils**: `angle_to_target` / `dispersion_score` 추가 + `Point2` fallback (sc2 미설치 환경 import 가능).
+- **combat_manager**: 공격 임계값 단(tier) 분기를 헬퍼로 위임 + 공격 hysteresis (`is_engaging` 시 -10% 버퍼로 토글링 방지).
+- **economy_manager**: gas overflow 시 옮길 일꾼을 가스 잔량에 비례(4~10명) + macro hatchery 임계값 race-modifier (P 0.92 / Z 0.90 / T 1.0).
+- **strategy_manager**: harassment_interval / log_cooldown 매직 넘버 → game_constants 흡수.
+- **lint**: `wicked_zerg_challenger/logic_tuning.py` 사전 black 미정합 수정 (CI 'Run black' 통과).
+
 ## [Phase 56] - 2026-03-29
 ### README 가독성/시각화 대규모 강화 + 다국어 라우팅 확장 시작
 - **README** 대규모 개편:
