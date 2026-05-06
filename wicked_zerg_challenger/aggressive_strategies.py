@@ -330,7 +330,6 @@ class AggressiveStrategyExecutor:
     async def _execute_baneling_bust(self) -> None:
         """맹독충 올인 실행"""
         config = self.strategy_configs[AggressiveStrategyType.BANELING_BUST]
-        game_time = getattr(self.bot, "time", 0)
 
         # 1. 스포닝 풀 건설
         if not self._pool_started:
@@ -522,7 +521,6 @@ class AggressiveStrategyExecutor:
     async def _execute_tunneling_claws(self) -> None:
         """잠복 바퀴 이동 실행"""
         config = self.strategy_configs[AggressiveStrategyType.TUNNELING_CLAWS]
-        game_time = getattr(self.bot, "time", 0)
 
         # 1. 바퀴굴 건설
         roach_warren = self.bot.structures(UnitTypeId.ROACHWARREN)
