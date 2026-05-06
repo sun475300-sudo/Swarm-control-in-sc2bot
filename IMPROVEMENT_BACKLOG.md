@@ -21,7 +21,7 @@
 - [x] **L3**: `opponent_modeling.py` `on_step` 342/766 중복 → 단순 후행 버전 제거. 빌드 오더 추적 / 타이밍 공격 감지 / blackboard 예측 갱신을 모두 잃고 있던 종합 버전이 다시 호출됨 (실질적 버그 수정).
 - [x] **L4**: `combat_manager.py` `_find_harass_target` 2382/4283 중복 → 단순 첫 번째 버전 제거. 워커/테크 건물 우선 정교한 버전 유지.
 - [x] **L5**: `local_training/production_resilience.py` `build_terran_counters` 1378/1875 중복 → 단순 첫 번째 버전 제거. TechCoordinator 통합 버전 유지.
-- [ ] **L6**: `combat_manager.py` except 블록의 미사용 `e` 변수 (50+개) → `except Exception:` 또는 로깅 추가.
+- [x] **L6**: 9개 파일 except 블록의 미사용 `as e` 변수 47개 → `as e` 제거. 의도된 swallow 동작은 유지하되 정적 분석 노이즈 제거.
 - [ ] **L7**: `economy_manager.py` 미사용 로컬 변수 `early_window`, `vespene`, `base_count`, `start_loc`, `minerals` → 의도된 로직 누락 가능성 검토.
 
 ## 사이클 3+ - 향후
