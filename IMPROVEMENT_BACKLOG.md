@@ -25,8 +25,14 @@
 - [x] **L7**: `economy_manager.py` 미사용 로컬 변수 `early_window`, `base_count`, `start_loc`, `minerals` 4건 제거 (의도된 로직 누락 없음 확인). `vespene`은 사이클 1 다른 정리에서 이미 제거됨.
 - [x] **L8**: `tools/background_parallel_learner.py` 함수 안 중복 `import shutil` 제거 (모듈 상단 import 사용). 같은 파일 black 포매팅도 정리.
 
-## 사이클 3+ - 향후
+## 사이클 5 - 정적 분석 노이즈 일괄 정리
 
+- [x] **Q1**: 57개 파일에 흩어진 placeholder가 없는 f-string 241개 → 단순 문자열로 일괄 변환. 사이클 1에서 economy_manager.py만 처리한 것을 전체로 확장.
+- [x] **Q2**: bot_step_integration.py의 사전 존재 black 위반 정리.
+
+## 사이클 6+ - 향후
+
+- [ ] 347개 미사용 import: 각 파일마다 안전하게 제거 (대부분 안전하지만 re-export 가능성 검토 필요)
 - [ ] 테스트 커버리지 확장: 통합 테스트 강화, `tests/integration/` 활성화
 - [ ] 매뉴얼 문서 (PROJECT_REVIEW_REPORT, BUG_ERROR_LOG) 정리/통합
 - [ ] CI 워크플로 통합 (sc2bot-ci.yml + ci.yml 중복 제거)
