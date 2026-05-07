@@ -215,6 +215,11 @@ class MicroCombat:
         self.bot = bot
         self.anti_splash = AntiSplashAwareness()
         self.chokepoint_manager = ChokePointManager(bot)
+        # ``asyncio.create_task`` only keeps a weak reference; if we don't
+        # store the result the task may be garbage-collected mid-flight,
+        # silently dropping the action. Hold strong refs in a set and remove
+        # them when the task finishes via ``add_done_callback``.
+        self._pending_action_tasks: set = set()
 
     def focus_fire(self, units: Iterable, target) -> None:
         """
@@ -638,7 +643,11 @@ class MicroCombat:
                 result = self.bot.do(action)
                 if asyncio.iscoroutine(result):
                     try:
-                        asyncio.create_task(result)
+                        task = asyncio.create_task(result)
+                        # Hold a strong reference so the task isn't GC'd mid-
+                        # flight. Drop the ref when it's done.
+                        self._pending_action_tasks.add(task)
+                        task.add_done_callback(self._pending_action_tasks.discard)
                     except RuntimeError:
                         pass
             except Exception:
