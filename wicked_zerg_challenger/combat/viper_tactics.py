@@ -230,7 +230,7 @@ class ViperTacticsManager:
         """
         for target_type in self.abduct_priority:
             targets = enemy_units.filter(
-                lambda u: u.type_id == target_type
+                lambda u, tt=target_type: u.type_id == tt
                 and u.distance_to(viper) <= self.abduct_range
             )
             if targets.exists:

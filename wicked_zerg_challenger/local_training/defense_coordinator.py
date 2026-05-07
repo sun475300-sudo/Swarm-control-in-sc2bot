@@ -498,7 +498,7 @@ class DefenseCoordinator:
             # Find available combat units nearby (exclude Queens if possible unless emergency)
             # Use units within 35 range (local response)
             defenders = b.units.filter(
-                lambda u: u.type_id
+                lambda u, bs=base: u.type_id
                 in {
                     UnitTypeId.ZERGLING,
                     UnitTypeId.ROACH,
@@ -506,7 +506,7 @@ class DefenseCoordinator:
                     UnitTypeId.MUTALISK,
                     UnitTypeId.QUEEN,
                 }
-                and u.distance_to(base) < 35
+                and u.distance_to(bs) < 35
             )
 
             if not defenders.exists:

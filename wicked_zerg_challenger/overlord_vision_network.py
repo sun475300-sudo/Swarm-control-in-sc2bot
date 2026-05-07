@@ -216,7 +216,7 @@ class OverlordVisionNetwork:
                 self.bot.do(overlord.move(pos))
                 self.assigned_overlords[pos] = overlord.tag
                 # Remove from available pool
-                overlords = overlords.filter(lambda u: u.tag != overlord.tag)
+                overlords = overlords.filter(lambda u, ol=overlord: u.tag != ol.tag)
 
                 self.logger.info(
                     f"[{int(self.bot.time)}s] [*] Overlord deployed to vision position {pos} [*]"

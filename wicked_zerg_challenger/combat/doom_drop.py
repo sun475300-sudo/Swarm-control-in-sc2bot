@@ -521,8 +521,8 @@ class DoomDropManager:
 
             # 대공 유닛 감지
             aa_threats = enemy_units.filter(
-                lambda u: u.can_attack_air
-                and u.distance_to(overlord) < self.safe_distance_from_aa
+                lambda u, ol=overlord: u.can_attack_air
+                and u.distance_to(ol) < self.safe_distance_from_aa
             )
 
             if aa_threats.exists and aa_threats.amount > 3:

@@ -187,10 +187,10 @@ class ResourceManager:
 
                 # Find nearby workers on minerals
                 nearby_workers = workers.filter(
-                    lambda w: (
+                    lambda w, ex=extractor: (
                         w.is_gathering
                         and not w.is_carrying_vespene
-                        and w.distance_to(extractor) < 15
+                        and w.distance_to(ex) < 15
                     )
                 )
 
@@ -203,7 +203,7 @@ class ResourceManager:
                         if hasattr(result, "__await__"):
                             await result
                         nearby_workers = nearby_workers.filter(
-                            lambda w: w.tag != worker.tag
+                            lambda w, wk=worker: w.tag != wk.tag
                         )
                     except Exception as e:
                         logger.error(f"Gas worker assign failed: {e}")

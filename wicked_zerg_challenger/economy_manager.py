@@ -420,8 +420,8 @@ class EconomyManager:
                         for extractor in self.bot.gas_buildings.ready:
                             if extractor.assigned_harvesters > 0:
                                 workers = self.bot.workers.filter(
-                                    lambda w: w.is_carrying_vespene
-                                    or w.order_target == extractor.tag
+                                    lambda w, ex=extractor: w.is_carrying_vespene
+                                    or w.order_target == ex.tag
                                 )
                                 if not workers:
                                     continue
@@ -781,17 +781,17 @@ class EconomyManager:
                 try:
                     # Get workers that are gathering minerals (not gas)
                     available_workers = self.bot.workers.filter(
-                        lambda w: (
+                        lambda w, ex=extractor: (
                             w.is_gathering
                             and not w.is_carrying_vespene
-                            and w.distance_to(extractor) < 20
+                            and w.distance_to(ex) < 20
                         )
                     )
 
                     if not available_workers:
                         # Try idle workers
                         available_workers = self.bot.workers.filter(
-                            lambda w: w.is_idle and w.distance_to(extractor) < 20
+                            lambda w, ex=extractor: w.is_idle and w.distance_to(ex) < 20
                         )
 
                     if available_workers:
@@ -801,7 +801,7 @@ class EconomyManager:
                             if worker:
                                 self.bot.do(worker.gather(extractor))
                                 available_workers = available_workers.filter(
-                                    lambda w: w.tag != worker.tag
+                                    lambda w, wk=worker: w.tag != wk.tag
                                 )
                 except (AttributeError, TypeError) as e:
                     self.logger.warning(
@@ -1186,8 +1186,8 @@ class EconomyManager:
                 # Get IDLE mineral workers at this depleted base (not moving, not carrying)
                 # 개선: is_idle 또는 is_gathering하고 있고 가까이 있는 일꾼만
                 nearby_workers = workers.filter(
-                    lambda w: (
-                        w.distance_to(depleted_th) < 8  # 거리 줄임 (15 -> 8)
+                    lambda w, dth=depleted_th: (
+                        w.distance_to(dth) < 8  # 거리 줄임 (15 -> 8)
                         and (w.is_idle or (w.is_gathering and not w.is_moving))
                         and not w.is_carrying_vespene
                         and not any(
@@ -1258,7 +1258,7 @@ class EconomyManager:
 
                 # Get workers near this townhall
                 nearby_workers = workers.filter(
-                    lambda w: w.distance_to(over_th) < 15 and w.is_gathering
+                    lambda w, oth=over_th: w.distance_to(oth) < 15 and w.is_gathering
                 )
 
                 for under_th, deficit in under_saturated[:]:
@@ -1282,7 +1282,7 @@ class EconomyManager:
                                     worker.gather(minerals.closest_to(under_th))
                                 )
                                 nearby_workers = nearby_workers.filter(
-                                    lambda w: w.tag != worker.tag
+                                    lambda w, wk=worker: w.tag != wk.tag
                                 )
                                 excess -= 1
                                 deficit -= 1
@@ -2640,7 +2640,7 @@ class EconomyManager:
                 if extractor.assigned_harvesters >= 3:
                     # 가스에서 일꾼 1명 이동
                     workers_on_gas = self.bot.workers.filter(
-                        lambda w: w.is_gathering and w.order_target == extractor.tag
+                        lambda w, ex=extractor: w.is_gathering and w.order_target == ex.tag
                     )
                     if workers_on_gas:
                         worker = workers_on_gas.first
@@ -3065,7 +3065,7 @@ class EconomyManager:
 
             # ★ SAFE MAYNARDING: 적정 인원만 이동 + 안전 체크 ★
             workers = self.bot.workers.filter(
-                lambda w: w.distance_to(source_base) < 10 and w.is_gathering
+                lambda w, sb=source_base: w.distance_to(sb) < 10 and w.is_gathering
             )
 
             if workers.amount < 8:  # ★ 소스 기지에 최소 8명은 유지 ★
@@ -3316,8 +3316,8 @@ class EconomyManager:
             # ★ Phase 39: order_target 단독 필터는 extractor 내부 일꾼을 놓침
             # — is_carrying_vespene OR order_target 두 경우 모두 포착
             workers = self.bot.workers.filter(
-                lambda w: (w.order_target == extractor.tag or w.is_carrying_vespene)
-                and w.distance_to(extractor) < 12
+                lambda w, ex=extractor: (w.order_target == ex.tag or w.is_carrying_vespene)
+                and w.distance_to(ex) < 12
             )
 
             for worker in workers[:excess]:
@@ -3365,7 +3365,7 @@ class EconomyManager:
             if extractor.assigned_harvesters > 0:
                 # 가스 일꾼을 미네랄로 이동
                 workers = self.bot.workers.filter(
-                    lambda w: w.order_target == extractor.tag
+                    lambda w, ex=extractor: w.order_target == ex.tag
                 )
 
                 for worker in workers:
@@ -3549,7 +3549,7 @@ class EconomyManager:
 
                 # 소스 기지 근처 일꾼 찾기
                 workers_near_source = self.bot.workers.filter(
-                    lambda w: w.distance_to(source_th) < 10
+                    lambda w, sth=source_th: w.distance_to(sth) < 10
                     and not w.is_carrying_vespene
                 )
 

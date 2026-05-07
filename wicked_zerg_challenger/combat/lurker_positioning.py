@@ -373,8 +373,8 @@ class LurkerPositionManager:
 
             # 적 디텍터 확인
             detectors_nearby = enemy_units.filter(
-                lambda u: u.type_id in self.detector_types
-                and u.distance_to(lurker) < self.unburrow_detector_range
+                lambda u, lk=lurker: u.type_id in self.detector_types
+                and u.distance_to(lk) < self.unburrow_detector_range
             )
 
             if detectors_nearby.exists:

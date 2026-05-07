@@ -91,7 +91,7 @@ class OverlordHunter:
             # 타겟 근처의 여왕 찾기 (사거리 + 추적 거리)
             # 여왕 지상 이동 속도가 느리므로 너무 멀리 쫓지는 않음
             queens = self.bot.units(UnitTypeId.QUEEN).filter(
-                lambda u: u.distance_to(target) < 15 and u.energy >= 0  # 조건
+                lambda u, t=target: u.distance_to(t) < 15 and u.energy >= 0  # 조건
             )
 
             for queen in queens:
