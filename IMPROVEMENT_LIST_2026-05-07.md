@@ -49,7 +49,7 @@ Type hints are silently broken at the static-analysis layer (works at runtime bu
 | E501 (line too long >100) | 320 | Low | wrap |
 | E712 (`== False` vs `is False`) | 42 | Low | fix |
 | F401 (unused import, mostly `os`) | 48 | Low | remove |
-| E741 (`l` ambiguous var) | 22 | Low | rename |
+| E741 (`l` ambiguous var) | 22 → 6 | Low | ✅ Mostly done (Iter 13): renamed in bot-logic files; 6 remain in `visuals/*.py` (presentation tooling, not bot core) |
 | W293 (blank-line whitespace) | 286 | Low | strip |
 | E402 (import not at top) | 97 | Low | reorder where safe |
 | E203 / E261 / E302 / E305 / E306 | 36 | Low | safe to autofix |
@@ -90,3 +90,4 @@ Type hints are silently broken at the static-analysis layer (works at runtime bu
 - **Iter 10**: A2 — add numpy/ruff/autoflake to requirements-dev.txt. Black format pass — 20 files.
 - **Iter 11**: G1 — drop redundant is_idle guard in creep_denial_system._morph_overseer.
 - **Iter 12**: G2 — add `tests/test_no_duplicate_methods.py` regression guard against future F811 shadows. Suite: 409 → 776 (+367 file-level checks, all green).
+- **Iter 13**: E741 sweep in bot-logic files — rename `l` → `lv`/`u`/`ling` in 4 modules. 22 → 6 (visuals/ left).
