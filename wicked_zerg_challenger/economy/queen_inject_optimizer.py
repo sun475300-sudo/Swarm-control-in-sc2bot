@@ -20,7 +20,10 @@ from collections import defaultdict
 from enum import Enum
 from typing import Dict, Set
 
-from utils.logger import get_logger
+try:
+    from utils.logger import get_logger
+except ImportError:
+    from wicked_zerg_challenger.utils.logger import get_logger
 
 try:
     from sc2.bot_ai import BotAI
