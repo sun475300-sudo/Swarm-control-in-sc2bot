@@ -77,7 +77,45 @@ must be broadened.
 | 1 | 2026-05-07 | B1.1, B1.2, B1.3 | **372P / 0F / 35S** | `2241e17` |
 | 2 | 2026-05-07 | B2.1, B2.2 + 7 more files | **372P / 0F / 35S**, F541 255→159 | `43e07f6` |
 | 3 | 2026-05-07 | B4.2 (F401), F541 batch 3 | **372P / 0F / 35S**, F541 159→105, F401 1→0 | `c7f10a0` |
-| 4 | 2026-05-07 | F541 batch 4 (28 files), pytest warning identified | **372P / 0F / 35S**, F541 105→49 | (this commit) |
+| 4 | 2026-05-07 | F541 batch 4 (28 files), pytest warning identified | **372P / 0F / 35S**, F541 105→49 | `d1a40aa` |
+| 5 | 2026-05-07 | F541 finishing sweep (15 files in tools/+visuals/) | **372P / 0F / 35S**, **F541 49→0** ✅ | (this commit) |
+
+### Cycle 5 detail
+
+Final F541 sweep — 49 more dead f-prefixes across `tools/` (10 files) and
+`visuals/` (5 files). Repository is now **F541-clean** (0 of 255).
+
+| File | Fixed |
+|---|---|
+| `tools/comprehensive_auto_fix_workflow.py` | 5 |
+| `tools/test_background_training.py` | 5 |
+| `visuals/generate_animated_gifs.py` | 5 |
+| `visuals/make_pptx.py` | 5 |
+| `tools/background_parallel_learner.py` | 4 |
+| `tools/integrated_pipeline.py` | 4 |
+| `tools/monitor_background_training.py` | 4 |
+| `visuals/poc_simulation.py` | 4 |
+| `tools/cleanup_pycache.py` | 3 |
+| `tools/package_for_aiarena.py` | 3 |
+| `visuals/Swarm-Net_Visuals_Package/make_pptx.py` | 3 |
+| `tools/check_missing_logic.py` | 1 |
+| `tools/pro_replay_learning_workflow.py` | 1 |
+| `tools/visualize_learning.py` | 1 |
+| `visuals/make_investor_pptx.py` | 1 |
+
+### Cumulative since baseline
+
+| Metric | Baseline (cycle 0) | After cycle 5 | Δ |
+|---|---|---|---|
+| pytest passed | 365 | **372** | +7 |
+| pytest failed | 7 | **0** | -7 |
+| pytest skipped | 34 | 35 | +1 |
+| pytest collection errors | 1 | **0** | -1 |
+| pytest warnings (env-dependent) | 1 | 0 (with pytest-timeout) | -1 |
+| flake8 F541 | 255 | **0** ✅ | -255 |
+| flake8 F401 | 1 | **0** ✅ | -1 |
+| flake8 total F-rule | 485 | 229 | -256 (-53%) |
+
 
 ### Cycle 4 detail
 
