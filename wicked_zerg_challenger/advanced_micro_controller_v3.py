@@ -57,6 +57,7 @@ class RavagerMicro:
         self.prediction_time = prediction_time
         self.min_targets_for_shot = min_targets_for_shot
         self.cooldown_duration = cooldown_duration
+        self.logger = get_logger("RavagerMicro")
 
         # Cooldown tracking
         self.last_shot_time: Dict[int, float] = {}  # unit_tag -> time
@@ -228,6 +229,7 @@ class LurkerMicro:
         self.optimal_range = optimal_range
         self.burrow_threshold = burrow_threshold
         self.reposition_threshold = reposition_threshold
+        self.logger = get_logger("LurkerMicro")
 
         # State tracking
         self.burrowed_lurkers: Set[int] = set()
@@ -385,6 +387,7 @@ class QueenMicro:
         self.transfuse_energy_cost = transfuse_energy_cost
         self.transfuse_range = transfuse_range
         self.min_energy_for_creep = min_energy_for_creep
+        self.logger = get_logger("QueenMicro")
 
         # Priority unit types for transfuse
         self.priority_types: Set = set()
@@ -500,6 +503,7 @@ class ViperMicro:
         self.blinding_cloud_energy_cost = blinding_cloud_energy_cost
         self.abduct_range = abduct_range
         self.consume_threshold = consume_threshold
+        self.logger = get_logger("ViperMicro")
 
         # High-value abduct targets
         self.abduct_priorities: Set = set()
@@ -624,6 +628,7 @@ class CorruptorMicro:
         self.caustic_spray_energy_cost = caustic_spray_energy_cost
         self.caustic_spray_range = caustic_spray_range
         self.cooldown_duration = cooldown_duration
+        self.logger = get_logger("CorruptorMicro")
 
         # Cooldown tracking
         self.last_spray_time: Dict[int, float] = {}  # unit_tag -> time
