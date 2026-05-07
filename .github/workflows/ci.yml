@@ -49,7 +49,11 @@ jobs:
           python -m pip install --upgrade pip
           pip install flake8 pytest pytest-cov
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
-          # 추가 테스트 의존성
+          # 테스트 전용 의존성 (pytest-asyncio, pytest-timeout 등) -
+          # 누락 시 async 테스트가 'async def functions are not natively
+          # supported' 에러로 일괄 fail 한다.
+          if [ -f requirements-dev.txt ]; then pip install -r requirements-dev.txt; fi
+          # 추가 fallback (requirements-dev.txt에 없으면 보충)
           pip install pyyaml aiohttp
 
       - name: flake8 린트 검사
@@ -110,10 +114,25 @@ jobs:
           "
         continue-on-error: true
 
-      - name: pytest 실행 (전체)
+      - name: pytest 실행 (수집 진단 — 비차단)
         run: |
           pytest tests/ -v --tb=short --co -q 2>/dev/null || true
+        env:
+          DRY_RUN: "true"
+          LOG_LEVEL: "DEBUG"
+
+      - name: pytest 실행 (crypto/security — 비차단)
+        run: |
           pytest tests/test_crypto_trading.py tests/test_security.py -v --tb=short || true
+        env:
+          DRY_RUN: "true"
+          LOG_LEVEL: "DEBUG"
+
+      # 신호용 차단 step: 전체 테스트가 통과해야 빌드가 통과한다.
+      # 스킵된 sc2/pyupbit 의존 테스트는 OK; 실제 실패 시에만 fail.
+      - name: pytest 실행 (전체 — 차단)
+        run: |
+          pytest tests/ --tb=short
         env:
           DRY_RUN: "true"
           LOG_LEVEL: "DEBUG"

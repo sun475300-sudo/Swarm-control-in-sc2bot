@@ -191,6 +191,12 @@
 - ✅ T3: `tests/test_security.py::test_no_hardcoded_keys_in_yaml`도 같은 패턴으로 sample yaml 생성 후 검사. PyYAML 미설치는 importorskip로 자연스럽게 skip.
 - 결과: 410 passed → 417 passed, 16 skipped → 9 skipped.
 
+### Cycle 6 — 2026-05-07
+- ✅ C1: `.github/workflows/ci.yml`이 `pytest-asyncio`/`pytest-timeout`/`pytest-mock`을 설치하지 않아 async 테스트가 80건 가까이 일괄 fail. `requirements-dev.txt`도 같이 install 하도록 변경.
+- ✅ C2 (부분): pytest 단계가 모두 `|| true`로 실패를 숨김. 진단용 step 2개는 그대로 두고, 새로운 차단(blocking) step `pytest tests/ --tb=short` 추가. 실제 실패가 빌드를 멈추도록.
+- ✅ L4 (신규): `economy/queen_transfusion_manager.py`의 `_queen_last_cast` 딕셔너리가 죽은 queen의 tag를 누적해 long-match에서 메모리/탐색 비용이 자란다. `_prune_queen_last_cast()` 추가 — 매 iteration 살아있는 queen의 tag만 유지.
+- 결과: 로컬 417 passed/9 skipped 유지. CI에 차단 step 추가로 향후 회귀 가시성 확보.
+
 ## 누적 진행
 | Cycle | passed | skipped | 비고 |
 |-------|--------|---------|------|
@@ -201,3 +207,4 @@
 | 3     |  406   |   20    | sc2 stub fix (import-scan만 영향) |
 | 4     |  410   |   16    | p606 클래스명 정정 |
 | 5     |  417   |    9    | config.yaml fixture로 7건 회복 |
+| 6     |  417   |    9    | CI deps + transfusion 메모리 가드 |
