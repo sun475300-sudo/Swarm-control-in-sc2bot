@@ -7,7 +7,14 @@ pytest-asyncio>=0.23.0
 pytest-timeout>=2.1.0
 pytest-mock>=3.10.0
 
+# Test-time deps used by tests/test_new_modules.py / test_p606_modules.py
+# (skipif gates fall back if missing, but installing these unblocks 14
+# extra tests that exercise core analytics/ML helpers).
+numpy>=1.24.0
+
 # Code quality (matches sc2bot-ci.yml versions)
 black==26.3.1
 isort>=5.12.0
 flake8>=6.0.0
+ruff>=0.4.0
+autoflake>=2.0.0

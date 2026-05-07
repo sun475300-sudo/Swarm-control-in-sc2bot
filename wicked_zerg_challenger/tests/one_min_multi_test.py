@@ -135,9 +135,7 @@ class OneMinMultiTest:
             if hasattr(self.bot, "already_pending"):
                 self.bot.already_pending(UnitTypeId.HATCHERY)
             else:
-                len(
-                    [h for h in current_hatcheries if not h.is_ready]
-                )
+                len([h for h in current_hatcheries if not h.is_ready])
 
             total_hatcheries = len(current_hatcheries)
 

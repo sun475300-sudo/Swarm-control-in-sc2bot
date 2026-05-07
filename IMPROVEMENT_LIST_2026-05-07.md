@@ -11,8 +11,8 @@
 | # | Sev | Location | Issue | Plan | Status |
 |---|-----|----------|-------|------|--------|
 | A1 | High | `tests/test_queen_transfusion.py:11` | `from sc2.ids.unit_typeid import UnitTypeId` at module-level — when `sc2` not installed, **collection fails** which prevents the entire test run from completing. | Wrap in `try/except ImportError` + `pytest.skip(..., allow_module_level=True)` (consistent with other test files). | ✅ Done (this run) |
-| A2 | Med | `requirements-dev.txt` | `numpy` missing — 14 tests skip when only running with dev deps. | Add `numpy>=1.24.0`. | Pending |
-| A3 | Low | `pytest.ini:36` | `timeout = 60` config option but `pytest-timeout` not always installed → `PytestConfigWarning: Unknown config option`. | Either add `pytest-timeout` to requirements-dev.txt (already there) OR move into `[pytest:timeout]` section. | Pending |
+| A2 | Med | `requirements-dev.txt` | `numpy` missing — 14 tests skip when only running with dev deps. | Add `numpy>=1.24.0`. Also added `ruff` + `autoflake` (used by ongoing iterative cleanup). | ✅ Done (Iter 10) |
+| A3 | Low | `pytest.ini:36` | `timeout = 60` config option but `pytest-timeout` not always installed → `PytestConfigWarning: Unknown config option`. | The option *is* valid once requirements-dev.txt is installed (`pytest-timeout>=2.1.0` already there). Local-env-only warning — kept as-is. | ⏭ Skipped |
 
 ## B. Critical bot-logic bugs — duplicate method shadows kill features (F811)
 
@@ -56,7 +56,7 @@ Type hints are silently broken at the static-analysis layer (works at runtime bu
 
 ## E. Black formatting
 
-11 files would be reformatted. Run `black wicked_zerg_challenger/ tests/` once duplicates are removed (B*) to avoid churn.
+11 files would be reformatted. Run `black wicked_zerg_challenger/ tests/` once duplicates are removed (B*) to avoid churn. ✅ Done (Iter 10): 20 files reformatted (more than the original 11 because the lint sweeps in Iter 6/7/8 created more touch-points). All clean.
 
 ## F. Skipped tests worth investigating
 

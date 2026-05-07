@@ -1447,9 +1447,7 @@ class EconomyManager:
             return
 
         game_time = self.bot.time
-        (
-            self.bot.townhalls.amount if hasattr(self.bot.townhalls, "amount") else 1
-        )
+        (self.bot.townhalls.amount if hasattr(self.bot.townhalls, "amount") else 1)
 
         # ★ 공통 쿨다운 체크 (모든 확장 시스템 공유) ★
         time_since_last = game_time - self._last_expansion_attempt_time
@@ -2488,9 +2486,17 @@ class EconomyManager:
             # ★ Banking-prevention queens + static defense (merged from legacy
             # _prevent_resource_banking that was shadowed by F811 duplicate). ★
             await self._spend_excess_on_queens_and_defense(
-                minerals, game_time, hatch_count if minerals > 1000 else (
-                    self.bot.townhalls.amount if hasattr(self.bot, "townhalls") else 1
-                )
+                minerals,
+                game_time,
+                (
+                    hatch_count
+                    if minerals > 1000
+                    else (
+                        self.bot.townhalls.amount
+                        if hasattr(self.bot, "townhalls")
+                        else 1
+                    )
+                ),
             )
 
         except Exception as e:
@@ -2563,9 +2569,7 @@ class EconomyManager:
                         await self.bot.build(UnitTypeId.SPORECRAWLER, near=pos)
                         minerals -= 75
                     except Exception as e:
-                        self.logger.warning(
-                            f"[ECONOMY_WARN] Spore build failed: {e}"
-                        )
+                        self.logger.warning(f"[ECONOMY_WARN] Spore build failed: {e}")
 
             # Spine: one per base, only when minerals > 2000.
             if minerals > 2000:
@@ -2581,9 +2585,7 @@ class EconomyManager:
                     )
                     if not enemies_near:
                         try:
-                            await self.bot.build(
-                                UnitTypeId.SPINECRAWLER, near=pos
-                            )
+                            await self.bot.build(UnitTypeId.SPINECRAWLER, near=pos)
                             minerals -= 100
                         except Exception as e:
                             self.logger.warning(
