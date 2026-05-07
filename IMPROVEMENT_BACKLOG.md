@@ -79,7 +79,36 @@ must be broadened.
 | 3 | 2026-05-07 | B4.2 (F401), F541 batch 3 | **372P / 0F / 35S**, F541 159→105, F401 1→0 | `c7f10a0` |
 | 4 | 2026-05-07 | F541 batch 4 (28 files), pytest warning identified | **372P / 0F / 35S**, F541 105→49 | `d1a40aa` |
 | 5 | 2026-05-07 | F541 finishing sweep (15 files in tools/+visuals/) | **372P / 0F / 35S**, **F541 49→0** ✅ | `07dfe45` |
-| 6 | 2026-05-07 | F841 `except as <unused>` sweep (47 sites) | **372P / 0F / 35S**, F841 128→81 | (this commit) |
+| 6 | 2026-05-07 | F841 `except as <unused>` sweep (47 sites) | **372P / 0F / 35S**, F841 128→81 | `039bac5` |
+| 7 | 2026-05-07 | Skip audit (no action), delete 2 safe F811 duplicates | **372P / 0F / 35S**, F811 5→3 | (this commit) |
+
+### Cycle 7 detail
+
+**Skip audit conclusion** — all 35 skipped tests are correctly env-gated
+(sc2 / numpy / pandas / pyupbit / torch absent on CI sandbox). No skip-removal
+is possible without first installing those deps; recommend leaving as-is and
+adding the deps to a `requirements-test-extras.txt` if a fuller suite is wanted.
+
+**F811 dead-duplicate deletion** — two of the five F811 redefinitions had
+small earlier-defined methods that were unconditionally shadowed by larger,
+more capable later definitions:
+
+| File | Removed | Kept (active) | Notes |
+|---|---|---|---|
+| `combat_manager.py` | `_find_harass_target` @ 2377 (~30 lines) | @ 4278 (sc2-aware, worker-prioritising) | Earlier version naïvely returned `enemy_start_locations[0]` |
+| `local_training/production_resilience.py` | `build_terran_counters` @ 1369 (~21 lines) | @ 1866 (TechCoordinator-aware) | Earlier version did not use TechCoordinator |
+
+A short comment is left at the deletion site so a future reader can
+locate the active version.
+
+**F811 deferred (3 remaining)**:
+
+| File | Symbol | Earlier shadowed | Why deferred |
+|---|---|---|---|
+| `economy_manager.py` | `_prevent_resource_banking` @ 2507 | @ 1298 | Both bodies are large (200+ lines) and structurally different — needs human review |
+| `economy_manager.py` | `_reduce_gas_workers` @ 3286 | @ 2630 | Earlier and later versions implement noticeably different policies — deletion changes nothing at runtime, but reviewer should confirm the active one is the desired strategy |
+| `opponent_modeling.py` | `on_step` @ 765 | @ 341 | `on_step` is the bot framework's main entry-point hook; deletion needs deliberate review |
+
 
 ### Cycle 6 detail
 
