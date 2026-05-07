@@ -7,6 +7,10 @@ pytest-asyncio>=0.23.0
 pytest-timeout>=2.1.0
 pytest-mock>=3.10.0
 
+# Required by tests that import the `cryptography` package — without
+# `_cffi_backend` the cryptography pyo3 extension panics under pytest.
+cffi>=1.16.0
+
 # Code quality (matches sc2bot-ci.yml versions)
 black==26.3.1
 isort>=5.12.0

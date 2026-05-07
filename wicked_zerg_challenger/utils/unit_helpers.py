@@ -19,8 +19,12 @@ try:
     from sc2.units import Units
 except ImportError:
     Unit = None
-    Units = None
     Point2 = None
+
+    # Fallback: when sc2 isn't installed (test environment) make `Units(items, _)`
+    # return an empty-list-compatible object so the helpers below stay callable.
+    def Units(items=None, _bot=None):  # type: ignore[no-redef]
+        return list(items or [])
 
 logger = get_logger("UnitHelpers")
 
