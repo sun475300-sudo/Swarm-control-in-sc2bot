@@ -73,10 +73,22 @@ jobs:
           cache: pip
 
       - name: Install dependencies
-        run: pip install -r requirements.txt pytest pytest-cov pytest-asyncio
+        # The test suite mocks sc2 / torch / numpy and skips when those are
+        # absent (363 passing locally with only dev deps + numpy + pyyaml).
+        # Installing the full requirements.txt (80+ pkgs incl. torch,
+        # burnysc2, mcp, boto3, claude-code-sdk) hit pip resolution-too-deep
+        # and made this step fragile across CI runs. Use the much smaller
+        # requirements-dev.txt plus the tiny runtime subset tests actually
+        # touch.
+        run: |
+          pip install -r requirements-dev.txt
+          pip install pytest-cov numpy pyyaml
 
       - name: Run unit tests
-        run: pytest tests/unit -v --cov=. --cov-report=xml --cov-report=term
+        # Repo layout has no tests/unit/ dir — every test_*.py at the top of
+        # tests/ is a unit-style test, with integration tests living under
+        # tests/integration/ and run as a separate step below.
+        run: pytest tests/ --ignore=tests/integration -v --cov=. --cov-report=xml --cov-report=term
 
       - name: Run integration tests
         run: pytest tests/integration -v --timeout=120

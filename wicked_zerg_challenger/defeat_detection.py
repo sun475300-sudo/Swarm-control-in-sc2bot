@@ -243,7 +243,6 @@ class DefeatDetection:
 
         workers = self.bot.workers
         minerals = getattr(self.bot, "minerals", 0)
-        townhalls = getattr(self.bot, "townhalls", [])
 
         # 일꾼이 충분하면 안전
         if workers.amount > 3:
@@ -252,12 +251,16 @@ class DefeatDetection:
         # 일꾼 3마리 이하 + 미네랄 부족
         if workers.amount <= 3 and minerals < 100:
             # 해처리가 없거나 라바가 없으면 회복 불가
-            if not townhalls.exists:
+            # NOTE: Use truthiness on the Units obj (or default to None) rather
+            # than `getattr(..., [])` then `.exists` — empty lists don't have
+            # the Units `.exists` attribute and would crash this very check.
+            townhalls = getattr(self.bot, "townhalls", None)
+            if townhalls is None or not townhalls:
                 return True
 
             # 라바 확인
-            larva = getattr(self.bot, "larva", [])
-            if not larva.exists:
+            larva = getattr(self.bot, "larva", None)
+            if larva is None or not larva:
                 return True
 
         return False

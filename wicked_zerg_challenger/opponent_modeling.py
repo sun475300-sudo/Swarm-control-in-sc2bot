@@ -176,7 +176,11 @@ class OpponentModel:
             # Fallback to most frequent strategy
             if self.strategy_frequency:
                 most_common = max(self.strategy_frequency.items(), key=lambda x: x[1])
-                confidence = most_common[1] / self.games_played
+                # Use sum of frequency counts rather than games_played so a
+                # bad-state model (e.g. loaded from a partially-corrupt
+                # persisted dict) cannot ZeroDivisionError us.
+                total = sum(self.strategy_frequency.values())
+                confidence = most_common[1] / total if total > 0 else 0.0
                 return (most_common[0], confidence)
             return ("unknown", 0.0)
 
@@ -778,9 +782,17 @@ class OpponentModeling:
         if not self.current_opponent or not self.current_game_history:
             return
 
-        # Update game history
-        self.current_game_history.game_won = won
-        self.current_game_history.game_lost = lost
+        # `update_from_game` keys the W/L counters off `game_history.game_result`
+        # ("win" / "loss" from OUR perspective), not off auxiliary attributes.
+        # Setting only game_won / game_lost (as the previous code did) left
+        # game_result == "unknown" forever, so opponent_model.games_won and
+        # games_lost never advanced.
+        if won:
+            self.current_game_history.game_result = "win"
+        elif lost:
+            self.current_game_history.game_result = "loss"
+        else:
+            self.current_game_history.game_result = "unknown"
         self.current_game_history.early_signals = [
             s.value for s in self.observed_signals
         ]
