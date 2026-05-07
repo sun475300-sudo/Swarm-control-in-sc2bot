@@ -1261,7 +1261,15 @@ class EconomyManager:
                     lambda w: w.distance_to(over_th) < 15 and w.is_gathering
                 )
 
-                for under_th, deficit in under_saturated[:]:
+                # Iterate over a snapshot so we can mutate ``under_saturated``.
+                # We also remember the original deficit for ``list.remove`` —
+                # decrementing the loop variable doesn't change the tuple stored
+                # in the list, so removing ``(under_th, deficit)`` after the
+                # loop would silently fail (ValueError, swallowed by the
+                # surrounding except).
+                for entry in under_saturated[:]:
+                    under_th, original_deficit = entry
+                    deficit = original_deficit
                     if excess <= 0 or deficit <= 0:
                         continue
 
@@ -1287,9 +1295,10 @@ class EconomyManager:
                                 excess -= 1
                                 deficit -= 1
 
-                    # Update under-saturated list
+                    # Update under-saturated list — match against the original
+                    # tuple, not the decremented one.
                     if deficit <= 0:
-                        under_saturated.remove((under_th, deficit))
+                        under_saturated.remove(entry)
 
         except (AttributeError, TypeError, ValueError) as e:
             if self.bot.iteration % 50 == 0:
