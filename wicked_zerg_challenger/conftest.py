@@ -64,16 +64,24 @@ def _install_sc2_stub() -> None:
             return self[1]
 
         def distance_to(self, other) -> float:
-            ox, oy = (other[0], other[1]) if hasattr(other, "__getitem__") else (
-                other.x,
-                other.y,
+            ox, oy = (
+                (other[0], other[1])
+                if hasattr(other, "__getitem__")
+                else (
+                    other.x,
+                    other.y,
+                )
             )
             return ((self.x - ox) ** 2 + (self.y - oy) ** 2) ** 0.5
 
         def towards(self, other, distance: float = 1.0) -> "Point2":
-            ox, oy = (other[0], other[1]) if hasattr(other, "__getitem__") else (
-                other.x,
-                other.y,
+            ox, oy = (
+                (other[0], other[1])
+                if hasattr(other, "__getitem__")
+                else (
+                    other.x,
+                    other.y,
+                )
             )
             dx, dy = ox - self.x, oy - self.y
             d = (dx * dx + dy * dy) ** 0.5 or 1.0
@@ -110,7 +118,11 @@ def _install_sc2_stub() -> None:
         def closer_than(self, distance, position):
             ref = getattr(position, "position", position)
             return Units(
-                [u for u in self if getattr(u, "distance_to", lambda *_: 0)(ref) < distance],
+                [
+                    u
+                    for u in self
+                    if getattr(u, "distance_to", lambda *_: 0)(ref) < distance
+                ],
                 self._bot_object,
             )
 
@@ -230,7 +242,9 @@ def _install_sc2_stub() -> None:
     main_mod = types.ModuleType("sc2.main")
 
     def run_game(*args, **kwargs):  # pragma: no cover - never called in tests
-        raise RuntimeError("sc2 stub: run_game is not available without the real library")
+        raise RuntimeError(
+            "sc2 stub: run_game is not available without the real library"
+        )
 
     main_mod.run_game = run_game
 

@@ -23,9 +23,7 @@ _STUB_LOADER = _PROJECT_ROOT / "wicked_zerg_challenger" / "conftest.py"
 # depend on import order. ``find_spec("sc2")`` short-circuits when the real
 # package is installed, so this is a no-op in that case.
 if _import_util.find_spec("sc2") is None and _STUB_LOADER.exists():
-    spec = _import_util.spec_from_file_location(
-        "_wicked_zerg_sc2_stub", _STUB_LOADER
-    )
+    spec = _import_util.spec_from_file_location("_wicked_zerg_sc2_stub", _STUB_LOADER)
     if spec and spec.loader:
         module = _import_util.module_from_spec(spec)
         sys.modules[spec.name] = module
