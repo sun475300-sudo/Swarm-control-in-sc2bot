@@ -44,6 +44,26 @@ try:
 except ImportError:
     HAS_TORCH = False
 
+    # Stubs so the *Torch class definitions below (which subclass nn.Module
+    # and use torch.Tensor as a type hint) can still be parsed when torch is
+    # absent. The numpy fallback paths never instantiate these.
+    class _TorchUnavailable:
+        def __init__(self, *_a, **_kw):
+            raise RuntimeError(
+                "PyTorch is not installed; use the *Numpy variants instead."
+            )
+
+    class _NnNamespace:
+        Module = _TorchUnavailable
+
+    class _TorchNamespace:
+        Tensor = object  # type alias only — never instantiated
+
+    nn = _NnNamespace()  # type: ignore[assignment]
+    torch = _TorchNamespace()  # type: ignore[assignment]
+    optim = None  # type: ignore[assignment]
+    Categorical = None  # type: ignore[assignment]
+
 # ===================================================================
 # NumPy fallback helpers
 # ===================================================================
