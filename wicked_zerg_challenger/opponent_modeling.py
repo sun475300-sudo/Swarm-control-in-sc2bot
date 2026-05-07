@@ -778,9 +778,17 @@ class OpponentModeling:
         if not self.current_opponent or not self.current_game_history:
             return
 
-        # Update game history
-        self.current_game_history.game_won = won
-        self.current_game_history.game_lost = lost
+        # `update_from_game` keys the W/L counters off `game_history.game_result`
+        # ("win" / "loss" from OUR perspective), not off auxiliary attributes.
+        # Setting only game_won / game_lost (as the previous code did) left
+        # game_result == "unknown" forever, so opponent_model.games_won and
+        # games_lost never advanced.
+        if won:
+            self.current_game_history.game_result = "win"
+        elif lost:
+            self.current_game_history.game_result = "loss"
+        else:
+            self.current_game_history.game_result = "unknown"
         self.current_game_history.early_signals = [
             s.value for s in self.observed_signals
         ]
