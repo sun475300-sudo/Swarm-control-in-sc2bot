@@ -700,14 +700,11 @@ class ProductionResilience:
         if b.minerals > 1500:
             ignore_caps = True
 
-        # Get current unit counts
+        # Get current unit counts (only zergling is read by this function;
+        # roach/hydra/mutalisk counts are used in the per-tech production
+        # branches that handle their own queries.)
         zergling_count = (
             b.units(UnitTypeId.ZERGLING).amount if hasattr(b, "units") else 0
-        )
-        roach_count = b.units(UnitTypeId.ROACH).amount if hasattr(b, "units") else 0
-        hydra_count = b.units(UnitTypeId.HYDRALISK).amount if hasattr(b, "units") else 0
-        mutalisk_count = (
-            b.units(UnitTypeId.MUTALISK).amount if hasattr(b, "units") else 0
         )
 
         # Check available tech

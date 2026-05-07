@@ -1521,6 +1521,13 @@ class StrategyManager:
             self._adjust_unit_ratio("hydra", 0.3)
             self._adjust_unit_ratio("roach", 0.3)
 
+        # ★ Ravager mirror: enemy ravagers seen → match with our own ravagers
+        # plus hydra for range (Ravager bile is brutal in ZvZ if uncountered).
+        if ravager_count >= 3:
+            self._adjust_unit_ratio("ravager", 0.35)
+            self._adjust_unit_ratio("hydra", 0.25)
+            self._adjust_unit_ratio("roach", 0.25)
+
         # 뮤탈리스크 → 히드라 + 스포어
         if mutalisk_count >= 3:
             # ★ Phase 34: "hydralisk" 오타 수정 → "hydra" (내부 키 통일)
