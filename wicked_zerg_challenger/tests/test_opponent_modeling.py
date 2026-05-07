@@ -295,8 +295,13 @@ class TestOpponentModel(unittest.TestCase):
         self.assertEqual(model.dominant_style, OpponentStyle.AGGRESSIVE)
 
 
-class TestOpponentModeling(unittest.TestCase):
-    """Test suite for OpponentModeling system"""
+class TestOpponentModeling(unittest.IsolatedAsyncioTestCase):
+    """Test suite for OpponentModeling system.
+
+    Inherits from ``IsolatedAsyncioTestCase`` so that ``async def test_*`` methods
+    are actually awaited. Previously these tests were no-ops because the runner
+    treated their coroutines as truthy return values without awaiting them.
+    """
 
     def setUp(self):
         """Set up test fixtures"""

@@ -686,8 +686,11 @@ class WickedZergBotProImpl(BotAI):
 
             except Exception as e:
                 self.logger.info(f"[WARNING] Training end logic error: {e}")
-                import traceback
-
+                # ``traceback`` is imported at module level (line 26). A
+                # previous local ``import traceback`` here turned the symbol
+                # into a function-local name, which made the earlier use at
+                # line 572 raise UnboundLocalError if that branch was ever
+                # exercised.
                 traceback.print_exc()
 
         # ★★★ 게임 간 매니저 상태 초기화 (훈련 에피소드 안정성) ★★★

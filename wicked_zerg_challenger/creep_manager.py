@@ -139,7 +139,8 @@ class CreepManager:
             return []
 
         targets = []
-        import math
+        # ``math`` is imported at module top level; the local re-import here
+        # was redundant.
 
         # 각 기지 주변 12 거리의 원형 포인트 추가
         for th in self.bot.townhalls:
