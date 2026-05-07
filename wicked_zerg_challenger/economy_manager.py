@@ -66,7 +66,7 @@ class EconomyManager:
         # ★ Phase 16: 매크로 해처리 임계값 하향 (라바 부족 시 더 빠르게 건설) ★
         if self.config:
             self.macro_hatchery_mineral_threshold = (
-                600  # ★ Phase 16: OVERFLOW→600 (더 빠른 매크로 해처리)
+                550  # ★ Phase 16: OVERFLOW→550 (더 빠른 매크로 해처리 최적화)
             )
             self.macro_hatchery_larva_threshold = self.config.LARVA_CRITICAL
         else:
