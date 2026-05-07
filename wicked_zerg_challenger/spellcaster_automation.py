@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 SpellCaster Automation - 마법 유닛 스킬 자동화
 

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Game Analytics System - 게임 분석 및 통계 시스템
 
@@ -397,7 +396,7 @@ class GameAnalytics:
         """통계 로드"""
         try:
             if self.save_path.exists():
-                with open(self.save_path, "r", encoding="utf-8") as f:
+                with open(self.save_path, encoding="utf-8") as f:
                     data = json.load(f)
 
                 self.total_games = data.get("total_games", 0)

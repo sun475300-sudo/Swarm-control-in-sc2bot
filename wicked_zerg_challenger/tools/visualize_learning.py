@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Learning Progress Visualization Tool
 학습 진행 상황 시각화 도구
@@ -38,7 +37,7 @@ class TrainingVisualizer:
         """데이터 로드 (없으면 목업 데이터 생성)"""
         if self.data_path.exists():
             try:
-                with open(self.data_path, 'r', encoding='utf-8') as f:
+                with open(self.data_path, encoding='utf-8') as f:
                     logger.info(f"Loading real data from {self.data_path}")
                     return json.load(f)
             except Exception as e:

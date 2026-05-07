@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 SC2-Swarm → Drone ATC: Animated GIF Generator
 DRONAI(osamhack2021) 스타일의 움직이는 시각 자료 생성

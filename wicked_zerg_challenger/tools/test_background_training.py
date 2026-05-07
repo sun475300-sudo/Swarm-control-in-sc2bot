@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Background Training System Test
 백그라운드 학습 시스템 테스트 스크립트

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Lurker Ambush System - Phase 19
 

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 3D UTM Demo Visualizer — Portfolio Showcase
 

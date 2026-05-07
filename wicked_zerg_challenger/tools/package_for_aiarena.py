@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 Package WickedZergBotPro for AI Arena deployment.
 

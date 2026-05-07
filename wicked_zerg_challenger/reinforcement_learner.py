@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Reinforcement Learner - 강화 학습 시스템
 
@@ -50,7 +49,7 @@ class ReinforcementLearner:
             if filename.endswith(".json"):
                 filepath = os.path.join(self.games_dir, filename)
                 try:
-                    with open(filepath, "r", encoding="utf-8") as f:
+                    with open(filepath, encoding="utf-8") as f:
                         game = json.load(f)
                         self.games_data.append(game)
                 except Exception as e:

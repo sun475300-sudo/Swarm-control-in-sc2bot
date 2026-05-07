@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Runtime Self-Healing System - 실행 중 자동 복구
 

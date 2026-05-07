@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Game Result Reporter - 경기 결과 자동 요약 보고서
 
@@ -539,7 +538,7 @@ class GameResultReporter:
                 f.write(report_text)
 
             logger.info(f"Saved to {filepath}")
-        except (IOError, OSError) as e:
+        except OSError as e:
             logger.error(f"Failed to save: {e}")
 
     def generate_quick_summary(self, game_data: Dict) -> str:

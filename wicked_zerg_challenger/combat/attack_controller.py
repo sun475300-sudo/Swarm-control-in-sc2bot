@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Attack Controller - 공격 제어 시스템
 

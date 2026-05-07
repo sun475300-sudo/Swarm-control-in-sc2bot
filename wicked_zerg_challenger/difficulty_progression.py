@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Difficulty Progression System - 난이도 자동 조정
 
@@ -56,7 +55,7 @@ class DifficultyProgression:
         """통계 데이터 로드"""
         if self.data_file.exists():
             try:
-                with open(self.data_file, "r", encoding="utf-8") as f:
+                with open(self.data_file, encoding="utf-8") as f:
                     data = json.load(f)
                     # Convert string keys back to enums
                     self.stats = self._deserialize_stats(data)

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 3D K-D Tree for Drone Proximity Queries
 

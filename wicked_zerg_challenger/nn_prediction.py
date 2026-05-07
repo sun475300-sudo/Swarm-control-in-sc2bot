@@ -174,12 +174,12 @@ class SimpleNeuralPredictor:
     def load_prediction_model(self, path: str) -> bool:
         """Load prediction model from file"""
         try:
-            with open(path, "r") as f:
+            with open(path) as f:
                 data = json.load(f)
             self.weights = data.get("weights", self.weights)
             self.enemy_patterns = data.get("patterns", self.enemy_patterns)
             return True
-        except (IOError, json.JSONDecodeError) as e:
+        except (OSError, json.JSONDecodeError) as e:
             logger.info(f"Error loading model: {e}")
             return False
 

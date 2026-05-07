@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 import json
 import logging
 from pathlib import Path
@@ -49,7 +48,7 @@ def show_build_orders():
         return
 
     try:
-        with open(path, "r", encoding="utf-8") as f:
+        with open(path, encoding="utf-8") as f:
             content = f.read()
             if not content:
                 logger.info("  [경고] 파일이 비어있습니다.")

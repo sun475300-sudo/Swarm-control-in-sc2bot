@@ -113,7 +113,7 @@ def migrate_prints(content: str) -> tuple:
 
 def process_file(filepath: str) -> None:
     try:
-        with open(filepath, "r", encoding="utf-8", errors="ignore") as f:
+        with open(filepath, encoding="utf-8", errors="ignore") as f:
             content = f.read()
     except Exception:
         return

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Run bot with neural network training enabled.
 

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 ���ΰ��̸� ���÷��� �н� �� ���� �Ʒ� ���� ��ũ�÷ο�
 
@@ -60,7 +59,7 @@ def check_learned_parameters(project_root: Path) -> Dict[str, Any]:
         return {}
     
     try:
-        with open(learned_file, 'r', encoding='utf-8') as f:
+        with open(learned_file, encoding='utf-8') as f:
             data = json.load(f)
         return data
     except Exception as e:

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Mutalisk Micro Controller - Advanced Mutalisk tactics
 

@@ -30,7 +30,7 @@ class SpatialQueryOptimizer:
         self.logger = get_logger("SpatialQueryOptimizer")
 
         # Query result cache (cleared every frame)
-        self._query_cache: Dict[Tuple, "Units"] = {}
+        self._query_cache: Dict[Tuple, Units] = {}
         self._last_cache_clear = 0
 
         # Statistics

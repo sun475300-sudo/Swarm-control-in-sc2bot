@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Multi-Base Defense System - Automatic defense for multiple expansions
 

@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 Iterative Replay Learning Workflow
 
@@ -70,7 +69,7 @@ class IterativeReplayLearningWorkflow:
             
             if result.returncode == 0:
                 if self.learned_build_orders_path.exists():
-                    with open(self.learned_build_orders_path, 'r', encoding='utf-8') as f:
+                    with open(self.learned_build_orders_path, encoding='utf-8') as f:
                         learned_params = json.load(f)
                     logger.info(f"Learned parameters: {learned_params}")
                     return True
@@ -131,7 +130,7 @@ class IterativeReplayLearningWorkflow:
             return {}
         
         try:
-            with open(self.learned_build_orders_path, 'r', encoding='utf-8') as f:
+            with open(self.learned_build_orders_path, encoding='utf-8') as f:
                 learned_params = json.load(f)
             return learned_params
         except Exception as e:
@@ -146,7 +145,7 @@ class IterativeReplayLearningWorkflow:
             # Load existing history
             existing_history = []
             if self.history_path.exists():
-                with open(self.history_path, 'r', encoding='utf-8') as f:
+                with open(self.history_path, encoding='utf-8') as f:
                     existing_history = json.load(f)
             
             # Append current iteration history

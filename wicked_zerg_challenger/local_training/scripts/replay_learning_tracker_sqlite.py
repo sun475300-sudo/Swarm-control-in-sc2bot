@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 Replay Learning Tracker - SQLite-based (thread-safe).
 

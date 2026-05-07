@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Advanced Worker Optimizer - 고급 일꾼 최적화 시스템
 

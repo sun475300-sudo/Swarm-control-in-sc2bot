@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Upgrade Resource Planner - 업그레이드 자원 계획 및 예약 시스템
 

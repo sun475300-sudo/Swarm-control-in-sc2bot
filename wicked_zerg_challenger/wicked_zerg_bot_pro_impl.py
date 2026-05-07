@@ -966,11 +966,11 @@ class WickedZergBotProImpl(BotAI):
         existing = []
         if results_file.exists():
             try:
-                with open(results_file, "r", encoding="utf-8") as f:
+                with open(results_file, encoding="utf-8") as f:
                     existing = json.load(f)
                 if not isinstance(existing, list):
                     existing = []
-            except (json.JSONDecodeError, IOError):
+            except (OSError, json.JSONDecodeError):
                 existing = []
 
         existing.append(game_result_entry)

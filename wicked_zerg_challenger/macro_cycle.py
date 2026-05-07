@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Macro Cycle Manager - 매크로 사이클 매니저 (#108)
 

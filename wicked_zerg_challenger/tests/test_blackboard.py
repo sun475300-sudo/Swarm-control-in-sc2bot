@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Blackboard (GameStateBlackboard) 테스트
 

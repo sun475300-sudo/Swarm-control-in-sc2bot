@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Timing Attack Planner - 타이밍 공격 플래너 (#107)
 

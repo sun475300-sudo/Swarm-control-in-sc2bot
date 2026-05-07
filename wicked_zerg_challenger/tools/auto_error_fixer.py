@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 자동 에러 수정 도구
 
@@ -28,7 +27,7 @@ class AutoErrorFixer:
         fixes: List[str] = []
 
         try:
-            with open(file_path, 'r', encoding='utf-8', errors='replace') as f:
+            with open(file_path, encoding='utf-8', errors='replace') as f:
                 content = f.read()
                 lines = content.splitlines()
 

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Learning System Test - 학습 시스템 검증
 

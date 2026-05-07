@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 Mass Testing Script - 난이도/종족별 대규모 인게임 테스트
 

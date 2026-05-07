@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 3D Voxel Grid — Spatial Partition for Drone Airspace
 

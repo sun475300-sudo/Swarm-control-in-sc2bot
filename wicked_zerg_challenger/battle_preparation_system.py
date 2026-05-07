@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Battle Preparation System - 교전 대비 시스템
 

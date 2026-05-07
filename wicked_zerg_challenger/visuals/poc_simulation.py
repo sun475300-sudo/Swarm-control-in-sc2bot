@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Swarm-Net Airspace Manager — PoC Simulation
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

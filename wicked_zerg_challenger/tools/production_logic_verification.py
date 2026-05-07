@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Production Logic Verification - Production logic verification tool
 

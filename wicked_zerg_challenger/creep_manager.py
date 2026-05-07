@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 Creep Manager - BurnySc2/CreepyBot inspired creep expansion system.
 

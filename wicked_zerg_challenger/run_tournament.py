@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Tournament Simulation - Phase 22 풀 토너먼트 시뮬레이션
 

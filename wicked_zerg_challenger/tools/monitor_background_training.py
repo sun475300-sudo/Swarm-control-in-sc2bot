@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Background Training Live Monitor
 백그라운드 학습 실시간 모니터링 스크립트
@@ -81,7 +80,7 @@ class BackgroundTrainingMonitor:
             return []
 
         try:
-            with open(self.log_file, 'r', encoding='utf-8') as f:
+            with open(self.log_file, encoding='utf-8') as f:
                 all_lines = f.readlines()
                 return all_lines[-lines:] if all_lines else []
         except Exception:

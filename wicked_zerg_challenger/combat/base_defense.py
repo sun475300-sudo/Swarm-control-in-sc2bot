@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Base Defense System - 기지 방어 시스템
 

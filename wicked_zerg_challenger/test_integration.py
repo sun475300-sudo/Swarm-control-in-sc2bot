@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Phase 15 Integration Test Script
 
@@ -257,7 +256,7 @@ class IntegrationTester:
 
         # Check wicked_zerg_bot_pro_impl.py
         impl_file = self.base_dir / "wicked_zerg_bot_pro_impl.py"
-        with open(impl_file, "r", encoding="utf-8") as f:
+        with open(impl_file, encoding="utf-8") as f:
             impl_content = f.read()
 
         integration_checks = {
@@ -288,7 +287,7 @@ class IntegrationTester:
 
         # Check bot_step_integration.py
         step_file = self.base_dir / "bot_step_integration.py"
-        with open(step_file, "r", encoding="utf-8") as f:
+        with open(step_file, encoding="utf-8") as f:
             step_content = f.read()
 
         step_checks = {

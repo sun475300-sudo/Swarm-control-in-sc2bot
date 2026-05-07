@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 빠른 테스트 - Easy 난이도 20게임 (최적화 검증용)
 """

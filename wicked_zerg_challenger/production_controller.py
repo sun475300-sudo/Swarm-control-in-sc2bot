@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Production Controller - 통합 생산 관리 시스템
 

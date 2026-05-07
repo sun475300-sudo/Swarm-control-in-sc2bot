@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 10-game performance monitoring test
 10게임 연속 성능 모니터링 테스트

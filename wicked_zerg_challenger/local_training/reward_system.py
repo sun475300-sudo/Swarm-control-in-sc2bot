@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Zerg Specialized Reward System (Reward Shaping)
 

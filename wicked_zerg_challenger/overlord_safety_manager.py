@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Overlord Safety Manager - 대군주 안전 관리 시스템
 

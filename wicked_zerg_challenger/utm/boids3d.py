@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 3D Boids Swarm Controller for Drone Formation Flight
 

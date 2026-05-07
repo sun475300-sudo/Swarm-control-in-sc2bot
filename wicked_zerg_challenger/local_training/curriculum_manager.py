@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 
 import json
 import logging
@@ -98,7 +97,7 @@ class CurriculumManager:
             return 0
 
         try:
-            with open(self.stats_file, "r", encoding="utf-8") as f:
+            with open(self.stats_file, encoding="utf-8") as f:
                 data = json.load(f)
             level_idx = data.get("curriculum_level_idx", 0)
 
@@ -108,7 +107,7 @@ class CurriculumManager:
                 return level_idx
             else:
                 return 0
-        except (IOError, json.JSONDecodeError):
+        except (OSError, json.JSONDecodeError):
             return 0
 
     def _load_win_loss_data(self):
@@ -117,11 +116,11 @@ class CurriculumManager:
             return
 
         try:
-            with open(self.stats_file, "r", encoding="utf-8") as f:
+            with open(self.stats_file, encoding="utf-8") as f:
                 data = json.load(f)
             self.wins_at_current_level = data.get("wins_at_current_level", 0)
             self.losses_at_current_level = data.get("losses_at_current_level", 0)
-        except (IOError, json.JSONDecodeError):
+        except (OSError, json.JSONDecodeError):
             pass
 
     def _load_race_stats(self):
@@ -131,12 +130,12 @@ class CurriculumManager:
             return
 
         try:
-            with open(race_stats_file, "r", encoding="utf-8") as f:
+            with open(race_stats_file, encoding="utf-8") as f:
                 data = json.load(f)
             for race in ["Terran", "Protoss", "Zerg"]:
                 if race in data:
                     self.race_stats[race] = data[race]
-        except (IOError, json.JSONDecodeError):
+        except (OSError, json.JSONDecodeError):
             pass
 
     def _save_race_stats(self):
@@ -157,7 +156,7 @@ class CurriculumManager:
 
             with open(race_stats_file, "w", encoding="utf-8") as f:
                 json.dump(stats_with_rates, f, indent=2, ensure_ascii=False)
-        except IOError as e:
+        except OSError as e:
             logger.error(f"Failed to save race stats: {e}")
 
     def save_level(self):
@@ -172,7 +171,7 @@ class CurriculumManager:
             }
             with open(self.stats_file, "w", encoding="utf-8") as f:
                 json.dump(data, f, indent=2)
-        except IOError:
+        except OSError:
             pass
 
     def get_difficulty(self) -> Difficulty:
@@ -532,7 +531,7 @@ class CurriculumManager:
             try:
                 priority_file = self.data_dir / "building_priorities.json"
                 if priority_file.exists():
-                    with open(priority_file, "r", encoding="utf-8") as f:
+                    with open(priority_file, encoding="utf-8") as f:
                         self.building_priorities = json.load(f)
                 else:
                     self.building_priorities = {}

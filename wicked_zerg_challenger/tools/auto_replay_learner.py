@@ -65,7 +65,7 @@ class AutoReplayLearner:
         id_file = self.archive_dir / "processed_ids.json"
         if id_file.exists():
             try:
-                with open(id_file, 'r') as f:
+                with open(id_file) as f:
                     data = json.load(f)
                     return set(data.get("replay_ids", []))
             except Exception:

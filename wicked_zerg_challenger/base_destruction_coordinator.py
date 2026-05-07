@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Base Destruction Coordinator - 적 기지 완전 파괴 시스템
 

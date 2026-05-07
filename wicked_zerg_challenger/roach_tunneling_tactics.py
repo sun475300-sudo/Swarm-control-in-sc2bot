@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Roach Tunneling Tactics - 바퀴 땅굴발톱 전술
 

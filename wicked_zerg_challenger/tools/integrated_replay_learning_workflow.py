@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 Integrated Replay Learning Workflow
 
@@ -72,7 +71,7 @@ class IntegratedReplayLearningWorkflow:
                 
                 # Verify learned parameters were saved
                 if self.learned_build_orders_path.exists():
-                    with open(self.learned_build_orders_path, 'r', encoding='utf-8') as f:
+                    with open(self.learned_build_orders_path, encoding='utf-8') as f:
                         learned_params = json.load(f)
                     logger.info(f"Learned parameters: {learned_params}")
                     return True
@@ -161,7 +160,7 @@ class IntegratedReplayLearningWorkflow:
             return False
         
         try:
-            with open(self.learned_build_orders_path, 'r', encoding='utf-8') as f:
+            with open(self.learned_build_orders_path, encoding='utf-8') as f:
                 learned_params = json.load(f)
             
             logger.info("Current learned parameters:")

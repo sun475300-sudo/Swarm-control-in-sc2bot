@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Dynamic Counter System - 적 고급 유닛 감지 시 즉시 카운터 유닛 생산
 

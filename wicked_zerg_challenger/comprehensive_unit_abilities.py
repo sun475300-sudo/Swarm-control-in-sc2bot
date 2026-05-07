@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Comprehensive Unit Abilities - 모든 유닛 스킬 통합 관리
 

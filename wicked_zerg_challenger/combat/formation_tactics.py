@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Formation Tactics - Concave formations and special ability management.
 

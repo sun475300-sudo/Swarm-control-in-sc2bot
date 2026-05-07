@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Complete Destruction Trainer - 완전 파괴 학습 시스템
 

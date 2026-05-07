@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Victory Tracker - 승리 조건 추적 시스템
 

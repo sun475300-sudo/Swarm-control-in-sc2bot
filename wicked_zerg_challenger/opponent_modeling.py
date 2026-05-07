@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Opponent Modeling System - 적 행동 패턴 학습 및 예측
 
@@ -223,7 +222,7 @@ class OpponentModel:
         }
 
     @classmethod
-    def from_dict(cls, data: dict) -> "OpponentModel":
+    def from_dict(cls, data: dict) -> OpponentModel:
         """모델 역직렬화"""
         model = cls(data["opponent_id"])
         model.games_played = data.get("games_played", 0)
@@ -683,7 +682,7 @@ class OpponentModeling:
             return False
 
         try:
-            with open(self.data_file, "r", encoding="utf-8") as f:
+            with open(self.data_file, encoding="utf-8") as f:
                 data = json.load(f)
 
             self.opponent_models = {

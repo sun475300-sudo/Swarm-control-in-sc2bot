@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Strategy Manager V2 - Enhanced Strategy Management System
 

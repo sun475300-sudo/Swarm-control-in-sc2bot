@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Game Data Logger - 게임 플레이 데이터 수집 시스템
 

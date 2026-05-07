@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Grid-based Spatial Partition for Dense Unit Distributions
 

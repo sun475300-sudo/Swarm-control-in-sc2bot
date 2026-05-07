@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 연속 학습 루프 - 단일 창에서 반복 실행
 """

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Comprehensive Training Workflow - 5 Iterations (Version 2)
 

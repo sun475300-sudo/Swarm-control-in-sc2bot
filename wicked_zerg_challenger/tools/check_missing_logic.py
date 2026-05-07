@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 ������ ���� �˻� ����
 
@@ -31,7 +30,7 @@ class MissingLogicChecker:
         """���Ͽ��� ���ǵ� �޼��� ����"""
         methods = set()
         try:
-            with open(file_path, 'r', encoding='utf-8', errors='replace') as f:
+            with open(file_path, encoding='utf-8', errors='replace') as f:
                 content = f.read()
             
             try:
@@ -51,7 +50,7 @@ class MissingLogicChecker:
         """���Ͽ��� ȣ��� �޼��� ����"""
         calls = set()
         try:
-            with open(file_path, 'r', encoding='utf-8', errors='replace') as f:
+            with open(file_path, encoding='utf-8', errors='replace') as f:
                 content = f.read()
                 lines = content.splitlines()
             
@@ -72,7 +71,7 @@ class MissingLogicChecker:
         """pass ���� �ִ� ���� ã��"""
         pass_lines = []
         try:
-            with open(file_path, 'r', encoding='utf-8', errors='replace') as f:
+            with open(file_path, encoding='utf-8', errors='replace') as f:
                 lines = f.readlines()
             
             for i, line in enumerate(lines, 1):
@@ -91,7 +90,7 @@ class MissingLogicChecker:
         """TODO �ּ� ã��"""
         todos = []
         try:
-            with open(file_path, 'r', encoding='utf-8', errors='replace') as f:
+            with open(file_path, encoding='utf-8', errors='replace') as f:
                 lines = f.readlines()
             
             for i, line in enumerate(lines, 1):

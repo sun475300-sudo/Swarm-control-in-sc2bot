@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Spell Unit Manager - Optimized targeting for spell units
 

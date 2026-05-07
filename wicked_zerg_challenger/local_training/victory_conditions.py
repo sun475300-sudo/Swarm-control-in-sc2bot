@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Victory & Defeat Conditions Learning System
 
@@ -95,7 +94,7 @@ class VictoryConditionsLearner:
             return
 
         try:
-            with open(self.conditions_file, "r", encoding="utf-8") as f:
+            with open(self.conditions_file, encoding="utf-8") as f:
                 data = json.load(f)
 
             self.victory_patterns = data.get("victory_patterns", [])[

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Strategy Audit - 전략 비교 분석
 
@@ -56,7 +55,7 @@ class StrategyAudit:
         """학습된 빌드 오더 로드"""
         try:
             if self.learned_builds_path.exists():
-                with open(self.learned_builds_path, "r", encoding="utf-8") as f:
+                with open(self.learned_builds_path, encoding="utf-8") as f:
                     return json.load(f)
         except Exception as e:
             logger.error(f"Failed to load learned builds: {e}")
@@ -66,7 +65,7 @@ class StrategyAudit:
         """훈련 통계 로드"""
         try:
             if self.training_stats_path.exists():
-                with open(self.training_stats_path, "r", encoding="utf-8") as f:
+                with open(self.training_stats_path, encoding="utf-8") as f:
                     return json.load(f)
         except Exception as e:
             logger.error(f"Failed to load training stats: {e}")

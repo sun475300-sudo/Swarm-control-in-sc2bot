@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Expansion Defense - 확장 기지 방어 시스템
 

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Overseer Scout Trainer - 감시군주 정찰 학습 시스템
 

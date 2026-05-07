@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Feature #92: Queen Walk 러시 매니저
 

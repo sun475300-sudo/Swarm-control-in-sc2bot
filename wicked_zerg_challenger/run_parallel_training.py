@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 Parallel Training Runner - 병렬 인스턴스 훈련
 

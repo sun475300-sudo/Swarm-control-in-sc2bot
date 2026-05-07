@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Bot Step Integration - on_step 구현 통합 모듈
 

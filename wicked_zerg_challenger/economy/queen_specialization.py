@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Queen Specialization Manager - 여왕 전문 분담 체제
 

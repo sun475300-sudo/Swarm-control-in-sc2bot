@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Run 3 games for testing improvements.
 개선 사항 테스트를 위한 3게임 실행 스크립트.

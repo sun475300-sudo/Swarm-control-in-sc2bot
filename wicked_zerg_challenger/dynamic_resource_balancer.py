@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Dynamic Resource Balancer - 자원 불균형 감지 및 생산 비율 자동 조정
 

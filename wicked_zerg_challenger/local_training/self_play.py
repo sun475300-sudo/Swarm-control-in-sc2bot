@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Self-Play Trainer - 자기 대전 학습 시스템 (#102)
 
@@ -337,7 +336,7 @@ class SelfPlayTrainer:
         meta_path = self.pool_dir / "pool_metadata.json"
         try:
             if meta_path.exists():
-                with open(str(meta_path), "r", encoding="utf-8") as f:
+                with open(str(meta_path), encoding="utf-8") as f:
                     data = json.load(f)
 
                 self.current_elo = data.get("current_elo", 1000.0)

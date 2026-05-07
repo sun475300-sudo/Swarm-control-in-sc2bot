@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Feature #94: Doom Drop 전술 매니저
 
