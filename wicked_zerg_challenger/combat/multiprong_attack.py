@@ -344,6 +344,10 @@ class MultiprongAttackManager:
                     prong.rally_point = self.bot.start_location.towards(
                         prong.target, 20
                     )
+                else:
+                    # No specific target yet — rally toward map center so the
+                    # prong is positioned to converge once a target is chosen.
+                    prong.rally_point = self.bot.start_location.towards(map_center, 20)
 
         self.sync_start_time = getattr(self.bot, "time", 0.0)
 

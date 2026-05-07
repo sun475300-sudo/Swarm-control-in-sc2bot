@@ -1166,8 +1166,6 @@ class ProductionResilience:
                     except Exception:
                         pass
                 can_afford_zergling = b.can_afford(UnitTypeId.ZERGLING)
-                can_afford_roach = b.can_afford(UnitTypeId.ROACH)
-                can_afford_hydralisk = b.can_afford(UnitTypeId.HYDRALISK)
 
                 # IMPROVED: Use DEBUG level for detailed logs during training
                 # Only print critical issues at INFO level

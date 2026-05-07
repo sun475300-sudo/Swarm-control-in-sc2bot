@@ -196,6 +196,10 @@ class AirUnitManager:
             combat_ready = list(mutalisks)
             regenerating = []
 
+        # Send regenerating mutalisks back to safety so they actually heal.
+        if regenerating:
+            await self.mutalisk_retreat(regenerating)
+
         if not combat_ready:
             return
 
@@ -329,6 +333,10 @@ class AirUnitManager:
         else:
             combat_ready = list(mutalisks)
             regenerating = []
+
+        # Send regenerating mutalisks back to safety so they actually heal.
+        if regenerating:
+            await self.mutalisk_retreat(regenerating)
 
         if not combat_ready:
             return
