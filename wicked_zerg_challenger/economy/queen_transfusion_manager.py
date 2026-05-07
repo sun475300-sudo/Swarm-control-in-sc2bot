@@ -15,7 +15,10 @@ from sc2.units import Units
 if TYPE_CHECKING:
     from sc2.bot_ai import BotAI
 
-from wicked_zerg_challenger.utils.logger import get_logger
+try:
+    from utils.logger import get_logger
+except ImportError:
+    from wicked_zerg_challenger.utils.logger import get_logger
 
 
 class QueenTransfusionManager:
