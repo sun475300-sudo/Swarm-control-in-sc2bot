@@ -269,6 +269,6 @@ class QueenTransfusionManager:
                     reverse=True,
                 )[:3]
                 self.logger.info(
-                    f"[TRANSFUSION] Top healed: "
+                    "[TRANSFUSION] Top healed: "
                     + ", ".join(f"{ut.name}: {count}" for ut, count in top_healed)
                 )
