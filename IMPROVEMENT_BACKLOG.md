@@ -74,7 +74,29 @@ must be broadened.
 | Cycle | Date | Items | Tests after | Commit |
 |---|---|---|---|---|
 | 0 (baseline) | 2026-05-07 | — | 365P / 7F / 34S / 1err | (current HEAD `0ac482b`) |
-| 1 | 2026-05-07 | B1.1, B1.2, B1.3 | **372P / 0F / 35S** | (this commit) |
+| 1 | 2026-05-07 | B1.1, B1.2, B1.3 | **372P / 0F / 35S** | `2241e17` |
+| 2 | 2026-05-07 | B2.1, B2.2 + 7 more files | **372P / 0F / 35S**, F541 255→159 | (this commit) |
+
+### Cycle 2 detail
+
+Removed dead `f` prefix from 96 f-strings without placeholders across 9 core files:
+
+| File | F541 fixed |
+|---|---|
+| `run_with_training.py` | 24 |
+| `economy_manager.py` | 14 |
+| `check_learning_rate.py` | 14 |
+| `local_training/production_resilience.py` | 11 |
+| `log_analyzer.py` | 10 |
+| `local_training/curriculum_manager.py` | 8 |
+| `wicked_zerg_bot_pro_impl.py` | 7 |
+| `bot_step_integration.py` | 7 |
+| `worker_combat_system.py` | 1 |
+
+Each fix is mechanical: `logger.info(f"static text")` → `logger.info("static text")`. No behavior change. Tests unchanged at 372P/0F/35S.
+
+Remaining F541: 159 (mostly in `tools/` and `visuals/` utility scripts — lower priority).
+
 
 ### Cycle 1 detail
 
