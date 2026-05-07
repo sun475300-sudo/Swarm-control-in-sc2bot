@@ -176,3 +176,7 @@
 - ✅ T3 (부분): test_combat_components 모듈-레벨 skip 분해 → 컴포넌트별 skipif. numpy 없는 환경에서 0 → 13 tests pass.
 - ✅ T5 (신규): `world_model/__init__.py`가 존재하지 않는 심볼(`DreamerAgent`, `WorldModel`, `LatentImagination`, `demo`)을 import해 패키지 import 깨짐. 실제 정의된 `SC2WorldModel`, `DreamerActor` 등으로 교체.
 - 결과: 405 passed → 406 passed (full suite, with numpy). CI 환경(numpy 없음)에서는 +13 tests recovered.
+
+### Cycle 3 — 2026-05-07
+- ✅ L2 fix: `scouting/advanced_scout_system_v2.py`의 `_assign_patrol(... unit_type=UnitTypeId.OVERLORD)` 기본값이 sc2 stub(빈 클래스) 환경에서 `AttributeError`로 클래스 정의 자체를 실패시켜 `bot_step_integration` 등 여러 모듈이 줄줄이 깨짐. 기본값을 `None`으로 바꾸고 함수 본문에서 fallback. import-scan AttributeError 1건 → 0건.
+- 결과: 봇 핵심 모듈(combat_manager, economy_manager, opponent_modeling, intel_manager, bot_step_integration, scouting/advanced_scout_system_v2 등) 모두 sc2 stub 환경에서 import 가능. 76개 ModuleNotFoundError 잔존하나 모두 외부 라이브러리(numpy/sc2/torch 등) 의존이라 별도 환경 설정 작업.
