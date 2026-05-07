@@ -254,7 +254,6 @@ class ProductionController:
             return
 
         # ★ Phase 23: 서플라이 블록 완전 제거 — 선행 생산 ★
-        game_time = getattr(self.bot, "time", 0)
         supply_used = supply_cap - supply_left
 
         # 동적 버퍼: 서플라이 사용량에 비례
@@ -423,6 +422,10 @@ class ProductionController:
                 try:
                     larva = larvae.first
                     self.bot.do(larva.train(best_uid))
+                    if best_unit is not None and getattr(self, "logger", None):
+                        self.logger.debug(
+                            f"[PROD] train {best_unit} (deficit={max_deficit:.2f})"
+                        )
                 except Exception:
                     pass
 

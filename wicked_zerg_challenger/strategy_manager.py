@@ -1521,6 +1521,13 @@ class StrategyManager:
             self._adjust_unit_ratio("hydra", 0.3)
             self._adjust_unit_ratio("roach", 0.3)
 
+        # ★ Ravager mirror: enemy ravagers seen → match with our own ravagers
+        # plus hydra for range (Ravager bile is brutal in ZvZ if uncountered).
+        if ravager_count >= 3:
+            self._adjust_unit_ratio("ravager", 0.35)
+            self._adjust_unit_ratio("hydra", 0.25)
+            self._adjust_unit_ratio("roach", 0.25)
+
         # 뮤탈리스크 → 히드라 + 스포어
         if mutalisk_count >= 3:
             # ★ Phase 34: "hydralisk" 오타 수정 → "hydra" (내부 키 통일)
@@ -1862,7 +1869,6 @@ class StrategyManager:
         Returns:
             전환 설명 문자열 (전환 없으면 None)
         """
-        game_time = getattr(self.bot, "time", 0.0)
         supply_used = getattr(self.bot, "supply_used", 0)
 
         # 강제 전환 조건 (시간보다 상황 우선)

@@ -295,6 +295,15 @@ class OpponentModeling:
 
         self.logger.info("[OPPONENT_MODELING] System initialized")
 
+    @property
+    def current_opponent(self) -> Optional[str]:
+        """Alias for current_opponent_id for backward compatibility."""
+        return self.current_opponent_id
+
+    @current_opponent.setter
+    def current_opponent(self, value: Optional[str]) -> None:
+        self.current_opponent_id = value
+
     async def on_start(self):
         """게임 시작 시 호출"""
         # Identify opponent
@@ -490,8 +499,6 @@ class OpponentModeling:
         """예측을 StrategyManagerV2에 전달"""
         if not hasattr(self.bot, "strategy_manager"):
             return
-
-        strategy_manager = self.bot.strategy_manager
 
         # Set blackboard recommendations
         if hasattr(self.bot, "blackboard") and self.bot.blackboard:
@@ -762,17 +769,6 @@ class OpponentModeling:
                 f"[OPPONENT_MODELING] Known opponent: {opponent_id} ({self.opponent_models[opponent_id].games_played} games)"
             )
 
-    async def on_step(self, iteration: int):
-        """매 프레임 호출 - 신호 감지"""
-        if not self.current_opponent or not self.bot:
-            return
-
-        game_time = self.bot.time
-
-        # Only detect signals in early game (0-180s)
-        if game_time <= 180.0:
-            await self._detect_early_signals(game_time)
-
     def on_game_end(self, won: bool, lost: bool):
         """게임 종료 시 호출 - 데이터 저장"""
         if not self.current_opponent or not self.current_game_history:
@@ -782,7 +778,7 @@ class OpponentModeling:
         self.current_game_history.game_won = won
         self.current_game_history.game_lost = lost
         self.current_game_history.early_signals = [
-            s.value for s in self.observed_signals
+            s.value if hasattr(s, "value") else s for s in self.observed_signals
         ]
 
         # Detect strategy (placeholder - would need more logic)

@@ -267,7 +267,14 @@ class EvolutionUpgradeManager:
         priorities = []
 
         # ★★★ Phase 18: 종족별 우선순위 조정 ★★★
+        # Look up the per-race weight table (e.g. Terran armor=1.3) and use the
+        # highest-weighted lane to gate which lane gets inserted at the front
+        # of the priority queue below. Without this, race_priority_modifiers
+        # would be unused dead state.
         race_modifiers = self.race_priority_modifiers.get(enemy_race, {})
+        race_lead_lane: Optional[str] = None
+        if race_modifiers:
+            race_lead_lane = max(race_modifiers, key=race_modifiers.get)
 
         if is_ranged_main:
             # ★ 바퀴/히드라 체제: 원거리 공격 올인 (사용자 요청)
@@ -313,6 +320,13 @@ class EvolutionUpgradeManager:
         elif total_air >= 3:  # 공중 유닛 3마리 이상이면
             priorities.append("air_attack")
             priorities.append("air_armor")
+
+        # Apply the race-preferred lane at the head of the queue so the
+        # race_priority_modifiers actually influences upgrade order.
+        if race_lead_lane and race_lead_lane in priorities:
+            priorities = [race_lead_lane] + [
+                lane for lane in priorities if lane != race_lead_lane
+            ]
 
         # === 업그레이드 순서 생성 (중복 제거) ===
         upgrade_order: List[object] = []

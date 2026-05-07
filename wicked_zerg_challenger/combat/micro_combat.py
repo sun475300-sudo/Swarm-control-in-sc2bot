@@ -408,19 +408,20 @@ class MicroCombat:
                 # ★ Enhanced Surround: Calculate optimal surround position ★
                 import math
 
-                # Count allies to determine surround angle
+                # Count allies to determine surround positions — use the
+                # actual ally count (capped at 8) so a 3-ling pack distributes
+                # over 3 evenly-spaced angles instead of 8 (which would leave
+                # 5 of the 8 slots empty and cluster the rest).
                 ally_count = len(nearby_allies)
+                slots = max(2, min(8, ally_count + 1))
 
                 # Calculate angle based on zergling's position relative to target
                 dx = zergling.position.x - target.position.x
                 dy = zergling.position.y - target.position.y
                 current_angle = math.atan2(dy, dx)
 
-                # Distribute units evenly around target (360 degrees)
-                # Add offset to create spiral surround pattern
-                angle_offset = (zergling.tag % 8) * (
-                    math.pi / 4
-                )  # 8 positions around circle
+                # Distribute units evenly around target across `slots` angles.
+                angle_offset = (zergling.tag % slots) * (2 * math.pi / slots)
                 optimal_angle = current_angle + angle_offset
 
                 # Calculate surround position (1.5 units from target center)
