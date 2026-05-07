@@ -1161,7 +1161,7 @@ class QueenManager:
             closest_base = min(
                 self.bot.townhalls, key=lambda th: queen.distance_to(th.position)
             )
-        except Exception as e:
+        except (AttributeError, ValueError) as e:
             logger.warning(f"[QueenManager] Closest base lookup suppressed: {e}")
             return None
 
@@ -1218,7 +1218,7 @@ class QueenManager:
                 UnitTypeId.CREEPTUMORQUEEN,
             }
             return sum(1 for s in self.bot.structures if s.type_id in tumor_types)
-        except Exception as e:
+        except (AttributeError, TypeError) as e:
             logger.warning(f"[QueenManager] Tumor count suppressed: {e}")
             return 0
 
@@ -1232,7 +1232,7 @@ class QueenManager:
             if hasattr(self.bot, "has_creep"):
                 result = self.bot.has_creep(target)
                 return bool(result)
-        except Exception as e:
+        except (AttributeError, TypeError, ValueError) as e:
             logger.warning(f"[QueenManager] Creep position check suppressed: {e}")
             return False
 
