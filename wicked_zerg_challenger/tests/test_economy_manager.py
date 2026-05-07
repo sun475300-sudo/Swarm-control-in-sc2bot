@@ -185,6 +185,8 @@ class TestEconomyManager(unittest.TestCase):
 
         # Cache time should be set
         self.assertGreaterEqual(self.manager._gold_cache_time, 0)
+        # Cache should return the same result for calls within the window
+        self.assertEqual(result1, result2)
 
     # ==================== Supply Management Tests ====================
 

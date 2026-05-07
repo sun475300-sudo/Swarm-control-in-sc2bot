@@ -2282,8 +2282,6 @@ class CombatManager:
         3. Enemy air units
         4. Ground army units
         """
-        game_time = getattr(self.bot, "time", 0)
-
         # Check if our base is under attack
         base_threatened = self._is_base_under_attack()
 
