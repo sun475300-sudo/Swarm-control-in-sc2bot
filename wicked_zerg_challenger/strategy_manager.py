@@ -22,7 +22,10 @@ from typing import Any, Dict, Optional
 from config.config_loader import ConfigLoader
 from racial_counter_manager import RacialCounterManager
 
-from utils.logger import get_logger
+try:
+    from utils.logger import get_logger
+except ImportError:
+    from wicked_zerg_challenger.utils.logger import get_logger
 
 try:
     from knowledge_manager import KnowledgeManager

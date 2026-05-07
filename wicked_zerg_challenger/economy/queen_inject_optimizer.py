@@ -20,7 +20,10 @@ from collections import defaultdict
 from enum import Enum
 from typing import Dict, Set
 
-from utils.logger import get_logger
+try:
+    from utils.logger import get_logger
+except ImportError:
+    from wicked_zerg_challenger.utils.logger import get_logger
 
 try:
     from sc2.bot_ai import BotAI
@@ -177,6 +180,17 @@ class QueenInjectOptimizer:
         # ★ 현재 할당 초기화 ★
         self.hatchery_queens.clear()
 
+        # Drop stale entries before re-assigning so dead queens / dead
+        # hatcheries don't stay in queen_assignments forever.
+        live_queen_tags = {q.tag for q in queens}
+        live_hatch_tags = {h.tag for h in hatcheries}
+        for stale in [
+            qt
+            for qt, ht in self.queen_assignments.items()
+            if qt not in live_queen_tags or ht not in live_hatch_tags
+        ]:
+            del self.queen_assignments[stale]
+
         # ★ Queen 할당 ★
         for queen in queens:
             # 이미 할당되어 있는지 확인
@@ -184,11 +198,7 @@ class QueenInjectOptimizer:
                 assigned_hatchery_tag = self.queen_assignments[queen.tag]
 
                 # Hatchery가 아직 존재하는지 확인
-                hatchery_exists = any(
-                    h.tag == assigned_hatchery_tag for h in hatcheries
-                )
-
-                if hatchery_exists:
+                if assigned_hatchery_tag in live_hatch_tags:
                     self.hatchery_queens[assigned_hatchery_tag].add(queen.tag)
                     continue
 
@@ -473,6 +483,29 @@ class QueenInjectOptimizer:
         if not queens or not hatcheries:
             return
 
+        # Drop dead queens / hatcheries from per-tag state — these maps
+        # are append-only from the call sites and would grow without
+        # bound across a long match.
+        live_queen_tags = {q.tag for q in queens}
+        live_hatch_tags = {h.tag for h in hatcheries}
+
+        for stale in [t for t in self.queen_roles if t not in live_queen_tags]:
+            del self.queen_roles[stale]
+        self.queens_reserved_for_inject &= live_queen_tags
+
+        for stale in [t for t in self.inject_cooldowns if t not in live_hatch_tags]:
+            del self.inject_cooldowns[stale]
+        for stale in [t for t in self.hatchery_priorities if t not in live_hatch_tags]:
+            del self.hatchery_priorities[stale]
+        for stale in [
+            t for t in self.expected_inject_times if t not in live_hatch_tags
+        ]:
+            del self.expected_inject_times[stale]
+        for stale in [
+            t for t in list(self.inject_retry_attempts) if t not in live_hatch_tags
+        ]:
+            del self.inject_retry_attempts[stale]
+
         # ★ 1. Inject 전용 여왕 배정 (기지당 1마리) ★
         inject_queens_needed = len(hatcheries) * self.inject_queens_per_base
         assigned_inject = 0
@@ -575,7 +608,6 @@ class QueenInjectOptimizer:
             # ★ 예상 인젝트 시간 체크 ★
             if hatchery_tag in self.expected_inject_times:
                 expected_time = self.expected_inject_times[hatchery_tag]
-                actual_time = self.inject_cooldowns.get(hatchery_tag, 0)
 
                 # 예상 시간이 지났는데 인젝트가 안 됐으면 미스
                 if game_time >= expected_time + self.inject_miss_threshold:

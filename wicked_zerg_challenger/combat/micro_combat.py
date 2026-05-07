@@ -408,9 +408,6 @@ class MicroCombat:
                 # ★ Enhanced Surround: Calculate optimal surround position ★
                 import math
 
-                # Count allies to determine surround angle
-                ally_count = len(nearby_allies)
-
                 # Calculate angle based on zergling's position relative to target
                 dx = zergling.position.x - target.position.x
                 dy = zergling.position.y - target.position.y

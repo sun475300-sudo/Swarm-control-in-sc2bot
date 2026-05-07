@@ -18,7 +18,7 @@ Integration:
 """
 
 from collections import defaultdict
-from typing import Dict, Optional, Set
+from typing import Any, Dict, Optional, Set
 
 from utils.logger import get_logger
 
@@ -1388,21 +1388,31 @@ class AdvancedMicroControllerV3:
             await AdvancedMicroControllerV3._do_actions(self.bot, actions)
 
     def _cleanup_dead_units(self):
-        """Cleanup dead unit assignments."""
+        """Cleanup dead unit assignments.
+
+        Per-unit cooldown / state dicts are keyed by unit tag and never
+        clear themselves — over a long match each one grows without
+        bound. Drop entries for units that are no longer alive.
+        """
         alive_unit_tags = {u.tag for u in getattr(self.bot, "units", [])}
         alive_enemy_tags = {e.tag for e in getattr(self.bot, "enemy_units", [])}
 
         self.focus_fire.clear_dead_assignments(alive_unit_tags, alive_enemy_tags)
 
-        # ★ Phase 18: Cleanup for new micro controllers ★
-        # Clean infestor cooldown tracking
-        dead_infestor_tags = (
-            set(self.infestor_micro.last_fungal_time.keys()) - alive_unit_tags
-        )
-        for tag in dead_infestor_tags:
-            del self.infestor_micro.last_fungal_time[tag]
+        # Drop tags belonging to dead friendly units across every
+        # per-tag cooldown / membership store on the micro controllers.
+        for stale_tag in set(self.ravager_micro.last_shot_time) - alive_unit_tags:
+            del self.ravager_micro.last_shot_time[stale_tag]
 
-    def get_status(self) -> Dict[str, any]:
+        self.lurker_micro.burrowed_lurkers &= alive_unit_tags
+
+        for stale_tag in set(self.corruptor_micro.last_spray_time) - alive_unit_tags:
+            del self.corruptor_micro.last_spray_time[stale_tag]
+
+        for stale_tag in set(self.infestor_micro.last_fungal_time) - alive_unit_tags:
+            del self.infestor_micro.last_fungal_time[stale_tag]
+
+    def get_status(self) -> Dict[str, Any]:
         """Get micro controller status."""
         return {
             "ravager_cooldowns": len(self.ravager_micro.last_shot_time),

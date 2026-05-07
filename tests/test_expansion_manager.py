@@ -25,7 +25,7 @@ Unit Tests for ExpansionManager
 """
 
 from typing import List
-from unittest.mock import AsyncMock, MagicMock, Mock
+from unittest.mock import AsyncMock, Mock
 
 import pytest
 

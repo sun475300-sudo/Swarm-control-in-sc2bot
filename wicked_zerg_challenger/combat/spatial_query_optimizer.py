@@ -11,15 +11,18 @@ Performance improvements:
 - Expected speedup: 3-10x for large unit counts
 """
 
-from typing import TYPE_CHECKING, Dict, Optional, Tuple
+from typing import TYPE_CHECKING, Any, Dict, Optional, Tuple
 
 if TYPE_CHECKING:
     from sc2.bot_ai import BotAI
-    from sc2.units import Units
-    from sc2.unit import Unit
     from sc2.position import Point2
+    from sc2.unit import Unit
+    from sc2.units import Units
 
-from wicked_zerg_challenger.utils.logger import get_logger
+try:
+    from utils.logger import get_logger
+except ImportError:
+    from wicked_zerg_challenger.utils.logger import get_logger
 
 
 class SpatialQueryOptimizer:
@@ -259,7 +262,7 @@ class SpatialQueryOptimizer:
             self._query_cache.clear()
             self._last_cache_clear = iteration
 
-    def get_statistics(self) -> Dict[str, any]:
+    def get_statistics(self) -> Dict[str, Any]:
         """
         Get query statistics
 

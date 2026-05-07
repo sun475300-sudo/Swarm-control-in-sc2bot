@@ -51,13 +51,13 @@ class ReplayDataCollector:
     def update_knowledge(self, build_key: str, build_data: Dict):
         """Update the JSON brain with new findings"""
         try:
-            with open(self.knowledge_file, "r") as f:
+            with open(self.knowledge_file, "r", encoding="utf-8") as f:
                 data = json.load(f)
 
             data["build_orders"][build_key] = build_data
 
-            with open(self.knowledge_file, "w") as f:
-                json.dump(data, f, indent=2)
+            with open(self.knowledge_file, "w", encoding="utf-8") as f:
+                json.dump(data, f, indent=2, ensure_ascii=False)
 
             self.logger.info(f"Updated commander_knowledge.json with {build_key}")
 

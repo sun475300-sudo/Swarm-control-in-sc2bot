@@ -5,7 +5,7 @@ Provides intelligent transfusion targeting for queens, prioritizing high-value u
 and optimizing healing efficiency in combat situations.
 """
 
-from typing import TYPE_CHECKING, Dict, Optional
+from typing import TYPE_CHECKING, Any, Dict, Optional
 
 from sc2.ids.ability_id import AbilityId
 from sc2.ids.unit_typeid import UnitTypeId
@@ -15,7 +15,10 @@ from sc2.units import Units
 if TYPE_CHECKING:
     from sc2.bot_ai import BotAI
 
-from wicked_zerg_challenger.utils.logger import get_logger
+try:
+    from utils.logger import get_logger
+except ImportError:
+    from wicked_zerg_challenger.utils.logger import get_logger
 
 
 class QueenTransfusionManager:
@@ -110,7 +113,10 @@ class QueenTransfusionManager:
         for queen in available_queens:
             # Skip queen if it cast too recently (avoid energy double-spend on lag)
             now = self.bot.time
-            if self._queen_last_cast.get(queen.tag, 0.0) + self.QUEEN_CAST_COOLDOWN > now:
+            if (
+                self._queen_last_cast.get(queen.tag, 0.0) + self.QUEEN_CAST_COOLDOWN
+                > now
+            ):
                 continue
 
             target = self._find_best_transfusion_target(queen, damaged_units)
@@ -230,7 +236,7 @@ class QueenTransfusionManager:
         hp_restored = min(hp_missing, self.TRANSFUSION_HP_RESTORE)
         self.hp_healed_total += hp_restored
 
-    def get_statistics(self) -> Dict[str, any]:
+    def get_statistics(self) -> Dict[str, Any]:
         """
         Get transfusion statistics
 
