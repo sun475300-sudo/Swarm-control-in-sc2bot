@@ -30,8 +30,16 @@ os.environ.setdefault("PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION", "python")
 def _install_sc2_stub() -> None:
     """Register a minimal in-memory ``sc2`` package when the real one is missing."""
 
-    if _import_util.find_spec("sc2") is not None:
+    # If sc2 is already importable (real package or stub already installed by
+    # the project-root conftest), do nothing. Use sys.modules first to avoid
+    # ``find_spec`` raising on stub modules that lack ``__spec__``.
+    if "sc2" in sys.modules:
         return
+    try:
+        if _import_util.find_spec("sc2") is not None:
+            return
+    except (ValueError, ModuleNotFoundError):
+        pass
 
     sc2 = types.ModuleType("sc2")
     sc2.__path__ = []  # mark as a package so submodule imports work

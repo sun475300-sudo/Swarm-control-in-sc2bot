@@ -729,9 +729,19 @@ class OpponentModeling:
     # Integration Methods (for main bot lifecycle)
     # ============================================================
 
+    # Backwards-compatible alias for callers that still reference
+    # ``current_opponent``. The canonical attribute is ``current_opponent_id``.
+    @property
+    def current_opponent(self) -> Optional[str]:
+        return self.current_opponent_id
+
+    @current_opponent.setter
+    def current_opponent(self, value: Optional[str]) -> None:
+        self.current_opponent_id = value
+
     def on_game_start(self, opponent_id: str, opponent_race=None):
         """게임 시작 시 호출 - 적 추적 시작"""
-        self.current_opponent = opponent_id
+        self.current_opponent_id = opponent_id
         # ★ FIX: GameHistory dataclass에 맞는 필드로 초기화
         race_name = (
             opponent_race.name
@@ -762,20 +772,17 @@ class OpponentModeling:
                 f"[OPPONENT_MODELING] Known opponent: {opponent_id} ({self.opponent_models[opponent_id].games_played} games)"
             )
 
-    async def on_step(self, iteration: int):
-        """매 프레임 호출 - 신호 감지"""
-        if not self.current_opponent or not self.bot:
-            return
-
-        game_time = self.bot.time
-
-        # Only detect signals in early game (0-180s)
-        if game_time <= 180.0:
-            await self._detect_early_signals(game_time)
+    # NOTE: A second ``async def on_step`` previously lived here and silently
+    # shadowed the richer implementation defined above (line ~341), reducing
+    # per-frame work to early-signal detection only. It also referenced the
+    # legacy ``self.current_opponent`` attribute which is not initialised in
+    # ``__init__``, causing ``AttributeError`` once the test suite started
+    # actually awaiting the coroutines. The duplicate has been removed; the
+    # single canonical ``on_step`` now handles all per-frame work.
 
     def on_game_end(self, won: bool, lost: bool):
         """게임 종료 시 호출 - 데이터 저장"""
-        if not self.current_opponent or not self.current_game_history:
+        if not self.current_opponent_id or not self.current_game_history:
             return
 
         # Update game history
@@ -791,14 +798,14 @@ class OpponentModeling:
             pass
 
         # Update opponent model
-        model = self.opponent_models[self.current_opponent]
+        model = self.opponent_models[self.current_opponent_id]
         model.update_from_game(self.current_game_history)
 
         # Save to disk
         self.save_models()
 
         self.logger.info(
-            f"[OPPONENT_MODELING] Game data saved for {self.current_opponent}"
+            f"[OPPONENT_MODELING] Game data saved for {self.current_opponent_id}"
         )
 
     def get_predicted_strategy(self) -> Tuple[Optional[str], float]:
