@@ -43,6 +43,11 @@ else:
 from combat.assignment_manager import (
     cleanup_assignments,
 )
+from combat.constants import (
+    COMBAT_TICK_FRAMES,
+    CombatCompositionThresholds,
+    CombatPhaseSeconds,
+)
 from combat.enemy_tracking import (
     find_densest_enemy_position,
     get_anti_air_threats,
@@ -166,7 +171,7 @@ class CombatManager:
                 self._last_victory_check = iteration
 
             # ★★★ 6분 Roach Rush 타이밍 공격 체크 ★★★
-            if iteration % 22 == 0 and not self._roach_rush_sent:
+            if iteration % COMBAT_TICK_FRAMES == 0 and not self._roach_rush_sent:
                 await self._check_roach_rush_timing(iteration)
 
             # ★ 필수 기지 방어 체크 - 항상 최우선 ★
@@ -181,7 +186,7 @@ class CombatManager:
                 self._last_expansion_defense_check = iteration
 
             # ★★★ Phase 23: 불리한 전투 후퇴 판단 ★★★
-            if iteration % 22 == 0:
+            if iteration % COMBAT_TICK_FRAMES == 0:
                 await self._evaluate_army_retreat(iteration)
 
             # ★★★ INTEGRATED: MicroController handles all ground combat ★★★
@@ -387,7 +392,11 @@ class CombatManager:
             strategy_active = getattr(strategy, "early_harassment_active", False)
 
         # Trigger if time is right OR strategy manager requested it
-        if (60 <= game_time <= 420) or strategy_active:
+        if (
+            CombatPhaseSeconds.EARLY_HARASS_START
+            <= game_time
+            <= CombatPhaseSeconds.EARLY_HARASS_END
+        ) or strategy_active:
             try:
                 from sc2.ids.unit_typeid import UnitTypeId
 
@@ -397,7 +406,11 @@ class CombatManager:
                     if hasattr(u, "type_id") and u.type_id == UnitTypeId.ZERGLING
                 ]
                 # ★ 저글링 6마리부터 하라스 시작 (더 빠른 압박)
-                if 6 <= len(zerglings) <= 24:
+                if (
+                    CombatCompositionThresholds.EARLY_HARASS_LINGS_MIN
+                    <= len(zerglings)
+                    <= CombatCompositionThresholds.EARLY_HARASS_LINGS_MAX
+                ):
                     harass_target = self._find_harass_target()
                     if harass_target:
                         # Priority 75 (더 높은 우선순위 - 일꾼 제거가 중요!)
@@ -431,7 +444,11 @@ class CombatManager:
 
         # === TASK 2.5: ★ 초반 저글링 압박 (3:00-4:30) ★ ===
         # 저글링 8마리 이상이면 압박
-        if 180 <= game_time <= 270:  # 3:00-4:30
+        if (
+            CombatPhaseSeconds.EARLY_PRESSURE_START
+            <= game_time
+            <= CombatPhaseSeconds.EARLY_PRESSURE_END
+        ):
             try:
                 from sc2.ids.unit_typeid import UnitTypeId
 
@@ -442,7 +459,10 @@ class CombatManager:
                 ]
 
                 # ★ 저글링 4마리 이상이면 압박 (기존 8마리 -> 4마리로 완화)
-                if len(zerglings) >= 4:
+                if (
+                    len(zerglings)
+                    >= CombatCompositionThresholds.EARLY_PRESSURE_LINGS_MIN
+                ):
                     enemy_base = self._get_enemy_base_location()
                     if enemy_base:
                         # Priority 75
@@ -456,7 +476,11 @@ class CombatManager:
 
         # === TASK 2.6: ★ MID-GAME TIMING ATTACK (5-8분) ★ ===
         # 상대가 테크 올리기 전에 중반 타이밍 공격으로 압박
-        if 300 <= game_time <= 480:  # 5-8분
+        if (
+            CombatPhaseSeconds.MID_TIMING_START
+            <= game_time
+            <= CombatPhaseSeconds.MID_TIMING_END
+        ):
             try:
                 from sc2.ids.unit_typeid import UnitTypeId
 
@@ -478,7 +502,13 @@ class CombatManager:
                 ]
 
                 # ★ BALANCED: 바퀴 5마리 OR 저글링 12마리 OR 맹독충 4마리
-                if len(roaches) >= 5 or len(zerglings) >= 12 or len(banelings) >= 4:
+                if (
+                    len(roaches) >= CombatCompositionThresholds.MID_TIMING_ROACHES_MIN
+                    or len(zerglings)
+                    >= CombatCompositionThresholds.MID_TIMING_LINGS_MIN
+                    or len(banelings)
+                    >= CombatCompositionThresholds.MID_TIMING_BANELINGS_MIN
+                ):
                     enemy_base = self._get_enemy_base_location()
                     if enemy_base:
                         # Priority 75 (higher than counter_attack)
@@ -489,14 +519,21 @@ class CombatManager:
         # === TASK 2.7: ★★★ 10-15분 강력한 타이밍 공격 ★★★ ===
         # ★ FIX: 15분까지만 (이후는 main_attack이 처리)
         # 3베이스 포화 후 강력한 타이밍 공격
-        if 600 <= game_time <= 900:  # 10-15분 (기존 10-20분 → 10-15분)
+        if (
+            CombatPhaseSeconds.MAJOR_TIMING_START
+            <= game_time
+            <= CombatPhaseSeconds.MAJOR_TIMING_END
+        ):
             try:
                 from sc2.ids.unit_typeid import UnitTypeId
 
                 army_supply = sum(getattr(u, "supply_cost", 1) for u in ground_army)
 
                 # ★ 서플라이 40 이상이면 강력한 타이밍 공격
-                if army_supply >= 40:
+                if (
+                    army_supply
+                    >= CombatCompositionThresholds.MAJOR_TIMING_SUPPLY_MIN
+                ):
                     enemy_base = self._get_enemy_base_location()
                     if enemy_base:
                         # Priority 75 (main_attack보다 높지만 80은 아님)
