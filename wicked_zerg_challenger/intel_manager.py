@@ -10,6 +10,11 @@ import asyncio
 import logging
 from typing import Optional
 
+try:
+    from combat.constants import LOG_CADENCE_FRAMES
+except ImportError:
+    LOG_CADENCE_FRAMES = 50
+
 logger = logging.getLogger(__name__)
 
 
@@ -96,8 +101,8 @@ class IntelManager:
             logger.warning(f"[IntelManager] on_step suppressed: {e}")
             return
         except Exception as e:
-            # Log unexpected errors
-            if iteration % 50 == 0:
+            # Log unexpected errors at the standard log cadence
+            if iteration % LOG_CADENCE_FRAMES == 0:
                 logger.info(f"Unexpected error in on_step: {type(e).__name__} - {e}")
             return
 
@@ -912,7 +917,7 @@ class IntelManager:
             return min(
                 self.destructible_rocks, key=lambda rock: rock.distance_to(position)
             )
-        except Exception as e:
+        except (AttributeError, ValueError) as e:
             logger.warning(f"[IntelManager] Closest destructible rock suppressed: {e}")
             return None
 
