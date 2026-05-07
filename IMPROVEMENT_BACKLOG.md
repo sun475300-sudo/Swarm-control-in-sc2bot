@@ -76,7 +76,24 @@ must be broadened.
 | 0 (baseline) | 2026-05-07 | — | 365P / 7F / 34S / 1err | (current HEAD `0ac482b`) |
 | 1 | 2026-05-07 | B1.1, B1.2, B1.3 | **372P / 0F / 35S** | `2241e17` |
 | 2 | 2026-05-07 | B2.1, B2.2 + 7 more files | **372P / 0F / 35S**, F541 255→159 | `43e07f6` |
-| 3 | 2026-05-07 | B4.2 (F401), F541 batch 3 | **372P / 0F / 35S**, F541 159→105, F401 1→0 | (this commit) |
+| 3 | 2026-05-07 | B4.2 (F401), F541 batch 3 | **372P / 0F / 35S**, F541 159→105, F401 1→0 | `c7f10a0` |
+| 4 | 2026-05-07 | F541 batch 4 (28 files), pytest warning identified | **372P / 0F / 35S**, F541 105→49 | (this commit) |
+
+### Cycle 4 detail
+
+- **F541 batch 4** — 56 more dead f-prefixes across 28 files. Touches one core file (`combat_manager.py:1` and `economy/queen_transfusion_manager.py:1`) plus a wide spread of training-pipeline / runtime-utility files. Repository F541: 105 → 49 (49 remaining, mostly in `tools/` + `visuals/` utility scripts).
+
+- **pytest warning** — root-caused: `pytest.ini:36 timeout = 60` requires `pytest-timeout` plugin which is in `requirements-dev.txt:7` but not always installed in CI environments. Locally fixed by `pip install pytest-timeout`; warning is environment-only, not a bug. No code change made.
+
+- **CI Lint & Type Check (3.11) — pre-existing failure**, not introduced by this branch. `black --check` would reformat 14 files, of which 11 (e.g. `combat_manager.py`, `harassment_coordinator.py`, `queen_transfusion_manager.py`, `logic_tuning.py`) were already non-compliant on `origin/main`. Per `MASTER_TODO_SC2.md` policy, broad black formatting is deferred until other PRs settle.
+
+### Cycle 4 cumulative impact (since baseline)
+
+- pytest: **365P / 7F / 34S / 1err  →  372P / 0F / 35S / 0err**
+- F541: 255 → 49 (-206, 81% reduction)
+- F401: 1 → 0
+- Total F errors: 485 → 278 (-207, 43% reduction)
+
 
 ### Cycle 3 detail
 
