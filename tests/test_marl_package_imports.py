@@ -162,3 +162,36 @@ def test_mappo_torch_stub_blocks_silent_use():
     # stub never fired).
     with pytest.raises(RuntimeError, match="PyTorch is not installed"):
         mod.SharedObsEncoderTorch(obs_dim=4, encoder_dim=8, hidden_dim=8)
+
+
+# ── Bot-core sc2 stubs must cover names used as default-arg values ───────
+
+
+def test_advanced_scout_unit_typeid_stub_has_overlord():
+    """Regression: scouting/advanced_scout_system_v2.py uses
+    ``UnitTypeId.OVERLORD`` as a default-argument value, which is evaluated
+    at class-body load time. Without sc2 installed, the local UnitTypeId
+    stub must still expose OVERLORD or the whole module — and any module
+    that imports it (like bot_step_integration.py) — fails at import."""
+    import importlib
+    import sys
+
+    # Force a clean import via the wicked_zerg_challenger search path.
+    repo_root = importlib.util.find_spec("tests").submodule_search_locations[0]
+    bot_dir = f"{repo_root}/../wicked_zerg_challenger"
+    if bot_dir not in sys.path:
+        sys.path.insert(0, bot_dir)
+
+    try:
+        scouting_mod = importlib.import_module("scouting.advanced_scout_system_v2")
+    except ModuleNotFoundError as e:
+        # If a *different* dependency is missing (e.g. unit_authority_manager
+        # not on path), that's fine — what we're guarding against is the
+        # AttributeError on UnitTypeId.OVERLORD specifically.
+        pytest.skip(f"scouting module not importable in this env: {e}")
+
+    UnitTypeId = scouting_mod.UnitTypeId
+    assert hasattr(UnitTypeId, "OVERLORD"), (
+        "UnitTypeId stub must expose OVERLORD because it is referenced as a "
+        "default-argument value at class-body load time."
+    )
