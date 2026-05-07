@@ -275,7 +275,8 @@ class EconomyManager:
         fast_gas = fresh and gas_time is not None and gas_time < 90.0
         # ★ FIX: natural_confirmed=False만으로 확장 차단 금지
         # 실제 치즈 의심이나 빠른 가스 같은 구체적 위협 시에만 지연
-        pressure_active = cheese_active or fast_gas
+        # — 또한 4분 이후로는 더 이상 'early pressure'가 아니므로 차단
+        pressure_active = early_window and (cheese_active or fast_gas)
 
         state.update(
             {
@@ -1448,9 +1449,6 @@ class EconomyManager:
             return
 
         game_time = self.bot.time
-        base_count = (
-            self.bot.townhalls.amount if hasattr(self.bot.townhalls, "amount") else 1
-        )
 
         # ★ 공통 쿨다운 체크 (모든 확장 시스템 공유) ★
         time_since_last = game_time - self._last_expansion_attempt_time
@@ -1854,7 +1852,6 @@ class EconomyManager:
             if self.bot.enemy_start_locations
             else self.bot.game_info.map_center
         )
-        start_loc = self.bot.start_location
 
         # Filter out taken bases
         available_bases = []
@@ -2678,7 +2675,6 @@ class EconomyManager:
         game_time = getattr(self.bot, "time", 0)
         workers = self.bot.workers
         bases = self.bot.townhalls.ready
-        minerals = getattr(self.bot, "minerals", 0)
 
         # ★ 현재 경제 상태 분석 ★
         worker_count = workers.amount
