@@ -78,7 +78,31 @@ must be broadened.
 | 2 | 2026-05-07 | B2.1, B2.2 + 7 more files | **372P / 0F / 35S**, F541 255→159 | `43e07f6` |
 | 3 | 2026-05-07 | B4.2 (F401), F541 batch 3 | **372P / 0F / 35S**, F541 159→105, F401 1→0 | `c7f10a0` |
 | 4 | 2026-05-07 | F541 batch 4 (28 files), pytest warning identified | **372P / 0F / 35S**, F541 105→49 | `d1a40aa` |
-| 5 | 2026-05-07 | F541 finishing sweep (15 files in tools/+visuals/) | **372P / 0F / 35S**, **F541 49→0** ✅ | (this commit) |
+| 5 | 2026-05-07 | F541 finishing sweep (15 files in tools/+visuals/) | **372P / 0F / 35S**, **F541 49→0** ✅ | `07dfe45` |
+| 6 | 2026-05-07 | F841 `except as <unused>` sweep (47 sites) | **372P / 0F / 35S**, F841 128→81 | (this commit) |
+
+### Cycle 6 detail
+
+The F841 (unused local) warnings include two distinct patterns:
+
+1. **`except (X, Y) as e:` where `e` is never read** (the dominant 47/128 cases) — silently dropping the exception object after a deliberate catch. Pure mechanical fix: drop ` as e`. Identical at runtime.
+2. **Regular assignments where the value is computed but never read** (81 remaining) — these need case-by-case audit because they may reveal forgotten code paths or wasted computation.
+
+Cycle 6 handled the mechanical-fix population (#1) only:
+
+| File | Sites fixed |
+|---|---|
+| `combat_manager.py` | 25 |
+| `bot_step_integration.py` | 11 |
+| `production_resilience.py` (training) | mixed |
+| `aggressive_strategies.py` | 4 |
+| `air_unit_manager.py` | 1 |
+| `production_controller.py` | 2 |
+| `economy_manager.py` | mixed |
+| Total | **47** |
+
+The remaining 81 F841s are **NOT** mere `except as` cases — they're real assignments to variables like `game_time`, `non_combat_names`, `regenerating`, `card`, etc. that were computed and then ignored. Some are likely dead code, others may be log/debug remnants. Queued for next cycle with manual inspection.
+
 
 ### Cycle 5 detail
 
