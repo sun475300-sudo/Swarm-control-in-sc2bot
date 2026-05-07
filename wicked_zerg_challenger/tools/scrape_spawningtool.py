@@ -56,9 +56,6 @@ def download_and_extract(replay_id):
             logger.error(f"Failed download {replay_id}: {response.status_code}")
             return
 
-        # Check content type
-        content_type = response.headers.get('content-type', '')
-        
         # Try to unzip
         try:
             with zipfile.ZipFile(io.BytesIO(response.content)) as z:
