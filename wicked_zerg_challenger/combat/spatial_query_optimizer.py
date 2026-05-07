@@ -310,9 +310,11 @@ class SpatialQueryOptimizer:
         if not units or not self.bot.enemy_units:
             return None
 
-        # Find unit with maximum minimum distance to enemies
+        # Find unit with maximum minimum distance to enemies.
+        # Use -inf as the initial best so we always return some unit even when
+        # everything is in melee range (distance == 0).
         best_unit = None
-        max_min_distance = 0
+        max_min_distance = float("-inf")
 
         for unit in units:
             closest_enemy = self.bot.enemy_units.closest_to(unit)
