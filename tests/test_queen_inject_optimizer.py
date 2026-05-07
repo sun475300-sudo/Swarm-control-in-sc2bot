@@ -11,12 +11,23 @@ Covers the pure-logic helpers that don't require an SC2 game loop:
 
 from __future__ import annotations
 
-from unittest.mock import MagicMock
+import sys
+from pathlib import Path
 
-import pytest
+# Match the runtime layout (wicked_zerg_challenger/ on sys.path) so the
+# module's bare `from utils.logger` import resolves and doesn't poison
+# subsequent tests that rely on the same shape — same rationale as
+# tests/test_medium_opening_stability.py.
+_PKG = Path(__file__).resolve().parent.parent / "wicked_zerg_challenger"
+if str(_PKG) not in sys.path:
+    sys.path.insert(0, str(_PKG))
+
+from unittest.mock import MagicMock  # noqa: E402
+
+import pytest  # noqa: E402
 
 try:
-    from wicked_zerg_challenger.economy.queen_inject_optimizer import (
+    from wicked_zerg_challenger.economy.queen_inject_optimizer import (  # noqa: E402
         QueenInjectOptimizer,
         QueenRole,
     )

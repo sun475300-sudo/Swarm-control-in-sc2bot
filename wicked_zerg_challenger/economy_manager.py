@@ -29,7 +29,10 @@ except ImportError:  # Fallbacks for tooling environments
 from config.unit_configs import EconomyConfig
 from local_training.economy_combat_balancer import EconomyCombatBalancer
 
-from utils.logger import get_logger
+try:
+    from utils.logger import get_logger
+except ImportError:
+    from wicked_zerg_challenger.utils.logger import get_logger
 
 
 class EconomyManager:

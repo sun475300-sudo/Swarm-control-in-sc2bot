@@ -7,12 +7,22 @@ paths, so MagicMock units are sufficient.
 
 from __future__ import annotations
 
-from unittest.mock import MagicMock
+import sys
+from pathlib import Path
 
-import pytest
+# Add wicked_zerg_challenger/ to sys.path so the module's transitive
+# `from utils.logger` import resolves; matches the runtime entry-point
+# layout used elsewhere (tests/test_medium_opening_stability.py).
+_PKG = Path(__file__).resolve().parent.parent / "wicked_zerg_challenger"
+if str(_PKG) not in sys.path:
+    sys.path.insert(0, str(_PKG))
+
+from unittest.mock import MagicMock  # noqa: E402
+
+import pytest  # noqa: E402
 
 try:
-    from wicked_zerg_challenger.economy.queen_specialization import (
+    from wicked_zerg_challenger.economy.queen_specialization import (  # noqa: E402
         QueenSpecialization,
         QueenSpecializationManager,
     )
