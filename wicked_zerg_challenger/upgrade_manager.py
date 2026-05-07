@@ -266,9 +266,6 @@ class EvolutionUpgradeManager:
 
         priorities = []
 
-        # ★★★ Phase 18: 종족별 우선순위 조정 ★★★
-        race_modifiers = self.race_priority_modifiers.get(enemy_race, {})
-
         if is_ranged_main:
             # ★ 바퀴/히드라 체제: 원거리 공격 올인 (사용자 요청)
             # 원거리 공1 -> 공2 -> 공3 -> 방어1...

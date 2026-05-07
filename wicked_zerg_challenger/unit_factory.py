@@ -290,7 +290,6 @@ class UnitFactory:
 
         # === StrategyManager 실시간 비율 연동 (via Blackboard or Direct) ===
         # 매 스텝마다 전략 매니저의 가스 비율을 가져와서 적용
-        strategy_mode = "NORMAL"
         emergency_active = False
 
         # 1. Try Blackboard first
