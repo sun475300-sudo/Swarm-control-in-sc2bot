@@ -180,3 +180,18 @@
 ### Cycle 3 — 2026-05-07
 - ✅ L2 fix: `scouting/advanced_scout_system_v2.py`의 `_assign_patrol(... unit_type=UnitTypeId.OVERLORD)` 기본값이 sc2 stub(빈 클래스) 환경에서 `AttributeError`로 클래스 정의 자체를 실패시켜 `bot_step_integration` 등 여러 모듈이 줄줄이 깨짐. 기본값을 `None`으로 바꾸고 함수 본문에서 fallback. import-scan AttributeError 1건 → 0건.
 - 결과: 봇 핵심 모듈(combat_manager, economy_manager, opponent_modeling, intel_manager, bot_step_integration, scouting/advanced_scout_system_v2 등) 모두 sc2 stub 환경에서 import 가능. 76개 ModuleNotFoundError 잔존하나 모두 외부 라이브러리(numpy/sc2/torch 등) 의존이라 별도 환경 설정 작업.
+
+### Cycle 4 — 2026-05-07
+- ✅ T2 후속: `tests/test_p606_infra.py`가 존재하지 않는 클래스명(`FuzzTarget`, `ContractViolation`, `PackageType`, `ProfileMetric`)을 import 시도해 4건 skip. 실제 정의된 `SC2Fuzzer/FuzzInput`, `Contract/ContractStatus`, `Package/SBOMGenerator`, `Timer/CPUProfiler`로 교체.
+- 코드 품질 스캔: bare except, mutable default args, eval/exec/shell=True/yaml unsafe load 모두 0 hits. except-pass 38건은 대부분 optional feature fallback 패턴.
+- 결과: 406 passed → 410 passed, 20 skipped → 16 skipped.
+
+## 누적 진행
+| Cycle | passed | skipped | 비고 |
+|-------|--------|---------|------|
+| Pre   |   0    |    -    | collection error로 차단 |
+| 1     |  372   |   35    | 차단 해제 |
+| 1+numpy | 405 |   21    | numpy 설치 효과 |
+| 2     |  406   |   20    | world_model fix |
+| 3     |  406   |   20    | sc2 stub fix (import-scan만 영향) |
+| 4     |  410   |   16    | p606 클래스명 정정 |
