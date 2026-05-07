@@ -183,25 +183,28 @@ class TestProductionResilience(unittest.IsolatedAsyncioTestCase):
 
     # ==================== Resource Management Tests ====================
 
-    def test_check_high_minerals_threshold(self):
-        """Test high minerals detection"""
-        self.bot.minerals = 1500
-        # High minerals should trigger resource dump
-        self.assertGreater(self.bot.minerals, 1000)
+    async def test_force_resource_dump_no_resources_is_safe(self):
+        """force_resource_dump must not crash when nothing is buildable."""
+        self.bot.can_afford = Mock(return_value=False)
+        self.bot.already_pending = Mock(return_value=0)
+        # No larva
+        empty_units = Mock()
+        empty_units.exists = False
+        self.bot.units = Mock(return_value=empty_units)
+        # Should complete without raising
+        await self.resilience.force_resource_dump()
 
-    def test_check_high_gas_threshold(self):
-        """Test high gas detection"""
-        self.bot.vespene = 1500
-        # High gas should trigger tech/unit production
-        self.assertGreater(self.bot.vespene, 1000)
-
-    def test_check_balanced_resources(self):
-        """Test balanced resource state"""
-        self.bot.minerals = 500
-        self.bot.vespene = 200
-        # Balanced resources
-        self.assertLess(self.bot.minerals, 1000)
-        self.assertLess(self.bot.vespene, 1000)
+    async def test_force_resource_dump_skips_when_too_many_pending(self):
+        """If 2+ Hatcheries already pending, skip expansion."""
+        self.bot.can_afford = Mock(return_value=True)
+        self.bot.already_pending = Mock(return_value=3)
+        empty_units = Mock()
+        empty_units.exists = False
+        self.bot.units = Mock(return_value=empty_units)
+        # Should not call _try_expand since already_pending >= 2
+        self.resilience._try_expand = Mock()
+        await self.resilience.force_resource_dump()
+        self.resilience._try_expand.assert_not_called()
 
     # ==================== Tech Requirements Tests ====================
 
