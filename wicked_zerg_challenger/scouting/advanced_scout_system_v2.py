@@ -16,7 +16,10 @@ Phase 10 기반, Phase 22 고도화:
 import math
 from typing import Dict, List, Optional, Set
 
-from utils.logger import get_logger
+try:
+    from utils.logger import get_logger
+except ImportError:
+    from wicked_zerg_challenger.utils.logger import get_logger
 
 try:
     from sc2.bot_ai import BotAI
