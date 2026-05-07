@@ -231,7 +231,7 @@ class TestRallyPoint:
             # 이 경우 테스트는 크래시 없이 완료되어야 함
             if combat._rally_point is not None:
                 # 랠리 포인트는 기지와 다른 위치여야 함
-                base_to_rally = (
+                (
                     (combat._rally_point[0] - 50) ** 2
                     + (combat._rally_point[1] - 50) ** 2
                 ) ** 0.5
@@ -261,7 +261,7 @@ class TestArmyManagement:
     def test_army_composition_tracking(self):
         """병력 구성 추적 테스트"""
         bot = MockBot()
-        combat = CombatManager(bot)
+        CombatManager(bot)
 
         # 다양한 유닛 추가
         units = [
@@ -286,7 +286,7 @@ class TestThreatAssessment:
     def test_threat_level_calculation(self):
         """위협 레벨 계산 테스트"""
         bot = MockBot()
-        combat = CombatManager(bot)
+        CombatManager(bot)
 
         # 아군 병력
         friendly_units = [MockUnit(i, "ZERGLING", (50, 50)) for i in range(10)]
@@ -307,7 +307,7 @@ class TestRetreatConditions:
     def test_retreat_on_low_health(self):
         """체력 낮을 때 후퇴 테스트"""
         bot = MockBot()
-        combat = CombatManager(bot)
+        CombatManager(bot)
 
         # 체력이 낮은 유닛
         damaged_unit = MockUnit(1, "ZERGLING", (50, 50), health=10.0, health_max=35.0)
@@ -320,7 +320,7 @@ class TestRetreatConditions:
     def test_retreat_on_overwhelming_enemy(self):
         """압도적 적 병력 시 후퇴 테스트"""
         bot = MockBot()
-        combat = CombatManager(bot)
+        CombatManager(bot)
 
         # 소수 아군
         friendly_units = [MockUnit(i, "ZERGLING", (50, 50)) for i in range(5)]
@@ -379,8 +379,8 @@ class TestCombatStatistics:
         # 기본 전투 관련 필드 확인
         assert hasattr(combat, "_base_defense_active")
         assert hasattr(combat, "_victory_push_active")
-        assert combat._base_defense_active == False
-        assert combat._victory_push_active == False
+        assert not combat._base_defense_active
+        assert not combat._victory_push_active
 
     def test_kd_ratio_tracking(self):
         """전투 추적 시스템 테스트"""

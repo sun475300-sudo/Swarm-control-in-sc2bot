@@ -191,7 +191,7 @@ class TestExpansionSafetyBasic:
 
         can_expand, reason = can_expand_safely(resilience)
 
-        assert can_expand == True
+        assert can_expand
         assert reason == ""
 
     def test_can_expand_safely_natural_expansion(self):
@@ -209,7 +209,7 @@ class TestExpansionSafetyBasic:
         can_expand, reason = can_expand_safely(resilience)
 
         # Should allow natural expansion even with low army
-        assert can_expand == True or "low_drones" in reason
+        assert can_expand or "low_drones" in reason
 
 
 class TestExpansionSafetyUnderAttack:
@@ -233,7 +233,7 @@ class TestExpansionSafetyUnderAttack:
 
         can_expand, reason = can_expand_safely(resilience)
 
-        assert can_expand == False
+        assert not can_expand
         assert reason == "under_attack"
 
     def test_can_expand_when_under_attack_with_high_minerals(self):
@@ -250,7 +250,7 @@ class TestExpansionSafetyUnderAttack:
         can_expand, reason = can_expand_safely(resilience)
 
         # Aggressive expansion bypasses under_attack check
-        assert can_expand == True
+        assert can_expand
 
 
 class TestExpansionSafetyEnemyNearby:
@@ -282,7 +282,7 @@ class TestExpansionSafetyEnemyNearby:
 
         can_expand, reason = can_expand_safely(resilience)
 
-        assert can_expand == False
+        assert not can_expand
         assert reason == "enemy_near_base"
 
     def test_can_expand_with_scouts_near_base(self):
@@ -303,7 +303,7 @@ class TestExpansionSafetyEnemyNearby:
         can_expand, reason = can_expand_safely(resilience)
 
         # Should ignore scouts (1-2 units)
-        assert can_expand == True or "low_drones" in reason
+        assert can_expand or "low_drones" in reason
 
 
 class TestExpansionAggressiveMode:
@@ -330,7 +330,7 @@ class TestExpansionAggressiveMode:
         can_expand, reason = can_expand_safely(resilience)
 
         # Aggressive expansion should succeed
-        assert can_expand == True
+        assert can_expand
 
     def test_aggressive_expansion_reduced_cooldown(self):
         """공격적 확장 시 쿨다운 반감"""
@@ -347,7 +347,7 @@ class TestExpansionAggressiveMode:
 
         # Cooldown should be halved (15s instead of 30s)
         # 20.0 - 5.0 = 15.0 >= 15.0 (half of 30)
-        assert can_expand == True or reason == "cooldown"
+        assert can_expand or reason == "cooldown"
 
 
 class TestExpansionLowArmy:
@@ -371,7 +371,7 @@ class TestExpansionLowArmy:
 
         can_expand, reason = can_expand_safely(resilience)
 
-        assert can_expand == False
+        assert not can_expand
         assert "low_army" in reason
 
     def test_can_expand_third_base_with_sufficient_army(self):
@@ -395,7 +395,7 @@ class TestExpansionLowArmy:
 
         can_expand, reason = can_expand_safely(resilience)
 
-        assert can_expand == True
+        assert can_expand
 
 
 class TestExpansionLowDrones:
@@ -423,7 +423,7 @@ class TestExpansionLowDrones:
 
         can_expand, reason = can_expand_safely(resilience)
 
-        assert can_expand == False
+        assert not can_expand
         assert "low_drones" in reason
 
     def test_can_expand_with_high_mineral_bank(self):
@@ -449,7 +449,7 @@ class TestExpansionLowDrones:
         can_expand, reason = can_expand_safely(resilience)
 
         # Should allow expansion to burn minerals
-        assert can_expand == True
+        assert can_expand
 
 
 class TestExpansionCooldown:
@@ -474,7 +474,7 @@ class TestExpansionCooldown:
         can_expand, reason = can_expand_safely(resilience)
 
         # 20.0 - 10.0 = 10.0 < 30.0 (full cooldown for 2+ bases with <300 minerals)
-        assert can_expand == False
+        assert not can_expand
         assert reason == "cooldown"
 
     def test_can_expand_after_cooldown(self):
@@ -492,7 +492,7 @@ class TestExpansionCooldown:
         can_expand, reason = can_expand_safely(resilience)
 
         # 50 - 10 = 40 >= 30 (cooldown passed)
-        assert can_expand == True
+        assert can_expand
 
 
 class TestTryExpandResources:
@@ -509,7 +509,7 @@ class TestTryExpandResources:
 
         result = await try_expand(resilience)
 
-        assert result == False
+        assert not result
         assert bot.expand_now.call_count == 0
 
 
@@ -527,7 +527,7 @@ class TestTryExpandPending:
 
         result = await try_expand(resilience)
 
-        assert result == False
+        assert not result
         assert bot.expand_now.call_count == 0
 
 
@@ -548,7 +548,7 @@ class TestTryExpandSuccess:
 
         result = await try_expand(resilience)
 
-        assert result == True
+        assert result
         assert bot.expand_now.call_count == 1
         assert resilience.last_expansion_attempt == 50.0
 
@@ -569,7 +569,7 @@ class TestTryExpandSuccess:
 
         result = await try_expand(resilience)
 
-        assert result == True
+        assert result
         assert bot.get_next_expansion.call_count == 1
         assert bot.build.call_count == 1
 

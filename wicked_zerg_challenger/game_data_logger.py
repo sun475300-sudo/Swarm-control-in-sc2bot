@@ -165,7 +165,7 @@ class GameDataLogger:
 
     async def _track_expansions(self, game_time: float):
         """확장 기지 추적"""
-        current_bases = (
+        (
             self.bot.townhalls.amount if hasattr(self.bot, "townhalls") else 0
         )
 

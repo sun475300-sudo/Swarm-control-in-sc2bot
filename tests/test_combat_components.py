@@ -217,7 +217,7 @@ class TestMicroCombat:
     def test_kiting_distance(self):
         """키팅 거리 계산 테스트"""
         bot = MockBot()
-        micro = MicroCombat(bot)
+        MicroCombat(bot)
 
         # 키팅 가능 여부 확인
         unit = MockUnit(1, "ROACH", (50, 50))
@@ -249,11 +249,11 @@ class TestMicroCombat:
     def test_retreat_logic(self):
         """후퇴 로직 테스트"""
         bot = MockBot()
-        micro = MicroCombat(bot)
+        MicroCombat(bot)
 
         # 저체력 유닛은 후퇴해야 함
         damaged_unit = MockUnit(1, "ZERGLING", (50, 50), health=10, health_max=35)
-        enemy = MockUnit(2, "MARINE", (52, 52))
+        MockUnit(2, "MARINE", (52, 52))
 
         # 후퇴 필요 여부 확인
         should_retreat = damaged_unit.health_percentage < 0.3
@@ -263,13 +263,13 @@ class TestMicroCombat:
     def test_stutter_step(self):
         """스터터 스텝 테스트"""
         bot = MockBot()
-        micro = MicroCombat(bot)
+        MicroCombat(bot)
 
         # 무기 쿨다운이 있을 때 후퇴
         unit = MockUnit(1, "ROACH", (50, 50))
         unit.weapon_cooldown = 5
 
-        enemy = MockUnit(2, "ZERGLING", (52, 52))
+        MockUnit(2, "ZERGLING", (52, 52))
 
         # 쿨다운 중이면 후퇴
         assert unit.weapon_cooldown > 0
@@ -370,7 +370,7 @@ class TestCombatComponentsIntegration:
         """타겟팅과 마이크로 컨트롤 통합 테스트"""
         bot = MockBot()
         targeting = Targeting(bot)
-        micro = MicroCombat(bot)
+        MicroCombat(bot)
 
         # 시나리오: 바퀴가 저글링을 키팅하면서 공격
         roach = MockUnit(1, "ROACH", (50, 50))
@@ -387,9 +387,9 @@ class TestCombatComponentsIntegration:
         distance = roach.distance_to(target)
         if distance < 4 and roach.weapon_cooldown > 0:
             # 후퇴해야 함
-            should_retreat = True
+            pass
         else:
-            should_retreat = False
+            pass
 
         # 로직이 작동해야 함
         assert target == zergling
@@ -457,7 +457,7 @@ class TestEdgeCases:
     def test_overlapping_units(self):
         """겹친 유닛들"""
         bot = MockBot()
-        micro = MicroCombat(bot)
+        MicroCombat(bot)
 
         # 정확히 같은 위치의 유닛들
         units = [
