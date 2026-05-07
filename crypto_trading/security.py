@@ -1125,6 +1125,21 @@ class SecretManager:
             )
             self._fernet = None
             self._use_fernet = False
+        except BaseException as exc:
+            # cryptography's Rust binding can panic with pyo3_runtime.
+            # PanicException (a BaseException, NOT an Exception) when its
+            # native libs are broken — e.g. a missing _cffi_backend on the
+            # system. Without catching BaseException the whole crypto_trading
+            # package fails to import. Fall back to base64 encoding so the
+            # rest of the bot still works in degraded environments.
+            logger.warning(
+                "SecretManager: cryptography 초기화 실패 (%s: %s) — "
+                "base64 폴백으로 동작합니다.",
+                type(exc).__name__,
+                exc,
+            )
+            self._fernet = None
+            self._use_fernet = False
 
     def _encrypt_value(self, value: str) -> str:
         """값 암호화 — Bug #7 Fix: Fernet 사용, 미설치 시 base64 폴백"""

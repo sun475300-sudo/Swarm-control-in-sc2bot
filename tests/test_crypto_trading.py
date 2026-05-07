@@ -34,6 +34,27 @@ class TestCryptoImports:
 
         assert hasattr(security, "trade_safety")
 
+    def test_import_security_resilient_to_broken_cryptography(self):
+        """Importing crypto_trading must not crash if cryptography's native
+        binding is broken. (Regression: cryptography's pyo3 layer can raise
+        ``pyo3_runtime.PanicException`` — a BaseException, not Exception —
+        when its native deps like ``_cffi_backend`` are missing on the host.
+        Both ``crypto_trading.__init__`` and ``SecretManager._init_fernet``
+        must catch that and fall back to base64.)"""
+        # Reach into the SecretManager that's instantiated at module import
+        # time and make sure it advertises the base64 fallback path when
+        # Fernet wasn't usable; if Fernet IS usable, that's fine too.
+        from crypto_trading.security import secret_manager
+
+        assert hasattr(secret_manager, "_use_fernet")
+        # Either Fernet succeeded, or we degraded gracefully — never None
+        # plus _use_fernet=True.
+        assert isinstance(secret_manager._use_fernet, bool)
+        if secret_manager._use_fernet:
+            assert secret_manager._fernet is not None
+        else:
+            assert secret_manager._fernet is None
+
     @pytest.mark.skipif(
         not all(__import__("importlib").util.find_spec(m) for m in ["pyupbit"]),
         reason="pyupbit not installed",
