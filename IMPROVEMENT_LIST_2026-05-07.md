@@ -69,11 +69,22 @@ Type hints are silently broken at the static-analysis layer (works at runtime bu
 
 ---
 
+## G. Bot logic micro-fixes (discovered during iter 10+)
+
+| # | Sev | Location | Issue | Plan | Status |
+|---|-----|----------|-------|------|--------|
+| G1 | Low | `wicked_zerg_challenger/creep_denial_system.py:298` (`_morph_overseer`) | Redundant `if overlord.is_idle:` immediately after `overlords = self.bot.units(...).idle` (`overlords.first` is already guaranteed idle). Mostly harmless, but reads as if there's a third condition that doesn't exist. | Drop the redundant guard. | ✅ Done (Iter 11) |
+
 ## Iteration log
 
-- **Iter 1 (this commit)**: Fix A1 — `test_queen_transfusion.py` collection error. Add this list. Tests: 405 passed / 21 skipped / 0 failed.
-- **Iter 2 (next)**: Fix B1 — restore comprehensive opponent_modeling.on_step.
-- **Iter 3**: Fix B2 — merge `_prevent_resource_banking` duplicates.
-- **Iter 4**: Fix B3, B4, B5 — remove other duplicate methods.
-- **Iter 5**: Fix C1-C5 — type hint `any` → `Any`.
-- **Iter 6+**: Lint debt sweeps (F401 unused imports, F541 false f-strings, E712, E741) — file-batched.
+- **Iter 1**: Fix A1 — `test_queen_transfusion.py` collection error. Add this list. Tests: 405 / 21 / 0.
+- **Iter 2**: Fix B1 — drop opponent_modeling.on_step stub that disabled the whole feature.
+- **Iter 3**: Fix B2 — merge `_prevent_resource_banking` duplicates; restore queen+spore+spine logic.
+- **Iter 4**: Fix B3, B4, B5 — remove other duplicate methods. F811 in bot core: 5 → 0.
+- **Iter 5**: Fix C1-C5 — type hint `Dict[str, any]` → `Dict[str, Any]` in 5 modules.
+- **Iter 6**: F401 unused-imports sweep — autoflake. 49 → 0.
+- **Iter 7**: F541 false f-strings sweep — ruff. 255 → 0.
+- **Iter 8**: W293/W291/E712/E711/F841 sweep — ruff. 504 → 22 (E741 left for follow-up).
+- **Iter 9**: Fix p606 import tests — point at real public class names. Tests: 405 / 21 → 409 / 17 (4 more real).
+- **Iter 10**: A2 — add numpy/ruff/autoflake to requirements-dev.txt. Black format pass — 20 files.
+- **Iter 11**: G1 — drop redundant is_idle guard in creep_denial_system._morph_overseer.
