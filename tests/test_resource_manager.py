@@ -80,6 +80,24 @@ class TestResourceManager:
         assert self.manager._reserved_gas == 150
 
     @pytest.mark.asyncio
+    async def test_manager_replacement_under_tight_resources(self):
+        """A manager re-reserving must not have its own prior reservation
+        counted against availability (regression: prior code rejected the
+        re-reservation when bot resources were tight)."""
+        self.bot.minerals = 300
+        self.bot.vespene = 100
+
+        r1 = await self.manager.try_reserve(200, 50, "TestManager")
+        assert r1 is True
+
+        # Re-reserve with a larger amount that only fits if the prior
+        # reservation is correctly released atomically.
+        r2 = await self.manager.try_reserve(280, 80, "TestManager")
+        assert r2 is True
+        assert self.manager._reserved_minerals == 280
+        assert self.manager._reserved_gas == 80
+
+    @pytest.mark.asyncio
     async def test_get_available_resources(self):
         """Test getting available resources"""
         await self.manager.try_reserve(200, 100, "TestManager")
