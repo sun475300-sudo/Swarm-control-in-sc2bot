@@ -197,6 +197,11 @@
 - ✅ L4 (신규): `economy/queen_transfusion_manager.py`의 `_queen_last_cast` 딕셔너리가 죽은 queen의 tag를 누적해 long-match에서 메모리/탐색 비용이 자란다. `_prune_queen_last_cast()` 추가 — 매 iteration 살아있는 queen의 tag만 유지.
 - 결과: 로컬 417 passed/9 skipped 유지. CI에 차단 step 추가로 향후 회귀 가시성 확보.
 
+### Cycle 7 — 2026-05-07
+- ✅ C4: `.github/workflows/sc2bot-ci.yml`의 lint matrix(3.10/3.11/3.12)에 `fail-fast: false` 추가. 한 Python 버전 실패가 다른 버전 jobs를 cancel하지 않게 — 디버깅 시 모든 매트릭스 신호를 한 번에 받을 수 있음.
+- 코드 품질 추가 스캔: `==None`/`!=None` 0건, `type() == type` 0건, mutable default args 0건, child class without super().__init__() 0건 (ABC 제외).
+- 결과: 변경 없음. 기존 417 passed/9 skipped 유지.
+
 ## 누적 진행
 | Cycle | passed | skipped | 비고 |
 |-------|--------|---------|------|
@@ -208,3 +213,4 @@
 | 4     |  410   |   16    | p606 클래스명 정정 |
 | 5     |  417   |    9    | config.yaml fixture로 7건 회복 |
 | 6     |  417   |    9    | CI deps + transfusion 메모리 가드 |
+| 7     |  417   |    9    | matrix fail-fast off + 품질 스캔 통과 |
