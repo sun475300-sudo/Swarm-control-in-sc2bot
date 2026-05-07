@@ -176,7 +176,11 @@ class OpponentModel:
             # Fallback to most frequent strategy
             if self.strategy_frequency:
                 most_common = max(self.strategy_frequency.items(), key=lambda x: x[1])
-                confidence = most_common[1] / self.games_played
+                # Use sum of frequency counts rather than games_played so a
+                # bad-state model (e.g. loaded from a partially-corrupt
+                # persisted dict) cannot ZeroDivisionError us.
+                total = sum(self.strategy_frequency.values())
+                confidence = most_common[1] / total if total > 0 else 0.0
                 return (most_common[0], confidence)
             return ("unknown", 0.0)
 
