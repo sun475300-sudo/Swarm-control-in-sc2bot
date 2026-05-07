@@ -161,3 +161,21 @@
 3. **S3.1 CI fail-fast: false** (단순 패치, 별 PR, 자동 가능)
 4. **S3.2 pip-tools 도입** (별 PR, 검토 후 자동)
 5. 그 외 S2/S3/S4 항목은 사용자 우선순위 협의 후 진행
+
+---
+
+## 5. 사용자 결정 필요 — 중복 메서드 (PR #100, cycle 3 발견)
+
+같은 클래스 안에 **이름이 같은 메서드가 두 번 정의된** 케이스. 두 번째 정의가 첫 번째를
+조용히 덮어쓰므로 첫 번째 로직은 dead code. 두 정의의 본문이 서로 달라 어느 쪽을 정본으로
+삼을지 도메인 결정이 필요. 자동 처리하지 않고 사용자 검토 대기.
+
+| 파일 | 클래스 | 메서드 | 라인(1차/2차) | 비고 |
+|---|---|---|---|---|
+| `wicked_zerg_challenger/opponent_modeling.py` | `OpponentModeling` | `on_step` | 341 / 765 | 1차는 strategy prediction + build/timing/tech tracking + blackboard 갱신 (풍부). 2차는 `_detect_early_signals`만 호출 (간소). 현재 동작은 2차. |
+| `wicked_zerg_challenger/economy_manager.py` | `EconomyManager` | `_prevent_resource_banking` | 1298 / 2507 | 1차는 Queens + 정적 방어 빌드. 2차는 매크로 해처리/확장/테크 + 가스 일꾼 감소. 현재 동작은 2차. |
+| `wicked_zerg_challenger/economy_manager.py` | `EconomyManager` | `_reduce_gas_workers` | 2630 / 3286 | 본문 비교 필요. |
+| `wicked_zerg_challenger/local_training/production_resilience.py` | `ProductionResilience` | `build_terran_counters` | 1369 / 1866 | 본문 비교 필요. |
+
+**권장 처리**: 케이스별로 사용자가 정본을 지정 → 죽은 정의를 삭제하거나 두 로직을 합치는 별도
+PR 진행. 현재 PR #100은 동작 변화가 없는 안전한 dead-code 제거(`_find_harass_target`)만 포함.
