@@ -1295,9 +1295,14 @@ class EconomyManager:
             if self.bot.iteration % 50 == 0:
                 self.logger.warning(f"[ECONOMY_WARN] Worker redistribution failed: {e}")
 
-    async def _prevent_resource_banking(self) -> None:
+    async def _build_static_defense_when_banking(self) -> None:
         """
-        ★ Prevent resource banking by spending excess minerals ★
+        Build extra Queens + static defense when banking minerals.
+
+        Previously this was a duplicate ``_prevent_resource_banking`` defined
+        earlier in the class, which was silently overridden by the richer
+        version near line 2507. Renaming preserves the behaviour and lets the
+        canonical ``_prevent_resource_banking`` invoke it.
 
         Logic:
         1. If Minerals > Config.Threshold and Larva < Config.Threshold:
@@ -2595,6 +2600,13 @@ class EconomyManager:
                             f"Resource ratio (M/G = {minerals}/{gas} = {minerals/max(1,gas):.1f})"
                         )
 
+            # Defensive top-up: extra Queens + static defense when minerals are
+            # banking and larva is starved. Previously this lived in a duplicate
+            # ``_prevent_resource_banking`` defined earlier in the file that
+            # was silently shadowed by this one. Now it runs as part of the
+            # canonical banking-prevention pipeline.
+            await self._build_static_defense_when_banking()
+
         except Exception as e:
             if self.bot.iteration % 50 == 0:
                 self.logger.warning(
@@ -2627,32 +2639,10 @@ class EconomyManager:
                 self._reserved_minerals = 150
                 self._reserved_gas = 100
 
-    async def _reduce_gas_workers(self) -> None:
-        """가스 일꾼 감소 (과잉 가스 방지)"""
-        try:
-            if (
-                not hasattr(self.bot, "gas_buildings")
-                or not self.bot.gas_buildings.ready
-            ):
-                return
-
-            for extractor in self.bot.gas_buildings.ready:
-                if extractor.assigned_harvesters >= 3:
-                    # 가스에서 일꾼 1명 이동
-                    workers_on_gas = self.bot.workers.filter(
-                        lambda w: w.is_gathering and w.order_target == extractor.tag
-                    )
-                    if workers_on_gas:
-                        worker = workers_on_gas.first
-                        # 가까운 미네랄로 이동
-                        closest_mineral = self.bot.mineral_field.closest_to(worker)
-                        if closest_mineral:
-                            self.bot.do(worker.gather(closest_mineral))
-                            return  # 한 번에 하나만
-
-        except (AttributeError, TypeError) as e:
-            if self.bot.iteration % 50 == 0:
-                self.logger.warning(f"[ECONOMY_WARN] Gas worker reduction failed: {e}")
+    # NOTE: ``_reduce_gas_workers`` is defined further below (~line 3298) with
+    # adaptive minimum-worker thresholds based on gas banking severity. That
+    # implementation shadowed this simpler one, making it dead code. Removed
+    # to keep a single canonical definition.
 
     async def _build_extractors(self) -> None:
         """가스 익스트랙터 건설 (가스 부족 시)"""

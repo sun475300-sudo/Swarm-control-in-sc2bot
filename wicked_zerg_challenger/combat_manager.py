@@ -2374,35 +2374,11 @@ class CombatManager:
             if self._has_units(enemy_units):
                 await self._mutalisk_attack(mutalisks, enemy_units)
 
-    def _find_harass_target(self):
-        """Find best harassment target (enemy base with workers)."""
-        # Try enemy main base
-        if (
-            hasattr(self.bot, "enemy_start_locations")
-            and self.bot.enemy_start_locations
-        ):
-            return self.bot.enemy_start_locations[0]
-
-        # Try known enemy structures
-        enemy_structures = getattr(self.bot, "enemy_structures", [])
-        if enemy_structures:
-            # Find townhalls
-            townhall_names = [
-                "NEXUS",
-                "COMMANDCENTER",
-                "ORBITALCOMMAND",
-                "PLANETARYFORTRESS",
-                "HATCHERY",
-                "LAIR",
-                "HIVE",
-            ]
-            for struct in enemy_structures:
-                if getattr(struct.type_id, "name", "") in townhall_names:
-                    return struct.position
-            # Any structure as fallback
-            return enemy_structures[0].position
-
-        return None
+    # NOTE: ``_find_harass_target`` is defined further below (~line 4278) with
+    # a richer priority chain (workers → isolated tech buildings → enemy base).
+    # That definition shadows this one in the class body, making the simpler
+    # version dead code. Removed to prevent confusion; keep the canonical
+    # implementation as the sole definition.
 
     async def _execute_harass(self, mutalisks, enemy_units):
         """
