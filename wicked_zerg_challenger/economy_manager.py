@@ -27,6 +27,11 @@ except ImportError:  # Fallbacks for tooling environments
 
 
 from config.unit_configs import EconomyConfig
+from economy.constants import (
+    RACE_GAS_TIMING_SECONDS,
+    EconomyDefaults,
+    GasBoostDefaults,
+)
 from local_training.economy_combat_balancer import EconomyCombatBalancer
 
 from utils.logger import get_logger
@@ -66,15 +71,21 @@ class EconomyManager:
         # ★ Phase 16: 매크로 해처리 임계값 하향 (라바 부족 시 더 빠르게 건설) ★
         if self.config:
             self.macro_hatchery_mineral_threshold = (
-                550  # ★ Phase 16: OVERFLOW→550 (더 빠른 매크로 해처리 최적화)
+                EconomyDefaults.MACRO_HATCHERY_MINERAL_THRESHOLD_TUNED
             )
             self.macro_hatchery_larva_threshold = self.config.LARVA_CRITICAL
         else:
-            self.macro_hatchery_mineral_threshold = 600
-            self.macro_hatchery_larva_threshold = 3
+            self.macro_hatchery_mineral_threshold = (
+                EconomyDefaults.MACRO_HATCHERY_MINERAL_THRESHOLD
+            )
+            self.macro_hatchery_larva_threshold = (
+                EconomyDefaults.MACRO_HATCHERY_LARVA_THRESHOLD
+            )
 
         self.last_macro_hatch_check = 0
-        self.macro_hatch_check_interval = 50  # Check every 50 frames
+        self.macro_hatch_check_interval = (
+            EconomyDefaults.MACRO_HATCH_CHECK_INTERVAL_FRAMES
+        )
         # Gold base tracking
         self._gold_bases_cache = []
         self._gold_cache_time = 0
@@ -84,7 +95,7 @@ class EconomyManager:
         self.transferred_hatcheries = set()
         # 2026-01-26 FIX: Prevent duplicate expansion attempts
         self._last_expansion_attempt_time = 0.0
-        self._expansion_cooldown = 3.0  # ★ FIX: 6초→3초 (확장 타이밍 놓침 방지)
+        self._expansion_cooldown = EconomyDefaults.EXPANSION_COOLDOWN_SECONDS
         # ★ 미네랄 예약 시스템 (확장 우선순위) ★
         self._mineral_reserved_for_expansion = 0  # 확장 예약 미네랄
         self._expansion_reserved_until = 0.0  # 예약 만료 시간
@@ -94,17 +105,11 @@ class EconomyManager:
         self._reserved_gas = 0
 
         # ★★★ Phase 18: Gas Timing Optimization ★★★
-        self.gas_timing_by_race = {
-            "Terran": 90,  # 1분 30초 (중간 타이밍)
-            "Protoss": 75,  # 1분 15초 (빠른 가스 - 프로토스는 초반 올인 많음)
-            "Zerg": 105,  # 1분 45초 (느린 가스 - 저그는 드론 펌핑 우선)
-            "Random": 90,
-            "Unknown": 90,
-        }
+        self.gas_timing_by_race = dict(RACE_GAS_TIMING_SECONDS)
 
         self.gas_boost_mode = False  # 빠른 테크가 필요할 때 활성화
         self.gas_boost_start_time = 0
-        self.gas_boost_duration = 120  # 2분간 가스 부스트
+        self.gas_boost_duration = GasBoostDefaults.DURATION_SECONDS
 
         self.dynamic_gas_workers_enabled = True  # 생산 큐 기반 가스 일꾼 조정
         self.gas_overflow_prevention_threshold = (

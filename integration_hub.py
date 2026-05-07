@@ -49,7 +49,8 @@ class SystemStatus:
 
 class IntegrationHub:
     def __init__(self, project_root: Optional[Path] = None):
-        self.project_root = project_root or Path(__file__).parent.parent
+        # The hub lives at the repo root, so __file__.parent IS the project root.
+        self.project_root = project_root or Path(__file__).parent
         self.status = self._check_all_systems()
 
     def _check_all_systems(self) -> SystemStatus:
@@ -208,7 +209,8 @@ class IntegrationHub:
 """Phase 66 Integration Test Script"""
 
 import sys
-sys.path.insert(0, str(__file__).parent.parent)
+from pathlib import Path
+sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from integration_hub import IntegrationHub
 
@@ -241,9 +243,8 @@ if __name__ == "__main__":
         return str(output_path)
 
 
-hub = IntegrationHub()
-
 if __name__ == "__main__":
+    hub = IntegrationHub()
     print("=== Phase 66: Integration Hub ===")
     print(json.dumps(hub.get_status(), indent=2))
     print("\\n=== Benchmark ===")
