@@ -750,10 +750,8 @@ def capstone_self_healing():
         # 위협 상승 시 빨강, 복구 시 초록
         if j > i or (i == 4 and j == 0):
             col = "#F44336" if i != 4 else "#4CAF50"
-            dash_style = "solid" if i != 4 else "dash"
         else:
             col = "#4CAF50"
-            dash_style = "dash"
 
         fig.add_trace(
             go.Scatter3d(
