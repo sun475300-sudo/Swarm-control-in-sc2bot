@@ -202,6 +202,19 @@
 - 코드 품질 추가 스캔: `==None`/`!=None` 0건, `type() == type` 0건, mutable default args 0건, child class without super().__init__() 0건 (ABC 제외).
 - 결과: 변경 없음. 기존 417 passed/9 skipped 유지.
 
+### Cycle 8 — 2026-05-07
+- 시도/롤백: 잔여 9건 skip 중 6건이 sc2 패키지 미설치로 인한 모듈-레벨 skip. `tests/conftest.py`에 minimal sc2.ids stubs(metaclass `__getattr__` 기반)를 주입해서 `from sc2.ids.unit_typeid import UnitTypeId` 같은 import만 통과시키려 시도했으나, 일부 테스트가 stub과 호환되지 않아 17 fails / 22 errors 발생. 롤백.
+- 향후 접근: 모듈-레벨 stub은 위험. 대안 — (a) per-test fixture로 sys.modules patching, (b) stub 정확도를 unit_typeid 대 ability_id 별로 분리, (c) sc2를 dev dep으로 추가(가장 깔끔하나 무게 큼).
+- 결과: 변경 없음. 417 passed/9 skipped 그대로.
+
+## 다음 사이클 후보 (P-여전히-pending)
+- C2 본격: `|| true` 제거하고 진짜 차단 모드로. 현재 cycle 6에서 추가 step만 둠.
+- C3: sc2bot-ci.yml의 strict mypy/black/bandit — 변경 파일만 검사하는 모드 도입.
+- C5: pip-tools / uv lockfile.
+- L1: numpy/psutil 등 dev/runtime dep 분리 정리.
+- D1/D2: 루트 60+ md 파일 docs/history로 이동, 캐논 README 1개 정립.
+- 더 이상 봇 코드 자체에서 정적 스캔으로 잡히는 명백한 버그는 없음. 추가 개선은 런타임 동작 검증(실제 sc2 경기)이 필요.
+
 ## 누적 진행
 | Cycle | passed | skipped | 비고 |
 |-------|--------|---------|------|
