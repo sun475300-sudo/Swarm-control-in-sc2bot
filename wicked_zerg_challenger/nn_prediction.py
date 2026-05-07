@@ -168,13 +168,13 @@ class SimpleNeuralPredictor:
             "patterns": self.enemy_patterns,
             "saved_at": datetime.now().isoformat(),
         }
-        with open(path, "w") as f:
+        with open(path, "w", encoding="utf-8") as f:
             json.dump(data, f, indent=2)
 
     def load_prediction_model(self, path: str) -> bool:
         """Load prediction model from file"""
         try:
-            with open(path, "r") as f:
+            with open(path, "r", encoding="utf-8") as f:
                 data = json.load(f)
             self.weights = data.get("weights", self.weights)
             self.enemy_patterns = data.get("patterns", self.enemy_patterns)
