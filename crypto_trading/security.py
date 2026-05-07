@@ -662,8 +662,16 @@ class EncryptedTradeLog:
                 self._fernet = Fernet(new_key)
             self._use_fernet = True
             logger.info("EncryptedTradeLog: Fernet 암호화 활성화")
-        except ImportError:
-            logger.warning("EncryptedTradeLog: cryptography 미설치. base64 폴백 사용.")
+        except BaseException as e:
+            # cryptography may raise pyo3_runtime.PanicException (BaseException
+            # subclass) when its native bindings (_cffi_backend, _rust) are
+            # missing; fall back to base64 in any failure mode.
+            logger.warning(
+                "EncryptedTradeLog: cryptography unavailable (%s). base64 폴백 사용.",
+                type(e).__name__,
+            )
+            if isinstance(e, (KeyboardInterrupt, SystemExit)):
+                raise
 
     def _encrypt(self, plaintext: str) -> str:
         """문자열 암호화"""
@@ -1117,11 +1125,17 @@ class SecretManager:
             fernet_key = base64.urlsafe_b64encode(key_hash)
             self._fernet = Fernet(fernet_key)
             self._use_fernet = True
-        except ImportError:
+        except BaseException as e:
+            # cryptography may raise pyo3_runtime.PanicException (BaseException
+            # subclass) when its native bindings (_cffi_backend, _rust) are
+            # missing; degrade to base64 fallback rather than crashing import.
+            if isinstance(e, (KeyboardInterrupt, SystemExit)):
+                raise
             logger.warning(
-                "SecretManager: cryptography 라이브러리 미설치 — "
+                "SecretManager: cryptography unavailable (%s) — "
                 "시크릿이 암호화되지 않고 base64 인코딩만 적용됩니다. "
-                "보안을 위해 'pip install cryptography'를 실행하세요."
+                "보안을 위해 'pip install cryptography'를 실행하세요.",
+                type(e).__name__,
             )
             self._fernet = None
             self._use_fernet = False
