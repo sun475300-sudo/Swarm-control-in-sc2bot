@@ -31,13 +31,22 @@ except ImportError:
         pass
 
     class UnitTypeId:
-        pass
+        # NOTE: these constants are referenced as default-argument values
+        # below (e.g. ``unit_type: UnitTypeId = UnitTypeId.OVERLORD``) and
+        # therefore evaluated at class-body load time. Without these stubs
+        # the module fails to import in any environment that lacks the sc2
+        # package, breaking unrelated modules that transitively import it.
+        OVERLORD = "OVERLORD"
+        OVERSEER = "OVERSEER"
+        ZERGLING = "ZERGLING"
+        DRONE = "DRONE"
+        QUEEN = "QUEEN"
 
     class AbilityId:
         pass
 
     class UpgradeId:
-        pass
+        OVERLORDSPEED = "OVERLORDSPEED"
 
     class Point2:
         pass

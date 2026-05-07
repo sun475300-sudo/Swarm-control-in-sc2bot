@@ -1,0 +1,15 @@
+# ═══════════════════════════════════════════════
+# Test / Development Dependencies
+# ═══════════════════════════════════════════════
+# Install with: pip install -r requirements-dev.txt
+# (Install runtime deps from requirements.txt first.)
+
+pytest>=8.0.0
+pytest-asyncio>=0.23.0       # required: many tests use `async def`
+pytest-timeout>=2.2.0        # required: pytest.ini sets `timeout = 60`
+pytest-cov>=4.1.0            # optional: coverage reporting
+
+# Lint / format (matches CI gates in .github/workflows/sc2bot-ci.yml)
+black>=26.3.1
+isort>=5.13.0
+flake8>=7.0.0

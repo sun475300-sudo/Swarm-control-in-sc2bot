@@ -46,6 +46,28 @@ try:
 except ImportError:
     HAS_TORCH = False
 
+    # Without torch, the *Torch classes below still need `nn.Module` /
+    # `torch.Tensor` to exist at class-definition time (subclass and type
+    # hints). The numpy fallback paths never instantiate them, so cheap stubs
+    # are sufficient — but instantiation must fail loudly to prevent silent
+    # numpy/torch divergence.
+    class _TorchUnavailable:
+        def __init__(self, *_a, **_kw):
+            raise RuntimeError(
+                "PyTorch is not installed; use the *Numpy variants instead."
+            )
+
+    class _NnNamespace:
+        Module = _TorchUnavailable
+
+    class _TorchNamespace:
+        Tensor = object  # type alias only — never instantiated
+
+    nn = _NnNamespace()  # type: ignore[assignment]
+    torch = _TorchNamespace()  # type: ignore[assignment]
+    F = None  # type: ignore[assignment]
+    optim = None  # type: ignore[assignment]
+
 # ===================================================================
 # NumPy fallback primitives
 # ===================================================================
