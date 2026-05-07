@@ -36,8 +36,6 @@ async def safe_train(resilience, unit, unit_type, retry_count: int = 1):
     Returns:
         bool: 생산 성공 여부
     """
-    last_error = None
-
     for attempt in range(retry_count + 1):
         try:
             # Validate unit is still valid
