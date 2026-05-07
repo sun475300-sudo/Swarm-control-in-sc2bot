@@ -218,10 +218,10 @@ class CombatManager:
                 if getattr(self, "overlord_hunter", None):
                     await self.overlord_hunter.on_step(iteration)
 
-                # CRITICAL FIX: Do NOT return here!
-                # We want to use MicroController for micro, but CombatManager for macro/strategy (assignments)
-                # The logic below will assign units to tasks, and then _execute_combat will use MicroController if available.
-                # return
+                # CRITICAL: do NOT return here. MicroController owns per-unit
+                # micro, but CombatManager still needs to run macro/strategy
+                # task assignments below; _execute_combat then delegates micro
+                # back to MicroController when available.
 
             # 아군 유닛과 적 유닛 확인
             if not hasattr(self.bot, "units") or not hasattr(self.bot, "enemy_units"):
