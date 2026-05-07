@@ -271,7 +271,9 @@ except ImportError:
 # Advanced Scout System V2
 try:
     # NOTE: class is AdvancedScoutingSystemV2 (with "ing"); alias kept for compat
-    from scouting.advanced_scout_system_v2 import AdvancedScoutingSystemV2 as AdvancedScoutSystemV2
+    from scouting.advanced_scout_system_v2 import (
+        AdvancedScoutingSystemV2 as AdvancedScoutSystemV2,
+    )
 except ImportError:
     AdvancedScoutSystemV2 = None
 
@@ -2877,7 +2879,6 @@ class BotStepIntegrator:
             # 전략 모드 적용 (StrategyManager에게 전달)
             if result and "strategy_mode" in result:
                 new_mode = result["strategy_mode"]
-                current_mode_str = "Unknown"
 
                 # StrategyManager에 모드 적용
                 if hasattr(self.bot, "strategy_manager") and self.bot.strategy_manager:
