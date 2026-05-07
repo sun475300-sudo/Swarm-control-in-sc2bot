@@ -119,8 +119,9 @@ class AdaptiveBuildOrder:
         elif self.enemy_fast_expand:
             self.current_build = "timing_attack"
             self._setup_timing_attack()
+            race_name = self.enemy_race.name if self.enemy_race is not None else "?"
             self.logger.info(
-                f"[{int(self.bot.time)}s] ★ BUILD: Timing Attack ({self.enemy_race.name}) ★"
+                f"[{int(self.bot.time)}s] ★ BUILD: Timing Attack ({race_name}) ★"
             )
 
         else:
