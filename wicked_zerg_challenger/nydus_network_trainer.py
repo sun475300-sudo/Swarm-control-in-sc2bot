@@ -97,8 +97,11 @@ class NydusNetworkTrainer:
         # 2. 병력 투입
         await self._load_units_into_network(network)
 
-        # 3. 배치된 유닛 관리
-        await self._command_deployed_units()
+        # 3. 배치된 유닛 관리 (active worms와 그 안의 유닛들 명령)
+        # NOTE: _command_deployed_units never existed; the actual method
+        # responsible for issuing orders to units that emerge from each
+        # active Nydus Worm is _manage_active_worms.
+        await self._manage_active_worms()
 
     async def _plan_new_worm(self, network, game_time: float):
         """새 Worm 계획"""

@@ -27,7 +27,7 @@ from sc2.ids.unit_typeid import UnitTypeId
 from sc2.position import Point2
 
 
-class TestProductionResilience(unittest.TestCase):
+class TestProductionResilience(unittest.IsolatedAsyncioTestCase):
     """Test suite for ProductionResilience"""
 
     def setUp(self):
@@ -114,17 +114,26 @@ class TestProductionResilience(unittest.TestCase):
 
     # ==================== Counter Unit Selection Tests ====================
 
-    async def test_get_counter_unit_terran_marine(self):
-        """Test counter selection against Terran marines"""
-        # Mock enemy composition with marines
-        mock_marine = Mock()
-        mock_marine.type_id = UnitTypeId.MARINE
-        self.bot.enemy_units = [mock_marine]
+    def _make_enemy(self, name: str):
+        """Helper: build a mock enemy unit whose type_id.name matches `name`."""
+        enemy = Mock()
+        enemy.type_id = Mock()
+        enemy.type_id.name = name
+        return enemy
 
-        # Should recommend banelings against marines
-        result = await self.resilience._get_counter_unit("Terran")
+    def test_get_counter_unit_terran_marine(self):
+        """Test counter selection against Terran marines (light infantry)."""
+        enemy_units = [self._make_enemy("MARINE")]
+        # Ensure structures lookup returns "exists=False" for the baneling-nest
+        # branch so we hit the roach-warren fallback.
+        baneling_nest = Mock()
+        baneling_nest.ready.exists = False
+        self.bot.structures = Mock(return_value=baneling_nest)
 
-        # Result could be BANELING, ROACH, or MUTALISK (all valid counters)
+        result = self.resilience._get_counter_unit(
+            enemy_units, has_roach_warren=True, has_hydra_den=False, has_spire=False
+        )
+
         valid_counters = [
             UnitTypeId.BANELING,
             UnitTypeId.ROACH,
@@ -133,11 +142,14 @@ class TestProductionResilience(unittest.TestCase):
         ]
         self.assertIn(result, valid_counters)
 
-    async def test_get_counter_unit_protoss(self):
-        """Test counter selection against Protoss"""
-        result = await self.resilience._get_counter_unit("Protoss")
+    def test_get_counter_unit_armored_ground(self):
+        """Test counter selection against armored ground (e.g. Stalkers)."""
+        enemy_units = [self._make_enemy("STALKER")]
 
-        # Common Protoss counters
+        result = self.resilience._get_counter_unit(
+            enemy_units, has_roach_warren=True, has_hydra_den=True, has_spire=False
+        )
+
         valid_counters = [
             UnitTypeId.ROACH,
             UnitTypeId.HYDRALISK,
@@ -146,11 +158,14 @@ class TestProductionResilience(unittest.TestCase):
         ]
         self.assertIn(result, valid_counters)
 
-    async def test_get_counter_unit_zerg(self):
-        """Test counter selection against Zerg"""
-        result = await self.resilience._get_counter_unit("Zerg")
+    def test_get_counter_unit_air(self):
+        """Test counter selection against air units (e.g. Mutalisks)."""
+        enemy_units = [self._make_enemy("MUTALISK")]
 
-        # Common Zerg counters
+        result = self.resilience._get_counter_unit(
+            enemy_units, has_roach_warren=False, has_hydra_den=True, has_spire=True
+        )
+
         valid_counters = [
             UnitTypeId.ROACH,
             UnitTypeId.MUTALISK,
@@ -158,43 +173,55 @@ class TestProductionResilience(unittest.TestCase):
             UnitTypeId.HYDRALISK,
         ]
         self.assertIn(result, valid_counters)
+
+    def test_get_counter_unit_no_enemies(self):
+        """Empty enemy_units must return None (early exit)."""
+        result = self.resilience._get_counter_unit(
+            [], has_roach_warren=True, has_hydra_den=True, has_spire=True
+        )
+        self.assertIsNone(result)
 
     # ==================== Resource Management Tests ====================
 
-    def test_check_high_minerals_threshold(self):
-        """Test high minerals detection"""
-        self.bot.minerals = 1500
-        # High minerals should trigger resource dump
-        self.assertGreater(self.bot.minerals, 1000)
+    async def test_force_resource_dump_no_resources_is_safe(self):
+        """force_resource_dump must not crash when nothing is buildable."""
+        self.bot.can_afford = Mock(return_value=False)
+        self.bot.already_pending = Mock(return_value=0)
+        # No larva
+        empty_units = Mock()
+        empty_units.exists = False
+        self.bot.units = Mock(return_value=empty_units)
+        # Should complete without raising
+        await self.resilience.force_resource_dump()
 
-    def test_check_high_gas_threshold(self):
-        """Test high gas detection"""
-        self.bot.vespene = 1500
-        # High gas should trigger tech/unit production
-        self.assertGreater(self.bot.vespene, 1000)
-
-    def test_check_balanced_resources(self):
-        """Test balanced resource state"""
-        self.bot.minerals = 500
-        self.bot.vespene = 200
-        # Balanced resources
-        self.assertLess(self.bot.minerals, 1000)
-        self.assertLess(self.bot.vespene, 1000)
+    async def test_force_resource_dump_skips_when_too_many_pending(self):
+        """If 2+ Hatcheries already pending, skip expansion."""
+        self.bot.can_afford = Mock(return_value=True)
+        self.bot.already_pending = Mock(return_value=3)
+        empty_units = Mock()
+        empty_units.exists = False
+        self.bot.units = Mock(return_value=empty_units)
+        # Should not call _try_expand since already_pending >= 2
+        self.resilience._try_expand = Mock()
+        await self.resilience.force_resource_dump()
+        self.resilience._try_expand.assert_not_called()
 
     # ==================== Tech Requirements Tests ====================
 
     def test_tech_requirement_spawning_pool(self):
-        """Test spawning pool requirement detection"""
-        # Should be UnitTypeId.SPAWNINGPOOL
-        self.assertEqual(UnitTypeId.SPAWNINGPOOL, UnitTypeId.SPAWNINGPOOL)
+        """Tech-tree IDs used by ProductionResilience must resolve."""
+        self.assertEqual(UnitTypeId.SPAWNINGPOOL.name, "SPAWNINGPOOL")
+        self.assertIsNotNone(UnitTypeId.SPAWNINGPOOL.value)
 
     def test_tech_requirement_lair(self):
-        """Test lair requirement detection"""
-        self.assertEqual(UnitTypeId.LAIR, UnitTypeId.LAIR)
+        """Lair tech-id must resolve and differ from Hatchery."""
+        self.assertEqual(UnitTypeId.LAIR.name, "LAIR")
+        self.assertNotEqual(UnitTypeId.LAIR, UnitTypeId.HATCHERY)
 
     def test_tech_requirement_spire(self):
-        """Test spire requirement for mutalisks"""
-        self.assertEqual(UnitTypeId.SPIRE, UnitTypeId.SPIRE)
+        """Spire tech-id must resolve and differ from Hydralisk Den."""
+        self.assertEqual(UnitTypeId.SPIRE.name, "SPIRE")
+        self.assertNotEqual(UnitTypeId.SPIRE, UnitTypeId.HYDRALISKDEN)
 
     # ==================== Production Status Tests ====================
 

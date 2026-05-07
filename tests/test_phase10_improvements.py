@@ -264,11 +264,17 @@ class TestStrategyManagerZvZCounter:
         assert hasattr(self.strategy, "_counter_zerg_units")
 
     def test_counter_zerg_only_runs_vs_zerg(self):
-        """Should only run when enemy is Zerg"""
+        """When enemy race is not Zerg, ratios must be left untouched."""
         self.strategy.detected_enemy_race = self.EnemyRace.TERRAN
-        self.strategy._cached_enemy_composition = {}
-        # Should not crash
+        self.strategy._cached_enemy_composition = {"ZERGLING": 50}
+        ratios_before = dict(
+            self.strategy.race_unit_ratios[self.EnemyRace.ZERG][self.GamePhase.MID]
+        )
         self.strategy._counter_zerg_units()
+        ratios_after = self.strategy.race_unit_ratios[self.EnemyRace.ZERG][
+            self.GamePhase.MID
+        ]
+        assert ratios_before == dict(ratios_after)
 
     def test_counter_zerg_zergling_flood(self):
         """Zergling flood should boost roach/baneling ratios"""
@@ -434,13 +440,24 @@ class TestEarlyScoutSystemMidGame:
 
     @pytest.mark.asyncio
     async def test_mid_game_rescouting_sends_zergling(self):
-        """Mid-game rescouting should send idle zergling to enemy base"""
+        """Mid-game rescouting should advance the cooldown after picking
+        an idle zergling. Previously this test asserted nothing — it would
+        have passed even if _mid_game_rescouting silently no-op'd."""
         self.bot.time = 400.0  # After 5 min
         self.scout._last_rescout_time = 0.0  # Reset cooldown
 
         await self.scout._mid_game_rescouting()
-        # Should have called closest_to and do()
-        # If no exception, the logic ran
+        # The routine should either record activity (cooldown advanced)
+        # or set a scout target — if it did nothing, the test must fail.
+        cooldown_advanced = self.scout._last_rescout_time > 0.0
+        target_set = (
+            getattr(self.scout, "_active_rescout_target", None) is not None
+            or getattr(self.scout, "_rescout_target", None) is not None
+        )
+        assert cooldown_advanced or target_set, (
+            "Mid-game rescouting did not advance cooldown nor set a target — "
+            "indicates the routine no-op'd, regressing the original feature."
+        )
 
 
 # ===== 7. Strategy Manager DT Response =====

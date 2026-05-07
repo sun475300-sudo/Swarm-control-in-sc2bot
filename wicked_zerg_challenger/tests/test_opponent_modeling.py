@@ -295,7 +295,7 @@ class TestOpponentModel(unittest.TestCase):
         self.assertEqual(model.dominant_style, OpponentStyle.AGGRESSIVE)
 
 
-class TestOpponentModeling(unittest.TestCase):
+class TestOpponentModeling(unittest.IsolatedAsyncioTestCase):
     """Test suite for OpponentModeling system"""
 
     def setUp(self):
@@ -595,6 +595,65 @@ class TestOpponentModeling(unittest.TestCase):
         # Verify model was updated
         model = self.modeling.opponent_models["opponent_Zerg"]
         self.assertEqual(model.games_played, 1)
+        # Defeat for us == win for opponent. Previously the on_end mapping
+        # was inverted, which made games_won/games_lost track the opposite
+        # of reality. Lock it down.
+        self.assertEqual(model.games_won, 1)
+        self.assertEqual(model.games_lost, 0)
+
+    async def test_on_end_victory_increments_opponent_loss(self):
+        """A Victory for us must register as a loss for the opponent."""
+        await self.modeling.on_start()
+        self.modeling.current_game_history = self.modeling.current_game_history or None
+        # on_start sets current_game_history, but only via on_game_start. The
+        # OpponentModeling constructor in newer paths leaves it None until
+        # signals/end run, so seed it explicitly to mirror a real game.
+        from opponent_modeling import GameHistory
+
+        self.modeling.current_game_history = GameHistory(
+            game_id="g1",
+            opponent_race="Zerg",
+            opponent_style="unknown",
+            detected_strategy="unknown",
+            build_order_observed=[],
+            timing_attacks=[],
+            final_composition={},
+            game_result="unknown",
+            game_duration=0.0,
+            early_signals=[],
+            tech_progression=[],
+        )
+        self.bot.time = 600.0
+        await self.modeling.on_end("Victory")
+        model = self.modeling.opponent_models[self.modeling.current_opponent_id]
+        self.assertEqual(model.games_played, 1)
+        self.assertEqual(model.games_won, 0)
+        self.assertEqual(model.games_lost, 1)
+
+    def test_on_game_end_records_result(self):
+        """Sync on_game_end(won, lost) must populate game_result correctly."""
+        from opponent_modeling import GameHistory
+
+        self.modeling.current_opponent_id = "opp"
+        self.modeling.opponent_models["opp"] = OpponentModel("opp")
+        self.modeling.current_game_history = GameHistory(
+            game_id="g1",
+            opponent_race="Zerg",
+            opponent_style="unknown",
+            detected_strategy="unknown",
+            build_order_observed=[],
+            timing_attacks=[],
+            final_composition={},
+            game_result="unknown",
+            game_duration=0.0,
+            early_signals=[],
+            tech_progression=[],
+        )
+        self.modeling.on_game_end(won=True, lost=False)
+        model = self.modeling.opponent_models["opp"]
+        # We won -> opponent lost
+        self.assertEqual(model.games_lost, 1)
+        self.assertEqual(model.games_won, 0)
 
     def test_get_opponent_stats(self):
         """Test retrieving opponent statistics"""

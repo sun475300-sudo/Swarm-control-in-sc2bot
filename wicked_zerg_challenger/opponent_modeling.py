@@ -590,8 +590,13 @@ class OpponentModeling:
         self.current_game_history.final_composition = (
             self._get_final_enemy_composition()
         )
+        # game_result is stored from OUR perspective (see
+        # OpponentModel.update_from_game), so "Victory" -> "win" and
+        # "Defeat" -> "loss". The previous mapping was inverted, which made
+        # the opponent's games_won/games_lost counters track the opposite
+        # of what actually happened.
         self.current_game_history.game_result = (
-            "win" if game_result == "Defeat" else "loss"
+            "win" if game_result == "Victory" else "loss"
         )
         self.current_game_history.game_duration = game_time
         self.current_game_history.early_signals = list(self.observed_signals)
@@ -731,7 +736,7 @@ class OpponentModeling:
 
     def on_game_start(self, opponent_id: str, opponent_race=None):
         """게임 시작 시 호출 - 적 추적 시작"""
-        self.current_opponent = opponent_id
+        self.current_opponent_id = opponent_id
         # ★ FIX: GameHistory dataclass에 맞는 필드로 초기화
         race_name = (
             opponent_race.name
@@ -764,7 +769,7 @@ class OpponentModeling:
 
     async def on_step(self, iteration: int):
         """매 프레임 호출 - 신호 감지"""
-        if not self.current_opponent or not self.bot:
+        if not self.current_opponent_id or not self.bot:
             return
 
         game_time = self.bot.time
@@ -775,14 +780,23 @@ class OpponentModeling:
 
     def on_game_end(self, won: bool, lost: bool):
         """게임 종료 시 호출 - 데이터 저장"""
-        if not self.current_opponent or not self.current_game_history:
+        if not self.current_opponent_id or not self.current_game_history:
             return
 
-        # Update game history
-        self.current_game_history.game_won = won
-        self.current_game_history.game_lost = lost
+        # Update game history. game_result is stored from OUR perspective
+        # (see OpponentModel.update_from_game). Previously this method wrote
+        # game_won/game_lost attributes that don't exist on GameHistory and
+        # never set game_result, so update_from_game always saw "unknown"
+        # and games_won/games_lost on the opponent model never advanced
+        # through this code path.
+        if won:
+            self.current_game_history.game_result = "win"
+        elif lost:
+            self.current_game_history.game_result = "loss"
+        else:
+            self.current_game_history.game_result = "unknown"
         self.current_game_history.early_signals = [
-            s.value for s in self.observed_signals
+            s.value if hasattr(s, "value") else s for s in self.observed_signals
         ]
 
         # Detect strategy (placeholder - would need more logic)
@@ -791,25 +805,25 @@ class OpponentModeling:
             pass
 
         # Update opponent model
-        model = self.opponent_models[self.current_opponent]
+        model = self.opponent_models[self.current_opponent_id]
         model.update_from_game(self.current_game_history)
 
         # Save to disk
         self.save_models()
 
         self.logger.info(
-            f"[OPPONENT_MODELING] Game data saved for {self.current_opponent}"
+            f"[OPPONENT_MODELING] Game data saved for {self.current_opponent_id}"
         )
 
     def get_predicted_strategy(self) -> Tuple[Optional[str], float]:
         """현재 적의 전략 예측"""
         if (
-            not self.current_opponent
-            or self.current_opponent not in self.opponent_models
+            not self.current_opponent_id
+            or self.current_opponent_id not in self.opponent_models
         ):
             return (None, 0.0)
 
-        model = self.opponent_models[self.current_opponent]
+        model = self.opponent_models[self.current_opponent_id]
 
         # If we have observed signals, use them for prediction
         if self.observed_signals:
