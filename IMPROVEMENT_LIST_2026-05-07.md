@@ -74,6 +74,7 @@ Type hints are silently broken at the static-analysis layer (works at runtime bu
 | # | Sev | Location | Issue | Plan | Status |
 |---|-----|----------|-------|------|--------|
 | G1 | Low | `wicked_zerg_challenger/creep_denial_system.py:298` (`_morph_overseer`) | Redundant `if overlord.is_idle:` immediately after `overlords = self.bot.units(...).idle` (`overlords.first` is already guaranteed idle). Mostly harmless, but reads as if there's a third condition that doesn't exist. | Drop the redundant guard. | ✅ Done (Iter 11) |
+| G2 | High (preventive) | `tests/test_no_duplicate_methods.py` (new) | The class of bug B1-B5 (F811 method shadowing in same class) had no automated guard — the only reason it was caught now was a manual flake8 sweep. | New AST-based parametrized regression test that walks every `*.py` under `wicked_zerg_challenger/` and asserts each class body defines each method ≤1 time. 367 file-level test cases. | ✅ Done (Iter 12) |
 
 ## Iteration log
 
@@ -88,3 +89,4 @@ Type hints are silently broken at the static-analysis layer (works at runtime bu
 - **Iter 9**: Fix p606 import tests — point at real public class names. Tests: 405 / 21 → 409 / 17 (4 more real).
 - **Iter 10**: A2 — add numpy/ruff/autoflake to requirements-dev.txt. Black format pass — 20 files.
 - **Iter 11**: G1 — drop redundant is_idle guard in creep_denial_system._morph_overseer.
+- **Iter 12**: G2 — add `tests/test_no_duplicate_methods.py` regression guard against future F811 shadows. Suite: 409 → 776 (+367 file-level checks, all green).
