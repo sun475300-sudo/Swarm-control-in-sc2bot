@@ -463,6 +463,12 @@ class QueenInjectOptimizer:
         2. Defense 전용: 2마리 (기지 근처 배치)
         3. Creep 전용: 2마리 (전선 방향 배치)
         4. Flexible: 나머지 (상황에 따라 모든 역할)
+
+        Recomputed from scratch every call (~10s) so that:
+        - Roles re-balance when the base count changes (e.g., lost expansion
+          should drop the inject role from one queen, not keep all queens
+          stuck on INJECT against a single hatchery).
+        - Tags of dead queens don't accumulate in the role dict forever.
         """
         if not hasattr(self.bot, "units") or not hasattr(self.bot, "townhalls"):
             return
@@ -473,52 +479,27 @@ class QueenInjectOptimizer:
         if not queens or not hatcheries:
             return
 
-        # ★ 1. Inject 전용 여왕 배정 (기지당 1마리) ★
-        inject_queens_needed = len(hatcheries) * self.inject_queens_per_base
-        assigned_inject = 0
+        # Wipe stale assignments — including dead queens — and rebuild fresh.
+        new_roles: Dict[int, QueenRole] = {}
+
+        inject_quota = len(hatcheries) * self.inject_queens_per_base
+        defense_quota = self.defense_queens_total
+        creep_quota = self.creep_queens_total
 
         for queen in queens:
-            if assigned_inject >= inject_queens_needed:
-                break
+            if inject_quota > 0:
+                new_roles[queen.tag] = QueenRole.INJECT
+                inject_quota -= 1
+            elif defense_quota > 0:
+                new_roles[queen.tag] = QueenRole.DEFENSE
+                defense_quota -= 1
+            elif creep_quota > 0:
+                new_roles[queen.tag] = QueenRole.CREEP
+                creep_quota -= 1
+            else:
+                new_roles[queen.tag] = QueenRole.FLEXIBLE
 
-            # 아직 역할이 없거나 Flexible인 경우
-            if (
-                queen.tag not in self.queen_roles
-                or self.queen_roles[queen.tag] == QueenRole.FLEXIBLE
-            ):
-                self.queen_roles[queen.tag] = QueenRole.INJECT
-                assigned_inject += 1
-
-        # ★ 2. Defense 전용 여왕 배정 ★
-        defense_assigned = 0
-        for queen in queens:
-            if defense_assigned >= self.defense_queens_total:
-                break
-
-            if (
-                queen.tag not in self.queen_roles
-                or self.queen_roles[queen.tag] == QueenRole.FLEXIBLE
-            ):
-                self.queen_roles[queen.tag] = QueenRole.DEFENSE
-                defense_assigned += 1
-
-        # ★ 3. Creep 전용 여왕 배정 ★
-        creep_assigned = 0
-        for queen in queens:
-            if creep_assigned >= self.creep_queens_total:
-                break
-
-            if (
-                queen.tag not in self.queen_roles
-                or self.queen_roles[queen.tag] == QueenRole.FLEXIBLE
-            ):
-                self.queen_roles[queen.tag] = QueenRole.CREEP
-                creep_assigned += 1
-
-        # ★ 4. 나머지는 Flexible ★
-        for queen in queens:
-            if queen.tag not in self.queen_roles:
-                self.queen_roles[queen.tag] = QueenRole.FLEXIBLE
+        self.queen_roles = new_roles
 
     def get_queen_role(self, queen_tag: int) -> QueenRole:
         """
