@@ -13,19 +13,73 @@ from unittest.mock import MagicMock, Mock
 
 import pytest
 
-try:
-    import os
-    import sys
+import os
+import sys
 
-    sys.path.insert(
-        0, os.path.join(os.path.dirname(__file__), "..", "wicked_zerg_challenger")
+sys.path.insert(
+    0, os.path.join(os.path.dirname(__file__), "..", "wicked_zerg_challenger")
+)
+
+# Import each component independently — a missing optional dep (e.g. numpy
+# for boids) should not skip the whole module. Tests for unavailable
+# components mark themselves skipped via the *_AVAILABLE flags below.
+try:
+    from combat.targeting import Targeting
+
+    _TARGETING_AVAILABLE = True
+except ImportError as e:
+    Targeting = None  # type: ignore[assignment]
+    _TARGETING_AVAILABLE = False
+    _TARGETING_ERR = f"{type(e).__name__}: {e}"
+
+try:
+    from combat.micro_combat import MicroCombat
+
+    _MICRO_AVAILABLE = True
+except ImportError as e:
+    MicroCombat = None  # type: ignore[assignment]
+    _MICRO_AVAILABLE = False
+    _MICRO_ERR = f"{type(e).__name__}: {e}"
+
+try:
+    from combat.boids_swarm_control import BoidsSwarmController
+
+    _BOIDS_AVAILABLE = True
+except ImportError as e:
+    BoidsSwarmController = None  # type: ignore[assignment]
+    _BOIDS_AVAILABLE = False
+    _BOIDS_ERR = f"{type(e).__name__}: {e}"
+
+if not (_TARGETING_AVAILABLE or _MICRO_AVAILABLE or _BOIDS_AVAILABLE):
+    pytest.skip(
+        "Combat components not available (all three failed to import)",
+        allow_module_level=True,
     )
 
-    from combat.boids_swarm_control import BoidsSwarmController
-    from combat.micro_combat import MicroCombat
-    from combat.targeting import Targeting
-except ImportError:
-    pytest.skip("Combat components not available", allow_module_level=True)
+_targeting_skip = pytest.mark.skipif(
+    not _TARGETING_AVAILABLE,
+    reason=(
+        f"combat.targeting not importable: {_TARGETING_ERR}"
+        if not _TARGETING_AVAILABLE
+        else ""
+    ),
+)
+_micro_skip = pytest.mark.skipif(
+    not _MICRO_AVAILABLE,
+    reason=(
+        f"combat.micro_combat not importable: {_MICRO_ERR}"
+        if not _MICRO_AVAILABLE
+        else ""
+    ),
+)
+_boids_skip = pytest.mark.skipif(
+    not _BOIDS_AVAILABLE,
+    reason=(
+        f"combat.boids_swarm_control not importable: {_BOIDS_ERR}"
+        if not _BOIDS_AVAILABLE
+        else ""
+    ),
+)
 
 
 class MockUnit:
@@ -118,6 +172,7 @@ class MockBot:
 # ===== Targeting System Tests =====
 
 
+@_targeting_skip
 class TestTargeting:
     """타겟팅 시스템 테스트"""
 
@@ -205,6 +260,7 @@ class TestTargeting:
 # ===== Micro Combat Tests =====
 
 
+@_micro_skip
 class TestMicroCombat:
     """마이크로 컨트롤 테스트"""
 
@@ -283,6 +339,7 @@ class TestMicroCombat:
 # ===== Boids Swarm Control Tests =====
 
 
+@_boids_skip
 class TestBoidsSwarmControl:
     """Boids 군집 제어 테스트"""
 
@@ -367,6 +424,8 @@ class TestBoidsSwarmControl:
 class TestCombatComponentsIntegration:
     """컴포넌트 통합 테스트"""
 
+    @_targeting_skip
+    @_micro_skip
     def test_targeting_with_micro(self):
         """타겟팅과 마이크로 컨트롤 통합 테스트"""
         bot = MockBot()
@@ -395,6 +454,8 @@ class TestCombatComponentsIntegration:
         # 로직이 작동해야 함
         assert target == zergling
 
+    @_targeting_skip
+    @_boids_skip
     def test_boids_with_targeting(self):
         """Boids와 타겟팅 통합 테스트"""
         bot = MockBot()
@@ -431,6 +492,7 @@ class TestCombatComponentsIntegration:
 class TestEdgeCases:
     """엣지 케이스 테스트"""
 
+    @_targeting_skip
     def test_empty_enemy_units(self):
         """적 유닛이 없을 때"""
         bot = MockBot()
@@ -442,6 +504,7 @@ class TestEdgeCases:
         # None 반환되어야 함
         assert target is None
 
+    @_boids_skip
     def test_single_unit_boids(self):
         """단일 유닛 Boids"""
         boids = BoidsSwarmController()
@@ -455,6 +518,7 @@ class TestEdgeCases:
             # None이거나 (0, 0) 반환
             assert force is None or force == (0, 0)
 
+    @_micro_skip
     def test_overlapping_units(self):
         """겹친 유닛들"""
         bot = MockBot()

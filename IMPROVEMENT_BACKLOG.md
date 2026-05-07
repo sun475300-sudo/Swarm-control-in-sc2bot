@@ -169,3 +169,10 @@
 - ✅ B1 fix: test_queen_transfusion sc2 import guard
 - ✅ B2 fix: check_proxy.py main guard + logger format
 - 결과: pytest 372 passed → 405 passed (numpy install 후), 0 fail
+
+### Cycle 2 — 2026-05-07
+- ✅ B4: pytest.ini `--disable-warnings` 제거, 카테고리별 filterwarnings로 교체
+- ✅ T2: test_p606_infra skip 사유에 모듈 경로 + 실제 ImportError 노출
+- ✅ T3 (부분): test_combat_components 모듈-레벨 skip 분해 → 컴포넌트별 skipif. numpy 없는 환경에서 0 → 13 tests pass.
+- ✅ T5 (신규): `world_model/__init__.py`가 존재하지 않는 심볼(`DreamerAgent`, `WorldModel`, `LatentImagination`, `demo`)을 import해 패키지 import 깨짐. 실제 정의된 `SC2WorldModel`, `DreamerActor` 등으로 교체.
+- 결과: 405 passed → 406 passed (full suite, with numpy). CI 환경(numpy 없음)에서는 +13 tests recovered.
