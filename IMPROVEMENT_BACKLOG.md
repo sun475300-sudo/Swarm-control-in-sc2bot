@@ -1,0 +1,252 @@
+# SC2 Bot — Improvement Backlog (Cycle Tracker)
+
+> Generated: 2026-05-07 · Branch: `claude/stoic-shannon-UAfoL`
+> Source: pytest baseline + flake8 critical-error scan
+> Cadence: each cycle picks ~5 items, fixes, runs tests, commits, pushes; then repeats.
+
+## Baseline (cycle 0)
+
+| Metric | Value |
+|---|---|
+| pytest collected | 342 (1 collection error blocked) |
+| pytest passed | 365 (after excluding collection error) |
+| pytest failed | 7 |
+| pytest skipped | 34 |
+| flake8 critical (F/E9/W6) | 485 |
+
+### Failures (cycle 0)
+
+1. `tests/test_queen_transfusion.py` — collection error (no `try/except` for `from sc2.ids.unit_typeid`)
+2. `tests/test_security.py::TestSecurityImports::test_import_security_module` — `pyo3_runtime.PanicException`
+3. `tests/test_security.py::TestSecurityImports::test_trade_safety_exists` — same
+4. `tests/test_security.py::TestSecurityImports::test_allowed_ips_defined` — same
+5. `tests/test_security.py::TestIPWhitelist::test_localhost_allowed` — same
+6. `tests/test_security.py::TestIPWhitelist::test_ipv6_localhost_allowed` — same
+7. `tests/test_crypto_trading.py::TestCryptoImports::test_import_config` — same
+8. `tests/test_crypto_trading.py::TestCryptoImports::test_import_security` — same
+
+Root cause for #2-#8: `crypto_trading/security.py` imports `cryptography.fernet.Fernet`
+inside `try/except ImportError`, but on this system `_cffi_backend` is missing,
+which raises `pyo3_runtime.PanicException` (not `ImportError`). The except clause
+must be broadened.
+
+## Backlog
+
+### Cycle 1 — Test stability (TARGETED)
+
+- [ ] **B1.1** `tests/test_queen_transfusion.py` — wrap `from sc2.ids.unit_typeid` in `try/except ImportError` + `pytest.skip(allow_module_level=True)`, matching the pattern in `test_harassment_coordinator.py:11-15`.
+- [ ] **B1.2** `crypto_trading/security.py:651` (EncryptedTradeLog) — replace `except ImportError` with `except Exception` so cryptography load failures degrade to base64 fallback.
+- [ ] **B1.3** `crypto_trading/security.py:1107` (SecretManager._init_fernet) — same broadening.
+- [ ] **B1.4** Quick re-run: confirm 0 fail / 0 collection error.
+
+### Cycle 2 — Lint hygiene (F541 batch)
+
+- [ ] **B2.1** `wicked_zerg_challenger/wicked_zerg_bot_pro_impl.py` — 7 F541 f-string placeholder warnings (lines 306, 320, 552, 652, 661, 673, 748).
+- [ ] **B2.2** `wicked_zerg_challenger/worker_combat_system.py:133` — 1 F541.
+- [ ] **B2.3** Survey remaining F541 (255 total) — group by top 5 files.
+
+### Cycle 3 — Lint hygiene (F841 unused locals)
+
+- [ ] **B3.1** Top file with unused locals — fix top 20 occurrences.
+- [ ] **B3.2** Identify whether any are bug-disguising (e.g. assigned but never read despite name suggesting use).
+
+### Cycle 4 — F811 / F401 / F403
+
+- [ ] **B4.1** `_find_harass_target` redefinition (line 2377 area).
+- [ ] **B4.2** Single F401 unused import.
+- [ ] **B4.3** Visual file `swarm_3d_ursina.py` — replace `from ursina import *` with explicit list (or scope via `# noqa: F403,F405` if intentional).
+
+### Cycle 5 — Test coverage / skip cleanup
+
+- [ ] **B5.1** Audit pytest skip/xfail (38 currently skipped) — categorize: env-dependent vs temporary holdovers.
+- [ ] **B5.2** Convert env-dependent skips to `pytest.importorskip` for clearer reasoning.
+
+### Cycle 6+ — Bot logic improvements (deferred until lint base is clean)
+
+- [ ] **B6.1** Review `wicked_zerg_challenger/economy/queen_transfusion_manager.py` — verify recent transfusion fixes hold under cooldown edge cases.
+- [ ] **B6.2** Audit `combat_manager` for missing `is_burrowed` / `is_cloaked` checks.
+- [ ] **B6.3** `harassment_coordinator` retraction triggers — make threshold configurable.
+
+---
+
+## Cycle log
+
+| Cycle | Date | Items | Tests after | Commit |
+|---|---|---|---|---|
+| 0 (baseline) | 2026-05-07 | — | 365P / 7F / 34S / 1err | (current HEAD `0ac482b`) |
+| 1 | 2026-05-07 | B1.1, B1.2, B1.3 | **372P / 0F / 35S** | `2241e17` |
+| 2 | 2026-05-07 | B2.1, B2.2 + 7 more files | **372P / 0F / 35S**, F541 255→159 | `43e07f6` |
+| 3 | 2026-05-07 | B4.2 (F401), F541 batch 3 | **372P / 0F / 35S**, F541 159→105, F401 1→0 | `c7f10a0` |
+| 4 | 2026-05-07 | F541 batch 4 (28 files), pytest warning identified | **372P / 0F / 35S**, F541 105→49 | `d1a40aa` |
+| 5 | 2026-05-07 | F541 finishing sweep (15 files in tools/+visuals/) | **372P / 0F / 35S**, **F541 49→0** ✅ | `07dfe45` |
+| 6 | 2026-05-07 | F841 `except as <unused>` sweep (47 sites) | **372P / 0F / 35S**, F841 128→81 | `039bac5` |
+| 7 | 2026-05-07 | Skip audit (no action), delete 2 safe F811 duplicates | **372P / 0F / 35S**, F811 5→3 | (this commit) |
+
+### Cycle 7 detail
+
+**Skip audit conclusion** — all 35 skipped tests are correctly env-gated
+(sc2 / numpy / pandas / pyupbit / torch absent on CI sandbox). No skip-removal
+is possible without first installing those deps; recommend leaving as-is and
+adding the deps to a `requirements-test-extras.txt` if a fuller suite is wanted.
+
+**F811 dead-duplicate deletion** — two of the five F811 redefinitions had
+small earlier-defined methods that were unconditionally shadowed by larger,
+more capable later definitions:
+
+| File | Removed | Kept (active) | Notes |
+|---|---|---|---|
+| `combat_manager.py` | `_find_harass_target` @ 2377 (~30 lines) | @ 4278 (sc2-aware, worker-prioritising) | Earlier version naïvely returned `enemy_start_locations[0]` |
+| `local_training/production_resilience.py` | `build_terran_counters` @ 1369 (~21 lines) | @ 1866 (TechCoordinator-aware) | Earlier version did not use TechCoordinator |
+
+A short comment is left at the deletion site so a future reader can
+locate the active version.
+
+**F811 deferred (3 remaining)**:
+
+| File | Symbol | Earlier shadowed | Why deferred |
+|---|---|---|---|
+| `economy_manager.py` | `_prevent_resource_banking` @ 2507 | @ 1298 | Both bodies are large (200+ lines) and structurally different — needs human review |
+| `economy_manager.py` | `_reduce_gas_workers` @ 3286 | @ 2630 | Earlier and later versions implement noticeably different policies — deletion changes nothing at runtime, but reviewer should confirm the active one is the desired strategy |
+| `opponent_modeling.py` | `on_step` @ 765 | @ 341 | `on_step` is the bot framework's main entry-point hook; deletion needs deliberate review |
+
+
+### Cycle 6 detail
+
+The F841 (unused local) warnings include two distinct patterns:
+
+1. **`except (X, Y) as e:` where `e` is never read** (the dominant 47/128 cases) — silently dropping the exception object after a deliberate catch. Pure mechanical fix: drop ` as e`. Identical at runtime.
+2. **Regular assignments where the value is computed but never read** (81 remaining) — these need case-by-case audit because they may reveal forgotten code paths or wasted computation.
+
+Cycle 6 handled the mechanical-fix population (#1) only:
+
+| File | Sites fixed |
+|---|---|
+| `combat_manager.py` | 25 |
+| `bot_step_integration.py` | 11 |
+| `production_resilience.py` (training) | mixed |
+| `aggressive_strategies.py` | 4 |
+| `air_unit_manager.py` | 1 |
+| `production_controller.py` | 2 |
+| `economy_manager.py` | mixed |
+| Total | **47** |
+
+The remaining 81 F841s are **NOT** mere `except as` cases — they're real assignments to variables like `game_time`, `non_combat_names`, `regenerating`, `card`, etc. that were computed and then ignored. Some are likely dead code, others may be log/debug remnants. Queued for next cycle with manual inspection.
+
+
+### Cycle 5 detail
+
+Final F541 sweep — 49 more dead f-prefixes across `tools/` (10 files) and
+`visuals/` (5 files). Repository is now **F541-clean** (0 of 255).
+
+| File | Fixed |
+|---|---|
+| `tools/comprehensive_auto_fix_workflow.py` | 5 |
+| `tools/test_background_training.py` | 5 |
+| `visuals/generate_animated_gifs.py` | 5 |
+| `visuals/make_pptx.py` | 5 |
+| `tools/background_parallel_learner.py` | 4 |
+| `tools/integrated_pipeline.py` | 4 |
+| `tools/monitor_background_training.py` | 4 |
+| `visuals/poc_simulation.py` | 4 |
+| `tools/cleanup_pycache.py` | 3 |
+| `tools/package_for_aiarena.py` | 3 |
+| `visuals/Swarm-Net_Visuals_Package/make_pptx.py` | 3 |
+| `tools/check_missing_logic.py` | 1 |
+| `tools/pro_replay_learning_workflow.py` | 1 |
+| `tools/visualize_learning.py` | 1 |
+| `visuals/make_investor_pptx.py` | 1 |
+
+### Cumulative since baseline
+
+| Metric | Baseline (cycle 0) | After cycle 5 | Δ |
+|---|---|---|---|
+| pytest passed | 365 | **372** | +7 |
+| pytest failed | 7 | **0** | -7 |
+| pytest skipped | 34 | 35 | +1 |
+| pytest collection errors | 1 | **0** | -1 |
+| pytest warnings (env-dependent) | 1 | 0 (with pytest-timeout) | -1 |
+| flake8 F541 | 255 | **0** ✅ | -255 |
+| flake8 F401 | 1 | **0** ✅ | -1 |
+| flake8 total F-rule | 485 | 229 | -256 (-53%) |
+
+
+### Cycle 4 detail
+
+- **F541 batch 4** — 56 more dead f-prefixes across 28 files. Touches one core file (`combat_manager.py:1` and `economy/queen_transfusion_manager.py:1`) plus a wide spread of training-pipeline / runtime-utility files. Repository F541: 105 → 49 (49 remaining, mostly in `tools/` + `visuals/` utility scripts).
+
+- **pytest warning** — root-caused: `pytest.ini:36 timeout = 60` requires `pytest-timeout` plugin which is in `requirements-dev.txt:7` but not always installed in CI environments. Locally fixed by `pip install pytest-timeout`; warning is environment-only, not a bug. No code change made.
+
+- **CI Lint & Type Check (3.11) — pre-existing failure**, not introduced by this branch. `black --check` would reformat 14 files, of which 11 (e.g. `combat_manager.py`, `harassment_coordinator.py`, `queen_transfusion_manager.py`, `logic_tuning.py`) were already non-compliant on `origin/main`. Per `MASTER_TODO_SC2.md` policy, broad black formatting is deferred until other PRs settle.
+
+### Cycle 4 cumulative impact (since baseline)
+
+- pytest: **365P / 7F / 34S / 1err  →  372P / 0F / 35S / 0err**
+- F541: 255 → 49 (-206, 81% reduction)
+- F401: 1 → 0
+- Total F errors: 485 → 278 (-207, 43% reduction)
+
+
+### Cycle 3 detail
+
+- **F401 fix** — `wicked_zerg_challenger/scouting/phase_scout_cadence.py:45` — removed unused `Tuple` from `from typing import List, Optional, Tuple`. Repository is now F401-clean.
+
+- **F541 batch 3** — 54 more f-prefix removals across 6 files:
+
+| File | Fixed |
+|---|---|
+| `tools/integrated_replay_learning_workflow.py` | 16 |
+| `tools/comprehensive_training_workflow_5x_v2.py` | 12 |
+| `tools/iterative_replay_learning_workflow.py` | 11 |
+| `aggressive_strategies.py` | 5 |
+| `build_feedback_system.py` | 5 |
+| `game_analytics_system.py` | 5 |
+
+Repository F541 count: 159 → 105.
+
+### Cycle 3 — F811 deferred
+
+5 F811 redefinitions remain. Investigation showed that the bodies of the
+shadowed (first) and active (second) definitions are **substantially different**
+in `economy_manager.py::_prevent_resource_banking` and `combat_manager.py::_find_harass_target`.
+Auto-deleting the first definition is mechanically safe (Python never reaches it)
+but obscures probable merge-conflict-resolution intent, so this is queued for
+a follow-up cycle that can be reviewed by a human:
+
+| File | Line | Symbol | Earlier line shadowed |
+|---|---|---|---|
+| `combat_manager.py` | 4278 | `_find_harass_target` | 2377 |
+| `economy_manager.py` | 2507 | `_prevent_resource_banking` | 1298 |
+| `economy_manager.py` | 3286 | `_reduce_gas_workers` | 2630 |
+| `local_training/production_resilience.py` | 1866 | `build_terran_counters` | 1369 |
+| `opponent_modeling.py` | 765 | `on_step` | 341 |
+
+
+### Cycle 2 detail
+
+Removed dead `f` prefix from 96 f-strings without placeholders across 9 core files:
+
+| File | F541 fixed |
+|---|---|
+| `run_with_training.py` | 24 |
+| `economy_manager.py` | 14 |
+| `check_learning_rate.py` | 14 |
+| `local_training/production_resilience.py` | 11 |
+| `log_analyzer.py` | 10 |
+| `local_training/curriculum_manager.py` | 8 |
+| `wicked_zerg_bot_pro_impl.py` | 7 |
+| `bot_step_integration.py` | 7 |
+| `worker_combat_system.py` | 1 |
+
+Each fix is mechanical: `logger.info(f"static text")` → `logger.info("static text")`. No behavior change. Tests unchanged at 372P/0F/35S.
+
+Remaining F541: 159 (mostly in `tools/` and `visuals/` utility scripts — lower priority).
+
+
+### Cycle 1 detail
+
+- **B1.1** `tests/test_queen_transfusion.py:11` — added `try/except ImportError` around `from sc2.ids.unit_typeid import UnitTypeId` with `pytest.skip(allow_module_level=True)`. Removes 1 collection error.
+- **B1.2** `crypto_trading/security.py:665` (EncryptedTradeLog) — broadened `except ImportError` to `except BaseException` (re-raising `KeyboardInterrupt`/`SystemExit`). Catches `pyo3_runtime.PanicException` raised when cryptography native bindings (`_cffi_backend`) are missing.
+- **B1.3** `crypto_trading/security.py:1123` (SecretManager._init_fernet) — same broadening with same KI/SE re-raise guard.
+
+Effect: 7 hard failures + 1 collection error gone.
+
