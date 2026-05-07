@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Air Threat Response Trainer - 공중 위협 대응 학습 시스템
 

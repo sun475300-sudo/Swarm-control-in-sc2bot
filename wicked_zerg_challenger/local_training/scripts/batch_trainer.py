@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Batch Trainer - 배치 학습 처리 관리
 
@@ -338,7 +337,7 @@ def train_from_manifest(
             logger.error(f"Manifest file not found: {manifest_path}")
             return {"loss": 0.0, "accuracy": 0.0}
 
-        with open(manifest_path, "r", encoding="utf-8") as f:
+        with open(manifest_path, encoding="utf-8") as f:
             manifest_data = json.load(f)
 
         # 결과 데이터 추출

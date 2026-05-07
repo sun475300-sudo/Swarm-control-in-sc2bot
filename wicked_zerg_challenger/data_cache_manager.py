@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Data Cache Manager - 자주 사용되는 데이터 캐싱
 

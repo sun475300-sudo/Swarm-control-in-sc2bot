@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Phase 15 Integration Monitor
 
@@ -57,7 +56,7 @@ class IntegrationMonitor:
 
         for json_file in sorted(json_files):
             try:
-                with open(json_file, "r", encoding="utf-8") as f:
+                with open(json_file, encoding="utf-8") as f:
                     data = json.load(f)
 
                 opponent_id = data.get("opponent_id", json_file.stem)
@@ -105,7 +104,7 @@ class IntegrationMonitor:
 
         # Summary
         overall_win_rate = (total_wins / total_games * 100) if total_games > 0 else 0
-        logger.info(f"[GRAPH] OVERALL STATISTICS:")
+        logger.info("[GRAPH] OVERALL STATISTICS:")
         logger.info(f"   Total Games: {total_games}")
         logger.info(f"   Total Wins: {total_wins}")
         logger.info(f"   Overall Win Rate: {overall_win_rate:.1f}%")
@@ -131,7 +130,7 @@ class IntegrationMonitor:
 
         # Read recent log entries
         try:
-            with open(self.log_file, "r", encoding="utf-8") as f:
+            with open(self.log_file, encoding="utf-8") as f:
                 lines = f.readlines()
 
             # Look for micro V3 log entries
@@ -148,7 +147,7 @@ class IntegrationMonitor:
             # Parse latest status
             latest_log = micro_v3_logs[-1] if micro_v3_logs else None
             if latest_log:
-                logger.info(f"  [GAME] Latest Status:")
+                logger.info("  [GAME] Latest Status:")
                 logger.info(f"     {latest_log.strip()}")
 
             # Count ability usage
@@ -158,7 +157,7 @@ class IntegrationMonitor:
             )
             focus_fire_count = sum(1 for line in micro_v3_logs if "Focus fire:" in line)
 
-            logger.info(f"\n  [GRAPH] Activity Summary:")
+            logger.info("\n  [GRAPH] Activity Summary:")
             logger.info(f"     Ravager micro executions: {ravager_count}")
             logger.info(f"     Lurker micro executions: {lurker_count}")
             logger.info(f"     Focus fire executions: {focus_fire_count}")
@@ -186,7 +185,7 @@ class IntegrationMonitor:
             return {"status": "no_logs"}
 
         try:
-            with open(self.log_file, "r", encoding="utf-8") as f:
+            with open(self.log_file, encoding="utf-8") as f:
                 lines = f.readlines()
 
             # Look for errors
@@ -250,7 +249,7 @@ class IntegrationMonitor:
             return {"status": "no_logs"}
 
         try:
-            with open(self.log_file, "r", encoding="utf-8") as f:
+            with open(self.log_file, encoding="utf-8") as f:
                 lines = f.readlines()
 
             # Look for timing information
@@ -295,7 +294,7 @@ class IntegrationMonitor:
             if lag_indicators:
                 logger.info(f"\n  [!]  Performance warnings: {len(lag_indicators)}")
             else:
-                logger.info(f"\n  [OK] No performance warnings detected")
+                logger.info("\n  [OK] No performance warnings detected")
 
             return {
                 "status": "ok",

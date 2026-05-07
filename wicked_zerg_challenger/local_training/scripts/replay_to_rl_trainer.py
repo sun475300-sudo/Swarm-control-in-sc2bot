@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Replay to RL Trainer
 리플레이 데이터를 RLAgent 학습용 데이터(State, Action, Reward)로 변환하고 학습시킵니다.

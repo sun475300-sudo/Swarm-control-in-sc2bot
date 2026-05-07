@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Comprehensive Scoring System — 종합 점수 기반 실시간 학습 엔진
 
@@ -394,7 +393,7 @@ class ScoringSystem:
 
         # 퀸 인젝트 체크
         structures = getattr(self.bot, "structures", None)
-        if structures and hasattr(structures, "__call__"):
+        if structures and callable(structures):
             try:
                 from sc2.ids.unit_typeid import UnitTypeId
 
@@ -434,7 +433,7 @@ class ScoringSystem:
         elif game_time < 480:
             # 중반: 테크 건물 + 업그레이드
             structures = getattr(self.bot, "structures", None)
-            if structures and hasattr(structures, "__call__"):
+            if structures and callable(structures):
                 try:
                     from sc2.ids.unit_typeid import UnitTypeId
 
@@ -746,7 +745,7 @@ class ScoringSystem:
         try:
             existing = []
             if os.path.exists(filepath):
-                with open(filepath, "r", encoding="utf-8") as f:
+                with open(filepath, encoding="utf-8") as f:
                     existing = json.load(f)
             existing.append(report)
             # Keep last 200 games
@@ -762,7 +761,7 @@ class ScoringSystem:
         filepath = os.path.join(self.SAVE_PATH, "cumulative_score.json")
         try:
             if os.path.exists(filepath):
-                with open(filepath, "r", encoding="utf-8") as f:
+                with open(filepath, encoding="utf-8") as f:
                     return json.load(f)
         except Exception:
             pass

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Game Statistics - 맵/난이도/종족별 승률 통계
 """
@@ -21,7 +20,7 @@ class GameStatistics:
     def load_stats(self):
         """통계 로드"""
         if self.stats_file.exists():
-            with open(self.stats_file, "r", encoding="utf-8") as f:
+            with open(self.stats_file, encoding="utf-8") as f:
                 return json.load(f)
         else:
             return {
@@ -200,14 +199,14 @@ class GameStatistics:
             return False
 
         try:
-            with open(results_path, "r", encoding="utf-8") as f:
+            with open(results_path, encoding="utf-8") as f:
                 data = json.load(f)
             if isinstance(data, list):
                 self._structured_results = data
             else:
                 self._structured_results = []
             return True
-        except (json.JSONDecodeError, IOError, OSError) as e:
+        except (json.JSONDecodeError, OSError) as e:
             logger.error(f"Failed to load structured results: {e}")
             self._structured_results = []
             return False

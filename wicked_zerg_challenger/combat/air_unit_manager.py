@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Air Unit Manager - 공중 유닛 전용 관리
 

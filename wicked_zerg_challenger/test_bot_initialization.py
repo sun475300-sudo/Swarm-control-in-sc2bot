@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 Test script to verify bot initialization and manager connections.
 """
@@ -144,7 +143,7 @@ def verify_code_patterns():
 
     # Check wicked_zerg_bot_pro_impl.py
     impl_path = os.path.join(os.path.dirname(__file__), "wicked_zerg_bot_pro_impl.py")
-    with open(impl_path, "r", encoding="utf-8") as f:
+    with open(impl_path, encoding="utf-8") as f:
         impl_content = f.read()
 
     checks = [
@@ -162,7 +161,7 @@ def verify_code_patterns():
 
     # Check unit_factory.py
     factory_path = os.path.join(os.path.dirname(__file__), "unit_factory.py")
-    with open(factory_path, "r", encoding="utf-8") as f:
+    with open(factory_path, encoding="utf-8") as f:
         factory_content = f.read()
 
     if "_safe_train" in factory_content:
@@ -172,7 +171,7 @@ def verify_code_patterns():
 
     # Check bot_step_integration.py
     integrator_path = os.path.join(os.path.dirname(__file__), "bot_step_integration.py")
-    with open(integrator_path, "r", encoding="utf-8") as f:
+    with open(integrator_path, encoding="utf-8") as f:
         integrator_content = f.read()
 
     if "end_frame()" in integrator_content:

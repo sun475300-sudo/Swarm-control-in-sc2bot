@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 
 import json
 import logging
@@ -98,7 +97,7 @@ class CurriculumManager:
             return 0
 
         try:
-            with open(self.stats_file, "r", encoding="utf-8") as f:
+            with open(self.stats_file, encoding="utf-8") as f:
                 data = json.load(f)
             level_idx = data.get("curriculum_level_idx", 0)
 
@@ -108,7 +107,7 @@ class CurriculumManager:
                 return level_idx
             else:
                 return 0
-        except (IOError, json.JSONDecodeError):
+        except (OSError, json.JSONDecodeError):
             return 0
 
     def _load_win_loss_data(self):
@@ -117,11 +116,11 @@ class CurriculumManager:
             return
 
         try:
-            with open(self.stats_file, "r", encoding="utf-8") as f:
+            with open(self.stats_file, encoding="utf-8") as f:
                 data = json.load(f)
             self.wins_at_current_level = data.get("wins_at_current_level", 0)
             self.losses_at_current_level = data.get("losses_at_current_level", 0)
-        except (IOError, json.JSONDecodeError):
+        except (OSError, json.JSONDecodeError):
             pass
 
     def _load_race_stats(self):
@@ -131,12 +130,12 @@ class CurriculumManager:
             return
 
         try:
-            with open(race_stats_file, "r", encoding="utf-8") as f:
+            with open(race_stats_file, encoding="utf-8") as f:
                 data = json.load(f)
             for race in ["Terran", "Protoss", "Zerg"]:
                 if race in data:
                     self.race_stats[race] = data[race]
-        except (IOError, json.JSONDecodeError):
+        except (OSError, json.JSONDecodeError):
             pass
 
     def _save_race_stats(self):
@@ -157,7 +156,7 @@ class CurriculumManager:
 
             with open(race_stats_file, "w", encoding="utf-8") as f:
                 json.dump(stats_with_rates, f, indent=2, ensure_ascii=False)
-        except IOError as e:
+        except OSError as e:
             logger.error(f"Failed to save race stats: {e}")
 
     def save_level(self):
@@ -172,7 +171,7 @@ class CurriculumManager:
             }
             with open(self.stats_file, "w", encoding="utf-8") as f:
                 json.dump(data, f, indent=2)
-        except IOError:
+        except OSError:
             pass
 
     def get_difficulty(self) -> Difficulty:
@@ -225,7 +224,7 @@ class CurriculumManager:
                 f"vs {opponent_race}: {race_wins}W/{race_games}G ({race_rate:.1f}%)"
             )
         elif not opponent_race:
-            logger.info(f"Opponent race unknown (None) - stats not recorded")
+            logger.info("Opponent race unknown (None) - stats not recorded")
 
         wins_required = self.wins_required_per_level.get(self.current_idx, 10)
 
@@ -271,7 +270,7 @@ class CurriculumManager:
                 f"vs {opponent_race}: {race_wins}W/{race_games}G ({race_rate:.1f}%)"
             )
         elif not opponent_race:
-            logger.info(f"Opponent race unknown (None) - stats not recorded")
+            logger.info("Opponent race unknown (None) - stats not recorded")
 
         wins_required = self.wins_required_per_level.get(self.current_idx, 10)
 
@@ -295,8 +294,8 @@ class CurriculumManager:
         """다음 단계로 승격."""
         if self.current_idx >= len(self.levels) - 1:
             logger.info(f"\n{'[*]'*12}")
-            logger.info(f"[TROPHY] 최고 난이도 마스터!")
-            logger.info(f"  모든 단계를 완료했습니다!")
+            logger.info("[TROPHY] 최고 난이도 마스터!")
+            logger.info("  모든 단계를 완료했습니다!")
             logger.info(f"{'[*]'*12}\n")
             self.save_level()
             return False
@@ -320,7 +319,7 @@ class CurriculumManager:
         wins_required = self.wins_required_per_level.get(self.current_idx, 10)
 
         logger.info(f"\n{'[*]'*12}")
-        logger.info(f"[PROMOTED] 단계 승격!")
+        logger.info("[PROMOTED] 단계 승격!")
         logger.info(f"  {old_difficulty} -> {new_difficulty}")
         logger.info(f"  이전 단계 승리: {old_wins}승")
         logger.info(f"  다음 목표: {wins_required}승 달성하기")
@@ -352,7 +351,7 @@ class CurriculumManager:
         wins_required = self.wins_required_per_level.get(self.current_idx, 10)
 
         logger.info(f"\n{'='*70}")
-        logger.info(f"[DOWN] 난이도 하향 (연습 더 필요)")
+        logger.info("[DOWN] 난이도 하향 (연습 더 필요)")
         logger.info(f"  {old_difficulty} -> {new_difficulty}")
         logger.info(f"  목표: {wins_required}승 달성하기")
         logger.info(f"{'='*70}\n")
@@ -398,7 +397,7 @@ class CurriculumManager:
                 self.save_level()
 
                 logger.info(f"\n{'='*70}")
-                logger.info(f"Difficulty increased by ONE level")
+                logger.info("Difficulty increased by ONE level")
                 logger.info(f"  {old_difficulty} -> {new_difficulty}")
                 logger.info(
                     f"  Win Rate: {win_rate*100:.1f}% (threshold: {self.promotion_threshold*100}%)"
@@ -438,7 +437,7 @@ class CurriculumManager:
                 self.save_level()
 
                 logger.info(f"\n{'='*70}")
-                logger.info(f"Difficulty decreased by ONE level")
+                logger.info("Difficulty decreased by ONE level")
                 logger.info(f"  {old_difficulty} -> {new_difficulty}")
                 logger.info(
                     f"  Win Rate: {win_rate*100:.1f}% (threshold: {self.demotion_threshold*100}%)"
@@ -532,7 +531,7 @@ class CurriculumManager:
             try:
                 priority_file = self.data_dir / "building_priorities.json"
                 if priority_file.exists():
-                    with open(priority_file, "r", encoding="utf-8") as f:
+                    with open(priority_file, encoding="utf-8") as f:
                         self.building_priorities = json.load(f)
                 else:
                     self.building_priorities = {}

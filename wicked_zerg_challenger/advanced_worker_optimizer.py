@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Advanced Worker Optimizer - 고급 일꾼 최적화 시스템
 
@@ -383,7 +382,7 @@ class AdvancedWorkerOptimizer:
             if gas_building.assigned_harvesters > 1:  # 최소 1명은 유지
                 # 가스 일꾼 1명을 미네랄로 이동
                 workers = self.bot.workers.filter(
-                    lambda w: w.order_target == gas_building.tag
+                    lambda w, gb=gas_building: w.order_target == gb.tag
                     or w.is_carrying_vespene
                 )
 

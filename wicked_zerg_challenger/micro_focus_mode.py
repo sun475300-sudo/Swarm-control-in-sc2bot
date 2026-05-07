@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Micro Focus Mode - Combat 우선순위 동적 할당
 

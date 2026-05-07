@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 
 Build Order Optimization System
@@ -523,7 +522,7 @@ class BuildOrderSystem:
         actual = self.expansion_actual_time
 
         if actual == 0:
-            logger.info(f"[!] Expansion timing: NOT RECORDED")
+            logger.info("[!] Expansion timing: NOT RECORDED")
             return
 
         target = self.expansion_timing_target

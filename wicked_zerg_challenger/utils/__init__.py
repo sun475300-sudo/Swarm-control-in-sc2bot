@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Utility modules for SC2 bot optimization.
 

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 코드 품질 개선 자동화 도구
 
@@ -32,7 +31,7 @@ class CodeQualityImprover:
     def remove_unused_imports(self, file_path: Path) -> Tuple[bool, List[str]]:
         """사용하지 않는 import 제거"""
         try:
-            with open(file_path, 'r', encoding='utf-8', errors='replace') as f:
+            with open(file_path, encoding='utf-8', errors='replace') as f:
                 content = f.read()
                 lines = content.splitlines()
         except Exception:
@@ -105,7 +104,7 @@ class CodeQualityImprover:
         issues = []
 
         try:
-            with open(file_path, 'r', encoding='utf-8', errors='replace') as f:
+            with open(file_path, encoding='utf-8', errors='replace') as f:
                 lines = f.readlines()
 
             # PEP 8 기본 검사
@@ -132,7 +131,7 @@ class CodeQualityImprover:
     def fix_code_style(self, file_path: Path) -> bool:
         """코드 스타일 자동 수정"""
         try:
-            with open(file_path, 'r', encoding='utf-8', errors='replace') as f:
+            with open(file_path, encoding='utf-8', errors='replace') as f:
                 content = f.read()
                 lines = content.splitlines()
 
@@ -164,7 +163,7 @@ class CodeQualityImprover:
 
         for file_path in all_files:
             try:
-                with open(file_path, 'r', encoding='utf-8', errors='replace') as f:
+                with open(file_path, encoding='utf-8', errors='replace') as f:
                     content = f.read()
                 tree = ast.parse(content, filename=str(file_path))
 

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Background Training Live Monitor
 백그라운드 학습 실시간 모니터링 스크립트
@@ -81,7 +80,7 @@ class BackgroundTrainingMonitor:
             return []
 
         try:
-            with open(self.log_file, 'r', encoding='utf-8') as f:
+            with open(self.log_file, encoding='utf-8') as f:
                 all_lines = f.readlines()
                 return all_lines[-lines:] if all_lines else []
         except Exception:
@@ -134,7 +133,7 @@ class BackgroundTrainingMonitor:
         elif buffer_delta < 0:
             logger.info(f"Status:      [OK] {abs(buffer_delta)} files processed")
         else:
-            logger.info(f"Status:      ○ No change")
+            logger.info("Status:      ○ No change")
 
         if buffer_info['files']:
             logger.info("\nRecent Files:")
@@ -158,7 +157,7 @@ class BackgroundTrainingMonitor:
         if archive_delta > 0:
             logger.info(f"Status:      [OK] +{archive_delta} files archived (training completed)")
         else:
-            logger.info(f"Status:      ○ No change")
+            logger.info("Status:      ○ No change")
 
         if archive_info['files']:
             logger.info("\nRecently Archived:")
@@ -176,7 +175,7 @@ class BackgroundTrainingMonitor:
         logger.info(f"Path:        {self.model_path}")
 
         if model_info['exists']:
-            logger.info(f"Status:      [OK] Model exists")
+            logger.info("Status:      [OK] Model exists")
             logger.info(f"Size:        {self.format_size(model_info['size'])}")
             logger.info(f"Modified:    {model_info['modified'].strftime('%Y-%m-%d %H:%M:%S')}")
 
@@ -188,7 +187,7 @@ class BackgroundTrainingMonitor:
 
             self.last_model_mtime = current_mtime
         else:
-            logger.info(f"Status:      [X] Model not found")
+            logger.info("Status:      [X] Model not found")
 
         # 학습 로그
         logger.info("\n? TRAINING LOG (Last 10 lines)")

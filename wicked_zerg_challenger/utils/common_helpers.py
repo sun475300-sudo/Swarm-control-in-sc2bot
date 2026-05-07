@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Common Helpers - 공통 유틸리티 함수
 

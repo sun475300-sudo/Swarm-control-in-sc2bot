@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Imitation Learner - 리플레이 모방학습 시스템 (#103)
 
@@ -105,7 +104,7 @@ class ReplayActionExtractor:
 
             except ImportError:
                 # sc2reader 미설치 시 - 기본 파싱 시도
-                logger.info(f"sc2reader 미설치, 기본 파싱 모드 사용")
+                logger.info("sc2reader 미설치, 기본 파싱 모드 사용")
                 frames = self._basic_parse(replay_path)
 
         except Exception as e:

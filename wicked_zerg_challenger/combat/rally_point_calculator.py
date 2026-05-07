@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Rally Point Calculator Module
 

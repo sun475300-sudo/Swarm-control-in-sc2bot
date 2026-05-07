@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 RL Tech Adapter - Reinforcement Learning for Enemy Tech Response
 
@@ -366,7 +365,7 @@ class RLTechAdapter:
         try:
             memory_file = Path(__file__).parent / "rl_tech_memory.json"
             if memory_file.exists():
-                with open(memory_file, "r", encoding="utf-8") as f:
+                with open(memory_file, encoding="utf-8") as f:
                     self.success_memory = json.load(f)
                 self.logger.info(
                     f"[RL_TECH] Loaded learning memory: {len(self.success_memory)} entries"
@@ -380,6 +379,6 @@ class RLTechAdapter:
             memory_file = Path(__file__).parent / "rl_tech_memory.json"
             with open(memory_file, "w", encoding="utf-8") as f:
                 json.dump(self.success_memory, f, indent=2)
-            self.logger.info(f"[RL_TECH] Saved learning memory")
+            self.logger.info("[RL_TECH] Saved learning memory")
         except Exception as e:
             self.logger.warning(f"[RL_TECH] Failed to save memory: {e}")

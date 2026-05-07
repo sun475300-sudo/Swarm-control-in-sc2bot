@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Game State Blackboard - 게임 상태 중앙 관리 시스템
 

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Upgrade Coordination System - 업그레이드 전략 타이밍
 

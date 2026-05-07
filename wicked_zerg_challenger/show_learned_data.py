@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 import json
 import logging
 from pathlib import Path
@@ -49,7 +48,7 @@ def show_build_orders():
         return
 
     try:
-        with open(path, "r", encoding="utf-8") as f:
+        with open(path, encoding="utf-8") as f:
             content = f.read()
             if not content:
                 logger.info("  [경고] 파일이 비어있습니다.")
@@ -104,7 +103,7 @@ def show_rl_agent():
                 # Q-Table or Neural Network?
                 if "q_table" in data:
                     q_table = data["q_table"]
-                    logger.info(f"  - 학습 방식: Q-Learning (테이블 방식)")
+                    logger.info("  - 학습 방식: Q-Learning (테이블 방식)")
                     logger.info(f"  - 학습된 상태 수: {len(q_table)}")
 
                     # Analyze preferred actions
@@ -136,8 +135,8 @@ def show_rl_agent():
                         logger.info("    (아직 유의미한 학습 데이터가 없습니다)")
 
                 elif "w1" in data:  # Neural Network
-                    logger.info(f"  - 학습 방식: Deep Q-Network (신경망)")
-                    logger.info(f"  - 가중치 레이어 감지됨 (w1, w2...)")
+                    logger.info("  - 학습 방식: Deep Q-Network (신경망)")
+                    logger.info("  - 가중치 레이어 감지됨 (w1, w2...)")
                     # Cannot easily interpret NN weights directly without running inference
                     logger.info(
                         "  - 신경망 모델은 직접적인 해석이 어렵지만, 현재 게임플레이를 통해 지속적으로 최적화되고 있습니다."

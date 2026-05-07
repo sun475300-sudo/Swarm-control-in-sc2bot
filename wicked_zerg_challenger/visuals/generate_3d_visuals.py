@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 SC2 Swarm Control → Drone ATC: 3D Presentation Visuals Generator
 Plotly 기반 인터랙티브 3D 시각화 4파트 생성

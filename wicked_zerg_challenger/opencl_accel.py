@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Optional OpenCL acceleration bridge with safe CPU fallback.
 
 This module is intentionally dependency-tolerant:

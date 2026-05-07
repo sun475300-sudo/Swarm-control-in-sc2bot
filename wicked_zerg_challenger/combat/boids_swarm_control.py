@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Boids Algorithm for Swarm Control.
 
@@ -513,7 +512,7 @@ class BoidsSwarmController:
 
         return results
 
-    def get_priority_target(self, unit, enemy_units) -> "Optional[Unit]":
+    def get_priority_target(self, unit, enemy_units) -> Optional[Unit]:
         """
         ★ Enhanced: Threat-based priority targeting ★
 

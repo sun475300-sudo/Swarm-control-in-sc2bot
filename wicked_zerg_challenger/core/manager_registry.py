@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 Manager Registry - 모든 매니저 설정 중앙 관리
 

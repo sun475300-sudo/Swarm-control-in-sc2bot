@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Overlord Transport - 대군주 수송 시스템
 
@@ -45,7 +44,7 @@ class OverlordTransport:
         # Transport state
         self._transport_active = False
         self._loaded_overlords: Dict[int, List[int]] = {}  # overlord_tag -> [unit_tags]
-        self._drop_targets: Dict[int, "Point2"] = {}  # overlord_tag -> target_position
+        self._drop_targets: Dict[int, Point2] = {}  # overlord_tag -> target_position
         self._last_drop_time = 0
         self._drop_cooldown = 60  # 1분마다 드랍 시도
 

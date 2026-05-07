@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Micro Controller - Boids-based movement orchestrator with modular components.
 
@@ -229,7 +228,7 @@ class BoidsController:
                         high_priority_units.append(unit)
                     else:
                         low_priority_units.append(unit)
-                except (AttributeError, ValueError) as e:
+                except (AttributeError, ValueError):
                     # Unit has no ground_range or distance calculation failed
                     low_priority_units.append(unit)
         else:

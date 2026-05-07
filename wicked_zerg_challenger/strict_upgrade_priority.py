@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Strict Upgrade Priority System - 엄격한 업그레이드 우선순위
 

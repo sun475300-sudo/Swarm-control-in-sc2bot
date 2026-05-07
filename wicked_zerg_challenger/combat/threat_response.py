@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Threat Response - Splash damage avoidance and threat detection.
 

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Smart Consume System - Phase 19
 

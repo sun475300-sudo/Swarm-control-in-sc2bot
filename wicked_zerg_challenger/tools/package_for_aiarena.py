@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 Package WickedZergBotPro for AI Arena deployment.
 
@@ -105,19 +104,19 @@ def main() -> None:
         # 1. run.py (entry point)
         zf.write(run_py, "run.py")
         file_count += 1
-        logger.info(f"  + run.py")
+        logger.info("  + run.py")
 
         # 2. ladderbots.json (AI Arena config)
         zf.write(lb_json, "ladderbots.json")
         file_count += 1
-        logger.info(f"  + ladderbots.json")
+        logger.info("  + ladderbots.json")
 
         # 3. requirements.txt
         req = BOT_DIR / "requirements.txt"
         if req.exists():
             zf.write(req, "requirements.txt")
             file_count += 1
-            logger.info(f"  + requirements.txt")
+            logger.info("  + requirements.txt")
 
         # 4. Bot code (wicked_zerg_challenger/)
         logger.info(f"\n  Scanning bot directory: {BOT_DIR}")

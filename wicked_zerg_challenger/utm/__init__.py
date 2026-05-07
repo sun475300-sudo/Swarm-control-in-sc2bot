@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 UTM (Unmanned Traffic Management) Module
 

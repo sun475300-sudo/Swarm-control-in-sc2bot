@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Roach Burrow Heal - 바퀴 잠복 회복 시스템
 

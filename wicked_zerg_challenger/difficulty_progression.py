@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Difficulty Progression System - 난이도 자동 조정
 
@@ -56,7 +55,7 @@ class DifficultyProgression:
         """통계 데이터 로드"""
         if self.data_file.exists():
             try:
-                with open(self.data_file, "r", encoding="utf-8") as f:
+                with open(self.data_file, encoding="utf-8") as f:
                     data = json.load(f)
                     # Convert string keys back to enums
                     self.stats = self._deserialize_stats(data)
@@ -66,7 +65,7 @@ class DifficultyProgression:
                 self.stats = {}
         else:
             self.stats = {}
-            logger.info(f"No existing progression data, starting fresh")
+            logger.info("No existing progression data, starting fresh")
 
     def _save_stats(self) -> None:
         """통계 데이터 저장"""
@@ -76,7 +75,7 @@ class DifficultyProgression:
             serialized = self._serialize_stats(self.stats)
             with open(self.data_file, "w", encoding="utf-8") as f:
                 json.dump(serialized, f, indent=2, ensure_ascii=False)
-            logger.info(f"Saved progression data")
+            logger.info("Saved progression data")
         except Exception as e:
             logger.info(f"Error saving stats: {e}")
 
@@ -158,7 +157,7 @@ class DifficultyProgression:
             next_diff = self._get_next_difficulty(difficulty)
             if next_diff:
                 logger.info(f"\n{'='*70}")
-                logger.info(f"🎉 DIFFICULTY PROGRESSION! 🎉")
+                logger.info("🎉 DIFFICULTY PROGRESSION! 🎉")
                 logger.info(f"{'='*70}")
                 logger.info(f"  Map: {map_name}")
                 logger.info(f"  Opponent: {opponent_race.name}")

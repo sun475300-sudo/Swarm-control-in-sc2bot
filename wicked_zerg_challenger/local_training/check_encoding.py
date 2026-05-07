@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 
 """Simple UTF-8 validation for main_integrated.py."""
 

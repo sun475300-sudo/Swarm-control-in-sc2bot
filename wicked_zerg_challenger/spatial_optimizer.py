@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Spatial Optimizer - 공간 해싱 및 거리 계산 최적화
 

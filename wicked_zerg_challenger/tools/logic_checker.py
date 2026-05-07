@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Logic Checker
 
@@ -29,7 +28,7 @@ class LogicChecker:
         issues = []
 
         try:
-            with open(file_path, "r", encoding="utf-8", errors="replace") as f:
+            with open(file_path, encoding="utf-8", errors="replace") as f:
                 content = f.read()
                 lines = content.splitlines()
 
@@ -82,7 +81,7 @@ class LogicChecker:
         issues = []
 
         try:
-            with open(file_path, "r", encoding="utf-8", errors="replace") as f:
+            with open(file_path, encoding="utf-8", errors="replace") as f:
                 content = f.read()
 
             # Detect repeated 5-line blocks (rough heuristic).
@@ -117,7 +116,7 @@ class LogicChecker:
         issues = []
 
         try:
-            with open(file_path, "r", encoding="utf-8", errors="replace") as f:
+            with open(file_path, encoding="utf-8", errors="replace") as f:
                 content = f.read()
                 lines = content.splitlines()
 

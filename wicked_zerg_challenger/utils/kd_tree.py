@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 K-D Tree Implementation for Spatial Optimization
 

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Error Handler - 개발/프로덕션 모드 분리
 
@@ -71,7 +70,7 @@ class ErrorHandler:
                     f"\n[ERROR] {log_key} failed in DEBUG_MODE - crashing for debugging"
                 )
                 logger.error(f"Exception: {e}")
-                logger.error(f"Traceback:")
+                logger.error("Traceback:")
                 traceback.print_exc()
                 raise  # 즉시 예외 발생
             else:
@@ -117,7 +116,7 @@ class ErrorHandler:
                             f"\n[ERROR] {key} failed in DEBUG_MODE - crashing for debugging"
                         )
                         logger.error(f"Exception: {e}")
-                        logger.error(f"Traceback:")
+                        logger.error("Traceback:")
                         traceback.print_exc()
                         raise
                     else:

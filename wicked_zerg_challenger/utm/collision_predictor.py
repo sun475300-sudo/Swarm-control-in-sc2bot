@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Time-to-Collision (TTC) Predictor for Drone Deconfliction
 

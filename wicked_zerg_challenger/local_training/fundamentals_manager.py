@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Fundamentals Manager - 기본기 학습 단계 관리
 
@@ -254,7 +253,7 @@ class FundamentalsManager:
             return
 
         try:
-            with open(self.progress_file, "r", encoding="utf-8") as f:
+            with open(self.progress_file, encoding="utf-8") as f:
                 data = json.load(f)
 
             self.current_level = data.get("current_level", 0)

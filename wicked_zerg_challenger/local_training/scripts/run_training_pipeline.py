@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 Run Training Pipeline - 독립 실행 훈련 스크립트
 
@@ -180,7 +179,7 @@ def main():
     )
 
     logger.info(f"\n{'='*60}")
-    logger.info(f"  SC2 Bot Training Pipeline")
+    logger.info("  SC2 Bot Training Pipeline")
     logger.info(f"  Cycles: {args.cycles}")
     logger.info(f"  Learning Rate: {args.learning_rate}")
     logger.info(f"  Buffer: {pipeline.buffer_dir}")
@@ -199,7 +198,7 @@ def main():
 
     # 최종 요약
     logger.info(f"\n{'='*60}")
-    logger.info(f"  TRAINING COMPLETE")
+    logger.info("  TRAINING COMPLETE")
     logger.info(f"{'='*60}")
     logger.info(f"  Cycles completed: {len(results)}/{args.cycles}")
 
@@ -210,7 +209,7 @@ def main():
         logger.info(f"  Best win rate: {best_wr:.1%}")
 
     summary = pipeline.get_training_summary()
-    logger.info(f"\n  Pipeline Status:")
+    logger.info("\n  Pipeline Status:")
     for k, v in summary.items():
         logger.info(f"    {k}: {v}")
 

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Test configuration - runs before test collection."""
 
 import os

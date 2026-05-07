@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Rally Point Manager - 랠리 포인트 관리
 

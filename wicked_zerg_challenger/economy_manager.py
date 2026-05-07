@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Economy Manager - deterministic worker production with macro hatcheries.
 """
@@ -420,8 +419,8 @@ class EconomyManager:
                         for extractor in self.bot.gas_buildings.ready:
                             if extractor.assigned_harvesters > 0:
                                 workers = self.bot.workers.filter(
-                                    lambda w: w.is_carrying_vespene
-                                    or w.order_target == extractor.tag
+                                    lambda w, ex=extractor: w.is_carrying_vespene
+                                    or w.order_target == ex.tag
                                 )
                                 if not workers:
                                     continue
@@ -781,17 +780,17 @@ class EconomyManager:
                 try:
                     # Get workers that are gathering minerals (not gas)
                     available_workers = self.bot.workers.filter(
-                        lambda w: (
+                        lambda w, ex=extractor: (
                             w.is_gathering
                             and not w.is_carrying_vespene
-                            and w.distance_to(extractor) < 20
+                            and w.distance_to(ex) < 20
                         )
                     )
 
                     if not available_workers:
                         # Try idle workers
                         available_workers = self.bot.workers.filter(
-                            lambda w: w.is_idle and w.distance_to(extractor) < 20
+                            lambda w, ex=extractor: w.is_idle and w.distance_to(ex) < 20
                         )
 
                     if available_workers:
@@ -801,7 +800,7 @@ class EconomyManager:
                             if worker:
                                 self.bot.do(worker.gather(extractor))
                                 available_workers = available_workers.filter(
-                                    lambda w: w.tag != worker.tag
+                                    lambda w, wk=worker: w.tag != wk.tag
                                 )
                 except (AttributeError, TypeError) as e:
                     self.logger.warning(
@@ -1186,8 +1185,8 @@ class EconomyManager:
                 # Get IDLE mineral workers at this depleted base (not moving, not carrying)
                 # 개선: is_idle 또는 is_gathering하고 있고 가까이 있는 일꾼만
                 nearby_workers = workers.filter(
-                    lambda w: (
-                        w.distance_to(depleted_th) < 8  # 거리 줄임 (15 -> 8)
+                    lambda w, dth=depleted_th: (
+                        w.distance_to(dth) < 8  # 거리 줄임 (15 -> 8)
                         and (w.is_idle or (w.is_gathering and not w.is_moving))
                         and not w.is_carrying_vespene
                         and not any(
@@ -1258,7 +1257,7 @@ class EconomyManager:
 
                 # Get workers near this townhall
                 nearby_workers = workers.filter(
-                    lambda w: w.distance_to(over_th) < 15 and w.is_gathering
+                    lambda w, oth=over_th: w.distance_to(oth) < 15 and w.is_gathering
                 )
 
                 for under_th, deficit in under_saturated[:]:
@@ -1282,7 +1281,7 @@ class EconomyManager:
                                     worker.gather(minerals.closest_to(under_th))
                                 )
                                 nearby_workers = nearby_workers.filter(
-                                    lambda w: w.tag != worker.tag
+                                    lambda w, wk=worker: w.tag != wk.tag
                                 )
                                 excess -= 1
                                 deficit -= 1
@@ -1690,7 +1689,7 @@ class EconomyManager:
                     )
                     expansion_success = True
                 else:
-                    self.logger.info(f"[FORCE EXPAND] expand_now returned False")
+                    self.logger.info("[FORCE EXPAND] expand_now returned False")
             else:
                 # expand_now가 없으면 직접 위치 찾아서 건설
                 # ★★★ USE GOLD PRIORITY ★★★
@@ -1717,7 +1716,7 @@ class EconomyManager:
             self.logger.info(f"[FORCE EXPAND] Failed: {e}")
 
         if not expansion_success:
-            self.logger.info(f"[FORCE EXPAND] ALL METHODS FAILED")
+            self.logger.info("[FORCE EXPAND] ALL METHODS FAILED")
 
     async def _check_proactive_expansion(self) -> None:
         """
@@ -1741,7 +1740,7 @@ class EconomyManager:
             if self.blackboard.threat.level >= ThreatLevel.HIGH:
                 if self.bot.iteration % 100 == 0:
                     self.logger.info(
-                        f"[ECONOMY] Proactive expansion paused due to HIGH THREAT"
+                        "[ECONOMY] Proactive expansion paused due to HIGH THREAT"
                     )
                 return
 
@@ -1922,7 +1921,7 @@ class EconomyManager:
                     expansion_success = True
                 else:
                     self.logger.info(
-                        f"[EXPAND] expand_now returned False (no valid location?)"
+                        "[EXPAND] expand_now returned False (no valid location?)"
                     )
         except Exception as e:
             self.logger.info(f"[EXPAND] expand_now failed: {e}")
@@ -1945,7 +1944,7 @@ class EconomyManager:
                 self.logger.info(f"[EXPAND] Gold expansion failed: {e}")
 
         if not expansion_success:
-            self.logger.info(f"[EXPAND] ALL METHODS FAILED - Check bot state")
+            self.logger.info("[EXPAND] ALL METHODS FAILED - Check bot state")
 
     async def _get_hidden_expansion_location(self) -> Optional[Point2]:
         """
@@ -2196,7 +2195,7 @@ class EconomyManager:
                     try:
                         await self.bot.expand_now()
                         self.logger.info(
-                            f"[ECONOMY] [*] Natural expansion started successfully! [*]"
+                            "[ECONOMY] [*] Natural expansion started successfully! [*]"
                         )
                     except Exception as e:
                         self.logger.info(f"[ECONOMY] [*] Expansion failed: {e} [*]")
@@ -2254,7 +2253,7 @@ class EconomyManager:
         ★★★ IMPROVED: Gold base priority ★★★
         """
         if not hasattr(self.bot, "workers") or not self.bot.workers:
-            self.logger.info(f"[MANUAL EXPAND] No workers available!")
+            self.logger.info("[MANUAL EXPAND] No workers available!")
             return
 
         # 확장 가능한 위치 찾기
@@ -2262,13 +2261,13 @@ class EconomyManager:
             # ★★★ USE GOLD PRIORITY ★★★
             expansion_locations = await self._get_best_expansion_with_gold_priority()
             if not expansion_locations:
-                self.logger.info(f"[MANUAL EXPAND] No expansion locations found!")
+                self.logger.info("[MANUAL EXPAND] No expansion locations found!")
                 return
 
             # 가장 가까운 일꾼 찾기
             worker = self.bot.workers.closest_to(expansion_locations)
             if not worker:
-                self.logger.info(f"[MANUAL EXPAND] No worker found!")
+                self.logger.info("[MANUAL EXPAND] No worker found!")
                 return
 
             # 해처리 건설 명령
@@ -2640,7 +2639,7 @@ class EconomyManager:
                 if extractor.assigned_harvesters >= 3:
                     # 가스에서 일꾼 1명 이동
                     workers_on_gas = self.bot.workers.filter(
-                        lambda w: w.is_gathering and w.order_target == extractor.tag
+                        lambda w, ex=extractor: w.is_gathering and w.order_target == ex.tag
                     )
                     if workers_on_gas:
                         worker = workers_on_gas.first
@@ -2677,7 +2676,7 @@ class EconomyManager:
                     if workers:
                         worker = workers.closest_to(geyser)
                         self.bot.do(worker.build_gas(geyser))
-                        self.logger.info(f"[ECONOMY] Building extractor (gas shortage)")
+                        self.logger.info("[ECONOMY] Building extractor (gas shortage)")
                         return  # 한 번에 하나만
 
         except (AttributeError, TypeError, ValueError) as e:
@@ -2836,7 +2835,7 @@ class EconomyManager:
                     f"[ECONOMY RECOVERY]   Current: {worker_count}, Ideal: {ideal_workers}"
                 )
                 self.logger.info(
-                    f"[ECONOMY RECOVERY]   Prioritizing drone production..."
+                    "[ECONOMY RECOVERY]   Prioritizing drone production..."
                 )
 
         elif worker_deficit <= 0:
@@ -2930,7 +2929,7 @@ class EconomyManager:
                                 f"[ECONOMY PREDICTION]   Remaining minerals: {total_remaining}"
                             )
                             self.logger.info(
-                                f"[ECONOMY PREDICTION]   Triggering pre-emptive expansion..."
+                                "[ECONOMY PREDICTION]   Triggering pre-emptive expansion..."
                             )
 
                         await self._trigger_expansion_for_growth()
@@ -3030,7 +3029,7 @@ class EconomyManager:
                             UnitTypeId.HYDRALISKDEN, near=self.bot.townhalls.first
                         )
                         self.logger.info(
-                            f"[DEFENSE] [*] Anti-Air Tech: Building Hydralisk Den! [*]"
+                            "[DEFENSE] [*] Anti-Air Tech: Building Hydralisk Den! [*]"
                         )
 
     async def _check_maynarding(self) -> None:
@@ -3065,7 +3064,7 @@ class EconomyManager:
 
             # ★ SAFE MAYNARDING: 적정 인원만 이동 + 안전 체크 ★
             workers = self.bot.workers.filter(
-                lambda w: w.distance_to(source_base) < 10 and w.is_gathering
+                lambda w, sb=source_base: w.distance_to(sb) < 10 and w.is_gathering
             )
 
             if workers.amount < 8:  # ★ 소스 기지에 최소 8명은 유지 ★
@@ -3316,8 +3315,8 @@ class EconomyManager:
             # ★ Phase 39: order_target 단독 필터는 extractor 내부 일꾼을 놓침
             # — is_carrying_vespene OR order_target 두 경우 모두 포착
             workers = self.bot.workers.filter(
-                lambda w: (w.order_target == extractor.tag or w.is_carrying_vespene)
-                and w.distance_to(extractor) < 12
+                lambda w, ex=extractor: (w.order_target == ex.tag or w.is_carrying_vespene)
+                and w.distance_to(ex) < 12
             )
 
             for worker in workers[:excess]:
@@ -3365,7 +3364,7 @@ class EconomyManager:
             if extractor.assigned_harvesters > 0:
                 # 가스 일꾼을 미네랄로 이동
                 workers = self.bot.workers.filter(
-                    lambda w: w.order_target == extractor.tag
+                    lambda w, ex=extractor: w.order_target == ex.tag
                 )
 
                 for worker in workers:
@@ -3400,7 +3399,7 @@ class EconomyManager:
     def disable_gas_boost_mode(self):
         """가스 부스트 모드 비활성화"""
         self.gas_boost_mode = False
-        self.logger.info(f"[ECONOMY] Gas boost mode deactivated")
+        self.logger.info("[ECONOMY] Gas boost mode deactivated")
 
     def get_gas_stats(self) -> dict:
         """★ Phase 18: 가스 통계 반환 ★"""
@@ -3549,7 +3548,7 @@ class EconomyManager:
 
                 # 소스 기지 근처 일꾼 찾기
                 workers_near_source = self.bot.workers.filter(
-                    lambda w: w.distance_to(source_th) < 10
+                    lambda w, sth=source_th: w.distance_to(sth) < 10
                     and not w.is_carrying_vespene
                 )
 

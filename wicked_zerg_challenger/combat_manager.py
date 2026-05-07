@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Combat Manager - 전투 관리자
 
@@ -856,7 +855,7 @@ class CombatManager:
                     for unit in attack_units:
                         try:
                             self.bot.do(unit.attack(target))
-                        except (AttributeError, TypeError) as e:
+                        except (AttributeError, TypeError):
                             # Unit command failed
                             continue
                     for u in attack_units:
@@ -878,7 +877,7 @@ class CombatManager:
                     for unit in attack_units:
                         try:
                             self.bot.do(unit.attack(target))
-                        except (AttributeError, TypeError) as e:
+                        except (AttributeError, TypeError):
                             # Unit command failed
                             continue
                     # 로그 (30초마다)
@@ -897,7 +896,7 @@ class CombatManager:
                     for unit in attack_units:
                         try:
                             self.bot.do(unit.attack(target))
-                        except (AttributeError, TypeError) as e:
+                        except (AttributeError, TypeError):
                             # Unit command failed
                             continue
                     # Remove from available pool
@@ -978,7 +977,7 @@ class CombatManager:
                     try:
                         self.bot.do(unit.attack(attack_target))
                         available_ground.discard(unit.tag)
-                    except (AttributeError, TypeError) as e:
+                    except (AttributeError, TypeError):
                         # Unit command failed
                         continue
 
@@ -990,7 +989,7 @@ class CombatManager:
                     for unit in attack_units:
                         try:
                             self.bot.do(unit.attack(target))
-                        except (AttributeError, TypeError) as e:
+                        except (AttributeError, TypeError):
                             # Unit command failed
                             continue
                     # Remove from available pool
@@ -1157,7 +1156,7 @@ class CombatManager:
             for unit in units:
                 try:
                     self.bot.do(unit.attack(threat_position))
-                except (AttributeError, TypeError) as e:
+                except (AttributeError, TypeError):
                     # Unit command failed
                     continue
             return
@@ -1206,7 +1205,7 @@ class CombatManager:
                     self.bot.do(queen.attack(target))
                 else:
                     self.bot.do(queen.move(threat_position))
-            except (AttributeError, TypeError) as e:
+            except (AttributeError, TypeError):
                 # Queen defense command failed
                 continue
 
@@ -1261,7 +1260,7 @@ class CombatManager:
                     self.bot.do(unit.attack(priority_target))
                 else:
                     self.bot.do(unit.attack(threat_position))
-            except (AttributeError, TypeError) as e:
+            except (AttributeError, TypeError):
                 # Defense unit attack failed
                 continue
 
@@ -2336,7 +2335,7 @@ class CombatManager:
             for muta in mutalisks:
                 try:
                     self.bot.do(muta.attack(target))
-                except (AttributeError, TypeError) as e:
+                except (AttributeError, TypeError):
                     # Unit command failed
                     continue
 
@@ -2467,7 +2466,7 @@ class CombatManager:
             for muta in combat_ready:
                 try:
                     self.bot.do(muta.attack(self._air_harass_target))
-                except (AttributeError, TypeError) as e:
+                except (AttributeError, TypeError):
                     # Unit command failed
                     continue
 
@@ -2828,7 +2827,7 @@ class CombatManager:
         for muta in mutalisks:
             try:
                 self.bot.do(muta.attack(best_target))
-            except (AttributeError, TypeError) as e:
+            except (AttributeError, TypeError):
                 # Mutalisk attack failed
                 continue
 
@@ -2846,7 +2845,7 @@ class CombatManager:
             for muta in mutalisks:
                 try:
                     self.bot.do(muta.move(retreat_pos))
-                except (AttributeError, TypeError) as e:
+                except (AttributeError, TypeError):
                     # Unit command failed
                     continue
 
@@ -2895,7 +2894,7 @@ class CombatManager:
             for muta in combat_ready:
                 try:
                     self.bot.do(muta.attack(target))
-                except (AttributeError, TypeError) as e:
+                except (AttributeError, TypeError):
                     # Unit command failed
                     continue
         else:
@@ -2903,7 +2902,7 @@ class CombatManager:
             for muta in combat_ready:
                 try:
                     self.bot.do(muta.attack(target))
-                except (AttributeError, TypeError) as e:
+                except (AttributeError, TypeError):
                     # Unit command failed
                     continue
 
@@ -2987,7 +2986,7 @@ class CombatManager:
                 for corr in corruptors:
                     try:
                         self.bot.do(corr.attack(target))
-                    except (AttributeError, TypeError) as e:
+                    except (AttributeError, TypeError):
                         # Unit command failed
                         continue
 
@@ -3001,7 +3000,7 @@ class CombatManager:
                 for bl in broodlords:
                     try:
                         self.bot.do(bl.attack(target))
-                    except (AttributeError, TypeError) as e:
+                    except (AttributeError, TypeError):
                         # Unit command failed
                         continue
 
@@ -3150,7 +3149,7 @@ class CombatManager:
         if hasattr(enemy_units, "closest_to"):
             try:
                 return enemy_units.closest_to(unit.position)
-            except (AttributeError, TypeError, ValueError) as e:
+            except (AttributeError, TypeError, ValueError):
                 # Finding closest enemy failed
                 return None
         closest_unit = None
@@ -3158,7 +3157,7 @@ class CombatManager:
         for enemy in enemy_units:
             try:
                 dist = unit.distance_to(enemy)
-            except (AttributeError, TypeError) as e:
+            except (AttributeError, TypeError):
                 # Distance calculation failed
                 continue
             if closest_dist is None or dist < closest_dist:
@@ -3544,7 +3543,7 @@ class CombatManager:
                         # 다른 유닛: 메인 타겟 집중
                         else:
                             self.bot.do(unit.attack(main_target))
-                    except (AttributeError, TypeError) as e:
+                    except (AttributeError, TypeError):
                         # Unit command failed
                         continue
 
@@ -3595,7 +3594,7 @@ class CombatManager:
                 else:
                     # 멀리 있으면 위협 위치로 이동
                     self.bot.do(unit.attack(threat_position))
-            except (AttributeError, TypeError) as e:
+            except (AttributeError, TypeError):
                 # Worker defense attack failed
                 continue
 
@@ -3711,7 +3710,7 @@ class CombatManager:
                                 self.bot.mineral_field.closest_to(closest_townhall)
                             )
                         )
-            except (AttributeError, TypeError) as e:
+            except (AttributeError, TypeError):
                 # Worker return to gather failed
                 continue
 
@@ -3777,7 +3776,7 @@ class CombatManager:
             current_structure_count > 10 or our_army_supply < 20
         ):
             self._victory_push_active = False
-            self.logger.info(f"[VICTORY PUSH] Deactivated - regroup needed")
+            self.logger.info("[VICTORY PUSH] Deactivated - regroup needed")
 
         # 승리 푸시 모드일 때 공격 강도 증가
         if self._victory_push_active:
@@ -3820,7 +3819,7 @@ class CombatManager:
                 # idle이거나 공격 중이 아닌 유닛은 목표로 공격
                 if unit.is_idle or not getattr(unit, "is_attacking", False):
                     self.bot.do(unit.attack(attack_target))
-            except (AttributeError, TypeError) as e:
+            except (AttributeError, TypeError):
                 # Army attack command failed
                 continue
 
@@ -3848,7 +3847,7 @@ class CombatManager:
                 supply = getattr(unit, "supply_cost", 1)
                 if isinstance(supply, (int, float)):
                     total_supply += supply
-            except (AttributeError, TypeError) as e:
+            except (AttributeError, TypeError):
                 # Supply calculation failed
                 continue
 
@@ -4021,7 +4020,7 @@ class CombatManager:
                     self.bot.do(queen.attack(target))
                 else:
                     self.bot.do(queen.move(expansion.position))
-            except (AttributeError, TypeError) as e:
+            except (AttributeError, TypeError):
                 # Queen expansion defense failed
                 continue
 
@@ -4030,7 +4029,7 @@ class CombatManager:
             try:
                 target = priority_target if priority_target else threat_center
                 self.bot.do(unit.attack(target))
-            except (AttributeError, TypeError) as e:
+            except (AttributeError, TypeError):
                 # Unit attack command failed
                 continue
 
@@ -4080,7 +4079,7 @@ class CombatManager:
             for unit in counterattack_force:
                 try:
                     self.bot.do(unit.attack(target))
-                except (AttributeError, TypeError) as e:
+                except (AttributeError, TypeError):
                     # Unit command failed
                     continue
 
@@ -4097,7 +4096,7 @@ class CombatManager:
                 for unit in counterattack_force:
                     try:
                         self.bot.do(unit.attack(target))
-                    except (AttributeError, TypeError) as e:
+                    except (AttributeError, TypeError):
                         # Unit command failed
                         continue
 

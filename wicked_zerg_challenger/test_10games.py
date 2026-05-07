@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 10-game performance monitoring test
 10게임 연속 성능 모니터링 테스트
@@ -155,7 +154,7 @@ def main():
         if total_games > 0
         else "No games"
     )
-    logger.info(f"\nMemory:")
+    logger.info("\nMemory:")
     logger.info(f"  Initial: {initial_memory:.1f} MB")
     logger.info(f"  Final: {final_memory:.1f} MB")
     logger.info(f"  Total Leak: {total_leak:+.1f} MB")
@@ -163,7 +162,7 @@ def main():
         f"  Per Game: {total_leak/total_games:+.1f} MB" if total_games > 0 else "N/A"
     )
 
-    logger.info(f"\nResults:")
+    logger.info("\nResults:")
     for result in results:
         logger.info(f"  {result}")
 

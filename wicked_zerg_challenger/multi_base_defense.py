@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Multi-Base Defense System - Automatic defense for multiple expansions
 
@@ -277,7 +276,7 @@ class MultiBaseDefense:
                         UnitTypeId.QUEEN,
                         UnitTypeId.OVERSEER,
                     ]
-                ).filter(lambda u: u.can_attack and u.distance_to(base_pos) > 20)
+                ).filter(lambda u, bp=base_pos: u.can_attack and u.distance_to(bp) > 20)
 
                 for unit in idle_army:
                     self.bot.do(unit.attack(base_pos))

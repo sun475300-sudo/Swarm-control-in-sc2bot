@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Nydus Network Trainer - 땅굴망 사용법 학습 시스템
 

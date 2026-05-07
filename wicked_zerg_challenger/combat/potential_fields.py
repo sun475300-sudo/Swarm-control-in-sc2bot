@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Potential Field Controller - Force-based repulsion model for unit avoidance.
 
@@ -140,7 +139,7 @@ class PotentialFieldController:
                     splash_strength = strength * self.splash_weight
                     repulsion_x += (dx / (dist + 0.1)) * splash_strength
                     repulsion_y += (dy / (dist + 0.1)) * splash_strength
-            except (AttributeError, ZeroDivisionError) as e:
+            except (AttributeError, ZeroDivisionError):
                 # Unit position or attribute access failed, skip this unit
                 continue
 

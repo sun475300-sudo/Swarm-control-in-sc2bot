@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Performance Optimizer - Unified optimization for combat and movement.
 

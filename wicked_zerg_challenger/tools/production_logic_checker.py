@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Production Logic Checker
 
@@ -27,7 +26,7 @@ class ProductionLogicChecker:
         """Check file syntax"""
         errors = []
         try:
-            with open(file_path, "r", encoding="utf-8", errors="replace") as f:
+            with open(file_path, encoding="utf-8", errors="replace") as f:
                 content = f.read()
 
             try:
@@ -44,7 +43,7 @@ class ProductionLogicChecker:
         """Check production-related functions"""
         issues = []
         try:
-            with open(file_path, "r", encoding="utf-8", errors="replace") as f:
+            with open(file_path, encoding="utf-8", errors="replace") as f:
                 content = f.read()
 
             tree = ast.parse(content, filename=str(file_path))

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Queen Manager - Unified queen production, injection, and creep control.
 

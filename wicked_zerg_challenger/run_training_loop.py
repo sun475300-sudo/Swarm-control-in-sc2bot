@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 연속 학습 루프 - 단일 창에서 반복 실행
 """
@@ -149,8 +148,8 @@ def main():
     logger.info("  [*] 10-GAME BLOCK SCORING + ADAPTIVE DIFFICULTY [*]")
     logger.info("=" * 70)
     logger.info(f"  Block Size: {total_games} games")
-    logger.info(f"  Scoring: +50(7W+) / +20(5W+) / 0(3W+) / -30(2W-)")
-    logger.info(f"  Auto-Progress at: 90% win rate (min 10 games)")
+    logger.info("  Scoring: +50(7W+) / +20(5W+) / 0(3W+) / -30(2W-)")
+    logger.info("  Auto-Progress at: 90% win rate (min 10 games)")
     logger.info("=" * 70)
     wins = 0
     losses = 0

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Combat Package - 전투 시스템 모듈화
 

@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """Analyze why high tech units are not being produced"""
 
 import logging

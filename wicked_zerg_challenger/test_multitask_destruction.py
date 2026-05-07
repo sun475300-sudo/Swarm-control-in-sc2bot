@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 멀티테스킹 건물 파괴 시스템 테스트
 
@@ -67,7 +66,7 @@ def main():
         logger.info(f"\n{'='*70}")
         logger.info(f"게임 {game_num}/{total_games} 시작")
         logger.info(f"맵: {selected_map}")
-        logger.info(f"상대: Random 종족 (Easy)")
+        logger.info("상대: Random 종족 (Easy)")
         logger.info(f"{'='*70}\n")
 
         try:

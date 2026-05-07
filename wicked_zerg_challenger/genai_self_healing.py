@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Gen-AI Self-Healing System - 자가 수복 시스템 고도화
 
@@ -405,7 +404,7 @@ class GenAISelfHealing:
         suggestions = []
 
         try:
-            with open(file_path, "r", encoding="utf-8", errors="replace") as f:
+            with open(file_path, encoding="utf-8", errors="replace") as f:
                 content = f.read()
                 lines = content.splitlines()
 

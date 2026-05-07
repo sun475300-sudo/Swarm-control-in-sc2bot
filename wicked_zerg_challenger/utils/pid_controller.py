@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 PID Controller for Smooth Unit Movement
 

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Space Control Trainer - 공간 확보 학습 시스템
 
