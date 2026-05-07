@@ -14,3 +14,25 @@ known_first_party = [
   "scripts",
   "tools",
 ]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.ruff.lint]
+# Bug-class lints that must stay clean. These catch the failure modes we
+# just hand-fixed across the SC2 bot codebase:
+#   - F811 dead-code shadows
+#   - F823 referenced-before-assignment
+#   - B004 unreliable callable checks (use callable())
+#   - B023 late-binding loop closures inside lambdas
+#   - E713 use `x not in y` instead of `not x in y`
+# F841/F401 (unused vars/imports) and style/perf checks remain advisory;
+# many F841 sites are intentional tuple unpacks and cleanup is incremental.
+select = [
+  "F811",
+  "F823",
+  "B004",
+  "B023",
+  "E713",
+]
