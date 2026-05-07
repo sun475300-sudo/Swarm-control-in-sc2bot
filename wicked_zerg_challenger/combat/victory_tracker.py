@@ -111,7 +111,7 @@ class VictoryTracker:
             current_structure_count > 10 or our_army_supply < 20
         ):
             self._victory_push_active = False
-            self.logger.info(f"Victory push deactivated - regroup needed")
+            self.logger.info("Victory push deactivated - regroup needed")
 
         # 로그 (30초마다)
         if iteration % 660 == 0:
@@ -154,7 +154,7 @@ class VictoryTracker:
                 if pos not in self._known_enemy_expansions:
                     self._known_enemy_expansions.add(pos)
                     self.logger.info(
-                        f"New enemy expansion discovered at ({pos.x:.1f}, {pos.y:.1f})"
+                        "New enemy expansion discovered at ({pos.x:.1f}, {pos.y:.1f})"
                     )
 
     async def execute_victory_push(self, iteration: int, attack_target_finder):
@@ -190,7 +190,7 @@ class VictoryTracker:
         # 로그 (10초마다)
         if iteration % 220 == 0:
             target_str = (
-                f"({attack_target.x:.1f}, {attack_target.y:.1f})"
+                "({attack_target.x:.1f}, {attack_target.y:.1f})"
                 if hasattr(attack_target, "x")
                 else str(attack_target)
             )

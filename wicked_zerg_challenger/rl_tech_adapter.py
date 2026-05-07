@@ -222,7 +222,7 @@ class RLTechAdapter:
                 f"[RL_TECH] ★★★ ADAPTING to {tech} ★★★\n"
                 f"  Counter Units: {counter_rule['counter_units']}\n"
                 f"  Tech Response: {counter_rule['tech_response']}\n"
-                f"  Ratio Boost: +{counter_rule['ratio_boost']*100:.0f}%"
+                "  Ratio Boost: +{counter_rule['ratio_boost']*100:.0f}%"
             )
 
             # Blackboard에 카운터 전략 등록
@@ -355,7 +355,7 @@ class RLTechAdapter:
             self.logger.info(
                 f"[RL_TECH] Learning Update: {tech} → {response_key}\n"
                 f"  Result: {'WIN' if won else 'LOSS'}\n"
-                f"  Win Rate: {old_value:.2%} → {new_value:.2%}"
+                "  Win Rate: {old_value:.2%} → {new_value:.2%}"
             )
 
         # 학습 데이터 저장
@@ -380,6 +380,6 @@ class RLTechAdapter:
             memory_file = Path(__file__).parent / "rl_tech_memory.json"
             with open(memory_file, "w", encoding="utf-8") as f:
                 json.dump(self.success_memory, f, indent=2)
-            self.logger.info(f"[RL_TECH] Saved learning memory")
+            self.logger.info("[RL_TECH] Saved learning memory")
         except Exception as e:
             self.logger.warning(f"[RL_TECH] Failed to save memory: {e}")

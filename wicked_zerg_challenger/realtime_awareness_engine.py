@@ -697,14 +697,14 @@ class RealtimeAwarenessEngine:
             logger.info(f"{len(critical)} CRITICAL problems:")
             for p in critical[:3]:
                 logger.info(f"  [{p.severity.upper()}] {p.description}")
-                logger.info(f"    → action required (see logs)")
+                logger.info("    → action required (see logs)")
 
     def get_situation_summary(self) -> str:
         """현재 상황 요약"""
         s = self.situation
         problems_str = ", ".join(p.category for p in self.active_problems[:3]) or "none"
         return (
-            f"[{s.phase.upper()}] {s.game_time:.0f}s | "
+            "[{s.phase.upper()}] {s.game_time:.0f}s | "
             f"Supply: {s.supply_used}/{s.supply_cap} | "
             f"Army: {s.army_supply} | Workers: {s.worker_count} | "
             f"Bases: {s.base_count} | M:{s.minerals} G:{s.vespene} | "

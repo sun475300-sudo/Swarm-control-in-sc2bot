@@ -80,9 +80,9 @@ def run_training_cycle(pipeline, rl_agent, cycle_num):
     logger.info("  Training...")
     train_stats = rl_agent.train_from_batch(experiences)
     logger.info(
-        f"  Loss: {train_stats['loss']:.4f}, "
+        "  Loss: {train_stats['loss']:.4f}, "
         f"Steps: {train_stats['steps']}, "
-        f"LR: {train_stats.get('adjusted_lr', 0):.6f}"
+        "LR: {train_stats.get('adjusted_lr', 0):.6f}"
     )
 
     # 4. 메트릭 계산 (경험 기반 추정)
@@ -180,7 +180,7 @@ def main():
     )
 
     logger.info(f"\n{'='*60}")
-    logger.info(f"  SC2 Bot Training Pipeline")
+    logger.info("  SC2 Bot Training Pipeline")
     logger.info(f"  Cycles: {args.cycles}")
     logger.info(f"  Learning Rate: {args.learning_rate}")
     logger.info(f"  Buffer: {pipeline.buffer_dir}")
@@ -199,7 +199,7 @@ def main():
 
     # 최종 요약
     logger.info(f"\n{'='*60}")
-    logger.info(f"  TRAINING COMPLETE")
+    logger.info("  TRAINING COMPLETE")
     logger.info(f"{'='*60}")
     logger.info(f"  Cycles completed: {len(results)}/{args.cycles}")
 
@@ -207,10 +207,10 @@ def main():
         deployed_versions = [r for r in results if r["deployed"]]
         logger.info(f"  Models deployed: {len(deployed_versions)}")
         best_wr = max(r["metrics"]["win_rate"] for r in results)
-        logger.info(f"  Best win rate: {best_wr:.1%}")
+        logger.info("  Best win rate: {best_wr:.1%}")
 
     summary = pipeline.get_training_summary()
-    logger.info(f"\n  Pipeline Status:")
+    logger.info("\n  Pipeline Status:")
     for k, v in summary.items():
         logger.info(f"    {k}: {v}")
 

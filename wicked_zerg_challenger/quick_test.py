@@ -117,7 +117,7 @@ def main():
     logger.info("\n" + "=" * 70)
     logger.info("  OPTIMIZATION VERIFICATION TEST")
     logger.info("=" * 70)
-    logger.info(f"  Difficulty: Easy")
+    logger.info("  Difficulty: Easy")
     logger.info(f"  Total Games: {total_games}")
     logger.info(f"  Target Win Rate: {target_win_rate}%+")
     logger.info("  New Features:")
@@ -151,17 +151,17 @@ def main():
         win_rate = (wins / total_completed * 100) if total_completed > 0 else 0
 
         logger.info("\n" + "-" * 70)
-        logger.info(f"  Game Duration: {game_duration:.1f}s")
+        logger.info("  Game Duration: {game_duration:.1f}s")
         logger.error(f"  Current Score: {wins}W - {losses}L - {errors}E")
-        logger.info(f"  Win Rate: {win_rate:.1f}% (Target: {target_win_rate}%)")
-        logger.info(f"  Total Time: {total_duration/60:.1f} min")
+        logger.info("  Win Rate: {win_rate:.1f}% (Target: {target_win_rate}%)")
+        logger.info("  Total Time: {total_duration/60:.1f} min")
 
         # Check if target achieved early
         if win_rate >= target_win_rate and total_completed >= 10:
             logger.info(f"  STATUS: Target achieved with {total_completed} games!")
         elif total_completed >= 10:
             diff = target_win_rate - win_rate
-            logger.info(f"  STATUS: {diff:.1f}% away from target")
+            logger.info("  STATUS: {diff:.1f}% away from target")
 
         logger.info("-" * 70)
         # Short delay between games
@@ -176,19 +176,19 @@ def main():
     logger.info("  FINAL RESULTS")
     logger.info("=" * 70)
     logger.error(f"  Score: {wins}W - {losses}L - {errors}E")
-    logger.info(f"  Win Rate: {final_win_rate:.1f}%")
+    logger.info("  Win Rate: {final_win_rate:.1f}%")
     logger.info(f"  Target: {target_win_rate}%")
-    logger.info(f"  Total Time: {total_duration/60:.1f} minutes")
-    logger.info(f"  Avg Game Time: {total_duration/max(total_completed, 1):.1f}s")
+    logger.info("  Total Time: {total_duration/60:.1f} minutes")
+    logger.info("  Avg Game Time: {total_duration/max(total_completed, 1):.1f}s")
     logger.info("-" * 70)
 
     if final_win_rate >= target_win_rate:
-        logger.info(f"  STATUS: SUCCESS - Target achieved!")
-        logger.info(f"  Ready for next difficulty: Medium")
+        logger.info("  STATUS: SUCCESS - Target achieved!")
+        logger.info("  Ready for next difficulty: Medium")
     else:
         diff = target_win_rate - final_win_rate
-        logger.info(f"  STATUS: INCOMPLETE - {diff:.1f}% away from target")
-        logger.info(f"  Action: Further optimization needed")
+        logger.info("  STATUS: INCOMPLETE - {diff:.1f}% away from target")
+        logger.info("  Action: Further optimization needed")
 
     logger.info("=" * 70)
 

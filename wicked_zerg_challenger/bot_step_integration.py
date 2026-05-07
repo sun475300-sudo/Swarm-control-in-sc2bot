@@ -53,7 +53,7 @@ class LogicActivityTracker:
         # 성능 경고: 10ms 초과 시 로그
         if elapsed > 0.010:
             logger = logging.getLogger("PerfMonitor")
-            logger.warning(f"[PERF] {name} took {elapsed*1000:.1f}ms (>10ms threshold)")
+            logger.warning("[PERF] {name} took {elapsed*1000:.1f}ms (>10ms threshold)")
 
         # 통계 업데이트
         self.execution_counts[name] = self.execution_counts.get(name, 0) + 1
@@ -74,7 +74,7 @@ class LogicActivityTracker:
         for name, count in sorted(self.execution_counts.items()):
             total_time = self.execution_times.get(name, 0)
             avg_time = (total_time / count * 1000) if count > 0 else 0
-            lines.append(f"  {name}: {count}회 실행, 평균 {avg_time:.2f}ms")
+            lines.append("  {name}: {count}회 실행, 평균 {avg_time:.2f}ms")
 
         lines.append("=" * 50)
 
@@ -1655,7 +1655,7 @@ class BotStepIntegrator:
                     if defeat_status.get("last_stand_required", False):
                         if iteration % 50 == 0:
                             self.logger.info(
-                                f"[DEFEAT DETECTION] [*] 패배 직전! 마지막 방어 시도! [*]"
+                                "[DEFEAT DETECTION] [*] 패배 직전! 마지막 방어 시도! [*]"
                             )
                             self.logger.info(
                                 f"  - 패배 수준: {self.bot.defeat_detection.get_defeat_level_name()}"
@@ -1678,11 +1678,11 @@ class BotStepIntegrator:
                         game_time = getattr(self.bot, "time", 0)
                         reason = defeat_status.get("defeat_reason", "알 수 없음")
                         self.logger.info(
-                            f"\n[SURRENDER] [*][*][*] 게임 포기! [*][*][*]"
+                            "\n[SURRENDER] [*][*][*] 게임 포기! [*][*][*]"
                         )
                         self.logger.info(f"  - 게임 시간: {int(game_time)}초")
                         self.logger.info(f"  - 이유: {reason}")
-                        self.logger.info(f"  - 다음 게임으로 이동...\n")
+                        self.logger.info("  - 다음 게임으로 이동...\n")
 
                         await self.bot.chat_send("gg")
 
@@ -1727,7 +1727,7 @@ class BotStepIntegrator:
                         )
                         if predicted_strategy and confidence > 0.3:
                             self.logger.info(
-                                f"[OPPONENT_MODELING] Strategy: {predicted_strategy} ({confidence:.1%} confidence)"
+                                "[OPPONENT_MODELING] Strategy: {predicted_strategy} ({confidence:.1%} confidence)"
                             )
                 except Exception as e:
                     if error_handler.debug_mode:
@@ -1890,7 +1890,7 @@ class BotStepIntegrator:
                     expected = min(int(game_min / 2.5) + 1, 5)  # 2.5분당 1기지, 최대 5
                     if base_count < expected and self.bot.minerals > 300:
                         self.logger.info(
-                            f"[EXPANSION] 확장 지연: {base_count}기지 (목표: {expected}, {game_min:.1f}분)"
+                            "[EXPANSION] 확장 지연: {base_count}기지 (목표: {expected}, {game_min:.1f}분)"
                         )
                 except Exception as e:
                     self.logger.warning(
@@ -1906,7 +1906,7 @@ class BotStepIntegrator:
                     if iteration % 1320 == 0:  # ~1분마다
                         stats = self.bot.queen_inject_opt.get_inject_stats()
                         self.logger.info(
-                            f"[QUEEN_INJECT] Efficiency: {stats['inject_efficiency']*100:.1f}%, "
+                            "[QUEEN_INJECT] Efficiency: {stats['inject_efficiency']*100:.1f}%, "
                             f"Total: {stats['total_injects']}, "
                             f"Queens: {stats['queens_assigned']}"
                         )
@@ -2487,7 +2487,7 @@ class BotStepIntegrator:
 
         except Exception as e:
             if error_handler.debug_mode:
-                self.logger.error(f"\n[ERROR] Game logic execution error in DEBUG_MODE")
+                self.logger.error("\n[ERROR] Game logic execution error in DEBUG_MODE")
                 raise
             else:
                 error_handler.error_counts["GameLogic"] += 1
@@ -2595,7 +2595,7 @@ class BotStepIntegrator:
                         self.logger.debug(f"[DEBUG] Expansion check error: {e}")
 
             # 4. 텍스트 표시
-            debug_text = f"""
+            debug_text = """
             [WickedZergBot Pro]
             Time: {int(b.time // 60)}:{int(b.time % 60):02d}
             Strategy: {strategy_mode}
@@ -2788,24 +2788,24 @@ class BotStepIntegrator:
 
                     # ★ 상태 벡터 로깅 (30초마다) - 실제 값 확인 ★
                     if iteration % 660 == 0:  # 30초
-                        self.logger.info(f"[RL_STATE] 게임 상태 벡터 (15차원):")
+                        self.logger.info("[RL_STATE] 게임 상태 벡터 (15차원):")
                         self.logger.info(
-                            f"  미네랄: {game_state[0]:.3f}, 가스: {game_state[1]:.3f}"
+                            "  미네랄: {game_state[0]:.3f}, 가스: {game_state[1]:.3f}"
                         )
                         self.logger.info(
-                            f"  서플라이: {game_state[2]:.3f}/{game_state[3]:.3f}"
+                            "  서플라이: {game_state[2]:.3f}/{game_state[3]:.3f}"
                         )
                         self.logger.info(
-                            f"  일꾼: {game_state[4]:.3f}, 유닛: {game_state[5]:.3f}, 적 유닛: {game_state[6]:.3f}"
+                            "  일꾼: {game_state[4]:.3f}, 유닛: {game_state[5]:.3f}, 적 유닛: {game_state[6]:.3f}"
                         )
                         self.logger.info(
-                            f"  기지: {game_state[7]:.3f}, 시간: {game_state[8]:.3f}"
+                            "  기지: {game_state[7]:.3f}, 시간: {game_state[8]:.3f}"
                         )
                         self.logger.info(
-                            f"  적 기지: {game_state[9]:.3f}, 업그레이드: {game_state[10]:.3f}, 라바: {game_state[11]:.3f}"
+                            "  적 기지: {game_state[9]:.3f}, 업그레이드: {game_state[10]:.3f}, 라바: {game_state[11]:.3f}"
                         )
                         self.logger.info(
-                            f"  맵 장악: {game_state[12]:.3f}, 아군 HP: {game_state[13]:.3f}, 적군 HP: {game_state[14]:.3f}"
+                            "  맵 장악: {game_state[12]:.3f}, 아군 HP: {game_state[13]:.3f}, 적군 HP: {game_state[14]:.3f}"
                         )
 
                     # ★★★ CRITICAL: RLAgent에게 행동 결정 요청 (최우선) ★★★
@@ -2920,7 +2920,7 @@ class BotStepIntegrator:
                             f"[STRATEGY] 규칙 기반 결정: {new_mode} (RLAgent 없음)"
                         )
                     else:
-                        self.logger.info(f"[STRATEGY] 현행 유지 (Shadow Mode)")
+                        self.logger.info("[STRATEGY] 현행 유지 (Shadow Mode)")
 
                 # ★ 불일치 경고 (RL이 있는데 사용 안 됨) ★
                 if (
@@ -2930,7 +2930,7 @@ class BotStepIntegrator:
                 ):
                     if iteration % 220 == 0:
                         self.logger.warning(
-                            f"[WARNING] [*] RLAgent가 있지만 결정이 사용되지 않음! [*]"
+                            "[WARNING] [*] RLAgent가 있지만 결정이 사용되지 않음! [*]"
                         )
 
         except Exception as e:
@@ -3394,7 +3394,7 @@ class BotStepIntegrator:
 
             # 주기적으로 보상 로그 출력
             if iteration % 500 == 0:
-                self.logger.info(f"[TRAINING] Step reward: {step_reward:.3f}")
+                self.logger.info("[TRAINING] Step reward: {step_reward:.3f}")
 
         # ★★★ Model Hot Reload (30초마다 배포 모델 변경 감지) ★★★
         if iteration % 660 == 0:  # ~30초

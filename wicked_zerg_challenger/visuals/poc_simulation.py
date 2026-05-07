@@ -56,7 +56,7 @@ class Position:
         return math.sqrt((self.x - other.x) ** 2 + (self.z - other.z) ** 2)
 
     def __str__(self):
-        return f"({self.x:.1f}, {self.y:.1f}, {self.z:.1f})"
+        return "({self.x:.1f}, {self.y:.1f}, {self.z:.1f})"
 
 
 @dataclass
@@ -119,14 +119,14 @@ class RadarMeshNetwork:
             z = self.center.z + self.radius * 0.6 * math.sin(ang)
             self.sentinels.append(
                 SentinelDrone(
-                    id=f"S-{i+2:02d}",
+                    id="S-{i+2:02d}",
                     position=Position(x, self.center.y, z),
                     radar_range=self.radius * 0.6,
                 )
             )
         logger.info(f"  [MESH] {n}대 Sentinel 배치 완료 (반경 {self.radius}m)")
         for s in self.sentinels:
-            logger.info(f"    {s.id} @ {s.position} (감지 반경: {s.radar_range:.0f}m)")
+            logger.info("    {s.id} @ {s.position} (감지 반경: {s.radar_range:.0f}m)")
 
     def detect(self, target_pos: Position) -> List[str]:
         """타겟 위치를 감지할 수 있는 Sentinel ID 목록 반환"""
@@ -175,7 +175,7 @@ class SessionManager:
         drone.status = DroneStatus.AUTHORIZED
         self.sessions[drone.id] = drone
         logger.info(
-            f"  [SESSION] Drone {drone.id} 등록 | 비행 허가: {self.default_timer:.0f}초"
+            "  [SESSION] Drone {drone.id} 등록 | 비행 허가: {self.default_timer:.0f}초"
         )
 
     def check_timers(self) -> List[dict]:
@@ -222,9 +222,9 @@ class NotificationService:
     async def send_warning(drone_id: str, remaining: float):
         """1차 경고 알림"""
         logger.info(
-            f"  [PUSH] >>> Drone {drone_id}: 비행 시간 임박! 잔여 {remaining:.0f}초"
+            "  [PUSH] >>> Drone {drone_id}: 비행 시간 임박! 잔여 {remaining:.0f}초"
         )
-        logger.info(f"         >>> FCM/MQTT Push 전송 완료")
+        logger.info("         >>> FCM/MQTT Push 전송 완료")
 
     @staticmethod
     async def send_expiry(drone_id: str):
@@ -232,14 +232,14 @@ class NotificationService:
         logger.info(
             f"  [ALERT] !!! Drone {drone_id}: 비행 시간 만료! 즉시 착륙/복귀하세요!"
         )
-        logger.info(f"          !!! 상태: UNAUTHORIZED (적색 경고)")
-        logger.info(f"          !!! FCM 강제 알림 전송 완료")
+        logger.info("          !!! 상태: UNAUTHORIZED (적색 경고)")
+        logger.info("          !!! FCM 강제 알림 전송 완료")
 
     @staticmethod
     async def send_eviction(drone_id: str):
         """강제 퇴각 명령"""
         logger.info(f"  [EVICT] Drone {drone_id}: 강제 퇴각 명령 발행")
-        logger.info(f"          착륙 유도 경로 전송 완료")
+        logger.info("          착륙 유도 경로 전송 완료")
 
 
 # ═══════════════════════════════════════════════════════
@@ -337,7 +337,7 @@ class AirspaceController:
                 DroneStatus.EVICTING: "[>>]",
             }.get(d.status, "[??]")
             lines.append(
-                f"    {status_icon} {did}: {d.status.value} | 잔여 {rem:.0f}s | 위치 {d.position}"
+                "    {status_icon} {did}: {d.status.value} | 잔여 {rem:.0f}s | 위치 {d.position}"
             )
         return "\n".join(lines)
 
@@ -404,12 +404,12 @@ async def run_simulation():
 
         # UD-003: 10초에 공역 진입
         if sim_ticks == 8:
-            logger.info(f"\n  --- [t={sim_ticks:3d}s] UD-003 공역 진입 ---")
+            logger.info("\n  --- [t={sim_ticks:3d}s] UD-003 공역 진입 ---")
             user_drones[2].position = Position(5, 85, -10)
 
         # UD-001: 20초에 자발적 이탈
         if sim_ticks == 22:
-            logger.info(f"\n  --- [t={sim_ticks:3d}s] UD-001 자발적 이탈 ---")
+            logger.info("\n  --- [t={sim_ticks:3d}s] UD-001 자발적 이탈 ---")
             user_drones[0].position = Position(200, 80, 200)
 
         # 드론 위치 미세 변동 (실제로는 GPS 갱신)
@@ -437,7 +437,7 @@ async def run_simulation():
 
         # 5초마다 상태 요약 출력
         if sim_ticks % 5 == 0:
-            logger.info(f"\n  === [t={sim_ticks:3d}s] 상태 요약 ===")
+            logger.info("\n  === [t={sim_ticks:3d}s] 상태 요약 ===")
             logger.info(controller.get_status_summary())
 
     # ── 최종 결과 ──
@@ -447,7 +447,7 @@ async def run_simulation():
     logger.info(f"  총 이벤트: {len(controller.event_log)}건")
     for evt in controller.event_log:
         logger.info(
-            f"    {evt['type']:10s} | Drone {evt['drone_id']} | 잔여 {evt.get('remaining', 0):.0f}s"
+            "    {evt['type']:10s} | Drone {evt['drone_id']} | 잔여 {evt.get('remaining', 0):.0f}s"
         )
     logger.info("=" * 65)
 

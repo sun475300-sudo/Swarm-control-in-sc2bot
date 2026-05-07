@@ -303,7 +303,7 @@ class WickedZergBotProImpl(BotAI):
             )
 
             self.hierarchical_rl = HierarchicalRLSystem()
-            self.logger.info(f"[HIERARCHICAL_RL] Initialized (Shadow Mode Active)")
+            self.logger.info("[HIERARCHICAL_RL] Initialized (Shadow Mode Active)")
         except ImportError as e:
             self.logger.info(f"[HIERARCHICAL_RL] Not available: {e}")
         except Exception as e:
@@ -317,7 +317,7 @@ class WickedZergBotProImpl(BotAI):
 
             self.situational_awareness = SituationalAwareness(self)
             self.logger.info(
-                f"[SITUATIONAL_AWARENESS] Initialized (SITREP Generation Active)"
+                "[SITUATIONAL_AWARENESS] Initialized (SITREP Generation Active)"
             )
         except ImportError as e:
             self.logger.info(f"[SITUATIONAL_AWARENESS] Not available: {e}")
@@ -375,7 +375,7 @@ class WickedZergBotProImpl(BotAI):
                 )
                 if predicted_strategy:
                     self.logger.info(
-                        f"[OPPONENT_MODELING] Predicted strategy: {predicted_strategy} (confidence: {confidence:.2%})"
+                        "[OPPONENT_MODELING] Predicted strategy: {predicted_strategy} (confidence: {confidence:.2%})"
                     )
                     counter_units = self.opponent_modeling.get_counter_recommendations()
                     self.logger.info(
@@ -510,7 +510,7 @@ class WickedZergBotProImpl(BotAI):
                 score_report = self.scoring_system.on_game_end(result_key)
                 logger.info(f"\n{self.scoring_system.get_summary()}")
                 self.logger.info(
-                    f"[SCORING] Total: {score_report.get('total_score', 0):.0f} | "
+                    "[SCORING] Total: {score_report.get('total_score', 0):.0f} | "
                     f"Peak Supply: {score_report.get('peak_supply', 0)} | "
                     f"Engagements: {score_report.get('engagements_won', 0)}W/"
                     f"{score_report.get('engagements_lost', 0)}L"
@@ -549,7 +549,7 @@ class WickedZergBotProImpl(BotAI):
                 # Record game outcome
                 self.opponent_modeling.on_game_end(won, lost)
                 self.logger.info(
-                    f"[OPPONENT_MODELING] Game data saved. Opponent model updated."
+                    "[OPPONENT_MODELING] Game data saved. Opponent model updated."
                 )
 
                 # Print learning summary every 5 games
@@ -565,7 +565,7 @@ class WickedZergBotProImpl(BotAI):
                             f"Games: {model.games_played}, Wins: {model.games_won}, Losses: {model.games_lost}"
                         )
                         self.logger.info(
-                            f"Win rate: {model.games_won / model.games_played * 100:.1f}%"
+                            "Win rate: {model.games_won / model.games_played * 100:.1f}%"
                         )
             except Exception as e:
                 self.logger.warning(f"OpponentModeling on_end error: {e}")
@@ -598,14 +598,14 @@ class WickedZergBotProImpl(BotAI):
                         logger.info(
                             f"\n[VICTORY] Conditions met: {', '.join(conditions)}"
                         )
-                        self.logger.info(f"[VICTORY] Total reward: {reward:.1f}")
+                        self.logger.info("[VICTORY] Total reward: {reward:.1f}")
                     elif game_lost:
                         conditions, penalty = self._victory_learner.analyze_game_result(
                             self, "Defeat"
                         )
                         game_outcome_reward = penalty
                         logger.info(f"\n[DEFEAT] Conditions: {', '.join(conditions)}")
-                        self.logger.info(f"[DEFEAT] Total penalty: {penalty:.1f}")
+                        self.logger.info("[DEFEAT] Total penalty: {penalty:.1f}")
 
                     # 통계 출력 (10게임마다)
                     total_games = len(self._victory_learner.victory_patterns) + len(
@@ -631,7 +631,7 @@ class WickedZergBotProImpl(BotAI):
                     if new_lr and hasattr(self, "rl_agent") and self.rl_agent:
                         self.rl_agent.learning_rate = new_lr
                         self.logger.info(
-                            f"[ADAPTIVE_LR] [OK] RL Agent 학습률 업데이트: {new_lr:.6f}"
+                            "[ADAPTIVE_LR] [OK] RL Agent 학습률 업데이트: {new_lr:.6f}"
                         )
 
                     # 10게임마다 통계 출력
@@ -649,16 +649,16 @@ class WickedZergBotProImpl(BotAI):
                     # Check if learning occurred (steps > 0 means rewards were collected)
                     if training_stats.get("steps", 0) > 0:
                         self.parameters_updated = 1  # Mark that learning occurred
-                        self.logger.info(f"[TRAINING] [OK] Neural network updated!")
+                        self.logger.info("[TRAINING] [OK] Neural network updated!")
                         self.logger.info(
-                            f"Loss: {training_stats.get('loss', 0):.4f}, Avg Reward: {training_stats.get('avg_reward', 0):.3f}"
+                            "Loss: {training_stats.get('loss', 0):.4f}, Avg Reward: {training_stats.get('avg_reward', 0):.3f}"
                         )
                         self.logger.info(
-                            f"Steps: {training_stats.get('steps', 0)}, ε={training_stats.get('epsilon', 0):.3f}, LR={training_stats.get('learning_rate', 0):.6f}"
+                            "Steps: {training_stats.get('steps', 0)}, ε={training_stats.get('epsilon', 0):.3f}, LR={training_stats.get('learning_rate', 0):.6f}"
                         )
                     else:
                         self.logger.info(
-                            f"[TRAINING] No learning this episode (no rewards collected)"
+                            "[TRAINING] No learning this episode (no rewards collected)"
                         )
 
                     # 모델 검증 (게임 결과 기록)
@@ -670,7 +670,7 @@ class WickedZergBotProImpl(BotAI):
                         ready, reason = self.rl_agent.is_ready_for_deployment()
                         if ready:
                             self.logger.info(
-                                f"[RL_AGENT] [*] MODEL READY FOR DEPLOYMENT [*]"
+                                "[RL_AGENT] [*] MODEL READY FOR DEPLOYMENT [*]"
                             )
                         else:
                             self.logger.info(f"[RL_AGENT] Training progress: {reason}")
@@ -745,7 +745,7 @@ class WickedZergBotProImpl(BotAI):
                 f"[CURRICULUM] 현재 단계: {progress['level_name']} "
                 f"({progress['wins_at_current_level']}/{progress['wins_required']}승)"
             )
-            self.logger.info(f"[CURRICULUM] 최종 목표: CheatInsane AI 격파!")
+            self.logger.info("[CURRICULUM] 최종 목표: CheatInsane AI 격파!")
 
             # ★ 종족별 승률 출력 ★
             curriculum.print_race_stats()
@@ -991,7 +991,7 @@ class WickedZergBotProImpl(BotAI):
             json.dump(existing, f, indent=2, ensure_ascii=False)
 
         self.logger.info(
-            f"[GAME_RESULT] Saved structured result: {result_label} vs {opp_race} ({game_duration:.0f}s)"
+            "[GAME_RESULT] Saved structured result: {result_label} vs {opp_race} ({game_duration:.0f}s)"
         )
 
     # =========================================================================
@@ -1103,7 +1103,7 @@ class WickedZergBotProImpl(BotAI):
                         {
                             "structure": struct_name,
                             "game_time_seconds": round(game_time, 1),
-                            "game_time_formatted": f"{int(game_time // 60)}:{int(game_time % 60):02d}",
+                            "game_time_formatted": "{int(game_time // 60)}:{int(game_time % 60):02d}",
                             "position": {
                                 "x": round(structure.position.x, 1),
                                 "y": round(structure.position.y, 1),
@@ -1175,7 +1175,7 @@ class WickedZergBotProImpl(BotAI):
                 {
                     "unit_type": unit_info.get("type", "UNKNOWN"),
                     "game_time_seconds": round(game_time, 1),
-                    "game_time_formatted": f"{int(game_time // 60)}:{int(game_time % 60):02d}",
+                    "game_time_formatted": "{int(game_time // 60)}:{int(game_time % 60):02d}",
                     "position": unit_info.get("position", None),
                 }
             )
@@ -1189,7 +1189,7 @@ class WickedZergBotProImpl(BotAI):
             game_time = getattr(self, "time", 0.0)
             self.logger.info(
                 f"[BUILD_COMPLETE] {unit_type.name} at "
-                f"{int(game_time // 60)}:{int(game_time % 60):02d}"
+                "{int(game_time // 60)}:{int(game_time % 60):02d}"
             )
 
             # 전략 매니저에 건물 완성 알림
@@ -1217,7 +1217,7 @@ class WickedZergBotProImpl(BotAI):
             game_time = getattr(self, "time", 0.0)
             self.logger.info(
                 f"[UPGRADE_COMPLETE] {upgrade.name} at "
-                f"{int(game_time // 60)}:{int(game_time % 60):02d}"
+                "{int(game_time // 60)}:{int(game_time % 60):02d}"
             )
 
             # 전략 매니저에 업그레이드 완료 알림

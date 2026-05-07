@@ -138,7 +138,7 @@ class IntegrationTester:
             # Test strategy prediction (should return None for new opponent)
             strategy, confidence = om.get_predicted_strategy()
             logger.info(
-                f"  [OK] Strategy prediction: {strategy} (confidence: {confidence:.2%})"
+                "  [OK] Strategy prediction: {strategy} (confidence: {confidence:.2%})"
             )
 
             # Test counter recommendations
@@ -229,7 +229,7 @@ class IntegrationTester:
                 if line.startswith("Ran "):
                     logger.info(f"  [OK] {line}")
                 if line.startswith("OK"):
-                    logger.info(f"  [OK] All tests passed!")
+                    logger.info("  [OK] All tests passed!")
                     self.results["performance"]["unit_tests"] = "all_passed"
                     return True
                 if "FAILED" in line:
@@ -332,7 +332,7 @@ class IntegrationTester:
         success_rate = (passed_checks / total_checks * 100) if total_checks > 0 else 0
 
         logger.info(
-            f"\n[OK] Passed: {passed_checks}/{total_checks} ({success_rate:.1f}%)"
+            "\n[OK] Passed: {passed_checks}/{total_checks} ({success_rate:.1f}%)"
         )
 
         if self.results["errors"]:

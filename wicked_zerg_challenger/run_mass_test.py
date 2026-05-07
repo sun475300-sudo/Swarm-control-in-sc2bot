@@ -94,7 +94,7 @@ def run_single_test(map_name, race, difficulty, diff_name, game_num, total):
 
         won = str(result) == "Result.Victory"
         result_str = "WIN" if won else "LOSS"
-        logger.info(f"  Result: {result_str} | Time: {elapsed:.1f}s")
+        logger.info("  Result: {result_str} | Time: {elapsed:.1f}s")
 
         return {
             "result": result_str,
@@ -158,7 +158,7 @@ def main():
         elapsed = time.time() - start_time
         wr = wins / max(wins + losses, 1) * 100
         logger.error(
-            f"  Progress: {i}/{total} | W:{wins} L:{losses} E:{errors} | WR:{wr:.0f}% | Time:{elapsed/60:.1f}m"
+            "  Progress: {i}/{total} | W:{wins} L:{losses} E:{errors} | WR:{wr:.0f}% | Time:{elapsed/60:.1f}m"
         )
 
         time.sleep(2)
@@ -166,32 +166,32 @@ def main():
     # Final summary
     total_time = time.time() - start_time
     logger.info(f"\n{'='*70}")
-    logger.info(f"  MASS TEST COMPLETE")
+    logger.info("  MASS TEST COMPLETE")
     logger.info(f"{'='*70}")
     logger.info(f"  Total Games: {total}")
     logger.error(f"  Results: {wins}W / {losses}L / {errors}E")
     if wins + losses > 0:
-        logger.info(f"  Win Rate: {wins/(wins+losses)*100:.1f}%")
-    logger.info(f"  Total Time: {total_time/60:.1f} minutes")
-    logger.info(f"  Avg Time/Game: {total_time/max(len(results),1):.1f}s")
+        logger.info("  Win Rate: {wins/(wins+losses)*100:.1f}%")
+    logger.info("  Total Time: {total_time/60:.1f} minutes")
+    logger.info("  Avg Time/Game: {total_time/max(len(results),1):.1f}s")
 
     # Per-difficulty breakdown
-    logger.info(f"\n  --- By Difficulty ---")
+    logger.info("\n  --- By Difficulty ---")
     for _, diff_name in DIFFICULTIES:
         d_results = [r for r in results if r.get("difficulty") == diff_name]
         d_wins = sum(1 for r in d_results if r.get("won"))
         d_total = sum(1 for r in d_results if r.get("result") != "error")
         wr = d_wins / max(d_total, 1) * 100
-        logger.info(f"  {diff_name:12s}: {d_wins}W/{d_total-d_wins}L ({wr:.0f}%)")
+        logger.info("  {diff_name:12s}: {d_wins}W/{d_total-d_wins}L ({wr:.0f}%)")
 
     # Per-race breakdown
-    logger.info(f"\n  --- By Race ---")
+    logger.info("\n  --- By Race ---")
     for race in RACES:
         r_results = [r for r in results if r.get("race") == race.name]
         r_wins = sum(1 for r in r_results if r.get("won"))
         r_total = sum(1 for r in r_results if r.get("result") != "error")
         wr = r_wins / max(r_total, 1) * 100
-        logger.info(f"  {race.name:12s}: {r_wins}W/{r_total-r_wins}L ({wr:.0f}%)")
+        logger.info("  {race.name:12s}: {r_wins}W/{r_total-r_wins}L ({wr:.0f}%)")
 
     logger.info(f"{'='*70}")
 

@@ -153,7 +153,7 @@ class LogAnalyzer:
         lines.append(
             f"  Total: {total_games} games, {total_wins}W-{total_games - total_wins}L"
         )
-        lines.append(f"  Overall Win Rate: {win_rate:.1f}%")
+        lines.append("  Overall Win Rate: {win_rate:.1f}%")
 
         # Rating
         if win_rate >= 80:
@@ -192,13 +192,13 @@ class LogAnalyzer:
 
             indicator = "!!" if win_rate < 20 else ("!" if win_rate < 40 else " ")
             lines.append(
-                f"  {indicator} vs {race:8s}: {wins}W-{losses}L ({win_rate:.1f}%) [{games} games]"
+                "  {indicator} vs {race:8s}: {wins}W-{losses}L ({win_rate:.1f}%) [{games} games]"
             )
 
         # Identify weakest matchup
         weakest = sorted_races[0]
         lines.append(
-            f"\n  WEAKEST MATCHUP: vs {weakest[0]} ({weakest[1].get('win_rate', 0):.1f}%)"
+            "\n  WEAKEST MATCHUP: vs {weakest[0]} ({weakest[1].get('win_rate', 0):.1f}%)"
         )
 
         # Specific recommendations per race
@@ -207,15 +207,15 @@ class LogAnalyzer:
             if wr < 20:
                 if race == "Zerg":
                     lines.append(
-                        f"  -> vs Zerg: Need better ZvZ opening (roach timing / baneling bust defense)"
+                        "  -> vs Zerg: Need better ZvZ opening (roach timing / baneling bust defense)"
                     )
                 elif race == "Terran":
                     lines.append(
-                        f"  -> vs Terran: Need better anti-bio strategy (banelings vs marines)"
+                        "  -> vs Terran: Need better anti-bio strategy (banelings vs marines)"
                     )
                 elif race == "Protoss":
                     lines.append(
-                        f"  -> vs Protoss: Need better anti-gateway pressure (roach/ravager timing)"
+                        "  -> vs Protoss: Need better anti-gateway pressure (roach/ravager timing)"
                     )
 
         lines.append("")
@@ -236,7 +236,7 @@ class LogAnalyzer:
             losses = stats.get("losses", 0)
             total = wins + losses
             rate = (wins / total * 100) if total > 0 else 0
-            lines.append(f"  {map_name:25s}: {wins}W-{losses}L ({rate:.0f}%)")
+            lines.append("  {map_name:25s}: {wins}W-{losses}L ({rate:.0f}%)")
 
         lines.append("")
         return "\n".join(lines)
@@ -278,27 +278,27 @@ class LogAnalyzer:
             avg_exp = sum(expansion_times) / len(expansion_times)
             min_exp = min(expansion_times)
             max_exp = max(expansion_times)
-            lines.append(f"  Natural Expansion:")
-            lines.append(f"    Average: {avg_exp:.0f}s (target: 60s)")
-            lines.append(f"    Best: {min_exp:.0f}s | Worst: {max_exp:.0f}s")
+            lines.append("  Natural Expansion:")
+            lines.append("    Average: {avg_exp:.0f}s (target: 60s)")
+            lines.append("    Best: {min_exp:.0f}s | Worst: {max_exp:.0f}s")
             if avg_exp > 90:
-                lines.append(f"    !! LATE - Average {avg_exp - 60:.0f}s behind target")
+                lines.append("    !! LATE - Average {avg_exp - 60:.0f}s behind target")
             elif avg_exp > 70:
-                lines.append(f"    ! Slightly late - aim for sub-60s")
+                lines.append("    ! Slightly late - aim for sub-60s")
             else:
-                lines.append(f"    OK - On target")
+                lines.append("    OK - On target")
 
         if pool_times:
             avg_pool = sum(pool_times) / len(pool_times)
-            lines.append(f"\n  Spawning Pool:")
-            lines.append(f"    Average: {avg_pool:.0f}s")
+            lines.append("\n  Spawning Pool:")
+            lines.append("    Average: {avg_pool:.0f}s")
 
         if game_durations:
             avg_dur = sum(game_durations) / len(game_durations)
             short_games = sum(1 for d in game_durations if d < 180)
             long_games = sum(1 for d in game_durations if d > 600)
-            lines.append(f"\n  Game Duration:")
-            lines.append(f"    Average: {avg_dur / 60:.1f} minutes")
+            lines.append("\n  Game Duration:")
+            lines.append("    Average: {avg_dur / 60:.1f} minutes")
             lines.append(f"    Quick losses (<3min): {short_games}")
             lines.append(f"    Long games (>10min): {long_games}")
 
@@ -335,7 +335,7 @@ class LogAnalyzer:
         total = len(self.game_data_files)
         if total > 0:
             lines.append(
-                f"  Mineral Banking (>1000): {high_mineral_games}/{total} games ({high_mineral_games/total*100:.0f}%)"
+                "  Mineral Banking (>1000): {high_mineral_games}/{total} games ({high_mineral_games/total*100:.0f}%)"
             )
             if high_mineral_games / total > 0.5:
                 lines.append(
@@ -344,7 +344,7 @@ class LogAnalyzer:
 
         if peak_workers_list:
             avg_peak = sum(peak_workers_list) / len(peak_workers_list)
-            lines.append(f"  Peak Workers (avg): {avg_peak:.0f}")
+            lines.append("  Peak Workers (avg): {avg_peak:.0f}")
             if avg_peak < 50:
                 lines.append("    !! LOW WORKER COUNT - Target 66+ for 3-base economy")
 
@@ -377,7 +377,7 @@ class LogAnalyzer:
             avg_loss = total_supply_lost / total_engagements
             lines.append(f"  Total Engagements: {total_engagements}")
             lines.append(f"  Total Supply Lost: {total_supply_lost}")
-            lines.append(f"  Average Loss per Fight: {avg_loss:.1f} supply")
+            lines.append("  Average Loss per Fight: {avg_loss:.1f} supply")
             lines.append(f"  Big Losses (>30 supply): {big_losses}")
             if big_losses > total_engagements * 0.3:
                 lines.append(
@@ -392,7 +392,7 @@ class LogAnalyzer:
                 unit_counts[unit_type] += 1
 
         if unit_counts:
-            lines.append(f"\n  Most Produced Units:")
+            lines.append("\n  Most Produced Units:")
             for unit, count in unit_counts.most_common(5):
                 lines.append(f"    {unit}: {count}")
 
@@ -427,9 +427,9 @@ class LogAnalyzer:
         if defeat_timings:
             avg_defeat = sum(defeat_timings) / len(defeat_timings)
             lines.append(f"  Defeats Analyzed: {len(defeat_timings)}")
-            lines.append(f"  Average Defeat Time: {avg_defeat / 60:.1f} minutes")
+            lines.append("  Average Defeat Time: {avg_defeat / 60:.1f} minutes")
 
-            lines.append(f"\n  Defeat Timing Distribution:")
+            lines.append("\n  Defeat Timing Distribution:")
             for reason, count in defeat_reasons.most_common():
                 lines.append(f"    {reason}: {count}")
 
@@ -518,14 +518,14 @@ class LogAnalyzer:
             if weakest_race[1].get("win_rate", 100) < 20:
                 lines.append(
                     f"  {priority}. [CRITICAL] vs {weakest_race[0]} win rate is "
-                    f"{weakest_race[1]['win_rate']:.0f}% - needs dedicated practice"
+                    "{weakest_race[1]['win_rate']:.0f}% - needs dedicated practice"
                 )
                 priority += 1
 
         # 2. Overall rate
         if overall_wr < 30:
             lines.append(
-                f"  {priority}. [HIGH] Overall win rate {overall_wr:.0f}% - "
+                "  {priority}. [HIGH] Overall win rate {overall_wr:.0f}% - "
                 "focus on fundamentals (macro, spending, expansion timing)"
             )
             priority += 1
@@ -541,7 +541,7 @@ class LogAnalyzer:
             if exp_times and sum(exp_times) / len(exp_times) > 90:
                 lines.append(
                     f"  {priority}. [HIGH] Natural expansion averaging "
-                    f"{sum(exp_times)/len(exp_times):.0f}s - use Hatch First build (target: 60s)"
+                    "{sum(exp_times)/len(exp_times):.0f}s - use Hatch First build (target: 60s)"
                 )
                 priority += 1
 

@@ -194,7 +194,7 @@ class BackgroundParallelLearner:
                     file_age = current_time - file_path.stat().st_mtime
                     if file_age > self.max_file_age:
                         if self.verbose:
-                            logger.info(f"  [-] Skipped (too old): {file_path.name} (Age: {file_age/60:.1f} min)")
+                            logger.info("  [-] Skipped (too old): {file_path.name} (Age: {file_age/60:.1f} min)")
                         files_skipped += 1
                         # ★ FIX: 오래된 파일 아카이브 보존 (삭제하지 않음, 초기 학습 데이터 유지)
                         try:
@@ -227,7 +227,7 @@ class BackgroundParallelLearner:
                     
                     if self.verbose:
                         total_reward = np.sum(loaded_data['rewards'])
-                        logger.info(f"  [OK] Loaded: {file_path.name} (Steps: {len(loaded_data['states'])}, Reward: {total_reward:.2f})")
+                        logger.info("  [OK] Loaded: {file_path.name} (Steps: {len(loaded_data['states'])}, Reward: {total_reward:.2f})")
                 except Exception as e:
                     logger.error(f"[ERROR] Corrupt file {file_path.name}: {e}")
                     # 손상된 파일은 별도 이동 또는 삭제
@@ -277,12 +277,12 @@ class BackgroundParallelLearner:
 
                 processing_time = time.time() - start_time
                 if self.verbose:
-                    logger.info(f"[OK] Training complete!")
-                    logger.info(f"  - Loss: {train_stats.get('loss', 0):.4f}")
+                    logger.info("[OK] Training complete!")
+                    logger.info("  - Loss: {train_stats.get('loss', 0):.4f}")
                     logger.info(f"  - Games trained: {train_stats.get('games', 0)}")
-                    logger.info(f"  - Adjusted LR: {train_stats.get('adjusted_lr', 0):.6f}")
+                    logger.info("  - Adjusted LR: {train_stats.get('adjusted_lr', 0):.6f}")
                     logger.info(f"  - Files archived: {archived_count}")
-                    logger.info(f"  - Processing time: {processing_time:.2f}s")
+                    logger.info("  - Processing time: {processing_time:.2f}s")
 
                 # 로그 파일에 기록
                 self._log_training_result(len(experiences), train_stats, processing_time)
@@ -324,21 +324,21 @@ class BackgroundParallelLearner:
         logger.info("\n" + "="*70)
         logger.info("? [BACKGROUND LEARNER] STATUS REPORT")
         logger.info("="*70)
-        logger.info(f"? Training Statistics:")
+        logger.info("? Training Statistics:")
         logger.info(f"  Files Processed:      {self.stats['files_processed']}")
         logger.info(f"  Files Skipped (Old):  {self.stats['files_skipped_old']}")
         logger.info(f"  Batch Training Runs:  {self.stats['batches_trained']}")
         logger.info(f"  Total Samples:        {self.stats['total_samples']}")
-        logger.info(f"  Average Loss:         {self.stats['avg_loss']:.4f}")
-        logger.info(f"  Last Loss:            {self.stats['last_loss']:.4f}")
-        logger.info(f"  Last Adjusted LR:     {self.stats['last_adjusted_lr']:.6f}")
-        logger.info(f"? Directory Status:")
+        logger.info("  Average Loss:         {self.stats['avg_loss']:.4f}")
+        logger.info("  Last Loss:            {self.stats['last_loss']:.4f}")
+        logger.info("  Last Adjusted LR:     {self.stats['last_adjusted_lr']:.6f}")
+        logger.info("? Directory Status:")
         logger.info(f"  Buffer Files:         {self.stats['buffer_file_count']}")
         logger.info(f"  Archived Files:       {self.stats['archive_file_count']}")
-        logger.info(f"  Max File Age:         {self.max_file_age/60:.1f} min")
-        logger.info(f"? System Status:")
+        logger.info("  Max File Age:         {self.max_file_age/60:.1f} min")
+        logger.info("? System Status:")
         logger.info(f"  Active Workers:       {self.stats['active_workers']}/{self.stats['max_workers']}")
-        logger.info(f"  Total Process Time:   {self.stats['total_processing_time']:.2f}s")
+        logger.info("  Total Process Time:   {self.stats['total_processing_time']:.2f}s")
         logger.error(f"  Errors:               {self.stats['errors']}")
 
         if self.stats['last_batch_time']:
@@ -361,9 +361,9 @@ class BackgroundParallelLearner:
                 f.write(f"\n[{timestamp}] Batch Training Complete\n")
                 f.write(f"  Batch Size:      {batch_size} games\n")
                 f.write(f"  Total Steps:     {train_stats.get('steps', 0)}\n")
-                f.write(f"  Loss:            {train_stats.get('loss', 0):.4f}\n")
-                f.write(f"  Adjusted LR:     {train_stats.get('adjusted_lr', 0):.6f}\n")
-                f.write(f"  Processing Time: {processing_time:.2f}s\n")
+                f.write("  Loss:            {train_stats.get('loss', 0):.4f}\n")
+                f.write("  Adjusted LR:     {train_stats.get('adjusted_lr', 0):.6f}\n")
+                f.write("  Processing Time: {processing_time:.2f}s\n")
                 f.write(f"  Total Processed: {self.stats['files_processed']} files\n")
                 f.write(f"  Total Skipped:   {self.stats['files_skipped_old']} files (too old)\n")
                 f.write(f"  Total Batches:   {self.stats['batches_trained']}\n")

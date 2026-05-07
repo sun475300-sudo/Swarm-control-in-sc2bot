@@ -386,7 +386,7 @@ class DefenseCoordinator:
                         UnitTypeId.SPAWNINGPOOL, "DefenseCoordinator"
                     ):
                         self.logger.info(
-                            f"[DEFENSE] Requesting Spawning Pool at {game_time:.1f}s"
+                            "[DEFENSE] Requesting Spawning Pool at {game_time:.1f}s"
                         )
                         self.pool_requested = True
 
@@ -401,7 +401,7 @@ class DefenseCoordinator:
                 )
                 self.first_queen_requested = True
                 self.logger.info(
-                    f"[DEFENSE] Requesting first Queen at {game_time:.1f}s"
+                    "[DEFENSE] Requesting first Queen at {game_time:.1f}s"
                 )
 
         # 3. 초기 Zergling 생산 요청 (러시 감지 시, 설정값 사용)
@@ -717,7 +717,7 @@ class DefenseCoordinator:
                 if self.bot.workers.exists:
                     worker = self.bot.workers.closest_to(build_pos)
                     self.bot.do(worker.build(UnitTypeId.SPINECRAWLER, build_pos))
-                    self.logger.info(f"[DEFENSE] Building Spine Crawler at base")
+                    self.logger.info("[DEFENSE] Building Spine Crawler at base")
             else:
                 pass  # 자원 부족 또는 예약 실패
 
@@ -754,7 +754,7 @@ class DefenseCoordinator:
                         worker = self.bot.workers.closest_to(build_pos)
                         self.bot.do(worker.build(UnitTypeId.SPORECRAWLER, build_pos))
                         self.logger.info(
-                            f"[DEFENSE] Building Spore Crawler (reactive - air threat)"
+                            "[DEFENSE] Building Spore Crawler (reactive - air threat)"
                         )
 
     # ========== Proactive 공중 방어 ★ NEW ★ ==========

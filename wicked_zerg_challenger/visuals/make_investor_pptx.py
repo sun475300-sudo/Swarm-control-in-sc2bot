@@ -130,7 +130,7 @@ def footer(slide, n, total=20):
         Inches(6.9),
         Inches(2),
         Inches(0.4),
-        f"{n:02d} / {total:02d}",
+        "{n:02d} / {total:02d}",
         sz=8,
         c=DIM,
         fn=MONO,
@@ -1780,7 +1780,7 @@ def main():
 
     logger.info(f"\n{'='*60}")
     logger.info(f"PPTX CREATED: {out}")
-    logger.info(f"  Slides: 20  |  Theme: Dark Navy + Cyan/Green")
+    logger.info("  Slides: 20  |  Theme: Dark Navy + Cyan/Green")
     logger.info(f"{'='*60}")
 
 

@@ -135,7 +135,7 @@ class QueenTransfusionManager:
                 ):
                     self.logger.info(
                         f"[{int(self.bot.time)}s] Transfusion: {target.type_id.name} "
-                        f"at {target.health_percentage:.0%} HP "
+                        "at {target.health_percentage:.0%} HP "
                         f"(Priority: {self.HEAL_PRIORITY.get(target.type_id, 0)})"
                     )
 
@@ -257,8 +257,8 @@ class QueenTransfusionManager:
             self.logger.info(
                 f"[TRANSFUSION STATS] "
                 f"Total: {stats['total_transfusions']}, "
-                f"HP Healed: {stats['total_hp_healed']:.0f}, "
-                f"Avg: {stats['avg_hp_per_transfusion']:.1f} HP/cast"
+                "HP Healed: {stats['total_hp_healed']:.0f}, "
+                "Avg: {stats['avg_hp_per_transfusion']:.1f} HP/cast"
             )
 
             # Log top 3 healed unit types
@@ -269,6 +269,6 @@ class QueenTransfusionManager:
                     reverse=True,
                 )[:3]
                 self.logger.info(
-                    f"[TRANSFUSION] Top healed: "
+                    "[TRANSFUSION] Top healed: "
                     + ", ".join(f"{ut.name}: {count}" for ut, count in top_healed)
                 )

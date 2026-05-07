@@ -246,7 +246,7 @@ class GameAnalytics:
         # 개선 제안
         suggestions = self._get_improvement_suggestions(game_record)
         if suggestions:
-            lines.append(f"\n💡 개선 제안:")
+            lines.append("\n💡 개선 제안:")
             for suggestion in suggestions:
                 lines.append(f"  - {suggestion}")
 
@@ -285,7 +285,7 @@ class GameAnalytics:
         """통계 요약"""
         lines = []
         lines.append(f"\n{'='*60}")
-        lines.append(f"[GAME ANALYTICS] 전체 통계")
+        lines.append("[GAME ANALYTICS] 전체 통계")
         lines.append(f"{'='*60}")
 
         # 전체 승률
@@ -293,21 +293,21 @@ class GameAnalytics:
             (self.total_wins / self.total_games * 100) if self.total_games > 0 else 0.0
         )
         lines.append(
-            f"전체 승률: {self.total_wins}/{self.total_games}승 ({win_rate:.1f}%)"
+            "전체 승률: {self.total_wins}/{self.total_games}승 ({win_rate:.1f}%)"
         )
         lines.append(f"평균 게임 시간: {int(self.timing_stats['avg_game_time'])}초")
 
         # 종족별 승률
-        lines.append(f"\n종족별 승률:")
+        lines.append("\n종족별 승률:")
         for race, stats in self.race_stats.items():
             if stats["games"] > 0:
                 race_wr = stats["wins"] / stats["games"] * 100
                 lines.append(
-                    f"  vs {race}: {stats['wins']}/{stats['games']}승 ({race_wr:.1f}%) | 평균: {int(stats['avg_time'])}초"
+                    "  vs {race}: {stats['wins']}/{stats['games']}승 ({race_wr:.1f}%) | 평균: {int(stats['avg_time'])}초"
                 )
 
         # 맵별 승률 (상위 5개)
-        lines.append(f"\n맵별 승률 (상위 5개):")
+        lines.append("\n맵별 승률 (상위 5개):")
         sorted_maps = sorted(
             self.map_stats.items(), key=lambda x: x[1]["games"], reverse=True
         )[:5]
@@ -315,11 +315,11 @@ class GameAnalytics:
             if stats["games"] > 0:
                 map_wr = stats["wins"] / stats["games"] * 100
                 lines.append(
-                    f"  {map_name}: {stats['wins']}/{stats['games']}승 ({map_wr:.1f}%)"
+                    "  {map_name}: {stats['wins']}/{stats['games']}승 ({map_wr:.1f}%)"
                 )
 
         # 패배 원인 Top 3
-        lines.append(f"\n주요 패배 원인:")
+        lines.append("\n주요 패배 원인:")
         sorted_reasons = sorted(
             self.defeat_reasons.items(), key=lambda x: x[1], reverse=True
         )[:3]
@@ -345,19 +345,19 @@ class GameAnalytics:
         lines.append(f"\n[ADVICE] vs {opponent_race} 조언:")
 
         if win_rate < 20:
-            lines.append(f"  🚨 승률 매우 낮음 ({win_rate:.1f}%) - 전략 재검토 필요")
+            lines.append("  🚨 승률 매우 낮음 ({win_rate:.1f}%) - 전략 재검토 필요")
             lines.append(f"  - {opponent_race}에 특화된 빌드 오더 연구")
             lines.append(f"  - {opponent_race}의 주요 전략 파악")
 
         elif win_rate < 40:
-            lines.append(f"  [WARNING] 승률 낮음 ({win_rate:.1f}%) - 개선 필요")
+            lines.append("  [WARNING] 승률 낮음 ({win_rate:.1f}%) - 개선 필요")
             lines.append(f"  - {opponent_race}에 대한 카운터 전략 개발")
 
         elif win_rate < 60:
-            lines.append(f"  [O] 승률 보통 ({win_rate:.1f}%) - 추가 연습 필요")
+            lines.append("  [O] 승률 보통 ({win_rate:.1f}%) - 추가 연습 필요")
 
         else:
-            lines.append(f"  [OK] 승률 양호 ({win_rate:.1f}%) - 현재 전략 유지")
+            lines.append("  [OK] 승률 양호 ({win_rate:.1f}%) - 현재 전략 유지")
 
         return "\n".join(lines)
 

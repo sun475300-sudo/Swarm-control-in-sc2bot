@@ -355,7 +355,7 @@ class VictoryConditionsLearner:
         logger.info(f"Total Games: {total_games}")
         logger.info(f"Victories: {total_victories}")
         logger.info(f"Defeats: {total_defeats}")
-        logger.info(f"Win Rate: {win_rate:.1%}")
+        logger.info("Win Rate: {win_rate:.1%}")
 
         logger.info("\n" + "-" * 70)
         logger.info("Top Victory Conditions:")
@@ -366,7 +366,7 @@ class VictoryConditionsLearner:
                 percentage = (
                     (count / total_victories * 100) if total_victories > 0 else 0
                 )
-                logger.info(f"  {idx}. {condition}: {count} times ({percentage:.1f}%)")
+                logger.info("  {idx}. {condition}: {count} times ({percentage:.1f}%)")
         else:
             logger.info("  No victories yet.")
 
@@ -377,7 +377,7 @@ class VictoryConditionsLearner:
         if defeat_conditions:
             for idx, (condition, count) in enumerate(defeat_conditions, 1):
                 percentage = (count / total_defeats * 100) if total_defeats > 0 else 0
-                logger.info(f"  {idx}. {condition}: {count} times ({percentage:.1f}%)")
+                logger.info("  {idx}. {condition}: {count} times ({percentage:.1f}%)")
         else:
             logger.info("  No defeats yet (amazing!).")
 
@@ -388,24 +388,24 @@ class VictoryConditionsLearner:
         if victory_conditions:
             top_victory = victory_conditions[0][0]
             logger.info(f"  - Most common path to victory: {top_victory}")
-            logger.info(f"    -> Keep focusing on this strategy!")
+            logger.info("    -> Keep focusing on this strategy!")
 
         # 패배 인사이트
         if defeat_conditions:
             top_defeat = defeat_conditions[0][0]
             logger.info(f"  - Most common cause of defeat: {top_defeat}")
-            logger.info(f"    -> This needs urgent improvement!")
+            logger.info("    -> This needs urgent improvement!")
 
         # 승률 기반 조언
         if win_rate < 0.3:
-            logger.info(f"  - Win rate is low ({win_rate:.1%}). Focus on fundamentals.")
+            logger.info("  - Win rate is low ({win_rate:.1%}). Focus on fundamentals.")
         elif win_rate < 0.5:
-            logger.info(f"  - Win rate is improving ({win_rate:.1%}). Keep learning!")
+            logger.info("  - Win rate is improving ({win_rate:.1%}). Keep learning!")
         elif win_rate < 0.7:
-            logger.info(f"  - Win rate is good ({win_rate:.1%}). Refine strategies.")
+            logger.info("  - Win rate is good ({win_rate:.1%}). Refine strategies.")
         else:
             logger.info(
-                f"  - Win rate is excellent ({win_rate:.1%}). Mastery achieved!"
+                "  - Win rate is excellent ({win_rate:.1%}). Mastery achieved!"
             )
 
         logger.info("=" * 70)

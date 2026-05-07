@@ -75,7 +75,7 @@ class IterativeReplayLearningWorkflow:
                     logger.info(f"Learned parameters: {learned_params}")
                     return True
                 else:
-                    logger.warning(f"Learned build orders file not created")
+                    logger.warning("Learned build orders file not created")
                     return False
             else:
                 logger.error(f"Replay learning failed with return code {result.returncode}")
@@ -90,7 +90,7 @@ class IterativeReplayLearningWorkflow:
     def collect_training_data(self) -> bool:
         """���� �Ʒ� ������ ����"""
         if not self.collect_data_path.exists():
-            logger.warning(f"Collect training data script not found")
+            logger.warning("Collect training data script not found")
             return True  # Optional step
         
         try:
@@ -109,7 +109,7 @@ class IterativeReplayLearningWorkflow:
     def extract_and_learn_from_training(self) -> bool:
         """�Ʒ� �����Ϳ��� ���� �� �н�"""
         if not self.extract_train_path.exists():
-            logger.warning(f"Extract and train script not found")
+            logger.warning("Extract and train script not found")
             return True  # Optional step
         
         try:
@@ -169,8 +169,8 @@ class IterativeReplayLearningWorkflow:
             # Note: run_with_training.py runs continuously, so we'll just verify it can start
             # In practice, game training should run in parallel or separately
             logger.info(f"Game training script available: {self.run_training_path}")
-            logger.info(f"Learned parameters will be automatically applied in production_resilience.py")
-            logger.info(f"To start game training, run: python run_with_training.py")
+            logger.info("Learned parameters will be automatically applied in production_resilience.py")
+            logger.info("To start game training, run: python run_with_training.py")
             return True
                 
         except Exception as e:
@@ -204,7 +204,7 @@ class IterativeReplayLearningWorkflow:
                 "duration": step1_duration,
                 "learned_params": learned_params
             })
-            logger.info(f"Step 1 completed in {step1_duration:.1f}s")
+            logger.info("Step 1 completed in {step1_duration:.1f}s")
             logger.info(f"Learned parameters: {learned_params}")
         else:
             step1_duration = time.time() - step1_start
@@ -213,7 +213,7 @@ class IterativeReplayLearningWorkflow:
                 "status": "failed",
                 "duration": step1_duration
             })
-            logger.error(f"Step 1 failed")
+            logger.error("Step 1 failed")
             return iteration_result
         
         # Step 2: Verify game training can use learned parameters
@@ -226,9 +226,9 @@ class IterativeReplayLearningWorkflow:
             "status": "completed",
             "duration": step2_duration
         })
-        logger.info(f"Step 2 completed in {step2_duration:.1f}s")
-        logger.info(f"Learned parameters are ready for game training")
-        logger.info(f"Parameters will be automatically applied via production_resilience.py")
+        logger.info("Step 2 completed in {step2_duration:.1f}s")
+        logger.info("Learned parameters are ready for game training")
+        logger.info("Parameters will be automatically applied via production_resilience.py")
         
         # Step 3: Collect training data (if exists from previous games)
         logger.info(f"\n[ITERATION {iteration} - STEP 3] Collecting training data...")
@@ -240,7 +240,7 @@ class IterativeReplayLearningWorkflow:
             "status": "completed",
             "duration": step3_duration
         })
-        logger.info(f"Step 3 completed in {step3_duration:.1f}s")
+        logger.info("Step 3 completed in {step3_duration:.1f}s")
         
         # Step 4: Extract and learn from training
         logger.info(f"\n[ITERATION {iteration} - STEP 4] Extracting and learning from training...")
@@ -252,7 +252,7 @@ class IterativeReplayLearningWorkflow:
             "status": "completed",
             "duration": step4_duration
         })
-        logger.info(f"Step 4 completed in {step4_duration:.1f}s")
+        logger.info("Step 4 completed in {step4_duration:.1f}s")
         
         # Verify final parameters
         final_params = self.verify_learned_parameters()
@@ -263,9 +263,9 @@ class IterativeReplayLearningWorkflow:
         iteration_result["end_time"] = iteration_end.isoformat()
         iteration_result["duration"] = iteration_duration
         
-        logger.info(f"\n[ITERATION {iteration}] Completed in {iteration_duration:.1f}s")
+        logger.info("\n[ITERATION {iteration}] Completed in {iteration_duration:.1f}s")
         logger.info(f"Final parameters: {final_params}")
-        logger.info(f"These parameters are automatically used in game training")
+        logger.info("These parameters are automatically used in game training")
         
         return iteration_result
     
@@ -306,7 +306,7 @@ class IterativeReplayLearningWorkflow:
                 
                 # Brief pause between iterations
                 if iteration < max_iterations:
-                    logger.info(f"\n[INFO] Waiting 2 seconds before next iteration...")
+                    logger.info("\n[INFO] Waiting 2 seconds before next iteration...")
                     time.sleep(2)
                 
             except KeyboardInterrupt:
@@ -331,8 +331,8 @@ class IterativeReplayLearningWorkflow:
         logger.info(f"Total iterations: {max_iterations}")
         logger.info(f"Successful: {successful_iterations}")
         logger.error(f"Failed: {failed_iterations}")
-        logger.info(f"Total duration: {workflow_duration:.1f} seconds ({workflow_duration/60:.1f} minutes)")
-        logger.info(f"")
+        logger.info("Total duration: {workflow_duration:.1f} seconds ({workflow_duration/60:.1f} minutes)")
+        logger.info("")
         for param, value in final_params.items():
             logger.info(f"  - {param}: {value}")
         logger.info(f"Iteration history saved to: {self.history_path}")

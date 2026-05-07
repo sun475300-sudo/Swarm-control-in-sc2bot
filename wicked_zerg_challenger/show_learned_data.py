@@ -65,17 +65,17 @@ def show_build_orders():
         logger.info("\n[유닛 생산 우선순위 TOP 10]")
         sorted_prio = sorted(priorities.items(), key=lambda x: x[1], reverse=True)
         for unit, score in sorted_prio[:10]:
-            logger.info(f"  - {translate_unit(unit)}: {score:.5f}")
+            logger.info("  - {translate_unit(unit)}: {score:.5f}")
 
         logger.info("\n[최적 확장 타이밍]")
         if timings:
             if "second_base" in timings:
                 logger.info(
-                    f"  - 앞마당(2멀티): {timings['second_base']:.1f}초 ({int(timings['second_base']//60)}분 {int(timings['second_base']%60)}초)"
+                    "  - 앞마당(2멀티): {timings['second_base']:.1f}초 ({int(timings['second_base']//60)}분 {int(timings['second_base']%60)}초)"
                 )
             if "third_base" in timings:
                 logger.info(
-                    f"  - 트리플(3멀티): {timings['third_base']:.1f}초 ({int(timings['third_base']//60)}분 {int(timings['third_base']%60)}초)"
+                    "  - 트리플(3멀티): {timings['third_base']:.1f}초 ({int(timings['third_base']//60)}분 {int(timings['third_base']%60)}초)"
                 )
         else:
             logger.info("  (데이터 없음)")
@@ -104,7 +104,7 @@ def show_rl_agent():
                 # Q-Table or Neural Network?
                 if "q_table" in data:
                     q_table = data["q_table"]
-                    logger.info(f"  - 학습 방식: Q-Learning (테이블 방식)")
+                    logger.info("  - 학습 방식: Q-Learning (테이블 방식)")
                     logger.info(f"  - 학습된 상태 수: {len(q_table)}")
 
                     # Analyze preferred actions
@@ -130,14 +130,14 @@ def show_rl_agent():
                     if total > 0:
                         for label, count in action_counts.items():
                             logger.info(
-                                f"    - {label}: {count}회 ({count/total*100:.1f}%)"
+                                "    - {label}: {count}회 ({count/total*100:.1f}%)"
                             )
                     else:
                         logger.info("    (아직 유의미한 학습 데이터가 없습니다)")
 
                 elif "w1" in data:  # Neural Network
-                    logger.info(f"  - 학습 방식: Deep Q-Network (신경망)")
-                    logger.info(f"  - 가중치 레이어 감지됨 (w1, w2...)")
+                    logger.info("  - 학습 방식: Deep Q-Network (신경망)")
+                    logger.info("  - 가중치 레이어 감지됨 (w1, w2...)")
                     # Cannot easily interpret NN weights directly without running inference
                     logger.info(
                         "  - 신경망 모델은 직접적인 해석이 어렵지만, 현재 게임플레이를 통해 지속적으로 최적화되고 있습니다."
@@ -151,7 +151,7 @@ def show_rl_agent():
 
                 if "epsilon" in data:
                     eps = float(data["epsilon"])
-                    logger.info(f"  - 현재 탐험률(Epsilon): {eps:.4f} ({eps*100:.1f}%)")
+                    logger.info("  - 현재 탐험률(Epsilon): {eps:.4f} ({eps*100:.1f}%)")
                     if eps > 0.1:
                         logger.info(
                             "    → 아직 다양한 전략을 시도해보는 '탐험 단계'입니다."
@@ -164,7 +164,7 @@ def show_rl_agent():
                 # Learning Rate
                 if "learning_rate" in data:
                     lr = float(data["learning_rate"])
-                    logger.info(f"  - 현재 학습률(Learning Rate): {lr:.5f}")
+                    logger.info("  - 현재 학습률(Learning Rate): {lr:.5f}")
                 else:
                     logger.info(
                         "  - 현재 학습률(Learning Rate): 0.001 (Adaptive - 상황에 따라 자동 조절됨)"
@@ -177,7 +177,7 @@ def show_rl_agent():
                         f"  - 신경망 구조: 입력({w1.shape[0]}) -> 은닉({w1.shape[1]}) -> 출력"
                     )
                     logger.info(
-                        f"  - 가중치 평균/표준편차: {np.mean(w1):.4f} / {np.std(w1):.4f}"
+                        "  - 가중치 평균/표준편차: {np.mean(w1):.4f} / {np.std(w1):.4f}"
                     )
                     logger.info(
                         "    (가중치 변화가 있을수록 학습이 진행되고 있음을 의미합니다)"

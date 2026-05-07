@@ -235,7 +235,7 @@ class TournamentRunner:
                 result["bot_game_time"] = tr.get("game_time", 0)
 
             status = "WIN" if result["won"] else "LOSS"
-            logger.info(f"\n[GAME {game_number}] {status} in {elapsed:.0f}s")
+            logger.info("\n[GAME {game_number}] {status} in {elapsed:.0f}s")
 
         except Exception as e:
             result["error"] = str(e)
@@ -286,10 +286,10 @@ class TournamentRunner:
         errors = sum(1 for r in self.results if r.get("error"))
         win_rate = (wins / total * 100) if total > 0 else 0
 
-        lines.append(f"--- OVERALL ---")
+        lines.append("--- OVERALL ---")
         lines.append(f"  Total: {total} games")
         lines.append(f"  Wins: {wins} | Losses: {losses} | Errors: {errors}")
-        lines.append(f"  Win Rate: {win_rate:.1f}%")
+        lines.append("  Win Rate: {win_rate:.1f}%")
         lines.append("")
 
         # Per-race stats
@@ -300,7 +300,7 @@ class TournamentRunner:
             race_total = len(race_games)
             rate = (race_wins / race_total * 100) if race_total > 0 else 0
             lines.append(
-                f"  vs {race_name.upper():8s}: {race_wins}W-{race_total - race_wins}L ({rate:.0f}%)"
+                "  vs {race_name.upper():8s}: {race_wins}W-{race_total - race_wins}L ({rate:.0f}%)"
             )
         lines.append("")
 
@@ -312,7 +312,7 @@ class TournamentRunner:
             diff_total = len(diff_games)
             rate = (diff_wins / diff_total * 100) if diff_total > 0 else 0
             lines.append(
-                f"  {diff_name.upper():12s}: {diff_wins}W-{diff_total - diff_wins}L ({rate:.0f}%)"
+                "  {diff_name.upper():12s}: {diff_wins}W-{diff_total - diff_wins}L ({rate:.0f}%)"
             )
         lines.append("")
 
@@ -330,7 +330,7 @@ class TournamentRunner:
                 rate = (combo_wins / combo_total * 100) if combo_total > 0 else 0
                 label = f"{diff_name.upper()} vs {race_name.upper()}"
                 lines.append(
-                    f"  {label:25s}: {combo_wins}W-{combo_total - combo_wins}L ({rate:.0f}%)"
+                    "  {label:25s}: {combo_wins}W-{combo_total - combo_wins}L ({rate:.0f}%)"
                 )
         lines.append("")
 
@@ -340,10 +340,10 @@ class TournamentRunner:
             status = "WIN " if r["won"] else "LOSS"
             if r.get("error"):
                 status = "ERR "
-            time_str = f"{r['game_time']:.0f}s" if r["game_time"] > 0 else "N/A"
+            time_str = "{r['game_time']:.0f}s" if r["game_time"] > 0 else "N/A"
             lines.append(
-                f"  #{r['game_number']:2d} {status} vs {r['opponent_race'].upper():8s} "
-                f"({r['difficulty'].upper():8s}) on {r['map']:20s} [{time_str}]"
+                "  #{r['game_number']:2d} {status} vs {r['opponent_race'].upper():8s} "
+                "({r['difficulty'].upper():8s}) on {r['map']:20s} [{time_str}]"
             )
         lines.append("")
         lines.append("=" * 70)
