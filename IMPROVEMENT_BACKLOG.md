@@ -75,7 +75,43 @@ must be broadened.
 |---|---|---|---|---|
 | 0 (baseline) | 2026-05-07 | — | 365P / 7F / 34S / 1err | (current HEAD `0ac482b`) |
 | 1 | 2026-05-07 | B1.1, B1.2, B1.3 | **372P / 0F / 35S** | `2241e17` |
-| 2 | 2026-05-07 | B2.1, B2.2 + 7 more files | **372P / 0F / 35S**, F541 255→159 | (this commit) |
+| 2 | 2026-05-07 | B2.1, B2.2 + 7 more files | **372P / 0F / 35S**, F541 255→159 | `43e07f6` |
+| 3 | 2026-05-07 | B4.2 (F401), F541 batch 3 | **372P / 0F / 35S**, F541 159→105, F401 1→0 | (this commit) |
+
+### Cycle 3 detail
+
+- **F401 fix** — `wicked_zerg_challenger/scouting/phase_scout_cadence.py:45` — removed unused `Tuple` from `from typing import List, Optional, Tuple`. Repository is now F401-clean.
+
+- **F541 batch 3** — 54 more f-prefix removals across 6 files:
+
+| File | Fixed |
+|---|---|
+| `tools/integrated_replay_learning_workflow.py` | 16 |
+| `tools/comprehensive_training_workflow_5x_v2.py` | 12 |
+| `tools/iterative_replay_learning_workflow.py` | 11 |
+| `aggressive_strategies.py` | 5 |
+| `build_feedback_system.py` | 5 |
+| `game_analytics_system.py` | 5 |
+
+Repository F541 count: 159 → 105.
+
+### Cycle 3 — F811 deferred
+
+5 F811 redefinitions remain. Investigation showed that the bodies of the
+shadowed (first) and active (second) definitions are **substantially different**
+in `economy_manager.py::_prevent_resource_banking` and `combat_manager.py::_find_harass_target`.
+Auto-deleting the first definition is mechanically safe (Python never reaches it)
+but obscures probable merge-conflict-resolution intent, so this is queued for
+a follow-up cycle that can be reviewed by a human:
+
+| File | Line | Symbol | Earlier line shadowed |
+|---|---|---|---|
+| `combat_manager.py` | 4278 | `_find_harass_target` | 2377 |
+| `economy_manager.py` | 2507 | `_prevent_resource_banking` | 1298 |
+| `economy_manager.py` | 3286 | `_reduce_gas_workers` | 2630 |
+| `local_training/production_resilience.py` | 1866 | `build_terran_counters` | 1369 |
+| `opponent_modeling.py` | 765 | `on_step` | 341 |
+
 
 ### Cycle 2 detail
 
