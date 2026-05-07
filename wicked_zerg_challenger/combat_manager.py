@@ -2396,6 +2396,11 @@ class CombatManager:
             combat_ready = list(mutalisks)
             regenerating = []
 
+        # Send regenerating mutalisks back to safety so they actually heal
+        # instead of orbiting the harass target with low HP.
+        if regenerating:
+            await self._mutalisk_retreat(regenerating)
+
         if not combat_ready:
             return  # All units regenerating
 
@@ -2841,6 +2846,10 @@ class CombatManager:
         else:
             combat_ready = list(mutalisks)
             regenerating = []
+
+        # Send regenerating mutalisks back to safety so they actually heal.
+        if regenerating:
+            await self._mutalisk_retreat(regenerating)
 
         if not combat_ready:
             return  # All units regenerating
@@ -4302,4 +4311,6 @@ class CombatManager:
             pass
 
         return None
+
+
 # Improved micro management for VeryHard difficulty
