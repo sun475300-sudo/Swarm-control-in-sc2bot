@@ -62,7 +62,7 @@ Type hints are silently broken at the static-analysis layer (works at runtime bu
 
 | Test | Skip reason | Action |
 |------|-------------|--------|
-| `tests/test_p606_infra.py:46/55/85/135` | "not importable" | Inspect actual import failure — modules may be missing or have errors. |
+| `tests/test_p606_infra.py:46/55/85/135` | "not importable" | ✅ Done (Iter 9): tests referenced **outdated class names** (FuzzTarget/FuzzConfig, ContractViolation/ContractType, PackageType/SBOMFormat, ProfileMetric/ProfilingConfig) — none of those exist; modules expose SC2Fuzzer, ContractTester, SBOMGenerator, SC2Profiler. Updated test references; 4 tests now actually pass. |
 | `tests/test_core_modules.py:174` (`micro_controller`) | requires sc2 lib | Document — acceptable. |
 | `tests/test_crypto_trading.py:144-185` | `config.yaml not found` | Crypto tests want repo-root `config.yaml`; either ship sample or skip cleanly. |
 | `tests/test_security.py:99` | `config.yaml 파일이 없습니다.` | Same. |
