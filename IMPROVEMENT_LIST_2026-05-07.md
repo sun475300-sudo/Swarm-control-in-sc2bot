@@ -34,11 +34,11 @@ Type hints are silently broken at the static-analysis layer (works at runtime bu
 
 | # | Location | Status |
 |---|----------|--------|
-| C1 | `wicked_zerg_challenger/economy/queen_transfusion_manager.py:233` | Pending |
-| C2 | `wicked_zerg_challenger/combat/spatial_query_optimizer.py:262` | Pending |
-| C3 | `wicked_zerg_challenger/advanced_micro_controller_v3.py:1405` | Pending |
-| C4 | `wicked_zerg_challenger/strategy/adaptive_build_order.py:64` | Pending |
-| C5 | `wicked_zerg_challenger/core/resource_manager.py:189` | Pending |
+| C1 | `wicked_zerg_challenger/economy/queen_transfusion_manager.py:233` | ✅ Done (Iter 5) |
+| C2 | `wicked_zerg_challenger/combat/spatial_query_optimizer.py:262` | ✅ Done (Iter 5) |
+| C3 | `wicked_zerg_challenger/advanced_micro_controller_v3.py:1405` | ✅ Done (Iter 5) |
+| C4 | `wicked_zerg_challenger/strategy/adaptive_build_order.py:64` | ✅ Done (Iter 5) |
+| C5 | `wicked_zerg_challenger/core/resource_manager.py:189` | ✅ Done (Iter 5) |
 
 ## D. Lint debt (flake8 stats)
 
