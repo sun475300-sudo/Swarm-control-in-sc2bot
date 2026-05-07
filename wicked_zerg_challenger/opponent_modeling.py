@@ -590,8 +590,13 @@ class OpponentModeling:
         self.current_game_history.final_composition = (
             self._get_final_enemy_composition()
         )
+        # game_result is stored from OUR perspective (see
+        # OpponentModel.update_from_game), so "Victory" -> "win" and
+        # "Defeat" -> "loss". The previous mapping was inverted, which made
+        # the opponent's games_won/games_lost counters track the opposite
+        # of what actually happened.
         self.current_game_history.game_result = (
-            "win" if game_result == "Defeat" else "loss"
+            "win" if game_result == "Victory" else "loss"
         )
         self.current_game_history.game_duration = game_time
         self.current_game_history.early_signals = list(self.observed_signals)
@@ -778,11 +783,20 @@ class OpponentModeling:
         if not self.current_opponent_id or not self.current_game_history:
             return
 
-        # Update game history
-        self.current_game_history.game_won = won
-        self.current_game_history.game_lost = lost
+        # Update game history. game_result is stored from OUR perspective
+        # (see OpponentModel.update_from_game). Previously this method wrote
+        # game_won/game_lost attributes that don't exist on GameHistory and
+        # never set game_result, so update_from_game always saw "unknown"
+        # and games_won/games_lost on the opponent model never advanced
+        # through this code path.
+        if won:
+            self.current_game_history.game_result = "win"
+        elif lost:
+            self.current_game_history.game_result = "loss"
+        else:
+            self.current_game_history.game_result = "unknown"
         self.current_game_history.early_signals = [
-            s.value for s in self.observed_signals
+            s.value if hasattr(s, "value") else s for s in self.observed_signals
         ]
 
         # Detect strategy (placeholder - would need more logic)
