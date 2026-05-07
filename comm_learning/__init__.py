@@ -15,6 +15,7 @@ TarMAC = NumpyTarMAC
 
 class CommChannel:
     """Stub retained for API compatibility. No-op placeholder."""
+
     pass
 
 
