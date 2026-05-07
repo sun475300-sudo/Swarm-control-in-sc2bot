@@ -1300,7 +1300,6 @@ class EconomyManager:
     # the last def), so its body never executed. Removed; the canonical
     # definition lower in this file is the active one.
 
-
     def _get_first_larva(self):
         larva = getattr(self.bot, "larva", None)
         if not larva:
@@ -2529,7 +2528,6 @@ class EconomyManager:
     # overridden by a later definition with the same name (Python keeps
     # the last def), so its body never executed. Removed; the canonical
     # definition lower in this file is the active one.
-
 
     async def _build_extractors(self) -> None:
         """가스 익스트랙터 건설 (가스 부족 시)"""
