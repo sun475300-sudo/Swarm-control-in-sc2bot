@@ -39,11 +39,16 @@ class MetaGameAnalyzer:
         self.strategy_performance[strategy]["wins"] += result.get("win", 0)
         self.strategy_performance[strategy]["losses"] += 1 - result.get("win", 0)
 
+        win = result.get("win", 0)
+        loss = 1 - win
+
         race = result.get("enemy_race", "unknown")
-        self.race_performance[race]["wins"] += result.get("win", 0)
+        self.race_performance[race]["wins"] += win
+        self.race_performance[race]["losses"] += loss
 
         map_name = result.get("map", "unknown")
-        self.map_performance[map_name]["wins"] += result.get("win", 0)
+        self.map_performance[map_name]["wins"] += win
+        self.map_performance[map_name]["losses"] += loss
 
     def get_current_meta_strategies(self) -> List[MetaStrategy]:
         """Get current meta strategies based on win rates"""
@@ -96,8 +101,8 @@ class MetaGameAnalyzer:
 
     def recommend_strategy(self, enemy_race: str, map_name: str) -> Dict[str, Any]:
         """Recommend best strategy based on current meta"""
-        race_perf = self.race_performance.get(enemy_race, {"wins": 0})
-        map_perf = self.map_performance.get(map_name, {"wins": 0})
+        race_perf = self.race_performance.get(enemy_race, {"wins": 0, "losses": 0})
+        map_perf = self.map_performance.get(map_name, {"wins": 0, "losses": 0})
 
         best_strategies = {
             ("terran", "small"): "RUSH",
@@ -111,10 +116,23 @@ class MetaGameAnalyzer:
         map_size = "small" if map_name in ["GroundZero", "Corridor"] else "large"
         recommended = best_strategies.get((enemy_race.lower(), map_size), "MACRO")
 
+        # Confidence reflects how much history we have for this matchup.
+        # No history → 0.5 (coin-flip); >=10 games → up to 0.9.
+        race_games = race_perf.get("wins", 0) + race_perf.get("losses", 0)
+        map_games = map_perf.get("wins", 0) + map_perf.get("losses", 0)
+        sample = race_games + map_games
+        confidence = 0.5 + min(0.4, sample * 0.04)
+
         return {
             "recommended_strategy": recommended,
-            "confidence": 0.75,
-            "reasoning": f"Based on vs {enemy_race} on {map_name}",
+            "confidence": round(confidence, 2),
+            "reasoning": (
+                f"Based on vs {enemy_race} on {map_name} "
+                f"(race history: {race_perf.get('wins', 0)}W/"
+                f"{race_perf.get('losses', 0)}L, "
+                f"map history: {map_perf.get('wins', 0)}W/"
+                f"{map_perf.get('losses', 0)}L)"
+            ),
             "alternatives": ["RUSH", "MACRO", "TIMING"],
             "meta_analysis": self.get_current_meta_strategies()[:3],
         }
