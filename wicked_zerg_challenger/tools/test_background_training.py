@@ -74,7 +74,7 @@ def test_experience_data_save_load():
         logger.info(f"  - States shape: {data['states'].shape}")
         logger.info(f"  - Actions shape: {data['actions'].shape}")
         logger.info(f"  - Rewards shape: {data['rewards'].shape}")
-        logger.info("  - Total reward: {np.sum(data['rewards']):.2f}")
+        logger.info(f"  - Total reward: {np.sum(data['rewards']):.2f}")
 
     # 정리
     test_file.unlink()
@@ -93,7 +93,7 @@ def test_rl_agent_batch_training():
 
     # RLAgent 생성
     agent = RLAgent(model_path=str(temp_model_path))
-    logger.info("Created RLAgent")
+    logger.info(f"Created RLAgent")
 
     # 더미 경험 데이터 생성
     experiences = []
@@ -115,8 +115,8 @@ def test_rl_agent_batch_training():
 
     # 배치 학습
     stats = agent.train_from_batch(experiences)
-    logger.info("Batch training complete:")
-    logger.info("  - Loss: {stats['loss']:.4f}")
+    logger.info(f"Batch training complete:")
+    logger.info(f"  - Loss: {stats['loss']:.4f}")
     logger.info(f"  - Total steps: {stats['steps']}")
 
     # 모델 저장
@@ -155,7 +155,7 @@ def test_background_learner_processing():
 
     # 더미 경험 데이터 생성 (5개 파일)
     for i in range(5):
-        file_path = test_buffer_dir / "game_{i:03d}.npz"
+        file_path = test_buffer_dir / f"game_{i:03d}.npz"
         create_dummy_experience_data(file_path, num_steps=25)
 
     logger.info(f"Created 5 dummy experience files in {test_buffer_dir}")
@@ -181,7 +181,7 @@ def test_background_learner_processing():
         logger.info(f"  - Files processed: {learner.stats['files_processed']}")
         logger.info(f"  - Batches trained: {learner.stats['batches_trained']}")
         logger.info(f"  - Total samples: {learner.stats['total_samples']}")
-        logger.info("  - Avg loss: {learner.stats['avg_loss']:.4f}")
+        logger.info(f"  - Avg loss: {learner.stats['avg_loss']:.4f}")
 
         # 아카이브 디렉토리 확인
         archived_files = list(test_archive_dir.glob("*.npz"))
@@ -221,13 +221,13 @@ def test_background_learner_lifecycle():
     # 통계 확인
     time.sleep(2)
     stats = learner.get_stats()
-    logger.info("Stats retrieved:")
+    logger.info(f"Stats retrieved:")
     for key, value in stats.items():
         logger.info(f"  - {key}: {value}")
 
     # 중지
     learner.stop()
-    logger.info("Learner stopped")
+    logger.info(f"Learner stopped")
     logger.info(f"  - Running: {learner.running}")
 
     time.sleep(1)
@@ -251,8 +251,8 @@ def run_all_tests():
         elapsed = time.time() - start_time
 
         logger.info("\n" + "="*70)
-        logger.info("  ALL TESTS PASSED [OK]")
-        logger.info("  Total time: {elapsed:.2f}s")
+        logger.info(f"  ALL TESTS PASSED [OK]")
+        logger.info(f"  Total time: {elapsed:.2f}s")
         logger.info("="*70 + "\n")
 
     except Exception as e:

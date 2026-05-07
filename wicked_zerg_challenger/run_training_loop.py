@@ -127,11 +127,11 @@ def print_block_summary(block_num, block_wins, block_losses, total_wins, total_l
 
     logger.info("\n" + "=" * 70)
     logger.info(f"  [*][*][*] BLOCK #{block_num} COMPLETE (10 GAMES) [*][*][*]")
-    logger.info("  Block Record: {block_wins}W / {block_losses}L ({block_wr:.0f}%)")
+    logger.info(f"  Block Record: {block_wins}W / {block_losses}L ({block_wr:.0f}%)")
     logger.info(
         f"  Block Score: {'+' if block_score >= 0 else ''}{block_score} (Grade: {grade})"
     )
-    logger.info("  Cumulative: {total_wins}W / {total_losses}L ({total_wr:.1f}%)")
+    logger.info(f"  Cumulative: {total_wins}W / {total_losses}L ({total_wr:.1f}%)")
     logger.info("=" * 70 + "\n")
 
 
@@ -149,8 +149,8 @@ def main():
     logger.info("  [*] 10-GAME BLOCK SCORING + ADAPTIVE DIFFICULTY [*]")
     logger.info("=" * 70)
     logger.info(f"  Block Size: {total_games} games")
-    logger.info("  Scoring: +50(7W+) / +20(5W+) / 0(3W+) / -30(2W-)")
-    logger.info("  Auto-Progress at: 90% win rate (min 10 games)")
+    logger.info(f"  Scoring: +50(7W+) / +20(5W+) / 0(3W+) / -30(2W-)")
+    logger.info(f"  Auto-Progress at: 90% win rate (min 10 games)")
     logger.info("=" * 70)
     wins = 0
     losses = 0
@@ -172,20 +172,20 @@ def main():
         total_duration = time.time() - start_time
 
         logger.info("\n" + "-" * 70)
-        logger.info("  Game #{game_num} Duration: {game_duration:.1f}s")
-        logger.info("  Total Duration: {total_duration/60:.1f} min")
+        logger.info(f"  Game #{game_num} Duration: {game_duration:.1f}s")
+        logger.info(f"  Total Duration: {total_duration/60:.1f} min")
         logger.info(f"  Games Completed: {games_completed}/{game_num}")
         if won is not None:
             current_win_rate = (
                 (wins / (wins + losses) * 100) if (wins + losses) > 0 else 0
             )
             logger.info(
-                "  Session Win Rate: {wins}W/{losses}L ({current_win_rate:.1f}%)"
+                f"  Session Win Rate: {wins}W/{losses}L ({current_win_rate:.1f}%)"
             )
         logger.info("-" * 70)
         # Break if 60 minutes passed
         if total_duration > 3600:  # 60 minutes
-            logger.info("\n[TIME] Time limit reached ({total_duration/60:.1f} min)")
+            logger.info(f"\n[TIME] Time limit reached ({total_duration/60:.1f} min)")
             break
 
         # Short delay between games
@@ -202,9 +202,9 @@ def main():
     logger.info(f"  Session Results: {wins}W / {losses}L")
     if (wins + losses) > 0:
         final_win_rate = wins / (wins + losses) * 100
-        logger.info("  Session Win Rate: {final_win_rate:.1f}%")
-    logger.info("  Total Time: {final_duration/60:.1f} minutes")
-    logger.info("  Avg Time/Game: {final_duration/max(games_completed, 1):.1f}s")
+        logger.info(f"  Session Win Rate: {final_win_rate:.1f}%")
+    logger.info(f"  Total Time: {final_duration/60:.1f} minutes")
+    logger.info(f"  Avg Time/Game: {final_duration/max(games_completed, 1):.1f}s")
     logger.info("=" * 70)
 
 

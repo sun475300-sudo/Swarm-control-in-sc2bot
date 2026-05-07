@@ -57,7 +57,7 @@ class IntegratedReplayLearningWorkflow:
             env["MAX_REPLAYS_FOR_LEARNING"] = str(max_replays)
             
             logger.info(f"Learning from up to {max_replays} replays...")
-            logger.info("Replay directory: D:\\replays\\replays")
+            logger.info(f"Replay directory: D:\\replays\\replays")
             logger.info(f"Running: {self.replay_learner_path.name}")
             # Run replay learner
             result = subprocess.run(
@@ -68,7 +68,7 @@ class IntegratedReplayLearningWorkflow:
             )
             
             if result.returncode == 0:
-                logger.info("Replay learning completed")
+                logger.info(f"Replay learning completed")
                 
                 # Verify learned parameters were saved
                 if self.learned_build_orders_path.exists():
@@ -77,7 +77,7 @@ class IntegratedReplayLearningWorkflow:
                     logger.info(f"Learned parameters: {learned_params}")
                     return True
                 else:
-                    logger.warning("Learned build orders file not created")
+                    logger.warning(f"Learned build orders file not created")
                     return False
             else:
                 logger.error(f"Replay learning failed with return code {result.returncode}")
@@ -97,12 +97,12 @@ class IntegratedReplayLearningWorkflow:
         
         if not self.collect_data_path.exists():
             logger.warning(f"Collect training data script not found: {self.collect_data_path}")
-            logger.info("Skipping training data collection")
+            logger.info(f"Skipping training data collection")
             return True  # Optional step, don't fail
         
         try:
-            logger.info("Running training data collection...")
-            logger.info("This will analyze existing training_stats.json")
+            logger.info(f"Running training data collection...")
+            logger.info(f"This will analyze existing training_stats.json")
             result = subprocess.run(
                 [sys.executable, str(self.collect_data_path)],
                 cwd=str(self.project_root),
@@ -110,7 +110,7 @@ class IntegratedReplayLearningWorkflow:
             )
             
             if result.returncode == 0:
-                logger.info("Training data collection completed")
+                logger.info(f"Training data collection completed")
                 return True
             else:
                 logger.warning(f"Training data collection had issues (return code {result.returncode})")
@@ -128,11 +128,11 @@ class IntegratedReplayLearningWorkflow:
         
         if not self.extract_train_path.exists():
             logger.warning(f"Extract and train script not found: {self.extract_train_path}")
-            logger.info("Skipping extraction step")
+            logger.info(f"Skipping extraction step")
             return True  # Optional step
         
         try:
-            logger.info("Extracting training data and comparing with pro replays...")
+            logger.info(f"Extracting training data and comparing with pro replays...")
             result = subprocess.run(
                 [sys.executable, str(self.extract_train_path)],
                 cwd=str(self.project_root),
@@ -140,7 +140,7 @@ class IntegratedReplayLearningWorkflow:
             )
             
             if result.returncode == 0:
-                logger.info("Training data extraction and learning completed")
+                logger.info(f"Training data extraction and learning completed")
                 return True
             else:
                 logger.warning(f"Extraction step had issues (return code {result.returncode})")
@@ -164,7 +164,7 @@ class IntegratedReplayLearningWorkflow:
             with open(self.learned_build_orders_path, 'r', encoding='utf-8') as f:
                 learned_params = json.load(f)
             
-            logger.info("Current learned parameters:")
+            logger.info(f"Current learned parameters:")
             logger.info(f"  - spawning_pool_supply: {learned_params.get('spawning_pool_supply', 'N/A')}")
             logger.info(f"  - gas_supply: {learned_params.get('gas_supply', 'N/A')}")
             logger.info(f"  - natural_expansion_supply: {learned_params.get('natural_expansion_supply', 'N/A')}")
@@ -175,19 +175,19 @@ class IntegratedReplayLearningWorkflow:
                 "natural_expansion_supply": 30.0
             }
             
-            logger.info("Pro baseline values:")
+            logger.info(f"Pro baseline values:")
             for param, value in pro_baseline.items():
                 learned_value = learned_params.get(param)
                 if learned_value:
                     diff = abs(learned_value - value)
                     status = "?" if diff <= 1.0 else "?"
-                    logger.info("  {status} {param}: {learned_value} (baseline: {value}, diff: {diff:.1f})")
+                    logger.info(f"  {status} {param}: {learned_value} (baseline: {value}, diff: {diff:.1f})")
                 else:
                     logger.info(f"  ? {param}: Not found")
-            logger.info("Learned parameters are ready for game training")
-            logger.info("These parameters will be automatically used by:")
-            logger.info("  - production_resilience.py (via get_learned_parameter())")
-            logger.info("  - config.py (via get_learned_parameter())")
+            logger.info(f"Learned parameters are ready for game training")
+            logger.info(f"These parameters will be automatically used by:")
+            logger.info(f"  - production_resilience.py (via get_learned_parameter())")
+            logger.info(f"  - config.py (via get_learned_parameter())")
             
             return True
             
@@ -233,7 +233,7 @@ class IntegratedReplayLearningWorkflow:
         logger.info("\n" + "=" * 70)
         logger.info("")
         logger.info("=" * 70)
-        logger.info("Integrated replay learning workflow completed in {duration:.1f} seconds")
+        logger.info(f"Integrated replay learning workflow completed in {duration:.1f} seconds")
         logger.info("")
         logger.info("1. Learned parameters are saved to: local_training/scripts/learned_build_orders.json")
         logger.info("2. These parameters are automatically used in production_resilience.py")

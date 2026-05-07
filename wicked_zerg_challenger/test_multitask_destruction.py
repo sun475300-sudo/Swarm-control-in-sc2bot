@@ -67,7 +67,7 @@ def main():
         logger.info(f"\n{'='*70}")
         logger.info(f"게임 {game_num}/{total_games} 시작")
         logger.info(f"맵: {selected_map}")
-        logger.info("상대: Random 종족 (Easy)")
+        logger.info(f"상대: Random 종족 (Easy)")
         logger.info(f"{'='*70}\n")
 
         try:
@@ -100,7 +100,7 @@ def main():
     logger.info(f"총 게임: {total_games}")
     logger.info(f"승리: {wins}")
     logger.info(f"패배: {total_games - wins}")
-    logger.info("승률: {win_rate:.1f}%")
+    logger.info(f"승률: {win_rate:.1f}%")
     logger.info("=" * 70)
 
     if win_rate >= 66.7:  # 3게임 중 2게임 승리

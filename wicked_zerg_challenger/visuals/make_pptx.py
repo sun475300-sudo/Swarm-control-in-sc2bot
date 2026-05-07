@@ -177,7 +177,7 @@ def add_footer(slide, slide_num, total=8):
         Inches(6.9),
         Inches(2),
         Inches(0.4),
-        "{slide_num:02d} / {total:02d}",
+        f"{slide_num:02d} / {total:02d}",
         font_size=9,
         color=DIM,
         font_name="Consolas",
@@ -1390,14 +1390,14 @@ def main():
     except PermissionError:
         output_path = Path(__file__).parent / "Swarm_Net_Presentation_v2.pptx"
         prs.save(str(output_path))
-        logger.info("  (Original locked, saved as v2)")
+        logger.info(f"  (Original locked, saved as v2)")
 
     logger.info(f"\n{'='*60}")
-    logger.info("PPTX CREATED SUCCESSFULLY!")
+    logger.info(f"PPTX CREATED SUCCESSFULLY!")
     logger.info(f"   File: {output_path}")
-    logger.info("   Slides: 8")
-    logger.info("   Speaker notes: included")
-    logger.info("   Theme: Dark Navy + Cyan/Green accents")
+    logger.info(f"   Slides: 8")
+    logger.info(f"   Speaker notes: included")
+    logger.info(f"   Theme: Dark Navy + Cyan/Green accents")
     logger.info(f"{'='*60}")
 
 

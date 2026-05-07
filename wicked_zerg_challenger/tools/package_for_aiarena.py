@@ -105,19 +105,19 @@ def main() -> None:
         # 1. run.py (entry point)
         zf.write(run_py, "run.py")
         file_count += 1
-        logger.info("  + run.py")
+        logger.info(f"  + run.py")
 
         # 2. ladderbots.json (AI Arena config)
         zf.write(lb_json, "ladderbots.json")
         file_count += 1
-        logger.info("  + ladderbots.json")
+        logger.info(f"  + ladderbots.json")
 
         # 3. requirements.txt
         req = BOT_DIR / "requirements.txt"
         if req.exists():
             zf.write(req, "requirements.txt")
             file_count += 1
-            logger.info("  + requirements.txt")
+            logger.info(f"  + requirements.txt")
 
         # 4. Bot code (wicked_zerg_challenger/)
         logger.info(f"\n  Scanning bot directory: {BOT_DIR}")
@@ -152,7 +152,7 @@ def main() -> None:
     logger.info(f"\n{'=' * 60}")
     logger.info(f"Package created: {output_path.name}")
     logger.info(f"Files: {file_count}")
-    logger.info("Size: {size_kb:.1f} KB")
+    logger.info(f"Size: {size_kb:.1f} KB")
     logger.info(f"{'=' * 60}")
     logger.info(f"\nUpload this file to AI Arena: {output_path}")
 

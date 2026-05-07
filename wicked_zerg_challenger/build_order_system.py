@@ -523,7 +523,7 @@ class BuildOrderSystem:
         actual = self.expansion_actual_time
 
         if actual == 0:
-            logger.info("[!] Expansion timing: NOT RECORDED")
+            logger.info(f"[!] Expansion timing: NOT RECORDED")
             return
 
         target = self.expansion_timing_target
@@ -605,7 +605,7 @@ class BuildOrderSystem:
             wins = stats["wins"]
             win_rate = (wins / games * 100) if games > 0 else 0.0
 
-            lines.append("  {build_type.value}: {wins}/{games} wins ({win_rate:.1f}%)")
+            lines.append(f"  {build_type.value}: {wins}/{games} wins ({win_rate:.1f}%)")
 
         lines.append("=" * 40)
         return "\n".join(lines)

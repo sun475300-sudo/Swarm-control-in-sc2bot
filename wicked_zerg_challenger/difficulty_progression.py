@@ -66,7 +66,7 @@ class DifficultyProgression:
                 self.stats = {}
         else:
             self.stats = {}
-            logger.info("No existing progression data, starting fresh")
+            logger.info(f"No existing progression data, starting fresh")
 
     def _save_stats(self) -> None:
         """통계 데이터 저장"""
@@ -76,7 +76,7 @@ class DifficultyProgression:
             serialized = self._serialize_stats(self.stats)
             with open(self.data_file, "w", encoding="utf-8") as f:
                 json.dump(serialized, f, indent=2, ensure_ascii=False)
-            logger.info("Saved progression data")
+            logger.info(f"Saved progression data")
         except Exception as e:
             logger.info(f"Error saving stats: {e}")
 
@@ -158,12 +158,12 @@ class DifficultyProgression:
             next_diff = self._get_next_difficulty(difficulty)
             if next_diff:
                 logger.info(f"\n{'='*70}")
-                logger.info("🎉 DIFFICULTY PROGRESSION! 🎉")
+                logger.info(f"🎉 DIFFICULTY PROGRESSION! 🎉")
                 logger.info(f"{'='*70}")
                 logger.info(f"  Map: {map_name}")
                 logger.info(f"  Opponent: {opponent_race.name}")
                 logger.info(f"  Current: {difficulty.name}")
-                logger.info("  Win Rate: {win_rate*100:.1f}% ({wins}W/{losses}L)")
+                logger.info(f"  Win Rate: {win_rate*100:.1f}% ({wins}W/{losses}L)")
                 logger.info(f"  >>> ADVANCING TO: {next_diff.name} <<<")
                 logger.info(f"{'='*70}\n")
 
@@ -252,8 +252,8 @@ class DifficultyProgression:
 
                 status = "[OK]" if win_rate >= self.win_rate_threshold * 100 else "[~]"
                 lines.append(
-                    "  {status} {diff.name:15s}: {wins:3d}W / {losses:3d}L "
-                    "= {win_rate:5.1f}% ({total} games)"
+                    f"  {status} {diff.name:15s}: {wins:3d}W / {losses:3d}L "
+                    f"= {win_rate:5.1f}% ({total} games)"
                 )
 
         lines.append(f"{'='*70}\n")

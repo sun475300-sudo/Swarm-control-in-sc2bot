@@ -117,7 +117,7 @@ def test_difficulty(difficulty, games_per_difficulty=20):
     logger.info(f"  TESTING {difficulty.name} DIFFICULTY")
     logger.info("=" * 70)
     logger.info(f"  Target Games: {games_per_difficulty}")
-    logger.info("  Target Win Rate: 90%+")
+    logger.info(f"  Target Win Rate: 90%+")
     logger.info("=" * 70)
     start_time = time.time()
 
@@ -141,10 +141,10 @@ def test_difficulty(difficulty, games_per_difficulty=20):
         win_rate = (wins / total_completed * 100) if total_completed > 0 else 0
 
         logger.info("\n" + "-" * 70)
-        logger.info("  Game Duration: {game_duration:.1f}s")
+        logger.info(f"  Game Duration: {game_duration:.1f}s")
         logger.info(f"  Current Score: {wins}W - {losses}L - {errors}E")
-        logger.info("  Win Rate: {win_rate:.1f}%")
-        logger.info("  Total Time: {total_duration/60:.1f} min")
+        logger.info(f"  Win Rate: {win_rate:.1f}%")
+        logger.info(f"  Total Time: {total_duration/60:.1f} min")
         logger.info("-" * 70)
         # Short delay between games
         time.sleep(1)
@@ -182,9 +182,9 @@ def main():
     logger.info("  COMPREHENSIVE WIN RATE TEST")
     logger.info("=" * 70)
     logger.info(f"  Total Difficulties: {len(difficulties_to_test)}")
-    logger.info("  Games per Difficulty: 20")
+    logger.info(f"  Games per Difficulty: 20")
     logger.info(f"  Total Games: {sum(count for _, count in difficulties_to_test)}")
-    logger.info("  Target: 90%+ win rate on all difficulties")
+    logger.info(f"  Target: 90%+ win rate on all difficulties")
     logger.info("=" * 70)
     overall_start = time.time()
     results = []
@@ -197,7 +197,7 @@ def main():
         logger.info("\n" + "=" * 70)
         logger.info(f"  {difficulty.name} COMPLETE")
         logger.info("=" * 70)
-        logger.info("  Win Rate: {result['win_rate']:.1f}%")
+        logger.info(f"  Win Rate: {result['win_rate']:.1f}%")
         logger.info(f"  Score: {result['wins']}W - {result['losses']}L")
         logger.info(f"  Status: {'PASS' if result['win_rate'] >= 90 else 'FAIL'}")
         logger.info("=" * 70)
@@ -214,12 +214,12 @@ def main():
     for result in results:
         status = "PASS" if result["win_rate"] >= 90 else "FAIL"
         logger.info(
-            "  {result['difficulty']:12} | {result['win_rate']:5.1f}% | {result['wins']:2}W-{result['losses']:2}L | {status}"
+            f"  {result['difficulty']:12} | {result['win_rate']:5.1f}% | {result['wins']:2}W-{result['losses']:2}L | {status}"
         )
 
     logger.info("-" * 70)
-    logger.info("  Overall Win Rate: {overall_win_rate:.1f}%")
-    logger.info("  Total Time: {overall_duration/60:.1f} minutes")
+    logger.info(f"  Overall Win Rate: {overall_win_rate:.1f}%")
+    logger.info(f"  Total Time: {overall_duration/60:.1f} minutes")
     logger.info("=" * 70)
 
     # Save results to JSON

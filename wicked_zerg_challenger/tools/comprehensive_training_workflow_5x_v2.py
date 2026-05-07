@@ -98,7 +98,7 @@ def main():
         iteration_success = True
         
         # Step 1: Auto error fixing
-        logger.error("\n[STEP 1] Running auto error fixing...")
+        logger.error(f"\n[STEP 1] Running auto error fixing...")
         success1, _ = run_command(
             [sys.executable, str(auto_error_fixer)],
             project_root,
@@ -113,7 +113,7 @@ def main():
             iteration_success = False
         
         # Step 2: Code quality check
-        logger.info("\n[STEP 2] Running code quality check...")
+        logger.info(f"\n[STEP 2] Running code quality check...")
         success2, _ = run_command(
             [sys.executable, str(code_quality_improver)],
             project_root,
@@ -128,7 +128,7 @@ def main():
             iteration_success = False
         
         # Step 3: Game training
-        logger.info("\n[STEP 3] Running game training...")
+        logger.info(f"\n[STEP 3] Running game training...")
         success3, _ = run_command(
             [sys.executable, str(run_training)],
             project_root,
@@ -143,7 +143,7 @@ def main():
             iteration_success = False
         
         # Step 4: Replay build order learning
-        logger.info("\n[STEP 4] Running replay build order learning...")
+        logger.info(f"\n[STEP 4] Running replay build order learning...")
         success4, _ = run_command(
             [sys.executable, str(replay_learner)],
             project_root,
@@ -159,7 +159,7 @@ def main():
             iteration_success = False
         
         # Step 5: Replay comparison analysis
-        logger.info("\n[STEP 5] Running replay comparison analysis...")
+        logger.info(f"\n[STEP 5] Running replay comparison analysis...")
         success5, _ = run_command(
             [sys.executable, str(strategy_audit)],
             project_root,
@@ -186,19 +186,19 @@ def main():
         logger.info(f"{'='*70}")
         
         if iteration < 5:
-            logger.info("\nWaiting 10 seconds before next iteration...")
+            logger.info(f"\nWaiting 10 seconds before next iteration...")
             time.sleep(10)
     
     logger.info(f"\n\n{'#'*70}")
     logger.info("# ALL 5 ITERATIONS COMPLETED")
     logger.info(f"{'#'*70}")
-    logger.info("\nSummary:")
+    logger.info(f"\nSummary:")
     logger.info(f"  - Successful iterations: {successful_iterations} / 5")
-    logger.info("  - Learned build orders: local_training/scripts/learned_build_orders.json")
-    logger.info("  - Comparison reports: local_training/comparison_reports/")
-    logger.info("\nCheck results:")
-    logger.info("  python tools\\show_learning_rate.py")
-    logger.info("  python tools\\monitor_training_progress.py")
+    logger.info(f"  - Learned build orders: local_training/scripts/learned_build_orders.json")
+    logger.info(f"  - Comparison reports: local_training/comparison_reports/")
+    logger.info(f"\nCheck results:")
+    logger.info(f"  python tools\\show_learning_rate.py")
+    logger.info(f"  python tools\\monitor_training_progress.py")
     logger.info(f"\n{'#'*70}")
 
 if __name__ == "__main__":

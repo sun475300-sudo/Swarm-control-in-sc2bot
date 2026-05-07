@@ -71,7 +71,7 @@ class ErrorHandler:
                     f"\n[ERROR] {log_key} failed in DEBUG_MODE - crashing for debugging"
                 )
                 logger.error(f"Exception: {e}")
-                logger.error("Traceback:")
+                logger.error(f"Traceback:")
                 traceback.print_exc()
                 raise  # 즉시 예외 발생
             else:
@@ -117,7 +117,7 @@ class ErrorHandler:
                             f"\n[ERROR] {key} failed in DEBUG_MODE - crashing for debugging"
                         )
                         logger.error(f"Exception: {e}")
-                        logger.error("Traceback:")
+                        logger.error(f"Traceback:")
                         traceback.print_exc()
                         raise
                     else:

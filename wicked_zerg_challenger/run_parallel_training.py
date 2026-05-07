@@ -100,7 +100,7 @@ def run_training_game(game_num, total, difficulty_idx=0):
 
         won = str(result) == "Result.Victory"
         tag = "WIN" if won else "LOSS"
-        logger.info("  {tag} in {elapsed:.0f}s | {enemy_race.name} {diff_name}")
+        logger.info(f"  {tag} in {elapsed:.0f}s | {enemy_race.name} {diff_name}")
 
         return {
             "game": game_num,
@@ -131,7 +131,7 @@ def main():
     logger.info(f"  Maps: {len(MAP_POOL)} | Races: {len(RACE_POOL)}")
     logger.info(f"  Difficulty Ladder: {[d.name for d in DIFFICULTY_LADDER]}")
     logger.info(f"  GPU: {GPU_NAME}")
-    logger.info("  Mode: Sequential Fast (realtime=False)")
+    logger.info(f"  Mode: Sequential Fast (realtime=False)")
     logger.info(f"{'='*70}\n")
 
     results = []
@@ -168,8 +168,8 @@ def main():
         elapsed = time.time() - start_time
         wr = wins / max(wins + losses, 1) * 100
         logger.info(
-            "  [{game_num}/{TOTAL_GAMES}] W:{wins} L:{losses} WR:{wr:.0f}% | "
-            "Diff:{DIFFICULTY_LADDER[difficulty_idx].name} | {elapsed/60:.1f}m"
+            f"  [{game_num}/{TOTAL_GAMES}] W:{wins} L:{losses} WR:{wr:.0f}% | "
+            f"Diff:{DIFFICULTY_LADDER[difficulty_idx].name} | {elapsed/60:.1f}m"
         )
 
         time.sleep(2)
@@ -177,22 +177,22 @@ def main():
     # Final report
     total_time = time.time() - start_time
     logger.info(f"\n{'='*70}")
-    logger.info("  TRAINING COMPLETE: {TOTAL_GAMES} games in {total_time/60:.1f}min")
+    logger.info(f"  TRAINING COMPLETE: {TOTAL_GAMES} games in {total_time/60:.1f}min")
     logger.info(f"{'='*70}")
     logger.info(
-        "  Win Rate: {wins}/{wins+losses} ({wins/max(wins+losses,1)*100:.1f}%)"
+        f"  Win Rate: {wins}/{wins+losses} ({wins/max(wins+losses,1)*100:.1f}%)"
     )
     logger.info(f"  Final Difficulty: {DIFFICULTY_LADDER[difficulty_idx].name}")
     logger.info(
-        "  Avg Game Time: {sum(r.get('time',0) for r in results)/max(len(results),1):.0f}s"
+        f"  Avg Game Time: {sum(r.get('time',0) for r in results)/max(len(results),1):.0f}s"
     )
 
     # Per-race stats
-    logger.info("\n  --- By Race ---")
+    logger.info(f"\n  --- By Race ---")
     for race in RACE_POOL:
         rr = [r for r in results if r.get("race") == race.name]
         rw = sum(1 for r in rr if r.get("won"))
-        logger.info("  {race.name:10s}: {rw}/{len(rr)} ({rw/max(len(rr),1)*100:.0f}%)")
+        logger.info(f"  {race.name:10s}: {rw}/{len(rr)} ({rw/max(len(rr),1)*100:.0f}%)")
 
     # Save
     report_path = Path(__file__).parent / "training_results.json"

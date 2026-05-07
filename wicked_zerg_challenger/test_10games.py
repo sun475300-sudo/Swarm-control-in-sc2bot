@@ -87,7 +87,7 @@ def main():
     process = psutil.Process(os.getpid())
     initial_memory = process.memory_info().rss / 1024 / 1024  # MB
 
-    logger.info("Initial: {initial_memory:.1f} MB\n")
+    logger.info(f"Initial: {initial_memory:.1f} MB\n")
 
     for game_num in range(1, total_games + 1):
         logger.info("\n" + "=" * 70)
@@ -99,7 +99,7 @@ def main():
         logger.info("=" * 70)
         # Memory before game
         mem_before = process.memory_info().rss / 1024 / 1024
-        logger.info("Before game {game_num}: {mem_before:.1f} MB")
+        logger.info(f"Before game {game_num}: {mem_before:.1f} MB")
 
         # Create bot
         bot = Bot(Race.Zerg, WickedZergBotPro(train_mode=False, instance_id=game_num))
@@ -121,8 +121,8 @@ def main():
 
             # Assume result is returned (in real python-sc2, check result)
             # For now, mark as completed
-            logger.info("\n[GAME {game_num} FINISHED] Time: {elapsed:.1f}s")
-            results.append("Game {game_num}: Completed in {elapsed:.1f}s")
+            logger.info(f"\n[GAME {game_num} FINISHED] Time: {elapsed:.1f}s")
+            results.append(f"Game {game_num}: Completed in {elapsed:.1f}s")
 
         except Exception as e:
             logger.error(f"\n[GAME {game_num} ERROR] {e}")
@@ -133,7 +133,7 @@ def main():
         mem_after = process.memory_info().rss / 1024 / 1024
         mem_delta = mem_after - mem_before
         logger.info(
-            "After game {game_num}: {mem_after:.1f} MB (delta: {mem_delta:+.1f} MB)"
+            f"After game {game_num}: {mem_after:.1f} MB (delta: {mem_delta:+.1f} MB)"
         )
 
         # Short pause between games
@@ -151,26 +151,26 @@ def main():
     logger.info("=" * 70)
     logger.info(f"\nGames Completed: {len(results)}/{total_games}")
     logger.info(
-        "Win Rate: {wins}W-{losses}L ({wins/total_games*100:.1f}%)"
+        f"Win Rate: {wins}W-{losses}L ({wins/total_games*100:.1f}%)"
         if total_games > 0
         else "No games"
     )
-    logger.info("\nMemory:")
-    logger.info("  Initial: {initial_memory:.1f} MB")
-    logger.info("  Final: {final_memory:.1f} MB")
-    logger.info("  Total Leak: {total_leak:+.1f} MB")
+    logger.info(f"\nMemory:")
+    logger.info(f"  Initial: {initial_memory:.1f} MB")
+    logger.info(f"  Final: {final_memory:.1f} MB")
+    logger.info(f"  Total Leak: {total_leak:+.1f} MB")
     logger.info(
-        "  Per Game: {total_leak/total_games:+.1f} MB" if total_games > 0 else "N/A"
+        f"  Per Game: {total_leak/total_games:+.1f} MB" if total_games > 0 else "N/A"
     )
 
-    logger.info("\nResults:")
+    logger.info(f"\nResults:")
     for result in results:
         logger.info(f"  {result}")
 
     logger.info("=" * 70)
     # Memory snapshot
     current, peak = tracemalloc.get_traced_memory()
-    logger.info("Peak: {peak / 1024 / 1024:.1f} MB")
+    logger.info(f"Peak: {peak / 1024 / 1024:.1f} MB")
     tracemalloc.stop()
 
 

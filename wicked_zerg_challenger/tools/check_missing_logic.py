@@ -172,7 +172,7 @@ def main():
     logger.info("��ĵ ��...")
     results = checker.scan_all()
     
-    logger.info("\n�˻� �Ϸ�!")
+    logger.info(f"\n�˻� �Ϸ�!")
     logger.info(f"  - ������ �޼���: {results['total_missing']}��")
     logger.info(f"  - pass ���� �ִ� ����: {results['files_with_pass']}��")
     logger.info(f"  - TODO �ּ��� �ִ� ����: {results['files_with_todos']}��")

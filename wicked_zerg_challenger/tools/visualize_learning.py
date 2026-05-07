@@ -165,7 +165,7 @@ class TrainingVisualizer:
         plt.savefig(output_path, dpi=100)
         plt.savefig(latest_path, dpi=100) # 덮어쓰기용 최신 파일
         
-        logger.info("Charts saved to:")
+        logger.info(f"Charts saved to:")
         logger.info(f"  - {output_path}")
         logger.info(f"  - {latest_path}")
         

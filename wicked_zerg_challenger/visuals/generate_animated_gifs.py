@@ -193,10 +193,10 @@ def gif_boids_swarm():
 
     # 레전드
     legend_elements = [
-        mpatches.Patch(color="#8BC34A", label="Zergling ×20"),
-        mpatches.Patch(color="#2E7D32", label="Roach ×15"),
-        mpatches.Patch(color="#1976D2", label="Hydralisk ×15"),
-        mpatches.Patch(color="#7B1FA2", label="Mutalisk ×10"),
+        mpatches.Patch(color="#8BC34A", label=f"Zergling ×20"),
+        mpatches.Patch(color="#2E7D32", label=f"Roach ×15"),
+        mpatches.Patch(color="#1976D2", label=f"Hydralisk ×15"),
+        mpatches.Patch(color="#7B1FA2", label=f"Mutalisk ×10"),
     ]
     ax.legend(
         handles=legend_elements,
@@ -285,7 +285,7 @@ def gif_formation_flight():
                 interp = current_pos * (1 - alpha) + next_pos * alpha
                 noise = np.random.randn(N, 2) * 0.08
                 all_frames.append(interp + noise)
-                all_labels.append("TRANSITIONING...")
+                all_labels.append(f"TRANSITIONING...")
             current_pos = next_pos.copy()
 
     fig, ax = plt.subplots(figsize=(10, 8), facecolor="#0a1628")
@@ -672,7 +672,7 @@ def gif_sim_to_real():
 
         stage_names = ["SC2 Simulation", "3D Simulation", "Real Drone", "ATC Scale-up"]
         stage_label.set_text(f"▶ {stage_names[stage_idx]}")
-        pct_text.set_text("Progress: {progress * 100:.0f}%")
+        pct_text.set_text(f"Progress: {progress * 100:.0f}%")
 
         return [dot, progress_bar, stage_label, pct_text] + boxes
 
@@ -860,6 +860,6 @@ if __name__ == "__main__":
     print(f"Complete! {len(gifs)} GIF files generated:")
     for g in sorted(gifs):
         size = os.path.getsize(os.path.join(OUTPUT_DIR, g)) / 1024
-        print("  {g} ({size:.0f} KB)")
+        print(f"  {g} ({size:.0f} KB)")
     print(f"\nOutput: {OUTPUT_DIR}")
     print("=" * 60)

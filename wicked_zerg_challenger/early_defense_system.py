@@ -114,7 +114,7 @@ class EarlyDefenseSystem:
             logger.warning(
                 f"[WARNING] Early rush detected! {nearby_enemies.amount} enemies found (Game Time: {int(self.bot.time)}s)"
             )
-            logger.info("Emergency Defense Mode ACTIVATED!")
+            logger.info(f"Emergency Defense Mode ACTIVATED!")
 
     async def _build_early_pool(self) -> None:
         """
@@ -163,7 +163,7 @@ class EarlyDefenseSystem:
                     f"[OK] Spawning Pool requested via TechCoordinator (Game Time: {int(self.bot.time)}s)"
                 )
             elif not tech_coordinator:
-                logger.warning("[WARNING] TechCoordinator not available")
+                logger.warning(f"[WARNING] TechCoordinator not available")
         except Exception as e:
             logger.error(f"Failed to request Pool construction: {e}")
 
@@ -261,7 +261,7 @@ class EarlyDefenseSystem:
             # Threat cleared
             self.early_threats.clear()
             self.emergency_mode = False
-            logger.info("Early threat cleared. Returning to normal mode.")
+            logger.info(f"Early threat cleared. Returning to normal mode.")
             return
 
         # Closest enemy

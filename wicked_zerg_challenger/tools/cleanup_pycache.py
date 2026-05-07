@@ -82,7 +82,7 @@ def cleanup_all(root_dir: str, dry_run: bool = True) -> Tuple[int, int, int]:
     for d in pycache_dirs:
         size = sum(f.stat().st_size for f in d.rglob("*") if f.is_file())
         total_bytes += size
-        logger.info("  [DIR] {d} ({size:,} bytes)")
+        logger.info(f"  [DIR] {d} ({size:,} bytes)")
         if not dry_run:
             try:
                 shutil.rmtree(d)
@@ -102,7 +102,7 @@ def cleanup_all(root_dir: str, dry_run: bool = True) -> Tuple[int, int, int]:
     for f in standalone_pyc:
         size = f.stat().st_size
         total_bytes += size
-        logger.info("  [FILE] {f} ({size:,} bytes)")
+        logger.info(f"  [FILE] {f} ({size:,} bytes)")
         if not dry_run:
             try:
                 f.unlink()
@@ -120,7 +120,7 @@ def cleanup_all(root_dir: str, dry_run: bool = True) -> Tuple[int, int, int]:
     for f in temp_files:
         size = f.stat().st_size
         total_bytes += size
-        logger.info("  [FILE] {f} ({size:,} bytes)")
+        logger.info(f"  [FILE] {f} ({size:,} bytes)")
         if not dry_run:
             try:
                 f.unlink()
@@ -137,13 +137,13 @@ def cleanup_all(root_dir: str, dry_run: bool = True) -> Tuple[int, int, int]:
     logger.info(f"{'='*60}")
     logger.info(f"  Directories to delete: {len(pycache_dirs)}")
     logger.info(f"  Files to delete: {len(standalone_pyc) + len(temp_files)}")
-    logger.info("  Total space to free: {total_bytes:,} bytes ({total_bytes/1024/1024:.2f} MB)")
+    logger.info(f"  Total space to free: {total_bytes:,} bytes ({total_bytes/1024/1024:.2f} MB)")
 
     if dry_run:
-        logger.info("\n[DRY RUN] No files were actually deleted.")
-        logger.info("Run with --execute to perform actual cleanup.")
+        logger.info(f"\n[DRY RUN] No files were actually deleted.")
+        logger.info(f"Run with --execute to perform actual cleanup.")
     else:
-        logger.info("\n[COMPLETED] Cleanup finished!")
+        logger.info(f"\n[COMPLETED] Cleanup finished!")
         logger.info(f"  Directories deleted: {dirs_deleted}")
         logger.info(f"  Files deleted: {files_deleted}")
 

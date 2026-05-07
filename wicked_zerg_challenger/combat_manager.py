@@ -1643,7 +1643,7 @@ class CombatManager:
                     await self._gather_at_rally_point(army_units, iteration)
                 if iteration % 220 == 0:
                     self.logger.info(
-                        "[{int(game_time)}s] HOLD: army {army_supply:.0f} < enemy {visible_enemy_supply:.0f}*0.6"
+                        f"[{int(game_time)}s] HOLD: army {army_supply:.0f} < enemy {visible_enemy_supply:.0f}*0.6"
                     )
                 return
 
@@ -2687,7 +2687,7 @@ class CombatManager:
                 if iteration % 220 == 0:
                     self.logger.info(
                         f"[RETREAT-EMERGENCY] [{int(game_time)}s] "
-                        "Our: {our_supply:.0f}, Enemy: {enemy_supply:.0f} (ratio: {ratio:.1f}x)"
+                        f"Our: {our_supply:.0f}, Enemy: {enemy_supply:.0f} (ratio: {ratio:.1f}x)"
                     )
                 await self._retreat_to_base(engaged_units)
             elif ratio >= 1.5:
@@ -2695,7 +2695,7 @@ class CombatManager:
                 if iteration % 220 == 0:
                     self.logger.info(
                         f"[RETREAT] [{int(game_time)}s] "
-                        "Our: {our_supply:.0f}, Enemy: {enemy_supply:.0f} (ratio: {ratio:.1f}x)"
+                        f"Our: {our_supply:.0f}, Enemy: {enemy_supply:.0f} (ratio: {ratio:.1f}x)"
                     )
                 await self._retreat_to_closest_base(engaged_units)
             elif ratio >= 1.3:
@@ -2703,7 +2703,7 @@ class CombatManager:
                 if iteration % 220 == 0:
                     self.logger.info(
                         f"[REGROUP] [{int(game_time)}s] "
-                        "Our: {our_supply:.0f}, Enemy: {enemy_supply:.0f} (ratio: {ratio:.1f}x)"
+                        f"Our: {our_supply:.0f}, Enemy: {enemy_supply:.0f} (ratio: {ratio:.1f}x)"
                     )
                 await self._retreat_to_rally(engaged_units)
 
@@ -3729,7 +3729,7 @@ class CombatManager:
             current_structure_count > 10 or our_army_supply < 20
         ):
             self._victory_push_active = False
-            self.logger.info("[VICTORY PUSH] Deactivated - regroup needed")
+            self.logger.info(f"[VICTORY PUSH] Deactivated - regroup needed")
 
         # 승리 푸시 모드일 때 공격 강도 증가
         if self._victory_push_active:
@@ -3779,7 +3779,7 @@ class CombatManager:
         # 로그 (10초마다)
         if iteration % 220 == 0:
             target_str = (
-                "({attack_target.x:.1f}, {attack_target.y:.1f})"
+                f"({attack_target.x:.1f}, {attack_target.y:.1f})"
                 if hasattr(attack_target, "x")
                 else str(attack_target)
             )

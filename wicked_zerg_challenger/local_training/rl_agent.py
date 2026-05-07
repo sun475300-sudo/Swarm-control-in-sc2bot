@@ -430,7 +430,7 @@ class RLAgent:
                         f"[OK] Experience data saved: {exp_path.name} (Size: {len(self.states)})"
                     )
                 else:
-                    logger.error("[ERROR] Failed to save experience data")
+                    logger.error(f"[ERROR] Failed to save experience data")
             except Exception as e:
                 logger.error(f"[ERROR] Exception during save: {e}")
 
@@ -448,7 +448,7 @@ class RLAgent:
             if abs(sum(recent_20) / 20 - sum(older_20) / 20) < 0.1:
                 # 정체 → 탐색률 부분 복원
                 self.epsilon = min(0.3, self.epsilon * 1.5)
-                logger.info("Plateau detected! Epsilon boosted to {self.epsilon:.3f}")
+                logger.info(f"Plateau detected! Epsilon boosted to {self.epsilon:.3f}")
 
         self._clear_buffers()
         self.episode_count += 1
@@ -723,13 +723,13 @@ class RLAgent:
 
         # 2. Epsilon이 충분히 낮아짐 (탐험 종료)
         if self.epsilon > 0.2:
-            return False, "Still exploring (ε={self.epsilon:.3f}, target<0.2)"
+            return False, f"Still exploring (ε={self.epsilon:.3f}, target<0.2)"
 
         # 3. 검증 점수 (있는 경우)
         if len(self.validation_scores) >= 10:
             avg_score = np.mean(self.validation_scores[-10:])
             if avg_score < 0.4:
-                return False, "Validation score too low: {avg_score:.3f}"
+                return False, f"Validation score too low: {avg_score:.3f}"
 
         # 4. 최근 학습이 안정적인지 확인
         if len(self.training_history) >= 10:
@@ -737,7 +737,7 @@ class RLAgent:
             if np.mean(recent_losses) > 10.0:  # 손실이 너무 큼
                 return (
                     False,
-                    "Training unstable (avg loss={np.mean(recent_losses):.3f})",
+                    f"Training unstable (avg loss={np.mean(recent_losses):.3f})",
                 )
 
         return True, "Model ready for deployment"
