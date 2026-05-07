@@ -13,9 +13,7 @@ Phase graph (happy path):
 
 import sys
 import os
-from dataclasses import dataclass, field
-from typing import List, Optional, Set
-from unittest.mock import MagicMock, patch, patch as mock_patch
+from unittest.mock import MagicMock, patch
 
 import pytest
 
@@ -70,7 +68,7 @@ class FakePoint2:
 
     @property
     def normalized(self):
-        length = (self.x ** 2 + self.y ** 2) ** 0.5 or 1.0
+        length = (self.x**2 + self.y**2) ** 0.5 or 1.0
         return FakePoint2(self.x / length, self.y / length)
 
     def __iter__(self):
@@ -84,7 +82,9 @@ class FakePoint2:
 
 
 class FakeUnit:
-    def __init__(self, tag, position, health=100.0, health_max=100.0, weapon_cooldown=0.0):
+    def __init__(
+        self, tag, position, health=100.0, health_max=100.0, weapon_cooldown=0.0
+    ):
         self.tag = tag
         self.position = position
         self.health = health
@@ -160,8 +160,14 @@ def controller(bot):
     return ctrl
 
 
-def _make_group(phase, unit_tags, rally=None, target=None, engagement_time=0.0,
-                last_phase_change=0.0):
+def _make_group(
+    phase,
+    unit_tags,
+    rally=None,
+    target=None,
+    engagement_time=0.0,
+    last_phase_change=0.0,
+):
     return CombatGroup(
         units=set(unit_tags),
         phase=phase,
@@ -281,8 +287,11 @@ class TestRetreatTrigger:
 class TestIdleToGathering:
     def _run(self, controller, group, our, enemies, game_time=5.0):
         import asyncio
+
         asyncio.get_event_loop().run_until_complete(
-            controller._handle_idle_phase("g1", group, FakeUnits(our), enemies, game_time)
+            controller._handle_idle_phase(
+                "g1", group, FakeUnits(our), enemies, game_time
+            )
         )
 
     def test_transitions_to_gathering_when_enemy_detected(self, controller):
@@ -302,16 +311,18 @@ class TestIdleToGathering:
     def test_transitions_when_sufficient_units_and_target(self, controller):
         our = [FakeUnit(i, FakePoint2(0, 0)) for i in range(8)]
         enemies = FakeUnits([])
-        group = _make_group(CombatPhase.IDLE, {u.tag for u in our},
-                            target=FakePoint2(100, 100))
+        group = _make_group(
+            CombatPhase.IDLE, {u.tag for u in our}, target=FakePoint2(100, 100)
+        )
         self._run(controller, group, our, enemies)
         assert group.phase == CombatPhase.GATHERING
 
     def test_stays_idle_when_insufficient_units(self, controller):
         our = [FakeUnit(i, FakePoint2(0, 0)) for i in range(7)]
         enemies = FakeUnits([])
-        group = _make_group(CombatPhase.IDLE, {u.tag for u in our},
-                            target=FakePoint2(100, 100))
+        group = _make_group(
+            CombatPhase.IDLE, {u.tag for u in our}, target=FakePoint2(100, 100)
+        )
         self._run(controller, group, our, enemies)
         assert group.phase == CombatPhase.IDLE
 
@@ -324,6 +335,7 @@ class TestIdleToGathering:
 class TestGatheringToPositioning:
     def _run(self, controller, group, all_units, game_time=10.0):
         import asyncio
+
         asyncio.get_event_loop().run_until_complete(
             controller._handle_gathering_phase(
                 "g1", group, FakeUnits(all_units), game_time
@@ -335,7 +347,9 @@ class TestGatheringToPositioning:
         near = [FakeUnit(i, FakePoint2(10, 10)) for i in range(8)]
         far = [FakeUnit(10 + i, FakePoint2(100, 100)) for i in range(2)]
         all_units = near + far
-        group = _make_group(CombatPhase.GATHERING, {u.tag for u in all_units}, rally=rally)
+        group = _make_group(
+            CombatPhase.GATHERING, {u.tag for u in all_units}, rally=rally
+        )
         self._run(controller, group, all_units)
         assert group.phase == CombatPhase.POSITIONING
 
@@ -344,7 +358,9 @@ class TestGatheringToPositioning:
         near = [FakeUnit(i, FakePoint2(10, 10)) for i in range(5)]
         far = [FakeUnit(10 + i, FakePoint2(100, 100)) for i in range(5)]
         all_units = near + far
-        group = _make_group(CombatPhase.GATHERING, {u.tag for u in all_units}, rally=rally)
+        group = _make_group(
+            CombatPhase.GATHERING, {u.tag for u in all_units}, rally=rally
+        )
         self._run(controller, group, all_units)
         assert group.phase == CombatPhase.GATHERING
 
@@ -358,7 +374,10 @@ class TestGatheringToPositioning:
 class TestPositioningToEngagement:
     def _run(self, controller, group, our, enemies, game_time=15.0):
         import asyncio
-        with patch.object(controller, "_calculate_formation_positions", return_value=[]):
+
+        with patch.object(
+            controller, "_calculate_formation_positions", return_value=[]
+        ):
             asyncio.get_event_loop().run_until_complete(
                 controller._handle_positioning_phase(
                     "g1", group, FakeUnits(our), enemies, game_time
@@ -368,16 +387,18 @@ class TestPositioningToEngagement:
     def test_transitions_when_enemy_within_10(self, controller):
         our = [FakeUnit(i, FakePoint2(0, 0)) for i in range(5)]
         enemies = FakeUnits([FakeUnit(100, FakePoint2(8, 0))])  # dist=8 < 10
-        group = _make_group(CombatPhase.POSITIONING, {u.tag for u in our},
-                            target=FakePoint2(20, 0))
+        group = _make_group(
+            CombatPhase.POSITIONING, {u.tag for u in our}, target=FakePoint2(20, 0)
+        )
         self._run(controller, group, our, enemies)
         assert group.phase == CombatPhase.ENGAGEMENT
 
     def test_stays_positioning_when_enemy_far(self, controller):
         our = [FakeUnit(i, FakePoint2(0, 0)) for i in range(5)]
         enemies = FakeUnits([FakeUnit(100, FakePoint2(20, 0))])  # dist=20 > 10
-        group = _make_group(CombatPhase.POSITIONING, {u.tag for u in our},
-                            target=FakePoint2(30, 0))
+        group = _make_group(
+            CombatPhase.POSITIONING, {u.tag for u in our}, target=FakePoint2(30, 0)
+        )
         self._run(controller, group, our, enemies)
         assert group.phase == CombatPhase.POSITIONING
 
@@ -391,6 +412,7 @@ class TestPositioningToEngagement:
 class TestEngagementToActiveCombat:
     def _run(self, controller, group, our, enemies, game_time):
         import asyncio
+
         with patch.object(controller, "_get_priority_target", return_value=None):
             asyncio.get_event_loop().run_until_complete(
                 controller._handle_engagement_phase(
@@ -401,24 +423,27 @@ class TestEngagementToActiveCombat:
     def test_transitions_after_2s(self, controller):
         our = [FakeUnit(i, FakePoint2(0, 0)) for i in range(5)]
         enemies = FakeUnits([FakeUnit(100, FakePoint2(3, 0))])
-        group = _make_group(CombatPhase.ENGAGEMENT, {u.tag for u in our},
-                            engagement_time=10.0)
+        group = _make_group(
+            CombatPhase.ENGAGEMENT, {u.tag for u in our}, engagement_time=10.0
+        )
         self._run(controller, group, our, enemies, game_time=12.1)
         assert group.phase == CombatPhase.ACTIVE_COMBAT
 
     def test_stays_engagement_before_2s(self, controller):
         our = [FakeUnit(i, FakePoint2(0, 0)) for i in range(5)]
         enemies = FakeUnits([FakeUnit(100, FakePoint2(3, 0))])
-        group = _make_group(CombatPhase.ENGAGEMENT, {u.tag for u in our},
-                            engagement_time=10.0)
+        group = _make_group(
+            CombatPhase.ENGAGEMENT, {u.tag for u in our}, engagement_time=10.0
+        )
         self._run(controller, group, our, enemies, game_time=11.0)
         assert group.phase == CombatPhase.ENGAGEMENT
 
     def test_transitions_to_positioning_when_no_enemies(self, controller):
         our = [FakeUnit(i, FakePoint2(0, 0)) for i in range(5)]
         enemies = FakeUnits([])
-        group = _make_group(CombatPhase.ENGAGEMENT, {u.tag for u in our},
-                            engagement_time=10.0)
+        group = _make_group(
+            CombatPhase.ENGAGEMENT, {u.tag for u in our}, engagement_time=10.0
+        )
         self._run(controller, group, our, enemies, game_time=12.5)
         assert group.phase == CombatPhase.POSITIONING
 
@@ -434,6 +459,7 @@ class TestActiveCombatToRegrouping:
         enemies = FakeUnits([])
         group = _make_group(CombatPhase.ACTIVE_COMBAT, {u.tag for u in our})
         import asyncio
+
         asyncio.get_event_loop().run_until_complete(
             controller._handle_active_combat_phase(
                 "g1", group, FakeUnits(our), enemies, 20.0, iteration=100

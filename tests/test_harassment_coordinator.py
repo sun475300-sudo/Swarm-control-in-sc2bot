@@ -4,12 +4,11 @@ Unit Tests for Harassment Coordinator
 Tests aggressive modes, baneling drops, squad locking, and multi-angle attacks.
 """
 
-from unittest.mock import MagicMock, Mock
+from unittest.mock import Mock
 
 import pytest
 
 try:
-    from sc2.ids.unit_typeid import UnitTypeId
     from sc2.position import Point2
 except ImportError:
     pytest.skip("sc2 library not available", allow_module_level=True)
@@ -137,12 +136,12 @@ class TestHarassmentCoordinator:
         """Test checking if unit is locked"""
         unit_tag = 12345
 
-        assert self.coordinator.is_unit_locked(unit_tag) == False
+        assert not self.coordinator.is_unit_locked(unit_tag)
 
         # Lock unit
         self.coordinator.lock_unit_to_squad(unit_tag, "zergling_runby")
 
-        assert self.coordinator.is_unit_locked(unit_tag) == True
+        assert self.coordinator.is_unit_locked(unit_tag)
 
     def test_get_locked_units_by_squad(self):
         """Test retrieving locked units by squad name"""
@@ -181,14 +180,13 @@ class TestHarassmentCoordinator:
 
     def test_baneling_drop_initialization(self):
         """Test baneling drop system initialization"""
-        assert self.coordinator.baneling_drop_active == False
+        assert not self.coordinator.baneling_drop_active
         assert self.coordinator.baneling_drop_overlord_tag is None
         assert isinstance(self.coordinator.baneling_drop_baneling_tags, set)
         assert self.coordinator.baneling_drop_interval == 120  # 2 minutes
 
     def test_baneling_drop_cooldown(self):
         """Test baneling drop cooldown mechanism"""
-        initial_cooldown = self.coordinator.baneling_drop_cooldown
 
         # Simulate cooldown reduction
         self.coordinator.baneling_drop_cooldown = 60
@@ -211,7 +209,7 @@ class TestHarassmentCoordinator:
 
         # Initially false due to missing units or cooldown
         assert isinstance(can_execute, bool)
-        assert can_execute == False
+        assert not can_execute
 
     # ===== Multi-Angle Attack Tests =====
 

@@ -317,10 +317,11 @@ class CreepDenialSystem:
             return
 
         # 대군주 → 감시군주 변이
+        # `overlords` came from `.idle`, so the first one is already guaranteed
+        # to be idle — no extra is_idle check needed (was a redundant gate).
         overlord = overlords.first
-        if overlord.is_idle:
-            self.bot.do(overlord(AbilityId.MORPH_OVERSEER))
-            self.logger.info("[CREEP_DENIAL] Morphing Overlord to Overseer")
+        self.bot.do(overlord(AbilityId.MORPH_OVERSEER))
+        self.logger.info("[CREEP_DENIAL] Morphing Overlord to Overseer")
 
     def _has_lair(self) -> bool:
         """레어/군락 보유 여부 확인"""

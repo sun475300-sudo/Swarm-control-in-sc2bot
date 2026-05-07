@@ -193,10 +193,10 @@ def gif_boids_swarm():
 
     # 레전드
     legend_elements = [
-        mpatches.Patch(color="#8BC34A", label=f"Zergling ×20"),
-        mpatches.Patch(color="#2E7D32", label=f"Roach ×15"),
-        mpatches.Patch(color="#1976D2", label=f"Hydralisk ×15"),
-        mpatches.Patch(color="#7B1FA2", label=f"Mutalisk ×10"),
+        mpatches.Patch(color="#8BC34A", label="Zergling ×20"),
+        mpatches.Patch(color="#2E7D32", label="Roach ×15"),
+        mpatches.Patch(color="#1976D2", label="Hydralisk ×15"),
+        mpatches.Patch(color="#7B1FA2", label="Mutalisk ×10"),
     ]
     ax.legend(
         handles=legend_elements,
@@ -285,7 +285,7 @@ def gif_formation_flight():
                 interp = current_pos * (1 - alpha) + next_pos * alpha
                 noise = np.random.randn(N, 2) * 0.08
                 all_frames.append(interp + noise)
-                all_labels.append(f"TRANSITIONING...")
+                all_labels.append("TRANSITIONING...")
             current_pos = next_pos.copy()
 
     fig, ax = plt.subplots(figsize=(10, 8), facecolor="#0a1628")
@@ -331,7 +331,7 @@ def gif_formation_flight():
         family="monospace",
     )
     info = ax.text(-7.5, -5.5, "", color="#4FC3F7", fontsize=9, family="monospace")
-    drone_count = ax.text(
+    ax.text(
         7.5,
         5.3,
         f"DRONES: {N}",
@@ -408,7 +408,6 @@ def gif_collision_avoidance():
 
             # 충돌 회피
             avoid = np.zeros(2)
-            avoiding = False
             for j in range(N):
                 if i == j:
                     continue
@@ -418,7 +417,6 @@ def gif_collision_avoidance():
                     force = diff / (dist**2) * 2.0
                     avoid += force
                     if dist < SAFE_DIST * 1.2:
-                        avoiding = True
                         frame_avoid.append((i, j))
 
             new_vel[i] = vel[i] * 0.7 + seek + avoid

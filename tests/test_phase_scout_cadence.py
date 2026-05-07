@@ -7,6 +7,7 @@ Verifies:
      DispatchPlan — i.e. nothing time-of-day dependent.
   4. Zergling quadrant cycles 0 → 1 → 2 → 3 → 0.
 """
+
 from __future__ import annotations
 
 from types import SimpleNamespace
@@ -15,9 +16,7 @@ import pytest
 
 from wicked_zerg_challenger.scouting.phase_scout_cadence import (
     PHASE_1_CADENCE_S,
-    PHASE_1_END_S,
     PHASE_2_CADENCE_S,
-    PHASE_2_END_S,
     PHASE_3_CADENCE_S,
     PhaseScoutCadence,
     ScoutPhase,
@@ -25,10 +24,10 @@ from wicked_zerg_challenger.scouting.phase_scout_cadence import (
     phase_for_time,
 )
 
-
 # ---------------------------------------------------------------------
 # Pure functions
 # ---------------------------------------------------------------------
+
 
 class TestPhaseMapping:
     @pytest.mark.parametrize(
@@ -51,20 +50,21 @@ class TestCadence:
     def test_cadence_constants(self):
         assert cadence_for_phase(ScoutPhase.OVERLORD_EARLY) == PHASE_1_CADENCE_S == 30.0
         assert cadence_for_phase(ScoutPhase.ZERGLING_SWEEP) == PHASE_2_CADENCE_S == 60.0
-        assert cadence_for_phase(ScoutPhase.OVERSEER_DETECT) == PHASE_3_CADENCE_S == 90.0
+        assert (
+            cadence_for_phase(ScoutPhase.OVERSEER_DETECT) == PHASE_3_CADENCE_S == 90.0
+        )
 
 
 # ---------------------------------------------------------------------
 # Stateful wrapper
 # ---------------------------------------------------------------------
 
+
 @pytest.fixture
 def fake_bot():
     return SimpleNamespace(
         enemy_start_locations=[(50.0, 80.0)],
-        game_info=SimpleNamespace(
-            playable_area=SimpleNamespace(width=100, height=100)
-        ),
+        game_info=SimpleNamespace(playable_area=SimpleNamespace(width=100, height=100)),
     )
 
 

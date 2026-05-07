@@ -302,7 +302,7 @@ class MacroCycleManager:
 
             # 기지당 최적 라바 수: 3 (인젝트 1회당 3라바)
             optimal_larva = base_count * 3
-            max_larva = base_count * 19  # 기지당 최대 19라바
+            base_count * 19  # 기지당 최대 19라바
 
             if current_larva > optimal_larva * 2:
                 # 라바가 너무 많이 쌓이면 효율 감소

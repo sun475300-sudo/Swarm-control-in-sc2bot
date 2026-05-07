@@ -2,20 +2,33 @@
 
 These tests use MagicMock so no SC2 game instance is required.
 """
+
 from __future__ import annotations
 
-from types import SimpleNamespace
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
 import pytest
-from sc2.ids.unit_typeid import UnitTypeId
+
+try:
+    from sc2.ids.unit_typeid import UnitTypeId
+except ImportError:
+    pytest.skip("sc2 library not available", allow_module_level=True)
 
 # ---------------------------------------------------------------------------
 # Minimal stubs so we can import without a running SC2 environment
 # ---------------------------------------------------------------------------
 
-def _make_unit(type_id, health_pct=0.4, health_max=200, tag=1, energy=100,
-               is_flying=False, is_biological=True, is_ready=True):
+
+def _make_unit(
+    type_id,
+    health_pct=0.4,
+    health_max=200,
+    tag=1,
+    energy=100,
+    is_flying=False,
+    is_biological=True,
+    is_ready=True,
+):
     u = MagicMock()
     u.type_id = type_id
     u.health_percentage = health_pct
@@ -31,8 +44,9 @@ def _make_unit(type_id, health_pct=0.4, health_max=200, tag=1, energy=100,
 
 
 def _make_queen(tag=99, energy=100, is_flying=False):
-    q = _make_unit(UnitTypeId.QUEEN, health_pct=0.9, tag=tag, energy=energy,
-                   is_flying=is_flying)
+    q = _make_unit(
+        UnitTypeId.QUEEN, health_pct=0.9, tag=tag, energy=energy, is_flying=is_flying
+    )
     q.distance_to = MagicMock(return_value=4.0)
     return q
 
@@ -44,12 +58,14 @@ def _make_bot(time=120.0):
     return bot
 
 
-from wicked_zerg_challenger.economy.queen_transfusion_manager import QueenTransfusionManager
-
+from wicked_zerg_challenger.economy.queen_transfusion_manager import (
+    QueenTransfusionManager,
+)
 
 # ---------------------------------------------------------------------------
 # Helper
 # ---------------------------------------------------------------------------
+
 
 def _mgr(time=120.0):
     bot = _make_bot(time)
@@ -59,6 +75,7 @@ def _mgr(time=120.0):
 # ---------------------------------------------------------------------------
 # Tests: is_idle fix — queens should transfuse even when not idle
 # ---------------------------------------------------------------------------
+
 
 class TestIsIdleFix:
     def test_non_idle_queen_can_transfuse(self):
@@ -70,33 +87,40 @@ class TestIsIdleFix:
         # _find_best_transfusion_target bypasses the filter; test filter directly
         queens_mock = [queen]
         # is_flying=False, energy >= 50 → should pass the new filter
-        available = [q for q in queens_mock
-                     if q.energy >= mgr.TRANSFUSION_ENERGY_COST
-                     and not q.is_flying]
+        available = [
+            q
+            for q in queens_mock
+            if q.energy >= mgr.TRANSFUSION_ENERGY_COST and not q.is_flying
+        ]
         assert len(available) == 1, "Non-idle queen should pass energy+flying filter"
 
     def test_flying_queen_excluded(self):
         """Flying queens cannot cast transfusion."""
         mgr, bot = _mgr()
         queen = _make_queen(tag=2, energy=100, is_flying=True)
-        available = [q for q in [queen]
-                     if q.energy >= mgr.TRANSFUSION_ENERGY_COST
-                     and not q.is_flying]
+        available = [
+            q
+            for q in [queen]
+            if q.energy >= mgr.TRANSFUSION_ENERGY_COST and not q.is_flying
+        ]
         assert len(available) == 0, "Flying queen must be excluded"
 
     def test_low_energy_queen_excluded(self):
         """Queens with < 50 energy must be excluded."""
         mgr, bot = _mgr()
         queen = _make_queen(tag=3, energy=49)
-        available = [q for q in [queen]
-                     if q.energy >= mgr.TRANSFUSION_ENERGY_COST
-                     and not q.is_flying]
+        available = [
+            q
+            for q in [queen]
+            if q.energy >= mgr.TRANSFUSION_ENERGY_COST and not q.is_flying
+        ]
         assert len(available) == 0
 
 
 # ---------------------------------------------------------------------------
 # Tests: target deduplication
 # ---------------------------------------------------------------------------
+
 
 class TestTargetDeduplication:
     def test_targeted_set_starts_empty(self):
@@ -145,6 +169,7 @@ class TestTargetDeduplication:
 # Tests: per-queen cast cooldown
 # ---------------------------------------------------------------------------
 
+
 class TestQueenCastCooldown:
     def test_queen_skipped_within_cooldown(self):
         """Queen that cast < QUEEN_CAST_COOLDOWN seconds ago must be skipped."""
@@ -175,13 +200,17 @@ class TestQueenCastCooldown:
         mgr, bot = _mgr(time=100.0)
         queen = _make_queen(tag=99, energy=100)
 
-        skip = mgr._queen_last_cast.get(queen.tag, 0.0) + mgr.QUEEN_CAST_COOLDOWN > bot.time
+        skip = (
+            mgr._queen_last_cast.get(queen.tag, 0.0) + mgr.QUEEN_CAST_COOLDOWN
+            > bot.time
+        )
         assert not skip, "First-time queen must not be in cooldown"
 
 
 # ---------------------------------------------------------------------------
 # Tests: priority ordering
 # ---------------------------------------------------------------------------
+
 
 class TestPriorityOrdering:
     def test_ultralisk_healed_before_zergling(self):
@@ -197,8 +226,9 @@ class TestPriorityOrdering:
 
         target = mgr._find_best_transfusion_target(queen, [ling, ultra])
         assert target is not None
-        assert target.type_id == UnitTypeId.ULTRALISK, \
-            "Ultralisk must be preferred over zergling"
+        assert (
+            target.type_id == UnitTypeId.ULTRALISK
+        ), "Ultralisk must be preferred over zergling"
 
     def test_critical_hp_unit_chosen_over_same_priority_unit(self):
         """Among equal-priority units, one at critical HP (<30%) wins."""
@@ -206,14 +236,19 @@ class TestPriorityOrdering:
         queen = _make_queen(tag=31)
         queen.distance_to = MagicMock(return_value=3.0)
 
-        roach_crit = _make_unit(UnitTypeId.ROACH, health_pct=0.2, health_max=145, tag=10)
-        roach_norm = _make_unit(UnitTypeId.ROACH, health_pct=0.55, health_max=145, tag=11)
+        roach_crit = _make_unit(
+            UnitTypeId.ROACH, health_pct=0.2, health_max=145, tag=10
+        )
+        roach_norm = _make_unit(
+            UnitTypeId.ROACH, health_pct=0.55, health_max=145, tag=11
+        )
         for u in (roach_crit, roach_norm):
             u.distance_to = MagicMock(return_value=3.0)
 
         target = mgr._find_best_transfusion_target(queen, [roach_norm, roach_crit])
-        assert target.tag == roach_crit.tag, \
-            "Critical-HP unit must be preferred over same-type healthy unit"
+        assert (
+            target.tag == roach_crit.tag
+        ), "Critical-HP unit must be preferred over same-type healthy unit"
 
     def test_baneling_excluded(self):
         """Banelings (suicide units) must never be valid transfusion targets."""
@@ -221,7 +256,9 @@ class TestPriorityOrdering:
         queen = _make_queen(tag=40)
         queen.distance_to = MagicMock(return_value=2.0)
 
-        baneling = _make_unit(UnitTypeId.BANELING, health_pct=0.1, health_max=30, tag=99)
+        baneling = _make_unit(
+            UnitTypeId.BANELING, health_pct=0.1, health_max=30, tag=99
+        )
         baneling.distance_to = MagicMock(return_value=2.0)
 
         target = mgr._find_best_transfusion_target(queen, [baneling])
@@ -244,7 +281,9 @@ class TestPriorityOrdering:
         mgr, _ = _mgr()
         queen = _make_queen(tag=60)
 
-        far_ultra = _make_unit(UnitTypeId.ULTRALISK, health_pct=0.1, health_max=400, tag=200)
+        far_ultra = _make_unit(
+            UnitTypeId.ULTRALISK, health_pct=0.1, health_max=400, tag=200
+        )
         queen.distance_to = MagicMock(return_value=10.0)  # beyond range 7
         far_ultra.distance_to = MagicMock(return_value=10.0)
 
