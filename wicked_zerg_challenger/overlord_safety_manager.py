@@ -260,10 +260,10 @@ class OverlordSafetyManager:
                     selected.append(best)
 
         # 여전히 부족하면 남은 것 중에서 랜덤 선택
+        # ``random`` is already imported at module level; the previous local
+        # ``import random`` made the symbol function-local and defeated that.
         if len(selected) < max_count:
             remaining = [p for p in pillars if p not in selected]
-            import random
-
             additional = random.sample(
                 remaining, min(max_count - len(selected), len(remaining))
             )
