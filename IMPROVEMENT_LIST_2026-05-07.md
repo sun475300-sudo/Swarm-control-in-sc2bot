@@ -22,9 +22,11 @@ These are **methods defined twice in the same class**. Python keeps the second o
 |---|-----|----------|----------------------|---------------------|------|--------|
 | B1 | **HIGH** | `wicked_zerg_challenger/opponent_modeling.py:341 vs 765` | The 341-line version is the **comprehensive** opponent-modeling step: build-order tracking, timing-attack detection, tech-progression tracking, blackboard updates. | The 765-version is a **stub** that only calls `_detect_early_signals`. **Whole opponent-modeling feature is silently disabled** by the duplicate. | Removed the stub at 765 — the comprehensive method at 341 already invokes `_detect_early_signals`, so functionality is preserved + the rest is now actually active. | ✅ Done (Iter 2) |
 | B2 | High | `wicked_zerg_challenger/economy_manager.py:1298 vs 2507` (`_prevent_resource_banking`) | First has tighter early-game defense banking via `EconomyConfig.BANKING_*` thresholds. | Second uses blackboard-aware threat checks, but lacks the config thresholds. | Removed dead first; extracted queen+spore+spine block to `_spend_excess_on_queens_and_defense` invoked from active method. | ✅ Done (Iter 3) |
-| B3 | Med | `wicked_zerg_challenger/economy_manager.py:2630 vs 3286` (`_reduce_gas_workers`) | First: simple 1-worker-at-a-time fallback. | Second: severity-based (`gas>2000→0 keep, >1000→1, else 2`); active. | Remove the older first definition. | Pending |
-| B4 | Med | `wicked_zerg_challenger/combat_manager.py:2377 vs 4278` (`_find_harass_target`) | First: returns `enemy_start_locations[0]` only. | Second: prioritizes enemy workers → tech buildings → bases. | Remove the older simpler version. | Pending |
-| B5 | Med | `wicked_zerg_challenger/local_training/production_resilience.py:1369 vs 1866` (`build_terran_counters`) | First: simple BANELINGNEST build, no TechCoordinator. | Second: uses TechCoordinator with priority. | Remove the first definition. | Pending |
+| B3 | Med | `wicked_zerg_challenger/economy_manager.py:2630 vs 3286` (`_reduce_gas_workers`) | First: simple 1-worker-at-a-time fallback. | Second: severity-based (`gas>2000→0 keep, >1000→1, else 2`); active. | Removed the dead first def. | ✅ Done (Iter 4) |
+| B4 | Med | `wicked_zerg_challenger/combat_manager.py:2377 vs 4278` (`_find_harass_target`) | First: returns `enemy_start_locations[0]` only. | Second: prioritizes enemy workers → tech buildings → bases. | Removed the dead first def. | ✅ Done (Iter 4) |
+| B5 | Med | `wicked_zerg_challenger/local_training/production_resilience.py:1369 vs 1866` (`build_terran_counters`) | First: simple BANELINGNEST build, no TechCoordinator. | Second: uses TechCoordinator with priority. | Removed the dead first def. | ✅ Done (Iter 4) |
+
+**Result:** zero `F811 redefinition` warnings remain in `wicked_zerg_challenger/`.
 
 ## C. Type-hint bugs — `Dict[str, any]` (lowercase `any` is a builtin, not a type)
 
