@@ -14,7 +14,7 @@ Macro Cycle Manager - 매크로 사이클 매니저 (#108)
 
 import logging
 from enum import Enum
-from typing import Any, Dict, List, Optional, Set, Tuple
+from typing import Any, Dict, List, Set
 
 logger = logging.getLogger("MacroCycle")
 
@@ -163,8 +163,8 @@ class MacroCycleManager:
                 queens = self.bot.units(UnitTypeId.QUEEN)
                 for q in queens:
                     active_queen_tags.add(q.tag)
-        except Exception:
-            pass
+        except (AttributeError, KeyError) as e:
+            logger.debug("queen tag enumeration failed: %s", e)
 
         # 죽은 퀸/기지 제거
         dead_assignments = []
@@ -214,7 +214,8 @@ class MacroCycleManager:
                             if dist < best_dist:
                                 best_dist = dist
                                 best_queen_tag = q_tag
-                except Exception:
+                except (AttributeError, ValueError) as e:
+                    logger.debug("queen→hatch distance check failed: %s", e)
                     continue
 
             if best_queen_tag:

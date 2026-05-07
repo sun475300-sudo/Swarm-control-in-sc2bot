@@ -5,7 +5,6 @@
 
 import logging
 import math
-import random
 from typing import List, Optional
 
 from sc2.ids.unit_typeid import UnitTypeId
@@ -89,7 +88,8 @@ def is_too_close_to_resources(position: Point2, bot, min_distance: float = 3.0) 
                     return True
 
         return False
-    except Exception:
+    except (AttributeError, TypeError, ValueError) as e:
+        logger.debug("resource proximity check failed at %s: %s", position, e)
         return False  # 에러 시 안전하게 False 반환 (배치 허용)
 
 
@@ -131,7 +131,8 @@ class BuildingPlacementHelper:
                 return self.bot.has_creep(position)
             # 대체 방법: 점막 확인 불가 시 False 반환
             return False
-        except Exception:
+        except (AttributeError, TypeError, IndexError) as e:
+            logger.debug("has_creep check failed at %s: %s", position, e)
             return False
 
     def is_too_close_to_resources(
@@ -169,7 +170,10 @@ class BuildingPlacementHelper:
                         return True
 
             return False
-        except Exception:
+        except (AttributeError, TypeError, ValueError) as e:
+            logger.debug(
+                "is_too_close_to_resources check failed at %s: %s", position, e
+            )
             return False
 
     def find_creep_positions(

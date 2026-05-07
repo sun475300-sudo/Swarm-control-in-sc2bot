@@ -1,8 +1,7 @@
 import logging
-from typing import Any, Dict, Optional, Tuple
+from typing import Any, Dict, Tuple
 
 from sc2.ids.unit_typeid import UnitTypeId
-from sc2.position import Point2
 
 logger = logging.getLogger("TechCoordinator")
 
@@ -46,8 +45,14 @@ class TechCoordinator:
                 return False
 
             # Override if new request is higher priority
-            # print(f"[TECH] Overriding {structure_type} request from {self.pending_requests[structure_type][3]} "
-            #       f"(P{current_priority}) with {requester_name} (P{priority})")
+            logger.debug(
+                "Overriding %s request from %s (P%s) with %s (P%s)",
+                structure_type,
+                self.pending_requests[structure_type][3],
+                current_priority,
+                requester_name,
+                priority,
+            )
 
         self.pending_requests[structure_type] = (
             priority,

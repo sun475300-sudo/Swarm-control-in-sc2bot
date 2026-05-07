@@ -9,7 +9,7 @@ Air Threat Response Trainer - 공중 위협 대응 학습 시스템
 4. 동적 카운터: 히드라, 퀸, 감염충, 타락귀
 """
 
-from typing import Dict, List, Optional, Set
+from typing import Dict
 
 from sc2.ids.unit_typeid import UnitTypeId
 
@@ -230,8 +230,8 @@ class AirThreatResponseTrainer:
                 if queens.amount < 5:
                     self.logger.info("[PRODUCTION] Requesting more Queens")
 
-            except Exception:
-                pass
+            except (AttributeError, KeyError) as e:
+                self.logger.debug("air-threat production query failed: %s", e)
 
     def get_current_strategy(self) -> str:
         """현재 전략 반환"""

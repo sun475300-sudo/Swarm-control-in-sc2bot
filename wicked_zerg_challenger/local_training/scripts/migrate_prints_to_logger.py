@@ -8,7 +8,6 @@ print() 호출을 logging 호출로 변환합니다.
 import logging
 import os
 import re
-import sys
 
 logger = logging.getLogger(__name__)
 

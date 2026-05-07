@@ -14,7 +14,7 @@ Features:
 """
 
 import math
-from typing import Optional, Tuple
+from typing import Tuple
 
 
 class PIDController:

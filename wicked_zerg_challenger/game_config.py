@@ -244,6 +244,19 @@ class GameConfig:
     QUEEN_CREEP_ENERGY_THRESHOLD = 25  # CREEP 퀸 최소 에너지
     QUEEN_TRANSFUSE_HP_THRESHOLD = 0.5  # 수혈 HP 비율 임계값
 
+    # QueenManager 인스턴스 기본값 (queen_manager.py 와 일치)
+    QUEEN_INJECT_ENERGY_THRESHOLD = 25  # 인젝트 시도 최소 에너지
+    QUEEN_INJECT_COOLDOWN_SEC = 29.0  # 인젝트 쿨다운 (SC2 스폰라바 28.57s + 여유)
+    QUEEN_MAX_INJECT_DISTANCE = 8.0  # 인젝트 사거리 (이동 보정 포함)
+    QUEEN_MAX_TRAVEL_DISTANCE = 10.0  # 퀸 이동 최대 거리
+    QUEEN_CREEP_SPREAD_ENERGY = 20  # 점막 확장 최소 에너지 (작전적 우선순위)
+    QUEEN_CREEP_SPREAD_COOLDOWN_SEC = 4.0  # 점막 확장 쿨다운
+    QUEEN_INJECT_QUEEN_CREEP_ENERGY = 35  # 인젝트 퀸이 점막 시도하는 임계값
+    QUEEN_TRANSFUSE_ENERGY_THRESHOLD = 50  # 수혈 시도 최소 에너지
+    QUEEN_TRANSFUSE_COOLDOWN_SEC = 1.0  # 수혈 쿨다운
+    QUEEN_MAX_PER_BASE = 2  # 기지당 최대 퀸 수
+    QUEEN_CREEP_BONUS_QUEENS = 4  # 점막 전용 추가 퀸 수
+
     # ========== A* 점막 고속도로 (Phase 1) ==========
 
     CREEP_HIGHWAY_GRID_RESOLUTION = 4  # A* 그리드 셀 크기

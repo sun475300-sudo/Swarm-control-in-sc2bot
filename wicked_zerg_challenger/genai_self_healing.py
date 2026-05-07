@@ -335,7 +335,8 @@ class GenAISelfHealing:
 
             return efficiency
 
-        except Exception:
+        except (TypeError, ZeroDivisionError, KeyError) as e:
+            logger.debug("economic efficiency calc fallback: %s", e)
             return 0.5  # 기본값
 
     def _calculate_combat_efficiency(self, data: Dict) -> float:
@@ -361,7 +362,8 @@ class GenAISelfHealing:
 
             return efficiency
 
-        except Exception:
+        except (TypeError, ZeroDivisionError, KeyError) as e:
+            logger.debug("combat efficiency calc fallback: %s", e)
             return 0.5  # 기본값
 
     def validate_code_syntax(self, code: str) -> Tuple[bool, Optional[str]]:

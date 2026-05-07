@@ -4,7 +4,24 @@
 
 통합 문제 해결 후 발견된 추가 개선 사항들입니다.
 
-**Last refreshed:** 2026-04-27 (Issue #1, #2 → Resolved 섹션으로 이동)
+**Last refreshed:** 2026-04-27 (Issue #1, #2 → Resolved; Issue #6 partially resolved via Batch 3)
+
+---
+
+## 🆕 신규 발견 (PR #44, 2026-04-27)
+
+자동/수동 점검 사이클(테스트 → 코드 검사 → 개선 → 커밋/푸시 반복)에서 새로 식별된 항목.
+
+| ID | 설명 | 우선순위 | 상태 |
+|----|------|---------|------|
+| N1 | `OpponentModeling.on_step` 중복 정의 (line 341 vs 765 — F811) | 🟠 HIGH | open — 동작 영향(상위 on_step이 미실행) 가능 |
+| N2 | `EconomyManager._prevent_resource_banking` / `_reduce_gas_workers` 재정의 (F811) | 🟡 MED | open |
+| N3 | `combat_manager._find_harass_target` 재정의 (line 2377 vs 4278) | 🟡 MED | open |
+| N4 | `production_resilience.build_terran_counters` 재정의 (1369 vs 1866) | 🟡 MED | open |
+| N5 | bare `except Exception:` 다수 (≈360+) — 이번 PR에서 12건 처리, 잔여 다수 | 🟢 LOW | partial |
+| N6 | F841 unused local variables (visuals/make_pptx 등) | 🟢 LOW | open (presentation 코드라 영향 작음) |
+
+검증 권장: PR 분리 (N1 단독 PR 권장 — 동작 변화 가능성).
 
 ---
 
@@ -12,6 +29,25 @@
 
 이전 버전(2026-01-29)에 남아있던 두 이슈는 코드에 이미 반영된 상태로 확인됐습니다.
 문서가 stale했던 것으로, 별도 작업 없이 닫습니다.
+
+### ✅ (PR #44) Issue #6 부분 해결: Queen Manager magic numbers
+
+`queen_manager.py` 인스턴스 기본값 11종을 `GameConfig` 클래스 상수로 이동.
+회귀 테스트 7건 추가 (`tests/test_queen_manager_constants.py`).
+
+| 상수 | GameConfig 키 |
+|------|--------------|
+| inject_energy_threshold (25) | `QUEEN_INJECT_ENERGY_THRESHOLD` |
+| inject_cooldown (29.0s) | `QUEEN_INJECT_COOLDOWN_SEC` |
+| max_inject_distance (8.0) | `QUEEN_MAX_INJECT_DISTANCE` |
+| creep_energy_threshold (20) | `QUEEN_CREEP_SPREAD_ENERGY` |
+| creep_spread_cooldown (4.0s) | `QUEEN_CREEP_SPREAD_COOLDOWN_SEC` |
+| inject_queen_creep_threshold (35) | `QUEEN_INJECT_QUEEN_CREEP_ENERGY` |
+| transfuse_energy_threshold (50) | `QUEEN_TRANSFUSE_ENERGY_THRESHOLD` |
+| transfuse_cooldown (1.0s) | `QUEEN_TRANSFUSE_COOLDOWN_SEC` |
+| transfuse_health_threshold (0.5) | `QUEEN_TRANSFUSE_HP_THRESHOLD` |
+| max_queens_per_base (2) | `QUEEN_MAX_PER_BASE` |
+| creep_queen_bonus (4) | `QUEEN_CREEP_BONUS_QUEENS` |
 
 ### ✅ Issue #1: Queen Inject 쿨다운 — 25→29초 수정 완료
 

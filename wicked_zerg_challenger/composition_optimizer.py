@@ -14,7 +14,7 @@ Composition Optimizer - 유닛 조합 최적화 시스템 (#105)
 
 import logging
 from enum import Enum
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Tuple
 
 try:
     from sc2.ids.unit_typeid import UnitTypeId
@@ -238,7 +238,8 @@ class CompositionOptimizer:
                 unit_name = getattr(unit.type_id, "name", "UNKNOWN").upper()
                 if unit_name not in ("SCV", "PROBE", "DRONE", "MULE"):
                     composition[unit_name] = composition.get(unit_name, 0) + 1
-            except Exception:
+            except (AttributeError, TypeError) as e:
+                logger.debug("enemy unit composition skip: %s", e)
                 continue
 
         # Use IntelManager historical data to keep units that moved out of vision.
@@ -251,7 +252,8 @@ class CompositionOptimizer:
                     continue
                 try:
                     composition[key] = max(composition.get(key, 0), int(count))
-                except Exception:
+                except (TypeError, ValueError) as e:
+                    logger.debug("historical count parse skip key=%s: %s", key, e)
                     continue
 
         self.enemy_composition = composition
@@ -274,7 +276,8 @@ class CompositionOptimizer:
                 unit_name = getattr(unit.type_id, "name", "UNKNOWN").upper()
                 if unit_name != "DRONE" and unit_name != "LARVA":
                     composition[unit_name] = composition.get(unit_name, 0) + 1
-            except Exception:
+            except (AttributeError, TypeError) as e:
+                logger.debug("own unit composition skip: %s", e)
                 continue
 
         self.current_composition = composition

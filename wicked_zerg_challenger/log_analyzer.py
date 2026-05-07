@@ -19,14 +19,12 @@ Usage:
 """
 
 import argparse
-import glob
 import json
 import logging
-import os
-from collections import Counter, defaultdict
+from collections import Counter
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Dict, List
 
 logger = logging.getLogger("LogAnalyzer")
 
@@ -70,8 +68,8 @@ class LogAnalyzer:
                     data = json.loads(filepath.read_text(encoding="utf-8"))
                     data["_filename"] = filepath.name
                     self.game_data_files.append(data)
-                except Exception:
-                    pass
+                except (OSError, json.JSONDecodeError, UnicodeDecodeError) as e:
+                    logger.debug("skipping unreadable game file %s: %s", filepath, e)
             logger.info(f"  data/games/: {len(self.game_data_files)} game files")
 
         # 4. Tournament results
@@ -81,8 +79,10 @@ class LogAnalyzer:
                 try:
                     data = json.loads(filepath.read_text(encoding="utf-8"))
                     self.tournament_results.append(data)
-                except Exception:
-                    pass
+                except (OSError, json.JSONDecodeError, UnicodeDecodeError) as e:
+                    logger.debug(
+                        "skipping unreadable tournament file %s: %s", filepath, e
+                    )
             logger.info(
                 f"  data/tournament/: {len(self.tournament_results)} tournaments"
             )
@@ -96,8 +96,8 @@ class LogAnalyzer:
                 ).splitlines()
                 self.bot_log_lines = lines[-500:]
                 logger.info(f"  logs/bot.log: {len(lines)} lines (last 500 loaded)")
-            except Exception:
-                pass
+            except (OSError, UnicodeDecodeError) as e:
+                logger.debug("could not read bot.log: %s", e)
 
         logger.info("Data loading complete.\n")
 

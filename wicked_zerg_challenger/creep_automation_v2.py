@@ -241,5 +241,6 @@ class CreepAutomationV2:
                     self.tumor_positions.add(pos_key)
                     self._tumor_cooldowns[tag] = current_iter if current_iter else 0
                     spread_count += 1
-            except Exception:
+            except (AttributeError, RuntimeError, ValueError) as e:
+                self.logger.debug("tumor spread skip tag=%s: %s", tag, e)
                 continue
