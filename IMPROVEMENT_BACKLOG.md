@@ -186,6 +186,11 @@
 - 코드 품질 스캔: bare except, mutable default args, eval/exec/shell=True/yaml unsafe load 모두 0 hits. except-pass 38건은 대부분 optional feature fallback 패턴.
 - 결과: 406 passed → 410 passed, 20 skipped → 16 skipped.
 
+### Cycle 5 — 2026-05-07
+- ✅ T3: `tests/test_crypto_trading.py::TestConfigLoader`가 프로젝트 루트의 `config.yaml`이 없으면 클래스 전체 skip(7건). 임시 디렉토리에 `sample_config`로 yaml을 생성하는 fixture(`_temp_config_yaml`, `_config_loader`) 추가. 글로벌 캐시도 매 테스트마다 reset.
+- ✅ T3: `tests/test_security.py::test_no_hardcoded_keys_in_yaml`도 같은 패턴으로 sample yaml 생성 후 검사. PyYAML 미설치는 importorskip로 자연스럽게 skip.
+- 결과: 410 passed → 417 passed, 16 skipped → 9 skipped.
+
 ## 누적 진행
 | Cycle | passed | skipped | 비고 |
 |-------|--------|---------|------|
@@ -195,3 +200,4 @@
 | 2     |  406   |   20    | world_model fix |
 | 3     |  406   |   20    | sc2 stub fix (import-scan만 영향) |
 | 4     |  410   |   16    | p606 클래스명 정정 |
+| 5     |  417   |    9    | config.yaml fixture로 7건 회복 |
