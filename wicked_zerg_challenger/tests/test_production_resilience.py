@@ -206,17 +206,19 @@ class TestProductionResilience(unittest.IsolatedAsyncioTestCase):
     # ==================== Tech Requirements Tests ====================
 
     def test_tech_requirement_spawning_pool(self):
-        """Test spawning pool requirement detection"""
-        # Should be UnitTypeId.SPAWNINGPOOL
-        self.assertEqual(UnitTypeId.SPAWNINGPOOL, UnitTypeId.SPAWNINGPOOL)
+        """Tech-tree IDs used by ProductionResilience must resolve."""
+        self.assertEqual(UnitTypeId.SPAWNINGPOOL.name, "SPAWNINGPOOL")
+        self.assertIsNotNone(UnitTypeId.SPAWNINGPOOL.value)
 
     def test_tech_requirement_lair(self):
-        """Test lair requirement detection"""
-        self.assertEqual(UnitTypeId.LAIR, UnitTypeId.LAIR)
+        """Lair tech-id must resolve and differ from Hatchery."""
+        self.assertEqual(UnitTypeId.LAIR.name, "LAIR")
+        self.assertNotEqual(UnitTypeId.LAIR, UnitTypeId.HATCHERY)
 
     def test_tech_requirement_spire(self):
-        """Test spire requirement for mutalisks"""
-        self.assertEqual(UnitTypeId.SPIRE, UnitTypeId.SPIRE)
+        """Spire tech-id must resolve and differ from Hydralisk Den."""
+        self.assertEqual(UnitTypeId.SPIRE.name, "SPIRE")
+        self.assertNotEqual(UnitTypeId.SPIRE, UnitTypeId.HYDRALISKDEN)
 
     # ==================== Production Status Tests ====================
 
