@@ -134,10 +134,38 @@ class TestCryptoConfig:
         assert DATA_DIR.exists(), f"데이터 디렉토리가 없습니다: {DATA_DIR}"
 
 
-@pytest.mark.skipif(
-    not os.path.exists(os.path.join(os.path.dirname(__file__), "..", "config.yaml")),
-    reason="config.yaml not found",
-)
+@pytest.fixture
+def _temp_config_yaml(tmp_path, sample_config):
+    """Write sample_config to a temp config.yaml and return its path.
+
+    Skips the test if PyYAML is not installed.
+    """
+    yaml = pytest.importorskip("yaml")
+    cfg_path = tmp_path / "config.yaml"
+    cfg_path.write_text(
+        yaml.dump(sample_config, default_flow_style=False, allow_unicode=True),
+        encoding="utf-8",
+    )
+    return cfg_path
+
+
+@pytest.fixture
+def _config_loader(_temp_config_yaml):
+    """Reset config_loader's cache and load from a temp config.yaml.
+
+    Yields the imported config_loader module so each test gets a clean
+    state that does not depend on the project-root config.yaml.
+    """
+    import config_loader
+
+    config_loader._config = None
+    config_loader._config_path = None
+    config_loader.load_config(config_path=_temp_config_yaml)
+    yield config_loader
+    config_loader._config = None
+    config_loader._config_path = None
+
+
 class TestConfigLoader:
     """config_loader 모듈의 기능을 테스트한다."""
 
@@ -148,50 +176,38 @@ class TestConfigLoader:
         assert hasattr(config_loader, "load_config")
         assert hasattr(config_loader, "get")
 
-    def test_load_config_returns_dict(self):
+    def test_load_config_returns_dict(self, _config_loader, _temp_config_yaml):
         """load_config()가 딕셔너리를 반환하는지 확인한다."""
-        from config_loader import load_config
-
-        config = load_config()
+        config = _config_loader.load_config(config_path=_temp_config_yaml)
         assert isinstance(config, dict)
 
-    def test_get_project_name(self):
+    def test_get_project_name(self, _config_loader):
         """프로젝트 이름을 가져올 수 있는지 확인한다."""
-        from config_loader import get, load_config
-
-        load_config()
-        name = get("project.name")
+        name = _config_loader.get("project.name")
         assert name is not None
         assert isinstance(name, str)
         assert len(name) > 0
 
-    def test_get_proxy_port(self):
+    def test_get_proxy_port(self, _config_loader):
         """프록시 포트 설정을 가져올 수 있는지 확인한다."""
-        from config_loader import get, load_config
-
-        load_config()
-        port = get("proxy.port")
+        port = _config_loader.get("proxy.port")
         assert isinstance(port, int)
         assert port > 0
 
-    def test_get_nonexistent_key_returns_default(self):
+    def test_get_nonexistent_key_returns_default(self, _config_loader):
         """존재하지 않는 키에 대해 기본값을 반환하는지 확인한다."""
-        from config_loader import get, load_config
-
-        load_config()
-        result = get("no.such.key", default="테스트기본값")
+        result = _config_loader.get("no.such.key", default="테스트기본값")
         assert result == "테스트기본값"
 
-    def test_env_override(self, monkeypatch):
+    def test_env_override(self, monkeypatch, _temp_config_yaml):
         """환경변수로 설정값을 오버라이드할 수 있는지 확인한다."""
         monkeypatch.setenv("PROXY_PORT", "9999")
-        # 캐시를 무시하고 재로드
         import config_loader
-        from config_loader import get, load_config
 
         config_loader._config = None
-        cfg = load_config()
-        port = get("proxy.port")
+        config_loader._config_path = None
+        config_loader.load_config(config_path=_temp_config_yaml)
+        port = config_loader.get("proxy.port")
         assert port == 9999
 
 

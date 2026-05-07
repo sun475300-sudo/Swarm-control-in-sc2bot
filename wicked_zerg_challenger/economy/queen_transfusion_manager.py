@@ -95,6 +95,9 @@ class QueenTransfusionManager:
         self._targeted_this_iter.clear()
 
         if not queens or not damaged_units:
+            # Still purge dead-queen entries so the cooldown dict can't grow
+            # unbounded across long matches with high queen turnover.
+            self._prune_queen_last_cast(queens)
             return
 
         # Filter queens with sufficient energy
@@ -102,6 +105,9 @@ class QueenTransfusionManager:
             lambda q: q.energy >= self.TRANSFUSION_ENERGY_COST
             and not q.is_flying  # transfusion is a ground-only cast
         )
+
+        # Drop cooldown entries for queens that no longer exist.
+        self._prune_queen_last_cast(queens)
 
         if not available_queens:
             return
@@ -215,6 +221,23 @@ class QueenTransfusionManager:
             return False
 
         return True
+
+    def _prune_queen_last_cast(self, live_queens: Units) -> None:
+        """Remove cooldown entries for queens that no longer exist.
+
+        Without this, ``_queen_last_cast`` would grow by one entry every
+        time a queen casts and its tag stays after death. Over a long
+        game with many queens this accumulates.
+        """
+        if not self._queen_last_cast:
+            return
+        live_tags = {q.tag for q in live_queens}
+        if not live_tags:
+            self._queen_last_cast.clear()
+            return
+        stale = [tag for tag in self._queen_last_cast if tag not in live_tags]
+        for tag in stale:
+            del self._queen_last_cast[tag]
 
     def _record_transfusion(self, target: Unit) -> None:
         """Record transfusion statistics"""
