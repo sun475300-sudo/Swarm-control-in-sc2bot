@@ -67,10 +67,14 @@ class AirThreatResponseTrainer:
             UnitTypeId.TEMPEST,
         }
 
-        # 대공 유닛
+        # 대공 유닛 — 대공 공격이 가능한 우리 측 유닛
+        # MUTALISK: 공중 유닛이지만 anti-air 공격 가능 (스택된 mut끼리 공격)
+        # INFESTOR: Fungal Growth로 stacked air에 면적 데미지 (간접 anti-air)
+        # SPORECRAWLER: 정적 방어 구조물
         self.OUR_ANTI_AIR = {
             UnitTypeId.QUEEN,
             UnitTypeId.HYDRALISK,
+            UnitTypeId.MUTALISK,  # ★ added: 자체 anti-air 공격
             UnitTypeId.CORRUPTOR,
             UnitTypeId.INFESTOR,
             UnitTypeId.SPORECRAWLER,
