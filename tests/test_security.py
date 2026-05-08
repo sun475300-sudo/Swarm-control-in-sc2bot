@@ -9,7 +9,6 @@
   - 설정 파일 내 민감 정보 유무 검사
 """
 
-import os
 import sys
 from pathlib import Path
 
@@ -99,7 +98,6 @@ class TestSensitiveDataProtection:
             pytest.skip("config.yaml 파일이 없습니다.")
         content = self._read_file(yaml_path)
         # API 키 필드에 환경변수 참조 ${...} 또는 빈 값이 있어야 한다
-        import re
 
         for line in content.split("\n"):
             if "access_key:" in line or "secret_key:" in line or "password:" in line:

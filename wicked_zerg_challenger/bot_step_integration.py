@@ -924,14 +924,14 @@ class BotStepIntegrator:
             if hasattr(self.bot, "spatial_optimizer") and self.bot.spatial_optimizer:
                 try:
                     await self.bot.spatial_optimizer.on_step(iteration)
-                except Exception as e:
+                except Exception:
                     if error_handler.debug_mode:
                         raise
 
             if hasattr(self.bot, "data_cache") and self.bot.data_cache:
                 try:
                     await self.bot.data_cache.on_step(iteration)
-                except Exception as e:
+                except Exception:
                     if error_handler.debug_mode:
                         raise
 
@@ -939,7 +939,7 @@ class BotStepIntegrator:
             if hasattr(self.bot, "base_destruction") and self.bot.base_destruction:
                 try:
                     await self.bot.base_destruction.on_step(iteration)
-                except Exception as e:
+                except Exception:
                     if error_handler.debug_mode:
                         raise
 
@@ -947,7 +947,7 @@ class BotStepIntegrator:
             if hasattr(self.bot, "building_destroyer") and self.bot.building_destroyer:
                 try:
                     await self.bot.building_destroyer.on_step(iteration)
-                except Exception as e:
+                except Exception:
                     if error_handler.debug_mode:
                         raise
 
@@ -955,7 +955,7 @@ class BotStepIntegrator:
             if hasattr(self.bot, "self_healing") and self.bot.self_healing:
                 try:
                     await self.bot.self_healing.on_step(iteration)
-                except Exception as e:
+                except Exception:
                     if error_handler.debug_mode:
                         raise
 
@@ -963,7 +963,7 @@ class BotStepIntegrator:
             if hasattr(self.bot, "personality") and self.bot.personality:
                 try:
                     await self.bot.personality.on_step(iteration)
-                except Exception as e:
+                except Exception:
                     if error_handler.debug_mode:
                         raise
 
@@ -971,7 +971,7 @@ class BotStepIntegrator:
             if hasattr(self.bot, "battle_prep") and self.bot.battle_prep:
                 try:
                     await self.bot.battle_prep.on_step(iteration)
-                except Exception as e:
+                except Exception:
                     if error_handler.debug_mode:
                         raise
 
@@ -983,7 +983,7 @@ class BotStepIntegrator:
                         await self.bot.destructible_aware.on_start()
 
                     await self.bot.destructible_aware.on_step(iteration)
-                except Exception as e:
+                except Exception:
                     if error_handler.debug_mode:
                         raise
 
@@ -991,7 +991,7 @@ class BotStepIntegrator:
             if hasattr(self.bot, "nydus_trainer") and self.bot.nydus_trainer:
                 try:
                     await self.bot.nydus_trainer.on_step(iteration)
-                except Exception as e:
+                except Exception:
                     if error_handler.debug_mode:
                         raise
 
@@ -999,7 +999,7 @@ class BotStepIntegrator:
             if hasattr(self.bot, "overlord_safety") and self.bot.overlord_safety:
                 try:
                     await self.bot.overlord_safety.on_step(iteration)
-                except Exception as e:
+                except Exception:
                     if error_handler.debug_mode:
                         raise
 
@@ -1377,7 +1377,7 @@ class BotStepIntegrator:
                             )
                     elif iteration % 110 == 0:
                         astar_hw.update_progress()
-                except Exception as e:
+                except Exception:
                     if error_handler.debug_mode:
                         raise
 
@@ -1658,7 +1658,7 @@ class BotStepIntegrator:
                     if defeat_status.get("last_stand_required", False):
                         if iteration % 50 == 0:
                             self.logger.info(
-                                f"[DEFEAT DETECTION] [*] 패배 직전! 마지막 방어 시도! [*]"
+                                "[DEFEAT DETECTION] [*] 패배 직전! 마지막 방어 시도! [*]"
                             )
                             self.logger.info(
                                 f"  - 패배 수준: {self.bot.defeat_detection.get_defeat_level_name()}"
@@ -1680,12 +1680,10 @@ class BotStepIntegrator:
                     elif defeat_status.get("should_surrender", False):
                         game_time = getattr(self.bot, "time", 0)
                         reason = defeat_status.get("defeat_reason", "알 수 없음")
-                        self.logger.info(
-                            f"\n[SURRENDER] [*][*][*] 게임 포기! [*][*][*]"
-                        )
+                        self.logger.info("\n[SURRENDER] [*][*][*] 게임 포기! [*][*][*]")
                         self.logger.info(f"  - 게임 시간: {int(game_time)}초")
                         self.logger.info(f"  - 이유: {reason}")
-                        self.logger.info(f"  - 다음 게임으로 이동...\n")
+                        self.logger.info("  - 다음 게임으로 이동...\n")
 
                         await self.bot.chat_send("gg")
 
@@ -2490,7 +2488,7 @@ class BotStepIntegrator:
 
         except Exception as e:
             if error_handler.debug_mode:
-                self.logger.error(f"\n[ERROR] Game logic execution error in DEBUG_MODE")
+                self.logger.error("\n[ERROR] Game logic execution error in DEBUG_MODE")
                 raise
             else:
                 error_handler.error_counts["GameLogic"] += 1
@@ -2791,7 +2789,7 @@ class BotStepIntegrator:
 
                     # ★ 상태 벡터 로깅 (30초마다) - 실제 값 확인 ★
                     if iteration % 660 == 0:  # 30초
-                        self.logger.info(f"[RL_STATE] 게임 상태 벡터 (15차원):")
+                        self.logger.info("[RL_STATE] 게임 상태 벡터 (15차원):")
                         self.logger.info(
                             f"  미네랄: {game_state[0]:.3f}, 가스: {game_state[1]:.3f}"
                         )
@@ -2924,7 +2922,7 @@ class BotStepIntegrator:
                             f"[STRATEGY] 규칙 기반 결정: {new_mode} (RLAgent 없음)"
                         )
                     else:
-                        self.logger.info(f"[STRATEGY] 현행 유지 (Shadow Mode)")
+                        self.logger.info("[STRATEGY] 현행 유지 (Shadow Mode)")
 
                 # ★ 불일치 경고 (RL이 있는데 사용 안 됨) ★
                 if (
@@ -2934,7 +2932,7 @@ class BotStepIntegrator:
                 ):
                     if iteration % 220 == 0:
                         self.logger.warning(
-                            f"[WARNING] [*] RLAgent가 있지만 결정이 사용되지 않음! [*]"
+                            "[WARNING] [*] RLAgent가 있지만 결정이 사용되지 않음! [*]"
                         )
 
         except Exception as e:
