@@ -25,9 +25,8 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")
 # load the SUT without the sc2 library present. Skip the whole module
 # rather than collect with mocks that wouldn't reach the real code path.
 try:
-    from sc2.data import Difficulty, Race
-
     from difficulty_progression import DifficultyProgression
+    from sc2.data import Difficulty, Race
 except ImportError:
     pytest.skip("sc2 library not available", allow_module_level=True)
 
