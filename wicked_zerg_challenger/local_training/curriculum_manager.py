@@ -197,7 +197,7 @@ class CurriculumManager:
             return difficulty_names[self.current_idx]
         return "Very Easy"
 
-    def record_win(self, opponent_race: str = None) -> bool:
+    def record_win(self, opponent_race: str | None = None) -> bool:
         """
         ★ 승리 기록 및 승격 체크 ★
 
@@ -243,7 +243,7 @@ class CurriculumManager:
         self.save_level()
         return False
 
-    def record_loss(self, opponent_race: str = None) -> bool:
+    def record_loss(self, opponent_race: str | None = None) -> bool:
         """
         ★ 패배 기록 및 강등 체크 ★
 

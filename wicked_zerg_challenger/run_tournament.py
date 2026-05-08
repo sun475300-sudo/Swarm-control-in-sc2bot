@@ -107,8 +107,8 @@ class TournamentRunner:
     def __init__(
         self,
         games_per_combo: int = 2,
-        difficulties: List[str] = None,
-        races: List[str] = None,
+        difficulties: List[str] | None = None,
+        races: List[str] | None = None,
         personality: str = "serral",
     ):
         self.games_per_combo = games_per_combo

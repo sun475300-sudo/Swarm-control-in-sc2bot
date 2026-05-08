@@ -306,7 +306,7 @@ class BoidsController:
         return [u for u in units if u.type_id in self.combat_unit_types]
 
     async def _apply_boids(
-        self, units, enemy_units, skip_units: Set[int] = None
+        self, units, enemy_units, skip_units: Set[int] | None = None
     ) -> None:
         """
         Apply Boids algorithm with all integrated components.

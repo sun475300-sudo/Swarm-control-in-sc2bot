@@ -9,6 +9,19 @@ from __future__ import annotations
 import asyncio
 from typing import Iterable, List, Optional, Tuple
 
+# Strong-ref set so asyncio doesn't garbage-collect fire-and-forget
+# do(...) coroutines before they actually run (RUF006).
+_PENDING_ACTIONS: set[asyncio.Task] = set()
+
+
+def _schedule(coro):
+    try:
+        task = asyncio.create_task(coro)
+    except RuntimeError:
+        return
+    _PENDING_ACTIONS.add(task)
+    task.add_done_callback(_PENDING_ACTIONS.discard)
+
 try:
     from sc2.ids.ability_id import AbilityId
     from sc2.ids.unit_typeid import UnitTypeId
@@ -637,9 +650,6 @@ class MicroCombat:
             try:
                 result = self.bot.do(action)
                 if asyncio.iscoroutine(result):
-                    try:
-                        asyncio.create_task(result)
-                    except RuntimeError:
-                        pass
+                    _schedule(result)
             except Exception:
                 continue

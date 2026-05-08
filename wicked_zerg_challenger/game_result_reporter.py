@@ -28,7 +28,7 @@ class GameResultReporter:
         self.bot = bot
         self.report_dir = "data/reports"
 
-    def generate_report(self, game_data: Dict, analytics_data: Dict = None) -> str:
+    def generate_report(self, game_data: Dict, analytics_data: Dict | None = None) -> str:
         """
         종합 경기 결과 보고서 생성.
 

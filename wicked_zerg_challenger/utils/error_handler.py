@@ -212,7 +212,7 @@ def validate_position(position) -> bool:
         return False
 
 
-def log_error_context(func_name: str, error: Exception, context: dict = None):
+def log_error_context(func_name: str, error: Exception, context: dict | None = None):
     """
     에러와 함께 컨텍스트 정보 로깅
 

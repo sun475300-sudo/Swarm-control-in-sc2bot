@@ -13,11 +13,28 @@ Real-time Awareness Engine — 실시간 상황 인식 + 자동 대응 시스템
 5. 학습 피드백 (Learning Feedback)
 """
 
+import asyncio
 import logging
 from dataclasses import dataclass
 from typing import Dict, List
 
 logger = logging.getLogger("RealtimeAwarenessEngine")
+
+# Strong-ref set so asyncio doesn't garbage-collect fire-and-forget
+# do(...) coroutines before they actually run. Tasks remove themselves
+# via add_done_callback.
+_PENDING_ACTIONS: set[asyncio.Task] = set()
+
+
+def _schedule(coro):
+    """Schedule a coroutine without losing the reference (RUF006)."""
+    try:
+        task = asyncio.ensure_future(coro)
+    except RuntimeError:
+        # No running event loop — drop silently, as before.
+        return
+    _PENDING_ACTIONS.add(task)
+    task.add_done_callback(_PENDING_ACTIONS.discard)
 
 try:
     from sc2.ids.unit_typeid import UnitTypeId
@@ -584,9 +601,7 @@ class RealtimeAwarenessEngine:
                     l = larva.random
                     result = self.bot.do(l.train(UnitTypeId.HYDRALISK))
                     if hasattr(result, "__await__"):
-                        import asyncio
-
-                        asyncio.ensure_future(result)
+                        _schedule(result)
                     return
 
             # 바퀴굴 있으면 바퀴
@@ -595,9 +610,7 @@ class RealtimeAwarenessEngine:
                     l = larva.random
                     result = self.bot.do(l.train(UnitTypeId.ROACH))
                     if hasattr(result, "__await__"):
-                        import asyncio
-
-                        asyncio.ensure_future(result)
+                        _schedule(result)
                     return
 
             # 스파이어 있으면 뮤탈
@@ -606,9 +619,7 @@ class RealtimeAwarenessEngine:
                     l = larva.random
                     result = self.bot.do(l.train(UnitTypeId.MUTALISK))
                     if hasattr(result, "__await__"):
-                        import asyncio
-
-                        asyncio.ensure_future(result)
+                        _schedule(result)
                     return
         except Exception:
             pass
@@ -632,9 +643,7 @@ class RealtimeAwarenessEngine:
                     ).ready.exists and self.bot.can_afford(UnitTypeId.ROACH):
                         result = self.bot.do(l.train(UnitTypeId.ROACH))
                         if hasattr(result, "__await__"):
-                            import asyncio
-
-                            asyncio.ensure_future(result)
+                            _schedule(result)
                         continue
 
                 # 저글링
@@ -643,9 +652,7 @@ class RealtimeAwarenessEngine:
                 ).ready.exists and self.bot.can_afford(UnitTypeId.ZERGLING):
                     result = self.bot.do(l.train(UnitTypeId.ZERGLING))
                     if hasattr(result, "__await__"):
-                        import asyncio
-
-                        asyncio.ensure_future(result)
+                        _schedule(result)
         except Exception:
             pass
 
@@ -657,9 +664,7 @@ class RealtimeAwarenessEngine:
                 l = larva.first
                 result = self.bot.do(l.train(UnitTypeId.OVERLORD))
                 if hasattr(result, "__await__"):
-                    import asyncio
-
-                    asyncio.ensure_future(result)
+                    _schedule(result)
         except Exception:
             pass
 
@@ -678,9 +683,7 @@ class RealtimeAwarenessEngine:
                 if self.bot.structures(UnitTypeId.SPAWNINGPOOL).ready.exists:
                     result = self.bot.do(l.train(UnitTypeId.ZERGLING))
                     if hasattr(result, "__await__"):
-                        import asyncio
-
-                        asyncio.ensure_future(result)
+                        _schedule(result)
         except Exception:
             pass
 
