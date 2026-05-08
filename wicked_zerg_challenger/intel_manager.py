@@ -959,7 +959,7 @@ class IntelManager:
             }
 
             with open(file_path, "w", encoding="utf-8") as f:
-                json.dump(data, f, indent=2)
+                json.dump(data, f, indent=2, ensure_ascii=False)
 
             logger.info(f"Data saved to {file_path}")
             return True

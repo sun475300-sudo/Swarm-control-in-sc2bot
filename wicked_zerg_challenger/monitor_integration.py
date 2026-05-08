@@ -373,7 +373,7 @@ class IntegrationMonitor:
         # Save report
         report_file = self.base_dir / "integration_monitor_report.json"
         with open(report_file, "w", encoding="utf-8") as f:
-            json.dump(summary, f, indent=2)
+            json.dump(summary, f, indent=2, ensure_ascii=False)
 
         logger.info(f"\n[STATS] Full report saved to: {report_file}")
 
