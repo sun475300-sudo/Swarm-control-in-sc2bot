@@ -12,8 +12,14 @@ Map Memory System - 맵 기억 시스템
 from dataclasses import dataclass
 from typing import Dict, List, Optional, Set, Tuple
 
-from sc2.ids.unit_typeid import UnitTypeId
-from sc2.position import Point2
+try:
+    from sc2.ids.unit_typeid import UnitTypeId
+    from sc2.position import Point2
+except ImportError:
+    from utils.sc2_stubs import (
+        Point2,
+        UnitTypeId,
+    )
 
 from utils.logger import get_logger
 

@@ -11,8 +11,14 @@ Strict Upgrade Priority System - 엄격한 업그레이드 우선순위
 
 from typing import Optional, Set
 
-from sc2.ids.unit_typeid import UnitTypeId
-from sc2.ids.upgrade_id import UpgradeId
+try:
+    from sc2.ids.unit_typeid import UnitTypeId
+    from sc2.ids.upgrade_id import UpgradeId
+except ImportError:
+    from utils.sc2_stubs import (
+        UnitTypeId,
+        UpgradeId,
+    )
 
 from utils.logger import get_logger
 

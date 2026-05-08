@@ -12,9 +12,16 @@ Zergling Harassment Trainer - 저글링 괴롭힘 전술 학습 시스템
 
 from typing import Dict, List, Optional
 
-from sc2.ids.unit_typeid import UnitTypeId
-from sc2.ids.upgrade_id import UpgradeId
-from sc2.position import Point2
+try:
+    from sc2.ids.unit_typeid import UnitTypeId
+    from sc2.ids.upgrade_id import UpgradeId
+    from sc2.position import Point2
+except ImportError:
+    from utils.sc2_stubs import (
+        Point2,
+        UnitTypeId,
+        UpgradeId,
+    )
 
 from utils.logger import get_logger
 

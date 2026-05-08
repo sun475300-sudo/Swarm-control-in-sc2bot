@@ -11,7 +11,12 @@ Space Control Trainer - 공간 확보 학습 시스템
 
 from typing import Dict, Set
 
-from sc2.position import Point2
+try:
+    from sc2.position import Point2
+except ImportError:
+    from utils.sc2_stubs import (
+        Point2,
+    )
 
 from utils.logger import get_logger
 

@@ -11,9 +11,16 @@ Nydus Network Trainer - 땅굴망 사용법 학습 시스템
 
 from typing import Dict, List, Optional, Set
 
-from sc2.ids.ability_id import AbilityId
-from sc2.ids.unit_typeid import UnitTypeId
-from sc2.position import Point2
+try:
+    from sc2.ids.ability_id import AbilityId
+    from sc2.ids.unit_typeid import UnitTypeId
+    from sc2.position import Point2
+except ImportError:
+    from utils.sc2_stubs import (
+        AbilityId,
+        Point2,
+        UnitTypeId,
+    )
 
 from utils.logger import get_logger
 

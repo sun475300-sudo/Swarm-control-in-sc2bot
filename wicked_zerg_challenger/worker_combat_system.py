@@ -11,10 +11,18 @@ Worker Combat System - 일꾼 전투 시스템
 
 from typing import Dict, Set
 
-from sc2.ids.unit_typeid import UnitTypeId
-from sc2.position import Point2
-from sc2.unit import Unit
-from sc2.units import Units
+try:
+    from sc2.ids.unit_typeid import UnitTypeId
+    from sc2.position import Point2
+    from sc2.unit import Unit
+    from sc2.units import Units
+except ImportError:
+    from utils.sc2_stubs import (
+        Point2,
+        Unit,
+        UnitTypeId,
+        Units,
+    )
 
 from utils.logger import get_logger
 

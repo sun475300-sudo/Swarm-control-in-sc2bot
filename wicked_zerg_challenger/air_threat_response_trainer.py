@@ -11,7 +11,12 @@ Air Threat Response Trainer - 공중 위협 대응 학습 시스템
 
 from typing import Dict
 
-from sc2.ids.unit_typeid import UnitTypeId
+try:
+    from sc2.ids.unit_typeid import UnitTypeId
+except ImportError:
+    from utils.sc2_stubs import (
+        UnitTypeId,
+    )
 
 from utils.logger import get_logger
 
