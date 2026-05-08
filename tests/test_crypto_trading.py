@@ -8,7 +8,6 @@
   - unified_logger 기본 기능 테스트
 """
 
-import os
 import sys
 from pathlib import Path
 
@@ -45,7 +44,9 @@ class TestCryptoImports:
         assert hasattr(upbit_client, "UpbitClient")
 
     @pytest.mark.skipif(
-        not all(__import__("importlib").util.find_spec(m) for m in ["pyupbit", "pandas"]),
+        not all(
+            __import__("importlib").util.find_spec(m) for m in ["pyupbit", "pandas"]
+        ),
         reason="pyupbit or pandas not installed",
     )
     def test_import_auto_trader(self):
@@ -65,7 +66,9 @@ class TestCryptoImports:
         assert hasattr(portfolio_tracker, "PortfolioTracker")
 
     @pytest.mark.skipif(
-        not all(__import__("importlib").util.find_spec(m) for m in ["pyupbit", "pandas"]),
+        not all(
+            __import__("importlib").util.find_spec(m) for m in ["pyupbit", "pandas"]
+        ),
         reason="pyupbit or pandas not installed",
     )
     def test_import_market_analyzer(self):
@@ -134,10 +137,37 @@ class TestCryptoConfig:
         assert DATA_DIR.exists(), f"데이터 디렉토리가 없습니다: {DATA_DIR}"
 
 
-@pytest.mark.skipif(
-    not os.path.exists(os.path.join(os.path.dirname(__file__), "..", "config.yaml")),
-    reason="config.yaml not found",
-)
+_SAMPLE_CONFIG_YAML = """\
+project:
+  name: "JARVIS Test"
+  version: "0.0.1"
+  environment: "test"
+proxy:
+  host: "127.0.0.1"
+  port: 3456
+crypto:
+  trading:
+    dry_run: true
+"""
+
+
+@pytest.fixture
+def sample_config_path(tmp_path, monkeypatch):
+    """Write a hermetic config.yaml under tmp_path and reset the cache.
+
+    Lets TestConfigLoader run on environments where the repo-root config.yaml
+    is intentionally absent.
+    """
+    cfg_file = tmp_path / "config.yaml"
+    cfg_file.write_text(_SAMPLE_CONFIG_YAML, encoding="utf-8")
+
+    import config_loader
+
+    monkeypatch.setattr(config_loader, "_config", None, raising=False)
+    monkeypatch.setattr(config_loader, "_config_path", None, raising=False)
+    return cfg_file
+
+
 class TestConfigLoader:
     """config_loader 모듈의 기능을 테스트한다."""
 
@@ -148,49 +178,48 @@ class TestConfigLoader:
         assert hasattr(config_loader, "load_config")
         assert hasattr(config_loader, "get")
 
-    def test_load_config_returns_dict(self):
+    def test_load_config_returns_dict(self, sample_config_path):
         """load_config()가 딕셔너리를 반환하는지 확인한다."""
         from config_loader import load_config
 
-        config = load_config()
+        config = load_config(config_path=sample_config_path)
         assert isinstance(config, dict)
 
-    def test_get_project_name(self):
+    def test_get_project_name(self, sample_config_path):
         """프로젝트 이름을 가져올 수 있는지 확인한다."""
         from config_loader import get, load_config
 
-        load_config()
+        load_config(config_path=sample_config_path)
         name = get("project.name")
         assert name is not None
         assert isinstance(name, str)
         assert len(name) > 0
 
-    def test_get_proxy_port(self):
+    def test_get_proxy_port(self, sample_config_path):
         """프록시 포트 설정을 가져올 수 있는지 확인한다."""
         from config_loader import get, load_config
 
-        load_config()
+        load_config(config_path=sample_config_path)
         port = get("proxy.port")
         assert isinstance(port, int)
         assert port > 0
 
-    def test_get_nonexistent_key_returns_default(self):
+    def test_get_nonexistent_key_returns_default(self, sample_config_path):
         """존재하지 않는 키에 대해 기본값을 반환하는지 확인한다."""
         from config_loader import get, load_config
 
-        load_config()
+        load_config(config_path=sample_config_path)
         result = get("no.such.key", default="테스트기본값")
         assert result == "테스트기본값"
 
-    def test_env_override(self, monkeypatch):
+    def test_env_override(self, monkeypatch, sample_config_path):
         """환경변수로 설정값을 오버라이드할 수 있는지 확인한다."""
         monkeypatch.setenv("PROXY_PORT", "9999")
-        # 캐시를 무시하고 재로드
         import config_loader
         from config_loader import get, load_config
 
         config_loader._config = None
-        cfg = load_config()
+        load_config(config_path=sample_config_path)
         port = get("proxy.port")
         assert port == 9999
 

@@ -86,6 +86,12 @@ class AdvancedBuildingManager:
         else:
             self.placement_helper = None
 
+        # 일꾼 위치 히스토리: tag -> (last_position, last_iteration)
+        # rescue_stuck_workers에서 "이동 중인데 제자리" 케이스 탐지에 사용.
+        self._worker_position_history: Dict[int, Tuple[Tuple[float, float], int]] = {}
+        self._stuck_movement_radius = 0.5  # 이만큼 못 움직이면 stuck 으로 간주
+        self._stuck_check_interval = 25  # iteration 단위 체크 간격
+
     # ==================== 1. 중복 코드 제거: 공통 변태 로직 ====================
 
     async def morph_unit_safely(
@@ -520,7 +526,9 @@ class AdvancedBuildingManager:
                         results[tech_type] = True
                         self._last_aggressive_tech_time = game_time
                         logger.info(
-                            f"Built {tech_type} (surplus: M:{int(mineral_surplus)}+ G:{int(gas_surplus)}+)"
+                            f"Built {tech_type} "
+                            f"(surplus: M:{int(mineral_surplus)}+ "
+                            f"G:{int(gas_surplus)}+)"
                         )
                         break
                 except Exception as e:
@@ -775,7 +783,9 @@ class AdvancedBuildingManager:
                 if hasattr(worker, "is_idle") and worker.is_idle:
                     is_stuck = True
 
-                # 2. 움직이지만 제자리인 경우 (TODO: 위치 기록 필요, 여기선 생략)
+                # 2. 움직이지만 제자리인 경우 — 위치 히스토리 기반 탐지
+                if not is_stuck and self._has_orders(worker):
+                    is_stuck = self._is_worker_position_stuck(worker)
 
                 if is_stuck:
                     if hasattr(self.bot, "structures"):
@@ -804,3 +814,31 @@ class AdvancedBuildingManager:
                 continue
 
         return rescued
+
+    @staticmethod
+    def _has_orders(worker) -> bool:
+        return bool(getattr(worker, "orders", None))
+
+    def _is_worker_position_stuck(self, worker) -> bool:
+        """주문은 있지만 위치가 거의 변하지 않으면 stuck 으로 간주."""
+        position = getattr(worker, "position", None)
+        if position is None:
+            return False
+        try:
+            current = (float(position[0]), float(position[1]))
+        except (TypeError, ValueError, IndexError):
+            return False
+
+        iteration = getattr(self.bot, "iteration", 0)
+        prev = self._worker_position_history.get(worker.tag)
+        self._worker_position_history[worker.tag] = (current, iteration)
+
+        if prev is None:
+            return False
+        last_pos, last_iter = prev
+        if iteration - last_iter < self._stuck_check_interval:
+            return False
+
+        dx = current[0] - last_pos[0]
+        dy = current[1] - last_pos[1]
+        return (dx * dx + dy * dy) < (self._stuck_movement_radius**2)
