@@ -337,6 +337,20 @@ class QueenManager:
             if hatch_tag in current_hatch_tags and queen_tag in current_queen_tags
         }
 
+        # 죽은 햇처리/퀸의 타임스탬프 항목을 정리 (장기전 메모리 누수 방지)
+        self.last_inject_time = {
+            tag: t for tag, t in self.last_inject_time.items()
+            if tag in current_hatch_tags
+        }
+        self.last_creep_time = {
+            tag: t for tag, t in self.last_creep_time.items()
+            if tag in current_queen_tags
+        }
+        self.last_transfuse_time = {
+            tag: t for tag, t in self.last_transfuse_time.items()
+            if tag in current_queen_tags
+        }
+
         # Assign inject queens (1차 - 메인 인젝트)
         assigned_queens = set(self.inject_assignments.values())
         assigned_queens.update(self.secondary_inject_assignments.values())
