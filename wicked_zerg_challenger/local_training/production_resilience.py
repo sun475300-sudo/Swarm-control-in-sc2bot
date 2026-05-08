@@ -706,9 +706,7 @@ class ProductionResilience:
         )
         b.units(UnitTypeId.ROACH).amount if hasattr(b, "units") else 0
         b.units(UnitTypeId.HYDRALISK).amount if hasattr(b, "units") else 0
-        (
-            b.units(UnitTypeId.MUTALISK).amount if hasattr(b, "units") else 0
-        )
+        (b.units(UnitTypeId.MUTALISK).amount if hasattr(b, "units") else 0)
 
         # Check available tech
         has_roach_warren = b.structures(UnitTypeId.ROACHWARREN).ready.exists

@@ -1342,12 +1342,8 @@ def ir_roi_analysis():
     )
 
     # 절감률 표시 (annotation)
-    [
-        round((1 - c2 / c1) * 100) for c1, c2 in zip(cost_traditional, cost_ours)
-    ]
-    [
-        round((1 - t2 / t1) * 100) for t1, t2 in zip(time_traditional, time_ours)
-    ]
+    [round((1 - c2 / c1) * 100) for c1, c2 in zip(cost_traditional, cost_ours)]
+    [round((1 - t2 / t1) * 100) for t1, t2 in zip(time_traditional, time_ours)]
 
     total_cost_trad = sum(cost_traditional)
     total_cost_ours = sum(cost_ours)

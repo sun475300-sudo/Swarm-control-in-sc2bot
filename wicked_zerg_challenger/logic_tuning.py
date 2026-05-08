@@ -4,6 +4,7 @@ Logic Tuning - 일일 자동 개선 (2026-05-03)
 전투 매니저와 경제 매니저의 파라미터를 미세 조정하여 효율성을 극대화합니다.
 """
 
+
 def tune_combat_params(combat_manager):
     """전투 파라미터 조정"""
     # 공격적인 진출 타이밍을 위해 임계값 하향 조정
@@ -16,6 +17,7 @@ def tune_combat_params(combat_manager):
 
     return "Combat parameters tuned for better aggression and defense."
 
+
 def tune_economy_params(economy_manager):
     """경제 파라미터 조정"""
     # 일벌레 최적화 속도 향상
@@ -24,6 +26,7 @@ def tune_economy_params(economy_manager):
         economy_manager.drone_to_army_ratio = 0.65
 
     return "Economy parameters tuned for faster drone saturation."
+
 
 if __name__ == "__main__":
     print("Logic tuning module created.")

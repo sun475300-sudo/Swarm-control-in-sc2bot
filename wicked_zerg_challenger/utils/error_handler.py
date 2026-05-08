@@ -117,7 +117,6 @@ def retry_on_failure(max_retries=3, delay=0.1):
         async def async_wrapper(*args, **kwargs):
             import asyncio
 
-
             for attempt in range(max_retries):
                 try:
                     return await func(*args, **kwargs)
@@ -137,7 +136,6 @@ def retry_on_failure(max_retries=3, delay=0.1):
         @functools.wraps(func)
         def sync_wrapper(*args, **kwargs):
             import time
-
 
             for attempt in range(max_retries):
                 try:

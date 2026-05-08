@@ -493,7 +493,6 @@ class OpponentModeling:
         if not hasattr(self.bot, "strategy_manager"):
             return
 
-
         # Set blackboard recommendations
         if hasattr(self.bot, "blackboard") and self.bot.blackboard:
             # Recommend counter strategy
