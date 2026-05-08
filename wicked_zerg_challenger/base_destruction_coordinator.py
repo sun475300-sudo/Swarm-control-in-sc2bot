@@ -192,7 +192,7 @@ class BaseDestructionCoordinator:
             nearby_army = [
                 u
                 for u in self.bot.enemy_units
-                if u.distance_to(base.position) < 20 and not u.type_id in worker_types
+                if u.distance_to(base.position) < 20 and u.type_id not in worker_types
             ]
 
             base.defense_strength = len(nearby_defense) * 10 + len(nearby_army)
