@@ -584,7 +584,7 @@ class PPOAgent:
         all_actions = np.array(self.memory.actions, dtype=np.int64)
         all_old_log_probs = np.array(self.memory.log_probs, dtype=np.float32)
 
-        for epoch in range(self.ppo_epochs):
+        for _epoch in range(self.ppo_epochs):
             # 미니배치 인덱스 생성
             n = len(all_states)
             indices = np.random.permutation(n)

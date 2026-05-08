@@ -291,7 +291,7 @@ class ReinforcementLearner:
             result = game["game_result"].get("result", "Unknown")
             defense_events = game.get("defense_events", [])
 
-            for event in defense_events:
+            for _event in defense_events:
                 defense_samples["events"] += 1
                 if result == "Victory":
                     defense_samples["successful"] += 1

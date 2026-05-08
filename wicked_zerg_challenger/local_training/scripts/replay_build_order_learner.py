@@ -285,7 +285,7 @@ class ReplayBuildOrderLearner:
         """평균 빌드 타이밍 계산"""
         timings: Dict[str, List[float]] = {}
 
-        for category, builds in self.learned_builds.items():
+        for _category, builds in self.learned_builds.items():
             for build in builds:
                 for action in build.get("actions", []):
                     unit = action.get("unit", "")
@@ -304,7 +304,7 @@ class ReplayBuildOrderLearner:
         counts: Dict[str, int] = {}
         total = 0
 
-        for category, builds in self.learned_builds.items():
+        for _category, builds in self.learned_builds.items():
             for build in builds:
                 for action in build.get("actions", []):
                     unit = action.get("unit", "")
@@ -320,7 +320,7 @@ class ReplayBuildOrderLearner:
         """확장 타이밍 계산"""
         timings = {"second_base": [], "third_base": [], "fourth_base": []}
 
-        for category, builds in self.learned_builds.items():
+        for _category, builds in self.learned_builds.items():
             for build in builds:
                 hatch_count = 0
                 for action in build.get("actions", []):

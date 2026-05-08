@@ -183,7 +183,7 @@ class DestructibleAwarenessSystem:
         """파괴 우선순위 평가"""
         expansion_locations = list(self.bot.expansion_locations_list)
 
-        for tag, destructible in self.destructibles.items():
+        for _tag, destructible in self.destructibles.items():
             if destructible.is_destroyed:
                 continue
 

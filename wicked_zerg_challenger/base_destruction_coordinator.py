@@ -148,7 +148,7 @@ class BaseDestructionCoordinator:
 
     def _update_base_info(self):
         """기지 정보 업데이트 (건물 수, 일꾼 수, 방어력)"""
-        for key, base in self.enemy_bases.items():
+        for _key, base in self.enemy_bases.items():
             if base.is_destroyed:
                 continue
 
