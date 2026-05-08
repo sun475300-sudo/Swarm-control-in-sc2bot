@@ -37,7 +37,7 @@ def is_game_running():
     """다른 게임이 실행 중인지 확인"""
     if LOCK_FILE.exists():
         try:
-            with open(LOCK_FILE, "r") as f:
+            with open(LOCK_FILE, "r", encoding="utf-8") as f:
                 pid = int(f.read().strip())
                 # PID가 실제로 실행 중인지 확인
                 try:
@@ -55,7 +55,7 @@ def is_game_running():
 
 def create_lock():
     """Lock 파일 생성"""
-    with open(LOCK_FILE, "w") as f:
+    with open(LOCK_FILE, "w", encoding="utf-8") as f:
         f.write(str(os.getpid()))
 
 
