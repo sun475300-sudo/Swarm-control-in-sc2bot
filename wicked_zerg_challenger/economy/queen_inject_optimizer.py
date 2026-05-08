@@ -150,9 +150,46 @@ class QueenInjectOptimizer:
                 self._print_enhanced_report(game_time)
                 self.last_efficiency_report = game_time
 
+            # 7. Drop tags belonging to dead queens / hatcheries to keep
+            #    the per-tag dicts bounded across a long match.
+            if iteration % 1100 == 0:  # ~50s
+                self._cleanup_dead_tags()
+
         except Exception as e:
             if iteration % 50 == 0:
                 self.logger.error(f"[INJECT_OPT] Error: {e}")
+
+    def _cleanup_dead_tags(self) -> None:
+        """Remove entries keyed by tags of units/structures no longer alive.
+
+        queen_assignments / queen_roles / queens_reserved_for_inject /
+        inject_cooldowns / expected_inject_times / inject_retry_attempts /
+        hatchery_priorities / hatchery_queens are all keyed by a Queen or
+        Hatchery tag. Without periodic pruning they grow for the entire
+        match.
+        """
+        if not hasattr(self.bot, "units") or not hasattr(self.bot, "townhalls"):
+            return
+
+        live_queen_tags = {q.tag for q in self.bot.units(UnitTypeId.QUEEN)}
+        live_hatch_tags = {h.tag for h in self.bot.townhalls}
+
+        for tag in [t for t in self.queen_assignments if t not in live_queen_tags]:
+            self.queen_assignments.pop(tag, None)
+        for tag in [t for t in self.queen_roles if t not in live_queen_tags]:
+            self.queen_roles.pop(tag, None)
+        self.queens_reserved_for_inject &= live_queen_tags
+
+        for tag in [t for t in self.inject_cooldowns if t not in live_hatch_tags]:
+            self.inject_cooldowns.pop(tag, None)
+        for tag in [t for t in self.expected_inject_times if t not in live_hatch_tags]:
+            self.expected_inject_times.pop(tag, None)
+        for tag in [t for t in self.inject_retry_attempts if t not in live_hatch_tags]:
+            self.inject_retry_attempts.pop(tag, None)
+        for tag in [t for t in self.hatchery_priorities if t not in live_hatch_tags]:
+            self.hatchery_priorities.pop(tag, None)
+        for tag in [t for t in list(self.hatchery_queens) if t not in live_hatch_tags]:
+            self.hatchery_queens.pop(tag, None)
 
     # ========================================
     # Queen Assignment

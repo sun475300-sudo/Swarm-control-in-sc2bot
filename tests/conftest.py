@@ -20,6 +20,15 @@ PROJECT_ROOT = Path(__file__).parent.parent
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
+# 봇 코드 다수가 `from utils.logger import get_logger` 처럼 wicked_zerg_challenger
+# 안의 utils 를 top-level 로 가정하고 import 한다. 봇을 정상 실행 환경에서는
+# 그 디렉터리가 cwd 라 문제가 없지만, pytest 가 프로젝트 루트에서 실행되면
+# `utils` 가 보이지 않아 collection 단계에서 ImportError 가 난다.
+# 테스트에 한해 wicked_zerg_challenger 를 sys.path 에 끼워주면 해결된다.
+WZC_ROOT = PROJECT_ROOT / "wicked_zerg_challenger"
+if WZC_ROOT.exists() and str(WZC_ROOT) not in sys.path:
+    sys.path.insert(0, str(WZC_ROOT))
+
 
 def _install_sc2_stub() -> None:
     """sc2 패키지가 실제로 설치되어 있지 않을 때, 테스트가 import만 하면

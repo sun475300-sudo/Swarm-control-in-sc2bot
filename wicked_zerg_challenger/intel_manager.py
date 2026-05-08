@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
-from typing import Optional
+from typing import Optional, Set
 
 logger = logging.getLogger(__name__)
 
@@ -70,7 +70,7 @@ class IntelManager:
             "NYDUSNETWORK": "NYDUS_INCOMING",
             "FLEETBEACON": "CARRIER_INCOMING",
         }
-        self._detected_tech_alerts: set = set()  # 이미 경고한 테크
+        self._detected_tech_alerts: Set[str] = set()  # 이미 경고한 테크
 
         # Build pattern confidence tracking
         self._build_pattern_confidence = 0.0  # 0.0 ~ 1.0
