@@ -74,7 +74,7 @@ class DefeatAnalysis:
             return
 
         try:
-            with open(self.analysis_file, "r", encoding="utf-8") as f:
+            with open(self.analysis_file, encoding="utf-8") as f:
                 data = json.load(f)
             self.defeat_history = data.get("history", [])
             self.reason_counts = data.get("reason_counts", {})

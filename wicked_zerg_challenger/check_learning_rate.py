@@ -23,7 +23,7 @@ logger.info("=" * 60)
 
 if adaptive_lr_path.exists():
     logger.info("\n[ADAPTIVE_LR] 적응형 학습률 통계 로드됨")
-    with open(adaptive_lr_path, "r", encoding="utf-8") as f:
+    with open(adaptive_lr_path, encoding="utf-8") as f:
         data = json.load(f)
 
     logger.info(f"\n[OK] 현재 학습률: {data['learning_rate']:.6f}")
@@ -88,7 +88,7 @@ logger.info("게임 분석 통계")
 logger.info("=" * 60)
 
 if analytics_path.exists():
-    with open(analytics_path, "r", encoding="utf-8") as f:
+    with open(analytics_path, encoding="utf-8") as f:
         data = json.load(f)
 
     logger.info(f"\n[OK] 총 게임: {data['total_games']}")
@@ -116,7 +116,7 @@ logger.info("요약")
 logger.info("=" * 60)
 
 if adaptive_lr_path.exists():
-    with open(adaptive_lr_path, "r", encoding="utf-8") as f:
+    with open(adaptive_lr_path, encoding="utf-8") as f:
         data = json.load(f)
     logger.info(f"\n[CURRENT] 현재 학습률: {data['learning_rate']:.6f}")
     logger.info(

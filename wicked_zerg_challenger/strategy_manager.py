@@ -379,7 +379,7 @@ class StrategyManager:
         cmd_path = Path("jarvis_command.json")
         if cmd_path.exists():
             try:
-                with open(cmd_path, "r", encoding="utf-8") as f:
+                with open(cmd_path, encoding="utf-8") as f:
                     cmd_data = json.load(f)
 
                     # --- Aggression Level (existing) ---

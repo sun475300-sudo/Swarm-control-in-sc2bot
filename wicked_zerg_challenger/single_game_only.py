@@ -37,7 +37,7 @@ def is_game_running():
     """다른 게임이 실행 중인지 확인"""
     if LOCK_FILE.exists():
         try:
-            with open(LOCK_FILE, "r") as f:
+            with open(LOCK_FILE) as f:
                 pid = int(f.read().strip())
                 # PID가 실제로 실행 중인지 확인
                 try:

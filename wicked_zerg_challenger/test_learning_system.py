@@ -212,7 +212,7 @@ def test_learning_system():
     logger.info(f"  Rejected patterns: {learner.learning_stats['rejected_patterns']}")
 
     # 학습된 타이밍 확인
-    if "learned_timings" in learned and learned["learned_timings"]:
+    if learned.get("learned_timings"):
         logger.info("\n[TEST] Sample learned timing:")
         sample_key = list(learned["learned_timings"].keys())[0]
         sample_value = learned["learned_timings"][sample_key]

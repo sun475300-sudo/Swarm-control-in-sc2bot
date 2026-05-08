@@ -964,7 +964,7 @@ class IntelManager:
             logger.info(f"Data saved to {file_path}")
             return True
 
-        except (IOError, OSError) as e:
+        except OSError as e:
             logger.error(f"Failed to save data (I/O error): {e}")
             return False
         except (TypeError, ValueError) as e:
@@ -990,7 +990,7 @@ class IntelManager:
             return False
 
         try:
-            with open(file_path, "r", encoding="utf-8") as f:
+            with open(file_path, encoding="utf-8") as f:
                 data = json.load(f)
 
             # 데이터 복원
@@ -1010,7 +1010,7 @@ class IntelManager:
 
             return True
 
-        except (IOError, OSError) as e:
+        except OSError as e:
             logger.error(f"Failed to load data (I/O error): {e}")
             return False
         except (TypeError, ValueError, KeyError) as e:

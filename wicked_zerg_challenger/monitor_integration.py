@@ -57,7 +57,7 @@ class IntegrationMonitor:
 
         for json_file in sorted(json_files):
             try:
-                with open(json_file, "r", encoding="utf-8") as f:
+                with open(json_file, encoding="utf-8") as f:
                     data = json.load(f)
 
                 opponent_id = data.get("opponent_id", json_file.stem)
@@ -131,7 +131,7 @@ class IntegrationMonitor:
 
         # Read recent log entries
         try:
-            with open(self.log_file, "r", encoding="utf-8") as f:
+            with open(self.log_file, encoding="utf-8") as f:
                 lines = f.readlines()
 
             # Look for micro V3 log entries
@@ -186,7 +186,7 @@ class IntegrationMonitor:
             return {"status": "no_logs"}
 
         try:
-            with open(self.log_file, "r", encoding="utf-8") as f:
+            with open(self.log_file, encoding="utf-8") as f:
                 lines = f.readlines()
 
             # Look for errors
@@ -250,7 +250,7 @@ class IntegrationMonitor:
             return {"status": "no_logs"}
 
         try:
-            with open(self.log_file, "r", encoding="utf-8") as f:
+            with open(self.log_file, encoding="utf-8") as f:
                 lines = f.readlines()
 
             # Look for timing information

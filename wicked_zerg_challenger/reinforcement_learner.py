@@ -50,7 +50,7 @@ class ReinforcementLearner:
             if filename.endswith(".json"):
                 filepath = os.path.join(self.games_dir, filename)
                 try:
-                    with open(filepath, "r", encoding="utf-8") as f:
+                    with open(filepath, encoding="utf-8") as f:
                         game = json.load(f)
                         self.games_data.append(game)
                 except Exception as e:

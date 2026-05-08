@@ -68,7 +68,7 @@ class TrainingPipeline:
         """버전 히스토리 로드"""
         if self.history_path.exists():
             try:
-                with open(self.history_path, "r") as f:
+                with open(self.history_path) as f:
                     data = json.load(f)
                 self.versions = [ModelVersion(**v) for v in data.get("versions", [])]
             except (json.JSONDecodeError, TypeError):

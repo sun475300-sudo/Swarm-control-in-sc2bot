@@ -320,7 +320,7 @@ class GameConfig:
             _config_logger.warning(f"Config file not found: {filepath}")
             return
 
-        with open(filepath, "r") as f:
+        with open(filepath) as f:
             if filepath.endswith(".json"):
                 config_dict = json.load(f)
             elif filepath.endswith(".yaml") or filepath.endswith(".yml"):

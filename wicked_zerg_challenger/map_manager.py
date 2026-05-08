@@ -78,7 +78,7 @@ class MapManager:
             return {}
 
         try:
-            with open(self.stats_file, "r", encoding="utf-8") as handle:
+            with open(self.stats_file, encoding="utf-8") as handle:
                 data = json.load(handle)
             if isinstance(data, dict):
                 return data

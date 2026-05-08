@@ -685,7 +685,7 @@ class OpponentModeling:
             return False
 
         try:
-            with open(self.data_file, "r", encoding="utf-8") as f:
+            with open(self.data_file, encoding="utf-8") as f:
                 data = json.load(f)
 
             self.opponent_models = {

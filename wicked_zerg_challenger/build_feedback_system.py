@@ -216,7 +216,7 @@ class BuildFeedbackSystem:
         try:
             # 기존 데이터 로드
             if self.data_file.exists():
-                with open(self.data_file, "r", encoding="utf-8") as f:
+                with open(self.data_file, encoding="utf-8") as f:
                     all_data = json.load(f)
             else:
                 all_data = {"games": []}
@@ -251,7 +251,7 @@ class BuildFeedbackSystem:
             if not self.data_file.exists():
                 return
 
-            with open(self.data_file, "r", encoding="utf-8") as f:
+            with open(self.data_file, encoding="utf-8") as f:
                 all_data = json.load(f)
 
             games = all_data.get("games", [])

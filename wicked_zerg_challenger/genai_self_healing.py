@@ -121,7 +121,7 @@ class GenAISelfHealing:
 
 에러 정보:
 - 에러 타입: {type(error).__name__}
-- 에러 메시지: {str(error)}
+- 에러 메시지: {error!s}
 - 파일: {context.get('file', 'Unknown')}
 - 라인: {context.get('line', 'Unknown')}
 
@@ -388,7 +388,7 @@ class GenAISelfHealing:
                 error_msg += f"\nCode: {e.text.strip()}"
             return False, error_msg
         except Exception as e:
-            return False, f"Validation error: {str(e)}"
+            return False, f"Validation error: {e!s}"
 
     def static_analysis_optimization(self, file_path: Path) -> List[Dict[str, Any]]:
         """
@@ -405,7 +405,7 @@ class GenAISelfHealing:
         suggestions = []
 
         try:
-            with open(file_path, "r", encoding="utf-8", errors="replace") as f:
+            with open(file_path, encoding="utf-8", errors="replace") as f:
                 content = f.read()
                 lines = content.splitlines()
 

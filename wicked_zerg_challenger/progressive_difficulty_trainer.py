@@ -104,7 +104,7 @@ class ProgressiveTrainer:
     def load_results(self):
         """이전 결과 로드"""
         if self.results_file.exists():
-            with open(self.results_file, "r", encoding="utf-8") as f:
+            with open(self.results_file, encoding="utf-8") as f:
                 data = json.load(f)
                 self.current_difficulty_index = data.get("current_difficulty_index", 0)
                 self.total_points = data.get("total_points", 0)

@@ -26,7 +26,7 @@ def run_comparison():
         logger.info("Please run replay_build_order_learner.py first.")
         return
 
-    with open(learned_builds_path, "r", encoding="utf-8") as f:
+    with open(learned_builds_path, encoding="utf-8") as f:
         pro_data = json.load(f)
 
     pro_timings = pro_data.get("build_order_timings", {})
@@ -112,13 +112,13 @@ def run_comparison():
     history = {"entries": []}
     if history_path.exists():
         try:
-            with open(history_path, "r") as f:
+            with open(history_path) as f:
                 loaded = json.load(f)
                 if isinstance(loaded, dict) and "entries" in loaded:
                     history = loaded
                 elif isinstance(loaded, list):  # Legacy format support if any
                     history["entries"] = loaded
-        except (json.JSONDecodeError, FileNotFoundError, IOError) as e:
+        except (OSError, json.JSONDecodeError, FileNotFoundError) as e:
             logger.error(f"History load failed, using defaults: {e}")
 
     history["entries"].append(history_entry)

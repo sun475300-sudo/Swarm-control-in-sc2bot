@@ -278,7 +278,7 @@ class AdaptiveLearningRate:
         """통계 로드"""
         try:
             if self.save_path.exists():
-                with open(self.save_path, "r", encoding="utf-8") as f:
+                with open(self.save_path, encoding="utf-8") as f:
                     data = json.load(f)
 
                 self.learning_rate = data.get("learning_rate", self.learning_rate)

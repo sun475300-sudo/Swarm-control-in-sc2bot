@@ -128,7 +128,7 @@ class PhaseScoutCadence:
     def __init__(self, bot: BotAI) -> None:
         self.bot = bot
         # Last dispatch wall time per phase, indexed by phase enum.
-        self._last_dispatch_s: dict = {p: -10**6 for p in ScoutPhase}
+        self._last_dispatch_s: dict = dict.fromkeys(ScoutPhase, -10 ** 6)
         # Round-robin quadrant index for zergling sweep
         self._zergling_quadrant = 0
 

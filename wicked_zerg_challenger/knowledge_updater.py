@@ -47,7 +47,7 @@ class KnowledgeUpdater:
             if filename.endswith(".json"):
                 filepath = os.path.join(self.games_dir, filename)
                 try:
-                    with open(filepath, "r", encoding="utf-8") as f:
+                    with open(filepath, encoding="utf-8") as f:
                         game_data = json.load(f)
                         self.games_data.append(game_data)
                 except Exception as e:
@@ -95,7 +95,7 @@ class KnowledgeUpdater:
     def _load_knowledge(self) -> Dict:
         """기존 지식 베이스 로드"""
         if os.path.exists(self.knowledge_file):
-            with open(self.knowledge_file, "r", encoding="utf-8") as f:
+            with open(self.knowledge_file, encoding="utf-8") as f:
                 return json.load(f)
         return {}
 

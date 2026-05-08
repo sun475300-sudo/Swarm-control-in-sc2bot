@@ -397,7 +397,7 @@ class GameAnalytics:
         """통계 로드"""
         try:
             if self.save_path.exists():
-                with open(self.save_path, "r", encoding="utf-8") as f:
+                with open(self.save_path, encoding="utf-8") as f:
                     data = json.load(f)
 
                 self.total_games = data.get("total_games", 0)
