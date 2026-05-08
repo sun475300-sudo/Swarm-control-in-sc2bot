@@ -1597,8 +1597,18 @@ class BotStepIntegrator:
                             self.logger.info(
                                 "[SURRENDER] StrategyManager requested surrender."
                             )
-                            await self.bot.chat_send("gg")
-                            await self.bot.client.leave()
+                            try:
+                                await self.bot.chat_send("gg")
+                            except Exception as e:
+                                self.logger.warning(
+                                    f"[SURRENDER] chat_send suppressed: {e}"
+                                )
+                            try:
+                                await self.bot.client.leave()
+                            except Exception as e:
+                                self.logger.warning(
+                                    f"[SURRENDER] leave suppressed: {e}"
+                                )
                             return
 
                 except Exception as e:
@@ -1685,7 +1695,12 @@ class BotStepIntegrator:
                         self.logger.info(f"  - 이유: {reason}")
                         self.logger.info(f"  - 다음 게임으로 이동...\n")
 
-                        await self.bot.chat_send("gg")
+                        try:
+                            await self.bot.chat_send("gg")
+                        except Exception as chat_error:
+                            self.logger.warning(
+                                f"[SURRENDER] chat_send suppressed: {chat_error}"
+                            )
 
                         try:
                             await self.bot.client.leave()
@@ -3474,7 +3489,12 @@ class BotStepIntegrator:
                 # 이미 응답했는지 확인 (플래그 사용)
                 if not getattr(self.bot, "_gg_replied", False):
                     self.logger.info(f"[CHAT] Opponent surrendered: {chat.message}")
-                    await self.bot.chat_send("gg wp")
+                    try:
+                        await self.bot.chat_send("gg wp")
+                    except Exception as e:
+                        self.logger.warning(
+                            f"[CHAT] chat_send suppressed (game ended?): {e}"
+                        )
                     self.bot._gg_replied = True
 
                     # 훈련 보상에 승리 보너스 추가 가능성 (여기서는 로깅만)

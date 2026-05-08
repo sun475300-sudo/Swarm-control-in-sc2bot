@@ -1,11 +1,18 @@
 # Phase 619: Communication Learning for SC2 Multi-Agent Coordination
-from .sc2_comm_agent import (
-    CommConfig,
-    SC2CommAgent,
-    NumpyCommNet,
-    NumpyTarMAC,
-    ProtocolAnalyzer,
-)
+try:
+    from .sc2_comm_agent import (
+        CommConfig,
+        SC2CommAgent,
+        NumpyCommNet,
+        NumpyTarMAC,
+        ProtocolAnalyzer,
+    )
+except ImportError:
+    CommConfig = None
+    SC2CommAgent = None
+    NumpyCommNet = None
+    NumpyTarMAC = None
+    ProtocolAnalyzer = None
 
 # Backward-compat aliases (original API names used by older code)
 CommAgent = SC2CommAgent

@@ -1920,26 +1920,31 @@ class StrategyManager:
 
     def check_surrender(self, game_time: float) -> bool:
         """
-        ★ Smart Surrender Logic ★
+        ★ Smart Surrender Logic (relaxed thresholds) ★
 
         Check if the game is hopelessly lost to save time.
 
         Conditions:
-        1. Time > 5 minutes
-        2. No bases left OR
-        3. Massive army disadvantage (5x) with low population OR
-        4. Critical supply drop (< 10) after 5 mins
+        1. Time > 8 minutes
+        2. No bases left and cannot rebuild
+        3. Critical supply drop (< 5) after 15 mins
+        4. Massive economic disadvantage after 18 mins
         """
-        if game_time < 300:  # Don't surrender in first 5 mins
+        if game_time < 480:  # Don't surrender in first 8 mins
             return False
 
         # 1. No bases left
         if not hasattr(self.bot, "townhalls") or not self.bot.townhalls.exists:
-            # Check if we have enough minerals to rebuild (300+) AND a drone
             can_rebuild = False
-            if self.bot.minerals >= 300:
-                if hasattr(self.bot, "workers") and self.bot.workers.exists:
-                    can_rebuild = True
+            workers_alive = hasattr(self.bot, "workers") and self.bot.workers.exists
+            if self.bot.minerals >= 200 and workers_alive:
+                can_rebuild = True
+            elif (
+                self.bot.minerals >= 100
+                and workers_alive
+                and self.bot.workers.amount >= 3
+            ):
+                can_rebuild = True
 
             if not can_rebuild:
                 self.logger.warning(
@@ -1949,16 +1954,14 @@ class StrategyManager:
 
         # 2. Critical Supply Drop (Wiped out)
         if hasattr(self.bot, "supply_used"):
-            if self.bot.supply_used < 10 and game_time > 600:  # 10분 이후 인구 10 미만
+            if self.bot.supply_used < 5 and game_time > 900:
                 self.logger.warning(
                     f"[{int(game_time)}s] SURRENDER: Critical supply drop ({self.bot.supply_used}) late game."
                 )
                 return True
 
         # 3. Massive Disadvantage
-        # (Requires reliable army value calculation, so keep it simple for now)
-        # If opponent has 5+ bases and we have 1 base after 15 mins?
-        if game_time > 900:  # 15분
+        if game_time > 1080:
             if hasattr(self.bot, "townhalls") and self.bot.townhalls.amount < 2:
                 if hasattr(self.bot, "enemy_structures"):
                     enemy_bases = len(
@@ -1977,7 +1980,7 @@ class StrategyManager:
                             ]
                         ]
                     )
-                    if enemy_bases >= 4:
+                    if enemy_bases >= 6:
                         self.logger.warning(
                             f"[{int(game_time)}s] SURRENDER: Economic collapse (1 vs {enemy_bases} bases)."
                         )
