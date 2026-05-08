@@ -331,7 +331,7 @@ def gif_formation_flight():
         family="monospace",
     )
     info = ax.text(-7.5, -5.5, "", color="#4FC3F7", fontsize=9, family="monospace")
-    drone_count = ax.text(
+    ax.text(
         7.5,
         5.3,
         f"DRONES: {N}",
@@ -408,7 +408,6 @@ def gif_collision_avoidance():
 
             # 충돌 회피
             avoid = np.zeros(2)
-            avoiding = False
             for j in range(N):
                 if i == j:
                     continue

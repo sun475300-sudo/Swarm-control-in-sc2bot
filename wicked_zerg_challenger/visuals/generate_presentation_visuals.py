@@ -750,7 +750,6 @@ def capstone_self_healing():
         # 위협 상승 시 빨강, 복구 시 초록
         if j > i or (i == 4 and j == 0):
             col = "#F44336" if i != 4 else "#4CAF50"
-            dash_style = "solid" if i != 4 else "dash"
         else:
             col = "#4CAF50"
 
@@ -1341,14 +1340,6 @@ def ir_roi_analysis():
         row=1,
         col=2,
     )
-
-    # 절감률 표시 (annotation)
-    cost_savings = [
-        round((1 - c2 / c1) * 100) for c1, c2 in zip(cost_traditional, cost_ours)
-    ]
-    time_savings = [
-        round((1 - t2 / t1) * 100) for t1, t2 in zip(time_traditional, time_ours)
-    ]
 
     total_cost_trad = sum(cost_traditional)
     total_cost_ours = sum(cost_ours)
