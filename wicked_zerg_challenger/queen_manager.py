@@ -112,6 +112,35 @@ class QueenManager:
         self.transfuse_cooldown = GameConfig.QUEEN_TRANSFUSE_COOLDOWN_SEC
         self.transfuse_health_threshold = GameConfig.QUEEN_TRANSFUSE_HP_THRESHOLD
 
+        # Transfuse 우선순위/예외 캐시 — 매 step 재구성 비용 제거
+        _PRIORITY_DEFS = (
+            ("QUEEN", 0),
+            ("BROODLORD", 1),
+            ("CORRUPTOR", 2),
+            ("SPINECRAWLER", 3),
+            ("OVERSEER", 4),
+            ("ULTRALISK", 5),
+            ("RAVAGER", 6),
+            ("ROACH", 7),
+            ("HYDRALISK", 8),
+            ("LURKERMP", 9),
+            ("INFESTOR", 10),
+            ("SWARMHOSTMP", 11),
+            ("MUTALISK", 12),
+            ("VIPER", 2),
+        )
+        self._transfuse_priority: Dict = {}
+        for name, prio in _PRIORITY_DEFS:
+            unit_type = getattr(UnitTypeId, name, None)
+            if unit_type is not None:
+                self._transfuse_priority[unit_type] = prio
+
+        self._unhealable_units: Set = set()
+        for _u_name in ("BANELING", "BROODLING", "LOCUSTMP"):
+            _u = getattr(UnitTypeId, _u_name, None)
+            if _u is not None:
+                self._unhealable_units.add(_u)
+
     async def on_step(self, iteration: int) -> None:
         """
         Main queen management loop.
@@ -739,32 +768,9 @@ class QueenManager:
         """
         current_time = getattr(self.bot, "time", 0.0)
 
-        # CreepyBot-style priority map (lower = higher priority)
-        TRANSFUSE_PRIORITY = {}
-        priority_defs = [
-            ("QUEEN", 0),
-            ("BROODLORD", 1),
-            ("CORRUPTOR", 2),
-            ("SPINECRAWLER", 3),
-            ("OVERSEER", 4),
-            ("ULTRALISK", 5),
-            ("RAVAGER", 6),
-            ("ROACH", 7),
-            ("HYDRALISK", 8),
-            ("LURKERMP", 9),
-            ("INFESTOR", 10),
-            ("SWARMHOSTMP", 11),
-            ("MUTALISK", 12),
-            ("VIPER", 2),  # Vipers same priority as corruptors (spell utility)
-        ]
-        for name, prio in priority_defs:
-            unit_type = getattr(UnitTypeId, name, None)
-            if unit_type is not None:
-                TRANSFUSE_PRIORITY[unit_type] = prio
-
-        UNHEALABLE_UNITS = {UnitTypeId.BANELING, UnitTypeId.BROODLING}
-        if hasattr(UnitTypeId, "LOCUSTMP"):
-            UNHEALABLE_UNITS.add(UnitTypeId.LOCUSTMP)
+        # __init__에서 캐시된 우선순위/예외 사용 (이전엔 매 step 재구성)
+        TRANSFUSE_PRIORITY = self._transfuse_priority
+        UNHEALABLE_UNITS = self._unhealable_units
 
         # Find injured units to heal
         injured_targets = []
@@ -878,33 +884,39 @@ class QueenManager:
 
         # CreepyBot: Queens with 190+ energy also transfuse damaged buildings
         if hasattr(self.bot, "structures"):
-            for queen in queens:
-                if getattr(queen, "energy", 0) < 190:
+            # 손상된 건물을 한 번만 필터링하여 O(queens × structures) → O(queens × damaged) 축소
+            damaged_buildings = []
+            for building in self.bot.structures:
+                if not hasattr(building, "health") or not hasattr(
+                    building, "health_max"
+                ):
                     continue
-                last_t = self.last_transfuse_time.get(queen.tag, 0.0)
-                if current_time - last_t < self.transfuse_cooldown:
+                if building.health_max == 0:
                     continue
-                for building in self.bot.structures:
-                    if not hasattr(building, "health") or not hasattr(
-                        building, "health_max"
-                    ):
+                if building.health_max - building.health < 125:
+                    continue
+                damaged_buildings.append(building)
+
+            if damaged_buildings:
+                for queen in queens:
+                    if getattr(queen, "energy", 0) < 190:
                         continue
-                    if building.health_max == 0:
+                    last_t = self.last_transfuse_time.get(queen.tag, 0.0)
+                    if current_time - last_t < self.transfuse_cooldown:
                         continue
-                    if building.health_max - building.health < 125:
-                        continue
-                    try:
-                        if queen.distance_to(building) > 7:
+                    for building in damaged_buildings:
+                        try:
+                            if queen.distance_to(building) > 7:
+                                continue
+                            result = self.bot.do(
+                                queen(AbilityId.TRANSFUSION_TRANSFUSION, building)
+                            )
+                            if hasattr(result, "__await__"):
+                                await result
+                            self.last_transfuse_time[queen.tag] = current_time
+                            break  # One transfuse per queen per cycle
+                        except Exception:
                             continue
-                        result = self.bot.do(
-                            queen(AbilityId.TRANSFUSION_TRANSFUSION, building)
-                        )
-                        if hasattr(result, "__await__"):
-                            await result
-                        self.last_transfuse_time[queen.tag] = current_time
-                        break  # One transfuse per queen per cycle
-                    except Exception:
-                        continue
 
     async def _spread_creep(self, creep_queens, iteration: int) -> None:
         """
