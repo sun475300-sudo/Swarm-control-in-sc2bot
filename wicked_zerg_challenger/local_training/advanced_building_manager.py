@@ -86,6 +86,12 @@ class AdvancedBuildingManager:
         else:
             self.placement_helper = None
 
+        # 일꾼 위치 추적: tag → (last_x, last_y, last_iteration, stationary_count)
+        # rescue_stuck_workers 에서 "이동 명령은 받았지만 제자리"인 일꾼 감지에 사용.
+        self._worker_position_history: Dict[int, Tuple[float, float, int, int]] = {}
+        self._stuck_position_epsilon = 0.5  # 거리 임계값 (in-game units)
+        self._stuck_iteration_threshold = 8  # N틱 연속 제자리면 stuck
+
     # ==================== 1. 중복 코드 제거: 공통 변태 로직 ====================
 
     async def morph_unit_safely(
@@ -767,6 +773,14 @@ class AdvancedBuildingManager:
         if not hasattr(self.bot, "workers"):
             return 0
 
+        current_iter = getattr(self.bot, "iteration", 0)
+        # 메모리 누수 방지: 살아있는 일꾼 태그만 유지
+        live_tags = {w.tag for w in self.bot.workers}
+        if len(self._worker_position_history) > len(live_tags) + 16:
+            self._worker_position_history = {
+                t: v for t, v in self._worker_position_history.items() if t in live_tags
+            }
+
         rescued = 0
         for worker in self.bot.workers:
             try:
@@ -775,7 +789,25 @@ class AdvancedBuildingManager:
                 if hasattr(worker, "is_idle") and worker.is_idle:
                     is_stuck = True
 
-                # 2. 움직이지만 제자리인 경우 (TODO: 위치 기록 필요, 여기선 생략)
+                # 2. 움직이지만 제자리인 경우 — 위치 히스토리 기반 감지
+                wx = getattr(worker.position, "x", None)
+                wy = getattr(worker.position, "y", None)
+                if wx is not None and wy is not None:
+                    prev = self._worker_position_history.get(worker.tag)
+                    stationary_count = 0
+                    if prev is not None:
+                        px, py, _, prev_count = prev
+                        moved = math.hypot(wx - px, wy - py)
+                        if moved < self._stuck_position_epsilon:
+                            stationary_count = prev_count + 1
+                            if stationary_count >= self._stuck_iteration_threshold:
+                                is_stuck = True
+                    self._worker_position_history[worker.tag] = (
+                        wx,
+                        wy,
+                        current_iter,
+                        stationary_count,
+                    )
 
                 if is_stuck:
                     if hasattr(self.bot, "structures"):
