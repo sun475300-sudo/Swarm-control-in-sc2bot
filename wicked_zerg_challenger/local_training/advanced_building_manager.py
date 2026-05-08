@@ -837,8 +837,9 @@ class AdvancedBuildingManager:
             except Exception:
                 continue
 
-        # 사라진 일꾼은 추적 dict 에서 정리하여 메모리 누수 방지
-        if self._worker_positions and active_tags:
+        # 사라진 일꾼은 추적 dict 에서 정리하여 메모리 누수 방지.
+        # active_tags 가 비어 있더라도 (모든 일꾼 사망) dict 를 비우는 것이 옳다.
+        if self._worker_positions:
             stale = [t for t in self._worker_positions if t not in active_tags]
             for t in stale:
                 self._worker_positions.pop(t, None)
