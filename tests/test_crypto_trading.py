@@ -8,7 +8,6 @@
   - unified_logger 기본 기능 테스트
 """
 
-import os
 import sys
 from pathlib import Path
 

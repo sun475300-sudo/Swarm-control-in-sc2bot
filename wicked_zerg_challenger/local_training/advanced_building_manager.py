@@ -526,7 +526,9 @@ class AdvancedBuildingManager:
                         results[tech_type] = True
                         self._last_aggressive_tech_time = game_time
                         logger.info(
-                            f"Built {tech_type} (surplus: M:{int(mineral_surplus)}+ G:{int(gas_surplus)}+)"
+                            f"Built {tech_type} "
+                            f"(surplus: M:{int(mineral_surplus)}+ "
+                            f"G:{int(gas_surplus)}+)"
                         )
                         break
                 except Exception as e:
