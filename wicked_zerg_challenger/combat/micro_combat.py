@@ -408,8 +408,9 @@ class MicroCombat:
                 # ★ Enhanced Surround: Calculate optimal surround position ★
                 import math
 
-                # Count allies to determine surround angle
-                ally_count = len(nearby_allies)
+                # NOTE: Spacing은 현재 zergling.tag 해싱(8 슬롯, π/4)으로
+                # 결정한다. 동시 공격 인원에 따라 각도를 조정하는 동적 분배는
+                # 아직 미구현 — len(nearby_allies)에 의존하려면 별도 PR 필요.
 
                 # Calculate angle based on zergling's position relative to target
                 dx = zergling.position.x - target.position.x
