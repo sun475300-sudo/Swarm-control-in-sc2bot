@@ -98,6 +98,37 @@ class CombatManager:
     6. ★ 필수 기지 방어 시스템 ★
     """
 
+    # ★ Hot-path 클래스 상수 — 매 step 재할당 회피 ★
+    _TOWNHALL_TYPES = frozenset({
+        "NEXUS", "COMMANDCENTER", "COMMANDCENTERFLYING",
+        "ORBITALCOMMAND", "ORBITALCOMMANDFLYING", "PLANETARYFORTRESS",
+        "HATCHERY", "LAIR", "HIVE",
+    })
+    # 적 생산 건물 — 병력 차단/우선 타겟 (SPIRE 포함, 저글링/뮤탈/콜포 제거)
+    _PRODUCTION_TYPES = frozenset({
+        "BARRACKS", "BARRACKSFLYING", "FACTORY", "FACTORYFLYING",
+        "STARPORT", "STARPORTFLYING", "GATEWAY", "WARPGATE",
+        "ROBOTICSFACILITY", "STARGATE",
+        "SPAWNINGPOOL", "ROACHWARREN", "HYDRALISKDEN", "SPIRE",
+    })
+    _WORKER_TYPES = frozenset({"SCV", "PROBE", "DRONE", "MULE", "LARVA", "EGG"})
+    _COMBAT_UNIT_NAMES = frozenset({
+        "ZERGLING", "MARINE", "ZEALOT", "REAPER", "ADEPT",
+        "BANELING", "ROACH", "STALKER", "MARAUDER",
+        "SIEGETANK", "SIEGETANKSIEGED", "WIDOWMINE",
+        "HYDRALISK", "MUTALISK", "CORRUPTOR", "BROODLORD",
+        "RAVAGER", "LURKER", "ULTRALISK", "INFESTOR",
+        "COLOSSUS", "DISRUPTOR", "IMMORTAL", "ARCHON",
+        "THOR", "HELLION", "HELLIONTANK", "CYCLONE",
+        "BATTLECRUISER", "LIBERATOR", "VIKING", "MEDIVAC",
+        "VOIDRAY", "CARRIER", "TEMPEST", "PHOENIX",
+    })
+    _NON_COMBAT_NAMES = frozenset({
+        "SCV", "PROBE", "DRONE", "MULE",
+        "OBSERVER", "OVERLORD", "OVERSEER",
+        "WARPPRISM", "RAVEN", "CHANGELING",
+    })
+
     def __init__(self, bot):
         """전투 매니저 초기화"""
         self.bot = bot
@@ -511,22 +542,10 @@ class CombatManager:
         # === TASK 2.8: ★ EXPANSION DENIAL (확장 견제) ★ ===
         # 적의 새로운 확장을 감지하면 저글링 특공대 파견
         if hasattr(self.bot, "enemy_structures") and 180 < game_time:  # 3분 이후
-            townhall_types = {
-                "NEXUS",
-                "COMMANDCENTER",
-                "COMMANDCENTERFLYING",
-                "ORBITALCOMMAND",
-                "ORBITALCOMMANDFLYING",
-                "PLANETARYFORTRESS",
-                "HATCHERY",
-                "LAIR",
-                "HIVE",
-            }
-
             enemy_bases = [
                 s
                 for s in self.bot.enemy_structures
-                if getattr(s.type_id, "name", "").upper() in townhall_types
+                if getattr(s.type_id, "name", "").upper() in self._TOWNHALL_TYPES
             ]
 
             # 멀리 있는 기지 찾기
@@ -1412,7 +1431,7 @@ class CombatManager:
         try:
             best = None
             best_score = 999
-            worker_types = {"SCV", "PROBE", "DRONE", "MULE", "LARVA", "EGG"}
+            worker_types = self._WORKER_TYPES
             for e in enemy_units:
                 if not hasattr(e, "health_percentage"):
                     continue
@@ -1774,45 +1793,15 @@ class CombatManager:
         # 2순위: 생산 건물 (병력 생산 차단)
         # 3순위: 타운홀 (본진 파괴)
 
-        # 생산 건물 타입
-        production_types = {
-            "BARRACKS",
-            "BARRACKSFLYING",
-            "FACTORY",
-            "FACTORYFLYING",
-            "STARPORT",
-            "STARPORTFLYING",
-            "GATEWAY",
-            "WARPGATE",
-            "ROBOTICSFACILITY",
-            "STARGATE",
-            "SPAWNINGPOOL",
-            "ROACHWARREN",
-            "HYDRALISKDEN",
-        }
-
-        # 기지 타입
-        townhall_types = {
-            "NEXUS",
-            "COMMANDCENTER",
-            "COMMANDCENTERFLYING",
-            "ORBITALCOMMAND",
-            "ORBITALCOMMANDFLYING",
-            "PLANETARYFORTRESS",
-            "HATCHERY",
-            "LAIR",
-            "HIVE",
-        }
-
-        # 타겟 분류
+        # 타겟 분류 (클래스 상수 사용)
         production_buildings = []
         enemy_bases = []
 
         for struct in enemy_structures:
             struct_type = getattr(struct.type_id, "name", "").upper()
-            if struct_type in production_types:
+            if struct_type in self._PRODUCTION_TYPES:
                 production_buildings.append(struct)
-            elif struct_type in townhall_types:
+            elif struct_type in self._TOWNHALL_TYPES:
                 enemy_bases.append(struct)
 
         if hasattr(self.bot, "townhalls") and self.bot.townhalls.exists:
@@ -1891,36 +1880,9 @@ class CombatManager:
 
         enemy_structures = getattr(self.bot, "enemy_structures", None)
 
-        # 기지 타입 (최우선)
-        townhall_types = {
-            "NEXUS",
-            "COMMANDCENTER",
-            "COMMANDCENTERFLYING",
-            "ORBITALCOMMAND",
-            "ORBITALCOMMANDFLYING",
-            "PLANETARYFORTRESS",
-            "HATCHERY",
-            "LAIR",
-            "HIVE",
-        }
-
-        # 생산 건물 타입 (2순위)
-        production_types = {
-            "BARRACKS",
-            "BARRACKSFLYING",
-            "FACTORY",
-            "FACTORYFLYING",
-            "STARPORT",
-            "STARPORTFLYING",
-            "GATEWAY",
-            "WARPGATE",
-            "ROBOTICSFACILITY",
-            "STARGATE",
-            "SPAWNINGPOOL",
-            "ROACHWARREN",
-            "HYDRALISKDEN",
-            "SPIRE",
-        }
+        # 클래스 상수 사용 (이전엔 매 호출 set 재할당)
+        townhall_types = self._TOWNHALL_TYPES
+        production_types = self._PRODUCTION_TYPES
 
         if enemy_structures and enemy_structures.exists:
             # 우선순위별 타겟 찾기
@@ -3023,59 +2985,9 @@ class CombatManager:
 
         game_time = getattr(self.bot, "time", 0)
 
-        # 전투 유닛 목록 (실제 위협이 되는 유닛)
-        combat_unit_names = {
-            "ZERGLING",
-            "MARINE",
-            "ZEALOT",
-            "REAPER",
-            "ADEPT",
-            "BANELING",
-            "ROACH",
-            "STALKER",
-            "MARAUDER",
-            "SIEGETANK",
-            "SIEGETANKSIEGED",
-            "WIDOWMINE",
-            "HYDRALISK",
-            "MUTALISK",
-            "CORRUPTOR",
-            "BROODLORD",
-            "RAVAGER",
-            "LURKER",
-            "ULTRALISK",
-            "INFESTOR",
-            "COLOSSUS",
-            "DISRUPTOR",
-            "IMMORTAL",
-            "ARCHON",
-            "THOR",
-            "HELLION",
-            "HELLIONTANK",
-            "CYCLONE",
-            "BATTLECRUISER",
-            "LIBERATOR",
-            "VIKING",
-            "MEDIVAC",
-            "VOIDRAY",
-            "CARRIER",
-            "TEMPEST",
-            "PHOENIX",
-        }
-
-        # 비전투 유닛 (정찰용, 위협이 낮음)
-        non_combat_names = {
-            "SCV",
-            "PROBE",
-            "DRONE",
-            "MULE",
-            "OBSERVER",
-            "OVERLORD",
-            "OVERSEER",
-            "WARPPRISM",
-            "RAVEN",
-            "CHANGELING",
-        }
+        # 클래스 상수 사용 (이전엔 매 호출 set 재할당)
+        combat_unit_names = self._COMBAT_UNIT_NAMES
+        # non_combat_names는 이전에도 미사용 — 클래스 상수로만 보존
 
         for th in self.bot.townhalls:
             # 일반 감지 거리

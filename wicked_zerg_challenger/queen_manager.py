@@ -68,6 +68,17 @@ class QueenManager:
     - Robust error handling with iteration-based logging
     """
 
+    # 퀸 방어 시 우선 공격 대상 — 고위협 공중 유닛 (퀸 대공 사거리 활용)
+    HIGH_VALUE_AIR_NAMES = frozenset({
+        "CARRIER",
+        "BATTLECRUISER",
+        "TEMPEST",
+        "BROODLORD",
+        "VOIDRAY",
+        "LIBERATOR",
+        "LIBERATORAG",
+    })
+
     def __init__(self, bot):
         """
         Initialize queen manager.
@@ -111,6 +122,42 @@ class QueenManager:
         self.transfuse_energy_threshold = GameConfig.QUEEN_TRANSFUSE_ENERGY_THRESHOLD
         self.transfuse_cooldown = GameConfig.QUEEN_TRANSFUSE_COOLDOWN_SEC
         self.transfuse_health_threshold = GameConfig.QUEEN_TRANSFUSE_HP_THRESHOLD
+
+        # Transfuse 우선순위/예외 캐시 — 매 step 재구성 비용 제거
+        _PRIORITY_DEFS = (
+            ("QUEEN", 0),
+            ("BROODLORD", 1),
+            ("CORRUPTOR", 2),
+            ("SPINECRAWLER", 3),
+            ("OVERSEER", 4),
+            ("ULTRALISK", 5),
+            ("RAVAGER", 6),
+            ("ROACH", 7),
+            ("HYDRALISK", 8),
+            ("LURKERMP", 9),
+            ("INFESTOR", 10),
+            ("SWARMHOSTMP", 11),
+            ("MUTALISK", 12),
+            ("VIPER", 2),
+        )
+        self._transfuse_priority: Dict = {}
+        for name, prio in _PRIORITY_DEFS:
+            unit_type = getattr(UnitTypeId, name, None)
+            if unit_type is not None:
+                self._transfuse_priority[unit_type] = prio
+
+        self._unhealable_units: Set = set()
+        for _u_name in ("BANELING", "BROODLING", "LOCUSTMP"):
+            _u = getattr(UnitTypeId, _u_name, None)
+            if _u is not None:
+                self._unhealable_units.add(_u)
+
+        # 점막 종양 타입 캐시 — _count_creep_tumors 매 호출 set 재구성 회피
+        self._creep_tumor_types: Set = set()
+        for _t_name in ("CREEPTUMOR", "CREEPTUMORBURROWED", "CREEPTUMORQUEEN"):
+            _t = getattr(UnitTypeId, _t_name, None)
+            if _t is not None:
+                self._creep_tumor_types.add(_t)
 
     async def on_step(self, iteration: int) -> None:
         """
@@ -335,6 +382,20 @@ class QueenManager:
             hatch_tag: queen_tag
             for hatch_tag, queen_tag in self.secondary_inject_assignments.items()
             if hatch_tag in current_hatch_tags and queen_tag in current_queen_tags
+        }
+
+        # 죽은 햇처리/퀸의 타임스탬프 항목을 정리 (장기전 메모리 누수 방지)
+        self.last_inject_time = {
+            tag: t for tag, t in self.last_inject_time.items()
+            if tag in current_hatch_tags
+        }
+        self.last_creep_time = {
+            tag: t for tag, t in self.last_creep_time.items()
+            if tag in current_queen_tags
+        }
+        self.last_transfuse_time = {
+            tag: t for tag, t in self.last_transfuse_time.items()
+            if tag in current_queen_tags
         }
 
         # Assign inject queens (1차 - 메인 인젝트)
@@ -646,6 +707,20 @@ class QueenManager:
                     f"[{int(game_time)}s] {len(inject_queens)} queens still injecting for reinforcement"
                 )
 
+        # 공중 유닛 우선순위 분류는 queen-독립 → 루프 외부에서 한 번만 수행
+        # 우선순위: 고위협 공중 > 일반 공중 > 지상 > 인터셉터(low_value)
+        high_value_air = []
+        normal_air = []
+        low_value_air = []
+        for e in air_enemies:
+            name = getattr(e.type_id, "name", "").upper()
+            if name == "INTERCEPTOR":
+                low_value_air.append(e)
+            elif name in self.HIGH_VALUE_AIR_NAMES:
+                high_value_air.append(e)
+            else:
+                normal_air.append(e)
+
         # Send defense queens to defend
         for queen in defense_queens:
             try:
@@ -656,34 +731,7 @@ class QueenManager:
                     # ★ 공중 유닛 우선 공격 (퀸은 대공 유닛) ★
                     target = None
 
-                    # 우선순위: 고위협 공중 > 일반 공중 > 지상
-                    # 인터셉터(Interceptor)는 최후순위로 미룸
-
-                    # 고위협 공중 유닛 식별
-                    high_value_air = []
-                    normal_air = []
-                    low_value_air = []  # Interceptors
-
-                    high_value_names = {
-                        "CARRIER",
-                        "BATTLECRUISER",
-                        "TEMPEST",
-                        "BROODLORD",
-                        "VOIDRAY",
-                        "LIBERATOR",
-                        "LIBERATORAG",
-                    }
-
-                    for e in air_enemies:
-                        name = getattr(e.type_id, "name", "").upper()
-                        if name == "INTERCEPTOR":
-                            low_value_air.append(e)
-                        elif name in high_value_names:
-                            high_value_air.append(e)
-                        else:
-                            normal_air.append(e)
-
-                    # 타겟 선정
+                    # 타겟 선정 (queen별 거리 기반)
                     if high_value_air:
                         target = min(high_value_air, key=lambda e: e.distance_to(queen))
                     elif normal_air:
@@ -725,32 +773,9 @@ class QueenManager:
         """
         current_time = getattr(self.bot, "time", 0.0)
 
-        # CreepyBot-style priority map (lower = higher priority)
-        TRANSFUSE_PRIORITY = {}
-        priority_defs = [
-            ("QUEEN", 0),
-            ("BROODLORD", 1),
-            ("CORRUPTOR", 2),
-            ("SPINECRAWLER", 3),
-            ("OVERSEER", 4),
-            ("ULTRALISK", 5),
-            ("RAVAGER", 6),
-            ("ROACH", 7),
-            ("HYDRALISK", 8),
-            ("LURKERMP", 9),
-            ("INFESTOR", 10),
-            ("SWARMHOSTMP", 11),
-            ("MUTALISK", 12),
-            ("VIPER", 2),  # Vipers same priority as corruptors (spell utility)
-        ]
-        for name, prio in priority_defs:
-            unit_type = getattr(UnitTypeId, name, None)
-            if unit_type is not None:
-                TRANSFUSE_PRIORITY[unit_type] = prio
-
-        UNHEALABLE_UNITS = {UnitTypeId.BANELING, UnitTypeId.BROODLING}
-        if hasattr(UnitTypeId, "LOCUSTMP"):
-            UNHEALABLE_UNITS.add(UnitTypeId.LOCUSTMP)
+        # __init__에서 캐시된 우선순위/예외 사용 (이전엔 매 step 재구성)
+        TRANSFUSE_PRIORITY = self._transfuse_priority
+        UNHEALABLE_UNITS = self._unhealable_units
 
         # Find injured units to heal
         injured_targets = []
@@ -864,33 +889,39 @@ class QueenManager:
 
         # CreepyBot: Queens with 190+ energy also transfuse damaged buildings
         if hasattr(self.bot, "structures"):
-            for queen in queens:
-                if getattr(queen, "energy", 0) < 190:
+            # 손상된 건물을 한 번만 필터링하여 O(queens × structures) → O(queens × damaged) 축소
+            damaged_buildings = []
+            for building in self.bot.structures:
+                if not hasattr(building, "health") or not hasattr(
+                    building, "health_max"
+                ):
                     continue
-                last_t = self.last_transfuse_time.get(queen.tag, 0.0)
-                if current_time - last_t < self.transfuse_cooldown:
+                if building.health_max == 0:
                     continue
-                for building in self.bot.structures:
-                    if not hasattr(building, "health") or not hasattr(
-                        building, "health_max"
-                    ):
+                if building.health_max - building.health < 125:
+                    continue
+                damaged_buildings.append(building)
+
+            if damaged_buildings:
+                for queen in queens:
+                    if getattr(queen, "energy", 0) < 190:
                         continue
-                    if building.health_max == 0:
+                    last_t = self.last_transfuse_time.get(queen.tag, 0.0)
+                    if current_time - last_t < self.transfuse_cooldown:
                         continue
-                    if building.health_max - building.health < 125:
-                        continue
-                    try:
-                        if queen.distance_to(building) > 7:
+                    for building in damaged_buildings:
+                        try:
+                            if queen.distance_to(building) > 7:
+                                continue
+                            result = self.bot.do(
+                                queen(AbilityId.TRANSFUSION_TRANSFUSION, building)
+                            )
+                            if hasattr(result, "__await__"):
+                                await result
+                            self.last_transfuse_time[queen.tag] = current_time
+                            break  # One transfuse per queen per cycle
+                        except Exception:
                             continue
-                        result = self.bot.do(
-                            queen(AbilityId.TRANSFUSION_TRANSFUSION, building)
-                        )
-                        if hasattr(result, "__await__"):
-                            await result
-                        self.last_transfuse_time[queen.tag] = current_time
-                        break  # One transfuse per queen per cycle
-                    except Exception:
-                        continue
 
     async def _spread_creep(self, creep_queens, iteration: int) -> None:
         """
@@ -1212,11 +1243,7 @@ class QueenManager:
             return 0
 
         try:
-            tumor_types = {
-                UnitTypeId.CREEPTUMOR,
-                UnitTypeId.CREEPTUMORBURROWED,
-                UnitTypeId.CREEPTUMORQUEEN,
-            }
+            tumor_types = self._creep_tumor_types
             return sum(1 for s in self.bot.structures if s.type_id in tumor_types)
         except Exception as e:
             logger.warning(f"[QueenManager] Tumor count suppressed: {e}")

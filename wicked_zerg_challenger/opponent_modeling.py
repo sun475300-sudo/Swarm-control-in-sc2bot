@@ -258,6 +258,16 @@ class OpponentModeling:
     5. 게임 종료 시 데이터 저장
     """
 
+    # ★ Hot-path 클래스 상수 — 매 step 재할당 회피 ★
+    _MAIN_BASE_NAMES = frozenset({"HATCHERY", "NEXUS", "COMMANDCENTER"})
+    _ALL_BASE_NAMES = frozenset({
+        "HATCHERY", "LAIR", "HIVE",
+        "NEXUS",
+        "COMMANDCENTER", "ORBITALCOMMAND", "PLANETARYFORTRESS",
+    })
+    _GAS_STRUCTURES = frozenset({"EXTRACTOR", "ASSIMILATOR", "REFINERY"})
+    _TECH_RUSH_STRUCTURES = frozenset({"STARGATE", "FACTORY", "ROBOTICSFACILITY", "SPIRE"})
+
     def __init__(
         self,
         bot: BotAI,
@@ -379,18 +389,13 @@ class OpponentModeling:
             getattr(s.type_id, "name", "").upper() for s in enemy_structures
         }
 
-        # Fast expand detection
-        if game_time < 120 and any(
-            base in structure_names for base in ["HATCHERY", "NEXUS", "COMMANDCENTER"]
-        ):
+        # Fast expand detection — 클래스 상수 사용
+        if game_time < 120 and structure_names & self._MAIN_BASE_NAMES:
             if (
-                len(
-                    [
-                        s
-                        for s in enemy_structures
-                        if getattr(s.type_id, "name", "").upper()
-                        in ["HATCHERY", "NEXUS", "COMMANDCENTER"]
-                    ]
+                sum(
+                    1
+                    for s in enemy_structures
+                    if getattr(s.type_id, "name", "").upper() in self._MAIN_BASE_NAMES
                 )
                 >= 2
             ):
@@ -401,31 +406,19 @@ class OpponentModeling:
             self._add_signal(StrategySignal.EARLY_POOL)
 
         # Early gas detection
-        gas_structures = {"EXTRACTOR", "ASSIMILATOR", "REFINERY"}
-        if game_time < 90 and any(gas in structure_names for gas in gas_structures):
+        if game_time < 90 and structure_names & self._GAS_STRUCTURES:
             self._add_signal(StrategySignal.EARLY_GAS)
 
         # Tech rush detection
-        tech_structures = {"STARGATE", "FACTORY", "ROBOTICSFACILITY", "SPIRE"}
-        if game_time < 150 and any(tech in structure_names for tech in tech_structures):
+        if game_time < 150 and structure_names & self._TECH_RUSH_STRUCTURES:
             self._add_signal(StrategySignal.TECH_RUSH)
 
         # No natural expansion
         if game_time > 120:
-            base_count = len(
-                [
-                    s
-                    for s in enemy_structures
-                    if getattr(s.type_id, "name", "").upper()
-                    in [
-                        "HATCHERY",
-                        "NEXUS",
-                        "COMMANDCENTER",
-                        "LAIR",
-                        "HIVE",
-                        "ORBITALCOMMAND",
-                    ]
-                ]
+            base_count = sum(
+                1
+                for s in enemy_structures
+                if getattr(s.type_id, "name", "").upper() in self._ALL_BASE_NAMES
             )
             if base_count <= 1:
                 self._add_signal(StrategySignal.NO_NATURAL)

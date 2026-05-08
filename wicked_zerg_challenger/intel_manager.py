@@ -16,6 +16,50 @@ logger = logging.getLogger(__name__)
 class IntelManager:
     """Collects intel and bridges update() to on_step()."""
 
+    # ★ Hot-path 클래스 상수 — 매 step 재할당 회피 ★
+    _ENEMY_SUPPLY_TABLE = {
+        "ZERGLING": 0.5, "BANELING": 0.5, "ROACH": 2, "RAVAGER": 3,
+        "HYDRALISK": 2, "LURKERMP": 3, "MUTALISK": 2, "CORRUPTOR": 2,
+        "ULTRALISK": 6, "BROODLORD": 4, "INFESTOR": 2, "VIPER": 3,
+        "MARINE": 1, "MARAUDER": 2, "REAPER": 1, "GHOST": 2,
+        "HELLION": 2, "HELLIONTANK": 2, "SIEGETANK": 3, "SIEGETANKSIEGED": 3,
+        "THOR": 6, "BATTLECRUISER": 6, "VIKING": 2, "MEDIVAC": 2,
+        "BANSHEE": 3, "RAVEN": 2, "LIBERATOR": 3, "CYCLONE": 3,
+        "ZEALOT": 2, "STALKER": 2, "ADEPT": 2, "IMMORTAL": 4,
+        "COLOSSUS": 6, "DISRUPTOR": 3, "ARCHON": 4, "HIGHTEMPLAR": 2,
+        "DARKTEMPLAR": 2, "PHOENIX": 2, "VOIDRAY": 4, "CARRIER": 6,
+        "ORACLE": 3, "TEMPEST": 4,
+    }
+    _WORKER_NAMES = frozenset({"SCV", "PROBE", "DRONE"})
+    _BASE_TYPES = frozenset({
+        "COMMANDCENTER", "COMMANDCENTERFLYING",
+        "ORBITALCOMMAND", "ORBITALCOMMANDFLYING",
+        "PLANETARYFORTRESS", "NEXUS",
+        "HATCHERY", "LAIR", "HIVE",
+    })
+    _TECH_BUILDINGS = frozenset({
+        "FACTORY", "STARPORT", "ARMORY", "FUSIONCORE",
+        "ROBOTICSFACILITY", "STARGATE", "DARKSHRINE", "TEMPLARARCHIVE",
+        "FLEETBEACON", "TWILIGHTCOUNCIL", "SPIRE", "GREATERSPIRE",
+        "INFESTATIONPIT", "BANELINGNEST", "ROACHWARREN",
+        "HYDRALISKDEN", "NYDUSNETWORK", "NYDUSCANAL",
+    })
+    # 조기 공격(early attack) 탐지 거리 상향 대상 — _high_threat_types와는
+    # 다른 set: 작고 빠른 견제용 유닛까지 포함
+    _EARLY_ATTACK_UNITS = frozenset({
+        "ZERGLING", "MARINE", "ZEALOT", "REAPER", "ADEPT",
+        "BANELING", "ROACH", "STALKER", "MARAUDER",
+        "SIEGETANK", "SIEGETANKSIEGED", "LIBERATOR", "WIDOWMINE",
+    })
+    # 적 확장 감지용 — _BASE_TYPES의 단순 형태(메인 타운홀만)
+    _EXPANSION_BASE_TYPES = frozenset({"COMMANDCENTER", "NEXUS", "HATCHERY"})
+    # 적 비싼 테크 건물 — _detect_enemy_vulnerability에서 매 호출 재할당하던 set
+    _EXPENSIVE_TECH = frozenset({
+        "STARPORT", "ROBOTICSFACILITY", "STARGATE",
+        "DARKSHRINE", "FLEETBEACON", "FUSIONCORE",
+        "GREATERSPIRE", "NYDUSNETWORK",
+    })
+
     def __init__(self, bot):
         self.bot = bot
         self.last_update = 0
@@ -136,108 +180,31 @@ class IntelManager:
         self.enemy_army_supply = 0
         self.enemy_worker_count = 0
 
-        # ★ Phase 42: supply_cost 속성 없음 — 정확한 룩업 테이블 사용
-        _ENEMY_SUPPLY = {
-            "ZERGLING": 0.5,
-            "BANELING": 0.5,
-            "ROACH": 2,
-            "RAVAGER": 3,
-            "HYDRALISK": 2,
-            "LURKERMP": 3,
-            "MUTALISK": 2,
-            "CORRUPTOR": 2,
-            "ULTRALISK": 6,
-            "BROODLORD": 4,
-            "INFESTOR": 2,
-            "VIPER": 3,
-            "MARINE": 1,
-            "MARAUDER": 2,
-            "REAPER": 1,
-            "GHOST": 2,
-            "HELLION": 2,
-            "HELLIONTANK": 2,
-            "SIEGETANK": 3,
-            "SIEGETANKSIEGED": 3,
-            "THOR": 6,
-            "BATTLECRUISER": 6,
-            "VIKING": 2,
-            "MEDIVAC": 2,
-            "BANSHEE": 3,
-            "RAVEN": 2,
-            "LIBERATOR": 3,
-            "CYCLONE": 3,
-            "ZEALOT": 2,
-            "STALKER": 2,
-            "ADEPT": 2,
-            "IMMORTAL": 4,
-            "COLOSSUS": 6,
-            "DISRUPTOR": 3,
-            "ARCHON": 4,
-            "HIGHTEMPLAR": 2,
-            "DARKTEMPLAR": 2,
-            "PHOENIX": 2,
-            "VOIDRAY": 4,
-            "CARRIER": 6,
-            "ORACLE": 3,
-            "TEMPEST": 4,
-        }
-        worker_names = {"SCV", "PROBE", "DRONE"}
+        # ★ Phase 42: 클래스 상수 supply 룩업 테이블 사용
         for unit in enemy_units:
             type_name = getattr(unit.type_id, "name", str(unit.type_id))
             self.enemy_unit_counts[type_name] = (
                 self.enemy_unit_counts.get(type_name, 0) + 1
             )
 
-            # ★ Phase 42: 룩업 테이블 우선, 없으면 1
-            supply = _ENEMY_SUPPLY.get(type_name.upper(), 1)
-            if type_name.upper() in worker_names:
+            type_upper = type_name.upper()
+            if type_upper in self._WORKER_NAMES:
                 self.enemy_worker_count += 1
             else:
-                self.enemy_army_supply += supply
+                self.enemy_army_supply += self._ENEMY_SUPPLY_TABLE.get(type_upper, 1)
 
         # Count enemy bases
-        base_types = {
-            "COMMANDCENTER",
-            "COMMANDCENTERFLYING",
-            "ORBITALCOMMAND",
-            "ORBITALCOMMANDFLYING",
-            "PLANETARYFORTRESS",
-            "NEXUS",
-            "HATCHERY",
-            "LAIR",
-            "HIVE",
-        }
         self.enemy_base_count = sum(
             1
             for s in enemy_structures
-            if getattr(s.type_id, "name", "").upper() in base_types
+            if getattr(s.type_id, "name", "").upper() in self._BASE_TYPES
         )
 
         # Track tech buildings with detailed categorization
-        tech_buildings = {
-            "FACTORY",
-            "STARPORT",
-            "ARMORY",
-            "FUSIONCORE",
-            "ROBOTICSFACILITY",
-            "STARGATE",
-            "DARKSHRINE",
-            "TEMPLARARCHIVE",
-            "FLEETBEACON",
-            "TWILIGHTCOUNCIL",
-            "SPIRE",
-            "GREATERSPIRE",
-            "INFESTATIONPIT",
-            "BANELINGNEST",
-            "ROACHWARREN",
-            "HYDRALISKDEN",
-            "NYDUSNETWORK",
-            "NYDUSCANAL",
-        }
         self.enemy_tech_buildings = {
             getattr(s.type_id, "name", "").upper()
             for s in enemy_structures
-            if getattr(s.type_id, "name", "").upper() in tech_buildings
+            if getattr(s.type_id, "name", "").upper() in self._TECH_BUILDINGS
         }
 
         # ★ NEW: Hidden tech alert system
@@ -260,24 +227,12 @@ class IntelManager:
         1. Visible enemy townhalls (closest to known start location)
         2. bot.enemy_start_locations[0] as fallback
         """
-        base_types = {
-            "COMMANDCENTER",
-            "COMMANDCENTERFLYING",
-            "ORBITALCOMMAND",
-            "ORBITALCOMMANDFLYING",
-            "PLANETARYFORTRESS",
-            "NEXUS",
-            "HATCHERY",
-            "LAIR",
-            "HIVE",
-        }
-
         # Try to find from visible enemy structures
         enemy_bases = []
         for s in enemy_structures:
             try:
                 type_name = getattr(s.type_id, "name", "").upper()
-                if type_name in base_types:
+                if type_name in self._BASE_TYPES:
                     enemy_bases.append(s)
             except (AttributeError, TypeError) as e:
                 logger.warning(f"[IntelManager] Enemy base detection suppressed: {e}")
@@ -315,23 +270,6 @@ class IntelManager:
             if cached_threat:
                 self._threat_level = cached_threat.lower()
 
-        # High-threat unit types (detect earlier)
-        high_threat_units = {
-            "ZERGLING",
-            "MARINE",
-            "ZEALOT",
-            "REAPER",
-            "ADEPT",
-            "BANELING",
-            "ROACH",
-            "STALKER",
-            "MARAUDER",
-            "SIEGETANK",
-            "SIEGETANKSIEGED",
-            "LIBERATOR",
-            "WIDOWMINE",
-        }
-
         # ★ O(n) 최적화: 적 유닛 1회 순회, 타운홀 위치 캐시 ★
         th_positions = [th.position for th in townhalls]
         base_detection_range = 40 if current_time < 180 else 30
@@ -343,7 +281,7 @@ class IntelManager:
                 detection_range = (
                     base_detection_range
                     if current_time < 180
-                    else (35 if enemy_type in high_threat_units else 30)
+                    else (35 if enemy_type in self._EARLY_ATTACK_UNITS else 30)
                 )
 
                 near_base = any(
@@ -482,26 +420,14 @@ class IntelManager:
         expanding = False
         teching = False
 
-        base_types = {"COMMANDCENTER", "NEXUS", "HATCHERY"}
-        expensive_tech = {
-            "STARPORT",
-            "ROBOTICSFACILITY",
-            "STARGATE",
-            "DARKSHRINE",
-            "FLEETBEACON",
-            "FUSIONCORE",
-            "GREATERSPIRE",
-            "NYDUSNETWORK",
-        }
-
         for struct in enemy_structures:
             type_name = getattr(struct.type_id, "name", "").upper()
             build_progress = getattr(struct, "build_progress", 1.0)
 
             if build_progress < 1.0:  # 건설 중
-                if type_name in base_types:
+                if type_name in self._EXPANSION_BASE_TYPES:
                     expanding = True
-                if type_name in expensive_tech:
+                if type_name in self._EXPENSIVE_TECH:
                     teching = True
 
         blackboard.set("enemy_expanding", expanding)

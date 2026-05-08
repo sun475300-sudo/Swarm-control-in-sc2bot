@@ -664,6 +664,14 @@ class EncryptedTradeLog:
             logger.info("EncryptedTradeLog: Fernet 암호화 활성화")
         except ImportError:
             logger.warning("EncryptedTradeLog: cryptography 미설치. base64 폴백 사용.")
+        except BaseException as e:
+            # cryptography 백엔드 손상 (pyo3 PanicException, OSError 등)
+            logger.warning(
+                "EncryptedTradeLog: cryptography 백엔드 초기화 실패 (%s: %s) — "
+                "base64 폴백 사용.",
+                type(e).__name__,
+                e,
+            )
 
     def _encrypt(self, plaintext: str) -> str:
         """문자열 암호화"""
@@ -1105,9 +1113,6 @@ class SecretManager:
     def _init_fernet(self):
         """Bug #7 Fix + H-7: Fernet 대칭 암호화 초기화. PBKDF2 키 파생 강화."""
         try:
-            # H-7: PBKDF2로 강화된 키 파생 (salt + 100k iterations)
-            import hashlib
-
             from cryptography.fernet import Fernet
 
             _salt = hashlib.sha256(b"JARVIS_FERNET_SALT_v1").digest()[:16]
@@ -1122,6 +1127,18 @@ class SecretManager:
                 "SecretManager: cryptography 라이브러리 미설치 — "
                 "시크릿이 암호화되지 않고 base64 인코딩만 적용됩니다. "
                 "보안을 위해 'pip install cryptography'를 실행하세요."
+            )
+            self._fernet = None
+            self._use_fernet = False
+        except BaseException as e:
+            # cryptography 백엔드(_cffi_backend, _rust 바인딩 등)가 깨졌을 때
+            # pyo3_runtime.PanicException, OSError, RuntimeError 등이 발생할 수 있다.
+            # 이 경우 base64 폴백으로 안전하게 진행한다.
+            logger.warning(
+                "SecretManager: cryptography 백엔드 초기화 실패 (%s: %s) — "
+                "base64 폴백 모드로 진행합니다.",
+                type(e).__name__,
+                e,
             )
             self._fernet = None
             self._use_fernet = False
