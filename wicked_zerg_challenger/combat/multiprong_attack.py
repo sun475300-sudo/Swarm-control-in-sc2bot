@@ -354,7 +354,7 @@ class MultiprongAttackManager:
 
         # 각 공격조 상태별 관리
         all_disbanded = True
-        for name, prong in list(self.prongs.items()):
+        for _name, prong in list(self.prongs.items()):
             if prong.status == ProngStatus.DISBANDED:
                 continue
 

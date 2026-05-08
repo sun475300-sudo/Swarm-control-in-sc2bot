@@ -392,7 +392,7 @@ def gif_collision_avoidance():
     all_pos = [pos.copy()]
     avoidance_events = []
 
-    for f in range(FRAMES):
+    for _f in range(FRAMES):
         new_pos = pos.copy()
         new_vel = vel.copy()
         frame_avoid = []

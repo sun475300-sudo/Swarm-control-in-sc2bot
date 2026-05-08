@@ -554,7 +554,7 @@ def clear_tech_transfer():
         )
 
     # 범례
-    for conf_val, col, label in [
+    for _conf_val, col, label in [
         (5, "#4CAF50", "★★★★★ Direct (직접 전이)"),
         (4, "#FFC107", "★★★★☆ Adapt (적응 필요)"),
         (3, "#FF9800", "★★★☆☆ Concept (개념 전이)"),

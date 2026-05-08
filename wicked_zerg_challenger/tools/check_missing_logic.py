@@ -56,7 +56,7 @@ class MissingLogicChecker:
                 lines = content.splitlines()
 
             # self._method() ���� ã��
-            for i, line in enumerate(lines, 1):
+            for _i, line in enumerate(lines, 1):
                 # await self._method() �Ǵ� self._method() ����
                 matches = re.findall(r'(?:await\s+)?self\.(_[a-zA-Z_][a-zA-Z0-9_]*)\s*\(', line)
                 calls.update(matches)
@@ -129,7 +129,7 @@ class MissingLogicChecker:
 
     def scan_all(self) -> Dict:
         """��ü ��ĵ"""
-        for root, dirs, files in Path(PROJECT_ROOT).rglob('*.py'):
+        for root, _dirs, _files in Path(PROJECT_ROOT).rglob('*.py'):
             # ������ ���丮
             if any(excluded in str(root) for excluded in ['__pycache__', '.git', 'node_modules', '.venv', 'venv', 'models', '.pytest_cache']):
                 continue

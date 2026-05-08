@@ -989,7 +989,7 @@ class AggressiveStrategyExecutor:
             overlords = self.bot.units(UnitTypeId.OVERLORD)
             if overlords.amount >= config["drop_overlord_count"]:
                 # 2기 선택
-                for i, ol in enumerate(overlords[: config["drop_overlord_count"]]):
+                for _i, ol in enumerate(overlords[: config["drop_overlord_count"]]):
                     self._drop_overlords.add(ol.tag)
 
                 self._overlord_drop_active = True
