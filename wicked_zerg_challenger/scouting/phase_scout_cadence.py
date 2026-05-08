@@ -217,14 +217,14 @@ class PhaseScoutCadence:
 
 
 __all__ = [
+    "PHASE_1_CADENCE_S",
+    "PHASE_1_END_S",
+    "PHASE_2_CADENCE_S",
+    "PHASE_2_END_S",
+    "PHASE_3_CADENCE_S",
+    "DispatchPlan",
     "PhaseScoutCadence",
     "ScoutPhase",
-    "DispatchPlan",
-    "phase_for_time",
     "cadence_for_phase",
-    "PHASE_1_END_S",
-    "PHASE_2_END_S",
-    "PHASE_1_CADENCE_S",
-    "PHASE_2_CADENCE_S",
-    "PHASE_3_CADENCE_S",
+    "phase_for_time",
 ]

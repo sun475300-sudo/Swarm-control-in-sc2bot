@@ -18,16 +18,16 @@ from .pid_controller import (
 from .spatial_partition import DynamicSpatialPartition, SpatialGrid, build_unit_grid
 
 __all__ = [
-    "KDTree",
-    "KDTreeNode",
-    "build_unit_kdtree",
-    "SpatialGrid",
-    "DynamicSpatialPartition",
-    "build_unit_grid",
-    "PIDController",
     "PID2D",
-    "UnitMovementController",
+    "DynamicSpatialPartition",
     "FormationController",
     "FrameCache",
+    "KDTree",
+    "KDTreeNode",
+    "PIDController",
+    "SpatialGrid",
+    "UnitMovementController",
+    "build_unit_grid",
+    "build_unit_kdtree",
     "cached_per_frame",
 ]
