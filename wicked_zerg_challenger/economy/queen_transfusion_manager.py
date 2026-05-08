@@ -187,6 +187,10 @@ class QueenTransfusionManager:
         Returns:
             True if valid target, False otherwise
         """
+        # SC2 disallows self-targeting — skip to avoid wasted invalid casts
+        if unit.tag == queen.tag:
+            return False
+
         # Cannot heal blacklisted units
         if unit.type_id in self.CANNOT_HEAL:
             return False

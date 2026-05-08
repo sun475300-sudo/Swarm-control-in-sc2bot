@@ -25,14 +25,14 @@ except ImportError:
 logger = get_logger("UnitHelpers")
 
 
-def find_nearby_enemies(unit: Unit, enemy_units: Units, range: float) -> Units:
+def find_nearby_enemies(unit: Unit, enemy_units: Units, radius: float) -> Units:
     """
     특정 거리 내의 적 유닛 찾기
 
     Args:
         unit: 기준 유닛
         enemy_units: 적 유닛 컬렉션
-        range: 검색 거리
+        radius: 검색 거리 (built-in `range`와 충돌 방지를 위해 변수명 변경)
 
     Returns:
         거리 내의 적 유닛 컬렉션
@@ -43,10 +43,10 @@ def find_nearby_enemies(unit: Unit, enemy_units: Units, range: float) -> Units:
     try:
         # closer_than 메서드 사용 (최적화)
         if hasattr(enemy_units, "closer_than"):
-            return enemy_units.closer_than(range, unit)
+            return enemy_units.closer_than(radius, unit)
         else:
             # 폴백: 직접 필터링
-            return Units([e for e in enemy_units if e.distance_to(unit) < range], None)
+            return Units([e for e in enemy_units if e.distance_to(unit) < radius], None)
     except Exception as e:
         logger.debug(f"find_nearby_enemies error: {e}")
         return Units([], None) if Units is not None else []

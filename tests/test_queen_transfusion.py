@@ -254,3 +254,17 @@ class TestPriorityOrdering:
 
         target = mgr._find_best_transfusion_target(queen, [far_ultra])
         assert target is None, "Out-of-range unit must not be targeted"
+
+    def test_queen_self_targeting_excluded(self):
+        """A damaged queen must not target itself — SC2 disallows self-cast."""
+        mgr, _ = _mgr()
+        queen_tag = 70
+        queen = _make_queen(tag=queen_tag, energy=100)
+        queen.health_percentage = 0.4  # damaged enough to look heal-eligible
+        queen.health = queen.health_max * 0.4
+        queen.is_biological = True
+        queen.is_ready = True
+        queen.distance_to = MagicMock(return_value=0.0)
+
+        target = mgr._find_best_transfusion_target(queen, [queen])
+        assert target is None, "Queen must not transfuse herself"
