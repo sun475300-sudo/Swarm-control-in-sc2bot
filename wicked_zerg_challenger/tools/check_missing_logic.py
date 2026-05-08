@@ -92,9 +92,7 @@ class MissingLogicChecker:
         """TODO/FIXME/XXX 주석 찾기"""
         todos: List[Tuple[int, str]] = []
         try:
-            lines = file_path.read_text(
-                encoding="utf-8", errors="replace"
-            ).splitlines()
+            lines = file_path.read_text(encoding="utf-8", errors="replace").splitlines()
         except OSError:
             return todos
 
