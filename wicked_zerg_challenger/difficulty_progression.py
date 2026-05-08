@@ -37,6 +37,7 @@ except ImportError:
         Protoss = 3
         Random = 4
 
+
 logger = logging.getLogger("DifficultyProgression")
 
 
