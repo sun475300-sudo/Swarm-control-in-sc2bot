@@ -4,6 +4,7 @@
 Covers the position-history-based stuck detector that supplements the
 existing is_idle path in rescue_stuck_workers.
 """
+
 from __future__ import annotations
 
 import os

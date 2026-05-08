@@ -90,7 +90,7 @@ class AdvancedBuildingManager:
         # rescue_stuck_workers에서 "이동 중인데 제자리" 케이스 탐지에 사용.
         self._worker_position_history: Dict[int, Tuple[Tuple[float, float], int]] = {}
         self._stuck_movement_radius = 0.5  # 이만큼 못 움직이면 stuck 으로 간주
-        self._stuck_check_interval = 25    # iteration 단위 체크 간격
+        self._stuck_check_interval = 25  # iteration 단위 체크 간격
 
     # ==================== 1. 중복 코드 제거: 공통 변태 로직 ====================
 
@@ -841,4 +841,4 @@ class AdvancedBuildingManager:
 
         dx = current[0] - last_pos[0]
         dy = current[1] - last_pos[1]
-        return (dx * dx + dy * dy) < (self._stuck_movement_radius ** 2)
+        return (dx * dx + dy * dy) < (self._stuck_movement_radius**2)

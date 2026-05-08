@@ -7,6 +7,7 @@ LatentImagination, WorldModel), causing every consumer to crash with
 ImportError. This test pins the canonical exports + the back-compat
 aliases so the surface can't silently drift again.
 """
+
 from __future__ import annotations
 
 import importlib

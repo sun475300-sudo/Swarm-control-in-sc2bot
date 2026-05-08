@@ -31,9 +31,8 @@ except ImportError:
             return Units([u for u in self if fn(u)], None)
 
         def closer_than(self, distance, position):
-            return Units(
-                [u for u in self if u.distance_to(position) < distance], None
-            )
+            return Units([u for u in self if u.distance_to(position) < distance], None)
+
 
 logger = get_logger("UnitHelpers")
 
