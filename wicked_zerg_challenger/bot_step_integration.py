@@ -900,7 +900,7 @@ class BotStepIntegrator:
                     if iteration % 1320 == 0:
                         report = self.bot.creep_denial.get_creep_denial_report()
                         self.logger.info(report)
-                except Exception:
+                except Exception as e:
                     if error_handler.debug_mode:
                         raise
                     else:
@@ -1068,7 +1068,7 @@ class BotStepIntegrator:
                                         f"[WARNING] Failed to set RL opening: {e}"
                                     )
 
-                        except Exception:
+                        except Exception as e:
                             if error_handler.debug_mode:
                                 raise
                             else:
@@ -1096,7 +1096,7 @@ class BotStepIntegrator:
                         if iteration % 150 == 0:
                             progress = self.bot.build_order_system.get_progress()
                             self.logger.info(f"[BUILD_ORDER] {progress}")
-                    except Exception:
+                    except Exception as e:
                         if error_handler.debug_mode:
                             raise
                         else:
@@ -1128,7 +1128,7 @@ class BotStepIntegrator:
                         self.logger.info(
                             f"[DEFENSE] Threat: {threat}, Status: {status}"
                         )
-                except Exception:
+                except Exception as e:
                     if error_handler.debug_mode:
                         raise
                     else:
@@ -1150,7 +1150,7 @@ class BotStepIntegrator:
                 start_time = self._logic_tracker.start_logic("EarlyDefense")
                 try:
                     await self.bot.early_defense.on_step(iteration)
-                except Exception:
+                except Exception as e:
                     if error_handler.debug_mode:
                         raise
                     else:
@@ -1170,7 +1170,7 @@ class BotStepIntegrator:
                 start_time = self._logic_tracker.start_logic("WorkerCombat")
                 try:
                     await self.bot.worker_combat.on_step()
-                except Exception:
+                except Exception as e:
                     if error_handler.debug_mode:
                         raise
                     else:
@@ -1190,7 +1190,7 @@ class BotStepIntegrator:
                 start_time = self._logic_tracker.start_logic("UpgradePriority")
                 try:
                     await self.bot.upgrade_priority.on_step()
-                except Exception:
+                except Exception as e:
                     if error_handler.debug_mode:
                         raise
                     else:
@@ -1210,7 +1210,7 @@ class BotStepIntegrator:
                 start_time = self._logic_tracker.start_logic("RLTechAdapter")
                 try:
                     await self.bot.rl_tech_adapter.on_step(iteration)
-                except Exception:
+                except Exception as e:
                     if error_handler.debug_mode:
                         raise
                     else:
@@ -1228,7 +1228,7 @@ class BotStepIntegrator:
                 start_time = self._logic_tracker.start_logic("MicroFocusMode")
                 try:
                     self.bot.micro_focus.update(iteration)
-                except Exception:
+                except Exception as e:
                     if error_handler.debug_mode:
                         raise
                     else:
@@ -1262,7 +1262,7 @@ class BotStepIntegrator:
                         self.bot.unit_factory.gas_unit_ratio_target = (
                             self.bot.current_gas_ratio
                         )
-                except Exception:
+                except Exception as e:
                     if error_handler.debug_mode:
                         raise
                     else:
@@ -1280,7 +1280,7 @@ class BotStepIntegrator:
                 start_time = self._logic_tracker.start_logic("SmartBalancer")
                 try:
                     await self.bot.smart_balancer.on_step(iteration)
-                except Exception:
+                except Exception as e:
                     if error_handler.debug_mode:
                         raise
                     else:
@@ -1385,7 +1385,7 @@ class BotStepIntegrator:
                 start_time = self._logic_tracker.start_logic("CreepHighway")
                 try:
                     await self.bot.creep_highway.on_step(iteration)
-                except Exception:
+                except Exception as e:
                     if error_handler.debug_mode:
                         raise
                     else:
@@ -1403,7 +1403,7 @@ class BotStepIntegrator:
                 start_time = self._logic_tracker.start_logic("FlankingCoord")
                 try:
                     await self.bot.flanking_coord.on_step(iteration)
-                except Exception:
+                except Exception as e:
                     if error_handler.debug_mode:
                         raise
                     else:
@@ -1423,7 +1423,7 @@ class BotStepIntegrator:
                 start_time = self._logic_tracker.start_logic("SpellCaster")
                 try:
                     await self.bot.spellcaster.on_step(iteration)
-                except Exception:
+                except Exception as e:
                     if error_handler.debug_mode:
                         raise
                     else:
@@ -1457,7 +1457,7 @@ class BotStepIntegrator:
                 start_time = self._logic_tracker.start_logic("UpgradeCoord")
                 try:
                     await self.bot.upgrade_coord.on_step(iteration)
-                except Exception:
+                except Exception as e:
                     if error_handler.debug_mode:
                         raise
                     else:
@@ -1494,7 +1494,7 @@ class BotStepIntegrator:
                         if iteration % 150 == 0:
                             status = self.bot.early_scout.get_scout_status()
                             self.logger.info(f"[EARLY_SCOUT] {status}")
-                    except Exception:
+                    except Exception as e:
                         if error_handler.debug_mode:
                             raise
                         else:
@@ -1523,7 +1523,7 @@ class BotStepIntegrator:
                             f"WT:{report.get('watchtowers_held',0)}, "
                             f"Lost:{report.get('scouts_lost',0)}"
                         )
-                except Exception:
+                except Exception as e:
                     if error_handler.debug_mode:
                         raise
                     else:
@@ -1543,7 +1543,7 @@ class BotStepIntegrator:
                 start_time = self._logic_tracker.start_logic("BuildOrderOpt")
                 try:
                     await self.bot.build_order_opt.on_step(iteration)
-                except Exception:
+                except Exception as e:
                     if error_handler.debug_mode:
                         raise
                     else:
@@ -1563,7 +1563,7 @@ class BotStepIntegrator:
                 start_time = self._logic_tracker.start_logic("MultiTest")
                 try:
                     await self.bot.multi_test.on_step(iteration)
-                except Exception:
+                except Exception as e:
                     if error_handler.debug_mode:
                         raise
                     else:
@@ -1602,7 +1602,7 @@ class BotStepIntegrator:
                             await self.bot.client.leave()
                             return
 
-                except Exception:
+                except Exception as e:
                     if error_handler.debug_mode:
                         raise
                     else:
@@ -1629,7 +1629,7 @@ class BotStepIntegrator:
                 start_time = self._logic_tracker.start_logic("SituationalAwareness")
                 try:
                     self.bot.situational_awareness.on_step(iteration)
-                except Exception:
+                except Exception as e:
                     if error_handler.debug_mode:
                         raise
                     else:
@@ -1731,7 +1731,7 @@ class BotStepIntegrator:
                             self.logger.info(
                                 f"[OPPONENT_MODELING] Strategy: {predicted_strategy} ({confidence:.1%} confidence)"
                             )
-                except Exception:
+                except Exception as e:
                     if error_handler.debug_mode:
                         raise
                     else:
@@ -1788,7 +1788,7 @@ class BotStepIntegrator:
                         self.logger.info(
                             f"[PRODUCTION] Authority: {stats['authority_mode']}, Queue: {stats['queue_size']}"
                         )
-                except Exception:
+                except Exception as e:
                     if error_handler.debug_mode:
                         raise
                     else:
@@ -1862,7 +1862,7 @@ class BotStepIntegrator:
                     if iteration % 1320 == 0:
                         report = self.bot.worker_optimizer.get_efficiency_report()
                         self.logger.info(report)
-                except Exception:
+                except Exception as e:
                     if error_handler.debug_mode:
                         raise
                     else:
@@ -1912,7 +1912,7 @@ class BotStepIntegrator:
                             f"Total: {stats['total_injects']}, "
                             f"Queens: {stats['queens_assigned']}"
                         )
-                except Exception:
+                except Exception as e:
                     if error_handler.debug_mode:
                         raise
                     else:
@@ -1949,7 +1949,7 @@ class BotStepIntegrator:
                     # Log statistics periodically
                     self.bot.queen_transfusion.log_statistics(iteration)
 
-                except Exception:
+                except Exception as e:
                     if error_handler.debug_mode:
                         raise
                     else:
@@ -1976,7 +1976,7 @@ class BotStepIntegrator:
                             iteration
                         )
 
-                except Exception:
+                except Exception as e:
                     if error_handler.debug_mode:
                         raise
                     else:
@@ -1998,7 +1998,7 @@ class BotStepIntegrator:
                     # Log statistics periodically
                     self.bot.spatial_query.log_statistics(iteration)
 
-                except Exception:
+                except Exception as e:
                     if error_handler.debug_mode:
                         raise
                     else:
@@ -2016,7 +2016,7 @@ class BotStepIntegrator:
                 start_time = self._logic_tracker.start_logic("VisionNetwork")
                 try:
                     await self.bot.vision_network.on_step(iteration)
-                except Exception:
+                except Exception as e:
                     if error_handler.debug_mode:
                         raise
                     else:
@@ -2036,7 +2036,7 @@ class BotStepIntegrator:
                 start_time = self._logic_tracker.start_logic("CreepV2")
                 try:
                     await self.bot.creep_v2.on_step(iteration)
-                except Exception:
+                except Exception as e:
                     if error_handler.debug_mode:
                         raise
                     else:
@@ -2068,7 +2068,7 @@ class BotStepIntegrator:
                     if iteration % 660 == 0:
                         report = self.bot.upgrade_planner.get_upgrade_progress_report()
                         self.logger.info(report)
-                except Exception:
+                except Exception as e:
                     if error_handler.debug_mode:
                         raise
                     else:
@@ -2166,7 +2166,7 @@ class BotStepIntegrator:
                 start_time = self._logic_tracker.start_logic("IdleUnits")
                 try:
                     await self.bot.idle_units.on_step(iteration)
-                except Exception:
+                except Exception as e:
                     if error_handler.debug_mode:
                         raise
                     else:
@@ -2191,7 +2191,7 @@ class BotStepIntegrator:
                     if iteration % 660 == 0:
                         report = self.bot.combat_phase.get_combat_report()
                         self.logger.info(report)
-                except Exception:
+                except Exception as e:
                     if error_handler.debug_mode:
                         raise
                     else:
@@ -2211,7 +2211,7 @@ class BotStepIntegrator:
                 start_time = self._logic_tracker.start_logic("HarassmentCoord")
                 try:
                     await self.bot.harassment_coord.on_step(iteration)
-                except Exception:
+                except Exception as e:
                     if error_handler.debug_mode:
                         raise
                     else:
@@ -2231,7 +2231,7 @@ class BotStepIntegrator:
                 start_time = self._logic_tracker.start_logic("MultiProng")
                 try:
                     await self.bot.multi_prong.on_step(iteration)
-                except Exception:
+                except Exception as e:
                     if error_handler.debug_mode:
                         raise
                     else:
@@ -2251,7 +2251,7 @@ class BotStepIntegrator:
                 start_time = self._logic_tracker.start_logic("TradeAnalyzer")
                 try:
                     await self.bot.trade_analyzer.on_step(iteration)
-                except Exception:
+                except Exception as e:
                     if error_handler.debug_mode:
                         raise
                     else:
@@ -2338,7 +2338,7 @@ class BotStepIntegrator:
                             f"Lurkers burrowed: {status.get('lurker_burrowed', 0)}, "
                             f"Focus fire: {status.get('focus_fire_assignments', 0)} assignments"
                         )
-                except Exception:
+                except Exception as e:
                     if error_handler.debug_mode:
                         raise
                     else:
@@ -2381,7 +2381,7 @@ class BotStepIntegrator:
                 start_time = self._logic_tracker.start_logic("LateGameOpt")
                 try:
                     await self.bot.late_game_opt.on_step(iteration)
-                except Exception:
+                except Exception as e:
                     if error_handler.debug_mode:
                         raise
                     else:
@@ -2401,7 +2401,7 @@ class BotStepIntegrator:
                 start_time = self._logic_tracker.start_logic("AdaptiveBuild")
                 try:
                     await self.bot.adaptive_build.on_step(iteration)
-                except Exception:
+                except Exception as e:
                     if error_handler.debug_mode:
                         raise
                     else:
@@ -2421,7 +2421,7 @@ class BotStepIntegrator:
                 start_time = self._logic_tracker.start_logic("TimingAttacks")
                 try:
                     await self.bot.timing_attacks.on_step(iteration)
-                except Exception:
+                except Exception as e:
                     if error_handler.debug_mode:
                         raise
                     else:
@@ -2441,7 +2441,7 @@ class BotStepIntegrator:
                 start_time = self._logic_tracker.start_logic("ProxyHatch")
                 try:
                     await self.bot.proxy_hatch.on_step(iteration)
-                except Exception:
+                except Exception as e:
                     if error_handler.debug_mode:
                         raise
                     else:
