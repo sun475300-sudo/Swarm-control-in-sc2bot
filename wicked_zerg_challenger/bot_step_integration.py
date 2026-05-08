@@ -1226,6 +1226,12 @@ class BotStepIntegrator:
             if hasattr(self.bot, "micro_focus") and self.bot.micro_focus:
                 start_time = self._logic_tracker.start_logic("MicroFocusMode")
                 try:
+                    # Side-effect call: micro_focus.update() advances the
+                    # controller's internal state. Return value (a recommended
+                    # interval) is intentionally discarded — the local
+                    # `micro_interval` default of 8 above is the canonical
+                    # fallback used by downstream code.
+                    self.bot.micro_focus.update(iteration)
                 except Exception as e:
                     if error_handler.debug_mode:
                         raise
