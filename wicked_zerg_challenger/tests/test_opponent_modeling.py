@@ -17,16 +17,21 @@ import tempfile
 import unittest
 from unittest.mock import Mock
 
+import pytest
+
 # Add parent directory to path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from opponent_modeling import (
-    GameHistory,
-    OpponentModel,
-    OpponentModeling,
-    OpponentStyle,
-)
-from sc2.position import Point2
+try:
+    from opponent_modeling import (
+        GameHistory,
+        OpponentModel,
+        OpponentModeling,
+        OpponentStyle,
+    )
+    from sc2.position import Point2
+except ImportError:
+    pytest.skip("sc2 library not available", allow_module_level=True)
 
 
 class TestOpponentModel(unittest.TestCase):
