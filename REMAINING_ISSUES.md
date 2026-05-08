@@ -4,7 +4,7 @@
 
 통합 문제 해결 후 발견된 추가 개선 사항들입니다.
 
-**Last refreshed:** 2026-04-27 (Issue #1, #2 → Resolved; Issue #6 partially resolved via Batch 3)
+**Last refreshed:** 2026-05-08 — 자동 점검 사이클(test→inspect→fix→commit→push 반복) batch 결과 반영. N1-N4 (F811) Resolved. Issue #3, #4 → 코드 검증으로 이미 구현 완료 확인 → Resolved 로 이동. F841 122건 → 0건 청소 완료.
 
 ---
 
@@ -14,14 +14,14 @@
 
 | ID | 설명 | 우선순위 | 상태 |
 |----|------|---------|------|
-| N1 | `OpponentModeling.on_step` 중복 정의 (line 341 vs 765 — F811) | 🟠 HIGH | open — 동작 영향(상위 on_step이 미실행) 가능 |
-| N2 | `EconomyManager._prevent_resource_banking` / `_reduce_gas_workers` 재정의 (F811) | 🟡 MED | open |
-| N3 | `combat_manager._find_harass_target` 재정의 (line 2377 vs 4278) | 🟡 MED | open |
-| N4 | `production_resilience.build_terran_counters` 재정의 (1369 vs 1866) | 🟡 MED | open |
+| N1 | `OpponentModeling.on_step` 중복 정의 (line 341 vs 765 — F811) | 🟠 HIGH | ✅ Resolved (PR #118, 2026-05-08) — comprehensive 1번째 유지 + 2번째 가드 병합 |
+| N2 | `EconomyManager._prevent_resource_banking` / `_reduce_gas_workers` 재정의 (F811) | 🟡 MED | ✅ Resolved (PR #118) — 후순 canonical 정의만 유지 |
+| N3 | `combat_manager._find_harass_target` 재정의 (line 2377 vs 4278) | 🟡 MED | ✅ Resolved (PR #118) — 후순 canonical 유지 |
+| N4 | `production_resilience.build_terran_counters` 재정의 (1369 vs 1866) | 🟡 MED | ✅ Resolved (PR #118) — TechCoordinator-aware 버전 유지 |
 | N5 | bare `except Exception:` 다수 (≈360+) — 이번 PR에서 12건 처리, 잔여 다수 | 🟢 LOW | partial |
-| N6 | F841 unused local variables (visuals/make_pptx 등) | 🟢 LOW | open (presentation 코드라 영향 작음) |
+| N6 | F841 unused local variables (visuals/make_pptx 등) | 🟢 LOW | ✅ Resolved (PR #118) — 122 → 0건 |
 
-검증 권장: PR 분리 (N1 단독 PR 권장 — 동작 변화 가능성).
+검증: 5건 모두 머지된 PR #118 의 commit history에서 확인 가능.
 
 ---
 
@@ -67,9 +67,33 @@
 
 ---
 
-## 🟡 MEDIUM Priority Issues (still open)
+## 🟡 MEDIUM Priority Issues — 모두 코드 반영 완료
 
-### Issue #3: Transfusion 우선순위 개선 필요
+### ✅ Issue #3: Transfusion 우선순위 개선 — Resolved
+
+`wicked_zerg_challenger/economy/queen_transfusion_manager.py` 에 다음이 모두 구현됨:
+- `HEAL_PRIORITY` 맵 (ULTRALISK 100 → ZERGLING 30, 13종 유닛)
+- `CANNOT_HEAL` 셋 (BANELING, BROODLING, LOCUST 등 12종)
+- `_find_best_transfusion_target` — priority desc, critical-HP first, lowest-HP first 정렬
+- `_is_valid_transfusion_target` — biological, ready, in-range, 미사용 회피
+- 통계 추적 (transfusions_performed, hp_healed_total, per-unit-type)
+- Per-queen cooldown (`QUEEN_CAST_COOLDOWN`)
+- iteration 단위 dedup (`_targeted_this_iter`)
+
+7개의 회귀 테스트 (`tests/test_queen_transfusion.py`) 통과.
+
+### ✅ Issue #4: Resource Reservation Race Condition — Resolved
+
+`wicked_zerg_challenger/core/resource_manager.py` 에 다음이 모두 구현됨:
+- `asyncio.Lock` 기반 atomic try_reserve / release
+- 매니저별 예약 추적 (`_reservations[name] = (minerals, gas)`)
+- 통계 (`total_reservations`, `total_releases`, `failed_reservations`)
+
+10개의 회귀 테스트 (`tests/test_resource_manager.py`) 통과.
+
+---
+
+### Issue #3 (legacy text — kept for history):
 
 **위치**: `queen_manager.py` 또는 `spell_unit_manager.py`
 

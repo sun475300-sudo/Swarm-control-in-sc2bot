@@ -329,7 +329,6 @@ class AggressiveStrategyExecutor:
     async def _execute_baneling_bust(self) -> None:
         """맹독충 올인 실행"""
         config = self.strategy_configs[AggressiveStrategyType.BANELING_BUST]
-        game_time = getattr(self.bot, "time", 0)
 
         # 1. 스포닝 풀 건설
         if not self._pool_started:
@@ -521,7 +520,6 @@ class AggressiveStrategyExecutor:
     async def _execute_tunneling_claws(self) -> None:
         """잠복 바퀴 이동 실행"""
         config = self.strategy_configs[AggressiveStrategyType.TUNNELING_CLAWS]
-        game_time = getattr(self.bot, "time", 0)
 
         # 1. 바퀴굴 건설
         roach_warren = self.bot.structures(UnitTypeId.ROACHWARREN)
@@ -981,7 +979,7 @@ class AggressiveStrategyExecutor:
                             )
                             self._ventral_sacs_started = True
                             logger.info(f"Ventral Sacs upgrade started!")
-                    except Exception as e:
+                    except Exception:
                         pass
 
         # 2. 드랍용 대군주 지정
@@ -1039,7 +1037,7 @@ class AggressiveStrategyExecutor:
                             # 또는 유닛이 대군주에 타도록 (AbilityId.SMART)
                             # 여기서는 대군주가 태우는 방식 사용
                             self.bot.do(overlord(AbilityId.LOAD, ling))
-                        except (AttributeError, TypeError) as e:
+                        except (AttributeError, TypeError):
                             # Overlord transport may fail if unit is busy or ability unavailable
                             pass
                 else:
