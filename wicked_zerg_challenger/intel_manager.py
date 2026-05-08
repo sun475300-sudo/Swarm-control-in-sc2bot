@@ -51,6 +51,14 @@ class IntelManager:
         "BANELING", "ROACH", "STALKER", "MARAUDER",
         "SIEGETANK", "SIEGETANKSIEGED", "LIBERATOR", "WIDOWMINE",
     })
+    # 적 확장 감지용 — _BASE_TYPES의 단순 형태(메인 타운홀만)
+    _EXPANSION_BASE_TYPES = frozenset({"COMMANDCENTER", "NEXUS", "HATCHERY"})
+    # 적 비싼 테크 건물 — _detect_enemy_vulnerability에서 매 호출 재할당하던 set
+    _EXPENSIVE_TECH = frozenset({
+        "STARPORT", "ROBOTICSFACILITY", "STARGATE",
+        "DARKSHRINE", "FLEETBEACON", "FUSIONCORE",
+        "GREATERSPIRE", "NYDUSNETWORK",
+    })
 
     def __init__(self, bot):
         self.bot = bot
@@ -412,26 +420,14 @@ class IntelManager:
         expanding = False
         teching = False
 
-        base_types = {"COMMANDCENTER", "NEXUS", "HATCHERY"}
-        expensive_tech = {
-            "STARPORT",
-            "ROBOTICSFACILITY",
-            "STARGATE",
-            "DARKSHRINE",
-            "FLEETBEACON",
-            "FUSIONCORE",
-            "GREATERSPIRE",
-            "NYDUSNETWORK",
-        }
-
         for struct in enemy_structures:
             type_name = getattr(struct.type_id, "name", "").upper()
             build_progress = getattr(struct, "build_progress", 1.0)
 
             if build_progress < 1.0:  # 건설 중
-                if type_name in base_types:
+                if type_name in self._EXPANSION_BASE_TYPES:
                     expanding = True
-                if type_name in expensive_tech:
+                if type_name in self._EXPENSIVE_TECH:
                     teching = True
 
         blackboard.set("enemy_expanding", expanding)
