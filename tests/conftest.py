@@ -4,10 +4,12 @@ pytest 공통 fixtures (#171)
 모든 테스트 파일에서 공유할 수 있는 fixture와 설정을 정의한다.
 """
 
+import importlib.util
 import os
 import shutil
 import sys
 import tempfile
+import types
 from pathlib import Path
 from unittest.mock import MagicMock
 
@@ -17,6 +19,148 @@ import pytest
 PROJECT_ROOT = Path(__file__).parent.parent
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
+
+# 봇 코드 다수가 `from utils.logger import get_logger` 처럼 wicked_zerg_challenger
+# 안의 utils 를 top-level 로 가정하고 import 한다. 봇을 정상 실행 환경에서는
+# 그 디렉터리가 cwd 라 문제가 없지만, pytest 가 프로젝트 루트에서 실행되면
+# `utils` 가 보이지 않아 collection 단계에서 ImportError 가 난다.
+# 테스트에 한해 wicked_zerg_challenger 를 sys.path 에 끼워주면 해결된다.
+WZC_ROOT = PROJECT_ROOT / "wicked_zerg_challenger"
+if WZC_ROOT.exists() and str(WZC_ROOT) not in sys.path:
+    sys.path.insert(0, str(WZC_ROOT))
+
+
+def _install_sc2_stub() -> None:
+    """sc2 패키지가 실제로 설치되어 있지 않을 때, 테스트가 import만 하면
+    되는 정도의 최소 stub 을 sys.modules 에 등록한다.
+
+    실제 sc2 가 있으면 아무 것도 하지 않는다. 효과:
+      - test_queen_transfusion(*).py, test_advanced_scout_system_v2.py,
+        test_spatial_query_optimizer.py, test_harassment_coordinator.py 가
+        module-level skip 대신 실제로 실행된다.
+      - 테스트가 사용하는 심볼만 노출하므로 실제 sc2 와 충돌하지 않는다.
+    """
+    if importlib.util.find_spec("sc2") is not None:
+        return  # 진짜 sc2 가 우선
+
+    class _StringEnumLike(type):
+        """무엇을 받아도 새 멤버처럼 동작하는 enum-like 메타."""
+
+        def __getattr__(cls, name):
+            value = cls._members.setdefault(name, cls(name))  # type: ignore[attr-defined]
+            return value
+
+    class _IdBase(metaclass=_StringEnumLike):
+        _members: dict = {}
+
+        def __init__(self, name: str):
+            self.name = name
+            self.value = name
+
+        def __repr__(self) -> str:  # pragma: no cover
+            return f"{type(self).__name__}.{self.name}"
+
+        def __eq__(self, other) -> bool:
+            if isinstance(other, type(self)):
+                return self.name == other.name
+            return NotImplemented
+
+        def __hash__(self) -> int:
+            return hash((type(self).__name__, self.name))
+
+    def _make_id_class(class_name: str) -> type:
+        # 클래스마다 별도 _members dict 를 갖도록 동적 생성
+        return type(class_name, (_IdBase,), {"_members": {}})
+
+    UnitTypeId = _make_id_class("UnitTypeId")
+    AbilityId = _make_id_class("AbilityId")
+    UpgradeId = _make_id_class("UpgradeId")
+
+    class Point2(tuple):
+        def __new__(cls, position):
+            if isinstance(position, Point2):
+                return position
+            try:
+                x, y = position
+            except (TypeError, ValueError):
+                x, y = position, 0
+            obj = super().__new__(cls, (float(x), float(y)))
+            return obj
+
+        @property
+        def x(self) -> float:
+            return self[0]
+
+        @property
+        def y(self) -> float:
+            return self[1]
+
+        def distance_to(self, other) -> float:
+            ox = getattr(other, "x", other[0] if hasattr(other, "__getitem__") else 0)
+            oy = getattr(other, "y", other[1] if hasattr(other, "__getitem__") else 0)
+            return ((self.x - ox) ** 2 + (self.y - oy) ** 2) ** 0.5
+
+    class Point3(Point2):
+        def __new__(cls, position):
+            if len(position) == 3:
+                x, y, _z = position
+            else:
+                x, y = position
+            return Point2.__new__(cls, (x, y))
+
+    class Unit:  # pragma: no cover - test stub
+        pass
+
+    class Units(list):  # pragma: no cover - test stub
+        def __init__(self, items=None, bot_object=None):
+            super().__init__(items or [])
+
+    class BotAI:  # pragma: no cover - test stub
+        pass
+
+    sc2 = types.ModuleType("sc2")
+    sc2.__path__ = []  # 패키지로 인식
+
+    ids = types.ModuleType("sc2.ids")
+    ids.__path__ = []
+
+    unit_typeid = types.ModuleType("sc2.ids.unit_typeid")
+    unit_typeid.UnitTypeId = UnitTypeId
+
+    ability_id = types.ModuleType("sc2.ids.ability_id")
+    ability_id.AbilityId = AbilityId
+
+    upgrade_id = types.ModuleType("sc2.ids.upgrade_id")
+    upgrade_id.UpgradeId = UpgradeId
+
+    position_mod = types.ModuleType("sc2.position")
+    position_mod.Point2 = Point2
+    position_mod.Point3 = Point3
+
+    unit_mod = types.ModuleType("sc2.unit")
+    unit_mod.Unit = Unit
+
+    units_mod = types.ModuleType("sc2.units")
+    units_mod.Units = Units
+
+    bot_ai_mod = types.ModuleType("sc2.bot_ai")
+    bot_ai_mod.BotAI = BotAI
+
+    for mod in (
+        sc2,
+        ids,
+        unit_typeid,
+        ability_id,
+        upgrade_id,
+        position_mod,
+        unit_mod,
+        units_mod,
+        bot_ai_mod,
+    ):
+        sys.modules[mod.__name__] = mod
+
+
+_install_sc2_stub()
 
 
 # ═══════════════════════════════════════════════════════

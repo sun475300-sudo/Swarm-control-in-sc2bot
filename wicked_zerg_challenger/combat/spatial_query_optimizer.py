@@ -11,7 +11,7 @@ Performance improvements:
 - Expected speedup: 3-10x for large unit counts
 """
 
-from typing import TYPE_CHECKING, Dict, Optional, Tuple
+from typing import TYPE_CHECKING, Any, Dict, Optional, Tuple
 
 if TYPE_CHECKING:
     from sc2.bot_ai import BotAI
@@ -29,14 +29,24 @@ class SpatialQueryOptimizer:
         self.bot = bot
         self.logger = get_logger("SpatialQueryOptimizer")
 
-        # Query result cache (cleared every frame)
+        # Query result cache (cleared every frame). Cache keys embed the
+        # iteration so stale-iteration entries can never produce a hit, but
+        # without proactive eviction the dict would grow unbounded across
+        # a long match. _maybe_invalidate() drops the entire cache as soon
+        # as a new iteration shows up in any query path.
         self._query_cache: Dict[Tuple, "Units"] = {}
-        self._last_cache_clear = 0
+        self._last_cache_clear = -1
 
         # Statistics
         self.total_queries = 0
         self.cache_hits = 0
         self.cache_misses = 0
+
+    def _maybe_invalidate(self, iteration: int) -> None:
+        """Drop the per-frame cache when the iteration counter advances."""
+        if iteration != self._last_cache_clear:
+            self._query_cache.clear()
+            self._last_cache_clear = iteration
 
     def get_enemies_near_position(
         self, position: "Point2", radius: float, iteration: int
@@ -52,6 +62,7 @@ class SpatialQueryOptimizer:
         Returns:
             Units collection of enemies within radius
         """
+        self._maybe_invalidate(iteration)
         self.total_queries += 1
 
         # Cache key
@@ -81,6 +92,7 @@ class SpatialQueryOptimizer:
         Returns:
             Units collection of allies within radius
         """
+        self._maybe_invalidate(iteration)
         self.total_queries += 1
 
         cache_key = (iteration, "allies_near", position.x, position.y, radius)
@@ -108,6 +120,7 @@ class SpatialQueryOptimizer:
         Returns:
             Units collection of allies within radius
         """
+        self._maybe_invalidate(iteration)
         self.total_queries += 1
 
         cache_key = (iteration, "allies_near_unit", unit.tag, radius)
@@ -135,6 +148,7 @@ class SpatialQueryOptimizer:
         Returns:
             Units collection of enemies within radius
         """
+        self._maybe_invalidate(iteration)
         self.total_queries += 1
 
         cache_key = (iteration, "enemies_near_unit", unit.tag, radius)
@@ -250,16 +264,15 @@ class SpatialQueryOptimizer:
 
     def clear_cache_if_needed(self, iteration: int) -> None:
         """
-        Clear cache every frame (iteration change)
+        Clear cache every frame (iteration change). Kept for callers that
+        invalidate explicitly; the get_* methods now also self-invalidate.
 
         Args:
             iteration: Current game iteration
         """
-        if iteration != self._last_cache_clear:
-            self._query_cache.clear()
-            self._last_cache_clear = iteration
+        self._maybe_invalidate(iteration)
 
-    def get_statistics(self) -> Dict[str, any]:
+    def get_statistics(self) -> Dict[str, Any]:
         """
         Get query statistics
 

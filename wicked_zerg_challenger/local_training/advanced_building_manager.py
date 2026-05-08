@@ -86,6 +86,11 @@ class AdvancedBuildingManager:
         else:
             self.placement_helper = None
 
+        # 일꾼 위치 추적 (제자리 정체 감지용): tag -> (position, last_iteration)
+        self._worker_positions: Dict[int, tuple] = {}
+        self._stuck_position_eps: float = 0.5
+        self._stuck_iteration_window: int = 30
+
     # ==================== 1. 중복 코드 제거: 공통 변태 로직 ====================
 
     async def morph_unit_safely(
@@ -768,6 +773,8 @@ class AdvancedBuildingManager:
             return 0
 
         rescued = 0
+        current_iter = getattr(self.bot, "iteration", 0)
+        active_tags = set()
         for worker in self.bot.workers:
             try:
                 # 1. Idle 상태인 경우
@@ -775,7 +782,34 @@ class AdvancedBuildingManager:
                 if hasattr(worker, "is_idle") and worker.is_idle:
                     is_stuck = True
 
-                # 2. 움직이지만 제자리인 경우 (TODO: 위치 기록 필요, 여기선 생략)
+                # 2. 움직이지만 제자리인 경우: 이전 위치를 기록해두고
+                #    stuck_iteration_window 동안 변위가 stuck_position_eps 미만이면 정체로 간주
+                pos = getattr(worker, "position", None)
+                if pos is not None:
+                    tag = getattr(worker, "tag", None)
+                    if tag is not None:
+                        active_tags.add(tag)
+                        prev = self._worker_positions.get(tag)
+                        if prev is None:
+                            self._worker_positions[tag] = (pos, current_iter)
+                        else:
+                            prev_pos, prev_iter = prev
+                            try:
+                                dx = float(pos.x) - float(prev_pos.x)
+                                dy = float(pos.y) - float(prev_pos.y)
+                                moved = (dx * dx + dy * dy) ** 0.5
+                            except (AttributeError, TypeError):
+                                moved = self._stuck_position_eps + 1.0
+                            elapsed = current_iter - prev_iter
+                            if (
+                                elapsed >= self._stuck_iteration_window
+                                and moved < self._stuck_position_eps
+                            ):
+                                is_stuck = True
+                                # 정체 감지 후 기준 위치 갱신
+                                self._worker_positions[tag] = (pos, current_iter)
+                            elif moved >= self._stuck_position_eps:
+                                self._worker_positions[tag] = (pos, current_iter)
 
                 if is_stuck:
                     if hasattr(self.bot, "structures"):
@@ -802,5 +836,12 @@ class AdvancedBuildingManager:
                                 rescued += 1
             except Exception:
                 continue
+
+        # 사라진 일꾼은 추적 dict 에서 정리하여 메모리 누수 방지.
+        # active_tags 가 비어 있더라도 (모든 일꾼 사망) dict 를 비우는 것이 옳다.
+        if self._worker_positions:
+            stale = [t for t in self._worker_positions if t not in active_tags]
+            for t in stale:
+                self._worker_positions.pop(t, None)
 
         return rescued
