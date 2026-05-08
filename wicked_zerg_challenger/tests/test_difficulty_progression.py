@@ -16,34 +16,20 @@ import tempfile
 import unittest
 from io import StringIO
 
+import pytest
+
 # Add parent directory to path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from difficulty_progression import DifficultyProgression
-
-# Mock sc2.data imports
+# difficulty_progression.py hard-imports sc2.data at top-level, so we cannot
+# load the SUT without the sc2 library present. Skip the whole module
+# rather than collect with mocks that wouldn't reach the real code path.
 try:
     from sc2.data import Difficulty, Race
+
+    from difficulty_progression import DifficultyProgression
 except ImportError:
-    # Create mock enums for testing
-    from enum import Enum
-
-    class Difficulty(Enum):
-        VeryEasy = 1
-        Easy = 2
-        Medium = 3
-        MediumHard = 4
-        Hard = 5
-        Harder = 6
-        VeryHard = 7
-        CheatVision = 8
-        CheatMoney = 9
-        CheatInsane = 10
-
-    class Race(Enum):
-        Terran = 1
-        Protoss = 2
-        Zerg = 3
+    pytest.skip("sc2 library not available", allow_module_level=True)
 
 
 class TestDifficultyProgressionBasics(unittest.TestCase):
