@@ -42,7 +42,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from enum import Enum
-from typing import List, Optional, Tuple
+from typing import Optional
 
 try:
     from sc2.bot_ai import BotAI  # type: ignore
@@ -104,7 +104,7 @@ def cadence_for_phase(phase: ScoutPhase) -> float:
     }[phase]
 
 
-def _quadrant_targets(enemy_main: Point2, map_extent: float) -> List[Point2]:
+def _quadrant_targets(enemy_main: Point2, map_extent: float) -> list[Point2]:
     """4 sweep targets for zergling phase: NE / SE / SW / NW relative to
     midpoint between own and enemy main."""
     cx, cy = enemy_main[0], enemy_main[1]
@@ -128,7 +128,7 @@ class PhaseScoutCadence:
     def __init__(self, bot: BotAI) -> None:
         self.bot = bot
         # Last dispatch wall time per phase, indexed by phase enum.
-        self._last_dispatch_s: dict = {p: -10**6 for p in ScoutPhase}
+        self._last_dispatch_s: dict = dict.fromkeys(ScoutPhase, -10 ** 6)
         # Round-robin quadrant index for zergling sweep
         self._zergling_quadrant = 0
 
@@ -217,14 +217,14 @@ class PhaseScoutCadence:
 
 
 __all__ = [
+    "PHASE_1_CADENCE_S",
+    "PHASE_1_END_S",
+    "PHASE_2_CADENCE_S",
+    "PHASE_2_END_S",
+    "PHASE_3_CADENCE_S",
+    "DispatchPlan",
     "PhaseScoutCadence",
     "ScoutPhase",
-    "DispatchPlan",
-    "phase_for_time",
     "cadence_for_phase",
-    "PHASE_1_END_S",
-    "PHASE_2_END_S",
-    "PHASE_1_CADENCE_S",
-    "PHASE_2_CADENCE_S",
-    "PHASE_3_CADENCE_S",
+    "phase_for_time",
 ]

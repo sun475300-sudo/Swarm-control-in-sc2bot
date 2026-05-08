@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Feature #92: Queen Walk 러시 매니저
 
@@ -10,7 +9,7 @@ Feature #92: Queen Walk 러시 매니저
 """
 
 from enum import Enum
-from typing import Dict, Optional, Set
+from typing import Optional
 
 try:
     from sc2.ids.ability_id import AbilityId
@@ -67,8 +66,8 @@ class QueenWalkManager:
         self.walk_active: bool = False
 
         # 할당된 유닛
-        self.queen_tags: Set[int] = set()  # 퀸 워크에 참여하는 퀸
-        self.zergling_tags: Set[int] = set()  # 호위 저글링
+        self.queen_tags: set[int] = set()  # 퀸 워크에 참여하는 퀸
+        self.zergling_tags: set[int] = set()  # 호위 저글링
         self.rally_point: Optional[Point2] = None  # 집결 지점
         self.target_point: Optional[Point2] = None  # 공격 목표
 
@@ -473,7 +472,7 @@ class QueenWalkManager:
         self.rally_point = None
         self.target_point = None
 
-    def get_queen_walk_stats(self) -> Dict:
+    def get_queen_walk_stats(self) -> dict:
         """
         퀸 워크 통계 반환
 

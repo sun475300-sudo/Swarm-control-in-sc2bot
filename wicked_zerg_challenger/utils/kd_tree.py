@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 K-D Tree Implementation for Spatial Optimization
 
@@ -12,7 +11,7 @@ Features:
 """
 
 import math
-from typing import Any, List, Optional, Tuple
+from typing import Any, Optional
 
 
 class KDTreeNode:
@@ -20,7 +19,7 @@ class KDTreeNode:
 
     def __init__(
         self,
-        point: Tuple[float, float],
+        point: tuple[float, float],
         data: Any = None,
         left: Optional["KDTreeNode"] = None,
         right: Optional["KDTreeNode"] = None,
@@ -43,7 +42,7 @@ class KDTree:
     - Range query: O(sqrt(N) + k) where k is result count
     """
 
-    def __init__(self, points: Optional[List[Tuple[Tuple[float, float], Any]]] = None):
+    def __init__(self, points: Optional[list[tuple[tuple[float, float], Any]]] = None):
         """
         Initialize K-D Tree.
 
@@ -56,7 +55,7 @@ class KDTree:
         if points:
             self.build(points)
 
-    def build(self, points: List[Tuple[Tuple[float, float], Any]]) -> None:
+    def build(self, points: list[tuple[tuple[float, float], Any]]) -> None:
         """
         Build K-D Tree from list of points.
 
@@ -72,7 +71,7 @@ class KDTree:
         self.root = self._build_recursive(points, depth=0)
 
     def _build_recursive(
-        self, points: List[Tuple[Tuple[float, float], Any]], depth: int
+        self, points: list[tuple[tuple[float, float], Any]], depth: int
     ) -> Optional[KDTreeNode]:
         """Recursively build K-D Tree."""
         if not points:
@@ -97,8 +96,8 @@ class KDTree:
         return node
 
     def nearest_neighbor(
-        self, query: Tuple[float, float], exclude_data: Any = None
-    ) -> Optional[Tuple[Tuple[float, float], Any, float]]:
+        self, query: tuple[float, float], exclude_data: Any = None
+    ) -> Optional[tuple[tuple[float, float], Any, float]]:
         """
         Find nearest neighbor to query point.
 
@@ -123,8 +122,8 @@ class KDTree:
     def _nearest_neighbor_recursive(
         self,
         node: Optional[KDTreeNode],
-        query: Tuple[float, float],
-        best: List,
+        query: tuple[float, float],
+        best: list,
         exclude_data: Any,
     ) -> None:
         """Recursively search for nearest neighbor."""
@@ -156,8 +155,8 @@ class KDTree:
             self._nearest_neighbor_recursive(second, query, best, exclude_data)
 
     def range_query(
-        self, center: Tuple[float, float], radius: float
-    ) -> List[Tuple[Tuple[float, float], Any, float]]:
+        self, center: tuple[float, float], radius: float
+    ) -> list[tuple[tuple[float, float], Any, float]]:
         """
         Find all points within radius of center.
 
@@ -176,9 +175,9 @@ class KDTree:
     def _range_query_recursive(
         self,
         node: Optional[KDTreeNode],
-        center: Tuple[float, float],
+        center: tuple[float, float],
         radius: float,
-        results: List,
+        results: list,
     ) -> None:
         """Recursively search for points within radius."""
         if node is None:
@@ -205,8 +204,8 @@ class KDTree:
                 self._range_query_recursive(node.left, center, radius, results)
 
     def k_nearest_neighbors(
-        self, query: Tuple[float, float], k: int, exclude_data: Any = None
-    ) -> List[Tuple[Tuple[float, float], Any, float]]:
+        self, query: tuple[float, float], k: int, exclude_data: Any = None
+    ) -> list[tuple[tuple[float, float], Any, float]]:
         """
         Find k nearest neighbors to query point.
 
@@ -239,9 +238,9 @@ class KDTree:
     def _knn_recursive(
         self,
         node: Optional[KDTreeNode],
-        query: Tuple[float, float],
+        query: tuple[float, float],
         k: int,
-        heap: List,
+        heap: list,
         exclude_data: Any,
     ) -> None:
         """Recursively search for k nearest neighbors."""
@@ -281,7 +280,7 @@ class KDTree:
             self._knn_recursive(second, query, k, heap, exclude_data)
 
     @staticmethod
-    def _distance(p1: Tuple[float, float], p2: Tuple[float, float]) -> float:
+    def _distance(p1: tuple[float, float], p2: tuple[float, float]) -> float:
         """Calculate Euclidean distance between two points."""
         dx = p1[0] - p2[0]
         dy = p1[1] - p2[1]

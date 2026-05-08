@@ -1,11 +1,9 @@
-# -*- coding: utf-8 -*-
 """
 Dynamic Resource Balancer - 자원 불균형 감지 및 생산 비율 자동 조정
 
 후반 미네랄 과다/가스 부족 시 가스 유닛 비중을 자동 조절합니다.
 """
 
-from typing import Dict, Tuple
 
 from utils.logger import get_logger
 
@@ -46,7 +44,7 @@ class DynamicResourceBalancer:
         )
         self.last_state_change = 0
 
-    def update(self, iteration: int) -> Dict[str, float]:
+    def update(self, iteration: int) -> dict[str, float]:
         """
         자원 상태를 분석하고 조정된 유닛 비율을 반환
 
@@ -91,7 +89,7 @@ class DynamicResourceBalancer:
 
     def _analyze_resource_imbalance(
         self, minerals: int, gas: int, game_time: float
-    ) -> Tuple[str, float]:
+    ) -> tuple[str, float]:
         """
         자원 불균형을 분석하고 목표 가스 비율 계산
 
@@ -155,7 +153,7 @@ class DynamicResourceBalancer:
 
         return "BALANCED", target_ratio
 
-    def get_unit_ratio_adjustments(self) -> Dict[str, float]:
+    def get_unit_ratio_adjustments(self) -> dict[str, float]:
         """
         현재 자원 상태에 따른 유닛별 비율 조정값 반환
 

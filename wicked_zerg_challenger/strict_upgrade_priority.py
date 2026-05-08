@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Strict Upgrade Priority System - 엄격한 업그레이드 우선순위
 
@@ -9,7 +8,7 @@ Strict Upgrade Priority System - 엄격한 업그레이드 우선순위
 해결: 가스 예약 시스템으로 발업 우선순위 강제
 """
 
-from typing import Optional, Set
+from typing import Optional
 
 from sc2.ids.unit_typeid import UnitTypeId
 from sc2.ids.upgrade_id import UpgradeId
@@ -74,8 +73,8 @@ class StrictUpgradePriority:
         self.reserved_for_upgrade: Optional[UpgradeId] = None
 
         # 업그레이드 진행 상태
-        self.upgrade_in_progress: Set[UpgradeId] = set()
-        self.completed_upgrades: Set[UpgradeId] = set()
+        self.upgrade_in_progress: set[UpgradeId] = set()
+        self.completed_upgrades: set[UpgradeId] = set()
 
         # 차단 시스템
         self.gas_spending_blocked = False

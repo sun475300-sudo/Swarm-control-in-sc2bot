@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Production Package
 
@@ -20,16 +19,16 @@ from .unit_production import (
 )
 
 __all__ = [
+    "balanced_production",
     # Expansion
     "can_expand_safely",
-    "try_expand",
-    "log_expand_block",
     "cleanup_build_reservations",
-    # Unit Production
-    "safe_train",
-    "produce_army_unit",
     "emergency_zergling_production",
-    "balanced_production",
     # Counter Units
     "get_counter_unit",
+    "log_expand_block",
+    "produce_army_unit",
+    # Unit Production
+    "safe_train",
+    "try_expand",
 ]

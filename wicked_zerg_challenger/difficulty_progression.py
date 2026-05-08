@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Difficulty Progression System - 난이도 자동 조정
 
@@ -11,7 +10,7 @@ Difficulty Progression System - 난이도 자동 조정
 import json
 import logging
 from pathlib import Path
-from typing import Dict, Optional
+from typing import Optional
 
 from sc2.data import Difficulty, Race
 
@@ -46,7 +45,7 @@ class DifficultyProgression:
         self, data_file: str = "local_training/data/difficulty_progression.json"
     ):
         self.data_file = Path(data_file)
-        self.stats: Dict = {}  # {map_name: {race: {difficulty: {wins, losses}}}}
+        self.stats: dict = {}  # {map_name: {race: {difficulty: {wins, losses}}}}
         self.win_rate_threshold = 0.90  # 90%
         self.min_games_for_progression = 10  # 최소 10게임
 
@@ -56,7 +55,7 @@ class DifficultyProgression:
         """통계 데이터 로드"""
         if self.data_file.exists():
             try:
-                with open(self.data_file, "r", encoding="utf-8") as f:
+                with open(self.data_file, encoding="utf-8") as f:
                     data = json.load(f)
                     # Convert string keys back to enums
                     self.stats = self._deserialize_stats(data)
@@ -66,7 +65,7 @@ class DifficultyProgression:
                 self.stats = {}
         else:
             self.stats = {}
-            logger.info(f"No existing progression data, starting fresh")
+            logger.info("No existing progression data, starting fresh")
 
     def _save_stats(self) -> None:
         """통계 데이터 저장"""
@@ -76,11 +75,11 @@ class DifficultyProgression:
             serialized = self._serialize_stats(self.stats)
             with open(self.data_file, "w", encoding="utf-8") as f:
                 json.dump(serialized, f, indent=2, ensure_ascii=False)
-            logger.info(f"Saved progression data")
+            logger.info("Saved progression data")
         except Exception as e:
             logger.info(f"Error saving stats: {e}")
 
-    def _serialize_stats(self, stats: Dict) -> Dict:
+    def _serialize_stats(self, stats: dict) -> dict:
         """Enum을 문자열로 변환"""
         serialized = {}
         for map_name, map_data in stats.items():
@@ -93,7 +92,7 @@ class DifficultyProgression:
                     serialized[map_name][race_str][diff_str] = diff_data
         return serialized
 
-    def _deserialize_stats(self, serialized: Dict) -> Dict:
+    def _deserialize_stats(self, serialized: dict) -> dict:
         """문자열을 Enum으로 변환"""
         stats = {}
         for map_name, map_data in serialized.items():
@@ -158,7 +157,7 @@ class DifficultyProgression:
             next_diff = self._get_next_difficulty(difficulty)
             if next_diff:
                 logger.info(f"\n{'='*70}")
-                logger.info(f"🎉 DIFFICULTY PROGRESSION! 🎉")
+                logger.info("🎉 DIFFICULTY PROGRESSION! 🎉")
                 logger.info(f"{'='*70}")
                 logger.info(f"  Map: {map_name}")
                 logger.info(f"  Opponent: {opponent_race.name}")

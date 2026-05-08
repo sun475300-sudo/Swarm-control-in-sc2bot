@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Comprehensive Scoring System — 종합 점수 기반 실시간 학습 엔진
 
@@ -24,7 +23,6 @@ import os
 import time
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Dict, List
 
 logger = logging.getLogger("ScoringSystem")
 
@@ -87,7 +85,7 @@ class ScoringSystem:
         self.update_interval = 2.0  # 2초마다 평가
 
         # === 10개 도메인 점수 ===
-        self.domains: Dict[str, DomainScore] = {
+        self.domains: dict[str, DomainScore] = {
             "combat": DomainScore("Combat"),
             "production": DomainScore("Production"),
             "scouting": DomainScore("Scouting"),
@@ -125,7 +123,7 @@ class ScoringSystem:
         self._larva_wasted = 0
 
         # === 10게임 누적 ===
-        self._session_scores: List[Dict] = []
+        self._session_scores: list[dict] = []
         self._cumulative_score = self._load_cumulative_score()
 
         os.makedirs(self.SAVE_PATH, exist_ok=True)
@@ -394,7 +392,7 @@ class ScoringSystem:
 
         # 퀸 인젝트 체크
         structures = getattr(self.bot, "structures", None)
-        if structures and hasattr(structures, "__call__"):
+        if structures and callable(structures):
             try:
                 from sc2.ids.unit_typeid import UnitTypeId
 
@@ -434,7 +432,7 @@ class ScoringSystem:
         elif game_time < 480:
             # 중반: 테크 건물 + 업그레이드
             structures = getattr(self.bot, "structures", None)
-            if structures and hasattr(structures, "__call__"):
+            if structures and callable(structures):
                 try:
                     from sc2.ids.unit_typeid import UnitTypeId
 
@@ -556,7 +554,7 @@ class ScoringSystem:
     # 게임 종료 처리
     # =========================================================================
 
-    def on_game_end(self, result: str) -> Dict:
+    def on_game_end(self, result: str) -> dict:
         """
         게임 종료 시 최종 점수 계산 및 저장
 
@@ -605,7 +603,7 @@ class ScoringSystem:
 
         return report
 
-    def _generate_report(self, result: str, game_time: float) -> Dict:
+    def _generate_report(self, result: str, game_time: float) -> dict:
         """종합 리포트 생성"""
         total_score = sum(d.score for d in self.domains.values())
         report = {
@@ -695,7 +693,7 @@ class ScoringSystem:
     # 실시간 상황 인식 + 자동 대응 권고
     # =========================================================================
 
-    def get_realtime_advice(self) -> List[str]:
+    def get_realtime_advice(self) -> list[str]:
         """실시간 상황 분석 후 즉각 행동 권고 반환"""
         advice = []
         game_time = getattr(self.bot, "time", 0.0)
@@ -740,13 +738,13 @@ class ScoringSystem:
     # 저장/로드
     # =========================================================================
 
-    def _save_game_score(self, report: Dict) -> None:
+    def _save_game_score(self, report: dict) -> None:
         """개별 게임 점수 저장"""
         filepath = os.path.join(self.SAVE_PATH, "game_scores.json")
         try:
             existing = []
             if os.path.exists(filepath):
-                with open(filepath, "r", encoding="utf-8") as f:
+                with open(filepath, encoding="utf-8") as f:
                     existing = json.load(f)
             existing.append(report)
             # Keep last 200 games
@@ -757,12 +755,12 @@ class ScoringSystem:
         except Exception:
             pass
 
-    def _load_cumulative_score(self) -> Dict:
+    def _load_cumulative_score(self) -> dict:
         """누적 점수 로드"""
         filepath = os.path.join(self.SAVE_PATH, "cumulative_score.json")
         try:
             if os.path.exists(filepath):
-                with open(filepath, "r", encoding="utf-8") as f:
+                with open(filepath, encoding="utf-8") as f:
                     return json.load(f)
         except Exception:
             pass

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Combat Execution - 전투 실행 시스템
 

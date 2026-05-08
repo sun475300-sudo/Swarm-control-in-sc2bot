@@ -14,7 +14,6 @@ Features:
 - 가스 집약 유닛 비율 관리
 """
 
-from typing import Set
 
 from utils.logger import get_logger
 
@@ -56,7 +55,7 @@ class LateGameOptimizer:
         self.recommended_comp = "standard"  # "brood_lord", "ultralisk", "corruptor"
 
         # Tech transitions
-        self.tech_targets: Set[UnitTypeId] = set()
+        self.tech_targets: set[UnitTypeId] = set()
 
     async def on_step(self, iteration: int):
         """매 프레임 실행"""

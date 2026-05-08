@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Lurker Ambush System - Phase 19
 
@@ -16,7 +15,7 @@ Features:
 - Target prioritization
 """
 
-from typing import Dict, Optional, Set
+from typing import Optional
 
 from utils.logger import get_logger
 
@@ -51,11 +50,11 @@ class LurkerAmbushSystem:
         self.logger = get_logger("LurkerAmbush")
 
         # Lurker tracking
-        self.lurker_states: Dict[int, str] = {}  # {tag: state}
+        self.lurker_states: dict[int, str] = {}  # {tag: state}
         # States: "waiting", "attacking", "retreating", "burrowing"
 
-        self.lurker_targets: Dict[int, Set[int]] = {}  # {lurker_tag: {enemy_tags}}
-        self.last_attack_time: Dict[int, float] = {}  # {lurker_tag: time}
+        self.lurker_targets: dict[int, set[int]] = {}  # {lurker_tag: {enemy_tags}}
+        self.last_attack_time: dict[int, float] = {}  # {lurker_tag: time}
 
         # Ambush settings
         self.MIN_TARGETS_FOR_ATTACK = 3  # Minimum enemies before attacking
@@ -362,7 +361,7 @@ class LurkerAmbushSystem:
 
         # Count by state
         states = {}
-        for tag, state in self.lurker_states.items():
+        for _tag, state in self.lurker_states.items():
             states[state] = states.get(state, 0) + 1
 
         self.logger.info(f"[{int(game_time)}s] === LURKER AMBUSH REPORT ===")
@@ -371,7 +370,7 @@ class LurkerAmbushSystem:
             f"Ambushes: {self.ambushes_executed} | Range: {self.LURKER_RANGE}"
         )
 
-    def get_ambush_stats(self) -> Dict:
+    def get_ambush_stats(self) -> dict:
         """Get ambush statistics"""
         if not hasattr(self.bot, "units"):
             return {}

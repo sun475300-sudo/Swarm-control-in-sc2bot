@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Log Analyzer - Phase 22 로그 정밀 분석 도구
 
@@ -24,7 +23,6 @@ import logging
 from collections import Counter
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, List
 
 logger = logging.getLogger("LogAnalyzer")
 
@@ -36,9 +34,9 @@ class LogAnalyzer:
         self.base_dir = Path(".")
         self.race_stats = {}
         self.game_stats = {}
-        self.game_data_files: List[Dict] = []
-        self.tournament_results: List[Dict] = []
-        self.bot_log_lines: List[str] = []
+        self.game_data_files: list[dict] = []
+        self.tournament_results: list[dict] = []
+        self.bot_log_lines: list[str] = []
 
     def load_all_data(self):
         """모든 데이터 소스 로드"""
@@ -207,15 +205,15 @@ class LogAnalyzer:
             if wr < 20:
                 if race == "Zerg":
                     lines.append(
-                        f"  -> vs Zerg: Need better ZvZ opening (roach timing / baneling bust defense)"
+                        "  -> vs Zerg: Need better ZvZ opening (roach timing / baneling bust defense)"
                     )
                 elif race == "Terran":
                     lines.append(
-                        f"  -> vs Terran: Need better anti-bio strategy (banelings vs marines)"
+                        "  -> vs Terran: Need better anti-bio strategy (banelings vs marines)"
                     )
                 elif race == "Protoss":
                     lines.append(
-                        f"  -> vs Protoss: Need better anti-gateway pressure (roach/ravager timing)"
+                        "  -> vs Protoss: Need better anti-gateway pressure (roach/ravager timing)"
                     )
 
         lines.append("")
@@ -278,26 +276,26 @@ class LogAnalyzer:
             avg_exp = sum(expansion_times) / len(expansion_times)
             min_exp = min(expansion_times)
             max_exp = max(expansion_times)
-            lines.append(f"  Natural Expansion:")
+            lines.append("  Natural Expansion:")
             lines.append(f"    Average: {avg_exp:.0f}s (target: 60s)")
             lines.append(f"    Best: {min_exp:.0f}s | Worst: {max_exp:.0f}s")
             if avg_exp > 90:
                 lines.append(f"    !! LATE - Average {avg_exp - 60:.0f}s behind target")
             elif avg_exp > 70:
-                lines.append(f"    ! Slightly late - aim for sub-60s")
+                lines.append("    ! Slightly late - aim for sub-60s")
             else:
-                lines.append(f"    OK - On target")
+                lines.append("    OK - On target")
 
         if pool_times:
             avg_pool = sum(pool_times) / len(pool_times)
-            lines.append(f"\n  Spawning Pool:")
+            lines.append("\n  Spawning Pool:")
             lines.append(f"    Average: {avg_pool:.0f}s")
 
         if game_durations:
             avg_dur = sum(game_durations) / len(game_durations)
             short_games = sum(1 for d in game_durations if d < 180)
             long_games = sum(1 for d in game_durations if d > 600)
-            lines.append(f"\n  Game Duration:")
+            lines.append("\n  Game Duration:")
             lines.append(f"    Average: {avg_dur / 60:.1f} minutes")
             lines.append(f"    Quick losses (<3min): {short_games}")
             lines.append(f"    Long games (>10min): {long_games}")
@@ -392,7 +390,7 @@ class LogAnalyzer:
                 unit_counts[unit_type] += 1
 
         if unit_counts:
-            lines.append(f"\n  Most Produced Units:")
+            lines.append("\n  Most Produced Units:")
             for unit, count in unit_counts.most_common(5):
                 lines.append(f"    {unit}: {count}")
 
@@ -429,7 +427,7 @@ class LogAnalyzer:
             lines.append(f"  Defeats Analyzed: {len(defeat_timings)}")
             lines.append(f"  Average Defeat Time: {avg_defeat / 60:.1f} minutes")
 
-            lines.append(f"\n  Defeat Timing Distribution:")
+            lines.append("\n  Defeat Timing Distribution:")
             for reason, count in defeat_reasons.most_common():
                 lines.append(f"    {reason}: {count}")
 

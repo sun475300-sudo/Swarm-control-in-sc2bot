@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Queen Specialization Manager - 여왕 전문 분담 체제
 
@@ -14,7 +13,7 @@ Queen Specialization Manager - 여왕 전문 분담 체제
 """
 
 from enum import Enum
-from typing import Dict, List, Optional, Set
+from typing import Optional
 
 try:
     from sc2.ids.ability_id import AbilityId
@@ -55,11 +54,11 @@ class QueenSpecializationManager:
 
     def __init__(self, bot):
         self.bot = bot
-        self.specializations: Dict[int, QueenSpecialization] = {}  # queen_tag -> spec
-        self.pump_assignments: Dict[int, int] = {}  # queen_tag -> hatchery_tag
-        self.last_inject_time: Dict[int, float] = {}  # hatchery_tag -> time
-        self.last_creep_time: Dict[int, float] = {}  # queen_tag -> time
-        self.last_transfuse_time: Dict[int, float] = {}  # queen_tag -> time
+        self.specializations: dict[int, QueenSpecialization] = {}  # queen_tag -> spec
+        self.pump_assignments: dict[int, int] = {}  # queen_tag -> hatchery_tag
+        self.last_inject_time: dict[int, float] = {}  # hatchery_tag -> time
+        self.last_creep_time: dict[int, float] = {}  # queen_tag -> time
+        self.last_transfuse_time: dict[int, float] = {}  # queen_tag -> time
 
         # Config
         self.inject_cooldown = 29.0
@@ -89,7 +88,7 @@ class QueenSpecializationManager:
             qt: ht for qt, ht in self.pump_assignments.items() if qt in current_tags
         }
 
-        assigned: Set[int] = set()
+        assigned: set[int] = set()
 
         # === Phase 1: PUMP 퀸 (기지당 1마리) ===
         hatch_tags = {h.tag for h in hatcheries}
@@ -195,7 +194,7 @@ class QueenSpecializationManager:
         except Exception:
             pass
 
-    async def execute_creep_queen(self, queen, highway_waypoints: List) -> None:
+    async def execute_creep_queen(self, queen, highway_waypoints: list) -> None:
         """
         CREEP 퀸: A* 고속도로 경로를 따라 점막 확장 전담.
         점막 위에서만 종양 설치, 아니면 이동.
@@ -330,7 +329,7 @@ class QueenSpecializationManager:
         """특정 퀸의 역할 반환"""
         return self.specializations.get(queen_tag)
 
-    def get_role_counts(self) -> Dict[str, int]:
+    def get_role_counts(self) -> dict[str, int]:
         """역할별 퀸 수 반환"""
         counts = {"pump": 0, "creep": 0, "combat": 0}
         for spec in self.specializations.values():

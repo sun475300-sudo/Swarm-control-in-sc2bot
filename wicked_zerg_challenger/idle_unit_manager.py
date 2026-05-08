@@ -10,7 +10,7 @@
 4. 소수 병력 → 자동 견제
 """
 
-from typing import Optional, Set
+from typing import Optional
 
 from sc2.ids.unit_typeid import UnitTypeId
 from sc2.position import Point2
@@ -42,7 +42,7 @@ class IdleUnitManager:
         }
 
         # 유닛 태그 추적
-        self.managed_units: Set[int] = set()
+        self.managed_units: set[int] = set()
 
         # 집결지
         self.rally_point: Optional[Point2] = None
@@ -226,7 +226,6 @@ class IdleUnitManager:
         if not self.bot.townhalls.exists:
             return
 
-        main_base = self.bot.townhalls.first.position
 
         combat_units = self.bot.units.filter(
             lambda u: u.type_id in self.combat_unit_types
@@ -292,7 +291,7 @@ class HarassmentManager:
         self.logger = get_logger("HarassmentManager")
 
         # 견제 유닛
-        self.harassment_units: Set[int] = set()
+        self.harassment_units: set[int] = set()
         self.last_harassment = 0
 
     async def on_step(self, iteration: int):

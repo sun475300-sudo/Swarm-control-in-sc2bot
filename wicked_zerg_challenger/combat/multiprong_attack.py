@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Feature #98: 멀티프롱 공격 매니저
 
@@ -14,7 +13,7 @@ Feature #98: 멀티프롱 공격 매니저
 """
 
 from enum import Enum
-from typing import Dict, List, Optional, Set, Tuple
+from typing import Optional
 
 try:
     from sc2.ids.unit_typeid import UnitTypeId
@@ -45,7 +44,7 @@ class AttackProng:
 
     def __init__(self, name: str, target: Optional[Point2] = None):
         self.name = name
-        self.unit_tags: Set[int] = set()
+        self.unit_tags: set[int] = set()
         self.target: Optional[Point2] = target
         self.rally_point: Optional[Point2] = None
         self.status: ProngStatus = ProngStatus.ASSEMBLING
@@ -85,7 +84,7 @@ class MultiprongAttackManager:
         self.logger = get_logger("MultiprongAttack")
 
         # 공격조 관리
-        self.prongs: Dict[str, AttackProng] = {}
+        self.prongs: dict[str, AttackProng] = {}
         self.attack_active: bool = False
         self.attack_start_time: float = 0.0
 
@@ -203,7 +202,7 @@ class MultiprongAttackManager:
                 total_supply += max(supply, 1)
         return total_supply
 
-    def _find_attack_targets(self) -> List[Tuple[Point2, str]]:
+    def _find_attack_targets(self) -> list[tuple[Point2, str]]:
         """
         공격 목표 탐색
 
@@ -256,7 +255,7 @@ class MultiprongAttackManager:
 
         return targets
 
-    def _organize_prongs(self, targets: List[Tuple[Point2, str]]):
+    def _organize_prongs(self, targets: list[tuple[Point2, str]]):
         """
         공격조 편성
 
@@ -338,7 +337,6 @@ class MultiprongAttackManager:
 
         # 집결 지점 설정
         if hasattr(self.bot, "start_location") and hasattr(self.bot, "game_info"):
-            map_center = self.bot.game_info.map_center
             for prong in self.prongs.values():
                 if prong.target:
                     prong.rally_point = self.bot.start_location.towards(
@@ -355,7 +353,7 @@ class MultiprongAttackManager:
 
         # 각 공격조 상태별 관리
         all_disbanded = True
-        for name, prong in list(self.prongs.items()):
+        for _name, prong in list(self.prongs.items()):
             if prong.status == ProngStatus.DISBANDED:
                 continue
 
@@ -500,7 +498,7 @@ class MultiprongAttackManager:
         self.last_attack_time = game_time
         self.prongs.clear()
 
-    def get_multiprong_stats(self) -> Dict:
+    def get_multiprong_stats(self) -> dict:
         """
         멀티프롱 공격 통계 반환
 

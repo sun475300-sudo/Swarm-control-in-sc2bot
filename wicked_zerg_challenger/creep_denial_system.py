@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Creep Denial System - 적 점막 제거 시스템
 
@@ -14,7 +13,7 @@ ZvZ 대전에서 특히 중요한 시스템입니다.
 
 from collections import defaultdict
 from dataclasses import dataclass
-from typing import Dict, List, Optional, Set, Tuple
+from typing import Optional
 
 try:
     from sc2.ids.ability_id import AbilityId
@@ -42,7 +41,7 @@ class DetectedTumor:
     detection_time: float
     last_seen: float
     unit_tag: Optional[int] = None  # 종양 유닛 태그 (보이면)
-    assigned_units: Set[int] = None  # 파괴 임무에 할당된 유닛 태그
+    assigned_units: set[int] = None  # 파괴 임무에 할당된 유닛 태그
     is_burrowed: bool = True
 
     def __post_init__(self):
@@ -70,19 +69,19 @@ class CreepDenialSystem:
         self.logger = get_logger("CreepDenial")
 
         # 탐지된 크립 종양
-        self.detected_tumors: Dict[int, DetectedTumor] = {}  # tumor_id -> DetectedTumor
+        self.detected_tumors: dict[int, DetectedTumor] = {}  # tumor_id -> DetectedTumor
         self._next_tumor_id = 0
 
         # 감시군주 관리
-        self.overseer_patrol_positions: List[Point2] = []
-        self.overseer_assignments: Dict[int, Point2] = (
+        self.overseer_patrol_positions: list[Point2] = []
+        self.overseer_assignments: dict[int, Point2] = (
             {}
         )  # overseer_tag -> patrol_position
 
         # 크립 종양 제거 통계
         self.tumors_destroyed = 0
         self.tumors_detected = 0
-        self.detection_by_unit_type: Dict[str, int] = defaultdict(int)
+        self.detection_by_unit_type: dict[str, int] = defaultdict(int)
 
         # ★ 설정 (GameConfig에서 로드) ★
         self.min_overseers = GameConfig.CREEP_DENIAL_MIN_OVERSEERS
@@ -90,7 +89,7 @@ class CreepDenialSystem:
         self.detection_radius = GameConfig.CREEP_DENIAL_DETECTION_RADIUS
 
         # 크립 종양 우선순위 지점
-        self.priority_areas: List[Point2] = []  # 확장 위치, 전략적 요충지
+        self.priority_areas: list[Point2] = []  # 확장 위치, 전략적 요충지
 
         # 마지막 작업 시간
         self.last_overseer_check = 0
@@ -99,7 +98,7 @@ class CreepDenialSystem:
 
         # ★ UnitAuthorityManager 통합 ★
         self.unit_authority = None  # 초기화 시 설정됨
-        self.managed_units: Set[int] = set()  # 현재 관리 중인 유닛 태그
+        self.managed_units: set[int] = set()  # 현재 관리 중인 유닛 태그
 
     async def on_step(self, iteration: int) -> None:
         """매 프레임 호출"""
@@ -364,7 +363,7 @@ class CreepDenialSystem:
         # 우선순위 순으로 종양 처리
         sorted_tumors = self._get_prioritized_tumors()
 
-        for tumor_id, tumor in sorted_tumors:
+        for _tumor_id, tumor in sorted_tumors:
             # 이미 충분한 유닛이 할당되었으면 스킵
             if len(tumor.assigned_units) >= GameConfig.CREEP_DENIAL_MAX_UNITS_PER_TUMOR:
                 continue
@@ -401,7 +400,7 @@ class CreepDenialSystem:
             if not attack_units:
                 break
 
-    def _get_available_attack_units(self) -> List[Unit]:
+    def _get_available_attack_units(self) -> list[Unit]:
         """
         공격 가능한 유닛 가져오기 (UnitAuthorityManager 통합)
 
@@ -449,7 +448,7 @@ class CreepDenialSystem:
 
         return available_units
 
-    def _get_available_attack_units_fallback(self) -> List[Unit]:
+    def _get_available_attack_units_fallback(self) -> list[Unit]:
         """Fallback: UnitAuthorityManager 없이 유닛 가져오기 (legacy)"""
         attack_types = [
             UnitTypeId.ZERGLING,
@@ -504,7 +503,7 @@ class CreepDenialSystem:
 
         return False
 
-    def _get_prioritized_tumors(self) -> List[Tuple[int, DetectedTumor]]:
+    def _get_prioritized_tumors(self) -> list[tuple[int, DetectedTumor]]:
         """우선순위 순으로 정렬된 종양 목록"""
         tumor_list = []
 
@@ -551,8 +550,8 @@ class CreepDenialSystem:
         return priority
 
     def _get_nearest_units(
-        self, units: List[Unit], position: Point2, count: int = 3
-    ) -> List[Unit]:
+        self, units: list[Unit], position: Point2, count: int = 3
+    ) -> list[Unit]:
         """위치에서 가장 가까운 유닛들 반환"""
         sorted_units = sorted(units, key=lambda u: u.distance_to(position))
         return sorted_units[:count]

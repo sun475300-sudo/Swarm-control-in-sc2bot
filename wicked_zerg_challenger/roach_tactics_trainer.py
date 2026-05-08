@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Roach Tactics Trainer - 바퀴 전술 학습 시스템
 
@@ -9,7 +8,6 @@ Roach Tactics Trainer - 바퀴 전술 학습 시스템
 4. 탱킹 포지셔닝 (앞줄에서 피해 흡수)
 """
 
-from typing import Dict
 
 from sc2.ids.ability_id import AbilityId
 from sc2.ids.unit_typeid import UnitTypeId
@@ -43,7 +41,7 @@ class RoachTacticsTrainer:
         self.logger = get_logger("RoachTactics")
 
         # 바퀴 추적
-        self.roaches: Dict[int, RoachTactics] = {}  # tag -> RoachTactics
+        self.roaches: dict[int, RoachTactics] = {}  # tag -> RoachTactics
 
         # 잠복 설정
         self.BURROW_HP_THRESHOLD = 0.4  # 체력 40% 이하면 잠복
@@ -350,7 +348,7 @@ class RoachTacticsTrainer:
 
                     self.bot.do(roach.move(retreat_target))
 
-    def get_roach_statistics(self) -> Dict:
+    def get_roach_statistics(self) -> dict:
         """바퀴 전술 통계 반환"""
         avg_burrows_per_roach = 0
         if len(self.roaches) > 0:

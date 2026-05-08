@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Queen Manager - Unified queen production, injection, and creep control.
 
@@ -10,7 +9,7 @@ Consolidated version combining features from original and improved versions:
 """
 
 import logging
-from typing import Dict, Optional, Set
+from typing import Optional
 
 try:
     from wicked_zerg_challenger.game_config import GameConfig
@@ -97,13 +96,13 @@ class QueenManager:
         self.last_tumor_check = 0
 
         # Tracking
-        self.inject_assignments: Dict[int, int] = {}  # hatchery_tag -> queen_tag
-        self.last_inject_time: Dict[int, float] = {}  # hatchery_tag -> time
-        self.last_creep_time: Dict[int, float] = {}  # queen_tag -> time
-        self.last_transfuse_time: Dict[int, float] = {}  # queen_tag -> time
-        self.assigned_queen_tags: Set[int] = set()
-        self.dedicated_creep_queens: Set[int] = set()
-        self.secondary_inject_assignments: Dict[int, int] = (
+        self.inject_assignments: dict[int, int] = {}  # hatchery_tag -> queen_tag
+        self.last_inject_time: dict[int, float] = {}  # hatchery_tag -> time
+        self.last_creep_time: dict[int, float] = {}  # queen_tag -> time
+        self.last_transfuse_time: dict[int, float] = {}  # queen_tag -> time
+        self.assigned_queen_tags: set[int] = set()
+        self.dedicated_creep_queens: set[int] = set()
+        self.secondary_inject_assignments: dict[int, int] = (
             {}
         )  # hatchery_tag -> queen_tag (2차)
 
@@ -1107,7 +1106,6 @@ class QueenManager:
         기지 근처가 아닌 적 방향으로 점막 확장
         """
         try:
-            pass
 
             # 적 시작 위치
             enemy_start = None
@@ -1352,7 +1350,7 @@ class QueenManager:
         return projection + dist * 0.25
 
     @staticmethod
-    def _find_closest_queen(position, queens, excluded_tags: Set[int]):
+    def _find_closest_queen(position, queens, excluded_tags: set[int]):
         """Find closest queen not in excluded set."""
         candidates = [q for q in queens if q.tag not in excluded_tags]
         if not candidates:

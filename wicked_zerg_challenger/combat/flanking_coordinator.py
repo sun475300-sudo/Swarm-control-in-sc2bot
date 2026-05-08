@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Flanking Coordinator - 양각 포위(샌드위치) 전술
 
@@ -14,7 +13,6 @@ from __future__ import annotations
 
 import logging
 import math
-from typing import Dict, List
 
 logger = logging.getLogger(__name__)
 
@@ -46,8 +44,8 @@ class FlankingCoordinator:
     def __init__(self, bot):
         self.bot = bot
         self._flanking_active = False
-        self._groups: Dict[int, List] = {}  # group_id -> [unit_tags]
-        self._approach_points: Dict[int, object] = {}  # group_id -> Point2
+        self._groups: dict[int, list] = {}  # group_id -> [unit_tags]
+        self._approach_points: dict[int, object] = {}  # group_id -> Point2
         self._last_flank_time = 0.0
         self._phase = "IDLE"  # IDLE, APPROACH, ATTACK
 
@@ -201,7 +199,7 @@ class FlankingCoordinator:
         if not enemy_center:
             return
 
-        for group_id, tags in self._groups.items():
+        for _group_id, tags in self._groups.items():
             for tag in tags:
                 unit = self._find_by_tag(tag)
                 if not unit:
@@ -266,7 +264,7 @@ class FlankingCoordinator:
     def is_flanking(self) -> bool:
         return self._flanking_active
 
-    def get_status(self) -> Dict:
+    def get_status(self) -> dict:
         return {
             "phase": self._phase,
             "groups": len(self._groups),

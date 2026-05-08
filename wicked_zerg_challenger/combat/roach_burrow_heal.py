@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Roach Burrow Heal - 바퀴 잠복 회복 시스템
 
@@ -9,7 +8,7 @@ Roach Burrow Heal - 바퀴 잠복 회복 시스템
 4. 잠복 중 안전 확인
 """
 
-from typing import TYPE_CHECKING, Dict, Set
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from sc2.position import Point2
@@ -51,8 +50,8 @@ class RoachBurrowHeal:
         self.config = RoachBurrowConfig() if RoachBurrowConfig else None
 
         # Burrow tracking
-        self._burrowed_roaches: Set[int] = set()  # Set of roach tags that are healing
-        self._burrow_start_time: Dict[int, float] = {}  # roach_tag -> burrow_time
+        self._burrowed_roaches: set[int] = set()  # Set of roach tags that are healing
+        self._burrow_start_time: dict[int, float] = {}  # roach_tag -> burrow_time
 
         # Thresholds (from config or defaults)
         if self.config:
@@ -328,7 +327,7 @@ class RoachBurrowHeal:
             if roach_tag in self._burrow_start_time:
                 del self._burrow_start_time[roach_tag]
 
-    def get_healing_status(self) -> Dict:
+    def get_healing_status(self) -> dict:
         """
         회복 상태 반환
 

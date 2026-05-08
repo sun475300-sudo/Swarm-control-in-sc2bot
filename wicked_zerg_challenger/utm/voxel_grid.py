@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 3D Voxel Grid — Spatial Partition for Drone Airspace
 
@@ -9,11 +8,11 @@ Origin: wicked_zerg_challenger/utils/spatial_partition.py
 """
 
 import math
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Optional
 
 # Type alias: 3D 좌표 튜플
-Pos3 = Tuple[float, float, float]
-Cell3 = Tuple[int, int, int]
+Pos3 = tuple[float, float, float]
+Cell3 = tuple[int, int, int]
 
 
 class VoxelGrid:
@@ -34,7 +33,7 @@ class VoxelGrid:
     def __init__(
         self,
         cell_size: float = 10.0,
-        map_size: Tuple[float, float, float] = (1000.0, 1000.0, 120.0),
+        map_size: tuple[float, float, float] = (1000.0, 1000.0, 120.0),
     ):
         """
         Args:
@@ -46,13 +45,13 @@ class VoxelGrid:
         self.map_depth = map_size[1]
         self.map_altitude = map_size[2]
 
-        self.grid_w = int(math.ceil(self.map_width / self.cell_size))
-        self.grid_d = int(math.ceil(self.map_depth / self.cell_size))
-        self.grid_h = int(math.ceil(self.map_altitude / self.cell_size))
+        self.grid_w = math.ceil(self.map_width / self.cell_size)
+        self.grid_d = math.ceil(self.map_depth / self.cell_size)
+        self.grid_h = math.ceil(self.map_altitude / self.cell_size)
 
         # 3D 복셀 저장소: (cx, cy, cz) → [(position, data), ...]
-        self.grid: Dict[Cell3, List[Tuple[Pos3, Any]]] = {}
-        self.data_to_cell: Dict[int, Cell3] = {}
+        self.grid: dict[Cell3, list[tuple[Pos3, Any]]] = {}
+        self.data_to_cell: dict[int, Cell3] = {}
         self.size = 0
 
     def clear(self) -> None:
@@ -97,14 +96,14 @@ class VoxelGrid:
 
     def query_radius(
         self, center: Pos3, radius: float, exclude_data: Any = None
-    ) -> List[Tuple[Pos3, Any, float]]:
+    ) -> list[tuple[Pos3, Any, float]]:
         """
         3D 구 범위 검색. 기존 2D 원 검색의 3D 확장.
 
         기존: dx, dy 2중 루프 → 변경: dx, dy, dz 3중 루프
         """
         results = []
-        cells_to_check = int(math.ceil(radius / self.cell_size)) + 1
+        cells_to_check = math.ceil(radius / self.cell_size) + 1
         cc = self._get_cell(center[0], center[1], center[2])
 
         for dx in range(-cells_to_check, cells_to_check + 1):
@@ -123,7 +122,7 @@ class VoxelGrid:
 
     def query_altitude_layer(
         self, z_min: float, z_max: float
-    ) -> List[Tuple[Pos3, Any]]:
+    ) -> list[tuple[Pos3, Any]]:
         """특정 고도층의 모든 드론 검색 (UTM 신규 기능)."""
         results = []
         cz_min = max(0, int(z_min / self.cell_size))
@@ -135,7 +134,7 @@ class VoxelGrid:
 
     def nearest_neighbor(
         self, query: Pos3, exclude_data: Any = None
-    ) -> Optional[Tuple[Pos3, Any, float]]:
+    ) -> Optional[tuple[Pos3, Any, float]]:
         """최근접 이웃 검색. 기존 SpatialGrid 확장 탐색 패턴."""
         max_dim = max(self.grid_w, self.grid_d, self.grid_h)
         for mult in range(1, max_dim + 1):
@@ -147,7 +146,7 @@ class VoxelGrid:
 
     def k_nearest_neighbors(
         self, query: Pos3, k: int, exclude_data: Any = None
-    ) -> List[Tuple[Pos3, Any, float]]:
+    ) -> list[tuple[Pos3, Any, float]]:
         """k-최근접 이웃. 기존 SpatialGrid 패턴."""
         max_dim = max(self.grid_w, self.grid_d, self.grid_h)
         for mult in range(1, max_dim + 1):

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Creep Denial System - 적 점막 제거 시스템
 
@@ -11,7 +10,6 @@ ZvZ 매치업에서 특히 중요합니다.
 3. 안전 확인 후 제거 및 위협 시 후퇴
 """
 
-from typing import Dict, List
 
 from sc2.ids.unit_typeid import UnitTypeId
 from sc2.position import Point2
@@ -45,7 +43,7 @@ class CreepDenialSystem:
 
         # 제거 대상 태그 추적 (중복 명령 방지)
         # {tumor_tag: killer_tag}
-        self.assignments: Dict[int, int] = {}
+        self.assignments: dict[int, int] = {}
 
         # 제거에 사용할 유닛 타입 (설정값 사용)
         if self.config:
@@ -95,7 +93,7 @@ class CreepDenialSystem:
         # 3. 제거 명령 실행 (새로운 할당)
         await self._assign_killers(enemy_tumors)
 
-    def _find_enemy_tumors(self) -> List[Unit]:
+    def _find_enemy_tumors(self) -> list[Unit]:
         """적 점막 종양 탐색"""
         if not hasattr(self.bot, "enemy_structures"):
             return []
@@ -148,7 +146,7 @@ class CreepDenialSystem:
             if tag in self.assignments:
                 del self.assignments[tag]
 
-    async def _assign_killers(self, tumors: List[Unit]):
+    async def _assign_killers(self, tumors: list[Unit]):
         """
         종양 제거를 위해 유닛 할당
         """

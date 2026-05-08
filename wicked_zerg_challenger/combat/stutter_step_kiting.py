@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Stutter-Step Kiting - 진정한 스터터 스텝 구현
 
@@ -9,7 +8,7 @@ Stutter-Step Kiting - 진정한 스터터 스텝 구현
 히드라, 바퀴 등 원거리 유닛에 적용
 """
 
-from typing import Dict, Optional, Set
+from typing import Optional
 
 from sc2.ids.unit_typeid import UnitTypeId
 from sc2.position import Point2
@@ -68,9 +67,9 @@ class StutterStepKiting:
         self.bot = bot
 
         # 카이팅 상태 추적
-        self.unit_states: Dict[int, str] = {}  # unit_tag -> "attacking" | "retreating"
-        self.last_attack_frame: Dict[int, int] = {}  # unit_tag -> frame
-        self.retreat_positions: Dict[int, Point2] = {}  # unit_tag -> retreat_position
+        self.unit_states: dict[int, str] = {}  # unit_tag -> "attacking" | "retreating"
+        self.last_attack_frame: dict[int, int] = {}  # unit_tag -> frame
+        self.retreat_positions: dict[int, Point2] = {}  # unit_tag -> retreat_position
 
     def should_kite(self, unit: Unit) -> bool:
         """유닛이 카이팅을 해야 하는지 확인"""
@@ -192,7 +191,6 @@ class StutterStepKiting:
 
     def _clamp_to_map(self, position: Point2) -> Point2:
         """위치를 맵 경계 내로 제한"""
-        map_center = self.bot.game_info.map_center
         playable_area = self.bot.game_info.playable_area
 
         x = max(playable_area.x, min(position.x, playable_area.x + playable_area.width))
@@ -206,7 +204,7 @@ class StutterStepKiting:
         """유닛의 카이팅 상태 반환"""
         return self.unit_states.get(unit.tag)
 
-    def cleanup_dead_units(self, alive_tags: Set[int]) -> None:
+    def cleanup_dead_units(self, alive_tags: set[int]) -> None:
         """죽은 유닛 정보 정리"""
         # 살아있는 유닛만 남기기
         self.unit_states = {

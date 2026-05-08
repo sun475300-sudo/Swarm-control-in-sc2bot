@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Feature #91: Nydus Worm 전술 매니저
 
@@ -10,7 +9,7 @@ Feature #91: Nydus Worm 전술 매니저
 """
 
 from enum import Enum
-from typing import Dict, List, Optional, Set, Tuple
+from typing import Optional
 
 try:
     from sc2.ids.ability_id import AbilityId
@@ -66,8 +65,8 @@ class NydusTacticsManager:
         # 전술 상태
         self.phase = NydusPhase.IDLE
         self.nydus_network_tag: Optional[int] = None
-        self.active_worms: Dict[int, Point2] = {}  # worm_tag -> position
-        self.units_in_nydus: Set[int] = set()  # 나이더스 안에 있는 유닛 태그
+        self.active_worms: dict[int, Point2] = {}  # worm_tag -> position
+        self.units_in_nydus: set[int] = set()  # 나이더스 안에 있는 유닛 태그
 
         # 타이밍 관리
         self.last_worm_attempt_time: float = 0.0
@@ -236,7 +235,7 @@ class NydusTacticsManager:
         if not Point2:
             return None
 
-        candidates: List[Tuple[Point2, float]] = []  # (position, priority_score)
+        candidates: list[tuple[Point2, float]] = []  # (position, priority_score)
 
         # 1. 적 기지 자원 지역 뒤
         enemy_structures = getattr(self.bot, "enemy_structures", None)
@@ -504,7 +503,7 @@ class NydusTacticsManager:
                     )
                     break
 
-    def get_nydus_stats(self) -> Dict:
+    def get_nydus_stats(self) -> dict:
         """
         나이더스 전술 통계 반환
 

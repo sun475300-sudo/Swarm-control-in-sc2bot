@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Aggressive Tech Builder - Build tech more aggressively when resources overflow.
 
@@ -12,7 +11,6 @@ This module does when resources overflow:
 """
 
 import logging
-from typing import Dict, List, Tuple
 
 logger = logging.getLogger("AggressiveTechBuilder")
 try:
@@ -49,7 +47,7 @@ class AggressiveTechBuilder:
         # Supply ��ȭ ���� (�ڿ��� ��ĥ �� supply ������ �̸�ŭ ��ȭ)
         self.supply_reduction_factor = 0.7  # 30% ��ȭ (��: 17 -> 12)
 
-    def has_excess_resources(self) -> Tuple[bool, float, float]:
+    def has_excess_resources(self) -> tuple[bool, float, float]:
         """
         �ڿ��� ��ġ���� Ȯ��
 
@@ -181,8 +179,8 @@ class AggressiveTechBuilder:
         return False
 
     async def build_multiple_techs_aggressively(
-        self, tech_priorities: List[Tuple[UnitTypeId, callable, float]]
-    ) -> Dict[UnitTypeId, bool]:
+        self, tech_priorities: list[tuple[UnitTypeId, callable, float]]
+    ) -> dict[UnitTypeId, bool]:
         """
         �ڿ��� ��ĥ �� ���� ��ũ�� ���ÿ� �ø�
 
@@ -246,7 +244,7 @@ class AggressiveTechBuilder:
         }
         return priority_map.get(tech_type, 10)
 
-    async def recommend_tech_builds(self) -> List[Tuple[UnitTypeId, float, int]]:
+    async def recommend_tech_builds(self) -> list[tuple[UnitTypeId, float, int]]:
         """
 
         Returns:
@@ -257,7 +255,7 @@ class AggressiveTechBuilder:
             return []
 
         recommendations = []
-        supply_used = getattr(self.bot, "supply_used", 0)
+        getattr(self.bot, "supply_used", 0)
 
         # Spawning Pool (�⺻ ��ũ)
         if not self.bot.structures(UnitTypeId.SPAWNINGPOOL).exists:

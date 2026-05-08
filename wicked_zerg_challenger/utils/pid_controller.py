@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 PID Controller for Smooth Unit Movement
 
@@ -14,7 +13,6 @@ Features:
 """
 
 import math
-from typing import Tuple
 
 
 class PIDController:
@@ -151,10 +149,10 @@ class PID2D:
 
     def update(
         self,
-        current: Tuple[float, float],
-        target: Tuple[float, float],
+        current: tuple[float, float],
+        target: tuple[float, float],
         dt: float,
-    ) -> Tuple[float, float]:
+    ) -> tuple[float, float]:
         """
         Update controller and get 2D output.
 
@@ -225,10 +223,10 @@ class UnitMovementController:
 
     def calculate_velocity(
         self,
-        current_pos: Tuple[float, float],
-        target_pos: Tuple[float, float],
+        current_pos: tuple[float, float],
+        target_pos: tuple[float, float],
         dt: float,
-    ) -> Tuple[float, float]:
+    ) -> tuple[float, float]:
         """
         Calculate optimal velocity towards target.
 
@@ -287,10 +285,10 @@ class UnitMovementController:
 
     def get_next_position(
         self,
-        current_pos: Tuple[float, float],
-        target_pos: Tuple[float, float],
+        current_pos: tuple[float, float],
+        target_pos: tuple[float, float],
         dt: float,
-    ) -> Tuple[float, float]:
+    ) -> tuple[float, float]:
         """
         Calculate next position after applying velocity.
 
@@ -332,11 +330,11 @@ class FormationController:
     def calculate_formation_velocity(
         self,
         unit_id: int,
-        unit_pos: Tuple[float, float],
-        formation_pos: Tuple[float, float],
-        group_velocity: Tuple[float, float],
+        unit_pos: tuple[float, float],
+        formation_pos: tuple[float, float],
+        group_velocity: tuple[float, float],
         dt: float,
-    ) -> Tuple[float, float]:
+    ) -> tuple[float, float]:
         """
         Calculate velocity for unit to maintain formation.
 

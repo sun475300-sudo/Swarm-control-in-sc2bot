@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 UnitFactory 테스트
 
@@ -205,7 +204,7 @@ class TestRaceGasRatios(unittest.TestCase):
     def test_ratios_are_reasonable(self):
         bot = FakeBot()
         uf = UnitFactory(bot)
-        for race, ratio in uf.race_gas_ratios.items():
+        for _race, ratio in uf.race_gas_ratios.items():
             self.assertGreater(ratio, 0.0)
             self.assertLess(ratio, 1.0)
 

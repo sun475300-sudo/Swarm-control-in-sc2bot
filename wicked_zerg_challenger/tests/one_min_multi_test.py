@@ -18,7 +18,7 @@ Usage:
 
 import asyncio
 import logging
-from typing import Dict, Optional
+from typing import Optional
 
 logger = logging.getLogger("OneMinMultiTest")
 
@@ -133,9 +133,9 @@ class OneMinMultiTest:
 
             # 건설 중인 Hatchery도 포함
             if hasattr(self.bot, "already_pending"):
-                pending_hatcheries = self.bot.already_pending(UnitTypeId.HATCHERY)
+                self.bot.already_pending(UnitTypeId.HATCHERY)
             else:
-                pending_hatcheries = len(
+                len(
                     [h for h in current_hatcheries if not h.is_ready]
                 )
 
@@ -210,7 +210,7 @@ class OneMinMultiTest:
                 logger.info(f"  Expansion placed at: {self.expansion_placed_time:.1f}s")
             logger.info("=" * 60)
 
-    def get_results(self) -> Dict:
+    def get_results(self) -> dict:
         """테스트 결과 반환"""
         return {
             "test_passed": self.test_passed,

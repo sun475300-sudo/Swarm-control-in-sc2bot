@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Upgrade Timing Manager - 업그레이드 타이밍 관리자 (#109)
 
@@ -15,7 +14,7 @@ Upgrade Timing Manager - 업그레이드 타이밍 관리자 (#109)
 
 import logging
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any, Optional
 
 logger = logging.getLogger("UpgradeTiming")
 
@@ -79,7 +78,7 @@ class UpgradeTimingManager:
         self.recommended_path: UpgradePathType = UpgradePathType.BALANCED
 
         # 실제 타이밍 기록
-        self.actual_timings: Dict[str, float] = {}
+        self.actual_timings: dict[str, float] = {}
 
         # 성능 추적
         self.timing_score: float = 1.0  # 벤치마크 대비 점수
@@ -109,7 +108,7 @@ class UpgradeTimingManager:
         """추천 업그레이드 경로 반환"""
         return self.recommended_path
 
-    def get_upgrade_priority_order(self) -> List[str]:
+    def get_upgrade_priority_order(self) -> list[str]:
         """
         현재 추천 경로에 따른 업그레이드 우선순위 반환
 
@@ -182,7 +181,7 @@ class UpgradeTimingManager:
         # 벤치마크 시간 +-30초 이내면 시작
         return abs(game_time - benchmark) < 30 or game_time > benchmark
 
-    def get_next_upgrade_timing(self) -> Optional[Dict[str, Any]]:
+    def get_next_upgrade_timing(self) -> Optional[dict[str, Any]]:
         """
         다음 업그레이드 타이밍 정보 반환
 
@@ -343,7 +342,7 @@ class UpgradeTimingManager:
             # 점수: 1.0 = 벤치마크 정확히 맞춤, >1.0 = 빠름, <1.0 = 느림
             self.timing_score = max(0.0, 1.0 - avg_diff)
 
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> dict[str, Any]:
         """타이밍 통계"""
         return {
             "recommended_path": self.recommended_path.value,

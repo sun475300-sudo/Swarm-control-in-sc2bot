@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 Micro combat utilities with anti-splash awareness.
 """
@@ -7,7 +6,21 @@ Micro combat utilities with anti-splash awareness.
 from __future__ import annotations
 
 import asyncio
-from typing import Iterable, List, Optional, Tuple
+from typing import Optional
+from collections.abc import Iterable
+
+# Strong-ref set so asyncio doesn't garbage-collect fire-and-forget
+# do(...) coroutines before they actually run (RUF006).
+_PENDING_ACTIONS: set[asyncio.Task] = set()
+
+
+def _schedule(coro):
+    try:
+        task = asyncio.create_task(coro)
+    except RuntimeError:
+        return
+    _PENDING_ACTIONS.add(task)
+    task.add_done_callback(_PENDING_ACTIONS.discard)
 
 try:
     from sc2.ids.ability_id import AbilityId
@@ -66,7 +79,7 @@ class AntiSplashAwareness:
                 if unit_type is not None:
                     self.extreme_threats.add(unit_type)
 
-    def get_threats(self, enemy_units: Iterable) -> List:
+    def get_threats(self, enemy_units: Iterable) -> list:
         """Get splash threat units. Phase 22: Uses set lookup for O(1) type check."""
         if not self.threat_types or not enemy_units:
             return []
@@ -100,7 +113,7 @@ class AntiSplashAwareness:
             self.min_multiplier + ratio * (self.max_multiplier - self.min_multiplier),
         )
 
-    def repulsion_vector(self, unit, enemy_units: Iterable) -> Tuple[float, float]:
+    def repulsion_vector(self, unit, enemy_units: Iterable) -> tuple[float, float]:
         threats = self.get_threats(enemy_units)
         if not threats:
             return 0.0, 0.0
@@ -335,7 +348,7 @@ class MicroCombat:
 
         self._issue_actions(actions)
 
-    def _micro_queen(self, queen, friendly_units: Iterable, actions: List) -> bool:
+    def _micro_queen(self, queen, friendly_units: Iterable, actions: list) -> bool:
         """Queen Transfuse logic."""
         if not hasattr(self.bot, "abilities"):
             return False
@@ -364,7 +377,7 @@ class MicroCombat:
 
         return False
 
-    def _micro_zergling(self, zergling, enemy_units: Iterable, actions: List) -> bool:
+    def _micro_zergling(self, zergling, enemy_units: Iterable, actions: list) -> bool:
         """
         Zergling Surround Logic - maximize attack surface by surrounding enemies.
 
@@ -409,7 +422,7 @@ class MicroCombat:
                 import math
 
                 # Count allies to determine surround angle
-                ally_count = len(nearby_allies)
+                len(nearby_allies)
 
                 # Calculate angle based on zergling's position relative to target
                 dx = zergling.position.x - target.position.x
@@ -447,7 +460,7 @@ class MicroCombat:
         # Default: attack normally if not in surround scenario
         return False
 
-    def _micro_baneling(self, baneling, enemy_units: Iterable, actions: List) -> bool:
+    def _micro_baneling(self, baneling, enemy_units: Iterable, actions: list) -> bool:
         """
         ★ Phase 27: 바네링 자폭 최적화 ★
         - 경장갑/밀집 타겟에 attack() (이전: move()로 이동만)
@@ -496,7 +509,7 @@ class MicroCombat:
         actions.append(baneling.attack(closest))
         return True
 
-    def _micro_roach(self, roach, actions: List) -> bool:
+    def _micro_roach(self, roach, actions: list) -> bool:
         """
         Roach Burrow Heal Logic.
         If HP < 30% and Burrow researched, burrow to heal/de-aggro.
@@ -518,7 +531,7 @@ class MicroCombat:
 
         return False
 
-    def _micro_roach_burrowed(self, roach, actions: List) -> bool:
+    def _micro_roach_burrowed(self, roach, actions: list) -> bool:
         """
         Handle burrowed Roaches.
         If HP > 80%, unburrow to fight again.
@@ -630,16 +643,13 @@ class MicroCombat:
         except Exception:
             return None
 
-    def _issue_actions(self, actions: List) -> None:
+    def _issue_actions(self, actions: list) -> None:
         if not actions:
             return
         for action in actions:
             try:
                 result = self.bot.do(action)
                 if asyncio.iscoroutine(result):
-                    try:
-                        asyncio.create_task(result)
-                    except RuntimeError:
-                        pass
+                    _schedule(result)
             except Exception:
                 continue

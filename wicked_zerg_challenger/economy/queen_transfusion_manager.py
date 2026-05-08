@@ -5,7 +5,7 @@ Provides intelligent transfusion targeting for queens, prioritizing high-value u
 and optimizing healing efficiency in combat situations.
 """
 
-from typing import TYPE_CHECKING, Dict, Optional
+from typing import TYPE_CHECKING, Optional
 
 from sc2.ids.ability_id import AbilityId
 from sc2.ids.unit_typeid import UnitTypeId
@@ -23,7 +23,7 @@ class QueenTransfusionManager:
 
     # Priority map (higher = more important to heal)
     # Prioritizes units by cost and strategic value
-    HEAL_PRIORITY: Dict[UnitTypeId, int] = {
+    HEAL_PRIORITY: dict[UnitTypeId, int] = {
         UnitTypeId.ULTRALISK: 100,  # 300M/200G - Most expensive ground unit
         UnitTypeId.BROODLORD: 90,  # 150M/150G/2S - Critical air support
         UnitTypeId.VIPER: 85,  # 100M/200G/3S - Spellcaster, high value
@@ -69,13 +69,13 @@ class QueenTransfusionManager:
 
         # Statistics tracking
         self.transfusions_performed = 0
-        self.transfusions_per_unit_type: Dict[UnitTypeId, int] = {}
+        self.transfusions_per_unit_type: dict[UnitTypeId, int] = {}
         self.hp_healed_total = 0
 
         # Deduplication: track tags targeted this iteration to avoid double-healing
         self._targeted_this_iter: set = set()
         # Per-queen cooldown: tag → game-time of last cast
-        self._queen_last_cast: Dict[int, float] = {}
+        self._queen_last_cast: dict[int, float] = {}
         # Minimum seconds between successive casts from the same queen
         self.QUEEN_CAST_COOLDOWN = 1.5
 
@@ -230,7 +230,7 @@ class QueenTransfusionManager:
         hp_restored = min(hp_missing, self.TRANSFUSION_HP_RESTORE)
         self.hp_healed_total += hp_restored
 
-    def get_statistics(self) -> Dict[str, any]:
+    def get_statistics(self) -> dict[str, any]:
         """
         Get transfusion statistics
 
@@ -269,6 +269,6 @@ class QueenTransfusionManager:
                     reverse=True,
                 )[:3]
                 self.logger.info(
-                    f"[TRANSFUSION] Top healed: "
+                    "[TRANSFUSION] Top healed: "
                     + ", ".join(f"{ut.name}: {count}" for ut, count in top_healed)
                 )

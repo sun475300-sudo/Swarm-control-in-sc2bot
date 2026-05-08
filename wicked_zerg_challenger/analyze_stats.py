@@ -19,7 +19,7 @@ def analyze_stats():
         return
 
     try:
-        with open(file_path, "r", encoding="utf-8") as f:
+        with open(file_path, encoding="utf-8") as f:
             data = json.load(f)
     except Exception as e:
         logger.error(f"Error reading file: {e}")

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Single Game Only - 절대 하나만 실행 (Lock 파일 사용)
 """
@@ -37,7 +36,7 @@ def is_game_running():
     """다른 게임이 실행 중인지 확인"""
     if LOCK_FILE.exists():
         try:
-            with open(LOCK_FILE, "r") as f:
+            with open(LOCK_FILE) as f:
                 pid = int(f.read().strip())
                 # PID가 실제로 실행 중인지 확인
                 try:
@@ -111,7 +110,7 @@ def main():
         logger.info("=" * 70)
         logger.info(f"Map: {selected_map}")
         logger.info(f"Enemy: {enemy_race.name}")
-        logger.info(f"Difficulty: Easy")
+        logger.info("Difficulty: Easy")
         logger.info("=" * 70 + "\n")
 
         # ★ 5. 게임 실행 (하나만) ★

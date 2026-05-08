@@ -1,5 +1,5 @@
 import logging
-from typing import Any, Dict, Tuple
+from typing import Any
 
 from sc2.ids.unit_typeid import UnitTypeId
 
@@ -22,7 +22,7 @@ class TechCoordinator:
     def __init__(self, bot):
         self.bot = bot
         # Format: {UnitTypeId: (priority, location_or_near, request_frame, requester_name)}
-        self.pending_requests: Dict[UnitTypeId, Tuple[int, Any, int, str]] = {}
+        self.pending_requests: dict[UnitTypeId, tuple[int, Any, int, str]] = {}
         self.last_build_frame = 0
 
     def request_structure(
@@ -99,7 +99,7 @@ class TechCoordinator:
             self.pending_requests.items(), key=lambda x: x[1][0], reverse=True
         )
 
-        for stype, (priority, location, frame, requester) in sorted_requests:
+        for stype, (priority, location, _frame, requester) in sorted_requests:
             # Check resources
             if not self.bot.can_afford(stype):
                 continue

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Creep Highway Manager - 기지 간 연결 우선 점막 확장
 
@@ -8,7 +7,6 @@ Creep Highway Manager - 기지 간 연결 우선 점막 확장
 - 빠른 증원 및 재배치
 """
 
-from typing import Dict, List, Set, Tuple
 
 from utils.logger import get_logger
 
@@ -48,10 +46,10 @@ class CreepHighwayManager:
         self.check_interval = 44  # 약 2초마다
 
         # ★ 고속도로 계획 ★
-        self.highways: List[Dict] = (
+        self.highways: list[dict] = (
             []
         )  # [{from: pos, to: pos, progress: 0-100, waypoints: []}]
-        self.highway_waypoints: Set[Tuple[int, int]] = set()  # 고속도로 경유지
+        self.highway_waypoints: set[tuple[int, int]] = set()  # 고속도로 경유지
 
         # ★ 우선순위 ★
         self.priority_mode = "HIGHWAY"  # HIGHWAY, ENEMY, BALANCED
@@ -137,7 +135,7 @@ class CreepHighwayManager:
 
     def _calculate_waypoints(
         self, start: Point2, end: Point2, spacing: float = 8.0
-    ) -> List[Point2]:
+    ) -> list[Point2]:
         """
         두 지점 사이의 경유지 계산
 
@@ -189,7 +187,7 @@ class CreepHighwayManager:
         for highway in sorted_highways[:2]:
             await self._build_single_highway(highway, iteration)
 
-    async def _build_single_highway(self, highway: Dict, iteration: int):
+    async def _build_single_highway(self, highway: dict, iteration: int):
         """
         단일 고속도로 건설
 
@@ -257,7 +255,7 @@ class CreepHighwayManager:
                 f"  Total Highways: {self.highways_completed}"
             )
 
-    def _get_creep_queens(self) -> List:
+    def _get_creep_queens(self) -> list:
         """
         점막 확산 전용 퀸 반환
 
@@ -344,7 +342,7 @@ class CreepHighwayManager:
 
         return all(h["completed"] for h in self.highways)
 
-    def get_highway_progress(self) -> Dict:
+    def get_highway_progress(self) -> dict:
         """
         고속도로 건설 진행 상황 반환
 

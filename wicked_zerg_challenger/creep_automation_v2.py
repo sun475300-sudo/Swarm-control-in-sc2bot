@@ -14,7 +14,6 @@ Features:
 - Defensive creep (초크 포인트)
 """
 
-from typing import List, Set, Tuple
 
 from utils.logger import get_logger
 
@@ -48,14 +47,14 @@ class CreepAutomationV2:
         self.logger = get_logger("CreepV2")
 
         # Creep targets
-        self.creep_targets: List[Point2] = []
-        self.tumor_positions: Set[Tuple[float, float]] = set()
+        self.creep_targets: list[Point2] = []
+        self.tumor_positions: set[tuple[float, float]] = set()
 
         # ★ Phase 18: 종양 릴레이 쿨다운 추적 ★
         self._tumor_cooldowns: dict = {}
 
         # Creep queens
-        self.creep_queen_tags: Set[int] = set()
+        self.creep_queen_tags: set[int] = set()
 
     async def on_step(self, iteration: int):
         """매 프레임 실행"""

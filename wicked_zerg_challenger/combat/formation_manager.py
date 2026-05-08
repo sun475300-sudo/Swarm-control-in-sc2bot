@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Formation Manager - 지형 활용 및 대형 제어
 
@@ -8,7 +7,7 @@ Formation Manager - 지형 활용 및 대형 제어
 3. 고저차 활용: 언덕, 경사로 등을 활용한 전술
 """
 
-from typing import List, Optional, Tuple
+from typing import Optional
 
 from sc2.game_info import GameInfo
 from sc2.ids.unit_typeid import UnitTypeId
@@ -51,7 +50,7 @@ class FormationManager:
 
     def form_concave(
         self, units: Units, enemy_center: Point2, formation_radius: float = 8.0
-    ) -> List[Tuple[Unit, Point2]]:
+    ) -> list[tuple[Unit, Point2]]:
         """
         오목한 대형(Concave) 형성
 
@@ -117,7 +116,7 @@ class FormationManager:
 
         return assignments
 
-    def find_choke_points(self, map_info: GameInfo) -> List[Point2]:
+    def find_choke_points(self, map_info: GameInfo) -> list[Point2]:
         """
         길목(Choke Point) 찾기
 

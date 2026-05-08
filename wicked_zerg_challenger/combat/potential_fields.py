@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Potential Field Controller - Force-based repulsion model for unit avoidance.
 
@@ -6,7 +5,8 @@ This module implements potential field theory for collision avoidance,
 calculating repulsion vectors from enemies, structures, and terrain.
 """
 
-from typing import Iterable, List, Optional, Tuple
+from typing import Optional
+from collections.abc import Iterable
 
 try:
     from sc2.position import Point2
@@ -71,9 +71,9 @@ class PotentialFieldController:
         self,
         unit,
         enemy_units: Iterable,
-        terrain_points: Optional[List] = None,
-        structure_units: Optional[List] = None,
-    ) -> Tuple[float, float]:
+        terrain_points: Optional[list] = None,
+        structure_units: Optional[list] = None,
+    ) -> tuple[float, float]:
         """
         Calculate combined repulsion vector from all obstacles.
 
@@ -116,7 +116,7 @@ class PotentialFieldController:
 
     def _calculate_enemy_repulsion(
         self, unit, enemy_units, repulsion_x: float, repulsion_y: float
-    ) -> Tuple[float, float]:
+    ) -> tuple[float, float]:
         """Calculate repulsion from enemy units."""
         for enemy in enemy_units or []:
             try:
@@ -140,7 +140,7 @@ class PotentialFieldController:
                     splash_strength = strength * self.splash_weight
                     repulsion_x += (dx / (dist + 0.1)) * splash_strength
                     repulsion_y += (dy / (dist + 0.1)) * splash_strength
-            except (AttributeError, ZeroDivisionError) as e:
+            except (AttributeError, ZeroDivisionError):
                 # Unit position or attribute access failed, skip this unit
                 continue
 
@@ -148,7 +148,7 @@ class PotentialFieldController:
 
     def _calculate_structure_repulsion(
         self, unit, structure_units, repulsion_x: float, repulsion_y: float
-    ) -> Tuple[float, float]:
+    ) -> tuple[float, float]:
         """Calculate repulsion from structures."""
         for structure in structure_units or []:
             try:
@@ -171,7 +171,7 @@ class PotentialFieldController:
         terrain_weight: float,
         repulsion_x: float,
         repulsion_y: float,
-    ) -> Tuple[float, float]:
+    ) -> tuple[float, float]:
         """Calculate repulsion from terrain obstacles."""
         for point in terrain_points:
             try:

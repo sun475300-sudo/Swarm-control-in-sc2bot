@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Unit Assignment Manager Module
 
@@ -16,7 +15,7 @@ def cleanup_assignments(manager):
     if not hasattr(manager.bot, "units"):
         return
 
-    alive_tags = set(u.tag for u in manager.bot.units)
+    alive_tags = {u.tag for u in manager.bot.units}
     stale_tags = [tag for tag in manager._unit_assignments if tag not in alive_tags]
     for tag in stale_tags:
         del manager._unit_assignments[tag]

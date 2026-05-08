@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 UTM (Unmanned Traffic Management) Module
 
@@ -16,12 +15,12 @@ from wicked_zerg_challenger.utm.types3d import DroneState, Point3D
 from wicked_zerg_challenger.utm.voxel_grid import VoxelGrid
 
 __all__ = [
-    "Point3D",
-    "DroneState",
-    "VoxelGrid",
-    "KDTree3D",
     "Boids3DController",
-    "FlightCorridor",
-    "CorridorManager",
     "CollisionPredictor",
+    "CorridorManager",
+    "DroneState",
+    "FlightCorridor",
+    "KDTree3D",
+    "Point3D",
+    "VoxelGrid",
 ]

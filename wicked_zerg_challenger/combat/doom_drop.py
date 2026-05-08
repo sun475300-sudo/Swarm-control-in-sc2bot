@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Feature #94: Doom Drop 전술 매니저
 
@@ -15,7 +14,7 @@ Feature #94: Doom Drop 전술 매니저
 """
 
 from enum import Enum
-from typing import Dict, List, Optional, Tuple
+from typing import Optional
 
 try:
     from sc2.ids.ability_id import AbilityId
@@ -77,11 +76,11 @@ class DoomDropManager:
         self.drop_active: bool = False
 
         # 오버로드 관리
-        self.transport_overlords: Dict[int, List[int]] = (
+        self.transport_overlords: dict[int, list[int]] = (
             {}
         )  # overlord_tag -> [unit_tags]
         self.drop_target: Optional[Point2] = None
-        self.waypoints: List[Point2] = []  # 대공 회피 경로
+        self.waypoints: list[Point2] = []  # 대공 회피 경로
         self.current_waypoint_idx: int = 0
 
         # 전술 파라미터
@@ -263,7 +262,7 @@ class DoomDropManager:
         if not Point2:
             return None
 
-        candidates: List[Tuple[Point2, float]] = []
+        candidates: list[tuple[Point2, float]] = []
 
         # 적 기지 정보
         enemy_structures = getattr(self.bot, "enemy_structures", None)
@@ -324,7 +323,7 @@ class DoomDropManager:
 
         return None
 
-    def _calculate_safe_route(self, target: Point2) -> List[Point2]:
+    def _calculate_safe_route(self, target: Point2) -> list[Point2]:
         """
         대공 위협 회피 경로 계산
 
@@ -563,7 +562,7 @@ class DoomDropManager:
         self.waypoints.clear()
         self.current_waypoint_idx = 0
 
-    def get_doom_drop_stats(self) -> Dict:
+    def get_doom_drop_stats(self) -> dict:
         """
         둠 드롭 통계 반환
 

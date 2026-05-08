@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Infestor Tactics Controller - Advanced Infestor burrow movement
 
@@ -9,7 +8,7 @@ Features:
 4. Escape: Burrow move away from threats
 """
 
-from typing import Dict, Optional, Set
+from typing import Optional
 
 try:
     from sc2.ids.ability_id import AbilityId
@@ -58,9 +57,9 @@ class InfestorTacticsController:
         self.energy_threshold = energy_threshold
 
         # Tactical state tracking
-        self.infiltrating: Dict[int, Point2] = {}  # unit_tag -> target_position
-        self.flanking: Dict[int, Point2] = {}  # unit_tag -> flank_position
-        self.escaping: Set[int] = set()  # unit_tags that are escaping
+        self.infiltrating: dict[int, Point2] = {}  # unit_tag -> target_position
+        self.flanking: dict[int, Point2] = {}  # unit_tag -> flank_position
+        self.escaping: set[int] = set()  # unit_tags that are escaping
 
         self.last_tactic_update: float = 0.0
         self.tactic_update_interval: float = 2.0  # Update every 2 seconds
@@ -193,7 +192,7 @@ class InfestorTacticsController:
 
     async def execute_burrow_tactics(
         self, infestors, enemy_units, bot, current_time: float
-    ) -> Set[int]:
+    ) -> set[int]:
         """
         Execute burrow movement tactics.
 
@@ -253,7 +252,7 @@ class InfestorTacticsController:
                 continue
 
             # ★ INFILTRATION MODE: High energy, target available ★
-            if energy >= self.energy_threshold and not unit_tag in self.infiltrating:
+            if energy >= self.energy_threshold and unit_tag not in self.infiltrating:
                 infiltration_target = self.find_infiltration_target(bot)
                 if infiltration_target:
                     # Start infiltration

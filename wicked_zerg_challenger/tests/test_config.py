@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Unit Tests for config/unit_configs.py
 

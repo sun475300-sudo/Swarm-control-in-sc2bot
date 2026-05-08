@@ -34,9 +34,9 @@ def add_logger_import(content: str, filename: str) -> str:
         last_import = 0
         for i, line in enumerate(lines):
             stripped = line.strip()
-            if stripped.startswith("import ") or stripped.startswith("from "):
+            if stripped.startswith(("import ", "from ")):
                 last_import = i
-            elif stripped.startswith("class ") or stripped.startswith("def "):
+            elif stripped.startswith(("class ", "def ")):
                 break
 
         lines.insert(last_import + 1, "import logging")
@@ -113,7 +113,7 @@ def migrate_prints(content: str) -> tuple:
 
 def process_file(filepath: str) -> None:
     try:
-        with open(filepath, "r", encoding="utf-8", errors="ignore") as f:
+        with open(filepath, encoding="utf-8", errors="ignore") as f:
             content = f.read()
     except Exception:
         return

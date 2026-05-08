@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Victory & Defeat Conditions Learning System
 
@@ -21,7 +20,6 @@ import json
 import logging
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, List, Tuple
 
 logger = logging.getLogger("VictoryConditions")
 
@@ -79,12 +77,12 @@ class VictoryConditionsLearner:
         self.conditions_file = self.data_dir / "victory_conditions.json"
 
         # 승리 패턴 추적
-        self.victory_patterns: List[Dict] = []
-        self.defeat_patterns: List[Dict] = []
+        self.victory_patterns: list[dict] = []
+        self.defeat_patterns: list[dict] = []
 
         # 조건별 승리/패배 카운트
-        self.victory_counts: Dict[str, int] = {}
-        self.defeat_counts: Dict[str, int] = {}
+        self.victory_counts: dict[str, int] = {}
+        self.defeat_counts: dict[str, int] = {}
 
         # 로드
         self._load_data()
@@ -95,7 +93,7 @@ class VictoryConditionsLearner:
             return
 
         try:
-            with open(self.conditions_file, "r", encoding="utf-8") as f:
+            with open(self.conditions_file, encoding="utf-8") as f:
                 data = json.load(f)
 
             self.victory_patterns = data.get("victory_patterns", [])[
@@ -123,7 +121,7 @@ class VictoryConditionsLearner:
         except Exception as e:
             logger.error(f"Failed to save data: {e}")
 
-    def analyze_game_result(self, bot, game_result: str) -> Tuple[List[str], float]:
+    def analyze_game_result(self, bot, game_result: str) -> tuple[list[str], float]:
         """
         게임 결과 분석
 
@@ -141,7 +139,7 @@ class VictoryConditionsLearner:
         else:
             return self._analyze_defeat(bot, game_time)
 
-    def _analyze_victory(self, bot, game_time: float) -> Tuple[List[str], float]:
+    def _analyze_victory(self, bot, game_time: float) -> tuple[list[str], float]:
         """승리 조건 분석"""
         conditions = []
         final_reward = 10.0  # 기본 승리 보상
@@ -215,7 +213,7 @@ class VictoryConditionsLearner:
 
         return conditions, final_reward
 
-    def _analyze_defeat(self, bot, game_time: float) -> Tuple[List[str], float]:
+    def _analyze_defeat(self, bot, game_time: float) -> tuple[list[str], float]:
         """패배 조건 분석"""
         conditions = []
         final_penalty = -10.0  # 기본 패배 페널티
@@ -275,7 +273,7 @@ class VictoryConditionsLearner:
         return conditions, final_penalty
 
     def _record_victory(
-        self, conditions: List[str], game_time: float, reward: float
+        self, conditions: list[str], game_time: float, reward: float
     ) -> None:
         """승리 기록"""
         record = {
@@ -293,7 +291,7 @@ class VictoryConditionsLearner:
         self._save_data()
 
     def _record_defeat(
-        self, conditions: List[str], game_time: float, penalty: float
+        self, conditions: list[str], game_time: float, penalty: float
     ) -> None:
         """패배 기록"""
         record = {
@@ -312,7 +310,7 @@ class VictoryConditionsLearner:
 
     def get_most_common_victory_conditions(
         self, top_n: int = 5
-    ) -> List[Tuple[str, int]]:
+    ) -> list[tuple[str, int]]:
         """가장 흔한 승리 조건 반환"""
         sorted_conditions = sorted(
             self.victory_counts.items(), key=lambda x: x[1], reverse=True
@@ -321,7 +319,7 @@ class VictoryConditionsLearner:
 
     def get_most_common_defeat_conditions(
         self, top_n: int = 5
-    ) -> List[Tuple[str, int]]:
+    ) -> list[tuple[str, int]]:
         """가장 흔한 패배 조건 반환"""
         sorted_conditions = sorted(
             self.defeat_counts.items(), key=lambda x: x[1], reverse=True
@@ -388,13 +386,13 @@ class VictoryConditionsLearner:
         if victory_conditions:
             top_victory = victory_conditions[0][0]
             logger.info(f"  - Most common path to victory: {top_victory}")
-            logger.info(f"    -> Keep focusing on this strategy!")
+            logger.info("    -> Keep focusing on this strategy!")
 
         # 패배 인사이트
         if defeat_conditions:
             top_defeat = defeat_conditions[0][0]
             logger.info(f"  - Most common cause of defeat: {top_defeat}")
-            logger.info(f"    -> This needs urgent improvement!")
+            logger.info("    -> This needs urgent improvement!")
 
         # 승률 기반 조언
         if win_rate < 0.3:
@@ -410,7 +408,7 @@ class VictoryConditionsLearner:
 
         logger.info("=" * 70)
 
-    def get_reward_adjustment_for_conditions(self) -> Dict[str, float]:
+    def get_reward_adjustment_for_conditions(self) -> dict[str, float]:
         """
         조건별 보상 조정 값 반환
 

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 3D K-D Tree for Drone Proximity Queries
 
@@ -10,15 +9,15 @@ Origin: wicked_zerg_challenger/utils/kd_tree.py
 
 import heapq
 import math
-from typing import Any, List, Optional, Tuple
+from typing import Any, Optional
 
-Pos3 = Tuple[float, float, float]
+Pos3 = tuple[float, float, float]
 
 
 class KDTree3DNode:
     """3D K-D Tree 노드. 기존 KDTreeNode + z축."""
 
-    __slots__ = ("point", "data", "left", "right", "axis")
+    __slots__ = ("axis", "data", "left", "point", "right")
 
     def __init__(
         self,
@@ -50,13 +49,13 @@ class KDTree3D:
     - Range query: O(N^(2/3) + k)
     """
 
-    def __init__(self, points: Optional[List[Tuple[Pos3, Any]]] = None):
+    def __init__(self, points: Optional[list[tuple[Pos3, Any]]] = None):
         self.root: Optional[KDTree3DNode] = None
         self.size = 0
         if points:
             self.build(points)
 
-    def build(self, points: List[Tuple[Pos3, Any]]) -> None:
+    def build(self, points: list[tuple[Pos3, Any]]) -> None:
         if not points:
             self.root = None
             self.size = 0
@@ -65,7 +64,7 @@ class KDTree3D:
         self.root = self._build_recursive(list(points), depth=0)
 
     def _build_recursive(
-        self, points: List[Tuple[Pos3, Any]], depth: int
+        self, points: list[tuple[Pos3, Any]], depth: int
     ) -> Optional[KDTree3DNode]:
         if not points:
             return None
@@ -85,17 +84,17 @@ class KDTree3D:
 
     def nearest_neighbor(
         self, query: Pos3, exclude_data: Any = None
-    ) -> Optional[Tuple[Pos3, Any, float]]:
+    ) -> Optional[tuple[Pos3, Any, float]]:
         if not self.root:
             return None
-        best: List = [None, float("inf")]
+        best: list = [None, float("inf")]
         self._nn_recursive(self.root, query, best, exclude_data)
         if best[0] is None:
             return None
         return (best[0].point, best[0].data, best[1])
 
     def _nn_recursive(
-        self, node: Optional[KDTree3DNode], query: Pos3, best: List, exclude_data: Any
+        self, node: Optional[KDTree3DNode], query: Pos3, best: list, exclude_data: Any
     ) -> None:
         if node is None:
             return
@@ -114,14 +113,14 @@ class KDTree3D:
         if abs(diff) < best[1]:
             self._nn_recursive(second, query, best, exclude_data)
 
-    def range_query(self, center: Pos3, radius: float) -> List[Tuple[Pos3, Any, float]]:
-        results: List[Tuple[Pos3, Any, float]] = []
+    def range_query(self, center: Pos3, radius: float) -> list[tuple[Pos3, Any, float]]:
+        results: list[tuple[Pos3, Any, float]] = []
         if self.root:
             self._range_recursive(self.root, center, radius, results)
         return results
 
     def _range_recursive(
-        self, node: Optional[KDTree3DNode], center: Pos3, radius: float, results: List
+        self, node: Optional[KDTree3DNode], center: Pos3, radius: float, results: list
     ) -> None:
         if node is None:
             return
@@ -142,10 +141,10 @@ class KDTree3D:
 
     def k_nearest_neighbors(
         self, query: Pos3, k: int, exclude_data: Any = None
-    ) -> List[Tuple[Pos3, Any, float]]:
+    ) -> list[tuple[Pos3, Any, float]]:
         if not self.root or k <= 0:
             return []
-        heap: List = []
+        heap: list = []
         self._knn_recursive(self.root, query, k, heap, exclude_data)
         results = []
         while heap:
@@ -159,7 +158,7 @@ class KDTree3D:
         node: Optional[KDTree3DNode],
         query: Pos3,
         k: int,
-        heap: List,
+        heap: list,
         exclude_data: Any,
     ) -> None:
         if node is None:

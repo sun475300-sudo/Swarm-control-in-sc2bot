@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Multi-Base Defense System - Automatic defense for multiple expansions
 
@@ -9,7 +8,6 @@ Multi-Base Defense System - Automatic defense for multiple expansions
 4. 공격 받는 기지 우선 방어
 """
 
-from typing import Dict
 
 from utils.logger import get_logger
 
@@ -29,7 +27,7 @@ class MultiBaseDefense:
         self.logger = get_logger("MultiBaseDefense")
 
         # 기지별 방어 상태 추적
-        self.base_defense_status: Dict[int, Dict] = {}
+        self.base_defense_status: dict[int, dict] = {}
         self.last_defense_check = 0
         self.defense_check_interval = 44  # ~2초마다 체크
 
@@ -151,7 +149,7 @@ class MultiBaseDefense:
             key=lambda x: (-x[1]["threat_level"], x[1]["spine_count"]),
         )
 
-        for base_tag, status in sorted_bases:
+        for _base_tag, status in sorted_bases:
             # 스파인 크롤러 건설
             if status["spine_count"] < self.spine_per_base:
                 await self._build_spine_at_base(status["position"], iteration)
@@ -220,7 +218,7 @@ class MultiBaseDefense:
             return
 
         # 퀸이 부족한 기지 찾기
-        for base_tag, status in self.base_defense_status.items():
+        for _base_tag, status in self.base_defense_status.items():
             if status["queen_count"] < self.queens_per_base:
                 # 가까운 퀸을 해당 기지로 보냄
                 if queens.exists:
@@ -243,7 +241,7 @@ class MultiBaseDefense:
         self._defense_unit_tags.clear()
         any_base_under_attack = False
 
-        for base_tag, status in self.base_defense_status.items():
+        for _base_tag, status in self.base_defense_status.items():
             if not status["under_attack"]:
                 continue
 

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 SC2 Encyclopedia - 유닛/건물 상성 참조 데이터베이스
 
@@ -6,7 +5,7 @@ SC2 Encyclopedia - 유닛/건물 상성 참조 데이터베이스
 DynamicCounterSystem, ProtossCounterSystem 등에서 참조합니다.
 """
 
-from typing import Dict, List, Optional
+from typing import Optional
 
 # ================================================================
 # === Zerg Units (아군 유닛 정보) ===
@@ -330,25 +329,25 @@ TIMING_BENCHMARKS = {
 # ================================================================
 # === Helper Functions ===
 # ================================================================
-def get_counter(enemy_unit: str) -> Optional[Dict]:
+def get_counter(enemy_unit: str) -> Optional[dict]:
     """적 유닛에 대한 카운터 정보 반환"""
     key = enemy_unit.upper().replace(" ", "_")
     return COUNTER_MATRIX.get(key)
 
 
-def get_unit_info(unit_name: str) -> Optional[Dict]:
+def get_unit_info(unit_name: str) -> Optional[dict]:
     """유닛 정보 반환"""
     key = unit_name.upper().replace(" ", "_")
     return ZERG_UNITS.get(key)
 
 
-def get_tech_path(unit_name: str) -> Optional[Dict]:
+def get_tech_path(unit_name: str) -> Optional[dict]:
     """유닛 생산에 필요한 기술 경로 반환"""
     key = unit_name.upper().replace(" ", "_")
     return TECH_REQUIREMENTS.get(key)
 
 
-def suggest_composition(enemy_comp: List[str]) -> Dict[str, int]:
+def suggest_composition(enemy_comp: list[str]) -> dict[str, int]:
     """
     적 조합에 대한 추천 아군 조합 반환.
 

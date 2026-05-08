@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Spatial Optimizer - 공간 해싱 및 거리 계산 최적화
 
@@ -7,7 +6,7 @@ O(N^2) → O(N) 연산량 감소 (70% 절감)
 """
 
 from collections import defaultdict
-from typing import Dict, List, Optional, Set, Tuple
+from typing import Optional
 
 from utils.logger import get_logger
 
@@ -33,11 +32,11 @@ class SpatialOptimizer:
 
         # ★ 그리드 설정 ★
         self.grid_size = max(grid_size, 1)  # 각 그리드 크기 (10x10), 0 방지
-        self.grids: Dict[Tuple[int, int], Set[int]] = defaultdict(set)
+        self.grids: dict[tuple[int, int], set[int]] = defaultdict(set)
 
         # ★ 유닛 위치 캐시 ★
-        self.unit_positions: Dict[int, Point2] = {}
-        self.unit_grids: Dict[int, Tuple[int, int]] = {}
+        self.unit_positions: dict[int, Point2] = {}
+        self.unit_grids: dict[int, tuple[int, int]] = {}
 
         # ★ 업데이트 주기 ★
         self.last_update = 0
@@ -99,8 +98,8 @@ class SpatialOptimizer:
         self.unit_grids[unit_tag] = grid_key
 
     def find_units_in_range(
-        self, center: Point2, radius: float, unit_tags: Optional[Set[int]] = None
-    ) -> List[int]:
+        self, center: Point2, radius: float, unit_tags: Optional[set[int]] = None
+    ) -> list[int]:
         """
         특정 위치 주변의 유닛 찾기 (최적화된 버전)
 
@@ -150,9 +149,9 @@ class SpatialOptimizer:
     def find_closest_unit(
         self,
         center: Point2,
-        unit_tags: Optional[Set[int]] = None,
+        unit_tags: Optional[set[int]] = None,
         max_distance: float = 50.0,
-    ) -> Optional[Tuple[int, float]]:
+    ) -> Optional[tuple[int, float]]:
         """
         가장 가까운 유닛 찾기
 
@@ -183,7 +182,7 @@ class SpatialOptimizer:
         return (closest_tag, min_distance) if closest_tag else None
 
     def count_units_in_range(
-        self, center: Point2, radius: float, unit_tags: Optional[Set[int]] = None
+        self, center: Point2, radius: float, unit_tags: Optional[set[int]] = None
     ) -> int:
         """
         범위 내 유닛 개수 세기
@@ -200,10 +199,10 @@ class SpatialOptimizer:
 
     def get_unit_clusters(
         self,
-        unit_tags: Set[int],
+        unit_tags: set[int],
         cluster_radius: float = 8.0,
         min_cluster_size: int = 3,
-    ) -> List[Tuple[Point2, List[int]]]:
+    ) -> list[tuple[Point2, list[int]]]:
         """
         유닛 클러스터(밀집 지역) 찾기
 
@@ -265,7 +264,7 @@ class SpatialOptimizer:
         dy = p1.y - p2.y
         return (dx * dx + dy * dy) ** 0.5
 
-    def get_statistics(self) -> Dict:
+    def get_statistics(self) -> dict:
         """통계 반환"""
         efficiency = (
             (self.queries_optimized / self.queries_total * 100)
@@ -282,7 +281,7 @@ class SpatialOptimizer:
             "efficiency": f"{efficiency:.1f}%",
         }
 
-    def get_grid_info(self, position: Point2) -> Dict:
+    def get_grid_info(self, position: Point2) -> dict:
         """
         특정 위치의 그리드 정보 반환
 

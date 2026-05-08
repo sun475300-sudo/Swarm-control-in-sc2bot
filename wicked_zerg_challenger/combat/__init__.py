@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Combat Package - 전투 시스템 모듈화
 
@@ -112,23 +111,23 @@ except ImportError:
     MultiprongAttackManager = None
 
 __all__ = [
-    "BaseDefenseSystem",
-    "RallyPointManager",
-    "ThreatAssessment",
-    "MultitaskingSystem",
-    "CombatExecution",
     "AirUnitManager",
     "AttackController",
-    "VictoryTracker",
+    "BanelingTacticsManager",
+    "BaseDefenseSystem",
+    "CombatExecution",
+    "DoomDropManager",
     "ExpansionDefense",
-    "OverlordTransport",
-    "RoachBurrowHeal",
+    "LurkerPositionManager",
+    "MultiprongAttackManager",
+    "MultitaskingSystem",
     # Feature #91-#98
     "NydusTacticsManager",
+    "OverlordTransport",
     "QueenWalkManager",
-    "BanelingTacticsManager",
-    "DoomDropManager",
-    "LurkerPositionManager",
+    "RallyPointManager",
+    "RoachBurrowHeal",
+    "ThreatAssessment",
+    "VictoryTracker",
     "ViperTacticsManager",
-    "MultiprongAttackManager",
 ]

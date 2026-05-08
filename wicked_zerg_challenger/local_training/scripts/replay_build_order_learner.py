@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Replay Build Order Learner
 
@@ -16,7 +15,7 @@ import logging
 import sys
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Optional
 
 logger = logging.getLogger("ReplayBuildOrderLearner")
 
@@ -82,7 +81,7 @@ class ReplayBuildOrderLearner:
         }
 
         # 학습된 빌드 오더
-        self.learned_builds: Dict[str, List[Dict]] = {
+        self.learned_builds: dict[str, list[dict]] = {
             "vs_terran": [],
             "vs_protoss": [],
             "vs_zerg": [],
@@ -90,14 +89,14 @@ class ReplayBuildOrderLearner:
         }
 
         # 빌드 오더 통계
-        self.build_stats: Dict[str, Any] = {
+        self.build_stats: dict[str, Any] = {
             "total_replays": 0,
             "zerg_wins": 0,
             "avg_game_length": 0.0,
             "common_openers": {},
         }
 
-    def scan_replays(self) -> List[Path]:
+    def scan_replays(self) -> list[Path]:
         """리플레이 파일 스캔"""
         replays = []
         if self.replay_dir.exists():
@@ -106,7 +105,7 @@ class ReplayBuildOrderLearner:
         logger.info(f"Found {len(replays)} replay files")
         return replays
 
-    def parse_replay(self, replay_path: Path) -> Optional[Dict[str, Any]]:
+    def parse_replay(self, replay_path: Path) -> Optional[dict[str, Any]]:
         """리플레이 파일 파싱"""
         try:
             # sc2reader 시도
@@ -125,7 +124,7 @@ class ReplayBuildOrderLearner:
             logger.error(f"Failed to parse {replay_path.name}: {e}")
             return None
 
-    def _extract_from_sc2reader(self, replay) -> Dict[str, Any]:
+    def _extract_from_sc2reader(self, replay) -> dict[str, Any]:
         """sc2reader로 상세 정보 추출"""
         data = {
             "map": replay.map_name,
@@ -170,13 +169,12 @@ class ReplayBuildOrderLearner:
 
         return data
 
-    def _extract_build_order(self, replay, player) -> List[Dict]:
+    def _extract_build_order(self, replay, player) -> list[dict]:
         """플레이어의 빌드 오더 추출"""
         build_order = []
 
         try:
             logger.debug(f"Total events: {len(replay.events)}")  # DEBUG
-            debug_count = 0
 
             # 이벤트에서 유닛/건물 생산 추출
             for event in replay.events:
@@ -213,7 +211,7 @@ class ReplayBuildOrderLearner:
         build_order.sort(key=lambda x: x["time"])
         return build_order[:50]  # 처음 50개만
 
-    def _extract_basic_metadata(self, replay_path: Path) -> Dict[str, Any]:
+    def _extract_basic_metadata(self, replay_path: Path) -> dict[str, Any]:
         """기본 메타데이터 추출 (sc2reader 없이)"""
         return {
             "map": "Unknown",
@@ -224,7 +222,7 @@ class ReplayBuildOrderLearner:
             "parsed_at": datetime.now().isoformat(),
         }
 
-    def learn_from_replays(self, max_replays: int = 100) -> Dict[str, Any]:
+    def learn_from_replays(self, max_replays: int = 100) -> dict[str, Any]:
         """리플레이에서 빌드 오더 학습"""
         replays = self.scan_replays()[:max_replays]
 
@@ -244,7 +242,7 @@ class ReplayBuildOrderLearner:
 
         return self._generate_learned_parameters()
 
-    def _process_build_order(self, data: Dict) -> None:
+    def _process_build_order(self, data: dict) -> None:
         """빌드 오더 처리 및 분류"""
         for build in data.get("build_orders", []):
             if "Win" in build.get("result", ""):
@@ -263,14 +261,14 @@ class ReplayBuildOrderLearner:
                         }
                     )
 
-    def _get_opponent_race(self, data: Dict, player_name: str) -> str:
+    def _get_opponent_race(self, data: dict, player_name: str) -> str:
         """상대 종족 추출"""
         for player in data.get("players", []):
             if player["name"] != player_name:
                 return player.get("race", "Unknown")
         return "Unknown"
 
-    def _generate_learned_parameters(self) -> Dict[str, Any]:
+    def _generate_learned_parameters(self) -> dict[str, Any]:
         """학습된 파라미터 생성"""
         parameters = {
             "build_order_timings": self._calculate_avg_timings(),
@@ -281,11 +279,11 @@ class ReplayBuildOrderLearner:
         }
         return parameters
 
-    def _calculate_avg_timings(self) -> Dict[str, float]:
+    def _calculate_avg_timings(self) -> dict[str, float]:
         """평균 빌드 타이밍 계산"""
-        timings: Dict[str, List[float]] = {}
+        timings: dict[str, list[float]] = {}
 
-        for category, builds in self.learned_builds.items():
+        for _category, builds in self.learned_builds.items():
             for build in builds:
                 for action in build.get("actions", []):
                     unit = action.get("unit", "")
@@ -299,12 +297,12 @@ class ReplayBuildOrderLearner:
             unit: sum(times) / len(times) for unit, times in timings.items() if times
         }
 
-    def _calculate_unit_priorities(self) -> Dict[str, float]:
+    def _calculate_unit_priorities(self) -> dict[str, float]:
         """유닛 우선순위 계산"""
-        counts: Dict[str, int] = {}
+        counts: dict[str, int] = {}
         total = 0
 
-        for category, builds in self.learned_builds.items():
+        for _category, builds in self.learned_builds.items():
             for build in builds:
                 for action in build.get("actions", []):
                     unit = action.get("unit", "")
@@ -316,11 +314,11 @@ class ReplayBuildOrderLearner:
             return {}
         return {unit: count / total for unit, count in counts.items()}
 
-    def _calculate_expansion_timings(self) -> Dict[str, float]:
+    def _calculate_expansion_timings(self) -> dict[str, float]:
         """확장 타이밍 계산"""
         timings = {"second_base": [], "third_base": [], "fourth_base": []}
 
-        for category, builds in self.learned_builds.items():
+        for _category, builds in self.learned_builds.items():
             for build in builds:
                 hatch_count = 0
                 for action in build.get("actions", []):
@@ -338,7 +336,7 @@ class ReplayBuildOrderLearner:
             for base, times in timings.items()
         }
 
-    def _get_default_build_orders(self) -> Dict[str, Any]:
+    def _get_default_build_orders(self) -> dict[str, Any]:
         """기본 빌드 오더 (리플레이 없을 때)"""
         return {
             "build_order_timings": {
@@ -371,7 +369,7 @@ class ReplayBuildOrderLearner:
             "generated_at": datetime.now().isoformat(),
         }
 
-    def save_learned_data(self, data: Dict[str, Any]) -> bool:
+    def save_learned_data(self, data: dict[str, Any]) -> bool:
         """학습 데이터 저장"""
         try:
             output_path = Path(self.output_dir)
@@ -386,7 +384,7 @@ class ReplayBuildOrderLearner:
             logger.error(f"Failed to save: {e}")
             return False
 
-    def run(self) -> Dict[str, Any]:
+    def run(self) -> dict[str, Any]:
         """메인 실행"""
         logger.info("=" * 60)
         logger.info("REPLAY BUILD ORDER LEARNER")

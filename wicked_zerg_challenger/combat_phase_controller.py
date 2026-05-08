@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Combat Phase Controller - 전투 단계별 컨트롤 시스템
 
@@ -11,7 +10,7 @@ Combat Phase Controller - 전투 단계별 컨트롤 시스템
 
 from dataclasses import dataclass
 from enum import Enum
-from typing import Dict, List, Optional, Set
+from typing import Optional
 
 try:
     from sc2.ids.unit_typeid import UnitTypeId
@@ -43,7 +42,7 @@ class CombatPhase(Enum):
 class CombatGroup:
     """전투 그룹"""
 
-    units: Set[int]  # 유닛 태그 집합
+    units: set[int]  # 유닛 태그 집합
     phase: CombatPhase
     rally_point: Optional[Point2]
     target_position: Optional[Point2]
@@ -78,7 +77,7 @@ class CombatPhaseController:
         self.logger = get_logger("CombatPhaseController")
 
         # 전투 그룹 관리
-        self.combat_groups: Dict[str, CombatGroup] = {}  # group_id -> CombatGroup
+        self.combat_groups: dict[str, CombatGroup] = {}  # group_id -> CombatGroup
 
         # 전투 설정
         self.min_army_for_attack = 8  # 최소 공격 병력
@@ -161,7 +160,7 @@ class CombatPhaseController:
             return
 
         nearby_enemies = self._get_nearby_enemies(group_units)
-        group_center = self._get_group_center(group_units)
+        self._get_group_center(group_units)
         group_health_ratio = self._get_group_health_ratio(group_units)
 
         # === 단계별 행동 ===
@@ -473,12 +472,12 @@ class CombatPhaseController:
             if unit.weapon_cooldown == 0:
                 self.bot.do(unit.attack(closest_enemy))
 
-    def _create_new_group(self, units: List[Unit], game_time: float) -> str:
+    def _create_new_group(self, units: list[Unit], game_time: float) -> str:
         """새 전투 그룹 생성"""
         group_id = f"group_{len(self.combat_groups)}"
 
         group = CombatGroup(
-            units=set(u.tag for u in units),
+            units={u.tag for u in units},
             phase=CombatPhase.IDLE,
             rally_point=None,
             target_position=None,
@@ -497,7 +496,7 @@ class CombatPhaseController:
 
     def _calculate_formation_positions(
         self, units: Units, target: Point2, formation_type: str
-    ) -> List[Point2]:
+    ) -> list[Point2]:
         """진형 계산"""
         if not units:
             return []
@@ -509,7 +508,7 @@ class CombatPhaseController:
 
         if formation_type == "concave":
             # 오목 진형 (적을 감싸는 형태)
-            for i, unit in enumerate(units):
+            for i, _unit in enumerate(units):
                 angle = (i / len(units)) * 3.14 - 1.57  # -90도 ~ +90도
                 offset = Point2((direction.x * 3, direction.y * 3))
                 offset = offset.rotated(angle)
@@ -518,7 +517,7 @@ class CombatPhaseController:
         elif formation_type == "line":
             # 일직선 진형
             perpendicular = Point2((-direction.y, direction.x))
-            for i, unit in enumerate(units):
+            for i, _unit in enumerate(units):
                 offset = perpendicular * (i - len(units) / 2) * 2
                 positions.append(center + offset)
 
@@ -611,7 +610,7 @@ class CombatPhaseController:
 
     def _collect_learning_data(self, game_time: float) -> None:
         """학습 데이터 수집"""
-        for group_id, group in self.combat_groups.items():
+        for _group_id, group in self.combat_groups.items():
             group_units = self._get_group_units(group)
             nearby_enemies = self._get_nearby_enemies(group_units)
 

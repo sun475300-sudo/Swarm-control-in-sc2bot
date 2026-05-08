@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Rally Point Manager - 랠리 포인트 관리
 
@@ -158,9 +157,7 @@ class RallyPointManager:
                 is_idle = getattr(unit, "is_idle", False)
                 distance_to_rally = unit.distance_to(self._rally_point)
 
-                if is_idle and distance_to_rally > 5:
-                    self.bot.do(unit.move(self._rally_point))
-                elif distance_to_rally > 20:  # Very far from rally
+                if is_idle and distance_to_rally > 5 or distance_to_rally > 20:
                     self.bot.do(unit.move(self._rally_point))
             except Exception:
                 continue

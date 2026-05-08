@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Improved Hierarchical Reinforcement Learning (개선된 계층적 강화학습)
 
@@ -12,7 +11,7 @@ Role: Pure Strategic Decision Maker (The Brain)
 """
 
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Any, Optional
 
 import numpy as np
 
@@ -32,7 +31,7 @@ class CommanderAgent:
 
     def __init__(self):
         """사령관 에이전트 초기화"""
-        self.strategy_history: List[str] = []
+        self.strategy_history: list[str] = []
         self.decision_confidence: float = 0.5
 
     def make_decision(
@@ -131,7 +130,7 @@ class HierarchicalRLSystem:
             return text.split(".", 1)[1]
         return text
 
-    def step(self, bot, override_strategy: Optional[str] = None) -> Dict[str, Any]:
+    def step(self, bot, override_strategy: Optional[str] = None) -> dict[str, Any]:
         """
         매 프레임 실행되어 전략적 결정을 내립니다.
 

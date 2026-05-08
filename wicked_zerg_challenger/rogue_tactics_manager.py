@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 이병렬(Rogue) 선수 전술 구현 매니저
 
@@ -10,7 +9,7 @@
 """
 
 import logging
-from typing import List, Optional, Set, Tuple
+from typing import Optional
 
 logger = logging.getLogger("RogueTacticsManager")
 
@@ -45,7 +44,7 @@ class RogueTacticsManager:
         self._drop_cooldown_duration = 60  # 60초 쿨다운
         self._last_drop_time = 0
         self._drop_in_progress = False
-        self._drop_overlords: Set[int] = set()  # 드랍 중인 수송 대군주 태그
+        self._drop_overlords: set[int] = set()  # 드랍 중인 수송 대군주 태그
 
         # 라바 세이빙 상태
         self._larva_saving_mode = False
@@ -263,7 +262,7 @@ class RogueTacticsManager:
 
         return target
 
-    def _calculate_stealth_path(self, start: Point2, end: Point2) -> List[Point2]:
+    def _calculate_stealth_path(self, start: Point2, end: Point2) -> list[Point2]:
         """
         시야 밖 우회 기동 경로 계산
 
@@ -459,7 +458,7 @@ class RogueTacticsManager:
         """맹독충 드랍 준비 중인지 여부"""
         return self._can_execute_drop() and not self._drop_in_progress
 
-    def get_enemy_on_creep_status(self) -> Tuple[bool, bool, Optional[Point2]]:
+    def get_enemy_on_creep_status(self) -> tuple[bool, bool, Optional[Point2]]:
         """
         적이 점막에 있는지, 전진 중인지 반환
 

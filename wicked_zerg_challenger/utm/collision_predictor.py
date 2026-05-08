@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Time-to-Collision (TTC) Predictor for Drone Deconfliction
 
@@ -11,7 +10,7 @@ Origin: potential_fields.py의 반발력 + pid_controller.py의 제어
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import List, Optional
+from typing import Optional
 
 import numpy as np
 
@@ -90,7 +89,7 @@ class CollisionPredictor:
         pos_b = drone_b.position.to_array() + drone_b.velocity * t
         return float(np.linalg.norm(pos_a - pos_b))
 
-    def check_all_pairs(self, drones: List[DroneState]) -> List[CollisionAlert]:
+    def check_all_pairs(self, drones: list[DroneState]) -> list[CollisionAlert]:
         """
         모든 드론 쌍의 충돌 검사. O(N²) — VoxelGrid로 사전 필터링 가능.
         """

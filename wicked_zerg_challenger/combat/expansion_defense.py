@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Expansion Defense - 확장 기지 방어 시스템
 
@@ -9,7 +8,7 @@ Expansion Defense - 확장 기지 방어 시스템
 4. 파괴 후 반격
 """
 
-from typing import TYPE_CHECKING, Dict, Set
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from sc2.position import Point2
@@ -44,7 +43,7 @@ class ExpansionDefense:
         self.logger = get_logger("ExpansionDefense")
 
         # Expansion defense state
-        self._expansion_under_attack: Dict[int, float] = (
+        self._expansion_under_attack: dict[int, float] = (
             {}
         )  # base_tag -> attack_start_time
         self._expansion_destroyed_positions = []
@@ -72,7 +71,7 @@ class ExpansionDefense:
             return
 
         # STEP 1: 확장 기지 파괴 감지
-        current_bases = set(th.tag for th in townhalls)
+        current_bases = {th.tag for th in townhalls}
         previous_bases = set(self._expansion_under_attack.keys())
 
         destroyed_bases = previous_bases - current_bases
@@ -225,7 +224,7 @@ class ExpansionDefense:
             )
 
     async def counterattack_after_base_loss(
-        self, destroyed_base_tags: Set[int], iteration: int
+        self, destroyed_base_tags: set[int], iteration: int
     ):
         """
         확장 기지 파괴 후 반격

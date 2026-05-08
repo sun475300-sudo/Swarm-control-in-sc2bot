@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 Move completed replays to a completed folder.
 """
@@ -9,7 +8,6 @@ from __future__ import annotations
 import argparse
 import logging
 from pathlib import Path
-from typing import Tuple
 
 from replay_learning_tracker_sqlite import ReplayLearningTrackerSQLite
 
@@ -21,7 +19,7 @@ def move_completed_replays(
     completed_dir: Path,
     min_iterations: int,
     dry_run: bool,
-) -> Tuple[int, int]:
+) -> tuple[int, int]:
     replay_dir = Path(replay_dir)
     completed_dir = Path(completed_dir)
     completed_dir.mkdir(parents=True, exist_ok=True)
@@ -65,7 +63,7 @@ def move_completed_replays(
 
 def force_move_all(
     replay_dir: Path, completed_dir: Path, dry_run: bool
-) -> Tuple[int, int]:
+) -> tuple[int, int]:
     replay_dir = Path(replay_dir)
     completed_dir = Path(completed_dir)
     completed_dir.mkdir(parents=True, exist_ok=True)

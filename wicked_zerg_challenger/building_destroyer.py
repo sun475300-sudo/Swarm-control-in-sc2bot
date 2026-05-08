@@ -10,7 +10,6 @@
 """
 
 import logging
-from typing import Dict, List, Set
 
 from sc2.ids.unit_typeid import UnitTypeId
 from sc2.position import Point2
@@ -68,10 +67,10 @@ class BuildingDestroyer:
         }
 
         # 공격 배정된 건물 추적
-        self.assigned_targets: Dict[int, Set[int]] = {}  # {building_tag: {unit_tags}}
+        self.assigned_targets: dict[int, set[int]] = {}  # {building_tag: {unit_tags}}
 
         # 알려진 모든 적 건물 (시야에서 사라져도 기억)
-        self.known_enemy_buildings: Dict[int, Point2] = {}  # {tag: last_known_position}
+        self.known_enemy_buildings: dict[int, Point2] = {}  # {tag: last_known_position}
 
     async def on_step(self, iteration: int):
         """매 프레임 실행"""
@@ -100,7 +99,7 @@ class BuildingDestroyer:
         visible_tags = {s.tag for s in self.bot.enemy_structures}
         destroyed_tags = set(self.known_enemy_buildings.keys()) - visible_tags
 
-        for tag in destroyed_tags:
+        for _tag in destroyed_tags:
             # 실제로 파괴되었는지 확인 (시야 밖일 수도 있음)
             # 일단 보존 (정찰로 재확인 필요)
             pass
@@ -184,7 +183,7 @@ class BuildingDestroyer:
 
         return self.bot.units.filter(lambda u: u.type_id in combat_types)
 
-    def _get_prioritized_buildings(self) -> List[Unit]:
+    def _get_prioritized_buildings(self) -> list[Unit]:
         """
         우선순위가 높은 순으로 건물 정렬
 

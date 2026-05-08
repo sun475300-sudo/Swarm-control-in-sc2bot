@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 
 Build Order Optimization System
@@ -11,7 +10,6 @@ Purpose: Stable and optimized automated build order execution
 
 import logging
 from enum import Enum
-from typing import Dict, List
 
 from knowledge_manager import KnowledgeManager  # NEW
 
@@ -92,12 +90,12 @@ class BuildOrderSystem:
 
         # Current Build Order (Selected by enemy race)
         self.current_build_order: BuildOrderType = self._select_build_by_enemy_race()
-        self.build_steps: List[BuildOrderStep] = []
+        self.build_steps: list[BuildOrderStep] = []
         self.current_step_index = 0
 
         # Timing tracking
-        self.step_timings: Dict[int, float] = {}  # supply -> game_time
-        self.missed_timings: List[str] = []
+        self.step_timings: dict[int, float] = {}  # supply -> game_time
+        self.missed_timings: list[str] = []
 
         # Performance Stats
         self.build_order_stats = {
@@ -122,7 +120,7 @@ class BuildOrderSystem:
         # ★ Phase 25: 스텝 재시도 시스템 ★
         self._step_retry_count = 0
         self._max_retries_before_skip = 50  # ~50프레임(2초) 재시도 후 다음 스텝으로
-        self._skipped_steps: List[BuildOrderStep] = []  # 건너뛴 스텝 (나중에 재실행)
+        self._skipped_steps: list[BuildOrderStep] = []  # 건너뛴 스텝 (나중에 재실행)
 
         # ★ Phase 22: 확장 타이밍 검증 ★
         self.expansion_timing_target = 60.0  # 1분 멀티 목표
@@ -174,7 +172,7 @@ class BuildOrderSystem:
         logger.info(f"Build Order Set: {self.current_build_order.value}")
         logger.info(f"Total {len(self.build_steps)} steps")
 
-    def _parse_build_steps(self, steps_data: List[Dict]) -> List[BuildOrderStep]:
+    def _parse_build_steps(self, steps_data: list[dict]) -> list[BuildOrderStep]:
         """Parse JSON steps into objects"""
         parsed_steps = []
         for step in steps_data:
@@ -523,7 +521,7 @@ class BuildOrderSystem:
         actual = self.expansion_actual_time
 
         if actual == 0:
-            logger.info(f"[!] Expansion timing: NOT RECORDED")
+            logger.info("[!] Expansion timing: NOT RECORDED")
             return
 
         target = self.expansion_timing_target

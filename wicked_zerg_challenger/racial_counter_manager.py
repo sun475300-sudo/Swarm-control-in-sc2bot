@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Racial Counter Manager - Race-specific unit composition counter logic
 
@@ -10,7 +9,6 @@ Usage:
     counter_mgr.update(enemy_race, game_phase, game_time, enemy_composition)
 """
 
-from typing import Dict, List, Tuple
 
 from config.config_loader import ConfigLoader
 
@@ -32,8 +30,8 @@ class RacialCounterManager:
         self._counter_cfg = ConfigLoader.get_counter_build_config()
 
         # Log spam prevention
-        self._log_flags: Dict[str, bool] = {}
-        self._last_log_times: Dict[str, float] = {}
+        self._log_flags: dict[str, bool] = {}
+        self._last_log_times: dict[str, float] = {}
         self.log_cooldown = 5.0
 
     def update(
@@ -41,10 +39,10 @@ class RacialCounterManager:
         enemy_race: str,
         game_phase: str,
         game_time: float,
-        enemy_composition: Dict[str, int],
-        current_ratios: Dict[str, float],
+        enemy_composition: dict[str, int],
+        current_ratios: dict[str, float],
         request_building_fn=None,
-    ) -> Dict[str, float]:
+    ) -> dict[str, float]:
         """
         Analyze enemy composition and return adjusted unit ratios.
 
@@ -86,10 +84,10 @@ class RacialCounterManager:
     def _counter_terran(
         self,
         game_time: float,
-        comp: Dict[str, int],
-        ratios: Dict[str, float],
+        comp: dict[str, int],
+        ratios: dict[str, float],
         req_building=None,
-    ) -> Dict[str, float]:
+    ) -> dict[str, float]:
         marine = comp.get("MARINE", 0)
         marauder = comp.get("MARAUDER", 0)
         medivac = comp.get("MEDIVAC", 0)
@@ -162,10 +160,10 @@ class RacialCounterManager:
     def _counter_protoss(
         self,
         game_time: float,
-        comp: Dict[str, int],
-        ratios: Dict[str, float],
+        comp: dict[str, int],
+        ratios: dict[str, float],
         req_building=None,
-    ) -> Dict[str, float]:
+    ) -> dict[str, float]:
         immortal = comp.get("IMMORTAL", 0)
         colossus = comp.get("COLOSSUS", 0)
         voidray = comp.get("VOIDRAY", 0)
@@ -281,10 +279,10 @@ class RacialCounterManager:
     def _counter_zerg(
         self,
         game_time: float,
-        comp: Dict[str, int],
-        ratios: Dict[str, float],
+        comp: dict[str, int],
+        ratios: dict[str, float],
         req_building=None,
-    ) -> Dict[str, float]:
+    ) -> dict[str, float]:
         zergling = comp.get("ZERGLING", 0)
         baneling = comp.get("BANELING", 0)
         roach = comp.get("ROACH", 0)
@@ -340,13 +338,13 @@ class RacialCounterManager:
     # ------------------------------------------------------------------
 
     @staticmethod
-    def _set(ratios: Dict[str, float], unit: str, value: float) -> None:
+    def _set(ratios: dict[str, float], unit: str, value: float) -> None:
         """Set ratio only if higher than current (boost, not reduce)."""
         if value > ratios.get(unit, 0):
             ratios[unit] = value
 
     @staticmethod
-    def _normalize(ratios: Dict[str, float]) -> Dict[str, float]:
+    def _normalize(ratios: dict[str, float]) -> dict[str, float]:
         """Normalize ratios to sum to 1.0."""
         total = sum(ratios.values())
         if total > 0:
@@ -373,7 +371,7 @@ class RacialCounterManager:
     # ------------------------------------------------------------------
 
     # Counter rules for high-value enemy units
-    THREAT_COUNTER_RULES: Dict[str, Dict] = {
+    THREAT_COUNTER_RULES: dict[str, dict] = {
         "BATTLECRUISER": {
             "counter_units": ["corruptor", "queen"],
             "ratios": [0.70, 0.30],
@@ -455,7 +453,7 @@ class RacialCounterManager:
     }
 
     def scan_high_threats(
-        self, enemy_composition: Dict[str, int], game_time: float
+        self, enemy_composition: dict[str, int], game_time: float
     ) -> None:
         """
         Scan for high-value enemy units and register counters to Blackboard.
@@ -485,13 +483,13 @@ class RacialCounterManager:
                     self.blackboard.set("unit_composition_override", override)
                     self.blackboard.set("dynamic_counter_active", True)
 
-    def get_active_threats(self) -> List[str]:
+    def get_active_threats(self) -> list[str]:
         """Return list of detected high-value enemy unit types."""
         return [
             k.replace("threat_", "") for k in self._log_flags if k.startswith("threat_")
         ]
 
-    def get_highest_threat(self) -> Tuple[str, str]:
+    def get_highest_threat(self) -> tuple[str, str]:
         """Return highest urgency threat detected."""
         threats = self.get_active_threats()
         for urgency in ["CRITICAL", "HIGH", "MEDIUM"]:

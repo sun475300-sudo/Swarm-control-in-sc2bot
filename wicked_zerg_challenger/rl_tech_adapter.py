@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 RL Tech Adapter - Reinforcement Learning for Enemy Tech Response
 
@@ -14,7 +13,7 @@ Features:
 
 import json
 from pathlib import Path
-from typing import Dict, List, Optional, Set
+from typing import Optional
 
 from utils.logger import get_logger
 
@@ -44,7 +43,7 @@ class RLTechAdapter:
         self.logger = get_logger("RLTechAdapter")
 
         # ★ State Observation ★
-        self.observed_enemy_tech: Set[str] = set()
+        self.observed_enemy_tech: set[str] = set()
         self.last_tech_scan = 0
         self.tech_scan_interval = 44  # ~2초마다 스캔
 
@@ -55,8 +54,8 @@ class RLTechAdapter:
 
         # ★ Learning Data ★
         self.game_start_time = 0
-        self.adaptations_made: List[Dict] = []  # 이번 게임에서 한 적응들
-        self.tech_first_seen: Dict[str, float] = {}  # 각 테크를 처음 본 시간
+        self.adaptations_made: list[dict] = []  # 이번 게임에서 한 적응들
+        self.tech_first_seen: dict[str, float] = {}  # 각 테크를 처음 본 시간
 
         # ★ Counter Rules (실시간 조정 가능) ★
         self.counter_priorities = {
@@ -153,7 +152,7 @@ class RLTechAdapter:
             if iteration % 50 == 0:
                 self.logger.error(f"[RL_TECH] Error: {e}")
 
-    async def _scan_enemy_tech(self) -> Set[str]:
+    async def _scan_enemy_tech(self) -> set[str]:
         """
         적 테크 건물을 스캔하고 새로 발견된 테크를 반환
 
@@ -182,7 +181,7 @@ class RLTechAdapter:
 
         return new_tech
 
-    async def _decide_counter_strategy(self, new_tech: Set[str], game_time: float):
+    async def _decide_counter_strategy(self, new_tech: set[str], game_time: float):
         """
         새로 감지된 테크에 대한 카운터 전략 결정
 
@@ -228,7 +227,7 @@ class RLTechAdapter:
             # Blackboard에 카운터 전략 등록
             await self._register_counter_to_blackboard(tech, counter_rule)
 
-    async def _register_counter_to_blackboard(self, tech: str, counter_rule: Dict):
+    async def _register_counter_to_blackboard(self, tech: str, counter_rule: dict):
         """
         Blackboard에 카운터 전략을 등록하여 다른 매니저들이 사용할 수 있게 함
         """
@@ -295,7 +294,7 @@ class RLTechAdapter:
 
         return True
 
-    def _get_learned_response(self, tech: str) -> Optional[Dict]:
+    def _get_learned_response(self, tech: str) -> Optional[dict]:
         """
         학습된 성공률을 기반으로 최적 대응 전략 가져오기
 
@@ -366,7 +365,7 @@ class RLTechAdapter:
         try:
             memory_file = Path(__file__).parent / "rl_tech_memory.json"
             if memory_file.exists():
-                with open(memory_file, "r", encoding="utf-8") as f:
+                with open(memory_file, encoding="utf-8") as f:
                     self.success_memory = json.load(f)
                 self.logger.info(
                     f"[RL_TECH] Loaded learning memory: {len(self.success_memory)} entries"
@@ -380,6 +379,6 @@ class RLTechAdapter:
             memory_file = Path(__file__).parent / "rl_tech_memory.json"
             with open(memory_file, "w", encoding="utf-8") as f:
                 json.dump(self.success_memory, f, indent=2)
-            self.logger.info(f"[RL_TECH] Saved learning memory")
+            self.logger.info("[RL_TECH] Saved learning memory")
         except Exception as e:
             self.logger.warning(f"[RL_TECH] Failed to save memory: {e}")

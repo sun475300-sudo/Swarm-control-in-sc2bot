@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Aggressive Early Game Strategies - 초반 공격 전략 모음
 
@@ -14,7 +13,7 @@ Aggressive Early Game Strategies - 초반 공격 전략 모음
 
 import logging
 from enum import Enum
-from typing import Optional, Set
+from typing import Optional
 
 logger = logging.getLogger("AggressiveStrategies")
 
@@ -82,13 +81,13 @@ class AggressiveStrategyExecutor:
         self._nydus_location: Optional[Point2] = None
         self._nydus_built = False
         self._nydus_worm_tag: Optional[int] = None  # ★ Worm 추적
-        self._nydus_units_sent: Set[int] = set()  # ★ 투입된 유닛 추적
+        self._nydus_units_sent: set[int] = set()  # ★ 투입된 유닛 추적
         self._nydus_attack_started = False  # ★ 공격 시작 여부
 
         # 유닛 태그 추적
-        self._rush_units: Set[int] = set()
-        self._proxy_drones: Set[int] = set()
-        self._drop_overlords: Set[int] = set()  # ★ 드랍 대군주
+        self._rush_units: set[int] = set()
+        self._proxy_drones: set[int] = set()
+        self._drop_overlords: set[int] = set()  # ★ 드랍 대군주
         self._overlord_drop_active = False  # ★ 드랍 활성화 여부
         self._last_drop_time = 0  # ★ 마지막 드랍 시간
 
@@ -160,7 +159,7 @@ class AggressiveStrategyExecutor:
         # 50% Chance: Standard Macro (No Aggressive Strategy)
         if roll < 0.5:
             self.active_strategy = AggressiveStrategyType.NONE
-            logger.info(f"Selected: STANDARD MACRO (Safe Play)")
+            logger.info("Selected: STANDARD MACRO (Safe Play)")
             self._strategy_decided = True
             return self.active_strategy
 
@@ -329,7 +328,7 @@ class AggressiveStrategyExecutor:
     async def _execute_baneling_bust(self) -> None:
         """맹독충 올인 실행"""
         config = self.strategy_configs[AggressiveStrategyType.BANELING_BUST]
-        game_time = getattr(self.bot, "time", 0)
+        getattr(self.bot, "time", 0)
 
         # 1. 스포닝 풀 건설
         if not self._pool_started:
@@ -521,7 +520,7 @@ class AggressiveStrategyExecutor:
     async def _execute_tunneling_claws(self) -> None:
         """잠복 바퀴 이동 실행"""
         config = self.strategy_configs[AggressiveStrategyType.TUNNELING_CLAWS]
-        game_time = getattr(self.bot, "time", 0)
+        getattr(self.bot, "time", 0)
 
         # 1. 바퀴굴 건설
         roach_warren = self.bot.structures(UnitTypeId.ROACHWARREN)
@@ -648,7 +647,7 @@ class AggressiveStrategyExecutor:
                         self.bot.do(
                             drone.build(UnitTypeId.HATCHERY, self._proxy_location)
                         )
-                        logger.info(f"Building proxy Hatchery!")
+                        logger.info("Building proxy Hatchery!")
                         break  # ★ 한 드론만 건설하면 충분 ★
 
         # 4. 가시 촉수 건설
@@ -747,7 +746,7 @@ class AggressiveStrategyExecutor:
                     self.bot.do(network(AbilityId.BUILD_NYDUSWORM, nydus_location))
                     self._nydus_location = nydus_location
                     self._nydus_built = True
-                    logger.info(f"Building Nydus Worm at enemy base!")
+                    logger.info("Building Nydus Worm at enemy base!")
 
         # 5. 땅굴 벌레 확인 및 추적
         nydus_worms = self.bot.structures(UnitTypeId.NYDUSCANAL)
@@ -770,7 +769,7 @@ class AggressiveStrategyExecutor:
 
         # 8. Worm이 파괴되면 재건설 (선택적)
         if self._nydus_built and not nydus_worms.exists:
-            logger.info(f"Worm destroyed! Rebuilding...")
+            logger.info("Worm destroyed! Rebuilding...")
             self._nydus_built = False
             self._nydus_worm_tag = None
             self._nydus_attack_started = False
@@ -980,8 +979,8 @@ class AggressiveStrategyExecutor:
                                 lairs.first.research(UpgradeId.OVERLORDTRANSPORT)
                             )
                             self._ventral_sacs_started = True
-                            logger.info(f"Ventral Sacs upgrade started!")
-                    except Exception as e:
+                            logger.info("Ventral Sacs upgrade started!")
+                    except Exception:
                         pass
 
         # 2. 드랍용 대군주 지정
@@ -989,7 +988,7 @@ class AggressiveStrategyExecutor:
             overlords = self.bot.units(UnitTypeId.OVERLORD)
             if overlords.amount >= config["drop_overlord_count"]:
                 # 2기 선택
-                for i, ol in enumerate(overlords[: config["drop_overlord_count"]]):
+                for _i, ol in enumerate(overlords[: config["drop_overlord_count"]]):
                     self._drop_overlords.add(ol.tag)
 
                 self._overlord_drop_active = True
@@ -1039,7 +1038,7 @@ class AggressiveStrategyExecutor:
                             # 또는 유닛이 대군주에 타도록 (AbilityId.SMART)
                             # 여기서는 대군주가 태우는 방식 사용
                             self.bot.do(overlord(AbilityId.LOAD, ling))
-                        except (AttributeError, TypeError) as e:
+                        except (AttributeError, TypeError):
                             # Overlord transport may fail if unit is busy or ability unavailable
                             pass
                 else:

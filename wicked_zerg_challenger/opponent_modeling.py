@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Opponent Modeling System - 적 행동 패턴 학습 및 예측
 
@@ -17,7 +16,7 @@ import os
 from collections import defaultdict
 from dataclasses import dataclass
 from enum import Enum
-from typing import Dict, List, Optional, Set, Tuple
+from typing import Optional
 
 from utils.logger import get_logger
 
@@ -69,13 +68,13 @@ class GameHistory:
     opponent_race: str
     opponent_style: str
     detected_strategy: str
-    build_order_observed: List[str]  # ["spawningpool", "roachwarren", ...]
-    timing_attacks: List[float]  # [180.0, 360.0, ...] (seconds)
-    final_composition: Dict[str, int]  # {"zergling": 30, "roach": 15, ...}
+    build_order_observed: list[str]  # ["spawningpool", "roachwarren", ...]
+    timing_attacks: list[float]  # [180.0, 360.0, ...] (seconds)
+    final_composition: dict[str, int]  # {"zergling": 30, "roach": 15, ...}
     game_result: str  # "win" or "loss"
     game_duration: float
-    early_signals: List[str]  # StrategySignal names
-    tech_progression: List[Tuple[float, str]]  # [(120.0, "lair"), ...]
+    early_signals: list[str]  # StrategySignal names
+    tech_progression: list[tuple[float, str]]  # [(120.0, "lair"), ...]
 
 
 class OpponentModel:
@@ -88,22 +87,22 @@ class OpponentModel:
         self.games_lost = 0
 
         # Style distribution
-        self.style_counts: Dict[str, int] = defaultdict(int)
+        self.style_counts: dict[str, int] = defaultdict(int)
         self.dominant_style = OpponentStyle.UNKNOWN
 
         # Strategy patterns
-        self.strategy_frequency: Dict[str, int] = defaultdict(int)
-        self.build_order_patterns: List[List[str]] = []
-        self.timing_attack_history: List[float] = []
+        self.strategy_frequency: dict[str, int] = defaultdict(int)
+        self.build_order_patterns: list[list[str]] = []
+        self.timing_attack_history: list[float] = []
 
         # Predictive indicators
-        self.early_signal_correlations: Dict[str, Dict[str, int]] = defaultdict(
+        self.early_signal_correlations: dict[str, dict[str, int]] = defaultdict(
             lambda: defaultdict(int)
         )
         # {signal: {strategy: count}}
 
         # Composition preferences
-        self.unit_preferences: Dict[str, float] = defaultdict(float)
+        self.unit_preferences: dict[str, float] = defaultdict(float)
 
     def update_from_game(self, game_history: GameHistory):
         """
@@ -147,7 +146,7 @@ class OpponentModel:
         for unit_type, count in game_history.final_composition.items():
             self.unit_preferences[unit_type] += count
 
-    def predict_strategy(self, observed_signals: List[str]) -> Tuple[str, float]:
+    def predict_strategy(self, observed_signals: list[str]) -> tuple[str, float]:
         """
         초반 시그널로 전략 예측
 
@@ -161,7 +160,7 @@ class OpponentModel:
             return ("unknown", 0.0)
 
         # 시그널별 전략 점수 계산
-        strategy_scores: Dict[str, float] = defaultdict(float)
+        strategy_scores: dict[str, float] = defaultdict(float)
 
         for signal in observed_signals:
             if signal in self.early_signal_correlations:
@@ -186,7 +185,7 @@ class OpponentModel:
 
         return (predicted[0], confidence)
 
-    def get_expected_timing_attacks(self) -> List[float]:
+    def get_expected_timing_attacks(self) -> list[float]:
         """예상 타이밍 공격 시간대 반환"""
         if not self.timing_attack_history:
             return []
@@ -223,7 +222,7 @@ class OpponentModel:
         }
 
     @classmethod
-    def from_dict(cls, data: dict) -> "OpponentModel":
+    def from_dict(cls, data: dict) -> OpponentModel:
         """모델 역직렬화"""
         model = cls(data["opponent_id"])
         model.games_played = data.get("games_played", 0)
@@ -270,15 +269,15 @@ class OpponentModeling:
         self.data_file = data_file
 
         # Opponent models
-        self.opponent_models: Dict[str, OpponentModel] = {}
+        self.opponent_models: dict[str, OpponentModel] = {}
         self.current_opponent_id: Optional[str] = None
         self.current_game_history: Optional[GameHistory] = None
 
         # Current game tracking
-        self.observed_signals: Set[str] = set()
-        self.build_order_observed: List[str] = []
-        self.tech_progression: List[Tuple[float, str]] = []
-        self.timing_attacks_detected: List[float] = []
+        self.observed_signals: set[str] = set()
+        self.build_order_observed: list[str] = []
+        self.tech_progression: list[tuple[float, str]] = []
+        self.timing_attacks_detected: list[float] = []
 
         # Prediction
         self.predicted_strategy: Optional[str] = None
@@ -340,6 +339,8 @@ class OpponentModeling:
 
     async def on_step(self, iteration: int):
         """매 프레임 실행"""
+        if not self.current_opponent or not self.bot:
+            return
         if iteration - self.last_update < self.update_interval:
             return
 
@@ -491,7 +492,6 @@ class OpponentModeling:
         if not hasattr(self.bot, "strategy_manager"):
             return
 
-        strategy_manager = self.bot.strategy_manager
 
         # Set blackboard recommendations
         if hasattr(self.bot, "blackboard") and self.bot.blackboard:
@@ -511,7 +511,7 @@ class OpponentModeling:
                 f"[OPPONENT_MODELING] Recommended counter: {counter_strategies}"
             )
 
-    def _get_counter_strategy(self, opponent_strategy: str) -> List[str]:
+    def _get_counter_strategy(self, opponent_strategy: str) -> list[str]:
         """적 전략에 대한 카운터 전략 반환"""
         counter_map = {
             "terran_bio": ["baneling", "zergling", "spine_crawler"],
@@ -645,7 +645,7 @@ class OpponentModeling:
         # Default
         return OpponentStyle.MIXED.value
 
-    def _get_final_enemy_composition(self) -> Dict[str, int]:
+    def _get_final_enemy_composition(self) -> dict[str, int]:
         """게임 종료 시점 적 조합"""
         if not self.intel:
             return {}
@@ -683,7 +683,7 @@ class OpponentModeling:
             return False
 
         try:
-            with open(self.data_file, "r", encoding="utf-8") as f:
+            with open(self.data_file, encoding="utf-8") as f:
                 data = json.load(f)
 
             self.opponent_models = {
@@ -701,7 +701,7 @@ class OpponentModeling:
             self.logger.error(f"[OPPONENT_MODELING] Failed to load models: {e}")
             return False
 
-    def get_opponent_stats(self, opponent_id: str) -> Optional[Dict]:
+    def get_opponent_stats(self, opponent_id: str) -> Optional[dict]:
         """특정 적의 통계 반환"""
         if opponent_id not in self.opponent_models:
             return None
@@ -762,17 +762,6 @@ class OpponentModeling:
                 f"[OPPONENT_MODELING] Known opponent: {opponent_id} ({self.opponent_models[opponent_id].games_played} games)"
             )
 
-    async def on_step(self, iteration: int):
-        """매 프레임 호출 - 신호 감지"""
-        if not self.current_opponent or not self.bot:
-            return
-
-        game_time = self.bot.time
-
-        # Only detect signals in early game (0-180s)
-        if game_time <= 180.0:
-            await self._detect_early_signals(game_time)
-
     def on_game_end(self, won: bool, lost: bool):
         """게임 종료 시 호출 - 데이터 저장"""
         if not self.current_opponent or not self.current_game_history:
@@ -801,7 +790,7 @@ class OpponentModeling:
             f"[OPPONENT_MODELING] Game data saved for {self.current_opponent}"
         )
 
-    def get_predicted_strategy(self) -> Tuple[Optional[str], float]:
+    def get_predicted_strategy(self) -> tuple[Optional[str], float]:
         """현재 적의 전략 예측"""
         if (
             not self.current_opponent
@@ -825,7 +814,7 @@ class OpponentModeling:
 
         return (None, 0.0)
 
-    def get_counter_recommendations(self) -> List[str]:
+    def get_counter_recommendations(self) -> list[str]:
         """예측된 전략에 대한 카운터 유닛 추천"""
         predicted_strategy, confidence = self.get_predicted_strategy()
 

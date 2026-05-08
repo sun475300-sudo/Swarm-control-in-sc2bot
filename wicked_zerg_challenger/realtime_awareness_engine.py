@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Real-time Awareness Engine — 실시간 상황 인식 + 자동 대응 시스템
 
@@ -13,11 +12,27 @@ Real-time Awareness Engine — 실시간 상황 인식 + 자동 대응 시스템
 5. 학습 피드백 (Learning Feedback)
 """
 
+import asyncio
 import logging
 from dataclasses import dataclass
-from typing import Dict, List
 
 logger = logging.getLogger("RealtimeAwarenessEngine")
+
+# Strong-ref set so asyncio doesn't garbage-collect fire-and-forget
+# do(...) coroutines before they actually run. Tasks remove themselves
+# via add_done_callback.
+_PENDING_ACTIONS: set[asyncio.Task] = set()
+
+
+def _schedule(coro):
+    """Schedule a coroutine without losing the reference (RUF006)."""
+    try:
+        task = asyncio.ensure_future(coro)
+    except RuntimeError:
+        # No running event loop — drop silently, as before.
+        return
+    _PENDING_ACTIONS.add(task)
+    task.add_done_callback(_PENDING_ACTIONS.discard)
 
 try:
     from sc2.ids.unit_typeid import UnitTypeId
@@ -89,9 +104,9 @@ class RealtimeAwarenessEngine:
         self.last_update = 0.0
         self.update_interval = 1.0  # 1초마다 진단
         self.situation = Situation()
-        self.active_problems: List[Problem] = []
-        self.active_overrides: List[Override] = []
-        self.problem_history: List[Dict] = []
+        self.active_problems: list[Problem] = []
+        self.active_overrides: list[Override] = []
+        self.problem_history: list[dict] = []
 
         # 상황 추적
         self._last_army_supply = 0
@@ -103,7 +118,7 @@ class RealtimeAwarenessEngine:
         self._force_army_mode = False
         self._force_army_until = 0.0
 
-    def on_step(self, iteration: int) -> List[Override]:
+    def on_step(self, iteration: int) -> list[Override]:
         """
         매 프레임 호출 — 상황 진단 → 문제 감지 → 자동 대응
 
@@ -242,7 +257,7 @@ class RealtimeAwarenessEngine:
     # Step 2: 문제 감지 (14가지 패턴)
     # =========================================================================
 
-    def _detect_problems(self) -> List[Problem]:
+    def _detect_problems(self) -> list[Problem]:
         """14가지 패턴으로 문제 감지"""
         problems = []
         s = self.situation
@@ -485,7 +500,7 @@ class RealtimeAwarenessEngine:
     # Step 3: 오버라이드 생성
     # =========================================================================
 
-    def _generate_overrides(self, game_time: float) -> List[Override]:
+    def _generate_overrides(self, game_time: float) -> list[Override]:
         """문제에 대한 행동 오버라이드 명령 생성"""
         overrides = []
 
@@ -584,9 +599,7 @@ class RealtimeAwarenessEngine:
                     l = larva.random
                     result = self.bot.do(l.train(UnitTypeId.HYDRALISK))
                     if hasattr(result, "__await__"):
-                        import asyncio
-
-                        asyncio.ensure_future(result)
+                        _schedule(result)
                     return
 
             # 바퀴굴 있으면 바퀴
@@ -595,9 +608,7 @@ class RealtimeAwarenessEngine:
                     l = larva.random
                     result = self.bot.do(l.train(UnitTypeId.ROACH))
                     if hasattr(result, "__await__"):
-                        import asyncio
-
-                        asyncio.ensure_future(result)
+                        _schedule(result)
                     return
 
             # 스파이어 있으면 뮤탈
@@ -606,9 +617,7 @@ class RealtimeAwarenessEngine:
                     l = larva.random
                     result = self.bot.do(l.train(UnitTypeId.MUTALISK))
                     if hasattr(result, "__await__"):
-                        import asyncio
-
-                        asyncio.ensure_future(result)
+                        _schedule(result)
                     return
         except Exception:
             pass
@@ -632,9 +641,7 @@ class RealtimeAwarenessEngine:
                     ).ready.exists and self.bot.can_afford(UnitTypeId.ROACH):
                         result = self.bot.do(l.train(UnitTypeId.ROACH))
                         if hasattr(result, "__await__"):
-                            import asyncio
-
-                            asyncio.ensure_future(result)
+                            _schedule(result)
                         continue
 
                 # 저글링
@@ -643,9 +650,7 @@ class RealtimeAwarenessEngine:
                 ).ready.exists and self.bot.can_afford(UnitTypeId.ZERGLING):
                     result = self.bot.do(l.train(UnitTypeId.ZERGLING))
                     if hasattr(result, "__await__"):
-                        import asyncio
-
-                        asyncio.ensure_future(result)
+                        _schedule(result)
         except Exception:
             pass
 
@@ -657,9 +662,7 @@ class RealtimeAwarenessEngine:
                 l = larva.first
                 result = self.bot.do(l.train(UnitTypeId.OVERLORD))
                 if hasattr(result, "__await__"):
-                    import asyncio
-
-                    asyncio.ensure_future(result)
+                    _schedule(result)
         except Exception:
             pass
 
@@ -678,9 +681,7 @@ class RealtimeAwarenessEngine:
                 if self.bot.structures(UnitTypeId.SPAWNINGPOOL).ready.exists:
                     result = self.bot.do(l.train(UnitTypeId.ZERGLING))
                     if hasattr(result, "__await__"):
-                        import asyncio
-
-                        asyncio.ensure_future(result)
+                        _schedule(result)
         except Exception:
             pass
 
@@ -697,7 +698,7 @@ class RealtimeAwarenessEngine:
             logger.info(f"{len(critical)} CRITICAL problems:")
             for p in critical[:3]:
                 logger.info(f"  [{p.severity.upper()}] {p.description}")
-                logger.info(f"    → action required (see logs)")
+                logger.info("    → action required (see logs)")
 
     def get_situation_summary(self) -> str:
         """현재 상황 요약"""

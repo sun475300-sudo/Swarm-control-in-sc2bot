@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Threat Assessment - 위협 평가 시스템
 

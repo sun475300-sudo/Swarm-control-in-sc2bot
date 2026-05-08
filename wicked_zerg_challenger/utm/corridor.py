@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Virtual Flight Corridor System
 
@@ -12,7 +11,7 @@ from __future__ import annotations
 
 import math
 from dataclasses import dataclass, field
-from typing import Dict, List, Optional
+from typing import Optional
 
 from wicked_zerg_challenger.utm.types3d import Point3D
 
@@ -43,7 +42,7 @@ class FlightCorridor:
     """
 
     corridor_id: str
-    waypoints: List[Point3D]
+    waypoints: list[Point3D]
     width: float = 20.0  # 기본 회랑 폭 (SC2: waypoint_spacing = 9.0)
     altitude_layer: str = "medium"
     bidirectional: bool = False
@@ -99,7 +98,7 @@ class CorridorManager:
     SC2 CreepHighway의 경로 관리 기능을 UTM으로 진화.
     """
 
-    corridors: Dict[str, FlightCorridor] = field(default_factory=dict)
+    corridors: dict[str, FlightCorridor] = field(default_factory=dict)
     waypoint_spacing: float = 50.0  # 미터 (SC2: 9.0 game units)
 
     def create_corridor(
@@ -167,7 +166,7 @@ class CorridorManager:
 
     def check_corridor_conflict(
         self, corridor_a: str, corridor_b: str
-    ) -> List[Point3D]:
+    ) -> list[Point3D]:
         """두 회랑의 교차점 검출 (UTM 충돌 위험 지점)."""
         a = self.corridors.get(corridor_a)
         b = self.corridors.get(corridor_b)

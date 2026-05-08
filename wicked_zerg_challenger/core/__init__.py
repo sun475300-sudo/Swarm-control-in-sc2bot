@@ -2,4 +2,4 @@
 
 from .manager_factory import ManagerConfig, ManagerFactory, ManagerPriority
 
-__all__ = ["ManagerFactory", "ManagerConfig", "ManagerPriority"]
+__all__ = ["ManagerConfig", "ManagerFactory", "ManagerPriority"]

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Hive Tech Maximizer - 군락 이후 고급 기술 극대화
 
@@ -9,7 +8,6 @@ Hive Tech Maximizer - 군락 이후 고급 기술 극대화
 4. 고급 유닛 대량 생산
 """
 
-from typing import Set
 
 from sc2.ids.ability_id import AbilityId
 from sc2.ids.unit_typeid import UnitTypeId
@@ -30,7 +28,7 @@ class HiveTechMaximizer:
         self.hive_completion_time = 0.0
 
         # 건물 건설 상태
-        self.buildings_built: Set[UnitTypeId] = set()
+        self.buildings_built: set[UnitTypeId] = set()
 
         # 목표 건물 개수 (Hive 이후)
         self.target_buildings = {
@@ -225,7 +223,7 @@ class HiveTechMaximizer:
                 self.advanced_buildings_built += 1
                 break  # 한 번에 하나씩
 
-            except Exception as e:
+            except Exception:
                 continue
 
     async def _produce_advanced_units(self, game_time: float):

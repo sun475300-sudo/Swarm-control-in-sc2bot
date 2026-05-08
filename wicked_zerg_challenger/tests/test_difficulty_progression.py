@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Unit Tests for difficulty_progression.py
 
@@ -189,7 +188,7 @@ class TestDifficultyRecommendation(unittest.TestCase):
         sys.stdout = StringIO()
         try:
             # Record 10 games with 100% win rate
-            for i in range(10):
+            for _i in range(10):
                 self.progression.record_game(
                     "TestMap", Race.Zerg, Difficulty.Easy, won=True
                 )
@@ -227,7 +226,7 @@ class TestProgressionChecking(unittest.TestCase):
         sys.stdout = StringIO()
         try:
             # Record only 5 games (below minimum of 10)
-            for i in range(5):
+            for _i in range(5):
                 self.progression.record_game(
                     "TestMap", Race.Terran, Difficulty.Easy, won=True
                 )
@@ -250,7 +249,7 @@ class TestProgressionChecking(unittest.TestCase):
         sys.stdout = StringIO()
         try:
             # Record 10 wins (100% win rate) at Medium difficulty
-            for i in range(10):
+            for _i in range(10):
                 self.progression.record_game(
                     "TestMap", Race.Protoss, Difficulty.Medium, won=True
                 )
@@ -308,7 +307,7 @@ class TestStatsSerDe(unittest.TestCase):
     def test_serialize_deserialize_consistency(self):
         """Test serialization/deserialization maintains data integrity"""
         # Record games
-        for i in range(5):
+        for _i in range(5):
             self.progression.record_game("TestMap", Race.Zerg, Difficulty.Hard, True)
 
         # Serialize
@@ -352,7 +351,7 @@ class TestStatsSummary(unittest.TestCase):
         sys.stdout = StringIO()
         try:
             # Record games
-            for i in range(10):
+            for _i in range(10):
                 self.progression.record_game(
                     "TestMap", Race.Protoss, Difficulty.Easy, True
                 )

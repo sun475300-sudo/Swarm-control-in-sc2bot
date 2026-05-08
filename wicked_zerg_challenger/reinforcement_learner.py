@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Reinforcement Learner - 강화 학습 시스템
 
@@ -10,7 +9,6 @@ import logging
 import os
 import statistics
 from collections import defaultdict
-from typing import Dict, List
 
 logger = logging.getLogger("ReinforcementLearner")
 
@@ -50,7 +48,7 @@ class ReinforcementLearner:
             if filename.endswith(".json"):
                 filepath = os.path.join(self.games_dir, filename)
                 try:
-                    with open(filepath, "r", encoding="utf-8") as f:
+                    with open(filepath, encoding="utf-8") as f:
                         game = json.load(f)
                         self.games_data.append(game)
                 except Exception as e:
@@ -59,7 +57,7 @@ class ReinforcementLearner:
         logger.info(f"Loaded {len(self.games_data)} games for reinforcement learning")
         return self.games_data
 
-    def learn_with_reinforcement(self) -> Dict:
+    def learn_with_reinforcement(self) -> dict:
         """강화 학습 실행 - 모든 패턴을 3번씩 반복 확인"""
         if len(self.games_data) < self.MIN_SAMPLES:
             logger.info(f"Not enough games ({len(self.games_data)}/{self.MIN_SAMPLES})")
@@ -111,7 +109,7 @@ class ReinforcementLearner:
 
         return learned_knowledge
 
-    def _reinforce_timings(self) -> Dict:
+    def _reinforce_timings(self) -> dict:
         """타이밍 강화 학습 (3번 이상 반복 확인)"""
         logger.info("\n[TIMING] Reinforcement learning for timings...")
 
@@ -182,7 +180,7 @@ class ReinforcementLearner:
         self.learning_stats["total_patterns"] += len(timing_samples)
         return learned_timings
 
-    def _reinforce_compositions(self) -> Dict:
+    def _reinforce_compositions(self) -> dict:
         """유닛 구성비 강화 학습"""
         logger.info("\n[COMPOSITION] Reinforcement learning for unit compositions...")
 
@@ -242,7 +240,7 @@ class ReinforcementLearner:
 
         return learned_compositions
 
-    def _reinforce_harassment(self) -> Dict:
+    def _reinforce_harassment(self) -> dict:
         """하라스 패턴 강화 학습"""
         logger.info("\n[HARASSMENT] Reinforcement learning for harassment...")
 
@@ -281,7 +279,7 @@ class ReinforcementLearner:
 
         return {}
 
-    def _reinforce_defense(self) -> Dict:
+    def _reinforce_defense(self) -> dict:
         """방어 패턴 강화 학습"""
         logger.info("\n[DEFENSE] Reinforcement learning for defense...")
 
@@ -291,7 +289,7 @@ class ReinforcementLearner:
             result = game["game_result"].get("result", "Unknown")
             defense_events = game.get("defense_events", [])
 
-            for event in defense_events:
+            for _event in defense_events:
                 defense_samples["events"] += 1
                 if result == "Victory":
                     defense_samples["successful"] += 1
@@ -317,7 +315,7 @@ class ReinforcementLearner:
 
         return {}
 
-    def _reinforce_map_control(self) -> Dict:
+    def _reinforce_map_control(self) -> dict:
         """맵 장악 패턴 강화 학습"""
         logger.info("\n[MAP_CONTROL] Reinforcement learning for map control...")
 
@@ -366,7 +364,7 @@ class ReinforcementLearner:
 
         return {}
 
-    def _reinforce_counters(self) -> Dict:
+    def _reinforce_counters(self) -> dict:
         """적 카운터 패턴 강화 학습
 
         실제 교전 결과를 분석하여 유효한 카운터 유닛 학습:
@@ -509,7 +507,7 @@ class ReinforcementLearner:
 
         return confidence
 
-    def _calculate_weighted_composition(self, samples: List[tuple]) -> Dict:
+    def _calculate_weighted_composition(self, samples: list[tuple]) -> dict:
         """가중 평균 유닛 구성비 계산"""
         unit_totals = defaultdict(lambda: {"weighted_sum": 0.0, "weight_sum": 0.0})
 

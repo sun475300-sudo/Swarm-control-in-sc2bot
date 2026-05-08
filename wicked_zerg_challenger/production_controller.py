@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Production Controller - 통합 생산 관리 시스템
 
@@ -14,7 +13,7 @@ Dynamic Authority 기반 생산 관리:
 참고: LOGIC_IMPROVEMENT_REPORT.md - Section 3 (Dynamic Authority)
 """
 
-from typing import Any, Dict, Optional
+from typing import Any, Optional
 
 from utils.logger import get_logger
 
@@ -51,7 +50,7 @@ class ProductionController:
         self.logger = get_logger("ProductionController")
 
         # 생산 통계
-        self.units_produced: Dict[Any, int] = {}
+        self.units_produced: dict[Any, int] = {}
         self.production_failures: int = 0
         self.max_produced_per_frame = 0  # 프레임당 최대 생산 기록
 
@@ -233,7 +232,7 @@ class ProductionController:
                 if self.bot.time < 300:
                     self.logger.info(f"{unit_type.name} requested by {requester}")
 
-            except Exception as e:
+            except Exception:
                 self.production_failures += 1
                 break
 
@@ -254,7 +253,7 @@ class ProductionController:
             return
 
         # ★ Phase 23: 서플라이 블록 완전 제거 — 선행 생산 ★
-        game_time = getattr(self.bot, "time", 0)
+        getattr(self.bot, "time", 0)
         supply_used = supply_cap - supply_left
 
         # 동적 버퍼: 서플라이 사용량에 비례
@@ -292,7 +291,7 @@ class ProductionController:
             self.bot.do(larvae.first.train(UnitTypeId.OVERLORD))
             self.logger.info(f"Auto Overlord (supply: {supply_left}/{supply_cap})")
 
-        except Exception as e:
+        except Exception:
             self.production_failures += 1
 
     # ========== ★ Phase 13: 비율 기반 군대 자동 생산 ★ ==========
@@ -379,7 +378,6 @@ class ProductionController:
 
         # 가장 부족한 유닛 찾기
         max_deficit = -1.0
-        best_unit = None
         best_uid = None
 
         for name, target_ratio in ratios.items():
@@ -414,7 +412,6 @@ class ProductionController:
 
             if deficit > max_deficit:
                 max_deficit = deficit
-                best_unit = name
                 best_uid = uid
 
         # 가장 부족한 유닛 생산

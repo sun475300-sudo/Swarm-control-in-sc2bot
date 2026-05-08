@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Self-Play Trainer - 자기 대전 학습 시스템 (#102)
 
@@ -17,7 +16,7 @@ import random
 import shutil
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Optional
 
 import numpy as np
 
@@ -65,7 +64,7 @@ class OpponentSnapshot:
             self.losses += 1
         self.win_rate = self.wins / max(self.games_played, 1)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """딕셔너리로 변환"""
         return {
             "model_path": self.model_path,
@@ -79,7 +78,7 @@ class OpponentSnapshot:
         }
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "OpponentSnapshot":
+    def from_dict(cls, data: dict[str, Any]) -> "OpponentSnapshot":
         """딕셔너리에서 생성"""
         snapshot = cls(
             model_path=data["model_path"],
@@ -139,7 +138,7 @@ class SelfPlayTrainer:
         self.latest_opponent_prob = latest_opponent_prob
 
         # 상대 풀
-        self.opponent_pool: List[OpponentSnapshot] = []
+        self.opponent_pool: list[OpponentSnapshot] = []
 
         # 현재 에이전트 ELO
         self.current_elo: float = 1000.0
@@ -148,7 +147,7 @@ class SelfPlayTrainer:
         self.total_games: int = 0
         self.total_wins: int = 0
         self.total_losses: int = 0
-        self.match_history: List[Dict[str, Any]] = []
+        self.match_history: list[dict[str, Any]] = []
 
         # 메타데이터 로드
         self._load_pool_metadata()
@@ -235,7 +234,7 @@ class SelfPlayTrainer:
 
     def report_game_result(
         self, opponent: OpponentSnapshot, won: bool, game_time: float = 0.0
-    ) -> Dict[str, float]:
+    ) -> dict[str, float]:
         """
         대전 결과 보고 및 ELO 업데이트
 
@@ -337,7 +336,7 @@ class SelfPlayTrainer:
         meta_path = self.pool_dir / "pool_metadata.json"
         try:
             if meta_path.exists():
-                with open(str(meta_path), "r", encoding="utf-8") as f:
+                with open(str(meta_path), encoding="utf-8") as f:
                     data = json.load(f)
 
                 self.current_elo = data.get("current_elo", 1000.0)
@@ -359,7 +358,7 @@ class SelfPlayTrainer:
         except Exception as e:
             logger.info(f"메타데이터 로드 실패: {e}")
 
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> dict[str, Any]:
         """Self-Play 통계 반환"""
         return {
             "current_elo": self.current_elo,
@@ -370,7 +369,7 @@ class SelfPlayTrainer:
             "snapshot_interval": self.snapshot_interval,
         }
 
-    def get_recent_performance(self, n: int = 20) -> Dict[str, float]:
+    def get_recent_performance(self, n: int = 20) -> dict[str, float]:
         """
         최근 N게임 성적 반환
 

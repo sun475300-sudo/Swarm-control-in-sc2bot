@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Strategy Manager V2 - Enhanced Strategy Management System
 
@@ -13,7 +12,7 @@ Inherits from StrategyManager and extends functionality.
 """
 
 from enum import Enum
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Optional
 
 from strategy_manager import GamePhase, StrategyManager, StrategyMode
 
@@ -90,7 +89,7 @@ class StrategyManagerV2(StrategyManager):
 
         # Win condition tracking
         self.current_win_condition = WinCondition.UNKNOWN
-        self.win_condition_history: List[WinCondition] = []
+        self.win_condition_history: list[WinCondition] = []
         self.win_condition_update_interval = (
             self.config.WIN_CONDITION_UPDATE_INTERVAL if self.config else 5.0
         )
@@ -105,22 +104,22 @@ class StrategyManagerV2(StrategyManager):
         self.current_build_phase = BuildOrderPhase.OPENING
         self.build_transition_complete = False
         self.planned_expansions = []
-        self.expansion_targets: List[Tuple[float, Any]] = []  # (timing, location)
+        self.expansion_targets: list[tuple[float, Any]] = []  # (timing, location)
 
         # Strategy scoring
-        self.strategy_scores: Dict[str, float] = {}
-        self.active_strategies: List[Dict[str, Any]] = []
+        self.strategy_scores: dict[str, float] = {}
+        self.active_strategies: list[dict[str, Any]] = []
 
         # Resource allocation (설정값 사용)
         if self.config:
-            self.resource_priorities: Dict[str, float] = {
+            self.resource_priorities: dict[str, float] = {
                 "economy": self.config.DEFAULT_PRIORITY_ECONOMY,
                 "army": self.config.DEFAULT_PRIORITY_ARMY,
                 "tech": self.config.DEFAULT_PRIORITY_TECH,
                 "defense": self.config.DEFAULT_PRIORITY_DEFENSE,
             }
         else:
-            self.resource_priorities: Dict[str, float] = {
+            self.resource_priorities: dict[str, float] = {
                 "economy": 0.4,
                 "army": 0.4,
                 "tech": 0.1,
@@ -128,13 +127,13 @@ class StrategyManagerV2(StrategyManager):
             }
 
         # Multi-strategy execution
-        self.strategy_queue: List[Dict[str, Any]] = []
+        self.strategy_queue: list[dict[str, Any]] = []
         self.concurrent_strategy_limit = (
             self.config.CONCURRENT_STRATEGY_LIMIT if self.config else 3
         )
 
         # Adaptive Composition (Phase 18)
-        self.target_unit_ratios: Dict[str, float] = {}
+        self.target_unit_ratios: dict[str, float] = {}
         self.last_composition_update = 0
 
         self.logger.info("[STRATEGY_V2] Initialized with enhanced decision-making")
@@ -810,7 +809,7 @@ class StrategyManagerV2(StrategyManager):
             if self.strategy_scores:
                 self.logger.info(f"[STRATEGY_SCORES] {self.strategy_scores}")
 
-    def _calculate_strategy_score(self, strategy: Dict[str, Any]) -> float:
+    def _calculate_strategy_score(self, strategy: dict[str, Any]) -> float:
         """
         ★ Phase 21.1: 실제 전략 효과 계산 ★
 
@@ -1339,7 +1338,7 @@ class StrategyManagerV2(StrategyManager):
             return False  # Delegate to harassment_coordinator
         return False
 
-    def _add_strategy(self, strategy: Dict[str, Any]) -> None:
+    def _add_strategy(self, strategy: dict[str, Any]) -> None:
         """Add strategy to active list"""
         # Check if already active
         strategy_name = strategy.get("name", "")
@@ -1361,7 +1360,7 @@ class StrategyManagerV2(StrategyManager):
         self.last_composition_update = game_time
         self.target_unit_ratios = self._calculate_desired_composition()
 
-    def _calculate_desired_composition(self) -> Dict[str, float]:
+    def _calculate_desired_composition(self) -> dict[str, float]:
         """
         Calculate ideal Zerg unit composition based on enemy army
 
@@ -1484,7 +1483,7 @@ class StrategyManagerV2(StrategyManager):
 
         return ratios
 
-    def _get_default_composition_by_race(self) -> Dict[str, float]:
+    def _get_default_composition_by_race(self) -> dict[str, float]:
         """Default compositions per matchup"""
         if not hasattr(self.bot, "enemy_race"):
             return {"roach": 0.5, "hydra": 0.3, "ravager": 0.2}
@@ -1510,7 +1509,7 @@ class StrategyManagerV2(StrategyManager):
         else:
             return {"roach": 0.5, "hydra": 0.3, "ravager": 0.2}
 
-    def get_unit_ratios(self) -> Dict[str, float]:
+    def get_unit_ratios(self) -> dict[str, float]:
         """Public API for UnitFactory"""
         return self.target_unit_ratios
 
@@ -1574,7 +1573,7 @@ class StrategyManagerV2(StrategyManager):
         threshold = self.config.SHOULD_BUILD_ARMY_THRESHOLD if self.config else 0.5
         return self.get_resource_priority("army") >= threshold
 
-    def get_status_report_v2(self) -> Dict[str, Any]:
+    def get_status_report_v2(self) -> dict[str, Any]:
         """
         Enhanced status report with V2 data
 
@@ -1637,7 +1636,7 @@ class StrategyManagerV2(StrategyManager):
 
         self._last_realtime_adjust = game_time
 
-    def get_meta_strategy(self) -> Dict[str, Any]:
+    def get_meta_strategy(self) -> dict[str, Any]:
         """
         메타 전략 분석 (#114)
 
@@ -1717,7 +1716,7 @@ class StrategyManagerV2(StrategyManager):
 
         return round(score / max(factors, 1), 3)
 
-    def suggest_strategy_pivot(self) -> Optional[Dict[str, Any]]:
+    def suggest_strategy_pivot(self) -> Optional[dict[str, Any]]:
         """
         전략 피봇(전환) 제안 (#114)
 
@@ -1767,7 +1766,7 @@ class StrategyManagerV2(StrategyManager):
             "current_effectiveness": effectiveness,
         }
 
-    def get_opponent_tendency(self) -> Dict[str, Any]:
+    def get_opponent_tendency(self) -> dict[str, Any]:
         """
         상대 성향 분석 (#114)
 

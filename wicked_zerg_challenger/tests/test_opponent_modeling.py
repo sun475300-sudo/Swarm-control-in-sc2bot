@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Unit tests for Opponent Modeling System
 
@@ -418,7 +417,7 @@ class TestOpponentModeling(unittest.TestCase):
 
         # Create army units (15+ supply)
         mock_units = []
-        for i in range(15):
+        for _i in range(15):
             unit = Mock()
             unit.is_worker = False
             unit.supply_cost = 1

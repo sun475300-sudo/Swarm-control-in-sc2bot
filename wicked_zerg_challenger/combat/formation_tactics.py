@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Formation Tactics - Concave formations and special ability management.
 
@@ -7,7 +6,7 @@ special ability timing (burrow/unburrow).
 """
 
 import math
-from typing import Optional, Set, Tuple
+from typing import Optional
 
 try:
     from sc2.ids.ability_id import AbilityId
@@ -48,7 +47,7 @@ class ConcaveFormationController:
         self.range_buffer = range_buffer
 
         # Ranged unit types that should use concave formations
-        self.ranged_unit_types: Set = set()
+        self.ranged_unit_types: set = set()
         if UnitTypeId:
             self.ranged_unit_types = {
                 UnitTypeId.ROACH,
@@ -117,7 +116,7 @@ class ConcaveFormationController:
         return (bucket / 3.0) * self.spread_angle
 
     @staticmethod
-    def _rotate(x: float, y: float, angle: float) -> Tuple[float, float]:
+    def _rotate(x: float, y: float, angle: float) -> tuple[float, float]:
         """
         Rotate a 2D vector by given angle.
 
@@ -184,7 +183,7 @@ class BurrowController:
         self.last_check_frame = 0
 
         # Unit types that can burrow
-        self.burrow_unit_types: Set = set()
+        self.burrow_unit_types: set = set()
         if UnitTypeId:
             self.burrow_unit_types = {
                 UnitTypeId.ROACH,
@@ -213,7 +212,7 @@ class BurrowController:
 
     async def handle_burrow(
         self, units, enemy_units, iteration: int, do_actions_func, bot=None
-    ) -> Set[int]:
+    ) -> set[int]:
         """
         Process burrow/unburrow logic for all applicable units.
 
@@ -315,7 +314,7 @@ class BurrowController:
         if UnitTypeId and unit.type_id == UnitTypeId.LURKERMP:
             # 적이 공격 사거리(9) 내에 있으면 잠복
             # NOTE: enemy_units not in scope here (existing bug). Conservative: skip burrow logic.
-            if down_ability and getattr(unit, "is_idle", False):  # noqa: F821
+            if down_ability and getattr(unit, "is_idle", False):
                 pass  # placeholder — original logic referenced undefined enemy_units
 
         return None
@@ -343,7 +342,7 @@ class BurrowController:
         return False
 
     @staticmethod
-    def _get_burrow_abilities(unit_type) -> Tuple:
+    def _get_burrow_abilities(unit_type) -> tuple:
         """
         Get burrow down and up ability IDs for given unit type.
 

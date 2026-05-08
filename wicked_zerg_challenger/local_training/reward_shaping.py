@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Reward Shaping - 보상 셰이핑 시스템 (#113)
 
@@ -14,7 +13,7 @@ Reward Shaping - 보상 셰이핑 시스템 (#113)
 
 import logging
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any, Optional
 
 import numpy as np
 
@@ -50,7 +49,7 @@ class PotentialFunction:
         self.gamma = gamma
         self._last_potential: float = 0.0
 
-    def compute(self, state: Dict[str, Any]) -> float:
+    def compute(self, state: dict[str, Any]) -> float:
         """
         잠재 값 계산 — 상태의 '좋은 정도'를 스칼라로 표현.
 
@@ -69,7 +68,7 @@ class PotentialFunction:
         )
         return potential
 
-    def get_shaping_reward(self, current_state: Dict[str, Any]) -> float:
+    def get_shaping_reward(self, current_state: dict[str, Any]) -> float:
         """
         셰이핑 보상 계산 (F = gamma * Phi(s') - Phi(s))
 
@@ -99,7 +98,7 @@ class RewardShaper:
         self.bot = bot
 
         # 보상 구성요소 가중치
-        self.weights: Dict[RewardComponent, float] = {
+        self.weights: dict[RewardComponent, float] = {
             RewardComponent.COMBAT: 1.0,
             RewardComponent.ECONOMY: 0.8,
             RewardComponent.TECH: 0.5,
@@ -110,12 +109,12 @@ class RewardShaper:
         }
 
         # 잠재 함수들 — 기본 잠재 함수 자동 등록
-        self.potentials: Dict[str, PotentialFunction] = {}
+        self.potentials: dict[str, PotentialFunction] = {}
         self.register_potential("default", PotentialFunction("default", gamma=0.99))
 
         # 보상 통계
-        self.reward_history: List[float] = []
-        self.component_history: Dict[str, List[float]] = {
+        self.reward_history: list[float] = []
+        self.component_history: dict[str, list[float]] = {
             comp.value: [] for comp in RewardComponent
         }
 
@@ -127,7 +126,7 @@ class RewardShaper:
         logger.info("보상 셰이핑 시스템 초기화")
 
     def compute_shaped_reward(
-        self, raw_reward: float, state: Optional[Dict[str, Any]] = None
+        self, raw_reward: float, state: Optional[dict[str, Any]] = None
     ) -> float:
         """
         셰이핑된 보상 계산 (스텁)
@@ -143,7 +142,7 @@ class RewardShaper:
 
         # 잠재 함수 보상 추가
         if state:
-            for name, potential in self.potentials.items():
+            for _name, potential in self.potentials.items():
                 shaped += potential.get_shaping_reward(state)
 
         # 정규화
@@ -153,7 +152,7 @@ class RewardShaper:
         self.reward_history.append(shaped)
         return shaped
 
-    def compute_component_rewards(self, state: Dict[str, Any]) -> Dict[str, float]:
+    def compute_component_rewards(self, state: dict[str, Any]) -> dict[str, float]:
         """
         구성요소별 보상 계산 (스텁)
 
@@ -163,13 +162,13 @@ class RewardShaper:
         Returns:
             구성요소별 보상 딕셔너리
         """
-        rewards: Dict[str, float] = {}
+        rewards: dict[str, float] = {}
 
         workers = state.get("workers", 0)
         army = state.get("army_supply", 0)
         enemy_army = state.get("enemy_army", 0)
         minerals = state.get("minerals", 0)
-        gas = state.get("vespene", 0)
+        state.get("vespene", 0)
         tech = state.get("tech_level", 0.0)
         bases = state.get("bases", 1)
         threat = state.get("threat", 0.0)
@@ -240,7 +239,7 @@ class RewardShaper:
         self._reward_mean = float(np.mean(self.reward_history[-100:]))
         self._reward_std = float(np.std(self.reward_history[-100:])) + 1e-8
 
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> dict[str, Any]:
         """보상 통계 반환"""
         return {
             "total_rewards": len(self.reward_history),

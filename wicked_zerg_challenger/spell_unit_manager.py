@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Spell Unit Manager - Optimized targeting for spell units
 
@@ -15,7 +14,7 @@ Features:
 """
 
 import logging
-from typing import TYPE_CHECKING, List, Optional
+from typing import TYPE_CHECKING, Optional
 
 logger = logging.getLogger("SpellUnitManager")
 
@@ -54,16 +53,15 @@ class SpellUnitManager:
         self.spell_update_interval: int = 12  # ★ 16 → 12 프레임 (더 빠른 반응)
 
         # Spell cooldown tracking
-        from typing import Dict
 
-        self.infestor_last_spell: Dict[int, float] = {}  # unit tag -> last spell time
-        self.viper_last_spell: Dict[int, float] = {}  # unit tag -> last spell time
-        self.viper_last_consume: Dict[int, float] = (
+        self.infestor_last_spell: dict[int, float] = {}  # unit tag -> last spell time
+        self.viper_last_spell: dict[int, float] = {}  # unit tag -> last spell time
+        self.viper_last_consume: dict[int, float] = (
             {}
         )  # ★ FIXED: Viper consume tracking
-        self.ravager_last_bile: Dict[int, float] = {}  # ★ NEW: Ravager bile tracking
+        self.ravager_last_bile: dict[int, float] = {}  # ★ NEW: Ravager bile tracking
         self.baneling_exploded: set = set()  # ★ NEW: Baneling explode tracking
-        self.overseer_last_contaminate: Dict[int, float] = (
+        self.overseer_last_contaminate: dict[int, float] = (
             {}
         )  # ★ NEW: Overseer contaminate
 
@@ -401,7 +399,7 @@ class SpellUnitManager:
                                 pass
 
     def _find_best_fungal_target(
-        self, infestor: Unit, enemies: List[Unit]
+        self, infestor: Unit, enemies: list[Unit]
     ) -> Optional[Point2]:
         """Find best position for Fungal Growth to hit multiple enemies"""
         if not enemies:
@@ -420,7 +418,7 @@ class SpellUnitManager:
         return best_position
 
     def _find_best_blinding_cloud_position(
-        self, viper: Unit, enemies: List[Unit]
+        self, viper: Unit, enemies: list[Unit]
     ) -> Optional[Point2]:
         """Find best position for Blinding Cloud to cover multiple enemies"""
         if not enemies:
@@ -612,7 +610,7 @@ class SpellUnitManager:
                             pass
 
     def _find_best_bile_position(
-        self, ravager: Unit, enemies: List[Unit]
+        self, ravager: Unit, enemies: list[Unit]
     ) -> Optional[Point2]:
         """
         가장 많은 적을 맞출 수 있는 Bile 위치 찾기
@@ -757,7 +755,7 @@ class SpellUnitManager:
                     pass
 
     @staticmethod
-    def _unit_type_ids(names: List[str]) -> List[object]:
+    def _unit_type_ids(names: list[str]) -> list[object]:
         if not UnitTypeId:
             return []
         unit_ids = []

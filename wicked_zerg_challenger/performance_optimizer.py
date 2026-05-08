@@ -12,7 +12,7 @@
 
 import logging
 import time
-from typing import Any, Dict, Optional
+from typing import Any, Optional
 
 logger = logging.getLogger("PerformanceOptimizer")
 
@@ -183,7 +183,7 @@ class PerformanceOptimizer:
         if len(self.execution_times[logic_name]) > 100:
             self.execution_times[logic_name].pop(0)
 
-    def get_performance_report(self) -> Dict[str, Any]:
+    def get_performance_report(self) -> dict[str, Any]:
         """
         성능 보고서 생성
 
@@ -315,7 +315,7 @@ class PerformanceOptimizer:
 
             return distance
 
-        except Exception as e:
+        except Exception:
             # 에러 발생 시 폴백: 직접 계산
             try:
                 pos1 = getattr(unit1, "position", unit1)

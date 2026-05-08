@@ -13,7 +13,8 @@ import functools
 import logging
 import time
 from collections import defaultdict, deque
-from typing import Any, Callable, Dict, List
+from typing import Any
+from collections.abc import Callable
 
 
 class PerformanceProfiler:
@@ -23,13 +24,13 @@ class PerformanceProfiler:
         self.logger = logger or logging.getLogger(__name__)
 
         # Timing data: {function_name: [execution_times]}
-        self.timing_data: Dict[str, deque] = defaultdict(lambda: deque(maxlen=100))
+        self.timing_data: dict[str, deque] = defaultdict(lambda: deque(maxlen=100))
 
         # Call count: {function_name: count}
-        self.call_counts: Dict[str, int] = defaultdict(int)
+        self.call_counts: dict[str, int] = defaultdict(int)
 
         # Total time spent: {function_name: total_seconds}
-        self.total_time: Dict[str, float] = defaultdict(float)
+        self.total_time: dict[str, float] = defaultdict(float)
 
         # Frame timing
         self.frame_times: deque = deque(maxlen=100)
@@ -94,7 +95,7 @@ class PerformanceProfiler:
                 f"SLOW FRAME: {frame_time*1000:.2f}ms (target: {self.slow_frame_threshold*1000:.0f}ms)"
             )
 
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> dict[str, Any]:
         """프로파일링 통계 반환"""
         stats = {}
 
@@ -119,7 +120,7 @@ class PerformanceProfiler:
 
         return stats
 
-    def get_top_bottlenecks(self, n: int = 10) -> List[tuple]:
+    def get_top_bottlenecks(self, n: int = 10) -> list[tuple]:
         """
         가장 느린 함수 N개 반환
 
@@ -138,7 +139,7 @@ class PerformanceProfiler:
             for func_name, data in sorted_stats[:n]
         ]
 
-    def get_frame_stats(self) -> Dict[str, float]:
+    def get_frame_stats(self) -> dict[str, float]:
         """프레임 타이밍 통계"""
         if not self.frame_times:
             return {}

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Gen-AI Self-Healing System - 자가 수복 시스템 고도화
 
@@ -12,7 +11,7 @@ import ast
 import logging
 import os
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Optional
 
 logger = logging.getLogger("GenaiSelfHealing")
 
@@ -62,8 +61,8 @@ class GenAISelfHealing:
                 logger.error(f"Failed to initialize Gemini: {e}")
 
     def analyze_error(
-        self, error: Exception, context: Dict, source_code: Optional[str] = None
-    ) -> Dict:
+        self, error: Exception, context: dict, source_code: Optional[str] = None
+    ) -> dict:
         """
         에러 분석 및 패치 생성
 
@@ -113,7 +112,7 @@ class GenAISelfHealing:
             return {"success": False, "error": str(e), "patch_code": None}
 
     def _generate_error_analysis_prompt(
-        self, error: Exception, context: Dict, source_code: Optional[str]
+        self, error: Exception, context: dict, source_code: Optional[str]
     ) -> str:
         """에러 분석 프롬프트 생성"""
         prompt = f"""
@@ -121,7 +120,7 @@ class GenAISelfHealing:
 
 에러 정보:
 - 에러 타입: {type(error).__name__}
-- 에러 메시지: {str(error)}
+- 에러 메시지: {error!s}
 - 파일: {context.get('file', 'Unknown')}
 - 라인: {context.get('line', 'Unknown')}
 
@@ -167,7 +166,7 @@ class GenAISelfHealing:
 
         return ""
 
-    def _validate_patch_code(self, patch_code: str) -> Dict[str, Any]:
+    def _validate_patch_code(self, patch_code: str) -> dict[str, Any]:
         """
         패치 코드 검증
 
@@ -245,7 +244,7 @@ class GenAISelfHealing:
         visitor.visit(tree)
         return visitor.max_depth
 
-    def _detect_inefficient_comprehensions(self, tree: ast.AST) -> List[str]:
+    def _detect_inefficient_comprehensions(self, tree: ast.AST) -> list[str]:
         """비효율적인 컴프리헨션 감지"""
 
         class ComprehensionVisitor(ast.NodeVisitor):
@@ -277,10 +276,10 @@ class GenAISelfHealing:
 
     def filter_training_data(
         self,
-        replay_data: List[Dict],
+        replay_data: list[dict],
         min_resource_efficiency: float = 0.7,
         min_combat_efficiency: float = 0.6,
-    ) -> List[Dict]:
+    ) -> list[dict]:
         """
         학습 데이터 필터
 
@@ -320,7 +319,7 @@ class GenAISelfHealing:
 
         return filtered
 
-    def _calculate_resource_efficiency(self, data: Dict) -> float:
+    def _calculate_resource_efficiency(self, data: dict) -> float:
         """자원 효율 계산"""
         try:
             # 자원 수집량과 소모량
@@ -339,7 +338,7 @@ class GenAISelfHealing:
             logger.debug("economic efficiency calc fallback: %s", e)
             return 0.5  # 기본값
 
-    def _calculate_combat_efficiency(self, data: Dict) -> float:
+    def _calculate_combat_efficiency(self, data: dict) -> float:
         """교전 효율 계산"""
         try:
             # 교전 승률
@@ -366,7 +365,7 @@ class GenAISelfHealing:
             logger.debug("combat efficiency calc fallback: %s", e)
             return 0.5  # 기본값
 
-    def validate_code_syntax(self, code: str) -> Tuple[bool, Optional[str]]:
+    def validate_code_syntax(self, code: str) -> tuple[bool, Optional[str]]:
         """
         코드 구문 검증 (SyntaxError 체크)
 
@@ -388,9 +387,9 @@ class GenAISelfHealing:
                 error_msg += f"\nCode: {e.text.strip()}"
             return False, error_msg
         except Exception as e:
-            return False, f"Validation error: {str(e)}"
+            return False, f"Validation error: {e!s}"
 
-    def static_analysis_optimization(self, file_path: Path) -> List[Dict[str, Any]]:
+    def static_analysis_optimization(self, file_path: Path) -> list[dict[str, Any]]:
         """
         정적 분석을 통한 코드 최적화 감지
 
@@ -405,7 +404,7 @@ class GenAISelfHealing:
         suggestions = []
 
         try:
-            with open(file_path, "r", encoding="utf-8", errors="replace") as f:
+            with open(file_path, encoding="utf-8", errors="replace") as f:
                 content = f.read()
                 lines = content.splitlines()
 

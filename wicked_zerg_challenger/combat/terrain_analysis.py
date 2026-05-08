@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Terrain Analysis - Chokepoint detection and terrain-aware modifiers.
 
@@ -6,7 +5,7 @@ This module provides terrain analysis capabilities for tactical decision making,
 including chokepoint detection and cohesion modifiers for unit movement.
 """
 
-from typing import List, Optional
+from typing import Optional
 
 try:
     from sc2.position import Point2
@@ -39,7 +38,7 @@ class ChokePointDetector:
             cache_update_interval: Frames between cache updates
         """
         self.bot = bot
-        self.chokepoints: List = []
+        self.chokepoints: list = []
         self.chokepoint_cache_frame = -1
         self.chokepoint_radius = chokepoint_radius
         self.narrow_passage_threshold = narrow_passage_threshold

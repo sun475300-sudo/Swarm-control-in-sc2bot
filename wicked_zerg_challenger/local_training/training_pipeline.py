@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Training Pipeline - 모델 버전 관리 + 자동 배포
 
@@ -18,7 +17,7 @@ import shutil
 import time
 from dataclasses import asdict, dataclass
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Optional
 
 logger = logging.getLogger("TrainingPipeline")
 
@@ -29,7 +28,7 @@ class ModelVersion:
 
     version_id: int
     model_path: str
-    metrics: Dict  # {"win_rate": 0.6, "avg_reward": 50, "games": 10}
+    metrics: dict  # {"win_rate": 0.6, "avg_reward": 50, "games": 10}
     created_at: float
     deployed: bool = False
 
@@ -61,14 +60,14 @@ class TrainingPipeline:
         for d in [self.versions_dir, self.buffer_dir, self.archive_dir]:
             d.mkdir(parents=True, exist_ok=True)
 
-        self.versions: List[ModelVersion] = []
+        self.versions: list[ModelVersion] = []
         self._load_history()
 
     def _load_history(self) -> None:
         """버전 히스토리 로드"""
         if self.history_path.exists():
             try:
-                with open(self.history_path, "r") as f:
+                with open(self.history_path) as f:
                     data = json.load(f)
                 self.versions = [ModelVersion(**v) for v in data.get("versions", [])]
             except (json.JSONDecodeError, TypeError):
@@ -80,7 +79,7 @@ class TrainingPipeline:
         with open(self.history_path, "w") as f:
             json.dump(data, f, indent=2)
 
-    def create_checkpoint(self, rl_agent, metrics: Dict) -> ModelVersion:
+    def create_checkpoint(self, rl_agent, metrics: dict) -> ModelVersion:
         """
         현재 모델을 새 버전으로 저장.
 
@@ -200,7 +199,7 @@ class TrainingPipeline:
 
         self._save_history()
 
-    def get_training_summary(self) -> Dict:
+    def get_training_summary(self) -> dict:
         """전체 버전 히스토리 요약"""
         deployed = self._get_deployed_version()
         return {

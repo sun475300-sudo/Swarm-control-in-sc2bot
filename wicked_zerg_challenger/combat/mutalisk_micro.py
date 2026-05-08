@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Mutalisk Micro Controller - Advanced Mutalisk tactics
 
@@ -9,7 +8,7 @@ Features:
 """
 
 import math
-from typing import Dict, List, Optional, Set, Tuple
+from typing import Optional
 
 try:
     from sc2.ids.unit_typeid import UnitTypeId
@@ -52,11 +51,11 @@ class MutaliskMicroController:
         self.magic_box_radius = magic_box_radius
 
         # Regen Dance state tracking
-        self.regenerating_units: Dict[int, float] = {}  # unit_tag -> start_time
+        self.regenerating_units: dict[int, float] = {}  # unit_tag -> start_time
         self.last_regen_check: float = 0.0
 
         # Splash damage unit types (Magic Box triggers)
-        self.splash_threats: Set = set()
+        self.splash_threats: set = set()
         if UnitTypeId:
             self.splash_threats = {
                 UnitTypeId.THOR,
@@ -122,7 +121,7 @@ class MutaliskMicroController:
 
         return Point2((target_center.x + offset_x, target_center.y + offset_y))
 
-    def get_regen_status(self, unit: Unit, current_time: float) -> Tuple[bool, bool]:
+    def get_regen_status(self, unit: Unit, current_time: float) -> tuple[bool, bool]:
         """
         Get regeneration status for a Mutalisk.
 
@@ -216,7 +215,7 @@ class MutaliskMicroController:
 
     async def execute_regen_dance(
         self, mutalisks, current_time: float, bot
-    ) -> Tuple[List, List]:
+    ) -> tuple[list, list]:
         """
         Execute Regen Dance logic.
 

@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 Quick smoke training setup.
 
@@ -12,14 +11,14 @@ import json
 import logging
 import random
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any
 
 from batch_trainer import BatchTrainer
 
 logger = logging.getLogger("RunSmokeTraining")
 
 
-def build_fake_batch_results(samples: int) -> List[Dict[str, Any]]:
+def build_fake_batch_results(samples: int) -> list[dict[str, Any]]:
     results = []
     for i in range(samples):
         minerals = random.randint(200, 1600)

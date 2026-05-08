@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 Replay-based smoke pipeline.
 
@@ -12,7 +11,7 @@ import argparse
 import json
 import logging
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any
 
 from batch_trainer import train_from_manifest
 
@@ -28,8 +27,8 @@ except ImportError:
 
 def build_results_from_replays(
     replay_dir: Path, max_files: int
-) -> List[Dict[str, Any]]:
-    results: List[Dict[str, Any]] = []
+) -> list[dict[str, Any]]:
+    results: list[dict[str, Any]] = []
     replay_files = sorted(replay_dir.glob("*.SC2Replay"))[:max_files]
     logger.info(f"Found {len(replay_files)} replay files")
 

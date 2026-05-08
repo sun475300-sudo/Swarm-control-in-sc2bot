@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Personality Module - 봇 성격 및 채팅 시스템
 
@@ -12,7 +11,7 @@ Personality Module - 봇 성격 및 채팅 시스템
 
 import random
 from enum import Enum
-from typing import List, Optional
+from typing import Optional
 
 from utils.logger import get_logger
 
@@ -57,7 +56,7 @@ class PersonalityModule:
         self.opponent_modeling = opponent_modeling
 
         # 채팅 이력
-        self.messages_sent: List[str] = []
+        self.messages_sent: list[str] = []
         self.last_message_time = 0
         self.message_cooldown = 60.0  # 메시지 최소 간격 (초)
 
@@ -229,7 +228,7 @@ class PersonalityModule:
 
         games = stats["games_played"]
         win_rate = stats["win_rate"] * 100
-        style = stats["dominant_style"]
+        stats["dominant_style"]
 
         # Format message based on win rate
         if win_rate > 70:

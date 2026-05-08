@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Learning System Test - 학습 시스템 검증
 
@@ -212,9 +211,9 @@ def test_learning_system():
     logger.info(f"  Rejected patterns: {learner.learning_stats['rejected_patterns']}")
 
     # 학습된 타이밍 확인
-    if "learned_timings" in learned and learned["learned_timings"]:
+    if learned.get("learned_timings"):
         logger.info("\n[TEST] Sample learned timing:")
-        sample_key = list(learned["learned_timings"].keys())[0]
+        sample_key = next(iter(learned["learned_timings"].keys()))
         sample_value = learned["learned_timings"][sample_key]
         logger.info(f"  {sample_key}: {sample_value}")
 

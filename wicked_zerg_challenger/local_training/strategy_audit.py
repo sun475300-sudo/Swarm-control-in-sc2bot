@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Strategy Audit - 전략 비교 분석
 
@@ -16,7 +15,7 @@ import logging
 import sys
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any
 
 logger = logging.getLogger("StrategyAudit")
 
@@ -50,29 +49,29 @@ class StrategyAudit:
         }
 
         # 비교 결과
-        self.audit_results: Dict[str, Any] = {}
+        self.audit_results: dict[str, Any] = {}
 
-    def load_learned_builds(self) -> Dict[str, Any]:
+    def load_learned_builds(self) -> dict[str, Any]:
         """학습된 빌드 오더 로드"""
         try:
             if self.learned_builds_path.exists():
-                with open(self.learned_builds_path, "r", encoding="utf-8") as f:
+                with open(self.learned_builds_path, encoding="utf-8") as f:
                     return json.load(f)
         except Exception as e:
             logger.error(f"Failed to load learned builds: {e}")
         return {}
 
-    def load_training_stats(self) -> Dict[str, Any]:
+    def load_training_stats(self) -> dict[str, Any]:
         """훈련 통계 로드"""
         try:
             if self.training_stats_path.exists():
-                with open(self.training_stats_path, "r", encoding="utf-8") as f:
+                with open(self.training_stats_path, encoding="utf-8") as f:
                     return json.load(f)
         except Exception as e:
             logger.error(f"Failed to load training stats: {e}")
         return {}
 
-    def compare_build_timings(self, bot_timings: Dict[str, float]) -> Dict[str, Any]:
+    def compare_build_timings(self, bot_timings: dict[str, float]) -> dict[str, Any]:
         """빌드 타이밍 비교"""
         comparison = {}
 
@@ -127,8 +126,8 @@ class StrategyAudit:
             return f"Good aggressive timing, {int(-diff)}s ahead of standard"
 
     def compare_unit_composition(
-        self, bot_units: Dict[str, float], learned_units: Dict[str, float]
-    ) -> Dict[str, Any]:
+        self, bot_units: dict[str, float], learned_units: dict[str, float]
+    ) -> dict[str, Any]:
         """유닛 조합 비교"""
         comparison = {}
 
@@ -159,7 +158,7 @@ class StrategyAudit:
         else:
             return f"Consider more {unit}s"
 
-    def analyze_win_rate(self, stats: Dict[str, Any]) -> Dict[str, Any]:
+    def analyze_win_rate(self, stats: dict[str, Any]) -> dict[str, Any]:
         """승률 분석"""
         total_games = stats.get("total_games", 0)
         wins = stats.get("wins", 0)
@@ -189,7 +188,7 @@ class StrategyAudit:
 
         return analysis
 
-    def _analyze_matchup(self, matchup_stats: Dict[str, Any]) -> Dict[str, Any]:
+    def _analyze_matchup(self, matchup_stats: dict[str, Any]) -> dict[str, Any]:
         """매치업별 분석"""
         total = matchup_stats.get("total", 0)
         wins = matchup_stats.get("wins", 0)
@@ -203,8 +202,8 @@ class StrategyAudit:
         }
 
     def _get_win_rate_recommendations(
-        self, overall: float, vs_t: Dict, vs_p: Dict, vs_z: Dict
-    ) -> List[str]:
+        self, overall: float, vs_t: dict, vs_p: dict, vs_z: dict
+    ) -> list[str]:
         """승률 기반 추천"""
         recommendations = []
 
@@ -343,7 +342,7 @@ class StrategyAudit:
 
         return report
 
-    def get_pro_unit_composition(self) -> Dict[str, float]:
+    def get_pro_unit_composition(self) -> dict[str, float]:
         """프로 게이머 유닛 조합 기준"""
         return {
             "Drone": 0.30,

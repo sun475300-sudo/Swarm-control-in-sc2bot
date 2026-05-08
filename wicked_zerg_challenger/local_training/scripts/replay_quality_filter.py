@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 Replay Quality Filter - advanced filtering for replay collection.
 
@@ -12,7 +11,7 @@ import logging
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
+from typing import Optional
 
 logger = logging.getLogger("ReplayQualityFilter")
 
@@ -105,7 +104,7 @@ class FilterStats:
     failed_map: int = 0
     failed_duration: int = 0
 
-    def as_dict(self) -> Dict[str, int]:
+    def as_dict(self) -> dict[str, int]:
         return self.__dict__.copy()
 
 
@@ -114,7 +113,7 @@ class ReplayQualityFilter:
         self.min_apm = min_apm
         self.stats = FilterStats()
 
-    def check_file_integrity(self, replay_path: Path) -> Tuple[bool, Optional[str]]:
+    def check_file_integrity(self, replay_path: Path) -> tuple[bool, Optional[str]]:
         if not replay_path.exists():
             return False, "File does not exist"
 
@@ -213,7 +212,7 @@ class ReplayQualityFilter:
         self.stats.passed_all += 1
         return True
 
-    def filter_directory(self, replay_dir: Path) -> List[Path]:
+    def filter_directory(self, replay_dir: Path) -> list[Path]:
         replay_dir = Path(replay_dir)
         replays = sorted(replay_dir.glob("*.SC2Replay"))
         valid = []

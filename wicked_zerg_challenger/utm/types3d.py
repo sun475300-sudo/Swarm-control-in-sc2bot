@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 3D Coordinate Types for UTM Drone System
 
@@ -12,7 +11,7 @@ from __future__ import annotations
 
 import math
 from dataclasses import dataclass, field
-from typing import Any, Tuple
+from typing import Any
 
 import numpy as np
 
@@ -42,7 +41,7 @@ class Point3D:
         """numpy 배열 변환. Boids 벡터 연산용."""
         return np.array([self.x, self.y, self.z], dtype=np.float64)
 
-    def to_tuple(self) -> Tuple[float, float, float]:
+    def to_tuple(self) -> tuple[float, float, float]:
         return (self.x, self.y, self.z)
 
     def offset(self, dx: float = 0.0, dy: float = 0.0, dz: float = 0.0) -> Point3D:
@@ -119,7 +118,7 @@ class DroneState:
             self.heading = float(math.atan2(self.velocity[0], self.velocity[1]))
 
 
-def _get_pos3d(obj: Any) -> Tuple[float, float, float]:
+def _get_pos3d(obj: Any) -> tuple[float, float, float]:
     """객체에서 (x, y, z) 좌표를 안전하게 추출. 기존 _get_pos() 확장."""
     if isinstance(obj, DroneState):
         return obj.position.to_tuple()

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 RL Agent - Reinforcement Learning Agent for Zerg Bot
 
@@ -17,7 +16,7 @@ import os
 import shutil
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Optional
 
 import numpy as np
 
@@ -57,7 +56,7 @@ class PolicyNetwork:
         self.dW3 = np.zeros_like(self.W3)
         self.db3 = np.zeros_like(self.b3)
 
-    def forward(self, x: np.ndarray) -> Tuple[np.ndarray, Dict[str, np.ndarray]]:
+    def forward(self, x: np.ndarray) -> tuple[np.ndarray, dict[str, np.ndarray]]:
         """순전파"""
         # NaN/Inf 입력 방어
         if np.any(np.isnan(x)) or np.any(np.isinf(x)):
@@ -91,7 +90,7 @@ class PolicyNetwork:
         exp_x = np.exp(x - np.max(x))
         return exp_x / (np.sum(exp_x) + 1e-9)
 
-    def backward(self, cache: Dict, action_idx: int, advantage: float) -> None:
+    def backward(self, cache: dict, action_idx: int, advantage: float) -> None:
         """역전파 (REINFORCE)"""
         probs = cache["probs"]
 
@@ -152,7 +151,7 @@ class PolicyNetwork:
         self.dW3.fill(0)
         self.db3.fill(0)
 
-    def get_weights(self) -> Dict[str, np.ndarray]:
+    def get_weights(self) -> dict[str, np.ndarray]:
         return {
             "W1": self.W1,
             "b1": self.b1,
@@ -162,7 +161,7 @@ class PolicyNetwork:
             "b3": self.b3,
         }
 
-    def set_weights(self, weights: Dict[str, np.ndarray]) -> None:
+    def set_weights(self, weights: dict[str, np.ndarray]) -> None:
         self.W1 = weights["W1"]
         self.b1 = weights["b1"]
         self.W2 = weights["W2"]
@@ -194,10 +193,10 @@ class RLAgent:
         self.policy = PolicyNetwork()
 
         # 에피소드 버퍼
-        self.states: List[np.ndarray] = []
-        self.actions: List[int] = []
-        self.rewards: List[float] = []
-        self.caches: List[Dict] = []
+        self.states: list[np.ndarray] = []
+        self.actions: list[int] = []
+        self.rewards: list[float] = []
+        self.caches: list[dict] = []
 
         # 베이스라인
         self.baseline = 0.0
@@ -211,8 +210,8 @@ class RLAgent:
         # 통계
         self.episode_count = 0
         self.total_reward = 0.0
-        self.training_history: List[Dict] = []
-        self.validation_scores: List[float] = []
+        self.training_history: list[dict] = []
+        self.validation_scores: list[float] = []
 
         # 보상 정규화
         self.reward_mean = 0.0
@@ -233,7 +232,7 @@ class RLAgent:
 
     def get_action(
         self, state: np.ndarray, training: bool = True
-    ) -> Tuple[int, str, float]:
+    ) -> tuple[int, str, float]:
         """
         상태에서 행동 선택 (Epsilon-Greedy)
 
@@ -339,7 +338,7 @@ class RLAgent:
 
     def end_episode(
         self, final_reward: float = 0.0, save_experience: bool = True
-    ) -> Dict[str, float]:
+    ) -> dict[str, float]:
         """에피소드 종료 및 학습"""
         # ★★★ FIX: 남은 reward_buffer 마지막 리워드에 추가 ★★★
         if self.reward_buffer != 0.0 and self.rewards:
@@ -430,7 +429,7 @@ class RLAgent:
                         f"[OK] Experience data saved: {exp_path.name} (Size: {len(self.states)})"
                     )
                 else:
-                    logger.error(f"[ERROR] Failed to save experience data")
+                    logger.error("[ERROR] Failed to save experience data")
             except Exception as e:
                 logger.error(f"[ERROR] Exception during save: {e}")
 
@@ -500,7 +499,7 @@ class RLAgent:
             logger.info(f"Could not load model: {e}")
         return False
 
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> dict[str, Any]:
         recent = self.training_history[-10:] if self.training_history else []
         avg_reward = np.mean([s["avg_reward"] for s in recent]) if recent else 0.0
         return {
@@ -549,8 +548,8 @@ class RLAgent:
             return False
 
     def train_from_batch(
-        self, experiences: List[Dict[str, np.ndarray]]
-    ) -> Dict[str, float]:
+        self, experiences: list[dict[str, np.ndarray]]
+    ) -> dict[str, float]:
         """외부 경험 데이터로 학습 (Offline Training)"""
         total_loss = 0.0
         total_steps = 0
@@ -675,7 +674,7 @@ class RLAgent:
                     pass
             return False
 
-    def _update_reward_stats(self, rewards: List[float]) -> None:
+    def _update_reward_stats(self, rewards: list[float]) -> None:
         """보상 통계 업데이트 (Running Mean/Std)"""
         for r in rewards:
             self.reward_count += 1
@@ -706,7 +705,7 @@ class RLAgent:
         # 최소 50 게임 + epsilon이 충분히 낮아짐
         return self.episode_count >= 50 and self.epsilon <= 0.2
 
-    def is_ready_for_deployment(self) -> Tuple[bool, str]:
+    def is_ready_for_deployment(self) -> tuple[bool, str]:
         """
         배포 가능 여부 판단
 

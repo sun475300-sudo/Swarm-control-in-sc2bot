@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Destructible Awareness System - 파괴 가능 구조물 인지 시스템
 
@@ -9,7 +8,6 @@ Destructible Awareness System - 파괴 가능 구조물 인지 시스템
 4. 우선순위 결정 (중요도)
 """
 
-from typing import Dict, List
 
 from sc2.ids.unit_typeid import UnitTypeId
 
@@ -40,8 +38,8 @@ class DestructibleAwarenessSystem:
         self.logger = get_logger("DestructibleAware")
 
         # 파괴 가능 구조물 추적
-        self.destructibles: Dict[int, DestructibleStructure] = {}
-        self.destruction_queue: List[int] = []  # 파괴 우선순위 큐
+        self.destructibles: dict[int, DestructibleStructure] = {}
+        self.destruction_queue: list[int] = []  # 파괴 우선순위 큐
 
         # 설정
         self.EXPANSION_BLOCK_RADIUS = 8  # 확장 차단 판정 반경
@@ -183,7 +181,7 @@ class DestructibleAwarenessSystem:
         """파괴 우선순위 평가"""
         expansion_locations = list(self.bot.expansion_locations_list)
 
-        for tag, destructible in self.destructibles.items():
+        for _tag, destructible in self.destructibles.items():
             if destructible.is_destroyed:
                 continue
 
@@ -333,7 +331,7 @@ class DestructibleAwarenessSystem:
                 f"Destroyed: {self.total_destroyed}/{self.total_discovered}"
             )
 
-    def get_statistics(self) -> Dict:
+    def get_statistics(self) -> dict:
         """통계 반환"""
         active = len([d for d in self.destructibles.values() if not d.is_destroyed])
         blocks_expansion = len(

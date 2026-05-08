@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Base Defense System - 기지 방어 시스템
 
@@ -11,7 +10,7 @@ Base Defense System - 기지 방어 시스템
 6. 우선순위 타겟 집중 공격
 """
 
-from typing import TYPE_CHECKING, List, Optional
+from typing import TYPE_CHECKING, Optional
 
 if TYPE_CHECKING:
     from sc2.position import Point2
@@ -165,7 +164,7 @@ class BaseDefenseSystem:
 
         return highest_threat
 
-    def get_units_near_base(self, units, range_distance: float = 30) -> List:
+    def get_units_near_base(self, units, range_distance: float = 30) -> list:
         """기지 근처 유닛 가져오기 (최적화)"""
         if not hasattr(self.bot, "townhalls") or not self.bot.townhalls.exists:
             return []

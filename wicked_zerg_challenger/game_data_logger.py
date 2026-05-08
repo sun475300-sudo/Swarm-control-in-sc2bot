@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Game Data Logger - 게임 플레이 데이터 수집 시스템
 
@@ -9,7 +8,7 @@ import json
 import logging
 import os
 from datetime import datetime
-from typing import Any, Dict
+from typing import Any
 
 logger = logging.getLogger("GameDataLogger")
 
@@ -165,14 +164,14 @@ class GameDataLogger:
 
     async def _track_expansions(self, game_time: float):
         """확장 기지 추적"""
-        current_bases = (
+        (
             self.bot.townhalls.amount if hasattr(self.bot, "townhalls") else 0
         )
 
         # 새로운 확장 발견
         for townhall in self.bot.townhalls:
             if townhall.tag not in self._tracked_structures:
-                expansion_number = len([e for e in self.game_data["expansions"]]) + 1
+                expansion_number = len(list(self.game_data["expansions"])) + 1
 
                 self.game_data["expansions"].append(
                     {
@@ -304,7 +303,7 @@ class GameDataLogger:
             }
         )
 
-    def log_decision(self, decision_type: str, details: Dict[str, Any]):
+    def log_decision(self, decision_type: str, details: dict[str, Any]):
         """의사결정 로그 (중요한 결정만)"""
         if not hasattr(self.bot, "time"):
             return

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Macro Cycle Manager - 매크로 사이클 매니저 (#108)
 
@@ -14,7 +13,7 @@ Macro Cycle Manager - 매크로 사이클 매니저 (#108)
 
 import logging
 from enum import Enum
-from typing import Any, Dict, List, Set
+from typing import Any
 
 logger = logging.getLogger("MacroCycle")
 
@@ -93,16 +92,16 @@ class MacroCycleManager:
         self.bot = bot
 
         # 퀸-기지 배정
-        self.queen_assignments: Dict[int, QueenAssignment] = {}
-        self.unassigned_queens: Set[int] = set()
+        self.queen_assignments: dict[int, QueenAssignment] = {}
+        self.unassigned_queens: set[int] = set()
 
         # 크립 관리
-        self.creep_queen_tags: Set[int] = set()  # 크립 전용 퀸
+        self.creep_queen_tags: set[int] = set()  # 크립 전용 퀸
         self.last_creep_time: float = 0.0
         self.creep_interval: float = 5.0  # 크립 시도 간격
 
         # 생산 큐
-        self.production_queue: List[Dict[str, Any]] = []
+        self.production_queue: list[dict[str, Any]] = []
         self.pending_larva_usage: int = 0
 
         # 통계
@@ -169,9 +168,7 @@ class MacroCycleManager:
         # 죽은 퀸/기지 제거
         dead_assignments = []
         for queen_tag, assignment in self.queen_assignments.items():
-            if queen_tag not in active_queen_tags:
-                dead_assignments.append(queen_tag)
-            elif assignment.hatchery_tag not in active_hatchery_tags:
+            if queen_tag not in active_queen_tags or assignment.hatchery_tag not in active_hatchery_tags:
                 dead_assignments.append(queen_tag)
 
         for tag in dead_assignments:
@@ -302,7 +299,7 @@ class MacroCycleManager:
 
             # 기지당 최적 라바 수: 3 (인젝트 1회당 3라바)
             optimal_larva = base_count * 3
-            max_larva = base_count * 19  # 기지당 최대 19라바
+            base_count * 19  # 기지당 최대 19라바
 
             if current_larva > optimal_larva * 2:
                 # 라바가 너무 많이 쌓이면 효율 감소
@@ -340,7 +337,7 @@ class MacroCycleManager:
                 continue
 
         # 인젝트 배정된 퀸 중 에너지가 충분한 퀸으로도 크립 확산
-        for queen_tag, assignment in self.queen_assignments.items():
+        for queen_tag, _assignment in self.queen_assignments.items():
             try:
                 if not UnitTypeId or not AbilityId:
                     break
@@ -390,7 +387,7 @@ class MacroCycleManager:
         target = min(mineral_workers + gas_workers, self.MAX_DRONES)
         return target
 
-    def get_larva_priority_list(self) -> List[Dict[str, Any]]:
+    def get_larva_priority_list(self) -> list[dict[str, Any]]:
         """
         라바 사용 우선순위 리스트 반환
 
@@ -446,7 +443,7 @@ class MacroCycleManager:
         if queen_tag in self.queen_assignments:
             del self.queen_assignments[queen_tag]
 
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> dict[str, Any]:
         """매크로 사이클 통계"""
         return {
             "queen_assignments": len(self.queen_assignments),

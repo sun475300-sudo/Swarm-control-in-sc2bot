@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Defense Coordinator - 통합 방어 시스템
 
@@ -14,7 +13,7 @@ Blackboard 기반 아키텍처:
 참고: LOGIC_IMPROVEMENT_REPORT.md - Section 4 (Defense Consolidation)
 """
 
-from typing import List, Optional, Set
+from typing import Optional
 
 try:
     from sc2.bot_ai import BotAI
@@ -63,8 +62,8 @@ class DefenseCoordinator:
         self.config = DefenseConfig() if DefenseConfig else None
 
         # === 방어 상태 ===
-        self.detected_threats: Set[int] = set()  # 감지된 적 태그
-        self.defending_units: Set[int] = set()  # 방어 중인 유닛 태그
+        self.detected_threats: set[int] = set()  # 감지된 적 태그
+        self.defending_units: set[int] = set()  # 방어 중인 유닛 태그
 
         # === 초반 방어 (0-3분) ===
         self.early_game_threshold = (
@@ -74,8 +73,8 @@ class DefenseCoordinator:
         self.first_queen_requested = False
 
         # === 방어 건물 ===
-        self.spine_crawler_positions: List[Point2] = []
-        self.spore_crawler_positions: List[Point2] = []
+        self.spine_crawler_positions: list[Point2] = []
+        self.spore_crawler_positions: list[Point2] = []
 
         # === Proactive 공중 방어 ★ NEW ★ ===
         self.proactive_spore_requested = False  # 3:00 자동 스포어 요청 여부
@@ -717,7 +716,7 @@ class DefenseCoordinator:
                 if self.bot.workers.exists:
                     worker = self.bot.workers.closest_to(build_pos)
                     self.bot.do(worker.build(UnitTypeId.SPINECRAWLER, build_pos))
-                    self.logger.info(f"[DEFENSE] Building Spine Crawler at base")
+                    self.logger.info("[DEFENSE] Building Spine Crawler at base")
             else:
                 pass  # 자원 부족 또는 예약 실패
 
@@ -754,7 +753,7 @@ class DefenseCoordinator:
                         worker = self.bot.workers.closest_to(build_pos)
                         self.bot.do(worker.build(UnitTypeId.SPORECRAWLER, build_pos))
                         self.logger.info(
-                            f"[DEFENSE] Building Spore Crawler (reactive - air threat)"
+                            "[DEFENSE] Building Spore Crawler (reactive - air threat)"
                         )
 
     # ========== Proactive 공중 방어 ★ NEW ★ ==========

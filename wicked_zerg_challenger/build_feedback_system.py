@@ -14,7 +14,6 @@ import json
 import logging
 from datetime import datetime
 from pathlib import Path
-from typing import List
 
 logger = logging.getLogger("BuildFeedbackSystem")
 
@@ -216,7 +215,7 @@ class BuildFeedbackSystem:
         try:
             # 기존 데이터 로드
             if self.data_file.exists():
-                with open(self.data_file, "r", encoding="utf-8") as f:
+                with open(self.data_file, encoding="utf-8") as f:
                     all_data = json.load(f)
             else:
                 all_data = {"games": []}
@@ -251,7 +250,7 @@ class BuildFeedbackSystem:
             if not self.data_file.exists():
                 return
 
-            with open(self.data_file, "r", encoding="utf-8") as f:
+            with open(self.data_file, encoding="utf-8") as f:
                 all_data = json.load(f)
 
             games = all_data.get("games", [])
@@ -275,7 +274,7 @@ class BuildFeedbackSystem:
             else:
                 avg_victory_time = 0
 
-            logger.info(f"\n[BUILD FEEDBACK] Analysis:")
+            logger.info("\n[BUILD FEEDBACK] Analysis:")
             logger.info(
                 f"  Win Rate: {win_rate * 100:.1f}% ({len(victories)}/{len(recent_games)})"
             )
@@ -292,7 +291,7 @@ class BuildFeedbackSystem:
                 if game["result"] == "Victory":
                     build_stats[build]["wins"] += 1
 
-            logger.info(f"\n  Build Order Stats:")
+            logger.info("\n  Build Order Stats:")
             for build, stats in build_stats.items():
                 wr = stats["wins"] / stats["total"] if stats["total"] > 0 else 0
                 logger.info(
@@ -306,17 +305,17 @@ class BuildFeedbackSystem:
             logger.error(f"Analysis failed: {e}")
 
     def _generate_recommendations(
-        self, recent_games: List, victories: List, avg_victory_time: float
+        self, recent_games: list, victories: list, avg_victory_time: float
     ):
         """개선 추천 사항 생성"""
-        logger.info(f"\n[BUILD FEEDBACK] Recommendations:")
+        logger.info("\n[BUILD FEEDBACK] Recommendations:")
 
         # 1. 승리 시간 분석
         if avg_victory_time > 600:  # 10분 이상
             logger.info(
                 f"  - 승리가 너무 느림 ({avg_victory_time:.0f}s) → 더 공격적인 전략 필요"
             )
-            logger.info(f"    → 제안: 3분 저글링 공격, 5분 바퀴 푸시")
+            logger.info("    → 제안: 3분 저글링 공격, 5분 바퀴 푸시")
         elif avg_victory_time < 300:  # 5분 미만
             logger.info(
                 f"  - 매우 빠른 승리! ({avg_victory_time:.0f}s) → 현재 전략 유지"
@@ -352,7 +351,7 @@ class BuildFeedbackSystem:
                         unit_usage[unit].append(count)
 
             if unit_usage:
-                logger.info(f"  - 승리 시 주력 유닛:")
+                logger.info("  - 승리 시 주력 유닛:")
                 for unit, counts in sorted(
                     unit_usage.items(), key=lambda x: sum(x[1]), reverse=True
                 )[:3]:

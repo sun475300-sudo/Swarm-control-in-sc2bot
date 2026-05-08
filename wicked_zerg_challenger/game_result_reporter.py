@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Game Result Reporter - 경기 결과 자동 요약 보고서
 
@@ -16,7 +15,6 @@ Features:
 import logging
 import os
 from datetime import datetime
-from typing import Dict, List
 
 logger = logging.getLogger("GameResultReporter")
 
@@ -28,7 +26,7 @@ class GameResultReporter:
         self.bot = bot
         self.report_dir = "data/reports"
 
-    def generate_report(self, game_data: Dict, analytics_data: Dict = None) -> str:
+    def generate_report(self, game_data: dict, analytics_data: dict | None = None) -> str:
         """
         종합 경기 결과 보고서 생성.
 
@@ -138,7 +136,7 @@ class GameResultReporter:
 
         return report_text
 
-    def _normalize_data(self, game_data: Dict) -> Dict:
+    def _normalize_data(self, game_data: dict) -> dict:
         """
         GameDataLogger.game_data 포맷을 리포터 표준 포맷으로 정규화.
 
@@ -259,7 +257,7 @@ class GameResultReporter:
 
         return normalized
 
-    def _build_timeline(self, game_data: Dict) -> List[Dict]:
+    def _build_timeline(self, game_data: dict) -> list[dict]:
         """주요 이벤트 타임라인 구성"""
         events = []
 
@@ -307,7 +305,7 @@ class GameResultReporter:
         # 최대 20개 이벤트
         return events[:20]
 
-    def _analyze_economy(self, game_data: Dict) -> List[str]:
+    def _analyze_economy(self, game_data: dict) -> list[str]:
         """경제 분석"""
         lines = []
         snapshots = game_data.get("resource_snapshots", [])
@@ -333,7 +331,7 @@ class GameResultReporter:
 
         return lines
 
-    def _analyze_timings(self, game_data: Dict) -> List[str]:
+    def _analyze_timings(self, game_data: dict) -> list[str]:
         """확장/테크 타이밍 분석"""
         lines = []
 
@@ -347,7 +345,7 @@ class GameResultReporter:
 
         for i, exp in enumerate(expansions):
             exp_time = exp.get("time", 0)
-            target = benchmarks.get(i, None)
+            target = benchmarks.get(i)
             status = ""
             if target:
                 diff = exp_time - target
@@ -378,7 +376,7 @@ class GameResultReporter:
 
         return lines
 
-    def _analyze_combat(self, game_data: Dict) -> List[str]:
+    def _analyze_combat(self, game_data: dict) -> list[str]:
         """전투 분석"""
         lines = []
         engagements = game_data.get("engagements", [])
@@ -400,7 +398,7 @@ class GameResultReporter:
 
         return lines
 
-    def _analyze_composition(self, game_data: Dict) -> List[str]:
+    def _analyze_composition(self, game_data: dict) -> list[str]:
         """유닛 조합 분석"""
         lines = []
         production = game_data.get("unit_production", {})
@@ -424,7 +422,7 @@ class GameResultReporter:
 
         return lines
 
-    def _analyze_result_causes(self, game_data: Dict, result: str) -> List[str]:
+    def _analyze_result_causes(self, game_data: dict, result: str) -> list[str]:
         """승패 원인 분석"""
         lines = []
         game_time = game_data.get("game_time", 0)
@@ -463,7 +461,7 @@ class GameResultReporter:
 
         return lines
 
-    def _generate_suggestions(self, game_data: Dict, result: str) -> List[str]:
+    def _generate_suggestions(self, game_data: dict, result: str) -> list[str]:
         """개선 제안 생성"""
         suggestions = []
         game_time = game_data.get("game_time", 0)
@@ -526,7 +524,7 @@ class GameResultReporter:
         secs = int(seconds) % 60
         return f"{minutes}:{secs:02d}"
 
-    def _save_report(self, report_text: str, game_data: Dict):
+    def _save_report(self, report_text: str, game_data: dict):
         """보고서 파일 저장"""
         try:
             os.makedirs(self.report_dir, exist_ok=True)
@@ -539,10 +537,10 @@ class GameResultReporter:
                 f.write(report_text)
 
             logger.info(f"Saved to {filepath}")
-        except (IOError, OSError) as e:
+        except OSError as e:
             logger.error(f"Failed to save: {e}")
 
-    def generate_quick_summary(self, game_data: Dict) -> str:
+    def generate_quick_summary(self, game_data: dict) -> str:
         """
         간단 한줄 요약 (Discord 전송용)
         """

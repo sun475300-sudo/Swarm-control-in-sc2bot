@@ -14,7 +14,6 @@ Features:
 - Changelings 정찰 지원
 """
 
-from typing import Dict, List
 
 from utils.logger import get_logger
 
@@ -42,8 +41,8 @@ class OverlordVisionNetwork:
         self.logger = get_logger("VisionNetwork")
 
         # Vision positions
-        self.vision_positions: List[Point2] = []
-        self.assigned_overlords: Dict[Point2, int] = {}  # {position: overlord_tag}
+        self.vision_positions: list[Point2] = []
+        self.assigned_overlords: dict[Point2, int] = {}  # {position: overlord_tag}
 
         # Network state
         self.network_established = False
@@ -111,7 +110,7 @@ class OverlordVisionNetwork:
         # ★ PRIORITY 5: Map center (general awareness)
         self.vision_positions.append(self.bot.game_info.map_center)
 
-    def _find_highground_pillars(self, enemy_base) -> List[Point2]:
+    def _find_highground_pillars(self, enemy_base) -> list[Point2]:
         """
         ★★★ 대군주 절대 안전지대(Pillars) 탐색 ★★★
 

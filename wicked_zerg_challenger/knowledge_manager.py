@@ -1,6 +1,6 @@
 import json
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any, Optional
 
 from utils.logger import get_logger
 
@@ -13,7 +13,7 @@ class KnowledgeManager:
 
     def __init__(self):
         self.logger = get_logger("KnowledgeManager")
-        self.knowledge: Dict[str, Any] = {}
+        self.knowledge: dict[str, Any] = {}
         self.load_knowledge()
 
     def load_knowledge(self) -> None:
@@ -26,7 +26,7 @@ class KnowledgeManager:
                 self.logger.error(f"Knowledge file not found: {file_path}")
                 return
 
-            with open(file_path, "r", encoding="utf-8") as f:
+            with open(file_path, encoding="utf-8") as f:
                 self.knowledge = json.load(f)
 
             self.logger.info(
@@ -39,11 +39,11 @@ class KnowledgeManager:
         except Exception as e:
             self.logger.error(f"Failed to load knowledge: {e}")
 
-    def get_build_order(self, build_name: str) -> Optional[Dict]:
+    def get_build_order(self, build_name: str) -> Optional[dict]:
         """Get specific build order by name"""
         return self.knowledge.get("build_orders", {}).get(build_name)
 
-    def get_unit_ratios(self, race: str, game_phase: str) -> Dict[str, float]:
+    def get_unit_ratios(self, race: str, game_phase: str) -> dict[str, float]:
         """Get unit ratios for specific race and phase"""
         # Normalize keys (e.g., "Terran" -> "Terran")
         race_data = self.knowledge.get("unit_ratios", {}).get(race, {})
@@ -57,12 +57,12 @@ class KnowledgeManager:
         """Get list of available build orders"""
         return list(self.knowledge.get("build_orders", {}).keys())
 
-    def get_map_strategy(self, map_size: str) -> Dict:
+    def get_map_strategy(self, map_size: str) -> dict:
         """Get strategy for map size (Small/Large/Default)"""
         strategies = self.knowledge.get("map_strategies", {})
         return strategies.get(map_size, strategies.get("Default"))
 
-    def get_counter_unit(self, enemy_unit_type: str) -> Optional[Dict]:
+    def get_counter_unit(self, enemy_unit_type: str) -> Optional[dict]:
         """Get counter rule for specific enemy unit"""
         # Upper case key (e.g., VOIDRAY)
         key = enemy_unit_type.upper()

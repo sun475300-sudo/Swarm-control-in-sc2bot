@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Game Constants - SC2 게임 상수 정의
 

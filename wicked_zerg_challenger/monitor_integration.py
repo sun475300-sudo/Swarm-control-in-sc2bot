@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Phase 15 Integration Monitor
 
@@ -16,7 +15,6 @@ import logging
 import time
 from datetime import datetime
 from pathlib import Path
-from typing import Dict
 
 logger = logging.getLogger(__name__)
 
@@ -30,7 +28,7 @@ class IntegrationMonitor:
         self.log_file = self.base_dir / "logs" / "bot.log"
         self.last_check_time = datetime.now()
 
-    def check_opponent_models(self) -> Dict:
+    def check_opponent_models(self) -> dict:
         """Check opponent modeling data"""
         logger.info("\n" + "=" * 70)
         logger.info("OPPONENT MODELING STATUS")
@@ -57,7 +55,7 @@ class IntegrationMonitor:
 
         for json_file in sorted(json_files):
             try:
-                with open(json_file, "r", encoding="utf-8") as f:
+                with open(json_file, encoding="utf-8") as f:
                     data = json.load(f)
 
                 opponent_id = data.get("opponent_id", json_file.stem)
@@ -105,7 +103,7 @@ class IntegrationMonitor:
 
         # Summary
         overall_win_rate = (total_wins / total_games * 100) if total_games > 0 else 0
-        logger.info(f"[GRAPH] OVERALL STATISTICS:")
+        logger.info("[GRAPH] OVERALL STATISTICS:")
         logger.info(f"   Total Games: {total_games}")
         logger.info(f"   Total Wins: {total_wins}")
         logger.info(f"   Overall Win Rate: {overall_win_rate:.1f}%")
@@ -119,7 +117,7 @@ class IntegrationMonitor:
             "models": models_data,
         }
 
-    def check_micro_v3_status(self) -> Dict:
+    def check_micro_v3_status(self) -> dict:
         """Check micro controller V3 status from logs"""
         logger.info("\n" + "=" * 70)
         logger.info("ADVANCED MICRO CONTROLLER V3 STATUS")
@@ -131,7 +129,7 @@ class IntegrationMonitor:
 
         # Read recent log entries
         try:
-            with open(self.log_file, "r", encoding="utf-8") as f:
+            with open(self.log_file, encoding="utf-8") as f:
                 lines = f.readlines()
 
             # Look for micro V3 log entries
@@ -148,7 +146,7 @@ class IntegrationMonitor:
             # Parse latest status
             latest_log = micro_v3_logs[-1] if micro_v3_logs else None
             if latest_log:
-                logger.info(f"  [GAME] Latest Status:")
+                logger.info("  [GAME] Latest Status:")
                 logger.info(f"     {latest_log.strip()}")
 
             # Count ability usage
@@ -158,7 +156,7 @@ class IntegrationMonitor:
             )
             focus_fire_count = sum(1 for line in micro_v3_logs if "Focus fire:" in line)
 
-            logger.info(f"\n  [GRAPH] Activity Summary:")
+            logger.info("\n  [GRAPH] Activity Summary:")
             logger.info(f"     Ravager micro executions: {ravager_count}")
             logger.info(f"     Lurker micro executions: {lurker_count}")
             logger.info(f"     Focus fire executions: {focus_fire_count}")
@@ -175,7 +173,7 @@ class IntegrationMonitor:
             logger.info(f"\n[X] Error reading log file: {e}")
             return {"status": "error", "error": str(e)}
 
-    def check_errors(self) -> Dict:
+    def check_errors(self) -> dict:
         """Check for error messages in logs"""
         logger.info("\n" + "=" * 70)
         logger.info("ERROR CHECK")
@@ -186,7 +184,7 @@ class IntegrationMonitor:
             return {"status": "no_logs"}
 
         try:
-            with open(self.log_file, "r", encoding="utf-8") as f:
+            with open(self.log_file, encoding="utf-8") as f:
                 lines = f.readlines()
 
             # Look for errors
@@ -239,7 +237,7 @@ class IntegrationMonitor:
             logger.info(f"\n[X] Error reading log file: {e}")
             return {"status": "error", "error": str(e)}
 
-    def check_performance(self) -> Dict:
+    def check_performance(self) -> dict:
         """Check performance metrics"""
         logger.info("\n" + "=" * 70)
         logger.info("PERFORMANCE CHECK")
@@ -250,7 +248,7 @@ class IntegrationMonitor:
             return {"status": "no_logs"}
 
         try:
-            with open(self.log_file, "r", encoding="utf-8") as f:
+            with open(self.log_file, encoding="utf-8") as f:
                 lines = f.readlines()
 
             # Look for timing information
@@ -295,7 +293,7 @@ class IntegrationMonitor:
             if lag_indicators:
                 logger.info(f"\n  [!]  Performance warnings: {len(lag_indicators)}")
             else:
-                logger.info(f"\n  [OK] No performance warnings detected")
+                logger.info("\n  [OK] No performance warnings detected")
 
             return {
                 "status": "ok",
@@ -308,7 +306,7 @@ class IntegrationMonitor:
             logger.info(f"\n[X] Error reading log file: {e}")
             return {"status": "error", "error": str(e)}
 
-    def generate_summary_report(self) -> Dict:
+    def generate_summary_report(self) -> dict:
         """Generate comprehensive summary report"""
         logger.info("\n" + "=" * 70)
         logger.info("INTEGRATION MONITORING SUMMARY")

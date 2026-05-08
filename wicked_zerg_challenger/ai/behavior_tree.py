@@ -13,7 +13,8 @@ Behavior Tree (행동 트리) 시스템
 import logging
 from abc import ABC, abstractmethod
 from enum import Enum
-from typing import Any, Callable, List, Optional
+from typing import Any, Optional
+from collections.abc import Callable
 
 logger = logging.getLogger("BehaviorTree")
 
@@ -55,7 +56,7 @@ class Sequence(BehaviorNode):
     - 하나라도 RUNNING → RUNNING
     """
 
-    def __init__(self, name: str, children: List[BehaviorNode]):
+    def __init__(self, name: str, children: list[BehaviorNode]):
         super().__init__(name)
         self.children = children
 
@@ -85,7 +86,7 @@ class Selector(BehaviorNode):
     - 하나라도 RUNNING → RUNNING
     """
 
-    def __init__(self, name: str, children: List[BehaviorNode]):
+    def __init__(self, name: str, children: list[BehaviorNode]):
         super().__init__(name)
         self.children = children
 
@@ -118,9 +119,9 @@ class Parallel(BehaviorNode):
     def __init__(
         self,
         name: str,
-        children: List[BehaviorNode],
-        success_threshold: int = None,
-        failure_threshold: int = None,
+        children: list[BehaviorNode],
+        success_threshold: int | None = None,
+        failure_threshold: int | None = None,
     ):
         super().__init__(name)
         self.children = children

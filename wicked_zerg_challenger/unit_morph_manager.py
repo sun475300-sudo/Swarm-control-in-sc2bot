@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Unit Morph Manager - Automatic unit morphing system
 
@@ -143,7 +142,7 @@ class UnitMorphManager:
                 self.logger.error(f"Morph manager error: {e}")
 
     async def _morph_banelings(
-        self, enemy_race: str, iteration: int, dynamic_ratios: dict = None
+        self, enemy_race: str, iteration: int, dynamic_ratios: dict | None = None
     ):
         """저글링 -> 베인링 변태"""
         # 쿨다운 체크 (10초마다)
@@ -210,7 +209,7 @@ class UnitMorphManager:
                     )
 
     async def _morph_ravagers(
-        self, enemy_race: str, iteration: int, dynamic_ratios: dict = None
+        self, enemy_race: str, iteration: int, dynamic_ratios: dict | None = None
     ):
         """바퀴 -> 파멸충 변태"""
         # 쿨다운 체크 (15초마다)
@@ -273,7 +272,7 @@ class UnitMorphManager:
                 )
 
     async def _morph_lurkers(
-        self, enemy_race: str, iteration: int, dynamic_ratios: dict = None
+        self, enemy_race: str, iteration: int, dynamic_ratios: dict | None = None
     ):
         """히드라 -> 럴커 변태"""
         # 쿨다운 체크 (20초마다)
@@ -336,7 +335,7 @@ class UnitMorphManager:
                 )
 
     async def _morph_broodlords(
-        self, enemy_race: str, iteration: int, dynamic_ratios: dict = None
+        self, enemy_race: str, iteration: int, dynamic_ratios: dict | None = None
     ):
         """코럽터 -> 무리군주 변태"""
         # 쿨다운 체크 (30초마다)

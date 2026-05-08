@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Runtime Self-Healing System - 실행 중 자동 복구
 
@@ -10,7 +9,6 @@ Runtime Self-Healing System - 실행 중 자동 복구
 5. 자동 복구 조치
 """
 
-from typing import Dict, List
 
 from utils.logger import get_logger
 
@@ -39,7 +37,7 @@ class RuntimeSelfHealing:
         self.logger = get_logger("SelfHealing")
 
         # 건강 상태 추적
-        self.metrics: Dict[str, HealthMetric] = {
+        self.metrics: dict[str, HealthMetric] = {
             "economy": HealthMetric("economy", 30.0),  # 30초마다 체크
             "production": HealthMetric("production", 20.0),  # 20초마다 체크
             "resources": HealthMetric("resources", 15.0),  # 15초마다 체크
@@ -54,7 +52,7 @@ class RuntimeSelfHealing:
         self.last_gas_count = 0
 
         # 복구 조치 이력
-        self.recovery_actions: List[Dict] = []
+        self.recovery_actions: list[dict] = []
         self.total_recoveries = 0
 
         # 체크 시작 시간 추적
@@ -192,7 +190,7 @@ class RuntimeSelfHealing:
             self.recovery_actions.append(recovery_action)
             self.total_recoveries += 1
 
-            self.logger.info(f"[RECOVERY] Requesting emergency drone production")
+            self.logger.info("[RECOVERY] Requesting emergency drone production")
 
     async def _recover_production_stall(self, game_time: float):
         """생산 정체 복구"""
@@ -211,7 +209,7 @@ class RuntimeSelfHealing:
         self.recovery_actions.append(recovery_action)
         self.total_recoveries += 1
 
-        self.logger.info(f"[RECOVERY] Requesting emergency production")
+        self.logger.info("[RECOVERY] Requesting emergency production")
 
     async def _recover_mineral_waste(self, game_time: float, minerals: int):
         """미네랄 낭비 복구"""
@@ -289,12 +287,12 @@ class RuntimeSelfHealing:
                 from economy_manager import EconomyManager
 
                 self.bot.economy = EconomyManager(self.bot)
-                self.logger.info(f"[RECOVERY] Reinitialized EconomyManager")
+                self.logger.info("[RECOVERY] Reinitialized EconomyManager")
             elif manager_name == "strategy_manager":
                 from strategy_manager_v2 import StrategyManagerV2
 
                 self.bot.strategy_manager = StrategyManagerV2(self.bot)
-                self.logger.info(f"[RECOVERY] Reinitialized StrategyManagerV2")
+                self.logger.info("[RECOVERY] Reinitialized StrategyManagerV2")
             # 다른 매니저들도 필요시 추가
         except Exception as e:
             self.logger.error(f"[RECOVERY] Failed to reinitialize {manager_name}: {e}")
@@ -312,7 +310,7 @@ class RuntimeSelfHealing:
                 f"  [{int(action['time'])}s] {action['type']}: {action['action']}"
             )
 
-    def get_statistics(self) -> Dict:
+    def get_statistics(self) -> dict:
         """통계 반환"""
         recovery_by_type = {}
         for action in self.recovery_actions:

@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 Unit tests for BuildOrderSystem.
 
@@ -118,7 +117,7 @@ class TestKnowledgeJsonIntegrity(unittest.TestCase):
         self.assertTrue(
             json_path.exists(), f"commander_knowledge.json not found at {json_path}"
         )
-        with open(json_path, "r", encoding="utf-8") as f:
+        with open(json_path, encoding="utf-8") as f:
             self.knowledge = json.load(f)
 
     def test_build_orders_section_exists(self):
@@ -179,7 +178,7 @@ class TestBuildOrderStats(unittest.TestCase):
     def test_stats_have_required_fields(self):
         bot = MockBot("Race.Terran")
         system = BuildOrderSystem(bot)
-        for build_type, stats in system.build_order_stats.items():
+        for _build_type, stats in system.build_order_stats.items():
             self.assertIn("games", stats)
             self.assertIn("wins", stats)
 

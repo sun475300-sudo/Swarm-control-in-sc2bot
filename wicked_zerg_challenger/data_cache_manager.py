@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Data Cache Manager - 자주 사용되는 데이터 캐싱
 
@@ -12,7 +11,8 @@ Data Cache Manager - 자주 사용되는 데이터 캐싱
 """
 
 import time
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any, Optional
+from collections.abc import Callable
 
 from utils.logger import get_logger
 
@@ -49,7 +49,7 @@ class DataCacheManager:
         self.logger = get_logger("DataCache")
 
         # ★ 캐시 저장소 ★
-        self.cache: Dict[str, CacheEntry] = {}
+        self.cache: dict[str, CacheEntry] = {}
 
         # ★ 기본 TTL (Time To Live) ★
         self.default_ttl = {
@@ -211,7 +211,7 @@ class DataCacheManager:
             "resource_ratio", self._compute_resource_ratio, self.default_ttl["NORMAL"]
         )
 
-    def get_army_composition(self) -> Optional[Dict[str, int]]:
+    def get_army_composition(self) -> Optional[dict[str, int]]:
         """
         아군 유닛 구성 (1초 캐시)
 
@@ -224,7 +224,7 @@ class DataCacheManager:
             self.default_ttl["NORMAL"],
         )
 
-    def get_enemy_army_composition(self) -> Optional[Dict[str, int]]:
+    def get_enemy_army_composition(self) -> Optional[dict[str, int]]:
         """
         적 유닛 구성 (2초 캐시)
 
@@ -290,7 +290,7 @@ class DataCacheManager:
 
         return minerals / gas
 
-    def _compute_army_composition(self) -> Dict[str, int]:
+    def _compute_army_composition(self) -> dict[str, int]:
         """아군 유닛 구성 계산"""
         composition = {}
 
@@ -319,7 +319,7 @@ class DataCacheManager:
 
         return composition
 
-    def _compute_enemy_army_composition(self) -> Dict[str, int]:
+    def _compute_enemy_army_composition(self) -> dict[str, int]:
         """적 유닛 구성 계산"""
         composition = {}
 
@@ -332,7 +332,7 @@ class DataCacheManager:
 
         return composition
 
-    def get_statistics(self) -> Dict:
+    def get_statistics(self) -> dict:
         """통계 반환"""
         hit_rate = (
             (self.cache_hits / self.total_requests * 100)
@@ -349,7 +349,7 @@ class DataCacheManager:
             "memory_saved": f"{hit_rate:.1f}% CPU reduction estimate",
         }
 
-    def get_cache_info(self) -> List[Dict]:
+    def get_cache_info(self) -> list[dict]:
         """
         모든 캐시 엔트리 정보 반환
 

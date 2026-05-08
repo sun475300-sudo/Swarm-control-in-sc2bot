@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Micro Controller - Boids-based movement orchestrator with modular components.
 
@@ -12,7 +11,6 @@ integrating separate modules for:
 """
 
 import logging
-from typing import List, Set
 
 logger = logging.getLogger("MicroController")
 
@@ -101,7 +99,7 @@ class BoidsController:
             self._spatial_available = False
 
         # Combat unit types for filtering
-        self.combat_unit_types: Set = set()
+        self.combat_unit_types: set = set()
         if UnitTypeId:
             self.combat_unit_types = {
                 UnitTypeId.ZERGLING,
@@ -229,7 +227,7 @@ class BoidsController:
                         high_priority_units.append(unit)
                     else:
                         low_priority_units.append(unit)
-                except (AttributeError, ValueError) as e:
+                except (AttributeError, ValueError):
                     # Unit has no ground_range or distance calculation failed
                     low_priority_units.append(unit)
         else:
@@ -306,7 +304,7 @@ class BoidsController:
         return [u for u in units if u.type_id in self.combat_unit_types]
 
     async def _apply_boids(
-        self, units, enemy_units, skip_units: Set[int] = None
+        self, units, enemy_units, skip_units: set[int] | None = None
     ) -> None:
         """
         Apply Boids algorithm with all integrated components.
@@ -526,7 +524,7 @@ class BoidsController:
         total_y = sum(u.position.y for u in units)
         return Point2((total_x / len(units), total_y / len(units)))
 
-    async def _do_actions(self, actions: List) -> None:
+    async def _do_actions(self, actions: list) -> None:
         """Execute a batch of unit actions."""
         if not actions:
             return

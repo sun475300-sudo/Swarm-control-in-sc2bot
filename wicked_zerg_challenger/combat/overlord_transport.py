@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Overlord Transport - 대군주 수송 시스템
 
@@ -9,7 +8,7 @@ Overlord Transport - 대군주 수송 시스템
 4. 저글링/바퀴 드랍 전술
 """
 
-from typing import TYPE_CHECKING, Dict, List, Optional
+from typing import TYPE_CHECKING, Optional
 
 if TYPE_CHECKING:
     from sc2.position import Point2
@@ -44,8 +43,8 @@ class OverlordTransport:
 
         # Transport state
         self._transport_active = False
-        self._loaded_overlords: Dict[int, List[int]] = {}  # overlord_tag -> [unit_tags]
-        self._drop_targets: Dict[int, "Point2"] = {}  # overlord_tag -> target_position
+        self._loaded_overlords: dict[int, list[int]] = {}  # overlord_tag -> [unit_tags]
+        self._drop_targets: dict[int, Point2] = {}  # overlord_tag -> target_position
         self._last_drop_time = 0
         self._drop_cooldown = 60  # 1분마다 드랍 시도
 
@@ -186,7 +185,7 @@ class OverlordTransport:
         # 대군주 이동
         await self.move_overlords_to_drop(overlord_list, drop_target)
 
-    async def move_overlords_to_drop(self, overlords: List, target: "Point2"):
+    async def move_overlords_to_drop(self, overlords: list, target: "Point2"):
         """
         대군주를 드랍 위치로 이동
 
@@ -320,7 +319,7 @@ class OverlordTransport:
                             retreat_pos = self.bot.townhalls.first.position
                             self.bot.do(overlord.move(retreat_pos))
 
-    def get_transport_status(self) -> Dict:
+    def get_transport_status(self) -> dict:
         """
         수송 상태 반환
 

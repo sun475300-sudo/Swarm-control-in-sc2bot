@@ -8,17 +8,17 @@ import logging
 import random
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Any, Dict, List, Tuple
+from typing import Any
 
 logger = logging.getLogger("NnPrediction")
 
 
 @dataclass
 class GameState:
-    enemy_units: List[Dict]
-    enemy_structures: List[Dict]
+    enemy_units: list[dict]
+    enemy_structures: list[dict]
     game_time: int
-    map_position: Tuple[int, int]
+    map_position: tuple[int, int]
 
 
 @dataclass
@@ -42,8 +42,8 @@ class SimpleNeuralPredictor:
             "economic": 0.2,
             "tech": 0.2,
         }
-        self.prediction_history: List[Prediction] = []
-        self.enemy_patterns: Dict[str, int] = {
+        self.prediction_history: list[Prediction] = []
+        self.enemy_patterns: dict[str, int] = {
             "attack": 0,
             "expand": 0,
             "tech_up": 0,
@@ -146,7 +146,7 @@ class SimpleNeuralPredictor:
 
         return 0.65 + random.random() * 0.2
 
-    def get_enemy_pattern_analysis(self) -> Dict[str, Any]:
+    def get_enemy_pattern_analysis(self) -> dict[str, Any]:
         """Get analysis of enemy patterns"""
         total = sum(self.enemy_patterns.values())
         if total == 0:
@@ -174,12 +174,12 @@ class SimpleNeuralPredictor:
     def load_prediction_model(self, path: str) -> bool:
         """Load prediction model from file"""
         try:
-            with open(path, "r") as f:
+            with open(path) as f:
                 data = json.load(f)
             self.weights = data.get("weights", self.weights)
             self.enemy_patterns = data.get("patterns", self.enemy_patterns)
             return True
-        except (IOError, json.JSONDecodeError) as e:
+        except (OSError, json.JSONDecodeError) as e:
             logger.info(f"Error loading model: {e}")
             return False
 

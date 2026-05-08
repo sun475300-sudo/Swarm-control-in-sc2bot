@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Targeting utilities for combat logic.
 
@@ -6,7 +5,8 @@ Provides basic prioritization for high-threat or low-health targets.
 """
 
 import logging
-from typing import Iterable, List, Optional, Sequence
+from typing import Optional
+from collections.abc import Iterable, Sequence
 
 logger = logging.getLogger(__name__)
 
@@ -16,10 +16,10 @@ except ImportError:  # Fallback for tooling environments
     UnitTypeId = None
 
 
-def _unit_type_ids(names: Sequence[str]) -> List[object]:
+def _unit_type_ids(names: Sequence[str]) -> list[object]:
     if not UnitTypeId:
         return []
-    ids: List[object] = []
+    ids: list[object] = []
     for name in names:
         unit_type = getattr(UnitTypeId, name, None)
         if unit_type is not None:
@@ -148,7 +148,7 @@ def _score_target(unit) -> float:
 _prioritized_cache: dict = {"enemies_id": None, "result": [], "frame": -1}
 
 
-def prioritize_targets(enemies: Iterable, *, current_frame: int = -1) -> List:
+def prioritize_targets(enemies: Iterable, *, current_frame: int = -1) -> list:
     """Return enemies sorted by priority (highest first).
 
     동일 적 집합(tag frozenset 기준)에 대한 결과를 캐싱하여
@@ -229,7 +229,7 @@ class Targeting:
         self.bot = bot
         self.priority_targets = []  # ★ Phase 13: 하위 호환 속성
 
-    def prioritize(self, enemies: Iterable) -> List:
+    def prioritize(self, enemies: Iterable) -> list:
         return prioritize_targets(enemies)
 
     def select(

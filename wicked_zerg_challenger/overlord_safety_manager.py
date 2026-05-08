@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Overlord Safety Manager - 대군주 안전 관리 시스템
 
@@ -9,7 +8,7 @@ Overlord Safety Manager - 대군주 안전 관리 시스템
 """
 
 import random
-from typing import Dict, List, Optional, Set
+from typing import Optional
 
 from sc2.ids.unit_typeid import UnitTypeId
 from sc2.position import Point2
@@ -27,12 +26,12 @@ class OverlordSafetyManager:
         self.logger = get_logger("OverlordSafety")
 
         # 안전한 위치 (Pillars)
-        self.safe_spots: List[Point2] = []
+        self.safe_spots: list[Point2] = []
         self._pillars_calculated = False
 
         # 대군주 상태 추적
-        self.overlord_assignments: Dict[int, Point2] = {}  # tag -> target_pos
-        self.fleeing_overlords: Set[int] = set()
+        self.overlord_assignments: dict[int, Point2] = {}  # tag -> target_pos
+        self.fleeing_overlords: set[int] = set()
 
         # 설정
         self.SAFETY_DISTANCE = 15.0  # 대공 유닛과의 안전 거리
@@ -117,7 +116,7 @@ class OverlordSafetyManager:
             self._use_fallback_positions()
             self._pillars_calculated = True
 
-    def _find_pillar_positions(self) -> List[Point2]:
+    def _find_pillar_positions(self) -> list[Point2]:
         """지형 분석을 통한 실제 Pillar 위치 탐색
 
         Returns:
@@ -210,8 +209,8 @@ class OverlordSafetyManager:
         return True
 
     def _select_distributed_pillars(
-        self, pillars: List[Point2], max_count: int
-    ) -> List[Point2]:
+        self, pillars: list[Point2], max_count: int
+    ) -> list[Point2]:
         """맵 전체에 고르게 분포된 Pillar 선택
 
         Args:
@@ -404,7 +403,7 @@ class OverlordSafetyManager:
     # =========================================================================
     # Feature 87: Scout Timing - Optimal Scout Positions
     # =========================================================================
-    def get_optimal_scout_positions(self) -> List[Point2]:
+    def get_optimal_scout_positions(self) -> list[Point2]:
         """
         Return a list of key map positions for overlord scouting.
 
@@ -417,7 +416,7 @@ class OverlordSafetyManager:
         Returns:
             List of Point2 positions for scouting.
         """
-        positions: List[Point2] = []
+        positions: list[Point2] = []
 
         # 1. Map center
         if hasattr(self.bot, "game_info") and hasattr(self.bot.game_info, "map_center"):

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Space Control Trainer - 공간 확보 학습 시스템
 
@@ -9,7 +8,6 @@ Space Control Trainer - 공간 확보 학습 시스템
 4. 크립 확장 경로 개척
 """
 
-from typing import Dict, Set
 
 from sc2.position import Point2
 
@@ -39,8 +37,8 @@ class SpaceControlTrainer:
         self.logger = get_logger("SpaceControl")
 
         # 파괴 목표 추적
-        self.destructible_targets: Dict[int, DestructibleTarget] = {}
-        self.destroyed_tags: Set[int] = set()
+        self.destructible_targets: dict[int, DestructibleTarget] = {}
+        self.destroyed_tags: set[int] = set()
 
         # 우선순위 기준
         self.EXPANSION_PATH_PRIORITY = 100  # 확장 경로 최우선
@@ -318,7 +316,7 @@ class SpaceControlTrainer:
                 f"({self.total_destructibles_destroyed}/{self.total_destructibles_found})"
             )
 
-    def get_statistics(self) -> Dict:
+    def get_statistics(self) -> dict:
         """통계 반환"""
         cleared_percent = 0
         if self.total_destructibles_found > 0:

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Creep Expansion System - 전 맵 점막 확장
 
@@ -8,7 +7,6 @@ Queen의 Creep Tumor를 활용하여 맵 전체에 점막 확산:
 3. 맵 전체 점막 네트워크 구축
 """
 
-from typing import Dict, List, Set
 
 from sc2.ids.ability_id import AbilityId
 from sc2.ids.unit_typeid import UnitTypeId
@@ -33,8 +31,8 @@ class CreepExpansionSystem:
         self.logger = get_logger("CreepExpansion")
 
         # 점막 종양 위치 추적
-        self.tumor_positions: Set[Point2] = set()
-        self.target_creep_positions: List[Point2] = []
+        self.tumor_positions: set[Point2] = set()
+        self.target_creep_positions: list[Point2] = []
 
         # 통계
         self.tumors_created = 0
@@ -106,7 +104,7 @@ class CreepExpansionSystem:
             main_base = self.bot.townhalls.first.position
             for exp_loc in list(self.bot.expansion_locations_list)[:5]:
                 # 경로상 점막 위치 계산
-                direction = (main_base - exp_loc).normalized
+                (main_base - exp_loc).normalized
                 for i in range(1, 10):
                     pos = main_base.towards(exp_loc, i * 8)
                     if self.bot.in_map_bounds(pos):
@@ -131,13 +129,13 @@ class CreepExpansionSystem:
             self.target_creep_positions
         )
 
-    def _prioritize_targets(self, positions: List[Point2]) -> List[Point2]:
+    def _prioritize_targets(self, positions: list[Point2]) -> list[Point2]:
         """Deduplicate and prioritize creep targets for safer/faster spread."""
         if not positions:
             return []
 
         # 격자 단위로 중복 제거
-        unique: Dict[tuple, Point2] = {}
+        unique: dict[tuple, Point2] = {}
         for p in positions:
             key = (int(p.x), int(p.y))
             if key not in unique:
@@ -153,7 +151,7 @@ class CreepExpansionSystem:
         ):
             enemy_start = self.bot.enemy_start_locations[0]
 
-        safe_candidates: List[Point2] = []
+        safe_candidates: list[Point2] = []
         for p in candidates:
             if (
                 enemy_start
@@ -192,7 +190,7 @@ class CreepExpansionSystem:
         self,
         anchor: Point2,
         target: Point2,
-        expansion_points: List[Point2],
+        expansion_points: list[Point2],
         map_center: Point2,
         enemy_start: Point2 | None,
     ) -> float:

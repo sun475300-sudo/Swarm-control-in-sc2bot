@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Situational Awareness Module
 Aggregates high-level game state into a structured SITREP (Situation Report)
@@ -6,7 +5,7 @@ for strategic decision-making and LLM context.
 """
 
 from enum import Enum
-from typing import Any, Dict, List
+from typing import Any
 
 try:
     from strategy.strategy_manager_v2 import StrategyManagerV2, WinCondition
@@ -48,7 +47,7 @@ class SituationalAwareness:
         self.logger = bot.logger if hasattr(bot, "logger") else None
 
         # State tracking
-        self.last_sitrep: Dict[str, Any] = {}
+        self.last_sitrep: dict[str, Any] = {}
         self.last_update_time = 0.0
         self.update_interval = 2.0  # 2 seconds (doesn't need to be every frame)
 
@@ -57,8 +56,8 @@ class SituationalAwareness:
         self.opportunity_index = OpportunityIndex.NONE
 
         # History
-        self.threat_history: List[ThreatLevel] = []
-        self.sitrep_history: List[Dict[str, Any]] = []
+        self.threat_history: list[ThreatLevel] = []
+        self.sitrep_history: list[dict[str, Any]] = []
 
     def on_step(self, iteration: int):
         """Execute on every step (throttled)"""
@@ -142,7 +141,7 @@ class SituationalAwareness:
         # Log significant changes
         # self._log_changes(sitrep)
 
-    def get_latest_sitrep(self) -> Dict[str, Any]:
+    def get_latest_sitrep(self) -> dict[str, Any]:
         """Return the most recent SITREP"""
         return self.last_sitrep
 
@@ -211,7 +210,7 @@ class SituationalAwareness:
             return "MIDGAME"
         return "LATEGAME"
 
-    def _get_intel_summary(self) -> Dict[str, Any]:
+    def _get_intel_summary(self) -> dict[str, Any]:
         """Summarize enemy intel including detected threats"""
         if hasattr(self.bot, "enemy_race"):
             race = str(self.bot.enemy_race)

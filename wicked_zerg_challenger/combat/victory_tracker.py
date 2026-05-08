@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Victory Tracker - 승리 조건 추적 시스템
 
@@ -9,7 +8,7 @@ Victory Tracker - 승리 조건 추적 시스템
 4. 전력 공격 실행
 """
 
-from typing import TYPE_CHECKING, Set
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from sc2.position import Point2
@@ -52,7 +51,7 @@ class VictoryTracker:
         self._endgame_push_threshold = 360  # 6분 이후
 
         # Expansion tracking
-        self._known_enemy_expansions: Set = set()
+        self._known_enemy_expansions: set = set()
         self._last_expansion_check = 0
 
     @property
@@ -111,7 +110,7 @@ class VictoryTracker:
             current_structure_count > 10 or our_army_supply < 20
         ):
             self._victory_push_active = False
-            self.logger.info(f"Victory push deactivated - regroup needed")
+            self.logger.info("Victory push deactivated - regroup needed")
 
         # 로그 (30초마다)
         if iteration % 660 == 0:

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Tournament Simulation - Phase 22 풀 토너먼트 시뮬레이션
 
@@ -22,7 +21,6 @@ import sys
 import time
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, List
 
 from sc2 import maps
 from sc2.data import Difficulty, Race
@@ -107,8 +105,8 @@ class TournamentRunner:
     def __init__(
         self,
         games_per_combo: int = 2,
-        difficulties: List[str] = None,
-        races: List[str] = None,
+        difficulties: list[str] | None = None,
+        races: list[str] | None = None,
         personality: str = "serral",
     ):
         self.games_per_combo = games_per_combo
@@ -119,7 +117,7 @@ class TournamentRunner:
         self.races = races or ["zerg", "terran", "protoss"]
 
         # Results storage
-        self.results: List[Dict] = []
+        self.results: list[dict] = []
         self.start_time = None
         self.report_dir = Path("data/tournament")
 
@@ -149,7 +147,7 @@ class TournamentRunner:
             for race_name in self.races:
                 race = RACE_MAP.get(race_name, Race.Protoss)
 
-                for game_i in range(self.games_per_combo):
+                for _game_i in range(self.games_per_combo):
                     game_number += 1
                     map_name = random.choice(TOURNAMENT_MAPS)
 
@@ -184,7 +182,7 @@ class TournamentRunner:
         race_name: str,
         difficulty: Difficulty,
         diff_name: str,
-    ) -> Dict:
+    ) -> dict:
         """단일 게임 실행"""
         result = {
             "game_number": game_number,
@@ -286,7 +284,7 @@ class TournamentRunner:
         errors = sum(1 for r in self.results if r.get("error"))
         win_rate = (wins / total * 100) if total > 0 else 0
 
-        lines.append(f"--- OVERALL ---")
+        lines.append("--- OVERALL ---")
         lines.append(f"  Total: {total} games")
         lines.append(f"  Wins: {wins} | Losses: {losses} | Errors: {errors}")
         lines.append(f"  Win Rate: {win_rate:.1f}%")

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Smart Resource Balancer - 실시간 일꾼 재배치로 자원 효율 극대화
 
@@ -8,7 +7,6 @@ Smart Resource Balancer - 실시간 일꾼 재배치로 자원 효율 극대화
 - 자원 효율 20% 향상
 """
 
-from typing import Dict, Tuple
 
 from utils.logger import get_logger
 
@@ -179,7 +177,7 @@ class SmartResourceBalancer:
         target_ratio: float,
         current_ratio: float,
         game_time: float,
-    ) -> Tuple[bool, str]:
+    ) -> tuple[bool, str]:
         """
         재배치 필요 여부 판단
 
@@ -344,7 +342,7 @@ class SmartResourceBalancer:
 
         return moved
 
-    def get_statistics(self) -> Dict:
+    def get_statistics(self) -> dict:
         """통계 정보 반환"""
         return {
             "total_rebalances": self.total_rebalances,

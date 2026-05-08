@@ -6,7 +6,7 @@ HIGH PRIORITY FEATURE
 from collections import defaultdict
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Any, Dict, List
+from typing import Any
 
 
 @dataclass
@@ -20,18 +20,18 @@ class MetaStrategy:
 
 class MetaGameAnalyzer:
     def __init__(self):
-        self.game_history: List[Dict] = []
-        self.strategy_performance: Dict[str, Dict] = defaultdict(
+        self.game_history: list[dict] = []
+        self.strategy_performance: dict[str, dict] = defaultdict(
             lambda: {"wins": 0, "losses": 0}
         )
-        self.race_performance: Dict[str, Dict] = defaultdict(
+        self.race_performance: dict[str, dict] = defaultdict(
             lambda: {"wins": 0, "losses": 0}
         )
-        self.map_performance: Dict[str, Dict] = defaultdict(
+        self.map_performance: dict[str, dict] = defaultdict(
             lambda: {"wins": 0, "losses": 0}
         )
 
-    def record_game(self, result: Dict[str, Any]) -> None:
+    def record_game(self, result: dict[str, Any]) -> None:
         """Record a game result for analysis"""
         self.game_history.append({**result, "timestamp": datetime.now().isoformat()})
 
@@ -45,7 +45,7 @@ class MetaGameAnalyzer:
         map_name = result.get("map", "unknown")
         self.map_performance[map_name]["wins"] += result.get("win", 0)
 
-    def get_current_meta_strategies(self) -> List[MetaStrategy]:
+    def get_current_meta_strategies(self) -> list[MetaStrategy]:
         """Get current meta strategies based on win rates"""
         meta_strategies = [
             MetaStrategy(
@@ -94,10 +94,10 @@ class MetaGameAnalyzer:
             return 50.0
         return (perf["wins"] / total) * 100
 
-    def recommend_strategy(self, enemy_race: str, map_name: str) -> Dict[str, Any]:
+    def recommend_strategy(self, enemy_race: str, map_name: str) -> dict[str, Any]:
         """Recommend best strategy based on current meta"""
-        race_perf = self.race_performance.get(enemy_race, {"wins": 0})
-        map_perf = self.map_performance.get(map_name, {"wins": 0})
+        self.race_performance.get(enemy_race, {"wins": 0})
+        self.map_performance.get(map_name, {"wins": 0})
 
         best_strategies = {
             ("terran", "small"): "RUSH",
@@ -119,7 +119,7 @@ class MetaGameAnalyzer:
             "meta_analysis": self.get_current_meta_strategies()[:3],
         }
 
-    def get_counter_picks(self, enemy_strategy: str) -> List[str]:
+    def get_counter_picks(self, enemy_strategy: str) -> list[str]:
         """Get counter picks for enemy strategy"""
         counters = {
             "rush": ["DEFENSIVE", "EXPAND"],
@@ -130,7 +130,7 @@ class MetaGameAnalyzer:
         }
         return counters.get(enemy_strategy.lower(), ["MACRO"])
 
-    def analyze_trends(self) -> Dict[str, Any]:
+    def analyze_trends(self) -> dict[str, Any]:
         """Analyze recent trends"""
         recent_games = (
             self.game_history[-20:]

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Advanced Building Manager - 건설 로직 고도화 모듈
 
@@ -10,7 +9,7 @@ Advanced Building Manager - 건설 로직 고도화 모듈
 
 import logging
 import math
-from typing import Dict, List, Optional, Tuple
+from typing import Optional
 
 logger = logging.getLogger("AdvancedBuildingManager")
 
@@ -90,7 +89,7 @@ class AdvancedBuildingManager:
 
     async def morph_unit_safely(
         self,
-        source_units: List[Unit],
+        source_units: list[Unit],
         target_unit_type: UnitTypeId,
         morph_ability: AbilityId,
         required_building: UnitTypeId,
@@ -234,7 +233,7 @@ class AdvancedBuildingManager:
 
     # ==================== 2. 방어 건물 위치 최적화 ====================
 
-    def analyze_enemy_attack_paths(self) -> List[Point2]:
+    def analyze_enemy_attack_paths(self) -> list[Point2]:
         """
         적의 공격 경로 분석
 
@@ -270,8 +269,8 @@ class AdvancedBuildingManager:
         return chokepoints
 
     def _find_chokepoints(
-        self, enemy_positions: List[Point2], base_position: Point2
-    ) -> List[Point2]:
+        self, enemy_positions: list[Point2], base_position: Point2
+    ) -> list[Point2]:
         """
         적 유닛들의 위치를 분석하여 길목 찾기
 
@@ -369,7 +368,7 @@ class AdvancedBuildingManager:
 
         return False
 
-    async def build_defense_buildings_optimally(self) -> Dict[UnitTypeId, int]:
+    async def build_defense_buildings_optimally(self) -> dict[UnitTypeId, int]:
         """
         적 공격 경로를 분석하여 최적 위치에 방어 건물 건설
 
@@ -415,7 +414,7 @@ class AdvancedBuildingManager:
 
     # ==================== 3. 자원 적체 시 테크 건물 공격적 건설 ====================
 
-    def has_resource_surplus(self) -> Tuple[bool, float, float]:
+    def has_resource_surplus(self) -> tuple[bool, float, float]:
         """
         자원이 적체되었는지 확인 (3000+ 미네랄, 500+ 가스)
 
@@ -435,7 +434,7 @@ class AdvancedBuildingManager:
 
         return has_surplus, mineral_surplus, gas_surplus
 
-    async def build_tech_buildings_aggressively(self) -> Dict[UnitTypeId, bool]:
+    async def build_tech_buildings_aggressively(self) -> dict[UnitTypeId, bool]:
         """
         자원이 적체되었을 때 테크 건물을 공격적으로 건설
 
@@ -507,7 +506,7 @@ class AdvancedBuildingManager:
         main_base = self.bot.townhalls.first
 
         # 건설 실행
-        for tech_type, mineral_cost, gas_cost, priority in tech_buildings:
+        for tech_type, mineral_cost, gas_cost, _priority in tech_buildings:
             if self.bot.minerals >= mineral_cost and self.bot.vespene >= gas_cost:
 
                 try:
@@ -530,7 +529,7 @@ class AdvancedBuildingManager:
 
         return results
 
-    async def handle_resource_surplus(self) -> Dict[str, int]:
+    async def handle_resource_surplus(self) -> dict[str, int]:
         """
         자원 적체 시 종합 처리 (테크 건물 건설 + 유닛 변태)
 
@@ -671,7 +670,7 @@ class AdvancedBuildingManager:
 
     def _generate_spiral_positions(
         self, center: Point2, max_distance: float, step: float
-    ) -> List[Point2]:
+    ) -> list[Point2]:
         """중심점에서 나선형으로 위치 생성."""
         positions = [center]
 

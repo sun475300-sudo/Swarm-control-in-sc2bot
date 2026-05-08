@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Base Destruction Coordinator - 적 기지 완전 파괴 시스템
 
@@ -9,7 +8,7 @@ Base Destruction Coordinator - 적 기지 완전 파괴 시스템
 4. 완전 승리 보장
 """
 
-from typing import Dict, List, Optional
+from typing import Optional
 
 from sc2.ids.unit_typeid import UnitTypeId
 from sc2.position import Point2
@@ -44,7 +43,7 @@ class BaseDestructionCoordinator:
         self.logger = get_logger("BaseDestruction")
 
         # 적 기지 추적
-        self.enemy_bases: Dict[str, EnemyBase] = {}  # key: "x_y" position
+        self.enemy_bases: dict[str, EnemyBase] = {}  # key: "x_y" position
         self.current_target_base: Optional[str] = None
         self.attack_start_time = 0
 
@@ -148,7 +147,7 @@ class BaseDestructionCoordinator:
 
     def _update_base_info(self):
         """기지 정보 업데이트 (건물 수, 일꾼 수, 방어력)"""
-        for key, base in self.enemy_bases.items():
+        for _key, base in self.enemy_bases.items():
             if base.is_destroyed:
                 continue
 
@@ -186,7 +185,7 @@ class BaseDestructionCoordinator:
             nearby_army = [
                 u
                 for u in self.bot.enemy_units
-                if u.distance_to(base.position) < 20 and not u.type_id in worker_types
+                if u.distance_to(base.position) < 20 and u.type_id not in worker_types
             ]
 
             base.defense_strength = len(nearby_defense) * 10 + len(nearby_army)
@@ -245,7 +244,7 @@ class BaseDestructionCoordinator:
         # 새 타겟 선정
         self._select_next_target(active_bases, game_time)
 
-    def _select_next_target(self, active_bases: List[EnemyBase], game_time: float):
+    def _select_next_target(self, active_bases: list[EnemyBase], game_time: float):
         """다음 공격 타겟 선정"""
         if not active_bases:
             return
@@ -308,7 +307,7 @@ class BaseDestructionCoordinator:
 
         return None
 
-    def get_all_active_bases(self) -> List[Point2]:
+    def get_all_active_bases(self) -> list[Point2]:
         """
         모든 활성 적 기지 위치 반환
 
@@ -348,7 +347,7 @@ class BaseDestructionCoordinator:
                     f"(Structures: {target.structure_count}, Defense: {target.defense_strength})"
                 )
 
-    def get_statistics(self) -> Dict:
+    def get_statistics(self) -> dict:
         """통계 반환"""
         active_bases = [b for b in self.enemy_bases.values() if not b.is_destroyed]
 

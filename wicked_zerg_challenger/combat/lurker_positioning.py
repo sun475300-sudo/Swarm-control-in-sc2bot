@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Feature #95: 럴커 포지셔닝 매니저
 
@@ -14,7 +13,7 @@ Feature #95: 럴커 포지셔닝 매니저
 """
 
 from enum import Enum
-from typing import Dict, List, Optional
+from typing import Optional
 
 try:
     from sc2.ids.ability_id import AbilityId
@@ -68,18 +67,18 @@ class LurkerPositionManager:
         self.logger = get_logger("LurkerPosition")
 
         # 럴커 할당 상태
-        self.lurker_assignments: Dict[int, LurkerRole] = {}  # tag -> role
-        self.lurker_positions: Dict[int, Point2] = {}  # tag -> assigned_position
-        self.lurker_burrowed: Dict[int, bool] = {}  # tag -> is_burrowed
+        self.lurker_assignments: dict[int, LurkerRole] = {}  # tag -> role
+        self.lurker_positions: dict[int, Point2] = {}  # tag -> assigned_position
+        self.lurker_burrowed: dict[int, bool] = {}  # tag -> is_burrowed
 
         # 초크포인트 캐시
-        self._choke_points: List[Point2] = []
+        self._choke_points: list[Point2] = []
         self._choke_cache_time: float = 0.0
         self._choke_cache_duration: float = 60.0  # 1분마다 갱신
 
         # 전략적 위치
-        self._expansion_guard_positions: List[Point2] = []
-        self._forward_positions: List[Point2] = []
+        self._expansion_guard_positions: list[Point2] = []
+        self._forward_positions: list[Point2] = []
 
         # 파라미터
         self.lurker_range: float = 9.0  # 기본 사거리
@@ -442,7 +441,7 @@ class LurkerPositionManager:
             f"방어 {self.positions_held} | 재배치 {self.repositions}"
         )
 
-    def get_position_stats(self) -> Dict:
+    def get_position_stats(self) -> dict:
         """
         럴커 포지셔닝 통계 반환
 

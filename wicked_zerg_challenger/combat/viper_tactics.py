@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Feature #96: 바이퍼 활용 매니저
 
@@ -9,7 +8,7 @@ Feature #96: 바이퍼 활용 매니저
 4. 에너지 관리 및 우선순위 타겟팅
 """
 
-from typing import Dict, List, Optional
+from typing import Optional
 
 try:
     from sc2.ids.ability_id import AbilityId
@@ -58,11 +57,11 @@ class ViperTacticsManager:
         self.logger = get_logger("ViperTactics")
 
         # 바이퍼 상태 추적
-        self.viper_last_ability: Dict[int, float] = {}  # tag -> last_cast_time
+        self.viper_last_ability: dict[int, float] = {}  # tag -> last_cast_time
         self.ability_cooldown: float = 2.0  # 능력 사용 간격
 
         # 어브덕트 우선순위 타겟 (가치가 높은 유닛부터)
-        self.abduct_priority: List = []
+        self.abduct_priority: list = []
         if UnitTypeId:
             self.abduct_priority = [
                 UnitTypeId.SIEGETANKSIEGED,  # 시즈 모드 탱크 (최우선)
@@ -81,7 +80,7 @@ class ViperTacticsManager:
             ]
 
         # 블라인딩 클라우드 우선순위 (원거리 유닛 그룹)
-        self.blinding_cloud_targets: List = []
+        self.blinding_cloud_targets: list = []
         if UnitTypeId:
             self.blinding_cloud_targets = [
                 UnitTypeId.SIEGETANKSIEGED,
@@ -95,7 +94,7 @@ class ViperTacticsManager:
             ]
 
         # 패러사이틱 밤 대상
-        self.parasitic_bomb_targets: List = []
+        self.parasitic_bomb_targets: list = []
         if UnitTypeId:
             self.parasitic_bomb_targets = [
                 UnitTypeId.VIKINGFIGHTER,
@@ -435,7 +434,7 @@ class ViperTacticsManager:
             f"패러사이틱 {self.parasitic_bombs_cast}"
         )
 
-    def get_viper_stats(self) -> Dict:
+    def get_viper_stats(self) -> dict:
         """
         바이퍼 전술 통계 반환
 

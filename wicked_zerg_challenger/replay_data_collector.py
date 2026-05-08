@@ -1,6 +1,5 @@
 import json
 from pathlib import Path
-from typing import Dict
 
 from utils.logger import get_logger
 
@@ -48,10 +47,10 @@ class ReplayDataCollector:
         }
         self.update_knowledge("LEARNED_12POOL", new_build)
 
-    def update_knowledge(self, build_key: str, build_data: Dict):
+    def update_knowledge(self, build_key: str, build_data: dict):
         """Update the JSON brain with new findings"""
         try:
-            with open(self.knowledge_file, "r") as f:
+            with open(self.knowledge_file) as f:
                 data = json.load(f)
 
             data["build_orders"][build_key] = build_data
