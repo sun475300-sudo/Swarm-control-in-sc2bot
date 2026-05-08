@@ -11,9 +11,16 @@ Hive Tech Maximizer - 군락 이후 고급 기술 극대화
 
 from typing import Set
 
-from sc2.ids.ability_id import AbilityId
-from sc2.ids.unit_typeid import UnitTypeId
-from sc2.ids.upgrade_id import UpgradeId
+try:
+    from sc2.ids.ability_id import AbilityId
+    from sc2.ids.unit_typeid import UnitTypeId
+    from sc2.ids.upgrade_id import UpgradeId
+except ImportError:
+    from utils.sc2_stubs import (
+        AbilityId,
+        UnitTypeId,
+        UpgradeId,
+    )
 
 from utils.logger import get_logger
 
@@ -225,7 +232,7 @@ class HiveTechMaximizer:
                 self.advanced_buildings_built += 1
                 break  # 한 번에 하나씩
 
-            except Exception as e:
+            except Exception:
                 continue
 
     async def _produce_advanced_units(self, game_time: float):

@@ -7,8 +7,14 @@ import logging
 import math
 from typing import List, Optional
 
-from sc2.ids.unit_typeid import UnitTypeId
-from sc2.position import Point2
+try:
+    from sc2.ids.unit_typeid import UnitTypeId
+    from sc2.position import Point2
+except ImportError:
+    from utils.sc2_stubs import (
+        Point2,
+        UnitTypeId,
+    )
 
 logger = logging.getLogger("BuildingPlacementHelper")
 

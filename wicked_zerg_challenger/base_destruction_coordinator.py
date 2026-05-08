@@ -11,8 +11,14 @@ Base Destruction Coordinator - 적 기지 완전 파괴 시스템
 
 from typing import Dict, List, Optional
 
-from sc2.ids.unit_typeid import UnitTypeId
-from sc2.position import Point2
+try:
+    from sc2.ids.unit_typeid import UnitTypeId
+    from sc2.position import Point2
+except ImportError:
+    from utils.sc2_stubs import (
+        Point2,
+        UnitTypeId,
+    )
 
 from utils.logger import get_logger
 
@@ -186,7 +192,7 @@ class BaseDestructionCoordinator:
             nearby_army = [
                 u
                 for u in self.bot.enemy_units
-                if u.distance_to(base.position) < 20 and not u.type_id in worker_types
+                if u.distance_to(base.position) < 20 and u.type_id not in worker_types
             ]
 
             base.defense_strength = len(nearby_defense) * 10 + len(nearby_army)

@@ -17,8 +17,14 @@ Comprehensive Unit Abilities - 모든 유닛 스킬 통합 관리
 
 from typing import Dict, Set
 
-from sc2.ids.ability_id import AbilityId
-from sc2.ids.unit_typeid import UnitTypeId
+try:
+    from sc2.ids.ability_id import AbilityId
+    from sc2.ids.unit_typeid import UnitTypeId
+except ImportError:
+    from utils.sc2_stubs import (
+        AbilityId,
+        UnitTypeId,
+    )
 
 from utils.logger import get_logger
 

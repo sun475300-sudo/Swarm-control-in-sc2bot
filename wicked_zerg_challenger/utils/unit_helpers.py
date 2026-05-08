@@ -18,9 +18,19 @@ try:
     from sc2.unit import Unit
     from sc2.units import Units
 except ImportError:
-    Unit = None
-    Units = None
-    Point2 = None
+    Unit = object
+
+    class Units(list):
+        def __init__(self, iterable=None, bot_object=None):
+            super().__init__(iterable or [])
+
+        def filter(self, fn):
+            return Units([x for x in self if fn(x)], None)
+
+        def closer_than(self, distance, unit):
+            return Units([x for x in self if x.distance_to(unit) < distance], None)
+
+    Point2 = tuple
 
 logger = get_logger("UnitHelpers")
 

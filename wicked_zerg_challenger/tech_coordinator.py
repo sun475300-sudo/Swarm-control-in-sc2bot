@@ -1,7 +1,12 @@
 import logging
 from typing import Any, Dict, Tuple
 
-from sc2.ids.unit_typeid import UnitTypeId
+try:
+    from sc2.ids.unit_typeid import UnitTypeId
+except ImportError:
+    from utils.sc2_stubs import (
+        UnitTypeId,
+    )
 
 logger = logging.getLogger("TechCoordinator")
 

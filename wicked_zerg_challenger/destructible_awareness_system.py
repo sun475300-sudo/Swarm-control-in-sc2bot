@@ -11,7 +11,12 @@ Destructible Awareness System - 파괴 가능 구조물 인지 시스템
 
 from typing import Dict, List
 
-from sc2.ids.unit_typeid import UnitTypeId
+try:
+    from sc2.ids.unit_typeid import UnitTypeId
+except ImportError:
+    from utils.sc2_stubs import (
+        UnitTypeId,
+    )
 
 from utils.logger import get_logger
 
