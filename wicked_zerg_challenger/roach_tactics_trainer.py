@@ -113,8 +113,8 @@ class RoachTacticsTrainer:
             self.has_tunneling_claws = (
                 UpgradeId.TUNNELINGCLAWS in self.bot.state.upgrades
             )
-        except Exception:
-            pass
+        except Exception as e:
+            self.logger.debug("upgrade check failed: %s", e)
 
     def _update_roach_tracking(self, roaches, game_time: float):
         """바퀴 추적 업데이트"""
@@ -201,8 +201,8 @@ class RoachTacticsTrainer:
                     self.logger.info(
                         f"[BURROW] Roach {roach.tag} burrowing at {hp_ratio*100:.1f}% HP"
                     )
-                except Exception:
-                    pass
+                except Exception as e:
+                    self.logger.debug("roach burrow command failed: %s", e)
 
     async def _unburrow_healed_roaches(self, roaches, game_time: float):
         """
@@ -251,8 +251,8 @@ class RoachTacticsTrainer:
                         f"[UNBURROW] Roach {roach.tag} healed {hp_healed:.1f} HP "
                         f"({hp_ratio*100:.1f}% HP) in {burrow_duration:.1f}s"
                     )
-                except Exception:
-                    pass
+                except Exception as e:
+                    self.logger.debug("roach unburrow command failed: %s", e)
 
     def _is_in_combat(self, roach) -> bool:
         """바퀴가 전투 중인지 확인"""
@@ -270,7 +270,8 @@ class RoachTacticsTrainer:
                 return True
 
             return False
-        except Exception:
+        except Exception as e:
+            self.logger.debug("roach combat check failed: %s", e)
             return False
 
     async def _position_tanking_roaches(self, roaches):

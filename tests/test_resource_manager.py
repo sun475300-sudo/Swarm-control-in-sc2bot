@@ -80,6 +80,29 @@ class TestResourceManager:
         assert self.manager._reserved_gas == 150
 
     @pytest.mark.asyncio
+    async def test_replacement_at_capacity_does_not_double_count_self(self):
+        """Re-reserving up to bot.minerals should succeed; the manager's
+        own existing reservation must not be counted against itself.
+
+        Regression for the over-conservative availability check that
+        treated the requesting manager's old reservation as 'taken'.
+        """
+        self.bot.minerals = 400
+        self.bot.vespene = 200
+
+        # Manager initially holds 200/100 of 400/200.
+        assert await self.manager.try_reserve(200, 100, "Me") is True
+
+        # Re-reserve up to the full bot wallet (400/200). The check must
+        # exclude Me's own 200/100, so 400-0 >= 400 must hold.
+        assert await self.manager.try_reserve(400, 200, "Me") is True
+        assert self.manager._reserved_minerals == 400
+        assert self.manager._reserved_gas == 200
+
+        # And another manager now sees 0 free.
+        assert await self.manager.try_reserve(1, 0, "Other") is False
+
+    @pytest.mark.asyncio
     async def test_get_available_resources(self):
         """Test getting available resources"""
         await self.manager.try_reserve(200, 100, "TestManager")

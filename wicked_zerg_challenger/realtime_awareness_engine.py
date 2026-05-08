@@ -13,6 +13,7 @@ Real-time Awareness Engine — 실시간 상황 인식 + 자동 대응 시스템
 5. 학습 피드백 (Learning Feedback)
 """
 
+import asyncio
 import logging
 from dataclasses import dataclass
 from typing import Dict, List
@@ -132,8 +133,8 @@ class RealtimeAwarenessEngine:
             if self.active_problems and iteration % 100 == 0:
                 self._log_problems()
 
-        except Exception:
-            pass
+        except Exception as e:
+            logger.warning("on_step pipeline failed: %s", e, exc_info=True)
 
         return self.active_overrides
 
@@ -217,8 +218,8 @@ class RealtimeAwarenessEngine:
                             break
                     if s.enemy_near_base:
                         break
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug("enemy-near-base scan failed: %s", e)
 
         # Intel
         if hasattr(self.bot, "intel_manager"):
@@ -235,8 +236,8 @@ class RealtimeAwarenessEngine:
                     s.tech_level = "hive"
                 elif structures(UnitTypeId.LAIR).exists:
                     s.tech_level = "lair"
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug("tech-level detection failed: %s", e)
 
     # =========================================================================
     # Step 2: 문제 감지 (14가지 패턴)
@@ -463,8 +464,8 @@ class RealtimeAwarenessEngine:
                     )
                     if roach_count + hydra_count + ravager_count >= 5:
                         has_counter = True
-                except Exception:
-                    pass
+                except Exception as e:
+                    logger.debug("vs-protoss counter check failed: %s", e)
 
                 if not has_counter:
                     problems.append(
@@ -584,8 +585,6 @@ class RealtimeAwarenessEngine:
                     l = larva.random
                     result = self.bot.do(l.train(UnitTypeId.HYDRALISK))
                     if hasattr(result, "__await__"):
-                        import asyncio
-
                         asyncio.ensure_future(result)
                     return
 
@@ -595,8 +594,6 @@ class RealtimeAwarenessEngine:
                     l = larva.random
                     result = self.bot.do(l.train(UnitTypeId.ROACH))
                     if hasattr(result, "__await__"):
-                        import asyncio
-
                         asyncio.ensure_future(result)
                     return
 
@@ -606,12 +603,10 @@ class RealtimeAwarenessEngine:
                     l = larva.random
                     result = self.bot.do(l.train(UnitTypeId.MUTALISK))
                     if hasattr(result, "__await__"):
-                        import asyncio
-
                         asyncio.ensure_future(result)
                     return
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug("force gas-unit production failed: %s", e)
 
     def _force_army_production(self) -> None:
         """군대 강제 대량 생산"""
@@ -632,8 +627,6 @@ class RealtimeAwarenessEngine:
                     ).ready.exists and self.bot.can_afford(UnitTypeId.ROACH):
                         result = self.bot.do(l.train(UnitTypeId.ROACH))
                         if hasattr(result, "__await__"):
-                            import asyncio
-
                             asyncio.ensure_future(result)
                         continue
 
@@ -643,11 +636,9 @@ class RealtimeAwarenessEngine:
                 ).ready.exists and self.bot.can_afford(UnitTypeId.ZERGLING):
                     result = self.bot.do(l.train(UnitTypeId.ZERGLING))
                     if hasattr(result, "__await__"):
-                        import asyncio
-
                         asyncio.ensure_future(result)
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug("force army production failed: %s", e)
 
     def _force_overlord_production(self) -> None:
         """오버로드 강제 생산"""
@@ -657,11 +648,9 @@ class RealtimeAwarenessEngine:
                 l = larva.first
                 result = self.bot.do(l.train(UnitTypeId.OVERLORD))
                 if hasattr(result, "__await__"):
-                    import asyncio
-
                     asyncio.ensure_future(result)
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug("force overlord production failed: %s", e)
 
     def _flush_minerals(self) -> None:
         """미네랄 긴급 소비"""
@@ -678,11 +667,9 @@ class RealtimeAwarenessEngine:
                 if self.bot.structures(UnitTypeId.SPAWNINGPOOL).ready.exists:
                     result = self.bot.do(l.train(UnitTypeId.ZERGLING))
                     if hasattr(result, "__await__"):
-                        import asyncio
-
                         asyncio.ensure_future(result)
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug("mineral flush failed: %s", e)
 
     # =========================================================================
     # 유틸리티

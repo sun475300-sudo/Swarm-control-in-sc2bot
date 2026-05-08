@@ -393,7 +393,8 @@ class MapAwarenessManager:
                 self.scouted_areas.add(grid)
                 self.last_scout_time[grid] = game_time
 
-            except Exception:
+            except Exception as e:
+                logger.debug("enemy ghost update failed: %s", e)
                 continue
 
     def _update_ghosts(self, game_time: float) -> None:
@@ -434,7 +435,8 @@ class MapAwarenessManager:
                         known_enemy_bases.add(
                             (int(struct.position.x), int(struct.position.y))
                         )
-                except Exception:
+                except Exception as e:
+                    logger.debug("enemy base position read failed: %s", e)
                     continue
 
         # 적 시작 위치 기반 가까운 확장 위치 예측

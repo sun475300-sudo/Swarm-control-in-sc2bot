@@ -12,7 +12,7 @@ Features:
 """
 
 import asyncio
-from typing import TYPE_CHECKING, Dict, Optional, Tuple
+from typing import TYPE_CHECKING, Any, Dict, Optional, Tuple
 
 from wicked_zerg_challenger.utils.logger import get_logger
 
@@ -55,21 +55,19 @@ class ResourceManager:
             True if successful, False if insufficient resources
         """
         async with self._lock:
-            # Calculate currently available resources
-            available_m = self.bot.minerals - self._reserved_minerals
-            available_g = self.bot.vespene - self._reserved_gas
+            # If this manager already holds a reservation, exclude it from the
+            # availability check — the new request will replace the old one,
+            # so the old amount is logically already "available" for reuse.
+            old_m, old_g = self._reservations.get(manager_name, (0, 0))
+
+            available_m = self.bot.minerals - (self._reserved_minerals - old_m)
+            available_g = self.bot.vespene - (self._reserved_gas - old_g)
 
             # Check if we have enough resources
             if available_m >= minerals and available_g >= gas:
-                # Reserve resources
-                self._reserved_minerals += minerals
-                self._reserved_gas += gas
-
-                # Release any previous reservation from this manager
-                if manager_name in self._reservations:
-                    old_m, old_g = self._reservations[manager_name]
-                    self._reserved_minerals -= old_m
-                    self._reserved_gas -= old_g
+                # Net update: replace old (if any) with new
+                self._reserved_minerals += minerals - old_m
+                self._reserved_gas += gas - old_g
 
                 # Record new reservation
                 self._reservations[manager_name] = (minerals, gas)
@@ -186,7 +184,7 @@ class ResourceManager:
         """
         return manager_name in self._reservations
 
-    def get_statistics(self) -> Dict[str, any]:
+    def get_statistics(self) -> Dict[str, Any]:
         """
         Get resource manager statistics
 
