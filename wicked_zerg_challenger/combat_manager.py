@@ -2282,7 +2282,6 @@ class CombatManager:
         3. Enemy air units
         4. Ground army units
         """
-        game_time = getattr(self.bot, "time", 0)
 
         # Check if our base is under attack
         base_threatened = self._is_base_under_attack()
@@ -2419,12 +2418,11 @@ class CombatManager:
         # ★ REGEN DANCE: Separate damaged units during harassment ★
         if self.mutalisk_micro:
             current_time = getattr(self.bot, "time", 0)
-            combat_ready, regenerating = await self.mutalisk_micro.execute_regen_dance(
+            combat_ready, _ = await self.mutalisk_micro.execute_regen_dance(
                 mutalisks, current_time, self.bot
             )
         else:
             combat_ready = list(mutalisks)
-            regenerating = []
 
         if not combat_ready:
             return  # All units regenerating
@@ -2865,12 +2863,11 @@ class CombatManager:
         # ★ REGEN DANCE: Separate damaged units ★
         if self.mutalisk_micro:
             current_time = getattr(self.bot, "time", 0)
-            combat_ready, regenerating = await self.mutalisk_micro.execute_regen_dance(
+            combat_ready, _ = await self.mutalisk_micro.execute_regen_dance(
                 mutalisks, current_time, self.bot
             )
         else:
             combat_ready = list(mutalisks)
-            regenerating = []
 
         if not combat_ready:
             return  # All units regenerating
@@ -3064,19 +3061,10 @@ class CombatManager:
         }
 
         # 비전투 유닛 (정찰용, 위협이 낮음)
-        non_combat_names = {
-            "SCV",
-            "PROBE",
-            "DRONE",
-            "MULE",
-            "OBSERVER",
-            "OVERLORD",
-            "OVERSEER",
-            "WARPPRISM",
-            "RAVEN",
-            "CHANGELING",
-        }
-
+        # 식별: SCV/PROBE/DRONE/MULE/OBSERVER/OVERLORD/OVERSEER/
+        #       WARPPRISM/RAVEN/CHANGELING. 현재 로직은 combat_unit_names
+        # 필터를 통해 간접적으로 처리한다 — 분기 2(`nearby_enemies >= 3`)는
+        # combat 식별이 안 된 모든 잔여 적을 잠재 위협으로 본다.
         for th in self.bot.townhalls:
             # 일반 감지 거리
             base_range = 25 if game_time >= 180 else 30  # 초반 더 민감
