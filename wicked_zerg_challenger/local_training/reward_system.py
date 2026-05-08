@@ -938,14 +938,14 @@ reward_system = ZergRewardSystem()
 
 async def on_step(self, iteration: int):
     # ... ���� ���� ...
-    
+
     # �� ���� ���� ���
     step_reward = reward_system.calculate_step_reward(self)
-    
+
     # ��ȭ�н� �н��� ���� ���
     if self.train_mode:
         self.rl_agent.update_reward(step_reward)
-    
+
     # ... ������ ���� ...
 
 async def on_end(self, game_result):
