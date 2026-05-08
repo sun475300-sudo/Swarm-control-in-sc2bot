@@ -33,8 +33,8 @@ class CreepExpansionSystem:
         self.logger = get_logger("CreepExpansion")
 
         # 점막 종양 위치 추적
-        self.tumor_positions: Set[Point2] = set()
-        self.target_creep_positions: List[Point2] = []
+        self.tumor_positions: set[Point2] = set()
+        self.target_creep_positions: list[Point2] = []
 
         # 통계
         self.tumors_created = 0
@@ -131,13 +131,13 @@ class CreepExpansionSystem:
             self.target_creep_positions
         )
 
-    def _prioritize_targets(self, positions: List[Point2]) -> List[Point2]:
+    def _prioritize_targets(self, positions: list[Point2]) -> list[Point2]:
         """Deduplicate and prioritize creep targets for safer/faster spread."""
         if not positions:
             return []
 
         # 격자 단위로 중복 제거
-        unique: Dict[tuple, Point2] = {}
+        unique: dict[tuple, Point2] = {}
         for p in positions:
             key = (int(p.x), int(p.y))
             if key not in unique:
@@ -153,7 +153,7 @@ class CreepExpansionSystem:
         ):
             enemy_start = self.bot.enemy_start_locations[0]
 
-        safe_candidates: List[Point2] = []
+        safe_candidates: list[Point2] = []
         for p in candidates:
             if (
                 enemy_start
@@ -192,7 +192,7 @@ class CreepExpansionSystem:
         self,
         anchor: Point2,
         target: Point2,
-        expansion_points: List[Point2],
+        expansion_points: list[Point2],
         map_center: Point2,
         enemy_start: Point2 | None,
     ) -> float:

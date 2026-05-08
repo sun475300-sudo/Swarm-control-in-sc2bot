@@ -241,7 +241,7 @@ class AirThreatResponseTrainer:
         """공중유닛을 무시해야 하는지"""
         return self.current_strategy == "IGNORE_AIR"
 
-    def get_statistics(self) -> Dict:
+    def get_statistics(self) -> dict:
         """통계 반환"""
         threat_level = self._analyze_air_threat()
 

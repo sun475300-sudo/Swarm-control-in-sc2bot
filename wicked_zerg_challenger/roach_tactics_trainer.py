@@ -43,7 +43,7 @@ class RoachTacticsTrainer:
         self.logger = get_logger("RoachTactics")
 
         # 바퀴 추적
-        self.roaches: Dict[int, RoachTactics] = {}  # tag -> RoachTactics
+        self.roaches: dict[int, RoachTactics] = {}  # tag -> RoachTactics
 
         # 잠복 설정
         self.BURROW_HP_THRESHOLD = 0.4  # 체력 40% 이하면 잠복
@@ -350,7 +350,7 @@ class RoachTacticsTrainer:
 
                     self.bot.do(roach.move(retreat_target))
 
-    def get_roach_statistics(self) -> Dict:
+    def get_roach_statistics(self) -> dict:
         """바퀴 전술 통계 반환"""
         avg_burrows_per_roach = 0
         if len(self.roaches) > 0:

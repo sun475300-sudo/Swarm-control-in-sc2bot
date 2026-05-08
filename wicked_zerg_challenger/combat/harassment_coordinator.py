@@ -78,7 +78,7 @@ class HarassmentCoordinator:
 
         # ★ Zergling Run-by - Phase 17: 더 공격적인 견제 ★
         self.zergling_runby_active = False
-        self.zergling_runby_tags: Set[int] = set()
+        self.zergling_runby_tags: set[int] = set()
         self.zergling_runby_cooldown = 0  # 쿨다운 (초)
         self.zergling_runby_interval = (
             60  # ★ Phase 17: 2분 → 1분으로 단축 (더 빈번한 견제) ★
@@ -86,19 +86,19 @@ class HarassmentCoordinator:
 
         # ★ Mutalisk Harassment ★
         self.mutalisk_harass_active = False
-        self.mutalisk_harass_tags: Set[int] = set()
+        self.mutalisk_harass_tags: set[int] = set()
         self.mutalisk_harass_target: Optional[Point2] = None
         self.mutalisk_retreat_hp_threshold = 0.35  # 30% -> 35% 상향 (생존력 강화)
 
         # ★ Roach/Ravager Poking ★
         self.roach_poke_active = False
-        self.roach_poke_tags: Set[int] = set()
+        self.roach_poke_tags: set[int] = set()
         self.ravager_bile_ready = True
 
         # ★ Drop Play ★
         self.drop_play_active = False
         self.drop_overlord_tag: Optional[int] = None
-        self.drop_unit_tags: Set[int] = set()
+        self.drop_unit_tags: set[int] = set()
         self.drop_target: Optional[Point2] = None
 
         # ★ Phase 21: Aggressive Mode System ★
@@ -108,25 +108,25 @@ class HarassmentCoordinator:
         # ★ Phase 21: Baneling Drop System ★
         self.baneling_drop_active = False
         self.baneling_drop_overlord_tag: Optional[int] = None
-        self.baneling_drop_baneling_tags: Set[int] = set()
+        self.baneling_drop_baneling_tags: set[int] = set()
         self.baneling_drop_target: Optional[Point2] = None
         self.baneling_drop_cooldown = 0  # 쿨다운 (초)
         self.baneling_drop_interval = 120  # 2분 쿨다운
 
         # ★ Phase 21.3: Unit Persistence System (Squad Lock) ★
-        self.locked_units: Set[int] = set()  # 견제에 할당된 유닛 태그
-        self.squad_assignments: Dict[int, str] = {}  # {unit_tag: squad_name}
-        self.squad_members: Dict[str, Set[int]] = {
+        self.locked_units: set[int] = set()  # 견제에 할당된 유닛 태그
+        self.squad_assignments: dict[int, str] = {}  # {unit_tag: squad_name}
+        self.squad_members: dict[str, set[int]] = {
             "zergling_runby": set(),
             "mutalisk_harass": set(),
             "baneling_drop": set(),
             "roach_poke": set(),
         }
-        self.squad_lock_duration: Dict[str, float] = {}  # {squad_name: lock_until_time}
+        self.squad_lock_duration: dict[str, float] = {}  # {squad_name: lock_until_time}
         self.default_lock_duration = 30.0  # 30초 동안 유닛 고정
 
         # ★ Harassment Targets ★
-        self.priority_targets: List[Point2] = []  # 우선순위 타겟 위치
+        self.priority_targets: list[Point2] = []  # 우선순위 타겟 위치
 
         # ★ Performance Optimization: 캐싱 변수 ★
         self._has_closer_than = None  # hasattr 체크 캐시
@@ -144,7 +144,7 @@ class HarassmentCoordinator:
         self.nydus_network_tag: Optional[int] = None
         self.nydus_worm_tag: Optional[int] = None
         self.nydus_target: Optional[Point2] = None
-        self.nydus_squad_tags: Set[int] = set()
+        self.nydus_squad_tags: set[int] = set()
         self.nydus_cooldown = 0
 
         # ★ Phase 22: 일꾼 처치 추적 & 스마트 견제 ★
@@ -153,7 +153,7 @@ class HarassmentCoordinator:
         self.last_worker_kill_count = 0  # 시작 시점 적 일꾼 수 스냅샷
         self._current_raid_workers_killed = 0  # 이번 레이드에서 처치한 일꾼 수
         self._aggro_mode_last_update = 0  # 마지막 공격모드 자동 갱신 시간
-        self._mineral_line_defense_cache: Dict[Point2, int] = (
+        self._mineral_line_defense_cache: dict[Point2, int] = (
             {}
         )  # 미네랄라인별 방어력 캐시
         self._defense_cache_time = 0
@@ -503,7 +503,7 @@ class HarassmentCoordinator:
 
         return best_base.position
 
-    def _find_multi_mineral_lines(self, count: int = 2) -> List[Point2]:
+    def _find_multi_mineral_lines(self, count: int = 2) -> list[Point2]:
         """
         ★ Phase 22: 멀티 베이스 동시 타격용 - 여러 미네랄라인 반환 ★
         방어가 가장 약한 순서대로 최대 count개 반환.
@@ -626,7 +626,7 @@ class HarassmentCoordinator:
                 # ★ Phase 32: 일꾼 없으면 건물/유닛이라도 attack — move는 교전 없이 이동만
                 self.bot.do(muta.attack(self.mutalisk_harass_target))
 
-    def _find_enemy_workers_near(self, position: Point2) -> List:
+    def _find_enemy_workers_near(self, position: Point2) -> list:
         """특정 위치 근처의 적 일꾼 찾기"""
         if not hasattr(self.bot, "enemy_units"):
             return []
@@ -759,7 +759,7 @@ class HarassmentCoordinator:
             self.drop_unit_tags.discard(tag)
             # 죽었으므로 authority release는 불필요하지만 manager 내부 정리됨
 
-    def _find_buildings_near(self, position: Point2) -> List:
+    def _find_buildings_near(self, position: Point2) -> list:
         """특정 위치 근처의 적 건물 찾기"""
         if not hasattr(self.bot, "enemy_structures"):
             return []
@@ -1171,7 +1171,7 @@ class HarassmentCoordinator:
 
         return None
 
-    def _get_drop_banelings(self, min_count: int = 4) -> List[Unit]:
+    def _get_drop_banelings(self, min_count: int = 4) -> list[Unit]:
         """
         드랍용 맹독충 확보
 
@@ -1360,7 +1360,7 @@ class HarassmentCoordinator:
         """
         return unit_tag in self.locked_units
 
-    def get_locked_units_by_squad(self, squad_name: str) -> Set[int]:
+    def get_locked_units_by_squad(self, squad_name: str) -> set[int]:
         """
         특정 스쿼드에 락된 유닛 태그 반환
 
@@ -1464,7 +1464,7 @@ class HarassmentCoordinator:
             # Create new lock
             self.squad_lock_duration[squad_name] = self.bot.time + duration
 
-    def get_squad_status(self) -> Dict[str, Dict]:
+    def get_squad_status(self) -> dict[str, dict]:
         """
         모든 스쿼드 상태 반환
 
@@ -1486,7 +1486,7 @@ class HarassmentCoordinator:
 
         return status
 
-    def get_harassment_status(self) -> Dict:
+    def get_harassment_status(self) -> dict:
         """견제 상태 반환"""
         return {
             "zergling_runby_active": self.zergling_runby_active,

@@ -39,7 +39,7 @@ class ChokePointDetector:
             cache_update_interval: Frames between cache updates
         """
         self.bot = bot
-        self.chokepoints: List = []
+        self.chokepoints: list = []
         self.chokepoint_cache_frame = -1
         self.chokepoint_radius = chokepoint_radius
         self.narrow_passage_threshold = narrow_passage_threshold

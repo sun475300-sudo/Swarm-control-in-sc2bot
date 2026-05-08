@@ -43,7 +43,7 @@ class CombatPhase(Enum):
 class CombatGroup:
     """전투 그룹"""
 
-    units: Set[int]  # 유닛 태그 집합
+    units: set[int]  # 유닛 태그 집합
     phase: CombatPhase
     rally_point: Optional[Point2]
     target_position: Optional[Point2]
@@ -78,7 +78,7 @@ class CombatPhaseController:
         self.logger = get_logger("CombatPhaseController")
 
         # 전투 그룹 관리
-        self.combat_groups: Dict[str, CombatGroup] = {}  # group_id -> CombatGroup
+        self.combat_groups: dict[str, CombatGroup] = {}  # group_id -> CombatGroup
 
         # 전투 설정
         self.min_army_for_attack = 8  # 최소 공격 병력
@@ -473,7 +473,7 @@ class CombatPhaseController:
             if unit.weapon_cooldown == 0:
                 self.bot.do(unit.attack(closest_enemy))
 
-    def _create_new_group(self, units: List[Unit], game_time: float) -> str:
+    def _create_new_group(self, units: list[Unit], game_time: float) -> str:
         """새 전투 그룹 생성"""
         group_id = f"group_{len(self.combat_groups)}"
 
@@ -497,7 +497,7 @@ class CombatPhaseController:
 
     def _calculate_formation_positions(
         self, units: Units, target: Point2, formation_type: str
-    ) -> List[Point2]:
+    ) -> list[Point2]:
         """진형 계산"""
         if not units:
             return []

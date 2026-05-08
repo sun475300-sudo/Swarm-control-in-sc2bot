@@ -44,7 +44,7 @@ class BaseDestructionCoordinator:
         self.logger = get_logger("BaseDestruction")
 
         # 적 기지 추적
-        self.enemy_bases: Dict[str, EnemyBase] = {}  # key: "x_y" position
+        self.enemy_bases: dict[str, EnemyBase] = {}  # key: "x_y" position
         self.current_target_base: Optional[str] = None
         self.attack_start_time = 0
 
@@ -245,7 +245,7 @@ class BaseDestructionCoordinator:
         # 새 타겟 선정
         self._select_next_target(active_bases, game_time)
 
-    def _select_next_target(self, active_bases: List[EnemyBase], game_time: float):
+    def _select_next_target(self, active_bases: list[EnemyBase], game_time: float):
         """다음 공격 타겟 선정"""
         if not active_bases:
             return
@@ -308,7 +308,7 @@ class BaseDestructionCoordinator:
 
         return None
 
-    def get_all_active_bases(self) -> List[Point2]:
+    def get_all_active_bases(self) -> list[Point2]:
         """
         모든 활성 적 기지 위치 반환
 
@@ -348,7 +348,7 @@ class BaseDestructionCoordinator:
                     f"(Structures: {target.structure_count}, Defense: {target.defense_strength})"
                 )
 
-    def get_statistics(self) -> Dict:
+    def get_statistics(self) -> dict:
         """통계 반환"""
         active_bases = [b for b in self.enemy_bases.values() if not b.is_destroyed]
 

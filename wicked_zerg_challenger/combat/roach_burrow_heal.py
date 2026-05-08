@@ -51,8 +51,8 @@ class RoachBurrowHeal:
         self.config = RoachBurrowConfig() if RoachBurrowConfig else None
 
         # Burrow tracking
-        self._burrowed_roaches: Set[int] = set()  # Set of roach tags that are healing
-        self._burrow_start_time: Dict[int, float] = {}  # roach_tag -> burrow_time
+        self._burrowed_roaches: set[int] = set()  # Set of roach tags that are healing
+        self._burrow_start_time: dict[int, float] = {}  # roach_tag -> burrow_time
 
         # Thresholds (from config or defaults)
         if self.config:
@@ -328,7 +328,7 @@ class RoachBurrowHeal:
             if roach_tag in self._burrow_start_time:
                 del self._burrow_start_time[roach_tag]
 
-    def get_healing_status(self) -> Dict:
+    def get_healing_status(self) -> dict:
         """
         회복 상태 반환
 

@@ -69,7 +69,7 @@ class BuildStep:
         self.completed = False
         self.skipped = False
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """딕셔너리 변환"""
         return {
             "supply": self.supply,
@@ -131,7 +131,7 @@ class AdaptiveBuildOrderManager:
 
         # 현재 빌드 상태
         self.current_build_type: BuildOrderType = BuildOrderType.HATCH_FIRST
-        self.build_steps: List[BuildStep] = []
+        self.build_steps: list[BuildStep] = []
         self.current_step_index: int = 0
 
         # 적 정보
@@ -139,7 +139,7 @@ class AdaptiveBuildOrderManager:
         self.detected_strategy: str = "unknown"
 
         # 빌드 전환 이력
-        self.build_history: List[Dict[str, Any]] = []
+        self.build_history: list[dict[str, Any]] = []
         self.transition_count: int = 0
         self.last_transition_time: float = 0.0
 
@@ -175,7 +175,7 @@ class AdaptiveBuildOrderManager:
         logger.info(f"초기 빌드 선택: {build_type.value} (vs {enemy_race})")
         return build_type
 
-    def update(self, scout_info: Optional[Dict[str, Any]] = None) -> None:
+    def update(self, scout_info: Optional[dict[str, Any]] = None) -> None:
         """
         빌드오더 업데이트 (매 스텝 호출)
 
@@ -285,7 +285,7 @@ class AdaptiveBuildOrderManager:
             if self.enemy_race != "Unknown":
                 self.select_initial_build(self.enemy_race)
 
-    def _process_scout_info(self, scout_info: Dict[str, Any], game_time: float) -> None:
+    def _process_scout_info(self, scout_info: dict[str, Any], game_time: float) -> None:
         """
         정찰 정보 기반 빌드 수정
 
@@ -358,7 +358,7 @@ class AdaptiveBuildOrderManager:
                 return self.bot.structures(UnitTypeId.LAIR).exists
         return True
 
-    def _create_build_steps(self, build_type: BuildOrderType) -> List[BuildStep]:
+    def _create_build_steps(self, build_type: BuildOrderType) -> list[BuildStep]:
         """
         빌드오더 타입에 따른 빌드 스텝 생성
 
@@ -387,7 +387,7 @@ class AdaptiveBuildOrderManager:
         else:
             return self._build_hatch_first()
 
-    def _build_hatch_first(self) -> List[BuildStep]:
+    def _build_hatch_first(self) -> list[BuildStep]:
         """해처리 퍼스트 빌드"""
         return [
             BuildStep(13, "train", "overlord", priority=1),
@@ -404,7 +404,7 @@ class AdaptiveBuildOrderManager:
             BuildStep(44, "morph", "lair", priority=3),
         ]
 
-    def _build_pool_first(self) -> List[BuildStep]:
+    def _build_pool_first(self) -> list[BuildStep]:
         """풀 퍼스트 빌드 (안전형)"""
         return [
             BuildStep(13, "train", "overlord", priority=1),
@@ -420,7 +420,7 @@ class AdaptiveBuildOrderManager:
             BuildStep(30, "train", "roach", priority=3),
         ]
 
-    def _build_twelve_pool(self) -> List[BuildStep]:
+    def _build_twelve_pool(self) -> list[BuildStep]:
         """12풀 공격 빌드"""
         return [
             BuildStep(12, "build", "spawning_pool", priority=1),
@@ -433,7 +433,7 @@ class AdaptiveBuildOrderManager:
             BuildStep(18, "build", "hatchery", priority=3),
         ]
 
-    def _build_roach_rush(self) -> List[BuildStep]:
+    def _build_roach_rush(self) -> list[BuildStep]:
         """바퀴 러시 빌드"""
         return [
             BuildStep(13, "train", "overlord", priority=1),
@@ -449,7 +449,7 @@ class AdaptiveBuildOrderManager:
             BuildStep(34, "train", "overlord", priority=2),
         ]
 
-    def _build_ling_bane(self) -> List[BuildStep]:
+    def _build_ling_bane(self) -> list[BuildStep]:
         """저글링+맹독충 빌드"""
         return [
             BuildStep(13, "train", "overlord", priority=1),
@@ -465,7 +465,7 @@ class AdaptiveBuildOrderManager:
             BuildStep(30, "upgrade", "zergling_speed", priority=2),
         ]
 
-    def _build_hydra_timing(self) -> List[BuildStep]:
+    def _build_hydra_timing(self) -> list[BuildStep]:
         """히드라 타이밍 빌드"""
         return [
             BuildStep(13, "train", "overlord", priority=1),
@@ -483,7 +483,7 @@ class AdaptiveBuildOrderManager:
             BuildStep(48, "train", "overlord", priority=2),
         ]
 
-    def _build_roach_hydra(self) -> List[BuildStep]:
+    def _build_roach_hydra(self) -> list[BuildStep]:
         """바퀴+히드라 빌드"""
         return [
             BuildStep(13, "train", "overlord", priority=1),
@@ -501,7 +501,7 @@ class AdaptiveBuildOrderManager:
             BuildStep(44, "build", "hatchery", priority=3),
         ]
 
-    def _build_muta_ling(self) -> List[BuildStep]:
+    def _build_muta_ling(self) -> list[BuildStep]:
         """뮤탈+저글링 빌드"""
         return [
             BuildStep(13, "train", "overlord", priority=1),
@@ -518,7 +518,7 @@ class AdaptiveBuildOrderManager:
             BuildStep(40, "train", "mutalisk", priority=1),
         ]
 
-    def get_current_build_info(self) -> Dict[str, Any]:
+    def get_current_build_info(self) -> dict[str, Any]:
         """현재 빌드 정보 반환"""
         return {
             "build_type": self.current_build_type.value,

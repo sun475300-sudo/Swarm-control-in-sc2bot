@@ -54,11 +54,11 @@ class EvolutionUpgradeManager:
         self._evo_chamber_cooldown = 20.0  # ★ OPTIMIZED: 30 → 20초 ★
 
         # ★★★ Phase 18: Gas Reservation System ★★★
-        self.reserved_upgrades: List[object] = []  # 가스 부족으로 예약된 업그레이드
+        self.reserved_upgrades: list[object] = []  # 가스 부족으로 예약된 업그레이드
         self.gas_reservation_threshold = 50  # 가스가 50 이상이면 예약 업그레이드 실행
 
         # ★★★ Phase 18: IntelManager Integration ★★★
-        self.intel_based_priority_boost: Dict[str, float] = (
+        self.intel_based_priority_boost: dict[str, float] = (
             {}
         )  # {upgrade_type: boost_multiplier}
         self.last_intel_check = 0
@@ -218,7 +218,7 @@ class EvolutionUpgradeManager:
                     continue
                 return
 
-    def _get_upgrade_priority(self) -> List[object]:
+    def _get_upgrade_priority(self) -> list[object]:
         """
         ★ Phase 18: Get upgrade priority with Intel integration ★
 
@@ -315,7 +315,7 @@ class EvolutionUpgradeManager:
             priorities.append("air_armor")
 
         # === 업그레이드 순서 생성 (중복 제거) ===
-        upgrade_order: List[object] = []
+        upgrade_order: list[object] = []
         seen_upgrades = set()
 
         for lane in priorities:
@@ -326,7 +326,7 @@ class EvolutionUpgradeManager:
 
         return upgrade_order
 
-    def _get_unit_composition(self) -> Dict[str, int]:
+    def _get_unit_composition(self) -> dict[str, int]:
         """
         ★ OPTIMIZED: O(k) instead of O(n*m) using SC2 API's filter
         Uses C++-optimized units() method instead of manual iteration
@@ -365,7 +365,7 @@ class EvolutionUpgradeManager:
         return counts
 
     @staticmethod
-    def _has_unit(enemy_units, names: List[str]) -> bool:
+    def _has_unit(enemy_units, names: list[str]) -> bool:
         if not UnitTypeId or not enemy_units:
             return False
         for name in names:
@@ -386,7 +386,7 @@ class EvolutionUpgradeManager:
         return text
 
     @staticmethod
-    def _melee_unit_types() -> List[object]:
+    def _melee_unit_types() -> list[object]:
         if not UnitTypeId:
             return []
         return [
@@ -396,7 +396,7 @@ class EvolutionUpgradeManager:
         ]
 
     @staticmethod
-    def _ranged_unit_types() -> List[object]:
+    def _ranged_unit_types() -> list[object]:
         if not UnitTypeId:
             return []
         return [
@@ -407,7 +407,7 @@ class EvolutionUpgradeManager:
         ]
 
     @staticmethod
-    def _air_unit_types() -> List[object]:
+    def _air_unit_types() -> list[object]:
         if not UnitTypeId:
             return []
         return [
@@ -1494,7 +1494,7 @@ class EvolutionUpgradeManager:
                         self.logger.warning(f"Failed to execute reserved upgrade: {e}")
                         continue
 
-    def get_upgrade_stats(self) -> Dict:
+    def get_upgrade_stats(self) -> dict:
         """★ Phase 18: 업그레이드 통계 반환 ★"""
         return {
             "reserved_upgrades": len(self.reserved_upgrades),

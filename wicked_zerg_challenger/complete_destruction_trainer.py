@@ -41,8 +41,8 @@ class CompleteDestructionTrainer:
         self.logger = get_logger("CompleteDestruction")
 
         # 파괴 목표 추적
-        self.target_buildings: Dict[int, TargetBuilding] = {}  # tag -> TargetBuilding
-        self.destroyed_buildings: Set[int] = set()
+        self.target_buildings: dict[int, TargetBuilding] = {}  # tag -> TargetBuilding
+        self.destroyed_buildings: set[int] = set()
 
         # 건물 타입별 우선순위 (높을수록 먼저 파괴)
         self.DESTRUCTION_PRIORITY = {
@@ -86,7 +86,7 @@ class CompleteDestructionTrainer:
         # 통계
         self.total_buildings_found = 0
         self.total_buildings_destroyed = 0
-        self.buildings_destroyed_per_type: Dict[str, int] = {}
+        self.buildings_destroyed_per_type: dict[str, int] = {}
 
         # 설정
         self.MIN_ARMY_FOR_DESTRUCTION = 8  # 건물 파괴에 필요한 최소 군대
@@ -435,7 +435,7 @@ class CompleteDestructionTrainer:
 
         return None
 
-    def get_all_targets(self) -> List[Point2]:
+    def get_all_targets(self) -> list[Point2]:
         """모든 파괴 목표 위치 반환"""
         return [building.position for building in self.target_buildings.values()]
 
@@ -466,7 +466,7 @@ class CompleteDestructionTrainer:
             ):
                 self.logger.info(f"  {type_name}: {count}")
 
-    def get_statistics(self) -> Dict:
+    def get_statistics(self) -> dict:
         """통계 반환"""
         destroyed_percent = (
             self.total_buildings_destroyed / max(self.total_buildings_found, 1) * 100

@@ -51,8 +51,8 @@ class UpgradeCoordinationSystem:
         self.check_interval = 22  # 약 1초마다
 
         # ★ 업그레이드 완료 추적 ★
-        self.completed_upgrades: Dict[str, float] = {}
-        self.attack_triggers: Dict[str, Dict] = {}  # {upgrade: trigger_info}
+        self.completed_upgrades: dict[str, float] = {}
+        self.attack_triggers: dict[str, dict] = {}  # {upgrade: trigger_info}
 
         # ★ 타이밍 공격 정의 ★
         self.timing_attacks = {
@@ -135,7 +135,7 @@ class UpgradeCoordinationSystem:
             if iteration % 50 == 0:
                 self.logger.error(f"[UPGRADE_COORD] Error: {e}")
 
-    async def _check_upgrade_completions(self) -> List[str]:
+    async def _check_upgrade_completions(self) -> list[str]:
         """
         업그레이드 완료 확인
 
@@ -163,7 +163,7 @@ class UpgradeCoordinationSystem:
 
         return new_completions
 
-    async def _trigger_timing_attacks(self, new_upgrades: List[str]):
+    async def _trigger_timing_attacks(self, new_upgrades: list[str]):
         """
         업그레이드 완료에 따른 타이밍 공격 트리거
 
@@ -235,7 +235,7 @@ class UpgradeCoordinationSystem:
             # Blackboard에 타이밍 공격 등록
             await self._register_timing_attack(attack_id, attack_info)
 
-    async def _register_timing_attack(self, attack_id: str, attack_info: Dict):
+    async def _register_timing_attack(self, attack_id: str, attack_info: dict):
         """
         Blackboard에 타이밍 공격 등록
         """
@@ -339,7 +339,7 @@ class UpgradeCoordinationSystem:
 
         return total_supply
 
-    def get_next_timing_attack(self) -> Optional[Tuple[str, Dict]]:
+    def get_next_timing_attack(self) -> Optional[tuple[str, dict]]:
         """
         다음 타이밍 공격 정보 반환
 
@@ -360,7 +360,7 @@ class UpgradeCoordinationSystem:
 
         return None
 
-    def get_statistics(self) -> Dict:
+    def get_statistics(self) -> dict:
         """통계 반환"""
         return {
             "completed_upgrades": len(self.completed_upgrades),

@@ -26,7 +26,7 @@ class SpatialGrid:
     """
 
     def __init__(
-        self, cell_size: float = 5.0, map_size: Tuple[float, float] = (200.0, 200.0)
+        self, cell_size: float = 5.0, map_size: tuple[float, float] = (200.0, 200.0)
     ):
         """
         Initialize spatial grid.
@@ -44,10 +44,10 @@ class SpatialGrid:
         self.grid_height = int(math.ceil(self.map_height / self.cell_size))
 
         # Grid storage: cell_key -> list of (position, data)
-        self.grid: Dict[Tuple[int, int], List[Tuple[Tuple[float, float], Any]]] = {}
+        self.grid: dict[tuple[int, int], list[tuple[tuple[float, float], Any]]] = {}
 
         # Reverse lookup: data -> cell_key
-        self.data_to_cell: Dict[Any, Tuple[int, int]] = {}
+        self.data_to_cell: dict[Any, tuple[int, int]] = {}
 
         self.size = 0
 
@@ -57,7 +57,7 @@ class SpatialGrid:
         self.data_to_cell.clear()
         self.size = 0
 
-    def _get_cell(self, x: float, y: float) -> Tuple[int, int]:
+    def _get_cell(self, x: float, y: float) -> tuple[int, int]:
         """Get grid cell coordinates for a position."""
         _safe_cell_size = self.cell_size if self.cell_size else 0.001
         cell_x = int(x / _safe_cell_size)
@@ -67,7 +67,7 @@ class SpatialGrid:
         cell_y = max(0, min(cell_y, self.grid_height - 1))
         return (cell_x, cell_y)
 
-    def insert(self, position: Tuple[float, float], data: Any) -> None:
+    def insert(self, position: tuple[float, float], data: Any) -> None:
         """
         Insert a point into the grid.
 
@@ -108,7 +108,7 @@ class SpatialGrid:
         self.size -= 1
         return True
 
-    def update(self, position: Tuple[float, float], data: Any) -> None:
+    def update(self, position: tuple[float, float], data: Any) -> None:
         """
         Update position of existing data or insert if new.
 
@@ -120,8 +120,8 @@ class SpatialGrid:
         self.insert(position, data)
 
     def query_radius(
-        self, center: Tuple[float, float], radius: float, exclude_data: Any = None
-    ) -> List[Tuple[Tuple[float, float], Any, float]]:
+        self, center: tuple[float, float], radius: float, exclude_data: Any = None
+    ) -> list[tuple[tuple[float, float], Any, float]]:
         """
         Find all points within radius of center.
 
@@ -162,8 +162,8 @@ class SpatialGrid:
         return results
 
     def nearest_neighbor(
-        self, query: Tuple[float, float], exclude_data: Any = None
-    ) -> Optional[Tuple[Tuple[float, float], Any, float]]:
+        self, query: tuple[float, float], exclude_data: Any = None
+    ) -> Optional[tuple[tuple[float, float], Any, float]]:
         """
         Find nearest neighbor to query point.
 
@@ -187,8 +187,8 @@ class SpatialGrid:
         return None
 
     def k_nearest_neighbors(
-        self, query: Tuple[float, float], k: int, exclude_data: Any = None
-    ) -> List[Tuple[Tuple[float, float], Any, float]]:
+        self, query: tuple[float, float], k: int, exclude_data: Any = None
+    ) -> list[tuple[tuple[float, float], Any, float]]:
         """
         Find k nearest neighbors.
 
@@ -214,20 +214,20 @@ class SpatialGrid:
         return results
 
     def get_cell_contents(
-        self, cell: Tuple[int, int]
-    ) -> List[Tuple[Tuple[float, float], Any]]:
+        self, cell: tuple[int, int]
+    ) -> list[tuple[tuple[float, float], Any]]:
         """Get all entries in a specific cell."""
         return self.grid.get(cell, [])
 
     def get_neighbors_in_cell(
-        self, position: Tuple[float, float]
-    ) -> List[Tuple[Tuple[float, float], Any]]:
+        self, position: tuple[float, float]
+    ) -> list[tuple[tuple[float, float], Any]]:
         """Get all entries in the same cell as position."""
         cell = self._get_cell(position[0], position[1])
         return self.get_cell_contents(cell)
 
     @staticmethod
-    def _distance(p1: Tuple[float, float], p2: Tuple[float, float]) -> float:
+    def _distance(p1: tuple[float, float], p2: tuple[float, float]) -> float:
         """Calculate Euclidean distance."""
         dx = p1[0] - p2[0]
         dy = p1[1] - p2[1]
@@ -257,12 +257,12 @@ class DynamicSpatialPartition:
         self.cell_size = max(cell_size, 0.001)  # 0 나눗셈 방지
         self.density_threshold = density_threshold
         self.grid: Optional[SpatialGrid] = None
-        self.points: List[Tuple[Tuple[float, float], Any]] = []
+        self.points: list[tuple[tuple[float, float], Any]] = []
 
     def build(
         self,
-        points: List[Tuple[Tuple[float, float], Any]],
-        map_size: Tuple[float, float] = (200.0, 200.0),
+        points: list[tuple[tuple[float, float], Any]],
+        map_size: tuple[float, float] = (200.0, 200.0),
     ) -> None:
         """
         Build spatial structure from points.
@@ -282,8 +282,8 @@ class DynamicSpatialPartition:
             self.grid = None
 
     def query_radius(
-        self, center: Tuple[float, float], radius: float, exclude_data: Any = None
-    ) -> List[Tuple[Tuple[float, float], Any, float]]:
+        self, center: tuple[float, float], radius: float, exclude_data: Any = None
+    ) -> list[tuple[tuple[float, float], Any, float]]:
         """Find all points within radius."""
         if self.grid:
             return self.grid.query_radius(center, radius, exclude_data)
@@ -299,8 +299,8 @@ class DynamicSpatialPartition:
         return results
 
     def nearest_neighbor(
-        self, query: Tuple[float, float], exclude_data: Any = None
-    ) -> Optional[Tuple[Tuple[float, float], Any, float]]:
+        self, query: tuple[float, float], exclude_data: Any = None
+    ) -> Optional[tuple[tuple[float, float], Any, float]]:
         """Find nearest neighbor."""
         if self.grid:
             return self.grid.nearest_neighbor(query, exclude_data)

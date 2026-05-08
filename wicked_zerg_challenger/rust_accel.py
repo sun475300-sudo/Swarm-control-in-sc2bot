@@ -3,7 +3,8 @@
 
 from __future__ import annotations
 
-from typing import Dict, Iterable, List, Optional, Sequence, Tuple
+from typing import Dict, List, Optional, Tuple
+from collections.abc import Iterable, Sequence
 
 try:
     from swarm_rust_accel import batch_nearest_points as _batch_nearest_points_rust
@@ -42,8 +43,8 @@ except Exception:
 
 
 def nearest_point_index(
-    origin: Tuple[float, float],
-    points: Sequence[Tuple[float, float]],
+    origin: tuple[float, float],
+    points: Sequence[tuple[float, float]],
 ) -> Optional[int]:
     """Return nearest point index from origin via Rust/OpenCL/CPU fallback."""
     if not points:
@@ -100,8 +101,8 @@ def compute_feedback_priority(
 
 
 def combat_power_comparison(
-    my_units: Sequence[Tuple[float, float, float, float]],
-    enemy_units: Sequence[Tuple[float, float, float, float]],
+    my_units: Sequence[tuple[float, float, float, float]],
+    enemy_units: Sequence[tuple[float, float, float, float]],
 ) -> float:
     """Compare combat power: (hp, max_hp, damage, range) for each unit."""
     if _combat_power_comparison_rust is not None:
@@ -122,9 +123,9 @@ def combat_power_comparison(
 
 
 def batch_nearest_points(
-    origins: Sequence[Tuple[float, float]],
-    points: Sequence[Tuple[float, float]],
-) -> List[Optional[int]]:
+    origins: Sequence[tuple[float, float]],
+    points: Sequence[tuple[float, float]],
+) -> list[Optional[int]]:
     """Find nearest point for multiple origins in parallel (Rust)."""
     if _batch_nearest_points_rust is not None:
         try:
@@ -145,7 +146,7 @@ def path_distance(x1: float, y1: float, x2: float, y2: float) -> float:
     return ((x2 - x1) ** 2 + (y2 - y1) ** 2) ** 0.5
 
 
-def route_distance(steps: Sequence[Tuple[float, float]]) -> float:
+def route_distance(steps: Sequence[tuple[float, float]]) -> float:
     """Calculate total distance along a path."""
     if _route_distance_rust is not None:
         try:
@@ -159,9 +160,9 @@ def route_distance(steps: Sequence[Tuple[float, float]]) -> float:
 
 
 def cluster_points(
-    points: Sequence[Tuple[float, float]],
+    points: Sequence[tuple[float, float]],
     cluster_size: int,
-) -> List[List[Tuple[float, float]]]:
+) -> list[list[tuple[float, float]]]:
     """Cluster points by angular distribution."""
     if _cluster_points_rust is not None:
         try:
@@ -188,7 +189,7 @@ def formation_positions(
     center_x: float = 0.0,
     center_y: float = 0.0,
     formation_type: str = "line",
-) -> List[Tuple[float, float]]:
+) -> list[tuple[float, float]]:
     """Generate formation positions: line, circle, wedge, grid."""
     if _formation_positions_rust is not None:
         try:
@@ -242,12 +243,12 @@ def formation_positions(
     return [(center_x, center_y)] * count
 
 
-def points_to_xy_tuples(points: Iterable) -> List[Tuple[float, float]]:
+def points_to_xy_tuples(points: Iterable) -> list[tuple[float, float]]:
     """Convert Point2-like objects into plain (x, y) tuples."""
     return [(float(p.x), float(p.y)) for p in points]
 
 
-def rust_available() -> Dict[str, bool]:
+def rust_available() -> dict[str, bool]:
     """Check which Rust acceleration functions are available."""
     return {
         "nearest_point_index": _nearest_point_index_rust is not None,

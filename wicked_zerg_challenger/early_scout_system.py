@@ -35,7 +35,7 @@ except ImportError:
         pass
 
 
-GAS_BUILDING_TYPES: Set[object] = {
+GAS_BUILDING_TYPES: set[object] = {
     UnitTypeId.EXTRACTOR,
     UnitTypeId.ASSIMILATOR,
     UnitTypeId.REFINERY,
@@ -59,22 +59,22 @@ class EarlyScoutSystem:
         self.bot = bot
         self.early_game_threshold = 300.0
 
-        self.scout_ling_tags: List[int] = []
+        self.scout_ling_tags: list[int] = []
         self.max_scout_lings = 3
         self.ling_scouts_assigned = False
 
         self.scout_overlord_tag: Optional[int] = None
         self.overlord_scout_sent = False
 
-        self.ling_waypoints: Dict[int, List[Point2]] = {}
-        self.ling_current_wp: Dict[int, int] = {}
-        self.overlord_waypoints: List[Point2] = []
+        self.ling_waypoints: dict[int, list[Point2]] = {}
+        self.ling_current_wp: dict[int, int] = {}
+        self.overlord_waypoints: list[Point2] = []
         self.overlord_current_wp = 0
 
         self.enemy_pool_timing: Optional[float] = None
         self.enemy_gas_timing: Optional[float] = None
         self.enemy_natural_timing: Optional[float] = None
-        self.enemy_early_units: Set[int] = set()
+        self.enemy_early_units: set[int] = set()
         self.proxy_detected = False
         self.cheese_suspected = False
 
@@ -418,10 +418,10 @@ class EarlyScoutSystem:
         return self.cheese_suspected
 
     def get_scout_status(self) -> str:
-        status_parts: List[str] = []
+        status_parts: list[str] = []
 
         if self.ling_scouts_assigned:
-            zergling_tags: Set[int] = {
+            zergling_tags: set[int] = {
                 u.tag for u in self.bot.units(UnitTypeId.ZERGLING)
             }
             alive_scouts = len(
@@ -436,7 +436,7 @@ class EarlyScoutSystem:
         else:
             status_parts.append("OL:idle")
 
-        checkpoints: List[str] = []
+        checkpoints: list[str] = []
         if self.main_base_scouted:
             checkpoints.append("main")
         if self.natural_scouted:

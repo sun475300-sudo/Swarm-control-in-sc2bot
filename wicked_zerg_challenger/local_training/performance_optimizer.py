@@ -34,7 +34,7 @@ class DistanceCache:
             cache_duration: How long to keep cached values (seconds)
         """
         self.cache_duration = cache_duration
-        self.cache: Dict[Tuple[int, int], Tuple[float, float]] = {}
+        self.cache: dict[tuple[int, int], tuple[float, float]] = {}
         self.last_clear = time.time()
 
     def get_distance(self, unit1, unit2) -> float:
@@ -99,11 +99,11 @@ class PerformanceOptimizer:
         self._spatial_grid = None
 
         # PID controllers for units
-        self._unit_pids: Dict[int, Any] = {}
+        self._unit_pids: dict[int, Any] = {}
 
         # Frame timing
         self.last_frame_time = time.time()
-        self.frame_times: List[float] = []
+        self.frame_times: list[float] = []
         self.max_frame_history = 100
 
         # Configuration
@@ -163,8 +163,8 @@ class PerformanceOptimizer:
             self._kd_tree = None
 
     def find_units_in_radius(
-        self, position: Tuple[float, float], radius: float, units=None
-    ) -> List[Tuple[Any, float]]:
+        self, position: tuple[float, float], radius: float, units=None
+    ) -> list[tuple[Any, float]]:
         """
         Find units within radius of position.
 
@@ -196,8 +196,8 @@ class PerformanceOptimizer:
         return []
 
     def find_nearest_unit(
-        self, position: Tuple[float, float], units=None, exclude_unit=None
-    ) -> Optional[Tuple[Any, float]]:
+        self, position: tuple[float, float], units=None, exclude_unit=None
+    ) -> Optional[tuple[Any, float]]:
         """
         Find nearest unit to position.
 
@@ -253,8 +253,8 @@ class PerformanceOptimizer:
         return self._unit_pids[unit_tag]
 
     def calculate_optimal_movement(
-        self, unit, target_position: Tuple[float, float], dt: float = 0.1
-    ) -> Tuple[float, float]:
+        self, unit, target_position: tuple[float, float], dt: float = 0.1
+    ) -> tuple[float, float]:
         """
         Calculate optimal velocity for unit movement.
 
@@ -303,7 +303,7 @@ class PerformanceOptimizer:
         """
         return self.distance_cache.get_distance(unit1, unit2)
 
-    def get_performance_stats(self) -> Dict[str, Any]:
+    def get_performance_stats(self) -> dict[str, Any]:
         """
         Get performance statistics.
 

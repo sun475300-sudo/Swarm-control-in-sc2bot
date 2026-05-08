@@ -64,8 +64,8 @@ class TrainingSummary:
     error_total: int
     timeouts: int
     crashes: int
-    by_race: Dict[str, Dict[str, float | int]]
-    game_durations: List[float]
+    by_race: dict[str, dict[str, float | int]]
+    game_durations: list[float]
     weakest_matchup: str | None
     benchmark_passed: bool
     next_focus_race: str | None
@@ -78,7 +78,7 @@ def _detect_bot_log() -> Path | None:
     return None
 
 
-def _read_log_tail(log_path: Path, max_lines: int = 400) -> List[str]:
+def _read_log_tail(log_path: Path, max_lines: int = 400) -> list[str]:
     try:
         content = log_path.read_text(encoding="utf-8", errors="ignore").splitlines()
     except Exception:
@@ -86,7 +86,7 @@ def _read_log_tail(log_path: Path, max_lines: int = 400) -> List[str]:
     return content[-max_lines:]
 
 
-def _count_warn_error(lines: List[str]) -> Dict[str, int]:
+def _count_warn_error(lines: list[str]) -> dict[str, int]:
     warning = 0
     error = 0
     for line in lines:
@@ -121,7 +121,7 @@ def build_enemy_race_sequence(
     games: int,
     enemy_race: str = "Protoss",
     enemy_races: str | None = None,
-) -> List[str]:
+) -> list[str]:
     if games <= 0:
         return []
 
@@ -229,7 +229,7 @@ def run_one_game(
 
 
 def build_training_summary(
-    results: List[GameResult],
+    results: list[GameResult],
     started_at: str | None = None,
     finished_at: str | None = None,
 ) -> TrainingSummary:
@@ -242,7 +242,7 @@ def build_training_summary(
     avg_runtime = round(sum(durations) / max(1, len(durations)), 2)
     overall_win_rate = round((wins / max(1, len(results))) * 100, 2)
 
-    by_race: Dict[str, Dict[str, float | int]] = {}
+    by_race: dict[str, dict[str, float | int]] = {}
     for result in results:
         entry = by_race.setdefault(
             result.enemy_race,
@@ -322,8 +322,8 @@ def build_training_summary(
 
 
 def save_report(
-    results: List[GameResult],
-    config: Dict[str, Any],
+    results: list[GameResult],
+    config: dict[str, Any],
     report_prefix: str = "training_report",
     started_at: str | None = None,
     finished_at: str | None = None,
@@ -405,7 +405,7 @@ def main() -> int:
         "enemy_race_sequence": enemy_race_sequence,
     }
 
-    results: List[GameResult] = []
+    results: list[GameResult] = []
 
     for index, enemy_race in enumerate(enemy_race_sequence, start=1):
         logger.info(

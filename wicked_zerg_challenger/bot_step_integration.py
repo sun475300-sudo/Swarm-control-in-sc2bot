@@ -31,11 +31,11 @@ class LogicActivityTracker:
     """실시간 로직 활성화 추적기"""
 
     def __init__(self):
-        self.active_logics: Dict[str, Dict] = {}
+        self.active_logics: dict[str, dict] = {}
         self.last_report_time = 0
         self.report_interval = 10.0  # 10초마다 보고
-        self.execution_counts: Dict[str, int] = {}
-        self.execution_times: Dict[str, float] = {}
+        self.execution_counts: dict[str, int] = {}
+        self.execution_times: dict[str, float] = {}
 
     def start_logic(self, name: str) -> float:
         """로직 시작 시간 기록"""
@@ -84,7 +84,7 @@ class LogicActivityTracker:
 
         return "\n".join(lines)
 
-    def get_current_status(self) -> List[str]:
+    def get_current_status(self) -> list[str]:
         """현재 활성화된 로직 목록 반환"""
         return [
             name

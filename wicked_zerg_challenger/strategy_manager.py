@@ -176,13 +176,13 @@ class StrategyManager:
         )
 
         # ★ Feature 89: Custom unit weights from JARVIS ★
-        self.custom_unit_weights: Optional[Dict[str, float]] = None
+        self.custom_unit_weights: Optional[dict[str, float]] = None
         self.early_scout_pressure_active = False
         self.early_scout_greed_suppressed = False
         self.early_scout_fast_gas = False
         self.early_scout_cheese_active = False
 
-    def _load_ratios(self, race_name: str) -> Dict[GamePhase, Dict[str, float]]:
+    def _load_ratios(self, race_name: str) -> dict[GamePhase, dict[str, float]]:
         """KnowledgeManager에서 유닛 비율 로드"""
         ratios = {}
         race_data = self.knowledge_manager.knowledge.get("unit_ratios", {}).get(
@@ -262,9 +262,9 @@ class StrategyManager:
                 self.emergency_active or self.early_scout_pressure_active,
             )
 
-    def _cache_enemy_composition(self) -> Dict[str, int]:
+    def _cache_enemy_composition(self) -> dict[str, int]:
         """적 유닛 구성을 1회 캐시 (매 프레임 반복 조회 방지)"""
-        composition: Dict[str, int] = {}
+        composition: dict[str, int] = {}
         if not hasattr(self.bot, "enemy_units"):
             return composition
         for enemy in self.bot.enemy_units:
@@ -276,7 +276,7 @@ class StrategyManager:
                 continue
         return composition
 
-    def _get_early_scout_signal_state(self) -> Dict[str, Any]:
+    def _get_early_scout_signal_state(self) -> dict[str, Any]:
         if self.early_scout_pressure_active:
             self.current_mode = StrategyMode.DEFENSIVE
             return {
@@ -292,7 +292,7 @@ class StrategyManager:
             }
 
         game_time = getattr(self.bot, "time", 0.0)
-        state: Dict[str, Any] = {
+        state: dict[str, Any] = {
             "fresh": False,
             "gas_time": None,
             "natural_confirmed": False,
@@ -1699,7 +1699,7 @@ class StrategyManager:
             ):
                 self._reset_min_army_for_attack()
 
-    def get_unit_ratios(self) -> Dict[str, float]:
+    def get_unit_ratios(self) -> dict[str, float]:
         """
         현재 상황에 맞는 유닛 비율 반환
 
@@ -1776,7 +1776,7 @@ class StrategyManager:
             return max(ratios.keys(), key=lambda k: ratios[k])
         return None
 
-    def get_status_report(self) -> Dict[str, Any]:
+    def get_status_report(self) -> dict[str, Any]:
         """
         전략 상태 리포트 반환
 
@@ -1795,7 +1795,7 @@ class StrategyManager:
 
     # ========== #110: 게임 페이즈 관리 ==========
 
-    def get_game_phase_details(self) -> Dict[str, Any]:
+    def get_game_phase_details(self) -> dict[str, Any]:
         """
         게임 페이즈 상세 정보 반환 (#110)
 
@@ -1883,7 +1883,7 @@ class StrategyManager:
 
         return None
 
-    def get_phase_strategy_recommendation(self) -> Dict[str, Any]:
+    def get_phase_strategy_recommendation(self) -> dict[str, Any]:
         """
         현재 페이즈에 맞는 전략 추천 (#110)
 
@@ -1989,7 +1989,7 @@ class StrategyManager:
     # Feature #100: 테크 전환 감지
     # =========================================================================
 
-    def detect_tech_switch(self) -> Optional[Dict[str, Any]]:
+    def detect_tech_switch(self) -> Optional[dict[str, Any]]:
         """
         Feature #100: 적 테크 경로 변경 감지
 
@@ -2031,7 +2031,7 @@ class StrategyManager:
 
         return None
 
-    def _detect_terran_tech_switch(self, enemy_structures) -> Optional[Dict[str, Any]]:
+    def _detect_terran_tech_switch(self, enemy_structures) -> Optional[dict[str, Any]]:
         """
         테란 테크 전환 감지: 바이오/메카/공중 전환 패턴 분석
         """
@@ -2130,7 +2130,7 @@ class StrategyManager:
 
         return result if result["detected"] else None
 
-    def _detect_protoss_tech_switch(self, enemy_structures) -> Optional[Dict[str, Any]]:
+    def _detect_protoss_tech_switch(self, enemy_structures) -> Optional[dict[str, Any]]:
         """
         프로토스 테크 전환 감지: 게이트웨이/로보틱스/공중 전환 패턴 분석
         """
@@ -2196,7 +2196,7 @@ class StrategyManager:
 
         return result if result["detected"] else None
 
-    def _detect_zerg_tech_switch(self, enemy_structures) -> Optional[Dict[str, Any]]:
+    def _detect_zerg_tech_switch(self, enemy_structures) -> Optional[dict[str, Any]]:
         """
         저그 테크 전환 감지: 지상/공중 전환 패턴 분석
         """
@@ -2268,7 +2268,7 @@ class StrategyManager:
 
         return result if result["detected"] else None
 
-    def get_tech_switch_status(self) -> Dict[str, Any]:
+    def get_tech_switch_status(self) -> dict[str, Any]:
         """
         Feature #100: 적 테크 전환 상태 조회
 

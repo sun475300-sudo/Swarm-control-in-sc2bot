@@ -92,19 +92,19 @@ class KnowledgeUpdater:
         logger.info("Analysis complete!")
         self._print_summary(knowledge)
 
-    def _load_knowledge(self) -> Dict:
+    def _load_knowledge(self) -> dict:
         """기존 지식 베이스 로드"""
         if os.path.exists(self.knowledge_file):
             with open(self.knowledge_file, encoding="utf-8") as f:
                 return json.load(f)
         return {}
 
-    def _save_knowledge(self, knowledge: Dict):
+    def _save_knowledge(self, knowledge: dict):
         """지식 베이스 저장"""
         with open(self.knowledge_file, "w", encoding="utf-8") as f:
             json.dump(knowledge, f, indent=2, ensure_ascii=False)
 
-    def _analyze_map_winrates(self) -> Dict:
+    def _analyze_map_winrates(self) -> dict:
         """맵별 승률 분석"""
         map_stats = defaultdict(lambda: {"wins": 0, "losses": 0, "games": 0})
 
@@ -128,7 +128,7 @@ class KnowledgeUpdater:
 
         return dict(map_stats)
 
-    def _analyze_timings(self) -> Dict:
+    def _analyze_timings(self) -> dict:
         """타이밍 분석 (평균 확장 시간, 테크 시간)"""
         timings = {"expansion": defaultdict(list), "tech": defaultdict(list)}
 
@@ -168,7 +168,7 @@ class KnowledgeUpdater:
 
         return result
 
-    def _analyze_expansions(self) -> Dict:
+    def _analyze_expansions(self) -> dict:
         """확장 패턴 분석"""
         expansion_data = []
 
@@ -218,7 +218,7 @@ class KnowledgeUpdater:
 
         return {}
 
-    def _extract_build_patterns(self) -> Dict:
+    def _extract_build_patterns(self) -> dict:
         """빌드 오더 패턴 추출"""
         build_patterns = defaultdict(list)
 
@@ -250,7 +250,7 @@ class KnowledgeUpdater:
             ]
         }
 
-    def _analyze_engagements(self) -> Dict:
+    def _analyze_engagements(self) -> dict:
         """교전 분석"""
         total_engagements = 0
         total_supply_lost = 0
@@ -270,7 +270,7 @@ class KnowledgeUpdater:
             "total_games_analyzed": len(self.games_data),
         }
 
-    def _print_summary(self, knowledge: Dict):
+    def _print_summary(self, knowledge: dict):
         """분석 결과 요약 출력"""
         logger.info("\n" + "=" * 60)
         logger.info("KNOWLEDGE BASE UPDATE SUMMARY")

@@ -55,9 +55,9 @@ class Boids3DController:
     def calculate_force(
         self,
         drone: DroneState,
-        neighbors: List[DroneState],
+        neighbors: list[DroneState],
         target: Optional[Point3D] = None,
-        obstacles: Optional[List[Point3D]] = None,
+        obstacles: Optional[list[Point3D]] = None,
         desired_altitude: Optional[float] = None,
         terrain_height: float = 0.0,
     ) -> np.ndarray:
@@ -106,7 +106,7 @@ class Boids3DController:
 
         return force
 
-    def _separation(self, drone: DroneState, neighbors: List[DroneState]) -> np.ndarray:
+    def _separation(self, drone: DroneState, neighbors: list[DroneState]) -> np.ndarray:
         """
         분리력: 가까운 이웃으로부터 반발.
         기존: diff / distance² (역제곱 법칙) — 동일하게 3D 적용.
@@ -135,7 +135,7 @@ class Boids3DController:
 
         return force
 
-    def _alignment(self, drone: DroneState, neighbors: List[DroneState]) -> np.ndarray:
+    def _alignment(self, drone: DroneState, neighbors: list[DroneState]) -> np.ndarray:
         """
         정렬력: 이웃들의 평균 속도 방향으로 정렬.
         기존: 이웃 평균 위치 방향 — 여기서는 속도 정렬 (더 정확한 Boids 구현).
@@ -161,7 +161,7 @@ class Boids3DController:
 
         return np.zeros(3)
 
-    def _cohesion(self, drone: DroneState, neighbors: List[DroneState]) -> np.ndarray:
+    def _cohesion(self, drone: DroneState, neighbors: list[DroneState]) -> np.ndarray:
         """
         응집력: 이웃 그룹의 중심으로 이동.
         기존: centroid(neighbors) - unit_pos — 동일 패턴 3D.
@@ -203,7 +203,7 @@ class Boids3DController:
         return desired / dist * scale
 
     def _obstacle_avoidance(
-        self, drone: DroneState, obstacles: List[Point3D]
+        self, drone: DroneState, obstacles: list[Point3D]
     ) -> np.ndarray:
         """
         장애물 회피력: 기존 enemy_avoidance의 3D 변형.
@@ -254,10 +254,10 @@ class Boids3DController:
 
     def step(
         self,
-        drones: List[DroneState],
+        drones: list[DroneState],
         dt: float = 0.1,
         target: Optional[Point3D] = None,
-        obstacles: Optional[List[Point3D]] = None,
+        obstacles: Optional[list[Point3D]] = None,
         desired_altitude: Optional[float] = None,
     ) -> None:
         """

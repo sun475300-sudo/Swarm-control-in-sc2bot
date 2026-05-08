@@ -178,7 +178,7 @@ class BuildingPlacementHelper:
 
     def find_creep_positions(
         self, near: Point2, search_radius: float = 15.0, max_candidates: int = 20
-    ) -> List[Point2]:
+    ) -> list[Point2]:
         """
         주어진 위치 근처의 점막 위치를 찾습니다.
 

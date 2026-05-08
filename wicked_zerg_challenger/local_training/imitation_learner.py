@@ -77,10 +77,10 @@ class ReplayActionExtractor:
         else:
             self.replay_dir = Path(__file__).parent / "data" / "replays"
 
-        self.extracted_data: List[Dict[str, Any]] = []
+        self.extracted_data: list[dict[str, Any]] = []
         logger.info(f"ReplayActionExtractor 초기화 (replay_dir={self.replay_dir})")
 
-    def extract_from_replay(self, replay_path: str) -> List[Dict[str, Any]]:
+    def extract_from_replay(self, replay_path: str) -> list[dict[str, Any]]:
         """
         단일 리플레이 파일에서 행동 시퀀스 추출
 
@@ -113,7 +113,7 @@ class ReplayActionExtractor:
 
         return frames
 
-    def _parse_event(self, event, replay) -> Optional[Dict[str, Any]]:
+    def _parse_event(self, event, replay) -> Optional[dict[str, Any]]:
         """
         리플레이 이벤트를 상태-행동 쌍으로 변환
 
@@ -188,7 +188,7 @@ class ReplayActionExtractor:
 
         return None
 
-    def _basic_parse(self, replay_path: str) -> List[Dict[str, Any]]:
+    def _basic_parse(self, replay_path: str) -> list[dict[str, Any]]:
         """기본 파싱 (sc2reader 없이)"""
         # 리플레이 파일의 바이너리 데이터에서 최소한의 정보 추출
         # 실제 구현에서는 s2protocol 사용 권장
@@ -330,12 +330,12 @@ class ImitationLearner:
         self.criterion = nn.CrossEntropyLoss()
 
         # 학습 데이터
-        self.dataset_states: List[np.ndarray] = []
-        self.dataset_actions: List[int] = []
+        self.dataset_states: list[np.ndarray] = []
+        self.dataset_actions: list[int] = []
 
         # 통계
         self.epoch_count = 0
-        self.training_history: List[Dict[str, float]] = []
+        self.training_history: list[dict[str, float]] = []
 
         # 리플레이 추출기
         self.extractor = ReplayActionExtractor()
@@ -359,7 +359,7 @@ class ImitationLearner:
         self.dataset_states.append(state.astype(np.float32))
         self.dataset_actions.append(action)
 
-    def train_epoch(self) -> Dict[str, float]:
+    def train_epoch(self) -> dict[str, float]:
         """
         1 에폭 학습 수행
 
@@ -421,7 +421,7 @@ class ImitationLearner:
 
     def train(
         self, num_epochs: int = 100, verbose: bool = True
-    ) -> List[Dict[str, float]]:
+    ) -> list[dict[str, float]]:
         """
         여러 에폭 학습
 
@@ -445,7 +445,7 @@ class ImitationLearner:
 
         return results
 
-    def predict_action(self, state: np.ndarray) -> Tuple[int, np.ndarray]:
+    def predict_action(self, state: np.ndarray) -> tuple[int, np.ndarray]:
         """
         상태에서 행동 예측
 
@@ -504,7 +504,7 @@ class ImitationLearner:
             logger.info(f"모델 로드 실패: {e}")
         return False
 
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> dict[str, Any]:
         """학습 통계 반환"""
         return {
             "epoch_count": self.epoch_count,

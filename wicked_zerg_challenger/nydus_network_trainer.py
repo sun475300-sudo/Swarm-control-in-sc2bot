@@ -43,15 +43,15 @@ class NydusNetworkTrainer:
         self.logger = get_logger("NydusTrainer")
 
         # 땅굴벌레 위치 추적
-        self.worm_spots: List[NydusWormSpot] = []
-        self.active_worms: Dict[int, NydusWormSpot] = {}
+        self.worm_spots: list[NydusWormSpot] = []
+        self.active_worms: dict[int, NydusWormSpot] = {}
 
         # 투입 병력 추적
-        self.units_in_transit: Set[int] = set()
-        self.units_deployed: Set[int] = set()
+        self.units_in_transit: set[int] = set()
+        self.units_deployed: set[int] = set()
 
         # 학습 데이터
-        self.strategies_tried: List[Dict] = []
+        self.strategies_tried: list[dict] = []
         self.successful_attacks = 0
         self.failed_attacks = 0
 
@@ -409,7 +409,7 @@ class NydusNetworkTrainer:
             for spot in self.active_worms.values():
                 self.logger.info(f"  @ {spot.position}: {spot.purpose}")
 
-    def get_statistics(self) -> Dict:
+    def get_statistics(self) -> dict:
         """통계 반환"""
         total_attempts = self.successful_attacks + self.failed_attacks
         success_rate = (

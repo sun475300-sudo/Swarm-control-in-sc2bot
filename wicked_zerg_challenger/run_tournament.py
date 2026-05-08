@@ -107,8 +107,8 @@ class TournamentRunner:
     def __init__(
         self,
         games_per_combo: int = 2,
-        difficulties: List[str] | None = None,
-        races: List[str] | None = None,
+        difficulties: list[str] | None = None,
+        races: list[str] | None = None,
         personality: str = "serral",
     ):
         self.games_per_combo = games_per_combo
@@ -119,7 +119,7 @@ class TournamentRunner:
         self.races = races or ["zerg", "terran", "protoss"]
 
         # Results storage
-        self.results: List[Dict] = []
+        self.results: list[dict] = []
         self.start_time = None
         self.report_dir = Path("data/tournament")
 
@@ -184,7 +184,7 @@ class TournamentRunner:
         race_name: str,
         difficulty: Difficulty,
         diff_name: str,
-    ) -> Dict:
+    ) -> dict:
         """단일 게임 실행"""
         result = {
             "game_number": game_number,

@@ -58,13 +58,13 @@ class MultitaskingSystem:
         }
 
         # Active tasks and assigned units
-        self._active_tasks: Dict[str, Dict] = (
+        self._active_tasks: dict[str, dict] = (
             {}
         )  # task_name -> {"units": set(), "target": position}
-        self._unit_assignments: Dict[int, str] = {}  # unit_tag -> task_name
+        self._unit_assignments: dict[int, str] = {}  # unit_tag -> task_name
 
         # Task cooldowns
-        self._task_cooldowns: Dict[str, float] = {}
+        self._task_cooldowns: dict[str, float] = {}
 
     def get_task_priority(self, task_name: str) -> int:
         """작업 우선순위 가져오기"""
@@ -92,7 +92,7 @@ class MultitaskingSystem:
 
     def create_task_list(
         self, army_units, air_units, enemy_units, iteration: int
-    ) -> List[Tuple[str, any, int]]:
+    ) -> list[tuple[str, any, int]]:
         """
         우선순위 기반 작업 리스트 생성
 
@@ -214,7 +214,7 @@ class MultitaskingSystem:
         for tag in dead_tags:
             self.unassign_unit(tag)
 
-    def get_task_units(self, task_name: str) -> Set[int]:
+    def get_task_units(self, task_name: str) -> set[int]:
         """특정 작업에 할당된 유닛 태그 집합 반환"""
         if task_name in self._active_tasks:
             return self._active_tasks[task_name]["units"]
@@ -229,7 +229,7 @@ class MultitaskingSystem:
 
             del self._active_tasks[task_name]
 
-    def get_available_units(self, units) -> List:
+    def get_available_units(self, units) -> list:
         """할당되지 않은 유닛 목록 반환"""
         return [u for u in units if not self.is_unit_assigned(u.tag)]
 
@@ -246,7 +246,7 @@ class MultitaskingSystem:
             return self._active_tasks[task_name]["target"]
         return None
 
-    def get_active_tasks(self) -> List[str]:
+    def get_active_tasks(self) -> list[str]:
         """현재 활성화된 작업 목록"""
         return list(self._active_tasks.keys())
 

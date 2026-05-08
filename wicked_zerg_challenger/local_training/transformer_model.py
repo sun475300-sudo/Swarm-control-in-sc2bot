@@ -197,7 +197,7 @@ class TransformerDecisionModel:
         self.action_labels = ["ECONOMY", "AGGRESSIVE", "DEFENSIVE", "TECH", "ALL_IN"]
 
         # 상태 히스토리 (시퀀스 생성용)
-        self.state_history: List[np.ndarray] = []
+        self.state_history: list[np.ndarray] = []
         self.max_history_len = 10
 
     def _embed_input(self, x: np.ndarray) -> np.ndarray:
@@ -210,7 +210,7 @@ class TransformerDecisionModel:
         exp_x = np.exp(x - np.max(x))
         return exp_x / (np.sum(exp_x) + 1e-9)
 
-    def predict(self, game_state: List[float]) -> Dict[str, Any]:
+    def predict(self, game_state: list[float]) -> dict[str, Any]:
         """
         게임 상태를 입력받아 행동 예측
 

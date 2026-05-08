@@ -81,7 +81,7 @@ class DefeatDetection:
         self.defeat_warnings = 0
         self.critical_moments = 0
 
-    async def on_step(self, iteration: int) -> Dict:
+    async def on_step(self, iteration: int) -> dict:
         """
         패배 직감 체크 (매 스텝 호출)
 
@@ -121,7 +121,7 @@ class DefeatDetection:
 
         return self._get_current_status()
 
-    async def _evaluate_defeat_conditions(self) -> Tuple[int, Optional[str]]:
+    async def _evaluate_defeat_conditions(self) -> tuple[int, Optional[str]]:
         """
         패배 조건 평가
 
@@ -262,7 +262,7 @@ class DefeatDetection:
 
         return False
 
-    async def _check_critical_duration(self) -> Tuple[int, Optional[str]]:
+    async def _check_critical_duration(self) -> tuple[int, Optional[str]]:
         """
         ★★★ 위기 상태 장기 지속 체크 ★★★
 
@@ -282,7 +282,7 @@ class DefeatDetection:
 
         return DefeatLevel.SAFE, None
 
-    async def _check_military_disadvantage(self) -> Tuple[int, Optional[str]]:
+    async def _check_military_disadvantage(self) -> tuple[int, Optional[str]]:
         """압도적 병력 열세 체크"""
         if not hasattr(self.bot, "units") or not hasattr(self.bot, "enemy_units"):
             return DefeatLevel.SAFE, None
@@ -340,7 +340,7 @@ class DefeatDetection:
 
         return DefeatLevel.SAFE, None
 
-    async def _check_unrecoverable_economy(self) -> Tuple[int, Optional[str]]:
+    async def _check_unrecoverable_economy(self) -> tuple[int, Optional[str]]:
         """경제 회복 불가 상태 체크"""
         if not hasattr(self.bot, "workers") or not hasattr(self.bot, "minerals"):
             return DefeatLevel.SAFE, None
@@ -371,7 +371,7 @@ class DefeatDetection:
 
         return DefeatLevel.SAFE, None
 
-    async def _check_production_loss(self) -> Tuple[int, Optional[str]]:
+    async def _check_production_loss(self) -> tuple[int, Optional[str]]:
         """생산 능력 상실 체크"""
         if not hasattr(self.bot, "structures") or not hasattr(self.bot, "townhalls"):
             return DefeatLevel.SAFE, None
@@ -395,7 +395,7 @@ class DefeatDetection:
 
         return DefeatLevel.SAFE, None
 
-    async def _check_combined_crisis(self) -> Tuple[int, Optional[str]]:
+    async def _check_combined_crisis(self) -> tuple[int, Optional[str]]:
         """복합 위기 상황 체크"""
         if not hasattr(self.bot, "workers") or not hasattr(self.bot, "townhalls"):
             return DefeatLevel.SAFE, None
@@ -510,7 +510,7 @@ class DefeatDetection:
         else:
             self.last_stand_position = None
 
-    def _get_current_status(self) -> Dict:
+    def _get_current_status(self) -> dict:
         """현재 패배 감지 상태 반환"""
         # ★★★ 패배 불가피 시 즉시 항복 (훈련 효율 향상) ★★★
         should_surrender = self.defeat_level >= DefeatLevel.INEVITABLE
@@ -581,7 +581,7 @@ class DefeatDetection:
         """마지막 방어 시도 여부"""
         return self.last_stand_active and self.last_stand_position is not None
 
-    def get_statistics(self) -> Dict:
+    def get_statistics(self) -> dict:
         """통계 반환"""
         return {
             "defeat_level": self.defeat_level,

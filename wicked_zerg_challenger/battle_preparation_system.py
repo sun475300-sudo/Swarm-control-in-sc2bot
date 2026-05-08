@@ -44,7 +44,7 @@ class BattlePreparationSystem:
         self.logger = get_logger("BattlePrep")
 
         # 교전 지역 추적
-        self.battle_zones: Dict[str, BattleZone] = {}
+        self.battle_zones: dict[str, BattleZone] = {}
         self.last_check_time = 0
         self.check_interval = 2.0  # 2초마다 체크
 
@@ -142,7 +142,7 @@ class BattlePreparationSystem:
                     zone.enemy_count = enemy_count
                     zone.our_count = our_count
 
-    def _find_enemy_clusters(self, enemy_units) -> List[Tuple[Point2, List]]:
+    def _find_enemy_clusters(self, enemy_units) -> list[tuple[Point2, list]]:
         """적 병력 클러스터 찾기"""
         if not enemy_units:
             return []
@@ -325,7 +325,7 @@ class BattlePreparationSystem:
                         f"(Ratio: {ratio:.2f})"
                     )
 
-    def get_statistics(self) -> Dict:
+    def get_statistics(self) -> dict:
         """통계 반환"""
         total_battles = self.battles_won + self.battles_lost
         win_rate = (self.battles_won / total_battles * 100) if total_battles > 0 else 0

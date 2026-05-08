@@ -35,12 +35,12 @@ class CreepHighway:
 
     def __init__(self, bot):
         self.bot = bot
-        self.highway_waypoints: List = []  # Point2 list
-        self.completed_waypoints: Set[int] = set()  # 완성된 웨이포인트 인덱스
+        self.highway_waypoints: list = []  # Point2 list
+        self.completed_waypoints: set[int] = set()  # 완성된 웨이포인트 인덱스
         self._computed = False
         self._last_progress_check = 0
 
-    def compute_highway(self) -> List:
+    def compute_highway(self) -> list:
         """
         A* 경로 계산 후 웨이포인트 생성.
         게임 시작 시 1회 호출. 이후 필요 시 재계산.
@@ -64,7 +64,7 @@ class CreepHighway:
         self._computed = True
         return self.highway_waypoints
 
-    def _astar(self, start, goal) -> List[Tuple[float, float]]:
+    def _astar(self, start, goal) -> list[tuple[float, float]]:
         """
         A* 경로 탐색 (pathing_grid 기반)
 
@@ -95,8 +95,8 @@ class CreepHighway:
         gy = max(0, min(gy, h - 1))
 
         open_set = [(0.0, sx, sy)]
-        came_from: Dict[Tuple[int, int], Tuple[int, int]] = {}
-        g_score: Dict[Tuple[int, int], float] = {(sx, sy): 0.0}
+        came_from: dict[tuple[int, int], tuple[int, int]] = {}
+        g_score: dict[tuple[int, int], float] = {(sx, sy): 0.0}
 
         def heuristic(ax, ay, bx, by):
             return math.sqrt((ax - bx) ** 2 + (ay - by) ** 2)
@@ -156,7 +156,7 @@ class CreepHighway:
         # A* 실패 시 직선 경로 fallback
         return self._straight_line_path(start, goal)
 
-    def _straight_line_path(self, start, goal) -> List[Tuple[float, float]]:
+    def _straight_line_path(self, start, goal) -> list[tuple[float, float]]:
         """직선 경로 fallback"""
         path = []
         try:
@@ -172,7 +172,7 @@ class CreepHighway:
             path.append((x, y))
         return path
 
-    def _path_to_waypoints(self, path: List[Tuple[float, float]]) -> List:
+    def _path_to_waypoints(self, path: list[tuple[float, float]]) -> list:
         """
         A* 경로를 종양 배치 간격(9.0)으로 웨이포인트 변환.
         """
@@ -221,7 +221,7 @@ class CreepHighway:
             return 0.0
         return len(self.completed_waypoints) / len(self.highway_waypoints)
 
-    def get_stats(self) -> Dict:
+    def get_stats(self) -> dict:
         """통계 반환"""
         return {
             "total_waypoints": len(self.highway_waypoints),

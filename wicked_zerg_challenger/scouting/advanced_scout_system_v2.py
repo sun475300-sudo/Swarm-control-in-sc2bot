@@ -76,25 +76,25 @@ class AdvancedScoutingSystemV2:
         self.active_scouts = {}
 
         # 정찰 목표 기록 (위치 -> 마지막 정찰 시간)
-        self.last_scouted_at: Dict[Point2, float] = {}
+        self.last_scouted_at: dict[Point2, float] = {}
 
         # 유닛별 최대 정찰 수
         self.MAX_SCOUTS = {"WORKER": 1, "ZERGLING": 4, "OVERLORD": 3, "OVERSEER": 3}
 
         # ★ Phase 22: 순찰 경로 시스템 ★
-        self._patrol_routes: Dict[str, List[Point2]] = {}  # route_name -> waypoints
-        self._patrol_index: Dict[int, int] = {}  # unit_tag -> current waypoint index
-        self._patrol_units: Set[int] = set()  # 순찰 임무 중인 유닛 태그
+        self._patrol_routes: dict[str, list[Point2]] = {}  # route_name -> waypoints
+        self._patrol_index: dict[int, int] = {}  # unit_tag -> current waypoint index
+        self._patrol_units: set[int] = set()  # 순찰 임무 중인 유닛 태그
 
         # ★ Phase 22: 젤나가 감시탑 ★
-        self._watchtower_positions: List[Point2] = []
-        self._watchtower_claimers: Dict[Point2, int] = {}  # pos -> zergling tag
+        self._watchtower_positions: list[Point2] = []
+        self._watchtower_claimers: dict[Point2, int] = {}  # pos -> zergling tag
 
         # ★ Phase 22: 드롭 감시 포인트 ★
-        self._drop_watch_positions: List[Point2] = []
+        self._drop_watch_positions: list[Point2] = []
 
         # ★ Phase 22: 우선 정찰 대상 (백과사전 기반) ★
-        self._priority_scout_targets: List[str] = []  # 현재 찾아야 할 적 테크
+        self._priority_scout_targets: list[str] = []  # 현재 찾아야 할 적 테크
 
         # 정찰 통계
         self.scouts_sent = 0
@@ -894,7 +894,7 @@ class AdvancedScoutingSystemV2:
             if hasattr(self.bot, "unit_authority"):
                 self.bot.unit_authority.release_unit(tag, "AdvancedScoutingV2")
 
-    def _get_unit_patrol_route(self, tag: int) -> Optional[List[Point2]]:
+    def _get_unit_patrol_route(self, tag: int) -> Optional[list[Point2]]:
         """유닛 태그에서 순찰 경로 찾기"""
         info = self.active_scouts.get(tag)
         if not info:

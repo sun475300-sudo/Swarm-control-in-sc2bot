@@ -33,7 +33,7 @@ class TerrainZone:
     """맵 지형 구역"""
 
     def __init__(
-        self, center: Tuple[float, float], zone_type: str, radius: float = 5.0
+        self, center: tuple[float, float], zone_type: str, radius: float = 5.0
     ):
         """
         Args:
@@ -47,13 +47,13 @@ class TerrainZone:
         self.danger_level: float = 0.0  # 0.0 (안전) ~ 1.0 (위험)
         self.last_scouted: float = 0.0  # 마지막 정찰 시간
 
-    def distance_to(self, point: Tuple[float, float]) -> float:
+    def distance_to(self, point: tuple[float, float]) -> float:
         """특정 지점과의 거리"""
         dx = self.center[0] - point[0]
         dy = self.center[1] - point[1]
         return math.sqrt(dx * dx + dy * dy)
 
-    def contains(self, point: Tuple[float, float]) -> bool:
+    def contains(self, point: tuple[float, float]) -> bool:
         """해당 지점이 구역 내에 있는지"""
         return self.distance_to(point) <= self.radius
 
@@ -70,7 +70,7 @@ class EnemyGhost:
         self,
         unit_tag: int,
         unit_type: str,
-        last_position: Tuple[float, float],
+        last_position: tuple[float, float],
         last_seen: float,
     ):
         """
@@ -99,7 +99,7 @@ class EnemyGhost:
         elapsed = current_time - self.last_seen
         self.confidence = max(0.0, 1.0 - elapsed * decay_rate)
 
-    def update_sighting(self, position: Tuple[float, float], time: float) -> None:
+    def update_sighting(self, position: tuple[float, float], time: float) -> None:
         """유닛 재관찰 시 업데이트"""
         self.last_position = position
         self.estimated_position = position
@@ -132,21 +132,21 @@ class MapAwarenessManager:
         self.bot = bot
 
         # 지형 구역
-        self.terrain_zones: List[TerrainZone] = []
-        self.chokepoints: List[TerrainZone] = []
-        self.high_grounds: List[TerrainZone] = []
-        self.base_locations: List[TerrainZone] = []
-        self.ramps: List[TerrainZone] = []
+        self.terrain_zones: list[TerrainZone] = []
+        self.chokepoints: list[TerrainZone] = []
+        self.high_grounds: list[TerrainZone] = []
+        self.base_locations: list[TerrainZone] = []
+        self.ramps: list[TerrainZone] = []
 
         # 적 추정 위치
-        self.enemy_ghosts: Dict[int, EnemyGhost] = {}
+        self.enemy_ghosts: dict[int, EnemyGhost] = {}
 
         # 적 확장 기지 예측
-        self.predicted_enemy_bases: List[Tuple[float, float]] = []
+        self.predicted_enemy_bases: list[tuple[float, float]] = []
 
         # 시야 정보
-        self.scouted_areas: Set[Tuple[int, int]] = set()
-        self.last_scout_time: Dict[Tuple[int, int], float] = {}
+        self.scouted_areas: set[tuple[int, int]] = set()
+        self.last_scout_time: dict[tuple[int, int], float] = {}
 
         # 맵 크기
         self.map_width: float = 0.0
@@ -214,19 +214,19 @@ class MapAwarenessManager:
         # 위험도 업데이트
         self._update_danger_levels(game_time)
 
-    def get_chokepoints(self) -> List[TerrainZone]:
+    def get_chokepoints(self) -> list[TerrainZone]:
         """초크포인트 목록 반환"""
         return self.chokepoints
 
     def get_nearest_chokepoint(
-        self, position: Tuple[float, float]
+        self, position: tuple[float, float]
     ) -> Optional[TerrainZone]:
         """가장 가까운 초크포인트 반환"""
         if not self.chokepoints:
             return None
         return min(self.chokepoints, key=lambda c: c.distance_to(position))
 
-    def get_danger_level(self, position: Tuple[float, float]) -> float:
+    def get_danger_level(self, position: tuple[float, float]) -> float:
         """
         특정 위치의 위험도 반환
 
@@ -258,8 +258,8 @@ class MapAwarenessManager:
         return min(1.0, max_danger)
 
     def get_safe_path_waypoints(
-        self, start: Tuple[float, float], end: Tuple[float, float]
-    ) -> List[Tuple[float, float]]:
+        self, start: tuple[float, float], end: tuple[float, float]
+    ) -> list[tuple[float, float]]:
         """
         안전한 이동 경로의 경유지 계산
 
@@ -288,7 +288,7 @@ class MapAwarenessManager:
         waypoints.append(end)
         return waypoints
 
-    def get_enemy_ghosts(self, min_confidence: float = 0.3) -> List[EnemyGhost]:
+    def get_enemy_ghosts(self, min_confidence: float = 0.3) -> list[EnemyGhost]:
         """
         일정 신뢰도 이상의 적 추정 위치 반환
 
@@ -306,7 +306,7 @@ class MapAwarenessManager:
 
     def get_unscouted_base_locations(
         self, time_threshold: float = 120.0
-    ) -> List[Tuple[float, float]]:
+    ) -> list[tuple[float, float]]:
         """
         최근에 정찰하지 않은 기지 위치 반환
 
@@ -476,7 +476,7 @@ class MapAwarenessManager:
 
             zone.danger_level = min(1.0, danger)
 
-    def get_status(self) -> Dict[str, Any]:
+    def get_status(self) -> dict[str, Any]:
         """맵 인식 상태 반환"""
         return {
             "initialized": self._initialized,

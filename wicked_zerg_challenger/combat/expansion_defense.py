@@ -44,7 +44,7 @@ class ExpansionDefense:
         self.logger = get_logger("ExpansionDefense")
 
         # Expansion defense state
-        self._expansion_under_attack: Dict[int, float] = (
+        self._expansion_under_attack: dict[int, float] = (
             {}
         )  # base_tag -> attack_start_time
         self._expansion_destroyed_positions = []
@@ -225,7 +225,7 @@ class ExpansionDefense:
             )
 
     async def counterattack_after_base_loss(
-        self, destroyed_base_tags: Set[int], iteration: int
+        self, destroyed_base_tags: set[int], iteration: int
     ):
         """
         확장 기지 파괴 후 반격

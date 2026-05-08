@@ -51,7 +51,7 @@ class FormationManager:
 
     def form_concave(
         self, units: Units, enemy_center: Point2, formation_radius: float = 8.0
-    ) -> List[Tuple[Unit, Point2]]:
+    ) -> list[tuple[Unit, Point2]]:
         """
         오목한 대형(Concave) 형성
 
@@ -117,7 +117,7 @@ class FormationManager:
 
         return assignments
 
-    def find_choke_points(self, map_info: GameInfo) -> List[Point2]:
+    def find_choke_points(self, map_info: GameInfo) -> list[Point2]:
         """
         길목(Choke Point) 찾기
 

@@ -150,7 +150,7 @@ class AttackController:
             if iteration % 50 == 0:
                 self.logger.warning(f"Offensive attack error: {e}")
 
-    def find_multiple_attack_targets(self) -> List:
+    def find_multiple_attack_targets(self) -> list:
         """
         여러 공격 타겟 찾기
 

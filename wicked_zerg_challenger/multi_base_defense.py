@@ -29,7 +29,7 @@ class MultiBaseDefense:
         self.logger = get_logger("MultiBaseDefense")
 
         # 기지별 방어 상태 추적
-        self.base_defense_status: Dict[int, Dict] = {}
+        self.base_defense_status: dict[int, dict] = {}
         self.last_defense_check = 0
         self.defense_check_interval = 44  # ~2초마다 체크
 

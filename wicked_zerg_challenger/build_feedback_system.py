@@ -306,7 +306,7 @@ class BuildFeedbackSystem:
             logger.error(f"Analysis failed: {e}")
 
     def _generate_recommendations(
-        self, recent_games: List, victories: List, avg_victory_time: float
+        self, recent_games: list, victories: list, avg_victory_time: float
     ):
         """개선 추천 사항 생성"""
         logger.info("\n[BUILD FEEDBACK] Recommendations:")

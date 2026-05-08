@@ -76,7 +76,7 @@ class BuildOrderOptimizer:
         self.first_overlord_made = False
 
         # ★ Milestones ★
-        self.milestones_completed: Set[str] = set()
+        self.milestones_completed: set[str] = set()
 
     async def on_step(self, iteration: int):
         """매 프레임 실행"""
@@ -396,7 +396,7 @@ class BuildOrderOptimizer:
                     f"[{int(game_time)}s] [*] MILESTONE: 16 Mineral Drones [*]"
                 )
 
-    def get_build_order_status(self) -> Dict:
+    def get_build_order_status(self) -> dict:
         """빌드 오더 상태 반환"""
         return {
             "expansion_placed": self.expansion_placed,

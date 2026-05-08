@@ -41,7 +41,7 @@ class AdaptiveLearningRate:
         self.adjustment_factor = adjustment_factor  # 조정 배율 (1.2 = 20% 증가/감소)
 
         # 성능 추적
-        self.recent_win_rates: List[float] = []
+        self.recent_win_rates: list[float] = []
         self.window_size = 20  # 최근 20게임 승률 추적
         self.patience = patience  # 개선 없으면 이 횟수 후 조정
         self.games_without_improvement = 0
@@ -53,7 +53,7 @@ class AdaptiveLearningRate:
         # 통계
         self.total_games = 0
         self.total_wins = 0
-        self.adjustment_history: List[Dict] = []
+        self.adjustment_history: list[dict] = []
 
         # 저장 경로
         self.save_path = Path("local_training/adaptive_lr_stats.json")
@@ -193,7 +193,7 @@ class AdaptiveLearningRate:
         """현재 학습률 반환"""
         return self.learning_rate
 
-    def get_stats(self) -> Dict:
+    def get_stats(self) -> dict:
         """통계 반환"""
         recent_avg = (
             sum(self.recent_win_rates) / len(self.recent_win_rates)

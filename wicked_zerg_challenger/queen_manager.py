@@ -97,13 +97,13 @@ class QueenManager:
         self.last_tumor_check = 0
 
         # Tracking
-        self.inject_assignments: Dict[int, int] = {}  # hatchery_tag -> queen_tag
-        self.last_inject_time: Dict[int, float] = {}  # hatchery_tag -> time
-        self.last_creep_time: Dict[int, float] = {}  # queen_tag -> time
-        self.last_transfuse_time: Dict[int, float] = {}  # queen_tag -> time
-        self.assigned_queen_tags: Set[int] = set()
-        self.dedicated_creep_queens: Set[int] = set()
-        self.secondary_inject_assignments: Dict[int, int] = (
+        self.inject_assignments: dict[int, int] = {}  # hatchery_tag -> queen_tag
+        self.last_inject_time: dict[int, float] = {}  # hatchery_tag -> time
+        self.last_creep_time: dict[int, float] = {}  # queen_tag -> time
+        self.last_transfuse_time: dict[int, float] = {}  # queen_tag -> time
+        self.assigned_queen_tags: set[int] = set()
+        self.dedicated_creep_queens: set[int] = set()
+        self.secondary_inject_assignments: dict[int, int] = (
             {}
         )  # hatchery_tag -> queen_tag (2차)
 
@@ -1351,7 +1351,7 @@ class QueenManager:
         return projection + dist * 0.25
 
     @staticmethod
-    def _find_closest_queen(position, queens, excluded_tags: Set[int]):
+    def _find_closest_queen(position, queens, excluded_tags: set[int]):
         """Find closest queen not in excluded set."""
         candidates = [q for q in queens if q.tag not in excluded_tags]
         if not candidates:

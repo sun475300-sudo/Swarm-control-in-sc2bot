@@ -69,29 +69,29 @@ class EnhancedScoutSystem:
         self.worker_scout_tag: Optional[int] = None
         self.worker_scout_sent = False
         self.worker_scout_threshold = 13  # 13 supply에 출발
-        self.worker_scout_waypoints: List[Point2] = []
+        self.worker_scout_waypoints: list[Point2] = []
         self.worker_current_wp = 0
 
         # ★ Overlord Scout ★
         self.overlord_scout_tag: Optional[int] = None
         self.overlord_scout_sent = False
-        self.overlord_waypoints: List[Point2] = []
+        self.overlord_waypoints: list[Point2] = []
         self.overlord_current_wp = 0
 
         # ★ Zergling Patrol ★
-        self.zergling_patrol_tags: List[int] = []
+        self.zergling_patrol_tags: list[int] = []
         self.zergling_patrol_assigned = False
         self.zergling_patrol_count = 2  # 2마리의 Zergling 순찰
-        self.zergling_waypoints: Dict[int, List[Point2]] = {}
-        self.zergling_current_wp: Dict[int, int] = {}
+        self.zergling_waypoints: dict[int, list[Point2]] = {}
+        self.zergling_current_wp: dict[int, int] = {}
 
         # ★ Scout Data ★
         self.enemy_pool_timing: Optional[float] = None
         self.enemy_gas_timing: Optional[float] = None
         self.enemy_natural_timing: Optional[float] = None
         self.enemy_third_timing: Optional[float] = None
-        self.enemy_tech_buildings: Dict[str, float] = {}
-        self.enemy_army_units: Dict[str, int] = {}
+        self.enemy_tech_buildings: dict[str, float] = {}
+        self.enemy_army_units: dict[str, int] = {}
 
         # ★ Analysis Results ★
         self.is_cheese: bool = False
@@ -102,7 +102,7 @@ class EnhancedScoutSystem:
         # ★ Scouted Locations ★
         self.main_base_scouted = False
         self.natural_scouted = False
-        self.proxy_locations_scouted: Set[Tuple[float, float]] = set()
+        self.proxy_locations_scouted: set[tuple[float, float]] = set()
 
     async def on_step(self, iteration: int):
         """매 프레임 실행"""
@@ -551,7 +551,7 @@ class EnhancedScoutSystem:
             blackboard.set("enemy_gas_timing", self.enemy_gas_timing)
             blackboard.set("enemy_natural_timing", self.enemy_natural_timing)
 
-    def get_scout_report(self) -> Dict:
+    def get_scout_report(self) -> dict:
         """정찰 리포트 반환"""
         return {
             "worker_scout_sent": self.worker_scout_sent,

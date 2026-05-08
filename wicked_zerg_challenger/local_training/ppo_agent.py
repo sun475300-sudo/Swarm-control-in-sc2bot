@@ -130,7 +130,7 @@ class ActorCriticNetwork(nn.Module):
         if isinstance(critic_last, nn.Linear):
             nn.init.orthogonal_(critic_last.weight, gain=1.0)
 
-    def forward(self, state: "torch.Tensor") -> Tuple["torch.Tensor", "torch.Tensor"]:
+    def forward(self, state: "torch.Tensor") -> tuple["torch.Tensor", "torch.Tensor"]:
         """
         순전파
 
@@ -155,12 +155,12 @@ class PPOMemory:
 
     def __init__(self):
         """메모리 초기화"""
-        self.states: List[np.ndarray] = []
-        self.actions: List[int] = []
-        self.rewards: List[float] = []
-        self.log_probs: List[float] = []
-        self.values: List[float] = []
-        self.dones: List[bool] = []
+        self.states: list[np.ndarray] = []
+        self.actions: list[int] = []
+        self.rewards: list[float] = []
+        self.log_probs: list[float] = []
+        self.values: list[float] = []
+        self.dones: list[bool] = []
 
     def store(
         self,
@@ -191,7 +191,7 @@ class PPOMemory:
     def __len__(self) -> int:
         return len(self.states)
 
-    def get_batches(self, batch_size: int = 64) -> List[Dict[str, Any]]:
+    def get_batches(self, batch_size: int = 64) -> list[dict[str, Any]]:
         """
         미니배치로 분할하여 반환
 
@@ -313,7 +313,7 @@ class PPOAgent:
         # 통계
         self.episode_count = 0
         self.total_reward = 0.0
-        self.training_history: List[Dict[str, float]] = []
+        self.training_history: list[dict[str, float]] = []
 
         # 행동 라벨
         self.action_labels = ACTION_LABELS
@@ -419,7 +419,7 @@ class PPOAgent:
 
     def get_action(
         self, state: np.ndarray, training: bool = True
-    ) -> Tuple[int, str, float]:
+    ) -> tuple[int, str, float]:
         """
         상태에서 행동 선택
 
@@ -509,7 +509,7 @@ class PPOAgent:
 
     def _compute_gae(
         self, rewards: np.ndarray, values: np.ndarray, dones: np.ndarray
-    ) -> Tuple[np.ndarray, np.ndarray]:
+    ) -> tuple[np.ndarray, np.ndarray]:
         """
         GAE (Generalized Advantage Estimation) 계산
 
@@ -538,7 +538,7 @@ class PPOAgent:
         returns = advantages + values
         return advantages, returns
 
-    def end_episode(self, final_reward: float = 0.0) -> Dict[str, float]:
+    def end_episode(self, final_reward: float = 0.0) -> dict[str, float]:
         """
         에피소드 종료 및 PPO 학습 수행
 
@@ -713,7 +713,7 @@ class PPOAgent:
             logger.info(f"모델 로드 실패: {e}")
         return False
 
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> dict[str, Any]:
         """학습 통계 반환"""
         recent = self.training_history[-10:] if self.training_history else []
         avg_reward = np.mean([s["avg_reward"] for s in recent]) if recent else 0.0
@@ -729,7 +729,7 @@ class PPOAgent:
         """최소 학습 완료 여부 판단"""
         return self.episode_count >= 50
 
-    def is_ready_for_deployment(self) -> Tuple[bool, str]:
+    def is_ready_for_deployment(self) -> tuple[bool, str]:
         """
         배포 가능 여부 판단
 

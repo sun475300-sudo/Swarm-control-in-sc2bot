@@ -29,7 +29,7 @@ class ModelVersion:
 
     version_id: int
     model_path: str
-    metrics: Dict  # {"win_rate": 0.6, "avg_reward": 50, "games": 10}
+    metrics: dict  # {"win_rate": 0.6, "avg_reward": 50, "games": 10}
     created_at: float
     deployed: bool = False
 
@@ -61,7 +61,7 @@ class TrainingPipeline:
         for d in [self.versions_dir, self.buffer_dir, self.archive_dir]:
             d.mkdir(parents=True, exist_ok=True)
 
-        self.versions: List[ModelVersion] = []
+        self.versions: list[ModelVersion] = []
         self._load_history()
 
     def _load_history(self) -> None:
@@ -80,7 +80,7 @@ class TrainingPipeline:
         with open(self.history_path, "w") as f:
             json.dump(data, f, indent=2)
 
-    def create_checkpoint(self, rl_agent, metrics: Dict) -> ModelVersion:
+    def create_checkpoint(self, rl_agent, metrics: dict) -> ModelVersion:
         """
         현재 모델을 새 버전으로 저장.
 
@@ -200,7 +200,7 @@ class TrainingPipeline:
 
         self._save_history()
 
-    def get_training_summary(self) -> Dict:
+    def get_training_summary(self) -> dict:
         """전체 버전 히스토리 요약"""
         deployed = self._get_deployed_version()
         return {

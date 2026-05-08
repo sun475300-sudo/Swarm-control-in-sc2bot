@@ -165,7 +165,7 @@ class BaseDefenseSystem:
 
         return highest_threat
 
-    def get_units_near_base(self, units, range_distance: float = 30) -> List:
+    def get_units_near_base(self, units, range_distance: float = 30) -> list:
         """기지 근처 유닛 가져오기 (최적화)"""
         if not hasattr(self.bot, "townhalls") or not self.bot.townhalls.exists:
             return []

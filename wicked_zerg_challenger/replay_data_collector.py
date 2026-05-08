@@ -48,7 +48,7 @@ class ReplayDataCollector:
         }
         self.update_knowledge("LEARNED_12POOL", new_build)
 
-    def update_knowledge(self, build_key: str, build_data: Dict):
+    def update_knowledge(self, build_key: str, build_data: dict):
         """Update the JSON brain with new findings"""
         try:
             with open(self.knowledge_file) as f:

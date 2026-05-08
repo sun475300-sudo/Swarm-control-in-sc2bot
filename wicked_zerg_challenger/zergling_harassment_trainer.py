@@ -22,7 +22,7 @@ from utils.logger import get_logger
 class ZerglingSquad:
     """저글링 분대"""
 
-    def __init__(self, squad_id: int, lings: List):
+    def __init__(self, squad_id: int, lings: list):
         self.squad_id = squad_id
         self.ling_tags = {u.tag for u in lings}
         self.target_position: Optional[Point2] = None
@@ -43,7 +43,7 @@ class ZerglingHarassmentTrainer:
         self.logger = get_logger("ZerglingHarass")
 
         # 분대 관리
-        self.squads: Dict[int, ZerglingSquad] = {}  # squad_id -> ZerglingSquad
+        self.squads: dict[int, ZerglingSquad] = {}  # squad_id -> ZerglingSquad
         self.next_squad_id = 1
 
         # 괴롭힘 설정 (게임 초반 최적화)
@@ -297,7 +297,7 @@ class ZerglingHarassmentTrainer:
             elif avg_hp_ratio > self.REENGAGE_HP_THRESHOLD and squad.target_position:
                 await self._attack_target(squad, squad_lings)
 
-    async def _retreat_squad(self, squad: ZerglingSquad, squad_lings: List):
+    async def _retreat_squad(self, squad: ZerglingSquad, squad_lings: list):
         """분대 후퇴"""
         if not self.bot.townhalls.exists:
             return
@@ -313,7 +313,7 @@ class ZerglingHarassmentTrainer:
 
             self.bot.do(ling.move(retreat_target))
 
-    async def _attack_target(self, squad: ZerglingSquad, squad_lings: List):
+    async def _attack_target(self, squad: ZerglingSquad, squad_lings: list):
         """타겟 공격"""
         if not squad.target_position:
             return
@@ -354,7 +354,7 @@ class ZerglingHarassmentTrainer:
                     if ling.health / ling.health_max > 0.3:
                         self.bot.do(ling.attack(closest_worker))
 
-    def get_harassment_statistics(self) -> Dict:
+    def get_harassment_statistics(self) -> dict:
         """괴롭힘 통계 반환"""
         active_squads = len(self.squads)
         total_lings_in_squads = sum(len(s.ling_tags) for s in self.squads.values())

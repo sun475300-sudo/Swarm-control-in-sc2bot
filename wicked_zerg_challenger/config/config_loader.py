@@ -17,7 +17,7 @@ class ConfigLoader:
     """Centralized configuration management"""
 
     _instance = None
-    _config_cache: Dict[str, Any] = {}
+    _config_cache: dict[str, Any] = {}
 
     def __new__(cls):
         """Singleton pattern"""
@@ -26,7 +26,7 @@ class ConfigLoader:
         return cls._instance
 
     @staticmethod
-    def load_strategy_config() -> Dict[str, Any]:
+    def load_strategy_config() -> dict[str, Any]:
         """
         Load strategy configuration from JSON
 
@@ -51,61 +51,61 @@ class ConfigLoader:
             return ConfigLoader._get_default_config()
 
     @staticmethod
-    def get_scouting_config() -> Dict[str, Any]:
+    def get_scouting_config() -> dict[str, Any]:
         """Get scouting configuration"""
         config = ConfigLoader.load_strategy_config()
         return config.get("scouting", {})
 
     @staticmethod
-    def get_harassment_config() -> Dict[str, Any]:
+    def get_harassment_config() -> dict[str, Any]:
         """Get harassment configuration"""
         config = ConfigLoader.load_strategy_config()
         return config.get("harassment", {})
 
     @staticmethod
-    def get_expansion_config() -> Dict[str, Any]:
+    def get_expansion_config() -> dict[str, Any]:
         """Get expansion configuration"""
         config = ConfigLoader.load_strategy_config()
         return config.get("expansion", {})
 
     @staticmethod
-    def get_combat_config() -> Dict[str, Any]:
+    def get_combat_config() -> dict[str, Any]:
         """Get combat configuration"""
         config = ConfigLoader.load_strategy_config()
         return config.get("combat", {})
 
     @staticmethod
-    def get_performance_config() -> Dict[str, Any]:
+    def get_performance_config() -> dict[str, Any]:
         """Get performance configuration"""
         config = ConfigLoader.load_strategy_config()
         return config.get("performance", {})
 
     @staticmethod
-    def get_timing_config() -> Dict[str, Any]:
+    def get_timing_config() -> dict[str, Any]:
         """Get timing configuration"""
         config = ConfigLoader.load_strategy_config()
         return config.get("timing", {})
 
     @staticmethod
-    def get_rush_detection_config() -> Dict[str, Any]:
+    def get_rush_detection_config() -> dict[str, Any]:
         """Get rush detection configuration"""
         config = ConfigLoader.load_strategy_config()
         return config.get("rush_detection", {})
 
     @staticmethod
-    def get_emergency_config() -> Dict[str, Any]:
+    def get_emergency_config() -> dict[str, Any]:
         """Get emergency mode configuration"""
         config = ConfigLoader.load_strategy_config()
         return config.get("emergency_mode", {})
 
     @staticmethod
-    def get_counter_build_config() -> Dict[str, Any]:
+    def get_counter_build_config() -> dict[str, Any]:
         """Get counter build configuration"""
         config = ConfigLoader.load_strategy_config()
         return config.get("counter_build", {})
 
     @staticmethod
-    def get_race_fallback_config() -> Dict[str, Any]:
+    def get_race_fallback_config() -> dict[str, Any]:
         """Get race-specific fallback unit ratios"""
         config = ConfigLoader.load_strategy_config()
         return config.get("race_specific_fallback", {})
@@ -151,7 +151,7 @@ class ConfigLoader:
         ConfigLoader._config_cache.clear()
 
     @staticmethod
-    def _get_default_config() -> Dict[str, Any]:
+    def _get_default_config() -> dict[str, Any]:
         """
         Get default configuration (fallback)
 
@@ -184,31 +184,31 @@ class ConfigLoader:
 # Convenience functions for direct access
 
 
-def get_scouting_config() -> Dict[str, Any]:
+def get_scouting_config() -> dict[str, Any]:
     """Get scouting configuration"""
     return ConfigLoader.get_scouting_config()
 
 
-def get_harassment_config() -> Dict[str, Any]:
+def get_harassment_config() -> dict[str, Any]:
     """Get harassment configuration"""
     return ConfigLoader.get_harassment_config()
 
 
-def get_expansion_config() -> Dict[str, Any]:
+def get_expansion_config() -> dict[str, Any]:
     """Get expansion configuration"""
     return ConfigLoader.get_expansion_config()
 
 
-def get_combat_config() -> Dict[str, Any]:
+def get_combat_config() -> dict[str, Any]:
     """Get combat configuration"""
     return ConfigLoader.get_combat_config()
 
 
-def get_performance_config() -> Dict[str, Any]:
+def get_performance_config() -> dict[str, Any]:
     """Get performance configuration"""
     return ConfigLoader.get_performance_config()
 
 
-def get_timing_config() -> Dict[str, Any]:
+def get_timing_config() -> dict[str, Any]:
     """Get timing configuration"""
     return ConfigLoader.get_timing_config()

@@ -443,7 +443,7 @@ class UnitFactory:
                 except Exception:
                     continue
 
-    def _pick_unit(self, queue: List[object]) -> Optional[object]:
+    def _pick_unit(self, queue: list[object]) -> Optional[object]:
         for unit_type in queue:
             if self._can_train(unit_type):
                 return unit_type
@@ -483,7 +483,7 @@ class UnitFactory:
         gas_units: int,
         larva_count: int,
         can_spend_gas: bool,
-    ) -> List[object]:
+    ) -> list[object]:
         # ★ 공중 위협 시 히드라 강제 생산 ★
         force_hydra = getattr(self, "_force_hydra", False)
         if force_hydra:
@@ -505,7 +505,7 @@ class UnitFactory:
                 allow_mineral_mix or minerals >= self.min_mineral_reserve_for_gas * 2
             )
 
-        queue: List[object] = []
+        queue: list[object] = []
 
         # ★ Strategy Manager에서 공중 위협 감지시 히드라 우선 ★
         strategy = getattr(self.bot, "strategy_manager", None)
@@ -534,8 +534,8 @@ class UnitFactory:
             ]
         return queue
 
-    def _filter_units(self, table: List[dict], vespene: int) -> List[object]:
-        queue: List[object] = []
+    def _filter_units(self, table: list[dict], vespene: int) -> list[object]:
+        queue: list[object] = []
         for entry in table:
             unit_type = entry["unit"]
             max_ratio = entry.get("max_ratio")
@@ -547,7 +547,7 @@ class UnitFactory:
             queue.append(unit_type)
         return queue
 
-    def _gas_unit_table(self) -> List[dict]:
+    def _gas_unit_table(self) -> list[dict]:
         # Phase 18: Dynamic Ratios from StrategyManager
         strategy = getattr(self.bot, "strategy_manager", None)
         ratios = {}
@@ -603,7 +603,7 @@ class UnitFactory:
             },
         ]
 
-    def _mineral_unit_table(self) -> List[dict]:
+    def _mineral_unit_table(self) -> list[dict]:
         strategy = getattr(self.bot, "strategy_manager", None)
         ratios = {}
         if strategy and hasattr(strategy, "get_unit_ratios"):

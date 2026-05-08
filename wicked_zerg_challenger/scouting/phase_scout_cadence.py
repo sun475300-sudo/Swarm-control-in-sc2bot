@@ -104,7 +104,7 @@ def cadence_for_phase(phase: ScoutPhase) -> float:
     }[phase]
 
 
-def _quadrant_targets(enemy_main: Point2, map_extent: float) -> List[Point2]:
+def _quadrant_targets(enemy_main: Point2, map_extent: float) -> list[Point2]:
     """4 sweep targets for zergling phase: NE / SE / SW / NW relative to
     midpoint between own and enemy main."""
     cx, cy = enemy_main[0], enemy_main[1]

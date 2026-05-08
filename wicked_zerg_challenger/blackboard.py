@@ -129,10 +129,10 @@ class GameStateBlackboard:
         self.supply_cap = 0
 
         # === 유닛 카운트 (UnitTypeId -> UnitCounts) ===
-        self.unit_counts: Dict[Any, UnitCounts] = {}
+        self.unit_counts: dict[Any, UnitCounts] = {}
 
         # === 건물 상태 ===
-        self.building_counts: Dict[Any, UnitCounts] = {}
+        self.building_counts: dict[Any, UnitCounts] = {}
         self.bases_count: int = 0
         self.worker_count: int = 0
 
@@ -151,7 +151,7 @@ class GameStateBlackboard:
 
         # === 생산 요청 큐 ===
         # 우선순위별 생산 요청: {priority: [(unit_type, count, requester)]}
-        self.production_queue: Dict[int, List[tuple]] = {
+        self.production_queue: dict[int, list[tuple]] = {
             0: [],  # 긴급 (방어)
             1: [],  # 높음 (전투)
             2: [],  # 중간 (전략)
@@ -160,21 +160,21 @@ class GameStateBlackboard:
 
         # === 건설 예약 ===
         # 건물 타입 -> (예약 시간, 예약자)
-        self.building_reservations: Dict[Any, tuple] = {}
+        self.building_reservations: dict[Any, tuple] = {}
 
         # === 방어 상태 ===
         self.is_under_attack: bool = False
-        self.attacked_bases: Set[int] = set()  # 공격받은 기지 태그
+        self.attacked_bases: set[int] = set()  # 공격받은 기지 태그
 
         # === 캐시된 계산 결과 ===
-        self._cache: Dict[str, Any] = {}
-        self._cache_timestamps: Dict[str, float] = {}
+        self._cache: dict[str, Any] = {}
+        self._cache_timestamps: dict[str, float] = {}
         self._default_cache_ttl: float = 1.0  # 기본 캐시 유효 시간 (초)
         self._cache_ttls: dict = {}  # Bug fix #6: Per-key TTL storage
 
         # === Generic State (Backward Compatibility) ===
-        self.state: Dict[str, Any] = {}
-        self.requests: List[Dict[str, Any]] = []  # For old usage if any
+        self.state: dict[str, Any] = {}
+        self.requests: list[dict[str, Any]] = []  # For old usage if any
 
     # ========== Compatibility Methods ==========
 

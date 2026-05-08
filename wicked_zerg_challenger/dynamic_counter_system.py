@@ -65,9 +65,9 @@ class DynamicCounterSystem:
         self.check_interval = 33  # 약 1.5초마다
 
         # ★ 감지된 위협 ★
-        self.detected_threats: Set[str] = set()
-        self.threat_first_seen: Dict[str, float] = {}
-        self.active_counters: Dict[str, Dict] = {}  # {threat: counter_info}
+        self.detected_threats: set[str] = set()
+        self.threat_first_seen: dict[str, float] = {}
+        self.active_counters: dict[str, dict] = {}  # {threat: counter_info}
 
         # ★ 카운터 룰 ★
         self.counter_rules = {
@@ -205,7 +205,7 @@ class DynamicCounterSystem:
             if iteration % 50 == 0:
                 self.logger.error(f"[DYNAMIC_COUNTER] Error: {e}")
 
-    async def _scan_enemy_threats(self) -> Set[str]:
+    async def _scan_enemy_threats(self) -> set[str]:
         """
         적 고급 유닛 스캔
 
@@ -239,7 +239,7 @@ class DynamicCounterSystem:
         new_threats = current_threats - set(self.active_counters.keys())
         return new_threats
 
-    async def _activate_counters(self, threats: Set[str]):
+    async def _activate_counters(self, threats: set[str]):
         """
         위협 유닛에 대한 카운터 활성화
 
@@ -272,7 +272,7 @@ class DynamicCounterSystem:
             # Blackboard에 카운터 명령 등록
             await self._register_counter_to_blackboard(threat, counter_rule)
 
-    async def _register_counter_to_blackboard(self, threat: str, counter_rule: Dict):
+    async def _register_counter_to_blackboard(self, threat: str, counter_rule: dict):
         """
         Blackboard에 카운터 생산 명령 등록
         """
@@ -337,7 +337,7 @@ class DynamicCounterSystem:
                 if blackboard:
                     blackboard.set("dynamic_counter_active", False)
 
-    def get_active_threats(self) -> List[Tuple[str, Dict]]:
+    def get_active_threats(self) -> list[tuple[str, dict]]:
         """
         현재 활성화된 위협 목록 반환
 
@@ -346,7 +346,7 @@ class DynamicCounterSystem:
         """
         return [(threat, info) for threat, info in self.active_counters.items()]
 
-    def get_highest_threat(self) -> Tuple[str, int]:
+    def get_highest_threat(self) -> tuple[str, int]:
         """
         가장 위험한 위협 반환
 

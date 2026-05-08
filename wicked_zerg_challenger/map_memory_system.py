@@ -54,17 +54,17 @@ class MapMemorySystem:
         self.logger = get_logger("MapMemory")
 
         # 발견된 적 건물 (영구 기록)
-        self.discovered_structures: Dict[int, DiscoveredStructure] = {}
+        self.discovered_structures: dict[int, DiscoveredStructure] = {}
 
         # 예측된 적 기지
-        self.predicted_bases: List[PredictedBase] = []
+        self.predicted_bases: list[PredictedBase] = []
 
         # 맵 탐색 진행도
-        self.explored_positions: Set[Tuple[int, int]] = set()
+        self.explored_positions: set[tuple[int, int]] = set()
         self.exploration_progress = 0.0  # 0% ~ 100%
 
         # 확장 위치별 상태
-        self.expansion_status: Dict[Point2, str] = (
+        self.expansion_status: dict[Point2, str] = (
             {}
         )  # "unknown", "enemy", "ally", "neutral"
 
@@ -340,7 +340,7 @@ class MapMemorySystem:
                         f"(not seen for {int(time_since_last_seen)}s)"
                     )
 
-    def get_all_known_enemy_structures(self) -> List[DiscoveredStructure]:
+    def get_all_known_enemy_structures(self) -> list[DiscoveredStructure]:
         """모든 기억된 적 건물 반환 (파괴되지 않은 것만)"""
         return [
             structure
@@ -348,7 +348,7 @@ class MapMemorySystem:
             if not structure.is_destroyed
         ]
 
-    def get_enemy_bases(self) -> List[Point2]:
+    def get_enemy_bases(self) -> list[Point2]:
         """
         모든 적 기지 위치 반환 (발견된 + 예측된)
 
@@ -413,7 +413,7 @@ class MapMemorySystem:
             f"Exploration: {self.exploration_progress:.1f}%"
         )
 
-    def get_statistics(self) -> Dict:
+    def get_statistics(self) -> dict:
         """통계 반환"""
         return {
             "total_structures_discovered": self.total_structures_discovered,

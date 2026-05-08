@@ -14,7 +14,7 @@ if TYPE_CHECKING:
     from sc2.units import Units
 
 
-def get_center_position(units: Union[List, "Units"]) -> Point2:
+def get_center_position(units: Union[list, "Units"]) -> Point2:
     """
     Calculate geometric center of units
 
@@ -40,7 +40,7 @@ def get_center_position(units: Union[List, "Units"]) -> Point2:
 
 
 def get_weighted_center(
-    units: Union[List, "Units"],
+    units: Union[list, "Units"],
     weight_by_health: bool = False,
     weight_by_supply: bool = False,
 ) -> Point2:
@@ -91,7 +91,7 @@ def get_weighted_center(
     return get_center_position(units)
 
 
-def get_closest_unit(units: Union[List, "Units"], position: Point2) -> Optional["Unit"]:
+def get_closest_unit(units: Union[list, "Units"], position: Point2) -> Optional["Unit"]:
     """
     Get the closest unit to a position
 
@@ -118,7 +118,7 @@ def get_closest_unit(units: Union[List, "Units"], position: Point2) -> Optional[
 
 
 def get_furthest_unit(
-    units: Union[List, "Units"], position: Point2
+    units: Union[list, "Units"], position: Point2
 ) -> Optional["Unit"]:
     """
     Get the furthest unit from a position
@@ -146,7 +146,7 @@ def get_furthest_unit(
     return max(units, key=lambda u: u.position.distance_to(position))
 
 
-def get_average_distance(units: Union[List, "Units"], position: Point2) -> float:
+def get_average_distance(units: Union[list, "Units"], position: Point2) -> float:
     """
     Calculate average distance from units to a position
 
@@ -169,7 +169,7 @@ def get_average_distance(units: Union[List, "Units"], position: Point2) -> float
     return total_distance / len(units)
 
 
-def get_spread_radius(units: Union[List, "Units"]) -> float:
+def get_spread_radius(units: Union[list, "Units"]) -> float:
     """
     Calculate spread radius of units (max distance from center)
 
@@ -193,7 +193,7 @@ def get_spread_radius(units: Union[List, "Units"]) -> float:
 
 
 def is_position_safe(
-    position: Point2, enemy_units: Union[List, "Units"], safe_distance: float = 10.0
+    position: Point2, enemy_units: Union[list, "Units"], safe_distance: float = 10.0
 ) -> bool:
     """
     Check if a position is safe (no enemies within safe_distance)
@@ -226,7 +226,7 @@ def is_position_safe(
 
 def get_perimeter_positions(
     center: Point2, radius: float, count: int = 8
-) -> List[Point2]:
+) -> list[Point2]:
     """
     Get positions arranged in a circle around a center point
 
@@ -302,7 +302,7 @@ def clamp_position(
     return Point2((x, y))
 
 
-def get_bounding_box(units: Union[List, "Units"]) -> tuple[Point2, Point2]:
+def get_bounding_box(units: Union[list, "Units"]) -> tuple[Point2, Point2]:
     """
     Get bounding box of units (min and max corners)
 

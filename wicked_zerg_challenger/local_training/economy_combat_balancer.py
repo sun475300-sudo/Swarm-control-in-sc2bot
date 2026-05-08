@@ -71,7 +71,7 @@ class EconomyCombatBalancer:
         self.drones_per_base = 22  # 기지당 22마리 (16 미네랄 + 6 가스)
 
         # Production history tracking
-        self.production_history: Dict[str, int] = {
+        self.production_history: dict[str, int] = {
             "drones": 0,
             "army_units": 0,
             "total": 0,
@@ -470,7 +470,7 @@ class EconomyCombatBalancer:
         except Exception:
             return "BALANCED"
 
-    def get_production_stats(self) -> Dict[str, float]:
+    def get_production_stats(self) -> dict[str, float]:
         """
         Get production statistics for analysis.
 

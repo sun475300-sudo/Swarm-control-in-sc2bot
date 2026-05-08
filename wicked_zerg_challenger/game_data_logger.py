@@ -304,7 +304,7 @@ class GameDataLogger:
             }
         )
 
-    def log_decision(self, decision_type: str, details: Dict[str, Any]):
+    def log_decision(self, decision_type: str, details: dict[str, Any]):
         """의사결정 로그 (중요한 결정만)"""
         if not hasattr(self.bot, "time"):
             return

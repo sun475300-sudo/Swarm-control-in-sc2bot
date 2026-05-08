@@ -95,7 +95,7 @@ class OptimumDefenseSquad:
         }
 
         # ★ 현재 방어 작전 ★
-        self.active_defense: Optional[Dict] = None
+        self.active_defense: Optional[dict] = None
         self.defense_cooldown = 0
         self.defending_unit_tags = set()  # Currently defending units
 
@@ -165,7 +165,7 @@ class OptimumDefenseSquad:
 
     async def calculate_defense_force(
         self, threat_position: Point2, threat_radius: float = 15.0
-    ) -> Dict:
+    ) -> dict:
         """
         주어진 위치의 적 위협을 평가하고 필요한 방어 병력 계산
 
@@ -237,8 +237,8 @@ class OptimumDefenseSquad:
         }
 
     def _select_defense_units(
-        self, threat_position: Point2, required_power: int, enemy_composition: Dict
-    ) -> Tuple[Dict, List]:
+        self, threat_position: Point2, required_power: int, enemy_composition: dict
+    ) -> tuple[dict, list]:
         """
         최적 방어 유닛 선택
 
@@ -279,7 +279,7 @@ class OptimumDefenseSquad:
 
         return selected_units, selected_tags
 
-    def _get_available_defense_units(self, threat_position: Point2) -> List:
+    def _get_available_defense_units(self, threat_position: Point2) -> list:
         """
         방어에 사용 가능한 유닛 목록 반환
 
@@ -315,8 +315,8 @@ class OptimumDefenseSquad:
         return available
 
     def _sort_by_defense_priority(
-        self, units: List, threat_position: Point2, enemy_composition: Dict
-    ) -> List:
+        self, units: list, threat_position: Point2, enemy_composition: dict
+    ) -> list:
         """
         방어 우선순위로 유닛 정렬
 
@@ -352,7 +352,7 @@ class OptimumDefenseSquad:
 
         return sorted(units, key=priority_score, reverse=True)
 
-    def _get_counter_score(self, unit_type: str, enemy_composition: Dict) -> float:
+    def _get_counter_score(self, unit_type: str, enemy_composition: dict) -> float:
         """
         특정 유닛이 적 조합을 카운터하는 효율 점수
 
@@ -381,7 +381,7 @@ class OptimumDefenseSquad:
 
         return min(score, 100)
 
-    async def deploy_defense_force(self, defense_info: Dict, target_position: Point2):
+    async def deploy_defense_force(self, defense_info: dict, target_position: Point2):
         """
         계산된 방어 병력을 배치
 

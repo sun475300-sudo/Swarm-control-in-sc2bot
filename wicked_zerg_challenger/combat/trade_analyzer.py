@@ -58,10 +58,10 @@ class TradeAnalyzer:
         }
 
         # Battle tracking
-        self.friendly_losses: Dict[str, int] = defaultdict(int)
-        self.enemy_losses: Dict[str, int] = defaultdict(int)
-        self.last_unit_count: Dict[str, int] = {}
-        self.last_enemy_count: Dict[str, int] = {}
+        self.friendly_losses: dict[str, int] = defaultdict(int)
+        self.enemy_losses: dict[str, int] = defaultdict(int)
+        self.last_unit_count: dict[str, int] = {}
+        self.last_enemy_count: dict[str, int] = {}
 
         # Trade efficiency
         self.current_trade_ratio = 1.0  # resources lost / resources killed
@@ -111,7 +111,7 @@ class TradeAnalyzer:
 
         self.last_unit_count = current_counts
 
-    def _get_army_counts(self) -> Dict[str, int]:
+    def _get_army_counts(self) -> dict[str, int]:
         """아군 병력 수 집계"""
         counts = {}
         for unit in self.bot.units:
@@ -119,7 +119,7 @@ class TradeAnalyzer:
             counts[unit_type] = counts.get(unit_type, 0) + 1
         return counts
 
-    def _get_enemy_counts(self) -> Dict[str, int]:
+    def _get_enemy_counts(self) -> dict[str, int]:
         """적 병력 수 집계"""
         counts = {}
         for unit in self.bot.enemy_units:
@@ -144,7 +144,7 @@ class TradeAnalyzer:
         else:
             self.current_trade_ratio = 1.0
 
-    def get_trade_stats(self) -> Dict:
+    def get_trade_stats(self) -> dict:
         """교환 통계 반환"""
         return {
             "trade_ratio": self.current_trade_ratio,

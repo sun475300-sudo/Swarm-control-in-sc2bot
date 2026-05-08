@@ -43,7 +43,7 @@ class FundamentalSkill:
         skill_id: str,
         name: str,
         description: str,
-        success_criteria: Dict,
+        success_criteria: dict,
         reward_weight: float = 1.0,
     ):
         self.skill_id = skill_id
@@ -123,7 +123,7 @@ class FundamentalsManager:
         self.progress_file = self.data_dir / "fundamentals_progress.json"
 
         # 기본기 레벨 정의
-        self.levels: List[Dict] = [
+        self.levels: list[dict] = [
             # 레벨 0: 드론 생산 기본 (12-16 드론, 2분 이내)
             {
                 "level": 0,
@@ -364,7 +364,7 @@ class FundamentalsManager:
             self.current_level += 1
             self._save_progress()
 
-    def get_current_level_info(self) -> Dict:
+    def get_current_level_info(self) -> dict:
         """현재 레벨 정보 반환"""
         if self.current_level >= len(self.levels):
             return {

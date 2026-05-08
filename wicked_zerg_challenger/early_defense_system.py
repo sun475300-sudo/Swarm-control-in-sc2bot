@@ -57,7 +57,7 @@ class EarlyDefenseSystem:
         self.last_enemy_check = 0
 
         # Early threat detection
-        self.early_threats: Set = set()
+        self.early_threats: set = set()
 
     async def execute(self, iteration: int) -> None:
         """

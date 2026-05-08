@@ -22,7 +22,7 @@ class TechCoordinator:
     def __init__(self, bot):
         self.bot = bot
         # Format: {UnitTypeId: (priority, location_or_near, request_frame, requester_name)}
-        self.pending_requests: Dict[UnitTypeId, Tuple[int, Any, int, str]] = {}
+        self.pending_requests: dict[UnitTypeId, tuple[int, Any, int, str]] = {}
         self.last_build_frame = 0
 
     def request_structure(

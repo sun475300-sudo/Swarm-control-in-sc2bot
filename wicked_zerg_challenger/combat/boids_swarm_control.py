@@ -29,7 +29,7 @@ except ImportError:
     _Point2 = None  # type: ignore
 
 
-def _get_pos(obj: Any) -> Tuple[float, float]:
+def _get_pos(obj: Any) -> tuple[float, float]:
     """유닛이나 위치 객체에서 (x, y) 좌표를 안전하게 추출합니다."""
     pos = getattr(obj, "position", obj)
     return (float(getattr(pos, "x", 0.0)), float(getattr(pos, "y", 0.0)))
@@ -102,7 +102,7 @@ class BoidsSwarmController:
         enemy_units: Optional[Units] = None,
         separation_multiplier: float = 1.0,
         cohesion_multiplier: float = 1.0,
-    ) -> Tuple[float, float]:
+    ) -> tuple[float, float]:
         """
         Calculate movement velocity using boids forces.
 
@@ -371,7 +371,7 @@ class BoidsSwarmController:
         units: Units,
         target: Optional[Point2] = None,
         enemy_units: Optional[Units] = None,
-    ) -> List[Tuple[Any, Any]]:
+    ) -> list[tuple[Any, Any]]:
         """
         모든 유닛에 Boids 알고리즘을 적용
 
@@ -414,7 +414,7 @@ class BoidsSwarmController:
         defense_point: Point2,
         enemy_units: Optional[Units] = None,
         base_position: Optional[Point2] = None,
-    ) -> List[Tuple[Any, Any]]:
+    ) -> list[tuple[Any, Any]]:
         """
         기지 방어용 진형 적용
 
@@ -513,7 +513,7 @@ class BoidsSwarmController:
 
         return results
 
-    def get_priority_target(self, unit, enemy_units) -> "Optional[Unit]":
+    def get_priority_target(self, unit, enemy_units) -> Optional[Unit]:
         """
         ★ Enhanced: Threat-based priority targeting ★
 

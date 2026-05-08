@@ -45,7 +45,7 @@ class MultiProngCoordinator:
         self.logger = get_logger("MultiProng")
 
         # Attack prongs
-        self.prong_assignments: Dict[str, Set[int]] = {
+        self.prong_assignments: dict[str, set[int]] = {
             "main_army": set(),
             "mutalisk_harass": set(),
             "zergling_runby": set(),
@@ -53,7 +53,7 @@ class MultiProngCoordinator:
         }
 
         # Target assignments
-        self.prong_targets: Dict[str, Optional[Point2]] = {
+        self.prong_targets: dict[str, Optional[Point2]] = {
             "main_army": None,
             "mutalisk_harass": None,
             "zergling_runby": None,

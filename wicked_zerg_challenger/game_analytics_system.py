@@ -46,22 +46,22 @@ class GameAnalytics:
 
     def __init__(self):
         # 게임 기록
-        self.games: List[Dict] = []
+        self.games: list[dict] = []
         self.total_games = 0
         self.total_wins = 0
 
         # 종족별 통계
-        self.race_stats: Dict[str, Dict] = {
+        self.race_stats: dict[str, dict] = {
             "Terran": {"games": 0, "wins": 0, "avg_time": 0.0},
             "Protoss": {"games": 0, "wins": 0, "avg_time": 0.0},
             "Zerg": {"games": 0, "wins": 0, "avg_time": 0.0},
         }
 
         # 맵별 통계
-        self.map_stats: Dict[str, Dict] = {}
+        self.map_stats: dict[str, dict] = {}
 
         # 패배 원인 통계
-        self.defeat_reasons: Dict[str, int] = {
+        self.defeat_reasons: dict[str, int] = {
             reason.value: 0 for reason in DefeatReason
         }
 
@@ -90,7 +90,7 @@ class GameAnalytics:
         result: str,
         game_time: float,
         defeat_reason: Optional[DefeatReason] = None,
-        additional_stats: Optional[Dict] = None,
+        additional_stats: Optional[dict] = None,
     ) -> None:
         """
         게임 결과 기록 및 분석
@@ -166,7 +166,7 @@ class GameAnalytics:
         if not won:
             logger.info(self._get_defeat_analysis(game_record))
 
-    def _analyze_defeat_reason(self, game_time: float, stats: Dict) -> DefeatReason:
+    def _analyze_defeat_reason(self, game_time: float, stats: dict) -> DefeatReason:
         """패배 원인 자동 분석"""
         # 초반 러시 (3분 이내)
         if game_time < 180:
@@ -193,7 +193,7 @@ class GameAnalytics:
 
         return DefeatReason.UNKNOWN
 
-    def _update_timing_stats(self, game_time: float, stats: Dict) -> None:
+    def _update_timing_stats(self, game_time: float, stats: dict) -> None:
         """타이밍 통계 업데이트"""
         # 평균 게임 시간
         self.timing_stats["avg_game_time"] = (
@@ -227,7 +227,7 @@ class GameAnalytics:
                     self.timing_stats["avg_first_expand"] * 0.9 + expand_timing * 0.1
                 )
 
-    def _get_defeat_analysis(self, game_record: Dict) -> str:
+    def _get_defeat_analysis(self, game_record: dict) -> str:
         """패배 분석 메시지 생성"""
         lines = []
         lines.append(f"\n{'='*60}")
@@ -253,7 +253,7 @@ class GameAnalytics:
         lines.append(f"{'='*60}\n")
         return "\n".join(lines)
 
-    def _get_improvement_suggestions(self, game_record: Dict) -> List[str]:
+    def _get_improvement_suggestions(self, game_record: dict) -> list[str]:
         """개선 제안 생성"""
         suggestions = []
         defeat_reason = game_record.get("defeat_reason")
@@ -382,7 +382,7 @@ class GameAnalytics:
         except Exception as e:
             logger.info(f"저장 실패: {e}")
 
-    def _save_detailed_log(self, game_record: Dict) -> None:
+    def _save_detailed_log(self, game_record: dict) -> None:
         """상세 로그 저장 (JSONL)"""
         try:
             self.detailed_log_path.parent.mkdir(parents=True, exist_ok=True)

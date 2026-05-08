@@ -27,7 +27,7 @@ class BuildingCoordination:
         self.logger = get_logger("BuildingCoord")
 
         # 건설 요청 추적
-        self.building_requests: Dict[UnitTypeId, float] = (
+        self.building_requests: dict[UnitTypeId, float] = (
             {}
         )  # {building_type: request_time}
         self.request_cooldown = 10.0  # 같은 건물 10초 쿨다운
@@ -89,7 +89,7 @@ class BuildingCoordination:
             )
             return False
 
-    def get_building_count(self, building_type: UnitTypeId) -> Dict[str, int]:
+    def get_building_count(self, building_type: UnitTypeId) -> dict[str, int]:
         """건물 개수 정보"""
         return {
             "existing": self.bot.structures(building_type).amount,

@@ -42,7 +42,7 @@ class IdleUnitManager:
         }
 
         # 유닛 태그 추적
-        self.managed_units: Set[int] = set()
+        self.managed_units: set[int] = set()
 
         # 집결지
         self.rally_point: Optional[Point2] = None
@@ -292,7 +292,7 @@ class HarassmentManager:
         self.logger = get_logger("HarassmentManager")
 
         # 견제 유닛
-        self.harassment_units: Set[int] = set()
+        self.harassment_units: set[int] = set()
         self.last_harassment = 0
 
     async def on_step(self, iteration: int):

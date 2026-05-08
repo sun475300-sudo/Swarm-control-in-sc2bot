@@ -74,8 +74,8 @@ class StrictUpgradePriority:
         self.reserved_for_upgrade: Optional[UpgradeId] = None
 
         # 업그레이드 진행 상태
-        self.upgrade_in_progress: Set[UpgradeId] = set()
-        self.completed_upgrades: Set[UpgradeId] = set()
+        self.upgrade_in_progress: set[UpgradeId] = set()
+        self.completed_upgrades: set[UpgradeId] = set()
 
         # 차단 시스템
         self.gas_spending_blocked = False

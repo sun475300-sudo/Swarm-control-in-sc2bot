@@ -46,8 +46,8 @@ class BaseEconomy:
 
     base_tag: int
     position: Point2
-    mineral_patches: List[MineralPatchState]
-    gas_geysers: List[int]  # 가스 건물 태그
+    mineral_patches: list[MineralPatchState]
+    gas_geysers: list[int]  # 가스 건물 태그
     assigned_mineral_workers: int
     assigned_gas_workers: int
     optimal_mineral_workers: int
@@ -75,11 +75,11 @@ class AdvancedWorkerOptimizer:
         self.logger = get_logger("AdvancedWorkerOptimizer")
 
         # 기지별 경제 상태
-        self.base_economies: Dict[int, BaseEconomy] = {}  # base_tag -> BaseEconomy
+        self.base_economies: dict[int, BaseEconomy] = {}  # base_tag -> BaseEconomy
 
         # 일꾼 할당 추적
-        self.worker_assignments: Dict[int, str] = {}  # worker_tag -> "mineral" or "gas"
-        self.worker_base_assignment: Dict[int, int] = {}  # worker_tag -> base_tag
+        self.worker_assignments: dict[int, str] = {}  # worker_tag -> "mineral" or "gas"
+        self.worker_base_assignment: dict[int, int] = {}  # worker_tag -> base_tag
 
         # 최적화 설정
         self.optimal_workers_per_mineral = 2  # 미네랄 패치당 최적 일꾼
@@ -99,7 +99,7 @@ class AdvancedWorkerOptimizer:
         self.optimization_interval = 22  # ~1초마다
 
         # 고갈 감지
-        self.depleting_patches: Set[int] = set()
+        self.depleting_patches: set[int] = set()
         self.last_depletion_check = 0
 
     async def on_step(self, iteration: int) -> None:

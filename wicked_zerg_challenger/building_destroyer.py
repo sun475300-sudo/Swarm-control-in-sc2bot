@@ -68,10 +68,10 @@ class BuildingDestroyer:
         }
 
         # 공격 배정된 건물 추적
-        self.assigned_targets: Dict[int, Set[int]] = {}  # {building_tag: {unit_tags}}
+        self.assigned_targets: dict[int, set[int]] = {}  # {building_tag: {unit_tags}}
 
         # 알려진 모든 적 건물 (시야에서 사라져도 기억)
-        self.known_enemy_buildings: Dict[int, Point2] = {}  # {tag: last_known_position}
+        self.known_enemy_buildings: dict[int, Point2] = {}  # {tag: last_known_position}
 
     async def on_step(self, iteration: int):
         """매 프레임 실행"""
@@ -184,7 +184,7 @@ class BuildingDestroyer:
 
         return self.bot.units.filter(lambda u: u.type_id in combat_types)
 
-    def _get_prioritized_buildings(self) -> List[Unit]:
+    def _get_prioritized_buildings(self) -> list[Unit]:
         """
         우선순위가 높은 순으로 건물 정렬
 

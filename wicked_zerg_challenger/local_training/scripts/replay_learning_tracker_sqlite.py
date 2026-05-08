@@ -82,7 +82,7 @@ class ReplayLearningTrackerSQLite:
             return LearningPhase.MID_GAME
         return LearningPhase.LATE_GAME
 
-    def get_phase_focus(self, iteration: int) -> Dict:
+    def get_phase_focus(self, iteration: int) -> dict:
         phase = self.get_learning_phase(iteration)
         if phase == LearningPhase.EARLY_GAME:
             return {
@@ -138,8 +138,8 @@ class ReplayLearningTrackerSQLite:
     def increment_learning_count(
         self,
         replay_path: Path,
-        phase_focus: Optional[Dict] = None,
-        metadata: Optional[Dict] = None,
+        phase_focus: Optional[dict] = None,
+        metadata: Optional[dict] = None,
     ) -> int:
         replay_hash = self._get_replay_hash(replay_path)
         phase_focus_str = json.dumps(phase_focus) if phase_focus else None

@@ -29,7 +29,7 @@ class RoachTunnelingTactics:
         self.tunneling_requested = False
 
         # 잠복 이동 중인 바퀴
-        self.tunneling_roaches: Set[int] = set()
+        self.tunneling_roaches: set[int] = set()
 
         # 통계
         self.tunneling_attacks = 0

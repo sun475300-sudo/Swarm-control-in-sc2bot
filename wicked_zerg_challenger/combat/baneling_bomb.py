@@ -68,8 +68,8 @@ class BanelingTacticsManager:
         self.mode = BanelingBombMode.IDLE
 
         # 바네링 그룹 관리
-        self.bomb_squad: Set[int] = set()  # 폭탄 임무 바네링 태그
-        self.escort_zerglings: Set[int] = set()  # 호위 저글링 태그
+        self.bomb_squad: set[int] = set()  # 폭탄 임무 바네링 태그
+        self.escort_zerglings: set[int] = set()  # 호위 저글링 태그
         self.bomb_target: Optional[Point2] = None  # 폭탄 목표 위치
 
         # 전술 파라미터
@@ -451,7 +451,7 @@ class BanelingTacticsManager:
             return None
         return self.bot.units.find_by_tag(tag)
 
-    def get_bomb_stats(self) -> Dict:
+    def get_bomb_stats(self) -> dict:
         """
         바네 폭탄 통계 반환
 

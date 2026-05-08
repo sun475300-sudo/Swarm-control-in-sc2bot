@@ -292,14 +292,14 @@ class GameConfig:
     # ========== 설정 로드/저장 ==========
 
     @classmethod
-    def load_from_dict(cls, config_dict: Dict[str, Any]):
+    def load_from_dict(cls, config_dict: dict[str, Any]):
         """딕셔너리에서 설정 로드"""
         for key, value in config_dict.items():
             if hasattr(cls, key):
                 setattr(cls, key, value)
 
     @classmethod
-    def to_dict(cls) -> Dict[str, Any]:
+    def to_dict(cls) -> dict[str, Any]:
         """설정을 딕셔너리로 변환"""
         # Bug fix #8: Filter for JSON-serializable types only
         _JSON_TYPES = (bool, int, float, str, list, dict, type(None))

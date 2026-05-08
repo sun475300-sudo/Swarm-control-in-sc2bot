@@ -87,7 +87,7 @@ class ScoringSystem:
         self.update_interval = 2.0  # 2초마다 평가
 
         # === 10개 도메인 점수 ===
-        self.domains: Dict[str, DomainScore] = {
+        self.domains: dict[str, DomainScore] = {
             "combat": DomainScore("Combat"),
             "production": DomainScore("Production"),
             "scouting": DomainScore("Scouting"),
@@ -125,7 +125,7 @@ class ScoringSystem:
         self._larva_wasted = 0
 
         # === 10게임 누적 ===
-        self._session_scores: List[Dict] = []
+        self._session_scores: list[dict] = []
         self._cumulative_score = self._load_cumulative_score()
 
         os.makedirs(self.SAVE_PATH, exist_ok=True)
@@ -556,7 +556,7 @@ class ScoringSystem:
     # 게임 종료 처리
     # =========================================================================
 
-    def on_game_end(self, result: str) -> Dict:
+    def on_game_end(self, result: str) -> dict:
         """
         게임 종료 시 최종 점수 계산 및 저장
 
@@ -605,7 +605,7 @@ class ScoringSystem:
 
         return report
 
-    def _generate_report(self, result: str, game_time: float) -> Dict:
+    def _generate_report(self, result: str, game_time: float) -> dict:
         """종합 리포트 생성"""
         total_score = sum(d.score for d in self.domains.values())
         report = {
@@ -695,7 +695,7 @@ class ScoringSystem:
     # 실시간 상황 인식 + 자동 대응 권고
     # =========================================================================
 
-    def get_realtime_advice(self) -> List[str]:
+    def get_realtime_advice(self) -> list[str]:
         """실시간 상황 분석 후 즉각 행동 권고 반환"""
         advice = []
         game_time = getattr(self.bot, "time", 0.0)
@@ -740,7 +740,7 @@ class ScoringSystem:
     # 저장/로드
     # =========================================================================
 
-    def _save_game_score(self, report: Dict) -> None:
+    def _save_game_score(self, report: dict) -> None:
         """개별 게임 점수 저장"""
         filepath = os.path.join(self.SAVE_PATH, "game_scores.json")
         try:
@@ -757,7 +757,7 @@ class ScoringSystem:
         except Exception:
             pass
 
-    def _load_cumulative_score(self) -> Dict:
+    def _load_cumulative_score(self) -> dict:
         """누적 점수 로드"""
         filepath = os.path.join(self.SAVE_PATH, "cumulative_score.json")
         try:

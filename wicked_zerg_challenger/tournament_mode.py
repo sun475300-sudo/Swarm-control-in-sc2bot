@@ -46,13 +46,13 @@ class MatchResult:
         self.winner = winner
         self.game_map = game_map
         self.duration: float = 0.0
-        self.score: Tuple[int, int] = (0, 0)
+        self.score: tuple[int, int] = (0, 0)
 
     @property
     def is_draw(self) -> bool:
         return self.winner is None
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "player1": self.player1,
             "player2": self.player2,
@@ -85,7 +85,7 @@ class TournamentParticipant:
             return 0.0
         return self.wins / self.total_games
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "name": self.name,
             "strategy": self.strategy,
@@ -100,7 +100,7 @@ class TournamentParticipant:
 
 def _update_elo(
     winner_elo: float, loser_elo: float, k: float = 32.0
-) -> Tuple[float, float]:
+) -> tuple[float, float]:
     """ELO 레이팅 업데이트 (표준 공식)."""
     expected_w = 1.0 / (1.0 + math.pow(10, (loser_elo - winner_elo) / 400))
     expected_l = 1.0 - expected_w
@@ -121,11 +121,11 @@ class TournamentManager:
         self, tournament_format: TournamentFormat = TournamentFormat.ROUND_ROBIN
     ):
         self.format = tournament_format
-        self.participants: List[TournamentParticipant] = []
-        self.matches: List[MatchResult] = []
+        self.participants: list[TournamentParticipant] = []
+        self.matches: list[MatchResult] = []
         self.current_round: int = 0
         self.is_running: bool = False
-        self.map_pool: List[str] = [
+        self.map_pool: list[str] = [
             "AcropolisLE",
             "DiscoBloodbathLE",
             "EphemeronLE",
@@ -135,9 +135,9 @@ class TournamentManager:
             "WorldofSleepersLE",
         ]
         # 라운드 로빈 매칭 큐
-        self._pending_matches: List[Tuple[str, str, str]] = []
+        self._pending_matches: list[tuple[str, str, str]] = []
         # 싱글 엘리미네이션 브래킷
-        self._bracket: List[str] = []
+        self._bracket: list[str] = []
         self._bracket_idx: int = 0
 
         logger.info("토너먼트 관리자 초기화 (format=%s)", tournament_format.value)
@@ -217,7 +217,7 @@ class TournamentManager:
 
     # ── 매칭 ──────────────────────────────────
 
-    def get_next_match(self) -> Optional[Tuple[str, str, str]]:
+    def get_next_match(self) -> Optional[tuple[str, str, str]]:
         """다음 경기 정보 반환. 남은 매치가 없으면 None."""
         if not self._pending_matches:
             return None
@@ -276,7 +276,7 @@ class TournamentManager:
 
     # ── 리더보드 / 완료 체크 ──────────────────
 
-    def get_leaderboard(self) -> List[Dict[str, Any]]:
+    def get_leaderboard(self) -> list[dict[str, Any]]:
         """리더보드 반환 — ELO 기준 내림차순."""
         sorted_participants = sorted(
             self.participants,
@@ -291,7 +291,7 @@ class TournamentManager:
             return False
         return len(self._pending_matches) == 0
 
-    def get_status(self) -> Dict[str, Any]:
+    def get_status(self) -> dict[str, Any]:
         """상태 반환"""
         return {
             "format": self.format.value,

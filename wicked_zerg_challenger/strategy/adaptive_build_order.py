@@ -61,7 +61,7 @@ class AdaptiveBuildOrder:
         self.current_build = "standard"  # "anti_cheese", "timing_attack", "macro"
 
         # ★ Race-specific timing attacks ★
-        self.timing_attack_details: Dict[str, any] = {}
+        self.timing_attack_details: dict[str, any] = {}
         self.attack_supply_requirement = 0
         self.attack_target_time = 0
 
@@ -257,7 +257,7 @@ class AdaptiveBuildOrder:
         """현재 빌드 반환"""
         return self.current_build
 
-    def get_build_details(self) -> Dict:
+    def get_build_details(self) -> dict:
         """빌드 세부사항 반환"""
         return self.timing_attack_details
 

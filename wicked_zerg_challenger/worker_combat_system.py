@@ -49,7 +49,7 @@ class WorkerCombatSystem:
 
         # 전투 모드 상태
         self.combat_mode = False
-        self.combat_workers: Set[int] = set()  # 전투 중인 일꾼 태그
+        self.combat_workers: set[int] = set()  # 전투 중인 일꾼 태그
         self.last_threat_time = 0.0
 
         # 포위 공격 설정
@@ -59,7 +59,7 @@ class WorkerCombatSystem:
 
         # 드릴 마이크로 설정
         self.drill_attack_cooldown = 0.5  # 공격 후 대기 시간
-        self.worker_attack_timings: Dict[int, float] = {}  # 일꾼별 마지막 공격 시간
+        self.worker_attack_timings: dict[int, float] = {}  # 일꾼별 마지막 공격 시간
 
         # 위협 해제 조건
         self.combat_mode_cooldown = 5.0  # 위협 사라진 후 5초 대기

@@ -81,8 +81,8 @@ class BatchTrainer:
             raise
 
     def train_from_batch_results(
-        self, batch_results: List[Dict[str, Any]], epochs: int = 10
-    ) -> Dict[str, float]:
+        self, batch_results: list[dict[str, Any]], epochs: int = 10
+    ) -> dict[str, float]:
         """
         배치 결과로부터 학습 수행
 
@@ -184,7 +184,7 @@ class BatchTrainer:
             traceback.print_exc()
             return {"loss": 0.0, "accuracy": 0.0, "error": str(e)}
 
-    def _prepare_training_data(self, batch_results: List[Dict[str, Any]]) -> tuple:
+    def _prepare_training_data(self, batch_results: list[dict[str, Any]]) -> tuple:
         """
         배치 결과를 학습 데이터로 변환
 
@@ -225,7 +225,7 @@ class BatchTrainer:
 
         return inputs_tensor, targets_tensor
 
-    def _extract_input_features(self, result: Dict[str, Any]) -> Optional[List[float]]:
+    def _extract_input_features(self, result: dict[str, Any]) -> Optional[list[float]]:
         """입력 특징 벡터 추출 (15차원)"""
         try:
             # 아군 상태 (5개)
@@ -271,7 +271,7 @@ class BatchTrainer:
             logger.error(f"Feature extraction failed: {e}")
             return None
 
-    def _extract_target_features(self, result: Dict[str, Any]) -> Optional[List[float]]:
+    def _extract_target_features(self, result: dict[str, Any]) -> Optional[list[float]]:
         """타겟 레이블 추출 (4차원 전략 확률)"""
         try:
             # 승리 여부 확인
@@ -320,7 +320,7 @@ class BatchTrainer:
 
 def train_from_manifest(
     manifest_path: Path, model_path: Optional[str] = None, epochs: int = 10
-) -> Dict[str, float]:
+) -> dict[str, float]:
     """
     매니페스트 파일로부터 배치 학습 수행
 

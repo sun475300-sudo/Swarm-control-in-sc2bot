@@ -59,7 +59,7 @@ class RavagerMicro:
         self.cooldown_duration = cooldown_duration
 
         # Cooldown tracking
-        self.last_shot_time: Dict[int, float] = {}  # unit_tag -> time
+        self.last_shot_time: dict[int, float] = {}  # unit_tag -> time
 
     def is_on_cooldown(self, ravager: Unit, current_time: float) -> bool:
         """Check if Ravager ability is on cooldown."""
@@ -168,7 +168,7 @@ class RavagerMicro:
 
     async def execute_bile_shots(
         self, ravagers, enemy_units, bot, current_time: float
-    ) -> Set[int]:
+    ) -> set[int]:
         """
         Execute Corrosive Bile shots.
 
@@ -230,7 +230,7 @@ class LurkerMicro:
         self.reposition_threshold = reposition_threshold
 
         # State tracking
-        self.burrowed_lurkers: Set[int] = set()
+        self.burrowed_lurkers: set[int] = set()
 
     def should_burrow(self, lurker: Unit, enemy_units) -> bool:
         """Check if Lurker should burrow."""
@@ -297,7 +297,7 @@ class LurkerMicro:
 
         return Point2((optimal_x, optimal_y))
 
-    async def execute_lurker_micro(self, lurkers, enemy_units, bot) -> Set[int]:
+    async def execute_lurker_micro(self, lurkers, enemy_units, bot) -> set[int]:
         """
         Execute Lurker micro.
 
@@ -387,7 +387,7 @@ class QueenMicro:
         self.min_energy_for_creep = min_energy_for_creep
 
         # Priority unit types for transfuse
-        self.priority_types: Set = set()
+        self.priority_types: set = set()
         if UnitTypeId:
             self.priority_types = {
                 UnitTypeId.ULTRALISK,
@@ -438,7 +438,7 @@ class QueenMicro:
         injured_units.sort(key=lambda x: x[1], reverse=True)
         return injured_units[0][0]
 
-    async def execute_queen_micro(self, queens, friendly_units, bot) -> Set[int]:
+    async def execute_queen_micro(self, queens, friendly_units, bot) -> set[int]:
         """
         Execute Queen micro.
 
@@ -502,7 +502,7 @@ class ViperMicro:
         self.consume_threshold = consume_threshold
 
         # High-value abduct targets
-        self.abduct_priorities: Set = set()
+        self.abduct_priorities: set = set()
         if UnitTypeId:
             self.abduct_priorities = {
                 UnitTypeId.SIEGETANK,
@@ -536,7 +536,7 @@ class ViperMicro:
 
     async def execute_viper_micro(
         self, vipers, enemy_units, friendly_units, bot
-    ) -> Set[int]:
+    ) -> set[int]:
         """
         Execute Viper micro.
 
@@ -626,10 +626,10 @@ class CorruptorMicro:
         self.cooldown_duration = cooldown_duration
 
         # Cooldown tracking
-        self.last_spray_time: Dict[int, float] = {}  # unit_tag -> time
+        self.last_spray_time: dict[int, float] = {}  # unit_tag -> time
 
         # High-armor targets (prioritize for Caustic Spray)
-        self.priority_targets: Set = set()
+        self.priority_targets: set = set()
         if UnitTypeId:
             self.priority_targets = {
                 UnitTypeId.BATTLECRUISER,
@@ -688,7 +688,7 @@ class CorruptorMicro:
 
     async def execute_corruptor_micro(
         self, corruptors, enemy_units, bot, current_time: float
-    ) -> Set[int]:
+    ) -> set[int]:
         """
         Execute Corruptor micro.
 
@@ -748,11 +748,11 @@ class InfestorMicro:
         self.fungal_range = 10
         self.neural_range = 9
         self.min_fungal_targets = 3
-        self.last_fungal_time: Dict[int, float] = {}
+        self.last_fungal_time: dict[int, float] = {}
         self.fungal_cooldown = 10.0
 
         # High-value targets for Neural Parasite
-        self.neural_priority_targets: Set = set()
+        self.neural_priority_targets: set = set()
         if UnitTypeId:
             self.neural_priority_targets = {
                 UnitTypeId.THOR,
@@ -829,7 +829,7 @@ class InfestorMicro:
 
     async def execute_infestor_micro(
         self, infestors, enemy_units, bot, current_time: float
-    ) -> Set[int]:
+    ) -> set[int]:
         """Execute Infestor micro."""
         if not infestors or not enemy_units:
             return set()
@@ -907,7 +907,7 @@ class BanelingMicro:
         self.min_value_to_detonate = 3  # Minimum unit count worth exploding
 
         # High-value targets for Banelings
-        self.priority_targets: Set = set()
+        self.priority_targets: set = set()
         if UnitTypeId:
             self.priority_targets = {
                 UnitTypeId.MARINE,
@@ -982,7 +982,7 @@ class BanelingMicro:
         )
         return closest.position
 
-    async def execute_baneling_micro(self, banelings, enemy_units, bot) -> Set[int]:
+    async def execute_baneling_micro(self, banelings, enemy_units, bot) -> set[int]:
         """Execute Baneling micro."""
         if not banelings or not enemy_units:
             return set()
@@ -1035,7 +1035,7 @@ class FocusFireCoordinator:
 
     def __init__(self):
         # Priority targets (high value)
-        self.priority_types: Set = set()
+        self.priority_types: set = set()
         if UnitTypeId:
             self.priority_types = {
                 UnitTypeId.SIEGETANK,
@@ -1049,8 +1049,8 @@ class FocusFireCoordinator:
             }
 
         # Current target assignments
-        self.target_assignments: Dict[int, int] = {}  # unit_tag -> target_tag
-        self.target_damage_count: Dict[int, int] = defaultdict(
+        self.target_assignments: dict[int, int] = {}  # unit_tag -> target_tag
+        self.target_damage_count: dict[int, int] = defaultdict(
             int
         )  # target_tag -> attacker_count
 
@@ -1118,7 +1118,7 @@ class FocusFireCoordinator:
         self.target_damage_count[target_tag] += 1
 
     def clear_dead_assignments(
-        self, alive_unit_tags: Set[int], alive_enemy_tags: Set[int]
+        self, alive_unit_tags: set[int], alive_enemy_tags: set[int]
     ):
         """Remove assignments for dead units."""
         # Remove dead attackers
@@ -1402,7 +1402,7 @@ class AdvancedMicroControllerV3:
         for tag in dead_infestor_tags:
             del self.infestor_micro.last_fungal_time[tag]
 
-    def get_status(self) -> Dict[str, any]:
+    def get_status(self) -> dict[str, any]:
         """Get micro controller status."""
         return {
             "ravager_cooldowns": len(self.ravager_micro.last_shot_time),

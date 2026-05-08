@@ -52,7 +52,7 @@ class VictoryTracker:
         self._endgame_push_threshold = 360  # 6분 이후
 
         # Expansion tracking
-        self._known_enemy_expansions: Set = set()
+        self._known_enemy_expansions: set = set()
         self._last_expansion_check = 0
 
     @property

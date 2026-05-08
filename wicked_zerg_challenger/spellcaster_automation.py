@@ -93,7 +93,7 @@ class SpellCasterAutomation:
         }
 
         # ★ Authority Tracking ★
-        self.active_casters: Dict[int, str] = {}  # {tag: ability_name}
+        self.active_casters: dict[int, str] = {}  # {tag: ability_name}
 
     def _cleanup_authorities(self):
         """Clean up finished assignments"""
@@ -275,7 +275,7 @@ class SpellCasterAutomation:
                 )
                 break
 
-    def _find_bile_target(self, enemies: List) -> tuple:
+    def _find_bile_target(self, enemies: list) -> tuple:
         """
         담즙 최적 목표 위치 찾기
 
@@ -830,6 +830,6 @@ class SpellCasterAutomation:
 
         self.last_skill_used[unit_tag][ability] = game_time
 
-    def get_statistics(self) -> Dict:
+    def get_statistics(self) -> dict:
         """통계 반환"""
         return self.skills_used.copy()

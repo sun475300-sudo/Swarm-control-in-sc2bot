@@ -46,7 +46,7 @@ class DifficultyProgression:
         self, data_file: str = "local_training/data/difficulty_progression.json"
     ):
         self.data_file = Path(data_file)
-        self.stats: Dict = {}  # {map_name: {race: {difficulty: {wins, losses}}}}
+        self.stats: dict = {}  # {map_name: {race: {difficulty: {wins, losses}}}}
         self.win_rate_threshold = 0.90  # 90%
         self.min_games_for_progression = 10  # 최소 10게임
 
@@ -80,7 +80,7 @@ class DifficultyProgression:
         except Exception as e:
             logger.info(f"Error saving stats: {e}")
 
-    def _serialize_stats(self, stats: Dict) -> Dict:
+    def _serialize_stats(self, stats: dict) -> dict:
         """Enum을 문자열로 변환"""
         serialized = {}
         for map_name, map_data in stats.items():
@@ -93,7 +93,7 @@ class DifficultyProgression:
                     serialized[map_name][race_str][diff_str] = diff_data
         return serialized
 
-    def _deserialize_stats(self, serialized: Dict) -> Dict:
+    def _deserialize_stats(self, serialized: dict) -> dict:
         """문자열을 Enum으로 변환"""
         stats = {}
         for map_name, map_data in serialized.items():

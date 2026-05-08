@@ -8,7 +8,8 @@ This module is intentionally dependency-tolerant:
 
 from __future__ import annotations
 
-from typing import Optional, Sequence, Tuple
+from typing import Optional, Tuple
+from collections.abc import Sequence
 
 try:
     import numpy as np
@@ -64,8 +65,8 @@ def _ensure_opencl():
 
 
 def nearest_point_index_opencl(
-    origin: Tuple[float, float],
-    points: Sequence[Tuple[float, float]],
+    origin: tuple[float, float],
+    points: Sequence[tuple[float, float]],
 ) -> Optional[int]:
     """Return nearest point index, trying OpenCL first and CPU fallback."""
     if not points:

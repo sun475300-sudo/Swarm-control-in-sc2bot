@@ -183,7 +183,7 @@ class PerformanceOptimizer:
         if len(self.execution_times[logic_name]) > 100:
             self.execution_times[logic_name].pop(0)
 
-    def get_performance_report(self) -> Dict[str, Any]:
+    def get_performance_report(self) -> dict[str, Any]:
         """
         성능 보고서 생성
 

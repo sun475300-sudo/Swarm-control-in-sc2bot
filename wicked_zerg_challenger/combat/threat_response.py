@@ -48,7 +48,7 @@ class SplashThreatHandler:
         self.separation_max = separation_max
 
         # Define splash threat unit types - use getattr for compatibility
-        self.splash_threat_types: Set = set()
+        self.splash_threat_types: set = set()
         if UnitTypeId:
             threat_names = [
                 "SIEGETANK",
@@ -69,7 +69,7 @@ class SplashThreatHandler:
                 if unit_type is not None:
                     self.splash_threat_types.add(unit_type)
 
-    def get_splash_threats(self, enemy_units) -> List:
+    def get_splash_threats(self, enemy_units) -> list:
         """
         Filter enemy units to get only splash damage threats.
 
@@ -120,7 +120,7 @@ class SplashThreatHandler:
             self.separation_min + ratio * (self.separation_max - self.separation_min),
         )
 
-    def calculate_repulsion(self, unit, splash_threats) -> Tuple[float, float]:
+    def calculate_repulsion(self, unit, splash_threats) -> tuple[float, float]:
         """
         Calculate repulsion vector from splash damage threats.
 
@@ -160,7 +160,7 @@ class SplashThreatHandler:
 
     def calculate_neighbor_separation(
         self, unit, neighbors, radius: float = 10.0
-    ) -> Tuple[float, float]:
+    ) -> tuple[float, float]:
         """
         Calculate separation force from neighboring friendly units.
 
@@ -231,7 +231,7 @@ class SplashThreatHandler:
 
         return False
 
-    def get_panic_split_direction(self, unit, splash_threats) -> Tuple[float, float]:
+    def get_panic_split_direction(self, unit, splash_threats) -> tuple[float, float]:
         """
         Calculate emergency split direction when under heavy threat.
 

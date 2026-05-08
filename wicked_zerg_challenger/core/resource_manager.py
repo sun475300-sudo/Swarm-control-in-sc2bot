@@ -35,7 +35,7 @@ class ResourceManager:
         self._reserved_gas = 0
 
         # Per-manager reservation tracking: {manager_name: (minerals, gas)}
-        self._reservations: Dict[str, Tuple[int, int]] = {}
+        self._reservations: dict[str, tuple[int, int]] = {}
 
         # Statistics
         self.total_reservations = 0
@@ -142,7 +142,7 @@ class ResourceManager:
                     f"(Remaining: {new_m}M/{new_g}G)"
                 )
 
-    def get_available_resources(self) -> Tuple[int, int]:
+    def get_available_resources(self) -> tuple[int, int]:
         """
         Get currently available (unreserved) resources
 
@@ -153,7 +153,7 @@ class ResourceManager:
         available_g = max(0, self.bot.vespene - self._reserved_gas)
         return (available_m, available_g)
 
-    def get_reserved_resources(self) -> Tuple[int, int]:
+    def get_reserved_resources(self) -> tuple[int, int]:
         """
         Get currently reserved resources
 
@@ -162,7 +162,7 @@ class ResourceManager:
         """
         return (self._reserved_minerals, self._reserved_gas)
 
-    def get_manager_reservation(self, manager_name: str) -> Optional[Tuple[int, int]]:
+    def get_manager_reservation(self, manager_name: str) -> Optional[tuple[int, int]]:
         """
         Get reservation for a specific manager
 
@@ -186,7 +186,7 @@ class ResourceManager:
         """
         return manager_name in self._reservations
 
-    def get_statistics(self) -> Dict[str, any]:
+    def get_statistics(self) -> dict[str, any]:
         """
         Get resource manager statistics
 
@@ -238,7 +238,7 @@ class ResourceManager:
         """
         # Track reservation ages
         if not hasattr(self, "_reservation_times"):
-            self._reservation_times: Dict[str, int] = {}
+            self._reservation_times: dict[str, int] = {}
 
         async with self._lock:
             stale_threshold = 220  # 10 seconds worth of frames

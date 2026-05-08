@@ -57,7 +57,7 @@ class PersonalityModule:
         self.opponent_modeling = opponent_modeling
 
         # 채팅 이력
-        self.messages_sent: List[str] = []
+        self.messages_sent: list[str] = []
         self.last_message_time = 0
         self.message_cooldown = 60.0  # 메시지 최소 간격 (초)
 

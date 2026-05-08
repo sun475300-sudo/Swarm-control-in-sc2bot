@@ -358,7 +358,7 @@ class ProtossCounterSystem:
         if len(phoenixes) >= 2 and iteration % 20 == 0:
             await self._spread_units_vs_phoenix(phoenixes)
 
-    async def _spread_units_vs_phoenix(self, phoenixes: List):
+    async def _spread_units_vs_phoenix(self, phoenixes: list):
         """불사조 상대 유닛 분산"""
         # 퀸은 뭉쳐있기 (들어올리기 대상이지만 대공 필요)
         queens = self.bot.units(UnitTypeId.QUEEN)
@@ -522,7 +522,7 @@ class ProtossCounterSystem:
         )
         return lairs.ready.exists
 
-    def get_status_report(self) -> Dict:
+    def get_status_report(self) -> dict:
         """상태 보고서 (디버깅용)"""
         return {
             "dt_detected": self.dt_detected,

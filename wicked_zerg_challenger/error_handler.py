@@ -19,7 +19,8 @@ import functools
 import logging
 import traceback
 from collections import defaultdict
-from typing import Any, Callable, Optional
+from typing import Any, Optional
+from collections.abc import Callable
 
 logger = logging.getLogger("ErrorHandler")
 

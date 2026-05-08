@@ -106,9 +106,9 @@ class RealtimeAwarenessEngine:
         self.last_update = 0.0
         self.update_interval = 1.0  # 1초마다 진단
         self.situation = Situation()
-        self.active_problems: List[Problem] = []
-        self.active_overrides: List[Override] = []
-        self.problem_history: List[Dict] = []
+        self.active_problems: list[Problem] = []
+        self.active_overrides: list[Override] = []
+        self.problem_history: list[dict] = []
 
         # 상황 추적
         self._last_army_supply = 0
@@ -120,7 +120,7 @@ class RealtimeAwarenessEngine:
         self._force_army_mode = False
         self._force_army_until = 0.0
 
-    def on_step(self, iteration: int) -> List[Override]:
+    def on_step(self, iteration: int) -> list[Override]:
         """
         매 프레임 호출 — 상황 진단 → 문제 감지 → 자동 대응
 
@@ -259,7 +259,7 @@ class RealtimeAwarenessEngine:
     # Step 2: 문제 감지 (14가지 패턴)
     # =========================================================================
 
-    def _detect_problems(self) -> List[Problem]:
+    def _detect_problems(self) -> list[Problem]:
         """14가지 패턴으로 문제 감지"""
         problems = []
         s = self.situation
@@ -502,7 +502,7 @@ class RealtimeAwarenessEngine:
     # Step 3: 오버라이드 생성
     # =========================================================================
 
-    def _generate_overrides(self, game_time: float) -> List[Override]:
+    def _generate_overrides(self, game_time: float) -> list[Override]:
         """문제에 대한 행동 오버라이드 명령 생성"""
         overrides = []
 

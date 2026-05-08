@@ -58,7 +58,7 @@ class ResourceManager:
         self.update_interval = 22  # ~1 second
 
         # Resource statistics
-        self.income_history: List[Dict] = []
+        self.income_history: list[dict] = []
         self.last_minerals = 0
         self.last_gas = 0
 
@@ -283,7 +283,7 @@ class ResourceManager:
                         logger.error(f"Gas build failed: {e}")
                         continue
 
-    def get_saturation_status(self) -> Dict[str, int]:
+    def get_saturation_status(self) -> dict[str, int]:
         """
         Get current resource saturation status.
 
@@ -323,7 +323,7 @@ class ResourceManager:
 
         return result
 
-    def get_income_rate(self) -> Dict[str, float]:
+    def get_income_rate(self) -> dict[str, float]:
         """
         Get estimated income rate.
 

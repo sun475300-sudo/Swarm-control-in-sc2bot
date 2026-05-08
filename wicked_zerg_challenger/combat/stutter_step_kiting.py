@@ -68,9 +68,9 @@ class StutterStepKiting:
         self.bot = bot
 
         # 카이팅 상태 추적
-        self.unit_states: Dict[int, str] = {}  # unit_tag -> "attacking" | "retreating"
-        self.last_attack_frame: Dict[int, int] = {}  # unit_tag -> frame
-        self.retreat_positions: Dict[int, Point2] = {}  # unit_tag -> retreat_position
+        self.unit_states: dict[int, str] = {}  # unit_tag -> "attacking" | "retreating"
+        self.last_attack_frame: dict[int, int] = {}  # unit_tag -> frame
+        self.retreat_positions: dict[int, Point2] = {}  # unit_tag -> retreat_position
 
     def should_kite(self, unit: Unit) -> bool:
         """유닛이 카이팅을 해야 하는지 확인"""
@@ -206,7 +206,7 @@ class StutterStepKiting:
         """유닛의 카이팅 상태 반환"""
         return self.unit_states.get(unit.tag)
 
-    def cleanup_dead_units(self, alive_tags: Set[int]) -> None:
+    def cleanup_dead_units(self, alive_tags: set[int]) -> None:
         """죽은 유닛 정보 정리"""
         # 살아있는 유닛만 남기기
         self.unit_states = {

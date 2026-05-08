@@ -56,7 +56,7 @@ class LateGameOptimizer:
         self.recommended_comp = "standard"  # "brood_lord", "ultralisk", "corruptor"
 
         # Tech transitions
-        self.tech_targets: Set[UnitTypeId] = set()
+        self.tech_targets: set[UnitTypeId] = set()
 
     async def on_step(self, iteration: int):
         """매 프레임 실행"""

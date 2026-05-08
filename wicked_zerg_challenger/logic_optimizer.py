@@ -11,7 +11,8 @@ Logic Optimizer - 전체 시스템 실행 최적화
 
 from dataclasses import dataclass
 from enum import Enum
-from typing import Callable, Dict, Optional, Set
+from typing import Dict, Optional, Set
+from collections.abc import Callable
 
 from utils.logger import get_logger
 
@@ -41,7 +42,7 @@ class SystemConfig:
 
     name: str
     priority: SystemPriority
-    enabled_phases: Set[GamePhase]
+    enabled_phases: set[GamePhase]
     interval_frames: int  # 실행 간격 (프레임 수)
     condition: Optional[Callable] = None  # 활성화 조건
     last_executed: int = 0
@@ -59,7 +60,7 @@ class LogicOptimizer:
         self.logger = get_logger("LogicOptimizer")
 
         # 시스템 설정
-        self.systems: Dict[str, SystemConfig] = {}
+        self.systems: dict[str, SystemConfig] = {}
         self._initialize_system_configs()
 
         # 성능 추적
@@ -334,7 +335,7 @@ class LogicOptimizer:
         self,
         name: str,
         priority: SystemPriority,
-        enabled_phases: Set[GamePhase],
+        enabled_phases: set[GamePhase],
         interval: int,
         condition: Optional[Callable] = None,
     ):
@@ -598,7 +599,7 @@ class LogicOptimizer:
         self.apply_strategy_improvements(current_diff)
         return True
 
-    def get_optimization_stats(self, iteration: int) -> Dict:
+    def get_optimization_stats(self, iteration: int) -> dict:
         """최적화 통계 반환"""
         current_phase = self._get_current_phase()
 

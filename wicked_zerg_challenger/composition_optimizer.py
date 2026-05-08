@@ -138,7 +138,7 @@ ZERG_UNITS = {
 
 
 # 카운터 매트릭스: counter_matrix[적유닛][아군유닛] = 효율 점수 (0~1)
-COUNTER_MATRIX: Dict[str, Dict[str, float]] = {
+COUNTER_MATRIX: dict[str, dict[str, float]] = {
     # 테란
     "MARINE": {"baneling": 0.95, "zergling": 0.7, "lurker": 0.9, "ultralisk": 0.85},
     "MARAUDER": {"zergling": 0.8, "mutalisk": 0.7, "hydralisk": 0.6},
@@ -177,7 +177,7 @@ COUNTER_MATRIX: Dict[str, Dict[str, float]] = {
 
 
 # 유닛 시너지 매트릭스: synergy_matrix[유닛A][유닛B] = 조합 보너스
-UNIT_SYNERGY_MATRIX: Dict[str, Dict[str, float]] = {
+UNIT_SYNERGY_MATRIX: dict[str, dict[str, float]] = {
     "zergling": {"baneling": 0.18, "hydralisk": 0.08, "ultralisk": 0.06},
     "baneling": {"zergling": 0.20, "lurker": 0.05},
     "roach": {"ravager": 0.22, "hydralisk": 0.09},
@@ -211,17 +211,17 @@ class CompositionOptimizer:
         # 캐시
         self._last_analysis_time: float = 0.0
         self._analysis_interval: float = 5.0  # 5초마다 분석
-        self._cached_recommendation: Dict[str, float] = {}
+        self._cached_recommendation: dict[str, float] = {}
 
         # 현재 보유 유닛 정보
-        self.current_composition: Dict[str, int] = {}
+        self.current_composition: dict[str, int] = {}
 
         # 적 유닛 정보
-        self.enemy_composition: Dict[str, int] = {}
+        self.enemy_composition: dict[str, int] = {}
 
         logger.debug("[COMPOSITION] 유닛 조합 최적화기 초기화 완료")
 
-    def analyze_enemy_composition(self) -> Dict[str, int]:
+    def analyze_enemy_composition(self) -> dict[str, int]:
         """
         적 유닛 조합 분석
 
@@ -259,7 +259,7 @@ class CompositionOptimizer:
         self.enemy_composition = composition
         return composition
 
-    def analyze_current_composition(self) -> Dict[str, int]:
+    def analyze_current_composition(self) -> dict[str, int]:
         """
         아군 유닛 조합 분석
 
@@ -285,7 +285,7 @@ class CompositionOptimizer:
 
     def get_optimal_composition(
         self, budget_minerals: int = 0, budget_gas: int = 0
-    ) -> Dict[str, float]:
+    ) -> dict[str, float]:
         """
         적 조합 대비 최적 유닛 비율 계산
 
@@ -313,7 +313,7 @@ class CompositionOptimizer:
             return self._cached_recommendation
 
         # 카운터 점수 계산
-        counter_scores: Dict[str, float] = {}
+        counter_scores: dict[str, float] = {}
 
         for enemy_unit, count in enemy_comp.items():
             if enemy_unit in COUNTER_MATRIX:
@@ -381,7 +381,7 @@ class CompositionOptimizer:
         self._cached_recommendation = filtered
         return filtered
 
-    def _apply_synergy_bonus(self, counter_scores: Dict[str, float]) -> None:
+    def _apply_synergy_bonus(self, counter_scores: dict[str, float]) -> None:
         """추천 점수에 유닛 간 시너지 보너스를 적용한다."""
         if not counter_scores:
             return
@@ -414,7 +414,7 @@ class CompositionOptimizer:
             pair_bonus = min(pair_bonus, 0.35)
             counter_scores[unit_name] *= 1.0 + pair_bonus
 
-    def get_production_recommendation(self) -> List[Tuple[str, int]]:
+    def get_production_recommendation(self) -> list[tuple[str, int]]:
         """
         현재 자원 기반 생산 추천
 
@@ -466,7 +466,7 @@ class CompositionOptimizer:
 
         return recommendations
 
-    def calculate_army_value(self) -> Dict[str, float]:
+    def calculate_army_value(self) -> dict[str, float]:
         """
         현재 아군 군대 가치 계산
 
@@ -489,7 +489,7 @@ class CompositionOptimizer:
             "gas_value": total_gas,
         }
 
-    def _get_default_composition(self) -> Dict[str, float]:
+    def _get_default_composition(self) -> dict[str, float]:
         """적 정보 없을 때 기본 조합"""
         enemy_race = getattr(self.bot, "enemy_race", None)
 
@@ -515,7 +515,7 @@ class CompositionOptimizer:
 
         return {"roach": 0.35, "hydralisk": 0.3, "zergling": 0.2, "ravager": 0.15}
 
-    def get_status(self) -> Dict[str, Any]:
+    def get_status(self) -> dict[str, Any]:
         """최적화 상태 반환"""
         return {
             "enemy_composition": self.enemy_composition,

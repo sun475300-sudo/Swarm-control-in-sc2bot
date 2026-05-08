@@ -30,7 +30,7 @@ class IntegrationMonitor:
         self.log_file = self.base_dir / "logs" / "bot.log"
         self.last_check_time = datetime.now()
 
-    def check_opponent_models(self) -> Dict:
+    def check_opponent_models(self) -> dict:
         """Check opponent modeling data"""
         logger.info("\n" + "=" * 70)
         logger.info("OPPONENT MODELING STATUS")
@@ -119,7 +119,7 @@ class IntegrationMonitor:
             "models": models_data,
         }
 
-    def check_micro_v3_status(self) -> Dict:
+    def check_micro_v3_status(self) -> dict:
         """Check micro controller V3 status from logs"""
         logger.info("\n" + "=" * 70)
         logger.info("ADVANCED MICRO CONTROLLER V3 STATUS")
@@ -175,7 +175,7 @@ class IntegrationMonitor:
             logger.info(f"\n[X] Error reading log file: {e}")
             return {"status": "error", "error": str(e)}
 
-    def check_errors(self) -> Dict:
+    def check_errors(self) -> dict:
         """Check for error messages in logs"""
         logger.info("\n" + "=" * 70)
         logger.info("ERROR CHECK")
@@ -239,7 +239,7 @@ class IntegrationMonitor:
             logger.info(f"\n[X] Error reading log file: {e}")
             return {"status": "error", "error": str(e)}
 
-    def check_performance(self) -> Dict:
+    def check_performance(self) -> dict:
         """Check performance metrics"""
         logger.info("\n" + "=" * 70)
         logger.info("PERFORMANCE CHECK")
@@ -308,7 +308,7 @@ class IntegrationMonitor:
             logger.info(f"\n[X] Error reading log file: {e}")
             return {"status": "error", "error": str(e)}
 
-    def generate_summary_report(self) -> Dict:
+    def generate_summary_report(self) -> dict:
         """Generate comprehensive summary report"""
         logger.info("\n" + "=" * 70)
         logger.info("INTEGRATION MONITORING SUMMARY")

@@ -69,11 +69,11 @@ class MapManager:
 
     def __init__(self, stats_file: str = "map_performance.json"):
         self.stats_file = Path(stats_file)
-        self.stats: Dict[str, Dict[str, int]] = self._load_stats()
+        self.stats: dict[str, dict[str, int]] = self._load_stats()
         self.current_map_index = 0
         self.logger = logging.getLogger(__name__)
 
-    def _load_stats(self) -> Dict[str, Dict[str, int]]:
+    def _load_stats(self) -> dict[str, dict[str, int]]:
         if not self.stats_file.exists():
             return {}
 
@@ -102,7 +102,7 @@ class MapManager:
                 self.logger.warning("Failed to save map stats: %s", exc)
                 return
 
-    def get_available_maps(self) -> List[str]:
+    def get_available_maps(self) -> list[str]:
         maps_path = Path("Maps")
         if not maps_path.exists():
             return TRAINING_MAPS.copy()
@@ -111,7 +111,7 @@ class MapManager:
         if not all_maps:
             return TRAINING_MAPS.copy()
 
-        available: List[str] = []
+        available: list[str] = []
         for map_name in TRAINING_MAPS:
             if map_name in all_maps:
                 available.append(map_name)
@@ -138,7 +138,7 @@ class MapManager:
         self.current_map_index += 1
         return selected
 
-    def _select_weighted(self, available: List[str]) -> str:
+    def _select_weighted(self, available: list[str]) -> str:
         weights = []
         for map_name in available:
             stats = self.stats.get(map_name, {"wins": 0, "losses": 0})
@@ -157,5 +157,5 @@ class MapManager:
             stats["losses"] += 1
         self._save_stats()
 
-    def get_map_stats(self, map_name: str) -> Dict[str, int]:
+    def get_map_stats(self, map_name: str) -> dict[str, int]:
         return self.stats.get(map_name, {"wins": 0, "losses": 0})

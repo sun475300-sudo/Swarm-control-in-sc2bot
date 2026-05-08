@@ -44,8 +44,8 @@ class TimingWindow:
         self,
         name: str,
         min_supply: int,
-        required_units: Dict[str, int],
-        required_upgrades: Optional[List[str]] = None,
+        required_units: dict[str, int],
+        required_upgrades: Optional[list[str]] = None,
         max_time: float = 0.0,
         priority: int = 5,
     ):
@@ -65,7 +65,7 @@ class TimingWindow:
         self.max_time = max_time
         self.priority = priority
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """딕셔너리 변환"""
         return {
             "name": self.name,
@@ -94,7 +94,7 @@ class AttackPlan:
         self.enemies_killed: int = 0
         self.units_lost: int = 0
         self.damage_dealt: float = 0.0
-        self.target_position: Optional[Tuple[float, float]] = None
+        self.target_position: Optional[tuple[float, float]] = None
 
     @property
     def duration(self) -> float:
@@ -182,13 +182,13 @@ class TimingAttackPlanner:
         self.bot = bot
 
         # 등록된 타이밍 윈도우
-        self.timings: Dict[str, TimingWindow] = dict(PREDEFINED_TIMINGS)
+        self.timings: dict[str, TimingWindow] = dict(PREDEFINED_TIMINGS)
 
         # 활성 공격 계획
         self.active_plan: Optional[AttackPlan] = None
 
         # 공격 이력
-        self.attack_history: List[Dict[str, Any]] = []
+        self.attack_history: list[dict[str, Any]] = []
 
         # 상태
         self.attack_ready: bool = False
@@ -407,7 +407,7 @@ class TimingAttackPlanner:
         """새 타이밍 윈도우 등록"""
         self.timings[name] = timing
 
-    def get_status(self) -> Dict[str, Any]:
+    def get_status(self) -> dict[str, Any]:
         """타이밍 공격 상태 반환"""
         return {
             "attack_ready": self.attack_ready,

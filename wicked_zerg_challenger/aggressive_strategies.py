@@ -82,13 +82,13 @@ class AggressiveStrategyExecutor:
         self._nydus_location: Optional[Point2] = None
         self._nydus_built = False
         self._nydus_worm_tag: Optional[int] = None  # ★ Worm 추적
-        self._nydus_units_sent: Set[int] = set()  # ★ 투입된 유닛 추적
+        self._nydus_units_sent: set[int] = set()  # ★ 투입된 유닛 추적
         self._nydus_attack_started = False  # ★ 공격 시작 여부
 
         # 유닛 태그 추적
-        self._rush_units: Set[int] = set()
-        self._proxy_drones: Set[int] = set()
-        self._drop_overlords: Set[int] = set()  # ★ 드랍 대군주
+        self._rush_units: set[int] = set()
+        self._proxy_drones: set[int] = set()
+        self._drop_overlords: set[int] = set()  # ★ 드랍 대군주
         self._overlord_drop_active = False  # ★ 드랍 활성화 여부
         self._last_drop_time = 0  # ★ 마지막 드랍 시간
 

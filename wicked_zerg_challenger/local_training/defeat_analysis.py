@@ -60,10 +60,10 @@ class DefeatAnalysis:
         self.analysis_file = self.data_dir / "defeat_analysis.json"
 
         # 패배 원인 히스토리
-        self.defeat_history: List[Dict] = []
+        self.defeat_history: list[dict] = []
 
         # 패배 원인별 카운트
-        self.reason_counts: Dict[str, int] = {}
+        self.reason_counts: dict[str, int] = {}
 
         # 로드
         self._load_history()
@@ -95,7 +95,7 @@ class DefeatAnalysis:
         except Exception as e:
             logger.error(f"Failed to save history: {e}")
 
-    def analyze_defeat(self, bot, game_result: str = "Defeat") -> List[str]:
+    def analyze_defeat(self, bot, game_result: str = "Defeat") -> list[str]:
         """
         패배 원인 분석
 
@@ -180,7 +180,7 @@ class DefeatAnalysis:
 
         return reasons
 
-    def _record_defeat(self, reasons: List[str], game_time: float) -> None:
+    def _record_defeat(self, reasons: list[str], game_time: float) -> None:
         """패배 기록"""
         record = {
             "timestamp": datetime.now().isoformat(),
@@ -196,7 +196,7 @@ class DefeatAnalysis:
 
         self._save_history()
 
-    def get_top_failure_reasons(self, top_n: int = 5) -> List[tuple]:
+    def get_top_failure_reasons(self, top_n: int = 5) -> list[tuple]:
         """
         가장 빈번한 패배 원인 반환
 
@@ -211,7 +211,7 @@ class DefeatAnalysis:
         )
         return sorted_reasons[:top_n]
 
-    def get_feedback_for_next_game(self) -> Dict[str, float]:
+    def get_feedback_for_next_game(self) -> dict[str, float]:
         """
         다음 게임을 위한 피드백 (보상 가중치 조정)
 

@@ -15,7 +15,8 @@ from __future__ import annotations
 
 import logging
 import math
-from typing import Dict, Iterable, List, Optional, Set, Tuple
+from typing import Dict, List, Optional, Set, Tuple
+from collections.abc import Iterable
 
 logger = logging.getLogger(__name__)
 
@@ -64,11 +65,11 @@ class CreepManager:
         self.update_interval = 10
         self.tumor_relay_interval = 6
         self.last_tumor_relay = 0
-        self.cached_targets: List[object] = []
-        self.tumor_spread_cooldowns: Dict[int, int] = (
+        self.cached_targets: list[object] = []
+        self.tumor_spread_cooldowns: dict[int, int] = (
             {}
         )  # tumor_tag -> last_spread_frame
-        self.used_tumor_tags: Set[int] = (
+        self.used_tumor_tags: set[int] = (
             set()
         )  # CreepyBot: track tumors that already spawned
         self.max_tumors_per_cycle = 6
@@ -76,8 +77,8 @@ class CreepManager:
         self._tumor_count_check_interval = 0
 
         # CreepyBot-style coverage tracking
-        self._positions_with_creep: List[object] = []
-        self._positions_without_creep: List[object] = []
+        self._positions_with_creep: list[object] = []
+        self._positions_without_creep: list[object] = []
         self._creep_coverage: float = 0.0
         self._last_coverage_update: float = 0.0
         self._coverage_update_interval: float = 15.0  # seconds
@@ -126,14 +127,14 @@ class CreepManager:
         return None
 
     def _refresh_targets(self) -> None:
-        targets: List[object] = []
+        targets: list[object] = []
         targets.extend(self._get_expansion_targets())
         targets.extend(self._get_scout_targets())
         targets.extend(self._get_attack_path_targets())
         targets.extend(self._get_base_perimeter_targets())  # Issue 8
         self.cached_targets = self._dedupe_positions(targets)
 
-    def _get_base_perimeter_targets(self) -> List[object]:
+    def _get_base_perimeter_targets(self) -> list[object]:
         """기지 주변 점막 우선 확장 (방어 및 시야)"""
         if not hasattr(self.bot, "townhalls") or not self.bot.townhalls:
             return []
@@ -158,23 +159,23 @@ class CreepManager:
             return self.bot.game_info.map_center
         return None
 
-    def _get_expansion_targets(self) -> List[object]:
+    def _get_expansion_targets(self) -> list[object]:
         expansion_list = getattr(self.bot, "expansion_locations_list", None)
         if not expansion_list:
             return []
         return list(expansion_list)
 
-    def _get_scout_targets(self) -> List[object]:
+    def _get_scout_targets(self) -> list[object]:
         scout = getattr(self.bot, "scout", None)
         if not scout:
             return []
-        targets: List[object] = []
+        targets: list[object] = []
         targets.extend(getattr(scout, "cached_positions", []))
         assignments = getattr(scout, "overlord_assignments", {})
         targets.extend(assignments.values())
         return targets
 
-    def _get_attack_path_targets(self) -> List[object]:
+    def _get_attack_path_targets(self) -> list[object]:
         if not Point2:
             return []
 
@@ -204,10 +205,10 @@ class CreepManager:
         return path
 
     @staticmethod
-    def _dedupe_positions(positions: Iterable[object]) -> List[object]:
+    def _dedupe_positions(positions: Iterable[object]) -> list[object]:
         if not Point2:
             return list(positions)
-        deduped: List[object] = []
+        deduped: list[object] = []
         for pos in positions:
             if not pos:
                 continue
@@ -619,20 +620,20 @@ class CreepSpreadManager:
         self.bot = bot
 
         # 크립 종양 추적
-        self.tumor_positions: Set[Tuple[float, float]] = set()
-        self.pending_tumor_positions: Set[Tuple[float, float]] = set()
-        self.queen_tumor_cooldowns: Dict[int, float] = {}
+        self.tumor_positions: set[tuple[float, float]] = set()
+        self.pending_tumor_positions: set[tuple[float, float]] = set()
+        self.queen_tumor_cooldowns: dict[int, float] = {}
 
         # 크립 그리드 (BFS 기반)
-        self._target_grid: List[Point2] = []
+        self._target_grid: list[Point2] = []
         self._grid_generated: bool = False
 
         # 퀸 관리
-        self.creep_queen_tags: Set[int] = set()
+        self.creep_queen_tags: set[int] = set()
         self.queen_tumor_interval: float = 5.0
 
         # 확산 방향 우선순위
-        self._expansion_directions: List[Point2] = []
+        self._expansion_directions: list[Point2] = []
         self._enemy_direction: Optional[Point2] = None
 
         # 통계
@@ -693,9 +694,9 @@ class CreepSpreadManager:
         start = self.bot.start_location
         map_size = self.bot.game_info.map_size
 
-        visited: Set[Tuple[int, int]] = set()
+        visited: set[tuple[int, int]] = set()
         queue: deque = deque()
-        targets: List[Point2] = []
+        targets: list[Point2] = []
 
         start_gx = int(start.x / self.GRID_CELL_SIZE)
         start_gy = int(start.y / self.GRID_CELL_SIZE)
@@ -875,7 +876,7 @@ class CreepSpreadManager:
             return None
 
         spread_range = self.TUMOR_SPREAD_RANGE if is_tumor_spread else 8.0
-        candidates: List[Tuple[Point2, float]] = []
+        candidates: list[tuple[Point2, float]] = []
 
         for target in self._target_grid:
             dist = source_pos.distance_to(target)
@@ -955,7 +956,7 @@ class CreepSpreadManager:
         """크립 전용 퀸 해제"""
         self.creep_queen_tags.discard(queen_tag)
 
-    def get_creep_stats(self) -> Dict:
+    def get_creep_stats(self) -> dict:
         """
         크립 스프레드 최적화 통계 반환
 

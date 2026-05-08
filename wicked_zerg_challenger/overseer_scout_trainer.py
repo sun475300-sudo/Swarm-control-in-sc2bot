@@ -42,7 +42,7 @@ class OverseerScoutTrainer:
         self.logger = get_logger("OverseerScout")
 
         # 감시군주 추적
-        self.overseers: Dict[int, OverseerScout] = {}  # tag -> OverseerScout
+        self.overseers: dict[int, OverseerScout] = {}  # tag -> OverseerScout
 
         # 정찰 설정
         self.MIN_OVERSEERS_FOR_SCOUT = (
@@ -51,8 +51,8 @@ class OverseerScoutTrainer:
         self.SCOUT_INTERVAL = 30.0  # 정찰 간격 (초)
 
         # 정찰 존 (맵을 여러 구역으로 나눔)
-        self.scout_zones: List[Point2] = []
-        self.scouted_zones: Set[int] = set()  # 정찰 완료된 존 인덱스
+        self.scout_zones: list[Point2] = []
+        self.scouted_zones: set[int] = set()  # 정찰 완료된 존 인덱스
 
         # 변신체 설정
         self.CHANGELING_COOLDOWN = 60.0  # 변신체 쿨다운
@@ -314,7 +314,7 @@ class OverseerScoutTrainer:
                     )
                     break
 
-    def get_scout_statistics(self) -> Dict:
+    def get_scout_statistics(self) -> dict:
         """정찰 통계 반환"""
         active_overseers = len(self.overseers)
 

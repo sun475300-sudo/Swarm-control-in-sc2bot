@@ -93,16 +93,16 @@ class MacroCycleManager:
         self.bot = bot
 
         # 퀸-기지 배정
-        self.queen_assignments: Dict[int, QueenAssignment] = {}
-        self.unassigned_queens: Set[int] = set()
+        self.queen_assignments: dict[int, QueenAssignment] = {}
+        self.unassigned_queens: set[int] = set()
 
         # 크립 관리
-        self.creep_queen_tags: Set[int] = set()  # 크립 전용 퀸
+        self.creep_queen_tags: set[int] = set()  # 크립 전용 퀸
         self.last_creep_time: float = 0.0
         self.creep_interval: float = 5.0  # 크립 시도 간격
 
         # 생산 큐
-        self.production_queue: List[Dict[str, Any]] = []
+        self.production_queue: list[dict[str, Any]] = []
         self.pending_larva_usage: int = 0
 
         # 통계
@@ -390,7 +390,7 @@ class MacroCycleManager:
         target = min(mineral_workers + gas_workers, self.MAX_DRONES)
         return target
 
-    def get_larva_priority_list(self) -> List[Dict[str, Any]]:
+    def get_larva_priority_list(self) -> list[dict[str, Any]]:
         """
         라바 사용 우선순위 리스트 반환
 
@@ -446,7 +446,7 @@ class MacroCycleManager:
         if queen_tag in self.queen_assignments:
             del self.queen_assignments[queen_tag]
 
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> dict[str, Any]:
         """매크로 사이클 통계"""
         return {
             "queen_assignments": len(self.queen_assignments),

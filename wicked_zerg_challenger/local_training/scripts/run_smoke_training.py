@@ -19,7 +19,7 @@ from batch_trainer import BatchTrainer
 logger = logging.getLogger("RunSmokeTraining")
 
 
-def build_fake_batch_results(samples: int) -> List[Dict[str, Any]]:
+def build_fake_batch_results(samples: int) -> list[dict[str, Any]]:
     results = []
     for i in range(samples):
         minerals = random.randint(200, 1600)

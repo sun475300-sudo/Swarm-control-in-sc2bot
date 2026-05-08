@@ -40,8 +40,8 @@ class DestructibleAwarenessSystem:
         self.logger = get_logger("DestructibleAware")
 
         # 파괴 가능 구조물 추적
-        self.destructibles: Dict[int, DestructibleStructure] = {}
-        self.destruction_queue: List[int] = []  # 파괴 우선순위 큐
+        self.destructibles: dict[int, DestructibleStructure] = {}
+        self.destruction_queue: list[int] = []  # 파괴 우선순위 큐
 
         # 설정
         self.EXPANSION_BLOCK_RADIUS = 8  # 확장 차단 판정 반경
@@ -333,7 +333,7 @@ class DestructibleAwarenessSystem:
                 f"Destroyed: {self.total_destroyed}/{self.total_discovered}"
             )
 
-    def get_statistics(self) -> Dict:
+    def get_statistics(self) -> dict:
         """통계 반환"""
         active = len([d for d in self.destructibles.values() if not d.is_destroyed])
         blocks_expansion = len(

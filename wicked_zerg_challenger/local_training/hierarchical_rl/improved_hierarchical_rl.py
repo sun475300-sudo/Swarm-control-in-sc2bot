@@ -32,7 +32,7 @@ class CommanderAgent:
 
     def __init__(self):
         """사령관 에이전트 초기화"""
-        self.strategy_history: List[str] = []
+        self.strategy_history: list[str] = []
         self.decision_confidence: float = 0.5
 
     def make_decision(
@@ -131,7 +131,7 @@ class HierarchicalRLSystem:
             return text.split(".", 1)[1]
         return text
 
-    def step(self, bot, override_strategy: Optional[str] = None) -> Dict[str, Any]:
+    def step(self, bot, override_strategy: Optional[str] = None) -> dict[str, Any]:
         """
         매 프레임 실행되어 전략적 결정을 내립니다.
 

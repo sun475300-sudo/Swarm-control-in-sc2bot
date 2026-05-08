@@ -19,7 +19,8 @@ Usage:
 from __future__ import annotations
 
 import functools
-from typing import Any, Callable, Dict
+from typing import Any, Dict
+from collections.abc import Callable
 
 
 class FrameCache:
@@ -28,7 +29,7 @@ class FrameCache:
     __slots__ = ("_cache", "_last_iteration")
 
     def __init__(self):
-        self._cache: Dict[str, Any] = {}
+        self._cache: dict[str, Any] = {}
         self._last_iteration: int = -1
 
     def clear_if_new_frame(self, iteration: int) -> None:

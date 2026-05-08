@@ -25,7 +25,7 @@ from wicked_zerg_challenger.utm.types3d import DroneState, Point3D
 logger = logging.getLogger("DemoVisualizer")
 
 
-def create_demo_drones(n: int = 10, spread: float = 100.0) -> List[DroneState]:
+def create_demo_drones(n: int = 10, spread: float = 100.0) -> list[DroneState]:
     """데모용 드론 편대 생성."""
     drones = []
     for i in range(n):
@@ -52,15 +52,15 @@ def create_demo_drones(n: int = 10, spread: float = 100.0) -> List[DroneState]:
 
 
 def run_simulation(
-    drones: List[DroneState],
+    drones: list[DroneState],
     steps: int = 200,
     dt: float = 0.1,
     target: Optional[Point3D] = None,
-) -> List[List[Point3D]]:
+) -> list[list[Point3D]]:
     """시뮬레이션 실행, 궤적 기록."""
     boids = Boids3DController()
     predictor = CollisionPredictor()
-    trajectories: List[List[Point3D]] = [[] for _ in drones]
+    trajectories: list[list[Point3D]] = [[] for _ in drones]
 
     for _step in range(steps):
         # 충돌 검사
@@ -92,8 +92,8 @@ def run_simulation(
 
 
 def visualize(
-    drones: List[DroneState],
-    trajectories: List[List[Point3D]],
+    drones: list[DroneState],
+    trajectories: list[list[Point3D]],
     corridor_mgr: Optional[CorridorManager] = None,
     save_path: Optional[str] = None,
 ):

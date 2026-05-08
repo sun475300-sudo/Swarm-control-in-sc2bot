@@ -1973,7 +1973,7 @@ class ProductionResilience:
                     except Exception:
                         pass
 
-    async def _determine_ideal_composition(self) -> Dict[UnitTypeId, float]:
+    async def _determine_ideal_composition(self) -> dict[UnitTypeId, float]:
         """Reuses bot's composition logic via in-module call."""
         return await self.bot._determine_ideal_composition()
 
@@ -2290,7 +2290,7 @@ class ProductionResilience:
                     enemy_summary[t] = enemy_summary.get(t, 0) + 1
                 logger.info(f"Detected enemies: {enemy_summary}")
 
-    def get_detected_enemy_composition(self) -> Dict[str, int]:
+    def get_detected_enemy_composition(self) -> dict[str, int]:
         """
         Get a summary of detected enemy unit types.
         Can be used by other managers for decision making.

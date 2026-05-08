@@ -58,8 +58,8 @@ class BanelingTacticsController:
         self.min_targets_for_explode = min_targets_for_explode
 
         # Land mine state tracking
-        self.active_mines: Dict[int, Point2] = {}  # unit_tag -> position
-        self.mine_positions: Set[Tuple[float, float]] = set()  # Occupied positions
+        self.active_mines: dict[int, Point2] = {}  # unit_tag -> position
+        self.mine_positions: set[tuple[float, float]] = set()  # Occupied positions
         self.last_mine_check: float = 0.0
         self.mine_check_interval: float = 1.0  # Check every second
 
@@ -71,7 +71,7 @@ class BanelingTacticsController:
             return UpgradeId.BURROW in bot.state.upgrades
         return False
 
-    def find_mine_positions(self, bot, count: int = 5) -> List[Point2]:
+    def find_mine_positions(self, bot, count: int = 5) -> list[Point2]:
         """
         Find strategic positions for Baneling land mines.
 
@@ -187,7 +187,7 @@ class BanelingTacticsController:
             self.mine_positions.discard(pos_tuple)
             del self.active_mines[unit_tag]
 
-    async def deploy_land_mines(self, banelings, bot, current_time: float) -> Set[int]:
+    async def deploy_land_mines(self, banelings, bot, current_time: float) -> set[int]:
         """
         Deploy Banelings as land mines.
 
@@ -254,7 +254,7 @@ class BanelingTacticsController:
 
         return deployed
 
-    async def manage_land_mines(self, banelings, enemy_units, bot) -> Set[int]:
+    async def manage_land_mines(self, banelings, enemy_units, bot) -> set[int]:
         """
         Manage active land mines - unburrow and explode when enemies approach.
 
@@ -336,7 +336,7 @@ class BanelingTacticsController:
         """Get number of active land mines."""
         return len(self.active_mines)
 
-    def clear_dead_mines(self, alive_tags: Set[int]):
+    def clear_dead_mines(self, alive_tags: set[int]):
         """Remove mines that no longer exist."""
         dead_tags = set(self.active_mines.keys()) - alive_tags
         for tag in dead_tags:

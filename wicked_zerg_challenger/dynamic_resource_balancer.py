@@ -46,7 +46,7 @@ class DynamicResourceBalancer:
         )
         self.last_state_change = 0
 
-    def update(self, iteration: int) -> Dict[str, float]:
+    def update(self, iteration: int) -> dict[str, float]:
         """
         자원 상태를 분석하고 조정된 유닛 비율을 반환
 
@@ -91,7 +91,7 @@ class DynamicResourceBalancer:
 
     def _analyze_resource_imbalance(
         self, minerals: int, gas: int, game_time: float
-    ) -> Tuple[str, float]:
+    ) -> tuple[str, float]:
         """
         자원 불균형을 분석하고 목표 가스 비율 계산
 
@@ -155,7 +155,7 @@ class DynamicResourceBalancer:
 
         return "BALANCED", target_ratio
 
-    def get_unit_ratio_adjustments(self) -> Dict[str, float]:
+    def get_unit_ratio_adjustments(self) -> dict[str, float]:
         """
         현재 자원 상태에 따른 유닛별 비율 조정값 반환
 

@@ -22,7 +22,7 @@ class ProxyDetectionResult:
         self.is_proxy: bool = False
         self.proxy_type: ProxyType = ProxyType.UNKNOWN
         self.confidence: float = 0.0
-        self.location: Optional[Tuple[int, int]] = None
+        self.location: Optional[tuple[int, int]] = None
         self.threat_level: str = "LOW"
         self.recommendation: str = ""
 
@@ -30,16 +30,16 @@ class ProxyDetectionResult:
 class ProxyDetector:
     def __init__(self, bot=None):
         self.bot = bot
-        self.proxy_history: List[ProxyDetectionResult] = []
-        self.enemy_buildings_spotted: List[Dict] = []
-        self.normal_expansion_locations: List[Tuple[int, int]] = []
+        self.proxy_history: list[ProxyDetectionResult] = []
+        self.enemy_buildings_spotted: list[dict] = []
+        self.normal_expansion_locations: list[tuple[int, int]] = []
 
-    def initialize_normal_expansions(self, locations: List[Tuple[int, int]]) -> None:
+    def initialize_normal_expansions(self, locations: list[tuple[int, int]]) -> None:
         """Initialize known expansion locations"""
         self.normal_expansion_locations = locations
 
     def analyze_enemy_building(
-        self, position: Tuple[int, int], building_type: str
+        self, position: tuple[int, int], building_type: str
     ) -> ProxyDetectionResult:
         """Analyze if enemy building is a proxy"""
         result = ProxyDetectionResult()
@@ -66,14 +66,14 @@ class ProxyDetector:
         self.proxy_history.append(result)
         return result
 
-    def _is_near_expansion(self, position: Tuple[int, int]) -> bool:
+    def _is_near_expansion(self, position: tuple[int, int]) -> bool:
         """Check if position is near an expansion"""
         for exp in self.normal_expansion_locations:
             if self._distance(position, exp) < 15:
                 return True
         return False
 
-    def _is_near_start(self, position: Tuple[int, int]) -> bool:
+    def _is_near_start(self, position: tuple[int, int]) -> bool:
         """Check if position is near start locations"""
         start_locations = [(0, 0), (150, 150), (150, 0), (0, 150)]
         for start in start_locations:
@@ -81,12 +81,12 @@ class ProxyDetector:
                 return True
         return False
 
-    def _distance_to_enemy_base(self, position: Tuple[int, int]) -> float:
+    def _distance_to_enemy_base(self, position: tuple[int, int]) -> float:
         """Calculate distance to estimated enemy base"""
         enemy_base_estimate = (150, 150)
         return self._distance(position, enemy_base_estimate)
 
-    def _distance(self, pos1: Tuple[int, int], pos2: Tuple[int, int]) -> float:
+    def _distance(self, pos1: tuple[int, int], pos2: tuple[int, int]) -> float:
         """Calculate distance between two points"""
         return ((pos1[0] - pos2[0]) ** 2 + (pos1[1] - pos2[1]) ** 2) ** 0.5
 
@@ -102,11 +102,11 @@ class ProxyDetector:
         }
         return mapping.get(building_type.lower(), ProxyType.UNKNOWN)
 
-    def get_proxy_alerts(self) -> List[ProxyDetectionResult]:
+    def get_proxy_alerts(self) -> list[ProxyDetectionResult]:
         """Get all detected proxy alerts"""
         return [r for r in self.proxy_history if r.is_proxy]
 
-    def calculate_counter_strategy(self, proxy_type: ProxyType) -> Dict[str, Any]:
+    def calculate_counter_strategy(self, proxy_type: ProxyType) -> dict[str, Any]:
         """Calculate counter strategy for detected proxy"""
         strategies = {
             ProxyType.GATEWAY: {

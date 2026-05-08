@@ -14,7 +14,8 @@ import importlib
 import logging
 from dataclasses import dataclass
 from enum import IntEnum
-from typing import Any, Callable, Dict, List, Optional, Set
+from typing import Any, Dict, List, Optional, Set
+from collections.abc import Callable
 
 logger = logging.getLogger(__name__)
 
@@ -38,8 +39,8 @@ class ManagerConfig:
     class_name: str  # 클래스 이름
     attribute_name: str  # bot 속성 이름
     priority: ManagerPriority  # 우선순위
-    dependencies: List[str] = None  # 의존 매니저 (attribute_name)
-    init_args: Dict[str, Any] = None  # 추가 초기화 인자
+    dependencies: list[str] = None  # 의존 매니저 (attribute_name)
+    init_args: dict[str, Any] = None  # 추가 초기화 인자
     post_init: Optional[Callable] = None  # 초기화 후 실행 함수
     enabled: bool = True  # 활성화 여부
 
@@ -62,10 +63,10 @@ class ManagerFactory:
 
     def __init__(self, bot):
         self.bot = bot
-        self.managers: Dict[str, ManagerConfig] = {}
-        self.initialized: Set[str] = set()
-        self.failed: Dict[str, str] = {}  # attribute_name -> error_msg
-        self.initialization_order: List[str] = []
+        self.managers: dict[str, ManagerConfig] = {}
+        self.initialized: set[str] = set()
+        self.failed: dict[str, str] = {}  # attribute_name -> error_msg
+        self.initialization_order: list[str] = []
 
     def register_manager(self, config: ManagerConfig) -> None:
         """
@@ -79,7 +80,7 @@ class ManagerFactory:
             return
         self.managers[config.attribute_name] = config
 
-    def register_managers(self, configs: List[ManagerConfig]) -> None:
+    def register_managers(self, configs: list[ManagerConfig]) -> None:
         """
         여러 매니저 일괄 등록
 
@@ -92,7 +93,7 @@ class ManagerFactory:
         for config in configs:
             self.register_manager(config)
 
-    def initialize_all(self, verbose: bool = True) -> Dict[str, Any]:
+    def initialize_all(self, verbose: bool = True) -> dict[str, Any]:
         """
         모든 매니저 초기화 (의존성 순서 보장)
 
@@ -223,7 +224,7 @@ class ManagerFactory:
 
             return False
 
-    def _get_statistics(self) -> Dict[str, Any]:
+    def _get_statistics(self) -> dict[str, Any]:
         """초기화 통계 반환"""
         total = len([m for m in self.managers.values() if m.enabled])
         succeeded = len(self.initialized)
@@ -238,7 +239,7 @@ class ManagerFactory:
             "initialization_order": self.initialization_order,
         }
 
-    def _log_summary(self, stats: Dict[str, Any]) -> None:
+    def _log_summary(self, stats: dict[str, Any]) -> None:
         """초기화 결과 요약 로그 출력"""
         logger.info("\n" + "=" * 70)
         logger.info("MANAGER INITIALIZATION SUMMARY")

@@ -23,8 +23,8 @@ class OverlordHunter:
 
     def __init__(self, bot):
         self.bot = bot
-        self.assigned_hunters: Set[int] = set()  # tags of hunting units
-        self.target_overlords: Set[int] = set()  # tags of target overlords
+        self.assigned_hunters: set[int] = set()  # tags of hunting units
+        self.target_overlords: set[int] = set()  # tags of target overlords
 
     async def on_step(self, iteration: int):
         """매 프레임 실행"""
@@ -53,7 +53,7 @@ class OverlordHunter:
         # 우리 기지 근처거나, 맵 중앙 등에 떠있는 대군주
 
         # 수정: Units([], self.bot) 직접 생성자 호출 대신 일반 list 사용
-        collected: List = []
+        collected: list = []
 
         # 적 본진 위치 (추정)
         enemy_start = (

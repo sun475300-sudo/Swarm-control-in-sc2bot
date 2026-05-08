@@ -30,7 +30,7 @@ class SpatialQueryOptimizer:
         self.logger = get_logger("SpatialQueryOptimizer")
 
         # Query result cache (cleared every frame)
-        self._query_cache: Dict[Tuple, "Units"] = {}
+        self._query_cache: dict[tuple, Units] = {}
         self._last_cache_clear = 0
 
         # Statistics
@@ -259,7 +259,7 @@ class SpatialQueryOptimizer:
             self._query_cache.clear()
             self._last_cache_clear = iteration
 
-    def get_statistics(self) -> Dict[str, any]:
+    def get_statistics(self) -> dict[str, any]:
         """
         Get query statistics
 

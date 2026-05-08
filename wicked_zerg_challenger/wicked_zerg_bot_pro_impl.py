@@ -102,11 +102,11 @@ class WickedZergBotProImpl(BotAI):
         self.awareness_engine = None
 
         # ★ Feature 85: Build Order Timing Log ★
-        self._build_order_log: List[Dict[str, Any]] = []
+        self._build_order_log: list[dict[str, Any]] = []
         self._tracked_structure_tags: set = set()
 
         # ★ Feature 86: Unit Lost Tracking ★
-        self._units_lost: List[Dict[str, Any]] = []
+        self._units_lost: list[dict[str, Any]] = []
         self._workers_created: int = 0
         self._expansions_built: int = 0
 

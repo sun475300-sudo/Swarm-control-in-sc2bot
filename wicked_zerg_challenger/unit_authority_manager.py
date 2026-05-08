@@ -50,8 +50,8 @@ class UnitAuthorityManager:
     def __init__(self, bot: BotAI):
         self.bot = bot
         self.logger = get_logger("UnitAuthority")
-        self.authorities: Dict[int, UnitAuthority] = {}
-        self.system_units: Dict[str, Set[int]] = defaultdict(set)
+        self.authorities: dict[int, UnitAuthority] = {}
+        self.system_units: dict[str, set[int]] = defaultdict(set)
         self.AUTHORITY_TIMEOUT = 5.0  # 30초에서 5초로 단축 (빠른 권한 이관)
         self.total_conflicts = 0
 

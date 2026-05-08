@@ -51,7 +51,7 @@ class ProductionController:
         self.logger = get_logger("ProductionController")
 
         # 생산 통계
-        self.units_produced: Dict[Any, int] = {}
+        self.units_produced: dict[Any, int] = {}
         self.production_failures: int = 0
         self.max_produced_per_frame = 0  # 프레임당 최대 생산 기록
 

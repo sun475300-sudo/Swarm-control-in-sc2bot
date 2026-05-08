@@ -64,7 +64,7 @@ class UpgradeResourcePlanner:
         self.logger = get_logger("UpgradeResourcePlanner")
 
         # 업그레이드 타임라인
-        self.upgrade_timeline: List[UpgradePlan] = []
+        self.upgrade_timeline: list[UpgradePlan] = []
 
         # 자원 예약
         self.reserved_minerals = 0
@@ -85,7 +85,7 @@ class UpgradeResourcePlanner:
         self.min_bank_buffer = 200  # 최소 자원 버퍼 (유닛 생산용)
         self.max_bank_threshold = 2000  # 최대 뱅킹 임계값
 
-    def _initialize_upgrade_costs(self) -> Dict[str, Tuple[int, int]]:
+    def _initialize_upgrade_costs(self) -> dict[str, tuple[int, int]]:
         """업그레이드 비용 데이터베이스 초기화"""
         return {
             # 0순위 - CRITICAL
@@ -341,7 +341,7 @@ class UpgradeResourcePlanner:
             return upgrade_plan
         return None
 
-    def get_available_resources(self) -> Tuple[int, int]:
+    def get_available_resources(self) -> tuple[int, int]:
         """
         예약 후 사용 가능한 자원 반환
 
@@ -413,7 +413,7 @@ class UpgradeResourcePlanner:
         if len(self.resource_banking_history) > 300:
             self.resource_banking_history = self.resource_banking_history[-300:]
 
-    def _analyze_unit_composition(self) -> Dict[str, int]:
+    def _analyze_unit_composition(self) -> dict[str, int]:
         """현재 유닛 구성 분석"""
         composition = {"melee": 0, "ranged": 0, "air": 0}
 

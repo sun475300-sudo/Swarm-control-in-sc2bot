@@ -39,7 +39,7 @@ class RuntimeSelfHealing:
         self.logger = get_logger("SelfHealing")
 
         # 건강 상태 추적
-        self.metrics: Dict[str, HealthMetric] = {
+        self.metrics: dict[str, HealthMetric] = {
             "economy": HealthMetric("economy", 30.0),  # 30초마다 체크
             "production": HealthMetric("production", 20.0),  # 20초마다 체크
             "resources": HealthMetric("resources", 15.0),  # 15초마다 체크
@@ -54,7 +54,7 @@ class RuntimeSelfHealing:
         self.last_gas_count = 0
 
         # 복구 조치 이력
-        self.recovery_actions: List[Dict] = []
+        self.recovery_actions: list[dict] = []
         self.total_recoveries = 0
 
         # 체크 시작 시간 추적
@@ -312,7 +312,7 @@ class RuntimeSelfHealing:
                 f"  [{int(action['time'])}s] {action['type']}: {action['action']}"
             )
 
-    def get_statistics(self) -> Dict:
+    def get_statistics(self) -> dict:
         """통계 반환"""
         recovery_by_type = {}
         for action in self.recovery_actions:

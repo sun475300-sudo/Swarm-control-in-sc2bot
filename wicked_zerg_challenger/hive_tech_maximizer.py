@@ -30,7 +30,7 @@ class HiveTechMaximizer:
         self.hive_completion_time = 0.0
 
         # 건물 건설 상태
-        self.buildings_built: Set[UnitTypeId] = set()
+        self.buildings_built: set[UnitTypeId] = set()
 
         # 목표 건물 개수 (Hive 이후)
         self.target_buildings = {

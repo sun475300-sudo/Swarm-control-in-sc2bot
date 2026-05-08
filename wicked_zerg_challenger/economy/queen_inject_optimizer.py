@@ -71,18 +71,18 @@ class QueenInjectOptimizer:
         self.logger = get_logger("InjectOptimizer")
 
         # ★ Inject Tracking ★
-        self.inject_cooldowns: Dict[int, float] = {}  # {hatchery_tag: last_inject_time}
+        self.inject_cooldowns: dict[int, float] = {}  # {hatchery_tag: last_inject_time}
         self.INJECT_COOLDOWN = 29.0  # 29초 쿨다운
         self.INJECT_ENERGY_COST = 25  # 에너지 비용
 
         # ★ Queen Assignment ★
-        self.queen_assignments: Dict[int, int] = {}  # {queen_tag: hatchery_tag}
-        self.hatchery_queens: Dict[int, Set[int]] = defaultdict(
+        self.queen_assignments: dict[int, int] = {}  # {queen_tag: hatchery_tag}
+        self.hatchery_queens: dict[int, set[int]] = defaultdict(
             set
         )  # {hatchery_tag: {queen_tags}}
 
         # ★ Priority System ★
-        self.hatchery_priorities: Dict[int, int] = {}  # {hatchery_tag: priority}
+        self.hatchery_priorities: dict[int, int] = {}  # {hatchery_tag: priority}
 
         # ★ Statistics ★
         self.total_injects = 0
@@ -91,20 +91,20 @@ class QueenInjectOptimizer:
 
         # ★ Energy Priority System ★
         self.CREEP_ALLOWED_ENERGY = 50  # Inject + Creep 둘 다 가능한 최소 에너지
-        self.queens_reserved_for_inject: Set[int] = set()  # Inject 대기 중인 Queen tags
+        self.queens_reserved_for_inject: set[int] = set()  # Inject 대기 중인 Queen tags
 
         # ★★★ Phase 18: Queen Role System ★★★
-        self.queen_roles: Dict[int, QueenRole] = {}  # {queen_tag: role}
+        self.queen_roles: dict[int, QueenRole] = {}  # {queen_tag: role}
         self.inject_queens_per_base = 1  # 기지당 인젝트 전용 여왕 수
         self.defense_queens_total = 2  # 방어 전용 여왕 수
         self.creep_queens_total = 2  # 점막 전용 여왕 수
 
         # ★★★ Phase 18: Inject Miss Detection ★★★
-        self.expected_inject_times: Dict[int, float] = (
+        self.expected_inject_times: dict[int, float] = (
             {}
         )  # {hatchery_tag: next_expected_inject_time}
         self.inject_miss_threshold = 3.0  # 예상 시간에서 3초 이상 차이나면 미스로 간주
-        self.inject_retry_attempts: Dict[int, int] = defaultdict(
+        self.inject_retry_attempts: dict[int, int] = defaultdict(
             int
         )  # {hatchery_tag: retry_count}
         self.max_retry_attempts = 3  # 최대 재시도 횟수
@@ -440,7 +440,7 @@ class QueenInjectOptimizer:
 
         return True  # Creep 사용 가능
 
-    def get_inject_stats(self) -> Dict:
+    def get_inject_stats(self) -> dict:
         """Inject 통계 반환"""
         return {
             "total_injects": self.total_injects,

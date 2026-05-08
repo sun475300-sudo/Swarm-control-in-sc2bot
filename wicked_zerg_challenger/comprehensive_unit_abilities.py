@@ -31,7 +31,7 @@ class ComprehensiveUnitAbilities:
         self.logger = get_logger("UnitAbilities")
 
         # 스킬 사용 쿨다운 추적
-        self.last_ability_used: Dict[int, Dict[str, float]] = (
+        self.last_ability_used: dict[int, dict[str, float]] = (
             {}
         )  # {unit_tag: {ability_name: game_time}}
 
@@ -69,7 +69,7 @@ class ComprehensiveUnitAbilities:
         }
 
         # 잠복 추적
-        self.burrowed_units: Set[int] = set()  # 이미 잠복한 유닛 태그
+        self.burrowed_units: set[int] = set()  # 이미 잠복한 유닛 태그
 
     async def on_step(self, iteration: int):
         """매 프레임 실행"""

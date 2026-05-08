@@ -63,8 +63,8 @@ class DefenseCoordinator:
         self.config = DefenseConfig() if DefenseConfig else None
 
         # === 방어 상태 ===
-        self.detected_threats: Set[int] = set()  # 감지된 적 태그
-        self.defending_units: Set[int] = set()  # 방어 중인 유닛 태그
+        self.detected_threats: set[int] = set()  # 감지된 적 태그
+        self.defending_units: set[int] = set()  # 방어 중인 유닛 태그
 
         # === 초반 방어 (0-3분) ===
         self.early_game_threshold = (
@@ -74,8 +74,8 @@ class DefenseCoordinator:
         self.first_queen_requested = False
 
         # === 방어 건물 ===
-        self.spine_crawler_positions: List[Point2] = []
-        self.spore_crawler_positions: List[Point2] = []
+        self.spine_crawler_positions: list[Point2] = []
+        self.spore_crawler_positions: list[Point2] = []
 
         # === Proactive 공중 방어 ★ NEW ★ ===
         self.proactive_spore_requested = False  # 3:00 자동 스포어 요청 여부

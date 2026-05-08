@@ -36,9 +36,9 @@ class LogAnalyzer:
         self.base_dir = Path(".")
         self.race_stats = {}
         self.game_stats = {}
-        self.game_data_files: List[Dict] = []
-        self.tournament_results: List[Dict] = []
-        self.bot_log_lines: List[str] = []
+        self.game_data_files: list[dict] = []
+        self.tournament_results: list[dict] = []
+        self.bot_log_lines: list[str] = []
 
     def load_all_data(self):
         """모든 데이터 소스 로드"""
