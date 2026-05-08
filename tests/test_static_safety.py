@@ -4,6 +4,7 @@ Each test here pins a specific class of bug we previously fixed so it cannot
 silently reappear. Tests parse source files with ``ast`` only — no runtime
 imports of bot modules, so they work in any environment.
 """
+
 from __future__ import annotations
 
 import ast
@@ -63,9 +64,9 @@ def test_no_local_traceback_shadow_in_bot_pro_impl():
         pytest.skip(f"{src_path} not present")
 
     tree = ast.parse(src_path.read_text(encoding="utf-8"))
-    assert _module_imports(tree, "traceback"), (
-        "traceback must remain imported at module level for the existing usages"
-    )
+    assert _module_imports(
+        tree, "traceback"
+    ), "traceback must remain imported at module level for the existing usages"
 
     offenders: list[str] = []
     for node in ast.walk(tree):
