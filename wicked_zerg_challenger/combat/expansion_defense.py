@@ -71,7 +71,7 @@ class ExpansionDefense:
             return
 
         # STEP 1: 확장 기지 파괴 감지
-        current_bases = set(th.tag for th in townhalls)
+        current_bases = {th.tag for th in townhalls}
         previous_bases = set(self._expansion_under_attack.keys())
 
         destroyed_bases = previous_bases - current_bases

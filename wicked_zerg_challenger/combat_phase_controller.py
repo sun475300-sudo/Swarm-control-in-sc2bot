@@ -477,7 +477,7 @@ class CombatPhaseController:
         group_id = f"group_{len(self.combat_groups)}"
 
         group = CombatGroup(
-            units=set(u.tag for u in units),
+            units={u.tag for u in units},
             phase=CombatPhase.IDLE,
             rally_point=None,
             target_position=None,
