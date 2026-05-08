@@ -2281,7 +2281,7 @@ class CombatManager:
         3. Enemy air units
         4. Ground army units
         """
-        game_time = getattr(self.bot, "time", 0)
+        getattr(self.bot, "time", 0)
 
         # Check if our base is under attack
         base_threatened = self._is_base_under_attack()
@@ -2423,7 +2423,6 @@ class CombatManager:
             )
         else:
             combat_ready = list(mutalisks)
-            regenerating = []
 
         if not combat_ready:
             return  # All units regenerating
@@ -2869,7 +2868,6 @@ class CombatManager:
             )
         else:
             combat_ready = list(mutalisks)
-            regenerating = []
 
         if not combat_ready:
             return  # All units regenerating
@@ -3063,18 +3061,6 @@ class CombatManager:
         }
 
         # 비전투 유닛 (정찰용, 위협이 낮음)
-        non_combat_names = {
-            "SCV",
-            "PROBE",
-            "DRONE",
-            "MULE",
-            "OBSERVER",
-            "OVERLORD",
-            "OVERSEER",
-            "WARPPRISM",
-            "RAVEN",
-            "CHANGELING",
-        }
 
         for th in self.bot.townhalls:
             # 일반 감지 거리

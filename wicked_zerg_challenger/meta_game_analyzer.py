@@ -96,8 +96,8 @@ class MetaGameAnalyzer:
 
     def recommend_strategy(self, enemy_race: str, map_name: str) -> dict[str, Any]:
         """Recommend best strategy based on current meta"""
-        race_perf = self.race_performance.get(enemy_race, {"wins": 0})
-        map_perf = self.map_performance.get(map_name, {"wins": 0})
+        self.race_performance.get(enemy_race, {"wins": 0})
+        self.map_performance.get(map_name, {"wins": 0})
 
         best_strategies = {
             ("terran", "small"): "RUSH",

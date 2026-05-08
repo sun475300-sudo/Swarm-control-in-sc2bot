@@ -132,7 +132,6 @@ def run_single_game(
 
 def calculate_win_rate(stats: GameStatistics, difficulty_name: str, race_name: str):
     """특정 난이도/종족 조합의 승률 계산"""
-    key = f"{difficulty_name}_{race_name}"
 
     # 난이도별 통계 확인
     if difficulty_name in stats.stats["by_difficulty"]:

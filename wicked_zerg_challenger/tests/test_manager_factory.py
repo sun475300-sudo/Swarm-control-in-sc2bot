@@ -108,7 +108,7 @@ class TestManagerFactory(unittest.TestCase):
         # Mock the import for manager_a (Blackboard exists)
         # manager_b will fail, but should check dependency first
 
-        stats = self.factory.initialize_all(verbose=False)
+        self.factory.initialize_all(verbose=False)
 
         # manager_a should be initialized first (if available)
         if "manager_a" in self.factory.initialized:

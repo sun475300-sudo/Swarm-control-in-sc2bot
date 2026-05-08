@@ -35,7 +35,6 @@ async def safe_train(resilience, unit, unit_type, retry_count: int = 1):
     Returns:
         bool: 생산 성공 여부
     """
-    last_error = None
 
     for attempt in range(retry_count + 1):
         try:
@@ -50,7 +49,6 @@ async def safe_train(resilience, unit, unit_type, retry_count: int = 1):
             return True
 
         except Exception as e:
-            last_error = e
             game_time = getattr(resilience.bot, "time", 0.0)
 
             # Always log errors (not just every 200 iterations)
@@ -205,7 +203,6 @@ async def balanced_production(resilience, larvae) -> None:
         resilience: ProductionResilience 인스턴스
         larvae: 애벌레 리스트
     """
-    b = resilience.bot
 
     # Production logic based on balancer
     if resilience.balancer:
