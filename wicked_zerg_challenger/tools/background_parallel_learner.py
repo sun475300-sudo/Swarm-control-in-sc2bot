@@ -109,17 +109,17 @@ class BackgroundParallelLearner:
 
         try:
             self.running = True
-            
+
             # 디렉토리 생성
             self.data_dir.mkdir(parents=True, exist_ok=True)
             self.archive_dir.mkdir(parents=True, exist_ok=True)
-            
+
             # RLAgent 초기화 (모델 로드)
             self.rl_agent = RLAgent(model_path=str(self.model_path))
-            
+
             self.worker_thread = threading.Thread(target=self._worker_loop, daemon=True)
             self.worker_thread.start()
-            
+
             logger.info(f"Started (Monitoring {self.data_dir})")
             return True
 
@@ -211,7 +211,7 @@ class BackgroundParallelLearner:
                         loaded_data["states"] = np.copy(data['states'])
                         loaded_data["actions"] = np.copy(data['actions'])
                         loaded_data["rewards"] = np.copy(data['rewards'])
-                    
+
                     # ★ FIX: NaN/Inf 검증 (오염 데이터 학습 방지)
                     if (np.any(np.isnan(loaded_data["states"])) or np.any(np.isinf(loaded_data["states"]))
                             or np.any(np.isnan(loaded_data["rewards"])) or np.any(np.isinf(loaded_data["rewards"]))):
@@ -224,7 +224,7 @@ class BackgroundParallelLearner:
 
                     experiences.append(loaded_data)
                     files_to_archive.append(file_path)
-                    
+
                     if self.verbose:
                         total_reward = np.sum(loaded_data['rewards'])
                         logger.info(f"  [OK] Loaded: {file_path.name} (Steps: {len(loaded_data['states'])}, Reward: {total_reward:.2f})")
