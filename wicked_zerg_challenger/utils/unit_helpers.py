@@ -19,8 +19,21 @@ try:
     from sc2.units import Units
 except ImportError:
     Unit = None
-    Units = None
     Point2 = None
+
+    class Units(list):  # type: ignore[no-redef]
+        """Fallback Units shim when sc2 isn't installed (test environments)."""
+
+        def __init__(self, units=None, _bot_object=None):
+            super().__init__(units or [])
+
+        def filter(self, fn):
+            return Units([u for u in self if fn(u)], None)
+
+        def closer_than(self, distance, position):
+            return Units(
+                [u for u in self if u.distance_to(position) < distance], None
+            )
 
 logger = get_logger("UnitHelpers")
 
