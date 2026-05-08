@@ -29,7 +29,18 @@ try:
 except ImportError:
     TORCH_AVAILABLE = False
     torch = None
-    nn = None
+    optim = None
+
+    class _NNStub:
+        """Minimal stub so `class Foo(nn.Module)` still works without torch."""
+
+        class Module:
+            def __init__(self, *_, **__):
+                raise ImportError(
+                    "PyTorch가 필요합니다. pip install torch 로 설치하세요."
+                )
+
+    nn = _NNStub()
 
 
 class ReplayActionExtractor:
