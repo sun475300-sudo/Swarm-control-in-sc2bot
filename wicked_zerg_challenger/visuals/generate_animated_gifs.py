@@ -356,7 +356,7 @@ def gif_formation_flight():
             else:
                 line.set_data([], [])
 
-        return [sc, title, info] + [l for l, _, _ in lines]
+        return [sc, title, info] + [ln for ln, _, _ in lines]
 
     anim = FuncAnimation(fig, update, frames=len(all_frames), interval=66, blit=True)
     save_gif(anim, "formation_flight")
