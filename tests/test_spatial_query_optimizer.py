@@ -139,6 +139,24 @@ class TestSpatialQueryOptimizer:
 
         assert len(self.optimizer._query_cache) == 0
 
+    def test_cache_auto_invalidates_on_iteration_change(self):
+        """Cache must self-invalidate when a query arrives at a new iteration.
+
+        Without this, _query_cache would grow unbounded over a long match
+        because each iteration's keys are unique and stale-iteration entries
+        can never produce a hit.
+        """
+        position = Point2((50, 50))
+        radius = 10.0
+
+        # Populate cache across 10 distinct iterations without ever calling
+        # clear_cache_if_needed manually.
+        for i in range(10):
+            self.optimizer.get_enemies_near_position(position, radius, 1000 + i)
+
+        # At any point only the most recent iteration's entry is retained.
+        assert len(self.optimizer._query_cache) <= 1
+
     # ===== Statistics Tests =====
 
     def test_statistics_tracking(self):
