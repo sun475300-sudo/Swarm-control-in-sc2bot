@@ -468,7 +468,8 @@ class BoidsController:
                 self._spatial_index = self._build_unit_kdtree(units)
             else:
                 self._spatial_index = self._build_unit_grid(units, cell_size=6.0)
-        except Exception:
+        except Exception as e:
+            logger.debug("spatial index build failed: %s", e)
             self._spatial_index = None
 
     def _nearby_units(self, units, unit, radius: float):

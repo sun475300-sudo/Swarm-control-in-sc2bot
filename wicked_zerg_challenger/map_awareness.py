@@ -393,7 +393,8 @@ class MapAwarenessManager:
                 self.scouted_areas.add(grid)
                 self.last_scout_time[grid] = game_time
 
-            except Exception:
+            except Exception as e:
+                logger.debug("track_enemy_units skipped one unit: %s", e)
                 continue
 
     def _update_ghosts(self, game_time: float) -> None:
@@ -434,7 +435,8 @@ class MapAwarenessManager:
                         known_enemy_bases.add(
                             (int(struct.position.x), int(struct.position.y))
                         )
-                except Exception:
+                except Exception as e:
+                    logger.debug("predict_enemy_bases skipped one struct: %s", e)
                     continue
 
         # 적 시작 위치 기반 가까운 확장 위치 예측

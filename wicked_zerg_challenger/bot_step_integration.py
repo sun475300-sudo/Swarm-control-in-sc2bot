@@ -271,7 +271,9 @@ except ImportError:
 # Advanced Scout System V2
 try:
     # NOTE: class is AdvancedScoutingSystemV2 (with "ing"); alias kept for compat
-    from scouting.advanced_scout_system_v2 import AdvancedScoutingSystemV2 as AdvancedScoutSystemV2
+    from scouting.advanced_scout_system_v2 import (
+        AdvancedScoutingSystemV2 as AdvancedScoutSystemV2,
+    )
 except ImportError:
     AdvancedScoutSystemV2 = None
 

@@ -68,7 +68,7 @@ class TrainingPipeline:
         """버전 히스토리 로드"""
         if self.history_path.exists():
             try:
-                with open(self.history_path, "r") as f:
+                with open(self.history_path, "r", encoding="utf-8") as f:
                     data = json.load(f)
                 self.versions = [ModelVersion(**v) for v in data.get("versions", [])]
             except (json.JSONDecodeError, TypeError):
@@ -77,8 +77,8 @@ class TrainingPipeline:
     def _save_history(self) -> None:
         """버전 히스토리 저장"""
         data = {"versions": [asdict(v) for v in self.versions]}
-        with open(self.history_path, "w") as f:
-            json.dump(data, f, indent=2)
+        with open(self.history_path, "w", encoding="utf-8") as f:
+            json.dump(data, f, indent=2, ensure_ascii=False)
 
     def create_checkpoint(self, rl_agent, metrics: Dict) -> ModelVersion:
         """

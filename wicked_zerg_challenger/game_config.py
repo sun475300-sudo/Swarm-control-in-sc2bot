@@ -320,7 +320,7 @@ class GameConfig:
             _config_logger.warning(f"Config file not found: {filepath}")
             return
 
-        with open(filepath, "r") as f:
+        with open(filepath, "r", encoding="utf-8") as f:
             if filepath.endswith(".json"):
                 config_dict = json.load(f)
             elif filepath.endswith(".yaml") or filepath.endswith(".yml"):
@@ -350,8 +350,8 @@ class GameConfig:
         if dir_path:
             os.makedirs(dir_path, exist_ok=True)
 
-        with open(filepath, "w") as f:
-            json.dump(config_dict, f, indent=2)
+        with open(filepath, "w", encoding="utf-8") as f:
+            json.dump(config_dict, f, indent=2, ensure_ascii=False)
 
         _config_logger.info(f"Saved configuration to {filepath}")
 

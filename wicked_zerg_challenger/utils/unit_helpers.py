@@ -19,8 +19,22 @@ try:
     from sc2.units import Units
 except ImportError:
     Unit = None
-    Units = None
     Point2 = None
+
+    class _UnitsStub(list):
+        """Empty stub so callers that fall back to ``Units([], None)`` still work
+        when the real sc2 library is not installed (e.g. in CI / unit tests)."""
+
+        def __init__(self, units=(), bot_object=None):
+            super().__init__(units)
+
+        def closer_than(self, distance, position):  # pragma: no cover - stub
+            return _UnitsStub([], None)
+
+        def filter(self, fn):  # pragma: no cover - stub
+            return _UnitsStub([u for u in self if fn(u)], None)
+
+    Units = _UnitsStub
 
 logger = get_logger("UnitHelpers")
 

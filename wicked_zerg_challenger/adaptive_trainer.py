@@ -70,7 +70,7 @@ def kill_all_sc2():
 
 def create_lock():
     """Lock 파일 생성"""
-    with open(LOCK_FILE, "w") as f:
+    with open(LOCK_FILE, "w", encoding="utf-8") as f:
         f.write(str(os.getpid()))
 
 

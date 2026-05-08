@@ -171,7 +171,7 @@ class CurriculumManager:
                 "wins_required": self.wins_required_per_level.get(self.current_idx, 10),
             }
             with open(self.stats_file, "w", encoding="utf-8") as f:
-                json.dump(data, f, indent=2)
+                json.dump(data, f, indent=2, ensure_ascii=False)
         except IOError:
             pass
 

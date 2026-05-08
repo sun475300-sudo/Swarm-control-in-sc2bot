@@ -13,7 +13,30 @@ import logging
 from pathlib import Path
 from typing import Dict, Optional
 
-from sc2.data import Difficulty, Race
+try:
+    from sc2.data import Difficulty, Race
+except ImportError:
+    from enum import Enum
+
+    class Difficulty(Enum):
+        VeryEasy = 1
+        Easy = 2
+        Medium = 3
+        MediumHard = 4
+        Hard = 5
+        Harder = 6
+        VeryHard = 7
+        CheatVision = 8
+        CheatMoney = 9
+        CheatInsane = 10
+
+    class Race(Enum):
+        NoRace = 0
+        Terran = 1
+        Zerg = 2
+        Protoss = 3
+        Random = 4
+
 
 logger = logging.getLogger("DifficultyProgression")
 
