@@ -457,6 +457,14 @@ class QueenManager:
 
         self.assigned_queen_tags = assigned_queens
 
+        # 사라진 hatchery / queen tag 정리 (장시간 매치에서 dict 누적 방지)
+        for tag in [t for t in self.last_inject_time if t not in current_hatch_tags]:
+            self.last_inject_time.pop(tag, None)
+        for tag in [t for t in self.last_creep_time if t not in current_queen_tags]:
+            self.last_creep_time.pop(tag, None)
+        for tag in [t for t in self.last_transfuse_time if t not in current_queen_tags]:
+            self.last_transfuse_time.pop(tag, None)
+
     async def _inject_larva(self, hatcheries, queens) -> None:
         """
         Inject larva on hatcheries with cooldown tracking.
