@@ -259,7 +259,7 @@ class CompleteDestructionTrainer:
                     return True
 
             return False
-        except Exception as e:
+        except Exception:
             # 에러 시 안전하게 False 반환
             return False
 
