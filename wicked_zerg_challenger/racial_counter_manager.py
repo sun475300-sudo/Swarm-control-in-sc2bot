@@ -480,7 +480,9 @@ class RacialCounterManager:
                 # Register counter override to Blackboard
                 if self.blackboard:
                     override = self.blackboard.get("unit_composition_override", {})
-                    for unit, ratio in zip(rule["counter_units"], rule["ratios"]):
+                    for unit, ratio in zip(
+                        rule["counter_units"], rule["ratios"], strict=False
+                    ):
                         override[unit] = override.get(unit, 0) + ratio * 0.3
                     self.blackboard.set("unit_composition_override", override)
                     self.blackboard.set("dynamic_counter_active", True)

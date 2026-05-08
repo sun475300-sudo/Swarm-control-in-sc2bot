@@ -523,7 +523,7 @@ def capstone_llm_integration():
         (6, 0, 3, 0, 0, 0, "#1976D2"),
     ]
 
-    for x1, y1, z1, x2, y2, z2, col in connections:
+    for x1, _y1, z1, x2, _y2, z2, col in connections:
         t = np.linspace(0, 1, 20)
         cx = x1 + (x2 - x1) * t
         cy = np.sin(t * math.pi) * 0.8
@@ -750,10 +750,8 @@ def capstone_self_healing():
         # 위협 상승 시 빨강, 복구 시 초록
         if j > i or (i == 4 and j == 0):
             col = "#F44336" if i != 4 else "#4CAF50"
-            dash_style = "solid" if i != 4 else "dash"
         else:
             col = "#4CAF50"
-            dash_style = "dash"
 
         fig.add_trace(
             go.Scatter3d(
@@ -1344,11 +1342,13 @@ def ir_roi_analysis():
     )
 
     # 절감률 표시 (annotation)
-    cost_savings = [
-        round((1 - c2 / c1) * 100) for c1, c2 in zip(cost_traditional, cost_ours)
+    [
+        round((1 - c2 / c1) * 100)
+        for c1, c2 in zip(cost_traditional, cost_ours, strict=False)
     ]
-    time_savings = [
-        round((1 - t2 / t1) * 100) for t1, t2 in zip(time_traditional, time_ours)
+    [
+        round((1 - t2 / t1) * 100)
+        for t1, t2 in zip(time_traditional, time_ours, strict=False)
     ]
 
     total_cost_trad = sum(cost_traditional)
@@ -1686,7 +1686,6 @@ def section2_drone_growth():
 
     fig = make_subplots(specs=[[{"secondary_y": True}]])
 
-    years = [2019, 2020, 2021, 2022, 2023, 2024, 2025, 2026, 2027, 2028, 2030]
     labels = [
         "2019",
         "2020",
@@ -1704,7 +1703,7 @@ def section2_drone_growth():
     consumer = [9, 12, 17, 22, 28, 36, 43, 50, 58, 65, 80]
     commercial = [4.5, 6, 10, 14, 20, 36, 50, 70, 95, 125, 250]
     military = [1.5, 2, 3, 4, 7, 18, 27, 40, 57, 80, 170]
-    total = [c + m + d for c, m, d in zip(consumer, commercial, military)]
+    total = [c + m + d for c, m, d in zip(consumer, commercial, military, strict=False)]
     growth = [0] + [
         round((total[i] - total[i - 1]) / total[i - 1] * 100)
         for i in range(1, len(total))
@@ -1946,7 +1945,7 @@ def section2_approval_flow():
 
     # 현행 프로세스 바
     x_pos = 0
-    for i, (label, days, color) in enumerate(current_steps):
+    for _i, (label, days, color) in enumerate(current_steps):
         width = max(days * 0.8, 3)
         fig.add_trace(
             go.Bar(
@@ -1967,7 +1966,7 @@ def section2_approval_flow():
 
     # Swarm-Net 바
     x_pos_auto = 0
-    for i, (label, days, color) in enumerate(auto_steps):
+    for _i, (label, days, color) in enumerate(auto_steps):
         width = max(20, 20)
         fig.add_trace(
             go.Bar(

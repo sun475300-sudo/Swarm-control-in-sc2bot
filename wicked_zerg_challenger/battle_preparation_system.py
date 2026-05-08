@@ -176,7 +176,7 @@ class BattlePreparationSystem:
 
     async def _prepare_for_battles(self, game_time: float):
         """교전 준비"""
-        for zone_key, zone in list(self.battle_zones.items()):
+        for _zone_key, zone in list(self.battle_zones.items()):
             if not zone.is_active:
                 continue
 

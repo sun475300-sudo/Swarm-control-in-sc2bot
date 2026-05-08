@@ -179,7 +179,7 @@ class TestBuildOrderStats(unittest.TestCase):
     def test_stats_have_required_fields(self):
         bot = MockBot("Race.Terran")
         system = BuildOrderSystem(bot)
-        for build_type, stats in system.build_order_stats.items():
+        for _build_type, stats in system.build_order_stats.items():
             self.assertIn("games", stats)
             self.assertIn("wins", stats)
 

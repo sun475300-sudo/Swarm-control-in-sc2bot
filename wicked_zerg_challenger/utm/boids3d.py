@@ -269,5 +269,5 @@ class Boids3DController:
             f = self.calculate_force(drone, drones, target, obstacles, desired_altitude)
             forces.append(f)
 
-        for drone, f in zip(drones, forces):
+        for drone, f in zip(drones, forces, strict=False):
             drone.update(f, dt)
