@@ -2,18 +2,22 @@
 
 > Owner: 선우 (sun475300@gmail.com)
 > Maintainer: nightly automation
-> Last refreshed: 2026-05-04
+> Last refreshed: 2026-05-08 (PR #118 — automated test→inspect→fix→commit→push 사이클)
 
 ---
 
 ## Snapshot (current state)
 
-- Branch: `main`, last commit: queen transfusion + requirements-dev.txt session
+- Branch: `claude/stoic-shannon-kvKGn` (PR #118, draft)
 - Bot core: `wicked_zerg_challenger/` — 179+ Python files across 10+ subdirs.
 - `.gitattributes` enforces `* text=auto` ✅
-- CI: `sc2bot-ci.yml` runs black + isort + flake8 ✅ (all clean)
-- **Test suite: 468 pass / 15 skip / 0 fail** ✅ (was 398/20/0 two nights ago)
-- Queen transfusion logic: 3 bugs fixed (`is_idle` guard removed, target dedup, per-queen cooldown) ✅
+- CI: `sc2bot-ci.yml` runs black + isort + flake8 ✅ (mostly clean — visuals/ 은 비-봇 코드)
+- **Test suite: 372 pass / 35 skip / 0 fail / 0 warning** ✅
+  - 35 skipped 은 sc2/torch 등 외부 의존 미설치 환경 가드로 인해 정상 회피
+- Lint baseline (`wicked_zerg_challenger/` 비-visuals): F811=0, F401=0, F841=0,
+  E713=0, E741=0, E999=0, W291=0, W293=0
+- Queen transfusion logic: 3 bugs fixed + smart priority system 구현 완료 ✅
+- Resource Manager: `asyncio.Lock` 기반 thread-safe 구현 완료 ✅
 
 ## Resolved this run (2026-05-03)
 
@@ -94,3 +98,11 @@ Run `E:\GitHub\Swarm-control-in-sc2bot\scripts\commit_nightly_2026-05-03.bat`:
 - **2026-05-01** — P1.1 scout cadence, P1.2 harassment, P1.3 expansion timing, P1.5 doc history. Commit blocked by index.lock.
 - **2026-05-02** — P0 scout import mismatch fixed. P1.4 deprecation shim. P2.1 FSM tests 23/23 pass.
 - **2026-05-03** — **Test suite cleared:** 90 failures → 0. Fixed pytest-asyncio, torch stubs (qmix/mappo), stale __init__ exports (mappo/comm_learning), gas threshold test, crypto skipif guards. Final: 398 pass / 20 skip / 0 fail.
+- **2026-05-08** — **자동 사이클 PR #118 (claude/stoic-shannon-kvKGn)**:
+  - Cycle A: F811 재정의 5건 청소 (REMAINING_ISSUES N1-N4) + F401 1건. opponent_modeling.on_step 의 silently shadowed comprehensive 버전 복원 (실제 동작 변화).
+  - Cycle B: F841 미사용 지역변수 122 → 0 (visuals/ 포함 전체).
+  - Cycle C: REMAINING_ISSUES.md 동기화. Issue #3 (smart transfusion), Issue #4 (resource race) 모두 코드에 이미 반영됨 확인 → Resolved.
+  - Cycle D: Cycle B-2 자동스크립트가 부수효과 함수호출을 잘못 제거한 회귀 복구 (E999 IndentationError + 테스트 셋업 누락 2건).
+  - Cycle E: E713 2건 + E741 16건 정리 (`l` → 의미있는 이름).
+  - Cycle F: W291/W293 trailing whitespace 7건 정리.
+  - 누적: pytest 372 pass / 35 skip / 0 fail / 0 warning. flake8 핵심 코드 카테고리 0건.
