@@ -38,25 +38,43 @@ class AirThreatResponseTrainer:
         self.logger = get_logger("AirThreatResponse")
 
         # 공중 유닛 분류
+        # LIGHT_AIR = 빠르고 단단함은 낮은 dps 위주 유닛 (대응 임계값 낮음)
+        # HEAVY_AIR = 고-DPS 또는 massive 유닛 (대응 임계값 높음, 가중치 2배)
         self.LIGHT_AIR = {
+            # Zerg
             UnitTypeId.MUTALISK,
+            UnitTypeId.CORRUPTOR,  # ★ added: 적 Zerg 공중 코어
+            # Terran
+            UnitTypeId.MEDIVAC,
+            UnitTypeId.BANSHEE,  # ★ added: 클락 + 바이오 위협
+            UnitTypeId.VIKING,  # ★ added: viking ground mode (sometimes)
+            UnitTypeId.VIKINGFIGHTER,  # ★ added: viking air mode (anti-air)
+            UnitTypeId.LIBERATOR,  # ★ added: liberator air mode
+            # Protoss
             UnitTypeId.PHOENIX,
             UnitTypeId.ORACLE,
-            UnitTypeId.MEDIVAC,
         }
 
         self.HEAVY_AIR = {
+            # Zerg
+            UnitTypeId.BROODLORD,
+            # Terran
+            UnitTypeId.BATTLECRUISER,
+            UnitTypeId.LIBERATORAG,  # ★ added: 시즈 모드 — 지역 거부 능력↑
+            # Protoss
             UnitTypeId.VOIDRAY,
             UnitTypeId.CARRIER,
-            UnitTypeId.BATTLECRUISER,
             UnitTypeId.TEMPEST,
-            UnitTypeId.BROODLORD,
         }
 
-        # 대공 유닛
+        # 대공 유닛 — 대공 공격이 가능한 우리 측 유닛
+        # MUTALISK: 공중 유닛이지만 anti-air 공격 가능 (스택된 mut끼리 공격)
+        # INFESTOR: Fungal Growth로 stacked air에 면적 데미지 (간접 anti-air)
+        # SPORECRAWLER: 정적 방어 구조물
         self.OUR_ANTI_AIR = {
             UnitTypeId.QUEEN,
             UnitTypeId.HYDRALISK,
+            UnitTypeId.MUTALISK,  # ★ added: 자체 anti-air 공격
             UnitTypeId.CORRUPTOR,
             UnitTypeId.INFESTOR,
             UnitTypeId.SPORECRAWLER,
@@ -119,7 +137,6 @@ class AirThreatResponseTrainer:
 
         light_count = light_air.amount
         heavy_count = heavy_air.amount
-        total_air = light_count + heavy_count
 
         # 위협 가중치 (중형 공중은 2배)
         threat_score = light_count + (heavy_count * 2)

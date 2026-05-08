@@ -117,7 +117,7 @@ def main():
     logger.info("\n" + "=" * 70)
     logger.info("  OPTIMIZATION VERIFICATION TEST")
     logger.info("=" * 70)
-    logger.info(f"  Difficulty: Easy")
+    logger.info("  Difficulty: Easy")
     logger.info(f"  Total Games: {total_games}")
     logger.info(f"  Target Win Rate: {target_win_rate}%+")
     logger.info("  New Features:")
@@ -183,12 +183,12 @@ def main():
     logger.info("-" * 70)
 
     if final_win_rate >= target_win_rate:
-        logger.info(f"  STATUS: SUCCESS - Target achieved!")
-        logger.info(f"  Ready for next difficulty: Medium")
+        logger.info("  STATUS: SUCCESS - Target achieved!")
+        logger.info("  Ready for next difficulty: Medium")
     else:
         diff = target_win_rate - final_win_rate
         logger.info(f"  STATUS: INCOMPLETE - {diff:.1f}% away from target")
-        logger.info(f"  Action: Further optimization needed")
+        logger.info("  Action: Further optimization needed")
 
     logger.info("=" * 70)
 

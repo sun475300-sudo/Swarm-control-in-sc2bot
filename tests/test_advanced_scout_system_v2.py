@@ -4,7 +4,7 @@ Unit Tests for Advanced Scout System V2
 Tests dynamic scouting intervals, scout assignment, and intel reporting.
 """
 
-from unittest.mock import MagicMock, Mock, patch
+from unittest.mock import Mock, patch
 
 import pytest
 

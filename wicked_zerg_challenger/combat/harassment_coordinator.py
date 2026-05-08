@@ -161,8 +161,6 @@ class HarassmentCoordinator:
     async def on_step(self, iteration: int):
         """매 프레임 실행"""
         try:
-            current_time = self.bot.time
-
             # 1. Update harassment targets
             if iteration % 110 == 0:  # ~5초마다
                 self._update_harassment_targets()
@@ -696,8 +694,8 @@ class HarassmentCoordinator:
         # ★ 포킹 실행 ★
         for unit in active_pokes:
             # 안전 거리 유지하며 건물 공격
-            distance = unit.distance_to(target)
-
+            # NOTE: per-unit safe-distance gating은 미구현 — 현재는 threat_level
+            # (구역 단위 위협 추정)으로만 후퇴 결정한다.
             if threat_level > 10:  # 위협이 너무 크면 후퇴
                 self.bot.do(unit.move(self.bot.start_location))
                 continue
@@ -1594,10 +1592,7 @@ class HarassmentCoordinator:
         elif current_enemy_workers > self.last_worker_kill_count:
             # Enemy rebuilt workers. Log raid summary if a raid just ended
             # and reset the per-raid counter so we don't double-count.
-            if (
-                not harassment_active
-                and self._current_raid_workers_killed > 0
-            ):
+            if not harassment_active and self._current_raid_workers_killed > 0:
                 self.logger.info(
                     f"[{int(self.bot.time)}s] Raid #{self.raids_executed} summary:"
                     f" {self._current_raid_workers_killed} workers killed."
