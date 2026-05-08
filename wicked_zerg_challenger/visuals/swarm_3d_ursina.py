@@ -1,3 +1,7 @@
+# ruff: noqa: F401, F403, F405
+# ^ Ursina library expects `from ursina import *`. Disabled per-file because
+# every Entity/color/scene/etc. reference would otherwise trip F405.
+
 # ============================================================
 # Swarm-Net 3D Simulator — Ursina Engine (v12.0)
 # ============================================================
