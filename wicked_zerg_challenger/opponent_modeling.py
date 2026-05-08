@@ -174,7 +174,7 @@ class OpponentModel:
 
         if not strategy_scores:
             # Fallback to most frequent strategy
-            if self.strategy_frequency:
+            if self.strategy_frequency and self.games_played > 0:
                 most_common = max(self.strategy_frequency.items(), key=lambda x: x[1])
                 confidence = most_common[1] / self.games_played
                 return (most_common[0], confidence)
