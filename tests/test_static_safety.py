@@ -171,6 +171,53 @@ def test_no_duplicate_methods_on_production_resilience():
     )
 
 
+def test_combat_unit_names_covers_known_threats():
+    """combat_manager._is_base_under_attack matches enemy unit type names
+    via string equality against ``e.type_id.name.upper()``. The set must
+    contain the modern burnysc2 enum names — not legacy aliases that no
+    longer match any unit instance — for every unit class that can deal
+    damage to a townhall.
+
+    Pin the threats that historically were missing or wrongly named:
+    - LURKERMP (Heart-of-the-Swarm-onward enum; legacy "LURKER" never
+      matched any modern game unit)
+    - DARKTEMPLAR / HIGHTEMPLAR / SENTRY (Protoss tier-2 casters;
+      DT alone deletes a hatchery in seconds when un-detected)
+    - GHOST / BANSHEE (Terran cloak/snipe harassers)
+    - VIPER / SWARMHOSTMP / INFESTOR / LOCUSTMP (Zerg sieger/casters)
+    - ORACLE (Protoss air harasser, pulsar-beam shreds workers)
+    - VIKINGFIGHTER / VIKINGASSAULT (Viking flips between modes; the
+      base "VIKING" name doesn't match either)
+    - LIBERATORAG (siege-mode liberator — different type_id from
+      regular LIBERATOR)
+    """
+    src_path = REPO_ROOT / "wicked_zerg_challenger" / "combat_manager.py"
+    if not src_path.exists():
+        pytest.skip(f"{src_path} not present")
+
+    src = src_path.read_text(encoding="utf-8")
+    required = [
+        "LURKERMP",
+        "DARKTEMPLAR",
+        "HIGHTEMPLAR",
+        "SENTRY",
+        "GHOST",
+        "BANSHEE",
+        "VIPER",
+        "SWARMHOSTMP",
+        "ORACLE",
+        "VIKINGFIGHTER",
+        "LIBERATORAG",
+    ]
+    missing = [name for name in required if f'"{name}"' not in src]
+    assert not missing, (
+        "combat_manager.py's combat_unit_names is missing modern threat "
+        f"types: {missing}. _is_base_under_attack uses string equality "
+        "against type_id.name; missing entries silently let those threats "
+        "slip past the branch-1 guard."
+    )
+
+
 def test_opponent_modeling_uses_canonical_attribute_names():
     """The OpponentModeling class previously had a split between
     ``current_opponent`` (set by ``on_game_start``, used by 4 trailing
