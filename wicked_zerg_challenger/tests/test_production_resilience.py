@@ -25,10 +25,9 @@ sys.path.insert(
 )
 
 try:
+    from local_training.production_resilience import ProductionResilience
     from sc2.ids.unit_typeid import UnitTypeId
     from sc2.position import Point2
-
-    from local_training.production_resilience import ProductionResilience
 except ImportError:
     pytest.skip("sc2 library not available", allow_module_level=True)
 
