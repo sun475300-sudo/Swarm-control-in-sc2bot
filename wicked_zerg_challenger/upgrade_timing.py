@@ -272,7 +272,8 @@ class UpgradeTimingManager:
                     "BROODLORD",
                 ):
                     enemy_air += 1
-            except Exception:
+            except Exception as e:
+                logger.debug("enemy unit type classification failed: %s", e)
                 continue
 
         # 경로 결정
@@ -319,7 +320,8 @@ class UpgradeTimingManager:
             else:
                 return UpgradePathType.BALANCED
 
-        except Exception:
+        except Exception as e:
+            logger.debug("own composition analysis failed: %s", e)
             return UpgradePathType.BALANCED
 
     def _update_timing_score(self, game_time: float) -> None:
