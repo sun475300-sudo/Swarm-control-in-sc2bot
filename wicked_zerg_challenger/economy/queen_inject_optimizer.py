@@ -306,8 +306,15 @@ class QueenInjectOptimizer:
             assigned_queen_tags = self.hatchery_queens.get(hatchery.tag, set())
 
             if not assigned_queen_tags:
-                # 할당된 Queen이 없으면 가장 가까운 Queen 사용
-                idle_queens = queens.idle
+                # 할당된 Queen이 없으면 가장 가까운 Queen 사용.
+                # 에너지 부족하거나 Inject 역할이 아닌 Queen 은 미리 걸러서
+                # 쓸데없이 한 hatchery 슬롯을 잡지 않도록 한다.
+                idle_queens = [
+                    q
+                    for q in queens.idle
+                    if getattr(q, "energy", 0) >= self.INJECT_ENERGY_COST
+                    and self.can_queen_do_inject(q.tag)
+                ]
                 if idle_queens:
                     queen = min(
                         idle_queens,
