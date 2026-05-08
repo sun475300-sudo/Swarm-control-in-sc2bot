@@ -26,7 +26,7 @@ Unit Tests for ProductionResilience
 """
 
 from typing import List
-from unittest.mock import AsyncMock, MagicMock, Mock, patch
+from unittest.mock import Mock
 
 import pytest
 

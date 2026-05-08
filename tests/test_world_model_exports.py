@@ -12,8 +12,6 @@ from __future__ import annotations
 
 import importlib
 
-import pytest
-
 
 def test_world_model_canonical_exports():
     mod = importlib.import_module("world_model")
