@@ -1,6 +1,5 @@
 import json
 from pathlib import Path
-from typing import Dict
 
 from utils.logger import get_logger
 

@@ -8,7 +8,7 @@ type-safe access to configuration values.
 import json
 import logging
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any
 
 logger = logging.getLogger("ConfigLoader")
 

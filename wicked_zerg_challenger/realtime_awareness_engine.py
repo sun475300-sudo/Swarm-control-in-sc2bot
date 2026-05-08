@@ -15,7 +15,6 @@ Real-time Awareness Engine — 실시간 상황 인식 + 자동 대응 시스템
 import asyncio
 import logging
 from dataclasses import dataclass
-from typing import Dict, List
 
 logger = logging.getLogger("RealtimeAwarenessEngine")
 

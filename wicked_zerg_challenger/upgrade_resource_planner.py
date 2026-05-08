@@ -7,7 +7,7 @@ Upgrade Resource Planner - 업그레이드 자원 계획 및 예약 시스템
 
 from dataclasses import dataclass
 from enum import Enum
-from typing import Dict, List, Optional, Tuple
+from typing import Optional
 
 try:
     from sc2.ids.unit_typeid import UnitTypeId

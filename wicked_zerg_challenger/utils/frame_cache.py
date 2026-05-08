@@ -18,7 +18,7 @@ Usage:
 from __future__ import annotations
 
 import functools
-from typing import Any, Dict
+from typing import Any
 from collections.abc import Callable
 
 

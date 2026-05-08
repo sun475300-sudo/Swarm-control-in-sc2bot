@@ -8,7 +8,7 @@ Overseer Scout Trainer - 감시군주 정찰 학습 시스템
 4. 대군주보다 빠른 이동 속도
 """
 
-from typing import Dict, List, Optional, Set
+from typing import Optional
 
 from sc2.ids.ability_id import AbilityId
 from sc2.ids.unit_typeid import UnitTypeId

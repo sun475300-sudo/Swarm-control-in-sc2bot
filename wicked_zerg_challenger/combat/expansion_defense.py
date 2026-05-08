@@ -8,7 +8,7 @@ Expansion Defense - 확장 기지 방어 시스템
 4. 파괴 후 반격
 """
 
-from typing import TYPE_CHECKING, Dict, Set
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from sc2.position import Point2

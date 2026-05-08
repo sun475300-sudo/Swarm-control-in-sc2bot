@@ -9,7 +9,7 @@ Origin: wicked_zerg_challenger/utils/kd_tree.py
 
 import heapq
 import math
-from typing import Any, List, Optional, Tuple
+from typing import Any, Optional
 
 Pos3 = tuple[float, float, float]
 

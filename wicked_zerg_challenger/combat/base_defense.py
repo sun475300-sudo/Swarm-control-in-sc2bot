@@ -10,7 +10,7 @@ Base Defense System - 기지 방어 시스템
 6. 우선순위 타겟 집중 공격
 """
 
-from typing import TYPE_CHECKING, List, Optional
+from typing import TYPE_CHECKING, Optional
 
 if TYPE_CHECKING:
     from sc2.position import Point2

@@ -5,7 +5,7 @@ Provides basic prioritization for high-threat or low-health targets.
 """
 
 import logging
-from typing import List, Optional
+from typing import Optional
 from collections.abc import Iterable, Sequence
 
 logger = logging.getLogger(__name__)

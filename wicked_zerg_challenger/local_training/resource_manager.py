@@ -10,7 +10,6 @@ Features:
 """
 
 import logging
-from typing import Dict, List
 
 logger = logging.getLogger("ResourceManager")
 

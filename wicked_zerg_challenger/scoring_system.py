@@ -23,7 +23,6 @@ import os
 import time
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Dict, List
 
 logger = logging.getLogger("ScoringSystem")
 

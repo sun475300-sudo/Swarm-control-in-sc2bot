@@ -11,7 +11,7 @@ Data Cache Manager - 자주 사용되는 데이터 캐싱
 """
 
 import time
-from typing import Any, Dict, List, Optional
+from typing import Any, Optional
 from collections.abc import Callable
 
 from utils.logger import get_logger

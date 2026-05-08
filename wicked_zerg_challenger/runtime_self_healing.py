@@ -9,7 +9,6 @@ Runtime Self-Healing System - 실행 중 자동 복구
 5. 자동 복구 조치
 """
 
-from typing import Dict, List
 
 from utils.logger import get_logger
 

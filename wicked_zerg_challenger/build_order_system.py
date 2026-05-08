@@ -10,7 +10,6 @@ Purpose: Stable and optimized automated build order execution
 
 import logging
 from enum import Enum
-from typing import Dict, List
 
 from knowledge_manager import KnowledgeManager  # NEW
 

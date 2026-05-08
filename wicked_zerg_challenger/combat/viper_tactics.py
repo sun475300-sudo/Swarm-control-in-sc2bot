@@ -8,7 +8,7 @@ Feature #96: 바이퍼 활용 매니저
 4. 에너지 관리 및 우선순위 타겟팅
 """
 
-from typing import Dict, List, Optional
+from typing import Optional
 
 try:
     from sc2.ids.ability_id import AbilityId

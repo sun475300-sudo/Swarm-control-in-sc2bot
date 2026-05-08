@@ -5,7 +5,7 @@
 
 import logging
 import math
-from typing import List, Optional
+from typing import Optional
 
 from sc2.ids.unit_typeid import UnitTypeId
 from sc2.position import Point2

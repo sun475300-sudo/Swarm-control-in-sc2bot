@@ -7,7 +7,7 @@ Multitasking System - 멀티태스킹 관리
 3. 동시 작업 실행
 """
 
-from typing import TYPE_CHECKING, Dict, List, Optional, Set, Tuple
+from typing import TYPE_CHECKING, Optional
 
 if TYPE_CHECKING:
     from sc2.position import Point2

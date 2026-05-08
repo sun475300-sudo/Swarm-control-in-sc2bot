@@ -9,7 +9,7 @@ Consolidated version combining features from original and improved versions:
 """
 
 import logging
-from typing import Dict, Optional, Set
+from typing import Optional
 
 try:
     from wicked_zerg_challenger.game_config import GameConfig

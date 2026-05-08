@@ -6,7 +6,7 @@ opening decisions can consume the scout state reliably.
 """
 
 import logging
-from typing import Any, Dict, List, Optional, Set
+from typing import Any, Optional
 
 logger = logging.getLogger("EarlyScoutSystem")
 

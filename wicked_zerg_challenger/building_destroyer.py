@@ -10,7 +10,6 @@
 """
 
 import logging
-from typing import Dict, List, Set
 
 from sc2.ids.unit_typeid import UnitTypeId
 from sc2.position import Point2

@@ -11,7 +11,7 @@ Features:
 """
 
 import math
-from typing import Any, List, Optional, Tuple
+from typing import Any, Optional
 
 
 class KDTreeNode:

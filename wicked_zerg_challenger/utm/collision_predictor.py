@@ -10,7 +10,7 @@ Origin: potential_fields.py의 반발력 + pid_controller.py의 제어
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import List, Optional
+from typing import Optional
 
 import numpy as np
 

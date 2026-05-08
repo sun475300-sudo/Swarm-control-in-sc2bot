@@ -8,7 +8,7 @@ Features:
 4. Escape: Burrow move away from threats
 """
 
-from typing import Dict, Optional, Set
+from typing import Optional
 
 try:
     from sc2.ids.ability_id import AbilityId

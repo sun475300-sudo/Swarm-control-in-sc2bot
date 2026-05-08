@@ -8,7 +8,7 @@ Roach Burrow Heal - 바퀴 잠복 회복 시스템
 4. 잠복 중 안전 확인
 """
 
-from typing import TYPE_CHECKING, Dict, Set
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from sc2.position import Point2

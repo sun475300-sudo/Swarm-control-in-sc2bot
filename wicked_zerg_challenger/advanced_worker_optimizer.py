@@ -10,7 +10,7 @@ Advanced Worker Optimizer - 고급 일꾼 최적화 시스템
 """
 
 from dataclasses import dataclass
-from typing import Dict, List, Optional, Set
+from typing import Optional
 
 try:
     from sc2.ids.unit_typeid import UnitTypeId

@@ -13,7 +13,7 @@ Queen Specialization Manager - 여왕 전문 분담 체제
 """
 
 from enum import Enum
-from typing import Dict, List, Optional, Set
+from typing import Optional
 
 try:
     from sc2.ids.ability_id import AbilityId

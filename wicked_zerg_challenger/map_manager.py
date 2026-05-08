@@ -12,7 +12,6 @@ import logging
 import random
 import time
 from pathlib import Path
-from typing import Dict, List
 
 TRAINING_MAPS = [
     "LeyLinesAIE_v3",

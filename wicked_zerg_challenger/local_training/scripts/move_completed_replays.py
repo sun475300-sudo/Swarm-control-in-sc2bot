@@ -8,7 +8,6 @@ from __future__ import annotations
 import argparse
 import logging
 from pathlib import Path
-from typing import Tuple
 
 from replay_learning_tracker_sqlite import ReplayLearningTrackerSQLite
 

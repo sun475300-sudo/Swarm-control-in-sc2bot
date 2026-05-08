@@ -8,7 +8,6 @@ Bot Step Integration - on_step 구현 통합 모듈
 import asyncio
 import logging
 import time
-from typing import Dict, List
 
 # Error Handler 통합
 from error_handler import error_handler

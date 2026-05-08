@@ -11,7 +11,7 @@ Personality Module - 봇 성격 및 채팅 시스템
 
 import random
 from enum import Enum
-from typing import List, Optional
+from typing import Optional
 
 from utils.logger import get_logger
 

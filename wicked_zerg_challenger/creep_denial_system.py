@@ -13,7 +13,7 @@ ZvZ 대전에서 특히 중요한 시스템입니다.
 
 from collections import defaultdict
 from dataclasses import dataclass
-from typing import Dict, List, Optional, Set, Tuple
+from typing import Optional
 
 try:
     from sc2.ids.ability_id import AbilityId

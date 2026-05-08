@@ -4,7 +4,6 @@ Overlord Hunter - 적 대군주 사냥 모듈
 적의 시야를 끊어내기 위해 초반 대군주를 사냥합니다.
 """
 
-from typing import List, Set
 
 from sc2.ids.unit_typeid import UnitTypeId
 from sc2.units import Units

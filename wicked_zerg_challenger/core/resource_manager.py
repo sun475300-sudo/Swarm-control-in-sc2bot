@@ -12,7 +12,7 @@ Features:
 """
 
 import asyncio
-from typing import TYPE_CHECKING, Dict, Optional, Tuple
+from typing import TYPE_CHECKING, Optional
 
 from wicked_zerg_challenger.utils.logger import get_logger
 

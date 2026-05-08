@@ -13,7 +13,7 @@ Map Awareness Manager - 맵 인식 시스템 (#106)
 
 import logging
 import math
-from typing import Any, Dict, List, Optional, Set, Tuple
+from typing import Any, Optional
 
 logger = logging.getLogger("MapAwareness")
 

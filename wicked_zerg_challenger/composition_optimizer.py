@@ -13,7 +13,7 @@ Composition Optimizer - 유닛 조합 최적화 시스템 (#105)
 
 import logging
 from enum import Enum
-from typing import Any, Dict, List, Tuple
+from typing import Any
 
 try:
     from sc2.ids.unit_typeid import UnitTypeId

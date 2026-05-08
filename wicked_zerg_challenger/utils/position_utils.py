@@ -5,7 +5,7 @@ Provides common position calculation functions to eliminate code duplication
 across the codebase. Uses efficient algorithms and consistent interfaces.
 """
 
-from typing import TYPE_CHECKING, List, Optional, Union
+from typing import TYPE_CHECKING, Optional, Union
 
 from sc2.position import Point2
 

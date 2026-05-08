@@ -9,7 +9,7 @@
 """
 
 import logging
-from typing import List, Optional, Set, Tuple
+from typing import Optional
 
 logger = logging.getLogger("RogueTacticsManager")
 

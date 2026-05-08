@@ -5,7 +5,7 @@ Provides intelligent transfusion targeting for queens, prioritizing high-value u
 and optimizing healing efficiency in combat situations.
 """
 
-from typing import TYPE_CHECKING, Dict, Optional
+from typing import TYPE_CHECKING, Optional
 
 from sc2.ids.ability_id import AbilityId
 from sc2.ids.unit_typeid import UnitTypeId

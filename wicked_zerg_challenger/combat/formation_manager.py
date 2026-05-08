@@ -7,7 +7,7 @@ Formation Manager - 지형 활용 및 대형 제어
 3. 고저차 활용: 언덕, 경사로 등을 활용한 전술
 """
 
-from typing import List, Optional, Tuple
+from typing import Optional
 
 from sc2.game_info import GameInfo
 from sc2.ids.unit_typeid import UnitTypeId

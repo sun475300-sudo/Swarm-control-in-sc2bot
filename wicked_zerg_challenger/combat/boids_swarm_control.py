@@ -7,7 +7,7 @@ Implements separation, alignment, and cohesion for clustered micro.
 from __future__ import annotations
 
 import math
-from typing import TYPE_CHECKING, Any, List, Optional, Tuple
+from typing import TYPE_CHECKING, Any, Optional
 
 import numpy as np
 

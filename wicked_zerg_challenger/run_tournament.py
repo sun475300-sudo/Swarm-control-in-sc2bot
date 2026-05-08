@@ -21,7 +21,6 @@ import sys
 import time
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, List
 
 from sc2 import maps
 from sc2.data import Difficulty, Race

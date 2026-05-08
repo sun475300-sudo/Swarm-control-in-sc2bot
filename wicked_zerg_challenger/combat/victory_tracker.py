@@ -8,7 +8,7 @@ Victory Tracker - 승리 조건 추적 시스템
 4. 전력 공격 실행
 """
 
-from typing import TYPE_CHECKING, Set
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from sc2.position import Point2

@@ -5,7 +5,7 @@ This module provides terrain analysis capabilities for tactical decision making,
 including chokepoint detection and cohesion modifiers for unit movement.
 """
 
-from typing import List, Optional
+from typing import Optional
 
 try:
     from sc2.position import Point2

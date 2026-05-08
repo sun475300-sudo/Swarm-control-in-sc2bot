@@ -7,7 +7,6 @@ Queen의 Creep Tumor를 활용하여 맵 전체에 점막 확산:
 3. 맵 전체 점막 네트워크 구축
 """
 
-from typing import Dict, List, Set
 
 from sc2.ids.ability_id import AbilityId
 from sc2.ids.unit_typeid import UnitTypeId

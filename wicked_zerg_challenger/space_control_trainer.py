@@ -8,7 +8,6 @@ Space Control Trainer - 공간 확보 학습 시스템
 4. 크립 확장 경로 개척
 """
 
-from typing import Dict, Set
 
 from sc2.position import Point2
 

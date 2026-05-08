@@ -1,5 +1,5 @@
 import logging
-from typing import Any, Dict, Tuple
+from typing import Any
 
 from sc2.ids.unit_typeid import UnitTypeId
 

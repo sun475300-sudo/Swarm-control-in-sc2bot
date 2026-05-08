@@ -14,7 +14,6 @@ Comprehensive Unit Abilities - 모든 유닛 스킬 통합 관리
 10. Hydralisk: Lurker morph
 """
 
-from typing import Dict, Set
 
 from sc2.ids.ability_id import AbilityId
 from sc2.ids.unit_typeid import UnitTypeId

@@ -5,7 +5,7 @@ SC2 Encyclopedia - 유닛/건물 상성 참조 데이터베이스
 DynamicCounterSystem, ProtossCounterSystem 등에서 참조합니다.
 """
 
-from typing import Dict, List, Optional
+from typing import Optional
 
 # ================================================================
 # === Zerg Units (아군 유닛 정보) ===

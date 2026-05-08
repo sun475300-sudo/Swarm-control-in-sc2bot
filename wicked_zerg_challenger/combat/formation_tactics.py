@@ -6,7 +6,7 @@ special ability timing (burrow/unburrow).
 """
 
 import math
-from typing import Optional, Set, Tuple
+from typing import Optional
 
 try:
     from sc2.ids.ability_id import AbilityId

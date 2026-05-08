@@ -8,7 +8,7 @@ Features:
 """
 
 import math
-from typing import Dict, List, Optional, Set, Tuple
+from typing import Optional
 
 try:
     from sc2.ids.unit_typeid import UnitTypeId

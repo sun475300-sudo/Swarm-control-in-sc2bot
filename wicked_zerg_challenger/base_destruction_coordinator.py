@@ -8,7 +8,7 @@ Base Destruction Coordinator - 적 기지 완전 파괴 시스템
 4. 완전 승리 보장
 """
 
-from typing import Dict, List, Optional
+from typing import Optional
 
 from sc2.ids.unit_typeid import UnitTypeId
 from sc2.position import Point2

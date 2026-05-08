@@ -11,7 +11,6 @@ Building Coordination - 건물 중복 방지 시스템
 - 건물 건설 상태 추적
 """
 
-from typing import Dict
 
 from sc2.ids.unit_typeid import UnitTypeId
 

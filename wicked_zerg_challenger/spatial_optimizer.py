@@ -6,7 +6,7 @@ O(N^2) → O(N) 연산량 감소 (70% 절감)
 """
 
 from collections import defaultdict
-from typing import Dict, List, Optional, Set, Tuple
+from typing import Optional
 
 from utils.logger import get_logger
 

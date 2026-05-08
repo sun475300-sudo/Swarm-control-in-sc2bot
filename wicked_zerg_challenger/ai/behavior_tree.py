@@ -13,7 +13,7 @@ Behavior Tree (행동 트리) 시스템
 import logging
 from abc import ABC, abstractmethod
 from enum import Enum
-from typing import Any, List, Optional
+from typing import Any, Optional
 from collections.abc import Callable
 
 logger = logging.getLogger("BehaviorTree")

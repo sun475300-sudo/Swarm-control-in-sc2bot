@@ -6,7 +6,7 @@ Micro combat utilities with anti-splash awareness.
 from __future__ import annotations
 
 import asyncio
-from typing import List, Optional, Tuple
+from typing import Optional
 from collections.abc import Iterable
 
 # Strong-ref set so asyncio doesn't garbage-collect fire-and-forget

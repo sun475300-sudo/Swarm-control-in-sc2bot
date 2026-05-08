@@ -8,7 +8,6 @@ Hive Tech Maximizer - 군락 이후 고급 기술 극대화
 4. 고급 유닛 대량 생산
 """
 
-from typing import Set
 
 from sc2.ids.ability_id import AbilityId
 from sc2.ids.unit_typeid import UnitTypeId

@@ -8,7 +8,7 @@ import logging
 import random
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Any, Dict, List, Tuple
+from typing import Any
 
 logger = logging.getLogger("NnPrediction")
 

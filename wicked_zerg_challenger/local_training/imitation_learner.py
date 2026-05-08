@@ -13,7 +13,7 @@ SC2Replay 파일에서 전문가 행동을 추출하고 모방 학습합니다.
 import json
 import logging
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Optional
 
 import numpy as np
 

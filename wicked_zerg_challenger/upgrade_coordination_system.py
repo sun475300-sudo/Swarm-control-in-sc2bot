@@ -7,7 +7,7 @@ Upgrade Coordination System - 업그레이드 전략 타이밍
 - "공3방3 완료 → 최종 결전"
 """
 
-from typing import Dict, List, Optional, Tuple
+from typing import Optional
 
 from utils.logger import get_logger
 

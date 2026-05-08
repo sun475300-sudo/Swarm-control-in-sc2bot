@@ -10,7 +10,6 @@ ZvZ 매치업에서 특히 중요합니다.
 3. 안전 확인 후 제거 및 위협 시 후퇴
 """
 
-from typing import Dict, List
 
 from sc2.ids.unit_typeid import UnitTypeId
 from sc2.position import Point2

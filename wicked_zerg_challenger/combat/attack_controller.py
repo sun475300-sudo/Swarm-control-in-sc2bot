@@ -8,7 +8,7 @@ Attack Controller - 공격 제어 시스템
 4. 맵 수색
 """
 
-from typing import TYPE_CHECKING, List
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from sc2.position import Point2

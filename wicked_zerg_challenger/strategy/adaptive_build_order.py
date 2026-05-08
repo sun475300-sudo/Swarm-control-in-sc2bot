@@ -14,7 +14,7 @@ Features:
 - 타이밍 공격 최적화
 """
 
-from typing import Dict, Optional
+from typing import Optional
 
 from utils.logger import get_logger
 

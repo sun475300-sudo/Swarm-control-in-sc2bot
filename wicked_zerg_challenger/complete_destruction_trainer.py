@@ -8,7 +8,7 @@ Complete Destruction Trainer - 완전 파괴 학습 시스템
 4. Combat Manager와 통합
 """
 
-from typing import Dict, List, Optional, Set
+from typing import Optional
 
 from sc2.ids.unit_typeid import UnitTypeId
 from sc2.position import Point2

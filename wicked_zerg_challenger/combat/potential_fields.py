@@ -5,7 +5,7 @@ This module implements potential field theory for collision avoidance,
 calculating repulsion vectors from enemies, structures, and terrain.
 """
 
-from typing import List, Optional, Tuple
+from typing import Optional
 from collections.abc import Iterable
 
 try:

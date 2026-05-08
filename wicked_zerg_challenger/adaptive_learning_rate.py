@@ -10,7 +10,7 @@ Adaptive Learning Rate System - 적응형 학습률 시스템
 import json
 import logging
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Optional
 
 logger = logging.getLogger("AdaptiveLearningRate")
 

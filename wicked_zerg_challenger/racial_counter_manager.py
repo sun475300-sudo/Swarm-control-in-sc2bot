@@ -9,7 +9,6 @@ Usage:
     counter_mgr.update(enemy_race, game_phase, game_time, enemy_composition)
 """
 
-from typing import Dict, List, Tuple
 
 from config.config_loader import ConfigLoader
 

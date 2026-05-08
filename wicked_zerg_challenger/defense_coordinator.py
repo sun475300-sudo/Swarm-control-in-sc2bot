@@ -13,7 +13,7 @@ Blackboard 기반 아키텍처:
 참고: LOGIC_IMPROVEMENT_REPORT.md - Section 4 (Defense Consolidation)
 """
 
-from typing import List, Optional, Set
+from typing import Optional
 
 try:
     from sc2.bot_ai import BotAI

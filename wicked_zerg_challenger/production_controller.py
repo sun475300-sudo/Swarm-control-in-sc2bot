@@ -13,7 +13,7 @@ Dynamic Authority 기반 생산 관리:
 참고: LOGIC_IMPROVEMENT_REPORT.md - Section 3 (Dynamic Authority)
 """
 
-from typing import Any, Dict, Optional
+from typing import Any, Optional
 
 from utils.logger import get_logger
 

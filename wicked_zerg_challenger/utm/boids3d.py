@@ -10,7 +10,7 @@ Origin: wicked_zerg_challenger/combat/boids_swarm_control.py
 
 from __future__ import annotations
 
-from typing import List, Optional
+from typing import Optional
 
 import numpy as np
 

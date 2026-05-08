@@ -7,7 +7,6 @@ Roach Tunneling Tactics - 바퀴 땅굴발톱 전술
 3. 포위 기동
 """
 
-from typing import Set
 
 from sc2.ids.ability_id import AbilityId
 from sc2.ids.unit_typeid import UnitTypeId

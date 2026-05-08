@@ -14,7 +14,7 @@ Features:
 """
 
 import logging
-from typing import TYPE_CHECKING, List, Optional
+from typing import TYPE_CHECKING, Optional
 
 logger = logging.getLogger("SpellUnitManager")
 
@@ -53,7 +53,6 @@ class SpellUnitManager:
         self.spell_update_interval: int = 12  # ★ 16 → 12 프레임 (더 빠른 반응)
 
         # Spell cooldown tracking
-        from typing import Dict
 
         self.infestor_last_spell: dict[int, float] = {}  # unit tag -> last spell time
         self.viper_last_spell: dict[int, float] = {}  # unit tag -> last spell time

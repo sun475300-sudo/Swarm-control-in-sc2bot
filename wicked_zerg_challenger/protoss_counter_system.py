@@ -11,7 +11,6 @@ Protoss Counter System - Advanced counter logic for Protoss opponents
 7. 파수기/역장 대응 - 파멸충 담즙
 """
 
-from typing import Dict, List
 
 from utils.logger import get_logger
 

@@ -6,7 +6,6 @@ calculating appropriate separation and repulsion for unit survival.
 """
 
 import math
-from typing import List, Set, Tuple
 
 try:
     from sc2.ids.unit_typeid import UnitTypeId

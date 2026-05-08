@@ -12,7 +12,7 @@ Game Configuration - 중앙 설정 관리
 
 import logging
 import os
-from typing import Any, Dict
+from typing import Any
 
 _config_logger = logging.getLogger("GameConfig")
 

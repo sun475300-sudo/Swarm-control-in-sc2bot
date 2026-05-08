@@ -13,7 +13,7 @@ Feature #98: 멀티프롱 공격 매니저
 """
 
 from enum import Enum
-from typing import Dict, List, Optional, Set, Tuple
+from typing import Optional
 
 try:
     from sc2.ids.unit_typeid import UnitTypeId

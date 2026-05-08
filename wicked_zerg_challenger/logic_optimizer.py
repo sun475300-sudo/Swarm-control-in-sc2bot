@@ -10,7 +10,7 @@ Logic Optimizer - 전체 시스템 실행 최적화
 
 from dataclasses import dataclass
 from enum import Enum
-from typing import Dict, Optional, Set
+from typing import Optional
 from collections.abc import Callable
 
 from utils.logger import get_logger

@@ -11,7 +11,6 @@ integrating separate modules for:
 """
 
 import logging
-from typing import List, Set
 
 logger = logging.getLogger("MicroController")
 
