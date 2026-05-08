@@ -99,7 +99,7 @@ def visualize(
     """3D 시각화. matplotlib 사용."""
     try:
         import matplotlib.pyplot as plt
-        from mpl_toolkits.mplot3d import Axes3D  # noqa: F401
+        from mpl_toolkits.mplot3d import Axes3D
     except ImportError:
         logger.info("matplotlib 필요: pip install matplotlib")
         return

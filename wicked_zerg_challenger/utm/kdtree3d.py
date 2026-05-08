@@ -17,7 +17,7 @@ Pos3 = tuple[float, float, float]
 class KDTree3DNode:
     """3D K-D Tree 노드. 기존 KDTreeNode + z축."""
 
-    __slots__ = ("point", "data", "left", "right", "axis")
+    __slots__ = ("axis", "data", "left", "point", "right")
 
     def __init__(
         self,

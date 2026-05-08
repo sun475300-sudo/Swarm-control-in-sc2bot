@@ -852,9 +852,7 @@ class EvolutionUpgradeManager:
         roaches = self.bot.units(UnitTypeId.ROACH)
 
         should_research_burrow = False
-        if banelings.amount >= 2:
-            should_research_burrow = True
-        elif roaches.amount >= 5:
+        if banelings.amount >= 2 or roaches.amount >= 5:
             should_research_burrow = True
 
         if not should_research_burrow:

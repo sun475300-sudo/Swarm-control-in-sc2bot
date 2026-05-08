@@ -345,7 +345,7 @@ class GameResultReporter:
 
         for i, exp in enumerate(expansions):
             exp_time = exp.get("time", 0)
-            target = benchmarks.get(i, None)
+            target = benchmarks.get(i)
             status = ""
             if target:
                 diff = exp_time - target

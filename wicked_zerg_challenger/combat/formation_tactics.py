@@ -314,7 +314,7 @@ class BurrowController:
         if UnitTypeId and unit.type_id == UnitTypeId.LURKERMP:
             # 적이 공격 사거리(9) 내에 있으면 잠복
             # NOTE: enemy_units not in scope here (existing bug). Conservative: skip burrow logic.
-            if down_ability and getattr(unit, "is_idle", False):  # noqa: F821
+            if down_ability and getattr(unit, "is_idle", False):
                 pass  # placeholder — original logic referenced undefined enemy_units
 
         return None

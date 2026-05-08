@@ -168,9 +168,7 @@ class MacroCycleManager:
         # 죽은 퀸/기지 제거
         dead_assignments = []
         for queen_tag, assignment in self.queen_assignments.items():
-            if queen_tag not in active_queen_tags:
-                dead_assignments.append(queen_tag)
-            elif assignment.hatchery_tag not in active_hatchery_tags:
+            if queen_tag not in active_queen_tags or assignment.hatchery_tag not in active_hatchery_tags:
                 dead_assignments.append(queen_tag)
 
         for tag in dead_assignments:

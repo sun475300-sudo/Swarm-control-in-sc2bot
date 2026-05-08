@@ -509,7 +509,7 @@ class CombatManager:
 
         # === TASK 2.8: ★ EXPANSION DENIAL (확장 견제) ★ ===
         # 적의 새로운 확장을 감지하면 저글링 특공대 파견
-        if hasattr(self.bot, "enemy_structures") and 180 < game_time:  # 3분 이후
+        if hasattr(self.bot, "enemy_structures") and game_time > 180:  # 3분 이후
             townhall_types = {
                 "NEXUS",
                 "COMMANDCENTER",

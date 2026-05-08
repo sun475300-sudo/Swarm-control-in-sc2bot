@@ -2143,9 +2143,7 @@ class ProductionResilience:
 
         # First scout at 2:30 (150s)
         should_scout = False
-        if game_time >= 150 and not scout_state["enemy_base_scouted"]:
-            should_scout = True
-        elif time_since_last_scout >= scout_state["scout_interval"]:
+        if game_time >= 150 and not scout_state["enemy_base_scouted"] or time_since_last_scout >= scout_state["scout_interval"]:
             should_scout = True
 
         if not should_scout:

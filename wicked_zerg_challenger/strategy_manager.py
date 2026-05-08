@@ -1681,10 +1681,7 @@ class StrategyManager:
             if army_supply >= 100:
                 self.current_mode = StrategyMode.ALL_IN
             # 2. 적당한 물량이면 공격적 운영
-            elif army_supply >= 40:
-                self.current_mode = StrategyMode.AGGRESSIVE
-            # 3. 상대적 우위 계산 (기존 로직)
-            elif our_army > enemy_army * 1.5 and our_army >= 10:
+            elif army_supply >= 40 or our_army > enemy_army * 1.5 and our_army >= 10:
                 self.current_mode = StrategyMode.AGGRESSIVE
             elif our_army < enemy_army * 0.5 and enemy_army > 5:
                 self.current_mode = StrategyMode.DEFENSIVE
