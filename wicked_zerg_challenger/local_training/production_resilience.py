@@ -530,7 +530,7 @@ class ProductionResilience:
             if b.supply_left < 1:
                 if b.can_afford(UnitTypeId.OVERLORD):
                     if await self._safe_train(larva, UnitTypeId.OVERLORD):
-                        logger.info(f"Produced Overlord for supply")
+                        logger.info("Produced Overlord for supply")
                     break
                 continue
 
@@ -801,7 +801,7 @@ class ProductionResilience:
             if b.supply_left < 1:
                 if b.can_afford(UnitTypeId.OVERLORD) and larvae_list:
                     if await self._safe_train(larvae_list[0], UnitTypeId.OVERLORD):
-                        logger.info(f"Produced Overlord for supply")
+                        logger.info("Produced Overlord for supply")
                     if not flush_mode:
                         break
                 continue
@@ -901,7 +901,7 @@ class ProductionResilience:
                 if b.townhalls.exists and len(b.townhalls) < 3:
                     try:
                         if await self._try_expand():
-                            logger.info(f"Building expansion to dump minerals")
+                            logger.info("Building expansion to dump minerals")
                     except Exception:
                         pass
 
@@ -1003,7 +1003,7 @@ class ProductionResilience:
                     elif not tech_coordinator:
                         # Fallback only if TechCoordinator not available (should not happen in normal operation)
                         logger.warning(
-                            f"TechCoordinator not available, Spawning Pool build skipped"
+                            "TechCoordinator not available, Spawning Pool build skipped"
                         )
 
             # Natural Expansion timing
@@ -1189,7 +1189,7 @@ class ProductionResilience:
                     # Only log critical issues at INFO level
                     if larvae_count == 0:
                         loguru_logger.warning(
-                            f"[PRODUCTION] NO LARVAE - Production blocked!"
+                            "[PRODUCTION] NO LARVAE - Production blocked!"
                         )
                     elif (
                         larvae_count >= 3
@@ -1199,7 +1199,7 @@ class ProductionResilience:
                         and b.supply_left >= 2
                     ):
                         loguru_logger.warning(
-                            f"[PRODUCTION] Should produce Zerglings but not producing!"
+                            "[PRODUCTION] Should produce Zerglings but not producing!"
                         )
                 else:
                     # Non-training mode or no logger: Use print (for debugging)
@@ -1219,7 +1219,7 @@ class ProductionResilience:
                         )
 
                     if larvae_count == 0:
-                        logger.warning(f"NO LARVAE - Production blocked!")
+                        logger.warning("NO LARVAE - Production blocked!")
                     elif (
                         larvae_count >= 3
                         and b.minerals > 500
@@ -1227,7 +1227,7 @@ class ProductionResilience:
                         and can_afford_zergling
                         and b.supply_left >= 2
                     ):
-                        logger.warning(f"Should produce Zerglings but not producing!")
+                        logger.warning("Should produce Zerglings but not producing!")
         except Exception as e:
             if iteration % 100 == 0:
                 logger.error(f"Production diagnosis error: {e}")
@@ -2579,7 +2579,7 @@ class ProductionResilience:
         if has_lair:
             result = await self._build_spire()
             if result:
-                logger.info(f"Building Spire (200 gas)")
+                logger.info("Building Spire (200 gas)")
                 return
 
         # Build Hydralisk Den if don't have one (100 gas)
@@ -2594,7 +2594,7 @@ class ProductionResilience:
                         UnitTypeId.HYDRALISKDEN, near=b.townhalls.first.position
                     )
                     if result is not None:  # Only print if build actually succeeded
-                        logger.info(f"Building Hydralisk Den (100 gas)")
+                        logger.info("Building Hydralisk Den (100 gas)")
                         return
                 except Exception:
                     pass
@@ -2614,7 +2614,7 @@ class ProductionResilience:
                             UnitTypeId.INFESTATIONPIT, near=b.townhalls.first.position
                         )
                         if result is not None:
-                            logger.info(f"Building Infestation Pit (100 gas)")
+                            logger.info("Building Infestation Pit (100 gas)")
                             return
                     except Exception:
                         pass
