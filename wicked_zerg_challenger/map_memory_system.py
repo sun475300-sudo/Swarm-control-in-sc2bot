@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Map Memory System - 맵 기억 시스템
 

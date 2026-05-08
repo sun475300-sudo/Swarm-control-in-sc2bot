@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Feature #91: Nydus Worm 전술 매니저
 

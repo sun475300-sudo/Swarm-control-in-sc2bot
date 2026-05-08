@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Creep Highway - A* 기반 점막 고속도로
 

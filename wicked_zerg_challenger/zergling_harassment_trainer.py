@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Zergling Harassment Trainer - 저글링 괴롭힘 전술 학습 시스템
 

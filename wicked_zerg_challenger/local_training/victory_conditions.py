@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Victory & Defeat Conditions Learning System
 

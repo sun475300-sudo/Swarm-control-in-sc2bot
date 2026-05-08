@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Phase 56: Mixed-race benchmark runner and result/log analyzer.
 

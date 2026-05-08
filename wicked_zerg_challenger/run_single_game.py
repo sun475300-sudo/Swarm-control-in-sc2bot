@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Run a single game for testing.
 단일 게임 테스트용 스크립트.

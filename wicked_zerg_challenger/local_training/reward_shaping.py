@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Reward Shaping - 보상 셰이핑 시스템 (#113)
 

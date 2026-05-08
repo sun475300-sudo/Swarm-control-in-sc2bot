@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Aggressive Early Game Strategies - 초반 공격 전략 모음
 

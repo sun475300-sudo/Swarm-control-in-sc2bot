@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Stutter-Step Kiting - 진정한 스터터 스텝 구현
 

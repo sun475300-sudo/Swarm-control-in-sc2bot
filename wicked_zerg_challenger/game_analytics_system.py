@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Game Analytics System - 게임 분석 및 통계 시스템
 

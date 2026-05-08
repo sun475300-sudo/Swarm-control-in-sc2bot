@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 3D Coordinate Types for UTM Drone System
 

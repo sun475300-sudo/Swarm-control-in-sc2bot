@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Adaptive Trainer - 각 난이도/종족마다 90% 승률 달성 반복 학습
 """

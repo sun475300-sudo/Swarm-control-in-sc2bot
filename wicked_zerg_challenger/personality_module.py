@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Personality Module - 봇 성격 및 채팅 시스템
 

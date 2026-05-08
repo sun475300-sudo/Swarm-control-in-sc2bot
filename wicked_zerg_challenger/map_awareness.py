@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Map Awareness Manager - 맵 인식 시스템 (#106)
 

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Resource Manager - Optimized resource gathering and worker management.
 

@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 종합 테스트 - 모든 난이도에서 승률 측정
 """

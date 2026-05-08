@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Terrain Analysis - Chokepoint detection and terrain-aware modifiers.
 

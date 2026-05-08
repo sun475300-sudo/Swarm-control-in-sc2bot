@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Model Hot Reloader - 게임 중 모델 핫 리로드
 

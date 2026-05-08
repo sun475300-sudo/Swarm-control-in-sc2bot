@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Optimum Defense Squad - 최적 방어 병력 계산 시스템
 

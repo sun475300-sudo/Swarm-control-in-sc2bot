@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Defeat Detection System - 패배 직감 로직
 

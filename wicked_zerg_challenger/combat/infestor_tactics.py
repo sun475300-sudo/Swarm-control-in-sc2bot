@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Infestor Tactics Controller - Advanced Infestor burrow movement
 

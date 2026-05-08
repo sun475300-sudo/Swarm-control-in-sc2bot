@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Virtual Flight Corridor System
 

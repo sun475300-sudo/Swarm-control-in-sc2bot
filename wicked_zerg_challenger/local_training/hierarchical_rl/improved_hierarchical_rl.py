@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Improved Hierarchical Reinforcement Learning (개선된 계층적 강화학습)
 

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Progressive Difficulty Trainer - 점진적 난이도 상승 학습 시스템
 

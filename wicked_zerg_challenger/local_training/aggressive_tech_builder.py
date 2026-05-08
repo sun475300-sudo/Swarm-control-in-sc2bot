@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Aggressive Tech Builder - Build tech more aggressively when resources overflow.
 

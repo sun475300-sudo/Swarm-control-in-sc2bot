@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Game Result Reporter - 경기 결과 자동 요약 보고서
 

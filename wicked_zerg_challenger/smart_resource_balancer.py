@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Smart Resource Balancer - 실시간 일꾼 재배치로 자원 효율 극대화
 

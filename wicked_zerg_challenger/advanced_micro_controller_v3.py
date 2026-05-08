@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Advanced Micro Controller V3 - Comprehensive unit micro management
 

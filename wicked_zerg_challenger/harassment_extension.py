@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Harassment System Extension for Combat Manager
 

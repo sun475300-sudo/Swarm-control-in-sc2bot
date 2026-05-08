@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Imitation Learner - 리플레이 모방학습 시스템 (#103)
 

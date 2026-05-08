@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Protoss Counter System - Advanced counter logic for Protoss opponents
 

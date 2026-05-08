@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Quick creep test - 1분 빠른 점막 검증
 """

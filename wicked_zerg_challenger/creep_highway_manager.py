@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Creep Highway Manager - 기지 간 연결 우선 점막 확장
 

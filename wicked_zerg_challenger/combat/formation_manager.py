@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Formation Manager - 지형 활용 및 대형 제어
 

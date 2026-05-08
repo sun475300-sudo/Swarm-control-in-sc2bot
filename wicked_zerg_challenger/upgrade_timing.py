@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Upgrade Timing Manager - 업그레이드 타이밍 관리자 (#109)
 

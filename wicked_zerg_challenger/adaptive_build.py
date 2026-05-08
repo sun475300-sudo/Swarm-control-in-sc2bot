@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Adaptive Build Order Manager - 적응형 빌드오더 시스템 (#104)
 

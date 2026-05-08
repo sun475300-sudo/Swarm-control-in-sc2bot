@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 Intel Manager - lightweight information manager with update/on_step bridge.
 """

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Economy Manager - deterministic worker production with macro hatcheries.
 """

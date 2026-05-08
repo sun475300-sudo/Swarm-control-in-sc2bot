@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Composition Optimizer - 유닛 조합 최적화 시스템 (#105)
 

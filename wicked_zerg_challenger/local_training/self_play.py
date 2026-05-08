@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Self-Play Trainer - 자기 대전 학습 시스템 (#102)
 

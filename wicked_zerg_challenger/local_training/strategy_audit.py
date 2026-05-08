@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Strategy Audit - 전략 비교 분석
 

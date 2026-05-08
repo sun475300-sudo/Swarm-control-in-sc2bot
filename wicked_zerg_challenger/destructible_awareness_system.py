@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Destructible Awareness System - 파괴 가능 구조물 인지 시스템
 

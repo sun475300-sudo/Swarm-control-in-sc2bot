@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Error Handler - 개발/프로덕션 모드 분리
 

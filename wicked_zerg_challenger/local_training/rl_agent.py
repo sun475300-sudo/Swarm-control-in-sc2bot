@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 RL Agent - Reinforcement Learning Agent for Zerg Bot
 

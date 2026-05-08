@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Combat Phase Controller - 전투 단계별 컨트롤 시스템
 

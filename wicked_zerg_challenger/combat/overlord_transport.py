@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Overlord Transport - 대군주 수송 시스템
 

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Comprehensive Scoring System — 종합 점수 기반 실시간 학습 엔진
 

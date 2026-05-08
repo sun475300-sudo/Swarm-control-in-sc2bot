@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Targeting utilities for combat logic.
 

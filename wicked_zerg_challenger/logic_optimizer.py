@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Logic Optimizer - 전체 시스템 실행 최적화
 

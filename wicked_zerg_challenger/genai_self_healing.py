@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Gen-AI Self-Healing System - 자가 수복 시스템 고도화
 

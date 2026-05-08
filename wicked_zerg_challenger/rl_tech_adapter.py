@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 RL Tech Adapter - Reinforcement Learning for Enemy Tech Response
 

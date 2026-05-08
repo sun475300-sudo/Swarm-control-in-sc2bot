@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Opponent Modeling System - 적 행동 패턴 학습 및 예측
 

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Multitasking System - 멀티태스킹 관리
 

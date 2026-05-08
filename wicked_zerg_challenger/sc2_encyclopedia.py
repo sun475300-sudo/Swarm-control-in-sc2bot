@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 SC2 Encyclopedia - 유닛/건물 상성 참조 데이터베이스
 

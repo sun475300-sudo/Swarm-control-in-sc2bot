@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Advanced Building Manager - 건설 로직 고도화 모듈
 

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Unit Morph Manager - Automatic unit morphing system
 

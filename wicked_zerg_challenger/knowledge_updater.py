@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Knowledge Updater - 학습 데이터 분석 및 지식 베이스 업데이트
 

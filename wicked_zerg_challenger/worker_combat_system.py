@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Worker Combat System - 일꾼 전투 시스템
 

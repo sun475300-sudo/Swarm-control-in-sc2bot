@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Overlord Hunter - 적 대군주 사냥 모듈
 

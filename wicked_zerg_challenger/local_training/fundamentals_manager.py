@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Fundamentals Manager - 기본기 학습 단계 관리
 

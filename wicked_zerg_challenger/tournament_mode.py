@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Tournament Mode - 토너먼트 모드 (#115)
 

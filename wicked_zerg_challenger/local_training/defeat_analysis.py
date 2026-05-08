@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Defeat Analysis System - 패배 원인 분석 및 학습
 

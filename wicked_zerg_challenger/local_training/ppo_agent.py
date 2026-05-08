@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 PPO Agent - Proximal Policy Optimization 강화학습 에이전트 (#101)
 

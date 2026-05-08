@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Real-time Awareness Engine — 실시간 상황 인식 + 자동 대응 시스템
 

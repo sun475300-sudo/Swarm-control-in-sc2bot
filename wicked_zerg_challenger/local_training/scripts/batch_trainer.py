@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Batch Trainer - 배치 학습 처리 관리
 

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Frame-based cache decorator inspired by BurnySc2's property_cache_once_per_frame.
 

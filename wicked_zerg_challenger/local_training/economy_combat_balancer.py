@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Economy-Combat Balancer - Unified worker vs army production balance.
 

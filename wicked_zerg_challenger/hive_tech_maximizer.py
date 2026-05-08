@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Hive Tech Maximizer - 군락 이후 고급 기술 극대화
 

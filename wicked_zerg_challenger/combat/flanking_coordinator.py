@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Flanking Coordinator - 양각 포위(샌드위치) 전술
 

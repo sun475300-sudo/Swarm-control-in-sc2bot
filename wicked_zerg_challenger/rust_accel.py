@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Rust acceleration bridge with safe Python fallback."""
 
 from __future__ import annotations

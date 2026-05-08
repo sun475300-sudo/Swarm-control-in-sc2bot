@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Difficulty Progression System - 난이도 자동 조정
 

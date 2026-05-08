@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Single Game Only - 절대 하나만 실행 (Lock 파일 사용)
 """

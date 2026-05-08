@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Roach Tactics Trainer - 바퀴 전술 학습 시스템
 

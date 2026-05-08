@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Creep Denial System - 적 점막 제거 시스템
 

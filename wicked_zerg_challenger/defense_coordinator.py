@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Defense Coordinator - 통합 방어 시스템
 

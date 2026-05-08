@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Reinforcement Learner - 강화 학습 시스템
 

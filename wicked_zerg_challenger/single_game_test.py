@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Single Game Test - 단일 게임 테스트 (창 하나만)
 """

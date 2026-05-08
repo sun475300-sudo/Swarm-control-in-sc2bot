@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Adaptive Learning Rate System - 적응형 학습률 시스템
 

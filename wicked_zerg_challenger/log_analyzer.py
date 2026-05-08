@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Log Analyzer - Phase 22 로그 정밀 분석 도구
 

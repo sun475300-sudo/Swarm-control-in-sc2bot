@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Game Statistics - 맵/난이도/종족별 승률 통계
 """

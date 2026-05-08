@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Phase 15 Integration Test Script
 

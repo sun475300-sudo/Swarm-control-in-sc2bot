@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """Replay feedback loop for Phase 52.
 
 Reads replay summary JSON files and creates a prioritized training focus report.

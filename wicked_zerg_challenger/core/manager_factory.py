@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 Manager Factory - 중앙화된 매니저 초기화 시스템
 

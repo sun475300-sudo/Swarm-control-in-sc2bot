@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Micro Controller - Boids-based movement orchestrator with modular components.
 

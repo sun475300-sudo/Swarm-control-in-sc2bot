@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Racial Counter Manager - Race-specific unit composition counter logic
 

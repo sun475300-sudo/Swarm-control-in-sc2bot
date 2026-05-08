@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Combat Manager - 전투 관리자
 

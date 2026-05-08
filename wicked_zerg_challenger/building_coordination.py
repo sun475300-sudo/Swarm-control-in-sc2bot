@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Building Coordination - 건물 중복 방지 시스템
 

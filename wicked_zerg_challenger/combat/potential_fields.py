@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Potential Field Controller - Force-based repulsion model for unit avoidance.
 

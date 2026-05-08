@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Transformer Decision Model for StarCraft II Bot
 

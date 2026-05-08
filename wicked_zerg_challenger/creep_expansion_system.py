@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Creep Expansion System - 전 맵 점막 확장
 

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Situational Awareness Module
 Aggregates high-level game state into a structured SITREP (Situation Report)

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Game Configuration - 중앙 설정 관리
 

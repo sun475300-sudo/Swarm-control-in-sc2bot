@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 Run Training Pipeline - 독립 실행 훈련 스크립트
 

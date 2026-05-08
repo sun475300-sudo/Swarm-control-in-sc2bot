@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Strategy Manager - Race-specific and Emergency Mode Controller
 
