@@ -68,6 +68,17 @@ class QueenManager:
     - Robust error handling with iteration-based logging
     """
 
+    # 퀸 방어 시 우선 공격 대상 — 고위협 공중 유닛 (퀸 대공 사거리 활용)
+    HIGH_VALUE_AIR_NAMES = frozenset({
+        "CARRIER",
+        "BATTLECRUISER",
+        "TEMPEST",
+        "BROODLORD",
+        "VOIDRAY",
+        "LIBERATOR",
+        "LIBERATORAG",
+    })
+
     def __init__(self, bot):
         """
         Initialize queen manager.
@@ -140,6 +151,13 @@ class QueenManager:
             _u = getattr(UnitTypeId, _u_name, None)
             if _u is not None:
                 self._unhealable_units.add(_u)
+
+        # 점막 종양 타입 캐시 — _count_creep_tumors 매 호출 set 재구성 회피
+        self._creep_tumor_types: Set = set()
+        for _t_name in ("CREEPTUMOR", "CREEPTUMORBURROWED", "CREEPTUMORQUEEN"):
+            _t = getattr(UnitTypeId, _t_name, None)
+            if _t is not None:
+                self._creep_tumor_types.add(_t)
 
     async def on_step(self, iteration: int) -> None:
         """
@@ -689,6 +707,20 @@ class QueenManager:
                     f"[{int(game_time)}s] {len(inject_queens)} queens still injecting for reinforcement"
                 )
 
+        # 공중 유닛 우선순위 분류는 queen-독립 → 루프 외부에서 한 번만 수행
+        # 우선순위: 고위협 공중 > 일반 공중 > 지상 > 인터셉터(low_value)
+        high_value_air = []
+        normal_air = []
+        low_value_air = []
+        for e in air_enemies:
+            name = getattr(e.type_id, "name", "").upper()
+            if name == "INTERCEPTOR":
+                low_value_air.append(e)
+            elif name in self.HIGH_VALUE_AIR_NAMES:
+                high_value_air.append(e)
+            else:
+                normal_air.append(e)
+
         # Send defense queens to defend
         for queen in defense_queens:
             try:
@@ -699,34 +731,7 @@ class QueenManager:
                     # ★ 공중 유닛 우선 공격 (퀸은 대공 유닛) ★
                     target = None
 
-                    # 우선순위: 고위협 공중 > 일반 공중 > 지상
-                    # 인터셉터(Interceptor)는 최후순위로 미룸
-
-                    # 고위협 공중 유닛 식별
-                    high_value_air = []
-                    normal_air = []
-                    low_value_air = []  # Interceptors
-
-                    high_value_names = {
-                        "CARRIER",
-                        "BATTLECRUISER",
-                        "TEMPEST",
-                        "BROODLORD",
-                        "VOIDRAY",
-                        "LIBERATOR",
-                        "LIBERATORAG",
-                    }
-
-                    for e in air_enemies:
-                        name = getattr(e.type_id, "name", "").upper()
-                        if name == "INTERCEPTOR":
-                            low_value_air.append(e)
-                        elif name in high_value_names:
-                            high_value_air.append(e)
-                        else:
-                            normal_air.append(e)
-
-                    # 타겟 선정
+                    # 타겟 선정 (queen별 거리 기반)
                     if high_value_air:
                         target = min(high_value_air, key=lambda e: e.distance_to(queen))
                     elif normal_air:
@@ -1238,11 +1243,7 @@ class QueenManager:
             return 0
 
         try:
-            tumor_types = {
-                UnitTypeId.CREEPTUMOR,
-                UnitTypeId.CREEPTUMORBURROWED,
-                UnitTypeId.CREEPTUMORQUEEN,
-            }
+            tumor_types = self._creep_tumor_types
             return sum(1 for s in self.bot.structures if s.type_id in tumor_types)
         except Exception as e:
             logger.warning(f"[QueenManager] Tumor count suppressed: {e}")
