@@ -112,13 +112,15 @@ class KDTree:
         if not self.root:
             return None
 
-        best = [None, float("inf")]  # [node, distance]
+        # [node, distance] — node may stay None if every candidate is excluded
+        best: List[Any] = [None, float("inf")]
         self._nearest_neighbor_recursive(self.root, query, best, exclude_data)
 
-        if best[0] is None:
+        node = best[0]
+        if node is None:
             return None
 
-        return (best[0].point, best[0].data, best[1])
+        return (node.point, node.data, best[1])
 
     def _nearest_neighbor_recursive(
         self,
@@ -168,7 +170,7 @@ class KDTree:
         Returns:
             List of ((x, y), data, distance) tuples
         """
-        results = []
+        results: List[Tuple[Tuple[float, float], Any, float]] = []
         if self.root:
             self._range_query_recursive(self.root, center, radius, results)
         return results
@@ -224,7 +226,9 @@ class KDTree:
         # Use a max heap (negative distances) to track k best
         import heapq
 
-        heap = []  # Max heap using negative distances
+        heap: List[Tuple[float, Tuple[float, float], Any]] = (
+            []
+        )  # Max heap using negative distances
         self._knn_recursive(self.root, query, k, heap, exclude_data)
 
         # Convert heap to sorted list
