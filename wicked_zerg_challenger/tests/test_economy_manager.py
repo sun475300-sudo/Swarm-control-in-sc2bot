@@ -16,11 +16,17 @@ import sys
 import unittest
 from unittest.mock import Mock
 
+import pytest
+
 # Add parent directory to path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
+try:
+    from sc2.position import Point2
+except ImportError:
+    pytest.skip("sc2 library not available", allow_module_level=True)
+
 from economy_manager import EconomyManager
-from sc2.position import Point2
 
 
 class TestEconomyManager(unittest.TestCase):
