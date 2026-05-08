@@ -131,14 +131,6 @@ class OneMinMultiTest:
             # ★ 현재 Hatchery 수 확인 ★
             current_hatcheries = self.bot.structures(UnitTypeId.HATCHERY)
 
-            # 건설 중인 Hatchery도 포함
-            if hasattr(self.bot, "already_pending"):
-                pending_hatcheries = self.bot.already_pending(UnitTypeId.HATCHERY)
-            else:
-                pending_hatcheries = len(
-                    [h for h in current_hatcheries if not h.is_ready]
-                )
-
             total_hatcheries = len(current_hatcheries)
 
             # ★ 확장이 배치되었는지 확인 ★

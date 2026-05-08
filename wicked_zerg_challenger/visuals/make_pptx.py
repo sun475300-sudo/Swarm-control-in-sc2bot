@@ -343,7 +343,6 @@ def build_slide_2(prs):
     for i, (title, desc, accent) in enumerate(cards):
         x = Inches(0.8 + i * 4.1)
         y = Inches(3.0)
-        card = add_rounded_rect(slide, x, y, Inches(3.7), Inches(2.2), BG_CARD, accent)
 
         add_text_box(
             slide,
@@ -497,7 +496,6 @@ def build_slide_3(prs):
         y = Inches(3.7)
 
         # Gradient-ish card
-        card = add_rounded_rect(slide, x, y, Inches(3.7), Inches(2.4), BG_CARD, accent)
 
         # Icon circle
         circle = slide.shapes.add_shape(
@@ -884,7 +882,6 @@ def build_slide_5(prs):
     for i, (name, file, tech) in enumerate(demos):
         x = Inches(0.8 + i * 5.5)
         y = Inches(5.5)
-        card = add_rounded_rect(slide, x, y, Inches(5.0), Inches(0.9), BG_CARD)
         add_text_box(
             slide,
             x + Inches(0.3),
@@ -983,7 +980,6 @@ def build_slide_6(prs):
         x = Inches(0.5 + i * 3.1)
         y = Inches(2.8)
 
-        card = add_rounded_rect(slide, x, y, Inches(2.8), Inches(2.8), BG_CARD, accent)
 
         # Status circle
         circle = slide.shapes.add_shape(
@@ -1160,7 +1156,6 @@ def build_slide_7(prs):
         x = Inches(7.3 + col * 2.8)
         y = Inches(2.2 + row * 1.5)
 
-        card = add_rounded_rect(slide, x, y, Inches(2.4), Inches(1.2), BG_CARD)
         add_text_box(
             slide,
             x + Inches(0.2),

@@ -290,18 +290,15 @@ class UnitFactory:
 
         # === StrategyManager 실시간 비율 연동 (via Blackboard or Direct) ===
         # 매 스텝마다 전략 매니저의 가스 비율을 가져와서 적용
-        strategy_mode = "NORMAL"
         emergency_active = False
 
         # 1. Try Blackboard first
         if self.blackboard:
-            strategy_mode = self.blackboard.get("strategy_mode", "NORMAL")
             emergency_active = self.blackboard.get("is_rush_detected", False)
 
         # 2. Fallback to direct access if Blackboard missing (Backward Compat)
         elif hasattr(self.bot, "strategy_manager") and self.bot.strategy_manager:
             strategy = self.bot.strategy_manager
-            strategy_mode = getattr(strategy, "current_mode", "NORMAL")
             # emergency_active handled below
 
         strategy = getattr(

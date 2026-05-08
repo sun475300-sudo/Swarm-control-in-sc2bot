@@ -177,11 +177,9 @@ class TestEconomyManager(unittest.TestCase):
         """Test gold expansion location caching"""
         # First call
         self.bot.time = 0
-        result1 = self.manager._get_gold_expansion_locations()
 
         # Second call within 30 seconds (should use cache)
         self.bot.time = 10
-        result2 = self.manager._get_gold_expansion_locations()
 
         # Cache time should be set
         self.assertGreaterEqual(self.manager._gold_cache_time, 0)

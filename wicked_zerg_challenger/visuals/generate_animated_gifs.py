@@ -418,7 +418,6 @@ def gif_collision_avoidance():
                     force = diff / (dist**2) * 2.0
                     avoid += force
                     if dist < SAFE_DIST * 1.2:
-                        avoiding = True
                         frame_avoid.append((i, j))
 
             new_vel[i] = vel[i] * 0.7 + seek + avoid
