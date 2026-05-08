@@ -284,7 +284,7 @@ class DynamicCounterSystem:
         current_override = blackboard.get("unit_composition_override", {})
 
         for unit_name, ratio in zip(
-            counter_rule["counter_units"], counter_rule["counter_ratios"]
+            counter_rule["counter_units"], counter_rule["counter_ratios"], strict=False
         ):
             # 기존 비율에 boost 추가
             boost = ratio * counter_rule["production_boost"]

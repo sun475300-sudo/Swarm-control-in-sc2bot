@@ -228,7 +228,7 @@ class BanelingTacticsController:
 
         # Deploy Banelings
         actions = []
-        for baneling, target_pos in zip(available, mine_positions):
+        for baneling, target_pos in zip(available, mine_positions, strict=False):
             # Move to position
             try:
                 actions.append(baneling.move(target_pos))

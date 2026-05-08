@@ -64,7 +64,7 @@ def gen_slide1():
     angles = np.linspace(0, 2 * np.pi, 7)[:-1]
     r = 1.8
     cx, cy = np.cos(angles) * r, np.sin(angles) * r
-    positions = [(0, 0)] + list(zip(cx, cy))
+    positions = [(0, 0)] + list(zip(cx, cy, strict=False))
 
     # Mesh connections
     for i, (x1, y1) in enumerate(positions):
@@ -414,7 +414,7 @@ def gen_slide6():
         ("#FF0044", -0.1),
     ]
 
-    for ax_i, (color, pct) in zip(axes, statuses):
+    for ax_i, (color, pct) in zip(axes, statuses, strict=False):
         ax_i.set_facecolor(BG_DARK)
         ax_i.set_xlim(-1.5, 1.5)
         ax_i.set_ylim(-1.5, 1.5)

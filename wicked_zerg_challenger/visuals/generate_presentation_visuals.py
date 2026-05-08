@@ -1342,8 +1342,14 @@ def ir_roi_analysis():
     )
 
     # 절감률 표시 (annotation)
-    [round((1 - c2 / c1) * 100) for c1, c2 in zip(cost_traditional, cost_ours)]
-    [round((1 - t2 / t1) * 100) for t1, t2 in zip(time_traditional, time_ours)]
+    [
+        round((1 - c2 / c1) * 100)
+        for c1, c2 in zip(cost_traditional, cost_ours, strict=False)
+    ]
+    [
+        round((1 - t2 / t1) * 100)
+        for t1, t2 in zip(time_traditional, time_ours, strict=False)
+    ]
 
     total_cost_trad = sum(cost_traditional)
     total_cost_ours = sum(cost_ours)
@@ -1697,7 +1703,7 @@ def section2_drone_growth():
     consumer = [9, 12, 17, 22, 28, 36, 43, 50, 58, 65, 80]
     commercial = [4.5, 6, 10, 14, 20, 36, 50, 70, 95, 125, 250]
     military = [1.5, 2, 3, 4, 7, 18, 27, 40, 57, 80, 170]
-    total = [c + m + d for c, m, d in zip(consumer, commercial, military)]
+    total = [c + m + d for c, m, d in zip(consumer, commercial, military, strict=False)]
     growth = [0] + [
         round((total[i] - total[i - 1]) / total[i - 1] * 100)
         for i in range(1, len(total))
