@@ -38,19 +38,33 @@ class AirThreatResponseTrainer:
         self.logger = get_logger("AirThreatResponse")
 
         # 공중 유닛 분류
+        # LIGHT_AIR = 빠르고 단단함은 낮은 dps 위주 유닛 (대응 임계값 낮음)
+        # HEAVY_AIR = 고-DPS 또는 massive 유닛 (대응 임계값 높음, 가중치 2배)
         self.LIGHT_AIR = {
+            # Zerg
             UnitTypeId.MUTALISK,
+            UnitTypeId.CORRUPTOR,  # ★ added: 적 Zerg 공중 코어
+            # Terran
+            UnitTypeId.MEDIVAC,
+            UnitTypeId.BANSHEE,  # ★ added: 클락 + 바이오 위협
+            UnitTypeId.VIKING,  # ★ added: viking ground mode (sometimes)
+            UnitTypeId.VIKINGFIGHTER,  # ★ added: viking air mode (anti-air)
+            UnitTypeId.LIBERATOR,  # ★ added: liberator air mode
+            # Protoss
             UnitTypeId.PHOENIX,
             UnitTypeId.ORACLE,
-            UnitTypeId.MEDIVAC,
         }
 
         self.HEAVY_AIR = {
+            # Zerg
+            UnitTypeId.BROODLORD,
+            # Terran
+            UnitTypeId.BATTLECRUISER,
+            UnitTypeId.LIBERATORAG,  # ★ added: 시즈 모드 — 지역 거부 능력↑
+            # Protoss
             UnitTypeId.VOIDRAY,
             UnitTypeId.CARRIER,
-            UnitTypeId.BATTLECRUISER,
             UnitTypeId.TEMPEST,
-            UnitTypeId.BROODLORD,
         }
 
         # 대공 유닛
