@@ -39,8 +39,8 @@ class SpatialGrid:
         self.map_height = map_size[1]
 
         # Calculate grid dimensions
-        self.grid_width = int(math.ceil(self.map_width / self.cell_size))
-        self.grid_height = int(math.ceil(self.map_height / self.cell_size))
+        self.grid_width = math.ceil(self.map_width / self.cell_size)
+        self.grid_height = math.ceil(self.map_height / self.cell_size)
 
         # Grid storage: cell_key -> list of (position, data)
         self.grid: dict[tuple[int, int], list[tuple[tuple[float, float], Any]]] = {}
@@ -136,7 +136,7 @@ class SpatialGrid:
 
         # Calculate cells to check
         cells_to_check = (
-            int(math.ceil(radius / self.cell_size)) + 1
+            math.ceil(radius / self.cell_size) + 1
             if self.cell_size
             else int(radius) + 1
         )

@@ -45,9 +45,9 @@ class VoxelGrid:
         self.map_depth = map_size[1]
         self.map_altitude = map_size[2]
 
-        self.grid_w = int(math.ceil(self.map_width / self.cell_size))
-        self.grid_d = int(math.ceil(self.map_depth / self.cell_size))
-        self.grid_h = int(math.ceil(self.map_altitude / self.cell_size))
+        self.grid_w = math.ceil(self.map_width / self.cell_size)
+        self.grid_d = math.ceil(self.map_depth / self.cell_size)
+        self.grid_h = math.ceil(self.map_altitude / self.cell_size)
 
         # 3D 복셀 저장소: (cx, cy, cz) → [(position, data), ...]
         self.grid: dict[Cell3, list[tuple[Pos3, Any]]] = {}
@@ -103,7 +103,7 @@ class VoxelGrid:
         기존: dx, dy 2중 루프 → 변경: dx, dy, dz 3중 루프
         """
         results = []
-        cells_to_check = int(math.ceil(radius / self.cell_size)) + 1
+        cells_to_check = math.ceil(radius / self.cell_size) + 1
         cc = self._get_cell(center[0], center[1], center[2])
 
         for dx in range(-cells_to_check, cells_to_check + 1):

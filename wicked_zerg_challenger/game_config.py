@@ -322,7 +322,7 @@ class GameConfig:
         with open(filepath) as f:
             if filepath.endswith(".json"):
                 config_dict = json.load(f)
-            elif filepath.endswith(".yaml") or filepath.endswith(".yml"):
+            elif filepath.endswith((".yaml", ".yml")):
                 try:
                     import yaml
 
