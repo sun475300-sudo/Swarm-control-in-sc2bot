@@ -24,7 +24,7 @@ Unit Tests for EconomyManager
 """
 
 from typing import List
-from unittest.mock import AsyncMock, MagicMock, Mock, patch
+from unittest.mock import Mock
 
 import pytest
 
@@ -203,7 +203,7 @@ class TestEmergencyMode:
         manager = EconomyManager(bot)
 
         manager.set_emergency_mode(True)
-        assert manager._emergency_mode == True
+        assert manager._emergency_mode
 
     def test_set_emergency_mode_inactive(self):
         """긴급 모드 비활성화"""
@@ -211,7 +211,7 @@ class TestEmergencyMode:
         manager = EconomyManager(bot)
 
         manager.set_emergency_mode(False)
-        assert manager._emergency_mode == False
+        assert not manager._emergency_mode
 
 
 class TestOverlordProduction:
@@ -243,7 +243,6 @@ class TestOverlordProduction:
         bot.larva = MockUnits([MockUnit(1, "LARVA", (50, 50))])
 
         manager = EconomyManager(bot)
-        call_count_before = bot.do.call_count
         await manager._train_overlord_if_needed()
 
         # Should not produce overlord when supply is sufficient
@@ -280,7 +279,6 @@ class TestDroneProduction:
         bot.larva = MockUnits([MockUnit(1, "LARVA", (50, 50))])
 
         manager = EconomyManager(bot)
-        call_count_before = bot.do.call_count
         await manager._train_drone_if_needed()
 
         # Should not produce more drones when saturated
@@ -306,7 +304,7 @@ class TestGoldExpansion:
         manager = EconomyManager(bot)
         is_gold = manager._is_gold_expansion(gold_position)
 
-        assert is_gold == True
+        assert is_gold
 
     def test_is_gold_expansion_false(self):
         """일반 미네랄만 있는 확장지"""
@@ -324,7 +322,7 @@ class TestGoldExpansion:
         manager = EconomyManager(bot)
         is_gold = manager._is_gold_expansion(normal_position)
 
-        assert is_gold == False
+        assert not is_gold
 
     def test_get_gold_expansion_locations(self):
         """골드 확장지 목록 조회"""

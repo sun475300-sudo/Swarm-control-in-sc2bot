@@ -4,7 +4,7 @@ Unit Tests for Intel Manager
 Tests threat detection, build pattern recognition, and confidence scoring.
 """
 
-from unittest.mock import MagicMock, Mock
+from unittest.mock import Mock
 
 import pytest
 
@@ -55,10 +55,10 @@ class TestIntelManager:
 
     def test_threat_tracking_initialization(self):
         """Test threat tracking variables are initialized"""
-        assert self.intel._under_attack == False
+        assert not self.intel._under_attack
         assert self.intel._attack_position is None
         assert self.intel._threat_level == "none"
-        assert self.intel._high_threat_units_detected == False
+        assert not self.intel._high_threat_units_detected
 
     def test_build_pattern_tracking_initialization(self):
         """Test build pattern tracking is initialized"""
@@ -162,7 +162,7 @@ class TestIntelManager:
     def test_under_attack_detection(self):
         """Test under attack detection logic"""
         # Initially not under attack
-        assert self.intel._under_attack == False
+        assert not self.intel._under_attack
 
         # After threat update (implementation-dependent)
         self.intel._update_threat_status()
@@ -192,7 +192,6 @@ class TestIntelManager:
 
     def test_update_interval_timing(self):
         """Test that updates only happen after interval"""
-        initial_update = self.intel.last_update
 
         # Update at iteration 0
         self.intel.update(iteration=0)

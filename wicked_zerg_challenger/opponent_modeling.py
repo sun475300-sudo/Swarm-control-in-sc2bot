@@ -491,7 +491,6 @@ class OpponentModeling:
         if not hasattr(self.bot, "strategy_manager"):
             return
 
-        strategy_manager = self.bot.strategy_manager
 
         # Set blackboard recommendations
         if hasattr(self.bot, "blackboard") and self.bot.blackboard:
@@ -762,7 +761,7 @@ class OpponentModeling:
                 f"[OPPONENT_MODELING] Known opponent: {opponent_id} ({self.opponent_models[opponent_id].games_played} games)"
             )
 
-    async def on_step(self, iteration: int):
+    async def on_step(self, iteration: int):  # noqa: F811  TODO: shadows the comprehensive on_step at line ~341 — needs human review to decide which behavior is intended
         """매 프레임 호출 - 신호 감지"""
         if not self.current_opponent or not self.bot:
             return

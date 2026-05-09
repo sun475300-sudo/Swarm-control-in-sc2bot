@@ -4,7 +4,7 @@ Unit Tests for Queen Transfusion Manager
 Tests the smart transfusion priority system.
 """
 
-from unittest.mock import MagicMock, Mock
+from unittest.mock import Mock
 
 import pytest
 
@@ -116,10 +116,10 @@ class TestQueenTransfusionManager:
         )
 
         # 50% HP should be valid (below 60% threshold)
-        assert self.manager._is_valid_transfusion_target(target_low_hp, queen) == True
+        assert self.manager._is_valid_transfusion_target(target_low_hp, queen)
 
         # 70% HP should be invalid (above 60% threshold)
-        assert self.manager._is_valid_transfusion_target(target_high_hp, queen) == False
+        assert not self.manager._is_valid_transfusion_target(target_high_hp, queen)
 
     def test_blacklisted_unit_not_valid(self):
         """Test that blacklisted units are not valid targets"""
@@ -127,7 +127,7 @@ class TestQueenTransfusionManager:
         baneling = create_mock_unit(UnitTypeId.BANELING, health_pct=0.3, tag=2)
 
         # Baneling should not be valid even at low HP
-        assert self.manager._is_valid_transfusion_target(baneling, queen) == False
+        assert not self.manager._is_valid_transfusion_target(baneling, queen)
 
     def test_range_check(self):
         """Test that range is properly checked"""
@@ -142,10 +142,10 @@ class TestQueenTransfusionManager:
         )
 
         # Close target should be valid (distance=5 <= 7)
-        assert self.manager._is_valid_transfusion_target(target_close, queen) == True
+        assert self.manager._is_valid_transfusion_target(target_close, queen)
 
         # Far target should be invalid (distance=50 > 7 range)
-        assert self.manager._is_valid_transfusion_target(target_far, queen) == False
+        assert not self.manager._is_valid_transfusion_target(target_far, queen)
 
     def test_statistics_tracking(self):
         """Test that statistics are properly tracked"""

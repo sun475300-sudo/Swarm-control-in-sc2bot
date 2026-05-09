@@ -4,7 +4,6 @@ pytest 공통 fixtures (#171)
 모든 테스트 파일에서 공유할 수 있는 fixture와 설정을 정의한다.
 """
 
-import os
 import shutil
 import sys
 import tempfile
@@ -17,6 +16,12 @@ import pytest
 PROJECT_ROOT = Path(__file__).parent.parent
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
+
+# sc2 라이브러리가 설치되어 있지 않은 환경에서도 단위 테스트를 수집·실행할 수
+# 있도록 가벼운 스텁을 등록한다. 실제 ``sc2`` 패키지가 import 가능하면 무시된다.
+from tests._sc2_stub import install as _install_sc2_stub  # noqa: E402
+
+_install_sc2_stub()
 
 
 # ═══════════════════════════════════════════════════════

@@ -4,10 +4,8 @@ These tests use MagicMock so no SC2 game instance is required.
 """
 from __future__ import annotations
 
-from types import SimpleNamespace
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
-import pytest
 from sc2.ids.unit_typeid import UnitTypeId
 
 # ---------------------------------------------------------------------------

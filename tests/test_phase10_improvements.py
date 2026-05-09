@@ -11,7 +11,7 @@ Tests for:
 7. OverlordVisionNetwork faster update cycle
 """
 
-from unittest.mock import MagicMock, Mock, PropertyMock, patch
+from unittest.mock import Mock
 
 import pytest
 

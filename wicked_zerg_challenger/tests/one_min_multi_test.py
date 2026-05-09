@@ -133,9 +133,9 @@ class OneMinMultiTest:
 
             # 건설 중인 Hatchery도 포함
             if hasattr(self.bot, "already_pending"):
-                pending_hatcheries = self.bot.already_pending(UnitTypeId.HATCHERY)
+                self.bot.already_pending(UnitTypeId.HATCHERY)
             else:
-                pending_hatcheries = len(
+                len(
                     [h for h in current_hatcheries if not h.is_ready]
                 )
 
