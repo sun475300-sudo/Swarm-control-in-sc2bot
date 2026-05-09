@@ -14,14 +14,15 @@
 
 | ID | 설명 | 우선순위 | 상태 |
 |----|------|---------|------|
-| N1 | `OpponentModeling.on_step` 중복 정의 (line 341 vs 765 — F811) | 🟠 HIGH | open — 동작 영향(상위 on_step이 미실행) 가능 |
-| N2 | `EconomyManager._prevent_resource_banking` / `_reduce_gas_workers` 재정의 (F811) | 🟡 MED | open |
-| N3 | `combat_manager._find_harass_target` 재정의 (line 2377 vs 4278) | 🟡 MED | open |
-| N4 | `production_resilience.build_terran_counters` 재정의 (1369 vs 1866) | 🟡 MED | open |
+| N1 | `OpponentModeling.on_step` 중복 정의 (line 341 vs 765 — F811) | 🟠 HIGH | ✅ resolved 2026-05-09 — 하위 stub 제거, `current_opponent`는 property로 통합 (commit 0198e9e) |
+| N2 | `EconomyManager._prevent_resource_banking` / `_reduce_gas_workers` 재정의 (F811) | 🟡 MED | ✅ resolved 2026-05-09 — 그늘진 정의 제거; static-defense 경로는 `_build_static_defense_when_banking`으로 보존 (commit 60e6da7) |
+| N3 | `combat_manager._find_harass_target` 재정의 (line 2377 vs 4278) | 🟡 MED | ✅ resolved 2026-05-09 — 단순한 상위 정의 제거 (commit e3abe74) |
+| N4 | `production_resilience.build_terran_counters` 재정의 (1369 vs 1866) | 🟡 MED | ✅ resolved 2026-05-09 — TechCoordinator 미사용 상위 정의 제거 (commit 99b17c9) |
 | N5 | bare `except Exception:` 다수 (≈360+) — 이번 PR에서 12건 처리, 잔여 다수 | 🟢 LOW | partial |
 | N6 | F841 unused local variables (visuals/make_pptx 등) | 🟢 LOW | open (presentation 코드라 영향 작음) |
+| N7 | `tests/test_queen_transfusion.py`가 burnysc2 미설치 환경에서 collection abort | 🟡 MED | ✅ resolved 2026-05-09 — `pytest.importorskip`로 변경 (commit e075611) |
 
-검증 권장: PR 분리 (N1 단독 PR 권장 — 동작 변화 가능성).
+검증: pyflakes로 `wicked_zerg_challenger/` 전체 `redefinition` 0건 확인. `tests/` 372 passed / 35 skipped.
 
 ---
 
