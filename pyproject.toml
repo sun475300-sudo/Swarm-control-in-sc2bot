@@ -14,3 +14,18 @@ known_first_party = [
   "scripts",
   "tools",
 ]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+extend-exclude = [
+  "wicked_zerg_challenger/monitoring",
+  "wicked_zerg_challenger/tools",
+]
+
+[tool.ruff.lint.per-file-ignores]
+# 테스트는 sys.path를 조작한 뒤 import하는 패턴이 흔하고, try/except로 모듈
+# 가용성을 확인하기 위해 사용하지 않는 심볼을 import하기도 한다.
+"tests/**" = ["E402", "F401"]
+"wicked_zerg_challenger/tests/**" = ["E402", "F401"]
+"**/test_*.py" = ["E402", "F401"]

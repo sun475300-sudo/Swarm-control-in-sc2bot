@@ -4,7 +4,7 @@ Unit Tests for Spatial Query Optimizer
 Tests cache efficiency, query correctness, and performance improvements.
 """
 
-from unittest.mock import MagicMock, Mock
+from unittest.mock import Mock
 
 import pytest
 
@@ -101,11 +101,11 @@ class TestSpatialQueryOptimizer:
         iteration = 100
 
         # First query (cache miss)
-        result1 = self.optimizer.get_enemies_near_position(position, radius, iteration)
+        self.optimizer.get_enemies_near_position(position, radius, iteration)
         initial_misses = self.optimizer.cache_misses
 
         # Second identical query (cache hit)
-        result2 = self.optimizer.get_enemies_near_position(position, radius, iteration)
+        self.optimizer.get_enemies_near_position(position, radius, iteration)
 
         assert self.optimizer.cache_hits > 0
         assert self.optimizer.cache_misses == initial_misses  # No additional miss
