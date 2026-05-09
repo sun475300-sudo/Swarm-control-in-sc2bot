@@ -18,6 +18,22 @@ PROJECT_ROOT = Path(__file__).parent.parent
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
+# burnysc2 가 설치되어 있지 않을 때 wicked_zerg_challenger/tests/_sc2_stub.py 로
+# 가벼운 stub 을 sys.modules 에 등록하여 sc2.* 임포트를 모두 해결한다.
+os.environ.setdefault("PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION", "python")
+try:  # pragma: no cover - real burnysc2 wins when present
+    import sc2  # noqa: F401
+except ImportError:
+    _STUB_DIR = PROJECT_ROOT / "wicked_zerg_challenger" / "tests"
+    if _STUB_DIR.is_dir() and str(_STUB_DIR) not in sys.path:
+        sys.path.insert(0, str(_STUB_DIR))
+    try:
+        import _sc2_stub  # type: ignore  # noqa: E402
+
+        _sc2_stub.install_into_sys_modules()
+    except ImportError:
+        pass
+
 
 # ═══════════════════════════════════════════════════════
 # 경로 관련 Fixtures

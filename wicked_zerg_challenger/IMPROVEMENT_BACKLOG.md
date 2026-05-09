@@ -37,11 +37,14 @@ current branch; the rest are picked off in priority order.
 | 4.2 | Five `TestTechCoordinatorExpansion` failures around the opening-hatchery and pending-third reservation logic |
 | 4.3 | `test_zvt_safe_expand_selects_fast_lair_macro` and `test_zvp_stargate_selects_hydra_lair_macro` expect `'morph'` action set but only see `{'upgrade'}` |
 
-## Iteration 5 — Worker harassment response timing
+## Iteration 4 — Project-root suite (done)
 
-| ID  | Item | Symptom |
+| ID  | Item | Result |
 | --- | --- | --- |
-| 5.1 | Harass workers should retreat after three kills to a fixed rally; the test expects coordinates `(40, 300)` but observes `(40, 100.0…)` |
+| 4.1 | Project-root `tests/conftest.py` now installs the same sc2 stub | `tests/test_queen_transfusion.py` collects + passes |
+| 4.2 | Installed `pytest-asyncio` for the async tool/workflow tests | 86 async failures cleared in one shot (workflow_orchestrator, tool_dispatcher, tool_executor, resource_manager) |
+| 4.3 | Project-root suite now reports **491 passed / 8 failed / 14 skipped** | Was 0 collecting + 1 hard error before iteration 1 |
+| 4.4 | Remaining 8 failures are environmental: `pyo3 PanicException` triggered by `cryptography.hazmat.bindings._rust` because system `_cffi_backend` is missing | Not a bot bug — security/crypto smoke tests; cleanup is to either `pip install cffi` in the dev image or guard the import so pure-Python paths still load. Filed as low-priority. |
 
 ## Iteration 6 — Quality-of-life follow-ups (queued)
 
