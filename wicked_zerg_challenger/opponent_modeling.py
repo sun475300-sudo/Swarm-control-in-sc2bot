@@ -682,6 +682,12 @@ class OpponentModeling:
             )
             return False
 
+        # Treat empty file as "no data yet" — not an error. Brand-new
+        # temp files (created by tests) and freshly-touched data files
+        # both land here.
+        if os.path.getsize(self.data_file) == 0:
+            return False
+
         try:
             with open(self.data_file, "r", encoding="utf-8") as f:
                 data = json.load(f)
@@ -697,6 +703,11 @@ class OpponentModeling:
             )
             return True
 
+        except json.JSONDecodeError as e:
+            self.logger.warning(
+                f"[OPPONENT_MODELING] Models file corrupt, starting fresh: {e}"
+            )
+            return False
         except Exception as e:
             self.logger.error(f"[OPPONENT_MODELING] Failed to load models: {e}")
             return False
