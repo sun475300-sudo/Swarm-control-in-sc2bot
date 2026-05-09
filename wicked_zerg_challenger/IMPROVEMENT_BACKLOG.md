@@ -53,14 +53,15 @@ current branch; the rest are picked off in priority order.
 | 5.1 | `tests/test_combat_phase_fsm.py` swapped 5× `asyncio.get_event_loop().run_until_complete(...)` for `asyncio.run(...)` | The deprecated API was raising `RuntimeError: There is no current event loop` when the combined run interleaved with pytest-asyncio's auto-mode loops |
 | 5.2 | Combined suite `wicked_zerg_challenger/tests/ + tests/` now reports **1160 passed / 14 skipped / 0 failed** | Was **12 failed** in the combined run before |
 
-## Iteration 6 — Quality-of-life follow-ups (queued)
+## Iteration 6 — Quality-of-life follow-ups (in progress)
 
-| ID  | Item | Notes |
+| ID  | Item | Status |
 | --- | --- | --- |
-| 6.1 | Fold the stub into a permanent `sc2_dev_stub` package | Allows non-test scripts (smoke runners) to import without burnysc2 |
-| 6.2 | Address the 38 warnings (mostly pytest-asyncio default-loop-scope deprecation + return-value-from-test warnings) |
-| 6.3 | Wire a smoke target to `wicked_zerg_challenger/tests/run_scouting_tests.py` for the scouting subset |
-| 6.4 | Pre-existing repo-wide `black --check .` fails on 66 unrelated files; CI's `Lint & Type Check (3.11)` is red as a result. Out-of-scope here, but a one-shot black format pass would clear it |
+| 6.1 | `TestOpponentModeling` extended `unittest.TestCase`, so 8 `async def test_*` methods returned coroutines that were never awaited (silent passes). Switched to `unittest.IsolatedAsyncioTestCase` so they actually run. | Done — 32/32 pass after also fixing the production bug below |
+| 6.2 | **Production bug surfaced**: `OpponentModeling` had two `on_step` methods; the duplicate at line ~777 silently shadowed the canonical one at line ~341. The canonical step ran the full pipeline (build-order tracking, timing-attack detection, blackboard sync); the duplicate only detected early-game signals. Removed the duplicate. | Done |
+| 6.3 | `OpponentModeling` mixed two attribute names for the same concept (`current_opponent` set in the integration helpers vs `current_opponent_id` everywhere else). Added a `current_opponent` property that aliases `current_opponent_id` so both lifecycle APIs stay in sync. | Done |
+| 6.4 | Combined-suite warnings dropped from 38 → 19 after these fixes. | Done |
+| 6.5 | Pre-existing repo-wide `black --check .` fails on 66 unrelated files; CI's `Lint & Type Check (3.11)` is red as a result. Out-of-scope here, but a one-shot black format pass would clear it. | Pending (out of scope) |
 
 ## Iteration N — Continuous loop instructions
 

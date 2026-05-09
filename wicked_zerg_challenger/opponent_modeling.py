@@ -295,6 +295,18 @@ class OpponentModeling:
 
         self.logger.info("[OPPONENT_MODELING] System initialized")
 
+    # ``current_opponent`` is the public alias that the bot main loop
+    # (wicked_zerg_bot_pro_impl) uses; keep both names in sync so the two
+    # lifecycle APIs (on_start/on_end vs on_game_start/on_game_end) stay
+    # consistent.
+    @property
+    def current_opponent(self) -> Optional[str]:
+        return self.current_opponent_id
+
+    @current_opponent.setter
+    def current_opponent(self, value: Optional[str]) -> None:
+        self.current_opponent_id = value
+
     async def on_start(self):
         """게임 시작 시 호출"""
         # Identify opponent
@@ -762,16 +774,10 @@ class OpponentModeling:
                 f"[OPPONENT_MODELING] Known opponent: {opponent_id} ({self.opponent_models[opponent_id].games_played} games)"
             )
 
-    async def on_step(self, iteration: int):
-        """매 프레임 호출 - 신호 감지"""
-        if not self.current_opponent or not self.bot:
-            return
-
-        game_time = self.bot.time
-
-        # Only detect signals in early game (0-180s)
-        if game_time <= 180.0:
-            await self._detect_early_signals(game_time)
+    # NOTE: the canonical async ``on_step`` is defined earlier in this class.
+    # The legacy duplicate that lived here used to silently shadow it and only
+    # detected early-game signals; deleting it ensures the full step pipeline
+    # (build-order tracking, timing-attack detection, blackboard sync) runs.
 
     def on_game_end(self, won: bool, lost: bool):
         """게임 종료 시 호출 - 데이터 저장"""
