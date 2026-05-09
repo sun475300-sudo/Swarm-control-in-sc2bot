@@ -12,12 +12,13 @@ current branch; the rest are picked off in priority order.
 | 1.2 | `conftest.py` auto-installs the stub | Real `sc2` is preferred when present; otherwise the stub is registered before any test module imports. |
 | 1.3 | Recover 23 broken collections | Test collection now reports **661 tests** (was 364 with 23 errors). 646 pass on first run. |
 
-## Iteration 2 — Stub fidelity for serialization tests
+## Iteration 2 — Stub fidelity for serialization tests (done)
 
-| ID  | Item | Symptom |
+| ID  | Item | Result |
 | --- | --- | --- |
-| 2.1 | `Race`/`Difficulty`/`Result` need `__getitem__` / `from_string` lookups so persistence helpers can deserialize | `test_difficulty_progression.py::test_serialize_deserialize_consistency` → `TypeError: type 'Race' is not subscriptable` |
-| 2.2 | `Race`/`Difficulty` should iterate over their members | Allows `list(Race)` style enumeration used by stat persistence |
+| 2.1 | `Race`/`Difficulty`/`Result` now expose `__getitem__` so `Race["Terran"]` and `Difficulty["Easy"]` work | `test_difficulty_progression.py::test_serialize_deserialize_consistency` & `test_save_and_load_stats` pass |
+| 2.2 | Iteration / `__contains__` over enum members | Enables `list(Race)` and `name in Race` lookups |
+| 2.3 | Drove the failing-test count from 15 → 13 |
 
 ## Iteration 3 — Combat filter regressions
 

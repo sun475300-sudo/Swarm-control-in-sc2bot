@@ -58,7 +58,29 @@ class EffectId(metaclass=_AttrAuto):
     pass
 
 
-class _EnumLikeBase:
+class _EnumMeta(type):
+    """Metaclass that allows enum-style ``Cls[name]`` and iteration."""
+
+    def __getitem__(cls, name):
+        members = cls.__dict__.get("_members") or {}
+        try:
+            return members[name]
+        except KeyError as exc:
+            raise KeyError(name) from exc
+
+    def __iter__(cls):
+        return iter((cls.__dict__.get("_members") or {}).values())
+
+    def __contains__(cls, item):
+        members = cls.__dict__.get("_members") or {}
+        if isinstance(item, str):
+            return item in members
+        return item in members.values()
+
+
+class _EnumLikeBase(metaclass=_EnumMeta):
+    _members: dict = {}
+
     def __init__(self, name, value=None):
         self.name = name
         self.value = name if value is None else value
@@ -74,45 +96,59 @@ class _EnumLikeBase:
     def __hash__(self):
         return hash((type(self).__name__, self.name))
 
+    @classmethod
+    def _register(cls, name, value=None):
+        member = cls(name, value)
+        # Each subclass owns its own ``_members`` mapping so siblings don't
+        # collide (Race vs Difficulty vs Result).
+        if "_members" not in cls.__dict__:
+            cls._members = {}
+        cls._members[name] = member
+        setattr(cls, name, member)
+        return member
+
 
 class Race(_EnumLikeBase):
-    pass
+    _members: dict = {}
 
 
-Race.Zerg = Race("Zerg", 1)
-Race.Protoss = Race("Protoss", 2)
-Race.Terran = Race("Terran", 3)
-Race.Random = Race("Random", 4)
-Race.NoRace = Race("NoRace", 0)
+Race._register("Zerg", 1)
+Race._register("Protoss", 2)
+Race._register("Terran", 3)
+Race._register("Random", 4)
+Race._register("NoRace", 0)
 
 
 class Difficulty(_EnumLikeBase):
-    pass
+    _members: dict = {}
 
 
-for _name in (
-    "VeryEasy",
-    "Easy",
-    "Medium",
-    "MediumHard",
-    "Hard",
-    "Harder",
-    "VeryHard",
-    "CheatVision",
-    "CheatMoney",
-    "CheatInsane",
+for _idx, _name in enumerate(
+    (
+        "VeryEasy",
+        "Easy",
+        "Medium",
+        "MediumHard",
+        "Hard",
+        "Harder",
+        "VeryHard",
+        "CheatVision",
+        "CheatMoney",
+        "CheatInsane",
+    ),
+    start=1,
 ):
-    setattr(Difficulty, _name, Difficulty(_name))
+    Difficulty._register(_name, _idx)
 
 
 class Result(_EnumLikeBase):
-    pass
+    _members: dict = {}
 
 
-Result.Victory = Result("Victory", 1)
-Result.Defeat = Result("Defeat", 2)
-Result.Tie = Result("Tie", 3)
-Result.Undecided = Result("Undecided", 4)
+Result._register("Victory", 1)
+Result._register("Defeat", 2)
+Result._register("Tie", 3)
+Result._register("Undecided", 4)
 
 
 class Point2(tuple):
@@ -143,7 +179,9 @@ class Point2(tuple):
         dx = other[0] - self[0]
         dy = other[1] - self[1]
         length = (dx * dx + dy * dy) ** 0.5 or 1.0
-        return Point2(self[0] + dx / length * distance, self[1] + dy / length * distance)
+        return Point2(
+            self[0] + dx / length * distance, self[1] + dy / length * distance
+        )
 
     def __add__(self, other):
         return Point2(self[0] + other[0], self[1] + other[1])
