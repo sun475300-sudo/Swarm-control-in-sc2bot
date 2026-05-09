@@ -7,8 +7,16 @@ Overlord Hunter - 적 대군주 사냥 모듈
 
 from typing import List, Set
 
-from sc2.ids.unit_typeid import UnitTypeId
-from sc2.units import Units
+try:
+    from sc2.ids.unit_typeid import UnitTypeId
+    from sc2.units import Units
+except ImportError:  # pragma: no cover - sc2 미설치 환경 (CI / 단위테스트)
+    class UnitTypeId:  # type: ignore[no-redef]
+        OVERLORD = "OVERLORD"
+        QUEEN = "QUEEN"
+        MUTALISK = "MUTALISK"
+
+    Units = list  # type: ignore[assignment,misc]
 
 
 class OverlordHunter:
