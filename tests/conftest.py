@@ -18,6 +18,20 @@ PROJECT_ROOT = Path(__file__).parent.parent
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
+# Install minimal sc2 stub so unit tests can collect without python-sc2.
+# Real sc2 import is preferred; the stub only takes effect on its absence.
+sys.path.insert(0, str(Path(__file__).parent))
+from _sc2_stub import install as _install_sc2_stub  # noqa: E402
+
+_install_sc2_stub()
+
+# Also expose wicked_zerg_challenger on sys.path so its modules import cleanly
+# from top-level test files (mirrors the sys.path tweaks scattered through the
+# bot test files).
+_BOT_PKG = PROJECT_ROOT / "wicked_zerg_challenger"
+if _BOT_PKG.is_dir() and str(_BOT_PKG) not in sys.path:
+    sys.path.insert(0, str(_BOT_PKG))
+
 
 # ═══════════════════════════════════════════════════════
 # 경로 관련 Fixtures
