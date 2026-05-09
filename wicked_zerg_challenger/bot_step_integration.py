@@ -153,11 +153,34 @@ except ImportError:
 
 # *** PHASE 8/9 SYSTEMS ***
 
-# Enhanced Scouting System
-try:
-    from scouting.enhanced_scout_system import EnhancedScoutSystem
-except ImportError:
-    EnhancedScoutSystem = None
+# Enhanced Scouting System — deprecated fallback. Imported lazily inside
+# `_load_enhanced_scout_system()` so the DeprecationWarning only fires when
+# AdvancedScoutSystemV2 is unavailable (the documented fallback path).
+EnhancedScoutSystem = None
+
+
+def _load_enhanced_scout_system():
+    """Lazy import of the deprecated scouting fallback.
+
+    Returns the class, or None if it cannot be imported. Module-level
+    import would fire a DeprecationWarning even when AdvancedScoutSystemV2
+    handles every code path — the warning is only meaningful at the
+    actual fallback site.
+    """
+    global EnhancedScoutSystem
+    if EnhancedScoutSystem is not None:
+        return EnhancedScoutSystem
+    try:
+        import warnings as _warnings
+        with _warnings.catch_warnings():
+            _warnings.simplefilter("default", DeprecationWarning)
+            from scouting.enhanced_scout_system import (
+                EnhancedScoutSystem as _EnhancedScoutSystem,
+            )
+            EnhancedScoutSystem = _EnhancedScoutSystem
+    except ImportError:
+        EnhancedScoutSystem = None
+    return EnhancedScoutSystem
 
 # Harassment Coordinator
 try:
@@ -418,9 +441,13 @@ class BotStepIntegrator:
 
         # Enhanced Scouting System
         # * Skip if AdvancedScoutSystemV2 is available (it supersedes EnhancedScout)
-        if EnhancedScoutSystem and not AdvancedScoutSystemV2:
-            self.bot.enhanced_scout = EnhancedScoutSystem(bot)
-            self.logger.info("[INIT] EnhancedScoutSystem initialized (Phase 9)")
+        if not AdvancedScoutSystemV2:
+            scout_cls = _load_enhanced_scout_system()
+            if scout_cls:
+                self.bot.enhanced_scout = scout_cls(bot)
+                self.logger.info("[INIT] EnhancedScoutSystem initialized (Phase 9)")
+            else:
+                self.bot.enhanced_scout = None
         else:
             self.bot.enhanced_scout = None
 
