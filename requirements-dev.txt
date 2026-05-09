@@ -1,13 +1,26 @@
 # Development / Testing Dependencies
 # Install with: pip install -r requirements-dev.txt
+#
+# Notes:
+#   * The ``sc2`` (burnysc2) package is intentionally NOT listed here.
+#     burnysc2's ``mpyq`` dependency builds a C extension that fails in
+#     CI sandboxes without a toolchain. Tests fall back to the
+#     lightweight stub registered by ``tests/_sc2_stub.py``. If you have
+#     a working toolchain, install ``burnysc2`` separately for end-to-end
+#     ladder runs.
+#   * ``numpy`` is required by several offline-capable tests
+#     (``test_p606_modules.py``, ``test_new_modules.py``); without it
+#     they skip rather than fail.
 
 # Testing
 pytest>=7.0.0
 pytest-asyncio>=0.23.0
 pytest-timeout>=2.1.0
 pytest-mock>=3.10.0
+numpy>=1.24
 
 # Code quality (matches sc2bot-ci.yml versions)
 black==26.3.1
 isort>=5.12.0
 flake8>=6.0.0
+ruff>=0.5.0
