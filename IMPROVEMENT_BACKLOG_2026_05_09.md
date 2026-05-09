@@ -4,8 +4,8 @@
 > `claude/stoic-shannon-cJMyV`. Baseline: **372 pass / 34 skip / 1 collection
 > error**, **690 ruff findings** across `wicked_zerg_challenger/` + `tests/`.
 >
-> **Progress (current branch HEAD):** 372 pass / 35 skip / 0 fail / 0 collection
-> errors. Ruff findings reduced from 690 → 158 across 6 commits. PR #125 (draft).
+> **Final state (branch HEAD):** 372 pass / 35 skip / 0 fail / 0 collection
+> errors. **Ruff: 690 → 0 (all-clean)** across 12 commits. PR #125 (draft).
 >
 > | Round | Commit | Scope | Ruff Δ |
 > |---|---|---|---|
@@ -15,7 +15,13 @@
 > | 4 | 81ba61c | tests E402 (8) + F403/F405 cascade for swarm_3d_ursina (96) | -104 |
 > | 5 | b5c9d1a | F841 safe subset — unused `except X as e:` bindings (48) | -48 |
 > | 6 | 16c8d7a | F841 dead-locals + `non_combat_names` real bug | -7 |
-> | **Total** | — | — | **-526** |
+> | 7 | 30953e6 | Backlog refresh | 0 |
+> | 8 | 65f667b | Test F841 cleanup (smoke construction + missing assertions) | -21 |
+> | 9 | a6b59cc | Bot E402 (top-of-file reorder + sys.path noqa) | -44 |
+> | 10 | b581bd4 | Bot E402 trailing-sweep | -20 |
+> | 11 | 8d792fe | Bot F841 batch 1 (core managers) | -13 |
+> | 12 | 91b30e5 | Bot F841 batch 2 (production_resilience + auto-fix rest) | -60 |
+> | **Total** | — | — | **-690 (100 %)** |
 
 ## Baseline summary
 
@@ -61,28 +67,49 @@
 - E402 module-import-not-at-top in tests (8) → move imports to top
 - E741 ambiguous variable names (22) → rename `l`, `I`, `O`
 
-## Round 4+ — Larger refactors (deferred)
+## Round 4+ — Larger refactors (status)
 
-- F405 star-import side-effects in `wicked_zerg_challenger/visuals/swarm_3d_ursina.py` ✅ done in round 4 via `[tool.ruff.lint.per-file-ignores]`
-- F841 unused-variable cleanup in bot package — partially addressed (round 5+6, -55). **Remaining: 94** across ~50 files. Need per-site review; many are dead test setup (`micro = MicroCombat(bot)` then no assertions) or production scaffolds for unimplemented features.
-- pytest skip/xfail labelling (35 skipped tests) — categorize env vs temporary-disabled
-- Code-coverage threshold gate (`--cov-fail-under=70`)
-- **Real bug deferred** (round 6): `combat_manager.py` REGEN DANCE — `regenerating` list returned by `MutaliskMicro.execute_regen_dance` is never consumed at L2422-2427 and L2870-2873. Implement retreat-to-safe-distance for damaged Mutalisks.
+- ✅ F405 star-import side-effects — done in round 4
+  (`[tool.ruff.lint.per-file-ignores]`).
+- ✅ F841 unused-variable cleanup — fully addressed across rounds 5/6/8/11/12.
+- ✅ E402 import-order — fully addressed in rounds 9/10.
+- pytest skip/xfail labelling (35 skipped tests) — **deferred**.
+  Categorize env-deps (`sc2`, `numpy`, `pyupbit`, `config.yaml`) vs
+  temporary-disabled.
+- Code-coverage threshold gate (`--cov-fail-under=70`) — **deferred**.
 
-## Round 7+ — Test-side F841 sweep (next iteration)
+## Real bugs — discovered & fixed during sweep
 
-Sample sites needing review (each requires deciding: delete dead test
-setup, OR add the missing assertion the variable name implies):
+| # | File | Bug | Fixed in |
+|---|---|---|---|
+| 1 | `wicked_zerg_bot_pro_impl.py:572/689` | `UnboundLocalError` from inner `import traceback` shadowing module-level import inside `on_end` | round 1 |
+| 2 | `opponent_modeling.py:765` | Duplicate `on_step` silently overrode the L341 implementation, disabling build-order tracking, timing-attack detection, tech-progression tracking, blackboard updates, throttling guard | round 1 |
+| 3 | `production_resilience.py:1369` | Dead duplicate `build_terran_counters` shadowing the L1866 TechCoordinator-aware version | round 1 |
+| 4 | `tests/test_queen_transfusion.py:11` | Hard-import `sc2.ids.unit_typeid` broke pytest collection on environments without sc2 | round 1 |
+| 5 | `combat_manager.py:3067` | `non_combat_names` defined but never used — base-defense threat detector counted ALL nearby enemies vs. the documented "non-combat-only ≥3 threshold", producing false positives from neutral/unrecognized units | round 6 |
 
-- `tests/test_combat_components.py` — 8 sites: `micro = MicroCombat(bot)`,
-  `enemy = ...`, `should_retreat = ...` assigned without assertions.
-- `tests/test_combat_manager.py` — 5 sites: `combat = ...`, `base_to_rally = ...`
-- `tests/test_economy_manager.py` — `call_count_before = ...`
-- `tests/test_intel_manager.py`, `test_harassment_coordinator.py`,
-  `test_spatial_query_optimizer.py`, `test_crypto_trading.py` — assorted
+## Real bugs — discovered but deferred (need feature implementation, not deletion)
 
-If these are intended to verify "no exception during construction", add
-an explicit `assert isinstance(...)` line; otherwise delete the binding.
+- `combat_manager.py` REGEN DANCE: `regenerating` list returned by
+  `MutaliskMicro.execute_regen_dance` was being silently dropped — the
+  retreat-to-safe-distance behavior for damaged Mutalisks was scaffolded
+  but never finished. Removed in round 12 as dead capture; a future PR
+  should actually wire up the retreat command.
+
+## Test-suite improvements — done
+
+- `test_combat_components.py` — 12 sites: replaced unused
+  ``micro = MicroCombat(bot)`` bindings with bare ``MicroCombat(bot)``
+  calls preserving the smoke-construction intent.
+- `test_economy_manager.py` — converted 2 captured-but-never-asserted
+  ``call_count_before`` into real assertions
+  (``assert bot.do.call_count == call_count_before``).
+- `test_combat_manager.py` — converted ``base_to_rally`` capture into
+  ``assert base_to_rally >= 0``.
+- `test_spatial_query_optimizer.py` — added the obvious cache-equality
+  assertion (``assert result2 == result1``) that was missing.
+- `test_intel_manager.py`, `test_harassment_coordinator.py`,
+  `test_crypto_trading.py` — minor cleanup.
 
 ## Process for each round
 
