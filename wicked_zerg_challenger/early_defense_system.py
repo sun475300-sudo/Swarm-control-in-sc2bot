@@ -68,6 +68,26 @@ class EarlyDefenseSystem:
         self._spine_crawler_built = False
         self._spine_crawler_ordered = False
 
+    async def on_step(self, iteration: int) -> None:
+        """Alias for execute() — called by bot_step_integration."""
+        await self.execute(iteration)
+
+    def reset(self) -> None:
+        """Reset state between training episodes."""
+        self.early_rush_detected = False
+        self.pool_started = False
+        self.queen_started = False
+        self.emergency_mode = False
+        self.last_enemy_check = 0
+        self.early_threats = set()
+        self.proxy_structure_tags = set()
+        self.proxy_response_active = False
+        self._proxy_spines_requested = 0
+        self._proxy_worker_tags = set()
+        self._zergling_speed_researched = False
+        self._spine_crawler_built = False
+        self._spine_crawler_ordered = False
+
     async def execute(self, iteration: int) -> None:
         """
         Execute early defense logic every step

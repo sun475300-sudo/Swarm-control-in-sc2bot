@@ -1239,7 +1239,7 @@ class WickedZergBotProImpl(BotAI):
         """적 유닛 시야 진입 - 정찰 정보 업데이트 + 방어 트리거"""
         try:
             # Intel 매니저에 적 유닛 정보 전달
-            intel = getattr(self, "intel_manager", None)
+            intel = getattr(self, "intel", None) or getattr(self, "intel_manager", None)
             if intel and hasattr(intel, "on_enemy_spotted"):
                 intel.on_enemy_spotted(unit)
 
@@ -1281,6 +1281,7 @@ class WickedZergBotProImpl(BotAI):
             ("overlord_safety", "OverlordSafety"),
             ("micro_v3", "MicroController"),
             ("micro", "MicroControllerLegacy"),
+            ("intel", "IntelManager"),
             ("intel_manager", "IntelManager"),
             ("build_order_system", "BuildOrderSystem"),
             ("early_defense", "EarlyDefenseSystem"),

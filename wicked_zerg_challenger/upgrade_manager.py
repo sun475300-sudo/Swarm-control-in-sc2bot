@@ -207,16 +207,13 @@ class EvolutionUpgradeManager:
                 if not self._can_research(upgrade_id):
                     continue
 
-                # *** Phase 18: Gas reservation system ***
+                # *** Phase 18: Gas reservation system (FIX H1: use calculate_cost) ***
                 if not self.bot.can_afford(upgrade_id):
-                    # 가스가 부족하면 예약
-                    vespene_cost = getattr(upgrade_id, "_cost", {}).get("Vespene", 0)
+                    cost = self._get_upgrade_cost(upgrade_id)
                     minerals = getattr(self.bot, "minerals", 0)
                     vespene = getattr(self.bot, "vespene", 0)
 
-                    # 미네랄은 충분하지만 가스가 부족한 경우에만 예약
-                    mineral_cost = getattr(upgrade_id, "_cost", {}).get("Minerals", 0)
-                    if minerals >= mineral_cost and vespene < vespene_cost:
+                    if minerals >= cost[0] and vespene < cost[1]:
                         self._reserve_upgrade(upgrade_id)
                     continue
 
@@ -251,16 +248,13 @@ class EvolutionUpgradeManager:
                 if not self._can_research(upgrade_id):
                     continue
 
-                # *** Phase 18: Gas reservation system ***
+                # *** Phase 18: Gas reservation system (FIX H1: use calculate_cost) ***
                 if not self.bot.can_afford(upgrade_id):
-                    # 가스가 부족하면 예약
-                    vespene_cost = getattr(upgrade_id, "_cost", {}).get("Vespene", 0)
+                    cost = self._get_upgrade_cost(upgrade_id)
                     minerals = getattr(self.bot, "minerals", 0)
                     vespene = getattr(self.bot, "vespene", 0)
 
-                    # 미네랄은 충분하지만 가스가 부족한 경우에만 예약
-                    mineral_cost = getattr(upgrade_id, "_cost", {}).get("Minerals", 0)
-                    if minerals >= mineral_cost and vespene < vespene_cost:
+                    if minerals >= cost[0] and vespene < cost[1]:
                         self._reserve_upgrade(upgrade_id)
                     continue
 
@@ -1564,6 +1558,20 @@ class EvolutionUpgradeManager:
     # ========================================
     # *** Phase 18: Gas Reservation System ***
     # ========================================
+
+    def _get_upgrade_cost(self, upgrade_id: object) -> tuple:
+        """
+        Get (mineral_cost, vespene_cost) for an upgrade.
+        Uses bot.calculate_cost() if available, falls back to hardcoded defaults.
+        """
+        try:
+            if hasattr(self.bot, "calculate_cost"):
+                cost = self.bot.calculate_cost(upgrade_id)
+                return (cost.minerals, cost.vespene)
+        except Exception:
+            pass
+        # Fallback: most Zerg upgrades cost 100/100 or 150/150 or 200/200
+        return (100, 100)
 
     def _reserve_upgrade(self, upgrade_id: object):
         """

@@ -138,10 +138,6 @@ class EconomyManager:
         )
 
         self.last_gas_worker_adjustment = 0
-        self.gas_worker_adjustment_interval = (
-            33  # * FIX: 110->33 (~1.5초마다 조정, 가스 뱅킹 빠른 대응) *
-        )
-
         self.gas_worker_adjustment_interval = GameFrequencies.EVERY_1_5_SECONDS
 
         # * Expansion Blocking (Phase 17) *

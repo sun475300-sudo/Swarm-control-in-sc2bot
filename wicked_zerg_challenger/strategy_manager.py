@@ -198,7 +198,7 @@ ZVZ_COMPOSITION_TIMELINE = {
             "ravager": 0.20,
             "hydra": 0.25,
             "zergling": 0.10,
-            "LURKERMP": 0.10,
+            "lurkermp": 0.10,
         },
         "vs_muta": {
             "hydra": 0.50,
@@ -219,7 +219,7 @@ ZVZ_COMPOSITION_TIMELINE = {
             "corruptor": 0.20,
             "viper": 0.15,
             "hydra": 0.20,
-            "LURKERMP": 0.20,
+            "lurkermp": 0.20,
         },
         "vs_broodlord": {
             "corruptor": 0.40,
@@ -920,7 +920,7 @@ class StrategyManager:
             "BROODLORD",
             "RAVAGER",
             "LURKER",
-            "LURKERMP",
+            "lurkermp",
         }
 
         total_threat_score = 0
@@ -1682,7 +1682,7 @@ class StrategyManager:
 
     @staticmethod
     def _normalize_ratio_keys(ratios: Dict[str, float]) -> Dict[str, float]:
-        aliases = {"hydra": "hydralisk", "LURKERMP": "lurkermp", "lurker": "lurkermp"}
+        aliases = {"hydra": "hydralisk", "lurkermp": "lurkermp", "lurker": "lurkermp"}
         normalized: Dict[str, float] = {}
         for unit, value in ratios.items():
             key = aliases.get(unit, unit)
