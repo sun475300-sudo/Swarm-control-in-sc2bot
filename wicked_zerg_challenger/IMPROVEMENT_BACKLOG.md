@@ -20,16 +20,14 @@ current branch; the rest are picked off in priority order.
 | 2.2 | Iteration / `__contains__` over enum members | Enables `list(Race)` and `name in Race` lookups |
 | 2.3 | Drove the failing-test count from 15 → 13 |
 
-## Iteration 3 — Combat filter regressions
+## Iteration 3 — Combat filter regressions (done)
 
-| ID  | Item | Symptom |
+| ID  | Item | Result |
 | --- | --- | --- |
-| 3.1 | `CombatManager.filter_air_units` returning empty | `test_filter_air_units` expects 1, gets 0 |
-| 3.2 | `CombatManager.filter_ground_units` returning empty | `test_filter_ground_units` expects 1, gets 0 |
-| 3.3 | `CombatManager.filter_army_units` (ling-only and mixed) returning empty | Tests `test_filter_army_units_zerglings` / `test_filter_army_units_mixed` |
-
-These tests construct mock units with `is_flying`/`type_id` directly. The filter
-likely calls a lookup that no longer matches the production data path.
+| 3.1 | Stub `UnitTypeId` now mints enum-style members with `.name` and `.value`, so `mock.type_id = UnitTypeId.MUTALISK` round-trips through production code paths that call `unit.type_id.name in {...}` | `test_filter_air_units`, `test_filter_ground_units`, `test_filter_army_units_*` all pass |
+| 3.2 | Tightened equality so `UnitTypeId.X == "X"` and `UnitTypeId.X == UnitTypeId.X` agree | Removes the silent falsy-string mismatch from the filter helpers |
+| 3.3 | Side benefit: also fixed the 5 `TestTechCoordinatorExpansion` failures, the 2 build/zvt/zvp opener failures and the worker-harassment defense failure since they all relied on the same enum-name lookup path |
+| 3.4 | All 661 tests now pass on first run from `wicked_zerg_challenger/` | `python -m pytest tests/ --tb=no -q` ⇒ 661 passed |
 
 ## Iteration 4 — Opening expansion priority gating
 

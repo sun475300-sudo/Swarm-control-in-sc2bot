@@ -17,11 +17,58 @@ import sys
 import types
 
 
-class _AttrAuto(type):
-    """Metaclass that returns the attribute name as a fallback string value."""
+class _IdMember(int):
+    """Enum-style value carrying ``name`` and ``value`` attributes.
 
-    _cache: dict
-    _factory = staticmethod(lambda name: name)
+    Production code routinely calls ``unit.type_id.name`` or compares a
+    ``UnitTypeId`` against another via ``==``. By subclassing ``int`` we keep
+    set/dict membership cheap and stable while still exposing ``.name``.
+    """
+
+    _next_value = 1
+    _name: str = ""
+
+    def __new__(cls, name, value=None):
+        if value is None:
+            value = cls._next_value
+            cls._next_value += 1
+        obj = int.__new__(cls, int(value))
+        obj._name = name
+        return obj
+
+    @property
+    def name(self):
+        return self._name
+
+    @property
+    def value(self):
+        return int(self)
+
+    def __repr__(self):
+        return f"<{type(self).__name__}.{self._name}>"
+
+    def __str__(self):
+        return self._name
+
+    def __eq__(self, other):
+        if isinstance(other, _IdMember):
+            return type(self) is type(other) and self._name == other._name
+        if isinstance(other, str):
+            return self._name == other
+        if isinstance(other, int):
+            return int(self) == int(other)
+        return NotImplemented
+
+    def __ne__(self, other):
+        eq = self.__eq__(other)
+        return eq if eq is NotImplemented else not eq
+
+    def __hash__(self):
+        return hash((type(self).__name__, self._name))
+
+
+class _AttrAuto(type):
+    """Metaclass that lazily mints ``_IdMember`` instances on attribute access."""
 
     def __getattr__(cls, name):  # type: ignore[override]
         if name.startswith("__"):
@@ -31,30 +78,38 @@ class _AttrAuto(type):
             cache = {}
             type.__setattr__(cls, "_cache", cache)
         if name not in cache:
-            cache[name] = cls._factory(name)
+            cache[name] = cls(name)
         return cache[name]
 
     def __iter__(cls):
         return iter(cls.__dict__.get("_cache", {}).values())
 
+    def __contains__(cls, item):
+        cache = cls.__dict__.get("_cache") or {}
+        if isinstance(item, _IdMember):
+            return item._name in cache
+        if isinstance(item, str):
+            return item in cache
+        return False
 
-class UnitTypeId(metaclass=_AttrAuto):
-    """Stub – any attribute resolves lazily to a sentinel string."""
+
+class UnitTypeId(_IdMember, metaclass=_AttrAuto):
+    """Stub – ``UnitTypeId.MUTALISK`` returns an enum-like int with ``.name``."""
 
 
-class AbilityId(metaclass=_AttrAuto):
+class AbilityId(_IdMember, metaclass=_AttrAuto):
     pass
 
 
-class UpgradeId(metaclass=_AttrAuto):
+class UpgradeId(_IdMember, metaclass=_AttrAuto):
     pass
 
 
-class BuffId(metaclass=_AttrAuto):
+class BuffId(_IdMember, metaclass=_AttrAuto):
     pass
 
 
-class EffectId(metaclass=_AttrAuto):
+class EffectId(_IdMember, metaclass=_AttrAuto):
     pass
 
 
