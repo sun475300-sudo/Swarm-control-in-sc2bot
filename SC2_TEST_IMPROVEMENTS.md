@@ -97,21 +97,39 @@
 | **Batch 3** ✅ | pytest.ini cleanup + EnhancedScout lazy-import + dev deps | **662 pass, 0 warnings** (was 102) |
 | **Batch 4+** | 추가 사이클 — 매 사이클마다 테스트 재실행 후 신규 발견 사항 처리 | 진행 중 |
 
-## Batch 1-3 누적 성과
+## Batch 1-8 누적 성과
 
 | 지표 | Before | After |
 |---|---|---|
-| 테스트 통과 수 | 659 | **662** |
+| 테스트 통과 수 | 659 | **681** (+22) |
 | 수집 오류 | 1 | **0** |
 | 경고 | 138 | **0** |
-| 숨겨진 버그 (async 미실행으로 가려진) | 4 | **0** |
+| 숨겨진 버그 발견 | — | **6** (counter-unit 시그니처, current_opponent AttributeError, on_step duplicate, build_terran_counters duplicate, 모듈 silent stub, supply guard 누락) |
 | `pytest.ini --disable-warnings` 차단막 | 활성 | 제거됨 (filterwarnings로 대체) |
+| 커밋 수 | — | **9** (8 batches + 1 CI fix) |
 
-## 다음 사이클 후보 (Batch 4+)
+### 배치별 커밋 트레이스
+
+| 배치 | 커밋 | 내용 |
+|---|---|---|
+| 1 | `b9c499b` | async-on-`unittest.TestCase` fix + 4 hidden bugs |
+| 2 | `3c428fd` | mpyq fallback + scout silent-stub safety |
+| 3 | `d759987` | pytest.ini cleanup + lazy `EnhancedScoutSystem` import |
+| 4 | `f8551e5` | Centralised `utils.sc2_stubs` lenient fallback + 5 tests |
+| CI | `6efd9fd` | `black` format on changed files |
+| 5 | `5eb14cf` | Locked `OpponentModeling.on_step` dup-method contract |
+| 6 | `84ccce9` | New tests for `EarlyDefenseSystem` proxy-rush (7 tests) |
+| 7 | `4dffaad` | Locked `ProductionResilience.build_terran_counters` dup contract |
+| 8 | `eca7116` | **Real bug fix**: supply-gate `_train_all_larva_as_zerglings` + 5 tests |
+
+## 다음 사이클 후보 (Batch 9+)
 
 - [ ] 루트 `tests/test_security.py` 5건 실패 — pyo3_runtime 환경 의존성 graceful skip
 - [ ] mypy strict 도입 가능 영역 측정 (PR #28에서 누락된 항목)
-- [ ] 봇 핵심 모듈 커버리지 측정 (`pytest-cov` + `--cov-fail-under=70`)
-- [ ] 다른 `try/except ImportError` 스텁 패턴 (`enhanced_scout_system.py`, `phase_scout_cadence.py`)에도 lenient stub 적용 검토
+- [ ] 봇 핵심 모듈 커버리지 측정 (`pytest-cov` + `--cov-fail-under=70`) — 현재 27%
+- [ ] 다른 `try/except ImportError` 스텁 패턴 (37 모듈)을 `utils.sc2_stubs.get_sc2_imports()` 로 일괄 이전
 - [ ] CI 워크플로의 `pip install`을 `uv pip install`로 교체 (resolution-too-deep 해결)
 - [ ] `mpyq`를 optional extra로 분리 (e.g. `pip install ".[replay]"`)
+- [ ] 183건의 `except Exception: pass` 사일런트 swallow 감사 (특히 `production_resilience.py` 24건, `spell_unit_manager.py` 13건)
+- [ ] `OpponentModeling.on_step` / `ProductionResilience.build_terran_counters` 중복 메서드 정리 결정 (사용자 승인 필요)
+- [ ] 352개 `async def`인데 `await`이 없는 메서드 감사 (불필요한 async 제거)
