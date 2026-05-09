@@ -37,23 +37,9 @@ from typing import Dict, List, Optional, Set, Tuple
 
 from utils.logger import get_logger
 
-try:
-    from sc2.bot_ai import BotAI
-    from sc2.ids.unit_typeid import UnitTypeId
-    from sc2.position import Point2
-    from sc2.unit import Unit
-except ImportError:
+from utils.sc2_stubs import get_sc2_imports
 
-    class BotAI:
-        pass
-
-    class UnitTypeId:
-        DRONE = "DRONE"
-        ZERGLING = "ZERGLING"
-        OVERLORD = "OVERLORD"
-
-    Point2 = tuple
-    Unit = None
+BotAI, UnitTypeId, _AbilityId, _UpgradeId, Point2, Unit = get_sc2_imports()
 
 
 class EnhancedScoutSystem:
