@@ -596,6 +596,21 @@ class TestOpponentModeling(unittest.IsolatedAsyncioTestCase):
         model = self.modeling.opponent_models["opponent_Zerg"]
         self.assertEqual(model.games_played, 1)
 
+    def test_on_step_override_is_intentional(self):
+        """Lock in the current behaviour where the second on_step (line ~770)
+        intentionally shadows the richer one defined earlier (~345). If that
+        ever changes — e.g. someone removes the duplicate — this test will
+        fail and force an explicit decision about which behaviour to keep.
+        """
+        import inspect
+
+        # The active on_step must be a coroutine function and use
+        # ``current_opponent`` (the simpler integration-layer guard) rather
+        # than ``current_opponent_id``.
+        active_source = inspect.getsource(self.modeling.on_step)
+        self.assertIn("current_opponent", active_source)
+        self.assertNotIn("update_interval", active_source)
+
     def test_get_opponent_stats(self):
         """Test retrieving opponent statistics"""
         # Create model with history

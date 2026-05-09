@@ -766,8 +766,14 @@ class OpponentModeling:
                 f"[OPPONENT_MODELING] Known opponent: {opponent_id} ({self.opponent_models[opponent_id].games_played} games)"
             )
 
-    async def on_step(self, iteration: int):
-        """매 프레임 호출 - 신호 감지"""
+    # NOTE: This second on_step overrides the richer on_step defined earlier
+    # in the class (line ~345). Python's late-binding semantics mean only this
+    # simpler version is actually called by bot_step_integration. The richer
+    # variant performs build-order tracking, timing-attack detection, tech
+    # progression, and blackboard updates, but is currently dead code.
+    # See test_on_step_override_is_intentional() for the regression contract.
+    async def on_step(self, iteration: int):  # noqa: F811 - intentional override
+        """매 프레임 호출 - 신호 감지 (간소 버전)."""
         if not self.current_opponent or not self.bot:
             return
 
