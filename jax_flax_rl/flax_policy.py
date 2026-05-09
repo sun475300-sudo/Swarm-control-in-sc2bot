@@ -205,8 +205,6 @@ def train_jax_agent(total_steps: int = 20_000) -> dict:
 
 def _python_fallback(total_steps: int) -> dict:
     """Numpy-based policy gradient without JAX."""
-    import math
-
     # Simple softmax policy with weight table
     W = [[random.gauss(0, 0.1) for _ in range(ACT_DIM)] for _ in range(OBS_DIM)]
 

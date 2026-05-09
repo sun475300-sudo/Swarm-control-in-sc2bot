@@ -151,7 +151,37 @@
 
 ---
 
-## Cycle 6 (예정)
+## Cycle 6 (완료) — 봇 외부 디렉토리 F811 정리
+
+### 발견된 이슈
+
+| # | 카테고리 | 이슈 | 우선순위 |
+|---|---|---|---|
+| C6.1 | Lint | `discord_advanced_features.py`에 함수 안에서 모듈 레벨로 이미 import된 `os`, `asyncio`를 재import (3곳) | Low |
+| C6.2 | Lint | `cirq_quantum/quantum_circuits.py:187` `cirq` 재import (try 블록에서 이미 import됨, 함수 진입은 CIRQ_AVAILABLE 게이트로 보호됨) | Low |
+| C6.3 | Lint | `jax_flax_rl/flax_policy.py:208` `math` 재import (모듈 레벨에 이미 있음) | Low |
+| C6.4 | Lint | `pennylane_qml/quantum_policy.py`에 `import numpy as np` 함수 내 재import 2곳 (PENNYLANE_AVAILABLE 게이트로 보호되어 모듈 레벨 import는 항상 살아있음) | Low |
+| C6.5 | Lint | `spark_jobs/sc2_replay_analytics.py:11`에서 `dataclasses.fields` import → 같은 이름의 함수 파라미터로 shadow됨. import는 다른 곳에서 사용 안 됨 | Low |
+| C6.6 | Lint | `tianshou_rl/tianshou_trainer.py`에 `torch` 재import 3곳 (TIANSHOU_AVAILABLE 게이트 안쪽) | Low |
+
+### Cycle 6 적용된 fix
+
+- C6.1: 함수 내 redundant `import os`, `import asyncio` 제거
+- C6.2: 함수 내 `import cirq` 제거 (모듈 레벨에 이미 있음)
+- C6.3: 함수 내 `import math` 제거
+- C6.4: 함수 내 `import numpy as np` 두 곳 제거 + 코멘트로 게이트 의존성 명시
+- C6.5: `from dataclasses import` 줄에서 사용처 없는 `fields` 제거
+- C6.6: 함수/메서드 내 `import torch` 세 곳 제거
+
+### Cycle 6 결과
+
+- F811 (전체 codebase): **16 → 5** (남은 5건은 wicked_zerg_challenger/ 외부 노이즈가 아닌 실제 wicked_zerg_challenger 자체의 5건이 cycle 2에서 이미 처리됨)
+- pytest: 429 pass / 16 skip 유지
+- black: 변경 6개 파일 모두 통과
+
+---
+
+## Cycle 7 (예정)
 
 - C4.3: `creep_manager.py` ring distances를 `TUMOR_SPREAD_RANGE` 기반으로 결정 (행동 변경 — 회귀 시나리오 확인 필요)
 - 잔여 F841 22+ 건 audit

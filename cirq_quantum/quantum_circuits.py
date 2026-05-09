@@ -184,7 +184,6 @@ class CirqQAOA:
 def build_cirq_circuit(problem: RoutingProblem):
     if not CIRQ_AVAILABLE:
         return None
-    import cirq
     import sympy
 
     n = len(problem.nodes)
