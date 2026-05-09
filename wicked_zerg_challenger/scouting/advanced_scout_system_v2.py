@@ -30,13 +30,22 @@ except ImportError:
     class BotAI:
         pass
 
-    class UnitTypeId:
+    class _AutoAttrMeta(type):
+        # Class-level default annotations (UnitTypeId.OVERLORD, etc.) are
+        # consulted when burnysc2 is unavailable; fall back to the attribute
+        # name itself so callers can still compare and dispatch on identifiers.
+        def __getattr__(cls, name):
+            if name.startswith("__"):
+                raise AttributeError(name)
+            return name
+
+    class UnitTypeId(metaclass=_AutoAttrMeta):
         pass
 
-    class AbilityId:
+    class AbilityId(metaclass=_AutoAttrMeta):
         pass
 
-    class UpgradeId:
+    class UpgradeId(metaclass=_AutoAttrMeta):
         pass
 
     class Point2:

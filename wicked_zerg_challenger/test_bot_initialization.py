@@ -13,6 +13,20 @@ logger = logging.getLogger("TestBotInitialization")
 # Add current directory to path
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
+# Allow this smoke script to run without burnysc2 by reusing the test stub.
+try:
+    import sc2  # noqa: F401
+except ImportError:
+    _stub_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "tests")
+    if _stub_dir not in sys.path:
+        sys.path.insert(0, _stub_dir)
+    try:
+        import _sc2_stub  # type: ignore  # noqa: E402
+
+        _sc2_stub.install_into_sys_modules()
+    except ImportError:
+        pass
+
 
 def test_imports():
     """Test that all critical modules can be imported."""

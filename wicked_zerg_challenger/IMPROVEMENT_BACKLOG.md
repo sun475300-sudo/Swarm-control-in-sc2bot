@@ -78,6 +78,14 @@ unreachable dead code. Each case below was inspected:
 | 7.4 | `local_training/production_resilience.py:105 build_terran_counters` x2 | Needs human review. |
 | 7.5 | `opponent_modeling.py current_opponent` x2 | False positive — getter + setter for the property added in iteration 6. Intentional. |
 
+## Iteration 8 — Smoke runners work without burnysc2 (done)
+
+| ID  | Item | Result |
+| --- | --- | --- |
+| 8.1 | `wicked_zerg_challenger/test_bot_initialization.py` (a CLI smoke runner) couldn't run without burnysc2 because it imported the bot directly. Bootstraps the same `_sc2_stub` registration the pytest conftest does, so the script now exits 0 and verifies real importability of `WickedZergBotProImpl`. |
+| 8.2 | `scouting/advanced_scout_system_v2.py` had an empty `class UnitTypeId: pass` ImportError fallback. Any default-argument access (`unit_type=UnitTypeId.OVERLORD`) at class-definition time blew up the entire module. Added a tiny `__getattr__` metaclass so the fallback returns the attribute name as a sentinel, mirroring the test stub. |
+| 8.3 | Combined pytest suite still 1160/1160 green; main bot module imports cleanly via stub. |
+
 ## Iteration N — Continuous loop instructions
 
 After each iteration:
