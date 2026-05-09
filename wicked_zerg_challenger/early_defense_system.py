@@ -306,7 +306,15 @@ class EarlyDefenseSystem:
         if not larvae or getattr(self.bot, "minerals", 0) < 50:
             return
 
-        max_larvae = min(len(larvae), int(getattr(self.bot, "minerals", 0) // 50))
+        # Each larva morphs into 2 zerglings — costs 50 minerals + 2 supply.
+        # Without the supply guard a supply-blocked bot silently no-ops on
+        # the .train() call and burns CPU on the loop.
+        supply_left = getattr(self.bot, "supply_left", 0) or 0
+        max_by_supply = max(0, int(supply_left // 2))
+        max_by_minerals = int(getattr(self.bot, "minerals", 0) // 50)
+        max_larvae = min(len(larvae), max_by_minerals, max_by_supply)
+        if max_larvae <= 0:
+            return
         for larva in larvae[:max_larvae]:
             try:
                 self.bot.do(larva.train(UnitTypeId.ZERGLING))

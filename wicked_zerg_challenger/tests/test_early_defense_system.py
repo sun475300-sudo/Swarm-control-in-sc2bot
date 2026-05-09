@@ -146,6 +146,71 @@ class TestEarlyDefenseSystemProxyDetection(unittest.TestCase):
         self.bot.blackboard.set.assert_any_call("proxy_structure_rush", False)
 
 
+class TestEarlyDefenseSystemTrainZerglings(unittest.TestCase):
+    """Cover supply / mineral budget gating of _train_all_larva_as_zerglings."""
+
+    def _make_defense(self, *, minerals: int, supply_left: int, num_larvae: int):
+        bot = _build_bot(time_s=60.0)
+        bot.minerals = minerals
+        bot.supply_left = supply_left
+        # Larvae that record their .train() calls
+        larvae = []
+        for i in range(num_larvae):
+            larva = Mock()
+            larva.tag = 4000 + i
+            larva.train = Mock(return_value=Mock())
+            larvae.append(larva)
+        bot.larva = larvae
+        return EarlyDefenseSystem(bot), bot, larvae
+
+    def test_no_train_when_minerals_below_50(self) -> None:
+        defense, bot, larvae = self._make_defense(
+            minerals=49, supply_left=10, num_larvae=3
+        )
+        defense._train_all_larva_as_zerglings()
+        for larva in larvae:
+            larva.train.assert_not_called()
+        bot.do.assert_not_called()
+
+    def test_no_train_when_supply_blocked(self) -> None:
+        # Each pair costs 2 supply — supply_left=1 should produce 0 morphs
+        defense, bot, larvae = self._make_defense(
+            minerals=200, supply_left=1, num_larvae=3
+        )
+        defense._train_all_larva_as_zerglings()
+        for larva in larvae:
+            larva.train.assert_not_called()
+        bot.do.assert_not_called()
+
+    def test_train_count_capped_by_supply(self) -> None:
+        # 200 minerals → up to 4 morphs from minerals
+        # supply_left=4 → up to 2 morphs from supply (2 supply each)
+        defense, bot, larvae = self._make_defense(
+            minerals=200, supply_left=4, num_larvae=4
+        )
+        defense._train_all_larva_as_zerglings()
+        called = sum(1 for l in larvae if l.train.called)
+        self.assertEqual(called, 2)
+
+    def test_train_count_capped_by_minerals(self) -> None:
+        # 75 minerals → up to 1 morph from minerals
+        defense, bot, larvae = self._make_defense(
+            minerals=75, supply_left=20, num_larvae=4
+        )
+        defense._train_all_larva_as_zerglings()
+        called = sum(1 for l in larvae if l.train.called)
+        self.assertEqual(called, 1)
+
+    def test_train_count_capped_by_larvae(self) -> None:
+        # plenty of minerals & supply but only 2 larvae
+        defense, bot, larvae = self._make_defense(
+            minerals=500, supply_left=20, num_larvae=2
+        )
+        defense._train_all_larva_as_zerglings()
+        called = sum(1 for l in larvae if l.train.called)
+        self.assertEqual(called, 2)
+
+
 class TestEarlyDefenseSystemReset(unittest.TestCase):
     def test_reset_clears_all_state(self) -> None:
         bot = _build_bot()

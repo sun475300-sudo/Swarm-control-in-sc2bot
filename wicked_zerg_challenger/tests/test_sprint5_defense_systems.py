@@ -128,6 +128,9 @@ class FakeBot:
         self.larva = [FakeLarva(i) for i in range(3)]
         self.minerals = 500
         self.supply_army = 0
+        # supply_left guards _train_all_larva_as_zerglings (each larva morphs
+        # into 2 zerglings = 2 supply); leave generous head-room in tests.
+        self.supply_left = 20
         self.actions = []
         self.tech_coordinator = FakeTechCoordinator()
 
