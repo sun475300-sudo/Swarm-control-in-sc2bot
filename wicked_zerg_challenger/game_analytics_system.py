@@ -15,6 +15,7 @@ from datetime import datetime
 from enum import Enum
 from pathlib import Path
 from typing import Dict, List, Optional
+import uuid
 
 logger = logging.getLogger("GameAnalyticsSystem")
 
@@ -104,9 +105,12 @@ class GameAnalytics:
                 game_time, additional_stats or {}
             )
 
+        # Use globally unique ID to prevent duplicates across session restarts
+        unique_game_id = str(uuid.uuid4())[:8] + f"_{self.total_games + 1}"
+
         # 게임 기록
         game_record = {
-            "game_id": game_id,
+            "game_id": unique_game_id,
             "timestamp": datetime.now().isoformat(),
             "map": map_name,
             "opponent_race": opponent_race,

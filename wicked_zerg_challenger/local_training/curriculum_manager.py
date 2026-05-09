@@ -132,6 +132,8 @@ class CurriculumManager:
                 data = json.load(f)
             self.wins_at_current_level = data.get("wins_at_current_level", 0)
             self.losses_at_current_level = data.get("losses_at_current_level", 0)
+            # Recalculate to fix historical inconsistency (games != wins + losses)
+            self.games_at_current_level = self.wins_at_current_level + self.losses_at_current_level
         except (IOError, json.JSONDecodeError):
             pass
 

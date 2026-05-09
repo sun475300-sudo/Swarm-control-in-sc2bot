@@ -113,10 +113,15 @@ class PolicyNetwork:
         dW1 = np.outer(cache["x"], dz1)
         db1 = dz1
 
-        # NaN/Inf 그래디언트 방어: 해당 업데이트 스킵
+        # NaN/Inf 그래디언트 방어: 스킵 대신 0으로 클램핑 후 계속 누적
         grads = [dW1, db1, dW2, db2, dW3, db3]
         if any(np.any(np.isnan(g)) or np.any(np.isinf(g)) for g in grads):
-            return  # 이번 스텝 그래디언트 누적 스킵
+            dW1 = np.nan_to_num(dW1, nan=0.0, posinf=0.0, neginf=0.0)
+            db1 = np.nan_to_num(db1, nan=0.0, posinf=0.0, neginf=0.0)
+            dW2 = np.nan_to_num(dW2, nan=0.0, posinf=0.0, neginf=0.0)
+            db2 = np.nan_to_num(db2, nan=0.0, posinf=0.0, neginf=0.0)
+            dW3 = np.nan_to_num(dW3, nan=0.0, posinf=0.0, neginf=0.0)
+            db3 = np.nan_to_num(db3, nan=0.0, posinf=0.0, neginf=0.0)
 
         self.dW1 += dW1
         self.db1 += db1

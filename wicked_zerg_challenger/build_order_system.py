@@ -914,6 +914,17 @@ class BuildOrderSystem:
             return 0
 
     def _has_active_base_threat(self) -> bool:
+        # 0.5s frame cache — avoids O(bases×enemies) on every mineral-reserve call
+        current_time = getattr(self.bot, "time", 0.0)
+        cached = getattr(self, "_threat_cache", None)
+        if cached is not None and abs(current_time - cached[0]) < 0.5:
+            return cached[1]
+
+        result = self.__has_active_base_threat_uncached()
+        self._threat_cache = (current_time, result)
+        return result
+
+    def __has_active_base_threat_uncached(self) -> bool:
         enemy_units = getattr(self.bot, "enemy_units", None)
         townhalls = getattr(self.bot, "townhalls", None)
         if enemy_units is None or townhalls is None:

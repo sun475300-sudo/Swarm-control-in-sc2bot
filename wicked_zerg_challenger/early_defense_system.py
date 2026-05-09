@@ -523,9 +523,9 @@ class EarlyDefenseSystem:
         # All Zerglings defend
         zerglings = self.bot.units(UnitTypeId.ZERGLING)
         if zerglings:
-            for ling in zerglings:
-                if ling.is_idle or ling.is_moving:
-                    self.bot.do(ling.attack(closest_enemy.position))
+            idle_or_moving = zerglings.filter(lambda u: u.is_idle or u.is_moving)
+            if idle_or_moving:
+                idle_or_moving.attack(closest_enemy.position)
 
         # Worker Defense (Only if enemy is very close)
         if closest_enemy.distance_to(main_base) < 10:

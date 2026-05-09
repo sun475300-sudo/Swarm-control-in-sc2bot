@@ -104,11 +104,12 @@ class ZergRewardSystem:
             reward += self._calculate_strategic_decision_reward(bot)
 
         except Exception as e:
-            # ???? ?߻? ?? ???? 0 ??ȯ
             logger.error(f"Reward calculation error: {e}")
             return 0.0
 
-        return reward
+        # Normalize to [-1, 1] to prevent scale imbalance
+        # (creep_reward peaks at +15, strategic_decision at ±0.05 — 300x gap)
+        return float(np.tanh(reward / 5.0))
 
     def _calculate_creep_reward(self, bot) -> float:
         """
