@@ -181,12 +181,38 @@
 
 ---
 
-## Cycle 7 (예정)
+## Cycle 7 (완료) — comprehensive_test_suite.py 실제 pytest 연동
+
+### 발견된 이슈
+
+| # | 카테고리 | 이슈 | 우선순위 |
+|---|---|---|---|
+| C7.1 | Test infra (가짜 데이터) | `comprehensive_test_suite.py`가 하드코딩 결과(unit 7/7, fuzz 700/300, etc.)를 반환하여 비과적/오해 유발 보고서 생성 | Medium |
+| C7.2 | Test infra | `python-sc2`는 `mpyq` wheel 빌드 실패로 일반 환경에 설치 불가 → sc2 의존 5건은 stub 작업이 cycle 8+ 후속 | Note |
+
+### Cycle 7 적용된 fix
+
+- C7.1:
+  - `comprehensive_test_suite.py`를 실제 `pytest tests/` 호출로 교체
+  - 결과를 파일명 휴리스틱(`unit/integration/matchup/edge/fuzz/regression/benchmark`)으로 카테고리화
+  - ANSI 색상 escape 코드 strip + `--color=no`로 안전한 파싱
+  - 실행 binary는 PATH의 `pytest` 우선 (uv tool venv가 plugin 셋업되어 있음), 폴백으로 `python -m pytest`
+  - 수치: 0/759(가짜) → 429/445(실측)
+- C7.2: 별도 사이클로 보류 (real fix는 sc2 stub 패키지 작업 필요)
+
+### Cycle 7 결과
+
+- 실측 보고: **445 total / 429 pass / 0 fail / 16 skip / 96.4% pass rate**
+- 카테고리별 정확한 분류 출력
+- pytest: 회귀 없음 (테스트 자체는 변경되지 않음, runner만 교체)
+
+---
+
+## Cycle 8 (예정)
 
 - C4.3: `creep_manager.py` ring distances를 `TUMOR_SPREAD_RANGE` 기반으로 결정 (행동 변경 — 회귀 시나리오 확인 필요)
 - 잔여 F841 22+ 건 audit
-- `comprehensive_test_suite.py` 하드코딩 결과 → 실제 pytest 호출로 교체
-- 16건 skip 중 sc2 stub 가능 영역 식별
+- 16건 skip 중 sc2 stub 가능 영역 식별 (mpyq 우회 → 최소 stub 패키지)
 
 ### 후보 작업 영역
 
