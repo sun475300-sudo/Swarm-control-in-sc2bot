@@ -2820,14 +2820,15 @@ class CombatManager:
             return
 
         # * REGEN DANCE: Separate damaged units during harassment *
+        # execute_regen_dance issues regen-position move commands internally;
+        # the caller only needs combat_ready for engagement decisions.
         if self.mutalisk_micro:
             current_time = getattr(self.bot, "time", 0)
-            combat_ready, regenerating = await self.mutalisk_micro.execute_regen_dance(
+            combat_ready, _ = await self.mutalisk_micro.execute_regen_dance(
                 mutalisks, current_time, self.bot
             )
         else:
             combat_ready = list(mutalisks)
-            regenerating = []
 
         if not combat_ready:
             return  # All units regenerating
@@ -3474,19 +3475,8 @@ class CombatManager:
             "PHOENIX",
         }
 
-        # 비전투 유닛 (정찰용, 위협이 낮음)
-        non_combat_names = {
-            "SCV",
-            "PROBE",
-            "DRONE",
-            "MULE",
-            "OBSERVER",
-            "OVERLORD",
-            "OVERSEER",
-            "WARPPRISM",
-            "RAVEN",
-            "CHANGELING",
-        }
+        # 비전투 유닛(SCV/PROBE/DRONE/MULE/OBSERVER/OVERLORD/OVERSEER/...)는
+        # 굳이 분류하지 않아도, combat_unit_names에 안 들어가니 자연스레 제외된다.
 
         for th in self.bot.townhalls:
             # 일반 감지 거리
