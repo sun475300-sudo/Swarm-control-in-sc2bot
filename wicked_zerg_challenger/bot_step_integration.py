@@ -153,11 +153,10 @@ except ImportError:
 
 # *** PHASE 8/9 SYSTEMS ***
 
-# Enhanced Scouting System
-try:
-    from scouting.enhanced_scout_system import EnhancedScoutSystem
-except ImportError:
-    EnhancedScoutSystem = None
+# Enhanced Scouting System (legacy fallback only — superseded by AdvancedScoutSystemV2)
+# Imported lazily inside the conditional initializer to avoid emitting the
+# module-level DeprecationWarning on every bot startup when V2 is available.
+EnhancedScoutSystem = None
 
 # Harassment Coordinator
 try:
@@ -418,9 +417,16 @@ class BotStepIntegrator:
 
         # Enhanced Scouting System
         # * Skip if AdvancedScoutSystemV2 is available (it supersedes EnhancedScout)
-        if EnhancedScoutSystem and not AdvancedScoutSystemV2:
-            self.bot.enhanced_scout = EnhancedScoutSystem(bot)
-            self.logger.info("[INIT] EnhancedScoutSystem initialized (Phase 9)")
+        if not AdvancedScoutSystemV2:
+            try:
+                from scouting.enhanced_scout_system import (
+                    EnhancedScoutSystem as _EnhancedScoutSystem,
+                )
+
+                self.bot.enhanced_scout = _EnhancedScoutSystem(bot)
+                self.logger.info("[INIT] EnhancedScoutSystem initialized (Phase 9)")
+            except ImportError:
+                self.bot.enhanced_scout = None
         else:
             self.bot.enhanced_scout = None
 
