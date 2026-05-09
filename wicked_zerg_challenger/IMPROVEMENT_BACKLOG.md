@@ -46,13 +46,21 @@ current branch; the rest are picked off in priority order.
 | 4.3 | Project-root suite now reports **491 passed / 8 failed / 14 skipped** | Was 0 collecting + 1 hard error before iteration 1 |
 | 4.4 | Remaining 8 failures are environmental: `pyo3 PanicException` triggered by `cryptography.hazmat.bindings._rust` because system `_cffi_backend` is missing | Not a bot bug — security/crypto smoke tests; cleanup is to either `pip install cffi` in the dev image or guard the import so pure-Python paths still load. Filed as low-priority. |
 
+## Iteration 5 — Combined-suite event-loop fix (done)
+
+| ID  | Item | Result |
+| --- | --- | --- |
+| 5.1 | `tests/test_combat_phase_fsm.py` swapped 5× `asyncio.get_event_loop().run_until_complete(...)` for `asyncio.run(...)` | The deprecated API was raising `RuntimeError: There is no current event loop` when the combined run interleaved with pytest-asyncio's auto-mode loops |
+| 5.2 | Combined suite `wicked_zerg_challenger/tests/ + tests/` now reports **1160 passed / 14 skipped / 0 failed** | Was **12 failed** in the combined run before |
+
 ## Iteration 6 — Quality-of-life follow-ups (queued)
 
 | ID  | Item | Notes |
 | --- | --- | --- |
 | 6.1 | Fold the stub into a permanent `sc2_dev_stub` package | Allows non-test scripts (smoke runners) to import without burnysc2 |
-| 6.2 | Add `pytest --strict-markers` cleanup as warnings drop — currently 39 warnings |
+| 6.2 | Address the 38 warnings (mostly pytest-asyncio default-loop-scope deprecation + return-value-from-test warnings) |
 | 6.3 | Wire a smoke target to `wicked_zerg_challenger/tests/run_scouting_tests.py` for the scouting subset |
+| 6.4 | Pre-existing repo-wide `black --check .` fails on 66 unrelated files; CI's `Lint & Type Check (3.11)` is red as a result. Out-of-scope here, but a one-shot black format pass would clear it |
 
 ## Iteration N — Continuous loop instructions
 
