@@ -2059,7 +2059,7 @@ class CombatManager:
         for roach in roaches:
             try:
                 if retreat and retreat_anchor is not None:
-                    self.bot.do(roach.attack(target))
+                    self.bot.do(roach.attack(retreat_anchor))
                 else:
                     self.bot.do(roach.attack(target))
                 handled.add(roach.tag)
@@ -2856,15 +2856,9 @@ class CombatManager:
             if getattr(e.type_id, "name", "") in ["SCV", "PROBE", "DRONE"]
         ]
 
-        if hasattr(enemy_units, "closer_than"):
-            # Use SC2 Units collection for better performance
-            enemy_workers = [
-                w for w in workers_only if w.distance_to(self._air_harass_target) < 15
-            ]
-        else:
-            enemy_workers = [
-                w for w in workers_only if w.distance_to(self._air_harass_target) < 15
-            ]
+        enemy_workers = [
+            w for w in workers_only if w.distance_to(self._air_harass_target) < 15
+        ]
 
         if enemy_workers:
             # Attack workers with bouncing logic
