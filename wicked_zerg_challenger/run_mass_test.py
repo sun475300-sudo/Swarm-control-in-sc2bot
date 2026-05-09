@@ -43,8 +43,23 @@ _ensure_sc2_path()
 
 from sc2 import maps
 from sc2.data import Difficulty, Race
-from sc2.main import run_game
 from sc2.player import Bot, Computer
+
+# sc2.main pulls in mpyq, which has no published wheel and frequently fails to
+# build in CI. Tests that only construct the test matrix (parse_args /
+# build_test_cases) don't need run_game, so degrade gracefully and surface a
+# clear error only at actual launch time.
+try:
+    from sc2.main import run_game  # type: ignore[attr-defined]
+except ModuleNotFoundError as _exc:  # pragma: no cover - exercised only without mpyq
+
+    def run_game(*_args, **_kwargs):
+        raise ModuleNotFoundError(
+            "sc2.main is unavailable (likely missing 'mpyq'); install mpyq "
+            "to actually launch SC2 games. The test matrix builder still "
+            "works without it."
+        ) from _exc
+
 from wicked_zerg_bot_pro_impl import WickedZergBotProImpl
 
 # GPU setup

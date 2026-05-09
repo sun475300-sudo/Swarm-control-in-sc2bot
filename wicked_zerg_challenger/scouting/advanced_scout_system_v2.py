@@ -26,17 +26,34 @@ try:
     from sc2.position import Point2
     from sc2.unit import Unit
 except ImportError:
+    import logging as _logging
+
+    _logging.getLogger(__name__).warning(
+        "[advanced_scout_system_v2] python-sc2 not available — falling back "
+        "to lenient stubs (any UnitTypeId.* / AbilityId.* / UpgradeId.* "
+        "lookup yields a sentinel). Install 'burnysc2' for full behaviour."
+    )
+
+    class _LenientStubMeta(type):
+        """Return a sentinel for any attribute lookup so class-body defaults
+        like ``unit_type: UnitTypeId = UnitTypeId.OVERLORD`` don't AttributeError
+        at import time when python-sc2 isn't installed."""
+
+        def __getattr__(cls, name):
+            sentinel = object.__new__(cls)
+            object.__setattr__(sentinel, "name", name)
+            return sentinel
 
     class BotAI:
         pass
 
-    class UnitTypeId:
+    class UnitTypeId(metaclass=_LenientStubMeta):
         pass
 
-    class AbilityId:
+    class AbilityId(metaclass=_LenientStubMeta):
         pass
 
-    class UpgradeId:
+    class UpgradeId(metaclass=_LenientStubMeta):
         pass
 
     class Point2:
