@@ -1033,6 +1033,10 @@ class StrategyManager:
             self.last_major_attack_time = game_time
             return
 
+        if self._has_active_base_threat():
+            self.last_major_attack_time = game_time
+            return
+
         # No major attack right now - check if timeout has elapsed
         if game_time - self.last_major_attack_time >= self.defense_mode_timeout:
             self.current_mode = StrategyMode.NORMAL
@@ -1042,6 +1046,33 @@ class StrategyManager:
                 f"[{int(game_time)}s] DEFENSE MODE AUTO-EXIT: "
                 f"No major attack for {int(self.defense_mode_timeout)}s, returning to NORMAL"
             )
+
+    def _has_active_base_threat(self) -> bool:
+        """Return True when visible enemies are close enough to threaten a base."""
+        enemy_units = getattr(self.bot, "enemy_units", None)
+        townhalls = getattr(self.bot, "townhalls", None)
+        if not enemy_units or not townhalls:
+            return False
+
+        bases = getattr(townhalls, "ready", townhalls)
+        for enemy in enemy_units:
+            for base in bases:
+                base_position = getattr(base, "position", base)
+                try:
+                    distance = enemy.distance_to(base_position)
+                except Exception:
+                    enemy_position = getattr(enemy, "position", None)
+                    if not enemy_position or not hasattr(enemy_position, "distance_to"):
+                        continue
+                    try:
+                        distance = enemy_position.distance_to(base_position)
+                    except Exception:
+                        continue
+
+                if distance <= 35:
+                    return True
+
+        return False
 
     def _request_army_rally(self) -> None:
         """군대 집결 요청"""

@@ -682,10 +682,23 @@ class BuildOrderSystem:
     async def _build_structure(self, structure_type: UnitTypeId) -> bool:
         """Build Structure"""
         # Skip if already exists or pending
-        if self.bot.structures(structure_type).exists:
+        if (
+            structure_type != UnitTypeId.EXTRACTOR
+            and self.bot.structures(structure_type).exists
+        ):
             return True
         if self.bot.already_pending(structure_type) > 0:
             return True
+
+        if structure_type == UnitTypeId.EXTRACTOR and self._should_delay_extractor():
+            return False
+
+        if (
+            structure_type != UnitTypeId.HATCHERY
+            and structure_type != UnitTypeId.SPAWNINGPOOL
+            and self._should_reserve_third_base_minerals()
+        ):
+            return False
 
         # Check Resources
         if not self.bot.can_afford(structure_type):
@@ -775,6 +788,12 @@ class BuildOrderSystem:
 
     async def _train_unit(self, unit_type: UnitTypeId) -> bool:
         """Train Unit"""
+        if (
+            unit_type != UnitTypeId.OVERLORD
+            and self._should_reserve_third_base_minerals()
+        ):
+            return False
+
         # Check Resources
         if not self.bot.can_afford(unit_type):
             return False
@@ -825,8 +844,111 @@ class BuildOrderSystem:
 
         return False
 
+    def _should_delay_extractor(self) -> bool:
+        """Delay extra gas until Hatcheries are actually started."""
+        townhalls = getattr(self.bot, "townhalls", None)
+        try:
+            base_count = int(getattr(townhalls, "amount", 1) or 1)
+        except (TypeError, ValueError):
+            base_count = 1
+
+        already_pending = getattr(self.bot, "already_pending", lambda _: 0)
+        pending_hatch = int(already_pending(UnitTypeId.HATCHERY) or 0)
+        pending_gas = int(already_pending(UnitTypeId.EXTRACTOR) or 0)
+
+        extractors = self.bot.structures(UnitTypeId.EXTRACTOR)
+        try:
+            extractor_count = int(getattr(extractors, "amount", 0) or 0)
+        except (TypeError, ValueError):
+            extractor_count = 0
+
+        if base_count < 2 and pending_hatch == 0:
+            return True
+        if base_count < 3 and extractor_count + pending_gas >= 1:
+            return True
+        return False
+
+    def _should_reserve_third_base_minerals(self) -> bool:
+        """Hold non-essential spending until the third Hatchery is started."""
+        if getattr(self.bot, "time", 0.0) < 150.0:
+            return False
+
+        base_count = self._count_bases()
+        pending_hatch = self._pending_hatchery_count()
+
+        if base_count >= 3:
+            if getattr(self.bot, "time", 0.0) >= 360.0 and base_count < 4 and pending_hatch == 0:
+                return not self._has_active_base_threat()
+            return False
+        if base_count < 2:
+            return pending_hatch > 0 and not self._has_active_base_threat()
+        if pending_hatch > 0:
+            return False
+
+        return not self._has_active_base_threat()
+
+    def _count_bases(self) -> int:
+        townhalls = getattr(self.bot, "townhalls", None)
+        ready = getattr(townhalls, "ready", None) if townhalls else None
+
+        for source in (ready, townhalls):
+            if not source:
+                continue
+            amount = getattr(source, "amount", None)
+            if isinstance(amount, (int, float)):
+                return int(amount)
+            if amount is not None:
+                continue
+            try:
+                return len(list(source))
+            except TypeError:
+                pass
+
+        return 1
+
+    def _pending_hatchery_count(self) -> int:
+        already_pending = getattr(self.bot, "already_pending", lambda _: 0)
+        try:
+            return int(already_pending(UnitTypeId.HATCHERY) or 0)
+        except (TypeError, ValueError):
+            return 0
+
+    def _has_active_base_threat(self) -> bool:
+        enemy_units = getattr(self.bot, "enemy_units", None)
+        townhalls = getattr(self.bot, "townhalls", None)
+        if enemy_units is None or townhalls is None:
+            return False
+
+        try:
+            bases = list(townhalls)
+        except TypeError:
+            first_base = getattr(townhalls, "first", None)
+            bases = [first_base] if first_base else []
+
+        for base in bases:
+            if not base:
+                continue
+            try:
+                nearby = enemy_units.closer_than(12, base)
+            except Exception:
+                continue
+
+            amount = getattr(nearby, "amount", 0)
+            if isinstance(amount, (int, float)) and amount > 0:
+                return True
+            try:
+                if len(nearby) > 0:
+                    return True
+            except TypeError:
+                pass
+
+        return False
+
     async def _morph_unit(self, unit_type: UnitTypeId) -> bool:
         """Morph tech structures that are represented as build-order steps."""
+        if self._should_reserve_third_base_minerals():
+            return False
+
         if unit_type != getattr(UnitTypeId, "LAIR", None):
             return False
         if self.bot.structures(UnitTypeId.LAIR).exists:
@@ -856,6 +978,9 @@ class BuildOrderSystem:
 
     async def _research_upgrade(self, upgrade_name: str) -> bool:
         """Research upgrades referenced by string names in matchup build orders."""
+        if self._should_reserve_third_base_minerals():
+            return False
+
         if upgrade_name != "METABOLIC_BOOST":
             return False
 
@@ -934,12 +1059,12 @@ class BuildOrderSystem:
 
             if tech_coordinator:
                 if not tech_coordinator.is_planned(UnitTypeId.HATCHERY):
-                    tech_coordinator.request_structure(
-                        UnitTypeId.HATCHERY,
-                        location,
-                        PRIORITY_EXPANSION,
-                        "BuildOrderSystem",
-                    )
+                    if not self.bot.workers.exists:
+                        return False
+                    worker = self.bot.workers.closest_to(location)
+                    if not worker:
+                        return False
+                    self.bot.do(worker.build(UnitTypeId.HATCHERY, location))
                     self.expansion_actual_time = self.bot.time
                     logger.info(
                         f"[*] Natural expansion ordered at {int(self.bot.time)}s [*]"

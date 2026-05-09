@@ -200,6 +200,60 @@ class AggressiveStrategyExecutor:
 
         return self.active_strategy
 
+    def _ready_base_count(self) -> int:
+        townhalls = getattr(self.bot, "townhalls", None)
+        if not townhalls:
+            return 0
+
+        ready = getattr(townhalls, "ready", None)
+        for source in (ready, townhalls):
+            if not source:
+                continue
+            amount = getattr(source, "amount", None)
+            if isinstance(amount, (int, float)):
+                return int(amount)
+            if amount is not None:
+                continue
+            try:
+                return len(list(source))
+            except TypeError:
+                pass
+        return 0
+
+    def _pending_hatchery_count(self) -> int:
+        if not UnitTypeId:
+            return 0
+        already_pending = getattr(self.bot, "already_pending", None)
+        if not callable(already_pending):
+            return 0
+        try:
+            return int(already_pending(UnitTypeId.HATCHERY) or 0)
+        except (TypeError, ValueError):
+            return 0
+
+    def _should_preserve_third_base_minerals(self) -> bool:
+        """Pause all-in spending until the third Hatchery is at least started."""
+        if not UnitTypeId:
+            return False
+
+        try:
+            game_time = float(getattr(self.bot, "time", 0.0) or 0.0)
+        except (TypeError, ValueError):
+            game_time = 0.0
+        if game_time < 120.0:
+            return False
+
+        ready_bases = self._ready_base_count()
+        pending_hatch = self._pending_hatchery_count()
+
+        if ready_bases >= 3:
+            return False
+        if ready_bases < 2 and pending_hatch > 0:
+            return True
+        if ready_bases == 2 and pending_hatch == 0:
+            return True
+        return False
+
     def _can_command_unit(self, unit_tag: int) -> bool:
         """* UnitAuthority 체크: 다른 시스템이 제어 중인 유닛이면 False *"""
         authority = getattr(self.bot, "unit_authority", None)
@@ -219,6 +273,8 @@ class AggressiveStrategyExecutor:
             iteration: 게임 반복 횟수
         """
         if not UnitTypeId or self.active_strategy == AggressiveStrategyType.NONE:
+            return
+        if self._should_preserve_third_base_minerals():
             return
 
         try:
@@ -917,7 +973,10 @@ class AggressiveStrategyExecutor:
 
     def get_drone_limit(self) -> int:
         """현재 전략의 드론 제한 반환"""
-        if self.active_strategy == AggressiveStrategyType.NONE:
+        if (
+            self.active_strategy == AggressiveStrategyType.NONE
+            or self._should_preserve_third_base_minerals()
+        ):
             return 80  # 제한 없음
 
         config = self.strategy_configs.get(self.active_strategy, {})
@@ -925,7 +984,10 @@ class AggressiveStrategyExecutor:
 
     def is_active(self) -> bool:
         """공격 전략이 활성화되어 있는지"""
-        return self.active_strategy != AggressiveStrategyType.NONE
+        return (
+            self.active_strategy != AggressiveStrategyType.NONE
+            and not self._should_preserve_third_base_minerals()
+        )
 
     def get_status(self) -> dict:
         """현재 상태 반환"""

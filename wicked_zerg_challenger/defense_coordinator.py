@@ -100,6 +100,160 @@ class DefenseCoordinator:
         self.proactive_spore_requested = False
         self.last_threat_check = 0.0
 
+    def _as_unit_list(self, units) -> List:
+        if not units:
+            return []
+        try:
+            return list(units)
+        except TypeError:
+            return []
+
+    def _ready_base_count(self) -> int:
+        townhalls = getattr(self.bot, "townhalls", None)
+        if not townhalls:
+            return 0
+
+        ready = getattr(townhalls, "ready", None)
+        if ready is not None:
+            try:
+                amount = getattr(ready, "amount", None)
+                if isinstance(amount, (int, float)):
+                    return int(amount)
+            except (TypeError, ValueError):
+                pass
+            try:
+                return len(list(ready))
+            except TypeError:
+                pass
+
+        try:
+            amount = getattr(townhalls, "amount", None)
+            if isinstance(amount, (int, float)):
+                return int(amount)
+        except (TypeError, ValueError):
+            pass
+
+        try:
+            return len(list(townhalls))
+        except TypeError:
+            return 0
+
+    def _distance_to_base(self, enemy, base) -> float:
+        base_position = getattr(base, "position", base)
+        try:
+            return float(enemy.distance_to(base_position))
+        except (AttributeError, TypeError, ValueError):
+            pass
+
+        enemy_position = getattr(enemy, "position", enemy)
+        try:
+            return float(enemy_position.distance_to(base_position))
+        except (AttributeError, TypeError, ValueError):
+            return 9999.0
+
+    def _is_base_threatened(
+        self, base, distance: float = 30.0, air_only: bool = False
+    ) -> bool:
+        if self.blackboard:
+            attacked_bases = getattr(self.blackboard, "attacked_bases", set()) or set()
+            if getattr(base, "tag", None) in attacked_bases:
+                return True
+
+        for enemy in self._as_unit_list(getattr(self.bot, "enemy_units", [])):
+            if air_only and not getattr(enemy, "is_flying", False):
+                continue
+            if self._distance_to_base(enemy, base) <= distance:
+                return True
+        return False
+
+    def _has_base_threat(self, distance: float = 30.0, air_only: bool = False) -> bool:
+        townhalls = getattr(self.bot, "townhalls", None)
+        ready = getattr(townhalls, "ready", None) if townhalls else None
+        bases = self._as_unit_list(ready) or self._as_unit_list(townhalls)
+        if not bases:
+            return False
+
+        for base in bases:
+            if self._is_base_threatened(base, distance=distance, air_only=air_only):
+                return True
+        return False
+
+    def _base_threat_count(self, distance: float = 30.0, air_only: bool = False) -> int:
+        townhalls = getattr(self.bot, "townhalls", None)
+        ready = getattr(townhalls, "ready", None) if townhalls else None
+        bases = self._as_unit_list(ready) or self._as_unit_list(townhalls)
+        enemies = self._as_unit_list(getattr(self.bot, "enemy_units", []))
+        if not bases or not enemies:
+            return 0
+
+        max_count = 0
+        for base in bases:
+            count = 0
+            for enemy in enemies:
+                if air_only and not getattr(enemy, "is_flying", False):
+                    continue
+                if self._distance_to_base(enemy, base) <= distance:
+                    count += 1
+            max_count = max(max_count, count)
+        return max_count
+
+    def _blackboard_has_serious_base_threat(self, min_enemies: int = 4) -> bool:
+        threat = getattr(self.blackboard, "threat", None) if self.blackboard else None
+        if threat is None:
+            return False
+
+        try:
+            enemy_near_base = int(getattr(threat, "enemy_units_near_base", 0) or 0)
+        except (TypeError, ValueError):
+            enemy_near_base = 0
+        if enemy_near_base >= min_enemies:
+            return True
+
+        try:
+            enemy_supply = float(getattr(threat, "enemy_army_supply", 0.0) or 0.0)
+        except (TypeError, ValueError):
+            enemy_supply = 0.0
+        threat_level = getattr(threat, "level", None)
+        if ThreatLevel is not None and threat_level is not None:
+            try:
+                if threat_level >= ThreatLevel.CRITICAL and enemy_supply >= 6.0:
+                    return True
+            except TypeError:
+                pass
+
+        return False
+
+    def _has_serious_base_threat(
+        self, distance: float = 30.0, air_only: bool = False, min_enemies: int = 4
+    ) -> bool:
+        return self._base_threat_count(
+            distance=distance, air_only=air_only
+        ) >= min_enemies or self._blackboard_has_serious_base_threat(
+            min_enemies=min_enemies
+        )
+
+    def _should_preserve_third_base_minerals(self) -> bool:
+        """Reserve minerals for the next macro Hatchery unless a real threat exists."""
+        game_time = getattr(self.bot, "time", 0.0)
+        if game_time < 120:
+            return False
+        ready_bases = self._ready_base_count()
+        if ready_bases >= 4:
+            return False
+        already_pending = getattr(self.bot, "already_pending", lambda unit_type: 0)
+        try:
+            pending_hatch = int(already_pending(UnitTypeId.HATCHERY) or 0)
+        except (TypeError, ValueError):
+            pending_hatch = 0
+        if ready_bases >= 3 and pending_hatch > 0:
+            return False
+        if ready_bases >= 3 and game_time < 360:
+            return False
+        if self._has_serious_base_threat(distance=30.0):
+            return False
+
+        return True
+
     async def execute(self, iteration: int) -> None:
         """방어 로직 실행"""
         if not self.bot or not self.blackboard:
@@ -124,6 +278,7 @@ class DefenseCoordinator:
             iteration % 22 == 0
             and game_time >= self.proactive_spore_timing
             and not self.proactive_spore_requested
+            and not self._should_preserve_third_base_minerals()
         ):
             await self._proactive_air_defense()
 
@@ -459,6 +614,8 @@ class DefenseCoordinator:
         """긴급 병력 생산 요청"""
         if not self.blackboard:
             return
+        if self._should_preserve_third_base_minerals():
+            return
 
         game_time = self.bot.time
         pools_ready = self.bot.structures(UnitTypeId.SPAWNINGPOOL).ready
@@ -647,6 +804,8 @@ class DefenseCoordinator:
         """방어 건물 배치 (가시 촉수, 포자 촉수)"""
         if not self.bot.structures(UnitTypeId.SPAWNINGPOOL).ready:
             return
+        if self._should_preserve_third_base_minerals():
+            return
 
         # 각 기지마다 방어 건물 확인
         for base in self.bot.townhalls:
@@ -654,6 +813,9 @@ class DefenseCoordinator:
 
     async def _build_base_defense(self, base) -> None:
         """기지별 방어 건물 배치 (설정값 사용)"""
+        if self._ready_base_count() < 3 and not self._is_base_threatened(base):
+            return
+
         # 기지 근처 가시 촉수 개수
         defense_range = self.config.DEFENSE_STRUCTURE_RANGE if self.config else 15
         spines_nearby = self.bot.structures(UnitTypeId.SPINECRAWLER).closer_than(
@@ -775,6 +937,8 @@ class DefenseCoordinator:
 
         # 이미 요청했으면 스킵
         if self.proactive_spore_requested:
+            return
+        if self._should_preserve_third_base_minerals():
             return
 
         # Spawning Pool 필요 (스포어 크롤러 테크 요구사항)

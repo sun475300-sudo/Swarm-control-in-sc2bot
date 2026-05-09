@@ -58,6 +58,37 @@ class ScoutingSystem:
         self.zergling_route_index: Dict[int, int] = {}
         self.last_zergling_patrol_time = 0.0
 
+    @staticmethod
+    def _units_amount(units) -> int:
+        if units is None:
+            return 0
+        amount = getattr(units, "amount", None)
+        if isinstance(amount, (int, float)):
+            return int(amount)
+        try:
+            return len(units)
+        except TypeError:
+            pass
+        try:
+            return len(list(units))
+        except TypeError:
+            return 0
+
+    def _has_units(self, units) -> bool:
+        return self._units_amount(units) > 0
+
+    def _first_or_random(self, units):
+        if not self._has_units(units):
+            return None
+        for attr in ("first", "random"):
+            try:
+                unit = getattr(units, attr, None)
+            except Exception:
+                unit = None
+            if unit:
+                return unit
+        return None
+
     def get_overlord_scout_interval(self, game_time: Optional[float] = None) -> float:
         if game_time is None:
             game_time = float(getattr(self.bot, "time", 0.0) or 0.0)
@@ -106,11 +137,11 @@ class ScoutingSystem:
             )
         except Exception:
             return None
-        if not overlords:
+        if not self._has_units(overlords):
             return None
         if target is not None and hasattr(overlords, "closest_to"):
             return overlords.closest_to(target)
-        return getattr(overlords, "first", None) or getattr(overlords, "random", None)
+        return self._first_or_random(overlords)
 
     def record_scouted_location(self, position, label: Optional[str] = None) -> None:
         if label in {"enemy_main_ramp", "enemy_natural", "enemy_third"}:
@@ -248,7 +279,7 @@ class ScoutingSystem:
             overlords = units(UnitTypeId.OVERLORD)
         except Exception:
             return
-        overlord = getattr(overlords, "first", None) or getattr(overlords, "random", None)
+        overlord = self._first_or_random(overlords)
         ability = getattr(AbilityId, "MORPH_OVERSEER", None)
         if overlord and ability:
             try:
@@ -264,11 +295,11 @@ class ScoutingSystem:
             overseers = units(UnitTypeId.OVERSEER)
         except Exception:
             return None
-        if not overseers:
+        if not self._has_units(overseers):
             return None
         if target is not None and hasattr(overseers, "closest_to"):
             return overseers.closest_to(target)
-        return getattr(overseers, "first", None) or getattr(overseers, "random", None)
+        return self._first_or_random(overseers)
 
     def _find_idle_zergling(self):
         units = getattr(self.bot, "units", None)
@@ -281,7 +312,7 @@ class ScoutingSystem:
             )
         except Exception:
             return None
-        return getattr(zerglings, "first", None) or getattr(zerglings, "random", None)
+        return self._first_or_random(zerglings)
 
     def _enemy_start(self):
         starts = getattr(self.bot, "enemy_start_locations", []) or []

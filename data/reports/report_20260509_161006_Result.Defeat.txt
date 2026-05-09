@@ -1,0 +1,62 @@
+============================================================
+  GAME RESULT REPORT - DEFEAT
+============================================================
+  Map: 어비설 리프 - 래더
+  Opponent: Terran
+  Duration: 2:16
+  Date: 2026-05-09 16:10
+
+--- TIMELINE ---
+  [1:15] Build: UnitTypeId.SPAWNINGPOOL (Supply 17)
+  [1:40] Build: UnitTypeId.EXTRACTOR (Supply 18)
+  [1:55] Build: UnitTypeId.HATCHERY (Supply 18)
+  [2:15] Build: UnitTypeId.SPINECRAWLER (Supply 21)
+  [2:28] Build: UnitTypeId.SPINECRAWLER (Supply 22)
+  [3:30] Harassment: UnitTypeId.SUPPLYDEPOTLOWERED
+  [4:09] Build: UnitTypeId.EVOLUTIONCHAMBER (Supply 37)
+  [4:20] Build: UnitTypeId.SPINECRAWLER (Supply 37)
+  [4:44] Harassment: UnitTypeId.SUPPLYDEPOTLOWERED
+  [4:58] Build: UnitTypeId.SPINECRAWLER (Supply 38)
+  [6:51] Harassment: UnitTypeId.SUPPLYDEPOTLOWERED
+  [8:13] Harassment: UnitTypeId.FACTORY
+  [8:32] Harassment: UnitTypeId.FACTORYTECHLAB
+  [8:43] Harassment: UnitTypeId.BARRACKSTECHLAB
+  [8:52] Harassment: UnitTypeId.STARPORT
+  [8:58] Harassment: UnitTypeId.STARPORT
+  [9:03] Harassment: UnitTypeId.FACTORY
+  [9:09] Harassment: UnitTypeId.FACTORYTECHLAB
+  [9:14] Harassment: UnitTypeId.FACTORYTECHLAB
+  [9:20] Harassment: UnitTypeId.FACTORYTECHLAB
+
+--- ECONOMY ---
+  Peak Minerals: 170
+  Peak Vespene: 322
+  Peak Workers: 34
+
+--- TIMINGS ---
+  Tech: UnitTypeId.EVOLUTIONCHAMBER at 4:09
+  Tech: UnitTypeId.ROACHWARREN at 6:44
+  Tech: UnitTypeId.LAIR at 7:29
+  Tech: UnitTypeId.HYDRALISKDEN at 7:32
+  Tech: UnitTypeId.SPIRE at 8:36
+
+--- COMBAT ---
+  No engagement data recorded
+
+--- UNIT COMPOSITION ---
+  UnitTypeId.ZERGLING: 160 produced
+
+--- RESULT ANALYSIS ---
+  EARLY DEFEAT: Possible rush defense failure
+
+--- IMPROVEMENT SUGGESTIONS ---
+  1. Lost before 4 minutes - review early defense (spine crawlers, queens, zerglings)
+
+--- FINAL STATS ---
+  Workers: 3
+  Army Supply: 0
+  Bases: 1
+  Minerals: 48
+  Vespene: 302
+
+============================================================

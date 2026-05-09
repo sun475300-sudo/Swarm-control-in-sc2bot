@@ -1,0 +1,6571 @@
+{
+  "meta": {
+    "timestamp": "2026-05-09T19:02:13.648085",
+    "map_name": "어비설 리프 - 래더",
+    "opponent_race": "Race.Terran",
+    "bot_race": "Zerg",
+    "game_version": "5.0.12"
+  },
+  "build_order": [
+    {
+      "time": 74.8,
+      "supply": 17,
+      "action": "build_start",
+      "unit_type": "UnitTypeId.EXTRACTOR",
+      "position": [
+        41.5,
+        129.5
+      ]
+    },
+    {
+      "time": 86.1,
+      "supply": 18,
+      "action": "build_start",
+      "unit_type": "UnitTypeId.HATCHERY",
+      "position": [
+        42.5,
+        93.5
+      ]
+    },
+    {
+      "time": 103.4,
+      "supply": 18,
+      "action": "build_start",
+      "unit_type": "UnitTypeId.SPAWNINGPOOL",
+      "position": [
+        42.5,
+        119.5
+      ]
+    },
+    {
+      "time": 182.1,
+      "supply": 28,
+      "action": "build_start",
+      "unit_type": "UnitTypeId.SPINECRAWLER",
+      "position": [
+        43.0,
+        123.0
+      ]
+    },
+    {
+      "time": 189.5,
+      "supply": 29,
+      "action": "build_start",
+      "unit_type": "UnitTypeId.BANELINGNEST",
+      "position": [
+        47.5,
+        91.5
+      ]
+    },
+    {
+      "time": 219.5,
+      "supply": 30,
+      "action": "build_start",
+      "unit_type": "UnitTypeId.SPINECRAWLER",
+      "position": [
+        41.0,
+        127.0
+      ]
+    },
+    {
+      "time": 223.6,
+      "supply": 32,
+      "action": "build_start",
+      "unit_type": "UnitTypeId.CREEPTUMORQUEEN",
+      "position": [
+        46.5,
+        105.5
+      ]
+    },
+    {
+      "time": 253.4,
+      "supply": 34,
+      "action": "build_start",
+      "unit_type": "UnitTypeId.CREEPTUMOR",
+      "position": [
+        54.5,
+        99.5
+      ]
+    },
+    {
+      "time": 257.0,
+      "supply": 33,
+      "action": "build_start",
+      "unit_type": "UnitTypeId.SPINECRAWLER",
+      "position": [
+        35.0,
+        119.0
+      ]
+    },
+    {
+      "time": 260.9,
+      "supply": 35,
+      "action": "build_start",
+      "unit_type": "UnitTypeId.CREEPTUMORQUEEN",
+      "position": [
+        49.5,
+        88.5
+      ]
+    },
+    {
+      "time": 273.9,
+      "supply": 35,
+      "action": "build_start",
+      "unit_type": "UnitTypeId.CREEPTUMORQUEEN",
+      "position": [
+        57.5,
+        88.5
+      ]
+    },
+    {
+      "time": 284.1,
+      "supply": 37,
+      "action": "build_start",
+      "unit_type": "UnitTypeId.CREEPTUMORQUEEN",
+      "position": [
+        48.5,
+        112.5
+      ]
+    },
+    {
+      "time": 292.1,
+      "supply": 37,
+      "action": "build_start",
+      "unit_type": "UnitTypeId.CREEPTUMORQUEEN",
+      "position": [
+        48.5,
+        114.5
+      ]
+    },
+    {
+      "time": 292.7,
+      "supply": 37,
+      "action": "build_start",
+      "unit_type": "UnitTypeId.CREEPTUMOR",
+      "position": [
+        58.5,
+        83.5
+      ]
+    },
+    {
+      "time": 293.9,
+      "supply": 36,
+      "action": "build_start",
+      "unit_type": "UnitTypeId.SPINECRAWLER",
+      "position": [
+        39.0,
+        127.0
+      ]
+    },
+    {
+      "time": 299.8,
+      "supply": 36,
+      "action": "build_start",
+      "unit_type": "UnitTypeId.CREEPTUMORQUEEN",
+      "position": [
+        51.5,
+        113.5
+      ]
+    },
+    {
+      "time": 300.0,
+      "supply": 36,
+      "action": "build_start",
+      "unit_type": "UnitTypeId.CREEPTUMOR",
+      "position": [
+        63.5,
+        84.5
+      ]
+    },
+    {
+      "time": 300.0,
+      "supply": 36,
+      "action": "build_start",
+      "unit_type": "UnitTypeId.CREEPTUMORQUEEN",
+      "position": [
+        49.5,
+        111.5
+      ]
+    }
+  ],
+  "expansions": [
+    {
+      "time": 308.6,
+      "expansion_number": 1,
+      "supply": 37,
+      "minerals": 10,
+      "vespene": 358,
+      "position": [
+        70.5,
+        117.5
+      ]
+    }
+  ],
+  "unit_production": [
+    {
+      "time": 167.0,
+      "unit_type": "UnitTypeId.ZERGLING",
+      "supply": 26
+    },
+    {
+      "time": 167.0,
+      "unit_type": "UnitTypeId.ZERGLING",
+      "supply": 26
+    },
+    {
+      "time": 167.0,
+      "unit_type": "UnitTypeId.ZERGLING",
+      "supply": 26
+    },
+    {
+      "time": 167.0,
+      "unit_type": "UnitTypeId.ZERGLING",
+      "supply": 26
+    },
+    {
+      "time": 175.9,
+      "unit_type": "UnitTypeId.ZERGLING",
+      "supply": 29
+    },
+    {
+      "time": 175.9,
+      "unit_type": "UnitTypeId.ZERGLING",
+      "supply": 29
+    },
+    {
+      "time": 179.5,
+      "unit_type": "UnitTypeId.ZERGLING",
+      "supply": 29
+    },
+    {
+      "time": 179.5,
+      "unit_type": "UnitTypeId.ZERGLING",
+      "supply": 29
+    },
+    {
+      "time": 189.8,
+      "unit_type": "UnitTypeId.ZERGLING",
+      "supply": 29
+    },
+    {
+      "time": 189.8,
+      "unit_type": "UnitTypeId.ZERGLING",
+      "supply": 29
+    },
+    {
+      "time": 379.5,
+      "unit_type": "UnitTypeId.ZERGLING",
+      "supply": 48
+    },
+    {
+      "time": 379.5,
+      "unit_type": "UnitTypeId.ZERGLING",
+      "supply": 48
+    },
+    {
+      "time": 382.7,
+      "unit_type": "UnitTypeId.ZERGLING",
+      "supply": 50
+    },
+    {
+      "time": 382.7,
+      "unit_type": "UnitTypeId.ZERGLING",
+      "supply": 50
+    },
+    {
+      "time": 385.2,
+      "unit_type": "UnitTypeId.ZERGLING",
+      "supply": 50
+    },
+    {
+      "time": 385.2,
+      "unit_type": "UnitTypeId.ZERGLING",
+      "supply": 50
+    },
+    {
+      "time": 388.6,
+      "unit_type": "UnitTypeId.ZERGLING",
+      "supply": 52
+    },
+    {
+      "time": 388.6,
+      "unit_type": "UnitTypeId.ZERGLING",
+      "supply": 52
+    },
+    {
+      "time": 391.2,
+      "unit_type": "UnitTypeId.ZERGLING",
+      "supply": 53
+    },
+    {
+      "time": 391.2,
+      "unit_type": "UnitTypeId.ZERGLING",
+      "supply": 53
+    },
+    {
+      "time": 394.1,
+      "unit_type": "UnitTypeId.ZERGLING",
+      "supply": 54
+    },
+    {
+      "time": 394.1,
+      "unit_type": "UnitTypeId.ZERGLING",
+      "supply": 54
+    },
+    {
+      "time": 396.8,
+      "unit_type": "UnitTypeId.ZERGLING",
+      "supply": 55
+    },
+    {
+      "time": 396.8,
+      "unit_type": "UnitTypeId.ZERGLING",
+      "supply": 55
+    },
+    {
+      "time": 399.5,
+      "unit_type": "UnitTypeId.ZERGLING",
+      "supply": 56
+    },
+    {
+      "time": 399.5,
+      "unit_type": "UnitTypeId.ZERGLING",
+      "supply": 56
+    },
+    {
+      "time": 402.3,
+      "unit_type": "UnitTypeId.ZERGLING",
+      "supply": 57
+    },
+    {
+      "time": 402.3,
+      "unit_type": "UnitTypeId.ZERGLING",
+      "supply": 57
+    },
+    {
+      "time": 404.6,
+      "unit_type": "UnitTypeId.ZERGLING",
+      "supply": 58
+    },
+    {
+      "time": 404.6,
+      "unit_type": "UnitTypeId.ZERGLING",
+      "supply": 58
+    },
+    {
+      "time": 407.9,
+      "unit_type": "UnitTypeId.ZERGLING",
+      "supply": 58
+    },
+    {
+      "time": 407.9,
+      "unit_type": "UnitTypeId.ZERGLING",
+      "supply": 58
+    },
+    {
+      "time": 409.8,
+      "unit_type": "UnitTypeId.ZERGLING",
+      "supply": 58
+    },
+    {
+      "time": 409.8,
+      "unit_type": "UnitTypeId.ZERGLING",
+      "supply": 58
+    },
+    {
+      "time": 458.8,
+      "unit_type": "UnitTypeId.ZERGLING",
+      "supply": 50
+    },
+    {
+      "time": 458.8,
+      "unit_type": "UnitTypeId.ZERGLING",
+      "supply": 50
+    },
+    {
+      "time": 460.4,
+      "unit_type": "UnitTypeId.ZERGLING",
+      "supply": 51
+    },
+    {
+      "time": 460.4,
+      "unit_type": "UnitTypeId.ZERGLING",
+      "supply": 51
+    },
+    {
+      "time": 464.1,
+      "unit_type": "UnitTypeId.ZERGLING",
+      "supply": 52
+    },
+    {
+      "time": 464.1,
+      "unit_type": "UnitTypeId.ZERGLING",
+      "supply": 52
+    },
+    {
+      "time": 465.9,
+      "unit_type": "UnitTypeId.ZERGLING",
+      "supply": 53
+    },
+    {
+      "time": 465.9,
+      "unit_type": "UnitTypeId.ZERGLING",
+      "supply": 53
+    },
+    {
+      "time": 469.1,
+      "unit_type": "UnitTypeId.ZERGLING",
+      "supply": 53
+    },
+    {
+      "time": 469.1,
+      "unit_type": "UnitTypeId.ZERGLING",
+      "supply": 53
+    },
+    {
+      "time": 471.4,
+      "unit_type": "UnitTypeId.ZERGLING",
+      "supply": 52
+    },
+    {
+      "time": 471.4,
+      "unit_type": "UnitTypeId.ZERGLING",
+      "supply": 52
+    },
+    {
+      "time": 474.5,
+      "unit_type": "UnitTypeId.ZERGLING",
+      "supply": 52
+    },
+    {
+      "time": 474.5,
+      "unit_type": "UnitTypeId.ZERGLING",
+      "supply": 52
+    },
+    {
+      "time": 477.3,
+      "unit_type": "UnitTypeId.ZERGLING",
+      "supply": 50
+    },
+    {
+      "time": 477.3,
+      "unit_type": "UnitTypeId.ZERGLING",
+      "supply": 50
+    },
+    {
+      "time": 479.8,
+      "unit_type": "UnitTypeId.ZERGLING",
+      "supply": 51
+    },
+    {
+      "time": 479.8,
+      "unit_type": "UnitTypeId.ZERGLING",
+      "supply": 51
+    },
+    {
+      "time": 482.0,
+      "unit_type": "UnitTypeId.ZERGLING",
+      "supply": 51
+    },
+    {
+      "time": 482.0,
+      "unit_type": "UnitTypeId.ZERGLING",
+      "supply": 51
+    },
+    {
+      "time": 485.2,
+      "unit_type": "UnitTypeId.ZERGLING",
+      "supply": 52
+    },
+    {
+      "time": 485.2,
+      "unit_type": "UnitTypeId.ZERGLING",
+      "supply": 52
+    },
+    {
+      "time": 487.3,
+      "unit_type": "UnitTypeId.ZERGLING",
+      "supply": 53
+    },
+    {
+      "time": 487.3,
+      "unit_type": "UnitTypeId.ZERGLING",
+      "supply": 53
+    },
+    {
+      "time": 490.4,
+      "unit_type": "UnitTypeId.ZERGLING",
+      "supply": 54
+    },
+    {
+      "time": 490.4,
+      "unit_type": "UnitTypeId.ZERGLING",
+      "supply": 54
+    },
+    {
+      "time": 492.5,
+      "unit_type": "UnitTypeId.ZERGLING",
+      "supply": 55
+    },
+    {
+      "time": 492.5,
+      "unit_type": "UnitTypeId.ZERGLING",
+      "supply": 55
+    },
+    {
+      "time": 496.1,
+      "unit_type": "UnitTypeId.ZERGLING",
+      "supply": 56
+    },
+    {
+      "time": 496.1,
+      "unit_type": "UnitTypeId.ZERGLING",
+      "supply": 56
+    },
+    {
+      "time": 498.0,
+      "unit_type": "UnitTypeId.ZERGLING",
+      "supply": 57
+    },
+    {
+      "time": 498.0,
+      "unit_type": "UnitTypeId.ZERGLING",
+      "supply": 57
+    },
+    {
+      "time": 501.4,
+      "unit_type": "UnitTypeId.ZERGLING",
+      "supply": 58
+    },
+    {
+      "time": 501.4,
+      "unit_type": "UnitTypeId.ZERGLING",
+      "supply": 58
+    },
+    {
+      "time": 538.6,
+      "unit_type": "UnitTypeId.ZERGLING",
+      "supply": 66
+    },
+    {
+      "time": 538.6,
+      "unit_type": "UnitTypeId.ZERGLING",
+      "supply": 66
+    },
+    {
+      "time": 545.2,
+      "unit_type": "UnitTypeId.ZERGLING",
+      "supply": 66
+    },
+    {
+      "time": 545.2,
+      "unit_type": "UnitTypeId.ZERGLING",
+      "supply": 66
+    },
+    {
+      "time": 553.6,
+      "unit_type": "UnitTypeId.ZERGLING",
+      "supply": 67
+    },
+    {
+      "time": 553.6,
+      "unit_type": "UnitTypeId.ZERGLING",
+      "supply": 67
+    },
+    {
+      "time": 570.0,
+      "unit_type": "UnitTypeId.ZERGLING",
+      "supply": 75
+    },
+    {
+      "time": 570.0,
+      "unit_type": "UnitTypeId.ZERGLING",
+      "supply": 75
+    },
+    {
+      "time": 572.1,
+      "unit_type": "UnitTypeId.ZERGLING",
+      "supply": 75
+    },
+    {
+      "time": 572.1,
+      "unit_type": "UnitTypeId.ZERGLING",
+      "supply": 75
+    },
+    {
+      "time": 573.8,
+      "unit_type": "UnitTypeId.ZERGLING",
+      "supply": 76
+    },
+    {
+      "time": 573.8,
+      "unit_type": "UnitTypeId.ZERGLING",
+      "supply": 76
+    },
+    {
+      "time": 575.7,
+      "unit_type": "UnitTypeId.ZERGLING",
+      "supply": 77
+    },
+    {
+      "time": 575.7,
+      "unit_type": "UnitTypeId.ZERGLING",
+      "supply": 77
+    },
+    {
+      "time": 577.3,
+      "unit_type": "UnitTypeId.ZERGLING",
+      "supply": 78
+    },
+    {
+      "time": 577.3,
+      "unit_type": "UnitTypeId.ZERGLING",
+      "supply": 78
+    },
+    {
+      "time": 578.8,
+      "unit_type": "UnitTypeId.ZERGLING",
+      "supply": 78
+    },
+    {
+      "time": 578.8,
+      "unit_type": "UnitTypeId.ZERGLING",
+      "supply": 78
+    },
+    {
+      "time": 581.1,
+      "unit_type": "UnitTypeId.ZERGLING",
+      "supply": 78
+    },
+    {
+      "time": 581.1,
+      "unit_type": "UnitTypeId.ZERGLING",
+      "supply": 78
+    },
+    {
+      "time": 582.0,
+      "unit_type": "UnitTypeId.ZERGLING",
+      "supply": 78
+    },
+    {
+      "time": 582.0,
+      "unit_type": "UnitTypeId.ZERGLING",
+      "supply": 78
+    },
+    {
+      "time": 586.1,
+      "unit_type": "UnitTypeId.ZERGLING",
+      "supply": 81
+    },
+    {
+      "time": 586.1,
+      "unit_type": "UnitTypeId.ZERGLING",
+      "supply": 81
+    },
+    {
+      "time": 587.1,
+      "unit_type": "UnitTypeId.ZERGLING",
+      "supply": 81
+    },
+    {
+      "time": 587.1,
+      "unit_type": "UnitTypeId.ZERGLING",
+      "supply": 81
+    },
+    {
+      "time": 590.9,
+      "unit_type": "UnitTypeId.ZERGLING",
+      "supply": 83
+    },
+    {
+      "time": 590.9,
+      "unit_type": "UnitTypeId.ZERGLING",
+      "supply": 83
+    },
+    {
+      "time": 593.0,
+      "unit_type": "UnitTypeId.ZERGLING",
+      "supply": 84
+    },
+    {
+      "time": 593.0,
+      "unit_type": "UnitTypeId.ZERGLING",
+      "supply": 84
+    },
+    {
+      "time": 597.7,
+      "unit_type": "UnitTypeId.ZERGLING",
+      "supply": 84
+    },
+    {
+      "time": 597.7,
+      "unit_type": "UnitTypeId.ZERGLING",
+      "supply": 84
+    },
+    {
+      "time": 599.5,
+      "unit_type": "UnitTypeId.ZERGLING",
+      "supply": 85
+    },
+    {
+      "time": 599.5,
+      "unit_type": "UnitTypeId.ZERGLING",
+      "supply": 85
+    }
+  ],
+  "tech_upgrades": [
+    {
+      "time": 416.6,
+      "building": "UnitTypeId.EVOLUTIONCHAMBER",
+      "supply": 57,
+      "minerals": 60,
+      "vespene": 258
+    },
+    {
+      "time": 676.6,
+      "building": "UnitTypeId.ROACHWARREN",
+      "supply": 65,
+      "minerals": 5,
+      "vespene": 750
+    },
+    {
+      "time": 721.6,
+      "building": "UnitTypeId.LAIR",
+      "supply": 67,
+      "minerals": 20,
+      "vespene": 846
+    },
+    {
+      "time": 794.5,
+      "building": "UnitTypeId.HYDRALISKDEN",
+      "supply": 67,
+      "minerals": 50,
+      "vespene": 490
+    },
+    {
+      "time": 989.3,
+      "building": "UnitTypeId.INFESTATIONPIT",
+      "supply": 60,
+      "minerals": 70,
+      "vespene": 435
+    }
+  ],
+  "engagements": [],
+  "resource_snapshots": [
+    {
+      "time": 60.0,
+      "minerals": 180,
+      "vespene": 0,
+      "supply_used": 17,
+      "supply_cap": 38,
+      "supply_army": 0,
+      "supply_workers": 16,
+      "bases": 1,
+      "workers": 16
+    },
+    {
+      "time": 120.0,
+      "minerals": 50,
+      "vespene": 2,
+      "supply_used": 20,
+      "supply_cap": 38,
+      "supply_army": 0,
+      "supply_workers": 19,
+      "bases": 2,
+      "workers": 18
+    },
+    {
+      "time": 180.2,
+      "minerals": 0,
+      "vespene": 200,
+      "supply_used": 29,
+      "supply_cap": 52,
+      "supply_army": 9,
+      "supply_workers": 20,
+      "bases": 2,
+      "workers": 19
+    },
+    {
+      "time": 240.2,
+      "minerals": 90,
+      "vespene": 262,
+      "supply_used": 34,
+      "supply_cap": 52,
+      "supply_army": 17,
+      "supply_workers": 17,
+      "bases": 2,
+      "workers": 16
+    },
+    {
+      "time": 300.2,
+      "minerals": 290,
+      "vespene": 358,
+      "supply_used": 36,
+      "supply_cap": 52,
+      "supply_army": 21,
+      "supply_workers": 15,
+      "bases": 2,
+      "workers": 14
+    },
+    {
+      "time": 360.2,
+      "minerals": 20,
+      "vespene": 358,
+      "supply_used": 43,
+      "supply_cap": 52,
+      "supply_army": 21,
+      "supply_workers": 19,
+      "bases": 3,
+      "workers": 19
+    },
+    {
+      "time": 420.2,
+      "minerals": 5,
+      "vespene": 262,
+      "supply_used": 57,
+      "supply_cap": 50,
+      "supply_army": 33,
+      "supply_workers": 24,
+      "bases": 3,
+      "workers": 21
+    },
+    {
+      "time": 480.2,
+      "minerals": 25,
+      "vespene": 482,
+      "supply_used": 51,
+      "supply_cap": 66,
+      "supply_army": 27,
+      "supply_workers": 24,
+      "bases": 3,
+      "workers": 24
+    },
+    {
+      "time": 540.2,
+      "minerals": 10,
+      "vespene": 666,
+      "supply_used": 66,
+      "supply_cap": 66,
+      "supply_army": 29,
+      "supply_workers": 37,
+      "bases": 3,
+      "workers": 37
+    },
+    {
+      "time": 600.2,
+      "minerals": 25,
+      "vespene": 854,
+      "supply_used": 85,
+      "supply_cap": 106,
+      "supply_army": 43,
+      "supply_workers": 40,
+      "bases": 3,
+      "workers": 39
+    },
+    {
+      "time": 660.2,
+      "minerals": 65,
+      "vespene": 818,
+      "supply_used": 69,
+      "supply_cap": 106,
+      "supply_army": 27,
+      "supply_workers": 41,
+      "bases": 3,
+      "workers": 40
+    },
+    {
+      "time": 720.2,
+      "minerals": 35,
+      "vespene": 838,
+      "supply_used": 67,
+      "supply_cap": 106,
+      "supply_army": 28,
+      "supply_workers": 38,
+      "bases": 3,
+      "workers": 38
+    },
+    {
+      "time": 780.2,
+      "minerals": 10,
+      "vespene": 566,
+      "supply_used": 72,
+      "supply_cap": 106,
+      "supply_army": 33,
+      "supply_workers": 39,
+      "bases": 3,
+      "workers": 39
+    },
+    {
+      "time": 840.2,
+      "minerals": 40,
+      "vespene": 558,
+      "supply_used": 62,
+      "supply_cap": 82,
+      "supply_army": 28,
+      "supply_workers": 34,
+      "bases": 3,
+      "workers": 33
+    },
+    {
+      "time": 900.2,
+      "minerals": 45,
+      "vespene": 543,
+      "supply_used": 66,
+      "supply_cap": 82,
+      "supply_army": 31,
+      "supply_workers": 34,
+      "bases": 3,
+      "workers": 34
+    },
+    {
+      "time": 960.2,
+      "minerals": 60,
+      "vespene": 507,
+      "supply_used": 64,
+      "supply_cap": 82,
+      "supply_army": 29,
+      "supply_workers": 35,
+      "bases": 3,
+      "workers": 35
+    },
+    {
+      "time": 1020.2,
+      "minerals": 35,
+      "vespene": 443,
+      "supply_used": 64,
+      "supply_cap": 66,
+      "supply_army": 32,
+      "supply_workers": 32,
+      "bases": 3,
+      "workers": 32
+    },
+    {
+      "time": 1080.2,
+      "minerals": 25,
+      "vespene": 443,
+      "supply_used": 56,
+      "supply_cap": 58,
+      "supply_army": 26,
+      "supply_workers": 30,
+      "bases": 3,
+      "workers": 30
+    },
+    {
+      "time": 1140.2,
+      "minerals": 40,
+      "vespene": 443,
+      "supply_used": 23,
+      "supply_cap": 58,
+      "supply_army": 5,
+      "supply_workers": 18,
+      "bases": 3,
+      "workers": 18
+    },
+    {
+      "time": 1200.2,
+      "minerals": 25,
+      "vespene": 443,
+      "supply_used": 25,
+      "supply_cap": 42,
+      "supply_army": 8,
+      "supply_workers": 17,
+      "bases": 3,
+      "workers": 17
+    }
+  ],
+  "decision_log": [],
+  "game_result": {
+    "result": "Result.Defeat",
+    "duration": 416.2,
+    "final_supply": 4,
+    "final_minerals": 43,
+    "final_vespene": 343,
+    "final_bases": 3,
+    "end_time": "2026-05-09T19:09:09.814200"
+  },
+  "enemy_scouts": [],
+  "harassment": [
+    {
+      "time": 436.2,
+      "our_units": 3,
+      "target_structure": "UnitTypeId.BARRACKS",
+      "target_position": [
+        135.5,
+        34.5
+      ],
+      "workers_killed": 0
+    },
+    {
+      "time": 441.8,
+      "our_units": 4,
+      "target_structure": "UnitTypeId.BARRACKS",
+      "target_position": [
+        135.5,
+        34.5
+      ],
+      "workers_killed": 0
+    },
+    {
+      "time": 447.3,
+      "our_units": 4,
+      "target_structure": "UnitTypeId.COMMANDCENTER",
+      "target_position": [
+        129.5,
+        26.5
+      ],
+      "workers_killed": 0
+    },
+    {
+      "time": 452.9,
+      "our_units": 3,
+      "target_structure": "UnitTypeId.COMMANDCENTER",
+      "target_position": [
+        129.5,
+        26.5
+      ],
+      "workers_killed": 0
+    },
+    {
+      "time": 458.4,
+      "our_units": 4,
+      "target_structure": "UnitTypeId.BARRACKS",
+      "target_position": [
+        135.5,
+        34.5
+      ],
+      "workers_killed": 0
+    },
+    {
+      "time": 463.9,
+      "our_units": 4,
+      "target_structure": "UnitTypeId.COMMANDCENTER",
+      "target_position": [
+        129.5,
+        26.5
+      ],
+      "workers_killed": 0
+    },
+    {
+      "time": 469.5,
+      "our_units": 3,
+      "target_structure": "UnitTypeId.BARRACKS",
+      "target_position": [
+        135.5,
+        34.5
+      ],
+      "workers_killed": 0
+    },
+    {
+      "time": 511.8,
+      "our_units": 4,
+      "target_structure": "UnitTypeId.BARRACKS",
+      "target_position": [
+        135.5,
+        34.5
+      ],
+      "workers_killed": 0
+    },
+    {
+      "time": 517.3,
+      "our_units": 13,
+      "target_structure": "UnitTypeId.BARRACKS",
+      "target_position": [
+        135.5,
+        34.5
+      ],
+      "workers_killed": 0
+    },
+    {
+      "time": 522.9,
+      "our_units": 3,
+      "target_structure": "UnitTypeId.SENSORTOWER",
+      "target_position": [
+        145.5,
+        24.5
+      ],
+      "workers_killed": 0
+    },
+    {
+      "time": 528.4,
+      "our_units": 7,
+      "target_structure": "UnitTypeId.SENSORTOWER",
+      "target_position": [
+        145.5,
+        24.5
+      ],
+      "workers_killed": 0
+    },
+    {
+      "time": 533.9,
+      "our_units": 17,
+      "target_structure": "UnitTypeId.BARRACKSREACTOR",
+      "target_position": [
+        138.0,
+        34.0
+      ],
+      "workers_killed": 0
+    },
+    {
+      "time": 539.5,
+      "our_units": 6,
+      "target_structure": "UnitTypeId.FACTORYTECHLAB",
+      "target_position": [
+        152.0,
+        19.0
+      ],
+      "workers_killed": 0
+    },
+    {
+      "time": 545.0,
+      "our_units": 15,
+      "target_structure": "UnitTypeId.FACTORYTECHLAB",
+      "target_position": [
+        152.0,
+        23.0
+      ],
+      "workers_killed": 0
+    },
+    {
+      "time": 550.5,
+      "our_units": 15,
+      "target_structure": "UnitTypeId.ARMORY",
+      "target_position": [
+        156.5,
+        24.5
+      ],
+      "workers_killed": 0
+    },
+    {
+      "time": 556.1,
+      "our_units": 15,
+      "target_structure": "UnitTypeId.ENGINEERINGBAY",
+      "target_position": [
+        156.5,
+        21.5
+      ],
+      "workers_killed": 0
+    },
+    {
+      "time": 561.6,
+      "our_units": 24,
+      "target_structure": "UnitTypeId.SUPPLYDEPOTLOWERED",
+      "target_position": [
+        154.0,
+        23.0
+      ],
+      "workers_killed": 0
+    },
+    {
+      "time": 567.1,
+      "our_units": 14,
+      "target_structure": "UnitTypeId.ARMORY",
+      "target_position": [
+        156.5,
+        24.5
+      ],
+      "workers_killed": 0
+    },
+    {
+      "time": 572.7,
+      "our_units": 3,
+      "target_structure": "UnitTypeId.BARRACKSTECHLAB",
+      "target_position": [
+        166.0,
+        27.0
+      ],
+      "workers_killed": 0
+    },
+    {
+      "time": 578.2,
+      "our_units": 3,
+      "target_structure": "UnitTypeId.MISSILETURRET",
+      "target_position": [
+        164.0,
+        14.0
+      ],
+      "workers_killed": 0
+    },
+    {
+      "time": 583.8,
+      "our_units": 15,
+      "target_structure": "UnitTypeId.COMMANDCENTER",
+      "target_position": [
+        129.5,
+        26.5
+      ],
+      "workers_killed": 0
+    },
+    {
+      "time": 589.3,
+      "our_units": 14,
+      "target_structure": "UnitTypeId.COMMANDCENTER",
+      "target_position": [
+        129.5,
+        26.5
+      ],
+      "workers_killed": 0
+    },
+    {
+      "time": 594.8,
+      "our_units": 15,
+      "target_structure": "UnitTypeId.COMMANDCENTER",
+      "target_position": [
+        129.5,
+        26.5
+      ],
+      "workers_killed": 0
+    },
+    {
+      "time": 600.4,
+      "our_units": 13,
+      "target_structure": "UnitTypeId.COMMANDCENTER",
+      "target_position": [
+        129.5,
+        26.5
+      ],
+      "workers_killed": 0
+    },
+    {
+      "time": 605.9,
+      "our_units": 6,
+      "target_structure": "UnitTypeId.BARRACKSREACTOR",
+      "target_position": [
+        138.0,
+        34.0
+      ],
+      "workers_killed": 0
+    },
+    {
+      "time": 611.4,
+      "our_units": 4,
+      "target_structure": "UnitTypeId.BARRACKSREACTOR",
+      "target_position": [
+        138.0,
+        34.0
+      ],
+      "workers_killed": 0
+    },
+    {
+      "time": 617.0,
+      "our_units": 3,
+      "target_structure": "UnitTypeId.COMMANDCENTER",
+      "target_position": [
+        129.5,
+        26.5
+      ],
+      "workers_killed": 0
+    },
+    {
+      "time": 622.5,
+      "our_units": 10,
+      "target_structure": "UnitTypeId.BARRACKS",
+      "target_position": [
+        135.5,
+        34.5
+      ],
+      "workers_killed": 0
+    },
+    {
+      "time": 628.0,
+      "our_units": 3,
+      "target_structure": "UnitTypeId.SUPPLYDEPOTLOWERED",
+      "target_position": [
+        154.0,
+        23.0
+      ],
+      "workers_killed": 0
+    },
+    {
+      "time": 633.6,
+      "our_units": 3,
+      "target_structure": "UnitTypeId.SUPPLYDEPOTLOWERED",
+      "target_position": [
+        161.0,
+        29.0
+      ],
+      "workers_killed": 0
+    },
+    {
+      "time": 639.1,
+      "our_units": 3,
+      "target_structure": "UnitTypeId.SUPPLYDEPOTLOWERED",
+      "target_position": [
+        161.0,
+        27.0
+      ],
+      "workers_killed": 0
+    },
+    {
+      "time": 644.6,
+      "our_units": 3,
+      "target_structure": "UnitTypeId.FACTORYTECHLAB",
+      "target_position": [
+        152.0,
+        23.0
+      ],
+      "workers_killed": 0
+    },
+    {
+      "time": 650.2,
+      "our_units": 3,
+      "target_structure": "UnitTypeId.ENGINEERINGBAY",
+      "target_position": [
+        156.5,
+        21.5
+      ],
+      "workers_killed": 0
+    },
+    {
+      "time": 655.7,
+      "our_units": 3,
+      "target_structure": "UnitTypeId.SUPPLYDEPOTLOWERED",
+      "target_position": [
+        161.0,
+        27.0
+      ],
+      "workers_killed": 0
+    },
+    {
+      "time": 661.2,
+      "our_units": 3,
+      "target_structure": "UnitTypeId.FACTORY",
+      "target_position": [
+        149.5,
+        23.5
+      ],
+      "workers_killed": 0
+    },
+    {
+      "time": 666.8,
+      "our_units": 4,
+      "target_structure": "UnitTypeId.BARRACKS",
+      "target_position": [
+        156.5,
+        27.5
+      ],
+      "workers_killed": 0
+    },
+    {
+      "time": 672.3,
+      "our_units": 4,
+      "target_structure": "UnitTypeId.FACTORY",
+      "target_position": [
+        149.5,
+        23.5
+      ],
+      "workers_killed": 0
+    },
+    {
+      "time": 677.9,
+      "our_units": 4,
+      "target_structure": "UnitTypeId.SUPPLYDEPOTLOWERED",
+      "target_position": [
+        161.0,
+        29.0
+      ],
+      "workers_killed": 0
+    },
+    {
+      "time": 683.4,
+      "our_units": 4,
+      "target_structure": "UnitTypeId.ARMORY",
+      "target_position": [
+        156.5,
+        24.5
+      ],
+      "workers_killed": 0
+    },
+    {
+      "time": 688.9,
+      "our_units": 5,
+      "target_structure": "UnitTypeId.SUPPLYDEPOTLOWERED",
+      "target_position": [
+        154.0,
+        21.0
+      ],
+      "workers_killed": 0
+    },
+    {
+      "time": 694.5,
+      "our_units": 5,
+      "target_structure": "UnitTypeId.SUPPLYDEPOTLOWERED",
+      "target_position": [
+        154.0,
+        21.0
+      ],
+      "workers_killed": 0
+    },
+    {
+      "time": 700.0,
+      "our_units": 3,
+      "target_structure": "UnitTypeId.SUPPLYDEPOTLOWERED",
+      "target_position": [
+        154.0,
+        19.0
+      ],
+      "workers_killed": 0
+    },
+    {
+      "time": 705.5,
+      "our_units": 5,
+      "target_structure": "UnitTypeId.FACTORY",
+      "target_position": [
+        149.5,
+        23.5
+      ],
+      "workers_killed": 0
+    },
+    {
+      "time": 711.1,
+      "our_units": 4,
+      "target_structure": "UnitTypeId.STARPORTTECHLAB",
+      "target_position": [
+        152.0,
+        45.0
+      ],
+      "workers_killed": 0
+    },
+    {
+      "time": 716.6,
+      "our_units": 4,
+      "target_structure": "UnitTypeId.STARPORTTECHLAB",
+      "target_position": [
+        152.0,
+        45.0
+      ],
+      "workers_killed": 0
+    },
+    {
+      "time": 722.1,
+      "our_units": 4,
+      "target_structure": "UnitTypeId.STARPORTTECHLAB",
+      "target_position": [
+        152.0,
+        45.0
+      ],
+      "workers_killed": 0
+    },
+    {
+      "time": 727.7,
+      "our_units": 5,
+      "target_structure": "UnitTypeId.STARPORTTECHLAB",
+      "target_position": [
+        152.0,
+        45.0
+      ],
+      "workers_killed": 0
+    },
+    {
+      "time": 733.2,
+      "our_units": 3,
+      "target_structure": "UnitTypeId.STARPORTTECHLAB",
+      "target_position": [
+        152.0,
+        45.0
+      ],
+      "workers_killed": 0
+    },
+    {
+      "time": 738.8,
+      "our_units": 6,
+      "target_structure": "UnitTypeId.STARPORTTECHLAB",
+      "target_position": [
+        152.0,
+        45.0
+      ],
+      "workers_killed": 0
+    },
+    {
+      "time": 744.3,
+      "our_units": 10,
+      "target_structure": "UnitTypeId.STARPORTTECHLAB",
+      "target_position": [
+        152.0,
+        45.0
+      ],
+      "workers_killed": 0
+    },
+    {
+      "time": 749.8,
+      "our_units": 3,
+      "target_structure": "UnitTypeId.FACTORY",
+      "target_position": [
+        149.5,
+        23.5
+      ],
+      "workers_killed": 0
+    },
+    {
+      "time": 755.4,
+      "our_units": 3,
+      "target_structure": "UnitTypeId.BARRACKS",
+      "target_position": [
+        156.5,
+        27.5
+      ],
+      "workers_killed": 0
+    },
+    {
+      "time": 760.9,
+      "our_units": 3,
+      "target_structure": "UnitTypeId.BARRACKS",
+      "target_position": [
+        163.5,
+        27.5
+      ],
+      "workers_killed": 0
+    },
+    {
+      "time": 766.4,
+      "our_units": 3,
+      "target_structure": "UnitTypeId.ENGINEERINGBAY",
+      "target_position": [
+        156.5,
+        21.5
+      ],
+      "workers_killed": 0
+    },
+    {
+      "time": 772.0,
+      "our_units": 3,
+      "target_structure": "UnitTypeId.ORBITALCOMMAND",
+      "target_position": [
+        161.5,
+        21.5
+      ],
+      "workers_killed": 0
+    },
+    {
+      "time": 777.5,
+      "our_units": 3,
+      "target_structure": "UnitTypeId.BARRACKS",
+      "target_position": [
+        163.5,
+        27.5
+      ],
+      "workers_killed": 0
+    },
+    {
+      "time": 783.0,
+      "our_units": 3,
+      "target_structure": "UnitTypeId.SUPPLYDEPOTLOWERED",
+      "target_position": [
+        161.0,
+        27.0
+      ],
+      "workers_killed": 0
+    },
+    {
+      "time": 788.6,
+      "our_units": 3,
+      "target_structure": "UnitTypeId.STARPORT",
+      "target_position": [
+        121.5,
+        42.5
+      ],
+      "workers_killed": 0
+    },
+    {
+      "time": 812.3,
+      "our_units": 3,
+      "target_structure": "UnitTypeId.BARRACKS",
+      "target_position": [
+        163.5,
+        27.5
+      ],
+      "workers_killed": 0
+    },
+    {
+      "time": 817.9,
+      "our_units": 3,
+      "target_structure": "UnitTypeId.BARRACKS",
+      "target_position": [
+        163.5,
+        27.5
+      ],
+      "workers_killed": 0
+    },
+    {
+      "time": 823.4,
+      "our_units": 3,
+      "target_structure": "UnitTypeId.BARRACKS",
+      "target_position": [
+        163.5,
+        27.5
+      ],
+      "workers_killed": 0
+    },
+    {
+      "time": 828.9,
+      "our_units": 3,
+      "target_structure": "UnitTypeId.BARRACKS",
+      "target_position": [
+        163.5,
+        27.5
+      ],
+      "workers_killed": 0
+    },
+    {
+      "time": 834.5,
+      "our_units": 3,
+      "target_structure": "UnitTypeId.SUPPLYDEPOTLOWERED",
+      "target_position": [
+        161.0,
+        29.0
+      ],
+      "workers_killed": 0
+    },
+    {
+      "time": 840.0,
+      "our_units": 3,
+      "target_structure": "UnitTypeId.SUPPLYDEPOTLOWERED",
+      "target_position": [
+        161.0,
+        27.0
+      ],
+      "workers_killed": 0
+    },
+    {
+      "time": 845.5,
+      "our_units": 3,
+      "target_structure": "UnitTypeId.SUPPLYDEPOTLOWERED",
+      "target_position": [
+        161.0,
+        27.0
+      ],
+      "workers_killed": 0
+    },
+    {
+      "time": 851.1,
+      "our_units": 3,
+      "target_structure": "UnitTypeId.BARRACKS",
+      "target_position": [
+        163.5,
+        27.5
+      ],
+      "workers_killed": 0
+    },
+    {
+      "time": 856.6,
+      "our_units": 3,
+      "target_structure": "UnitTypeId.BARRACKSTECHLAB",
+      "target_position": [
+        159.0,
+        27.0
+      ],
+      "workers_killed": 0
+    },
+    {
+      "time": 862.1,
+      "our_units": 4,
+      "target_structure": "UnitTypeId.BARRACKSTECHLAB",
+      "target_position": [
+        159.0,
+        27.0
+      ],
+      "workers_killed": 0
+    },
+    {
+      "time": 867.7,
+      "our_units": 6,
+      "target_structure": "UnitTypeId.STARPORT",
+      "target_position": [
+        121.5,
+        42.5
+      ],
+      "workers_killed": 0
+    },
+    {
+      "time": 873.2,
+      "our_units": 3,
+      "target_structure": "UnitTypeId.SUPPLYDEPOTLOWERED",
+      "target_position": [
+        154.0,
+        23.0
+      ],
+      "workers_killed": 0
+    },
+    {
+      "time": 878.8,
+      "our_units": 3,
+      "target_structure": "UnitTypeId.STARPORT",
+      "target_position": [
+        149.5,
+        45.5
+      ],
+      "workers_killed": 0
+    },
+    {
+      "time": 884.3,
+      "our_units": 3,
+      "target_structure": "UnitTypeId.BARRACKS",
+      "target_position": [
+        163.5,
+        27.5
+      ],
+      "workers_killed": 0
+    },
+    {
+      "time": 889.8,
+      "our_units": 4,
+      "target_structure": "UnitTypeId.STARPORT",
+      "target_position": [
+        121.5,
+        42.5
+      ],
+      "workers_killed": 0
+    },
+    {
+      "time": 895.4,
+      "our_units": 3,
+      "target_structure": "UnitTypeId.SUPPLYDEPOTLOWERED",
+      "target_position": [
+        161.0,
+        27.0
+      ],
+      "workers_killed": 0
+    },
+    {
+      "time": 900.9,
+      "our_units": 3,
+      "target_structure": "UnitTypeId.SUPPLYDEPOTLOWERED",
+      "target_position": [
+        161.0,
+        29.0
+      ],
+      "workers_killed": 0
+    },
+    {
+      "time": 906.4,
+      "our_units": 3,
+      "target_structure": "UnitTypeId.ARMORY",
+      "target_position": [
+        156.5,
+        24.5
+      ],
+      "workers_killed": 0
+    },
+    {
+      "time": 912.0,
+      "our_units": 3,
+      "target_structure": "UnitTypeId.ORBITALCOMMAND",
+      "target_position": [
+        161.5,
+        21.5
+      ],
+      "workers_killed": 0
+    },
+    {
+      "time": 917.5,
+      "our_units": 3,
+      "target_structure": "UnitTypeId.SUPPLYDEPOTLOWERED",
+      "target_position": [
+        161.0,
+        29.0
+      ],
+      "workers_killed": 0
+    },
+    {
+      "time": 923.0,
+      "our_units": 3,
+      "target_structure": "UnitTypeId.ORBITALCOMMAND",
+      "target_position": [
+        161.5,
+        21.5
+      ],
+      "workers_killed": 0
+    },
+    {
+      "time": 928.6,
+      "our_units": 4,
+      "target_structure": "UnitTypeId.BARRACKS",
+      "target_position": [
+        156.5,
+        27.5
+      ],
+      "workers_killed": 0
+    },
+    {
+      "time": 934.1,
+      "our_units": 3,
+      "target_structure": "UnitTypeId.BARRACKS",
+      "target_position": [
+        163.5,
+        27.5
+      ],
+      "workers_killed": 0
+    },
+    {
+      "time": 939.6,
+      "our_units": 3,
+      "target_structure": "UnitTypeId.BARRACKS",
+      "target_position": [
+        156.5,
+        27.5
+      ],
+      "workers_killed": 0
+    },
+    {
+      "time": 945.2,
+      "our_units": 3,
+      "target_structure": "UnitTypeId.BARRACKS",
+      "target_position": [
+        163.5,
+        27.5
+      ],
+      "workers_killed": 0
+    },
+    {
+      "time": 950.7,
+      "our_units": 3,
+      "target_structure": "UnitTypeId.SUPPLYDEPOTLOWERED",
+      "target_position": [
+        161.0,
+        27.0
+      ],
+      "workers_killed": 0
+    },
+    {
+      "time": 1063.8,
+      "our_units": 4,
+      "target_structure": "UnitTypeId.ARMORY",
+      "target_position": [
+        102.5,
+        39.5
+      ],
+      "workers_killed": 0
+    },
+    {
+      "time": 1069.3,
+      "our_units": 3,
+      "target_structure": "UnitTypeId.MISSILETURRET",
+      "target_position": [
+        107.0,
+        34.0
+      ],
+      "workers_killed": 0
+    }
+  ],
+  "defense_events": [
+    {
+      "time": 450.2,
+      "enemy_count": 5,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 6,
+      "base_health": 100.0
+    },
+    {
+      "time": 450.4,
+      "enemy_count": 5,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 6,
+      "base_health": 100.0
+    },
+    {
+      "time": 450.5,
+      "enemy_count": 7,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 6,
+      "base_health": 100.0
+    },
+    {
+      "time": 450.7,
+      "enemy_count": 7,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 5,
+      "base_health": 100.0
+    },
+    {
+      "time": 450.9,
+      "enemy_count": 7,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 5,
+      "base_health": 100.0
+    },
+    {
+      "time": 451.1,
+      "enemy_count": 7,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 5,
+      "base_health": 100.0
+    },
+    {
+      "time": 451.3,
+      "enemy_count": 7,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 5,
+      "base_health": 100.0
+    },
+    {
+      "time": 451.4,
+      "enemy_count": 7,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 5,
+      "base_health": 100.0
+    },
+    {
+      "time": 451.6,
+      "enemy_count": 7,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 5,
+      "base_health": 100.0
+    },
+    {
+      "time": 451.8,
+      "enemy_count": 7,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 5,
+      "base_health": 100.0
+    },
+    {
+      "time": 452.0,
+      "enemy_count": 7,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 6,
+      "base_health": 100.0
+    },
+    {
+      "time": 452.1,
+      "enemy_count": 7,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 6,
+      "base_health": 100.0
+    },
+    {
+      "time": 452.3,
+      "enemy_count": 7,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 6,
+      "base_health": 100.0
+    },
+    {
+      "time": 452.5,
+      "enemy_count": 7,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 6,
+      "base_health": 100.0
+    },
+    {
+      "time": 452.7,
+      "enemy_count": 7,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 6,
+      "base_health": 100.0
+    },
+    {
+      "time": 452.9,
+      "enemy_count": 6,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 6,
+      "base_health": 100.0
+    },
+    {
+      "time": 453.0,
+      "enemy_count": 6,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 5,
+      "base_health": 100.0
+    },
+    {
+      "time": 453.2,
+      "enemy_count": 6,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 5,
+      "base_health": 100.0
+    },
+    {
+      "time": 453.4,
+      "enemy_count": 6,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 5,
+      "base_health": 100.0
+    },
+    {
+      "time": 453.6,
+      "enemy_count": 6,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 5,
+      "base_health": 100.0
+    },
+    {
+      "time": 453.8,
+      "enemy_count": 6,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 5,
+      "base_health": 100.0
+    },
+    {
+      "time": 453.9,
+      "enemy_count": 6,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 5,
+      "base_health": 100.0
+    },
+    {
+      "time": 454.1,
+      "enemy_count": 6,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 5,
+      "base_health": 100.0
+    },
+    {
+      "time": 454.3,
+      "enemy_count": 6,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 5,
+      "base_health": 100.0
+    },
+    {
+      "time": 454.5,
+      "enemy_count": 6,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 5,
+      "base_health": 100.0
+    },
+    {
+      "time": 454.6,
+      "enemy_count": 6,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 5,
+      "base_health": 100.0
+    },
+    {
+      "time": 454.8,
+      "enemy_count": 6,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 6,
+      "base_health": 100.0
+    },
+    {
+      "time": 455.0,
+      "enemy_count": 6,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 5,
+      "base_health": 100.0
+    },
+    {
+      "time": 455.2,
+      "enemy_count": 6,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 5,
+      "base_health": 100.0
+    },
+    {
+      "time": 455.4,
+      "enemy_count": 6,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 5,
+      "base_health": 100.0
+    },
+    {
+      "time": 455.5,
+      "enemy_count": 6,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 5,
+      "base_health": 100.0
+    },
+    {
+      "time": 455.7,
+      "enemy_count": 6,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 5,
+      "base_health": 100.0
+    },
+    {
+      "time": 455.9,
+      "enemy_count": 6,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 5,
+      "base_health": 100.0
+    },
+    {
+      "time": 456.1,
+      "enemy_count": 6,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 5,
+      "base_health": 100.0
+    },
+    {
+      "time": 456.3,
+      "enemy_count": 6,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 5,
+      "base_health": 100.0
+    },
+    {
+      "time": 456.4,
+      "enemy_count": 6,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 6,
+      "base_health": 100.0
+    },
+    {
+      "time": 456.6,
+      "enemy_count": 6,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 7,
+      "base_health": 100.0
+    },
+    {
+      "time": 456.8,
+      "enemy_count": 6,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 8,
+      "base_health": 100.0
+    },
+    {
+      "time": 457.0,
+      "enemy_count": 6,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 8,
+      "base_health": 100.0
+    },
+    {
+      "time": 457.1,
+      "enemy_count": 6,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 8,
+      "base_health": 100.0
+    },
+    {
+      "time": 457.3,
+      "enemy_count": 5,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 8,
+      "base_health": 100.0
+    },
+    {
+      "time": 457.5,
+      "enemy_count": 5,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 8,
+      "base_health": 100.0
+    },
+    {
+      "time": 457.7,
+      "enemy_count": 5,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 8,
+      "base_health": 100.0
+    },
+    {
+      "time": 457.9,
+      "enemy_count": 5,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 8,
+      "base_health": 100.0
+    },
+    {
+      "time": 458.0,
+      "enemy_count": 5,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 8,
+      "base_health": 100.0
+    },
+    {
+      "time": 458.2,
+      "enemy_count": 5,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 8,
+      "base_health": 100.0
+    },
+    {
+      "time": 458.4,
+      "enemy_count": 5,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 8,
+      "base_health": 100.0
+    },
+    {
+      "time": 458.6,
+      "enemy_count": 5,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 8,
+      "base_health": 100.0
+    },
+    {
+      "time": 458.8,
+      "enemy_count": 5,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 8,
+      "base_health": 100.0
+    },
+    {
+      "time": 458.9,
+      "enemy_count": 5,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 8,
+      "base_health": 100.0
+    },
+    {
+      "time": 459.1,
+      "enemy_count": 5,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 8,
+      "base_health": 100.0
+    },
+    {
+      "time": 459.3,
+      "enemy_count": 5,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 8,
+      "base_health": 100.0
+    },
+    {
+      "time": 459.5,
+      "enemy_count": 5,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 8,
+      "base_health": 100.0
+    },
+    {
+      "time": 459.6,
+      "enemy_count": 5,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 8,
+      "base_health": 100.0
+    },
+    {
+      "time": 459.8,
+      "enemy_count": 5,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 8,
+      "base_health": 100.0
+    },
+    {
+      "time": 460.0,
+      "enemy_count": 5,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 8,
+      "base_health": 100.0
+    },
+    {
+      "time": 460.2,
+      "enemy_count": 5,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 8,
+      "base_health": 100.0
+    },
+    {
+      "time": 460.4,
+      "enemy_count": 5,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 8,
+      "base_health": 100.0
+    },
+    {
+      "time": 460.5,
+      "enemy_count": 5,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 8,
+      "base_health": 100.0
+    },
+    {
+      "time": 460.7,
+      "enemy_count": 5,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 8,
+      "base_health": 100.0
+    },
+    {
+      "time": 460.9,
+      "enemy_count": 5,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 8,
+      "base_health": 100.0
+    },
+    {
+      "time": 819.1,
+      "enemy_count": 6,
+      "base_position": [
+        42.5,
+        93.5
+      ],
+      "our_army_nearby": 28,
+      "base_health": 100.0
+    },
+    {
+      "time": 819.3,
+      "enemy_count": 6,
+      "base_position": [
+        42.5,
+        93.5
+      ],
+      "our_army_nearby": 28,
+      "base_health": 100.0
+    },
+    {
+      "time": 819.5,
+      "enemy_count": 6,
+      "base_position": [
+        42.5,
+        93.5
+      ],
+      "our_army_nearby": 30,
+      "base_health": 100.0
+    },
+    {
+      "time": 819.6,
+      "enemy_count": 7,
+      "base_position": [
+        42.5,
+        93.5
+      ],
+      "our_army_nearby": 29,
+      "base_health": 100.0
+    },
+    {
+      "time": 819.8,
+      "enemy_count": 7,
+      "base_position": [
+        42.5,
+        93.5
+      ],
+      "our_army_nearby": 29,
+      "base_health": 100.0
+    },
+    {
+      "time": 820.0,
+      "enemy_count": 7,
+      "base_position": [
+        42.5,
+        93.5
+      ],
+      "our_army_nearby": 28,
+      "base_health": 100.0
+    },
+    {
+      "time": 820.2,
+      "enemy_count": 7,
+      "base_position": [
+        42.5,
+        93.5
+      ],
+      "our_army_nearby": 29,
+      "base_health": 100.0
+    },
+    {
+      "time": 820.4,
+      "enemy_count": 7,
+      "base_position": [
+        42.5,
+        93.5
+      ],
+      "our_army_nearby": 29,
+      "base_health": 100.0
+    },
+    {
+      "time": 820.5,
+      "enemy_count": 7,
+      "base_position": [
+        42.5,
+        93.5
+      ],
+      "our_army_nearby": 29,
+      "base_health": 100.0
+    },
+    {
+      "time": 820.7,
+      "enemy_count": 7,
+      "base_position": [
+        42.5,
+        93.5
+      ],
+      "our_army_nearby": 29,
+      "base_health": 100.0
+    },
+    {
+      "time": 820.9,
+      "enemy_count": 7,
+      "base_position": [
+        42.5,
+        93.5
+      ],
+      "our_army_nearby": 30,
+      "base_health": 100.0
+    },
+    {
+      "time": 821.1,
+      "enemy_count": 7,
+      "base_position": [
+        42.5,
+        93.5
+      ],
+      "our_army_nearby": 30,
+      "base_health": 100.0
+    },
+    {
+      "time": 821.2,
+      "enemy_count": 7,
+      "base_position": [
+        42.5,
+        93.5
+      ],
+      "our_army_nearby": 30,
+      "base_health": 100.0
+    },
+    {
+      "time": 821.4,
+      "enemy_count": 7,
+      "base_position": [
+        42.5,
+        93.5
+      ],
+      "our_army_nearby": 28,
+      "base_health": 100.0
+    },
+    {
+      "time": 821.6,
+      "enemy_count": 6,
+      "base_position": [
+        42.5,
+        93.5
+      ],
+      "our_army_nearby": 28,
+      "base_health": 100.0
+    },
+    {
+      "time": 821.8,
+      "enemy_count": 6,
+      "base_position": [
+        42.5,
+        93.5
+      ],
+      "our_army_nearby": 29,
+      "base_health": 100.0
+    },
+    {
+      "time": 822.0,
+      "enemy_count": 6,
+      "base_position": [
+        42.5,
+        93.5
+      ],
+      "our_army_nearby": 29,
+      "base_health": 100.0
+    },
+    {
+      "time": 822.1,
+      "enemy_count": 6,
+      "base_position": [
+        42.5,
+        93.5
+      ],
+      "our_army_nearby": 29,
+      "base_health": 100.0
+    },
+    {
+      "time": 822.3,
+      "enemy_count": 6,
+      "base_position": [
+        42.5,
+        93.5
+      ],
+      "our_army_nearby": 31,
+      "base_health": 100.0
+    },
+    {
+      "time": 822.5,
+      "enemy_count": 6,
+      "base_position": [
+        42.5,
+        93.5
+      ],
+      "our_army_nearby": 31,
+      "base_health": 100.0
+    },
+    {
+      "time": 822.7,
+      "enemy_count": 6,
+      "base_position": [
+        42.5,
+        93.5
+      ],
+      "our_army_nearby": 31,
+      "base_health": 100.0
+    },
+    {
+      "time": 822.9,
+      "enemy_count": 6,
+      "base_position": [
+        42.5,
+        93.5
+      ],
+      "our_army_nearby": 32,
+      "base_health": 100.0
+    },
+    {
+      "time": 823.0,
+      "enemy_count": 5,
+      "base_position": [
+        42.5,
+        93.5
+      ],
+      "our_army_nearby": 31,
+      "base_health": 100.0
+    },
+    {
+      "time": 823.2,
+      "enemy_count": 5,
+      "base_position": [
+        42.5,
+        93.5
+      ],
+      "our_army_nearby": 31,
+      "base_health": 100.0
+    },
+    {
+      "time": 823.4,
+      "enemy_count": 5,
+      "base_position": [
+        42.5,
+        93.5
+      ],
+      "our_army_nearby": 31,
+      "base_health": 100.0
+    },
+    {
+      "time": 1113.0,
+      "enemy_count": 5,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 22,
+      "base_health": 100.0
+    },
+    {
+      "time": 1113.2,
+      "enemy_count": 5,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 23,
+      "base_health": 100.0
+    },
+    {
+      "time": 1113.4,
+      "enemy_count": 6,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 25,
+      "base_health": 100.0
+    },
+    {
+      "time": 1113.6,
+      "enemy_count": 5,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 25,
+      "base_health": 100.0
+    },
+    {
+      "time": 1113.9,
+      "enemy_count": 5,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 25,
+      "base_health": 100.0
+    },
+    {
+      "time": 1114.1,
+      "enemy_count": 6,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 25,
+      "base_health": 100.0
+    },
+    {
+      "time": 1114.3,
+      "enemy_count": 6,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 25,
+      "base_health": 100.0
+    },
+    {
+      "time": 1114.5,
+      "enemy_count": 6,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 25,
+      "base_health": 100.0
+    },
+    {
+      "time": 1114.6,
+      "enemy_count": 6,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 24,
+      "base_health": 100.0
+    },
+    {
+      "time": 1114.8,
+      "enemy_count": 6,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 24,
+      "base_health": 100.0
+    },
+    {
+      "time": 1115.0,
+      "enemy_count": 6,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 24,
+      "base_health": 100.0
+    },
+    {
+      "time": 1115.2,
+      "enemy_count": 5,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 24,
+      "base_health": 100.0
+    },
+    {
+      "time": 1137.5,
+      "enemy_count": 5,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 16,
+      "base_health": 100.0
+    },
+    {
+      "time": 1137.7,
+      "enemy_count": 5,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 16,
+      "base_health": 100.0
+    },
+    {
+      "time": 1137.9,
+      "enemy_count": 5,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 16,
+      "base_health": 100.0
+    },
+    {
+      "time": 1138.0,
+      "enemy_count": 5,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 16,
+      "base_health": 100.0
+    },
+    {
+      "time": 1138.2,
+      "enemy_count": 5,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 16,
+      "base_health": 100.0
+    },
+    {
+      "time": 1138.4,
+      "enemy_count": 5,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 16,
+      "base_health": 100.0
+    },
+    {
+      "time": 1138.6,
+      "enemy_count": 5,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 16,
+      "base_health": 100.0
+    },
+    {
+      "time": 1138.8,
+      "enemy_count": 5,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 16,
+      "base_health": 100.0
+    },
+    {
+      "time": 1138.9,
+      "enemy_count": 5,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 16,
+      "base_health": 100.0
+    },
+    {
+      "time": 1139.1,
+      "enemy_count": 5,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 16,
+      "base_health": 100.0
+    },
+    {
+      "time": 1139.3,
+      "enemy_count": 5,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 16,
+      "base_health": 100.0
+    },
+    {
+      "time": 1139.5,
+      "enemy_count": 5,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 16,
+      "base_health": 100.0
+    },
+    {
+      "time": 1139.6,
+      "enemy_count": 5,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 16,
+      "base_health": 100.0
+    },
+    {
+      "time": 1139.8,
+      "enemy_count": 5,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 16,
+      "base_health": 100.0
+    },
+    {
+      "time": 1140.0,
+      "enemy_count": 5,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 16,
+      "base_health": 100.0
+    },
+    {
+      "time": 1140.2,
+      "enemy_count": 5,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 17,
+      "base_health": 100.0
+    },
+    {
+      "time": 1140.4,
+      "enemy_count": 5,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 17,
+      "base_health": 100.0
+    },
+    {
+      "time": 1140.5,
+      "enemy_count": 5,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 17,
+      "base_health": 100.0
+    },
+    {
+      "time": 1140.7,
+      "enemy_count": 5,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 17,
+      "base_health": 100.0
+    },
+    {
+      "time": 1197.7,
+      "enemy_count": 5,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 14,
+      "base_health": 100.0
+    },
+    {
+      "time": 1197.9,
+      "enemy_count": 5,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 14,
+      "base_health": 100.0
+    },
+    {
+      "time": 1198.0,
+      "enemy_count": 5,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 14,
+      "base_health": 100.0
+    },
+    {
+      "time": 1198.2,
+      "enemy_count": 6,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 14,
+      "base_health": 100.0
+    },
+    {
+      "time": 1198.4,
+      "enemy_count": 6,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 14,
+      "base_health": 100.0
+    },
+    {
+      "time": 1198.6,
+      "enemy_count": 8,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 14,
+      "base_health": 100.0
+    },
+    {
+      "time": 1198.8,
+      "enemy_count": 8,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 14,
+      "base_health": 100.0
+    },
+    {
+      "time": 1198.9,
+      "enemy_count": 10,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 14,
+      "base_health": 100.0
+    },
+    {
+      "time": 1199.1,
+      "enemy_count": 12,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 14,
+      "base_health": 100.0
+    },
+    {
+      "time": 1199.3,
+      "enemy_count": 12,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 14,
+      "base_health": 100.0
+    },
+    {
+      "time": 1199.5,
+      "enemy_count": 14,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 14,
+      "base_health": 100.0
+    },
+    {
+      "time": 1199.6,
+      "enemy_count": 16,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 14,
+      "base_health": 100.0
+    },
+    {
+      "time": 1199.8,
+      "enemy_count": 16,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 14,
+      "base_health": 100.0
+    },
+    {
+      "time": 1200.0,
+      "enemy_count": 17,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 14,
+      "base_health": 100.0
+    },
+    {
+      "time": 1200.2,
+      "enemy_count": 17,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 14,
+      "base_health": 100.0
+    },
+    {
+      "time": 1200.4,
+      "enemy_count": 17,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 14,
+      "base_health": 100.0
+    },
+    {
+      "time": 1200.5,
+      "enemy_count": 17,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 14,
+      "base_health": 100.0
+    },
+    {
+      "time": 1200.7,
+      "enemy_count": 17,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 14,
+      "base_health": 100.0
+    },
+    {
+      "time": 1200.9,
+      "enemy_count": 16,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 14,
+      "base_health": 100.0
+    },
+    {
+      "time": 1201.1,
+      "enemy_count": 16,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 14,
+      "base_health": 100.0
+    },
+    {
+      "time": 1201.2,
+      "enemy_count": 15,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 13,
+      "base_health": 100.0
+    },
+    {
+      "time": 1201.4,
+      "enemy_count": 14,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 13,
+      "base_health": 100.0
+    },
+    {
+      "time": 1201.6,
+      "enemy_count": 13,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 13,
+      "base_health": 100.0
+    },
+    {
+      "time": 1201.8,
+      "enemy_count": 12,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 13,
+      "base_health": 100.0
+    },
+    {
+      "time": 1202.0,
+      "enemy_count": 12,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 13,
+      "base_health": 100.0
+    },
+    {
+      "time": 1202.1,
+      "enemy_count": 12,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 12,
+      "base_health": 100.0
+    },
+    {
+      "time": 1202.3,
+      "enemy_count": 11,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 12,
+      "base_health": 100.0
+    },
+    {
+      "time": 1202.5,
+      "enemy_count": 11,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 12,
+      "base_health": 100.0
+    },
+    {
+      "time": 1202.7,
+      "enemy_count": 11,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 12,
+      "base_health": 100.0
+    },
+    {
+      "time": 1202.9,
+      "enemy_count": 12,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 12,
+      "base_health": 100.0
+    },
+    {
+      "time": 1203.0,
+      "enemy_count": 13,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 11,
+      "base_health": 100.0
+    },
+    {
+      "time": 1203.2,
+      "enemy_count": 13,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 12,
+      "base_health": 100.0
+    },
+    {
+      "time": 1203.4,
+      "enemy_count": 14,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 12,
+      "base_health": 100.0
+    },
+    {
+      "time": 1203.6,
+      "enemy_count": 14,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 11,
+      "base_health": 95.1
+    },
+    {
+      "time": 1203.8,
+      "enemy_count": 15,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 10,
+      "base_health": 93.9
+    },
+    {
+      "time": 1203.9,
+      "enemy_count": 16,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 9,
+      "base_health": 93.9
+    },
+    {
+      "time": 1204.1,
+      "enemy_count": 16,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 9,
+      "base_health": 93.9
+    },
+    {
+      "time": 1204.3,
+      "enemy_count": 15,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 9,
+      "base_health": 93.9
+    },
+    {
+      "time": 1204.5,
+      "enemy_count": 16,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 7,
+      "base_health": 93.9
+    },
+    {
+      "time": 1204.6,
+      "enemy_count": 16,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 7,
+      "base_health": 93.9
+    },
+    {
+      "time": 1204.8,
+      "enemy_count": 14,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 7,
+      "base_health": 93.9
+    },
+    {
+      "time": 1205.0,
+      "enemy_count": 14,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 6,
+      "base_health": 93.9
+    },
+    {
+      "time": 1205.2,
+      "enemy_count": 16,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 7,
+      "base_health": 93.9
+    },
+    {
+      "time": 1205.4,
+      "enemy_count": 16,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 7,
+      "base_health": 93.9
+    },
+    {
+      "time": 1205.5,
+      "enemy_count": 16,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 7,
+      "base_health": 93.9
+    },
+    {
+      "time": 1205.7,
+      "enemy_count": 17,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 6,
+      "base_health": 92.8
+    },
+    {
+      "time": 1205.9,
+      "enemy_count": 17,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 6,
+      "base_health": 91.6
+    },
+    {
+      "time": 1206.1,
+      "enemy_count": 17,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 5,
+      "base_health": 91.6
+    },
+    {
+      "time": 1206.2,
+      "enemy_count": 17,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 5,
+      "base_health": 91.6
+    },
+    {
+      "time": 1206.4,
+      "enemy_count": 17,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 4,
+      "base_health": 90.4
+    },
+    {
+      "time": 1206.6,
+      "enemy_count": 17,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 4,
+      "base_health": 90.4
+    },
+    {
+      "time": 1206.8,
+      "enemy_count": 16,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 4,
+      "base_health": 90.4
+    },
+    {
+      "time": 1207.0,
+      "enemy_count": 15,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 4,
+      "base_health": 90.4
+    },
+    {
+      "time": 1207.1,
+      "enemy_count": 14,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 4,
+      "base_health": 90.4
+    },
+    {
+      "time": 1207.3,
+      "enemy_count": 14,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 4,
+      "base_health": 90.4
+    },
+    {
+      "time": 1207.5,
+      "enemy_count": 13,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 4,
+      "base_health": 90.4
+    },
+    {
+      "time": 1207.7,
+      "enemy_count": 13,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 4,
+      "base_health": 90.4
+    },
+    {
+      "time": 1207.9,
+      "enemy_count": 13,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 4,
+      "base_health": 90.4
+    },
+    {
+      "time": 1208.0,
+      "enemy_count": 14,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 3,
+      "base_health": 90.4
+    },
+    {
+      "time": 1208.2,
+      "enemy_count": 14,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 2,
+      "base_health": 89.3
+    },
+    {
+      "time": 1208.4,
+      "enemy_count": 14,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 2,
+      "base_health": 89.3
+    },
+    {
+      "time": 1208.6,
+      "enemy_count": 14,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 2,
+      "base_health": 89.3
+    },
+    {
+      "time": 1208.8,
+      "enemy_count": 13,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 2,
+      "base_health": 89.3
+    },
+    {
+      "time": 1208.9,
+      "enemy_count": 12,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 2,
+      "base_health": 89.3
+    },
+    {
+      "time": 1209.1,
+      "enemy_count": 12,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 2,
+      "base_health": 89.3
+    },
+    {
+      "time": 1209.3,
+      "enemy_count": 12,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 2,
+      "base_health": 89.3
+    },
+    {
+      "time": 1209.5,
+      "enemy_count": 12,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 2,
+      "base_health": 89.3
+    },
+    {
+      "time": 1209.6,
+      "enemy_count": 12,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 2,
+      "base_health": 89.3
+    },
+    {
+      "time": 1209.8,
+      "enemy_count": 11,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 2,
+      "base_health": 89.3
+    },
+    {
+      "time": 1210.0,
+      "enemy_count": 11,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 2,
+      "base_health": 89.3
+    },
+    {
+      "time": 1210.2,
+      "enemy_count": 12,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 2,
+      "base_health": 89.3
+    },
+    {
+      "time": 1210.4,
+      "enemy_count": 12,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 2,
+      "base_health": 88.1
+    },
+    {
+      "time": 1210.5,
+      "enemy_count": 12,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 2,
+      "base_health": 88.1
+    },
+    {
+      "time": 1210.7,
+      "enemy_count": 12,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 2,
+      "base_health": 88.2
+    },
+    {
+      "time": 1210.9,
+      "enemy_count": 12,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 2,
+      "base_health": 88.2
+    },
+    {
+      "time": 1211.1,
+      "enemy_count": 12,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 2,
+      "base_health": 88.2
+    },
+    {
+      "time": 1211.2,
+      "enemy_count": 12,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 2,
+      "base_health": 88.2
+    },
+    {
+      "time": 1211.4,
+      "enemy_count": 12,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 2,
+      "base_health": 88.2
+    },
+    {
+      "time": 1211.6,
+      "enemy_count": 12,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 2,
+      "base_health": 88.2
+    },
+    {
+      "time": 1211.8,
+      "enemy_count": 12,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 3,
+      "base_health": 88.2
+    },
+    {
+      "time": 1212.0,
+      "enemy_count": 12,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 4,
+      "base_health": 88.2
+    },
+    {
+      "time": 1212.1,
+      "enemy_count": 12,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 4,
+      "base_health": 88.2
+    },
+    {
+      "time": 1212.3,
+      "enemy_count": 12,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 5,
+      "base_health": 87.0
+    },
+    {
+      "time": 1212.5,
+      "enemy_count": 12,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 5,
+      "base_health": 85.8
+    },
+    {
+      "time": 1212.7,
+      "enemy_count": 12,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 5,
+      "base_health": 85.8
+    },
+    {
+      "time": 1212.9,
+      "enemy_count": 12,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 5,
+      "base_health": 85.8
+    },
+    {
+      "time": 1213.0,
+      "enemy_count": 12,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 4,
+      "base_health": 80.9
+    },
+    {
+      "time": 1213.2,
+      "enemy_count": 12,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 4,
+      "base_health": 80.9
+    },
+    {
+      "time": 1213.4,
+      "enemy_count": 12,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 4,
+      "base_health": 80.9
+    },
+    {
+      "time": 1213.6,
+      "enemy_count": 12,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 2,
+      "base_health": 80.9
+    },
+    {
+      "time": 1213.8,
+      "enemy_count": 12,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 2,
+      "base_health": 80.9
+    },
+    {
+      "time": 1213.9,
+      "enemy_count": 12,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 3,
+      "base_health": 80.9
+    },
+    {
+      "time": 1214.1,
+      "enemy_count": 12,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 3,
+      "base_health": 80.9
+    },
+    {
+      "time": 1214.3,
+      "enemy_count": 12,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 3,
+      "base_health": 80.9
+    },
+    {
+      "time": 1214.5,
+      "enemy_count": 12,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 3,
+      "base_health": 80.9
+    },
+    {
+      "time": 1214.6,
+      "enemy_count": 12,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 2,
+      "base_health": 81.0
+    },
+    {
+      "time": 1214.8,
+      "enemy_count": 11,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 2,
+      "base_health": 81.0
+    },
+    {
+      "time": 1215.0,
+      "enemy_count": 11,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 2,
+      "base_health": 81.0
+    },
+    {
+      "time": 1215.2,
+      "enemy_count": 11,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 2,
+      "base_health": 81.0
+    },
+    {
+      "time": 1215.4,
+      "enemy_count": 11,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 2,
+      "base_health": 81.0
+    },
+    {
+      "time": 1215.5,
+      "enemy_count": 11,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 2,
+      "base_health": 81.0
+    },
+    {
+      "time": 1215.7,
+      "enemy_count": 11,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 2,
+      "base_health": 81.0
+    },
+    {
+      "time": 1215.9,
+      "enemy_count": 11,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 2,
+      "base_health": 81.0
+    },
+    {
+      "time": 1216.1,
+      "enemy_count": 11,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 2,
+      "base_health": 81.0
+    },
+    {
+      "time": 1216.2,
+      "enemy_count": 11,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 2,
+      "base_health": 81.0
+    },
+    {
+      "time": 1216.4,
+      "enemy_count": 11,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 2,
+      "base_health": 81.0
+    },
+    {
+      "time": 1216.6,
+      "enemy_count": 11,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 2,
+      "base_health": 81.0
+    },
+    {
+      "time": 1216.8,
+      "enemy_count": 11,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 2,
+      "base_health": 81.0
+    },
+    {
+      "time": 1217.0,
+      "enemy_count": 11,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 2,
+      "base_health": 81.0
+    },
+    {
+      "time": 1217.1,
+      "enemy_count": 11,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 2,
+      "base_health": 81.0
+    },
+    {
+      "time": 1217.3,
+      "enemy_count": 11,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 2,
+      "base_health": 81.0
+    },
+    {
+      "time": 1217.5,
+      "enemy_count": 11,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 2,
+      "base_health": 81.0
+    },
+    {
+      "time": 1217.7,
+      "enemy_count": 12,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 2,
+      "base_health": 81.0
+    },
+    {
+      "time": 1217.9,
+      "enemy_count": 12,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 2,
+      "base_health": 81.0
+    },
+    {
+      "time": 1218.0,
+      "enemy_count": 11,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 2,
+      "base_health": 81.0
+    },
+    {
+      "time": 1218.2,
+      "enemy_count": 11,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 2,
+      "base_health": 81.0
+    },
+    {
+      "time": 1218.4,
+      "enemy_count": 11,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 2,
+      "base_health": 81.0
+    },
+    {
+      "time": 1218.6,
+      "enemy_count": 11,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 2,
+      "base_health": 81.1
+    },
+    {
+      "time": 1218.8,
+      "enemy_count": 11,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 2,
+      "base_health": 81.1
+    },
+    {
+      "time": 1218.9,
+      "enemy_count": 11,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 2,
+      "base_health": 76.1
+    },
+    {
+      "time": 1219.1,
+      "enemy_count": 11,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 2,
+      "base_health": 76.1
+    },
+    {
+      "time": 1219.3,
+      "enemy_count": 11,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 2,
+      "base_health": 71.2
+    },
+    {
+      "time": 1219.5,
+      "enemy_count": 11,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 2,
+      "base_health": 71.2
+    },
+    {
+      "time": 1219.6,
+      "enemy_count": 11,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 2,
+      "base_health": 71.2
+    },
+    {
+      "time": 1219.8,
+      "enemy_count": 11,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 2,
+      "base_health": 71.2
+    },
+    {
+      "time": 1220.0,
+      "enemy_count": 11,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 2,
+      "base_health": 71.2
+    },
+    {
+      "time": 1220.2,
+      "enemy_count": 11,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 2,
+      "base_health": 71.2
+    },
+    {
+      "time": 1220.4,
+      "enemy_count": 11,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 2,
+      "base_health": 71.2
+    },
+    {
+      "time": 1220.5,
+      "enemy_count": 11,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 2,
+      "base_health": 71.2
+    },
+    {
+      "time": 1220.7,
+      "enemy_count": 10,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 2,
+      "base_health": 71.2
+    },
+    {
+      "time": 1220.9,
+      "enemy_count": 11,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 2,
+      "base_health": 71.2
+    },
+    {
+      "time": 1221.1,
+      "enemy_count": 11,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 2,
+      "base_health": 71.2
+    },
+    {
+      "time": 1221.2,
+      "enemy_count": 11,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 2,
+      "base_health": 71.3
+    },
+    {
+      "time": 1221.4,
+      "enemy_count": 11,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 2,
+      "base_health": 71.3
+    },
+    {
+      "time": 1221.6,
+      "enemy_count": 11,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 2,
+      "base_health": 71.3
+    },
+    {
+      "time": 1221.8,
+      "enemy_count": 11,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 2,
+      "base_health": 71.3
+    },
+    {
+      "time": 1222.0,
+      "enemy_count": 11,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 2,
+      "base_health": 71.3
+    },
+    {
+      "time": 1222.1,
+      "enemy_count": 10,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 2,
+      "base_health": 71.3
+    },
+    {
+      "time": 1222.3,
+      "enemy_count": 10,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 2,
+      "base_health": 71.3
+    },
+    {
+      "time": 1222.5,
+      "enemy_count": 10,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 2,
+      "base_health": 71.3
+    },
+    {
+      "time": 1222.7,
+      "enemy_count": 9,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 2,
+      "base_health": 71.3
+    },
+    {
+      "time": 1222.9,
+      "enemy_count": 10,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 2,
+      "base_health": 71.3
+    },
+    {
+      "time": 1223.0,
+      "enemy_count": 10,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 2,
+      "base_health": 71.3
+    },
+    {
+      "time": 1223.2,
+      "enemy_count": 10,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 2,
+      "base_health": 71.3
+    },
+    {
+      "time": 1223.4,
+      "enemy_count": 10,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 2,
+      "base_health": 71.3
+    },
+    {
+      "time": 1223.6,
+      "enemy_count": 10,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 2,
+      "base_health": 71.3
+    },
+    {
+      "time": 1223.8,
+      "enemy_count": 10,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 2,
+      "base_health": 71.3
+    },
+    {
+      "time": 1223.9,
+      "enemy_count": 10,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 2,
+      "base_health": 71.3
+    },
+    {
+      "time": 1224.1,
+      "enemy_count": 10,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 2,
+      "base_health": 71.3
+    },
+    {
+      "time": 1224.3,
+      "enemy_count": 10,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 2,
+      "base_health": 71.3
+    },
+    {
+      "time": 1224.5,
+      "enemy_count": 10,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 2,
+      "base_health": 71.3
+    },
+    {
+      "time": 1224.6,
+      "enemy_count": 10,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 3,
+      "base_health": 71.3
+    },
+    {
+      "time": 1224.8,
+      "enemy_count": 10,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 3,
+      "base_health": 71.3
+    },
+    {
+      "time": 1225.0,
+      "enemy_count": 10,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 3,
+      "base_health": 71.3
+    },
+    {
+      "time": 1225.2,
+      "enemy_count": 10,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 3,
+      "base_health": 71.4
+    },
+    {
+      "time": 1225.4,
+      "enemy_count": 10,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 3,
+      "base_health": 71.4
+    },
+    {
+      "time": 1225.5,
+      "enemy_count": 10,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 3,
+      "base_health": 71.4
+    },
+    {
+      "time": 1225.7,
+      "enemy_count": 10,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 3,
+      "base_health": 71.4
+    },
+    {
+      "time": 1225.9,
+      "enemy_count": 10,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 3,
+      "base_health": 71.4
+    },
+    {
+      "time": 1226.1,
+      "enemy_count": 10,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 3,
+      "base_health": 71.4
+    },
+    {
+      "time": 1226.2,
+      "enemy_count": 10,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 3,
+      "base_health": 71.4
+    },
+    {
+      "time": 1226.4,
+      "enemy_count": 10,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 3,
+      "base_health": 71.4
+    },
+    {
+      "time": 1226.6,
+      "enemy_count": 10,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 3,
+      "base_health": 71.4
+    },
+    {
+      "time": 1226.8,
+      "enemy_count": 10,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 3,
+      "base_health": 71.4
+    },
+    {
+      "time": 1227.0,
+      "enemy_count": 10,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 3,
+      "base_health": 71.4
+    },
+    {
+      "time": 1227.1,
+      "enemy_count": 10,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 3,
+      "base_health": 71.4
+    },
+    {
+      "time": 1227.3,
+      "enemy_count": 10,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 3,
+      "base_health": 71.4
+    },
+    {
+      "time": 1227.5,
+      "enemy_count": 10,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 3,
+      "base_health": 71.4
+    },
+    {
+      "time": 1227.7,
+      "enemy_count": 10,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 3,
+      "base_health": 71.4
+    },
+    {
+      "time": 1227.9,
+      "enemy_count": 10,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 3,
+      "base_health": 71.4
+    },
+    {
+      "time": 1228.0,
+      "enemy_count": 10,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 3,
+      "base_health": 71.4
+    },
+    {
+      "time": 1228.2,
+      "enemy_count": 10,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 3,
+      "base_health": 71.4
+    },
+    {
+      "time": 1228.4,
+      "enemy_count": 10,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 3,
+      "base_health": 71.4
+    },
+    {
+      "time": 1228.6,
+      "enemy_count": 10,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 3,
+      "base_health": 71.4
+    },
+    {
+      "time": 1228.8,
+      "enemy_count": 10,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 3,
+      "base_health": 71.4
+    },
+    {
+      "time": 1228.9,
+      "enemy_count": 10,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 3,
+      "base_health": 71.4
+    },
+    {
+      "time": 1229.1,
+      "enemy_count": 10,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 3,
+      "base_health": 71.5
+    },
+    {
+      "time": 1229.3,
+      "enemy_count": 10,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 3,
+      "base_health": 71.5
+    },
+    {
+      "time": 1229.5,
+      "enemy_count": 10,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 3,
+      "base_health": 71.5
+    },
+    {
+      "time": 1229.6,
+      "enemy_count": 10,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 3,
+      "base_health": 71.5
+    },
+    {
+      "time": 1229.8,
+      "enemy_count": 9,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 3,
+      "base_health": 71.5
+    },
+    {
+      "time": 1230.0,
+      "enemy_count": 9,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 3,
+      "base_health": 71.5
+    },
+    {
+      "time": 1230.2,
+      "enemy_count": 9,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 3,
+      "base_health": 71.5
+    },
+    {
+      "time": 1230.4,
+      "enemy_count": 9,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 3,
+      "base_health": 71.5
+    },
+    {
+      "time": 1230.5,
+      "enemy_count": 9,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 3,
+      "base_health": 71.5
+    },
+    {
+      "time": 1230.7,
+      "enemy_count": 9,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 3,
+      "base_health": 71.5
+    },
+    {
+      "time": 1230.9,
+      "enemy_count": 9,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 3,
+      "base_health": 71.5
+    },
+    {
+      "time": 1231.1,
+      "enemy_count": 9,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 3,
+      "base_health": 71.5
+    },
+    {
+      "time": 1231.2,
+      "enemy_count": 9,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 3,
+      "base_health": 71.5
+    },
+    {
+      "time": 1231.4,
+      "enemy_count": 9,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 3,
+      "base_health": 71.5
+    },
+    {
+      "time": 1231.6,
+      "enemy_count": 9,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 3,
+      "base_health": 71.5
+    },
+    {
+      "time": 1231.8,
+      "enemy_count": 9,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 3,
+      "base_health": 71.5
+    },
+    {
+      "time": 1232.0,
+      "enemy_count": 9,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 3,
+      "base_health": 71.5
+    },
+    {
+      "time": 1232.1,
+      "enemy_count": 9,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 3,
+      "base_health": 71.5
+    },
+    {
+      "time": 1232.3,
+      "enemy_count": 9,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 3,
+      "base_health": 71.5
+    },
+    {
+      "time": 1232.5,
+      "enemy_count": 9,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 4,
+      "base_health": 71.5
+    },
+    {
+      "time": 1232.7,
+      "enemy_count": 9,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 4,
+      "base_health": 71.5
+    },
+    {
+      "time": 1232.9,
+      "enemy_count": 9,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 4,
+      "base_health": 71.5
+    },
+    {
+      "time": 1233.0,
+      "enemy_count": 9,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 10,
+      "base_health": 71.6
+    },
+    {
+      "time": 1233.2,
+      "enemy_count": 10,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 10,
+      "base_health": 71.6
+    },
+    {
+      "time": 1233.4,
+      "enemy_count": 11,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 9,
+      "base_health": 71.6
+    },
+    {
+      "time": 1233.6,
+      "enemy_count": 11,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 9,
+      "base_health": 71.6
+    },
+    {
+      "time": 1233.8,
+      "enemy_count": 13,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 9,
+      "base_health": 71.6
+    },
+    {
+      "time": 1233.9,
+      "enemy_count": 14,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 9,
+      "base_health": 71.6
+    },
+    {
+      "time": 1234.1,
+      "enemy_count": 15,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 8,
+      "base_health": 71.6
+    },
+    {
+      "time": 1234.3,
+      "enemy_count": 15,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 8,
+      "base_health": 71.6
+    },
+    {
+      "time": 1234.5,
+      "enemy_count": 16,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 7,
+      "base_health": 71.6
+    },
+    {
+      "time": 1234.6,
+      "enemy_count": 16,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 7,
+      "base_health": 71.6
+    },
+    {
+      "time": 1234.8,
+      "enemy_count": 17,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 7,
+      "base_health": 71.6
+    },
+    {
+      "time": 1235.0,
+      "enemy_count": 17,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 7,
+      "base_health": 71.6
+    },
+    {
+      "time": 1235.2,
+      "enemy_count": 17,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 6,
+      "base_health": 71.6
+    },
+    {
+      "time": 1235.4,
+      "enemy_count": 18,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 7,
+      "base_health": 71.6
+    },
+    {
+      "time": 1235.5,
+      "enemy_count": 18,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 6,
+      "base_health": 71.6
+    },
+    {
+      "time": 1235.7,
+      "enemy_count": 18,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 6,
+      "base_health": 71.6
+    },
+    {
+      "time": 1235.9,
+      "enemy_count": 18,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 5,
+      "base_health": 71.6
+    },
+    {
+      "time": 1236.1,
+      "enemy_count": 18,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 4,
+      "base_health": 71.6
+    },
+    {
+      "time": 1236.2,
+      "enemy_count": 18,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 4,
+      "base_health": 71.6
+    },
+    {
+      "time": 1236.4,
+      "enemy_count": 18,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 4,
+      "base_health": 71.6
+    },
+    {
+      "time": 1236.6,
+      "enemy_count": 18,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 3,
+      "base_health": 71.6
+    },
+    {
+      "time": 1236.8,
+      "enemy_count": 18,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 3,
+      "base_health": 71.6
+    },
+    {
+      "time": 1237.0,
+      "enemy_count": 17,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 3,
+      "base_health": 71.7
+    },
+    {
+      "time": 1237.1,
+      "enemy_count": 18,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 3,
+      "base_health": 71.7
+    },
+    {
+      "time": 1237.3,
+      "enemy_count": 18,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 3,
+      "base_health": 71.7
+    },
+    {
+      "time": 1237.5,
+      "enemy_count": 18,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 3,
+      "base_health": 71.7
+    },
+    {
+      "time": 1237.7,
+      "enemy_count": 18,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 3,
+      "base_health": 71.7
+    },
+    {
+      "time": 1237.9,
+      "enemy_count": 18,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 3,
+      "base_health": 71.7
+    },
+    {
+      "time": 1238.0,
+      "enemy_count": 18,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 3,
+      "base_health": 71.7
+    },
+    {
+      "time": 1238.2,
+      "enemy_count": 18,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 3,
+      "base_health": 71.7
+    },
+    {
+      "time": 1238.4,
+      "enemy_count": 18,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 3,
+      "base_health": 71.7
+    },
+    {
+      "time": 1238.6,
+      "enemy_count": 18,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 3,
+      "base_health": 71.7
+    },
+    {
+      "time": 1238.8,
+      "enemy_count": 18,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 3,
+      "base_health": 71.7
+    },
+    {
+      "time": 1238.9,
+      "enemy_count": 18,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 3,
+      "base_health": 71.7
+    },
+    {
+      "time": 1239.1,
+      "enemy_count": 18,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 3,
+      "base_health": 71.7
+    },
+    {
+      "time": 1239.3,
+      "enemy_count": 18,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 3,
+      "base_health": 71.7
+    },
+    {
+      "time": 1239.5,
+      "enemy_count": 18,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 3,
+      "base_health": 71.7
+    },
+    {
+      "time": 1239.6,
+      "enemy_count": 17,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 3,
+      "base_health": 71.7
+    },
+    {
+      "time": 1239.8,
+      "enemy_count": 18,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 3,
+      "base_health": 71.7
+    },
+    {
+      "time": 1240.0,
+      "enemy_count": 18,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 3,
+      "base_health": 71.7
+    },
+    {
+      "time": 1240.2,
+      "enemy_count": 18,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 3,
+      "base_health": 71.7
+    },
+    {
+      "time": 1240.4,
+      "enemy_count": 18,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 3,
+      "base_health": 71.7
+    },
+    {
+      "time": 1240.5,
+      "enemy_count": 18,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 3,
+      "base_health": 71.7
+    },
+    {
+      "time": 1240.7,
+      "enemy_count": 18,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 3,
+      "base_health": 71.7
+    },
+    {
+      "time": 1240.9,
+      "enemy_count": 18,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 3,
+      "base_health": 71.8
+    },
+    {
+      "time": 1241.1,
+      "enemy_count": 18,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 3,
+      "base_health": 71.8
+    },
+    {
+      "time": 1241.2,
+      "enemy_count": 18,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 3,
+      "base_health": 71.8
+    },
+    {
+      "time": 1241.4,
+      "enemy_count": 18,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 3,
+      "base_health": 71.8
+    },
+    {
+      "time": 1241.6,
+      "enemy_count": 17,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 3,
+      "base_health": 71.8
+    },
+    {
+      "time": 1241.8,
+      "enemy_count": 16,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 3,
+      "base_health": 71.8
+    },
+    {
+      "time": 1242.0,
+      "enemy_count": 16,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 3,
+      "base_health": 71.8
+    },
+    {
+      "time": 1242.1,
+      "enemy_count": 16,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 3,
+      "base_health": 71.8
+    },
+    {
+      "time": 1242.3,
+      "enemy_count": 14,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 3,
+      "base_health": 71.8
+    },
+    {
+      "time": 1242.5,
+      "enemy_count": 14,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 3,
+      "base_health": 71.8
+    },
+    {
+      "time": 1242.7,
+      "enemy_count": 15,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 3,
+      "base_health": 71.8
+    },
+    {
+      "time": 1242.9,
+      "enemy_count": 14,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 3,
+      "base_health": 71.8
+    },
+    {
+      "time": 1243.0,
+      "enemy_count": 14,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 3,
+      "base_health": 71.8
+    },
+    {
+      "time": 1243.2,
+      "enemy_count": 14,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 3,
+      "base_health": 71.8
+    },
+    {
+      "time": 1243.4,
+      "enemy_count": 14,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 3,
+      "base_health": 71.8
+    },
+    {
+      "time": 1243.6,
+      "enemy_count": 15,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 3,
+      "base_health": 71.8
+    },
+    {
+      "time": 1243.8,
+      "enemy_count": 15,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 3,
+      "base_health": 71.8
+    },
+    {
+      "time": 1243.9,
+      "enemy_count": 15,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 3,
+      "base_health": 71.8
+    },
+    {
+      "time": 1244.1,
+      "enemy_count": 16,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 3,
+      "base_health": 70.6
+    },
+    {
+      "time": 1244.3,
+      "enemy_count": 17,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 3,
+      "base_health": 70.6
+    },
+    {
+      "time": 1244.5,
+      "enemy_count": 18,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 3,
+      "base_health": 70.6
+    },
+    {
+      "time": 1244.6,
+      "enemy_count": 19,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 3,
+      "base_health": 70.6
+    },
+    {
+      "time": 1244.8,
+      "enemy_count": 19,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 3,
+      "base_health": 70.6
+    },
+    {
+      "time": 1245.0,
+      "enemy_count": 19,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 3,
+      "base_health": 70.6
+    },
+    {
+      "time": 1245.2,
+      "enemy_count": 19,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 3,
+      "base_health": 70.6
+    },
+    {
+      "time": 1245.4,
+      "enemy_count": 18,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 3,
+      "base_health": 70.6
+    },
+    {
+      "time": 1245.5,
+      "enemy_count": 18,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 3,
+      "base_health": 70.6
+    },
+    {
+      "time": 1245.7,
+      "enemy_count": 18,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 3,
+      "base_health": 70.6
+    },
+    {
+      "time": 1245.9,
+      "enemy_count": 18,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 3,
+      "base_health": 70.6
+    },
+    {
+      "time": 1246.1,
+      "enemy_count": 18,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 3,
+      "base_health": 70.6
+    },
+    {
+      "time": 1246.2,
+      "enemy_count": 18,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 3,
+      "base_health": 70.6
+    },
+    {
+      "time": 1246.4,
+      "enemy_count": 18,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 3,
+      "base_health": 70.6
+    },
+    {
+      "time": 1246.6,
+      "enemy_count": 18,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 3,
+      "base_health": 70.6
+    },
+    {
+      "time": 1246.8,
+      "enemy_count": 18,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 3,
+      "base_health": 70.6
+    },
+    {
+      "time": 1247.0,
+      "enemy_count": 18,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 3,
+      "base_health": 70.6
+    },
+    {
+      "time": 1247.1,
+      "enemy_count": 18,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 3,
+      "base_health": 70.6
+    },
+    {
+      "time": 1247.3,
+      "enemy_count": 18,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 3,
+      "base_health": 70.7
+    },
+    {
+      "time": 1247.5,
+      "enemy_count": 18,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 3,
+      "base_health": 70.7
+    },
+    {
+      "time": 1247.7,
+      "enemy_count": 18,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 4,
+      "base_health": 70.7
+    },
+    {
+      "time": 1247.9,
+      "enemy_count": 18,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 4,
+      "base_health": 70.7
+    },
+    {
+      "time": 1248.0,
+      "enemy_count": 18,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 4,
+      "base_health": 65.7
+    },
+    {
+      "time": 1248.2,
+      "enemy_count": 18,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 4,
+      "base_health": 65.7
+    },
+    {
+      "time": 1248.4,
+      "enemy_count": 18,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 4,
+      "base_health": 65.7
+    },
+    {
+      "time": 1248.6,
+      "enemy_count": 18,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 4,
+      "base_health": 65.7
+    },
+    {
+      "time": 1248.8,
+      "enemy_count": 17,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 4,
+      "base_health": 65.8
+    },
+    {
+      "time": 1248.9,
+      "enemy_count": 17,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 4,
+      "base_health": 65.8
+    },
+    {
+      "time": 1249.1,
+      "enemy_count": 17,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 4,
+      "base_health": 65.8
+    },
+    {
+      "time": 1249.3,
+      "enemy_count": 17,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 4,
+      "base_health": 64.4
+    },
+    {
+      "time": 1249.5,
+      "enemy_count": 17,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 4,
+      "base_health": 64.4
+    },
+    {
+      "time": 1249.6,
+      "enemy_count": 17,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 4,
+      "base_health": 64.4
+    },
+    {
+      "time": 1249.8,
+      "enemy_count": 17,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 4,
+      "base_health": 64.4
+    },
+    {
+      "time": 1250.0,
+      "enemy_count": 17,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 4,
+      "base_health": 64.4
+    },
+    {
+      "time": 1250.2,
+      "enemy_count": 17,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 4,
+      "base_health": 64.4
+    },
+    {
+      "time": 1250.4,
+      "enemy_count": 17,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 3,
+      "base_health": 64.4
+    },
+    {
+      "time": 1250.5,
+      "enemy_count": 17,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 3,
+      "base_health": 59.5
+    },
+    {
+      "time": 1250.7,
+      "enemy_count": 17,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 3,
+      "base_health": 59.5
+    },
+    {
+      "time": 1250.9,
+      "enemy_count": 17,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 3,
+      "base_health": 59.5
+    },
+    {
+      "time": 1251.1,
+      "enemy_count": 17,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 3,
+      "base_health": 59.5
+    },
+    {
+      "time": 1251.2,
+      "enemy_count": 17,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 3,
+      "base_health": 59.5
+    },
+    {
+      "time": 1251.4,
+      "enemy_count": 17,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 3,
+      "base_health": 59.5
+    },
+    {
+      "time": 1251.6,
+      "enemy_count": 17,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 3,
+      "base_health": 59.5
+    },
+    {
+      "time": 1251.8,
+      "enemy_count": 17,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 3,
+      "base_health": 59.5
+    },
+    {
+      "time": 1252.0,
+      "enemy_count": 17,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 3,
+      "base_health": 59.5
+    },
+    {
+      "time": 1252.1,
+      "enemy_count": 17,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 3,
+      "base_health": 59.5
+    },
+    {
+      "time": 1252.3,
+      "enemy_count": 17,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 3,
+      "base_health": 54.6
+    },
+    {
+      "time": 1252.5,
+      "enemy_count": 17,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 3,
+      "base_health": 44.7
+    },
+    {
+      "time": 1252.7,
+      "enemy_count": 17,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 3,
+      "base_health": 44.7
+    },
+    {
+      "time": 1252.9,
+      "enemy_count": 17,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 3,
+      "base_health": 39.8
+    },
+    {
+      "time": 1253.0,
+      "enemy_count": 17,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 3,
+      "base_health": 39.8
+    },
+    {
+      "time": 1253.2,
+      "enemy_count": 17,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 3,
+      "base_health": 39.8
+    },
+    {
+      "time": 1253.4,
+      "enemy_count": 17,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 3,
+      "base_health": 39.8
+    },
+    {
+      "time": 1253.6,
+      "enemy_count": 17,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 3,
+      "base_health": 39.8
+    },
+    {
+      "time": 1253.8,
+      "enemy_count": 17,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 3,
+      "base_health": 39.8
+    },
+    {
+      "time": 1253.9,
+      "enemy_count": 17,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 3,
+      "base_health": 39.8
+    },
+    {
+      "time": 1254.1,
+      "enemy_count": 16,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 3,
+      "base_health": 39.8
+    },
+    {
+      "time": 1254.3,
+      "enemy_count": 15,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 3,
+      "base_health": 39.8
+    },
+    {
+      "time": 1254.5,
+      "enemy_count": 15,
+      "base_position": [
+        70.5,
+        117.5
+      ],
+      "our_army_nearby": 3,
+      "base_health": 39.8
+    }
+  ],
+  "unit_composition": [
+    {
+      "time": 120.0,
+      "total_supply": 23,
+      "composition": {
+        "UnitTypeId.DRONE": {
+          "count": 18,
+          "supply": 18,
+          "ratio": 0.783
+        },
+        "UnitTypeId.OVERLORD": {
+          "count": 4,
+          "supply": 4,
+          "ratio": 0.174
+        },
+        "UnitTypeId.EGG": {
+          "count": 1,
+          "supply": 1,
+          "ratio": 0.043
+        }
+      }
+    },
+    {
+      "time": 240.0,
+      "total_supply": 47,
+      "composition": {
+        "UnitTypeId.LARVA": {
+          "count": 12,
+          "supply": 12,
+          "ratio": 0.255
+        },
+        "UnitTypeId.DRONE": {
+          "count": 16,
+          "supply": 16,
+          "ratio": 0.34
+        },
+        "UnitTypeId.ZERGLING": {
+          "count": 10,
+          "supply": 10,
+          "ratio": 0.213
+        },
+        "UnitTypeId.QUEEN": {
+          "count": 4,
+          "supply": 4,
+          "ratio": 0.085
+        },
+        "UnitTypeId.OVERLORD": {
+          "count": 5,
+          "supply": 5,
+          "ratio": 0.106
+        }
+      }
+    },
+    {
+      "time": 360.2,
+      "total_supply": 66,
+      "composition": {
+        "UnitTypeId.QUEEN": {
+          "count": 8,
+          "supply": 8,
+          "ratio": 0.121
+        },
+        "UnitTypeId.LARVA": {
+          "count": 21,
+          "supply": 21,
+          "ratio": 0.318
+        },
+        "UnitTypeId.ZERGLING": {
+          "count": 10,
+          "supply": 10,
+          "ratio": 0.152
+        },
+        "UnitTypeId.DRONE": {
+          "count": 19,
+          "supply": 19,
+          "ratio": 0.288
+        },
+        "UnitTypeId.EGG": {
+          "count": 3,
+          "supply": 3,
+          "ratio": 0.045
+        },
+        "UnitTypeId.OVERLORD": {
+          "count": 5,
+          "supply": 5,
+          "ratio": 0.076
+        }
+      }
+    },
+    {
+      "time": 480.2,
+      "total_supply": 70,
+      "composition": {
+        "UnitTypeId.DRONE": {
+          "count": 24,
+          "supply": 24,
+          "ratio": 0.343
+        },
+        "UnitTypeId.ZERGLING": {
+          "count": 17,
+          "supply": 17,
+          "ratio": 0.243
+        },
+        "UnitTypeId.OVERLORD": {
+          "count": 6,
+          "supply": 6,
+          "ratio": 0.086
+        },
+        "UnitTypeId.EGG": {
+          "count": 6,
+          "supply": 6,
+          "ratio": 0.086
+        },
+        "UnitTypeId.LARVA": {
+          "count": 11,
+          "supply": 11,
+          "ratio": 0.157
+        },
+        "UnitTypeId.QUEEN": {
+          "count": 6,
+          "supply": 6,
+          "ratio": 0.086
+        }
+      }
+    },
+    {
+      "time": 600.2,
+      "total_supply": 112,
+      "composition": {
+        "UnitTypeId.ZERGLING": {
+          "count": 47,
+          "supply": 47,
+          "ratio": 0.42
+        },
+        "UnitTypeId.DRONE": {
+          "count": 39,
+          "supply": 39,
+          "ratio": 0.348
+        },
+        "UnitTypeId.QUEEN": {
+          "count": 6,
+          "supply": 6,
+          "ratio": 0.054
+        },
+        "UnitTypeId.EGG": {
+          "count": 9,
+          "supply": 9,
+          "ratio": 0.08
+        },
+        "UnitTypeId.OVERLORD": {
+          "count": 11,
+          "supply": 11,
+          "ratio": 0.098
+        }
+      }
+    },
+    {
+      "time": 720.2,
+      "total_supply": 78,
+      "composition": {
+        "UnitTypeId.OVERLORD": {
+          "count": 11,
+          "supply": 11,
+          "ratio": 0.141
+        },
+        "UnitTypeId.EGG": {
+          "count": 9,
+          "supply": 9,
+          "ratio": 0.115
+        },
+        "UnitTypeId.DRONE": {
+          "count": 38,
+          "supply": 38,
+          "ratio": 0.487
+        },
+        "UnitTypeId.QUEEN": {
+          "count": 6,
+          "supply": 6,
+          "ratio": 0.077
+        },
+        "UnitTypeId.LARVA": {
+          "count": 3,
+          "supply": 3,
+          "ratio": 0.038
+        },
+        "UnitTypeId.ZERGLING": {
+          "count": 11,
+          "supply": 11,
+          "ratio": 0.141
+        }
+      }
+    },
+    {
+      "time": 840.2,
+      "total_supply": 73,
+      "composition": {
+        "UnitTypeId.EGG": {
+          "count": 7,
+          "supply": 7,
+          "ratio": 0.096
+        },
+        "UnitTypeId.DRONE": {
+          "count": 33,
+          "supply": 33,
+          "ratio": 0.452
+        },
+        "UnitTypeId.ZERGLING": {
+          "count": 13,
+          "supply": 13,
+          "ratio": 0.178
+        },
+        "UnitTypeId.QUEEN": {
+          "count": 7,
+          "supply": 7,
+          "ratio": 0.096
+        },
+        "UnitTypeId.OVERSEER": {
+          "count": 5,
+          "supply": 5,
+          "ratio": 0.068
+        },
+        "UnitTypeId.OVERLORD": {
+          "count": 3,
+          "supply": 3,
+          "ratio": 0.041
+        },
+        "UnitTypeId.CHANGELINGMARINE": {
+          "count": 2,
+          "supply": 2,
+          "ratio": 0.027
+        },
+        "UnitTypeId.LARVA": {
+          "count": 3,
+          "supply": 3,
+          "ratio": 0.041
+        }
+      }
+    },
+    {
+      "time": 960.2,
+      "total_supply": 77,
+      "composition": {
+        "UnitTypeId.DRONE": {
+          "count": 35,
+          "supply": 35,
+          "ratio": 0.455
+        },
+        "UnitTypeId.OVERSEER": {
+          "count": 5,
+          "supply": 5,
+          "ratio": 0.065
+        },
+        "UnitTypeId.ZERGLING": {
+          "count": 18,
+          "supply": 18,
+          "ratio": 0.234
+        },
+        "UnitTypeId.EGG": {
+          "count": 6,
+          "supply": 6,
+          "ratio": 0.078
+        },
+        "UnitTypeId.QUEEN": {
+          "count": 7,
+          "supply": 7,
+          "ratio": 0.091
+        },
+        "UnitTypeId.OVERLORD": {
+          "count": 3,
+          "supply": 3,
+          "ratio": 0.039
+        },
+        "UnitTypeId.CHANGELINGMARINESHIELD": {
+          "count": 3,
+          "supply": 3,
+          "ratio": 0.039
+        }
+      }
+    },
+    {
+      "time": 1080.2,
+      "total_supply": 63,
+      "composition": {
+        "UnitTypeId.EGG": {
+          "count": 8,
+          "supply": 8,
+          "ratio": 0.127
+        },
+        "UnitTypeId.ZERGLING": {
+          "count": 11,
+          "supply": 11,
+          "ratio": 0.175
+        },
+        "UnitTypeId.OVERSEER": {
+          "count": 2,
+          "supply": 2,
+          "ratio": 0.032
+        },
+        "UnitTypeId.DRONE": {
+          "count": 30,
+          "supply": 30,
+          "ratio": 0.476
+        },
+        "UnitTypeId.QUEEN": {
+          "count": 6,
+          "supply": 6,
+          "ratio": 0.095
+        },
+        "UnitTypeId.OVERLORD": {
+          "count": 3,
+          "supply": 3,
+          "ratio": 0.048
+        },
+        "UnitTypeId.CHANGELINGMARINESHIELD": {
+          "count": 1,
+          "supply": 1,
+          "ratio": 0.016
+        },
+        "UnitTypeId.LARVA": {
+          "count": 2,
+          "supply": 2,
+          "ratio": 0.032
+        }
+      }
+    },
+    {
+      "time": 1200.2,
+      "total_supply": 34,
+      "composition": {
+        "UnitTypeId.DRONE": {
+          "count": 17,
+          "supply": 17,
+          "ratio": 0.5
+        },
+        "UnitTypeId.ZERGLING": {
+          "count": 6,
+          "supply": 6,
+          "ratio": 0.176
+        },
+        "UnitTypeId.LARVA": {
+          "count": 3,
+          "supply": 3,
+          "ratio": 0.088
+        },
+        "UnitTypeId.EGG": {
+          "count": 5,
+          "supply": 5,
+          "ratio": 0.147
+        },
+        "UnitTypeId.OVERLORD": {
+          "count": 3,
+          "supply": 3,
+          "ratio": 0.088
+        }
+      }
+    }
+  ],
+  "upgrade_sequence": [],
+  "map_control": [],
+  "enemy_build_detected": {}
+}

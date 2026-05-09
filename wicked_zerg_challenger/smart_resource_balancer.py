@@ -54,6 +54,9 @@ class SmartResourceBalancer:
         self.mineral_critical_threshold = 100  # 미네랄 100- = 심각
 
         # * 일꾼 재배치 상태 *
+        self.mineral_critical_threshold = 100
+        self.gas_lock_mineral_threshold = 500
+
         self.gas_workers_target = {}  # {extractor_tag: target_count}
         self.last_worker_moved = 0
         self.worker_move_cooldown = 11  # 0.5초 쿨다운
@@ -146,6 +149,22 @@ class SmartResourceBalancer:
         """
         if not hasattr(self.bot, "workers"):
             return 2.0
+
+        mineral_workers = 0
+        gas_workers = 0
+        extractor_tags = self._get_extractor_tags()
+
+        for worker in self.bot.workers:
+            if worker.is_gathering and hasattr(worker, "order_target"):
+                if self._is_worker_on_gas(worker, extractor_tags):
+                    gas_workers += 1
+                else:
+                    mineral_workers += 1
+
+        if gas_workers == 0:
+            return 10.0
+
+        return mineral_workers / gas_workers
 
         mineral_workers = 0
         gas_workers = 0
@@ -264,6 +283,27 @@ class SmartResourceBalancer:
             return 0
 
         moved = 0
+        target_moves = 3
+        extractor_tags = self._get_extractor_tags()
+
+        gas_workers = [
+            worker
+            for worker in self.bot.workers
+            if self._is_worker_on_gas(worker, extractor_tags)
+        ]
+
+        for worker in gas_workers[:target_moves]:
+            closest_base = self._closest_from(self.bot.townhalls, worker)
+            if not closest_base:
+                continue
+
+            mineral_fields = self.bot.mineral_field.closer_than(10, closest_base)
+            closest_mineral = self._closest_from(mineral_fields, worker)
+            if closest_mineral:
+                self.bot.do(worker.gather(closest_mineral))
+                moved += 1
+
+        return moved
         target_moves = 3  # 한번에 3명씩 이동
 
         # 가스 채취 중인 일꾼 찾기
@@ -299,6 +339,11 @@ class SmartResourceBalancer:
         if not hasattr(self.bot, "workers") or not hasattr(self.bot, "structures"):
             return 0
 
+        minerals = getattr(self.bot, "minerals", 0)
+        gas = getattr(self.bot, "vespene", 0)
+        if self._should_lock_gas_collection(minerals, gas):
+            return 0
+
         moved = 0
         target_moves = 2  # 한번에 2명씩 이동
 
@@ -313,7 +358,7 @@ class SmartResourceBalancer:
                         mineral_workers.append(worker)
 
         # 일꾼이 부족한 가스 건물 찾기
-        extractors = self.bot.structures(UnitTypeId.EXTRACTOR).ready
+        extractors = self._get_ready_extractors()
         for extractor in extractors:
             if not extractor.has_vespene:
                 continue
@@ -343,6 +388,90 @@ class SmartResourceBalancer:
                             break
 
         return moved
+
+    def _should_lock_gas_collection(self, minerals: int, gas: int) -> bool:
+        """Return True when mineral income must take priority over gas."""
+        try:
+            minerals = int(minerals or 0)
+            gas = int(gas or 0)
+        except (TypeError, ValueError):
+            return False
+
+        if gas >= self.gas_critical_threshold and minerals < self.gas_lock_mineral_threshold:
+            return True
+        if gas >= self.gas_excess_threshold and minerals < self.mineral_shortage_threshold:
+            return True
+        return gas > max(300, minerals * 3) and minerals < 800
+
+    def _get_ready_extractors(self) -> list:
+        """Collect ready extractors from common python-sc2 bot accessors."""
+        extractors = []
+
+        gas_buildings = getattr(self.bot, "gas_buildings", None)
+        if gas_buildings is not None:
+            extractors.extend(
+                self._as_unit_list(getattr(gas_buildings, "ready", gas_buildings))
+            )
+
+        structures = getattr(self.bot, "structures", None)
+        if callable(structures):
+            try:
+                structure_units = structures(UnitTypeId.EXTRACTOR)
+                extractors.extend(
+                    self._as_unit_list(getattr(structure_units, "ready", structure_units))
+                )
+            except Exception:
+                pass
+
+        unique = {}
+        for extractor in extractors:
+            tag = getattr(extractor, "tag", id(extractor))
+            unique[tag] = extractor
+        return list(unique.values())
+
+    def _get_extractor_tags(self) -> set:
+        return {
+            getattr(extractor, "tag", None)
+            for extractor in self._get_ready_extractors()
+            if getattr(extractor, "tag", None) is not None
+        }
+
+    def _is_worker_on_gas(self, worker, extractor_tags: set) -> bool:
+        if getattr(worker, "is_carrying_vespene", False):
+            return True
+
+        target = getattr(worker, "order_target", None)
+        if target in extractor_tags:
+            return True
+
+        target_tag = getattr(target, "tag", None)
+        if target_tag in extractor_tags:
+            return True
+
+        target_type = getattr(target, "type_id", None)
+        type_name = str(getattr(target_type, "name", target_type)).upper()
+        return (
+            "EXTRACTOR" in type_name
+            or "ASSIMILATOR" in type_name
+            or "REFINERY" in type_name
+        )
+
+    def _closest_from(self, units, target):
+        if not units:
+            return None
+        if hasattr(units, "closest_to"):
+            return units.closest_to(target)
+
+        unit_list = self._as_unit_list(units)
+        return unit_list[0] if unit_list else None
+
+    def _as_unit_list(self, units) -> list:
+        if not units:
+            return []
+        try:
+            return list(units)
+        except TypeError:
+            return [units]
 
     def get_statistics(self) -> Dict:
         """통계 정보 반환"""

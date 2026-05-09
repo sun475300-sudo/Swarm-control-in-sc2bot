@@ -243,6 +243,86 @@ class ProductionResilience:
         """Check if expansion is safe (using production module)"""
         return can_expand_safely(self)
 
+    def _should_reserve_third_base_minerals(self) -> bool:
+        """Hold non-essential spending until the third Hatchery is started."""
+        b = self.bot
+        try:
+            game_time = float(getattr(b, "time", 0.0) or 0.0)
+        except (TypeError, ValueError):
+            return False
+        if game_time < 150.0:
+            return False
+
+        townhalls = getattr(b, "townhalls", None)
+        ready = getattr(townhalls, "ready", None) if townhalls else None
+        base_count = 1
+        for source in (ready, townhalls):
+            if not source:
+                continue
+            try:
+                amount = getattr(source, "amount", None)
+                if isinstance(amount, (int, float)):
+                    base_count = int(amount)
+                    break
+                if amount is not None:
+                    continue
+            except (TypeError, ValueError):
+                pass
+            try:
+                base_count = len(list(source))
+                break
+            except TypeError:
+                pass
+
+        already_pending = getattr(b, "already_pending", lambda unit_type: 0)
+        try:
+            pending_hatch = int(already_pending(UnitTypeId.HATCHERY) or 0)
+        except (TypeError, ValueError):
+            pending_hatch = 0
+
+        if base_count >= 3:
+            if game_time >= 360.0 and base_count < 4 and pending_hatch == 0:
+                return not self._has_active_base_threat()
+            return False
+        if base_count < 2:
+            return pending_hatch > 0 and not self._has_active_base_threat()
+        if pending_hatch > 0:
+            return False
+
+        return not self._has_active_base_threat()
+
+    def _has_active_base_threat(self) -> bool:
+        b = self.bot
+        enemy_units = getattr(b, "enemy_units", None)
+        townhalls = getattr(b, "townhalls", None)
+        if enemy_units is None or townhalls is None:
+            return False
+
+        try:
+            bases = list(townhalls)
+        except TypeError:
+            first_base = getattr(townhalls, "first", None)
+            bases = [first_base] if first_base else []
+
+        for base in bases:
+            if not base:
+                continue
+            try:
+                nearby = enemy_units.closer_than(12, base)
+            except Exception:
+                continue
+
+            amount = getattr(nearby, "amount", 0)
+            if isinstance(amount, (int, float)) and amount > 0:
+                return True
+            try:
+                if len(nearby) > 0:
+                    return True
+            except TypeError:
+                pass
+
+        return False
+
     async def _try_expand(self) -> bool:
         b = self.bot
         if not b.can_afford(UnitTypeId.HATCHERY):
@@ -310,19 +390,7 @@ class ProductionResilience:
         # FIX: Only block DRONE production, never block army production.
         # After 300s (5 min), stop blocking entirely to avoid army starvation.
         time = getattr(b, "time", 0.0)
-        bases = b.townhalls.amount if hasattr(b, "townhalls") else 1
-        pending_hatcheries = (
-            b.already_pending(UnitTypeId.HATCHERY)
-            if hasattr(b, "already_pending")
-            else 0
-        )
-        self._expansion_reserve_active = (
-            bases <= 2
-            and pending_hatcheries == 0
-            and time > 120
-            and time < 300
-            and b.minerals < 300
-        )
+        self._expansion_reserve_active = self._should_reserve_third_base_minerals()
         # NOTE: We no longer return early here. Army production must continue.
         # The _expansion_reserve_active flag is checked in _balanced_production
         # to suppress drone production only.
@@ -330,7 +398,7 @@ class ProductionResilience:
         # *** FIX: 확장 체크를 미네랄 소비보다 먼저 실행 ***
         # === AGGRESSIVE EXPANSION: Prioritize expansion BEFORE spending minerals ===
         # Zerg needs expansions for macro advantage
-        if time >= 60 and b.minerals > 300:  # 300원부터 확장 고려
+        if time >= 60 and b.minerals >= 300:  # 300원부터 확장 고려
             bases = b.townhalls.amount if hasattr(b, "townhalls") else 1
             pending_hatcheries = b.already_pending(UnitTypeId.HATCHERY)
 
@@ -449,13 +517,7 @@ class ProductionResilience:
             else 0
         )
         game_time = getattr(b, "time", 0)
-        expansion_reserve_active = (
-            bases <= 2
-            and pending_hatch == 0
-            and game_time > 150
-            and game_time < 300
-            and b.minerals < 300
-        )
+        expansion_reserve_active = self._should_reserve_third_base_minerals()
         # NOTE: We do NOT return here. Army production continues below.
         # expansion_reserve_active is used below to suppress drone production only.
 
@@ -571,6 +633,9 @@ class ProductionResilience:
                     army_produced += 1
                 continue
 
+            if expansion_reserve_active:
+                continue
+
             # Decide: drone or army?
             # * EconomyManager 요청 반영 (이중 생산 방지: 여기서만 실행)
             economy_wants_drone = getattr(self, "_economy_drone_requested", False)
@@ -585,10 +650,6 @@ class ProductionResilience:
                     if army_ratio_this_round < 0.70:
                         force_army = True
                 # With 0 produced so far, allow one drone check below
-
-            # *** FIX: Expansion reserve suppresses drone production only ***
-            if expansion_reserve_active:
-                force_army = True
 
             # Consider strategy preference
             if force_army:
@@ -695,6 +756,11 @@ class ProductionResilience:
         """
         b = self.bot
         game_time = getattr(b, "time", 0)
+        if (
+            self._should_reserve_third_base_minerals()
+            and self._check_min_defense_met(game_time)
+        ):
+            return False
 
         # Auto-ignore caps if very rich
         if b.minerals > 1500:
@@ -782,6 +848,13 @@ class ProductionResilience:
         IMPROVED: Prioritize tech units over Zerglings; cap Zergling count.
         """
         b = self.bot
+        game_time = getattr(b, "time", 0)
+        if (
+            self._should_reserve_third_base_minerals()
+            and self._check_min_defense_met(game_time)
+        ):
+            return
+
         units_produced = 0
         larvae_list = list(larvae) if larvae.exists else []
 
@@ -1058,6 +1131,12 @@ class ProductionResilience:
                         # _safe_train handles exceptions internally
                         if await self._safe_train(larva, UnitTypeId.OVERLORD):
                             overlords_produced += 1
+
+            if (
+                self._should_reserve_third_base_minerals()
+                and self._check_min_defense_met(time)
+            ):
+                return
 
             # Unit production
             spawning_pools = b.units(UnitTypeId.SPAWNINGPOOL).ready
@@ -1356,6 +1435,8 @@ class ProductionResilience:
                 await self._try_expand()
             except Exception:
                 pass
+        if self._should_reserve_third_base_minerals():
+            return
         if b.units(UnitTypeId.LARVA).exists:
             larvae = b.units(UnitTypeId.LARVA).ready
             if larvae.exists and b.units(UnitTypeId.SPAWNINGPOOL).ready.exists:
@@ -1369,6 +1450,8 @@ class ProductionResilience:
     async def build_terran_counters(self) -> None:
         b = self.bot
         if not b.production:
+            return
+        if self._should_reserve_third_base_minerals():
             return
         baneling_nests = [
             s for s in b.units(UnitTypeId.BANELINGNEST).structure if s.is_ready
@@ -1413,6 +1496,9 @@ class ProductionResilience:
 
         # Need Spawning Pool first for all tech
         if not b.structures(UnitTypeId.SPAWNINGPOOL).ready.exists:
+            return
+
+        if self._should_reserve_third_base_minerals():
             return
 
         # SPAM FIX: Add cooldown for tech buildings
@@ -1636,6 +1722,12 @@ class ProductionResilience:
             if hasattr(b.townhalls, "amount")
             else len(list(b.townhalls))
         )
+        pending_hatcheries = b.already_pending(UnitTypeId.HATCHERY)
+        if base_count < 2 and pending_hatcheries == 0:
+            return
+        if base_count < 3 and total_extractors >= 1:
+            return
+
         target_extractors = base_count * 2
 
         # Early game timing:
@@ -1703,6 +1795,8 @@ class ProductionResilience:
         Lair is required for: Hydralisk Den, Spire, Infestation Pit, etc.
         """
         b = self.bot
+        if self._should_reserve_third_base_minerals():
+            return False
 
         # Check if we already have Lair or Hive
         if b.structures(UnitTypeId.LAIR).exists or b.structures(UnitTypeId.HIVE).exists:
@@ -1867,6 +1961,8 @@ class ProductionResilience:
         b = self.bot
         if not b.production:
             return
+        if self._should_reserve_third_base_minerals():
+            return
 
         # Use TechCoordinator if available
         tech_coordinator = getattr(b, "tech_coordinator", None)
@@ -1912,6 +2008,8 @@ class ProductionResilience:
     async def build_protoss_counters(self) -> None:
         b = self.bot
         if not b.production:
+            return
+        if self._should_reserve_third_base_minerals():
             return
 
         # Use TechCoordinator if available
@@ -1976,6 +2074,8 @@ class ProductionResilience:
         """
         b = self.bot
         if not b.production:
+            return
+        if self._should_reserve_third_base_minerals():
             return
 
         # Baneling Nest for anti-Zerg (Zerglings counter)

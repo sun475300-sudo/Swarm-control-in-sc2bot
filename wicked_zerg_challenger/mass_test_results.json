@@ -1,11 +1,11 @@
 {
-  "timestamp": "2026-05-09T15:10:28.558532",
+  "timestamp": "2026-05-09T20:33:19.775062",
   "total_games": 1,
   "wins": 0,
   "losses": 1,
   "errors": 0,
   "win_rate": 0.0,
-  "total_time_minutes": 1.4,
+  "total_time_minutes": 4.3,
   "gpu": "NVIDIA GeForce RTX 5070 Ti",
   "games": [
     {
@@ -13,7 +13,7 @@
       "map": "AbyssalReefLE",
       "race": "Terran",
       "difficulty": "Medium",
-      "time_seconds": 80.4,
+      "time_seconds": 253.1,
       "won": false
     }
   ]

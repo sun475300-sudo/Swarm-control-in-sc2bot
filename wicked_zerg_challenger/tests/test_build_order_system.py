@@ -225,6 +225,11 @@ class TestOpeningExpansionPriority(unittest.TestCase):
         bot.townhalls.__iter__ = Mock(return_value=iter([main]))
         bot.can_place = AsyncMock(return_value=True)
         bot.get_next_expansion = AsyncMock(return_value=distant)
+        worker = Mock()
+        worker.build = Mock(return_value=("build", UnitTypeId.HATCHERY, natural))
+        bot.workers.exists = True
+        bot.workers.closest_to = Mock(return_value=worker)
+        bot.do = Mock()
 
         class FakeTechCoordinator:
             def __init__(self):
@@ -245,8 +250,162 @@ class TestOpeningExpansionPriority(unittest.TestCase):
         result = asyncio.run(system._expand(UnitTypeId.HATCHERY))
 
         self.assertTrue(result)
-        self.assertEqual(bot.tech_coordinator.requests[0][1], natural)
+        self.assertEqual(bot.tech_coordinator.requests, [])
+        worker.build.assert_called_once_with(UnitTypeId.HATCHERY, natural)
+        bot.do.assert_called_once_with(("build", UnitTypeId.HATCHERY, natural))
         bot.get_next_expansion.assert_not_awaited()
+
+    def test_extractor_waits_until_first_hatchery_started(self):
+        bot = MockBot("Race.Terran")
+        bot.time = 70.0
+        bot.townhalls.amount = 1
+        bot.already_pending = Mock(return_value=0)
+        bot.tech_coordinator = Mock()
+
+        system = BuildOrderSystem(bot)
+
+        import asyncio
+
+        result = asyncio.run(system._build_structure(UnitTypeId.EXTRACTOR))
+
+        self.assertFalse(result)
+        bot.tech_coordinator.request_structure.assert_not_called()
+
+    def test_second_extractor_waits_until_third_base(self):
+        bot = MockBot("Race.Terran")
+        bot.time = 150.0
+        bot.townhalls.amount = 2
+        bot.already_pending = Mock(return_value=0)
+        bot.structures = Mock(
+            side_effect=lambda unit_type: Mock(
+                amount=1 if unit_type == UnitTypeId.EXTRACTOR else 0,
+                exists=unit_type == UnitTypeId.EXTRACTOR,
+            )
+        )
+        bot.tech_coordinator = Mock()
+
+        system = BuildOrderSystem(bot)
+
+        import asyncio
+
+        result = asyncio.run(system._build_structure(UnitTypeId.EXTRACTOR))
+
+        self.assertFalse(result)
+        bot.tech_coordinator.request_structure.assert_not_called()
+
+    def test_roach_warren_waits_for_third_hatchery_reserve(self):
+        bot = MockBot("Race.Terran")
+        bot.time = 190.0
+        bot.minerals = 250
+        bot.townhalls.amount = 2
+        bot.townhalls.ready = Mock(amount=2)
+        bot.already_pending = Mock(return_value=0)
+        bot.structures = Mock(
+            side_effect=lambda unit_type: Mock(amount=0, exists=False)
+        )
+        bot.can_afford = Mock(return_value=True)
+        bot.tech_coordinator = Mock()
+
+        system = BuildOrderSystem(bot)
+
+        import asyncio
+
+        result = asyncio.run(system._build_structure(UnitTypeId.ROACHWARREN))
+
+        self.assertFalse(result)
+        bot.can_afford.assert_not_called()
+        bot.tech_coordinator.request_structure.assert_not_called()
+
+    def test_queen_training_waits_for_third_hatchery_reserve(self):
+        bot = MockBot("Race.Terran")
+        bot.time = 190.0
+        bot.minerals = 250
+        bot.townhalls.amount = 2
+        bot.townhalls.ready = Mock(amount=2)
+        bot.already_pending = Mock(return_value=0)
+        bot.can_afford = Mock(return_value=True)
+        bot.do = Mock()
+
+        system = BuildOrderSystem(bot)
+
+        import asyncio
+
+        result = asyncio.run(system._train_unit(UnitTypeId.QUEEN))
+
+        self.assertFalse(result)
+        bot.can_afford.assert_not_called()
+        bot.do.assert_not_called()
+
+    def test_pending_third_hatchery_releases_mineral_reserve(self):
+        bot = MockBot("Race.Terran")
+        bot.time = 190.0
+        bot.townhalls.amount = 2
+        bot.townhalls.ready = Mock(amount=2)
+        bot.already_pending = Mock(
+            side_effect=lambda unit_type: 1
+            if unit_type == UnitTypeId.HATCHERY
+            else 0
+        )
+
+        system = BuildOrderSystem(bot)
+
+        self.assertFalse(system._should_reserve_third_base_minerals())
+
+    def test_fourth_hatchery_reserve_active_on_three_bases(self):
+        bot = MockBot("Race.Terran")
+        bot.time = 370.0
+        bot.townhalls.amount = 3
+        bot.townhalls.ready = Mock(amount=3)
+        bot.already_pending = Mock(return_value=0)
+
+        system = BuildOrderSystem(bot)
+
+        self.assertTrue(system._should_reserve_third_base_minerals())
+
+    def test_pending_fourth_hatchery_releases_mineral_reserve(self):
+        bot = MockBot("Race.Terran")
+        bot.time = 370.0
+        bot.townhalls.amount = 3
+        bot.townhalls.ready = Mock(amount=3)
+        bot.already_pending = Mock(
+            side_effect=lambda unit_type: 1
+            if unit_type == UnitTypeId.HATCHERY
+            else 0
+        )
+
+        system = BuildOrderSystem(bot)
+
+        self.assertFalse(system._should_reserve_third_base_minerals())
+
+    def test_pending_natural_keeps_third_hatchery_reserve(self):
+        bot = MockBot("Race.Terran")
+        bot.time = 150.0
+        bot.townhalls.amount = 1
+        bot.townhalls.ready = Mock(amount=1)
+        bot.already_pending = Mock(
+            side_effect=lambda unit_type: 1
+            if unit_type == UnitTypeId.HATCHERY
+            else 0
+        )
+
+        system = BuildOrderSystem(bot)
+
+        self.assertTrue(system._should_reserve_third_base_minerals())
+
+    def test_pending_natural_in_townhall_amount_keeps_third_hatchery_reserve(self):
+        bot = MockBot("Race.Terran")
+        bot.time = 150.0
+        bot.townhalls.amount = 2
+        bot.townhalls.ready = Mock(amount=1)
+        bot.already_pending = Mock(
+            side_effect=lambda unit_type: 1
+            if unit_type == UnitTypeId.HATCHERY
+            else 0
+        )
+
+        system = BuildOrderSystem(bot)
+
+        self.assertTrue(system._should_reserve_third_base_minerals())
 
 
 if __name__ == "__main__":

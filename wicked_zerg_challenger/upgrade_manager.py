@@ -163,6 +163,9 @@ class EvolutionUpgradeManager:
         # === 0순위: 핵심 업그레이드 (생명줄) ===
         await self._research_critical_upgrades(iteration)
 
+        if self._should_reserve_for_third_base():
+            return
+
         # === *** 테크 변이: 해처리 -> 레어 -> 군락 *** ===
         await self._upgrade_tech_buildings(iteration)
 
@@ -271,6 +274,46 @@ class EvolutionUpgradeManager:
                     self.logger.warning(f"Failed to research upgrade {upgrade_id}: {e}")
                     continue
                 return
+
+    def _should_reserve_for_third_base(self) -> bool:
+        """Hold non-critical tech spending until the next macro Hatchery starts."""
+        game_time = getattr(self.bot, "time", 0)
+        if game_time < 120:
+            return False
+
+        townhalls = getattr(self.bot, "townhalls", None)
+        ready = getattr(townhalls, "ready", None) if townhalls else None
+        base_count = 0
+        for source in (ready, townhalls):
+            if not source:
+                continue
+            amount = getattr(source, "amount", None)
+            if isinstance(amount, (int, float)):
+                base_count = int(amount)
+                break
+            if amount is not None:
+                continue
+            try:
+                base_count = len(list(source))
+                break
+            except TypeError:
+                pass
+
+        already_pending = getattr(self.bot, "already_pending", lambda _: 0)
+        try:
+            pending_hatch = int(already_pending(UnitTypeId.HATCHERY) or 0)
+        except (TypeError, ValueError):
+            pending_hatch = 0
+
+        if base_count >= 4:
+            return False
+        if base_count >= 3:
+            return game_time >= 360 and pending_hatch == 0
+        if base_count >= 2 and pending_hatch > 0:
+            return False
+        if base_count < 2:
+            return pending_hatch > 0
+        return True
 
     def _get_upgrade_priority(self) -> List[object]:
         """
@@ -630,6 +673,8 @@ class EvolutionUpgradeManager:
         # === 2순위: 대군주 속업 (Pneumatized Carapace) ===
         # 저글링 발업 시작 후, 3:00~3:30 사이에 연구
         if not self._overlord_speed_started and game_time >= 180:
+            if self._should_reserve_for_third_base():
+                return
             await self._research_overlord_speed(iteration)
 
         # === 3순위: 배주머니 (Ventral Sacs - 수송) ===

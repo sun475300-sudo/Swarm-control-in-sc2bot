@@ -177,6 +177,10 @@ class ResourceManager:
         if not workers:
             return
 
+        if self._should_prioritize_minerals_over_gas():
+            await self._move_gas_workers_to_minerals(extractors)
+            return
+
         for extractor in extractors:
             assigned = extractor.assigned_harvesters
             ideal = self.optimal_gas_workers
@@ -214,6 +218,96 @@ class ResourceManager:
                 # This is handled by economy_manager redistribution
                 pass
 
+    def _should_prioritize_minerals_over_gas(self) -> bool:
+        """Return True when gas is banked and minerals are the bottleneck."""
+        try:
+            minerals = int(getattr(self.bot, "minerals", 0) or 0)
+            gas = int(getattr(self.bot, "vespene", 0) or 0)
+        except (TypeError, ValueError):
+            return False
+
+        if gas >= 2000 and minerals < 500:
+            return True
+        if gas >= 1000 and minerals < 250:
+            return True
+        return gas > max(300, minerals * 3) and minerals < 800
+
+    async def _move_gas_workers_to_minerals(self, extractors) -> int:
+        """Move a small batch of gas workers back to mineral patches."""
+        if not hasattr(self.bot, "workers") or not hasattr(self.bot, "townhalls"):
+            return 0
+        if not hasattr(self.bot, "mineral_field"):
+            return 0
+
+        extractor_tags = {
+            getattr(extractor, "tag", None)
+            for extractor in self._as_unit_list(extractors)
+            if getattr(extractor, "tag", None) is not None
+        }
+        moved = 0
+
+        for worker in self.bot.workers:
+            if moved >= 6:
+                break
+            if not self._is_worker_on_gas(worker, extractor_tags):
+                continue
+
+            base = self._closest_from(self.bot.townhalls, worker)
+            if not base:
+                continue
+
+            minerals = self.bot.mineral_field.closer_than(10, base)
+            mineral = self._closest_from(minerals, worker)
+            if not mineral:
+                continue
+
+            try:
+                result = self.bot.do(worker.gather(mineral))
+                if hasattr(result, "__await__"):
+                    await result
+                moved += 1
+            except Exception as e:
+                logger.error(f"Gas worker mineral reassignment failed: {e}")
+
+        return moved
+
+    def _is_worker_on_gas(self, worker, extractor_tags: set) -> bool:
+        if getattr(worker, "is_carrying_vespene", False):
+            return True
+
+        target = getattr(worker, "order_target", None)
+        if target in extractor_tags:
+            return True
+
+        target_tag = getattr(target, "tag", None)
+        if target_tag in extractor_tags:
+            return True
+
+        target_type = getattr(target, "type_id", None)
+        type_name = str(getattr(target_type, "name", target_type)).upper()
+        return (
+            "EXTRACTOR" in type_name
+            or "ASSIMILATOR" in type_name
+            or "REFINERY" in type_name
+        )
+
+    def _closest_from(self, units, target):
+        if not units:
+            return None
+        if hasattr(units, "closest_to"):
+            return units.closest_to(target)
+
+        unit_list = self._as_unit_list(units)
+        return unit_list[0] if unit_list else None
+
+    def _as_unit_list(self, units) -> list:
+        if not units:
+            return []
+        try:
+            return list(units)
+        except TypeError:
+            return [units]
+
     async def _auto_build_extractors(self) -> None:
         """Automatically build extractors based on worker count."""
         if not hasattr(self.bot, "workers"):
@@ -237,7 +331,14 @@ class ResourceManager:
 
         # Limit by base count
         bases = getattr(self.bot, "townhalls", [])
-        max_extractors = len(bases) * 2 if bases else 0
+        try:
+            if hasattr(bases, "amount"):
+                base_count = int(getattr(bases, "amount", 0) or 0)
+            else:
+                base_count = len(list(bases)) if bases else 0
+        except (TypeError, ValueError):
+            base_count = 0
+        max_extractors = base_count * 2
         desired_extractors = min(desired_extractors, max_extractors)
 
         # Build extractor if needed
@@ -246,9 +347,31 @@ class ResourceManager:
             if hasattr(self.bot, "already_pending")
             else 0
         )
+        if self._should_delay_extractor(extractor_count, pending):
+            return
         if extractor_count + pending < desired_extractors:
             if self.bot.can_afford(UnitTypeId.EXTRACTOR):
                 await self._build_extractor()
+
+    def _should_delay_extractor(self, extractor_count: int, pending: int) -> bool:
+        """Keep gas behind natural and third Hatchery progress."""
+        townhalls = getattr(self.bot, "townhalls", None)
+        try:
+            if hasattr(townhalls, "amount"):
+                base_count = int(getattr(townhalls, "amount", 1) or 1)
+            else:
+                base_count = len(list(townhalls)) if townhalls else 1
+        except (TypeError, ValueError):
+            base_count = 1
+
+        already_pending = getattr(self.bot, "already_pending", lambda _: 0)
+        pending_hatch = int(already_pending(UnitTypeId.HATCHERY) or 0)
+
+        if base_count < 2 and pending_hatch == 0:
+            return True
+        if base_count < 3 and extractor_count + pending >= 1:
+            return True
+        return False
 
     async def _build_extractor(self) -> None:
         """Build extractor on nearest available geyser."""

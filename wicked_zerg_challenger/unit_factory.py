@@ -225,7 +225,8 @@ class UnitFactory:
             and pending_hatch == 0
             and not under_attack
         ):
-            if 250 <= self.bot.minerals < 350:
+            supply_left = getattr(self.bot, "supply_left", 0)
+            if self.bot.minerals >= 50 and self.bot.minerals < 350 and supply_left > 2:
                 if iteration % 100 == 0:
                     logger.info(
                         f"Saving minerals for 4th Base (Time: {int(game_time)}s), Minerals: {self.bot.minerals}"

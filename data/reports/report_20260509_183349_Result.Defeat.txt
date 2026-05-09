@@ -1,0 +1,61 @@
+============================================================
+  GAME RESULT REPORT - DEFEAT
+============================================================
+  Map: 어비설 리프 - 래더
+  Opponent: Terran
+  Duration: 3:57
+  Date: 2026-05-09 18:33
+
+--- TIMELINE ---
+  [1:14] Build: UnitTypeId.EXTRACTOR (Supply 17)
+  [1:26] Build: UnitTypeId.HATCHERY (Supply 18)
+  [1:43] Build: UnitTypeId.SPAWNINGPOOL (Supply 18)
+  [3:00] Build: UnitTypeId.SPINECRAWLER (Supply 29)
+  [3:37] Build: UnitTypeId.SPINECRAWLER (Supply 32)
+  [3:49] Build: UnitTypeId.CREEPTUMORQUEEN (Supply 34)
+  [4:20] Build: UnitTypeId.SPINECRAWLER (Supply 35)
+  [4:20] Build: UnitTypeId.CREEPTUMORQUEEN (Supply 35)
+  [4:21] Build: UnitTypeId.CREEPTUMOR (Supply 35)
+  [4:28] Build: UnitTypeId.CREEPTUMORQUEEN (Supply 35)
+  [4:36] Build: UnitTypeId.CREEPTUMORQUEEN (Supply 37)
+  [4:44] Build: UnitTypeId.CREEPTUMORQUEEN (Supply 39)
+  [4:52] Build: UnitTypeId.CREEPTUMOR (Supply 39)
+  [4:52] Build: UnitTypeId.CREEPTUMOR (Supply 39)
+  [4:53] Build: UnitTypeId.CREEPTUMORQUEEN (Supply 39)
+  [4:59] Build: UnitTypeId.CREEPTUMORQUEEN (Supply 39)
+  [5:33] Expansion #1 started
+  [7:30] Harassment: UnitTypeId.COMMANDCENTER
+  [7:36] Harassment: UnitTypeId.REFINERY
+  [7:41] Harassment: UnitTypeId.COMMANDCENTER
+
+--- ECONOMY ---
+  Peak Minerals: 170
+  Peak Vespene: 816
+  Peak Workers: 19
+
+--- TIMINGS ---
+  Expansion #1: 5:33 
+  Tech: UnitTypeId.LAIR at 6:21
+  Tech: UnitTypeId.EVOLUTIONCHAMBER at 15:25
+
+--- COMBAT ---
+  No engagement data recorded
+
+--- UNIT COMPOSITION ---
+  UnitTypeId.ZERGLING: 94 produced
+
+--- RESULT ANALYSIS ---
+  Economy collapsed - workers lost
+
+--- IMPROVEMENT SUGGESTIONS ---
+  1. Natural expansion at 333s - aim for sub-60s with Hatch First build
+  2. Lost before 4 minutes - review early defense (spine crawlers, queens, zerglings)
+
+--- FINAL STATS ---
+  Workers: 6
+  Army Supply: 3
+  Bases: 1
+  Minerals: 5
+  Vespene: 776
+
+============================================================

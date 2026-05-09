@@ -4,6 +4,7 @@ Economy Manager - deterministic worker production with macro hatcheries.
 """
 
 from enum import Enum
+import inspect
 from typing import Optional
 
 try:
@@ -153,6 +154,8 @@ class EconomyManager:
         self.first_expansion_time = 0.0
         self.first_expansion_reported = False
         self._opening_natural_requested = False
+        self._recent_expansion_requests = []
+        self._expansion_request_ttl = 100.0
 
         # * Feature 88: Queen Inject Efficiency Tracking *
         self._inject_attempts: int = 0
@@ -181,6 +184,7 @@ class EconomyManager:
         self.first_expansion_time = 0.0
         self.first_expansion_reported = False
         self._opening_natural_requested = False
+        self._recent_expansion_requests = []
         self._inject_attempts = 0
         self._inject_successes = 0
         self.threat_level = ThreatLevel.LOW
@@ -826,6 +830,9 @@ class EconomyManager:
                 return  # 3기지 이하에서 66드론이면 충분 -> 군대 전환
 
         # 기지 수 확인
+        if self._should_reserve_followup_expansion(worker_count):
+            return
+
         townhalls = self.bot.townhalls.ready if hasattr(self.bot, "townhalls") else []
         base_count = townhalls.amount if hasattr(townhalls, "amount") else 1
 
@@ -853,6 +860,9 @@ class EconomyManager:
         if scout_pressure["pressure_active"] and worker_count >= int(
             scout_pressure["drone_floor"]
         ):
+            return
+
+        if self._should_reserve_followup_expansion(worker_count):
             return
 
         if hasattr(self.bot, "supply_left") and self.bot.supply_left <= 0:
@@ -921,6 +931,9 @@ class EconomyManager:
         if self._should_reserve_opening_hatchery(worker_count):
             return False
 
+        if self._should_reserve_followup_expansion(worker_count):
+            return False
+
         if (
             not force_army
             and self.get_target_drone_count() > 0
@@ -930,17 +943,15 @@ class EconomyManager:
         ):
             return await self._train_larva_unit(larva_unit, UnitTypeId.DRONE)
 
-        if self._should_reserve_followup_expansion(worker_count):
-            return False
-
         return await self._dump_larva_into_army()
 
-    def _should_reserve_opening_hatchery(self, worker_count: int = None) -> bool:
+    def _should_reserve_opening_hatchery(
+        self, worker_count: int = None, require_mineral_floor: bool = True
+    ) -> bool:
         if worker_count is None:
             worker_count = getattr(getattr(self.bot, "workers", None), "amount", 0)
 
-        townhalls = getattr(self.bot, "townhalls", None)
-        base_count = getattr(townhalls, "amount", 1) if townhalls is not None else 1
+        base_count = self._ready_base_count()
         pending_hatch = getattr(self.bot, "already_pending", lambda unit_type: 0)(
             UnitTypeId.HATCHERY
         )
@@ -956,6 +967,10 @@ class EconomyManager:
         except (TypeError, ValueError):
             return False
 
+        mineral_ready = True
+        if require_mineral_floor:
+            mineral_ready = minerals >= self.OPENING_HATCH_RESERVE_MINERALS
+
         return (
             base_count == 1
             and pending_hatch == 0
@@ -963,15 +978,12 @@ class EconomyManager:
             <= game_time
             < self.OPENING_HATCH_RESERVE_END
             and worker_count >= self.OPENING_HATCH_RESERVE_WORKERS
-            and minerals >= self.OPENING_HATCH_RESERVE_MINERALS
+            and mineral_ready
         )
 
     def _should_reserve_followup_expansion(self, worker_count: int = None) -> bool:
-        townhalls = getattr(self.bot, "townhalls", None)
-        base_count = getattr(townhalls, "amount", 1) if townhalls is not None else 1
-        pending_hatch = getattr(self.bot, "already_pending", lambda unit_type: 0)(
-            UnitTypeId.HATCHERY
-        )
+        base_count = self._ready_base_count()
+        pending_hatch = self._pending_hatchery_count()
         game_time = getattr(self.bot, "time", 0.0)
 
         if worker_count is None:
@@ -985,24 +997,29 @@ class EconomyManager:
         except (TypeError, ValueError):
             return False
 
-        if game_time < 120.0 or base_count >= 4 or pending_hatch > 0:
+        effective_bases = base_count + pending_hatch
+        if game_time < 120.0 or base_count >= 4:
             return False
-        if worker_count < max(24, base_count * 10):
+        if effective_bases < 2:
             return False
-
         blackboard = getattr(self.bot, "blackboard", None)
         threat = getattr(blackboard, "threat", None)
         if threat is not None and getattr(threat, "is_rushing", False) is True:
+            return False
+        if effective_bases >= 3:
+            return False
+        if effective_bases == 2 and game_time >= 145.0:
+            return True
+        if worker_count < max(24, base_count * 10):
             return False
 
         return True
 
     def _should_block_extra_gas_before_third(self) -> bool:
-        townhalls = getattr(self.bot, "townhalls", None)
         gas_buildings = getattr(self.bot, "gas_buildings", None)
         already_pending = getattr(self.bot, "already_pending", lambda unit_type: 0)
         try:
-            base_count = int(getattr(townhalls, "amount", 1) or 1)
+            base_count = self._ready_base_count()
             gas_count = int(getattr(gas_buildings, "amount", 0) or 0)
             pending_gas = int(already_pending(UnitTypeId.EXTRACTOR) or 0)
         except (TypeError, ValueError):
@@ -1935,6 +1952,9 @@ class EconomyManager:
         if pending_hatch > 0:
             self._opening_natural_requested = True
             return
+        if self._has_recent_expansion_request():
+            self._opening_natural_requested = True
+            return
 
         if self._should_delay_opening_expansion(base_count):
             return
@@ -2029,6 +2049,8 @@ class EconomyManager:
             townhalls.amount if hasattr(townhalls, "amount") else len(list(townhalls))
         )
         minerals = getattr(self.bot, "minerals", 0)
+        if base_count < 2 and self._has_recent_expansion_request():
+            return
 
         force_expand = False
         reason = ""
@@ -2100,6 +2122,15 @@ class EconomyManager:
         # * 2026-01-26 FIX: 확장 시도 시간 기록 *
         self._last_expansion_attempt_time = game_time
 
+        expansion_success = await self._perform_smart_expansion(reason)
+        if expansion_success:
+            self.logger.info(
+                f"[FORCE EXPAND] [{int(game_time)}s] {reason} - SUCCESS"
+            )
+        else:
+            self.logger.info(f"[FORCE EXPAND] ALL METHODS FAILED")
+        return
+
         expansion_success = False
         try:
             if hasattr(self.bot, "expand_now"):
@@ -2170,6 +2201,8 @@ class EconomyManager:
         base_count = (
             townhalls.amount if hasattr(townhalls, "amount") else len(list(townhalls))
         )
+        if base_count < 2 and self._has_recent_expansion_request():
+            return
 
         # *** MAXIMUM FAST EXPANSION: 최대한 빠르고 많은 멀티 ***
         if self._should_delay_opening_expansion(base_count):
@@ -2326,6 +2359,12 @@ class EconomyManager:
                     return  # 심각한 위협: 확장 중단
 
         # * 그 외 모든 경우: 확장 계속 (매크로 경제 우선) *
+        expansion_success = await self._perform_smart_expansion(expand_reason)
+        if expansion_success:
+            return
+
+        self.logger.info(f"[EXPAND] ALL METHODS FAILED - Check bot state")
+        return
 
         # * 확장 실행 - bot.expand_now() 우선 사용 (안정적) *
         expansion_success = False
@@ -2410,6 +2449,186 @@ class EconomyManager:
 
         return best_loc
 
+    def _as_unit_list(self, collection) -> list:
+        if collection is None:
+            return []
+        try:
+            units = list(collection)
+            if units:
+                return units
+        except TypeError:
+            pass
+        except Exception:
+            return []
+        iterator = getattr(collection, "__iter__", None)
+        if callable(iterator):
+            try:
+                return list(iterator())
+            except TypeError:
+                return []
+            except Exception:
+                return []
+        return []
+
+    def _distance_safe(self, a, b) -> float:
+        try:
+            return a.distance_to(b)
+        except Exception:
+            try:
+                pos_a = getattr(a, "position", a)
+                pos_b = getattr(b, "position", b)
+                return pos_a.distance_to(pos_b)
+            except Exception:
+                return float("inf")
+
+    def _owned_base_positions(self) -> list:
+        positions = []
+
+        def add_positions(collection) -> None:
+            for item in self._as_unit_list(collection):
+                position = getattr(item, "position", item)
+                if hasattr(position, "distance_to"):
+                    positions.append(position)
+
+        townhalls = getattr(self.bot, "townhalls", None)
+        add_positions(townhalls)
+        add_positions(getattr(townhalls, "ready", None))
+        add_positions(getattr(townhalls, "not_ready", None))
+
+        structures = getattr(self.bot, "structures", None)
+        if callable(structures):
+            for unit_type in (
+                getattr(UnitTypeId, "HATCHERY", None),
+                getattr(UnitTypeId, "LAIR", None),
+                getattr(UnitTypeId, "HIVE", None),
+            ):
+                if unit_type is None:
+                    continue
+                try:
+                    add_positions(structures(unit_type))
+                except Exception:
+                    continue
+
+        return positions
+
+    def _prune_recent_expansion_requests(self) -> None:
+        game_time = getattr(self.bot, "time", 0.0)
+        owned_positions = self._owned_base_positions()
+        active_requests = []
+        for position, requested_at in getattr(self, "_recent_expansion_requests", []):
+            if any(self._distance_safe(position, owned) < 12.0 for owned in owned_positions):
+                continue
+            if game_time - requested_at <= self._expansion_request_ttl:
+                active_requests.append((position, requested_at))
+        self._recent_expansion_requests = active_requests
+
+    def _has_recent_expansion_request(
+        self, location=None, radius: float = 12.0, max_age: float = None
+    ) -> bool:
+        if not getattr(self, "_recent_expansion_requests", []):
+            return False
+        self._prune_recent_expansion_requests()
+        current_time = float(getattr(self.bot, "time", 0.0) or 0.0)
+        for position, requested_at in self._recent_expansion_requests:
+            if max_age is not None and current_time - requested_at > max_age:
+                continue
+            if location is None or self._distance_safe(location, position) < radius:
+                return True
+        return False
+
+    def _mark_expansion_requested(self, location) -> None:
+        if not location:
+            return
+        self._prune_recent_expansion_requests()
+        if self._has_recent_expansion_request(location):
+            return
+        self._recent_expansion_requests.append((location, getattr(self.bot, "time", 0.0)))
+
+    def _is_expansion_location_taken(
+        self, location, radius: float = 12.0, include_recent: bool = True
+    ) -> bool:
+        owned = any(
+            self._distance_safe(location, position) < radius
+            for position in self._owned_base_positions()
+        )
+        if owned:
+            return True
+        return include_recent and self._has_recent_expansion_request(location, radius)
+
+    def _has_enemy_near_expansion(self, location, radius: float = 10.0) -> bool:
+        for enemies in (
+            getattr(self.bot, "enemy_structures", None),
+            getattr(self.bot, "enemy_units", None),
+        ):
+            for enemy in self._as_unit_list(enemies):
+                position = getattr(enemy, "position", enemy)
+                if self._distance_safe(location, position) < radius:
+                    return True
+        return False
+
+    def _ready_base_count(self) -> int:
+        townhalls = getattr(self.bot, "townhalls", None)
+        ready = getattr(townhalls, "ready", None)
+        if ready is not None:
+            ready_amount = getattr(ready, "amount", None)
+            if isinstance(ready_amount, int):
+                return ready_amount
+            ready_units = self._as_unit_list(ready)
+            if ready_units:
+                return len(ready_units)
+
+        total_amount = getattr(townhalls, "amount", None)
+        if isinstance(total_amount, int):
+            return total_amount
+        return len(self._as_unit_list(townhalls))
+
+    def _pending_hatchery_count(self) -> int:
+        already_pending = getattr(self.bot, "already_pending", lambda unit_type: 0)
+        try:
+            return int(already_pending(UnitTypeId.HATCHERY) or 0)
+        except (TypeError, ValueError):
+            return 0
+
+    def _should_secure_standard_third(self, base_count: int) -> bool:
+        return base_count >= 2 and self._ready_base_count() < 3
+
+    async def _get_closest_available_expansion_location(self, allow_gold: bool = True):
+        if not hasattr(self.bot, "expansion_locations_list") or not hasattr(
+            self.bot, "start_location"
+        ):
+            return None
+
+        candidates = sorted(
+            list(self.bot.expansion_locations_list),
+            key=lambda pos: self._distance_safe(pos, self.bot.start_location),
+        )
+        for candidate in candidates:
+            if self._is_expansion_location_taken(candidate):
+                continue
+            if not allow_gold and self._is_gold_expansion(candidate):
+                continue
+            if self._has_enemy_near_expansion(candidate):
+                continue
+            if hasattr(self.bot, "can_place"):
+                try:
+                    if not await self.bot.can_place(UnitTypeId.HATCHERY, candidate):
+                        continue
+                except (AttributeError, TypeError, ValueError):
+                    continue
+            return candidate
+        return None
+
+    async def _resolve_expansion_target(self, target_pos, allow_gold: bool = True):
+        if (
+            target_pos
+            and not self._is_expansion_location_taken(target_pos)
+            and (allow_gold or not self._is_gold_expansion(target_pos))
+        ):
+            return target_pos
+        return await self._get_closest_available_expansion_location(
+            allow_gold=allow_gold
+        )
+
     async def _get_opening_natural_location(self):
         """Return the closest untaken expansion to our start location."""
         if not hasattr(self.bot, "expansion_locations_list") or not hasattr(
@@ -2419,14 +2638,9 @@ class EconomyManager:
                 return await self.bot.get_next_expansion()
             return None
 
-        taken = []
-        if hasattr(self.bot, "townhalls"):
-            for townhall in self.bot.townhalls:
-                taken.append(getattr(townhall, "position", townhall))
-
         candidates = []
         for location in self.bot.expansion_locations_list:
-            if any(location.distance_to(taken_pos) < 5 for taken_pos in taken):
+            if self._is_expansion_location_taken(location):
                 continue
             candidates.append(location)
 
@@ -2459,6 +2673,31 @@ class EconomyManager:
         self.first_expansion_reported = True
         self.logger.info(f"[EXPANSION] First expansion at {self.first_expansion_time:.1f}s")
 
+    async def _issue_hatchery_build(self, target_pos, worker) -> bool:
+        """Issue a Hatchery build through BotAI.build when available."""
+        build_method = getattr(self.bot, "build", None)
+        if build_method and inspect.iscoroutinefunction(build_method):
+            try:
+                return bool(
+                    await build_method(
+                        UnitTypeId.HATCHERY,
+                        near=target_pos,
+                        max_distance=8,
+                        build_worker=worker,
+                        random_alternative=False,
+                    )
+                )
+            except TypeError:
+                return bool(await build_method(UnitTypeId.HATCHERY, target_pos))
+
+        if not worker:
+            return False
+        action = worker.build(UnitTypeId.HATCHERY, target_pos)
+        if action is False or action is None:
+            return False
+        result = self.bot.do(action)
+        return result is not False
+
     async def _perform_smart_expansion(
         self, reason: str, force_hidden: bool = False
     ) -> bool:
@@ -2478,6 +2717,14 @@ class EconomyManager:
                 if hasattr(getattr(self.bot, "townhalls", None), "amount")
                 else 1
             )
+            ready_base_count = self._ready_base_count()
+            pending_hatcheries = self._pending_hatchery_count()
+            if ready_base_count < 2 and self._has_recent_expansion_request():
+                return False
+            if ready_base_count < 3 and pending_hatcheries > 0:
+                return False
+            if ready_base_count < 3 and self._has_recent_expansion_request(max_age=45.0):
+                return False
 
             # 1. Hidden Base
             if force_hidden:
@@ -2491,21 +2738,43 @@ class EconomyManager:
                 if target_pos:
                     method = "OpeningNatural"
 
-            # 3. Gold / Safe Base
+            prefer_standard_third = self._should_secure_standard_third(base_count)
+
+            # 3. Third base: use the closest safe standard base before taking gold.
+            if not target_pos and prefer_standard_third:
+                target_pos = await self._get_closest_available_expansion_location(
+                    allow_gold=False
+                )
+                if target_pos:
+                    method = "SafeThird"
+
+            # 4. Gold / Safe Base
             if not target_pos:
-                target_pos = await self._get_best_expansion_with_gold_priority()
+                target_pos = await self._get_best_expansion_with_gold_priority(
+                    allow_gold=not prefer_standard_third
+                )
                 if target_pos:
                     if self._is_gold_expansion(target_pos):
                         method = "Gold"
                     else:
                         method = "Safe/Standard"
 
-            # 4. Fallback to default
+            # 5. Fallback to default
             if not target_pos:
-                target_pos = await self.bot.get_next_expansion()
-                method = "Default"
+                if hasattr(self.bot, "get_next_expansion"):
+                    target_pos = await self.bot.get_next_expansion()
+                    method = "Default"
 
             if target_pos:
+                resolved_pos = await self._resolve_expansion_target(
+                    target_pos, allow_gold=not prefer_standard_third or method == "Hidden"
+                )
+                if not resolved_pos:
+                    return False
+                if resolved_pos != target_pos:
+                    target_pos = resolved_pos
+                    method = f"{method}->Available"
+
                 # * Reserve resources using ResourceManager (thread-safe) *
                 reserved = False
                 if hasattr(self.bot, "resource_manager") and self.bot.resource_manager:
@@ -2517,19 +2786,29 @@ class EconomyManager:
                         return False
 
                 if await self.bot.can_place(UnitTypeId.HATCHERY, target_pos):
-                    # Use TechCoordinator if available, else direct build
-                    tech_coordinator = getattr(self.bot, "tech_coordinator", None)
-                    if tech_coordinator:
-                        tech_coordinator.request_structure(
-                            UnitTypeId.HATCHERY,
-                            target_pos,
-                            priority=100,  # High priority
-                            requester="EconomyManager",
-                        )
-                    else:
-                        worker = self.bot.workers.closest_to(target_pos)
-                        if worker:
-                            self.bot.do(worker.build(UnitTypeId.HATCHERY, target_pos))
+                    worker = self.bot.workers.closest_to(target_pos)
+                    if not worker:
+                        if (
+                            reserved
+                            and hasattr(self.bot, "resource_manager")
+                            and self.bot.resource_manager
+                        ):
+                            await self.bot.resource_manager.release(
+                                "EconomyManager_Expansion"
+                            )
+                        return False
+                    issued = await self._issue_hatchery_build(target_pos, worker)
+                    if not issued:
+                        if (
+                            reserved
+                            and hasattr(self.bot, "resource_manager")
+                            and self.bot.resource_manager
+                        ):
+                            await self.bot.resource_manager.release(
+                                "EconomyManager_Expansion"
+                            )
+                        return False
+                    self._mark_expansion_requested(target_pos)
 
                     game_time = getattr(self.bot, "time", 0)
                     self.logger.info(
@@ -2804,22 +3083,15 @@ class EconomyManager:
         gold_expansions = []
 
         try:
-            # Get already taken expansion positions
-            taken_positions = set()
-            if hasattr(self.bot, "townhalls"):
-                for th in self.bot.townhalls:
-                    taken_positions.add(th.position)
-
             # Check enemy bases
             enemy_expansions = set()
-            if hasattr(self.bot, "enemy_structures"):
-                for struct in self.bot.enemy_structures:
-                    if hasattr(struct, "is_structure") and struct.is_structure:
-                        enemy_expansions.add(struct.position)
+            for struct in self._as_unit_list(getattr(self.bot, "enemy_structures", None)):
+                if hasattr(struct, "is_structure") and struct.is_structure:
+                    enemy_expansions.add(struct.position)
 
             for exp_pos in self.bot.expansion_locations_list:
                 # Skip already taken positions
-                if any(exp_pos.distance_to(taken) < 5 for taken in taken_positions):
+                if self._is_expansion_location_taken(exp_pos):
                     continue
 
                 # Skip enemy positions
@@ -2860,7 +3132,7 @@ class EconomyManager:
             )
             return []
 
-    async def _get_best_expansion_with_gold_priority(self):
+    async def _get_best_expansion_with_gold_priority(self, allow_gold: bool = True):
         """
         *** 황금 기지 1순위 확장 시스템 ***
 
@@ -2884,7 +3156,9 @@ class EconomyManager:
             game_time = getattr(self.bot, "time", 0)
 
             # * Phase 1: 황금 기지 최우선 확인 *
-            gold_expansions = self._get_gold_expansion_locations()
+            gold_expansions = (
+                self._get_gold_expansion_locations() if allow_gold else []
+            )
 
             if gold_expansions:
                 best_gold = None
@@ -2925,16 +3199,15 @@ class EconomyManager:
 
             # * Phase 2: 점수 기반 일반 확장 *
             if hasattr(self.bot, "expansion_locations_list"):
-                taken = set()
-                if hasattr(self.bot, "townhalls"):
-                    for th in self.bot.townhalls:
-                        taken.add(th.position)
-
                 best_exp = None
                 best_exp_score = float("-inf")
 
                 for exp_pos in self.bot.expansion_locations_list:
-                    if any(exp_pos.distance_to(t) < 5 for t in taken):
+                    if self._is_expansion_location_taken(exp_pos):
+                        continue
+                    if not allow_gold and self._is_gold_expansion(exp_pos):
+                        continue
+                    if self._has_enemy_near_expansion(exp_pos, 15):
                         continue
 
                     dist_to_us = exp_pos.distance_to(our_base)
@@ -2947,11 +3220,6 @@ class EconomyManager:
                     mineral_total = (
                         sum(m.mineral_contents for m in nearby) if nearby else 0
                     )
-
-                    # 적 근처는 페널티
-                    if hasattr(self.bot, "enemy_structures"):
-                        if self.bot.enemy_structures.closer_than(15, exp_pos):
-                            continue
 
                     # 종합 점수: 가까울수록 + 자원 많을수록 + 적으로부터 멀수록
                     score = (
@@ -2969,7 +3237,10 @@ class EconomyManager:
 
             # Fallback: get_next_expansion()
             if hasattr(self.bot, "get_next_expansion"):
-                return await self.bot.get_next_expansion()
+                fallback = await self.bot.get_next_expansion()
+                return await self._resolve_expansion_target(
+                    fallback, allow_gold=allow_gold
+                )
 
             return None
 
@@ -2978,7 +3249,10 @@ class EconomyManager:
                 f"[EconomyManager] Best expansion lookup suppressed: {e}"
             )
             if hasattr(self.bot, "get_next_expansion"):
-                return await self.bot.get_next_expansion()
+                fallback = await self.bot.get_next_expansion()
+                return await self._resolve_expansion_target(
+                    fallback, allow_gold=allow_gold
+                )
             return None
 
     # ============================================================
@@ -3151,7 +3425,7 @@ class EconomyManager:
             if not hasattr(self.bot, "townhalls") or not self.bot.townhalls.ready:
                 return
 
-            if self._should_reserve_opening_hatchery():
+            if self._should_reserve_opening_hatchery(require_mineral_floor=False):
                 return
             if self._should_block_extra_gas_before_third():
                 return
@@ -3210,7 +3484,9 @@ class EconomyManager:
             self.bot.gas_buildings.amount if hasattr(self.bot, "gas_buildings") else 0
         )
 
-        if self._should_reserve_opening_hatchery(worker_count):
+        if self._should_reserve_opening_hatchery(
+            worker_count, require_mineral_floor=False
+        ):
             return
         if self._should_block_extra_gas_before_third():
             return
@@ -3389,8 +3665,10 @@ class EconomyManager:
             return
 
         try:
-            # *** USE GOLD PRIORITY EXPANSION LOGIC ***
-            exp_pos = await self._get_best_expansion_with_gold_priority()
+            # Keep the third base conservative; gold bases are for later map control.
+            exp_pos = await self._get_best_expansion_with_gold_priority(
+                allow_gold=self._ready_base_count() >= 3
+            )
             if exp_pos:
                 if await self.bot.can_place(UnitTypeId.HATCHERY, exp_pos):
                     # Check if it's a gold base

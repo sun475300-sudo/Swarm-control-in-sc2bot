@@ -341,6 +341,68 @@ class CombatManager:
                 return True
         return bool(getattr(self, "_combat_is_emergency", False))
 
+    def _should_preserve_economy_before_third(self, game_time: float) -> bool:
+        """Delay offensive tasking until a third Hatchery is active."""
+        if game_time < 120:
+            return False
+        if self._is_emergency() and self._has_active_base_threat():
+            return False
+
+        ready_base_count = self._ready_base_count()
+        if ready_base_count:
+            return ready_base_count < 3
+
+        townhalls = getattr(self.bot, "townhalls", None)
+        try:
+            base_count = int(getattr(townhalls, "amount", 0) or 0)
+        except (TypeError, ValueError):
+            base_count = 0
+
+        return base_count < 3
+
+    def _ready_base_count(self) -> int:
+        townhalls = getattr(self.bot, "townhalls", None)
+        ready = getattr(townhalls, "ready", None)
+        ready_amount = getattr(ready, "amount", None)
+        if isinstance(ready_amount, (int, float)):
+            return int(ready_amount)
+        return 0
+
+    def _as_unit_list(self, collection) -> list:
+        if collection is None:
+            return []
+        try:
+            units = list(collection)
+            if units:
+                return units
+        except TypeError:
+            pass
+        except Exception:
+            return []
+        iterator = getattr(collection, "__iter__", None)
+        if callable(iterator):
+            try:
+                return list(iterator())
+            except Exception:
+                return []
+        return []
+
+    def _has_active_base_threat(self) -> bool:
+        enemy_units = self._as_unit_list(getattr(self.bot, "enemy_units", None))
+        townhalls = getattr(self.bot, "townhalls", None)
+        ready = getattr(townhalls, "ready", townhalls)
+        bases = self._as_unit_list(ready) or self._as_unit_list(townhalls)
+        for enemy in enemy_units:
+            if not getattr(enemy, "can_attack", False):
+                continue
+            for base in bases:
+                try:
+                    if enemy.distance_to(base) < 25:
+                        return True
+                except Exception:
+                    continue
+        return False
+
     async def _execute_multitasking(
         self, army_units, air_units, enemy_units, iteration: int
     ):
@@ -355,6 +417,7 @@ class CombatManager:
         5. Scouting (use idle Zerglings)
         """
         game_time = getattr(self.bot, "time", 0)
+        macro_lock = self._should_preserve_economy_before_third(game_time)
 
         # * DYNAMIC PRIORITY ADJUSTMENT *
         # 전략 모드에 따라 우선순위 동적 변경
@@ -466,7 +529,7 @@ class CombatManager:
             strategy_active = getattr(strategy, "early_harassment_active", False)
 
         # Trigger if time is right OR strategy manager requested it
-        if (60 <= game_time <= 420) or strategy_active:
+        if not macro_lock and ((60 <= game_time <= 420) or strategy_active):
             try:
                 from sc2.ids.unit_typeid import UnitTypeId
 
@@ -495,7 +558,9 @@ class CombatManager:
 
         # === TASK 2.5: Counter Attack (after winning a battle) ===
         ground_army = self._filter_ground_units(army_units)
-        if self._check_counterattack_opportunity(ground_army, enemy_units, game_time):
+        if not macro_lock and self._check_counterattack_opportunity(
+            ground_army, enemy_units, game_time
+        ):
             # Counter attack has priority 70 (same as counter_attack task priority)
             enemy_base = self._get_enemy_base_location()
             if enemy_base:
@@ -510,7 +575,7 @@ class CombatManager:
 
         # === TASK 2.5: * 초반 저글링 압박 (3:00-4:30) * ===
         # 저글링 8마리 이상이면 압박
-        if 180 <= game_time <= 270:  # 3:00-4:30
+        if not macro_lock and 180 <= game_time <= 270:  # 3:00-4:30
             try:
                 from sc2.ids.unit_typeid import UnitTypeId
 
@@ -535,7 +600,7 @@ class CombatManager:
 
         # === TASK 2.6: * MID-GAME TIMING ATTACK (5-8분) * ===
         # 상대가 테크 올리기 전에 중반 타이밍 공격으로 압박
-        if 300 <= game_time <= 480:  # 5-8분
+        if not macro_lock and 300 <= game_time <= 480:  # 5-8분
             try:
                 from sc2.ids.unit_typeid import UnitTypeId
 
@@ -589,7 +654,11 @@ class CombatManager:
 
         # === TASK 2.8: * EXPANSION DENIAL (확장 견제) * ===
         # 적의 새로운 확장을 감지하면 저글링 특공대 파견
-        if hasattr(self.bot, "enemy_structures") and 180 < game_time:  # 3분 이후
+        if (
+            not macro_lock
+            and hasattr(self.bot, "enemy_structures")
+            and 180 < game_time
+        ):  # 3분 이후
             townhall_types = {
                 "NEXUS",
                 "COMMANDCENTER",
@@ -643,7 +712,7 @@ class CombatManager:
 
         # === TASK 3: Main Army Attack ===
         # *** FIX: 항상 공격 태스크 추가 (병력이 있으면 무조건 공격) ***
-        if self._has_units(ground_army):
+        if not macro_lock and self._has_units(ground_army):
             attack_target = self._get_attack_target(enemy_units)
             if attack_target:
                 # * 우선순위를 50으로 올림 (기존 40 -> 50, 더 자주 실행)

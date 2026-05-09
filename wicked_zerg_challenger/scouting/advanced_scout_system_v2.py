@@ -119,6 +119,25 @@ class AdvancedScoutingSystemV2:
         self.scouts_lost = 0
         self.intel_updates = 0
 
+    @staticmethod
+    def _units_amount(units) -> int:
+        if units is None:
+            return 0
+        amount = getattr(units, "amount", None)
+        if isinstance(amount, (int, float)):
+            return int(amount)
+        try:
+            return len(units)
+        except TypeError:
+            pass
+        try:
+            return len(list(units))
+        except TypeError:
+            return 0
+
+    def _has_units(self, units) -> bool:
+        return self._units_amount(units) > 0
+
     async def on_step(self, iteration: int):
         # 0. 초기화 (한 번만)
         if not self._patrol_routes:
@@ -371,10 +390,10 @@ class AdvancedScoutingSystemV2:
             )
             if force_unit_type == UnitTypeId.OVERLORD:
                 # 대군주 속업 체크 (속업 안 되어있으면 정찰 지양하지만 강제라면 수행)
-                if available_units:
+                if self._has_units(available_units):
                     scout_unit = available_units.closest_to(target)
             elif force_unit_type == UnitTypeId.ZERGLING:
-                if available_units:
+                if self._has_units(available_units):
                     scout_unit = available_units.closest_to(target)
         else:
             scout_unit = self._select_scout_unit(target)
@@ -599,7 +618,7 @@ class AdvancedScoutingSystemV2:
             overseers = self.bot.units(UnitTypeId.OVERSEER).filter(
                 lambda u: u.tag not in self.active_scouts
             )
-            if overseers:
+            if self._has_units(overseers):
                 return overseers.closest_to(target)
 
         # 2. 저글링 (빠른 기동성)
@@ -610,7 +629,7 @@ class AdvancedScoutingSystemV2:
             zerglings = self.bot.units(UnitTypeId.ZERGLING).filter(
                 lambda u: u.tag not in self.active_scouts and not u.is_burrowed
             )
-            if zerglings:
+            if self._has_units(zerglings):
                 return zerglings.closest_to(target)
 
         # 3. 대군주 (속업 완료 시, 공중 시야)
@@ -625,13 +644,13 @@ class AdvancedScoutingSystemV2:
             overlords = self.bot.units(UnitTypeId.OVERLORD).filter(
                 lambda u: u.tag not in self.active_scouts
             )
-            if overlords:
+            if self._has_units(overlords):
                 return overlords.closest_to(target)
 
         # 4. 일꾼 (극초반)
         if self.bot.time < 180 and len(self.active_scouts) == 0:
             workers = self.bot.workers.filter(lambda u: not u.is_carrying_resource)
-            if workers:
+            if self._has_units(workers):
                 return workers.closest_to(target)
 
         return None
@@ -736,7 +755,7 @@ class AdvancedScoutingSystemV2:
                 return True
 
             # Ground scouts: any combat unit is a threat
-            if not is_flying and not enemy.is_worker:
+            if not is_flying and not getattr(enemy, "is_worker", False):
                 return True
 
         return False
@@ -1042,7 +1061,7 @@ class AdvancedScoutingSystemV2:
         if unit_type == UnitTypeId.OVERLORD:
             available = available.idle
 
-        if not available:
+        if not self._has_units(available):
             return False
 
         scout = available.closest_to(route[0])
@@ -1090,7 +1109,7 @@ class AdvancedScoutingSystemV2:
 
             # 이미 아군 유닛이 근처에 있으면 스킵
             nearby_units = self.bot.units.closer_than(3, tower_pos)
-            if nearby_units:
+            if self._has_units(nearby_units):
                 # 가장 가까운 유닛을 수비병으로 등록
                 self._watchtower_claimers[tower_pos] = nearby_units.first.tag
                 continue
@@ -1101,7 +1120,7 @@ class AdvancedScoutingSystemV2:
                 and u.tag not in self._patrol_units
                 and not u.is_burrowed
             )
-            if not zerglings:
+            if not self._has_units(zerglings):
                 continue
 
             ling = zerglings.closest_to(tower_pos)
@@ -1169,7 +1188,7 @@ class AdvancedScoutingSystemV2:
                 lambda u: u.tag not in self.active_scouts
                 and u.tag not in self._patrol_units
             )
-            if not overlords:
+            if not self._has_units(overlords):
                 break
 
             ol = overlords.closest_to(watch_pos)
@@ -1285,12 +1304,15 @@ class AdvancedScoutingSystemV2:
             lambda u: u.tag not in self.active_scouts
             and u.tag not in self._patrol_units
         )
-        if not overseers:
+        if not self._has_units(overseers):
             return
 
         # 1. Attach one overseer to the main army group for detection
-        army_units = self.bot.units.filter(lambda u: u.can_attack and not u.is_worker)
-        if army_units.amount >= 5:
+        army_units = self.bot.units.filter(
+            lambda u: getattr(u, "can_attack", False)
+            and not getattr(u, "is_worker", False)
+        )
+        if self._units_amount(army_units) >= 5:
             army_center = army_units.center
             # Find the overseer farthest from the army
             for overseer in overseers:
@@ -1300,7 +1322,7 @@ class AdvancedScoutingSystemV2:
 
         # 2. Send remaining overseers toward known enemy positions
         #    to pre-detect cloaked units approaching our bases
-        if overseers.amount >= 2:
+        if self._units_amount(overseers) >= 2:
             our_bases = self.bot.townhalls
             if our_bases:
                 for base in our_bases:
@@ -1312,7 +1334,7 @@ class AdvancedScoutingSystemV2:
                         available = overseers.filter(
                             lambda u: u.distance_to(base.position) > 15
                         )
-                        if available:
+                        if self._has_units(available):
                             closest = available.closest_to(base.position)
                             self.bot.do(closest.move(base.position))
                             break

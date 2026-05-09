@@ -14,7 +14,8 @@ Tests cover:
 import os
 import sys
 import unittest
-from unittest.mock import Mock
+from types import SimpleNamespace
+from unittest.mock import AsyncMock, Mock
 
 # Add parent directory to path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
@@ -234,6 +235,131 @@ class TestProductionResilience(unittest.TestCase):
         from local_training.production_resilience import PLACEMENT_HELPER_AVAILABLE
 
         self.assertIsInstance(PLACEMENT_HELPER_AVAILABLE, bool)
+
+    async def test_auto_extractors_wait_for_opening_hatchery(self):
+        """ProductionResilience cannot build gas before the natural starts."""
+        self.bot.time = 100.0
+        self.bot.townhalls.amount = 1
+        self.bot.already_pending = Mock(return_value=0)
+        self.bot.structures = Mock(return_value=Mock(amount=0))
+        self.bot.build = AsyncMock()
+
+        await self.resilience._auto_build_extractors(self.bot.time)
+
+        self.bot.build.assert_not_awaited()
+
+    async def test_auto_second_extractor_waits_for_third_base(self):
+        """ProductionResilience caps gas at one Extractor until third base."""
+        self.bot.time = 150.0
+        self.bot.townhalls.amount = 2
+        self.bot.already_pending = Mock(return_value=0)
+        self.bot.structures = Mock(return_value=Mock(amount=1))
+        self.bot.build = AsyncMock()
+
+        await self.resilience._auto_build_extractors(self.bot.time)
+
+        self.bot.build.assert_not_awaited()
+
+    def test_third_base_reserve_blocks_auto_tech(self):
+        """Roach Warren and other macro tech wait until the third starts."""
+        self.bot.time = 190.0
+        self.bot.minerals = 250
+        self.bot.townhalls.amount = 2
+        self.bot.already_pending = Mock(return_value=0)
+        self.bot.tech_coordinator = Mock()
+        self.resilience._auto_build_extractors = AsyncMock()
+
+        def structures(unit_type):
+            group = Mock(amount=0, exists=False)
+            group.ready = Mock(exists=unit_type == UnitTypeId.SPAWNINGPOOL)
+            return group
+
+        self.bot.structures = Mock(side_effect=structures)
+
+        import asyncio
+
+        asyncio.run(self.resilience._auto_build_tech_structures())
+
+        self.bot.tech_coordinator.request_structure.assert_not_called()
+
+    def test_third_base_reserve_blocks_army_larva_when_defense_ready(self):
+        """Once minimum defense exists, larvae are held for the third Hatchery."""
+        self.bot.time = 190.0
+        self.bot.minerals = 250
+        self.bot.townhalls.amount = 2
+        self.bot.already_pending = Mock(return_value=0)
+
+        def units(unit_type):
+            amounts = {
+                UnitTypeId.ZERGLING: 6,
+                UnitTypeId.ROACH: 0,
+                UnitTypeId.HYDRALISK: 0,
+                UnitTypeId.MUTALISK: 0,
+            }
+            return SimpleNamespace(amount=amounts.get(unit_type, 0))
+
+        self.bot.units = Mock(side_effect=units)
+        larva = Mock()
+
+        import asyncio
+
+        result = asyncio.run(self.resilience._produce_army_unit(larva))
+
+        self.assertFalse(result)
+        self.bot.can_afford.assert_not_called()
+
+    def test_pending_third_releases_production_reserve(self):
+        """A pending third Hatchery releases ProductionResilience spending."""
+        self.bot.time = 190.0
+        self.bot.townhalls.amount = 2
+        self.bot.townhalls.ready.amount = 2
+        self.bot.already_pending = Mock(
+            side_effect=lambda unit_type: 1 if unit_type == UnitTypeId.HATCHERY else 0
+        )
+
+        self.assertFalse(self.resilience._should_reserve_third_base_minerals())
+
+    def test_fourth_base_reserve_active_on_three_ready_bases(self):
+        """After six minutes, three-base play reserves minerals for the fourth."""
+        self.bot.time = 370.0
+        self.bot.townhalls.amount = 3
+        self.bot.townhalls.ready.amount = 3
+        self.bot.already_pending = Mock(return_value=0)
+
+        self.assertTrue(self.resilience._should_reserve_third_base_minerals())
+
+    def test_pending_fourth_releases_production_reserve(self):
+        """A pending fourth Hatchery releases ProductionResilience spending."""
+        self.bot.time = 370.0
+        self.bot.townhalls.amount = 3
+        self.bot.townhalls.ready.amount = 3
+        self.bot.already_pending = Mock(
+            side_effect=lambda unit_type: 1 if unit_type == UnitTypeId.HATCHERY else 0
+        )
+
+        self.assertFalse(self.resilience._should_reserve_third_base_minerals())
+
+    def test_pending_natural_keeps_third_base_reserve_active(self):
+        """While the natural is still pending, mineral spending is held for third."""
+        self.bot.time = 150.0
+        self.bot.townhalls.amount = 1
+        self.bot.townhalls.ready.amount = 1
+        self.bot.already_pending = Mock(
+            side_effect=lambda unit_type: 1 if unit_type == UnitTypeId.HATCHERY else 0
+        )
+
+        self.assertTrue(self.resilience._should_reserve_third_base_minerals())
+
+    def test_pending_natural_in_townhall_amount_keeps_third_base_reserve_active(self):
+        """A pending natural counted in townhalls.amount is not a pending third."""
+        self.bot.time = 150.0
+        self.bot.townhalls.amount = 2
+        self.bot.townhalls.ready.amount = 1
+        self.bot.already_pending = Mock(
+            side_effect=lambda unit_type: 1 if unit_type == UnitTypeId.HATCHERY else 0
+        )
+
+        self.assertTrue(self.resilience._should_reserve_third_base_minerals())
 
 
 # Run async tests

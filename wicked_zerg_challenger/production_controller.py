@@ -54,6 +54,7 @@ class ProductionController:
         self.units_produced: Dict[Any, int] = {}
         self.production_failures: int = 0
         self.max_produced_per_frame = 0  # 프레임당 최대 생산 기록
+        self._last_third_reserve_log_time = -999.0
 
     def request_unit(
         self,
@@ -151,6 +152,21 @@ class ProductionController:
             unit_type, count, requester = request
 
             # 생산 시도
+            if self._should_reserve_third_base_minerals() and not self._can_spend_during_third_base_reserve(
+                unit_type, requester
+            ):
+                priority = self.blackboard.get_authority_priority(requester)
+                self.blackboard.request_production(
+                    unit_type, count, requester, priority
+                )
+                game_time = getattr(self.bot, "time", 0.0)
+                if game_time - self._last_third_reserve_log_time >= 10.0:
+                    self.logger.info(
+                        f"[EXPANSION_RESERVE][{int(game_time)}s] Holding {unit_type} from {requester} until next Hatchery starts"
+                    )
+                    self._last_third_reserve_log_time = game_time
+                break
+
             produced = await self._produce_unit(unit_type, count, requester)
 
             if produced > 0:
@@ -239,6 +255,137 @@ class ProductionController:
 
         return produced
 
+    def _should_reserve_third_base_minerals(self) -> bool:
+        """Hold non-essential production while saving the third Hatchery."""
+        if UnitTypeId is None:
+            return False
+
+        try:
+            game_time = float(getattr(self.bot, "time", 0.0) or 0.0)
+        except (TypeError, ValueError):
+            return False
+        if game_time < 145.0:
+            return False
+
+        ready_bases = self._ready_base_count()
+        pending_hatch = self._pending_hatchery_count()
+
+        if ready_bases >= 3:
+            if game_time >= 360.0 and ready_bases < 4 and pending_hatch == 0:
+                return not self._has_active_base_threat()
+            return False
+        if ready_bases < 2:
+            return pending_hatch > 0 and not self._has_active_base_threat()
+        if pending_hatch > 0:
+            return False
+
+        return not self._has_active_base_threat()
+
+    def _can_spend_during_third_base_reserve(self, unit_type: Any, requester: str) -> bool:
+        """Allow supply safety and a small defensive floor during third reserve."""
+        if unit_type == UnitTypeId.OVERLORD:
+            return True
+        if unit_type in (UnitTypeId.ZERGLING, UnitTypeId.ROACH):
+            return self._needs_minimum_defense_before_third()
+        return False
+
+    def _needs_minimum_defense_before_third(self) -> bool:
+        try:
+            game_time = float(getattr(self.bot, "time", 0.0) or 0.0)
+        except (TypeError, ValueError):
+            return False
+
+        zerglings = self._unit_count(UnitTypeId.ZERGLING)
+        roaches = self._unit_count(UnitTypeId.ROACH)
+        army_floor_score = zerglings + roaches * 2
+        supply_army = getattr(self.bot, "supply_army", None)
+        if isinstance(supply_army, (int, float)):
+            army_floor_score = max(army_floor_score, int(supply_army))
+
+        if game_time >= 300.0:
+            return army_floor_score < 12
+        if game_time >= 210.0:
+            return army_floor_score < 8
+        return False
+
+    def _unit_count(self, unit_type: Any) -> int:
+        units = getattr(self.bot, "units", None)
+        if units is None:
+            return 0
+
+        try:
+            matching = units(unit_type)
+        except Exception:
+            return 0
+
+        amount = getattr(matching, "amount", None)
+        if isinstance(amount, (int, float)):
+            return int(amount)
+
+        try:
+            return len(list(matching))
+        except TypeError:
+            return 0
+
+    def _ready_base_count(self) -> int:
+        townhalls = getattr(self.bot, "townhalls", None)
+        if not townhalls:
+            return 0
+
+        ready = getattr(townhalls, "ready", None)
+        for source in (ready, townhalls):
+            if not source:
+                continue
+            amount = getattr(source, "amount", None)
+            if isinstance(amount, (int, float)):
+                return int(amount)
+            if amount is not None:
+                continue
+            try:
+                return len(list(source))
+            except TypeError:
+                pass
+
+        return 1
+
+    def _pending_hatchery_count(self) -> int:
+        already_pending = getattr(self.bot, "already_pending", lambda unit_type: 0)
+        try:
+            return int(already_pending(UnitTypeId.HATCHERY) or 0)
+        except (TypeError, ValueError):
+            return 0
+
+    def _has_active_base_threat(self) -> bool:
+        enemy_units = getattr(self.bot, "enemy_units", None)
+        townhalls = getattr(self.bot, "townhalls", None)
+        if enemy_units is None or townhalls is None:
+            return False
+
+        try:
+            bases = list(townhalls)
+        except TypeError:
+            first_base = getattr(townhalls, "first", None)
+            bases = [first_base] if first_base else []
+
+        for base in bases:
+            if not base:
+                continue
+            try:
+                nearby = enemy_units.closer_than(12, base)
+            except Exception:
+                continue
+
+            amount = getattr(nearby, "amount", 0)
+            if isinstance(amount, (int, float)) and amount > 0:
+                return True
+            try:
+                if len(nearby) > 0:
+                    return True
+            except TypeError:
+                pass
+
+        return False
+
     async def _auto_produce_overlords(self) -> None:
         """
         Overlord 자동 생산 (보급 차단 방지)
@@ -311,6 +458,8 @@ class ProductionController:
                 self.blackboard, "build_order_complete", self.bot.time >= 300
             )
         if not bo_complete:
+            return
+        if self._should_reserve_third_base_minerals():
             return
 
         # 라바 확인
@@ -439,6 +588,8 @@ class ProductionController:
         """
         minerals = getattr(self.bot, "minerals", 0)
         if minerals < 1000:
+            return
+        if self._should_reserve_third_base_minerals():
             return
 
         larvae = self.bot.larva

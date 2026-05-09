@@ -4,7 +4,8 @@ import unittest
 from unittest.mock import MagicMock
 
 # Add project root to path
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+sys.modules.pop("utils", None)
 
 # Mock StrategyConfig before importing StrategyManagerV2
 sys.modules["config.unit_configs"] = MagicMock()
@@ -69,6 +70,24 @@ class TestStrategyManagerV2Overrides(unittest.TestCase):
 
         # Verify
         self.assertEqual(self.sm.current_mode, StrategyMode.ALL_IN)
+
+    def test_defense_mode_does_not_exit_while_base_threat_exists(self):
+        """Visible enemies near a base keep defense mode active."""
+        base = MagicMock()
+        enemy = MagicMock()
+        enemy.distance_to.return_value = 10
+        self.bot.townhalls = [base]
+        self.bot.enemy_units = [enemy]
+        self.bot.time = 250.0
+
+        self.sm.current_mode = StrategyMode.DEFENSIVE
+        self.sm.last_major_attack_time = 0.0
+        self.sm._detect_major_attack = MagicMock(return_value=False)
+
+        self.sm._check_defense_mode_timeout()
+
+        self.assertEqual(self.sm.current_mode, StrategyMode.DEFENSIVE)
+        self.assertEqual(self.sm.last_major_attack_time, 250.0)
 
 
 if __name__ == "__main__":

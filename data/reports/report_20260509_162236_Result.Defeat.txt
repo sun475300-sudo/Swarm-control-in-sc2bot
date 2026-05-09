@@ -1,0 +1,63 @@
+============================================================
+  GAME RESULT REPORT - DEFEAT
+============================================================
+  Map: 어비설 리프 - 래더
+  Opponent: Terran
+  Duration: 3:17
+  Date: 2026-05-09 16:22
+
+--- TIMELINE ---
+  [1:14] Build: UnitTypeId.EXTRACTOR (Supply 17)
+  [1:24] Build: UnitTypeId.SPAWNINGPOOL (Supply 18)
+  [1:56] Build: UnitTypeId.HATCHERY (Supply 19)
+  [2:23] Build: UnitTypeId.SPINECRAWLER (Supply 23)
+  [2:37] Build: UnitTypeId.BANELINGNEST (Supply 23)
+  [3:33] Build: UnitTypeId.CREEPTUMORQUEEN (Supply 32)
+  [3:47] Build: UnitTypeId.SPINECRAWLER (Supply 33)
+  [4:05] Build: UnitTypeId.CREEPTUMOR (Supply 36)
+  [4:06] Build: UnitTypeId.EVOLUTIONCHAMBER (Supply 35)
+  [4:39] Build: UnitTypeId.SPINECRAWLER (Supply 35)
+  [4:45] Build: UnitTypeId.CREEPTUMOR (Supply 37)
+  [8:18] Harassment: UnitTypeId.BUNKER
+  [8:23] Harassment: UnitTypeId.MISSILETURRET
+  [8:28] Expansion #1 started
+  [8:29] Harassment: UnitTypeId.SENSORTOWER
+  [8:43] Harassment: UnitTypeId.BUNKER
+  [8:48] Harassment: UnitTypeId.COMMANDCENTER
+  [8:54] Harassment: UnitTypeId.BUNKER
+  [9:15] Harassment: UnitTypeId.BUNKER
+  [9:20] Harassment: UnitTypeId.BUNKER
+
+--- ECONOMY ---
+  Peak Minerals: 180
+  Peak Vespene: 750
+  Peak Workers: 42
+
+--- TIMINGS ---
+  Expansion #1: 8:28 
+  Tech: UnitTypeId.EVOLUTIONCHAMBER at 4:06
+  Tech: UnitTypeId.ROACHWARREN at 8:09
+  Tech: UnitTypeId.LAIR at 8:51
+  Tech: UnitTypeId.HYDRALISKDEN at 10:01
+
+--- COMBAT ---
+  No engagement data recorded
+
+--- UNIT COMPOSITION ---
+  UnitTypeId.ZERGLING: 136 produced
+
+--- RESULT ANALYSIS ---
+  Army wiped out - need better engagements
+
+--- IMPROVEMENT SUGGESTIONS ---
+  1. Natural expansion at 508s - aim for sub-60s with Hatch First build
+  2. Lost before 4 minutes - review early defense (spine crawlers, queens, zerglings)
+
+--- FINAL STATS ---
+  Workers: 24
+  Army Supply: 7
+  Bases: 3
+  Minerals: 5
+  Vespene: 730
+
+============================================================

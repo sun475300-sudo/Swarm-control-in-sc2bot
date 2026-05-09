@@ -1,0 +1,65 @@
+============================================================
+  GAME RESULT REPORT - DEFEAT
+============================================================
+  Map: 어비설 리프 - 래더
+  Opponent: Terran
+  Duration: 6:30
+  Date: 2026-05-09 19:33
+
+--- TIMELINE ---
+  [1:14] Build: UnitTypeId.SPAWNINGPOOL (Supply 18)
+  [1:40] Build: UnitTypeId.EXTRACTOR (Supply 19)
+  [1:52] Build: UnitTypeId.HATCHERY (Supply 19)
+  [2:21] Build: UnitTypeId.SPINECRAWLER (Supply 23)
+  [2:57] Build: UnitTypeId.SPINECRAWLER (Supply 26)
+  [3:41] Build: UnitTypeId.CREEPTUMORQUEEN (Supply 33)
+  [3:41] Build: UnitTypeId.CREEPTUMORQUEEN (Supply 33)
+  [3:41] Build: UnitTypeId.HATCHERY (Supply 32)
+  [3:52] Build: UnitTypeId.EXTRACTOR (Supply 33)
+  [4:03] Build: UnitTypeId.EXTRACTOR (Supply 34)
+  [4:09] Build: UnitTypeId.EXTRACTOR (Supply 34)
+  [4:12] Build: UnitTypeId.CREEPTUMOR (Supply 35)
+  [4:14] Build: UnitTypeId.EXTRACTOR (Supply 34)
+  [4:18] Build: UnitTypeId.CREEPTUMORQUEEN (Supply 35)
+  [4:20] Build: UnitTypeId.CREEPTUMORQUEEN (Supply 35)
+  [4:23] Build: UnitTypeId.EVOLUTIONCHAMBER (Supply 34)
+  [4:38] Build: UnitTypeId.EXTRACTOR (Supply 33)
+  [4:40] Build: UnitTypeId.SPINECRAWLER (Supply 32)
+  [4:44] Build: UnitTypeId.CREEPTUMOR (Supply 32)
+  [4:44] Build: UnitTypeId.CREEPTUMOR (Supply 32)
+
+--- ECONOMY ---
+  Peak Minerals: 290
+  Peak Vespene: 880
+  Peak Workers: 90
+
+--- TIMINGS ---
+  Expansion #1: 9:03 
+  Expansion #2: 15:31 (+871s LATE)
+  Tech: UnitTypeId.EVOLUTIONCHAMBER at 4:23
+  Tech: UnitTypeId.ROACHWARREN at 12:24
+  Tech: UnitTypeId.LAIR at 13:12
+  Tech: UnitTypeId.HYDRALISKDEN at 13:41
+  Tech: UnitTypeId.SPIRE at 14:13
+  Tech: UnitTypeId.INFESTATIONPIT at 14:41
+  Tech: UnitTypeId.LURKERDENMP at 15:10
+
+--- COMBAT ---
+  No engagement data recorded
+
+--- UNIT COMPOSITION ---
+  UnitTypeId.ZERGLING: 110 produced
+
+--- RESULT ANALYSIS ---
+
+--- IMPROVEMENT SUGGESTIONS ---
+  1. Natural expansion at 543s - aim for sub-60s with Hatch First build
+
+--- FINAL STATS ---
+  Workers: 88
+  Army Supply: 111
+  Bases: 5
+  Minerals: 220
+  Vespene: 570
+
+============================================================

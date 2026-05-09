@@ -1,0 +1,64 @@
+============================================================
+  GAME RESULT REPORT - DEFEAT
+============================================================
+  Map: 어비설 리프 - 래더
+  Opponent: Terran
+  Duration: 6:56
+  Date: 2026-05-09 19:09
+
+--- TIMELINE ---
+  [1:14] Build: UnitTypeId.EXTRACTOR (Supply 17)
+  [1:26] Build: UnitTypeId.HATCHERY (Supply 18)
+  [1:43] Build: UnitTypeId.SPAWNINGPOOL (Supply 18)
+  [3:02] Build: UnitTypeId.SPINECRAWLER (Supply 28)
+  [3:09] Build: UnitTypeId.BANELINGNEST (Supply 29)
+  [3:39] Build: UnitTypeId.SPINECRAWLER (Supply 30)
+  [3:43] Build: UnitTypeId.CREEPTUMORQUEEN (Supply 32)
+  [4:13] Build: UnitTypeId.CREEPTUMOR (Supply 34)
+  [4:17] Build: UnitTypeId.SPINECRAWLER (Supply 33)
+  [4:20] Build: UnitTypeId.CREEPTUMORQUEEN (Supply 35)
+  [4:33] Build: UnitTypeId.CREEPTUMORQUEEN (Supply 35)
+  [4:44] Build: UnitTypeId.CREEPTUMORQUEEN (Supply 37)
+  [4:52] Build: UnitTypeId.CREEPTUMORQUEEN (Supply 37)
+  [4:52] Build: UnitTypeId.CREEPTUMOR (Supply 37)
+  [4:53] Build: UnitTypeId.SPINECRAWLER (Supply 36)
+  [4:59] Build: UnitTypeId.CREEPTUMORQUEEN (Supply 36)
+  [5:00] Build: UnitTypeId.CREEPTUMOR (Supply 36)
+  [5:00] Build: UnitTypeId.CREEPTUMORQUEEN (Supply 36)
+  [5:08] Expansion #1 started
+  [7:16] Harassment: UnitTypeId.BARRACKS
+
+--- ECONOMY ---
+  Peak Minerals: 290
+  Peak Vespene: 854
+  Peak Workers: 40
+
+--- TIMINGS ---
+  Expansion #1: 5:08 
+  Tech: UnitTypeId.EVOLUTIONCHAMBER at 6:56
+  Tech: UnitTypeId.ROACHWARREN at 11:16
+  Tech: UnitTypeId.LAIR at 12:01
+  Tech: UnitTypeId.HYDRALISKDEN at 13:14
+  Tech: UnitTypeId.INFESTATIONPIT at 16:29
+
+--- COMBAT ---
+  No engagement data recorded
+
+--- UNIT COMPOSITION ---
+  UnitTypeId.ZERGLING: 102 produced
+
+--- RESULT ANALYSIS ---
+  Army wiped out - need better engagements
+
+--- IMPROVEMENT SUGGESTIONS ---
+  1. Natural expansion at 308s - aim for sub-60s with Hatch First build
+  2. Worker count below optimal - prioritize drone production
+
+--- FINAL STATS ---
+  Workers: 17
+  Army Supply: 8
+  Bases: 3
+  Minerals: 43
+  Vespene: 343
+
+============================================================

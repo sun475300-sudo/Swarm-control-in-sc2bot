@@ -73,6 +73,9 @@ class CreepExpansionSystem:
             if iteration % 1320 == 0:  # 60초마다
                 self._update_statistics(game_time)
 
+        except AssertionError as e:
+            if iteration % 50 == 0:
+                self.logger.debug(f"[CREEP] Transient assertion skipped: {e!r}")
         except Exception as e:
             if iteration % 50 == 0:
                 self.logger.error(f"[CREEP] Error: {e}")
@@ -247,19 +250,21 @@ class CreepExpansionSystem:
             closest_target = self.target_creep_positions[idx]
 
             # 이미 점막이 있는 위치는 스킵
-            if self.bot.has_creep(closest_target):
+            if self._safe_has_creep(closest_target):
                 self.target_creep_positions.remove(closest_target)
                 continue
 
             # Queen이 목표 근처에 있으면 종양 생성
             if queen.distance_to(closest_target) < 10:
-                abilities = await self.bot.get_available_abilities(queen)
+                abilities = await self._safe_available_abilities(queen)
                 if AbilityId.BUILD_CREEPTUMOR_QUEEN in abilities:
-                    self.bot.do(queen(AbilityId.BUILD_CREEPTUMOR_QUEEN, closest_target))
-                    self.tumor_positions.add(closest_target)
-                    self.tumors_created += 1
-                    self.logger.info(f"[CREEP] Queen creep tumor at {closest_target}")
-                    break
+                    if self._issue_creep_command(
+                        queen, AbilityId.BUILD_CREEPTUMOR_QUEEN, closest_target
+                    ):
+                        self.tumor_positions.add(closest_target)
+                        self.tumors_created += 1
+                        self.logger.info(f"[CREEP] Queen creep tumor at {closest_target}")
+                        break
 
     async def _spread_creep_tumors(self):
         """점막 종양 확장"""
@@ -281,19 +286,21 @@ class CreepExpansionSystem:
             closest_target = self.target_creep_positions[idx]
 
             # 이미 점막이 있는 위치는 스킵
-            if self.bot.has_creep(closest_target):
+            if self._safe_has_creep(closest_target):
                 self.target_creep_positions.remove(closest_target)
                 continue
 
             # 종양이 목표 근처에 있으면 확장
             if tumor.distance_to(closest_target) < 10:
-                abilities = await self.bot.get_available_abilities(tumor)
+                abilities = await self._safe_available_abilities(tumor)
                 if AbilityId.BUILD_CREEPTUMOR_TUMOR in abilities:
-                    self.bot.do(tumor(AbilityId.BUILD_CREEPTUMOR_TUMOR, closest_target))
-                    self.tumor_positions.add(closest_target)
-                    self.tumors_created += 1
-                    self.logger.info(f"[CREEP] Tumor spread to {closest_target}")
-                    break
+                    if self._issue_creep_command(
+                        tumor, AbilityId.BUILD_CREEPTUMOR_TUMOR, closest_target
+                    ):
+                        self.tumor_positions.add(closest_target)
+                        self.tumors_created += 1
+                        self.logger.info(f"[CREEP] Tumor spread to {closest_target}")
+                        break
 
     def _update_statistics(self, game_time: float):
         """통계 업데이트"""
@@ -310,3 +317,27 @@ class CreepExpansionSystem:
                 f"[CREEP] [{int(game_time)}s] Tumors: {self.tumors_created}, "
                 f"Coverage: {self.map_coverage:.1f}%"
             )
+
+    async def _safe_available_abilities(self, unit):
+        try:
+            return await self.bot.get_available_abilities(unit)
+        except (AssertionError, AttributeError, RuntimeError, ValueError) as exc:
+            tag = getattr(unit, "tag", "unknown")
+            self.logger.debug("[CREEP] Skip ability query for unit %s: %r", tag, exc)
+            return []
+
+    def _safe_has_creep(self, position) -> bool:
+        try:
+            return bool(self.bot.has_creep(position))
+        except (AssertionError, AttributeError, RuntimeError, ValueError) as exc:
+            self.logger.debug("[CREEP] Skip creep check at %s: %r", position, exc)
+            return False
+
+    def _issue_creep_command(self, unit, ability, target) -> bool:
+        try:
+            self.bot.do(unit(ability, target))
+            return True
+        except (AssertionError, AttributeError, RuntimeError, ValueError) as exc:
+            tag = getattr(unit, "tag", "unknown")
+            self.logger.debug("[CREEP] Skip creep command for unit %s: %r", tag, exc)
+            return False

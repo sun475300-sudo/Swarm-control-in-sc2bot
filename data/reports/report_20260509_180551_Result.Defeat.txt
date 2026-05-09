@@ -1,0 +1,58 @@
+============================================================
+  GAME RESULT REPORT - DEFEAT
+============================================================
+  Map: 어비설 리프 - 래더
+  Opponent: Terran
+  Duration: 4:19
+  Date: 2026-05-09 18:05
+
+--- TIMELINE ---
+  [1:13] Build: UnitTypeId.EXTRACTOR (Supply 17)
+  [1:14] Build: UnitTypeId.HATCHERY (Supply 16)
+  [1:40] Build: UnitTypeId.SPAWNINGPOOL (Supply 18)
+  [2:47] Build: UnitTypeId.ROACHWARREN (Supply 26)
+  [2:53] Build: UnitTypeId.SPINECRAWLER (Supply 25)
+  [3:40] Build: UnitTypeId.SPINECRAWLER (Supply 28)
+  [3:57] Build: UnitTypeId.CREEPTUMORQUEEN (Supply 32)
+  [4:17] Build: UnitTypeId.SPINECRAWLER (Supply 33)
+  [4:23] Harassment: UnitTypeId.FACTORY
+  [4:28] Build: UnitTypeId.CREEPTUMORQUEEN (Supply 31)
+  [4:29] Build: UnitTypeId.CREEPTUMOR (Supply 31)
+  [4:52] Build: UnitTypeId.CREEPTUMORQUEEN (Supply 35)
+  [4:59] Build: UnitTypeId.CREEPTUMORQUEEN (Supply 35)
+  [5:00] Build: UnitTypeId.CREEPTUMORQUEEN (Supply 35)
+  [5:57] Harassment: UnitTypeId.FACTORY
+  [8:31] Harassment: UnitTypeId.COMMANDCENTER
+  [8:37] Harassment: UnitTypeId.REFINERY
+  [8:42] Harassment: UnitTypeId.COMMANDCENTER
+  [8:48] Harassment: UnitTypeId.COMMANDCENTER
+  [9:01] Harassment: UnitTypeId.COMMANDCENTER
+
+--- ECONOMY ---
+  Peak Minerals: 185
+  Peak Vespene: 404
+  Peak Workers: 18
+
+--- TIMINGS ---
+  Tech: UnitTypeId.ROACHWARREN at 2:47
+
+--- COMBAT ---
+  No engagement data recorded
+
+--- UNIT COMPOSITION ---
+  UnitTypeId.ZERGLING: 112 produced
+
+--- RESULT ANALYSIS ---
+  Economy collapsed - workers lost
+
+--- IMPROVEMENT SUGGESTIONS ---
+  1. Game played well! Continue practicing current build
+
+--- FINAL STATS ---
+  Workers: 8
+  Army Supply: 3
+  Bases: 1
+  Minerals: 40
+  Vespene: 408
+
+============================================================

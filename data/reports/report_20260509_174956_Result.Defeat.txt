@@ -1,0 +1,47 @@
+============================================================
+  GAME RESULT REPORT - DEFEAT
+============================================================
+  Map: 어비설 리프 - 래더
+  Opponent: Terran
+  Duration: 4:02
+  Date: 2026-05-09 17:49
+
+--- TIMELINE ---
+  [1:16] Build: UnitTypeId.EXTRACTOR (Supply 17)
+  [1:22] Build: UnitTypeId.HATCHERY (Supply 17)
+  [1:43] Build: UnitTypeId.SPAWNINGPOOL (Supply 18)
+  [2:58] Build: UnitTypeId.BANELINGNEST (Supply 29)
+  [3:03] Build: UnitTypeId.SPINECRAWLER (Supply 28)
+  [3:41] Build: UnitTypeId.SPINECRAWLER (Supply 31)
+  [3:57] Build: UnitTypeId.CREEPTUMORQUEEN (Supply 33)
+  [4:28] Build: UnitTypeId.CREEPTUMOR (Supply 35)
+  [4:49] Build: UnitTypeId.SPORECRAWLER (Supply 38)
+
+--- ECONOMY ---
+  Peak Minerals: 180
+  Peak Vespene: 478
+  Peak Workers: 19
+
+--- TIMINGS ---
+  No timing data available
+
+--- COMBAT ---
+  No engagement data recorded
+
+--- UNIT COMPOSITION ---
+  UnitTypeId.ZERGLING: 26 produced
+
+--- RESULT ANALYSIS ---
+  Economy collapsed - workers lost
+
+--- IMPROVEMENT SUGGESTIONS ---
+  1. Game played well! Continue practicing current build
+
+--- FINAL STATS ---
+  Workers: 1
+  Army Supply: 3
+  Bases: 2
+  Minerals: 25
+  Vespene: 478
+
+============================================================

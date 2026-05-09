@@ -62,6 +62,8 @@ class BuildOrderOptimizer:
 
         # * Gas Priority System *
         self.gas_reserved_for_queen = False
+        self.first_queen_made = False
+        self.metabolic_boost_requested = False
         self.queens_per_base = 1  # 기지당 Queen 수
         self.first_queen_made = False
 
@@ -125,8 +127,8 @@ class BuildOrderOptimizer:
         # * 2. Hatchery at 17 supply *
         if supply >= self.HATCHERY_SUPPLY and not self.expansion_placed:
             await self._build_expansion()
-            if not self.expansion_placed and self.bot.time < 120:
-                return
+        if not self._has_expansion_started() and self.bot.time < 120:
+            return
 
         # * 3. Spawning Pool at 17 supply *
         if supply >= self.POOL_SUPPLY and not self.pool_placed:
@@ -170,6 +172,8 @@ class BuildOrderOptimizer:
 
         # * 자연 확장 위치 찾기 *
         await self.bot.expand_now()
+        if not self._has_expansion_started():
+            return
         self.expansion_placed = True
 
         self.logger.info(
@@ -227,6 +231,9 @@ class BuildOrderOptimizer:
         if not hasattr(self.bot, "vespene_geyser"):
             return
 
+        if self._should_delay_extractor():
+            return
+
         # Check if already exists
         extractors = self.bot.structures(UnitTypeId.EXTRACTOR)
         if extractors.exists or self.bot.already_pending(UnitTypeId.EXTRACTOR) > 0:
@@ -250,8 +257,35 @@ class BuildOrderOptimizer:
                         f"[{int(self.bot.time)}s] [*] EXTRACTOR placed (Supply: {self.bot.supply_used}) [*]"
                     )
 
+    def _should_delay_extractor(self) -> bool:
+        """Keep gas behind real expansion progress."""
+        townhalls = getattr(self.bot, "townhalls", None)
+        try:
+            base_count = int(getattr(townhalls, "amount", 1) or 1)
+        except (TypeError, ValueError):
+            base_count = 1
+
+        already_pending = getattr(self.bot, "already_pending", lambda _: 0)
+        pending_hatch = int(already_pending(UnitTypeId.HATCHERY) or 0)
+        pending_gas = int(already_pending(UnitTypeId.EXTRACTOR) or 0)
+
+        extractors = self.bot.structures(UnitTypeId.EXTRACTOR)
+        try:
+            extractor_count = int(getattr(extractors, "amount", 0) or 0)
+        except (TypeError, ValueError):
+            extractor_count = 0
+
+        if base_count < 2 and pending_hatch == 0:
+            return True
+        if base_count < 3 and extractor_count + pending_gas >= 1:
+            return True
+        return False
+
     def _can_build_queen(self) -> bool:
         """Queen을 생산할 수 있는지 확인"""
+        if self._should_reserve_third_base():
+            return False
+
         if not hasattr(self.bot, "structures"):
             return False
 
@@ -297,6 +331,8 @@ class BuildOrderOptimizer:
         """인구수 막힘 방지"""
         # * Supply check *
         supply_left = self.bot.supply_cap - self.bot.supply_used
+        if self._should_reserve_third_base() and supply_left > 0:
+            return
 
         if supply_left <= self.overlord_buffer and self.bot.supply_cap < 200:
             # Need Overlord
@@ -325,17 +361,35 @@ class BuildOrderOptimizer:
             self.gas_reserved_for_queen = True
             return
 
+        if self._should_reserve_third_base():
+            return
+
         # * Metabolic Boost 우선순위 *
         if hasattr(self.bot, "structures"):
             pools = self.bot.structures(UnitTypeId.SPAWNINGPOOL).ready
 
             if pools and self.bot.vespene >= 100:
                 # Metabolic Boost 연구 (아직 안 했으면)
-                if UpgradeId.ZERGLINGMOVEMENTSPEED not in self.bot.state.upgrades:
-                    self.bot.do(pools.first.research(UpgradeId.ZERGLINGMOVEMENTSPEED))
-                    self.logger.info(
-                        f"[{int(self.bot.time)}s] [*] METABOLIC BOOST started [*]"
-                    )
+                speed_upgrade = UpgradeId.ZERGLINGMOVEMENTSPEED
+                if speed_upgrade in self.bot.state.upgrades:
+                    self.metabolic_boost_requested = True
+                    return
+                if self.metabolic_boost_requested:
+                    return
+                pending_upgrade = getattr(self.bot, "already_pending_upgrade", None)
+                if callable(pending_upgrade) and pending_upgrade(speed_upgrade) > 0:
+                    self.metabolic_boost_requested = True
+                    return
+                if self.bot.minerals < 100:
+                    return
+
+                idle_pools = getattr(pools, "idle", None)
+                pool = idle_pools.first if idle_pools else pools.first
+                self.bot.do(pool.research(speed_upgrade))
+                self.metabolic_boost_requested = True
+                self.logger.info(
+                    f"[{int(self.bot.time)}s] [*] METABOLIC BOOST started [*]"
+                )
 
     # ========================================
     # Drone Saturation Management
@@ -361,6 +415,8 @@ class BuildOrderOptimizer:
 
         # * 현재 드론 수 *
         current_drones = self.bot.units(UnitTypeId.DRONE).amount
+        if self._should_reserve_third_base():
+            return
 
         # * 드론 생산 필요 여부 *
         if current_drones < target_total_drones:
@@ -374,6 +430,78 @@ class BuildOrderOptimizer:
                 for i in range(drones_to_make):
                     if self.bot.minerals >= 50:
                         self.bot.do(larvae[i].train(UnitTypeId.DRONE))
+
+    def _should_reserve_third_base(self) -> bool:
+        """Pause non-essential larva spending until the third Hatchery starts."""
+        game_time = getattr(self.bot, "time", 0.0)
+        if game_time < 150:
+            return False
+
+        townhalls = getattr(self.bot, "townhalls", None)
+        ready = getattr(townhalls, "ready", None) if townhalls else None
+        base_count = 0
+        for source in (ready, townhalls):
+            if not source:
+                continue
+            amount = getattr(source, "amount", None)
+            if isinstance(amount, (int, float)):
+                base_count = int(amount)
+                break
+            if amount is not None:
+                continue
+            try:
+                base_count = len(list(source))
+                break
+            except TypeError:
+                pass
+
+        already_pending = getattr(self.bot, "already_pending", lambda _: 0)
+        try:
+            pending_hatch = int(already_pending(UnitTypeId.HATCHERY) or 0)
+        except (TypeError, ValueError):
+            pending_hatch = 0
+
+        if base_count >= 3:
+            if game_time >= 360 and base_count < 4 and pending_hatch == 0:
+                return not self._has_active_base_threat()
+            return False
+        if base_count < 2:
+            return pending_hatch > 0 and not self._has_active_base_threat()
+        if pending_hatch > 0:
+            return False
+
+        return not self._has_active_base_threat()
+
+    def _has_active_base_threat(self) -> bool:
+        enemy_units = getattr(self.bot, "enemy_units", None)
+        townhalls = getattr(self.bot, "townhalls", None)
+        if enemy_units is None or townhalls is None:
+            return False
+
+        try:
+            bases = list(townhalls)
+        except TypeError:
+            first_base = getattr(townhalls, "first", None)
+            bases = [first_base] if first_base else []
+
+        for base in bases:
+            if not base:
+                continue
+            try:
+                nearby = enemy_units.closer_than(12, base)
+            except Exception:
+                continue
+
+            amount = getattr(nearby, "amount", 0)
+            if isinstance(amount, (int, float)) and amount > 0:
+                return True
+            try:
+                if len(nearby) > 0:
+                    return True
+            except TypeError:
+                pass
+
+        return False
 
     # ========================================
     # Milestone Tracking

@@ -115,6 +115,8 @@ class StrictUpgradePriority:
             return
         if UpgradeId.ZERGLINGMOVEMENTSPEED in self.upgrade_in_progress:
             return
+        if self._should_reserve_third_base_minerals():
+            return
 
         upgrade_info = self.CRITICAL_UPGRADES[UpgradeId.ZERGLINGMOVEMENTSPEED]
 
@@ -202,6 +204,84 @@ class StrictUpgradePriority:
         self.reserved_gas = 0
         self.reserved_for_upgrade = None
         self.gas_spending_blocked = False
+
+    def _should_reserve_third_base_minerals(self) -> bool:
+        """Delay mineral-spending upgrades until the third Hatchery starts."""
+        try:
+            game_time = float(getattr(self.bot, "time", 0.0) or 0.0)
+        except (TypeError, ValueError):
+            return False
+        if game_time < 145.0:
+            return False
+
+        townhalls = getattr(self.bot, "townhalls", None)
+        ready = getattr(townhalls, "ready", None) if townhalls else None
+        base_count = 1
+        for source in (ready, townhalls):
+            if not source:
+                continue
+            try:
+                amount = getattr(source, "amount", None)
+                if isinstance(amount, (int, float)):
+                    base_count = int(amount)
+                    break
+                if amount is not None:
+                    continue
+            except (TypeError, ValueError):
+                pass
+            try:
+                base_count = len(list(source))
+                break
+            except TypeError:
+                pass
+
+        already_pending = getattr(self.bot, "already_pending", lambda unit_type: 0)
+        try:
+            pending_hatch = int(already_pending(UnitTypeId.HATCHERY) or 0)
+        except (TypeError, ValueError):
+            pending_hatch = 0
+
+        if base_count >= 3:
+            if game_time >= 360.0 and base_count < 4 and pending_hatch == 0:
+                return not self._has_active_base_threat()
+            return False
+        if base_count < 2:
+            return pending_hatch > 0 and not self._has_active_base_threat()
+        if pending_hatch > 0:
+            return False
+
+        return not self._has_active_base_threat()
+
+    def _has_active_base_threat(self) -> bool:
+        enemy_units = getattr(self.bot, "enemy_units", None)
+        townhalls = getattr(self.bot, "townhalls", None)
+        if enemy_units is None or townhalls is None:
+            return False
+
+        try:
+            bases = list(townhalls)
+        except TypeError:
+            first_base = getattr(townhalls, "first", None)
+            bases = [first_base] if first_base else []
+
+        for base in bases:
+            if not base:
+                continue
+            try:
+                nearby = enemy_units.closer_than(12, base)
+            except Exception:
+                continue
+
+            amount = getattr(nearby, "amount", 0)
+            if isinstance(amount, (int, float)) and amount > 0:
+                return True
+            try:
+                if len(nearby) > 0:
+                    return True
+            except TypeError:
+                pass
+
+        return False
 
     def can_spend_gas(self, amount: int, requester: str = "Unknown") -> bool:
         """

@@ -1,9 +1,9 @@
 {
   "Terran": {
-    "wins": 10,
-    "losses": 34,
-    "games": 44,
-    "win_rate": 22.73
+    "wins": 12,
+    "losses": 55,
+    "games": 67,
+    "win_rate": 17.91
   },
   "Protoss": {
     "wins": 27,

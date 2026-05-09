@@ -9,7 +9,7 @@ os.environ["PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION"] = "python"
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 from intel_manager import IntelManager
-from scouting_system import ScoutingSystem
+from scouting_system import ScoutingSystem, UnitTypeId
 from strategy_manager import EnemyRace, GamePhase, StrategyManager
 
 
@@ -89,6 +89,30 @@ class FakeUnits(list):
         return None
 
 
+class TruthyEmptyUnits:
+    amount = 0
+
+    def __bool__(self):
+        return True
+
+    def __len__(self):
+        return 0
+
+    def filter(self, *_args, **_kwargs):
+        return self
+
+    def closest_to(self, *_args, **_kwargs):
+        raise AssertionError("closest_to should not run on an empty group")
+
+    @property
+    def first(self):
+        raise AssertionError("first should not run on an empty group")
+
+    @property
+    def random(self):
+        raise AssertionError("random should not run on an empty group")
+
+
 def make_structure(name, position):
     structure = MagicMock()
     structure.type_id = FakeType(name)
@@ -166,6 +190,30 @@ class TestSprint2ScoutingSystem(unittest.TestCase):
         self.assertTrue(self.bot.blackboard.get("cloak_threat_detected"))
         self.assertTrue(self.bot.blackboard.get("overseer_morph_requested"))
         self.assertTrue(self.bot.blackboard.get("urgent_overseer"))
+
+    def test_replacement_overlord_skips_truthy_empty_group(self):
+        self.bot.units = Mock(return_value=TruthyEmptyUnits())
+
+        result = self.scouting.get_replacement_overlord(FakePoint(40, 40))
+
+        self.assertIsNone(result)
+
+    def test_cloak_detection_skips_truthy_empty_detector_and_overlord_groups(self):
+        dark_templar = FakeUnit("DARKTEMPLAR", tag=20, position=FakePoint(40, 40))
+        self.bot.enemy_units = [dark_templar]
+
+        def units_by_type(unit_type):
+            if unit_type in (UnitTypeId.OVERSEER, UnitTypeId.OVERLORD):
+                return TruthyEmptyUnits()
+            return FakeUnits([])
+
+        self.bot.units = units_by_type
+
+        result = self.scouting.handle_cloak_detection()
+
+        self.assertFalse(result)
+        self.assertTrue(self.bot.blackboard.get("overseer_morph_requested"))
+        self.bot.do.assert_not_called()
 
 
 class TestSprint2IntelAndAirResponse(unittest.TestCase):

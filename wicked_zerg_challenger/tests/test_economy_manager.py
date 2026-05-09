@@ -284,6 +284,471 @@ class TestEconomyManager(unittest.TestCase):
         self.assertTrue(self.manager.first_expansion_reported)
         self.assertEqual(self.manager.first_expansion_time, 60)
 
+    def test_force_expansion_uses_smart_expansion_not_expand_now(self):
+        """Force expansion avoids ambiguous expand_now success reporting."""
+        self.bot.time = 80
+        self.bot.minerals = 300
+        self.bot.townhalls.amount = 1
+        self.bot.already_pending = Mock(return_value=0)
+        self.bot.expand_now = AsyncMock(return_value=True)
+        self.manager._perform_smart_expansion = AsyncMock(return_value=True)
+
+        import asyncio
+
+        asyncio.run(self.manager._force_expansion_if_stuck())
+
+        self.manager._perform_smart_expansion.assert_awaited_once()
+        self.bot.expand_now.assert_not_awaited()
+
+    def test_proactive_expansion_uses_smart_expansion_not_expand_now(self):
+        """Proactive expansion uses the verified worker-build path."""
+        self.bot.time = 150
+        self.bot.minerals = 300
+        self.bot.townhalls.amount = 2
+        self.bot.strategy_manager = None
+        self.bot.already_pending = Mock(return_value=0)
+        self.bot.can_afford = Mock(return_value=True)
+        self.bot.expand_now = AsyncMock(return_value=True)
+        self.manager._perform_smart_expansion = AsyncMock(return_value=True)
+
+        import asyncio
+
+        asyncio.run(self.manager._check_proactive_expansion())
+
+        self.manager._perform_smart_expansion.assert_awaited_once()
+        self.bot.expand_now.assert_not_awaited()
+
+    def test_smart_expansion_direct_builds_even_with_tech_coordinator(self):
+        """Smart expansion immediately issues Hatchery build to reserve minerals."""
+        actions = []
+        townhall = Mock()
+        townhall.position = Point2((50, 50))
+        townhalls = Mock()
+        townhalls.amount = 1
+        townhalls.__iter__ = Mock(return_value=iter([townhall]))
+
+        worker = Mock()
+        worker.build = Mock(return_value=("build", UnitTypeId.HATCHERY, Point2((60, 60))))
+        workers = Mock()
+        workers.closest_to = Mock(return_value=worker)
+
+        self.bot.time = 60
+        self.bot.townhalls = townhalls
+        self.bot.workers = workers
+        self.bot.expansion_locations_list = [Point2((50, 50)), Point2((60, 60))]
+        self.bot.can_place = AsyncMock(return_value=True)
+        self.bot.resource_manager = None
+        self.bot.tech_coordinator = Mock()
+        self.bot.do = lambda action: actions.append(action)
+
+        import asyncio
+
+        result = asyncio.run(self.manager._perform_smart_expansion("test expansion"))
+
+        self.assertTrue(result)
+        self.bot.tech_coordinator.request_structure.assert_not_called()
+        self.assertEqual(actions, [("build", UnitTypeId.HATCHERY, Point2((60, 60)))])
+
+    def test_smart_expansion_uses_bot_build_when_available(self):
+        """Runtime expansion uses BotAI.build so Hatchery cost is reserved."""
+        townhall = Mock()
+        townhall.position = Point2((50, 50))
+        townhalls = Mock()
+        townhalls.amount = 1
+        townhalls.__iter__ = Mock(return_value=iter([townhall]))
+
+        worker = Mock()
+        worker.build = Mock()
+        workers = Mock()
+        workers.closest_to = Mock(return_value=worker)
+
+        self.bot.time = 60
+        self.bot.townhalls = townhalls
+        self.bot.workers = workers
+        self.bot.expansion_locations_list = [Point2((50, 50)), Point2((60, 60))]
+        self.bot.can_place = AsyncMock(return_value=True)
+        self.bot.resource_manager = None
+        self.bot.build = AsyncMock(return_value=True)
+        self.bot.do = Mock()
+
+        import asyncio
+
+        result = asyncio.run(self.manager._perform_smart_expansion("test expansion"))
+
+        self.assertTrue(result)
+        self.bot.build.assert_awaited_once_with(
+            UnitTypeId.HATCHERY,
+            near=Point2((60, 60)),
+            max_distance=8,
+            build_worker=worker,
+            random_alternative=False,
+        )
+        worker.build.assert_not_called()
+        self.bot.do.assert_not_called()
+
+    def test_smart_expansion_skips_taken_natural_for_third(self):
+        """Third base expansion must not reuse the existing natural location."""
+        actions = []
+        main = Mock()
+        main.position = Point2((50, 50))
+        natural = Mock()
+        natural.position = Point2((60, 60))
+        townhalls = Mock()
+        townhalls.amount = 2
+        townhalls.__iter__ = Mock(side_effect=lambda: iter([main, natural]))
+
+        worker = Mock()
+
+        def build(unit_type, position):
+            return ("build", unit_type, position)
+
+        worker.build = build
+        workers = Mock()
+        workers.closest_to = Mock(return_value=worker)
+
+        self.bot.time = 176
+        self.bot.townhalls = townhalls
+        self.bot.workers = workers
+        self.bot.expansion_locations_list = [
+            Point2((50, 50)),
+            Point2((60, 60)),
+            Point2((75, 75)),
+            Point2((120, 120)),
+        ]
+        self.bot.can_place = AsyncMock(return_value=True)
+        self.bot.get_next_expansion = AsyncMock(return_value=Point2((60, 60)))
+        self.bot.resource_manager = None
+        self.bot.mineral_field.closer_than = Mock(return_value=[])
+        self.bot.do = lambda action: actions.append(action)
+
+        import asyncio
+
+        result = asyncio.run(self.manager._perform_smart_expansion("third base"))
+
+        self.assertTrue(result)
+        self.assertEqual(actions, [("build", UnitTypeId.HATCHERY, Point2((75, 75)))])
+
+    def test_third_base_skips_natural_when_hatchery_position_is_offset(self):
+        """Expansion-site center and Hatchery position can differ by several tiles."""
+        actions = []
+        main = Mock()
+        main.position = Point2((50, 50))
+        natural = Mock()
+        natural.position = Point2((60, 60))
+        townhalls = Mock()
+        townhalls.amount = 2
+        townhalls.__iter__ = Mock(side_effect=lambda: iter([main, natural]))
+
+        worker = Mock()
+        worker.build = lambda unit_type, position: ("build", unit_type, position)
+        workers = Mock()
+        workers.closest_to = Mock(return_value=worker)
+
+        self.bot.time = 176
+        self.bot.townhalls = townhalls
+        self.bot.workers = workers
+        self.bot.expansion_locations_list = [
+            Point2((50, 50)),
+            Point2((70, 60)),
+            Point2((85, 80)),
+        ]
+        self.bot.can_place = AsyncMock(return_value=True)
+        self.bot.resource_manager = None
+        self.bot.mineral_field.closer_than = Mock(return_value=[])
+        self.bot.do = lambda action: actions.append(action)
+
+        import asyncio
+
+        result = asyncio.run(self.manager._perform_smart_expansion("third base"))
+
+        self.assertTrue(result)
+        self.assertEqual(actions, [("build", UnitTypeId.HATCHERY, Point2((85, 80)))])
+
+    def test_third_base_prefers_standard_expansion_before_gold(self):
+        """Before three ready bases, expansion should not choose exposed gold bases."""
+        actions = []
+        main = Mock()
+        main.position = Point2((50, 50))
+        natural = Mock()
+        natural.position = Point2((60, 60))
+        townhalls = Mock()
+        townhalls.amount = 2
+        townhalls.ready = [main, natural]
+        townhalls.__iter__ = Mock(side_effect=lambda: iter([main, natural]))
+
+        worker = Mock()
+
+        def build(unit_type, position):
+            return ("build", unit_type, position)
+
+        worker.build = build
+        workers = Mock()
+        workers.closest_to = Mock(return_value=worker)
+
+        gold_position = Point2((70, 70))
+        standard_position = Point2((80, 80))
+        gold_mineral = Mock()
+        gold_mineral.mineral_contents = 1500
+        standard_mineral = Mock()
+        standard_mineral.mineral_contents = 900
+
+        def minerals_near(_radius, position):
+            if position.distance_to(gold_position) < 1:
+                return [gold_mineral]
+            return [standard_mineral]
+
+        self.bot.time = 176
+        self.bot.townhalls = townhalls
+        self.bot.workers = workers
+        self.bot.enemy_structures = []
+        self.bot.expansion_locations_list = [
+            Point2((50, 50)),
+            Point2((60, 60)),
+            gold_position,
+            standard_position,
+        ]
+        self.bot.mineral_field.closer_than = Mock(side_effect=minerals_near)
+        self.bot.can_place = AsyncMock(return_value=True)
+        self.bot.resource_manager = None
+        self.bot.do = lambda action: actions.append(action)
+
+        import asyncio
+
+        result = asyncio.run(self.manager._perform_smart_expansion("third base"))
+
+        self.assertTrue(result)
+        self.assertEqual(
+            actions, [("build", UnitTypeId.HATCHERY, standard_position)]
+        )
+
+    def test_gold_expansion_allowed_after_three_ready_bases(self):
+        """Gold expansion priority resumes after a standard third is secured."""
+        actions = []
+        main = Mock()
+        main.position = Point2((50, 50))
+        natural = Mock()
+        natural.position = Point2((60, 60))
+        third = Mock()
+        third.position = Point2((80, 80))
+        townhalls = Mock()
+        townhalls.amount = 3
+        townhalls.ready = [main, natural, third]
+        townhalls.__iter__ = Mock(side_effect=lambda: iter([main, natural, third]))
+
+        worker = Mock()
+
+        def build(unit_type, position):
+            return ("build", unit_type, position)
+
+        worker.build = build
+        workers = Mock()
+        workers.closest_to = Mock(return_value=worker)
+
+        gold_position = Point2((70, 70))
+        standard_position = Point2((90, 90))
+        gold_mineral = Mock()
+        gold_mineral.mineral_contents = 1500
+        standard_mineral = Mock()
+        standard_mineral.mineral_contents = 900
+
+        def minerals_near(_radius, position):
+            if position.distance_to(gold_position) < 1:
+                return [gold_mineral]
+            return [standard_mineral]
+
+        self.bot.time = 260
+        self.bot.townhalls = townhalls
+        self.bot.workers = workers
+        self.bot.enemy_structures = []
+        self.bot.expansion_locations_list = [
+            Point2((50, 50)),
+            Point2((60, 60)),
+            Point2((80, 80)),
+            gold_position,
+            standard_position,
+        ]
+        self.bot.mineral_field.closer_than = Mock(side_effect=minerals_near)
+        self.bot.can_place = AsyncMock(return_value=True)
+        self.bot.resource_manager = None
+        self.bot.do = lambda action: actions.append(action)
+
+        import asyncio
+
+        result = asyncio.run(self.manager._perform_smart_expansion("fourth base"))
+
+        self.assertTrue(result)
+        self.assertEqual(actions, [("build", UnitTypeId.HATCHERY, gold_position)])
+
+    def test_recent_opening_expansion_request_blocks_duplicate_command(self):
+        """Opening natural command is not repeated before the game reports pending."""
+        actions = []
+        main = Mock()
+        main.position = Point2((50, 50))
+        townhalls = Mock()
+        townhalls.amount = 1
+        townhalls.__iter__ = Mock(side_effect=lambda: iter([main]))
+
+        worker = Mock()
+        worker.build = Mock(side_effect=lambda unit_type, position: ("build", unit_type, position))
+        workers = Mock()
+        workers.closest_to = Mock(return_value=worker)
+
+        self.bot.time = 100
+        self.bot.townhalls = townhalls
+        self.bot.workers = workers
+        self.bot.expansion_locations_list = [Point2((50, 50)), Point2((60, 60))]
+        self.bot.can_place = AsyncMock(return_value=True)
+        self.bot.resource_manager = None
+        self.bot.do = lambda action: actions.append(action)
+
+        import asyncio
+
+        first = asyncio.run(self.manager._perform_smart_expansion("natural"))
+        self.bot.time = 104
+        second = asyncio.run(self.manager._perform_smart_expansion("duplicate"))
+
+        self.assertTrue(first)
+        self.assertFalse(second)
+        self.assertEqual(actions, [("build", UnitTypeId.HATCHERY, Point2((60, 60)))])
+
+    def test_recent_third_expansion_request_blocks_duplicate_command(self):
+        """A third-base worker in transit prevents another third Hatchery order."""
+        actions = []
+        main = Mock()
+        main.position = Point2((50, 50))
+        natural = Mock()
+        natural.position = Point2((60, 60))
+        townhalls = Mock()
+        townhalls.amount = 2
+        townhalls.__iter__ = Mock(side_effect=lambda: iter([main, natural]))
+
+        worker = Mock()
+        worker.build = Mock(side_effect=lambda unit_type, position: ("build", unit_type, position))
+        workers = Mock()
+        workers.closest_to = Mock(return_value=worker)
+
+        self.bot.time = 220
+        self.bot.townhalls = townhalls
+        self.bot.workers = workers
+        self.bot.enemy_structures = []
+        self.bot.enemy_units = []
+        self.bot.expansion_locations_list = [
+            Point2((50, 50)),
+            Point2((60, 60)),
+            Point2((80, 80)),
+        ]
+        self.bot.can_place = AsyncMock(return_value=True)
+        self.bot.resource_manager = None
+        self.bot.do = lambda action: actions.append(action)
+
+        import asyncio
+
+        first = asyncio.run(self.manager._perform_smart_expansion("third"))
+        self.bot.time = 240
+        second = asyncio.run(self.manager._perform_smart_expansion("duplicate third"))
+
+        self.assertTrue(first)
+        self.assertFalse(second)
+        self.assertEqual(actions, [("build", UnitTypeId.HATCHERY, Point2((80, 80)))])
+
+    def test_pending_third_blocks_duplicate_when_townhalls_count_includes_pending(self):
+        """Some game states include an unfinished Hatchery in townhalls.amount."""
+        main = Mock()
+        main.position = Point2((50, 50))
+        natural = Mock()
+        natural.position = Point2((60, 60))
+        townhalls = Mock()
+        townhalls.amount = 3
+        townhalls.ready = [main, natural]
+        townhalls.__iter__ = Mock(side_effect=lambda: iter([main, natural]))
+
+        self.bot.time = 353
+        self.bot.townhalls = townhalls
+        self.bot.already_pending = Mock(
+            side_effect=lambda unit_type: 1 if unit_type == UnitTypeId.HATCHERY else 0
+        )
+        self.bot.enemy_structures = []
+        self.bot.enemy_units = []
+        self.bot.expansion_locations_list = [
+            Point2((50, 50)),
+            Point2((60, 60)),
+            Point2((80, 80)),
+        ]
+        self.bot.can_place = AsyncMock(return_value=True)
+
+        import asyncio
+
+        result = asyncio.run(self.manager._perform_smart_expansion("duplicate third"))
+
+        self.assertFalse(result)
+        self.bot.can_place.assert_not_awaited()
+
+    def test_expansion_candidate_skips_enemy_units_near_location(self):
+        """Expansion selection avoids candidates covered by visible enemy units."""
+        actions = []
+        main = Mock()
+        main.position = Point2((50, 50))
+        natural = Mock()
+        natural.position = Point2((60, 60))
+        townhalls = Mock()
+        townhalls.amount = 2
+        townhalls.__iter__ = Mock(side_effect=lambda: iter([main, natural]))
+
+        worker = Mock()
+        worker.build = Mock(side_effect=lambda unit_type, position: ("build", unit_type, position))
+        workers = Mock()
+        workers.closest_to = Mock(return_value=worker)
+        enemy = Mock()
+        enemy.position = Point2((80, 80))
+
+        self.bot.time = 220
+        self.bot.townhalls = townhalls
+        self.bot.workers = workers
+        self.bot.enemy_structures = []
+        self.bot.enemy_units = [enemy]
+        self.bot.expansion_locations_list = [
+            Point2((50, 50)),
+            Point2((60, 60)),
+            Point2((80, 80)),
+            Point2((95, 95)),
+        ]
+        self.bot.can_place = AsyncMock(return_value=True)
+        self.bot.resource_manager = None
+        self.bot.do = lambda action: actions.append(action)
+
+        import asyncio
+
+        result = asyncio.run(self.manager._perform_smart_expansion("safe third"))
+
+        self.assertTrue(result)
+        self.assertEqual(actions, [("build", UnitTypeId.HATCHERY, Point2((95, 95)))])
+
+    def test_resolve_expansion_target_replaces_taken_default_location(self):
+        """Fallback get_next_expansion result is replaced if that base is occupied."""
+        main = Mock()
+        main.position = Point2((50, 50))
+        natural = Mock()
+        natural.position = Point2((60, 60))
+        townhalls = Mock()
+        townhalls.amount = 2
+        townhalls.__iter__ = Mock(side_effect=lambda: iter([main, natural]))
+
+        self.bot.townhalls = townhalls
+        self.bot.expansion_locations_list = [
+            Point2((50, 50)),
+            Point2((60, 60)),
+            Point2((75, 75)),
+        ]
+        self.bot.can_place = AsyncMock(return_value=True)
+
+        import asyncio
+
+        target = asyncio.run(
+            self.manager._resolve_expansion_target(Point2((60, 60)))
+        )
+
+        self.assertEqual(target, Point2((75, 75)))
+
     def test_threat_level_high_reduces_target_drone_count(self):
         """High enemy threat lowers the live drone target to 44."""
         intel = Mock()
@@ -332,6 +797,49 @@ class TestEconomyManager(unittest.TestCase):
 
         self.bot.do.assert_not_called()
 
+    def test_third_base_reservation_pauses_drone_training(self):
+        """On two bases, drone recovery does not spend minerals reserved for third."""
+        self.bot.time = 190
+        self.bot.minerals = 150
+        self.bot.workers.amount = 20
+        self.bot.townhalls.amount = 2
+        self.bot.supply_left = 8
+        self.bot.can_afford = Mock(return_value=True)
+        self.bot.do = Mock()
+
+        import asyncio
+
+        asyncio.run(self.manager._train_drone_if_needed())
+
+        self.bot.do.assert_not_called()
+
+    def test_pending_natural_starts_followup_expansion_reserve(self):
+        """A pending natural near completion also starts saving for the third."""
+        self.bot.time = 150
+        self.bot.minerals = 150
+        self.bot.workers.amount = 18
+        self.bot.townhalls.amount = 1
+        self.bot.supply_left = 8
+        self.bot.already_pending = Mock(
+            side_effect=lambda unit_type: 1 if unit_type == UnitTypeId.HATCHERY else 0
+        )
+
+        self.assertTrue(self.manager._should_reserve_followup_expansion())
+
+    def test_pending_natural_counted_in_townhalls_still_reserves_followup(self):
+        """Ready base count is used so a pending natural does not look like two bases."""
+        self.bot.time = 150
+        self.bot.minerals = 150
+        self.bot.workers.amount = 18
+        self.bot.townhalls.amount = 2
+        self.bot.townhalls.ready.amount = 1
+        self.bot.supply_left = 8
+        self.bot.already_pending = Mock(
+            side_effect=lambda unit_type: 1 if unit_type == UnitTypeId.HATCHERY else 0
+        )
+
+        self.assertTrue(self.manager._should_reserve_followup_expansion())
+
     def test_opening_hatchery_reservation_pauses_spend_larva_drone(self):
         """Generic larva spending also respects first-hatchery mineral reserve."""
         larva_unit = Mock()
@@ -341,6 +849,27 @@ class TestEconomyManager(unittest.TestCase):
         self.bot.minerals = 150
         self.bot.workers.amount = 16
         self.bot.townhalls.amount = 1
+        self.bot.supply_left = 8
+        self.bot.can_afford = Mock(return_value=True)
+        self.bot.do = Mock()
+
+        import asyncio
+
+        result = asyncio.run(self.manager.spend_larva())
+
+        self.assertFalse(result)
+        self.bot.do.assert_not_called()
+
+    def test_followup_expansion_reservation_pauses_spend_larva_drone(self):
+        """Generic larva spending does not make drones while saving for third."""
+        larva_unit = Mock()
+        larva_unit.train = Mock(return_value=("train", UnitTypeId.DRONE))
+        self.bot.larva.first = larva_unit
+        self.bot.time = 190
+        self.bot.minerals = 150
+        self.bot.workers.amount = 20
+        self.bot.townhalls.amount = 2
+        self.bot.townhalls.ready.amount = 2
         self.bot.supply_left = 8
         self.bot.can_afford = Mock(return_value=True)
         self.bot.do = Mock()
@@ -377,10 +906,44 @@ class TestEconomyManager(unittest.TestCase):
         self.bot.can_afford.assert_not_called()
         self.bot.do.assert_not_called()
 
+    def test_opening_hatchery_reservation_blocks_low_mineral_extractor_build(self):
+        """Gas also waits when pool spending has dropped minerals below reserve floor."""
+        self.bot.time = 76
+        self.bot.minerals = 40
+        self.bot.workers.amount = 17
+        self.bot.townhalls.amount = 1
+        self.bot.can_afford = Mock(return_value=True)
+        self.bot.do = Mock()
+
+        import asyncio
+
+        asyncio.run(self.manager._build_extractors())
+
+        self.bot.can_afford.assert_not_called()
+        self.bot.do.assert_not_called()
+
     def test_opening_hatchery_reservation_blocks_gas_timing(self):
         """Matchup gas timing waits until the first expansion has started."""
         self.bot.time = 64
         self.bot.minerals = 150
+        self.bot.workers.amount = 17
+        self.bot.townhalls.amount = 1
+        self.bot.gas_buildings = Mock()
+        self.bot.gas_buildings.amount = 0
+        self.bot.can_afford = Mock(return_value=True)
+        self.bot.do = Mock()
+
+        import asyncio
+
+        asyncio.run(self.manager._optimize_gas_timing())
+
+        self.bot.can_afford.assert_not_called()
+        self.bot.do.assert_not_called()
+
+    def test_opening_hatchery_reservation_blocks_low_mineral_gas_timing(self):
+        """Matchup gas timing cannot consume minerals before the natural starts."""
+        self.bot.time = 76
+        self.bot.minerals = 40
         self.bot.workers.amount = 17
         self.bot.townhalls.amount = 1
         self.bot.gas_buildings = Mock()
@@ -403,6 +966,26 @@ class TestEconomyManager(unittest.TestCase):
         self.bot.time = 170
         self.bot.minerals = 120
         self.bot.workers.amount = 24
+        self.bot.townhalls.amount = 2
+        self.bot.supply_left = 8
+        self.bot.can_afford = Mock(return_value=True)
+        self.bot.do = Mock()
+
+        import asyncio
+
+        result = asyncio.run(self.manager.spend_larva(force_army=True))
+
+        self.assertFalse(result)
+        self.bot.do.assert_not_called()
+
+    def test_followup_expansion_reservation_blocks_force_army_when_under_droned(self):
+        """Force-army larva spending still preserves minerals for the third base."""
+        larva_unit = Mock()
+        larva_unit.train = Mock(return_value=("train", UnitTypeId.ZERGLING))
+        self.bot.larva.first = larva_unit
+        self.bot.time = 170
+        self.bot.minerals = 120
+        self.bot.workers.amount = 18
         self.bot.townhalls.amount = 2
         self.bot.supply_left = 8
         self.bot.can_afford = Mock(return_value=True)

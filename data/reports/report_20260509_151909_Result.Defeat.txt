@@ -1,0 +1,63 @@
+============================================================
+  GAME RESULT REPORT - DEFEAT
+============================================================
+  Map: 어비설 리프 - 래더
+  Opponent: Terran
+  Duration: 2:05
+  Date: 2026-05-09 15:19
+
+--- TIMELINE ---
+  [1:04] Build: UnitTypeId.EXTRACTOR (Supply 17)
+  [1:14] Build: UnitTypeId.SPAWNINGPOOL (Supply 17)
+  [1:31] Build: UnitTypeId.EXTRACTOR (Supply 17)
+  [2:15] Build: UnitTypeId.SPINECRAWLER (Supply 22)
+  [2:29] Build: UnitTypeId.SPINECRAWLER (Supply 23)
+  [2:49] Build: UnitTypeId.ROACHWARREN (Supply 23)
+  [4:05] Build: UnitTypeId.EVOLUTIONCHAMBER (Supply 33)
+  [4:42] Build: UnitTypeId.SPINECRAWLER (Supply 37)
+  [8:59] Harassment: UnitTypeId.REFINERY
+  [9:04] Harassment: UnitTypeId.REFINERY
+  [9:10] Harassment: UnitTypeId.SUPPLYDEPOTLOWERED
+  [9:16] Harassment: UnitTypeId.SUPPLYDEPOTLOWERED
+  [9:22] Harassment: UnitTypeId.BARRACKS
+  [9:27] Harassment: UnitTypeId.BARRACKS
+  [9:33] Harassment: UnitTypeId.ORBITALCOMMAND
+  [9:38] Harassment: UnitTypeId.BARRACKS
+  [9:44] Harassment: UnitTypeId.BARRACKSTECHLAB
+  [9:49] Harassment: UnitTypeId.SUPPLYDEPOTLOWERED
+  [9:55] Harassment: UnitTypeId.ORBITALCOMMAND
+  [10:00] Harassment: UnitTypeId.BARRACKSTECHLAB
+
+--- ECONOMY ---
+  Peak Minerals: 320
+  Peak Vespene: 772
+  Peak Workers: 23
+
+--- TIMINGS ---
+  Tech: UnitTypeId.ROACHWARREN at 2:49
+  Tech: UnitTypeId.EVOLUTIONCHAMBER at 4:05
+  Tech: UnitTypeId.LAIR at 8:44
+  Tech: UnitTypeId.SPIRE at 8:50
+  Tech: UnitTypeId.HYDRALISKDEN at 10:02
+
+--- COMBAT ---
+  No engagement data recorded
+
+--- UNIT COMPOSITION ---
+  UnitTypeId.ZERGLING: 76 produced
+  UnitTypeId.ROACH: 2 produced
+
+--- RESULT ANALYSIS ---
+  EARLY DEFEAT: Possible rush defense failure
+
+--- IMPROVEMENT SUGGESTIONS ---
+  1. Lost before 4 minutes - review early defense (spine crawlers, queens, zerglings)
+
+--- FINAL STATS ---
+  Workers: 9
+  Army Supply: 4
+  Bases: 1
+  Minerals: 25
+  Vespene: 754
+
+============================================================

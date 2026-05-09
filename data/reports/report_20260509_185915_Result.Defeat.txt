@@ -1,0 +1,66 @@
+============================================================
+  GAME RESULT REPORT - DEFEAT
+============================================================
+  Map: 어비설 리프 - 래더
+  Opponent: Terran
+  Duration: 5:35
+  Date: 2026-05-09 18:59
+
+--- TIMELINE ---
+  [1:15] Build: UnitTypeId.EXTRACTOR (Supply 17)
+  [1:25] Build: UnitTypeId.HATCHERY (Supply 18)
+  [2:15] Build: UnitTypeId.SPAWNINGPOOL (Supply 19)
+  [2:48] Build: UnitTypeId.HATCHERY (Supply 24)
+  [2:49] Build: UnitTypeId.EXTRACTOR (Supply 23)
+  [3:20] Build: UnitTypeId.BANELINGNEST (Supply 31)
+  [3:29] Build: UnitTypeId.EXTRACTOR (Supply 31)
+  [3:32] Build: UnitTypeId.SPINECRAWLER (Supply 30)
+  [3:53] Build: UnitTypeId.EVOLUTIONCHAMBER (Supply 34)
+  [4:02] Build: UnitTypeId.EXTRACTOR (Supply 35)
+  [4:08] Build: UnitTypeId.EXTRACTOR (Supply 36)
+  [4:21] Build: UnitTypeId.EXTRACTOR (Supply 39)
+  [4:43] Build: UnitTypeId.SPINECRAWLER (Supply 41)
+  [6:45] Harassment: UnitTypeId.COMMANDCENTER
+  [6:51] Harassment: UnitTypeId.COMMANDCENTER
+  [7:01] Harassment: UnitTypeId.COMMANDCENTER
+  [7:06] Harassment: UnitTypeId.COMMANDCENTER
+  [7:12] Harassment: UnitTypeId.SENSORTOWER
+  [7:22] Harassment: UnitTypeId.COMMANDCENTER
+  [7:27] Harassment: UnitTypeId.COMMANDCENTER
+
+--- ECONOMY ---
+  Peak Minerals: 240
+  Peak Vespene: 511
+  Peak Workers: 59
+
+--- TIMINGS ---
+  Tech: UnitTypeId.EVOLUTIONCHAMBER at 3:53
+  Tech: UnitTypeId.ROACHWARREN at 6:34
+  Tech: UnitTypeId.LAIR at 7:37
+  Tech: UnitTypeId.HYDRALISKDEN at 8:21
+  Tech: UnitTypeId.INFESTATIONPIT at 9:16
+  Tech: UnitTypeId.SPIRE at 9:31
+  Tech: UnitTypeId.LURKERDENMP at 11:29
+  Tech: UnitTypeId.INFESTATIONPIT at 14:39
+
+--- COMBAT ---
+  No engagement data recorded
+
+--- UNIT COMPOSITION ---
+  UnitTypeId.ZERGLING: 150 produced
+  UnitTypeId.ROACH: 7 produced
+
+--- RESULT ANALYSIS ---
+  Army wiped out - need better engagements
+
+--- IMPROVEMENT SUGGESTIONS ---
+  1. Worker count below optimal - prioritize drone production
+
+--- FINAL STATS ---
+  Workers: 11
+  Army Supply: 5
+  Bases: 3
+  Minerals: 30
+  Vespene: 463
+
+============================================================

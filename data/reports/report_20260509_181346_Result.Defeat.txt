@@ -1,0 +1,58 @@
+============================================================
+  GAME RESULT REPORT - DEFEAT
+============================================================
+  Map: 어비설 리프 - 래더
+  Opponent: Terran
+  Duration: 4:37
+  Date: 2026-05-09 18:13
+
+--- TIMELINE ---
+  [1:13] Build: UnitTypeId.EXTRACTOR (Supply 17)
+  [1:23] Build: UnitTypeId.HATCHERY (Supply 18)
+  [1:41] Build: UnitTypeId.SPAWNINGPOOL (Supply 18)
+  [2:33] Build: UnitTypeId.SPINECRAWLER (Supply 23)
+  [3:11] Build: UnitTypeId.SPINECRAWLER (Supply 28)
+  [3:58] Build: UnitTypeId.CREEPTUMORQUEEN (Supply 34)
+  [4:02] Build: UnitTypeId.SPINECRAWLER (Supply 33)
+  [4:28] Build: UnitTypeId.CREEPTUMOR (Supply 35)
+  [4:30] Build: UnitTypeId.CREEPTUMORQUEEN (Supply 35)
+  [4:36] Build: UnitTypeId.CREEPTUMORQUEEN (Supply 37)
+  [4:43] Build: UnitTypeId.SPINECRAWLER (Supply 36)
+  [4:52] Build: UnitTypeId.CREEPTUMORQUEEN (Supply 36)
+  [7:10] Harassment: UnitTypeId.COMMANDCENTER
+  [7:16] Harassment: UnitTypeId.COMMANDCENTER
+  [7:21] Harassment: UnitTypeId.COMMANDCENTER
+  [8:01] Harassment: UnitTypeId.BUNKER
+  [8:08] Harassment: UnitTypeId.BUNKER
+  [9:48] Harassment: UnitTypeId.BUNKER
+  [9:53] Harassment: UnitTypeId.COMMANDCENTER
+  [9:59] Harassment: UnitTypeId.MISSILETURRET
+
+--- ECONOMY ---
+  Peak Minerals: 195
+  Peak Vespene: 412
+  Peak Workers: 18
+
+--- TIMINGS ---
+  Tech: UnitTypeId.EVOLUTIONCHAMBER at 5:53
+
+--- COMBAT ---
+  No engagement data recorded
+
+--- UNIT COMPOSITION ---
+  UnitTypeId.ZERGLING: 80 produced
+
+--- RESULT ANALYSIS ---
+  Economy collapsed - workers lost
+
+--- IMPROVEMENT SUGGESTIONS ---
+  1. Game played well! Continue practicing current build
+
+--- FINAL STATS ---
+  Workers: 5
+  Army Supply: 3
+  Bases: 1
+  Minerals: 5
+  Vespene: 412
+
+============================================================

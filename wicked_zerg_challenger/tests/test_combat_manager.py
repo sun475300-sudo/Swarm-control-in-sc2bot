@@ -101,6 +101,46 @@ class TestCombatManager(unittest.TestCase):
         result = self.manager._units_amount(None)
         self.assertEqual(result, 0)
 
+    def test_preserve_economy_before_third_blocks_offense(self):
+        """Offensive tasking is locked before the third Hatchery starts."""
+        self.bot.blackboard = None
+        self.bot.townhalls.amount = 2
+
+        self.assertTrue(self.manager._should_preserve_economy_before_third(180))
+
+    def test_preserve_economy_unlocks_after_third_started(self):
+        """Three Hatcheries unlock normal offensive tasking."""
+        self.bot.blackboard = None
+        self.bot.townhalls.amount = 3
+
+        self.assertFalse(self.manager._should_preserve_economy_before_third(180))
+
+    def test_preserve_economy_keeps_lock_when_emergency_has_no_base_threat(self):
+        """Rush flags alone do not unlock offense before the third base is active."""
+        self.bot.blackboard = Mock()
+        self.bot.blackboard.get.side_effect = lambda key, default=False: (
+            key == "is_rush_detected"
+        )
+        self.bot.townhalls.amount = 2
+
+        self.assertTrue(self.manager._should_preserve_economy_before_third(180))
+
+    def test_preserve_economy_allows_emergency_base_defense(self):
+        """Active base threats bypass the macro lock for defense only."""
+        self.bot.blackboard = Mock()
+        self.bot.blackboard.get.side_effect = lambda key, default=False: (
+            key == "is_rush_detected"
+        )
+        base = Mock()
+        enemy = Mock()
+        enemy.can_attack = True
+        enemy.distance_to = Mock(return_value=10)
+        self.bot.townhalls.amount = 2
+        self.bot.townhalls.__iter__ = Mock(side_effect=lambda: iter([base]))
+        self.bot.enemy_units.__iter__ = Mock(side_effect=lambda: iter([enemy]))
+
+        self.assertFalse(self.manager._should_preserve_economy_before_third(180))
+
     # ==================== Unit Filtering Tests ====================
 
     def test_filter_army_units_zerglings(self):

@@ -39,6 +39,29 @@ def create_mock_unit(type_id, position=(10, 10), tag=1, is_ready=True):
     return unit
 
 
+class TruthyEmptyUnits:
+    amount = 0
+
+    @property
+    def idle(self):
+        return self
+
+    def __bool__(self):
+        return True
+
+    def __len__(self):
+        return 0
+
+    def filter(self, *_args, **_kwargs):
+        return self
+
+    def closer_than(self, *_args, **_kwargs):
+        return self
+
+    def closest_to(self, *_args, **_kwargs):
+        raise AssertionError("closest_to should not run on an empty group")
+
+
 class TestAdvancedScoutSystemV2:
     """Test suite for Advanced Scouting System V2"""
 
@@ -169,6 +192,68 @@ class TestAdvancedScoutSystemV2:
         # Last scouted tracking should exist
         assert hasattr(self.scout_system, "last_scouted_at")
         assert isinstance(self.scout_system.last_scouted_at, dict)
+
+    def test_ground_scout_threat_handles_enemy_without_worker_flag(self):
+        """Real enemy unit wrappers may not expose is_worker."""
+        scout = Mock()
+        scout.is_flying = False
+        scout.health_percentage = 1.0
+        scout.distance_to.return_value = 3
+        enemy = type("EnemyUnit", (), {})()
+        self.bot.enemy_units = [enemy]
+
+        assert self.scout_system._scout_is_threatened(scout)
+
+    @pytest.mark.asyncio
+    async def test_overseer_detection_sweep_skips_empty_available_group(self):
+        """Do not call closest_to on an empty Units group."""
+        base = Mock()
+        base.position = Point2((50, 50))
+        self.bot.townhalls = [base]
+
+        nearby_overseers = MagicMock()
+        nearby_overseers.__bool__.return_value = False
+
+        available = MagicMock()
+        available.amount = 0
+        available.closest_to.side_effect = AssertionError("closest_to should not run")
+
+        overseers = MagicMock()
+        overseers.__bool__.return_value = True
+        overseers.amount = 2
+        overseers.filter.return_value = available
+
+        overseer_source = MagicMock()
+        overseer_source.filter.return_value = overseers
+        overseer_source.closer_than.return_value = nearby_overseers
+
+        army_units = MagicMock()
+        army_units.amount = 0
+
+        self.bot.units = MagicMock(return_value=overseer_source)
+        self.bot.units.filter.return_value = army_units
+
+        await self.scout_system._overseer_detection_sweep()
+
+        available.closest_to.assert_not_called()
+
+    def test_forced_scout_skips_truthy_empty_units_group(self):
+        target = Point2((40, 40))
+        empty_units = TruthyEmptyUnits()
+        self.scout_system.roadmap_scouting = Mock()
+        self.scout_system.roadmap_scouting.select_overlord_scout_target.return_value = target
+        self.bot.blackboard = Mock()
+        self.bot.units = Mock(return_value=empty_units)
+
+        assert not self.scout_system._send_specific_scout(UnitTypeId.OVERLORD)
+
+    def test_assign_patrol_skips_truthy_empty_units_group(self):
+        self.scout_system._patrol_routes["enemy_bases"] = [Point2((40, 40))]
+        self.bot.units = Mock(return_value=TruthyEmptyUnits())
+
+        assert not self.scout_system._assign_patrol(
+            "enemy_bases", UnitTypeId.OVERLORD
+        )
 
     # ===== Memory Management Tests =====
 

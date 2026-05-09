@@ -67,6 +67,12 @@ class ProxyHatchery:
         if not hasattr(self.bot, "enemy_start_locations"):
             return
 
+        if self._ready_base_count() < 4:
+            return
+
+        if self._pending_hatchery_count() > 0:
+            return
+
         if self.bot.minerals < 300:
             return
 
@@ -76,7 +82,7 @@ class ProxyHatchery:
 
         # 드론 파견
         drones = self.bot.units(UnitTypeId.DRONE)
-        if drones:
+        if self._units_amount(drones) > 0:
             drone = drones.first
             self.bot.do(drone.build(UnitTypeId.HATCHERY, proxy_location))
 
@@ -86,3 +92,38 @@ class ProxyHatchery:
             self.logger.info(
                 f"[{int(self.bot.time)}s] *** PROXY HATCHERY ATTEMPTED! Location: {proxy_location} ***"
             )
+
+    def _ready_base_count(self) -> int:
+        townhalls = getattr(self.bot, "townhalls", None)
+        if not townhalls:
+            return 0
+
+        ready = getattr(townhalls, "ready", None)
+        for source in (ready, townhalls):
+            amount = getattr(source, "amount", None)
+            if isinstance(amount, (int, float)):
+                return int(amount)
+            try:
+                return len(list(source))
+            except TypeError:
+                continue
+        return 0
+
+    def _pending_hatchery_count(self) -> int:
+        already_pending = getattr(self.bot, "already_pending", None)
+        if not callable(already_pending):
+            return 0
+        try:
+            return int(already_pending(UnitTypeId.HATCHERY) or 0)
+        except (TypeError, ValueError):
+            return 0
+
+    @staticmethod
+    def _units_amount(units) -> int:
+        amount = getattr(units, "amount", None)
+        if isinstance(amount, (int, float)):
+            return int(amount)
+        try:
+            return len(list(units))
+        except TypeError:
+            return 0

@@ -3063,6 +3063,115 @@ class BotStepIntegrator:
 
         return False
 
+    def _as_unit_list(self, units):
+        if not units:
+            return []
+        try:
+            return list(units)
+        except TypeError:
+            return []
+
+    def _ready_base_count(self) -> int:
+        townhalls = getattr(self.bot, "townhalls", None)
+        if not townhalls:
+            return 0
+        ready = getattr(townhalls, "ready", None)
+        if ready is not None:
+            amount = getattr(ready, "amount", None)
+            if isinstance(amount, (int, float)):
+                return int(amount)
+            try:
+                return len(list(ready))
+            except TypeError:
+                pass
+        amount = getattr(townhalls, "amount", None)
+        if isinstance(amount, (int, float)):
+            return int(amount)
+        try:
+            return len(list(townhalls))
+        except TypeError:
+            return 0
+
+    def _has_active_base_threat(
+        self, distance: float = 30.0, min_enemies: int = 4
+    ) -> bool:
+        enemies = self._as_unit_list(getattr(self.bot, "enemy_units", []))
+        if not enemies:
+            return False
+        townhalls = getattr(self.bot, "townhalls", None)
+        ready = getattr(townhalls, "ready", None) if townhalls else None
+        bases = self._as_unit_list(ready) or self._as_unit_list(townhalls)
+        for base in bases:
+            base_pos = getattr(base, "position", base)
+            nearby_count = 0
+            for enemy in enemies:
+                try:
+                    if enemy.distance_to(base_pos) <= distance:
+                        nearby_count += 1
+                        continue
+                except (AttributeError, TypeError, ValueError):
+                    enemy_pos = getattr(enemy, "position", enemy)
+                    try:
+                        if enemy_pos.distance_to(base_pos) <= distance:
+                            nearby_count += 1
+                    except (AttributeError, TypeError, ValueError):
+                        continue
+            if nearby_count >= min_enemies:
+                return True
+        return False
+
+    def _blackboard_has_serious_base_threat(self, min_enemies: int = 4) -> bool:
+        blackboard = getattr(self.bot, "blackboard", None)
+        threat = getattr(blackboard, "threat", None) if blackboard else None
+        if threat is None:
+            return False
+
+        try:
+            enemy_near_base = int(getattr(threat, "enemy_units_near_base", 0) or 0)
+        except (TypeError, ValueError):
+            enemy_near_base = 0
+        if enemy_near_base >= min_enemies:
+            return True
+
+        try:
+            enemy_supply = float(getattr(threat, "enemy_army_supply", 0.0) or 0.0)
+        except (TypeError, ValueError):
+            enemy_supply = 0.0
+        threat_level = getattr(threat, "level", None)
+        try:
+            from game_state_blackboard import ThreatLevel
+        except ImportError:
+            ThreatLevel = None
+        if ThreatLevel is not None and threat_level is not None:
+            try:
+                if threat_level >= ThreatLevel.CRITICAL and enemy_supply >= 6.0:
+                    return True
+            except TypeError:
+                pass
+
+        return False
+
+    def _should_preserve_third_base_minerals(self) -> bool:
+        game_time = getattr(self.bot, "time", 0.0)
+        if game_time < 120:
+            return False
+        ready_bases = self._ready_base_count()
+        if ready_bases >= 4:
+            return False
+        already_pending = getattr(self.bot, "already_pending", lambda unit_type: 0)
+        try:
+            pending_hatch = int(already_pending(UnitTypeId.HATCHERY) or 0)
+        except (TypeError, ValueError):
+            pending_hatch = 0
+        if ready_bases >= 3 and pending_hatch > 0:
+            return False
+        if ready_bases >= 3 and game_time < 360:
+            return False
+        return not (
+            self._has_active_base_threat(distance=30.0)
+            or self._blackboard_has_serious_base_threat()
+        )
+
     async def _handle_emergency_defense(self, iteration: int) -> None:
         """
         긴급 방어 로직 처리
@@ -3109,9 +3218,13 @@ class BotStepIntegrator:
                 max_spines = 3
                 force_build = False
 
+            preserve_third_base = self._should_preserve_third_base_minerals()
+
             # 긴급 스파인 크롤러 건설
             if getattr(strategy, "emergency_spine_requested", False) or force_build:
-                if hasattr(self.bot, "structures") and hasattr(self.bot, "townhalls"):
+                if preserve_third_base and not force_build:
+                    strategy.emergency_spine_requested = False
+                elif hasattr(self.bot, "structures") and hasattr(self.bot, "townhalls"):
                     from sc2.ids.unit_typeid import UnitTypeId
 
                     # 스파인 크롤러 현재 수 확인
@@ -3149,7 +3262,9 @@ class BotStepIntegrator:
 
             # 긴급 스포어 크롤러 건설 (대공)
             if getattr(strategy, "emergency_spore_requested", False):
-                if hasattr(self.bot, "structures") and hasattr(self.bot, "townhalls"):
+                if preserve_third_base:
+                    strategy.emergency_spore_requested = False
+                elif hasattr(self.bot, "structures") and hasattr(self.bot, "townhalls"):
                     from sc2.ids.unit_typeid import UnitTypeId
 
                     spores = self.bot.structures(UnitTypeId.SPORECRAWLER)
@@ -3201,6 +3316,8 @@ class BotStepIntegrator:
 
             # === 0. 공중 위협 레벨 계산 ===
             air_threat_level = self._calculate_air_threat_level()
+            if self._should_preserve_third_base_minerals() and air_threat_level < 2:
+                return
 
             # === 1. 스포어 크롤러 긴급 건설 (최우선) ===
             spore_target = 2 if air_threat_level >= 2 else 1  # 위협 높으면 기지당 2개

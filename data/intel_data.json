@@ -1,22 +1,32 @@
 {
   "enemy_race_name": "Terran",
   "enemy_unit_counts": {
-    "GHOST": 1,
     "MARAUDER": 4,
-    "RAVEN": 2,
-    "MEDIVAC": 1,
-    "MARINE": 5
+    "RAVEN": 3,
+    "MARINE": 12,
+    "CYCLONE": 1,
+    "REAPER": 2,
+    "MEDIVAC": 2,
+    "SIEGETANKSIEGED": 1
   },
   "enemy_tech_buildings": [
-    "FUSIONCORE",
     "ARMORY",
-    "FACTORY",
-    "STARPORT"
+    "STARPORT",
+    "FUSIONCORE",
+    "FACTORY"
   ],
   "scouted_locations": [
     [
       42.5,
       93.5
+    ],
+    [
+      129.5,
+      49.5
+    ],
+    [
+      141.5,
+      65.5
     ],
     [
       126.5,
@@ -31,8 +41,16 @@
       117.4231566176629
     ],
     [
+      129.5,
+      26.5
+    ],
+    [
       124.5,
       151.5
+    ],
+    [
+      38.5,
+      122.5
     ],
     [
       70.5,
@@ -43,8 +61,8 @@
       57.5
     ],
     [
-      155.31730954428252,
-      26.57684338233711
+      100.0,
+      72.0
     ],
     [
       157.5,
@@ -55,12 +73,16 @@
       96.5
     ],
     [
+      161.5,
+      21.5
+    ],
+    [
       80.5,
       56.5
     ],
     [
-      100.0,
-      72.0
+      155.31730954428252,
+      26.57684338233711
     ]
   ],
   "enemy_build_pattern": "mech_transition"
