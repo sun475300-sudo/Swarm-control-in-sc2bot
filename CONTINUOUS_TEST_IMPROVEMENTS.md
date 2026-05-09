@@ -208,11 +208,59 @@
 
 ---
 
-## Cycle 8 (예정)
+## Cycle 8 (완료) — 최소 sc2 stub 주입으로 5건 sc2-skip 해소
+
+### 발견된 이슈
+
+| # | 카테고리 | 이슈 | 우선순위 |
+|---|---|---|---|
+| C8.1 | Test infra | `python-sc2`/`burnysc2`가 `mpyq` wheel 빌드 실패로 일반 환경 설치 불가 → 5개 테스트 모듈(74개 테스트) 영구 skip | High |
+
+### Cycle 8 적용된 fix
+
+- `tests/conftest.py`에 모듈 레벨 sc2 stub 주입자 추가:
+  - 실제 `sc2`가 import 가능하면 그대로 사용
+  - 없으면 `sys.modules`에 다음을 채워 넣음:
+    - `sc2`, `sc2.ids`, `sc2.ids.unit_typeid`, `sc2.ids.ability_id`, `sc2.ids.upgrade_id`, `sc2.position`, `sc2.unit`, `sc2.units`, `sc2.bot_ai`
+  - `_Identifier`(UnitTypeId/AbilityId/UpgradeId)는 attribute access 시 캐시된 `_Member` 반환
+  - `_Member`는 `__slots__ + __eq__ + __hash__`로 dict key 사용 가능 (`HEAL_PRIORITY: Dict[UnitTypeId, int]`에서 필수)
+  - `_Point2`는 tuple 서브클래스 + `x/y/distance_to`
+  - `_Unit`/`_Units`/`_BotAI`는 빈 placeholder
+
+### Cycle 8 결과
+
+- pytest: **429 → 503 pass / 16 → 10 skip** (74개 테스트 신규 활성화)
+- 활성화된 테스트 모듈:
+  - `test_advanced_scout_system_v2.py`
+  - `test_harassment_coordinator.py`
+  - `test_queen_transfusion.py`
+  - `test_queen_transfusion_manager.py`
+  - `test_spatial_query_optimizer.py`
+- 남은 10 skip: 모두 crypto_trading (pyupbit/config.yaml 의존) + security (config.yaml 의존)
+- 회귀: 기존 테스트 0건 영향 (실제 sc2가 있으면 stub 우회 — 안전)
+
+### 누적 진척
+
+| Cycle | pass | skip | F811 (prod) | F401 (prod) | E713 |
+|---|---|---|---|---|---|
+| 시작 | collection-fail | 5 | 5 | 2 | 2 |
+| C1 | 392 | 34 | 5 | 2 | 2 |
+| C2 | 429 | 16 | 0 | 0 | 2 |
+| C3 | 429 | 16 | 0 | 0 | 0 |
+| C4 | 429 | 16 | 0 | 0 | 0 |
+| C5 | 429 | 16 | 0 | 0 | 0 |
+| C6 | 429 | 16 | 0 | 0 | 0 |
+| C7 | 429 | 16 | 0 | 0 | 0 |
+| C8 | **503** | **10** | 0 | 0 | 0 |
+
+---
+
+## Cycle 9 (예정)
 
 - C4.3: `creep_manager.py` ring distances를 `TUMOR_SPREAD_RANGE` 기반으로 결정 (행동 변경 — 회귀 시나리오 확인 필요)
 - 잔여 F841 22+ 건 audit
-- 16건 skip 중 sc2 stub 가능 영역 식별 (mpyq 우회 → 최소 stub 패키지)
+- 10건 skip 검토 (config.yaml stub vs. 진짜 환경 게이트)
+- pytest 커버리지 측정 도입
 
 ### 후보 작업 영역
 
