@@ -125,13 +125,38 @@
 
 ---
 
-## Cycle 5 (예정)
+## Cycle 5 (완료) — TechCoordinator 배선 + silent-swallow 가시화
 
-- C4.3: `creep_manager.py` distance ring을 `TUMOR_SPREAD_RANGE` 기반으로 결정하도록 배선 검토
-- C4.4: `build_order_system.py`의 expansion 빌드를 `tech_coordinator.request_structure(UnitTypeId.HATCHERY, 55, near=location)`로 라우팅
-- 잔여 F841 26건 추가 audit (`game_time`, `regenerating`, `current_time` 패턴)
-- `bot_step_integration.py` silent-swallow 11곳에 logger.warning 추가 (canonical 패턴 901-912 따라)
+### 발견된 이슈 / 적용
+
+| # | 카테고리 | 이슈 | 적용 |
+|---|---|---|---|
+| C5.1 | Real fix (latent) | C4.4 후속: `build_order_system.py`의 자연 확장이 `TechCoordinator.request_structure`를 거치지 않아 우선순위 시스템 우회 | `request_structure(UnitTypeId.HATCHERY, location, PRIORITY_EXPANSION=55, requester_name=...)`로 라우팅. 동일 슬롯에 더 낮은 우선순위 요청이 들어와 있으면 거절되도록 동작 |
+| C5.2 | Visibility | C3.3 후속: bot_step_integration.py에 silent-swallow 11곳이 catch-all + `if debug_mode: raise`만 가지고 있어 비-디버그 운영에서 모든 매니저 step 실패가 묻힘 | `_log_swallowed(name, exc)` 헬퍼 추가 (canonical CreepDenial 패턴과 동일한 rate-limited 로깅) + 11개 사이트(SpatialOptimizer, DataCache, BaseDestruction, BuildingDestroyer, SelfHealing, Personality, BattlePrep, DestructibleAware, NydusTrainer, OverlordSafety, AstarHighway)에 호출 추가 |
+| C5.3 | Process | C4.3(`creep_manager.py` ring distances ↔ `TUMOR_SPREAD_RANGE`)는 행동을 바꾸는 변경이므로 cycle 6 이후로 보류 | 기록만 |
+
+### Cycle 5 자가 회귀 (helper 메서드 위치 실수 → 즉시 fix)
+
+- `_log_swallowed`를 처음에는 `__init__` 본문 도중에 삽입 → __init__가 거기서 종료되어 lines 397+에서 `bot` 파라미터가 F821 미정의로 떨어짐
+- 헬퍼를 `__init__` 다음(`initialize_managers` 직전)으로 이동 후 회복
+- 교훈: 메서드 삽입 시 항상 인접 메서드 boundary 확인
+
+### Cycle 5 결과
+
+- F821 (production code): 0 유지 (자가 회귀 즉시 fix)
+- pytest: 429 pass / 16 skip 유지
+- 행동 변화 (의도된 것)
+  - 자연 확장이 TechCoordinator queue로 라우팅되며 우선순위 55 이하 요청은 거절될 수 있음
+  - 11개 매니저 step 실패가 비-디버그 모드에서도 rate-limited 로그로 표시됨 (이전: 완전 침묵)
+
+---
+
+## Cycle 6 (예정)
+
+- C4.3: `creep_manager.py` ring distances를 `TUMOR_SPREAD_RANGE` 기반으로 결정 (행동 변경 — 회귀 시나리오 확인 필요)
+- 잔여 F841 22+ 건 audit
 - `comprehensive_test_suite.py` 하드코딩 결과 → 실제 pytest 호출로 교체
+- 16건 skip 중 sc2 stub 가능 영역 식별
 
 ### 후보 작업 영역
 

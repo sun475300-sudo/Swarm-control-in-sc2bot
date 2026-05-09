@@ -1055,27 +1055,29 @@ class BuildOrderSystem:
         if not location:
             location = await self.bot.get_next_expansion()
         if location:
-            # Use TechCoordinator if available
+            # Route the expansion request through TechCoordinator when
+            # available so the priority system actually arbitrates
+            # competing structure requests. Phase 22 raised the natural
+            # expansion priority from 50 -> 55.
+            PRIORITY_EXPANSION = 55
             tech_coordinator = getattr(self.bot, "tech_coordinator", None)
-            # NOTE: this branch only checks is_planned() but does not actually
-            # route through tech_coordinator.request_structure(...), so the
-            # previously-defined PRIORITY_EXPANSION constant was never applied.
-            # Tracked as cycle-4 follow-up: route through request_structure to
-            # honor the priority system.
 
             if tech_coordinator:
                 if not tech_coordinator.is_planned(UnitTypeId.HATCHERY):
-                    if not self.bot.workers.exists:
-                        return False
-                    worker = self.bot.workers.closest_to(location)
-                    if not worker:
-                        return False
-                    self.bot.do(worker.build(UnitTypeId.HATCHERY, location))
-                    self.expansion_actual_time = self.bot.time
-                    logger.info(
-                        f"[*] Natural expansion ordered at {int(self.bot.time)}s [*]"
+                    accepted = tech_coordinator.request_structure(
+                        UnitTypeId.HATCHERY,
+                        location,
+                        PRIORITY_EXPANSION,
+                        requester_name="BuildOrderSystem.expand_natural",
                     )
-                    return True
+                    if accepted:
+                        self.expansion_actual_time = self.bot.time
+                        logger.info(
+                            f"[*] Natural expansion queued via TechCoordinator at {int(self.bot.time)}s "
+                            f"(priority={PRIORITY_EXPANSION}) [*]"
+                        )
+                        return True
+                    return False
             else:
                 if not self.bot.workers.exists:
                     return False
