@@ -193,6 +193,7 @@ class TestIntelManager:
     def test_update_interval_timing(self):
         """Test that updates only happen after interval"""
         initial_update = self.intel.last_update
+        assert initial_update >= 0  # attribute initialized
 
         # Update at iteration 0
         self.intel.update(iteration=0)

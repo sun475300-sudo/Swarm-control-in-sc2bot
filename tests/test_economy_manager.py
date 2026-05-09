@@ -247,8 +247,7 @@ class TestOverlordProduction:
         await manager._train_overlord_if_needed()
 
         # Should not produce overlord when supply is sufficient
-        # (implementation may vary, this tests the logic exists)
-        assert True  # Verification that function completes
+        assert bot.do.call_count == call_count_before
 
 
 class TestDroneProduction:
@@ -284,7 +283,7 @@ class TestDroneProduction:
         await manager._train_drone_if_needed()
 
         # Should not produce more drones when saturated
-        assert True
+        assert bot.do.call_count == call_count_before
 
 
 class TestGoldExpansion:

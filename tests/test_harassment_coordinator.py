@@ -189,6 +189,7 @@ class TestHarassmentCoordinator:
     def test_baneling_drop_cooldown(self):
         """Test baneling drop cooldown mechanism"""
         initial_cooldown = self.coordinator.baneling_drop_cooldown
+        assert initial_cooldown is not None  # attribute exists
 
         # Simulate cooldown reduction
         self.coordinator.baneling_drop_cooldown = 60

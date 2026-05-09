@@ -104,8 +104,9 @@ class TestSpatialQueryOptimizer:
         result1 = self.optimizer.get_enemies_near_position(position, radius, iteration)
         initial_misses = self.optimizer.cache_misses
 
-        # Second identical query (cache hit)
+        # Second identical query (cache hit) — must return same result
         result2 = self.optimizer.get_enemies_near_position(position, radius, iteration)
+        assert result2 == result1
 
         assert self.optimizer.cache_hits > 0
         assert self.optimizer.cache_misses == initial_misses  # No additional miss
