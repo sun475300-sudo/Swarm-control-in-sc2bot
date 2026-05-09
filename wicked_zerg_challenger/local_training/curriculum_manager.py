@@ -49,7 +49,7 @@ class CurriculumManager:
         # Load current level from file
         self.current_idx = self.load_level()
 
-        # ★ NEW: 승리 횟수 기반 승격 시스템 ★
+        # * NEW: 승리 횟수 기반 승격 시스템 *
         # 각 단계에서 필요한 승리 횟수 (달성 시 다음 단계로 승격)
         self.wins_required_per_level = {
             0: 5,  # VeryEasy: 5승 필요
@@ -84,7 +84,7 @@ class CurriculumManager:
         # 데이터 로드
         self._load_win_loss_data()
 
-        # ★ NEW: 종족별 승률 추적 시스템 ★
+        # * NEW: 종족별 승률 추적 시스템 *
         self.race_stats = {
             "Terran": {"wins": 0, "losses": 0, "games": 0},
             "Protoss": {"wins": 0, "losses": 0, "games": 0},
@@ -125,7 +125,7 @@ class CurriculumManager:
             pass
 
     def _load_race_stats(self):
-        """★ 종족별 승률 데이터 로드 ★"""
+        """* 종족별 승률 데이터 로드 *"""
         race_stats_file = self.data_dir / "race_stats.json"
         if not race_stats_file.exists():
             return
@@ -140,7 +140,7 @@ class CurriculumManager:
             pass
 
     def _save_race_stats(self):
-        """★ 종족별 승률 데이터 저장 ★"""
+        """* 종족별 승률 데이터 저장 *"""
         race_stats_file = self.data_dir / "race_stats.json"
         try:
             # 승률 계산 추가
@@ -199,7 +199,7 @@ class CurriculumManager:
 
     def record_win(self, opponent_race: str = None) -> bool:
         """
-        ★ 승리 기록 및 승격 체크 ★
+        * 승리 기록 및 승격 체크 *
 
         승리할 때마다 호출됩니다.
         필요한 승리 횟수에 도달하면 자동으로 다음 단계로 승격합니다.
@@ -213,7 +213,7 @@ class CurriculumManager:
         self.wins_at_current_level += 1
         self.games_at_current_level += 1
 
-        # ★ 종족별 승률 기록 ★
+        # * 종족별 승률 기록 *
         if opponent_race and opponent_race in self.race_stats:
             self.race_stats[opponent_race]["wins"] += 1
             self.race_stats[opponent_race]["games"] += 1
@@ -230,7 +230,7 @@ class CurriculumManager:
         wins_required = self.wins_required_per_level.get(self.current_idx, 10)
 
         logger.info(f"\n{'='*70}")
-        logger.info(f"🎉 승리! ({self.wins_at_current_level}/{wins_required})")
+        logger.info(f"[OK] 승리! ({self.wins_at_current_level}/{wins_required})")
         logger.info(
             f"  현재 단계: {self.get_level_name()} (Level {self.current_idx + 1}/{len(self.levels)})"
         )
@@ -245,7 +245,7 @@ class CurriculumManager:
 
     def record_loss(self, opponent_race: str = None) -> bool:
         """
-        ★ 패배 기록 및 강등 체크 ★
+        * 패배 기록 및 강등 체크 *
 
         패배할 때마다 호출됩니다.
         연속 패배가 많으면 강등될 수 있습니다.
@@ -259,7 +259,7 @@ class CurriculumManager:
         self.losses_at_current_level += 1
         self.games_at_current_level += 1
 
-        # ★ 종족별 승률 기록 ★
+        # * 종족별 승률 기록 *
         if opponent_race and opponent_race in self.race_stats:
             self.race_stats[opponent_race]["losses"] += 1
             self.race_stats[opponent_race]["games"] += 1
@@ -542,12 +542,12 @@ class CurriculumManager:
         return self.building_priorities.get(building_name, "Normal")
 
     # ============================================================
-    # ★★★ 종족별 승률 추적 시스템 ★★★
+    # *** 종족별 승률 추적 시스템 ***
     # ============================================================
 
     def get_race_stats(self) -> dict:
         """
-        ★ 종족별 승률 통계 조회 ★
+        * 종족별 승률 통계 조회 *
 
         Returns:
             {
@@ -591,7 +591,7 @@ class CurriculumManager:
         return result
 
     def print_race_stats(self):
-        """★ 종족별 승률 출력 ★"""
+        """* 종족별 승률 출력 *"""
         stats = self.get_race_stats()
 
         logger.info(f"\n{'='*70}")
@@ -615,7 +615,7 @@ class CurriculumManager:
 
     def get_weakest_race(self) -> str:
         """
-        ★ 가장 승률이 낮은 종족 반환 ★
+        * 가장 승률이 낮은 종족 반환 *
 
         이 종족에 대해 더 많은 연습이 필요합니다.
 
@@ -637,7 +637,7 @@ class CurriculumManager:
 
     def get_strongest_race(self) -> str:
         """
-        ★ 가장 승률이 높은 종족 반환 ★
+        * 가장 승률이 높은 종족 반환 *
 
         Returns:
             종족 이름 ("Terran", "Protoss", "Zerg")

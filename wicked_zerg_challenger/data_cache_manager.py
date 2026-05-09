@@ -39,7 +39,7 @@ class CacheEntry:
 
 class DataCacheManager:
     """
-    ★ Data Cache Manager ★
+    * Data Cache Manager *
 
     자주 사용되는 데이터를 캐싱하여 연산량 감소
     """
@@ -48,10 +48,10 @@ class DataCacheManager:
         self.bot = bot
         self.logger = get_logger("DataCache")
 
-        # ★ 캐시 저장소 ★
+        # * 캐시 저장소 *
         self.cache: Dict[str, CacheEntry] = {}
 
-        # ★ 기본 TTL (Time To Live) ★
+        # * 기본 TTL (Time To Live) *
         self.default_ttl = {
             "QUICK": 0.5,  # 0.5초 (빠르게 변함)
             "NORMAL": 1.0,  # 1초 (보통)
@@ -59,12 +59,12 @@ class DataCacheManager:
             "VERY_SLOW": 5.0,  # 5초 (거의 안 변함)
         }
 
-        # ★ 통계 ★
+        # * 통계 *
         self.cache_hits = 0
         self.cache_misses = 0
         self.total_requests = 0
 
-        # ★ 자동 정리 ★
+        # * 자동 정리 *
         self.last_cleanup = 0
         self.cleanup_interval = 5.0  # 5초마다 정리
 
@@ -84,7 +84,7 @@ class DataCacheManager:
         """
         self.total_requests += 1
 
-        # ★ 1. 캐시 확인 ★
+        # * 1. 캐시 확인 *
         if key in self.cache:
             entry = self.cache[key]
             if entry.is_valid():
@@ -94,13 +94,13 @@ class DataCacheManager:
                 # 만료된 캐시 제거
                 del self.cache[key]
 
-        # ★ 2. 캐시 미스 ★
+        # * 2. 캐시 미스 *
         self.cache_misses += 1
 
         if compute_func is None:
             return None
 
-        # ★ 3. 값 계산 및 캐싱 ★
+        # * 3. 값 계산 및 캐싱 *
         try:
             value = compute_func()
             self.set(key, value, ttl)
@@ -153,7 +153,7 @@ class DataCacheManager:
         try:
             current_time = time.time()
 
-            # ★ 주기적 정리 ★
+            # * 주기적 정리 *
             if current_time - self.last_cleanup > self.cleanup_interval:
                 self._cleanup_expired()
                 self.last_cleanup = current_time

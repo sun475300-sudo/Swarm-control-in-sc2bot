@@ -70,7 +70,7 @@ class TimingAttacks:
         """
         game_time = self.bot.time
 
-        # ★ Roach/Ravager 7분 타이밍 ★
+        # * Roach/Ravager 7분 타이밍 *
         if game_time >= self.ROACH_TIMING:
             attack_type = "roach_ravager"
 
@@ -84,7 +84,7 @@ class TimingAttacks:
                 if self._ready_for_roach_timing():
                     self._initiate_roach_timing()
 
-        # ★ Mutalisk 6분 타이밍 ★
+        # * Mutalisk 6분 타이밍 *
         elif game_time >= self.MUTA_TIMING:
             attack_type = "mutalisk"
 

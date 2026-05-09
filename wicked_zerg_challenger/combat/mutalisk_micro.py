@@ -21,6 +21,9 @@ except ImportError:
     Unit = None
 
 
+ANTI_AIR_THREAT_NAMES = {"THOR", "ARCHON", "QUEEN", "MARINE", "HYDRALISK"}
+
+
 class MutaliskMicroController:
     """
     Advanced Mutalisk micro management.
@@ -32,7 +35,7 @@ class MutaliskMicroController:
 
     def __init__(
         self,
-        regen_threshold: float = 0.7,  # Retreat when HP < 70%
+        regen_threshold: float = 0.5,  # Retreat when HP < 50%
         regen_target: float = 0.9,  # Return when HP > 90%
         regen_cooldown: float = 3.0,  # Minimum time between regen cycles
         magic_box_radius: float = 2.5,  # Spread radius for magic box
@@ -57,6 +60,7 @@ class MutaliskMicroController:
 
         # Splash damage unit types (Magic Box triggers)
         self.splash_threats: Set = set()
+        self.anti_air_threats: Set = set()
         if UnitTypeId:
             self.splash_threats = {
                 UnitTypeId.THOR,
@@ -65,6 +69,10 @@ class MutaliskMicroController:
                 UnitTypeId.PHOENIX,  # With range upgrade
                 UnitTypeId.TEMPEST,
             }
+            self.anti_air_threats = {
+                getattr(UnitTypeId, name, None) for name in ANTI_AIR_THREAT_NAMES
+            }
+            self.anti_air_threats.discard(None)
 
     def should_use_magic_box(self, enemy_units) -> bool:
         """
@@ -179,8 +187,20 @@ class MutaliskMicroController:
             return None
 
         # Retreat towards our main base
-        if hasattr(bot, "townhalls") and bot.townhalls.exists:
-            main_base = bot.townhalls.first.position
+        townhalls = getattr(bot, "townhalls", None)
+        main_base = None
+        if townhalls is not None:
+            if hasattr(townhalls, "exists") and townhalls.exists:
+                main_base = getattr(townhalls.first, "position", townhalls.first)
+            else:
+                try:
+                    townhall_list = list(townhalls or [])
+                    if townhall_list:
+                        main_base = getattr(townhall_list[0], "position", townhall_list[0])
+                except TypeError:
+                    main_base = None
+
+        if main_base is not None:
 
             # Move 10 units towards base from current position
             direction_x = main_base.x - unit.position.x
@@ -200,6 +220,120 @@ class MutaliskMicroController:
             return bot.start_location
 
         return None
+
+    def get_anti_air_threats(self, enemy_units, around=None) -> List:
+        """Return anti-air threats close enough to zone Mutalisks."""
+        if not enemy_units:
+            return []
+
+        threats = []
+        for enemy in enemy_units:
+            name = getattr(getattr(enemy, "type_id", None), "name", "").upper()
+            unit_type = getattr(enemy, "type_id", None)
+            try:
+                type_matches = unit_type in self.anti_air_threats
+            except TypeError:
+                type_matches = False
+            if name not in ANTI_AIR_THREAT_NAMES and not type_matches:
+                continue
+            if around is None:
+                threats.append(enemy)
+                continue
+            try:
+                threat_range = max(
+                    float(getattr(enemy, "air_range", 0) or 0),
+                    float(getattr(enemy, "ground_range", 0) or 0),
+                    5.0,
+                )
+                if around.distance_to(enemy) <= threat_range + 2.0:
+                    threats.append(enemy)
+            except Exception:
+                threats.append(enemy)
+        return threats
+
+    def should_retreat_from_anti_air(self, unit: Unit, enemy_units) -> bool:
+        return bool(self.get_anti_air_threats(enemy_units, around=unit))
+
+    def select_bounce_target(self, enemy_units):
+        """Pick the target with the densest nearby pack for bounce damage."""
+        enemies = list(enemy_units or [])
+        if not enemies:
+            return None
+
+        best = None
+        best_score = None
+        for enemy in enemies:
+            try:
+                nearby = sum(1 for other in enemies if enemy.distance_to(other) <= 3.0)
+            except Exception:
+                nearby = 1
+            worker_bonus = (
+                2
+                if getattr(getattr(enemy, "type_id", None), "name", "")
+                in {"SCV", "PROBE", "DRONE"}
+                else 0
+            )
+            low_hp_bonus = 1 if getattr(enemy, "health_percentage", 1.0) < 0.35 else 0
+            score = nearby + worker_bonus + low_hp_bonus
+            if best_score is None or score > best_score:
+                best = enemy
+                best_score = score
+        return best
+
+    def get_stack_point(self, mutalisks) -> Optional[object]:
+        """Return a single stack point for synchronized Mutalisk attacks."""
+        muta_list = list(mutalisks or [])
+        if not muta_list:
+            return None
+        if not Point2:
+            return getattr(muta_list[0], "position", None)
+        x = sum(muta.position.x for muta in muta_list) / len(muta_list)
+        y = sum(muta.position.y for muta in muta_list) / len(muta_list)
+        return Point2((x, y))
+
+    async def execute_hit_and_run(
+        self, mutalisks, enemy_units, bot, current_time: float
+    ) -> bool:
+        """Stack, focus bounce targets, and retreat from anti-air range."""
+        muta_list = list(mutalisks or [])
+        if not muta_list:
+            return False
+
+        actions = []
+        combat_ready = []
+        for muta in muta_list:
+            if self._get_health_ratio(muta) < self.regen_threshold:
+                self.mark_regenerating(muta.tag, current_time)
+                regen_pos = self.get_regen_position(muta, bot)
+                if regen_pos:
+                    actions.append(muta.move(regen_pos))
+                continue
+            combat_ready.append(muta)
+
+        if not combat_ready:
+            await self._issue(bot, actions)
+            return bool(actions)
+
+        stack_point = self.get_stack_point(combat_ready)
+        target = self.select_bounce_target(enemy_units)
+        for muta in combat_ready:
+            threats = self.get_anti_air_threats(enemy_units, around=muta)
+            if threats:
+                closest = min(threats, key=lambda enemy: muta.distance_to(enemy))
+                actions.append(muta.move(muta.position.towards(closest.position, -7)))
+                continue
+            if stack_point is not None:
+                try:
+                    if muta.distance_to(stack_point) > 1.5 and len(combat_ready) >= 3:
+                        actions.append(muta.move(stack_point))
+                        continue
+                except Exception:
+                    pass
+            if target:
+                actions.append(muta.attack(target))
+
+        await self._issue(bot, actions)
+        return bool(actions)
 
     def is_regenerating(self, unit_tag: int) -> bool:
         """Check if a unit is currently regenerating."""
@@ -271,13 +405,7 @@ class MutaliskMicroController:
 
         # Execute all move actions
         if actions:
-            for action in actions:
-                try:
-                    result = bot.do(action)
-                    if hasattr(result, "__await__"):
-                        await result
-                except Exception:
-                    pass
+            await self._issue(bot, actions)
 
         return combat_ready, regenerating
 
@@ -307,10 +435,14 @@ class MutaliskMicroController:
                     continue
 
         if actions:
-            for action in actions:
-                try:
-                    result = bot.do(action)
-                    if hasattr(result, "__await__"):
-                        await result
-                except Exception:
-                    pass
+            await self._issue(bot, actions)
+
+    @staticmethod
+    async def _issue(bot, actions: List) -> None:
+        for action in actions:
+            try:
+                result = bot.do(action)
+                if hasattr(result, "__await__"):
+                    await result
+            except Exception:
+                pass

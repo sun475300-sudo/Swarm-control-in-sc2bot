@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 발표 시각화 자료 생성기
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+--------------------------------------------
 캡스톤 4개 + IR 4개 + 보고서 11개 = 총 19개 HTML
 
 python generate_presentation_visuals.py
@@ -29,14 +29,14 @@ def save(fig, name):
         fig.write_html(desktop_path, include_plotlyjs="cdn")
 
 
-# ═══════════════════════════════════════════════════════════════
+# ===============================================================
 #  캡스톤 디자인 발표 시각화 (학술/기술 검증 집중)
-# ═══════════════════════════════════════════════════════════════
+# ===============================================================
 
 
-# ───────────────────────────────────────────────────────────────
+# ---------------------------------------------------------------
 # 캡스톤 1. 비용/위험 비교 인포그래픽
-# ───────────────────────────────────────────────────────────────
+# ---------------------------------------------------------------
 
 
 def capstone_cost_comparison():
@@ -62,7 +62,7 @@ def capstone_cost_comparison():
 
     # 실제 표시 라벨
     real_labels = ["~5,000만원", "~10회", "HIGH", "6개월+", "12개월"]
-    sim_labels = ["₩0", "100만회+", "ZERO", "불필요", "3개월"]
+    sim_labels = ["KRW0", "100만회+", "ZERO", "불필요", "3개월"]
 
     bar_width = 0.35
     n = len(categories)
@@ -192,7 +192,7 @@ def capstone_cost_comparison():
 
     fig.update_layout(
         title=dict(
-            text="왜 SC2인가? — 실물 드론 vs 시뮬레이션 비교",
+            text="왜 SC2인가? - 실물 드론 vs 시뮬레이션 비교",
             font=dict(size=22, family="Arial Black"),
             x=0.5,
         ),
@@ -211,9 +211,9 @@ def capstone_cost_comparison():
     save(fig, "capstone_1_cost_comparison")
 
 
-# ───────────────────────────────────────────────────────────────
+# ---------------------------------------------------------------
 # 캡스톤 2. SC2 = Digital Twin 레이더 차트
-# ───────────────────────────────────────────────────────────────
+# ---------------------------------------------------------------
 
 
 def capstone_digital_twin():
@@ -320,21 +320,21 @@ def capstone_digital_twin():
     save(fig, "capstone_2_digital_twin")
 
 
-# ───────────────────────────────────────────────────────────────
+# ---------------------------------------------------------------
 # 캡스톤 3. LLM(JARVIS) + SC2 통합 아키텍처
-# ───────────────────────────────────────────────────────────────
+# ---------------------------------------------------------------
 
 
 def capstone_llm_integration():
     """
-    자연어 지휘관(Commander) → AgentRouter → 각 모듈 제어
+    자연어 지휘관(Commander) -> AgentRouter -> 각 모듈 제어
     3D 계층 다이어그램 + 데이터 흐름 곡선
     """
     logger.info("LLM + SC2 통합 아키텍처")
 
     fig = go.Figure()
 
-    # ── 계층 정의 ──
+    # -- 계층 정의 --
     # Layer 3 (최상단): 인간 지휘관 + LLM
     # Layer 2 (중간): AgentRouter + ModelSelector + Orchestrator
     # Layer 1 (하단): SC2 실행 모듈들
@@ -499,23 +499,23 @@ def capstone_llm_integration():
                 )
             )
 
-    # ── 연결 곡선 (데이터 흐름) ──
+    # -- 연결 곡선 (데이터 흐름) --
     connections = [
-        # 지휘관 → JARVIS
+        # 지휘관 -> JARVIS
         (-3, 0, 9, 3, 0, 9, "#FF6F00"),
-        # JARVIS → AgentRouter
+        # JARVIS -> AgentRouter
         (3, 0, 9, -4, 0, 6, "#FFD600"),
-        # JARVIS → ModelSelector
+        # JARVIS -> ModelSelector
         (3, 0, 9, 0, 0, 6, "#FFD600"),
-        # JARVIS → Orchestrator
+        # JARVIS -> Orchestrator
         (3, 0, 9, 4, 0, 6, "#FFD600"),
-        # Agent층 → Module층
+        # Agent층 -> Module층
         (-4, 0, 6, -6, 0, 3, "#7B1FA2"),
         (-4, 0, 6, -3, 0, 3, "#7B1FA2"),
         (0, 0, 6, 0, 0, 3, "#7B1FA2"),
         (4, 0, 6, 3, 0, 3, "#7B1FA2"),
         (4, 0, 6, 6, 0, 3, "#7B1FA2"),
-        # Module층 → 환경
+        # Module층 -> 환경
         (-6, 0, 3, 0, 0, 0, "#1976D2"),
         (-3, 0, 3, 0, 0, 0, "#1976D2"),
         (0, 0, 3, 0, 0, 0, "#1976D2"),
@@ -607,21 +607,21 @@ def capstone_llm_integration():
     save(fig, "capstone_3_llm_integration")
 
 
-# ───────────────────────────────────────────────────────────────
+# ---------------------------------------------------------------
 # 캡스톤 4. 자가 복구(Self-Healing) 로직 흐름도
-# ───────────────────────────────────────────────────────────────
+# ---------------------------------------------------------------
 
 
 def capstone_self_healing():
     """
     Authority Mode 5단계 상태 전이 + 자가 복구 순환
-    BALANCED → ECONOMY → STRATEGY → COMBAT → EMERGENCY → 복구 → BALANCED
+    BALANCED -> ECONOMY -> STRATEGY -> COMBAT -> EMERGENCY -> 복구 -> BALANCED
     """
     logger.info("자가 복구 로직 흐름도")
 
     fig = go.Figure()
 
-    # 원형 배치의 5개 상태 (시계방향, 아래→위가 긴급도 상승)
+    # 원형 배치의 5개 상태 (시계방향, 아래->위가 긴급도 상승)
     states = [
         {
             "name": "BALANCED\n(균형 모드)",
@@ -721,7 +721,7 @@ def capstone_self_healing():
             )
         )
 
-    # ── 전이 화살표 (상태 간 연결) ──
+    # -- 전이 화살표 (상태 간 연결) --
     for i in range(len(states)):
         j = (i + 1) % len(states)
         si, sj = states[i], states[j]
@@ -767,7 +767,7 @@ def capstone_self_healing():
             )
         )
 
-    # 복구 경로 강조 (EMERGENCY → BALANCED)
+    # 복구 경로 강조 (EMERGENCY -> BALANCED)
     fig.add_trace(
         go.Scatter3d(
             x=[0],
@@ -787,7 +787,7 @@ def capstone_self_healing():
             y=[-3],
             z=[7.5],
             mode="text",
-            text=["위협 감지 →\n모드 자동 전환"],
+            text=["위협 감지 ->\n모드 자동 전환"],
             textfont=dict(size=12, color="#F44336"),
             showlegend=False,
         )
@@ -799,7 +799,7 @@ def capstone_self_healing():
             y=[-2],
             z=[1],
             mode="text",
-            text=["위협 해소 →\n자동 복구 ↩"],
+            text=["위협 해소 ->\n자동 복구 <-"],
             textfont=dict(size=12, color="#4CAF50"),
             showlegend=False,
         )
@@ -855,14 +855,14 @@ def capstone_self_healing():
     save(fig, "capstone_4_self_healing")
 
 
-# ═══════════════════════════════════════════════════════════════
+# ===============================================================
 #  IR/기업 설명회 시각화 (비즈니스/가치 창출 집중)
-# ═══════════════════════════════════════════════════════════════
+# ===============================================================
 
 
-# ───────────────────────────────────────────────────────────────
+# ---------------------------------------------------------------
 # IR 1. 시장 페인포인트 시각화
-# ───────────────────────────────────────────────────────────────
+# ---------------------------------------------------------------
 
 
 def ir_market_painpoint():
@@ -887,7 +887,7 @@ def ir_market_painpoint():
                 "추락 1회: ~300만원 손실",
                 "연간 테스트 예산: ~2억원+",
             ],
-            "highlight": "시뮬레이션: ₩0",
+            "highlight": "시뮬레이션: KRW0",
         },
         {
             "name": "시간\n(TIME)",
@@ -967,7 +967,7 @@ def ir_market_painpoint():
                 y=[0],
                 z=[-0.8],
                 mode="text",
-                text=[f"→ {pp['highlight']}"],
+                text=[f"-> {pp['highlight']}"],
                 textfont=dict(size=13, color="#2E7D32", family="Arial Black"),
                 showlegend=False,
             )
@@ -993,7 +993,7 @@ def ir_market_painpoint():
             z=[7.5],
             mode="text",
             text=[
-                "우크라이나 전쟁 이후 Drone Swarm 수요 급증 — 그러나 R&D 비용이 진입장벽"
+                "우크라이나 전쟁 이후 Drone Swarm 수요 급증 - 그러나 R&D 비용이 진입장벽"
             ],
             textfont=dict(size=12, color="#666"),
             showlegend=False,
@@ -1007,7 +1007,7 @@ def ir_market_painpoint():
             y=[0],
             z=[-2.5],
             mode="text",
-            text=['"실물 없이 검증할 수 있다면?" — 우리의 솔루션이 답입니다'],
+            text=['"실물 없이 검증할 수 있다면?" - 우리의 솔루션이 답입니다'],
             textfont=dict(size=15, color="#1976D2", family="Arial Black"),
             showlegend=False,
         )
@@ -1037,15 +1037,15 @@ def ir_market_painpoint():
     save(fig, "ir_1_market_painpoint")
 
 
-# ───────────────────────────────────────────────────────────────
+# ---------------------------------------------------------------
 # IR 2. Virtual Testbed + AI C2 솔루션 개요
-# ───────────────────────────────────────────────────────────────
+# ---------------------------------------------------------------
 
 
 def ir_virtual_testbed():
     """
     비즈니스 친화적 3블록 아키텍처:
-    Virtual Testbed → AI Brain (C2) → Real Deployment
+    Virtual Testbed -> AI Brain (C2) -> Real Deployment
     """
     logger.info("Virtual Testbed + AI C2 솔루션 개요")
 
@@ -1062,7 +1062,7 @@ def ir_virtual_testbed():
                 "200+ 에이전트 동시 운용",
                 "물리 충돌 + 시야 제약",
                 "수백만 회 무한 반복",
-                "비용: ₩0 / 위험: Zero",
+                "비용: KRW0 / 위험: Zero",
             ],
             "value": "R&D 비용 90%+ 절감",
         },
@@ -1073,7 +1073,7 @@ def ir_virtual_testbed():
             "z": 3,
             "color": "#FFD600",
             "features": [
-                "자연어 → 군집 명령 변환",
+                "자연어 -> 군집 명령 변환",
                 "실시간 위협 감지/대응",
                 "자가 복구(Self-Healing)",
                 "관제사 1인 = 수십 대 통제",
@@ -1166,7 +1166,7 @@ def ir_virtual_testbed():
                     y=[0],
                     z=[z - 0.3 - i * 0.5],
                     mode="text",
-                    text=[f"• {feat}"],
+                    text=[f"- {feat}"],
                     textposition="middle right",
                     textfont=dict(size=10, color="#555"),
                     showlegend=False,
@@ -1180,7 +1180,7 @@ def ir_virtual_testbed():
                 y=[0],
                 z=[z - 1.8],
                 mode="text",
-                text=[f"💰 {blk['value']}"],
+                text=[f"[GOLD] {blk['value']}"],
                 textfont=dict(size=13, color="#C62828", family="Arial Black"),
                 showlegend=False,
             )
@@ -1244,9 +1244,9 @@ def ir_virtual_testbed():
     save(fig, "ir_2_virtual_testbed")
 
 
-# ───────────────────────────────────────────────────────────────
+# ---------------------------------------------------------------
 # IR 3. ROI 분석 차트
-# ───────────────────────────────────────────────────────────────
+# ---------------------------------------------------------------
 
 
 def ir_roi_analysis():
@@ -1395,7 +1395,7 @@ def ir_roi_analysis():
                 borderpad=8,
             ),
             dict(
-                text=f"기존: {total_cost_trad}억원 → "
+                text=f"기존: {total_cost_trad}억원 -> "
                 f"Swarm-Net: {total_cost_ours}억원",
                 x=0.22,
                 y=1.08,
@@ -1405,7 +1405,7 @@ def ir_roi_analysis():
                 font=dict(size=12, color="#1565C0"),
             ),
             dict(
-                text=f"기존: {total_time_trad}개월 → "
+                text=f"기존: {total_time_trad}개월 -> "
                 f"Swarm-Net: {total_time_ours}개월",
                 x=0.78,
                 y=1.08,
@@ -1433,15 +1433,15 @@ def ir_roi_analysis():
     save(fig, "ir_3_roi_analysis")
 
 
-# ───────────────────────────────────────────────────────────────
+# ---------------------------------------------------------------
 # IR 4. 비즈니스 모델 & 로드맵
-# ───────────────────────────────────────────────────────────────
+# ---------------------------------------------------------------
 
 
 def ir_business_roadmap():
     """
     3단계 비즈니스 확장 타임라인
-    Phase 1: B2B SaaS → Phase 2: 군 납품 → Phase 3: 글로벌 확장
+    Phase 1: B2B SaaS -> Phase 2: 군 납품 -> Phase 3: 글로벌 확장
     """
     logger.info("비즈니스 모델 & 로드맵")
 
@@ -1455,9 +1455,9 @@ def ir_business_roadmap():
             "z": 0,
             "color": "#1976D2",
             "target": "방산 기업\n알고리즘 검증",
-            "revenue": "월 구독 모델\n₩500만~₩2,000만/월",
+            "revenue": "월 구독 모델\nKRW500만~KRW2,000만/월",
             "product": "가상 테스트베드\nSaaS 플랫폼",
-            "tam": "TAM: ₩500억",
+            "tam": "TAM: KRW500억",
         },
         {
             "title": "Phase 2\n군 납품",
@@ -1466,9 +1466,9 @@ def ir_business_roadmap():
             "z": 3,
             "color": "#FF6F00",
             "target": "국방부/ADD\n군 무인체계",
-            "revenue": "라이선스 납품\n₩10억~₩50억/건",
+            "revenue": "라이선스 납품\nKRW10억~KRW50억/건",
             "product": "C2 지휘통제\n소프트웨어",
-            "tam": "TAM: ₩5,000억",
+            "tam": "TAM: KRW5,000억",
         },
         {
             "title": "Phase 3\n글로벌 확장",
@@ -1479,7 +1479,7 @@ def ir_business_roadmap():
             "target": "글로벌 UTM\n드론 관제",
             "revenue": "플랫폼 수수료\n+ API 과금",
             "product": "AI 드론 관제\n글로벌 플랫폼",
-            "tam": "TAM: ₩10조+",
+            "tam": "TAM: KRW10조+",
         },
     ]
 
@@ -1547,9 +1547,9 @@ def ir_business_roadmap():
 
         # 상세 정보 (카드 내부)
         details = [
-            (f"🎯 {ph['target']}", 0.3),
-            (f"📦 {ph['product']}", -0.5),
-            (f"💰 {ph['revenue']}", -1.3),
+            (f"[TARGET] {ph['target']}", 0.3),
+            (f"[BOX] {ph['product']}", -0.5),
+            (f"[GOLD] {ph['revenue']}", -1.3),
         ]
         for detail_text, y_off in details:
             fig.add_trace(
@@ -1603,7 +1603,7 @@ def ir_business_roadmap():
             y=[2.0],
             z=[2],
             mode="text",
-            text=["기술 검증 완료\n→ 군 시장 진출"],
+            text=["기술 검증 완료\n-> 군 시장 진출"],
             textfont=dict(size=11, color="#FF6F00", family="Arial Black"),
             showlegend=False,
         )
@@ -1614,7 +1614,7 @@ def ir_business_roadmap():
             y=[2.0],
             z=[5],
             mode="text",
-            text=["실전 실적 기반\n→ 글로벌 확장"],
+            text=["실전 실적 기반\n-> 글로벌 확장"],
             textfont=dict(size=11, color="#FF6F00", family="Arial Black"),
             showlegend=False,
         )
@@ -1638,7 +1638,7 @@ def ir_business_roadmap():
             y=[0],
             z=[7.5],
             mode="text",
-            text=["성장 →"],
+            text=["성장 ->"],
             textfont=dict(size=13, color="#999"),
             showlegend=False,
         )
@@ -1668,14 +1668,14 @@ def ir_business_roadmap():
     save(fig, "ir_4_business_roadmap")
 
 
-# ═══════════════════════════════════════════════════════════════
+# ===============================================================
 #  캡스톤 보고서 섹션별 시각화 (정밀 데이터 기반)
-# ═══════════════════════════════════════════════════════════════
+# ===============================================================
 
 
-# ───────────────────────────────────────────────────────────────
+# ---------------------------------------------------------------
 # 섹션 2-1. 드론 등록 수 폭발적 증가 추이
-# ───────────────────────────────────────────────────────────────
+# ---------------------------------------------------------------
 
 
 def section2_drone_growth():
@@ -1828,13 +1828,13 @@ def section2_drone_growth():
     save(fig, "section2_drone_growth")
 
 
-# ───────────────────────────────────────────────────────────────
+# ---------------------------------------------------------------
 # 섹션 2-2. 문제 심각도 히트맵
-# ───────────────────────────────────────────────────────────────
+# ---------------------------------------------------------------
 
 
 def section2_problem_heatmap():
-    """4대 문제 × 4대 환경 심각도 히트맵"""
+    """4대 문제 x 4대 환경 심각도 히트맵"""
     logger.info("[섹션2-2] 문제 심각도 히트맵")
 
     problems = [
@@ -1890,7 +1890,7 @@ def section2_problem_heatmap():
 
     fig.update_layout(
         title=dict(
-            text="공역 통제 문제 심각도 매트릭스 (환경별 × 문제별)",
+            text="공역 통제 문제 심각도 매트릭스 (환경별 x 문제별)",
             font=dict(size=22, family="Arial Black"),
             x=0.5,
         ),
@@ -1902,7 +1902,7 @@ def section2_problem_heatmap():
         height=600,
         annotations=[
             dict(
-                text="평균 심각도: 7.6/10 — 전 환경에서 자동화 관제 시급",
+                text="평균 심각도: 7.6/10 - 전 환경에서 자동화 관제 시급",
                 x=0.5,
                 y=-0.15,
                 xref="paper",
@@ -1915,9 +1915,9 @@ def section2_problem_heatmap():
     save(fig, "section2_problem_heatmap")
 
 
-# ───────────────────────────────────────────────────────────────
+# ---------------------------------------------------------------
 # 섹션 2-3. 비행 승인 절차 Before/After 비교
-# ───────────────────────────────────────────────────────────────
+# ---------------------------------------------------------------
 
 
 def section2_approval_flow():
@@ -1987,7 +1987,7 @@ def section2_approval_flow():
 
     fig.update_layout(
         title=dict(
-            text="비행 승인·관제 절차 비교: 현행 vs Swarm-Net",
+            text="비행 승인-관제 절차 비교: 현행 vs Swarm-Net",
             font=dict(size=22, family="Arial Black"),
             x=0.5,
         ),
@@ -2040,9 +2040,9 @@ def section2_approval_flow():
     save(fig, "section2_approval_flow")
 
 
-# ───────────────────────────────────────────────────────────────
+# ---------------------------------------------------------------
 # 섹션 3-1. KPI 대시보드
-# ───────────────────────────────────────────────────────────────
+# ---------------------------------------------------------------
 
 
 def section3_kpi_dashboard():
@@ -2187,9 +2187,9 @@ def section3_kpi_dashboard():
     save(fig, "section3_kpi_dashboard")
 
 
-# ───────────────────────────────────────────────────────────────
+# ---------------------------------------------------------------
 # 섹션 3-2. 구현 일정 간트 차트
-# ───────────────────────────────────────────────────────────────
+# ---------------------------------------------------------------
 
 
 def section3_gantt_timeline():
@@ -2336,13 +2336,13 @@ def section3_gantt_timeline():
     save(fig, "section3_gantt_timeline")
 
 
-# ───────────────────────────────────────────────────────────────
+# ---------------------------------------------------------------
 # 섹션 3-3. End-to-End 자동화 관제 파이프라인
-# ───────────────────────────────────────────────────────────────
+# ---------------------------------------------------------------
 
 
 def section3_e2e_pipeline():
-    """탐지 → 식별 → 시간 할당 → 경고 → 퇴각 유도 5단계 자동화 파이프라인"""
+    """탐지 -> 식별 -> 시간 할당 -> 경고 -> 퇴각 유도 5단계 자동화 파이프라인"""
     logger.info("[섹션3-3] End-to-End 자동화 관제 파이프라인")
 
     fig = go.Figure()
@@ -2451,7 +2451,7 @@ def section3_e2e_pipeline():
     fig.add_annotation(
         x=50,
         y="기술 스택",
-        text="Redis TTL: 15/30/60분 카운트다운 → Keyspace Notification → 자동 만료 이벤트",
+        text="Redis TTL: 15/30/60분 카운트다운 -> Keyspace Notification -> 자동 만료 이벤트",
         showarrow=False,
         yshift=-35,
         font=dict(size=12, color="#7B1FA2", family="Arial Black"),
@@ -2490,13 +2490,13 @@ def section3_e2e_pipeline():
     save(fig, "section3_e2e_pipeline")
 
 
-# ───────────────────────────────────────────────────────────────
+# ---------------------------------------------------------------
 # 섹션 3-4. 3중 센서 퓨전 파이프라인
-# ───────────────────────────────────────────────────────────────
+# ---------------------------------------------------------------
 
 
 def section3_sensor_fusion():
-    """RF + Remote ID + Vision AI → Kalman Filter → 통합 탐지 Sankey 다이어그램"""
+    """RF + Remote ID + Vision AI -> Kalman Filter -> 통합 탐지 Sankey 다이어그램"""
     logger.info("[섹션3-4] 3중 센서 퓨전 파이프라인")
 
     fig = go.Figure(
@@ -2545,15 +2545,15 @@ def section3_sensor_fusion():
                     target=[3, 4, 5, 6, 6, 6, 7, 8, 9],
                     value=[8, 6, 5, 8, 6, 5, 10, 7, 7],
                     color=[
-                        "rgba(25,118,210,0.3)",  # RF → 패턴분석
-                        "rgba(76,175,80,0.3)",  # RID → 프로토콜파싱
-                        "rgba(255,152,0,0.3)",  # YOLO → 객체탐지
-                        "rgba(25,118,210,0.3)",  # 패턴분석 → 퓨전
-                        "rgba(76,175,80,0.3)",  # 프로토콜파싱 → 퓨전
-                        "rgba(255,152,0,0.3)",  # 객체탐지 → 퓨전
-                        "rgba(123,31,162,0.3)",  # 퓨전 → 3D위치
-                        "rgba(123,31,162,0.3)",  # 퓨전 → 관제DB
-                        "rgba(123,31,162,0.3)",  # 퓨전 → 실시간
+                        "rgba(25,118,210,0.3)",  # RF -> 패턴분석
+                        "rgba(76,175,80,0.3)",  # RID -> 프로토콜파싱
+                        "rgba(255,152,0,0.3)",  # YOLO -> 객체탐지
+                        "rgba(25,118,210,0.3)",  # 패턴분석 -> 퓨전
+                        "rgba(76,175,80,0.3)",  # 프로토콜파싱 -> 퓨전
+                        "rgba(255,152,0,0.3)",  # 객체탐지 -> 퓨전
+                        "rgba(123,31,162,0.3)",  # 퓨전 -> 3D위치
+                        "rgba(123,31,162,0.3)",  # 퓨전 -> 관제DB
+                        "rgba(123,31,162,0.3)",  # 퓨전 -> 실시간
                     ],
                 ),
             )
@@ -2573,7 +2573,7 @@ def section3_sensor_fusion():
         font=dict(size=12, family="Arial"),
         annotations=[
             dict(
-                text="탐지 범위 — RF: 500m~5km | Remote ID: 300m~1km | Vision: 50~300m",
+                text="탐지 범위 - RF: 500m~5km | Remote ID: 300m~1km | Vision: 50~300m",
                 x=0.5,
                 y=-0.12,
                 xref="paper",
@@ -2597,9 +2597,9 @@ def section3_sensor_fusion():
     save(fig, "section3_sensor_fusion")
 
 
-# ───────────────────────────────────────────────────────────────
+# ---------------------------------------------------------------
 # 섹션 3-5. 4계층 시스템 아키텍처
-# ───────────────────────────────────────────────────────────────
+# ---------------------------------------------------------------
 
 
 def section3_4layer_architecture():
@@ -2700,16 +2700,16 @@ def section3_4layer_architecture():
 
     # 계층 간 연결 곡선
     connections = [
-        # 공중 → 지상
+        # 공중 -> 지상
         (-5, 0, -3, 3, "#2E7D32"),
         (-1.5, 0, 0, 3, "#2E7D32"),
         (1.5, 0, 0, 3, "#2E7D32"),
         (5, 0, 3, 3, "#2E7D32"),
-        # 지상 → 백엔드
+        # 지상 -> 백엔드
         (-3, 3, -4, 6, "#1976D2"),
         (0, 3, 0, 6, "#1976D2"),
         (3, 3, 4, 6, "#1976D2"),
-        # 백엔드 → 사용자
+        # 백엔드 -> 사용자
         (-4, 6, -3, 9, "#7B1FA2"),
         (0, 6, -3, 9, "#7B1FA2"),
         (4, 6, 3, 9, "#7B1FA2"),
@@ -2790,9 +2790,9 @@ def section3_4layer_architecture():
     save(fig, "section3_4layer_architecture")
 
 
-# ───────────────────────────────────────────────────────────────
+# ---------------------------------------------------------------
 # 섹션 5-0. 기대 효과 Before/After 비교
-# ───────────────────────────────────────────────────────────────
+# ---------------------------------------------------------------
 
 
 def section5_expected_effects():
@@ -2861,7 +2861,7 @@ def section5_expected_effects():
         fig.add_annotation(
             x=max(current_norm[i], swarm_norm[i]) + 1.5,
             y=metrics[i],
-            text=f"▼ {imp}",
+            text=f"v {imp}",
             showarrow=False,
             font=dict(size=13, color="#2E7D32", family="Arial Black"),
             bgcolor="rgba(232,245,233,0.9)",
@@ -2907,13 +2907,13 @@ def section5_expected_effects():
     save(fig, "section5_expected_effects")
 
 
-# ───────────────────────────────────────────────────────────────
+# ---------------------------------------------------------------
 # 섹션 5-1. 적용 분야 히트맵
-# ───────────────────────────────────────────────────────────────
+# ---------------------------------------------------------------
 
 
 def section5_application_matrix():
-    """4대 적용 분야 × 5대 역량 히트맵"""
+    """4대 적용 분야 x 5대 역량 히트맵"""
     logger.info("[섹션5-1] 적용 분야 히트맵")
 
     domains = ["법 집행", "상업/민간", "국방/방산", "공공 안전"]
@@ -3005,9 +3005,9 @@ def section5_application_matrix():
     save(fig, "section5_application_matrix")
 
 
-# ───────────────────────────────────────────────────────────────
+# ---------------------------------------------------------------
 # 섹션 5-2. 글로벌 시장 규모 및 TAM 성장
-# ───────────────────────────────────────────────────────────────
+# ---------------------------------------------------------------
 
 
 def section5_market_tam():
@@ -3094,11 +3094,11 @@ def section5_market_tam():
         go.Scatter(
             x=labels,
             y=korea_market,
-            name="국내 시장 (₩조)",
+            name="국내 시장 (KRW조)",
             line=dict(color="#1976D2", width=3, dash="dash"),
             mode="lines+markers+text",
             marker=dict(size=8, color="#1976D2"),
-            text=[f"₩{v}조" if i % 2 == 0 else "" for i, v in enumerate(korea_market)],
+            text=[f"KRW{v}조" if i % 2 == 0 else "" for i, v in enumerate(korea_market)],
             textposition="top center",
             textfont=dict(size=10, color="#1976D2"),
         ),
@@ -3121,7 +3121,7 @@ def section5_market_tam():
         height=700,
         annotations=[
             dict(
-                text="Phase 1 TAM\n₩500억",
+                text="Phase 1 TAM\nKRW500억",
                 x="2026",
                 y=62,
                 xref="x",
@@ -3135,7 +3135,7 @@ def section5_market_tam():
                 borderpad=4,
             ),
             dict(
-                text="Phase 2 TAM\n₩5,000억",
+                text="Phase 2 TAM\nKRW5,000억",
                 x="2028",
                 y=75,
                 xref="x",
@@ -3149,7 +3149,7 @@ def section5_market_tam():
                 borderpad=4,
             ),
             dict(
-                text="Phase 3 TAM\n₩10조+",
+                text="Phase 3 TAM\nKRW10조+",
                 x="2032",
                 y=94,
                 xref="x",
@@ -3163,7 +3163,7 @@ def section5_market_tam():
                 borderpad=4,
             ),
             dict(
-                text="2035년: $99B (약 ₩130조) — CAGR 12~15%",
+                text="2035년: $99B (약 KRW130조) - CAGR 12~15%",
                 x=0.5,
                 y=-0.15,
                 xref="paper",
@@ -3179,34 +3179,34 @@ def section5_market_tam():
         gridcolor="rgba(200,200,200,0.5)",
     )
     fig.update_yaxes(
-        title_text="국내 시장 (₩조)", secondary_y=True, showgrid=False, range=[0, 7]
+        title_text="국내 시장 (KRW조)", secondary_y=True, showgrid=False, range=[0, 7]
     )
 
     save(fig, "section5_market_tam")
 
 
-# ═══════════════════════════════════════════════════════════════
+# ===============================================================
 # Main
-# ═══════════════════════════════════════════════════════════════
+# ===============================================================
 
 if __name__ == "__main__":
     print("=" * 60)
     print("발표 시각화 자료 생성 (캡스톤 4개 + IR 4개 + 보고서 11개)")
     print("=" * 60)
 
-    print("\n── 캡스톤 디자인 발표 시각화 ──")
+    print("\n-- 캡스톤 디자인 발표 시각화 --")
     capstone_cost_comparison()
     capstone_digital_twin()
     capstone_llm_integration()
     capstone_self_healing()
 
-    print("\n── IR/기업 설명회 시각화 ──")
+    print("\n-- IR/기업 설명회 시각화 --")
     ir_market_painpoint()
     ir_virtual_testbed()
     ir_roi_analysis()
     ir_business_roadmap()
 
-    print("\n── 캡스톤 보고서 섹션별 시각화 ──")
+    print("\n-- 캡스톤 보고서 섹션별 시각화 --")
     section2_drone_growth()
     section2_problem_heatmap()
     section2_approval_flow()

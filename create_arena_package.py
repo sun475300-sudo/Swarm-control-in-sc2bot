@@ -43,6 +43,13 @@ EXCLUDE_PATTERNS = [
     "logs",
     "test_results",
     ".pytest_cache",
+    "tests",
+    "docs",
+    "visuals",
+    "data\\games",
+    "data/games",
+    "data\\reports",
+    "data/reports",
     "*.log",
     "*.replay",
     "*.pt",  # 학습 모델 (용량 큼)

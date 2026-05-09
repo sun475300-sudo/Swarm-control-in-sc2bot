@@ -14,12 +14,14 @@ import os
 import sys
 import unittest
 from pathlib import Path
-from unittest.mock import Mock
+from types import SimpleNamespace
+from unittest.mock import AsyncMock, Mock
 
 # Add bot directory to path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from build_order_system import BuildOrderSystem, BuildOrderType
+from build_order_system import BuildOrderSystem, BuildOrderType, UnitTypeId
+from sc2.position import Point2
 
 
 class MockBot:
@@ -101,7 +103,7 @@ class TestBuildOrderStepParsing(unittest.TestCase):
     def test_build_steps_have_action(self):
         bot = MockBot("Race.Terran")
         system = BuildOrderSystem(bot)
-        valid_actions = {"build", "train", "expand", "morph"}
+        valid_actions = {"build", "train", "expand", "morph", "upgrade"}
         for step in system.build_steps:
             self.assertIn(
                 step.action,
@@ -182,6 +184,69 @@ class TestBuildOrderStats(unittest.TestCase):
         for build_type, stats in system.build_order_stats.items():
             self.assertIn("games", stats)
             self.assertIn("wins", stats)
+
+
+class TestOpeningExpansionPriority(unittest.TestCase):
+    """Test first natural expansion cannot be skipped by short retry windows."""
+
+    def test_opening_hatchery_step_is_held_before_ninety_seconds(self):
+        bot = MockBot("Race.Terran")
+        bot.time = 65.0
+        bot.supply_used = 16
+        bot.minerals = 250
+        bot.can_afford = Mock(return_value=False)
+
+        system = BuildOrderSystem(bot)
+        system.current_step_index = 1
+        step = system.build_steps[system.current_step_index]
+
+        self.assertEqual(step.action, "expand")
+        self.assertEqual(step.unit_type, UnitTypeId.HATCHERY)
+
+        import asyncio
+
+        for iteration in range(system._max_retries_before_skip + 5):
+            bot.iteration = iteration
+            asyncio.run(system.execute(iteration))
+
+        self.assertEqual(system.current_step_index, 1)
+        self.assertEqual(system._skipped_steps, [])
+
+    def test_first_expansion_prefers_closest_untaken_natural(self):
+        bot = MockBot("Race.Terran")
+        main = SimpleNamespace(position=Point2((50, 50)))
+        natural = Point2((60, 60))
+        distant = Point2((140, 140))
+        bot.time = 55.0
+        bot.minerals = 300
+        bot.start_location = Point2((50, 50))
+        bot.expansion_locations_list = [distant, natural, Point2((50, 50))]
+        bot.townhalls = Mock(amount=1, exists=True, first=main)
+        bot.townhalls.__iter__ = Mock(return_value=iter([main]))
+        bot.can_place = AsyncMock(return_value=True)
+        bot.get_next_expansion = AsyncMock(return_value=distant)
+
+        class FakeTechCoordinator:
+            def __init__(self):
+                self.requests = []
+
+            def is_planned(self, structure_type):
+                return False
+
+            def request_structure(self, structure_type, location, priority, requester):
+                self.requests.append((structure_type, location, priority, requester))
+                return True
+
+        bot.tech_coordinator = FakeTechCoordinator()
+        system = BuildOrderSystem(bot)
+
+        import asyncio
+
+        result = asyncio.run(system._expand(UnitTypeId.HATCHERY))
+
+        self.assertTrue(result)
+        self.assertEqual(bot.tech_coordinator.requests[0][1], natural)
+        bot.get_next_expansion.assert_not_awaited()
 
 
 if __name__ == "__main__":

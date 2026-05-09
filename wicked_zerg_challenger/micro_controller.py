@@ -64,7 +64,7 @@ class BoidsController:
         self.splash_handler = SplashThreatHandler()
         self.formation_controller = ConcaveFormationController()
         self.burrow_controller = BurrowController()
-        self.stutter_step = StutterStepKiting(bot)  # ★ NEW: Stutter-Step Kiting ★
+        self.stutter_step = StutterStepKiting(bot)  # * NEW: Stutter-Step Kiting *
 
         # Update timing - increased interval for performance
         self.last_update = 0
@@ -112,7 +112,7 @@ class BoidsController:
                 UnitTypeId.MUTALISK,
                 UnitTypeId.CORRUPTOR,
                 UnitTypeId.ULTRALISK,
-                UnitTypeId.LURKER,
+                UnitTypeId.LURKERMP,
                 UnitTypeId.BROODLORD,
                 UnitTypeId.INFESTOR,
                 UnitTypeId.VIPER,
@@ -167,7 +167,7 @@ class BoidsController:
 
         enemy_units = getattr(self.bot, "enemy_units", [])
 
-        # ★ NEW: Auto-enable Focus Mode (High Performance) during combat ★
+        # * NEW: Auto-enable Focus Mode (High Performance) during combat *
         # Combat detection: If any enemy is close to our units
         if enemy_units and units:
             # Optimization: Check distance between centers first? Or just simple check.
@@ -182,7 +182,7 @@ class BoidsController:
             elif self.focus_mode_active:
                 self.focus_mode_end_frame = iteration + 22  # Keep alive
 
-        # ★ NEW: Priority-based Unit Selection ★
+        # * NEW: Priority-based Unit Selection *
         # 1. Identify high-priority units (near enemies or in danger)
         high_priority_units = []
         low_priority_units = []
@@ -246,7 +246,7 @@ class BoidsController:
         # Combine lists
         active_units = high_priority_units + active_low_priority
 
-        # 전투 중 처리 유닛 수 증가 (기본 30 → 전투 시 80, 종료 후 복원)
+        # 전투 중 처리 유닛 수 증가 (기본 30 -> 전투 시 80, 종료 후 복원)
         frame_limit = 80 if high_priority_units else self.max_units_per_frame
         if len(active_units) > frame_limit:
             # Keep all high priority, trim low priority
@@ -264,7 +264,7 @@ class BoidsController:
                 active_units, enemy_units, iteration, self._do_actions, bot=self.bot
             )
 
-            # ★★★ NEW: Stutter-Step Kiting for Hydra/Roach ★★★
+            # *** NEW: Stutter-Step Kiting for Hydra/Roach ***
             kiting_handled = set()
             if enemy_units:
                 for unit in active_units:

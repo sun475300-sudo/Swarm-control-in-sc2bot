@@ -193,7 +193,7 @@ class ManagerFactory:
 
             # 6. 로그 출력
             if verbose:
-                star = "★ " if "NEW" in config.name or "Advanced" in config.name else ""
+                star = "* " if "NEW" in config.name or "Advanced" in config.name else ""
                 logger.info("[BOT] %s%s initialized", star, config.name)
 
             return True

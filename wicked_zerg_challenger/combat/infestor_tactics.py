@@ -230,7 +230,7 @@ class InfestorTacticsController:
             health_ratio = self._get_health_ratio(infestor)
             energy = getattr(infestor, "energy", 0)
 
-            # ★ ESCAPE MODE: Low health ★
+            # * ESCAPE MODE: Low health *
             if health_ratio < self.escape_threshold and not is_burrowed:
                 # Burrow to escape
                 if self.has_burrow(bot):
@@ -252,7 +252,7 @@ class InfestorTacticsController:
             if unit_tag in self.escaping:
                 continue
 
-            # ★ INFILTRATION MODE: High energy, target available ★
+            # * INFILTRATION MODE: High energy, target available *
             if energy >= self.energy_threshold and not unit_tag in self.infiltrating:
                 infiltration_target = self.find_infiltration_target(bot)
                 if infiltration_target:
@@ -295,7 +295,7 @@ class InfestorTacticsController:
                         except Exception:
                             pass
 
-            # ★ FLANKING MODE: Enemy army detected ★
+            # * FLANKING MODE: Enemy army detected *
             elif enemy_army_center and energy >= self.energy_threshold:
                 flank_pos = self.find_flank_position(infestor, enemy_army_center, bot)
 

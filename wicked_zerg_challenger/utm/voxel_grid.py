@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 """
-3D Voxel Grid — Spatial Partition for Drone Airspace
+3D Voxel Grid - Spatial Partition for Drone Airspace
 
 SC2 SpatialGrid(2D)를 3D 복셀 공간으로 확장.
-셀 키: (cell_x, cell_y) → (cell_x, cell_y, cell_z)
+셀 키: (cell_x, cell_y) -> (cell_x, cell_y, cell_z)
 
 Origin: wicked_zerg_challenger/utils/spatial_partition.py
 """
@@ -21,14 +21,14 @@ class VoxelGrid:
     3D Grid-based spatial partitioning for drone airspace management.
 
     SC2 SpatialGrid의 3D 확장:
-    - 2D 셀 (cell_x, cell_y) → 3D 복셀 (cell_x, cell_y, cell_z)
-    - 2D 원 범위 검색 → 3D 구 범위 검색
-    - 2D 유클리드 거리 → 3D 유클리드 거리
+    - 2D 셀 (cell_x, cell_y) -> 3D 복셀 (cell_x, cell_y, cell_z)
+    - 2D 원 범위 검색 -> 3D 구 범위 검색
+    - 2D 유클리드 거리 -> 3D 유클리드 거리
 
     Time Complexity:
     - Insert: O(1)
     - Query neighbors: O(k) where k is drones in nearby voxels
-    - Range query: O(voxels_checked × drones_per_voxel)
+    - Range query: O(voxels_checked x drones_per_voxel)
     """
 
     def __init__(
@@ -38,7 +38,7 @@ class VoxelGrid:
     ):
         """
         Args:
-            cell_size: 복셀 한 변의 크기 (미터). SC2의 5.0 → 드론 10.0m
+            cell_size: 복셀 한 변의 크기 (미터). SC2의 5.0 -> 드론 10.0m
             map_size: (width, depth, max_altitude) 공역 크기 (미터)
         """
         self.cell_size = max(cell_size, 0.001)
@@ -50,7 +50,7 @@ class VoxelGrid:
         self.grid_d = int(math.ceil(self.map_depth / self.cell_size))
         self.grid_h = int(math.ceil(self.map_altitude / self.cell_size))
 
-        # 3D 복셀 저장소: (cx, cy, cz) → [(position, data), ...]
+        # 3D 복셀 저장소: (cx, cy, cz) -> [(position, data), ...]
         self.grid: Dict[Cell3, List[Tuple[Pos3, Any]]] = {}
         self.data_to_cell: Dict[int, Cell3] = {}
         self.size = 0
@@ -61,7 +61,7 @@ class VoxelGrid:
         self.size = 0
 
     def _get_cell(self, x: float, y: float, z: float) -> Cell3:
-        """연속 좌표 → 이산 복셀 인덱스. 기존 2D _get_cell + z축."""
+        """연속 좌표 -> 이산 복셀 인덱스. 기존 2D _get_cell + z축."""
         s = self.cell_size
         cx = max(0, min(int(x / s), self.grid_w - 1))
         cy = max(0, min(int(y / s), self.grid_d - 1))
@@ -101,7 +101,7 @@ class VoxelGrid:
         """
         3D 구 범위 검색. 기존 2D 원 검색의 3D 확장.
 
-        기존: dx, dy 2중 루프 → 변경: dx, dy, dz 3중 루프
+        기존: dx, dy 2중 루프 -> 변경: dx, dy, dz 3중 루프
         """
         results = []
         cells_to_check = int(math.ceil(radius / self.cell_size)) + 1
@@ -164,7 +164,7 @@ class VoxelGrid:
 
     @staticmethod
     def _distance(p1: Pos3, p2: Pos3) -> float:
-        """3D 유클리드 거리. 기존 sqrt(dx²+dy²) → sqrt(dx²+dy²+dz²)"""
+        """3D 유클리드 거리. 기존 sqrt(dx²+dy²) -> sqrt(dx²+dy²+dz²)"""
         dx = p1[0] - p2[0]
         dy = p1[1] - p2[1]
         dz = p1[2] - p2[2]

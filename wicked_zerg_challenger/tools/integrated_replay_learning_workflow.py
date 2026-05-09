@@ -32,7 +32,7 @@ PROJECT_ROOT = Path(__file__).parent.parent
 
 
 class IntegratedReplayLearningWorkflow:
-    """���� ���÷��� �н� ��ũ�÷ο�"""
+    """???? ???/??? ?н? ??ũ?/ο?"""
 
     def __init__(self):
         self.project_root = PROJECT_ROOT
@@ -42,7 +42,7 @@ class IntegratedReplayLearningWorkflow:
         self.extract_train_path = self.project_root / "tools" / "extract_and_train_from_training.py"
         
     def step1_learn_from_replays(self, max_replays: int = 30) -> bool:
-        """Step 1: ���ΰ��̸� ���÷��̿��� ������� �н�"""
+        """Step 1: ???ΰ??̸? ???/??̿??? ??????? ?н?"""
         logger.info("\n" + "=" * 70)
         logger.info("Learning Build Orders from Pro Gamer Replays")
         logger.info("=" * 70)
@@ -90,7 +90,7 @@ class IntegratedReplayLearningWorkflow:
             return False
     
     def step2_collect_training_data(self) -> bool:
-        """Step 2: ���� �Ʒ� ������ ���� (������)"""
+        """Step 2: ???? ?Ʒ? ?????? ???? (??????)"""
         logger.info("\n" + "=" * 70)
         logger.info("Collecting Training Game Data")
         logger.info("=" * 70)
@@ -121,7 +121,7 @@ class IntegratedReplayLearningWorkflow:
             return True  # Optional step, don't fail
     
     def step3_extract_and_learn_from_training(self) -> bool:
-        """Step 3: �Ʒ� �����Ϳ��� ���� �� �н�"""
+        """Step 3: ?Ʒ? ?????Ϳ??? ???? ?? ?н?"""
         logger.info("\n" + "=" * 70)
         logger.info("Extracting and Learning from Training Data")
         logger.info("=" * 70)
@@ -151,7 +151,7 @@ class IntegratedReplayLearningWorkflow:
             return True  # Optional step
     
     def step4_apply_learned_parameters(self) -> bool:
-        """Step 4: �н��� �Ķ���� Ȯ�� �� ����"""
+        """Step 4: ?н??? ?Ķ???? Ȯ?? ?? ????"""
         logger.info("\n" + "=" * 70)
         logger.info("Verifying Learned Parameters")
         logger.info("=" * 70)
@@ -198,10 +198,10 @@ class IntegratedReplayLearningWorkflow:
             return False
     
     def run_full_workflow(self, max_replays: int = 30, skip_training_data: bool = False):
-        """��ü ��ũ�÷ο� ����"""
+        """??ü ??ũ?/ο? ????"""
         logger.info("\n" + "=" * 70)
         logger.info("INTEGRATED REPLAY LEARNING WORKFLOW")
-        logger.info("���ΰ��̸� ���÷��� �н� �� ������� �н� �� ���� �Ʒ� ����")
+        logger.info("???ΰ??̸? ???/??? ?н? ?? ??????? ?н? ?? ???? ?Ʒ? ????")
         logger.info("=" * 70)
         logger.info(f"Project root: {self.project_root}")
         logger.info(f"Max replays: {max_replays}")

@@ -23,7 +23,7 @@ class Boids3DController:
     3D Boids-based swarm controller for drone fleet management.
 
     SC2 BoidsSwarmController와의 차이:
-    - 모든 벡터: 2D [vx,vy] → 3D [vx,vy,vz]
+    - 모든 벡터: 2D [vx,vy] -> 3D [vx,vy,vz]
     - 신규 힘: altitude_hold (고도 유지), terrain_clearance (지면 이격)
     - 드론 운동학 반영: max_speed, max_acceleration 제한
     """
@@ -68,34 +68,34 @@ class Boids3DController:
         """
         force = np.zeros(3)
 
-        # 1. Separation (분리) — 기존 _calculate_separation 확장
+        # 1. Separation (분리) - 기존 _calculate_separation 확장
         sep = self._separation(drone, neighbors)
         force += sep * self.separation_weight
 
-        # 2. Alignment (정렬) — 기존 _calculate_alignment 확장
+        # 2. Alignment (정렬) - 기존 _calculate_alignment 확장
         ali = self._alignment(drone, neighbors)
         force += ali * self.alignment_weight
 
-        # 3. Cohesion (응집) — 기존 _calculate_cohesion 확장
+        # 3. Cohesion (응집) - 기존 _calculate_cohesion 확장
         coh = self._cohesion(drone, neighbors)
         force += coh * self.cohesion_weight
 
-        # 4. Target Seeking (목표 추적) — 기존 _calculate_target_seeking 확장
+        # 4. Target Seeking (목표 추적) - 기존 _calculate_target_seeking 확장
         if target is not None:
             tgt = self._target_seeking(drone, target)
             force += tgt * self.target_weight
 
-        # 5. Obstacle Avoidance (장애물 회피) — 기존 enemy_avoidance 변형
+        # 5. Obstacle Avoidance (장애물 회피) - 기존 enemy_avoidance 변형
         if obstacles:
             avoid = self._obstacle_avoidance(drone, obstacles)
             force += avoid * self.avoidance_weight
 
-        # 6. Altitude Hold (고도 유지) — 신규
+        # 6. Altitude Hold (고도 유지) - 신규
         if desired_altitude is not None:
             alt = self._altitude_hold(drone, desired_altitude)
             force += alt * self.altitude_hold_weight
 
-        # 7. Terrain Clearance (지면 이격) — 신규
+        # 7. Terrain Clearance (지면 이격) - 신규
         terrain = self._terrain_clearance(drone, terrain_height)
         force += terrain * self.terrain_clearance_weight
 
@@ -109,7 +109,7 @@ class Boids3DController:
     def _separation(self, drone: DroneState, neighbors: List[DroneState]) -> np.ndarray:
         """
         분리력: 가까운 이웃으로부터 반발.
-        기존: diff / distance² (역제곱 법칙) — 동일하게 3D 적용.
+        기존: diff / distance² (역제곱 법칙) - 동일하게 3D 적용.
         """
         force = np.zeros(3)
         pos = drone.position.to_array()
@@ -138,7 +138,7 @@ class Boids3DController:
     def _alignment(self, drone: DroneState, neighbors: List[DroneState]) -> np.ndarray:
         """
         정렬력: 이웃들의 평균 속도 방향으로 정렬.
-        기존: 이웃 평균 위치 방향 — 여기서는 속도 정렬 (더 정확한 Boids 구현).
+        기존: 이웃 평균 위치 방향 - 여기서는 속도 정렬 (더 정확한 Boids 구현).
         """
         avg_vel = np.zeros(3)
         count = 0
@@ -164,7 +164,7 @@ class Boids3DController:
     def _cohesion(self, drone: DroneState, neighbors: List[DroneState]) -> np.ndarray:
         """
         응집력: 이웃 그룹의 중심으로 이동.
-        기존: centroid(neighbors) - unit_pos — 동일 패턴 3D.
+        기존: centroid(neighbors) - unit_pos - 동일 패턴 3D.
         """
         center = np.zeros(3)
         count = 0
@@ -190,7 +190,7 @@ class Boids3DController:
     def _target_seeking(self, drone: DroneState, target: Point3D) -> np.ndarray:
         """
         목표 추적력: 목표 지점으로 이동.
-        기존: force = min(distance/10, 1.0) * max_force — 동일 감쇠.
+        기존: force = min(distance/10, 1.0) * max_force - 동일 감쇠.
         """
         desired = target.to_array() - drone.position.to_array()
         dist = float(np.linalg.norm(desired))

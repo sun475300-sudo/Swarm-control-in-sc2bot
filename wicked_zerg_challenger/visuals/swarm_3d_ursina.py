@@ -1,14 +1,14 @@
 # ============================================================
-# Swarm-Net 3D Simulator — Ursina Engine (v12.0)
+# Swarm-Net 3D Simulator - Ursina Engine (v12.0)
 # ============================================================
 # 실행: python swarm_3d_ursina.py
 # 필수: pip install ursina
 #
 # 조작:
-#   마우스 우클릭 드래그 — 회전 / 마우스 휠 — 줌
-#   Space — 드론 추가  |  X — 드론 퇴거
-#   M — 메시 라인 토글  |  R — 리셋
-#   1/2/3 — 카메라 프리셋
+#   마우스 우클릭 드래그 - 회전 / 마우스 휠 - 줌
+#   Space - 드론 추가  |  X - 드론 퇴거
+#   M - 메시 라인 토글  |  R - 리셋
+#   1/2/3 - 카메라 프리셋
 # ============================================================
 
 import math
@@ -25,7 +25,7 @@ app = Ursina(
 )
 
 # ================================================================
-# ★ DARK MODE — 조명 완전 제거, unlit 엔티티만 자체 발광
+# * DARK MODE - 조명 완전 제거, unlit 엔티티만 자체 발광
 # ================================================================
 window.color = color.black
 
@@ -34,7 +34,7 @@ for entity in scene.entities[:]:
     if type(entity).__name__ == "Sky":
         destroy(entity)
 
-# ★ 조명 없음 — 모든 엔티티가 unlit=True 로 자체 발광
+# * 조명 없음 - 모든 엔티티가 unlit=True 로 자체 발광
 
 # ================================================================
 # CONFIG
@@ -63,11 +63,11 @@ C_WHITE = color.white
 C_HUD_TITLE = color.rgb(0, 255, 210)
 
 # ================================================================
-# GROUND — plane 제거, 검은 빈 공간 + 부유 그리드
+# GROUND - plane 제거, 검은 빈 공간 + 부유 그리드
 # ================================================================
-# ★ 바닥 plane 없음 → window.color=black이 배경
+# * 바닥 plane 없음 -> window.color=black이 배경
 
-# 부유 그리드 — 검은 배경 위에서 잘 보이는 어두운 시안
+# 부유 그리드 - 검은 배경 위에서 잘 보이는 어두운 시안
 for i in range(-20, 21, 5):
     Entity(
         model="cube",
@@ -139,7 +139,7 @@ Text(
 )
 
 # ================================================================
-# SENTINEL DRONES (군집 드론) — unlit=True 자체 발광, 네온 시안
+# SENTINEL DRONES (군집 드론) - unlit=True 자체 발광, 네온 시안
 # ================================================================
 swarm_positions = []
 swarm_drones = []
@@ -151,7 +151,7 @@ for i in range(NUM_SWARM):
     pos = Vec3(x, HEX_HEIGHT, z)
     swarm_positions.append(pos)
 
-    # ★ unlit=True — 조명과 무관하게 시안색 자체 발광
+    # * unlit=True - 조명과 무관하게 시안색 자체 발광
     drone = Entity(
         model="diamond",
         scale=(0.7, 1.0, 0.7),
@@ -193,12 +193,12 @@ for i in range(NUM_SWARM):
     )
 
 # ================================================================
-# MESH LINES (결계선) — unlit=True, 충분한 두께
+# MESH LINES (결계선) - unlit=True, 충분한 두께
 # ================================================================
 mesh_lines = []
 mesh_visible = True
 
-# 외곽 결계선 — 두꺼운 시안
+# 외곽 결계선 - 두꺼운 시안
 for i in range(NUM_SWARM):
     j = (i + 1) % NUM_SWARM
     p1, p2 = swarm_positions[i], swarm_positions[j]
@@ -238,7 +238,7 @@ for i in range(NUM_SWARM):
 
 
 # ================================================================
-# RADAR RING — 바닥 펄스, unlit=True
+# RADAR RING - 바닥 펄스, unlit=True
 # ================================================================
 class RadarRing(Entity):
     def __init__(self, phase=0.0):
@@ -269,7 +269,7 @@ class RadarRing(Entity):
 radar_rings = [RadarRing(phase=i * 3.5) for i in range(2)]
 
 # ================================================================
-# USER DRONES — unlit=True 자체 발광, 빌보드 라벨
+# USER DRONES - unlit=True 자체 발광, 빌보드 라벨
 # ================================================================
 STATE_AUTHORIZED = "AUTHORIZED"
 STATE_WARNING = "WARNING"
@@ -302,7 +302,7 @@ class UserDrone:
             speed * math.sin(va),
         )
 
-        # ★ 드론 본체 — unlit=True 자체 발광
+        # * 드론 본체 - unlit=True 자체 발광
         self.entity = Entity(
             model="sphere",
             scale=0.6,
@@ -332,7 +332,7 @@ class UserDrone:
             unlit=True,
         )
 
-        # 빌보드 라벨 — background=False, 크게
+        # 빌보드 라벨 - background=False, 크게
         self.label = Text(
             text="",
             scale=5,
@@ -493,7 +493,7 @@ def log_event(msg):
 
 
 # ================================================================
-# HUD — background=False, 시꺼먼 박스 없음
+# HUD - background=False, 시꺼먼 박스 없음
 # ================================================================
 hud_title = Text(
     text="SWARM-NET AIRSPACE CONTROL",
@@ -621,7 +621,7 @@ def input(key):
 
 
 # ================================================================
-# CAMERA — 중심부를 바라보며 적절한 줌
+# CAMERA - 중심부를 바라보며 적절한 줌
 # ================================================================
 camera.position = Vec3(0, 22, -30)
 camera.rotation_x = 38

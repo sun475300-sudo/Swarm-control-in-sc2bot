@@ -77,6 +77,10 @@ class PerformanceProfiler:
 
         return wrapper
 
+    def measure(self, name: str) -> "TimingContext":
+        """Return a context manager that records a named operation."""
+        return TimingContext(name, self)
+
     def start_frame(self):
         """프레임 타이밍 시작"""
         self.last_frame_time = time.perf_counter()

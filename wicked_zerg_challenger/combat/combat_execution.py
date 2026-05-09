@@ -47,7 +47,7 @@ class CombatExecution:
         self.targeting = targeting
         self.micro_combat = micro_combat
 
-        # ★ Phase 22: Cache FormationManager instance ★
+        # * Phase 22: Cache FormationManager instance *
         self._formation_manager = None
 
     async def execute_combat(self, units, enemy_units):
@@ -128,7 +128,7 @@ class CombatExecution:
         try:
             from combat.formation_manager import FormationManager
 
-            # ★ Phase 22: Reuse cached instance ★
+            # * Phase 22: Reuse cached instance *
             if self._formation_manager is None:
                 self._formation_manager = FormationManager(self.bot)
             formation_manager = self._formation_manager
@@ -152,7 +152,7 @@ class CombatExecution:
                     ranged_units, enemy_center, formation_radius=8.0
                 )
 
-                # ★ Phase 22: Increased formation limit 10 -> 30 ★
+                # * Phase 22: Increased formation limit 10 -> 30 *
                 for unit, target_pos in formation_positions[:30]:
                     try:
                         self.bot.do(unit.move(target_pos))
@@ -172,7 +172,7 @@ class CombatExecution:
                         units, enemy_units, our_base
                     )
                     if retreat_pos:
-                        for unit in units[:30]:  # ★ Phase 22: 10 -> 30 ★
+                        for unit in units[:30]:  # * Phase 22: 10 -> 30 *
                             try:
                                 self.bot.do(unit.move(retreat_pos))
                             except Exception:

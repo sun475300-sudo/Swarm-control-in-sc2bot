@@ -15,6 +15,7 @@ REINFORCE 알고리즘 기반의 정책 학습 에이전트입니다.
 import logging
 import os
 import shutil
+import time
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
@@ -192,6 +193,20 @@ class RLAgent:
         )
 
         self.policy = PolicyNetwork()
+        self.micro_observation_dim = 16
+        self.micro_action_dim = 7
+        self.micro_policy = PolicyNetwork(
+            input_dim=self.micro_observation_dim, output_dim=self.micro_action_dim
+        )
+        self.micro_action_labels = [
+            "ATTACK",
+            "RETREAT",
+            "FOCUS_FIRE",
+            "KITE",
+            "SURROUND",
+            "HOLD",
+            "REGROUP",
+        ]
 
         # 에피소드 버퍼
         self.states: List[np.ndarray] = []
@@ -219,7 +234,7 @@ class RLAgent:
         self.reward_std = 1.0
         self.reward_count = 0
 
-        # ★★★ FIX: Reward buffer for dimension matching ★★★
+        # *** FIX: Reward buffer for dimension matching ***
         self.reward_buffer: float = 0.0  # Accumulate rewards between state samples
 
         # 중간 보상 추적용 상태 변수 (Reward Shaping)
@@ -230,6 +245,109 @@ class RLAgent:
         self.action_labels = ["ECONOMY", "AGGRESSIVE", "DEFENSIVE", "TECH", "ALL_IN"]
 
         self._load_model()
+
+    def build_micro_observation(self, bot, units, enemy_units) -> np.ndarray:
+        """Build the 16D live combat observation vector for micro inference."""
+        own_units = list(units or [])
+        enemies = list(enemy_units or [])
+        own_count = len(own_units)
+        enemy_count = len(enemies)
+        own_health = self._average_unit_value(own_units, "health")
+        enemy_health = self._average_unit_value(enemies, "health")
+        own_shield = self._average_unit_value(own_units, "shield")
+        enemy_shield = self._average_unit_value(enemies, "shield")
+        min_distance = self._min_distance(own_units, enemies)
+        army_ratio = own_count / max(enemy_count, 1)
+
+        observation = np.array(
+            [
+                own_count / 50.0,
+                enemy_count / 50.0,
+                own_health / 200.0,
+                enemy_health / 200.0,
+                own_shield / 200.0,
+                enemy_shield / 200.0,
+                min_distance / 40.0,
+                army_ratio / 3.0,
+                float(getattr(bot, "minerals", 0) or 0) / 2000.0,
+                float(getattr(bot, "vespene", 0) or 0) / 1000.0,
+                float(getattr(bot, "supply_used", 0) or 0) / 200.0,
+                float(getattr(bot, "supply_cap", 0) or 0) / 200.0,
+                float(getattr(bot, "supply_army", 0) or 0) / 200.0,
+                float(getattr(bot, "time", 0.0) or 0.0) / 1200.0,
+                self._fraction(own_units, "is_flying"),
+                self._fraction(enemies, "is_flying"),
+            ],
+            dtype=np.float32,
+        )
+        return np.clip(np.nan_to_num(observation), 0.0, 10.0)
+
+    def infer_micro_action(
+        self,
+        observation: np.ndarray,
+        timeout_ms: float = 50.0,
+        min_confidence: float = 0.35,
+    ) -> Dict[str, Any]:
+        """Run 16D/7-action micro inference with rule fallback metadata."""
+        started = time.perf_counter()
+        try:
+            obs = np.asarray(observation, dtype=np.float32)
+            if len(obs) < self.micro_observation_dim:
+                obs = np.concatenate(
+                    [
+                        obs,
+                        np.zeros(self.micro_observation_dim - len(obs), dtype=np.float32),
+                    ]
+                )
+            obs = obs[: self.micro_observation_dim]
+            probs, _cache = self.micro_policy.forward(obs)
+            action_idx = int(np.argmax(probs))
+            confidence = float(probs[action_idx])
+            elapsed_ms = (time.perf_counter() - started) * 1000.0
+            use_rl = elapsed_ms <= timeout_ms and confidence >= min_confidence
+            return {
+                "action_idx": action_idx,
+                "action": self.micro_action_labels[action_idx],
+                "confidence": confidence,
+                "elapsed_ms": elapsed_ms,
+                "use_rl": use_rl,
+                "fallback_reason": None if use_rl else "timeout_or_low_confidence",
+            }
+        except Exception as exc:
+            elapsed_ms = (time.perf_counter() - started) * 1000.0
+            return {
+                "action_idx": -1,
+                "action": "RULE_FALLBACK",
+                "confidence": 0.0,
+                "elapsed_ms": elapsed_ms,
+                "use_rl": False,
+                "fallback_reason": str(exc),
+            }
+
+    @staticmethod
+    def _average_unit_value(units, attr: str) -> float:
+        if not units:
+            return 0.0
+        return float(np.mean([float(getattr(unit, attr, 0.0) or 0.0) for unit in units]))
+
+    @staticmethod
+    def _fraction(units, attr: str) -> float:
+        if not units:
+            return 0.0
+        return sum(1 for unit in units if getattr(unit, attr, False)) / len(units)
+
+    @staticmethod
+    def _min_distance(own_units, enemy_units) -> float:
+        if not own_units or not enemy_units:
+            return 40.0
+        best = 40.0
+        for own in own_units:
+            for enemy in enemy_units:
+                try:
+                    best = min(best, float(own.distance_to(enemy)))
+                except Exception:
+                    continue
+        return best
 
     def get_action(
         self, state: np.ndarray, training: bool = True
@@ -270,7 +388,7 @@ class RLAgent:
             self.actions.append(action_idx)
             self.caches.append(cache)
 
-            # ★★★ FIX: Store accumulated reward from buffer ★★★
+            # *** FIX: Store accumulated reward from buffer ***
             self.rewards.append(self.reward_buffer)
             self.reward_buffer = 0.0  # Reset buffer after storing
 
@@ -280,7 +398,7 @@ class RLAgent:
         """
         보상 업데이트
 
-        ★★★ FIX: Accumulate to buffer instead of appending to list ★★★
+        *** FIX: Accumulate to buffer instead of appending to list ***
         Rewards are stored only when get_action() is called (state/action sampling)
         This ensures dimension matching: len(states) == len(actions) == len(rewards)
         """
@@ -341,7 +459,7 @@ class RLAgent:
         self, final_reward: float = 0.0, save_experience: bool = True
     ) -> Dict[str, float]:
         """에피소드 종료 및 학습"""
-        # ★★★ FIX: 남은 reward_buffer 마지막 리워드에 추가 ★★★
+        # *** FIX: 남은 reward_buffer 마지막 리워드에 추가 ***
         if self.reward_buffer != 0.0 and self.rewards:
             self.rewards[-1] += self.reward_buffer
             self.reward_buffer = 0.0
@@ -349,7 +467,7 @@ class RLAgent:
         if not self.rewards:
             return {"loss": 0.0, "avg_reward": 0.0, "epsilon": self.epsilon}
 
-        # ★★★ FIX: 차원 불일치 방지 (NaN 그래디언트 스킵 등으로 발생 가능) ★★★
+        # *** FIX: 차원 불일치 방지 (NaN 그래디언트 스킵 등으로 발생 가능) ***
         min_len = min(
             len(self.states), len(self.actions), len(self.rewards), len(self.caches)
         )
@@ -434,7 +552,7 @@ class RLAgent:
             except Exception as e:
                 logger.error(f"[ERROR] Exception during save: {e}")
 
-        # Epsilon 감쇠 + ★ 적응형 탐색 (plateau 감지 시 탐색률 복원) ★
+        # Epsilon 감쇠 + * 적응형 탐색 (plateau 감지 시 탐색률 복원) *
         self.epsilon = max(self.epsilon_min, self.epsilon * self.epsilon_decay)
 
         # Plateau 감지: 최근 20 에피소드 평균 보상이 정체 시 탐색 증가
@@ -446,7 +564,7 @@ class RLAgent:
                 else recent_20
             )
             if abs(sum(recent_20) / 20 - sum(older_20) / 20) < 0.1:
-                # 정체 → 탐색률 부분 복원
+                # 정체 -> 탐색률 부분 복원
                 self.epsilon = min(0.3, self.epsilon * 1.5)
                 logger.info(f"Plateau detected! Epsilon boosted to {self.epsilon:.3f}")
 
@@ -468,9 +586,9 @@ class RLAgent:
         self.actions.clear()
         self.rewards.clear()
         self.caches.clear()
-        # ★ FIX: reward_buffer 에피소드 간 누수 방지
+        # * FIX: reward_buffer 에피소드 간 누수 방지
         self.reward_buffer = 0.0
-        # ★ FIX: baseline 리셋 (에피소드 간 drift 방지)
+        # * FIX: baseline 리셋 (에피소드 간 drift 방지)
         self.baseline = 0.0
         # 중간 보상 추적 상태 리셋
         self.prev_base_count = 0
@@ -517,7 +635,7 @@ class RLAgent:
             path = Path(path)
             path.parent.mkdir(parents=True, exist_ok=True)
 
-            # 임시 파일 경로 생성 (.npz 제거 후 .tmp 추가 — savez_compressed가 .npz를 자동 추가)
+            # 임시 파일 경로 생성 (.npz 제거 후 .tmp 추가 - savez_compressed가 .npz를 자동 추가)
             path_str = str(path)
             base_no_ext = path_str[:-4] if path_str.endswith(".npz") else path_str
             temp_base = base_no_ext + ".tmp"
@@ -650,7 +768,7 @@ class RLAgent:
                 episode_count=np.array([self.episode_count]),
             )
 
-            # ★★★ FIX: Atomic rename with Windows compatibility ★★★
+            # *** FIX: Atomic rename with Windows compatibility ***
             if tmp_path.exists():
                 try:
                     # Remove old file first on Windows (replace() can fail silently)

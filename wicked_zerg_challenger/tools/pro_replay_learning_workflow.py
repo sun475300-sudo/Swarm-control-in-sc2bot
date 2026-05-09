@@ -1,12 +1,12 @@
 # -*- coding: utf-8 -*-
 """
-���ΰ��̸� ���÷��� �н� �� ���� �Ʒ� ���� ��ũ�÷ο�
+???ΰ??̸? ???/??? ?н? ?? ???? ?Ʒ? ???? ??ũ?/ο?
 
-1. ���ΰ��̸� ���÷��̿��� ������� �н�
-2. �н��� ��������� config.py�� ����
-3. ���� �Ʒ� ���� (�н��� ������� ����)
-4. ���� ���÷��̿� ���ΰ��̸� ���÷��� �� �м�
-5. ���� ���� ���� �� �ݺ�
+1. ???ΰ??̸? ???/??̿??? ??????? ?н?
+2. ?н??? ????????? config.py?? ????
+3. ???? ?Ʒ? ???? (?н??? ??????? ????)
+4. ???? ???/??̿? ???ΰ??̸? ???/??? ?? ?м?
+5. ???? ???? ???? ?? ?ݺ?
 """
 
 import json
@@ -53,7 +53,7 @@ def run_command(cmd: List[str], cwd: Path, description: str, timeout: int = 3600
 
 
 def check_learned_parameters(project_root: Path) -> Dict[str, Any]:
-    """�н��� �Ķ���� Ȯ��"""
+    """?н??? ?Ķ???? Ȯ??"""
     learned_file = project_root / "local_training" / "scripts" / "learned_build_orders.json"
     
     if not learned_file.exists():
@@ -69,13 +69,13 @@ def check_learned_parameters(project_root: Path) -> Dict[str, Any]:
 
 
 def print_learned_parameters(learned_params: Dict[str, Any]):
-    """�н��� �Ķ���� ���"""
+    """?н??? ?Ķ???? ???"""
     if not learned_params:
         logger.info("No learned parameters found")
         return
     
     logger.info(f"\n{'='*70}")
-    logger.info("�н��� ������� �Ķ����")
+    logger.info("?н??? ??????? ?Ķ????")
     logger.info(f"{'='*70}")
     
     if isinstance(learned_params, dict):
@@ -95,14 +95,14 @@ def main():
     project_root = Path(__file__).parent.parent
     
     logger.info("=" * 70)
-    logger.info("���ΰ��̸� ���÷��� �н� �� ���� �Ʒ� ���� ��ũ�÷ο�")
+    logger.info("???ΰ??̸? ???/??? ?н? ?? ???? ?Ʒ? ???? ??ũ?/ο?")
     logger.info("=" * 70)
-    logger.info("\n�� ��ũ�÷ο�� ���� �ܰ踦 �����մϴ�:")
-    logger.info("  1. ���ΰ��̸� ���÷��̿��� ������� �н�")
-    logger.info("  2. �н��� ��������� config.py�� ����")
-    logger.info("  3. ���� �Ʒ� ���� (�н��� ������� ����)")
-    logger.info("  4. ���� ���÷��̿� ���ΰ��̸� ���÷��� �� �м�")
-    logger.info("  5. ���� ���� ���� �� �ݺ�")
+    logger.info("\n?? ??ũ?/ο?? ???? ?ܰ踦 ?????մϴ?:")
+    logger.info("  1. ???ΰ??̸? ???/??̿??? ??????? ?н?")
+    logger.info("  2. ?н??? ????????? config.py?? ????")
+    logger.info("  3. ???? ?Ʒ? ???? (?н??? ??????? ????)")
+    logger.info("  4. ???? ???/??̿? ???ΰ??̸? ???/??? ?? ?м?")
+    logger.info("  5. ???? ???? ???? ?? ?ݺ?")
     logger.info("=" * 70)
     
     # Script paths
@@ -123,7 +123,7 @@ def main():
             sys.exit(1)
     
     iteration = 0
-    max_iterations = 5  # �ִ� 5ȸ �ݺ�
+    max_iterations = 5  # ?ִ? 5ȸ ?ݺ?
     
     while iteration < max_iterations:
         iteration += 1
@@ -131,9 +131,9 @@ def main():
         logger.info(f"# ITERATION {iteration} / {max_iterations}")
         logger.info(f"{'#'*70}\n")
         
-        # STEP 1: ���ΰ��̸� ���÷��̿��� ������� �н�
+        # STEP 1: ???ΰ??̸? ???/??̿??? ??????? ?н?
         logger.info(f"\n{'='*70}")
-        logger.info(f"���ΰ��̸� ���÷��̿��� ������� �н� (Iteration {iteration})")
+        logger.info(f"???ΰ??̸? ???/??̿??? ??????? ?н? (Iteration {iteration})")
         logger.info(f"{'='*70}\n")
         
         success_learn, output_learn = run_command(
@@ -149,7 +149,7 @@ def main():
         else:
             logger.info(f"Replay learning completed for iteration {iteration}")
         
-        # �н��� �Ķ���� Ȯ��
+        # ?н??? ?Ķ???? Ȯ??
         learned_params = check_learned_parameters(project_root)
         if learned_params:
             print_learned_parameters(learned_params)
@@ -157,14 +157,14 @@ def main():
         else:
             logger.warning("No learned parameters found. Using default parameters.")
         
-        # STEP 2: ���� �Ʒ� ���� (�н��� ������� ����)
+        # STEP 2: ???? ?Ʒ? ???? (?н??? ??????? ????)
         logger.info(f"\n{'='*70}")
-        logger.info(f"���� �Ʒ� ���� (�н��� ������� ����) (Iteration {iteration})")
+        logger.info(f"???? ?Ʒ? ???? (?н??? ??????? ????) (Iteration {iteration})")
         logger.info(f"{'='*70}\n")
         
-        logger.info("���� �Ʒ��� �����մϴ�...")
-        logger.info("�н��� ��������� �ڵ����� ����˴ϴ�.")
-        logger.info("Ctrl+C�� ���� �ߴ��� �� �ֽ��ϴ�.")
+        logger.info("???? ?Ʒ??? ?????մϴ?...")
+        logger.info("?н??? ????????? ?ڵ????? ?????ϴ?.")
+        logger.info("Ctrl+C?? ???? ?ߴ??? ?? ?ֽ??ϴ?.")
         success_training, output_training = run_command(
             [sys.executable, str(run_training)],
             project_root,
@@ -178,9 +178,9 @@ def main():
             logger.warning(f"Game training had issues in iteration {iteration}")
             logger.info("Continuing with comparison analysis...")
         
-        # STEP 3: ���� ���÷��̿� ���ΰ��̸� ���÷��� �� �м�
+        # STEP 3: ???? ???/??̿? ???ΰ??̸? ???/??? ?? ?м?
         logger.info(f"\n{'='*70}")
-        logger.info(f"���� ���÷��̿� ���ΰ��̸� ���÷��� �� �м� (Iteration {iteration})")
+        logger.info(f"???? ???/??̿? ???ΰ??̸? ???/??? ?? ?м? (Iteration {iteration})")
         logger.info(f"{'='*70}\n")
         
         success_audit, output_audit = run_command(
@@ -193,25 +193,25 @@ def main():
         if success_audit:
             logger.info(f"Comparison analysis completed for iteration {iteration}")
             
-            # �м� ��� ��� ���
+            # ?м? ??? ??? ???
             if "critical_issues" in output_audit.lower() or "recommendations" in output_audit.lower():
                 logger.info("\n[INFO] Analysis results:")
                 logger.info("  - Check local_training/comparison_reports/ for detailed reports")
         else:
             logger.warning(f"Comparison analysis had issues in iteration {iteration}")
         
-        # STEP 4: ���� ���� Ȯ�� �� ���
+        # STEP 4: ???? ???? Ȯ?? ?? ???
         logger.info(f"\n{'='*70}")
-        logger.info(f"���� ���� Ȯ�� �� ��� (Iteration {iteration})")
+        logger.info(f"???? ???? Ȯ?? ?? ??? (Iteration {iteration})")
         logger.info(f"{'='*70}\n")
         
-        # �н��� �Ķ���� ��Ȯ��
+        # ?н??? ?Ķ???? ??Ȯ??
         learned_params_after = check_learned_parameters(project_root)
         if learned_params_after:
             logger.info("Updated learned parameters:")
             print_learned_parameters(learned_params_after)
         
-        # �� ����Ʈ Ȯ��
+        # ?? ????Ʈ Ȯ??
         comparison_dir = project_root / "local_training" / "comparison_reports"
         if comparison_dir.exists():
             report_files = list(comparison_dir.glob("*.md"))
@@ -231,22 +231,22 @@ def main():
             logger.info(f"\n[INFO] Waiting 10 seconds before next iteration...")
             time.sleep(10)
     
-    # ���� ���
+    # ???? ???
     logger.info(f"\n\n{'#'*70}")
-    logger.info("# ��ü ��ũ�÷ο� �Ϸ�")
+    logger.info("# ??ü ??ũ?/ο? ?Ϸ?")
     logger.info(f"{'#'*70}\n")
     
-    # ���� �н��� �Ķ���� Ȯ��
+    # ???? ?н??? ?Ķ???? Ȯ??
     final_learned_params = check_learned_parameters(project_root)
     if final_learned_params:
-        logger.info("���� �н��� ������� �Ķ����:")
+        logger.info("???? ?н??? ??????? ?Ķ????:")
         print_learned_parameters(final_learned_params)
     
-    logger.info("\n��� Ȯ��:")
-    logger.info("  - �н��� �������: local_training/scripts/learned_build_orders.json")
-    logger.info("  - �� ����Ʈ: local_training/comparison_reports/")
-    logger.info("  - ���� ���: local_training/scripts/training_session_stats.json")
-    logger.info("\n�߰� ����:")
+    logger.info("\n??? Ȯ??:")
+    logger.info("  - ?н??? ???????: local_training/scripts/learned_build_orders.json")
+    logger.info("  - ?? ????Ʈ: local_training/comparison_reports/")
+    logger.info("  - ???? ???: local_training/scripts/training_session_stats.json")
+    logger.info("\n?߰? ????:")
     logger.info("  python tools\\show_learning_rate.py")
     logger.info("  python tools\\monitor_training_progress.py")
     logger.info(f"\n{'#'*70}")
@@ -256,7 +256,7 @@ if __name__ == "__main__":
     try:
         main()
     except KeyboardInterrupt:
-        print("\n\n??  Workflow interrupted by user")
+        print("\n\n[DRONE]  Workflow interrupted by user")
         sys.exit(1)
     except Exception as e:
         print(f"\n\n? Fatal error: {e}")

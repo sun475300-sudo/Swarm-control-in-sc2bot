@@ -326,7 +326,7 @@ class RogueTacticsManager:
             return
 
         try:
-            # ★ HarassmentCoordinator가 이미 드랍 중이면 스킵 ★
+            # * HarassmentCoordinator가 이미 드랍 중이면 스킵 *
             harass = getattr(self.bot, "harassment_coord", None)
             if harass and (
                 getattr(harass, "drop_play_active", False)
@@ -341,7 +341,7 @@ class RogueTacticsManager:
 
             transport = overlord_transports.first
 
-            # ★ UnitAuthority 체크: 다른 시스템이 이미 제어 중인 대군주 스킵 ★
+            # * UnitAuthority 체크: 다른 시스템이 이미 제어 중인 대군주 스킵 *
             authority = getattr(self.bot, "unit_authority", None)
             if authority and transport.tag in authority.authorities:
                 owner = authority.authorities[transport.tag].owner

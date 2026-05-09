@@ -14,6 +14,7 @@ Training Pipeline - 모델 버전 관리 + 자동 배포
 import json
 import logging
 import os
+import random
 import shutil
 import time
 from dataclasses import asdict, dataclass
@@ -21,6 +22,13 @@ from pathlib import Path
 from typing import Dict, List, Optional
 
 logger = logging.getLogger("TrainingPipeline")
+
+
+def update_elo(winner_elo, loser_elo, k=32):
+    expected = 1 / (1 + 10 ** ((loser_elo - winner_elo) / 400))
+    new_winner = winner_elo + k * (1 - expected)
+    new_loser = loser_elo + k * (0 - (1 - expected))
+    return new_winner, new_loser
 
 
 @dataclass
@@ -56,6 +64,9 @@ class TrainingPipeline:
         self.archive_dir = self.base_dir / "archive"
         self.history_path = self.versions_dir / "version_history.json"
         self.deployed_model_path = self.base_dir / "deployed_model.npz"
+        self.checkpoint_interval = 50
+        self.opponent_pool_size = 10
+        self.elo_ratings: Dict[str, float] = {"rule_based": 1500.0}
 
         # 디렉토리 생성
         for d in [self.versions_dir, self.buffer_dir, self.archive_dir]:
@@ -63,6 +74,8 @@ class TrainingPipeline:
 
         self.versions: List[ModelVersion] = []
         self._load_history()
+        for version in self.versions:
+            self.elo_ratings.setdefault(f"v{version.version_id}", 1500.0)
 
     def _load_history(self) -> None:
         """버전 히스토리 로드"""
@@ -114,6 +127,51 @@ class TrainingPipeline:
         logger.info(f"Checkpoint v{version_id}: {metrics}")
         return version
 
+    def maybe_checkpoint_episode(self, episode: int, rl_agent, metrics: Dict):
+        """Save a checkpoint every configured self-play interval."""
+        if episode <= 0 or episode % self.checkpoint_interval != 0:
+            return None
+        version = self.create_checkpoint(rl_agent, metrics)
+        self.elo_ratings.setdefault(f"v{version.version_id}", 1500.0)
+        return version
+
+    def get_opponent_pool(self) -> List[Dict[str, object]]:
+        """Return recent checkpoints plus the rule-based bot."""
+        pool = [
+            {"id": "rule_based", "type": "rule_based", "elo": self.elo_ratings["rule_based"]}
+        ]
+        recent_versions = self.versions[-self.opponent_pool_size :]
+        for version in recent_versions:
+            opponent_id = f"v{version.version_id}"
+            pool.append(
+                {
+                    "id": opponent_id,
+                    "type": "checkpoint",
+                    "version_id": version.version_id,
+                    "model_path": version.model_path,
+                    "elo": self.elo_ratings.get(opponent_id, 1500.0),
+                }
+            )
+        return pool
+
+    def select_opponent(self, player_elo: float = 1500.0, rng=None) -> Dict[str, object]:
+        """Select a self-play opponent within 200 ELO when available."""
+        rng = rng or random
+        pool = self.get_opponent_pool()
+        candidates = [p for p in pool if abs(float(p["elo"]) - player_elo) <= 200.0]
+        if not candidates:
+            candidates = sorted(pool, key=lambda p: abs(float(p["elo"]) - player_elo))[:1]
+        return rng.choice(candidates)
+
+    def record_self_play_result(self, winner_id: str, loser_id: str, k: int = 32):
+        """Update ELO ratings after a self-play match."""
+        winner_elo = self.elo_ratings.get(winner_id, 1500.0)
+        loser_elo = self.elo_ratings.get(loser_id, 1500.0)
+        new_winner, new_loser = update_elo(winner_elo, loser_elo, k=k)
+        self.elo_ratings[winner_id] = new_winner
+        self.elo_ratings[loser_id] = new_loser
+        return new_winner, new_loser
+
     def deploy_if_better(self, new_version: ModelVersion) -> bool:
         """
         새 모델이 현재 운영 모델보다 나으면 자동 배포.
@@ -134,7 +192,7 @@ class TrainingPipeline:
             self._deploy(new_version)
             logger.info(
                 f"[PIPELINE] AUTO-DEPLOY v{new_version.version_id}: "
-                f"win_rate {current_wr:.1%} → {new_wr:.1%} (+{new_wr - current_wr:.1%})"
+                f"win_rate {current_wr:.1%} -> {new_wr:.1%} (+{new_wr - current_wr:.1%})"
             )
             return True
 

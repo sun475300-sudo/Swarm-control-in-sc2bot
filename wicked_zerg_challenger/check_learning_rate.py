@@ -54,7 +54,7 @@ else:
     logger.info(f"  - 초기 학습률: 0.001000")
     logger.info(f"  - 최소 학습률: 0.000100")
     logger.info(f"  - 최대 학습률: 0.010000")
-    logger.info(f"  - 조정 배율: 1.2 (±20%)")
+    logger.info(f"  - 조정 배율: 1.2 (+/-20%)")
     logger.info(f"  - Patience: 10게임")
 
 # 2. RL Agent 모델 확인

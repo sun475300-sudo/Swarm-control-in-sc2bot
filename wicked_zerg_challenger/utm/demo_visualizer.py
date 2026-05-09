@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-3D UTM Demo Visualizer — Portfolio Showcase
+3D UTM Demo Visualizer - Portfolio Showcase
 
 matplotlib으로 드론 편대 비행, 충돌 회피, 비행 회랑을 3D 시각화.
 GIF/MP4 녹화 기능 포함 (포트폴리오용).
@@ -173,7 +173,7 @@ def visualize(
     ax.set_xlabel("X (m)")
     ax.set_ylabel("Y (m)")
     ax.set_zlabel("Altitude (m)")
-    ax.set_title("UTM Drone Swarm — SC2 Boids → 3D Flight Control", fontsize=13)
+    ax.set_title("UTM Drone Swarm - SC2 Boids -> 3D Flight Control", fontsize=13)
 
     if save_path:
         plt.savefig(save_path, dpi=150, bbox_inches="tight")
@@ -187,7 +187,7 @@ def visualize(
 def main():
     """데모 실행."""
     logger.info("=" * 60)
-    logger.info("  SC2 Swarm AI → UTM Drone Control Demo")
+    logger.info("  SC2 Swarm AI -> UTM Drone Control Demo")
     logger.info("  3D Boids + TTC Collision Prediction + Flight Corridors")
     logger.info("=" * 60)
 
@@ -232,11 +232,11 @@ def main():
         logger.info(f"\n경고: {len(alerts)}건의 충돌 위험 감지")
         for a in alerts[:3]:
             logger.info(
-                f"  D{a.drone_a_id}↔D{a.drone_b_id}: TTC={a.ttc:.1f}s, "
+                f"  D{a.drone_a_id}<->D{a.drone_b_id}: TTC={a.ttc:.1f}s, "
                 f"min_dist={a.min_distance:.1f}m [{a.severity}]"
             )
     else:
-        logger.info("\n충돌 위험 없음 — 모든 드론 안전 분리 유지")
+        logger.info("\n충돌 위험 없음 - 모든 드론 안전 분리 유지")
 
     # 시각화
     logger.info("\n3D 시각화 렌더링 중...")

@@ -42,7 +42,7 @@ def kill_all_sc2_processes():
 
 
 def main():
-    # ★★★ 시작 전 모든 SC2 프로세스 종료 ★★★
+    # *** 시작 전 모든 SC2 프로세스 종료 ***
     logger.info("\n" + "=" * 70)
     logger.info("KILLING ALL EXISTING SC2 PROCESSES...")
     logger.info("=" * 70)
@@ -90,7 +90,7 @@ def main():
     except Exception as e:
         logger.error(f"\n[ERROR] {e}")
 
-    # ★★★ 게임 종료 후 프로세스 정리 ★★★
+    # *** 게임 종료 후 프로세스 정리 ***
     logger.info("\n" + "=" * 70)
     logger.info("CLEANING UP...")
     logger.info("=" * 70)
@@ -102,5 +102,5 @@ if __name__ == "__main__":
     try:
         main()
     finally:
-        # ★ 예외 발생 시에도 프로세스 정리 ★
+        # * 예외 발생 시에도 프로세스 정리 *
         kill_all_sc2_processes()

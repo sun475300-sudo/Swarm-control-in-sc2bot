@@ -85,6 +85,11 @@ class BaseDefenseSystem:
             "THOR",
             "MEDIVAC",
         }
+        self.drop_transport_types = {"MEDIVAC", "WARPPRISM", "OVERLORDTRANSPORT"}
+        self.base_defender_tags = {}
+        self.air_harass_count = 0
+        self._last_air_harass_time = -999.0
+        self._spore_response_requested = False
 
     @property
     def is_active(self) -> bool:
@@ -308,6 +313,9 @@ class BaseDefenseSystem:
             return None
 
         game_time = getattr(self.bot, "time", 0)
+        drop_position = await self.handle_multi_base_drop_defense(iteration)
+        if drop_position:
+            return drop_position
 
         # 기지별 위협 평가
         max_threat_score = 0
@@ -396,7 +404,7 @@ class BaseDefenseSystem:
             UnitTypeId.ROACH,
             UnitTypeId.RAVAGER,
             UnitTypeId.HYDRALISK,
-            UnitTypeId.LURKER,
+            UnitTypeId.LURKERMP,
             UnitTypeId.MUTALISK,
             UnitTypeId.CORRUPTOR,
             UnitTypeId.ULTRALISK,
@@ -519,6 +527,179 @@ class BaseDefenseSystem:
             self.logger.info(
                 f"[{int(game_time)}s] {len(army_units)} units defending{defeat_msg}"
             )
+
+    async def handle_multi_base_drop_defense(self, iteration: int):
+        """Maintain base garrisons and respond to drop transports."""
+        bases = self._townhall_list()
+        enemy_units = list(getattr(self.bot, "enemy_units", []) or [])
+        if not bases or not enemy_units:
+            return None
+
+        self._maintain_base_garrisons(bases)
+
+        detected = []
+        for base in bases:
+            for enemy in enemy_units:
+                if self._type_name(enemy) not in self.drop_transport_types:
+                    continue
+                try:
+                    distance = enemy.distance_to(base)
+                except Exception:
+                    distance = enemy.distance_to(getattr(base, "position", base))
+                if distance <= 30.0:
+                    detected.append((base, enemy))
+
+        if not detected:
+            return None
+
+        base, transport = min(detected, key=lambda pair: pair[1].distance_to(pair[0]))
+        self._base_defense_active = True
+        self._defense_rally_point = getattr(transport, "position", transport)
+
+        self._record_air_harass()
+        self._command_base_garrison(base, transport)
+        self._dispatch_drop_reinforcements(transport)
+
+        blackboard = getattr(self.bot, "blackboard", None)
+        if blackboard and hasattr(blackboard, "set"):
+            blackboard.set("drop_defense_active", True)
+            blackboard.set("drop_defense_target", self._type_name(transport))
+            blackboard.set("air_harass_count", self.air_harass_count)
+
+        if self.air_harass_count >= 2:
+            self._request_spore_response(bases)
+
+        if iteration % 110 == 0:
+            self.logger.warning(
+                f"[DROP DEFENSE] {self._type_name(transport)} near base; garrison responding"
+            )
+        return self._defense_rally_point
+
+    def _maintain_base_garrisons(self, bases) -> None:
+        units = list(getattr(self.bot, "units", []) or [])
+        queens = [unit for unit in units if self._type_name(unit) == "QUEEN"]
+        lings = [unit for unit in units if self._type_name(unit) == "ZERGLING"]
+        assigned = set()
+
+        for index, base in enumerate(bases):
+            defenders = []
+            queen = self._closest_unassigned(queens, base, assigned)
+            if queen:
+                defenders.append(queen)
+                assigned.add(queen.tag)
+
+            for _ in range(4):
+                ling = self._closest_unassigned(lings, base, assigned)
+                if not ling:
+                    break
+                defenders.append(ling)
+                assigned.add(ling.tag)
+
+            self.base_defender_tags[index] = {unit.tag for unit in defenders}
+            for unit in defenders:
+                try:
+                    if unit.distance_to(base) > 9:
+                        self.bot.do(unit.move(getattr(base, "position", base)))
+                except Exception:
+                    continue
+
+    def _command_base_garrison(self, base, target) -> None:
+        tags = self.base_defender_tags.get(self._base_index(base), set())
+        for unit in getattr(self.bot, "units", []) or []:
+            if getattr(unit, "tag", None) not in tags:
+                continue
+            try:
+                self.bot.do(unit.attack(target))
+            except Exception:
+                continue
+
+    def _dispatch_drop_reinforcements(self, target, desired_count: int = 10) -> None:
+        garrison_tags = (
+            set().union(*self.base_defender_tags.values())
+            if self.base_defender_tags
+            else set()
+        )
+        army_names = {
+            "ZERGLING",
+            "BANELING",
+            "ROACH",
+            "RAVAGER",
+            "HYDRALISK",
+            "MUTALISK",
+            "CORRUPTOR",
+            "QUEEN",
+        }
+        candidates = [
+            unit
+            for unit in getattr(self.bot, "units", []) or []
+            if self._type_name(unit) in army_names
+            and getattr(unit, "tag", None) not in garrison_tags
+        ]
+        candidates.sort(key=lambda unit: unit.distance_to(target))
+        for unit in candidates[: max(8, min(12, desired_count))]:
+            try:
+                self.bot.do(unit.attack(target))
+            except Exception:
+                continue
+
+    def _record_air_harass(self) -> None:
+        game_time = float(getattr(self.bot, "time", 0.0) or 0.0)
+        if game_time - self._last_air_harass_time < 10.0:
+            return
+        self.air_harass_count += 1
+        self._last_air_harass_time = game_time
+
+    def _request_spore_response(self, bases) -> None:
+        if self._spore_response_requested:
+            return
+        self._spore_response_requested = True
+
+        blackboard = getattr(self.bot, "blackboard", None)
+        if blackboard and hasattr(blackboard, "set"):
+            blackboard.set("urgent_spore_all_bases", True)
+            blackboard.set("drop_spore_response", True)
+
+        building_coord = getattr(self.bot, "building_coord", None)
+        if not building_coord or not hasattr(building_coord, "request_building"):
+            return
+        try:
+            from sc2.ids.unit_typeid import UnitTypeId
+        except ImportError:
+            return
+        for _base in bases:
+            try:
+                building_coord.request_building(
+                    UnitTypeId.SPORECRAWLER, "BaseDefense-Drop"
+                )
+            except Exception:
+                continue
+
+    def _townhall_list(self):
+        townhalls = getattr(self.bot, "townhalls", []) or []
+        try:
+            if hasattr(townhalls, "exists") and not townhalls.exists:
+                return []
+        except Exception:
+            pass
+        return list(townhalls)
+
+    def _base_index(self, base) -> int:
+        for index, candidate in enumerate(self._townhall_list()):
+            if candidate is base:
+                return index
+        return 0
+
+    def _closest_unassigned(self, units, base, assigned):
+        available = [
+            unit for unit in units if getattr(unit, "tag", None) not in assigned
+        ]
+        if not available:
+            return None
+        return min(available, key=lambda unit: unit.distance_to(base))
+
+    @staticmethod
+    def _type_name(unit) -> str:
+        return getattr(getattr(unit, "type_id", None), "name", "").upper()
 
     async def worker_defense(self, threat_position, threat_enemies, iteration: int):
         """일꾼 방어 참여"""

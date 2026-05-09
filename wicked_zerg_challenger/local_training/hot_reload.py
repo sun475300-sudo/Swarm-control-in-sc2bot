@@ -90,7 +90,7 @@ class ModelHotReloader:
         if current_mtime <= self._last_mtime:
             return False
 
-        # 변경 감지 → 리로드 시도
+        # 변경 감지 -> 리로드 시도
         return self._reload_weights(current_mtime)
 
     def _reload_weights(self, new_mtime: float) -> bool:
@@ -138,8 +138,8 @@ class ModelHotReloader:
             self._reload_count += 1
 
             logger.info(
-                f"[HOT_RELOAD] ★ Model reloaded (#{self._reload_count}) "
-                f"from {self.model_path.name} ★"
+                f"[HOT_RELOAD] * Model reloaded (#{self._reload_count}) "
+                f"from {self.model_path.name} *"
             )
             return True
 

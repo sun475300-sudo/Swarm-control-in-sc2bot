@@ -88,7 +88,7 @@ class RavagerMicro:
 
         pos = enemy.position
 
-        # ★ Phase 18: Velocity-based prediction ★
+        # * Phase 18: Velocity-based prediction *
         # SC2 API provides velocity components when unit is moving
         if hasattr(enemy, "movement_speed") and enemy.movement_speed > 0:
             # Get velocity if available (newer SC2 API versions)
@@ -732,7 +732,7 @@ class CorruptorMicro:
 
 class InfestorMicro:
     """
-    ★ Phase 18: Infestor Micro Controller ★
+    * Phase 18: Infestor Micro Controller *
 
     Features:
     - Fungal Growth targeting (crowd control)
@@ -893,7 +893,7 @@ class InfestorMicro:
 
 class BanelingMicro:
     """
-    ★ Phase 18: Baneling Micro Controller ★
+    * Phase 18: Baneling Micro Controller *
 
     Features:
     - Surround detection and positioning
@@ -1054,7 +1054,7 @@ class FocusFireCoordinator:
             int
         )  # target_tag -> attacker_count
 
-        # ★ Phase 18: Memory leak prevention ★
+        # * Phase 18: Memory leak prevention *
         self.max_tracked_units = 500  # Maximum tracked entries
         self.last_cleanup_time = 0
 
@@ -1135,7 +1135,7 @@ class FocusFireCoordinator:
             if target_tag not in alive_enemy_tags:
                 del self.target_damage_count[target_tag]
 
-        # ★ Phase 18: Hard limit cleanup to prevent memory leak ★
+        # * Phase 18: Hard limit cleanup to prevent memory leak *
         if len(self.target_assignments) > self.max_tracked_units:
             # Keep only the most recent half
             entries = list(self.target_assignments.items())
@@ -1170,7 +1170,7 @@ class AdvancedMicroControllerV3:
         self.corruptor_micro = CorruptorMicro()
         self.focus_fire = FocusFireCoordinator()
 
-        # ★ Phase 18: New micro controllers ★
+        # * Phase 18: New micro controllers *
         self.infestor_micro = InfestorMicro()
         self.baneling_micro = BanelingMicro()
 
@@ -1221,7 +1221,7 @@ class AdvancedMicroControllerV3:
         await self._execute_corruptor_micro(current_time, enemy_units)
         await self._execute_focus_fire(units, enemy_units)
 
-        # ★ Phase 18: New micro executions ★
+        # * Phase 18: New micro executions *
         await self._execute_infestor_micro(current_time, enemy_units)
         await self._execute_baneling_micro(enemy_units)
         await self._execute_broodlord_micro(enemy_units)
@@ -1304,7 +1304,7 @@ class AdvancedMicroControllerV3:
             await AdvancedMicroControllerV3._do_actions(self.bot, actions)
 
     async def _execute_infestor_micro(self, current_time: float, enemy_units):
-        """★ Phase 18: Execute Infestor Fungal/Neural micro."""
+        """* Phase 18: Execute Infestor Fungal/Neural micro."""
         infestors = self.bot.units(UnitTypeId.INFESTOR) if UnitTypeId else []
         if infestors:
             await self.infestor_micro.execute_infestor_micro(
@@ -1312,7 +1312,7 @@ class AdvancedMicroControllerV3:
             )
 
     async def _execute_baneling_micro(self, enemy_units):
-        """★ Phase 18: Execute Baneling detonation micro."""
+        """* Phase 18: Execute Baneling detonation micro."""
         banelings = self.bot.units(UnitTypeId.BANELING) if UnitTypeId else []
         if banelings:
             await self.baneling_micro.execute_baneling_micro(
@@ -1321,12 +1321,12 @@ class AdvancedMicroControllerV3:
 
     async def _execute_broodlord_micro(self, enemy_units):
         """
-        ★ NEW: Broodlord kiting micro ★
+        * NEW: Broodlord kiting micro *
 
         브루드로드 사거리 9.5 유지 + 후퇴 마이크로:
-        - 적이 사거리 7 이내로 접근 → 후퇴
-        - 적이 사거리 9~11 → 공격
-        - 적 대공 유닛 감지 → 즉시 후퇴
+        - 적이 사거리 7 이내로 접근 -> 후퇴
+        - 적이 사거리 9~11 -> 공격
+        - 적 대공 유닛 감지 -> 즉시 후퇴
         """
         if not UnitTypeId:
             return
@@ -1377,10 +1377,10 @@ class AdvancedMicroControllerV3:
                 retreat_pos = bl.position.towards(self.bot.start_location, 3)
                 actions.append(bl.move(retreat_pos))
             elif dist <= BROODLORD_RANGE + 1:
-                # 사거리 내 → 공격
+                # 사거리 내 -> 공격
                 actions.append(bl.attack(closest_enemy))
             else:
-                # 사거리 밖 → 접근
+                # 사거리 밖 -> 접근
                 approach_pos = bl.position.towards(closest_enemy.position, 2)
                 actions.append(bl.move(approach_pos))
 
@@ -1394,7 +1394,7 @@ class AdvancedMicroControllerV3:
 
         self.focus_fire.clear_dead_assignments(alive_unit_tags, alive_enemy_tags)
 
-        # ★ Phase 18: Cleanup for new micro controllers ★
+        # * Phase 18: Cleanup for new micro controllers *
         # Clean infestor cooldown tracking
         dead_infestor_tags = (
             set(self.infestor_micro.last_fungal_time.keys()) - alive_unit_tags
@@ -1410,6 +1410,6 @@ class AdvancedMicroControllerV3:
             "corruptor_cooldowns": len(self.corruptor_micro.last_spray_time),
             "focus_fire_assignments": len(self.focus_fire.target_assignments),
             "priority_targets": len(self.focus_fire.target_damage_count),
-            # ★ Phase 18: New metrics ★
+            # * Phase 18: New metrics *
             "infestor_cooldowns": len(self.infestor_micro.last_fungal_time),
         }

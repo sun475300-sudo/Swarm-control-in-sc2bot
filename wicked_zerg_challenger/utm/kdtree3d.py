@@ -3,7 +3,7 @@
 3D K-D Tree for Drone Proximity Queries
 
 SC2 KDTree(2D)를 3D로 확장.
-핵심 변경: axis = depth % 2 → axis = depth % 3
+핵심 변경: axis = depth % 2 -> axis = depth % 3
 
 Origin: wicked_zerg_challenger/utils/kd_tree.py
 """
@@ -70,7 +70,7 @@ class KDTree3D:
         if not points:
             return None
 
-        axis = depth % 3  # ← 핵심 변경: 2 → 3 (x, y, z 순환)
+        axis = depth % 3  # <- 핵심 변경: 2 -> 3 (x, y, z 순환)
         points.sort(key=lambda p: p[0][axis])
         mid = len(points) // 2
 

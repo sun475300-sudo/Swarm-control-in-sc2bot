@@ -56,6 +56,17 @@ def get_all_manager_configs():
             priority=ManagerPriority.HIGH,
         ),
         ManagerConfig(
+            name="BuildingManager",
+            module_path="building_manager",
+            class_name="BuildingManager",
+            attribute_name="building_manager",
+            priority=ManagerPriority.HIGH,
+            dependencies=["blackboard"],
+            post_init=lambda bot, manager: setattr(
+                manager, "blackboard", getattr(bot, "blackboard", None)
+            ),
+        ),
+        ManagerConfig(
             name="IntelManager",
             module_path="intel_manager",
             class_name="IntelManager",
@@ -63,7 +74,7 @@ def get_all_manager_configs():
             priority=ManagerPriority.HIGH,
             post_init=lambda bot, manager: manager.load_data(),
         ),
-        # REMOVED: scouting_system.py (DEPRECATED → AdvancedScoutingSystemV2)
+        # REMOVED: scouting_system.py (DEPRECATED -> AdvancedScoutingSystemV2)
         ManagerConfig(
             name="StrategyManager",
             module_path="strategy_manager_v2",
@@ -87,21 +98,21 @@ def get_all_manager_configs():
         ),
         # ========== MEDIUM PRIORITY (일반 시스템) ==========
         ManagerConfig(
-            name="★ AdvancedWorkerOptimizer",
+            name="* AdvancedWorkerOptimizer",
             module_path="advanced_worker_optimizer",
             class_name="AdvancedWorkerOptimizer",
             attribute_name="worker_optimizer",
             priority=ManagerPriority.MEDIUM,
         ),
         ManagerConfig(
-            name="★ IdleUnitManager",
+            name="* IdleUnitManager",
             module_path="idle_unit_manager",
             class_name="IdleUnitManager",
             attribute_name="idle_units",
             priority=ManagerPriority.MEDIUM,
         ),
         ManagerConfig(
-            name="★ CombatPhaseController",
+            name="* CombatPhaseController",
             module_path="combat_phase_controller",
             class_name="CombatPhaseController",
             attribute_name="combat_phase",
@@ -150,9 +161,9 @@ def get_all_manager_configs():
             attribute_name="overlord_safety",
             priority=ManagerPriority.MEDIUM,
         ),
-        # REMOVED: active_scouting_system.py (DEPRECATED → AdvancedScoutingSystemV2)
+        # REMOVED: active_scouting_system.py (DEPRECATED -> AdvancedScoutingSystemV2)
         ManagerConfig(
-            name="★ CreepDenialSystem",
+            name="* CreepDenialSystem",
             module_path="creep_denial_system",
             class_name="CreepDenialSystem",
             attribute_name="creep_denial",
@@ -164,7 +175,7 @@ def get_all_manager_configs():
         ),
         # ========== LOW PRIORITY (선택적 시스템) ==========
         ManagerConfig(
-            name="★ OpponentModeling",
+            name="* OpponentModeling",
             module_path="opponent_modeling",
             class_name="OpponentModeling",
             attribute_name="opponent_modeling",
@@ -172,7 +183,7 @@ def get_all_manager_configs():
             dependencies=["intel"],
         ),
         ManagerConfig(
-            name="★ AdvancedMicroControllerV3",
+            name="* AdvancedMicroControllerV3",
             module_path="advanced_micro_controller_v3",
             class_name="AdvancedMicroControllerV3",
             attribute_name="micro_v3",  # Fixed: code accesses bot.micro_v3
@@ -214,7 +225,7 @@ def get_all_manager_configs():
             priority=ManagerPriority.LOW,
         ),
         ManagerConfig(
-            name="★ BattlePreparationSystem",
+            name="* BattlePreparationSystem",
             module_path="battle_preparation_system",
             class_name="BattlePreparationSystem",
             attribute_name="battle_prep",
@@ -237,7 +248,7 @@ def get_all_manager_configs():
             dependencies=["blackboard"],
         ),
         ManagerConfig(
-            name="★ BuildingDestroyer",
+            name="* BuildingDestroyer",
             module_path="building_destroyer",
             class_name="BuildingDestroyer",
             attribute_name="building_destroyer",
@@ -259,7 +270,7 @@ def get_all_manager_configs():
         ),
         # NOTE: BotStepIntegrator는 on_start에서 수동으로 초기화됨 (_step_integrator)
         # ManagerConfig(
-        #     name="★ BotStepIntegrator",
+        #     name="* BotStepIntegrator",
         #     module_path="bot_step_integration",
         #     class_name="BotStepIntegrator",
         #     attribute_name="step_integrator",

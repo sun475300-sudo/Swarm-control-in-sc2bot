@@ -6,7 +6,7 @@ CRITICAL: Spell units require less frequent targeting updates than regular units
 to reduce CPU load and allow proper spell cooldown management.
 
 Features:
-- ★ Ravager: Corrosive Bile (부식성 담즙) - 건물/중갑 유닛 파괴 ★
+- * Ravager: Corrosive Bile (부식성 담즙) - 건물/중갑 유닛 파괴 *
 - Infestor: Neural Parasite, Fungal Growth
 - Viper: Abduct, Parasitic Bomb, Blinding Cloud, Consume
 - Baneling: Explode (자폭)
@@ -51,7 +51,7 @@ class SpellUnitManager:
     def __init__(self, bot: "WickedZergBotPro"):
         self.bot = bot
         self.last_spell_update_frame: int = 0
-        self.spell_update_interval: int = 12  # ★ 16 → 12 프레임 (더 빠른 반응)
+        self.spell_update_interval: int = 12  # * 16 -> 12 프레임 (더 빠른 반응)
 
         # Spell cooldown tracking
         from typing import Dict
@@ -60,14 +60,14 @@ class SpellUnitManager:
         self.viper_last_spell: Dict[int, float] = {}  # unit tag -> last spell time
         self.viper_last_consume: Dict[int, float] = (
             {}
-        )  # ★ FIXED: Viper consume tracking
-        self.ravager_last_bile: Dict[int, float] = {}  # ★ NEW: Ravager bile tracking
-        self.baneling_exploded: set = set()  # ★ NEW: Baneling explode tracking
+        )  # * FIXED: Viper consume tracking
+        self.ravager_last_bile: Dict[int, float] = {}  # * NEW: Ravager bile tracking
+        self.baneling_exploded: set = set()  # * NEW: Baneling explode tracking
         self.overseer_last_contaminate: Dict[int, float] = (
             {}
-        )  # ★ NEW: Overseer contaminate
+        )  # * NEW: Overseer contaminate
 
-        # ★ NEW: Infestor Tactics Controller (Burrow Movement) ★
+        # * NEW: Infestor Tactics Controller (Burrow Movement) *
         try:
             from combat.infestor_tactics import InfestorTacticsController
 
@@ -82,13 +82,13 @@ class SpellUnitManager:
         self.PARASITIC_BOMB_COOLDOWN = 1.0
         self.BLINDING_CLOUD_COOLDOWN = 1.0
         self.CONSUME_COOLDOWN = 1.0
-        self.CORROSIVE_BILE_COOLDOWN = 7.0  # ★ NEW: Ravager bile cooldown
-        self.CONTAMINATE_COOLDOWN = 1.0  # ★ NEW: Overseer contaminate
+        self.CORROSIVE_BILE_COOLDOWN = 7.0  # * NEW: Ravager bile cooldown
+        self.CONTAMINATE_COOLDOWN = 1.0  # * NEW: Overseer contaminate
 
         self.consume_energy_threshold = 50
 
     def _is_controlled_by_spellcaster(self, unit_tag: int) -> bool:
-        """★ SpellCasterAutomation이 이미 제어 중인 유닛인지 확인 ★"""
+        """* SpellCasterAutomation이 이미 제어 중인 유닛인지 확인 *"""
         authority = getattr(self.bot, "unit_authority", None)
         if authority and unit_tag in authority.authorities:
             owner = authority.authorities[unit_tag].owner
@@ -109,12 +109,12 @@ class SpellUnitManager:
 
         self.last_spell_update_frame = iteration
 
-        # ★ SpellCasterAutomation이 활성이면 이 매니저는 스킵 (중복 스펠 방지) ★
+        # * SpellCasterAutomation이 활성이면 이 매니저는 스킵 (중복 스펠 방지) *
         if hasattr(self.bot, "spellcaster") and self.bot.spellcaster:
             return  # SpellCasterAutomation이 더 높은 우선순위로 먼저 실행
 
         try:
-            # ★ UPDATE RAVAGERS (HIGHEST PRIORITY - 가장 흔한 스킬 유닛)
+            # * UPDATE RAVAGERS (HIGHEST PRIORITY - 가장 흔한 스킬 유닛)
             await self._update_ravagers()
 
             # Update Infestors
@@ -123,10 +123,10 @@ class SpellUnitManager:
             # Update Vipers
             await self._update_vipers()
 
-            # ★ UPDATE BANELINGS (자폭)
+            # * UPDATE BANELINGS (자폭)
             await self._update_banelings()
 
-            # ★ UPDATE OVERSEERS (오염)
+            # * UPDATE OVERSEERS (오염)
             await self._update_overseers()
         except Exception as e:
             if iteration % 50 == 0:
@@ -153,7 +153,7 @@ class SpellUnitManager:
 
         current_time = b.time
 
-        # ★ BURROW MOVEMENT TACTICS: Infiltration and flanking ★
+        # * BURROW MOVEMENT TACTICS: Infiltration and flanking *
         if self.infestor_tactics:
             await self.infestor_tactics.execute_burrow_tactics(
                 infestors, enemy_units, b, current_time
@@ -477,7 +477,7 @@ class SpellUnitManager:
 
     async def _update_ravagers(self):
         """
-        ★★★ UPDATE RAVAGERS - Corrosive Bile (부식성 담즙) ★★★
+        *** UPDATE RAVAGERS - Corrosive Bile (부식성 담즙) ***
 
         Corrosive Bile 사용 우선순위:
         1. 적 건물 (특히 기지) - 건물 파괴
@@ -514,7 +514,7 @@ class SpellUnitManager:
             if time_since_bile < self.CORROSIVE_BILE_COOLDOWN:
                 continue
 
-            # ★ 우선순위 1: 적 건물 (특히 기지와 생산 건물)
+            # * 우선순위 1: 적 건물 (특히 기지와 생산 건물)
             if enemy_structures and enemy_structures.exists:
                 # 타운홀 우선
                 townhall_types = {
@@ -564,7 +564,7 @@ class SpellUnitManager:
                     except Exception:
                         pass
 
-            # ★ 우선순위 2: 중갑 고가치 유닛
+            # * 우선순위 2: 중갑 고가치 유닛
             if enemy_units:
                 high_value_types = {
                     UnitTypeId.SIEGETANKSIEGED,
@@ -595,7 +595,7 @@ class SpellUnitManager:
                         except Exception:
                             pass
 
-                # ★ 우선순위 3: 밀집된 적 병력 (3기 이상)
+                # * 우선순위 3: 밀집된 적 병력 (3기 이상)
                 nearby_enemies = [
                     e for e in enemy_units if ravager.distance_to(e) <= 9.0
                 ]
@@ -636,7 +636,7 @@ class SpellUnitManager:
 
     async def _update_banelings(self):
         """
-        ★ Baneling 자동 자폭 시스템 ★
+        * Baneling 자동 자폭 시스템 *
 
         조건:
         - 적 5기 이상 밀집 시
@@ -687,7 +687,7 @@ class SpellUnitManager:
 
     async def _update_overseers(self):
         """
-        ★ Overseer Contaminate (오염) ★
+        * Overseer Contaminate (오염) *
 
         타겟: 적 생산 건물 (타운홀, 배럭, 게이트웨이 등)
         효과: 60초간 생산 불가

@@ -74,7 +74,7 @@ class QueenTransfusionManager:
 
         # Deduplication: track tags targeted this iteration to avoid double-healing
         self._targeted_this_iter: set = set()
-        # Per-queen cooldown: tag → game-time of last cast
+        # Per-queen cooldown: tag -> game-time of last cast
         self._queen_last_cast: Dict[int, float] = {}
         # Minimum seconds between successive casts from the same queen
         self.QUEEN_CAST_COOLDOWN = 1.5

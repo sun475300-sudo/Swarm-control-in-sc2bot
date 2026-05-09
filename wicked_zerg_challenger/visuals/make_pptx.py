@@ -325,7 +325,7 @@ def build_slide_2(prs):
     cards = [
         (
             "탐지 사각지대",
-            "산악·도심 고층 건물군의\n전파 음영으로 고정 레이더가\n커버하지 못하는 저고도 영역 분포",
+            "산악-도심 고층 건물군의\n전파 음영으로 고정 레이더가\n커버하지 못하는 저고도 영역 분포",
             RED,
         ),
         (
@@ -406,9 +406,9 @@ def build_slide_2(prs):
         Inches(6.6),
         Inches(11),
         Inches(0.25),
-        "※ 국토교통부 「무인비행장치 등록 현황」 2025  |  "
-        "※ KARI 「산업용 무인기 시장 동향」 2024  |  "
-        "※ KOTI 「저고도 공역 관제 사각지대 실태 조사」 2024",
+        "* 국토교통부 '무인비행장치 등록 현황' 2025  |  "
+        "* KARI '산업용 무인기 시장 동향' 2024  |  "
+        "* KOTI '저고도 공역 관제 사각지대 실태 조사' 2024",
         font_size=7,
         color=DIM,
         font_name="Malgun Gothic",
@@ -555,7 +555,7 @@ def build_slide_4(prs):
         slide,
         Inches(0.8),
         Inches(0.5),
-        "CORE TECHNOLOGY — SIM-TO-REAL",
+        "CORE TECHNOLOGY - SIM-TO-REAL",
         PURPLE,
         BG_DARK,
     )
@@ -873,12 +873,12 @@ def build_slide_5(prs):
         (
             "3D 인터랙티브 관제 시뮬레이터",
             "Web 기반 Three.js 렌더링 엔진",
-            "Three.js 렌더링 · 3D 궤도 제어 · 실시간 모니터링",
+            "Three.js 렌더링 - 3D 궤도 제어 - 실시간 모니터링",
         ),
         (
             "실시간 Fleet 통제 대시보드",
             "React 18 아키텍처 기반",
-            "SVG 레이더 시각화 · Fleet 추적 엔진",
+            "SVG 레이더 시각화 - Fleet 추적 엔진",
         ),
     ]
     for i, (name, file, tech) in enumerate(demos):
@@ -1096,7 +1096,7 @@ def build_slide_7(prs):
         ("항목", "기존 방식", "Swarm-Net"),
         ("탐지 범위", "고정 레이더 반경 내", "군집 이동으로 동적 공역 커버"),
         ("배치 시간", "인프라 설치 수 개월", "드론 출격 수 분 내 전개"),
-        ("비용 구조", "CAPEX 수억 원 (고정 설비)", "OPEX 중심 — Fleet 유지보수"),
+        ("비용 구조", "CAPEX 수억 원 (고정 설비)", "OPEX 중심 - Fleet 유지보수"),
         ("유연성", "고정 위치, 재배치 불가", "실시간 공역 재구성"),
         ("확장성", "추가 기지국 필요", "드론 추가 투입으로 즉시 확장"),
         ("체공 지속성", "해당 없음 (고정 설치)", "Relay Rotation + Tethered 운용"),

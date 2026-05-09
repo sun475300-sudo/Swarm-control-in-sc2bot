@@ -1,0 +1,58 @@
+============================================================
+  GAME RESULT REPORT - DEFEAT
+============================================================
+  Map: 어비설 리프 - 래더
+  Opponent: Terran
+  Duration: 2:37
+  Date: 2026-05-09 14:52
+
+--- TIMELINE ---
+  [1:06] Build: UnitTypeId.EXTRACTOR (Supply 17)
+  [1:15] Build: UnitTypeId.SPAWNINGPOOL (Supply 17)
+  [1:31] Build: UnitTypeId.EXTRACTOR (Supply 17)
+  [2:00] Build: UnitTypeId.HATCHERY (Supply 19)
+  [2:09] Build: UnitTypeId.EXTRACTOR (Supply 19)
+  [2:31] Build: UnitTypeId.EVOLUTIONCHAMBER (Supply 20)
+  [2:39] Build: UnitTypeId.EXTRACTOR (Supply 20)
+  [2:48] Build: UnitTypeId.SPINECRAWLER (Supply 19)
+  [4:00] Build: UnitTypeId.SPINECRAWLER (Supply 24)
+  [4:50] Build: UnitTypeId.SPINECRAWLER (Supply 30)
+  [10:47] Harassment: UnitTypeId.ARMORY
+  [10:52] Harassment: UnitTypeId.STARPORT
+  [10:58] Harassment: UnitTypeId.SUPPLYDEPOT
+  [11:03] Harassment: UnitTypeId.STARPORT
+  [11:31] Harassment: UnitTypeId.ARMORY
+  [11:37] Harassment: UnitTypeId.COMMANDCENTER
+  [11:42] Harassment: UnitTypeId.COMMANDCENTER
+  [12:19] Harassment: UnitTypeId.STARPORT
+  [12:25] Harassment: UnitTypeId.STARPORT
+  [13:02] Harassment: UnitTypeId.MISSILETURRET
+
+--- ECONOMY ---
+  Peak Minerals: 180
+  Peak Vespene: 2794
+  Peak Workers: 27
+
+--- TIMINGS ---
+  Tech: UnitTypeId.EVOLUTIONCHAMBER at 2:31
+
+--- COMBAT ---
+  No engagement data recorded
+
+--- UNIT COMPOSITION ---
+  UnitTypeId.ZERGLING: 86 produced
+
+--- RESULT ANALYSIS ---
+  EARLY DEFEAT: Possible rush defense failure
+
+--- IMPROVEMENT SUGGESTIONS ---
+  1. Lost before 4 minutes - review early defense (spine crawlers, queens, zerglings)
+
+--- FINAL STATS ---
+  Workers: 8
+  Army Supply: 3
+  Bases: 2
+  Minerals: 0
+  Vespene: 2834
+
+============================================================

@@ -151,7 +151,7 @@ class ProtossCounterSystem:
 
     async def _handle_dark_templar_threat(self, game_time: float, iteration: int):
         """
-        ★★★ 암흑 기사 긴급 대응 ★★★
+        *** 암흑 기사 긴급 대응 ***
 
         1. 긴급 오버시어 변태 요청
         2. 긴급 포자 촉수 건설
@@ -454,9 +454,9 @@ class ProtossCounterSystem:
         """
         불멸자 카운터 (저글링 포위 + 파멸충 담즙)
 
-        ★ CRITICAL: 바퀴는 불멸자에게 약함! 저글링 + 파멸충 사용 ★
+        * CRITICAL: 바퀴는 불멸자에게 약함! 저글링 + 파멸충 사용 *
         """
-        # ★ DynamicCounter가 이미 IMMORTAL 대응 중이면 생산 비율 수정 스킵 ★
+        # * DynamicCounter가 이미 IMMORTAL 대응 중이면 생산 비율 수정 스킵 *
         blackboard = getattr(self.bot, "blackboard", None)
         if blackboard and blackboard.get("dynamic_counter_active", False):
             dynamic_counter = getattr(self.bot, "dynamic_counter", None)
@@ -473,7 +473,7 @@ class ProtossCounterSystem:
                 strategy._adjust_unit_ratio("zergling", 0.4)
                 # 파멸충 비율 증가 (담즙 공격)
                 strategy._adjust_unit_ratio("ravager", 0.35)
-                # ★ 바퀴 비율 감소 (불멸자에게 약함)
+                # * 바퀴 비율 감소 (불멸자에게 약함)
                 strategy._adjust_unit_ratio("roach", 0.05)
 
     async def _priority_target_support_units(self, iteration: int):

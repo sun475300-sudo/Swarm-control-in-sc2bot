@@ -227,7 +227,7 @@ class Targeting:
         if bot is None:
             logger.warning("Targeting: bot is None -- 일부 기능이 제한될 수 있습니다")
         self.bot = bot
-        self.priority_targets = []  # ★ Phase 13: 하위 호환 속성
+        self.priority_targets = []  # * Phase 13: 하위 호환 속성
 
     def prioritize(self, enemies: Iterable) -> List:
         return prioritize_targets(enemies)
@@ -242,17 +242,17 @@ class Targeting:
             return -999.0
         return _score_target(unit)
 
-    # ★ Phase 13: 하위 호환성 메서드 (테스트 호환) ★
+    # * Phase 13: 하위 호환성 메서드 (테스트 호환) *
     def get_priority_target(
         self, enemies_or_unit, position_or_enemies=None, max_range: float = 12.0
     ) -> Optional[object]:
         """하위 호환: prioritize_targets로 가장 높은 우선순위 반환.
 
         지원 시그니처:
-        - get_priority_target(enemies, position)  ← 레거시
-        - get_priority_target(unit, enemies)      ← 새 API
+        - get_priority_target(enemies, position)  <- 레거시
+        - get_priority_target(unit, enemies)      <- 새 API
         """
-        # 레거시: (enemies, position) — enemies가 iterable이고 position이 tuple
+        # 레거시: (enemies, position) - enemies가 iterable이고 position이 tuple
         if position_or_enemies is not None and isinstance(position_or_enemies, tuple):
             prioritized = prioritize_targets(enemies_or_unit)
             return prioritized[0] if prioritized else None

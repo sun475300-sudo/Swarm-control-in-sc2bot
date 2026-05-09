@@ -7,6 +7,7 @@ from typing import Dict, Iterable, List, Optional, Sequence, Tuple
 
 try:
     from swarm_rust_accel import batch_nearest_points as _batch_nearest_points_rust
+    from swarm_rust_accel import calculate_retreat_path as _calculate_retreat_path_rust
     from swarm_rust_accel import cluster_points as _cluster_points_rust
     from swarm_rust_accel import (
         combat_power_comparison as _combat_power_comparison_rust,
@@ -15,9 +16,11 @@ try:
         compute_feedback_priority as _compute_feedback_priority_rust,
     )
     from swarm_rust_accel import formation_positions as _formation_positions_rust
+    from swarm_rust_accel import find_unit_clusters as _find_unit_clusters_rust
     from swarm_rust_accel import nearest_point_index as _nearest_point_index_rust
     from swarm_rust_accel import path_distance as _path_distance_rust
     from swarm_rust_accel import route_distance as _route_distance_rust
+    from swarm_rust_accel import threat_assessment as _threat_assessment_rust
 except Exception:
     _nearest_point_index_rust = None
     _compute_feedback_priority_rust = None
@@ -27,6 +30,9 @@ except Exception:
     _route_distance_rust = None
     _cluster_points_rust = None
     _formation_positions_rust = None
+    _find_unit_clusters_rust = None
+    _threat_assessment_rust = None
+    _calculate_retreat_path_rust = None
 
 try:
     from wicked_zerg_challenger.opencl_accel import (
@@ -242,6 +248,103 @@ def formation_positions(
     return [(center_x, center_y)] * count
 
 
+def find_unit_clusters(
+    positions: Sequence[Tuple[float, float]],
+    radius: float,
+    min_count: int,
+) -> List[Tuple[float, float, int]]:
+    """Find dense unit clusters via Rust or deterministic CPU fallback."""
+    if _find_unit_clusters_rust is not None:
+        try:
+            return _find_unit_clusters_rust(list(positions), float(radius), int(min_count))
+        except Exception:
+            pass
+
+    clusters: List[Tuple[float, float, int]] = []
+    radius_sq = float(radius) * float(radius)
+    for x, y in positions:
+        count = 0
+        for px, py in positions:
+            dx = px - x
+            dy = py - y
+            if dx * dx + dy * dy <= radius_sq:
+                count += 1
+        if count >= min_count:
+            clusters.append((float(x), float(y), int(count)))
+    clusters.sort(key=lambda item: item[2], reverse=True)
+    return clusters
+
+
+def threat_assessment(
+    enemy_data: Sequence[Tuple[float, float, float, float, float]],
+    base_position: Tuple[float, float],
+    max_distance: float,
+) -> float:
+    """Score nearby enemy threat using HP, DPS, range, and proximity."""
+    if _threat_assessment_rust is not None:
+        try:
+            return float(
+                _threat_assessment_rust(
+                    list(enemy_data), tuple(base_position), float(max_distance)
+                )
+            )
+        except Exception:
+            pass
+
+    bx, by = base_position
+    max_distance = max(float(max_distance), 1e-6)
+    score = 0.0
+    for x, y, hp, dps, attack_range in enemy_data:
+        dx = float(x) - bx
+        dy = float(y) - by
+        distance = (dx * dx + dy * dy) ** 0.5
+        if distance <= max_distance:
+            proximity = 1.0 - (distance / max_distance)
+            score += max(0.0, hp) * max(0.0, dps) * proximity * (max(attack_range, 1.0) / 6.0)
+    return score
+
+
+def calculate_retreat_path(
+    unit_pos: Tuple[float, float],
+    base_positions: Sequence[Tuple[float, float]],
+    creep_positions: Sequence[Tuple[float, float]] = (),
+    spine_positions: Sequence[Tuple[float, float]] = (),
+) -> Tuple[float, float]:
+    """Choose the safest known retreat anchor with creep/spine bonuses."""
+    if not base_positions:
+        return tuple(unit_pos)
+
+    if _calculate_retreat_path_rust is not None:
+        try:
+            return tuple(
+                _calculate_retreat_path_rust(
+                    tuple(unit_pos),
+                    list(base_positions),
+                    list(creep_positions),
+                    list(spine_positions),
+                )
+            )
+        except Exception:
+            pass
+
+    ux, uy = unit_pos
+    best_pos = tuple(base_positions[0])
+    best_score = float("-inf")
+    for bx, by in base_positions:
+        distance = ((bx - ux) ** 2 + (by - uy) ** 2) ** 0.5
+        score = -distance
+        for cx, cy in creep_positions:
+            if ((cx - bx) ** 2 + (cy - by) ** 2) ** 0.5 < 5.0:
+                score += 10.0
+        for sx, sy in spine_positions:
+            if ((sx - bx) ** 2 + (sy - by) ** 2) ** 0.5 < 8.0:
+                score += 20.0
+        if score > best_score:
+            best_score = score
+            best_pos = (float(bx), float(by))
+    return best_pos
+
+
 def points_to_xy_tuples(points: Iterable) -> List[Tuple[float, float]]:
     """Convert Point2-like objects into plain (x, y) tuples."""
     return [(float(p.x), float(p.y)) for p in points]
@@ -258,5 +361,8 @@ def rust_available() -> Dict[str, bool]:
         "route_distance": _route_distance_rust is not None,
         "cluster_points": _cluster_points_rust is not None,
         "formation_positions": _formation_positions_rust is not None,
+        "find_unit_clusters": _find_unit_clusters_rust is not None,
+        "threat_assessment": _threat_assessment_rust is not None,
+        "calculate_retreat_path": _calculate_retreat_path_rust is not None,
         "opencl": _nearest_point_index_opencl is not None,
     }

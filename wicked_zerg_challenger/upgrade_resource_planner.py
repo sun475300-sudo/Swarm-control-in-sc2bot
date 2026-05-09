@@ -431,7 +431,7 @@ class UpgradeResourcePlanner:
                 UnitTypeId.ROACH,
                 UnitTypeId.HYDRALISK,
                 UnitTypeId.RAVAGER,
-                UnitTypeId.LURKER,
+                UnitTypeId.LURKERMP,
             ]:
                 composition["ranged"] += 1
             elif unit.type_id in [

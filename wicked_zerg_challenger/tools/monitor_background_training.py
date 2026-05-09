@@ -134,7 +134,7 @@ class BackgroundTrainingMonitor:
         elif buffer_delta < 0:
             logger.info(f"Status:      [OK] {abs(buffer_delta)} files processed")
         else:
-            logger.info(f"Status:      ○ No change")
+            logger.info(f"Status:      [O] No change")
 
         if buffer_info['files']:
             logger.info("\nRecent Files:")
@@ -158,7 +158,7 @@ class BackgroundTrainingMonitor:
         if archive_delta > 0:
             logger.info(f"Status:      [OK] +{archive_delta} files archived (training completed)")
         else:
-            logger.info(f"Status:      ○ No change")
+            logger.info(f"Status:      [O] No change")
 
         if archive_info['files']:
             logger.info("\nRecently Archived:")

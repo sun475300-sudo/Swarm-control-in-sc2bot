@@ -2,10 +2,10 @@
 Adaptive Build Order AI - 적응형 빌드 오더
 
 적의 전략과 종족에 따라 빌드를 동적으로 조정:
-- vs Terran: Anti-reaper defense → Roach push
-- vs Protoss: Fast expand → Roach/Ravager timing
-- vs Zerg: Pool first → Zergling pressure
-- Cheese detection → All-in defense
+- vs Terran: Anti-reaper defense -> Roach push
+- vs Protoss: Fast expand -> Roach/Ravager timing
+- vs Zerg: Pool first -> Zergling pressure
+- Cheese detection -> All-in defense
 
 Features:
 - 적 종족 감지
@@ -60,7 +60,7 @@ class AdaptiveBuildOrder:
         # Build plan
         self.current_build = "standard"  # "anti_cheese", "timing_attack", "macro"
 
-        # ★ Race-specific timing attacks ★
+        # * Race-specific timing attacks *
         self.timing_attack_details: Dict[str, any] = {}
         self.attack_supply_requirement = 0
         self.attack_target_time = 0
@@ -99,7 +99,7 @@ class AdaptiveBuildOrder:
         - vs Protoss: Roach 압박 + Ravager bile (7:00)
         - vs Zerg: Zergling/Baneling 올인 (5:30)
         """
-        # ★ StrategyManager가 Emergency 모드이면 AdaptiveBuild 판단 스킵 ★
+        # * StrategyManager가 Emergency 모드이면 AdaptiveBuild 판단 스킵 *
         blackboard = getattr(self.bot, "blackboard", None)
         if blackboard:
             strategy_mode = blackboard.get("strategy_mode", "NORMAL")
@@ -120,14 +120,14 @@ class AdaptiveBuildOrder:
             self.current_build = "timing_attack"
             self._setup_timing_attack()
             self.logger.info(
-                f"[{int(self.bot.time)}s] ★ BUILD: Timing Attack ({self.enemy_race.name}) ★"
+                f"[{int(self.bot.time)}s] * BUILD: Timing Attack ({self.enemy_race.name}) *"
             )
 
         else:
             self.current_build = "macro"
             self._setup_macro_build()
 
-        # ★ Blackboard에 빌드 결정 동기화 ★
+        # * Blackboard에 빌드 결정 동기화 *
         if blackboard:
             self._sync_to_blackboard(blackboard)
 

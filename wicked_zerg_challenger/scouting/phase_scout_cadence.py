@@ -8,14 +8,14 @@ Phases (game time, not iteration count):
 
 | Phase | Window           | Scout type                  | Cadence  | Targets                          |
 |-------|------------------|-----------------------------|----------|----------------------------------|
-| 1     | 0:00 → 3:00      | Overlord (already in air)   | 30 s     | enemy main entrance + ramp top   |
-| 2     | 3:00 → 8:00      | Zergling (cheap, fast)      | 60 s     | map sweep loop (4 quadrants)     |
+| 1     | 0:00 -> 3:00      | Overlord (already in air)   | 30 s     | enemy main entrance + ramp top   |
+| 2     | 3:00 -> 8:00      | Zergling (cheap, fast)      | 60 s     | map sweep loop (4 quadrants)     |
 | 3     | 8:00 +           | Overseer (cloak detection)  | 90 s     | enemy expansion + tech buildings |
 
 Why per-phase:
   * Overlords carry no risk (uncatchable by basic units), free intel early.
   * Zerglings are throwaway by mid game and can sweep multiple quadrants.
-  * Overseers expose stalker DT / lurker / banshee — the threats that win
+  * Overseers expose stalker DT / lurker / banshee - the threats that win
     games when missed.
 
 The cadence numbers are independent of the V2 system's emergency-mode
@@ -33,7 +33,7 @@ Usage::
         ...
 
 Determinism:
-  * No I/O, no time.time() — all decisions are pure functions of
+  * No I/O, no time.time() - all decisions are pure functions of
     (game_time_s, last_dispatch_time_s, enemy_main_position).
   * Replay-based regression: at fixed (seed, map), next_dispatch() at
     t=120, 240, 480 returns the SAME plan structure.
@@ -61,8 +61,8 @@ except ImportError:
 
 # --- Phase-cadence parameters (single source of truth) ---
 
-PHASE_1_END_S = 180.0          # 3:00 — overlord-only window
-PHASE_2_END_S = 480.0          # 8:00 — zergling sweep window
+PHASE_1_END_S = 180.0          # 3:00 - overlord-only window
+PHASE_2_END_S = 480.0          # 8:00 - zergling sweep window
 PHASE_1_CADENCE_S = 30.0
 PHASE_2_CADENCE_S = 60.0
 PHASE_3_CADENCE_S = 90.0
@@ -81,7 +81,7 @@ class DispatchPlan:
     """The decision PhaseScoutCadence emits."""
 
     phase: ScoutPhase
-    unit_type: object              # UnitTypeId.* — string fallback if SC2 unavailable
+    unit_type: object              # UnitTypeId.* - string fallback if SC2 unavailable
     target: Point2                 # where to send it
     deadline_s: float              # by when the unit should arrive
     quadrant_index: int = 0        # 0-3 for zergling sweep; 0 for others
@@ -195,7 +195,7 @@ class PhaseScoutCadence:
                 deadline_s=game_time_s + 120.0,
                 quadrant_index=qi,
             )
-        # Phase 3 — Overseer detect
+        # Phase 3 - Overseer detect
         return DispatchPlan(
             phase=phase,
             unit_type=getattr(UnitTypeId, "OVERSEER", "OVERSEER"),

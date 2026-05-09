@@ -9,7 +9,7 @@ Aggressive Early Game Strategies - 초반 공격 전략 모음
 4. Tunneling Claws (잠복 바퀴 이동)
 5. Proxy Hatchery (전진 해처리)
 6. Nydus All-In (땅굴망 올인)
-7. ★ Overlord Drop (대군주 드랍 견제) ★
+7. * Overlord Drop (대군주 드랍 견제) *
 """
 
 import logging
@@ -45,7 +45,7 @@ class AggressiveStrategyType(Enum):
     TUNNELING_CLAWS = "tunneling"  # 잠복 바퀴
     PROXY_HATCH = "proxy_hatch"  # 전진 해처리
     NYDUS_ALLIN = "nydus_allin"  # 땅굴망 올인
-    OVERLORD_DROP = "overlord_drop"  # ★ 대군주 드랍 견제
+    OVERLORD_DROP = "overlord_drop"  # * 대군주 드랍 견제
 
 
 class AggressiveStrategyExecutor:
@@ -58,7 +58,7 @@ class AggressiveStrategyExecutor:
     def __init__(self, bot):
         self.bot = bot
 
-        # ★ Blackboard 연동 ★
+        # * Blackboard 연동 *
         self.blackboard = getattr(bot, "blackboard", None)
 
         # 건물 배치 헬퍼
@@ -81,18 +81,18 @@ class AggressiveStrategyExecutor:
         self._proxy_location: Optional[Point2] = None
         self._nydus_location: Optional[Point2] = None
         self._nydus_built = False
-        self._nydus_worm_tag: Optional[int] = None  # ★ Worm 추적
-        self._nydus_units_sent: Set[int] = set()  # ★ 투입된 유닛 추적
-        self._nydus_attack_started = False  # ★ 공격 시작 여부
+        self._nydus_worm_tag: Optional[int] = None  # * Worm 추적
+        self._nydus_units_sent: Set[int] = set()  # * 투입된 유닛 추적
+        self._nydus_attack_started = False  # * 공격 시작 여부
 
         # 유닛 태그 추적
         self._rush_units: Set[int] = set()
         self._proxy_drones: Set[int] = set()
-        self._drop_overlords: Set[int] = set()  # ★ 드랍 대군주
-        self._overlord_drop_active = False  # ★ 드랍 활성화 여부
-        self._last_drop_time = 0  # ★ 마지막 드랍 시간
+        self._drop_overlords: Set[int] = set()  # * 드랍 대군주
+        self._overlord_drop_active = False  # * 드랍 활성화 여부
+        self._last_drop_time = 0  # * 마지막 드랍 시간
 
-        # ★ UnitAuthority 연동 ★
+        # * UnitAuthority 연동 *
         self._authority_system_name = "AggressiveStrategies"
 
         # 타이밍 설정
@@ -111,26 +111,26 @@ class AggressiveStrategyExecutor:
             AggressiveStrategyType.RAVAGER_RUSH: {
                 "roach_count": 4,
                 "ravager_count": 3,
-                "attack_timing": 180,  # ★ 3분으로 앞당김 (기존: 4분, 5분 제한 대응)
+                "attack_timing": 180,  # * 3분으로 앞당김 (기존: 4분, 5분 제한 대응)
             },
             AggressiveStrategyType.TUNNELING_CLAWS: {
                 "roach_count": 8,
-                "upgrade_timing": 150,  # ★ 2:30으로 앞당김 (기존: 3분)
+                "upgrade_timing": 150,  # * 2:30으로 앞당김 (기존: 3분)
             },
             AggressiveStrategyType.PROXY_HATCH: {
-                "proxy_timing": 45,  # ★ 45초로 앞당김 (기존: 1분)
+                "proxy_timing": 45,  # * 45초로 앞당김 (기존: 1분)
                 "spine_count": 2,
             },
             AggressiveStrategyType.NYDUS_ALLIN: {
-                "lair_timing": 180,  # ★ 3분으로 앞당김 (기존: 4분)
-                "nydus_timing": 190,  # ★ 3:10으로 앞당김 - Lair 완료 즉시 건설 (기존: 4분)
+                "lair_timing": 180,  # * 3분으로 앞당김 (기존: 4분)
+                "nydus_timing": 190,  # * 3:10으로 앞당김 - Lair 완료 즉시 건설 (기존: 4분)
                 "queen_count": 4,
             },
             AggressiveStrategyType.OVERLORD_DROP: {
-                "ventral_sacs_timing": 150,  # ★ 2분 30초로 앞당김 (기존: 3분)
-                "drop_overlord_count": 2,  # ★ 드랍용 대군주 2기
-                "drop_unit_count": 16,  # ★ 저글링 8마리 (2기 탑승)
-                "drop_timing": 210,  # ★ 3분 30초로 앞당김 (기존: 4분, 5분 제한 대응)
+                "ventral_sacs_timing": 150,  # * 2분 30초로 앞당김 (기존: 3분)
+                "drop_overlord_count": 2,  # * 드랍용 대군주 2기
+                "drop_unit_count": 16,  # * 저글링 8마리 (2기 탑승)
+                "drop_timing": 210,  # * 3분 30초로 앞당김 (기존: 4분, 5분 제한 대응)
             },
         }
 
@@ -201,7 +201,7 @@ class AggressiveStrategyExecutor:
         return self.active_strategy
 
     def _can_command_unit(self, unit_tag: int) -> bool:
-        """★ UnitAuthority 체크: 다른 시스템이 제어 중인 유닛이면 False ★"""
+        """* UnitAuthority 체크: 다른 시스템이 제어 중인 유닛이면 False *"""
         authority = getattr(self.bot, "unit_authority", None)
         if not authority:
             return True  # authority 시스템 없으면 허용
@@ -237,7 +237,7 @@ class AggressiveStrategyExecutor:
             elif self.active_strategy == AggressiveStrategyType.OVERLORD_DROP:
                 await self._execute_overlord_drop()
 
-            # ★★★ 새로운 견제 시스템 (전략과 무관하게 항상 실행) ★★★
+            # *** 새로운 견제 시스템 (전략과 무관하게 항상 실행) ***
             # 멀티 견제 (3분 이후)
             if self.bot.time > 180:
                 await self._execute_multi_harass()
@@ -287,7 +287,7 @@ class AggressiveStrategyExecutor:
         PRIORITY_STRATEGY = 75
 
         if self.bot.can_afford(UnitTypeId.SPAWNINGPOOL):
-            # ★★★ ALWAYS use TechCoordinator (no fallback to direct build) ★★★
+            # *** ALWAYS use TechCoordinator (no fallback to direct build) ***
             if tech_coordinator and not tech_coordinator.is_planned(
                 UnitTypeId.SPAWNINGPOOL
             ):
@@ -317,7 +317,7 @@ class AggressiveStrategyExecutor:
         sent = 0
         for ling in zerglings:
             if not self._can_command_unit(ling.tag):
-                continue  # ★ 다른 시스템이 제어 중인 유닛 스킵 ★
+                continue  # * 다른 시스템이 제어 중인 유닛 스킵 *
             self.bot.do(ling.attack(target))
             self._rush_units.add(ling.tag)
             sent += 1
@@ -345,7 +345,7 @@ class AggressiveStrategyExecutor:
                 await self._build_structure(UnitTypeId.BANELINGNEST)
                 return
 
-        # 3. 저글링 생산 (★ Blackboard 요청으로 변경 ★)
+        # 3. 저글링 생산 (* Blackboard 요청으로 변경 *)
         zerglings = self.bot.units(UnitTypeId.ZERGLING)
         target_zerglings = 16
 
@@ -441,7 +441,7 @@ class AggressiveStrategyExecutor:
                     await self._build_structure(UnitTypeId.ROACHWARREN)
             return
 
-        # 2. 바퀴 생산 (★ Blackboard 요청으로 변경 ★)
+        # 2. 바퀴 생산 (* Blackboard 요청으로 변경 *)
         roaches = self.bot.units(UnitTypeId.ROACH)
         target_roaches = config["roach_count"]
 
@@ -546,7 +546,7 @@ class AggressiveStrategyExecutor:
                         self._tunneling_upgrade_started = True
                         logger.info("Tunneling Claws upgrade started!")
 
-        # 4. 바퀴 생산 (★ Blackboard 요청으로 변경 ★)
+        # 4. 바퀴 생산 (* Blackboard 요청으로 변경 *)
         roaches = self.bot.units(UnitTypeId.ROACH)
         target_roaches = config["roach_count"]
 
@@ -608,7 +608,7 @@ class AggressiveStrategyExecutor:
             if self._proxy_location is None:
                 return
 
-        # 2. 드론 파견 (★ IMPROVED: 2마리 파견 + 대체 드론 ★)
+        # 2. 드론 파견 (* IMPROVED: 2마리 파견 + 대체 드론 *)
         if game_time >= config["proxy_timing"]:
             workers = self.bot.workers
             if workers.exists:
@@ -643,13 +643,13 @@ class AggressiveStrategyExecutor:
                 drone = self.bot.workers.find_by_tag(drone_tag)
                 if (
                     drone and drone.distance_to(self._proxy_location) < 8
-                ):  # ★ IMPROVED: 5 → 8 거리 완화 ★
+                ):  # * IMPROVED: 5 -> 8 거리 완화 *
                     if self.bot.can_afford(UnitTypeId.HATCHERY):
                         self.bot.do(
                             drone.build(UnitTypeId.HATCHERY, self._proxy_location)
                         )
                         logger.info(f"Building proxy Hatchery!")
-                        break  # ★ 한 드론만 건설하면 충분 ★
+                        break  # * 한 드론만 건설하면 충분 *
 
         # 4. 가시 촉수 건설
         if proxy_hatch and proxy_hatch.is_ready:
@@ -715,7 +715,7 @@ class AggressiveStrategyExecutor:
                         await self._build_structure(UnitTypeId.NYDUSNETWORK)
             return
 
-        # 3. 여왕 생산 (★ Blackboard 요청으로 변경 ★)
+        # 3. 여왕 생산 (* Blackboard 요청으로 변경 *)
         queens = self.bot.units(UnitTypeId.QUEEN)
         target_queens = config["queen_count"]
 
@@ -765,7 +765,7 @@ class AggressiveStrategyExecutor:
                     return
                 await self._load_units_into_nydus(nydus_network.first)
 
-                # 7. ★★★ Worm에서 나온 유닛들 공격 명령 ★★★
+                # 7. *** Worm에서 나온 유닛들 공격 명령 ***
                 await self._command_nydus_attackers(worm)
 
         # 8. Worm이 파괴되면 재건설 (선택적)
@@ -814,7 +814,7 @@ class AggressiveStrategyExecutor:
 
     async def _command_nydus_attackers(self, nydus_worm) -> None:
         """
-        ★★★ 땅굴에서 나온 유닛들에게 공격 명령 ★★★
+        *** 땅굴에서 나온 유닛들에게 공격 명령 ***
 
         Worm 근처의 아군 유닛을 찾아서 적 기지를 공격하게 합니다.
         """
@@ -942,10 +942,10 @@ class AggressiveStrategyExecutor:
             "overlord_drop_active": self._overlord_drop_active,
         }
 
-    # ========== ★★★ 대군주 드랍 견제 (NEW) ★★★ ==========
+    # ========== *** 대군주 드랍 견제 (NEW) *** ==========
     async def _execute_overlord_drop(self) -> None:
         """
-        ★ 대군주 드랍 견제 실행 ★
+        * 대군주 드랍 견제 실행 *
 
         타이밍:
         - 3분: Ventral Sacs 업그레이드 시작
@@ -1067,15 +1067,15 @@ class AggressiveStrategyExecutor:
 
         # 드랍된 유닛 제어는 별도 로직이나 기본 공격 로직이 처리할 것임
 
-    # ========== ★★★ 멀티 견제 시스템 (NEW) ★★★ ==========
+    # ========== *** 멀티 견제 시스템 (NEW) *** ==========
     async def _execute_multi_harass(self) -> None:
         """
-        ★ 멀티 견제 시스템 ★
+        * 멀티 견제 시스템 *
 
         전략:
         1. 상대 확장 위치 감지
         2. 저글링 4-6마리를 상대 멀티로 보내서 일꾼 견제
-        3. 지속적으로 순환 견제 (멀티1 → 멀티2 → 멀티1)
+        3. 지속적으로 순환 견제 (멀티1 -> 멀티2 -> 멀티1)
 
         타이밍:
         - 3분 이후부터 지속

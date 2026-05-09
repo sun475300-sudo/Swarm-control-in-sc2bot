@@ -12,6 +12,7 @@ import logging
 import os
 import sys
 import time
+import argparse
 from datetime import datetime
 from pathlib import Path
 
@@ -69,6 +70,86 @@ DIFFICULTIES = [
 
 GAMES_PER_MATCHUP = 1  # 1 game per combination = 36 total games
 
+RACE_BY_NAME = {
+    "Terran": Race.Terran,
+    "Protoss": Race.Protoss,
+    "Zerg": Race.Zerg,
+}
+
+DIFFICULTY_BY_NAME = {
+    "VeryEasy": Difficulty.VeryEasy,
+    "Easy": Difficulty.Easy,
+    "Medium": Difficulty.Medium,
+    "MediumHard": Difficulty.MediumHard,
+    "Hard": Difficulty.Hard,
+    "Harder": Difficulty.Harder,
+    "VeryHard": Difficulty.VeryHard,
+}
+
+
+def parse_args(argv=None):
+    parser = argparse.ArgumentParser(description="Run SC2 mass benchmark games")
+    parser.add_argument(
+        "--opponent",
+        choices=sorted(RACE_BY_NAME),
+        help="Filter to one opponent race",
+    )
+    parser.add_argument(
+        "--difficulty",
+        choices=sorted(DIFFICULTY_BY_NAME),
+        help="Filter to one AI difficulty",
+    )
+    parser.add_argument(
+        "--games",
+        type=int,
+        default=None,
+        help="Number of games for the selected matchup",
+    )
+    parser.add_argument(
+        "--maps",
+        default=",".join(MAPS),
+        help="Comma-separated map list to rotate through",
+    )
+    parser.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Print the generated matrix without launching SC2",
+    )
+    return parser.parse_args(argv)
+
+
+def build_test_cases(args):
+    selected_maps = [m.strip() for m in args.maps.split(",") if m.strip()]
+    if not selected_maps:
+        selected_maps = list(MAPS)
+
+    selected_races = (
+        [RACE_BY_NAME[args.opponent]] if args.opponent else list(RACES)
+    )
+    selected_difficulties = (
+        [(DIFFICULTY_BY_NAME[args.difficulty], args.difficulty)]
+        if args.difficulty
+        else list(DIFFICULTIES)
+    )
+
+    if args.games is not None:
+        test_cases = []
+        games = max(0, args.games)
+        for race in selected_races:
+            for difficulty, diff_name in selected_difficulties:
+                for index in range(games):
+                    map_name = selected_maps[index % len(selected_maps)]
+                    test_cases.append((map_name, race, difficulty, diff_name))
+        return test_cases
+
+    test_cases = []
+    for map_name in selected_maps:
+        for race in selected_races:
+            for difficulty, diff_name in selected_difficulties:
+                for _ in range(GAMES_PER_MATCHUP):
+                    test_cases.append((map_name, race, difficulty, diff_name))
+    return test_cases
+
 
 def run_single_test(map_name, race, difficulty, diff_name, game_num, total):
     """Run a single test game."""
@@ -116,27 +197,30 @@ def run_single_test(map_name, race, difficulty, diff_name, game_num, total):
         }
 
 
-def main():
+def main(argv=None):
+    args = parse_args(argv)
     start_time = time.time()
 
-    # Build test matrix
-    test_cases = []
-    for map_name in MAPS:
-        for race in RACES:
-            for difficulty, diff_name in DIFFICULTIES:
-                for _ in range(GAMES_PER_MATCHUP):
-                    test_cases.append((map_name, race, difficulty, diff_name))
+    test_cases = build_test_cases(args)
 
     total = len(test_cases)
     logger.info(f"\n{'='*70}")
     logger.info(f"  MASS TEST: {total} games")
     logger.info(
-        f"  Maps: {len(MAPS)} | Races: {len(RACES)} | Difficulties: {len(DIFFICULTIES)}"
+        f"  Maps: {len(set(case[0] for case in test_cases))} | "
+        f"Races: {len(set(case[1] for case in test_cases))} | "
+        f"Difficulties: {len(set(case[3] for case in test_cases))}"
     )
     logger.info(
         f"  GPU: {'YES - ' + torch.cuda.get_device_name(0) if GPU_AVAILABLE else 'CPU only'}"
     )
     logger.info(f"{'='*70}\n")
+
+    if args.dry_run:
+        for i, (map_name, race, _difficulty, diff_name) in enumerate(test_cases, 1):
+            logger.info("  DRY %02d/%02d: %s vs %s %s", i, total, map_name, race.name, diff_name)
+        logger.info("  Dry run complete; no SC2 games launched.")
+        return
 
     results = []
     wins = 0

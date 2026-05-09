@@ -64,7 +64,7 @@ def kill_all_sc2():
         )
         time.sleep(3)
     except (FileNotFoundError, subprocess.TimeoutExpired, OSError) as e:
-        # taskkill 미존재(Linux) / 타임아웃 / 권한 등 — cleanup이라 치명적이지 않음
+        # taskkill 미존재(Linux) / 타임아웃 / 권한 등 - cleanup이라 치명적이지 않음
         logger.debug("kill_all_sc2 skipped: %s", e)
 
 

@@ -205,7 +205,7 @@ if __name__ == "__main__":
     try:
         main()
     except KeyboardInterrupt:
-        print("\n\n??  Workflow interrupted by user")
+        print("\n\n[DRONE]  Workflow interrupted by user")
         sys.exit(1)
     except Exception as e:
         print(f"\n\n? Fatal error: {e}")

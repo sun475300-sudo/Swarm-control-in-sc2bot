@@ -51,7 +51,7 @@ class CreepAutomationV2:
         self.creep_targets: List[Point2] = []
         self.tumor_positions: Set[Tuple[float, float]] = set()
 
-        # ★ Phase 18: 종양 릴레이 쿨다운 추적 ★
+        # * Phase 18: 종양 릴레이 쿨다운 추적 *
         self._tumor_cooldowns: dict = {}
 
         # Creep queens
@@ -71,7 +71,7 @@ class CreepAutomationV2:
                 self.logger.error(f"[CREEP_V2] Error: {e}")
 
     def _update_creep_targets(self):
-        """크립 타겟 업데이트 — ★ Phase 18: 공격적 적진 방향 크립 확장 ★"""
+        """크립 타겟 업데이트 - * Phase 18: 공격적 적진 방향 크립 확장 *"""
         if not hasattr(self.bot, "expansion_locations_list"):
             return
 
@@ -86,7 +86,7 @@ class CreepAutomationV2:
         map_center = self.bot.game_info.map_center
         self.creep_targets.append(map_center)
 
-        # 3. ★ Phase 18: 적진 방향 공격적 크립 — 다단계 웨이포인트 ★
+        # 3. * Phase 18: 적진 방향 공격적 크립 - 다단계 웨이포인트 *
         if (
             hasattr(self.bot, "enemy_start_locations")
             and self.bot.enemy_start_locations
@@ -117,7 +117,7 @@ class CreepAutomationV2:
                     )
                     self.creep_targets.append(wp)
 
-                # ★ Phase 18: 측면 크립도 추가 (8분+, 적진 방향 좌우 15도 오프셋) ★
+                # * Phase 18: 측면 크립도 추가 (8분+, 적진 방향 좌우 15도 오프셋) *
                 if game_time >= 480:
                     import math
 
@@ -138,28 +138,28 @@ class CreepAutomationV2:
                             self.creep_targets.append(wp)
 
     async def _spread_creep(self):
-        """크립 확장 (Inject 우선순위 고려) — ★ Phase 18: 종양 릴레이 + 공격적 확장 ★"""
+        """크립 확장 (Inject 우선순위 고려) - * Phase 18: 종양 릴레이 + 공격적 확장 *"""
         if not hasattr(self.bot, "units"):
             return
 
-        # ★ Phase 18: 종양 릴레이 — 매립된 종양이 적 방향으로 자동 확산 ★
+        # * Phase 18: 종양 릴레이 - 매립된 종양이 적 방향으로 자동 확산 *
         await self._tumor_relay_toward_enemy()
 
-        # ★ Inject 우선순위 고려: 25+ 에너지가 있는 Queen만 사용 ★
+        # * Inject 우선순위 고려: 25+ 에너지가 있는 Queen만 사용 *
         queens = self.bot.units(UnitTypeId.QUEEN).filter(lambda q: q.energy >= 25)
 
         # InjectOptimizer가 있으면 우선순위 체크
         inject_optimizer = getattr(self.bot, "inject_optimizer", None)
 
         for queen in queens:
-            # ★ Inject 우선순위 체크 ★
+            # * Inject 우선순위 체크 *
             if inject_optimizer:
                 if not inject_optimizer.can_use_queen_for_creep(queen):
                     continue  # Inject를 위해 에너지 보존
 
             # Creep tumor 배치
             if self.creep_targets:
-                # ★ Phase 18: 크립이 없는 타겟 우선 (프론티어 확장) ★
+                # * Phase 18: 크립이 없는 타겟 우선 (프론티어 확장) *
                 uncovered_targets = [
                     t for t in self.creep_targets if not self.bot.has_creep(t)
                 ]
@@ -183,7 +183,7 @@ class CreepAutomationV2:
 
     async def _tumor_relay_toward_enemy(self):
         """
-        ★ Phase 18: 종양 릴레이 — 매립된 종양이 적 방향으로 자동 확산 ★
+        * Phase 18: 종양 릴레이 - 매립된 종양이 적 방향으로 자동 확산 *
 
         매립된 종양(CREEPTUMORBURROWED)이 쿨다운 완료 시
         적 방향으로 새 종양을 생성하여 크립 프론티어를 전진시킴.

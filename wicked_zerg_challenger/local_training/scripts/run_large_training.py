@@ -45,13 +45,13 @@ def train_ppo_agent(n_episodes: int, save_dir: str, max_frames: int = 2000):
     env = SC2ZergEnv(max_frames=max_frames)
 
     logger.info(
-        "╔══════════════════════════════════════════════════════════════════════╗"
+        "+======================================================================+"
     )
     logger.info(
-        f"║  PPO Agent Training — {n_episodes} Episodes (max_frames={max_frames})"
+        f"|  PPO Agent Training - {n_episodes} Episodes (max_frames={max_frames})"
     )
     logger.info(
-        "╠══════════════════════════════════════════════════════════════════════╣"
+        "+======================================================================+"
     )
 
     wins = 0
@@ -90,7 +90,7 @@ def train_ppo_agent(n_episodes: int, save_dir: str, max_frames: int = 2000):
             ep_reward += reward
             steps += 1
 
-        # 에피소드 종료 — 학습
+        # 에피소드 종료 - 학습
         won = info.get("winner") == "self" if isinstance(info, dict) else False
         final_r = 1.0 if won else -0.5
         metrics = agent.end_episode(final_reward=final_r)
@@ -106,8 +106,8 @@ def train_ppo_agent(n_episodes: int, save_dir: str, max_frames: int = 2000):
         avg_r = np.mean(total_rewards[-10:])
         wr = wins / ep * 100
         logger.info(
-            f"║ Ep {ep:4d}/{n_episodes} │ {steps:4d}s │ R={ep_reward:7.1f} │ "
-            f"AvgR={avg_r:6.1f} │ VL={vl:7.2f} │ WR={wr:4.1f}% │ {result_str} ║"
+            f"| Ep {ep:4d}/{n_episodes} | {steps:4d}s | R={ep_reward:7.1f} | "
+            f"AvgR={avg_r:6.1f} | VL={vl:7.2f} | WR={wr:4.1f}% | {result_str} |"
         )
 
         # 10에피소드마다 체크포인트
@@ -117,7 +117,7 @@ def train_ppo_agent(n_episodes: int, save_dir: str, max_frames: int = 2000):
             elapsed = time.time() - t0
             eps_per_sec = ep / elapsed
             logger.info(
-                f"║ ── Checkpoint: {cp_path} ({elapsed:.0f}s, {eps_per_sec:.1f} ep/s) ──"
+                f"| -- Checkpoint: {cp_path} ({elapsed:.0f}s, {eps_per_sec:.1f} ep/s) --"
             )
 
     # 최종 저장
@@ -126,17 +126,17 @@ def train_ppo_agent(n_episodes: int, save_dir: str, max_frames: int = 2000):
 
     elapsed = time.time() - t0
     logger.info(
-        "╠══════════════════════════════════════════════════════════════════════╣"
+        "+======================================================================+"
     )
     logger.info(
-        f"║  PPO 훈련 완료: {n_episodes}ep, 승률 {wins}/{n_episodes} ({wins/n_episodes*100:.1f}%)"
+        f"|  PPO 훈련 완료: {n_episodes}ep, 승률 {wins}/{n_episodes} ({wins/n_episodes*100:.1f}%)"
     )
     logger.info(
-        f"║  is_trained={agent.is_trained()}, deployment={agent.is_ready_for_deployment()}"
+        f"|  is_trained={agent.is_trained()}, deployment={agent.is_ready_for_deployment()}"
     )
-    logger.info(f"║  최종 모델: {final_path} ({elapsed:.1f}s)")
+    logger.info(f"|  최종 모델: {final_path} ({elapsed:.1f}s)")
     logger.info(
-        "╚══════════════════════════════════════════════════════════════════════╝"
+        "+======================================================================+"
     )
 
     return {
@@ -161,11 +161,11 @@ def train_rl_agent(n_episodes: int, save_dir: str, max_frames: int = 2000):
     env = SC2ZergEnv(max_frames=max_frames)
 
     logger.info(
-        "╔══════════════════════════════════════════════════════════════════════╗"
+        "+======================================================================+"
     )
-    logger.info(f"║  RL Agent (REINFORCE) Training — {n_episodes} Episodes")
+    logger.info(f"|  RL Agent (REINFORCE) Training - {n_episodes} Episodes")
     logger.info(
-        "╠══════════════════════════════════════════════════════════════════════╣"
+        "+======================================================================+"
     )
 
     wins = 0
@@ -216,15 +216,15 @@ def train_rl_agent(n_episodes: int, save_dir: str, max_frames: int = 2000):
         wr = wins / ep * 100
         loss = metrics.get("loss", 0) if isinstance(metrics, dict) else 0
         logger.info(
-            f"║ Ep {ep:4d}/{n_episodes} │ {steps:4d}s │ R={ep_reward:7.1f} │ "
-            f"AvgR={avg_r:6.1f} │ L={loss:7.4f} │ WR={wr:4.1f}% │ {result_str} ║"
+            f"| Ep {ep:4d}/{n_episodes} | {steps:4d}s | R={ep_reward:7.1f} | "
+            f"AvgR={avg_r:6.1f} | L={loss:7.4f} | WR={wr:4.1f}% | {result_str} |"
         )
 
         if ep % 10 == 0:
             cp_path = os.path.join(save_dir, f"rl_ep{ep}.npz")
             agent.save_model(cp_path)
             elapsed = time.time() - t0
-            logger.info(f"║ ── Checkpoint: {cp_path} ({elapsed:.0f}s) ──")
+            logger.info(f"| -- Checkpoint: {cp_path} ({elapsed:.0f}s) --")
 
     final_path = os.path.join(save_dir, f"rl_{n_episodes}ep.npz")
     agent.save_model(final_path)
@@ -232,15 +232,15 @@ def train_rl_agent(n_episodes: int, save_dir: str, max_frames: int = 2000):
     elapsed = time.time() - t0
     ready = agent.is_ready_for_deployment()
     logger.info(
-        "╠══════════════════════════════════════════════════════════════════════╣"
+        "+======================================================================+"
     )
     logger.info(
-        f"║  RL 훈련 완료: {n_episodes}ep, 승률 {wins}/{n_episodes} ({wins/n_episodes*100:.1f}%)"
+        f"|  RL 훈련 완료: {n_episodes}ep, 승률 {wins}/{n_episodes} ({wins/n_episodes*100:.1f}%)"
     )
-    logger.info(f"║  is_trained={agent.is_trained()}, deployment={ready}")
-    logger.info(f"║  최종 모델: {final_path} ({elapsed:.1f}s)")
+    logger.info(f"|  is_trained={agent.is_trained()}, deployment={ready}")
+    logger.info(f"|  최종 모델: {final_path} ({elapsed:.1f}s)")
     logger.info(
-        "╚══════════════════════════════════════════════════════════════════════╝"
+        "+======================================================================+"
     )
 
     return {
@@ -289,7 +289,7 @@ if __name__ == "__main__":
     print("=" * 72)
     for r in results:
         print(
-            f"  {r['agent']:4s} │ {r['episodes']}ep │ WR={r['win_rate']*100:.1f}% │ "
-            f"AvgR={r['avg_reward']:.1f} │ Trained={r['is_trained']} │ {r['elapsed']:.1f}s"
+            f"  {r['agent']:4s} | {r['episodes']}ep | WR={r['win_rate']*100:.1f}% | "
+            f"AvgR={r['avg_reward']:.1f} | Trained={r['is_trained']} | {r['elapsed']:.1f}s"
         )
     print("=" * 72)

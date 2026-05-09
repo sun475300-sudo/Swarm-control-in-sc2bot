@@ -157,7 +157,7 @@ class DefenseCoordinator:
             zergling_count = zerglings.amount if hasattr(zerglings, "amount") else 0
             zergling_pending = b.already_pending(UnitTypeId.ZERGLING)
 
-            # ★ 개선: 적 위협 감지 (기지 근처 적 유닛)
+            # * 개선: 적 위협 감지 (기지 근처 적 유닛)
             enemy_threat_detected = False
             if hasattr(b, "enemy_units") and hasattr(b, "townhalls"):
                 for th in b.townhalls:
@@ -168,15 +168,15 @@ class DefenseCoordinator:
                         enemy_threat_detected = True
                         break
 
-            # ★ 수정: 조건 완화 (4기/6기) 및 적 위협 또는 시간 조건
-            min_zerglings_150s = 4  # ★ 6 -> 4 (조건 완화)
-            min_zerglings_180s = 6  # ★ 8 -> 6 (조건 완화)
+            # * 수정: 조건 완화 (4기/6기) 및 적 위협 또는 시간 조건
+            min_zerglings_150s = 4  # * 6 -> 4 (조건 완화)
+            min_zerglings_180s = 6  # * 8 -> 6 (조건 완화)
 
             target_zerglings = (
                 min_zerglings_150s if game_time < 180 else min_zerglings_180s
             )
 
-            # ★ 개선: 적 위협이 있거나 3분(180초) 이후에만 긴급 생산
+            # * 개선: 적 위협이 있거나 3분(180초) 이후에만 긴급 생산
             should_emergency_produce = (
                 game_time >= 150
                 and (zergling_count + zergling_pending) < target_zerglings
@@ -279,7 +279,7 @@ class DefenseCoordinator:
                 except Exception:
                     pass
 
-        # ★★★ IMPROVED: Spore Crawler (Air Defense) - 공중 위협 시 최대 3개까지 건설 ★★★
+        # *** IMPROVED: Spore Crawler (Air Defense) - 공중 위협 시 최대 3개까지 건설 ***
         if (
             requested_spore and spore_count + pending_spores < 3
         ):  # 긴급 시 3개까지 증가 (기존: 1개)
@@ -338,16 +338,16 @@ class DefenseCoordinator:
                 except Exception:
                     pass
 
-        # ★★★ OPTIMIZED: 3:00 Spore Crawler (자원 예약 강화) ★★★
+        # *** OPTIMIZED: 3:00 Spore Crawler (자원 예약 강화) ***
         if game_time >= 180 and spore_count + pending_spores < 1:  # 정확히 3:00
-            # ★ 자원이 80이상이면 즉시 건설 (75 cost + 5 buffer) ★
+            # * 자원이 80이상이면 즉시 건설 (75 cost + 5 buffer) *
             if b.minerals >= 80 and b.townhalls.exists:
                 # Spawning Pool 체크
                 pools = b.structures(UnitTypeId.SPAWNINGPOOL).ready
                 if not pools.exists:
                     if game_time < 185:  # 3:05까지만 대기 로그
                         self.logger.info(
-                            f"[DEFENSE] [{int(game_time)}s] ⏳ Spore 대기: Spawning Pool 미완료"
+                            f"[DEFENSE] [{int(game_time)}s] [WAIT] Spore 대기: Spawning Pool 미완료"
                         )
                     return
 
@@ -366,7 +366,7 @@ class DefenseCoordinator:
                     self.logger.warning(f"[DEFENSE] Spore build failed: {e}")
             elif game_time < 185:  # 3:05까지만 대기 로그
                 self.logger.info(
-                    f"[DEFENSE] [{int(game_time)}s] ⏳ Spore 자원 대기: {b.minerals}m (필요: 75m)"
+                    f"[DEFENSE] [{int(game_time)}s] [WAIT] Spore 자원 대기: {b.minerals}m (필요: 75m)"
                 )
 
         # 4:00+ : Third Spine Crawler
@@ -442,7 +442,7 @@ class DefenseCoordinator:
                 except Exception:
                     pass
 
-            # ★★★ IMPROVED: 확장 기지 스포어 크롤러 증가 (1개 → 2개) ★★★
+            # *** IMPROVED: 확장 기지 스포어 크롤러 증가 (1개 -> 2개) ***
             if spore_count < 2 and b.can_afford(
                 UnitTypeId.SPORECRAWLER
             ):  # 확장당 2개로 증가
@@ -462,7 +462,7 @@ class DefenseCoordinator:
 
     async def _handle_drop_defense(self) -> None:
         """
-        ★ Drop Defense System ★
+        * Drop Defense System *
         Detect enemies near bases and dispatch defense squad.
         """
         b = self.bot
@@ -515,7 +515,7 @@ class DefenseCoordinator:
                     b.blackboard.set("global_defense_needed", True)
                     b.blackboard.set("defense_target", base.position)
                     self.logger.warning(
-                        "Local defense failed at %s — requesting global reinforcement",
+                        "Local defense failed at %s - requesting global reinforcement",
                         base.position,
                     )
                 continue
@@ -536,7 +536,7 @@ class DefenseCoordinator:
 
     async def _handle_worker_defense(self) -> None:
         """
-        ★ Worker Defense System (Mineral Walk & Drill) ★
+        * Worker Defense System (Mineral Walk & Drill) *
         """
         b = self.bot
         if not hasattr(b, "workers"):
@@ -577,7 +577,7 @@ class DefenseCoordinator:
                 UnitTypeId.BANELING,
                 UnitTypeId.ARCHON,
                 UnitTypeId.COLOSSUS,
-                UnitTypeId.LURKER,
+                UnitTypeId.LURKERMP,
             }
             if any(e.type_id in dangerous_types for e in nearby_enemies):
                 should_fight = False

@@ -1,14 +1,14 @@
 # -*- coding: utf-8 -*-
 """
-SC2-Swarm → Drone ATC: Animated GIF Generator
+SC2-Swarm -> Drone ATC: Animated GIF Generator
 DRONAI(osamhack2021) 스타일의 움직이는 시각 자료 생성
 
 생성되는 GIF:
-  1. boids_swarm_attack.gif     — 저그 유닛 Boids 군집 공격 시뮬레이션
-  2. formation_flight.gif       — 드론 편대 비행 (V자/원형/라인)
-  3. collision_avoidance.gif    — 자동 충돌 회피 시뮬레이션
-  4. sim_to_real_pipeline.gif   — Sim-to-Real 파이프라인 애니메이션
-  5. authority_mode_switch.gif  — Authority Mode 전환 시각화
+  1. boids_swarm_attack.gif     - 저그 유닛 Boids 군집 공격 시뮬레이션
+  2. formation_flight.gif       - 드론 편대 비행 (V자/원형/라인)
+  3. collision_avoidance.gif    - 자동 충돌 회피 시뮬레이션
+  4. sim_to_real_pipeline.gif   - Sim-to-Real 파이프라인 애니메이션
+  5. authority_mode_switch.gif  - Authority Mode 전환 시각화
 
 사용법:
     python generate_animated_gifs.py
@@ -39,9 +39,9 @@ def save_gif(anim, name, fps=FPS):
     plt.close("all")
 
 
-# ═══════════════════════════════════════════════════════
+# =======================================================
 # 1. Boids Swarm Attack Simulation
-# ═══════════════════════════════════════════════════════
+# =======================================================
 
 
 def gif_boids_swarm():
@@ -193,10 +193,10 @@ def gif_boids_swarm():
 
     # 레전드
     legend_elements = [
-        mpatches.Patch(color="#8BC34A", label=f"Zergling ×20"),
-        mpatches.Patch(color="#2E7D32", label=f"Roach ×15"),
-        mpatches.Patch(color="#1976D2", label=f"Hydralisk ×15"),
-        mpatches.Patch(color="#7B1FA2", label=f"Mutalisk ×10"),
+        mpatches.Patch(color="#8BC34A", label=f"Zergling x20"),
+        mpatches.Patch(color="#2E7D32", label=f"Roach x15"),
+        mpatches.Patch(color="#1976D2", label=f"Hydralisk x15"),
+        mpatches.Patch(color="#7B1FA2", label=f"Mutalisk x10"),
     ]
     ax.legend(
         handles=legend_elements,
@@ -211,21 +211,21 @@ def gif_boids_swarm():
         p = all_pos[frame]
         for sc, mask in scatters:
             sc.set_offsets(p[mask])
-        title.set_text(f"BOIDS SWARM ATTACK — Frame {frame}/{FRAMES}")
-        frame_text.set_text(f"Units: {N} | Boids: Sep×1.5 + Ali×0.3 + Coh×0.5")
+        title.set_text(f"BOIDS SWARM ATTACK - Frame {frame}/{FRAMES}")
+        frame_text.set_text(f"Units: {N} | Boids: Sepx1.5 + Alix0.3 + Cohx0.5")
         return [sc for sc, _ in scatters] + [title, frame_text]
 
     anim = FuncAnimation(fig, update, frames=len(all_pos), interval=66, blit=True)
     save_gif(anim, "boids_swarm_attack")
 
 
-# ═══════════════════════════════════════════════════════
+# =======================================================
 # 2. Drone Formation Flight
-# ═══════════════════════════════════════════════════════
+# =======================================================
 
 
 def gif_formation_flight():
-    """DRONAI 원형 편대처럼 드론 편대 비행 (V → Circle → Line 전환)"""
+    """DRONAI 원형 편대처럼 드론 편대 비행 (V -> Circle -> Line 전환)"""
     logger.info("Drone Formation Flight")
 
     N = 16
@@ -344,7 +344,7 @@ def gif_formation_flight():
     def update(frame):
         p = all_frames[frame]
         sc.set_offsets(p)
-        title.set_text(f"▲ {all_labels[frame]}")
+        title.set_text(f"^ {all_labels[frame]}")
         info.set_text(f"Frame {frame}/{len(all_frames)} | Spacing: 1.2m | Alt: 50m")
 
         # 연결선 업데이트 (가까운 드론 간만)
@@ -362,9 +362,9 @@ def gif_formation_flight():
     save_gif(anim, "formation_flight")
 
 
-# ═══════════════════════════════════════════════════════
+# =======================================================
 # 3. Collision Avoidance Simulation
-# ═══════════════════════════════════════════════════════
+# =======================================================
 
 
 def gif_collision_avoidance():
@@ -529,8 +529,8 @@ def gif_collision_avoidance():
             if not any(i == a[0] or i == a[1] for a in avoids):
                 circles[i].set_alpha(0)
 
-        title.set_text(f"COLLISION AVOIDANCE — Frame {frame}")
-        warn_text = f"⚠ AVOIDING: {warn_count}" if warn_count > 0 else "✓ CLEAR"
+        title.set_text(f"COLLISION AVOIDANCE - Frame {frame}")
+        warn_text = f"[!] AVOIDING: {warn_count}" if warn_count > 0 else "[OK] CLEAR"
         status.set_text(f"Drones: {N} | Safe dist: {SAFE_DIST}m | {warn_text}")
 
         return [sc, title, status] + circles + warn_lines
@@ -539,9 +539,9 @@ def gif_collision_avoidance():
     save_gif(anim, "collision_avoidance")
 
 
-# ═══════════════════════════════════════════════════════
+# =======================================================
 # 4. Sim-to-Real Pipeline Animation
-# ═══════════════════════════════════════════════════════
+# =======================================================
 
 
 def gif_sim_to_real():
@@ -558,10 +558,10 @@ def gif_sim_to_real():
     ax.axis("off")
 
     stages = [
-        (1.5, "SC2\nSimulation", "#1565C0", "🎮 Boids + FSM\n10,000+ games"),
-        (4.5, "3D Sim\n(Gazebo)", "#6A1B9A", "🖥️ ROS2 + Gazebo\n2D→3D transfer"),
-        (7.5, "Real Drone\n(PX4)", "#2E7D32", "🚁 Pixhawk + RPi\n3-drone flight"),
-        (10.5, "ATC\nScale-up", "#E65100", "✈️ 100+ drones\nCity airspace"),
+        (1.5, "SC2\nSimulation", "#1565C0", "[GAME] Boids + FSM\n10,000+ games"),
+        (4.5, "3D Sim\n(Gazebo)", "#6A1B9A", "[SCREEN]️ ROS2 + Gazebo\n2D->3D transfer"),
+        (7.5, "Real Drone\n(PX4)", "#2E7D32", "[DRONE] Pixhawk + RPi\n3-drone flight"),
+        (10.5, "ATC\nScale-up", "#E65100", "[AIR]️ 100+ drones\nCity airspace"),
     ]
 
     # 화살표
@@ -671,7 +671,7 @@ def gif_sim_to_real():
                 box.set_linewidth(2)
 
         stage_names = ["SC2 Simulation", "3D Simulation", "Real Drone", "ATC Scale-up"]
-        stage_label.set_text(f"▶ {stage_names[stage_idx]}")
+        stage_label.set_text(f"> {stage_names[stage_idx]}")
         pct_text.set_text(f"Progress: {progress * 100:.0f}%")
 
         return [dot, progress_bar, stage_label, pct_text] + boxes
@@ -680,9 +680,9 @@ def gif_sim_to_real():
     save_gif(anim, "sim_to_real_pipeline")
 
 
-# ═══════════════════════════════════════════════════════
+# =======================================================
 # 5. Authority Mode Switch Visualization
-# ═══════════════════════════════════════════════════════
+# =======================================================
 
 
 def gif_authority_mode():
@@ -691,7 +691,7 @@ def gif_authority_mode():
 
     FRAMES = 120
 
-    # 시나리오: BALANCED → EMERGENCY → COMBAT → BALANCED → ECONOMY
+    # 시나리오: BALANCED -> EMERGENCY -> COMBAT -> BALANCED -> ECONOMY
     scenario = [
         (0, 30, "BALANCED", "#2196F3"),
         (30, 50, "EMERGENCY", "#F44336"),
@@ -794,10 +794,10 @@ def gif_authority_mode():
     threat_fill = None
 
     events = {
-        30: "🚨 RUSH DETECTED!",
-        50: "⚔️ Rush Defended → Combat",
-        75: "✅ Threat Cleared",
-        95: "💰 Coast Clear → Economy",
+        30: "[!] RUSH DETECTED!",
+        50: "[COMBAT]️ Rush Defended -> Combat",
+        75: "[OK] Threat Cleared",
+        95: "[GOLD] Coast Clear -> Economy",
     }
 
     def update(frame):
@@ -840,9 +840,9 @@ def gif_authority_mode():
     save_gif(anim, "authority_mode_switch")
 
 
-# ═══════════════════════════════════════════════════════
+# =======================================================
 # Main
-# ═══════════════════════════════════════════════════════
+# =======================================================
 
 if __name__ == "__main__":
     print("=" * 60)

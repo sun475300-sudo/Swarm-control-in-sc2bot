@@ -291,7 +291,7 @@ class GameStateBlackboard:
         """권한 모드 변경"""
         if self.authority_mode != mode:
             self.logger.debug(
-                "authority %s → %s (%s)",
+                "authority %s -> %s (%s)",
                 self.authority_mode.value,
                 mode.value,
                 reason,

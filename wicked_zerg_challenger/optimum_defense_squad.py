@@ -30,7 +30,7 @@ except ImportError:
 
 class OptimumDefenseSquad:
     """
-    ★ Optimum Defense Squad ★
+    * Optimum Defense Squad *
 
     적 위협을 정확히 평가하고
     제압에 필요한 최소 병력(+20% 여유분)만 차출합니다.
@@ -40,11 +40,11 @@ class OptimumDefenseSquad:
         self.bot = bot
         self.logger = get_logger("OptimumDefense")
 
-        # ★ 체크 주기 ★
+        # * 체크 주기 *
         self.last_check = 0
         self.check_interval = 11  # 약 0.5초마다
 
-        # ★ 유닛 전투력 값 (Combat Power) ★
+        # * 유닛 전투력 값 (Combat Power) *
         self.unit_combat_values = {
             # Zerg
             "ZERGLING": 5,
@@ -94,7 +94,7 @@ class OptimumDefenseSquad:
             "TEMPEST": 55,
         }
 
-        # ★ 현재 방어 작전 ★
+        # * 현재 방어 작전 *
         self.active_defense: Optional[Dict] = None
         self.defense_cooldown = 0
         self.defending_unit_tags = set()  # Currently defending units
@@ -189,7 +189,7 @@ class OptimumDefenseSquad:
                 "overkill": False,
             }
 
-        # ★ 1. 위협 평가 ★
+        # * 1. 위협 평가 *
         threat_value = 0
         enemy_composition = {}
 
@@ -210,17 +210,17 @@ class OptimumDefenseSquad:
                 "overkill": False,
             }
 
-        # ★ 2. 필요 병력 계산 (+20% 여유분) ★
+        # * 2. 필요 병력 계산 (+20% 여유분) *
         required_power = int(threat_value * 1.2)
 
-        # ★ 3. 최적 방어 조합 선택 ★
+        # * 3. 최적 방어 조합 선택 *
         required_units, unit_tags = self._select_defense_units(
             threat_position, required_power, enemy_composition
         )
 
         game_time = getattr(self.bot, "time", 0)
         self.logger.info(
-            f"[{int(game_time)}s] ★ OPTIMUM DEFENSE ★\n"
+            f"[{int(game_time)}s] * OPTIMUM DEFENSE *\n"
             f"  Threat Value: {threat_value}\n"
             f"  Required Power: {required_power} (+20%)\n"
             f"  Enemy: {enemy_composition}\n"
@@ -253,15 +253,15 @@ class OptimumDefenseSquad:
         if not hasattr(self.bot, "units"):
             return {}, []
 
-        # ★ 1. 사용 가능한 방어 유닛 목록 ★
+        # * 1. 사용 가능한 방어 유닛 목록 *
         available_units = self._get_available_defense_units(threat_position)
 
-        # ★ 2. 우선순위 정렬 (거리, 효율성) ★
+        # * 2. 우선순위 정렬 (거리, 효율성) *
         sorted_units = self._sort_by_defense_priority(
             available_units, threat_position, enemy_composition
         )
 
-        # ★ 3. 필요한 만큼만 선택 ★
+        # * 3. 필요한 만큼만 선택 *
         selected_units = {}
         selected_tags = []
         current_power = 0
@@ -401,7 +401,7 @@ class OptimumDefenseSquad:
 
         game_time = getattr(self.bot, "time", 0)
         self.logger.info(
-            f"[{int(game_time)}s] ★ DEFENSE DEPLOYED ★\n"
+            f"[{int(game_time)}s] * DEFENSE DEPLOYED *\n"
             f"  Units: {len(unit_tags)}\n"
             f"  Target: {target_position}"
         )

@@ -215,7 +215,7 @@ class MacroCycleManager:
                                 best_dist = dist
                                 best_queen_tag = q_tag
                 except (AttributeError, ValueError) as e:
-                    logger.debug("queen→hatch distance check failed: %s", e)
+                    logger.debug("queen->hatch distance check failed: %s", e)
                     continue
 
             if best_queen_tag:

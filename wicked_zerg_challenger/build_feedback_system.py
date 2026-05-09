@@ -314,12 +314,12 @@ class BuildFeedbackSystem:
         # 1. 승리 시간 분석
         if avg_victory_time > 600:  # 10분 이상
             logger.info(
-                f"  - 승리가 너무 느림 ({avg_victory_time:.0f}s) → 더 공격적인 전략 필요"
+                f"  - 승리가 너무 느림 ({avg_victory_time:.0f}s) -> 더 공격적인 전략 필요"
             )
-            logger.info(f"    → 제안: 3분 저글링 공격, 5분 바퀴 푸시")
+            logger.info(f"    -> 제안: 3분 저글링 공격, 5분 바퀴 푸시")
         elif avg_victory_time < 300:  # 5분 미만
             logger.info(
-                f"  - 매우 빠른 승리! ({avg_victory_time:.0f}s) → 현재 전략 유지"
+                f"  - 매우 빠른 승리! ({avg_victory_time:.0f}s) -> 현재 전략 유지"
             )
 
         # 2. 자원 효율성
@@ -336,7 +336,7 @@ class BuildFeedbackSystem:
                         )
                         if avg_minerals > 1000:
                             logger.info(
-                                f"  - 미네랄 과잉 ({avg_minerals:.0f}) → 유닛 생산 증가 필요"
+                                f"  - 미네랄 과잉 ({avg_minerals:.0f}) -> 유닛 생산 증가 필요"
                             )
 
         # 3. 유닛 조합
@@ -357,4 +357,4 @@ class BuildFeedbackSystem:
                     unit_usage.items(), key=lambda x: sum(x[1]), reverse=True
                 )[:3]:
                     avg = sum(counts) / len(counts)
-                    logger.info(f"    → {unit}: 평균 {avg:.1f}마리")
+                    logger.info(f"    -> {unit}: 평균 {avg:.1f}마리")

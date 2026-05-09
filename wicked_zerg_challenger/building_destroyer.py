@@ -120,7 +120,7 @@ class BuildingDestroyer:
         if not attack_units.exists:
             return
 
-        # ★ BaseDestructionCoordinator 연동: 집중 공격 타겟 우선 ★
+        # * BaseDestructionCoordinator 연동: 집중 공격 타겟 우선 *
         primary_target = None
         if hasattr(self.bot, "base_destruction") and self.bot.base_destruction:
             try:
@@ -134,7 +134,7 @@ class BuildingDestroyer:
         if not target_buildings:
             return
 
-        # ★ 전략 변경: 분산 → 집중 공격 (2개 타겟까지만) ★
+        # * 전략 변경: 분산 -> 집중 공격 (2개 타겟까지만) *
         # primary_target이 있으면 그 근처 건물을 최우선
         if primary_target:
             target_buildings.sort(key=lambda b: b.distance_to(primary_target))
@@ -253,8 +253,8 @@ class RapidVictorySystem:
 
         # 공격적 모드
         self.aggressive_mode = False
-        self.rush_threshold = 480  # ★ 8분 이후 공격 시작 (3분 → 8분, 조기 올인 방지)
-        self.min_army_supply_for_rush = 40  # ★ 최소 서플 40 이상이어야 공격
+        self.rush_threshold = 480  # * 8분 이후 공격 시작 (3분 -> 8분, 조기 올인 방지)
+        self.min_army_supply_for_rush = 40  # * 최소 서플 40 이상이어야 공격
 
     async def on_step(self, iteration: int):
         """매 프레임 실행"""

@@ -54,27 +54,27 @@ def initialize_combat_state(manager):
     manager._last_rally_update = 0
     manager._rally_update_interval = 30  # Update rally point every 30 seconds
     manager._min_army_for_attack = (
-        12  # ★ FIX: 20→12 (faster aggression, 20 was too passive)
+        12  # * FIX: 20->12 (faster aggression, 20 was too passive)
     )
     manager._early_game_min_attack = (
-        8  # ★ FIX: 12→8 (earlier pressure with fewer units)
+        8  # * FIX: 12->8 (earlier pressure with fewer units)
     )
     manager._winning_state_start_time = 0.0  # Track when WINNING state began
 
-    # === ★★★ ROACH RUSH TIMING ATTACK ★★★ ===
+    # === *** ROACH RUSH TIMING ATTACK *** ===
     manager._roach_rush_active = False
-    manager._roach_rush_timing = 300  # ★ FIX: 6분→5분 (빌드오더 종료 즉시)
-    manager._roach_rush_min_count = 8  # ★ FIX: 12→8 (바퀴 8마리면 초반 압박 가능)
+    manager._roach_rush_timing = 300  # * FIX: 6분->5분 (빌드오더 종료 즉시)
+    manager._roach_rush_min_count = 8  # * FIX: 12->8 (바퀴 8마리면 초반 압박 가능)
     manager._roach_rush_sent = False
 
-    # === ★ ARMY UNITS CACHE (per-frame) ★ ===
+    # === * ARMY UNITS CACHE (per-frame) * ===
     manager._cached_army = None
     manager._cached_army_frame = -1
 
-    # === ★ COMBAT ENGAGEMENT STATE ★ ===
+    # === * COMBAT ENGAGEMENT STATE * ===
     manager.is_engaging = False  # True when actively fighting enemy units
 
-    # === ★ EARLY HARASS RETREAT & KILL TRACKING ★ ===
+    # === * EARLY HARASS RETREAT & KILL TRACKING * ===
     manager._harass_worker_kills = 0  # Total workers killed during harassment
     manager._harass_last_enemy_workers = (
         None  # Snapshot of enemy worker count for kill tracking
@@ -82,12 +82,16 @@ def initialize_combat_state(manager):
     manager._harass_retreating_tags = (
         set()
     )  # Units currently retreating from harassment
+    manager.harass_units = set()
+    manager.harass_returning_units = set()
+    manager.harass_kill_count = 0
+    manager._worker_harass_defender_tags = set()
 
-    # === ★ MANDATORY BASE DEFENSE SYSTEM ★ ===
+    # === * MANDATORY BASE DEFENSE SYSTEM * ===
     manager._base_defense_active = False
     manager._defense_rally_point = None
 
-    # === ★ Creep Denial System (New) ★ ===
+    # === * Creep Denial System (New) * ===
     try:
         from combat.creep_denial_system import CreepDenialSystem
 
@@ -98,11 +102,11 @@ def initialize_combat_state(manager):
         manager.creep_denial = None
 
     manager._last_defense_check = 0
-    manager._defense_check_interval = 3  # ★ OPTIMIZED: 5 → 3 (더 빠른 반응) ★
-    manager._worker_defense_threshold = 1  # ★ FIX: 적 1기라도 일꾼 근처 위협 시 방어 ★
+    manager._defense_check_interval = 3  # * OPTIMIZED: 5 -> 3 (더 빠른 반응) *
+    manager._worker_defense_threshold = 1  # * FIX: 적 1기라도 일꾼 근처 위협 시 방어 *
     manager._critical_defense_threshold = 8  # 적 8기 이상이면 모든 유닛 방어
 
-    # === ★★★ VICTORY CONDITION TRACKING ★★★ ===
+    # === *** VICTORY CONDITION TRACKING *** ===
     manager._victory_push_active = False  # 승리 푸시 모드
     manager._last_enemy_structure_count = 0  # 마지막으로 본 적 건물 수
     manager._enemy_structures_destroyed = 0  # 파괴한 적 건물 수
@@ -112,14 +116,14 @@ def initialize_combat_state(manager):
     manager._known_enemy_expansions = set()  # 발견한 적 확장 위치
     manager._last_expansion_check = 0  # 마지막 확장 체크 시간
 
-    # === ★★★ EXPANSION DEFENSE SYSTEM ★★★ ===
+    # === *** EXPANSION DEFENSE SYSTEM *** ===
     manager._expansion_under_attack = {}  # 확장 기지 tag -> 공격 시작 시간
     manager._expansion_destroyed_positions = []  # 파괴된 확장 기지 위치
     manager._last_expansion_defense_check = 0
     manager._expansion_defense_check_interval = 10  # 10프레임마다 확장 방어 체크
     manager._expansion_defense_force_size = 8  # 확장 방어에 투입할 최소 유닛 수
 
-    # === ★★★ Phase 17: PERFORMANCE OPTIMIZATION - FRAME SKIP ★★★ ===
+    # === *** Phase 17: PERFORMANCE OPTIMIZATION - FRAME SKIP *** ===
     manager._last_combat_frame = 0  # 마지막 전투 로직 실행 프레임
     manager._combat_frame_skip = 4  # 기본 4프레임마다 실행 (약 0.18초)
     manager._combat_base_skip = 4  # 기본 프레임 스킵 (동적 스케일링 기준)
@@ -164,6 +168,10 @@ def reset_combat_state(manager):
     manager._last_emergency_check = 0
     manager._last_frame_skip_update = 0
     manager._prev_unit_health_tags = {}
+    manager.harass_units = set()
+    manager.harass_returning_units = set()
+    manager.harass_kill_count = 0
+    manager._worker_harass_defender_tags = set()
 
 
 def initialize_managers(manager):
@@ -197,7 +205,7 @@ def initialize_managers(manager):
         if hasattr(manager.bot, "iteration") and manager.bot.iteration % 500 == 0:
             manager.logger.warning("Boids controller not available")
 
-    # ★ Formation Manager (Concave + Choke Control) ★
+    # * Formation Manager (Concave + Choke Control) *
     try:
         from combat.formation_manager import FormationManager
 
@@ -207,7 +215,7 @@ def initialize_managers(manager):
         if hasattr(manager.bot, "iteration") and manager.bot.iteration % 500 == 0:
             manager.logger.warning("Formation manager not available")
 
-    # ★ NEW: Mutalisk Micro Controller (Regen Dance + Magic Box) ★
+    # * NEW: Mutalisk Micro Controller (Regen Dance + Magic Box) *
     try:
         from combat.mutalisk_micro import MutaliskMicroController
 
@@ -217,7 +225,7 @@ def initialize_managers(manager):
         if hasattr(manager.bot, "iteration") and manager.bot.iteration % 500 == 0:
             manager.logger.warning("Mutalisk micro controller not available")
 
-    # ★ NEW: Baneling Tactics Controller (Land Mines) ★
+    # * NEW: Baneling Tactics Controller (Land Mines) *
     try:
         from combat.baneling_tactics import BanelingTacticsController
 
@@ -227,7 +235,7 @@ def initialize_managers(manager):
         if hasattr(manager.bot, "iteration") and manager.bot.iteration % 500 == 0:
             manager.logger.warning("Baneling tactics controller not available")
 
-    # ★ NEW: Overlord Transport (대군주 수송) ★
+    # * NEW: Overlord Transport (대군주 수송) *
     try:
         from combat.overlord_transport import OverlordTransport
 
@@ -237,7 +245,7 @@ def initialize_managers(manager):
         if hasattr(manager.bot, "iteration") and manager.bot.iteration % 500 == 0:
             manager.logger.warning("Overlord transport not available")
 
-    # ★ NEW: Roach Burrow Heal (바퀴 잠복 회복) ★
+    # * NEW: Roach Burrow Heal (바퀴 잠복 회복) *
     try:
         from combat.roach_burrow_heal import RoachBurrowHeal
 
@@ -247,7 +255,7 @@ def initialize_managers(manager):
         if hasattr(manager.bot, "iteration") and manager.bot.iteration % 500 == 0:
             manager.logger.warning("Roach burrow heal not available")
 
-    # ★★★ Phase 19: Lurker Ambush System ★★★
+    # *** Phase 19: Lurker Ambush System ***
     try:
         from combat.lurker_ambush import LurkerAmbushSystem
 
@@ -257,7 +265,7 @@ def initialize_managers(manager):
         if hasattr(manager.bot, "iteration") and manager.bot.iteration % 500 == 0:
             manager.logger.warning("Lurker ambush system not available")
 
-    # ★★★ Phase 19: Smart Consume System ★★★
+    # *** Phase 19: Smart Consume System ***
     try:
         from combat.smart_consume import SmartConsumeSystem
 
@@ -267,7 +275,7 @@ def initialize_managers(manager):
         if hasattr(manager.bot, "iteration") and manager.bot.iteration % 500 == 0:
             manager.logger.warning("Smart consume system not available")
 
-    # ★★★ Phase 20: Overlord Hunter ★★★
+    # *** Phase 20: Overlord Hunter ***
     try:
         from combat.overlord_hunter import OverlordHunter
 

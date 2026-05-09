@@ -77,8 +77,8 @@ class TradeAnalyzer:
                 # 불리한 교환 경고
                 if self.current_trade_ratio > 2.0 and self.battle_active:
                     self.logger.warning(
-                        f"[{int(self.bot.time)}s] ★ UNFAVORABLE TRADE! "
-                        f"Ratio: {self.current_trade_ratio:.2f}:1 - Consider retreating ★"
+                        f"[{int(self.bot.time)}s] * UNFAVORABLE TRADE! "
+                        f"Ratio: {self.current_trade_ratio:.2f}:1 - Consider retreating *"
                     )
 
         except Exception as e:

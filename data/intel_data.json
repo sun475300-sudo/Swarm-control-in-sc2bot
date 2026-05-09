@@ -1,21 +1,23 @@
 {
-  "enemy_race_name": "Protoss",
+  "enemy_race_name": "Terran",
   "enemy_unit_counts": {
-    "VOIDRAY": 3,
-    "IMMORTAL": 2,
-    "SENTRY": 2,
-    "STALKER": 2,
-    "ZEALOT": 4,
-    "ADEPT": 1
+    "GHOST": 1,
+    "MARAUDER": 4,
+    "RAVEN": 2,
+    "MEDIVAC": 1,
+    "MARINE": 5
   },
   "enemy_tech_buildings": [
-    "TEMPLARARCHIVE",
-    "FLEETBEACON",
-    "ROBOTICSFACILITY",
-    "TWILIGHTCOUNCIL",
-    "STARGATE"
+    "FUSIONCORE",
+    "ARMORY",
+    "FACTORY",
+    "STARPORT"
   ],
   "scouted_locations": [
+    [
+      42.5,
+      93.5
+    ],
     [
       126.5,
       71.5
@@ -25,12 +27,28 @@
       55.5
     ],
     [
+      44.68269045571747,
+      117.4231566176629
+    ],
+    [
       124.5,
       151.5
     ],
     [
+      70.5,
+      117.5
+    ],
+    [
       127.5,
       57.5
+    ],
+    [
+      155.31730954428252,
+      26.57684338233711
+    ],
+    [
+      157.5,
+      50.5
     ],
     [
       122.5,
@@ -39,7 +57,11 @@
     [
       80.5,
       56.5
+    ],
+    [
+      100.0,
+      72.0
     ]
   ],
-  "enemy_build_pattern": "protoss_stargate"
+  "enemy_build_pattern": "mech_transition"
 }

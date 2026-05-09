@@ -40,7 +40,7 @@ class MultiBaseDefense:
         # 퀸 할당 (각 기지마다)
         self.queens_per_base = 2  # 기지당 퀸 2마리
 
-        # ★ Phase 12: 방어 유닛 태그 추적 (중복 명령 방지) ★
+        # * Phase 12: 방어 유닛 태그 추적 (중복 명령 방지) *
         self._defense_unit_tags: set = set()
 
     async def on_step(self, iteration: int):
@@ -68,7 +68,7 @@ class MultiBaseDefense:
             # 4. 긴급 방어 (기지가 공격 받고 있을 때)
             await self._emergency_base_defense(iteration)
 
-            # ★ Phase 18: 전진 스파인 방어 (3기지+ & 8분+ & 미네랄 여유) ★
+            # * Phase 18: 전진 스파인 방어 (3기지+ & 8분+ & 미네랄 여유) *
             if game_time >= 480 and iteration % 176 == 0:  # 8초마다 체크
                 await self._build_forward_spine(game_time, iteration)
 
@@ -157,7 +157,7 @@ class MultiBaseDefense:
                 await self._build_spine_at_base(status["position"], iteration)
                 return  # 한 번에 하나씩만
 
-            # ★ Phase 26: 포자 촉수 2분으로 앞당김 (이전: 3분) — DT/오라클 대비
+            # * Phase 26: 포자 촉수 2분으로 앞당김 (이전: 3분) - DT/오라클 대비
             if game_time >= 120 and status["spore_count"] < self.spore_per_base:
                 await self._build_spore_at_base(status["position"], iteration)
                 return
@@ -239,7 +239,7 @@ class MultiBaseDefense:
         1. 근처 모든 유닛을 방어에 투입
         2. 일꾼도 임시 방어에 참여 (심각한 위협일 때)
         """
-        # ★ Phase 12: 매 프레임 방어 유닛 태그 초기화 ★
+        # * Phase 12: 매 프레임 방어 유닛 태그 초기화 *
         self._defense_unit_tags.clear()
         any_base_under_attack = False
 
@@ -265,9 +265,9 @@ class MultiBaseDefense:
             for unit in nearby_army:
                 closest_enemy = nearby_enemies.closest_to(unit)
                 self.bot.do(unit.attack(closest_enemy))
-                self._defense_unit_tags.add(unit.tag)  # ★ Phase 12: 태그 기록
+                self._defense_unit_tags.add(unit.tag)  # * Phase 12: 태그 기록
 
-            # ★ NEW: 먼 곳의 idle 군대도 위협 기지로 이동 (중간 이상 위협 시)
+            # * NEW: 먼 곳의 idle 군대도 위협 기지로 이동 (중간 이상 위협 시)
             if threat_level >= 2:
                 idle_army = self.bot.units.idle.exclude_type(
                     [
@@ -281,7 +281,7 @@ class MultiBaseDefense:
 
                 for unit in idle_army:
                     self.bot.do(unit.attack(base_pos))
-                    self._defense_unit_tags.add(unit.tag)  # ★ Phase 12
+                    self._defense_unit_tags.add(unit.tag)  # * Phase 12
 
             # 2. 심각한 위협이면 일꾼도 투입 (threat_level >= 3)
             if threat_level >= 3:
@@ -291,7 +291,7 @@ class MultiBaseDefense:
                 drone_count = min(nearby_drones.amount, 5)  # 최대 5마리만
 
                 for drone in nearby_drones[:drone_count]:
-                    # ★ CRITICAL: 드론이 기지에서 12거리 이상 벗어나지 않도록 체크 ★
+                    # * CRITICAL: 드론이 기지에서 12거리 이상 벗어나지 않도록 체크 *
                     if drone.distance_to(base_pos) > 12:
                         # 너무 멀리 나갔으면 복귀
                         nearby_minerals = self.bot.mineral_field.closer_than(
@@ -310,10 +310,10 @@ class MultiBaseDefense:
 
             if iteration % 100 == 0:
                 self.logger.warning(
-                    f"[{int(self.bot.time)}s] ★ EMERGENCY BASE DEFENSE! Threat: {threat_level} ★"
+                    f"[{int(self.bot.time)}s] * EMERGENCY BASE DEFENSE! Threat: {threat_level} *"
                 )
 
-        # ★ Phase 12: Blackboard에 방어 상태 저장 (CombatManager 디컨플릭트용) ★
+        # * Phase 12: Blackboard에 방어 상태 저장 (CombatManager 디컨플릭트용) *
         blackboard = getattr(self.bot, "blackboard", None)
         if blackboard and hasattr(blackboard, "set"):
             blackboard.set("base_under_attack", any_base_under_attack)
@@ -339,7 +339,7 @@ class MultiBaseDefense:
 
     async def _build_forward_spine(self, game_time: float, iteration: int):
         """
-        ★ Phase 18: 전진 스파인 방어 ★
+        * Phase 18: 전진 스파인 방어 *
 
         조건: 3기지+ & 8분+ & 미네랄 400+ & 크립 위
         위치: 가장 전진된 기지와 맵 센터 사이 (크립 위)
@@ -372,7 +372,7 @@ class MultiBaseDefense:
         if not self.bot.can_afford(UnitTypeId.SPINECRAWLER):
             return
 
-        # 전진 위치 계산: 가장 전진된 기지 → 맵 센터 방향
+        # 전진 위치 계산: 가장 전진된 기지 -> 맵 센터 방향
         if not hasattr(self.bot, "game_info"):
             return
 
@@ -390,7 +390,7 @@ class MultiBaseDefense:
         try:
             await self.bot.build(UnitTypeId.SPINECRAWLER, near=forward_pos)
             self.logger.info(
-                f"[{int(game_time)}s] ★ Phase 18: Forward Spine Crawler at "
+                f"[{int(game_time)}s] * Phase 18: Forward Spine Crawler at "
                 f"({forward_pos.x:.0f}, {forward_pos.y:.0f})"
             )
         except (AttributeError, RuntimeError, ValueError) as e:

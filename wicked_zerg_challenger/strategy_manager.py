@@ -66,6 +66,271 @@ class EnemyRace(Enum):
     UNKNOWN = "Unknown"
 
 
+ZVT_COMPOSITION_TIMELINE = {
+    "early": {
+        "default": {"zergling": 0.60, "queen": 0.30, "roach": 0.10},
+        "vs_hellion": {"queen": 0.30, "roach": 0.50, "zergling": 0.20},
+        "vs_reaper": {"zergling": 0.70, "queen": 0.30},
+    },
+    "mid": {
+        "vs_bio": {
+            "baneling": 0.25,
+            "zergling": 0.30,
+            "roach": 0.15,
+            "hydralisk": 0.20,
+            "ravager": 0.10,
+        },
+        "vs_mech": {
+            "ravager": 0.30,
+            "roach": 0.25,
+            "hydralisk": 0.25,
+            "swarmhost": 0.10,
+            "zergling": 0.10,
+        },
+        "vs_air": {
+            "hydralisk": 0.35,
+            "corruptor": 0.25,
+            "queen": 0.15,
+            "roach": 0.15,
+            "zergling": 0.10,
+        },
+    },
+    "late": {
+        "vs_bio": {
+            "ultralisk": 0.30,
+            "zergling": 0.25,
+            "baneling": 0.20,
+            "hydralisk": 0.15,
+            "viper": 0.10,
+        },
+        "vs_mech": {
+            "broodlord": 0.25,
+            "corruptor": 0.20,
+            "viper": 0.15,
+            "ravager": 0.20,
+            "hydralisk": 0.20,
+        },
+        "vs_bc": {
+            "corruptor": 0.40,
+            "hydralisk": 0.25,
+            "viper": 0.15,
+            "queen": 0.10,
+            "infestor": 0.10,
+        },
+    },
+}
+
+
+ZVP_COUNTER_RULES = {
+    "disruptor_nova": {
+        "detection": "DISRUPTOR in enemy units",
+        "response": {
+            "composition": {
+                "zergling": 0.30,
+                "mutalisk": 0.30,
+                "roach": 0.20,
+                "ravager": 0.20,
+            },
+            "micro": "SPREAD_ON_NOVA",
+            "note": "Use fast units to flank Disruptors and punish nova cooldown.",
+        },
+    },
+    "storm_templar": {
+        "detection": "HIGHTEMPLAR count >= 2",
+        "response": {
+            "composition": {
+                "zergling": 0.40,
+                "ravager": 0.30,
+                "roach": 0.15,
+                "viper": 0.15,
+            },
+            "micro": "SPLIT_ON_STORM",
+            "note": "Split during storms and collapse on templar with lings.",
+        },
+    },
+    "warp_prism_harass": {
+        "detection": "WARPPRISM near our bases",
+        "response": {
+            "composition": {"queen": 0.25, "hydra": 0.35, "zergling": 0.40},
+            "micro": "FOCUS_PRISM",
+            "note": "Queens and Hydralisks focus Warp Prism before ground units.",
+        },
+    },
+    "blink_stalker_allin": {
+        "detection": "STALKER count >= 8 and no enemy expansion by 5:00",
+        "response": {
+            "composition": {
+                "roach": 0.40,
+                "ravager": 0.25,
+                "zergling": 0.25,
+                "queen": 0.10,
+            },
+            "micro": "SURROUND_BLINK",
+            "note": "Hold with Roach/Ravager while lings deny blink retreats.",
+        },
+    },
+    "skytoss_transition": {
+        "detection": "CARRIER count >= 2 or TEMPEST count >= 2",
+        "response": {
+            "composition": {
+                "corruptor": 0.35,
+                "viper": 0.20,
+                "hydra": 0.25,
+                "queen": 0.10,
+                "infestor": 0.10,
+            },
+            "micro": "ABDUCT_CARRIERS",
+            "note": "Abduct capital ships, then focus them with Corruptors.",
+        },
+    },
+}
+
+
+ZVZ_COMPOSITION_TIMELINE = {
+    "early": {
+        "default": {"zergling": 0.60, "baneling": 0.20, "queen": 0.20},
+        "vs_12pool": {"zergling": 0.70, "queen": 0.30},
+        "vs_roach": {"roach": 0.50, "zergling": 0.30, "queen": 0.20},
+    },
+    "mid": {
+        "default": {
+            "roach": 0.35,
+            "ravager": 0.20,
+            "hydra": 0.25,
+            "zergling": 0.10,
+            "LURKERMP": 0.10,
+        },
+        "vs_muta": {
+            "hydra": 0.50,
+            "queen": 0.15,
+            "roach": 0.25,
+            "zergling": 0.10,
+        },
+        "vs_roach_all_in": {
+            "ravager": 0.30,
+            "roach": 0.40,
+            "hydra": 0.20,
+            "zergling": 0.10,
+        },
+    },
+    "late": {
+        "default": {
+            "broodlord": 0.25,
+            "corruptor": 0.20,
+            "viper": 0.15,
+            "hydra": 0.20,
+            "LURKERMP": 0.20,
+        },
+        "vs_broodlord": {
+            "corruptor": 0.40,
+            "viper": 0.20,
+            "hydra": 0.25,
+            "infestor": 0.15,
+        },
+    },
+}
+
+
+TIMING_ATTACKS = {
+    "ZvT": {
+        "ling_speed_timing": {
+            "trigger": "metabolic_boost_done AND zergling_count >= 16",
+            "time_window": (180, 300),
+            "target": "enemy_natural",
+            "retreat_if": "enemy_bunker_count >= 2 OR army_power_ratio < 1.2",
+        },
+        "roach_ravager_push": {
+            "trigger": "roach_count >= 8 AND ravager_count >= 3",
+            "time_window": (360, 480),
+            "target": "enemy_third",
+            "retreat_if": "siege_tank_count >= 3 OR army_power_ratio < 1.0",
+        },
+    },
+    "ZvP": {
+        "roach_timing": {
+            "trigger": "roach_count >= 10 AND roach_speed_done",
+            "time_window": (300, 420),
+            "target": "enemy_natural",
+            "retreat_if": "immortal_count >= 3 OR army_power_ratio < 1.1",
+        },
+        "ling_nydus_harass": {
+            "trigger": "nydus_network_ready AND zergling_count >= 20",
+            "time_window": (300, 600),
+            "target": "enemy_main_mineral_line",
+            "retreat_if": "zergling_count < 8",
+        },
+    },
+    "ZvZ": {
+        "ling_bane_allin": {
+            "trigger": "metabolic_boost_done AND baneling_count >= 6 AND zergling_count >= 12",
+            "time_window": (180, 300),
+            "target": "enemy_natural",
+            "retreat_if": "roach_count_enemy >= 4 OR army_power_ratio < 0.8",
+        },
+        "roach_push": {
+            "trigger": "roach_count >= 7",
+            "time_window": (300, 420),
+            "target": "enemy_natural",
+            "retreat_if": "ravager_count_enemy >= 4 AND roach_count_enemy >= 5",
+        },
+    },
+}
+
+
+EMERGENCY_RESPONSES = {
+    "proxy_barracks": {
+        "detection": "Barracks distance_to(our_base) < 40 AND game_time < 180",
+        "immediate": ["cancel_expansion", "spine_crawler_x2", "zergling_x6", "queen_defend"],
+        "drone_production": "HALT",
+    },
+    "hellion_runby": {
+        "detection": "Hellion count >= 4 AND distance_to(our_mineral_line) < 15",
+        "immediate": ["queen_defend", "roach_x4", "wall_off_natural"],
+        "drone_production": "REDUCE",
+    },
+    "bc_rush": {
+        "detection": "Battlecruiser count >= 1 AND game_time < 600",
+        "immediate": ["corruptor_x5", "queen_transfuse", "spore_x2"],
+        "drone_production": "REDUCE",
+    },
+    "cannon_rush": {
+        "detection": "Photon Cannon distance_to(our_base) < 40 AND game_time < 180",
+        "immediate": ["drone_pull_x4", "spine_crawler_x1", "zergling_x6"],
+        "drone_production": "HALT",
+    },
+    "dt_rush": {
+        "detection": "DarkTemplar detected OR DarkShrine scouted",
+        "immediate": ["overseer_morph", "spore_x2_each_base", "queen_defend"],
+        "drone_production": "NORMAL",
+    },
+    "void_ray_rush": {
+        "detection": "VoidRay count >= 2 AND game_time < 360",
+        "immediate": ["queen_x4", "hydra_x6", "spore_x2"],
+        "drone_production": "REDUCE",
+    },
+    "12pool_rush": {
+        "detection": "enemy_zergling_count >= 6 AND game_time < 120",
+        "immediate": ["drone_pull_x3", "spine_crawler_x1", "zergling_x4"],
+        "drone_production": "HALT",
+    },
+    "baneling_bust": {
+        "detection": "enemy_baneling_count >= 8 AND approaching_our_base",
+        "immediate": ["split_units", "queen_defend", "roach_x4"],
+        "drone_production": "HALT",
+    },
+    "enemy_all_in": {
+        "detection": "no enemy expansion after 5:00 AND enemy combat power >= 1.5x approaching",
+        "immediate": [
+            "spine_crawler_x4",
+            "all_larva_army",
+            "queen_all_defend",
+            "cancel_drone_production",
+        ],
+        "drone_production": "HALT",
+    },
+}
+
+
 class StrategyManager:
     """
     종족별 전략 및 Emergency Mode 관리자 (Data-Driven)
@@ -109,9 +374,9 @@ class StrategyManager:
         # 4분 이전 견제 시스템
         self.early_harassment_active = False
         self.last_harassment_time = 0
-        self.harassment_interval = 15.0  # ★ 30s → 15s: more aggressive harassment
+        self.harassment_interval = 15.0  # * 30s -> 15s: more aggressive harassment
 
-        # ★ Load Unit Ratios from KnowledgeManager ★
+        # * Load Unit Ratios from KnowledgeManager *
         self.race_unit_ratios = {
             EnemyRace.TERRAN: self._load_ratios("Terran"),
             EnemyRace.PROTOSS: self._load_ratios("Protoss"),
@@ -168,14 +433,14 @@ class StrategyManager:
         self.learned_expansion_timings = {}
         self.learned_army_ratios = {}
 
-        # ★ Feature 83: Extended JARVIS command fields ★
+        # * Feature 83: Extended JARVIS command fields *
         self.target_priority: str = "military"  # "economy" | "military" | "tech"
         self.expansion_timing: str = "normal"  # "fast" | "normal" | "slow"
         self.preferred_comp: str = (
             "balanced"  # "zergling_heavy" | "roach_heavy" | "muta_heavy" | "balanced"
         )
 
-        # ★ Feature 89: Custom unit weights from JARVIS ★
+        # * Feature 89: Custom unit weights from JARVIS *
         self.custom_unit_weights: Optional[Dict[str, float]] = None
         self.early_scout_pressure_active = False
         self.early_scout_greed_suppressed = False
@@ -235,7 +500,7 @@ class StrategyManager:
 
     def update(self) -> None:
         """매 스텝마다 호출하여 전략 업데이트"""
-        # ★ 적 유닛 정보 1회 캐시 (매 프레임 반복 조회 방지) ★
+        # * 적 유닛 정보 1회 캐시 (매 프레임 반복 조회 방지) *
         self._cached_enemy_composition = self._cache_enemy_composition()
 
         self._check_jarvis_commands()
@@ -248,11 +513,18 @@ class StrategyManager:
         self._apply_early_scout_signals()
         self._update_strategy_mode()
         self._update_counter_build()
+        self._detect_blackboard_air_threat()
         self._detect_direct_air_threat()
         # Delegated to RacialCounterManager
         self._apply_racial_counters()
+        self._apply_zvt_composition_timeline()
+        self._apply_zvp_counter_rules()
+        self._apply_zvz_composition_timeline()
+        self._apply_timing_attack_system()
+        self._detect_all_in_pressure()
+        self._apply_emergency_response_table()
 
-        # ★ Write State to Blackboard ★
+        # * Write State to Blackboard *
         if self.blackboard:
             self.blackboard.set("strategy_mode", self.current_mode.name)
             self.blackboard.set("game_phase", self.game_phase.name)
@@ -397,19 +669,19 @@ class StrategyManager:
                             f"[JARVIS] Aggression level updated to: {level}"
                         )
 
-                    # ★ Feature 83: target_priority ★
+                    # * Feature 83: target_priority *
                     tp = cmd_data.get("target_priority")
                     if tp and tp in ("economy", "military", "tech"):
                         self.target_priority = tp
                         self.logger.info(f"[JARVIS] Target priority set to: {tp}")
 
-                    # ★ Feature 83: expansion_timing ★
+                    # * Feature 83: expansion_timing *
                     et = cmd_data.get("expansion_timing")
                     if et and et in ("fast", "normal", "slow"):
                         self.expansion_timing = et
                         self.logger.info(f"[JARVIS] Expansion timing set to: {et}")
 
-                    # ★ Feature 83: unit_composition ★
+                    # * Feature 83: unit_composition *
                     uc = cmd_data.get("unit_composition")
                     if uc and uc in (
                         "zergling_heavy",
@@ -420,7 +692,7 @@ class StrategyManager:
                         self.preferred_comp = uc
                         self.logger.info(f"[JARVIS] Preferred composition set to: {uc}")
 
-                    # ★ Feature 89: unit_weights ★
+                    # * Feature 89: unit_weights *
                     uw = cmd_data.get("unit_weights")
                     if uw and isinstance(uw, dict):
                         # Validate all values are numeric
@@ -561,7 +833,7 @@ class StrategyManager:
         if hasattr(self.bot, "enemy_units") and self.bot.enemy_units:
             if hasattr(self.bot, "townhalls") and self.bot.townhalls.exists:
                 main_base = self.bot.townhalls.first
-                # ★ CRITICAL: 비상 모드 조건 완화 (30 → 15) - 확장 차단 방지 ★
+                # * CRITICAL: 비상 모드 조건 완화 (30 -> 15) - 확장 차단 방지 *
                 nearby_enemies = [
                     e
                     for e in self.bot.enemy_units
@@ -656,7 +928,7 @@ class StrategyManager:
         enemies_near_base = []
         counted_tags = set()
 
-        # ★ O(n) 최적화: 적 유닛 1회 순회, 각 타운홀 거리 체크 ★
+        # * O(n) 최적화: 적 유닛 1회 순회, 각 타운홀 거리 체크 *
         th_positions = [th.position for th in self.bot.townhalls]
         for enemy in enemy_units:
             try:
@@ -680,7 +952,7 @@ class StrategyManager:
         # 대규모 공격 판정
         # 조건: 위협 점수 30 이상 또는 고위협 유닛 3개 이상 (과민 감지 완화)
         if total_threat_score >= 30 or high_threat_count >= 3:
-            # ★★★ 로그 스팸 방지: 5초마다만 출력 ★★★
+            # *** 로그 스팸 방지: 5초마다만 출력 ***
             if game_time - self.last_major_attack_log > self.log_cooldown:
                 self.logger.warning(
                     f"[{int(game_time)}s] MAJOR ATTACK DETECTED! "
@@ -706,7 +978,7 @@ class StrategyManager:
             self.last_major_attack_time = game_time
             return
 
-        # ★ 로그 스팸 방지: 10초 쿨다운 ★
+        # * 로그 스팸 방지: 10초 쿨다운 *
         last_log = getattr(self, "_last_defense_log_time", 0.0)
         should_log = (game_time - last_log) >= 10.0
 
@@ -726,7 +998,7 @@ class StrategyManager:
         # 확장 기지 방어 건물 추가 요청 (BuildingCoordination에 위임)
         self._request_defensive_building(spine=True)
 
-        # 적 공중 유닛 체크 → 스포어 요청도 위임
+        # 적 공중 유닛 체크 -> 스포어 요청도 위임
         if hasattr(self.bot, "enemy_units"):
             air_threats = {
                 "MUTALISK",
@@ -792,7 +1064,7 @@ class StrategyManager:
 
     def _update_counter_build(self) -> None:
         """
-        ★ Phase 17: 적 빌드에 따른 실시간 대응 빌드 업데이트 ★
+        * Phase 17: 적 빌드에 따른 실시간 대응 빌드 업데이트 *
 
         IntelManager에서 감지한 적 빌드 패턴에 따라 아군 유닛 비율을 즉각 조정합니다.
         - 정찰 정보의 신뢰도(confidence)를 고려한 대응 강도 조절
@@ -803,7 +1075,7 @@ class StrategyManager:
         if not intel:
             return
 
-        # ★ Phase 17: 적 빌드 패턴 및 신뢰도 확인 ★
+        # * Phase 17: 적 빌드 패턴 및 신뢰도 확인 *
         enemy_pattern = ""
         build_confidence = 0.0
         build_status = "unknown"
@@ -817,14 +1089,14 @@ class StrategyManager:
         if hasattr(intel, "get_build_pattern_status"):
             build_status = intel.get_build_pattern_status()
 
-        # ★ Phase 17: 카운터빌드 반응속도 개선 — 폴백 타이밍 + 임계값 하향 ★
+        # * Phase 17: 카운터빌드 반응속도 개선 - 폴백 타이밍 + 임계값 하향 *
         game_time = getattr(self.bot, "time", 0)
         if (enemy_pattern == "unknown" or build_confidence < 0.1) and game_time > 150:
-            # ★ Phase 17: 2분30초 이후 정찰 실패 → 즉시 폴백 (기존 3분)
+            # * Phase 17: 2분30초 이후 정찰 실패 -> 즉시 폴백 (기존 3분)
             self._apply_safe_fallback_ratios()
             return
         if enemy_pattern == "unknown" or build_confidence < 0.1:
-            # ★ Phase 17: 0.2→0.1 (더 낮은 confidence에서도 대응 시작)
+            # * Phase 17: 0.2->0.1 (더 낮은 confidence에서도 대응 시작)
             return
 
         # === 적 빌드별 대응 유닛 비율 설정 ===
@@ -842,7 +1114,7 @@ class StrategyManager:
 
         current_ratios = base_ratios.copy()
 
-        # 2. ★ Phase 17: Apply Build Pattern Counters with Confidence-Based Scaling ★
+        # 2. * Phase 17: Apply Build Pattern Counters with Confidence-Based Scaling *
         recommended = intel.get_recommended_response()
         if recommended:
             # IntelManager recommends a list of units (e.g. ['hydralisk', 'corruptor'])
@@ -870,7 +1142,7 @@ class StrategyManager:
 
                 current_ratios[u_key] = current_ratios.get(u_key, 0) + adjusted_boost
 
-                # ★ 로그 출력 (10초마다만) ★
+                # * 로그 출력 (10초마다만) *
                 if int(game_time) % 10 == 0 and self.bot.iteration % 22 == 0:
                     self.logger.info(
                         f"[{int(game_time)}s] Counter boost: {u_key} +{adjusted_boost:.2f} "
@@ -944,7 +1216,7 @@ class StrategyManager:
             self._last_air_log_time = game_time
 
     def _force_anti_air_ratios(self) -> None:
-        """★ 대공 유닛 비율 강제 조정 ★"""
+        """* 대공 유닛 비율 강제 조정 *"""
         # 모든 페이즈에 대공 유닛 비율 높이기
         anti_air_ratios = {
             GamePhase.EARLY: {"zergling": 0.2, "queen": 0.3, "hydra": 0.5},
@@ -981,6 +1253,18 @@ class StrategyManager:
             if self.blackboard:
                 self.blackboard.set("urgent_spore_all_bases", True)
 
+        building_manager = getattr(self.bot, "building_manager", None)
+        if building_manager and hasattr(building_manager, "request_defensive_building"):
+            try:
+                building_manager.request_defensive_building(
+                    spine=spine,
+                    spore=spore,
+                    requester="StrategyManager",
+                )
+                return
+            except Exception:
+                pass
+
         # BuildingCoordination이 있으면 요청 등록
         building_coord = getattr(self.bot, "building_coord", None)
         if building_coord:
@@ -1006,6 +1290,24 @@ class StrategyManager:
         BuildingCoordination이 없으면 로그만 남깁니다.
         """
         building_coord = getattr(self.bot, "building_coord", None)
+        building_manager = getattr(self.bot, "building_manager", None)
+        if building_manager and hasattr(building_manager, "request_tech_structure"):
+            try:
+                from sc2.ids.unit_typeid import UnitTypeId
+
+                if building_manager.can_build(UnitTypeId.SPIRE):
+                    building_manager.request_tech_structure(
+                        UnitTypeId.SPIRE,
+                        requester="StrategyManager-AirThreat",
+                        priority=75,
+                    )
+                    self.logger.info(
+                        f"[{int(game_time)}s] Spire build requested via BuildingManager"
+                    )
+                return
+            except Exception:
+                pass
+
         if building_coord:
             try:
                 from sc2.ids.unit_typeid import UnitTypeId
@@ -1059,9 +1361,43 @@ class StrategyManager:
 
         return 0
 
+    def _detect_blackboard_air_threat(self) -> None:
+        """React to scouted air tech before air units are visible."""
+        if not self.blackboard:
+            return
+
+        try:
+            incoming_value = self.blackboard.get("AIR_THREAT_INCOMING", False)
+            active_value = self.blackboard.get("AIR_THREAT_ACTIVE", False)
+        except (AttributeError, TypeError):
+            return
+
+        incoming = incoming_value is True or active_value is True
+
+        if not incoming:
+            return
+
+        self._air_threat_active = True
+        self._force_hydra_production = True
+        self._request_defensive_building(spore=True)
+
+        ratios = dict(self.get_unit_ratios())
+        hydra_value = max(ratios.pop("hydra", 0.0), ratios.get("hydralisk", 0.0), 0.35)
+        ratios["hydralisk"] = hydra_value
+        ratios["queen"] = max(ratios.get("queen", 0.0), 0.15)
+        total = sum(ratios.values())
+        if total > 0:
+            ratios = {unit: value / total for unit, value in ratios.items()}
+
+        self.race_unit_ratios.setdefault(self.detected_enemy_race, {})[
+            self.game_phase
+        ] = ratios
+        self.blackboard.set("air_threat_response_active", True)
+        self.blackboard.set("unit_ratios", ratios)
+
     def _detect_direct_air_threat(self) -> None:
         """
-        ★ 직접 공중 유닛 감지 및 대응 ★
+        * 직접 공중 유닛 감지 및 대응 *
 
         빌드 패턴이 아닌 실제 공중 유닛이 보이면 즉시 대응
         """
@@ -1095,7 +1431,7 @@ class StrategyManager:
             "VIPER",
         }
 
-        # ★ 캐시된 적 구성 사용 ★
+        # * 캐시된 적 구성 사용 *
         comp = self._cached_enemy_composition
         air_unit_count = 0
         detected_air_types = set()
@@ -1104,7 +1440,7 @@ class StrategyManager:
                 air_unit_count += count
                 detected_air_types.add(etype)
 
-        # ★★★ IMPROVED: 공중 유닛 1기만 감지해도 즉시 대응 (기존: 2기) ★★★
+        # *** IMPROVED: 공중 유닛 1기만 감지해도 즉시 대응 (기존: 2기) ***
         if air_unit_count >= 1:
             self._air_threat_active = True
             self._request_defensive_building(spore=True)
@@ -1119,23 +1455,25 @@ class StrategyManager:
             # 히드라 우선 생산 설정
             self._force_hydra_production = True
 
-            # ★★★ IMPROVED: 공중 유닛 수에 따라 히드라 비율 동적 조정 ★★★
+            # *** IMPROVED: 공중 유닛 수에 따라 히드라 비율 동적 조정 ***
             current_ratios = self.get_unit_ratios()
 
             # 공중 유닛이 많을수록 히드라 비율 증가
             if air_unit_count >= 10:
-                hydra_ratio = 0.70  # 대규모 공중 병력 → 70% 히드라
+                hydra_ratio = 0.70  # 대규모 공중 병력 -> 70% 히드라
             elif air_unit_count >= 5:
-                hydra_ratio = 0.55  # 중간 규모 → 55% 히드라
+                hydra_ratio = 0.55  # 중간 규모 -> 55% 히드라
             else:
-                hydra_ratio = 0.45  # 소규모 → 45% 히드라 (기존 40%에서 증가)
+                hydra_ratio = 0.45  # 소규모 -> 45% 히드라 (기존 40%에서 증가)
 
-            if "hydra" in current_ratios:
-                current_ratios["hydra"] = max(
-                    current_ratios.get("hydra", 0), hydra_ratio
-                )
-            else:
-                current_ratios["hydra"] = hydra_ratio
+            hydra_value = max(
+                current_ratios.pop("hydra", 0),
+                current_ratios.get("hydralisk", 0),
+                hydra_ratio,
+            )
+            current_ratios["hydralisk"] = hydra_value
+            if self.blackboard:
+                self.blackboard.set("unit_ratios", current_ratios)
 
             # 공중 위협 대응 호출
             self._handle_air_threat()
@@ -1152,7 +1490,7 @@ class StrategyManager:
 
     def is_air_threat_detected(self) -> bool:
         """공중 위협 감지 여부"""
-        # ★ 직접 감지 우선 체크 ★
+        # * 직접 감지 우선 체크 *
         if getattr(self, "_air_threat_active", False):
             return True
 
@@ -1201,9 +1539,672 @@ class StrategyManager:
         if self.detected_enemy_race in self.race_unit_ratios:
             self.race_unit_ratios[self.detected_enemy_race][self.game_phase] = updated
 
+    def _apply_zvt_composition_timeline(self) -> None:
+        """Apply STRATEGY_PLAN Phase 1 ZvT composition targets."""
+        if self.detected_enemy_race != EnemyRace.TERRAN:
+            return
+
+        phase_key = self._get_zvt_timeline_phase()
+        comp_key = self._classify_terran_composition(phase_key)
+        phase_table = ZVT_COMPOSITION_TIMELINE.get(phase_key, {})
+        ratios = phase_table.get(comp_key) or phase_table.get("default")
+        if not ratios:
+            return
+
+        normalized = self._normalize_ratio_keys(ratios)
+        total = sum(normalized.values())
+        if total > 0:
+            normalized = {unit: value / total for unit, value in normalized.items()}
+
+        self.race_unit_ratios.setdefault(EnemyRace.TERRAN, {})[
+            self.game_phase
+        ] = normalized
+
+        if self.blackboard:
+            self.blackboard.set("zvt_enemy_composition", comp_key)
+            self.blackboard.set("zvt_composition_phase", phase_key)
+            self.blackboard.set("unit_ratios", normalized)
+
+        if comp_key in ("vs_air", "vs_bc"):
+            self._request_defensive_building(spore=True)
+
+    def _get_zvt_timeline_phase(self) -> str:
+        game_time = float(getattr(self.bot, "time", 0.0) or 0.0)
+        if game_time < 300.0:
+            return "early"
+        if game_time < 600.0:
+            return "mid"
+        return "late"
+
+    def _classify_terran_composition(self, phase_key: Optional[str] = None) -> str:
+        comp = getattr(self, "_cached_enemy_composition", {}) or {}
+        structures = self._get_enemy_structure_counts()
+        phase_key = phase_key or self._get_zvt_timeline_phase()
+
+        bc_count = comp.get("BATTLECRUISER", 0)
+        if phase_key == "late" and (
+            bc_count > 0
+            or structures.get("FUSIONCORE", 0) > 0
+            or self._blackboard_flag("fusion_core")
+        ):
+            return "vs_bc"
+
+        air_count = (
+            comp.get("BANSHEE", 0)
+            + comp.get("LIBERATOR", 0)
+            + comp.get("LIBERATORAG", 0)
+            + comp.get("VIKINGFIGHTER", 0)
+            + comp.get("VIKINGASSAULT", 0)
+            + comp.get("RAVEN", 0)
+            + comp.get("MEDIVAC", 0)
+            + bc_count
+        )
+        mech_count = (
+            comp.get("SIEGETANK", 0)
+            + comp.get("SIEGETANKSIEGED", 0)
+            + comp.get("HELLION", 0)
+            + comp.get("HELLIONTANK", 0)
+            + comp.get("THOR", 0)
+            + comp.get("THORAP", 0)
+            + comp.get("WIDOWMINE", 0)
+            + comp.get("WIDOWMINEBURROWED", 0)
+            + comp.get("CYCLONE", 0)
+        )
+        bio_count = (
+            comp.get("MARINE", 0)
+            + comp.get("MARAUDER", 0)
+            + comp.get("REAPER", 0)
+            + comp.get("GHOST", 0)
+        )
+
+        if phase_key == "early":
+            hellion_count = comp.get("HELLION", 0) + comp.get("HELLIONTANK", 0)
+            if hellion_count >= 2 or structures.get("FACTORY", 0) > 0:
+                return "vs_hellion"
+            if comp.get("REAPER", 0) > 0:
+                return "vs_reaper"
+            return "default"
+
+        if air_count >= max(2, mech_count + bio_count):
+            return "vs_air"
+        if structures.get("STARPORT", 0) > 0 and air_count >= 1:
+            return "vs_air"
+        if mech_count >= max(2, bio_count):
+            return "vs_mech"
+        if structures.get("FACTORY", 0) >= 2 or structures.get("ARMORY", 0) > 0:
+            return "vs_mech"
+        return "vs_bio"
+
+    def _get_enemy_structure_counts(self) -> Dict[str, int]:
+        counts: Dict[str, int] = {}
+        for structure in getattr(self.bot, "enemy_structures", []) or []:
+            name = getattr(getattr(structure, "type_id", None), "name", "")
+            if name:
+                key = name.upper()
+                counts[key] = counts.get(key, 0) + 1
+        return counts
+
+    def _blackboard_flag(self, key: str) -> bool:
+        if self.blackboard and hasattr(self.blackboard, "get"):
+            return bool(self.blackboard.get(key, False))
+        return False
+
+    @staticmethod
+    def _normalize_ratio_keys(ratios: Dict[str, float]) -> Dict[str, float]:
+        aliases = {"hydra": "hydralisk", "LURKERMP": "lurkermp", "lurker": "lurkermp"}
+        normalized: Dict[str, float] = {}
+        for unit, value in ratios.items():
+            key = aliases.get(unit, unit)
+            normalized[key] = normalized.get(key, 0.0) + value
+        return normalized
+
+    def _apply_zvz_composition_timeline(self) -> None:
+        """Apply STRATEGY_PLAN Phase 3 ZvZ composition targets."""
+        if self.detected_enemy_race != EnemyRace.ZERG:
+            return
+
+        phase_key = self._get_zvt_timeline_phase()
+        comp_key = self._classify_zerg_composition(phase_key)
+        phase_table = ZVZ_COMPOSITION_TIMELINE.get(phase_key, {})
+        ratios = phase_table.get(comp_key) or phase_table.get("default")
+        if not ratios:
+            return
+
+        normalized = self._normalize_ratio_keys(ratios)
+        total = sum(normalized.values())
+        if total > 0:
+            normalized = {unit: value / total for unit, value in normalized.items()}
+
+        self.race_unit_ratios.setdefault(EnemyRace.ZERG, {})[
+            self.game_phase
+        ] = normalized
+
+        if self.blackboard:
+            self.blackboard.set("zvz_enemy_composition", comp_key)
+            self.blackboard.set("zvz_composition_phase", phase_key)
+            self.blackboard.set("unit_ratios", normalized)
+
+        if comp_key == "vs_muta":
+            self._request_defensive_building(spore=True)
+
+    def _classify_zerg_composition(self, phase_key: Optional[str] = None) -> str:
+        comp = getattr(self, "_cached_enemy_composition", {}) or {}
+        structures = self._get_enemy_structure_counts()
+        phase_key = phase_key or self._get_zvt_timeline_phase()
+
+        if phase_key == "early":
+            if self._blackboard_flag("enemy_12pool_detected") or (
+                comp.get("ZERGLING", 0) >= 6
+                and float(getattr(self.bot, "time", 0.0) or 0.0) <= 150.0
+            ):
+                return "vs_12pool"
+            if comp.get("ROACH", 0) > 0 or structures.get("ROACHWARREN", 0) > 0:
+                return "vs_roach"
+            return "default"
+
+        if phase_key == "mid":
+            if (
+                comp.get("MUTALISK", 0) > 0
+                or structures.get("SPIRE", 0) > 0
+                or self._blackboard_flag("spire_existence")
+            ):
+                return "vs_muta"
+            if self._blackboard_flag("enemy_roach_all_in") or (
+                comp.get("ROACH", 0) >= 8
+                and not self._blackboard_flag("enemy_expand_confirmed")
+            ):
+                return "vs_roach_all_in"
+            return "default"
+
+        if (
+            comp.get("BROODLORD", 0) > 0
+            or structures.get("GREATERSPIRE", 0) > 0
+            or self._blackboard_flag("greater_spire")
+        ):
+            return "vs_broodlord"
+        return "default"
+
+    def _apply_zvp_counter_rules(self) -> None:
+        """Apply STRATEGY_PLAN Phase 2 ZvP counter rules."""
+        if self.detected_enemy_race != EnemyRace.PROTOSS:
+            return
+
+        rule_key = self._detect_zvp_counter_rule()
+        if not rule_key:
+            return
+
+        response = ZVP_COUNTER_RULES[rule_key]["response"]
+        ratios = self._normalize_ratio_keys(response["composition"])
+        total = sum(ratios.values())
+        if total > 0:
+            ratios = {unit: value / total for unit, value in ratios.items()}
+
+        self.race_unit_ratios.setdefault(EnemyRace.PROTOSS, {})[
+            self.game_phase
+        ] = ratios
+
+        if self.blackboard:
+            self.blackboard.set("zvp_counter_rule", rule_key)
+            self.blackboard.set("zvp_micro_directive", response["micro"])
+            self.blackboard.set("unit_ratios", ratios)
+
+        if rule_key in {"warp_prism_harass", "skytoss_transition"}:
+            self._request_defensive_building(spore=True)
+        if rule_key == "blink_stalker_allin":
+            self._request_defensive_building(spine=True)
+
+    def _detect_zvp_counter_rule(self) -> Optional[str]:
+        comp = getattr(self, "_cached_enemy_composition", {}) or {}
+        structures = self._get_enemy_structure_counts()
+
+        if comp.get("DISRUPTOR", 0) > 0 or self._blackboard_flag("disruptor_nova"):
+            return "disruptor_nova"
+
+        if (
+            comp.get("CARRIER", 0) >= 2
+            or comp.get("TEMPEST", 0) >= 2
+            or structures.get("FLEETBEACON", 0) > 0
+            or self._blackboard_flag("fleet_beacon")
+        ):
+            return "skytoss_transition"
+
+        if comp.get("HIGHTEMPLAR", 0) >= 2 or self._blackboard_flag(
+            "templar_archives"
+        ):
+            return "storm_templar"
+
+        if comp.get("WARPPRISM", 0) > 0 and self._enemy_unit_near_own_base(
+            {"WARPPRISM"}, 28.0
+        ):
+            return "warp_prism_harass"
+        if self._blackboard_flag("warp_prism_harass"):
+            return "warp_prism_harass"
+
+        enemy_expanded = self._blackboard_flag("enemy_expand_confirmed")
+        game_time = float(getattr(self.bot, "time", 0.0) or 0.0)
+        if self._blackboard_flag("blink_stalker_allin"):
+            return "blink_stalker_allin"
+        if comp.get("STALKER", 0) >= 8 and not enemy_expanded and game_time <= 360.0:
+            return "blink_stalker_allin"
+
+        return None
+
+    def _enemy_unit_near_own_base(self, names: set, distance: float) -> bool:
+        bases = list(getattr(self.bot, "townhalls", []) or [])
+        if not bases:
+            start = getattr(self.bot, "start_location", None)
+            bases = [start] if start is not None else []
+        if not bases:
+            return False
+
+        for enemy in getattr(self.bot, "enemy_units", []) or []:
+            enemy_name = getattr(getattr(enemy, "type_id", None), "name", "").upper()
+            if enemy_name not in names:
+                continue
+            for base in bases:
+                try:
+                    if enemy.distance_to(base) <= distance:
+                        return True
+                except Exception:
+                    continue
+        return False
+
+    def _apply_timing_attack_system(self) -> None:
+        """Apply matchup timing attacks from STRATEGY_PLAN Phase 4."""
+        if not self.blackboard:
+            return
+
+        selected = self._select_timing_attack()
+        if not selected:
+            if self.blackboard.get("timing_attack_active", False):
+                self.blackboard.set("timing_attack_active", False)
+                self.blackboard.set("timing_attack_key", None)
+            return
+
+        attack_key, attack_data, should_retreat = selected
+        if should_retreat:
+            self.blackboard.set("timing_attack_active", False)
+            self.blackboard.set("timing_attack_retreat", True)
+            self.blackboard.set("timing_attack_key", attack_key)
+            self.blackboard.set("timing_attack_retreat_reason", attack_data["retreat_if"])
+            return
+
+        self.current_mode = StrategyMode.AGGRESSIVE
+        self.blackboard.set("timing_attack_active", True)
+        self.blackboard.set("timing_attack_retreat", False)
+        self.blackboard.set("timing_attack_key", attack_key)
+        self.blackboard.set("timing_attack_matchup", self._matchup_key())
+        self.blackboard.set("timing_attack_target", attack_data["target"])
+        self.blackboard.set("attack_target", attack_data["target"])
+
+    def _select_timing_attack(self):
+        matchup = self._matchup_key()
+        game_time = float(getattr(self.bot, "time", 0.0) or 0.0)
+        for attack_key, attack_data in TIMING_ATTACKS.get(matchup, {}).items():
+            start, end = attack_data["time_window"]
+            if game_time < start or game_time > end:
+                continue
+            if not self._timing_attack_trigger_met(matchup, attack_key):
+                continue
+            should_retreat = self._timing_attack_retreat_met(matchup, attack_key)
+            return attack_key, attack_data, should_retreat
+        return None
+
+    def _timing_attack_trigger_met(self, matchup: str, attack_key: str) -> bool:
+        if matchup == "ZvT" and attack_key == "ling_speed_timing":
+            return self._speed_upgrade_done() and self._own_unit_count("ZERGLING") >= 16
+        if matchup == "ZvT" and attack_key == "roach_ravager_push":
+            return self._own_unit_count("ROACH") >= 8 and self._own_unit_count("RAVAGER") >= 3
+        if matchup == "ZvP" and attack_key == "roach_timing":
+            return self._own_unit_count("ROACH") >= 10 and self._roach_speed_done()
+        if matchup == "ZvP" and attack_key == "ling_nydus_harass":
+            return self._own_structure_count("NYDUSNETWORK") > 0 and self._own_unit_count("ZERGLING") >= 20
+        if matchup == "ZvZ" and attack_key == "ling_bane_allin":
+            return (
+                self._speed_upgrade_done()
+                and self._own_unit_count("BANELING") >= 6
+                and self._own_unit_count("ZERGLING") >= 12
+            )
+        if matchup == "ZvZ" and attack_key == "roach_push":
+            return self._own_unit_count("ROACH") >= 7
+        return False
+
+    def _timing_attack_retreat_met(self, matchup: str, attack_key: str) -> bool:
+        comp = getattr(self, "_cached_enemy_composition", {}) or {}
+        structures = self._get_enemy_structure_counts()
+        power_ratio = self._army_power_ratio()
+
+        if matchup == "ZvT" and attack_key == "ling_speed_timing":
+            return structures.get("BUNKER", 0) >= 2 or power_ratio < 1.2
+        if matchup == "ZvT" and attack_key == "roach_ravager_push":
+            tank_count = comp.get("SIEGETANK", 0) + comp.get("SIEGETANKSIEGED", 0)
+            return tank_count >= 3 or power_ratio < 1.0
+        if matchup == "ZvP" and attack_key == "roach_timing":
+            return comp.get("IMMORTAL", 0) >= 3 or power_ratio < 1.1
+        if matchup == "ZvP" and attack_key == "ling_nydus_harass":
+            return self._own_unit_count("ZERGLING") < 8
+        if matchup == "ZvZ" and attack_key == "ling_bane_allin":
+            return comp.get("ROACH", 0) >= 4 or power_ratio < 0.8
+        if matchup == "ZvZ" and attack_key == "roach_push":
+            return comp.get("RAVAGER", 0) >= 4 and comp.get("ROACH", 0) >= 5
+        return False
+
+    def _apply_emergency_response_table(self) -> None:
+        """Publish immediate matchup emergency responses."""
+        if not self.blackboard:
+            return
+
+        response_key = self._detect_emergency_response()
+        if not response_key:
+            if self.blackboard.get("emergency_response_active", False):
+                self.blackboard.set("emergency_response_active", False)
+            return
+
+        response = EMERGENCY_RESPONSES[response_key]
+        actions = list(response["immediate"])
+        self.current_mode = StrategyMode.EMERGENCY
+        self.emergency_active = True
+        if not self.emergency_start_time:
+            self.emergency_start_time = float(getattr(self.bot, "time", 0.0) or 0.0)
+
+        self.blackboard.set("emergency_response_active", True)
+        self.blackboard.set("emergency_response_key", response_key)
+        self.blackboard.set("emergency_actions", actions)
+        self.blackboard.set("drone_production_policy", response["drone_production"])
+        self.blackboard.set("is_rush_detected", True)
+
+        if any("spine" in action for action in actions):
+            self._request_defensive_building(spine=True)
+            if "spine_crawler_x4" in actions:
+                self.blackboard.set("urgent_spine_count", 4)
+            elif "spine_crawler_x3" in actions:
+                self.blackboard.set("urgent_spine_count", 3)
+        if any("spore" in action for action in actions):
+            self._request_defensive_building(spore=True)
+        if "overseer_morph" in actions:
+            self.blackboard.set("urgent_overseer", True)
+        if "cancel_expansion" in actions:
+            self.blackboard.set("cancel_pending_expansion", True)
+        if any(action.startswith("drone_pull") for action in actions):
+            self.blackboard.set("worker_pull_requested", True)
+        if "all_larva_army" in actions:
+            self.blackboard.set("spend_larva_on_army", True)
+        if "queen_all_defend" in actions:
+            self.blackboard.set("queen_defense_mode", True)
+        if "cancel_drone_production" in actions:
+            self.blackboard.set("drone_production_policy", "HALT")
+
+    def _detect_emergency_response(self) -> Optional[str]:
+        comp = getattr(self, "_cached_enemy_composition", None)
+        if comp is None:
+            comp = self._cache_enemy_composition()
+            self._cached_enemy_composition = comp
+        structures = self._get_enemy_structure_counts()
+        game_time = float(getattr(self.bot, "time", 0.0) or 0.0)
+
+        if self._blackboard_flag("enemy_all_in") or self._blackboard_flag(
+            "enemy_all_in_detected"
+        ):
+            return "enemy_all_in"
+
+        if self._blackboard_flag("proxy_barracks") or (
+            game_time < 180.0 and self._enemy_structure_near_own_base({"BARRACKS"}, 40.0)
+        ):
+            return "proxy_barracks"
+
+        if self._blackboard_flag("cannon_rush") or (
+            game_time < 180.0
+            and self._enemy_structure_near_own_base({"PHOTONCANNON"}, 40.0)
+        ):
+            return "cannon_rush"
+
+        if self._blackboard_flag("enemy_12pool_detected") or (
+            comp.get("ZERGLING", 0) >= 6 and game_time < 120.0
+        ):
+            return "12pool_rush"
+
+        if comp.get("HELLION", 0) + comp.get("HELLIONTANK", 0) >= 4 and self._enemy_unit_near_own_base(
+            {"HELLION", "HELLIONTANK"}, 18.0
+        ):
+            return "hellion_runby"
+
+        if comp.get("BANELING", 0) >= 8 and self._enemy_unit_near_own_base(
+            {"BANELING"}, 28.0
+        ):
+            return "baneling_bust"
+
+        if (
+            self._blackboard_flag("dark_templar_detected")
+            or self._blackboard_flag("dark_shrine_scouted")
+            or comp.get("DARKTEMPLAR", 0) > 0
+            or structures.get("DARKSHRINE", 0) > 0
+        ):
+            return "dt_rush"
+
+        if comp.get("VOIDRAY", 0) >= 2 and game_time < 360.0:
+            return "void_ray_rush"
+
+        if comp.get("BATTLECRUISER", 0) >= 1 and game_time < 600.0:
+            return "bc_rush"
+
+        return None
+
+    def _detect_all_in_pressure(self) -> bool:
+        """Detect no-expand all-ins after 5:00 and publish defense directives."""
+        if not self.blackboard:
+            return False
+
+        game_time = float(getattr(self.bot, "time", 0.0) or 0.0)
+        if game_time < 300.0:
+            return False
+
+        if self._enemy_has_expansion():
+            if self._blackboard_flag("enemy_all_in"):
+                self.blackboard.set("enemy_all_in", False)
+                self.blackboard.set("enemy_all_in_detected", False)
+            return False
+
+        enemy_power_ratio = self._enemy_army_power_ratio()
+        approaching = self._blackboard_flag(
+            "enemy_army_approaching"
+        ) or self._large_enemy_force_near_base()
+
+        if enemy_power_ratio < 1.5 or not approaching:
+            return False
+
+        self.current_mode = StrategyMode.ALL_IN
+        self.emergency_active = True
+        if not self.emergency_start_time:
+            self.emergency_start_time = game_time
+        self.blackboard.set("enemy_all_in", True)
+        self.blackboard.set("enemy_all_in_detected", True)
+        self.blackboard.set("enemy_army_power_ratio", enemy_power_ratio)
+        self.blackboard.set("drone_production_policy", "HALT")
+        self.blackboard.set("urgent_spine_count", 4)
+        self.blackboard.set("urgent_spine_all_bases", True)
+        self.blackboard.set("spend_larva_on_army", True)
+        self.blackboard.set("queen_defense_mode", True)
+        self._request_defensive_building(spine=True)
+        return True
+
+    def _enemy_has_expansion(self) -> bool:
+        if self._blackboard_flag("enemy_expand_confirmed"):
+            return True
+        if self._blackboard_number("enemy_base_count", 0) >= 2:
+            return True
+        base_names = {
+            "COMMANDCENTER",
+            "ORBITALCOMMAND",
+            "PLANETARYFORTRESS",
+            "NEXUS",
+            "HATCHERY",
+            "LAIR",
+            "HIVE",
+        }
+        structures = self._get_enemy_structure_counts()
+        return sum(structures.get(name, 0) for name in base_names) >= 2
+
+    def _enemy_army_power_ratio(self) -> float:
+        explicit = self._blackboard_number("enemy_army_power_ratio", None)
+        if explicit is not None:
+            return explicit
+        own_power = self._unit_health_power(getattr(self.bot, "units", []) or [])
+        enemy_power = self._unit_health_power(
+            getattr(self.bot, "enemy_units", []) or []
+        )
+        if own_power <= 0:
+            return 99.0 if enemy_power > 0 else 0.0
+        return enemy_power / own_power
+
+    def _large_enemy_force_near_base(self) -> bool:
+        bases = list(getattr(self.bot, "townhalls", []) or [])
+        if not bases:
+            start = getattr(self.bot, "start_location", None)
+            bases = [start] if start is not None else []
+        if not bases:
+            return False
+
+        nearby = 0
+        for enemy in getattr(self.bot, "enemy_units", []) or []:
+            for base in bases:
+                try:
+                    if enemy.distance_to(base) <= 60.0:
+                        nearby += 1
+                        break
+                except Exception:
+                    continue
+        return nearby >= 8
+
+    def _matchup_key(self) -> str:
+        race = self.detected_enemy_race
+        if race == EnemyRace.TERRAN:
+            return "ZvT"
+        if race == EnemyRace.PROTOSS:
+            return "ZvP"
+        if race == EnemyRace.ZERG:
+            return "ZvZ"
+        race_text = str(getattr(self.bot, "enemy_race", "")).lower()
+        if "protoss" in race_text:
+            return "ZvP"
+        if "zerg" in race_text:
+            return "ZvZ"
+        return "ZvT"
+
+    def _speed_upgrade_done(self) -> bool:
+        return self._upgrade_done(
+            "ZERGLINGMOVEMENTSPEED", "metabolic_boost_done", "zergling_speed_done"
+        )
+
+    def _roach_speed_done(self) -> bool:
+        return self._upgrade_done(
+            "GLIALRECONSTITUTION", "roach_speed_done", "glial_reconstitution_done"
+        )
+
+    def _upgrade_done(self, upgrade_name: str, *blackboard_flags: str) -> bool:
+        if any(self._blackboard_flag(flag) for flag in blackboard_flags):
+            return True
+        state = getattr(self.bot, "state", None)
+        upgrades = getattr(state, "upgrades", set()) if state else set()
+        for upgrade in upgrades or []:
+            name = getattr(upgrade, "name", str(upgrade)).upper()
+            if upgrade_name.upper() in name:
+                return True
+        return False
+
+    def _own_unit_count(self, name: str) -> int:
+        return max(
+            self._object_count("units", name),
+            int(self._blackboard_number(f"{name.lower()}_count", 0)),
+        )
+
+    def _own_structure_count(self, name: str) -> int:
+        return max(
+            self._object_count("structures", name),
+            int(self._blackboard_number(f"{name.lower()}_ready", 0)),
+        )
+
+    def _object_count(self, attr: str, name: str) -> int:
+        target = name.upper()
+        count = 0
+        objects = getattr(self.bot, attr, []) or []
+        try:
+            iterator = iter(objects)
+        except TypeError:
+            return 0
+        for obj in iterator:
+            obj_name = getattr(getattr(obj, "type_id", None), "name", None)
+            obj_name = obj_name or getattr(obj, "name", "")
+            if str(obj_name).upper() == target:
+                count += 1
+        return count
+
+    def _blackboard_number(self, key: str, default: float = 0.0) -> float:
+        if not self.blackboard or not hasattr(self.blackboard, "get"):
+            return default
+        try:
+            value = self.blackboard.get(key, default)
+            if value is None:
+                return default
+            return float(value)
+        except (TypeError, ValueError):
+            return default
+
+    def _army_power_ratio(self) -> float:
+        explicit = self._blackboard_number("army_power_ratio", None)
+        if explicit is not None:
+            return explicit
+
+        own_power = self._unit_health_power(getattr(self.bot, "units", []) or [])
+        enemy_power = self._unit_health_power(
+            getattr(self.bot, "enemy_units", []) or []
+        )
+        if enemy_power <= 0:
+            return 2.0
+        return own_power / enemy_power
+
+    @staticmethod
+    def _unit_health_power(units) -> float:
+        try:
+            iterator = iter(units)
+        except TypeError:
+            return 0.0
+        total = 0.0
+        for unit in iterator:
+            total += float(getattr(unit, "health", 0.0) or 0.0)
+            total += float(getattr(unit, "shield", 0.0) or 0.0)
+        return total
+
+    def _enemy_structure_near_own_base(self, names: set, distance: float) -> bool:
+        bases = list(getattr(self.bot, "townhalls", []) or [])
+        if not bases:
+            start = getattr(self.bot, "start_location", None)
+            bases = [start] if start is not None else []
+        if not bases:
+            return False
+
+        for structure in getattr(self.bot, "enemy_structures", []) or []:
+            structure_name = getattr(
+                getattr(structure, "type_id", None), "name", ""
+            ).upper()
+            if structure_name not in names:
+                continue
+            for base in bases:
+                try:
+                    if structure.distance_to(base) <= distance:
+                        return True
+                except Exception:
+                    position = getattr(structure, "position", None)
+                    if position and hasattr(position, "distance_to"):
+                        try:
+                            if position.distance_to(base) <= distance:
+                                return True
+                        except Exception:
+                            continue
+        return False
+
     def _counter_terran_units(self) -> None:
         """
-        ★ Phase 21: 테란 유닛별 카운터 로직 ★
+        * Phase 21: 테란 유닛별 카운터 로직 *
 
         - 바이오 (마린/마라우더/메딕): 바네링 돌진 + 저글링 포위
         - 메카닉 (탱크/토르): 레바저 담즙 + 뮤탈 견제
@@ -1272,7 +2273,7 @@ class StrategyManager:
                 )
 
         # 헬리온 러시 (초반): 퀸 + 바퀴
-        # ★ Phase 34: 4분→5분으로 확장 (4:30~5분 헬리온 러시 대응)
+        # * Phase 34: 4분->5분으로 확장 (4:30~5분 헬리온 러시 대응)
         if hellion_count >= 3 and game_time < 300:
             self._adjust_unit_ratio("queen", 0.20)
             self._adjust_unit_ratio("roach", 0.40)
@@ -1281,7 +2282,7 @@ class StrategyManager:
 
     def _counter_protoss_units(self) -> None:
         """
-        ★★★ 프로토스 유닛별 카운터 로직 ★★★
+        *** 프로토스 유닛별 카운터 로직 ***
 
         감지된 프로토스 유닛에 따라 유닛 비율 동적 조정:
         - 불멸자(Immortal): 레이바저 담즙, 저글링 포위
@@ -1301,7 +2302,7 @@ class StrategyManager:
 
         # 프로토스 핵심 유닛 카운트
         immortal_count = 0
-        # ★ 캐시된 적 구성 사용 (별도 루프 불필요) ★
+        # * 캐시된 적 구성 사용 (별도 루프 불필요) *
         comp = self._cached_enemy_composition
         immortal_count = comp.get("IMMORTAL", 0)
         colossus_count = comp.get("COLOSSUS", 0)
@@ -1312,7 +2313,7 @@ class StrategyManager:
         carrier_count = comp.get("CARRIER", 0)
         stalker_count = comp.get("STALKER", 0)
 
-        # ★ NEW: DarkShrine/Oracle 테크 경고 대응 (IntelManager 연동)
+        # * NEW: DarkShrine/Oracle 테크 경고 대응 (IntelManager 연동)
         intel = getattr(self.bot, "intel", None)
         if intel and hasattr(intel, "has_tech_alert"):
             # DT 대응: 스포어 크롤러 + 오버시어 긴급 생산
@@ -1336,9 +2337,9 @@ class StrategyManager:
                         f"[{int(game_time)}s] [*][*][*] STARGATE TECH! Spore + Queen PRIORITY [*][*][*]"
                     )
 
-        # ★ 유닛별 대응 전략 ★
+        # * 유닛별 대응 전략 *
 
-        # 불멸자 2기 이상 → 레이바저 담즙 강화
+        # 불멸자 2기 이상 -> 레이바저 담즙 강화
         if immortal_count >= 2:
             if not hasattr(self, "_immortal_counter_active"):
                 self._immortal_counter_active = False
@@ -1354,7 +2355,7 @@ class StrategyManager:
             self._adjust_unit_ratio("zergling", 0.35)  # 포위용
             self._adjust_unit_ratio("roach", 0.1)  # 바퀴 감소 (불멸자 약점)
 
-        # 콜로서스 1기 이상 → 커럽터 필수
+        # 콜로서스 1기 이상 -> 커럽터 필수
         if colossus_count >= 1:
             if not hasattr(self, "_colossus_counter_active"):
                 self._colossus_counter_active = False
@@ -1372,7 +2373,7 @@ class StrategyManager:
 
             # 스파이어 긴급 건설 - AggressiveTechBuilder로 통합됨
 
-        # 공허 포격기/캐리어 → 대공 강화 + ★ Phase 21: 바이퍼 추가 ★
+        # 공허 포격기/캐리어 -> 대공 강화 + * Phase 21: 바이퍼 추가 *
         if voidray_count >= 2 or carrier_count >= 1:
             if not getattr(self, "_zvp_air_logged", False):
                 self._zvp_air_logged = True
@@ -1382,13 +2383,13 @@ class StrategyManager:
             self._handle_air_threat()
             self._adjust_unit_ratio("hydralisk", 0.35)
             self._adjust_unit_ratio("corruptor", 0.30)
-            # ★ Phase 21: 캐리어 3+ 시 바이퍼 추가 (어둠 집어삼키기로 캐리어 잡기)
+            # * Phase 21: 캐리어 3+ 시 바이퍼 추가 (어둠 집어삼키기로 캐리어 잡기)
             if carrier_count >= 3:
                 self._adjust_unit_ratio("viper", 0.10)
                 self._adjust_unit_ratio("corruptor", 0.25)
                 self._adjust_unit_ratio("hydralisk", 0.30)
 
-        # 디스럽터 → 분산 필요, 빠른 공격
+        # 디스럽터 -> 분산 필요, 빠른 공격
         if disruptor_count >= 1:
             # 로그 스팸 방지
             if game_time - self.last_disruptor_log > self.log_cooldown:
@@ -1400,7 +2401,7 @@ class StrategyManager:
             self._adjust_unit_ratio("zergling", 0.3)
             self._adjust_unit_ratio("mutalisk", 0.3)
 
-        # 고위 기사/아콘 → 분산, 빠른 돌진
+        # 고위 기사/아콘 -> 분산, 빠른 돌진
         if high_templar_count >= 1 or archon_count >= 2:
             # 로그 스팸 방지
             if game_time - self.last_high_templar_log > self.log_cooldown:
@@ -1411,7 +2412,7 @@ class StrategyManager:
             self._adjust_unit_ratio("zergling", 0.4)
             self._adjust_unit_ratio("ravager", 0.3)  # 담즙으로 폭풍 지역 회피
 
-        # ★ Phase 34: 추적자(Stalker) 4+ → 저글링 포위 + 바퀴 돌진 (이전: stalker_count 수집만 하고 미사용)
+        # * Phase 34: 추적자(Stalker) 4+ -> 저글링 포위 + 바퀴 돌진 (이전: stalker_count 수집만 하고 미사용)
         if stalker_count >= 4:
             if not getattr(self, "_zvp_stalker_logged", False):
                 self._zvp_stalker_logged = True
@@ -1425,7 +2426,7 @@ class StrategyManager:
 
     def _apply_safe_fallback_ratios(self) -> None:
         """
-        ★ Phase 12: 정찰 실패 시 종족별 안전 폴백 빌드 ★
+        * Phase 12: 정찰 실패 시 종족별 안전 폴백 빌드 *
 
         정찰 정보가 없을 때 가장 범용적인 유닛 조합을 생산합니다.
         - vs Terran: 바퀴 + 히드라 (바이오/메카닉 모두 대응)
@@ -1479,13 +2480,13 @@ class StrategyManager:
 
     def _counter_zerg_units(self) -> None:
         """
-        ★ NEW: ZvZ 유닛별 카운터 로직 ★
+        * NEW: ZvZ 유닛별 카운터 로직 *
 
-        - 저글링 다수 → 맹독충 + 바퀴 전환
-        - 맹독충 → 바퀴 (맹독충에 강함)
-        - 뮤탈리스크 → 히드라 + 스포어
-        - 바퀴/히드라 → 레이바저 담즙
-        - 12풀 러시 → 스파인 + 퀸 방어
+        - 저글링 다수 -> 맹독충 + 바퀴 전환
+        - 맹독충 -> 바퀴 (맹독충에 강함)
+        - 뮤탈리스크 -> 히드라 + 스포어
+        - 바퀴/히드라 -> 레이바저 담즙
+        - 12풀 러시 -> 스파인 + 퀸 방어
         """
         if self.detected_enemy_race != EnemyRace.ZERG:
             return
@@ -1503,27 +2504,27 @@ class StrategyManager:
         hydra_count = comp.get("HYDRALISK", 0)
         ravager_count = comp.get("RAVAGER", 0)
 
-        # 저글링 10+ → 바퀴 + 맹독충으로 전환 (저글링 미러는 불리)
-        # ★ Phase 34: game_time < 300 제한 제거 — 5분 이후에도 저글링 러시 대응
+        # 저글링 10+ -> 바퀴 + 맹독충으로 전환 (저글링 미러는 불리)
+        # * Phase 34: game_time < 300 제한 제거 - 5분 이후에도 저글링 러시 대응
         if zergling_count >= 10:
             self._adjust_unit_ratio("roach", 0.4)
             self._adjust_unit_ratio("baneling", 0.3)
             self._adjust_unit_ratio("zergling", 0.2)
 
-        # 맹독충 4+ → 바퀴 전환 (바퀴가 맹독충에 강함)
+        # 맹독충 4+ -> 바퀴 전환 (바퀴가 맹독충에 강함)
         if baneling_count >= 4:
             self._adjust_unit_ratio("roach", 0.5)
             self._adjust_unit_ratio("ravager", 0.2)
 
-        # 바퀴 5+ → 레이바저 + 히드라
+        # 바퀴 5+ -> 레이바저 + 히드라
         if roach_count >= 5:
             self._adjust_unit_ratio("ravager", 0.3)
             self._adjust_unit_ratio("hydra", 0.3)
             self._adjust_unit_ratio("roach", 0.3)
 
-        # 뮤탈리스크 → 히드라 + 스포어
+        # 뮤탈리스크 -> 히드라 + 스포어
         if mutalisk_count >= 3:
-            # ★ Phase 34: "hydralisk" 오타 수정 → "hydra" (내부 키 통일)
+            # * Phase 34: "hydralisk" 오타 수정 -> "hydra" (내부 키 통일)
             self._adjust_unit_ratio("hydra", 0.5)
             self._request_defensive_building(spore=True)
             if game_time - getattr(self, "_last_zvz_muta_log", 0) > 10:
@@ -1532,12 +2533,12 @@ class StrategyManager:
                     f"[{int(game_time)}s] ZvZ: Mutalisk detected! Hydra + Spore priority"
                 )
 
-        # ★ Phase 21: ZvZ 중반 안정화 — 로치→히드라→럴커 전환 ★
+        # * Phase 21: ZvZ 중반 안정화 - 로치->히드라->럴커 전환 *
         if game_time >= 360:  # 6분+
             if roach_count >= 5 or hydra_count >= 5:
-                # 로치/히드라 미러 → 럴커가 결정적
+                # 로치/히드라 미러 -> 럴커가 결정적
                 self._adjust_unit_ratio("lurker", 0.20)
-                # ★ Phase 34: "hydralisk" 오타 수정 → "hydra"
+                # * Phase 34: "hydralisk" 오타 수정 -> "hydra"
                 self._adjust_unit_ratio("hydra", 0.30)
                 self._adjust_unit_ratio("roach", 0.25)
                 self._adjust_unit_ratio("ravager", 0.15)
@@ -1577,7 +2578,7 @@ class StrategyManager:
     def _activate_emergency_mode(self, game_time: float) -> None:
         """
         Emergency Mode 활성화
-        ★ Phase 17: Blackboard 연동 + 즉시 저글링 생산 요청 ★
+        * Phase 17: Blackboard 연동 + 즉시 저글링 생산 요청 *
         """
         self.emergency_active = True
         self.emergency_start_time = game_time
@@ -1605,7 +2606,7 @@ class StrategyManager:
         if has_air_enemy:
             self._request_defensive_building(spore=True)
 
-        # ★ Phase 17: Blackboard에 긴급 상태 전파 — 모든 시스템에 즉시 알림 ★
+        # * Phase 17: Blackboard에 긴급 상태 전파 - 모든 시스템에 즉시 알림 *
         if self.blackboard:
             self.blackboard.set("is_rush_detected", True)
             self.blackboard.set("emergency_mode", True)
@@ -1650,7 +2651,7 @@ class StrategyManager:
         if self.emergency_active:
             return  # Emergency 유지
 
-        # ★ 방어 모드가 활성화된 직후에는 덮어쓰지 않음 (oscillation 방지) ★
+        # * 방어 모드가 활성화된 직후에는 덮어쓰지 않음 (oscillation 방지) *
         game_time = getattr(self.bot, "time", 0.0)
         if (
             self.current_mode == StrategyMode.DEFENSIVE
@@ -1718,7 +2719,7 @@ class StrategyManager:
         )
         base_ratios = phase_ratios.get(self.game_phase, phase_ratios[GamePhase.EARLY])
 
-        # ★ Feature 89: Apply custom unit weights from JARVIS when set ★
+        # * Feature 89: Apply custom unit weights from JARVIS when set *
         if self.custom_unit_weights:
             merged = dict(base_ratios)
             for unit, weight in self.custom_unit_weights.items():
@@ -1739,6 +2740,13 @@ class StrategyManager:
         Returns:
             드론을 생산해야 하면 True
         """
+        if self.blackboard and hasattr(self.blackboard, "get"):
+            policy = self.blackboard.get("drone_production_policy", None)
+            if policy == "HALT":
+                return False
+            if policy == "REDUCE":
+                return self._get_drone_count() < 22
+
         # Emergency Mode에서는 드론 생산 최소화
         if self.emergency_active:
             drone_count = self._get_drone_count()
@@ -1920,7 +2928,7 @@ class StrategyManager:
 
     def check_surrender(self, game_time: float) -> bool:
         """
-        ★ Smart Surrender Logic (relaxed thresholds) ★
+        * Smart Surrender Logic (relaxed thresholds) *
 
         Check if the game is hopelessly lost to save time.
 

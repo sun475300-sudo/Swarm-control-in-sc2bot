@@ -149,7 +149,7 @@ class OverseerScoutTrainer:
         # 새로운 감시군주 추가
         for overseer in overseers:
             if overseer.tag not in self.overseers:
-                # ★ Unit Authority Check ★
+                # * Unit Authority Check *
                 if hasattr(self.bot, "unit_authority") and self.bot.unit_authority:
                     from unit_authority_manager import AuthorityLevel
 
@@ -190,7 +190,7 @@ class OverseerScoutTrainer:
         ]
 
         if not unscouted_zones:
-            # 모든 존 정찰 완료 → 리셋
+            # 모든 존 정찰 완료 -> 리셋
             self.scouted_zones.clear()
             return
 

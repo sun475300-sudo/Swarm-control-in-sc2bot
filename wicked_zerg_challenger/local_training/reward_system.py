@@ -2,14 +2,14 @@
 """
 Zerg Specialized Reward System (Reward Shaping)
 
-���� Ưȭ ���� �ý���: �ܼ��� �¸�/�й� ���� �ܿ���
-���� ���� �� "���ϰ� �ִ�"�� Ī���� �־� �н� �ӵ��� ���Դϴ�.
+???? Ưȭ ???? ?ý???: ?ܼ??? ???/?й? ???? ?ܿ???
+???? ???? ?? "???ϰ? ?ִ?"?? Ī???? ?-? ?н? ?ӵ??? ???Դϴ?.
 
-�ٽ� ���� ���:
-1. ����(Creep) Ŀ������ ���� (�� ���)
-2. ���(Larva) ȿ���� ���� (����)
-3. �ڿ� ȸ���� ���� (�Ҹ���)
-4. ���� ������ ���� (�Ҹ��� ȿ��)
+?ٽ? ???? ???:
+1. ????(Creep) Ŀ?????? ???? (?? ???)
+2. ???(Larva) ȿ???? ???? (????)
+3. ?ڿ? ȸ???? ???? (?Ҹ???)
+4. ???? ?????? ???? (?Ҹ??? ȿ??)
 """
 
 import logging
@@ -21,11 +21,11 @@ logger = logging.getLogger("RewardSystem")
 
 class ZergRewardSystem:
     """
-    ���� Ưȭ ���� �ý���
+    ???? Ưȭ ???? ?ý???
 
-    �ܼ��� "�̱�� +1, ���� -1"�� �н���Ű��,
-    AI�� ������ ���� ������ ���� �������� ����ϸ� �н� �ӵ��� �ſ� �������ϴ�.
-    **'���ϰ� �ִ�'�� Ī��(����)**�� �߰��߰� ��� ��� �մϴ�.
+    ?ܼ??? "?̱?? +1, ???? -1"?? ?н???Ű??,
+    AI?? ?????? ???? ?????? ???? ???????? ????ϸ? ?н? ?ӵ??? ?ſ? ???????ϴ?.
+    **'???ϰ? ?ִ?'?? Ī??(????)**?? ?߰??߰? ??? ??? ?մϴ?.
     """
 
     def __init__(self):
@@ -45,35 +45,35 @@ class ZergRewardSystem:
 
     def calculate_step_reward(self, bot) -> float:
         """
-        �� ����(Step)���� AI�� �󸶳� ���ϰ� �ִ��� ����(Reward)�� �ű�ϴ�.
+        ?? ????(Step)???? AI?? ?󸶳? ???ϰ? ?ִ??? ????(Reward)?? ?ű?ϴ?.
 
         Args:
-            bot: ���� ���� ���¸� ��� �ִ� �� ��ü (BotAI �ν��Ͻ�)
+            bot: ???? ???? ????? ??? ?ִ? ?? ??ü (BotAI ?ν??Ͻ?)
 
         Returns:
-            �̹� ������ ���� ���� (float)
+            ?̹? ?????? ???? ???? (float)
         """
         reward = 0.0
 
         try:
-            # 1. ����(Creep) Ŀ������ ���� (�� ���)
-            # ������ �ٽ��� �þ߿� �̵� �ӵ� ������ �ִ� �����Դϴ�.
+            # 1. ????(Creep) Ŀ?????? ???? (?? ???)
+            # ?????? ?ٽ??? ?þ?? ?̵? ?ӵ? ?????? ?ִ? ?????Դϴ?.
             reward += self._calculate_creep_reward(bot)
 
-            # 2. ���(Larva) ȿ���� ���� (����)
-            # ������ �� �ؼ� ��ٰ� �׿������� ���� (�г�Ƽ)
+            # 2. ???(Larva) ȿ???? ???? (????)
+            # ?????? ?? ?ؼ? ??ٰ? ?׿??????? ???? (?г?Ƽ)
             reward += self._calculate_larva_efficiency_reward(bot)
 
-            # 3. �ڿ� ȸ���� ���� (�Ҹ���)
-            # �̳׶��� 2000 �̻� ������ '���� �� ���� �ִ�'�� ���̹Ƿ� ����
+            # 3. ?ڿ? ȸ???? ???? (?Ҹ???)
+            # ?̳׶??? 2000 ?̻? ?????? '???? ?? ???? ?ִ?'?? ???̹Ƿ? ????
             reward += self._calculate_resource_turnover_reward(bot)
 
-            # 4. ���� ������ ���� (�Ҹ��� ȿ��)
-            # (���� �ı��� �� �ڿ� ��ġ) - (���� ���� �ڿ� ��ġ)
+            # 4. ???? ?????? ???? (?Ҹ??? ȿ??)
+            # (???? ?ı??? ?? ?ڿ? ??ġ) - (???? ???? ?ڿ? ??ġ)
             reward += self._calculate_combat_exchange_reward(bot)
 
-            # 5. ���� ��� ���� (NEW: Threat-based rewards)
-            # ���� ��ũ �ǹ� �߰�, �Ʊ� ���� ü�� ���� ��
+            # 5. ???? ??? ???? (NEW: Threat-based rewards)
+            # ???? ??ũ ?ǹ? ?߰?, ?Ʊ? ???? ü?? ???? ??
             reward += self._calculate_threat_based_reward(bot)
 
             # 6. 시야 확보 보상 (Vision acquisition)
@@ -94,17 +94,17 @@ class ZergRewardSystem:
             # 11. 매크로 해처리 보상 (Macro hatchery)
             reward += self._calculate_macro_hatchery_reward(bot)
 
-            # 12. ★★★ NEW: 초반 방어 병력 보상 (Early defense units) ★★★
+            # 12. *** NEW: 초반 방어 병력 보상 (Early defense units) ***
             reward += self._calculate_early_defense_reward(bot)
 
-            # 13. ★★★ NEW: 적 피해 보상 (Enemy damage reward) ★★★
+            # 13. *** NEW: 적 피해 보상 (Enemy damage reward) ***
             reward += self._calculate_enemy_damage_reward(bot)
 
-            # 14. ★★★ NEW: 전략적 판단 보상 (Strategic Decision Reward) ★★★
+            # 14. *** NEW: 전략적 판단 보상 (Strategic Decision Reward) ***
             reward += self._calculate_strategic_decision_reward(bot)
 
         except Exception as e:
-            # ���� �߻� �� ���� 0 ��ȯ
+            # ???? ?߻? ?? ???? 0 ??ȯ
             logger.error(f"Reward calculation error: {e}")
             return 0.0
 
@@ -112,13 +112,13 @@ class ZergRewardSystem:
 
     def _calculate_creep_reward(self, bot) -> float:
         """
-        ����(Creep) Ŀ������ ���� ���
+        ????(Creep) Ŀ?????? ???? ???
 
-        ������ ���� �а� �������� ���� ������ �����Ͽ�,
-        ������ �����ϰ� ���� ����(Creep Tumor)�� �ɵ��� �����մϴ�.
+        ?????? ???? ?а? ???????? ???? ?????? ?????Ͽ?,
+        ?????? ?????ϰ? ???? ????(Creep Tumor)?? ?ɵ??? ?????մϴ?.
 
         Returns:
-            ���� ���� ���� (float)
+            ???? ???? ???? (float)
         """
         try:
             if not hasattr(bot, "state") or not bot.state:
@@ -127,7 +127,7 @@ class ZergRewardSystem:
             if not hasattr(bot.state, "creep") or not bot.state.creep:
                 return 0.0
 
-            # �� ũ�� ���
+            # ?? ũ?? ???
             map_width = bot.game_info.map_size[0]
             map_height = bot.game_info.map_size[1]
             total_map_area = map_width * map_height
@@ -135,30 +135,30 @@ class ZergRewardSystem:
             if total_map_area == 0:
                 return 0.0
 
-            # ���� Ŀ������ ���
+            # ???? Ŀ?????? ???
             creep_coverage = np.sum(bot.state.creep) / total_map_area
 
-            # ���� Ŀ������ ��� ������ ���� (������ ������ ����)
+            # ???? Ŀ?????? ??? ?????? ???? (?????? ?????? ????)
             coverage_delta = creep_coverage - self.previous_creep_coverage
-            reward = coverage_delta * 10.0  # ����ġ ���� (5.0 -> 10.0���� ����)
+            reward = coverage_delta * 10.0  # ????ġ ???? (5.0 -> 10.0???? ????)
 
-            # ���� Ŀ������ ���� (�� ��ǵ�)
-            reward += creep_coverage * 5.0  # ����ġ ���� (2.0 -> 5.0)
+            # ???? Ŀ?????? ???? (?? ??ǵ?)
+            reward += creep_coverage * 5.0  # ????ġ ???? (2.0 -> 5.0)
 
-            # ���� ����(Creep Tumor) ���� ���� (NEW)
+            # ???? ????(Creep Tumor) ???? ???? (NEW)
             if hasattr(bot, "structures"):
                 creep_tumors = bot.structures.filter(lambda s: s.name == "CreepTumor")
                 tumor_count = len(creep_tumors)
-                # ���� ������ �������� ���� (�ִ� 3.0)
+                # ???? ?????? ???????? ???? (?ִ? 3.0)
                 reward += min(tumor_count * 0.5, 3.0)
 
-            # ����(Queen)�� ���� ���� ���� �ൿ ���� (NEW)
+            # ????(Queen)?? ???? ???? ???? ?ൿ ???? (NEW)
             if hasattr(bot, "units"):
                 queens = bot.units.filter(lambda u: u.name == "Queen")
                 for queen in queens:
-                    # ���� ���� ���� ���� ���� Ȯ��
+                    # ???? ???? ???? ???? ???? Ȯ??
                     if hasattr(queen, "energy") and queen.energy >= 25:
-                        # �������� ����ϸ� ���� ���� (���� ����)
+                        # ???????? ????ϸ? ???? ???? (???? ????)
                         reward += 0.1
 
             self.previous_creep_coverage = creep_coverage
@@ -170,13 +170,13 @@ class ZergRewardSystem:
 
     def _calculate_larva_efficiency_reward(self, bot) -> float:
         """
-        ���(Larva) ȿ���� ���� ���
+        ???(Larva) ȿ???? ???? ???
 
-        ������ �� �ؼ� ��ٰ� 3���� �̻� �׿������� ���� (�г�Ƽ)
-        ��ٰ� ���ϼ��� �� ū ���Ƽ�� �޽��ϴ�.
+        ?????? ?? ?ؼ? ??ٰ? 3???? ?̻? ?׿??????? ???? (?г?Ƽ)
+        ??ٰ? ???ϼ??? ?? ū ???Ƽ?? ?޽??ϴ?.
 
         Returns:
-            ��� ȿ���� ���� ���� (float, ���� ����)
+            ??? ȿ???? ???? ???? (float, ???? ????)
         """
         try:
             if not hasattr(bot, "townhalls"):
@@ -185,17 +185,17 @@ class ZergRewardSystem:
             total_larva_excess = 0
 
             for hatch in bot.townhalls:
-                # ��� ���� Ȯ�� (��ó�� �ֺ� 5 Ÿ�� �̳�)
+                # ??? ???? Ȯ?? (??ó?? ?ֺ? 5 Ÿ?? ?̳?)
                 if hasattr(bot, "units"):
                     larva_units = bot.units.larva.closer_than(5, hatch.position)
                     larva_count = len(larva_units)
 
-                    # ��ٰ� 3���� �̻� �׿������� ����
+                    # ??ٰ? 3???? ?̻? ?׿??????? ????
                     if larva_count > 3:
                         excess = larva_count - 3
                         total_larva_excess += excess
 
-            # ���Ƽ: ��ٰ� ���ϼ��� ����
+            # ???Ƽ: ??ٰ? ???ϼ??? ????
             penalty = -0.1 * total_larva_excess
 
             return penalty
@@ -207,9 +207,9 @@ class ZergRewardSystem:
         """
         자원 회전율 기반 보상
 
-        ★★★ FIX: 2분 이후 미네랄 뱅킹 강력 페널티 ★★★
-        - 2분(120초) 이후 미네랄 500+ → 페널티
-        - 미네랄 1000+ → 매우 강한 페널티
+        *** FIX: 2분 이후 미네랄 뱅킹 강력 페널티 ***
+        - 2분(120초) 이후 미네랄 500+ -> 페널티
+        - 미네랄 1000+ -> 매우 강한 페널티
         - 시간이 지날수록 페널티 증가
 
         Returns:
@@ -222,20 +222,20 @@ class ZergRewardSystem:
             minerals = bot.minerals
             game_time = bot.time  # 게임 시간 (초)
 
-            # ★★★ NEW: 2분(120초) 이후 미네랄 뱅킹 강력 페널티 ★★★
+            # *** NEW: 2분(120초) 이후 미네랄 뱅킹 강력 페널티 ***
             if game_time >= 120:  # 2분 이후
                 if minerals >= 1500:
-                    # 미네랄 1500+ → 매우 강한 페널티 (초당 증가)
+                    # 미네랄 1500+ -> 매우 강한 페널티 (초당 증가)
                     time_factor = min((game_time - 120) / 60.0, 5.0)  # 최대 5배
                     penalty = -0.5 * (minerals / 1000.0) * (1.0 + time_factor)
                     return penalty
                 elif minerals >= 1000:
-                    # 미네랄 1000-1500 → 강한 페널티
+                    # 미네랄 1000-1500 -> 강한 페널티
                     time_factor = min((game_time - 120) / 60.0, 3.0)  # 최대 3배
                     penalty = -0.3 * (minerals / 1000.0) * (1.0 + time_factor)
                     return penalty
                 elif minerals >= 500:
-                    # 미네랄 500-1000 → 중간 페널티
+                    # 미네랄 500-1000 -> 중간 페널티
                     penalty = -0.1 * ((minerals - 500) / 500.0)
                     return penalty
 
@@ -256,12 +256,12 @@ class ZergRewardSystem:
 
     def _calculate_combat_exchange_reward(self, bot) -> float:
         """
-        ���� ������ ���� ���
+        ???? ?????? ???? ???
 
-        (���� �ı��� �� �ڿ� ��ġ) - (���� ���� �ڿ� ��ġ)�� ��ȭ���� ����
+        (???? ?ı??? ?? ?ڿ? ??ġ) - (???? ???? ?ڿ? ??ġ)?? ??ȭ???? ????
 
         Returns:
-            ���� ������ ���� ���� (float)
+            ???? ?????? ???? ???? (float)
         """
         try:
             if not hasattr(bot, "state") or not bot.state:
@@ -272,15 +272,15 @@ class ZergRewardSystem:
 
             score = bot.state.score
 
-            # ���� ������ ���
+            # ???? ?????? ???
             current_kill_value = getattr(score, "kill_value_units", 0)
             current_lost_value = getattr(score, "lost_value_units", 0)
             current_net_value = current_kill_value - current_lost_value
 
-            # ���� ������ ��� ��ȭ��
+            # ???? ?????? ??? ??ȭ??
             delta_value = current_net_value - self.previous_score
 
-            # ��ȭ���� ����� ���� (�Ҹ��� ȿ��)
+            # ??ȭ???? ????? ???? (?Ҹ??? ȿ??)
             reward = delta_value * 0.001
 
             self.previous_score = current_net_value
@@ -292,19 +292,19 @@ class ZergRewardSystem:
 
     def _calculate_threat_based_reward(self, bot) -> float:
         """
-        ���� ��� ���� ��� (NEW)
+        ???? ??? ???? ??? (NEW)
 
-        - ���� ��ũ �ǹ� �߰� �� ���� (���� ȹ��)
-        - �Ʊ� ������ ü�� ����(Save) �� ����
-        - ���� ������ ���� ��� ����
+        - ???? ??ũ ?ǹ? ?߰? ?? ???? (???? ȹ??)
+        - ?Ʊ? ?????? ü?? ????(Save) ?? ????
+        - ???? ?????? ???? ??? ????
 
         Returns:
-            ���� ��� ���� ���� (float)
+            ???? ??? ???? ???? (float)
         """
         try:
             reward = 0.0
 
-            # 1. ���� ��ũ �ǹ� �߰� ���� (���� ȹ��)
+            # 1. ???? ??ũ ?ǹ? ?߰? ???? (???? ȹ??)
             if hasattr(bot, "enemy_structures"):
                 tech_buildings = [
                     "Factory",
@@ -321,11 +321,11 @@ class ZergRewardSystem:
                             getattr(bot.enemy_structures, building_type.lower())
                         )
                         if count > 0:
-                            # ��ũ �ǹ� �߰� �� ���� (���� ��ġ)
+                            # ??ũ ?ǹ? ?߰? ?? ???? (???? ??ġ)
                             reward += 0.5 * count
 
-            # 1-1. ���� ��ũ �ǹ� �ı� ���� (���� ����) - NEW
-            # ���� �����Ӱ� ���Ͽ� �ı��� �ǹ� �� Ȯ��
+            # 1-1. ???? ??ũ ?ǹ? ?ı? ???? (???? ????) - NEW
+            # ???? ?????Ӱ? ???Ͽ? ?ı??? ?ǹ? ?? Ȯ??
             if not hasattr(self, "_previous_enemy_tech_count"):
                 self._previous_enemy_tech_count = {}
 
@@ -337,24 +337,24 @@ class ZergRewardSystem:
                             getattr(bot.enemy_structures, building_type.lower())
                         )
 
-            # �ı��� �ǹ��� ���� ����
+            # ?ı??? ?ǹ??? ???? ????
             for building_type, current_count in current_tech_count.items():
                 previous_count = self._previous_enemy_tech_count.get(
                     building_type, current_count
                 )
                 if previous_count > current_count:
                     destroyed = previous_count - current_count
-                    # ��ũ �ǹ� �ı� �� ū ���� (���� ����)
+                    # ??ũ ?ǹ? ?ı? ?? ū ???? (???? ????)
                     reward += 2.0 * destroyed
 
             self._previous_enemy_tech_count = current_tech_count
 
-            # 2. �Ʊ� ���� ü�� ���� ����
+            # 2. ?Ʊ? ???? ü?? ???? ????
             if hasattr(bot, "units"):
                 total_health = 0
                 total_max_health = 0
 
-                # ���� ���ֵ��� ü�� ���� ���
+                # ???? ???ֵ??? ü?? ???? ???
                 combat_units = ["Zergling", "Roach", "Hydralisk", "Mutalisk", "Lurker"]
                 for unit_type in combat_units:
                     if hasattr(bot.units, unit_type.lower()):
@@ -364,18 +364,18 @@ class ZergRewardSystem:
                                 total_health += unit.health
                                 total_max_health += unit.health_max
 
-                # ü�� ������ �������� ���� (���� ����)
+                # ü?? ?????? ???????? ???? (???? ????)
                 if total_max_health > 0:
                     health_ratio = total_health / total_max_health
-                    # ü�� ������ 0.8 �̻��̸� ����
+                    # ü?? ?????? 0.8 ?̻??̸? ????
                     if health_ratio > 0.8:
                         reward += 0.1 * (health_ratio - 0.8) * 10
 
-            # 3. ���� ������ ���� ��� ���� (������ - ü�� �ս��� ������)
-            # ���� ü�°� �񱳴� ���� �����ӿ��� ó��
+            # 3. ???? ?????? ???? ??? ???? (?????? - ü?? ?ս??? ??????)
+            # ???? ü?deg? ?񱳴? ???? ?????ӿ??? ó??
 
-            # 4. ���� ���� (NEW: Risk-Aware Reward)
-            # ������ ���� �ʰ� ü���� �����ϸ� �������� �� ����
+            # 4. ???? ???? (NEW: Risk-Aware Reward)
+            # ?????? ???? ?ʰ? ü???? ?????ϸ? ???????? ?? ????
             if not hasattr(self, "_previous_unit_count"):
                 self._previous_unit_count = 0
                 self._previous_total_health = 0
@@ -391,12 +391,12 @@ class ZergRewardSystem:
                             if hasattr(unit, "health"):
                                 current_total_health += unit.health
 
-            # ���� ���� �����ǰų� �����߰�, ü�� �ս��� ������ ���� ����
+            # ???? ???? ?????ǰų? ?????߰?, ü?? ?ս??? ?????? ???? ????
             if (
                 current_unit_count >= self._previous_unit_count * 0.9
                 and current_total_health > self._previous_total_health * 0.8
             ):
-                # ���� ���� ���� (���� ����)
+                # ???? ???? ???? (???? ????)
                 reward += 0.5
 
             self._previous_unit_count = current_unit_count
@@ -409,34 +409,34 @@ class ZergRewardSystem:
 
     def _calculate_vision_reward(self, bot) -> float:
         """
-        �þ� Ȯ�� ���� ��� (NEW)
+        ?þ? Ȯ?? ???? ??? (NEW)
 
-        - ���� ��ġ�� �ľ��ϰų� �߿��� ������ ������ ����
-        - ���� ��Ƽ Ÿ�̹� ���� �� ����
+        - ???? ??ġ?? ?ľ??ϰų? ????? ?????? ?????? ????
+        - ???? ??Ƽ Ÿ?̹? ???? ?? ????
 
         Returns:
-            �þ� Ȯ�� ���� ���� (float)
+            ?þ? Ȯ?? ???? ???? (float)
         """
         try:
             reward = 0.0
 
-            # 1. ���� ��Ƽ �߰� ����
+            # 1. ???? ??Ƽ ?߰? ????
             if hasattr(bot, "enemy_structures"):
                 if hasattr(bot.enemy_structures, "townhall"):
                     enemy_bases = len(bot.enemy_structures.townhall)
                     if enemy_bases > 1:
-                        # ���� ��Ƽ �߰� �� ���� (���� ��ġ)
+                        # ???? ??Ƽ ?߰? ?? ???? (???? ??ġ)
                         reward += 1.0 * (enemy_bases - 1)
 
-            # 2. ���� ���� ��ġ �ľ� ����
+            # 2. ???? ???? ??ġ ?ľ? ????
             if hasattr(bot, "enemy_units"):
                 enemy_count = len(bot.enemy_units)
                 if enemy_count > 0:
-                    # ���� ���� ��ġ�� �ľ��ϸ� ���� ����
-                    reward += 0.05 * min(enemy_count, 20)  # �ִ� 1.0
+                    # ???? ???? ??ġ?? ?ľ??ϸ? ???? ????
+                    reward += 0.05 * min(enemy_count, 20)  # ?ִ? 1.0
 
-            # 3. ���� ���� Ÿ�̹� ���� (���� �ǹ� �ı�)
-            # �̴� ���� ������ ���󿡼� �̹� ó����
+            # 3. ???? ???? Ÿ?̹? ???? (???? ?ǹ? ?ı?)
+            # ?̴? ???? ?????? ???󿡼? ?̹? ó????
 
             return reward
 
@@ -670,7 +670,7 @@ class ZergRewardSystem:
 
     def _calculate_early_defense_reward(self, bot) -> float:
         """
-        ★★★ NEW: 초반 방어 병력 보상 ★★★
+        *** NEW: 초반 방어 병력 보상 ***
 
         사용자 요구사항: "1분동안 아무것도 안해서 병력이 3분안으로 뽑혀있지 않음"
 
@@ -705,7 +705,7 @@ class ZergRewardSystem:
             queens = bot.units.filter(lambda u: u.name == "Queen")
             queen_count = len(queens)
 
-            # ★★★ 1분(60초) 이내: 드론 12 목표 ★★★
+            # *** 1분(60초) 이내: 드론 12 목표 ***
             if game_time <= 60:
                 if drone_count >= 12:
                     reward += 1.0  # 강한 보상
@@ -715,7 +715,7 @@ class ZergRewardSystem:
                     # 페널티: 1분에 드론 10 미만
                     reward -= 0.3
 
-            # ★★★ 2분(120초) 이내: 저글링 4+ 또는 퀸 1 목표 ★★★
+            # *** 2분(120초) 이내: 저글링 4+ 또는 퀸 1 목표 ***
             elif 60 < game_time <= 120:
                 # 드론 유지 보상
                 if drone_count >= 14:
@@ -728,9 +728,9 @@ class ZergRewardSystem:
                     reward += 0.5
                 else:
                     # 페널티: 2분에 병력 없음
-                    reward -= 2.0  # ★ 강화된 페널티 (1.0 → 2.0) ★
+                    reward -= 2.0  # * 강화된 페널티 (1.0 -> 2.0) *
 
-            # ★★★ 3분(180초) 이내: 저글링 8+ 또는 퀸 2 목표 ★★★
+            # *** 3분(180초) 이내: 저글링 8+ 또는 퀸 2 목표 ***
             elif 120 < game_time <= 180:
                 # 드론 유지 보상
                 if drone_count >= 20:
@@ -745,9 +745,9 @@ class ZergRewardSystem:
                     reward += 0.3
                 else:
                     # 페널티: 3분에 병력 부족
-                    reward -= 2.5  # ★ 강화된 페널티 (1.5 → 2.5) ★
+                    reward -= 2.5  # * 강화된 페널티 (1.5 -> 2.5) *
 
-            # ★★★ 3분 이후: 지속적인 병력 유지 보상 ★★★
+            # *** 3분 이후: 지속적인 병력 유지 보상 ***
             elif game_time > 180:
                 total_army = zergling_count + queen_count * 2  # 퀸은 2배 가중치
 
@@ -766,7 +766,7 @@ class ZergRewardSystem:
 
     def _calculate_enemy_damage_reward(self, bot) -> float:
         """
-        ★★★ NEW: 적 피해 보상 ★★★
+        *** NEW: 적 피해 보상 ***
 
         사용자 요구사항: "상대의 병력과 일꾼손실을 더 일으킬수록 보상"
 
@@ -805,7 +805,7 @@ class ZergRewardSystem:
                 # 기본 유닛 킬 보상
                 reward += unit_kills_delta * 0.001  # 가치 1000당 1.0 보상
 
-                # ★★★ 특별 보상: 적 일꾼 킬 감지 ★★★
+                # *** 특별 보상: 적 일꾼 킬 감지 ***
                 # 일꾼 가치는 보통 50 정도이므로, 유닛 킬이 50 단위로 증가하면 일꾼 킬로 추정
                 if 40 <= unit_kills_delta <= 70:  # 일꾼 가치 범위
                     reward += 0.5  # 일꾼 킬 특별 보상!
@@ -820,7 +820,7 @@ class ZergRewardSystem:
                 # 건물 파괴 보상
                 reward += structure_kills_delta * 0.002  # 가치 1000당 2.0 보상
 
-                # ★★★ 특별 보상: 적 기지 파괴 감지 ★★★
+                # *** 특별 보상: 적 기지 파괴 감지 ***
                 # 해처리/넥서스/커맨드센터 가치는 보통 350-450
                 if structure_kills_delta >= 300:  # 기지 파괴
                     reward += 3.0  # 기지 파괴 특별 보상!
@@ -836,7 +836,7 @@ class ZergRewardSystem:
 
     def _calculate_strategic_decision_reward(self, bot) -> float:
         """
-        ★★★ NEW: 전략적 판단 보상 (Strategic Decision Reward) ★★★
+        *** NEW: 전략적 판단 보상 (Strategic Decision Reward) ***
 
         RL Agent의 "직관"을 날카롭게 하기 위한 보상 셰이핑.
         단순히 이기는 것뿐만 아니라, "유리할 때 싸우고 불리할 때 참는" 판단 자체에 보상을 줌.
@@ -931,24 +931,24 @@ class ZergRewardSystem:
             self._previous_total_health = 0
 
 
-# ��� ���� (�ּ� ó��)
+# ??? ???? (?ּ? ó??)
 """
-# ���� �������� ��� ����:
+# ???? ???????? ??? ????:
 reward_system = ZergRewardSystem()
 
 async def on_step(self, iteration: int):
-    # ... ���� ���� ...
+    # ... ???? ???? ...
     
-    # �� ���� ���� ���
+    # ?? ???? ???? ???
     step_reward = reward_system.calculate_step_reward(self)
     
-    # ��ȭ�н� �н��� ���� ���
+    # ??ȭ?н? ?н??? ???? ???
     if self.train_mode:
         self.rl_agent.update_reward(step_reward)
     
-    # ... ������ ���� ...
+    # ... ?????? ???? ...
 
 async def on_end(self, game_result):
-    # ���� ���� �� ���� �ý��� �ʱ�ȭ
+    # ???? ???? ?? ???? ?ý??? ?ʱ?ȭ
     reward_system.reset()
 """

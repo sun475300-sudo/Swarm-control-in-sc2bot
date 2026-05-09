@@ -52,7 +52,7 @@ class PotentialFunction:
 
     def compute(self, state: Dict[str, Any]) -> float:
         """
-        잠재 값 계산 — 상태의 '좋은 정도'를 스칼라로 표현.
+        잠재 값 계산 - 상태의 '좋은 정도'를 스칼라로 표현.
 
         군집 점수: workers/66 * 0.3 + army_supply/100 * 0.4 + tech_level * 0.2 + bases/4 * 0.1
         """
@@ -109,7 +109,7 @@ class RewardShaper:
             RewardComponent.SURVIVAL: 0.6,
         }
 
-        # 잠재 함수들 — 기본 잠재 함수 자동 등록
+        # 잠재 함수들 - 기본 잠재 함수 자동 등록
         self.potentials: Dict[str, PotentialFunction] = {}
         self.register_potential("default", PotentialFunction("default", gamma=0.99))
 

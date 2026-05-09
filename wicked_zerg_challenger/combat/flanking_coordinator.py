@@ -6,7 +6,7 @@ Flanking Coordinator - 양각 포위(샌드위치) 전술
 동시에 덮치는 포위 공격 로직.
 
 - 아군 서플라이 15+ 시 포위 기동 개시
-- 적 중심에서 ±60도 오프셋으로 접근 웨이포인트 생성
+- 적 중심에서 +/-60도 오프셋으로 접근 웨이포인트 생성
 - 모든 그룹이 접근 지점 도달 시 동시 돌격
 """
 
@@ -30,7 +30,7 @@ class FlankingCoordinator:
     """
     양각 포위 전술 코디네이터
 
-    아군 → 적 기본 벡터에서 ±ANGLE_OFFSET 만큼 회전하여
+    아군 -> 적 기본 벡터에서 +/-ANGLE_OFFSET 만큼 회전하여
     2~3개 접근 경로를 생성하고, 유닛을 각 경로로 분배.
     모든 그룹이 접근 완료되면 동시 공격.
     """
@@ -106,7 +106,7 @@ class FlankingCoordinator:
         """
         병력을 NUM_GROUPS 개로 분리하고 각 그룹의 접근 웨이포인트 생성.
 
-        기본 벡터(아군→적)에서 ±ANGLE_OFFSET 만큼 회전하여
+        기본 벡터(아군->적)에서 +/-ANGLE_OFFSET 만큼 회전하여
         적의 양옆으로 접근 경로를 만듦.
         """
         if not army or not hasattr(self.bot, "townhalls") or not self.bot.townhalls:
@@ -114,7 +114,7 @@ class FlankingCoordinator:
 
         our_base = self.bot.townhalls.first.position
 
-        # 아군→적 기본 벡터
+        # 아군->적 기본 벡터
         dx = enemy_center.x - our_base.x
         dy = enemy_center.y - our_base.y
         base_angle = math.atan2(dy, dx)

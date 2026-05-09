@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 SC2-Swarm 캡스톤 디자인: 이해하기 쉬운 3D 시각화
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+----------------------------------------------
 - 큰 글씨, 명확한 색상, 최소한의 요소
 - 심사위원/교수님이 한 눈에 파악 가능
 - 한국어 라벨 + 영어 기술 용어 병기
@@ -27,21 +27,21 @@ def save(fig, name):
     logger.info(f"  -> {path}")
 
 
-# ═══════════════════════════════════════════════════════
+# =======================================================
 # 1. 시스템 전체 구조도 (가장 중요한 한 장)
-# ═══════════════════════════════════════════════════════
+# =======================================================
 
 
 def clear_system_overview():
     """
-    캡스톤 핵심 1장: SC2 → 시뮬레이션 → 실제 드론
+    캡스톤 핵심 1장: SC2 -> 시뮬레이션 -> 실제 드론
     3단계 파이프라인을 3D 계단식으로 보여줌
     """
     logger.info("시스템 전체 구조도 (3-Stage Pipeline)")
 
     fig = go.Figure()
 
-    # ── 3개 스테이지 플랫폼 ──
+    # -- 3개 스테이지 플랫폼 --
     stages = [
         {
             "name": "Stage 1\nSC2 게임 시뮬레이션",
@@ -136,16 +136,16 @@ def clear_system_overview():
                 )
             )
 
-    # ── 스테이지 간 화살표 (큰 화살표) ──
+    # -- 스테이지 간 화살표 (큰 화살표) --
     arrows = [
         {
             "from": 0,
             "to": 5,
             "z1": 0,
             "z2": 2,
-            "label": "알고리즘 추출\n(2D → 3D 변환)",
+            "label": "알고리즘 추출\n(2D -> 3D 변환)",
         },
-        {"from": 5, "to": 10, "z1": 2, "z2": 4, "label": "Sim-to-Real\n(시뮬 → 실제)"},
+        {"from": 5, "to": 10, "z1": 2, "z2": 4, "label": "Sim-to-Real\n(시뮬 -> 실제)"},
     ]
 
     for a in arrows:
@@ -216,9 +216,9 @@ def clear_system_overview():
     save(fig, "clear_1_system_overview")
 
 
-# ═══════════════════════════════════════════════════════
+# =======================================================
 # 2. Boids 알고리즘 설명도 (핵심 기술)
-# ═══════════════════════════════════════════════════════
+# =======================================================
 
 
 def clear_boids_explained():
@@ -286,23 +286,23 @@ def clear_boids_explained():
             )
         )
 
-    # ── 3대 힘 벡터 (크고 명확하게) ──
+    # -- 3대 힘 벡터 (크고 명확하게) --
     forces = [
         {
             "name": "① 분리 (Separation)",
-            "desc": "너무 가까우면 밀어냄\n→ 충돌 방지",
+            "desc": "너무 가까우면 밀어냄\n-> 충돌 방지",
             "dir": (-2.5, -1.5, 1.5),
             "color": "#F44336",
         },
         {
             "name": "② 정렬 (Alignment)",
-            "desc": "이웃과 같은 방향\n→ 대형 유지",
+            "desc": "이웃과 같은 방향\n-> 대형 유지",
             "dir": (2.0, 2.5, 0.5),
             "color": "#2196F3",
         },
         {
             "name": "③ 응집 (Cohesion)",
-            "desc": "그룹 중심으로 모임\n→ 흩어짐 방지",
+            "desc": "그룹 중심으로 모임\n-> 흩어짐 방지",
             "dir": (0.5, -2.0, -1.0),
             "color": "#4CAF50",
         },
@@ -384,7 +384,7 @@ def clear_boids_explained():
             y=[total[1] * 1.2],
             z=[total[2] * 1.2],
             mode="text",
-            text=["최종 이동 방향 ▶"],
+            text=["최종 이동 방향 >"],
             textfont=dict(size=16, color="#FF6F00", family="Arial Black"),
             showlegend=False,
         )
@@ -397,7 +397,7 @@ def clear_boids_explained():
             y=[0],
             z=[3.5],
             mode="text",
-            text=["V = Separation × 1.5  +  Alignment × 1.0  +  Cohesion × 1.0"],
+            text=["V = Separation x 1.5  +  Alignment x 1.0  +  Cohesion x 1.0"],
             textfont=dict(size=14, color="#333", family="Courier New"),
             showlegend=False,
         )
@@ -424,17 +424,17 @@ def clear_boids_explained():
     save(fig, "clear_2_boids_explained")
 
 
-# ═══════════════════════════════════════════════════════
-# 3. SC2 ↔ 드론 매핑 (기술 전이)
-# ═══════════════════════════════════════════════════════
+# =======================================================
+# 3. SC2 <-> 드론 매핑 (기술 전이)
+# =======================================================
 
 
 def clear_tech_transfer():
     """
-    SC2 모듈 → 드론 ATC 대응 모듈
+    SC2 모듈 -> 드론 ATC 대응 모듈
     양쪽에 박스, 가운데 연결선 (색상으로 전이 신뢰도)
     """
-    logger.info("SC2 ↔ 드론 기술 전이 매핑")
+    logger.info("SC2 <-> 드론 기술 전이 매핑")
 
     fig = go.Figure()
 
@@ -536,7 +536,7 @@ def clear_tech_transfer():
                 mode="lines",
                 line=dict(color=col, width=width),
                 showlegend=False,
-                hovertext=f"전이 신뢰도: {'★' * conf}",
+                hovertext=f"전이 신뢰도: {'*' * conf}",
             )
         )
 
@@ -547,7 +547,7 @@ def clear_tech_transfer():
                 y=[1.2],
                 z=[z],
                 mode="text",
-                text=["★" * conf],
+                text=["*" * conf],
                 textfont=dict(size=12, color=col),
                 showlegend=False,
             )
@@ -555,9 +555,9 @@ def clear_tech_transfer():
 
     # 범례
     for conf_val, col, label in [
-        (5, "#4CAF50", "★★★★★ Direct (직접 전이)"),
-        (4, "#FFC107", "★★★★☆ Adapt (적응 필요)"),
-        (3, "#FF9800", "★★★☆☆ Concept (개념 전이)"),
+        (5, "#4CAF50", "***** Direct (직접 전이)"),
+        (4, "#FFC107", "***** Adapt (적응 필요)"),
+        (3, "#FF9800", "***** Concept (개념 전이)"),
     ]:
         fig.add_trace(
             go.Scatter3d(
@@ -572,7 +572,7 @@ def clear_tech_transfer():
 
     fig.update_layout(
         title=dict(
-            text="SC2 → 드론 ATC: 기술 전이 매핑",
+            text="SC2 -> 드론 ATC: 기술 전이 매핑",
             font=dict(size=22, family="Arial Black"),
             x=0.5,
         ),
@@ -594,9 +594,9 @@ def clear_tech_transfer():
     save(fig, "clear_3_tech_transfer")
 
 
-# ═══════════════════════════════════════════════════════
+# =======================================================
 # 4. Boids 군집 비행 시뮬레이션 (깔끔 버전)
-# ═══════════════════════════════════════════════════════
+# =======================================================
 
 
 def clear_swarm_simulation():
@@ -734,7 +734,7 @@ def clear_swarm_simulation():
                 symbol="circle",
                 line=dict(width=1, color="white"),
             ),
-            name=f"팔로워 드론 ×{N - 1}",
+            name=f"팔로워 드론 x{N - 1}",
         )
     )
 
@@ -804,7 +804,7 @@ def clear_swarm_simulation():
                 xanchor="center",
                 buttons=[
                     dict(
-                        label="▶ 비행 시작",
+                        label="> 비행 시작",
                         method="animate",
                         args=[
                             None,
@@ -814,7 +814,7 @@ def clear_swarm_simulation():
                         ],
                     ),
                     dict(
-                        label="⏸ 정지",
+                        label="|| 정지",
                         method="animate",
                         args=[
                             [None],
@@ -858,14 +858,14 @@ def clear_swarm_simulation():
     save(fig, "clear_4_swarm_simulation")
 
 
-# ═══════════════════════════════════════════════════════
+# =======================================================
 # 5. ATC 우선순위 시스템 (피라미드)
-# ═══════════════════════════════════════════════════════
+# =======================================================
 
 
 def clear_atc_priority():
     """
-    ATC 우선순위를 3D 피라미드로 — 위쪽일수록 높은 우선순위
+    ATC 우선순위를 3D 피라미드로 - 위쪽일수록 높은 우선순위
     """
     logger.info("ATC 우선순위 피라미드")
 
@@ -1014,9 +1014,9 @@ def clear_atc_priority():
     save(fig, "clear_5_atc_priority")
 
 
-# ═══════════════════════════════════════════════════════
+# =======================================================
 # Main
-# ═══════════════════════════════════════════════════════
+# =======================================================
 
 if __name__ == "__main__":
     print("=" * 60)

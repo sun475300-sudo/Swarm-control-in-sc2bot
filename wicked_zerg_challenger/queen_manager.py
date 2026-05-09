@@ -83,7 +83,7 @@ class QueenManager:
         self.max_inject_distance = GameConfig.QUEEN_MAX_INJECT_DISTANCE
         self.max_queen_travel_distance = GameConfig.QUEEN_MAX_TRAVEL_DISTANCE
 
-        # Creep settings (GameConfig 중앙화 — 공격적 점막 확장)
+        # Creep settings (GameConfig 중앙화 - 공격적 점막 확장)
         self.creep_energy_threshold = GameConfig.QUEEN_CREEP_SPREAD_ENERGY
         self.creep_spread_cooldown = GameConfig.QUEEN_CREEP_SPREAD_COOLDOWN_SEC
         self.inject_queen_creep_threshold = GameConfig.QUEEN_INJECT_QUEEN_CREEP_ENERGY
@@ -137,7 +137,7 @@ class QueenManager:
             if not queens or not hatcheries:
                 return
 
-            # ★★★ NEW: QueenSpecializationManager가 있으면 전문 분담 시스템 사용 ★★★
+            # *** NEW: QueenSpecializationManager가 있으면 전문 분담 시스템 사용 ***
             spec_mgr = getattr(self.bot, "queen_specialization", None)
             if spec_mgr:
                 await self._run_specialization_system(
@@ -151,7 +151,7 @@ class QueenManager:
             # === DEFENSE PRIORITY: Check if base is under attack ===
             under_attack = self._is_base_under_attack()
 
-            # ★ Phase 23: 인젝트는 항상 최우선 (방어 중에도) ★
+            # * Phase 23: 인젝트는 항상 최우선 (방어 중에도) *
             if not (
                 hasattr(self.bot, "queen_inject_opt") and self.bot.queen_inject_opt
             ):
@@ -171,7 +171,7 @@ class QueenManager:
                     queens, iteration, include_structures=under_attack
                 )
 
-            # ★ Phase 26: 전투 시 크립 퀸도 방어 투입 (크립은 평시에만) ★
+            # * Phase 26: 전투 시 크립 퀸도 방어 투입 (크립은 평시에만) *
             _creep_v2_active = hasattr(self.bot, "creep_v2") and self.bot.creep_v2
 
             if not _creep_v2_active:
@@ -189,7 +189,7 @@ class QueenManager:
                     # 인젝트 퀸도 에너지 여유 있으면 점막 확장 (개선)
                     await self._inject_queens_spread_creep(queens, iteration)
 
-                    # ★★★ NEW: 여유 있는 모든 퀸 점막 확장 활용 ★★★
+                    # *** NEW: 여유 있는 모든 퀸 점막 확장 활용 ***
                     await self._utilize_idle_queens_for_creep(queens, iteration)
 
         except Exception as e:
@@ -200,7 +200,7 @@ class QueenManager:
         self, spec_mgr, queens, hatcheries, iteration: int
     ) -> None:
         """
-        ★ 전문 분담 시스템으로 퀸 관리 ★
+        * 전문 분담 시스템으로 퀸 관리 *
 
         PUMP/CREEP/COMBAT 역할별 독립 실행.
         방어 모드에서도 PUMP은 인젝트, CREEP은 점막 계속.
@@ -278,7 +278,7 @@ class QueenManager:
             if len(queens) + pending >= desired:
                 break
 
-            # ★ Phase 36: 퀸 0마리 위기 시 non-idle 해처리에서도 강제 생산
+            # * Phase 36: 퀸 0마리 위기 시 non-idle 해처리에서도 강제 생산
             # (이전: 모든 해처리 busy면 퀸 영구 미생산)
             queen_critical = len(queens) + pending == 0
             if not queen_critical:
@@ -308,7 +308,7 @@ class QueenManager:
         """
         Assign queen roles - inject queens and dedicated creep queens.
 
-        ★ 개선: 기지당 2마리 배치 ★
+        * 개선: 기지당 2마리 배치 *
         Priority:
         1. Inject queens (2 per hatchery - 1차/2차 인젝트 퀸)
         2. Dedicated creep queens for map control
@@ -327,7 +327,7 @@ class QueenManager:
             tag for tag in self.dedicated_creep_queens if tag in current_queen_tags
         }
 
-        # ★ 기지당 2마리 배정을 위한 2차 배정 딕셔너리 ★
+        # * 기지당 2마리 배정을 위한 2차 배정 딕셔너리 *
         if not hasattr(self, "secondary_inject_assignments"):
             self.secondary_inject_assignments = {}
 
@@ -367,7 +367,7 @@ class QueenManager:
                     self.inject_assignments[hatch.tag] = candidate.tag
                     assigned_queens.add(candidate.tag)
 
-        # ★ 2차 인젝트 퀸 배정 (기지당 2마리) ★
+        # * 2차 인젝트 퀸 배정 (기지당 2마리) *
         for hatch in hatcheries:
             if hatch.tag in self.secondary_inject_assignments:
                 queen_tag = self.secondary_inject_assignments[hatch.tag]
@@ -391,18 +391,18 @@ class QueenManager:
                     self.secondary_inject_assignments[hatch.tag] = candidate.tag
                     assigned_queens.add(candidate.tag)
 
-        # ★★★ CRITICAL FIX: 점막 전담 퀸 강제 배정 (최소 1명) ★★★
+        # *** CRITICAL FIX: 점막 전담 퀸 강제 배정 (최소 1명) ***
         # Assign dedicated creep queens - FORCE at least 1 creep queen
         unassigned = [q for q in queens if q.tag not in assigned_queens]
 
-        # ★ Phase 36: print 스팸 제거 → logger.debug (이전: 30초마다 강제 print)
+        # * Phase 36: print 스팸 제거 -> logger.debug (이전: 30초마다 강제 print)
         game_time = getattr(self.bot, "time", 0)
         if int(game_time) % 60 == 0:
             logger.debug(
                 f"[QUEEN] Queens:{len(queens)} Assigned:{len(assigned_queens)} Unassigned:{len(unassigned)}"
             )
 
-        # ★ 퀸이 3마리 이상이면 최소 1명은 무조건 점막 전담 ★
+        # * 퀸이 3마리 이상이면 최소 1명은 무조건 점막 전담 *
         if len(queens) >= 3:
             # If no unassigned queens, steal one from inject queens for creep
             if len(unassigned) == 0 and len(queens) >= 3:
@@ -426,7 +426,7 @@ class QueenManager:
             target_creep_queens = min(self.creep_queen_bonus, len(unassigned))
 
         if target_creep_queens > 0 and unassigned:
-            # ★ FIX: enemy_start가 없어도 점막 전담 퀸 배정 ★
+            # * FIX: enemy_start가 없어도 점막 전담 퀸 배정 *
             enemy_start = None
             if (
                 hasattr(self.bot, "enemy_start_locations")
@@ -448,11 +448,11 @@ class QueenManager:
                 # No enemy location yet - just use unassigned as-is
                 unassigned_sorted = unassigned
 
-            # ★ CRITICAL: 무조건 점막 전담 퀸 배정 (enemy_start 없어도) ★
+            # * CRITICAL: 무조건 점막 전담 퀸 배정 (enemy_start 없어도) *
             for queen in unassigned_sorted[:target_creep_queens]:
                 self.dedicated_creep_queens.add(queen.tag)
                 assigned_queens.add(queen.tag)
-                # ★ Phase 36: print 제거 (매 배정마다 로그 스팸 방지)
+                # * Phase 36: print 제거 (매 배정마다 로그 스팸 방지)
                 logger.debug(f"[QUEEN] Assigned creep queen: {queen.tag}")
 
         self.assigned_queen_tags = assigned_queens
@@ -461,7 +461,7 @@ class QueenManager:
         """
         Inject larva on hatcheries with cooldown tracking.
 
-        ★ 개선: 기지당 2마리 퀸 활용 ★
+        * 개선: 기지당 2마리 퀸 활용 *
         - 1차 퀸이 인젝트 불가능하면 2차 퀸이 대신 수행
         - 더 효율적인 라바 생산
         """
@@ -478,12 +478,12 @@ class QueenManager:
             if current_time - last_inject < self.inject_cooldown:
                 continue
 
-            # ★ 1차 퀸 시도 ★
+            # * 1차 퀸 시도 *
             queen = self._find_queen_by_tag(
                 queens, self.inject_assignments.get(hatch_tag)
             )
 
-            # ★ 1차 퀸이 에너지 부족하면 2차 퀸 시도 ★
+            # * 1차 퀸이 에너지 부족하면 2차 퀸 시도 *
             if not queen or getattr(queen, "energy", 0) < self.inject_energy_threshold:
                 secondary_assignments = getattr(
                     self, "secondary_inject_assignments", {}
@@ -528,7 +528,7 @@ class QueenManager:
                 if dist > self.max_queen_travel_distance:
                     continue  # 너무 멀면 스킵
 
-                # ★ 개선: 거리 무관하게 인젝트 명령 실행 (SC2 API가 이동+인젝트 자동 처리)
+                # * 개선: 거리 무관하게 인젝트 명령 실행 (SC2 API가 이동+인젝트 자동 처리)
                 result = self.bot.do(queen(AbilityId.EFFECT_INJECTLARVA, hatch))
                 if hasattr(result, "__await__"):
                     await result
@@ -549,7 +549,7 @@ class QueenManager:
         game_time = getattr(self.bot, "time", 0)
 
         for th in self.bot.townhalls:
-            # ★ Phase 36: 탐지 거리 하향 — 30/25 → 20/18 (이전: 30 타일 밖 적에 퀸 인젝트 포기)
+            # * Phase 36: 탐지 거리 하향 - 30/25 -> 20/18 (이전: 30 타일 밖 적에 퀸 인젝트 포기)
             detection_range = 20 if game_time < 180 else 18
 
             nearby_enemies = [
@@ -567,8 +567,8 @@ class QueenManager:
         Queens will:
         1. Move to defend threatened bases
         2. Attack nearby enemies
-        3. ★ Prioritize air units (Queens have good anti-air) ���
-        4. ★ IMPROVED: Keep some queens injecting for reinforcements ★
+        3. * Prioritize air units (Queens have good anti-air) ???
+        4. * IMPROVED: Keep some queens injecting for reinforcements *
         """
         if not hasattr(self.bot, "enemy_units") or not hasattr(self.bot, "townhalls"):
             return
@@ -604,7 +604,7 @@ class QueenManager:
         if not threatened_base or not threat_position:
             return
 
-        # ★ 공중 유닛 분류 (퀸 대공 우선) ★
+        # * 공중 유닛 분류 (퀸 대공 우선) *
         air_enemies = [e for e in nearby_enemies_list if getattr(e, "is_flying", False)]
         ground_enemies = [
             e for e in nearby_enemies_list if not getattr(e, "is_flying", False)
@@ -618,12 +618,12 @@ class QueenManager:
                 f"[{int(game_time)}s] Queens defending! Air: {air_count}, Ground: {ground_count}"
             )
 
-        # ★ IMPROVED: Keep 1-2 queens injecting for reinforcement ★
-        # 전투 중에도 최소 1명의 퀸은 라바 ���젝트를 계속해야 병력 충원 가능
+        # * IMPROVED: Keep 1-2 queens injecting for reinforcement *
+        # 전투 중에도 최소 1명의 퀸은 라바 ???젝트를 계속해야 병력 충원 가능
         inject_queens = []
         defense_queens = []
 
-        # ★ Phase 26: 전투 시 인젝트 퀸만 유지, 크립퀸도 방어 투입
+        # * Phase 26: 전투 시 인젝트 퀸만 유지, 크립퀸도 방어 투입
         hatcheries = self.bot.townhalls.ready
         num_inject_queens = min(2, max(1, len(hatcheries) // 2))
 
@@ -638,7 +638,7 @@ class QueenManager:
             else:
                 defense_queens.append(queen)
 
-        # ★ 인젝트 퀸은 계속 인젝트 수행 ★
+        # * 인젝트 퀸은 계속 인젝트 수행 *
         if inject_queens and hatcheries:
             await self._inject_larva(hatcheries, inject_queens)
             if iteration % 50 == 0:
@@ -653,7 +653,7 @@ class QueenManager:
 
                 # If queen is close enough, attack
                 if dist_to_threat < 12:
-                    # ★ 공중 유닛 우선 공격 (퀸은 대공 유닛) ★
+                    # * 공중 유닛 우선 공격 (퀸은 대공 유닛) *
                     target = None
 
                     # 우선순위: 고위협 공중 > 일반 공중 > 지상
@@ -954,7 +954,7 @@ class QueenManager:
 
     async def _inject_queens_spread_creep(self, queens, iteration: int) -> None:
         """
-        ★ 수정: 인젝트 퀸이 에너지 여유가 있을 때 점막 확장 (조건 완화)
+        * 수정: 인젝트 퀸이 에너지 여유가 있을 때 점막 확장 (조건 완화)
 
         조건:
         1. 에너지 50 이상 (인젝트 25 + 종양 25 = 충분)
@@ -964,7 +964,7 @@ class QueenManager:
         """
         current_time = getattr(self.bot, "time", 0.0)
 
-        # ★ 점막 종양 수 제한 (1000: 사실상 무제한)
+        # * 점막 종양 수 제한 (1000: 사실상 무제한)
         tumor_count = self._count_creep_tumors()
         if tumor_count >= 1000:
             return
@@ -974,10 +974,10 @@ class QueenManager:
 
         for queen in inject_queens:
             # 에너지 확인 (인젝트 + 종양에 충분)
-            if getattr(queen, "energy", 0) < 50:  # ★ 60 → 50으로 감소
+            if getattr(queen, "energy", 0) < 50:  # * 60 -> 50으로 감소
                 continue
 
-            # ★ 쿨다운 확인 (10초로 감소)
+            # * 쿨다운 확인 (10초로 감소)
             last_time = self.last_creep_time.get(queen.tag, 0.0)
             if current_time - last_time < 10.0:
                 continue
@@ -1010,7 +1010,7 @@ class QueenManager:
 
     async def _utilize_idle_queens_for_creep(self, queens, iteration: int) -> None:
         """
-        ★ 개선: 여유 있는 퀸을 점막 확장에 활용 (초반부터 활성화) ★
+        * 개선: 여유 있는 퀸을 점막 확장에 활용 (초반부터 활성화) *
 
         조건:
         1. idle 상태인 퀸 (명령 없음)
@@ -1019,16 +1019,16 @@ class QueenManager:
         4. 게임 시간 2분 이후 (스포닝풀 완성 후)
         5. 점막 종양 수 1000개 이하 (사실상 무제한)
 
-        ★ 수정 이유: 초반 점막 확장 강화 (목표: 3분 5개, 5분 15개)
+        * 수정 이유: 초반 점막 확장 강화 (목표: 3분 5개, 5분 15개)
         """
         current_time = getattr(self.bot, "time", 0.0)
         game_time = int(current_time)
 
-        # ★ 조건 1: 게임 시간 2분 이후 작동 (스포닝풀 완성 후부터 점막 확장)
+        # * 조건 1: 게임 시간 2분 이후 작동 (스포닝풀 완성 후부터 점막 확장)
         if game_time < 120:
             return
 
-        # ★ 조건 2: 점막 종양 수 제한 (1000 = 사실상 무제한)
+        # * 조건 2: 점막 종양 수 제한 (1000 = 사실상 무제한)
         tumor_count = self._count_creep_tumors()
         if tumor_count >= 1000:
             return
@@ -1044,7 +1044,7 @@ class QueenManager:
             if current_time - last_creep < 8.0:
                 continue
 
-            # ★ 완화된 조건: idle + 에너지 50 이상 (인젝트 2회분)
+            # * 완화된 조건: idle + 에너지 50 이상 (인젝트 2회분)
             if hasattr(queen, "is_idle") and queen.is_idle and energy >= 50:
                 available_queens.append(queen)
 
@@ -1060,7 +1060,7 @@ class QueenManager:
         # 각 여유 퀸으로 점막 확장 (최대 4개로 증가)
         tumors_placed = 0
         for queen in available_queens:
-            if tumors_placed >= 4:  # ★ 한 번에 최대 4개로 증가 (빠른 점막 확장)
+            if tumors_placed >= 4:  # * 한 번에 최대 4개로 증가 (빠른 점막 확장)
                 break
 
             try:
@@ -1102,7 +1102,7 @@ class QueenManager:
 
     def _get_aggressive_creep_target(self, queen):
         """
-        ★ 적 방향으로 공격적인 점막 타겟 설정 ★
+        * 적 방향으로 공격적인 점막 타겟 설정 *
 
         기지 근처가 아닌 적 방향으로 점막 확장
         """
@@ -1122,7 +1122,7 @@ class QueenManager:
 
             queen_pos = queen.position
 
-            # ★ 확장 기지 위치 가져오기
+            # * 확장 기지 위치 가져오기
             expansion_locations = []
             if hasattr(self.bot, "expansion_locations_list"):
                 expansion_locations = list(self.bot.expansion_locations_list)
@@ -1134,7 +1134,7 @@ class QueenManager:
                 distance = random.uniform(7.0, 10.0)
                 target = queen_pos.towards(enemy_start, distance)
 
-                # ★ FIX: 확장 기지 위치 근처는 제외 (기지 건설 공간 확보)
+                # * FIX: 확장 기지 위치 근처는 제외 (기지 건설 공간 확보)
                 too_close = False
                 for exp_loc in expansion_locations:
                     if target.distance_to(exp_loc) < 7.0:
@@ -1165,7 +1165,7 @@ class QueenManager:
             logger.warning(f"[QueenManager] Closest base lookup suppressed: {e}")
             return None
 
-        # ★ 확장 기지 위치 가져오기
+        # * 확장 기지 위치 가져오기
         expansion_locations = []
         if hasattr(self.bot, "expansion_locations_list"):
             expansion_locations = list(self.bot.expansion_locations_list)
@@ -1191,7 +1191,7 @@ class QueenManager:
                     if not (map_area.y <= target.y <= map_area.y + map_area.height):
                         continue
 
-                # ★ FIX: 확장 기지 위치 근처는 제외 (기지 건설 공간 확보)
+                # * FIX: 확장 기지 위치 근처는 제외 (기지 건설 공간 확보)
                 too_close = False
                 for exp_loc in expansion_locations:
                     if target.distance_to(exp_loc) < 7.0:
@@ -1236,7 +1236,7 @@ class QueenManager:
             logger.warning(f"[QueenManager] Creep position check suppressed: {e}")
             return False
 
-        # ★ 수정: has_creep 메서드 없으면 False 반환 (잘못된 위치 방지)
+        # * 수정: has_creep 메서드 없으면 False 반환 (잘못된 위치 방지)
         return False
 
     async def _position_creep_queen_forward(self, queen, enemy_start) -> None:

@@ -40,23 +40,23 @@ class UnitFactory:
             self.larva_pressure_threshold = 6
 
         self.min_mineral_reserve_for_gas = 150
-        self.gas_unit_ratio_target = 0.50  # ★ BALANCED: 0.60 → 0.50 (드론 우선) ★
-        self.larva_gas_ratio = 0.45  # ★ BALANCED: 0.6 → 0.45 (미네랄 유닛 55%) ★
+        self.gas_unit_ratio_target = 0.50  # * BALANCED: 0.60 -> 0.50 (드론 우선) *
+        self.larva_gas_ratio = 0.45  # * BALANCED: 0.6 -> 0.45 (미네랄 유닛 55%) *
         self.max_larva_spend_per_step = 5
 
-        # ★ COMBAT REINFORCEMENT SYSTEM ★
+        # * COMBAT REINFORCEMENT SYSTEM *
         # 전투 중 병력 충원을 위한 시스템
         self._combat_mode = False
         self._last_combat_check = 0
         self._combat_check_interval = 22  # ~1초마다 체크
         self._combat_larva_spend = 5  # 전투 중 더 많은 라바 소비 (3 -> 5)
 
-        # 종족별 가스 유닛 비율 - ★ RE-BALANCED: 드론 생산 보장 ★
+        # 종족별 가스 유닛 비율 - * RE-BALANCED: 드론 생산 보장 *
         self.race_gas_ratios = {
-            "Terran": 0.50,  # ★ BALANCED: 0.65 → 0.50 (미네랄 여유 확보) ★
-            "Protoss": 0.55,  # ★ BALANCED: 0.70 → 0.55 (드론 우선) ★
-            "Zerg": 0.45,  # ★ BALANCED: 0.55 → 0.45 ★
-            "Unknown": 0.50,  # ★ BALANCED: 0.60 → 0.50 ★
+            "Terran": 0.50,  # * BALANCED: 0.65 -> 0.50 (미네랄 여유 확보) *
+            "Protoss": 0.55,  # * BALANCED: 0.70 -> 0.55 (드론 우선) *
+            "Zerg": 0.45,  # * BALANCED: 0.55 -> 0.45 *
+            "Unknown": 0.50,  # * BALANCED: 0.60 -> 0.50 *
         }
 
     def _should_save_larva(self) -> bool:
@@ -169,7 +169,7 @@ class UnitFactory:
             # 라바가 없으면 할 게 없음
             return
 
-        # ★ CRITICAL FIX: 앞마당/3멀티 확보를 위한 자원 보존 (확장 우선) ★
+        # * CRITICAL FIX: 앞마당/3멀티 확보를 위한 자원 보존 (확장 우선) *
         # 유닛 생산이 확장을 방해하지 않도록 강제 제한
         townhalls = self.bot.townhalls
         base_count = townhalls.amount
@@ -179,7 +179,7 @@ class UnitFactory:
         # 단, 이미 해처리 건설 중이면(pending) 세이브 안 해도 됨
         pending_hatch = self.bot.already_pending(UnitTypeId.HATCHERY)
 
-        # ★ FIX: 전투 중에는 확장 대기하지 않음 (생존 우선) ★
+        # * FIX: 전투 중에는 확장 대기하지 않음 (생존 우선) *
         strategy = getattr(self.bot, "strategy_manager", None)
         under_attack = False
         if strategy:
@@ -187,9 +187,9 @@ class UnitFactory:
                 strategy, "defense_active", False
             )
 
-        # ★ OPTIMIZATION: 2분 내 멀티 보장 (60초부터 자원 모으기 시작) ★
+        # * OPTIMIZATION: 2분 내 멀티 보장 (60초부터 자원 모으기 시작) *
         # 기존 120초 -> 60초로 앞당김
-        # ★ 단, 미네랄이 200-350 범위에 있을 때만 세이브 (너무 적으면 방어 유닛 필요)
+        # * 단, 미네랄이 200-350 범위에 있을 때만 세이브 (너무 적으면 방어 유닛 필요)
         if (
             base_count < 2
             and game_time > 60
@@ -218,7 +218,7 @@ class UnitFactory:
                 return
 
         # 3. 4멀티 체크 (빠른 4멀티: 5분 목표 -> 4분 40초부터 자원 보존)
-        # ★ 4멀티는 선택사항이므로 미네랄 250+ 있을 때만 세이브
+        # * 4멀티는 선택사항이므로 미네랄 250+ 있을 때만 세이브
         if (
             base_count < 4
             and game_time > 280
@@ -239,7 +239,7 @@ class UnitFactory:
         if hasattr(self.bot, "supply_left") and self.bot.supply_left <= 0:
             return
 
-        # ★★★ FIX: 사전 오버로드 생산 (supply_left < 4 시 강제) ★★★
+        # *** FIX: 사전 오버로드 생산 (supply_left < 4 시 강제) ***
         # 서플라이 블럭 방지: 미리 오버로드 생산
         if hasattr(self.bot, "supply_left") and self.bot.supply_left < 4:
             # 이미 생산 중인 오버로드 체크
@@ -274,7 +274,7 @@ class UnitFactory:
                     except Exception:
                         pass
 
-        # ★ COMBAT REINFORCEMENT: 전투 모드 체크 ★
+        # * COMBAT REINFORCEMENT: 전투 모드 체크 *
         in_combat = self._check_combat_mode(iteration)
 
         # 전투 중이면 더 많은 라바 소비
@@ -312,7 +312,7 @@ class UnitFactory:
             if emergency_active or getattr(strategy, "emergency_active", False):
                 self.gas_unit_ratio_target = 0.15  # 긴급 시 가스 유닛 최소화
             else:
-                # ★★★ FIX: 프로토스 핵심 유닛 감지 시 가스 부스트 ★★★
+                # *** FIX: 프로토스 핵심 유닛 감지 시 가스 부스트 ***
                 protoss_threat_boost = self._check_protoss_threat_boost()
                 if protoss_threat_boost:
                     self.gas_unit_ratio_target = 0.55  # 히드라/커럽터 우선
@@ -379,7 +379,7 @@ class UnitFactory:
         gas_ratio = gas_units / total_units
         can_spend_gas = vespene >= self.min_gas_reserve
 
-        # ★★★ IMPROVED: 업그레이드 우선순위 존중 (자원 예약 시스템) ★★★
+        # *** IMPROVED: 업그레이드 우선순위 존중 (자원 예약 시스템) ***
         # StrictUpgradePriority가 가스를 예약했으면 유닛 생산 제한
         if hasattr(self.bot, "upgrade_priority") and self.bot.upgrade_priority:
             available_gas = self.bot.upgrade_priority.get_available_gas()
@@ -393,7 +393,7 @@ class UnitFactory:
             can_spend_gas=can_spend_gas,
         )
 
-        # ★★★ Blackboard 통합: 우선순위 큐를 Blackboard에 요청으로 등록 ★★★
+        # *** Blackboard 통합: 우선순위 큐를 Blackboard에 요청으로 등록 ***
         if self.blackboard:
             to_request = min(self.max_larva_spend_per_step, len(larva))
 
@@ -407,7 +407,7 @@ class UnitFactory:
 
             # Blackboard에 생산 요청 등록
             for unit_type, count in unit_requests.items():
-                # 전투 모드면 우선순위 높임 (MEDIUM → HIGH)
+                # 전투 모드면 우선순위 높임 (MEDIUM -> HIGH)
                 priority = 1 if in_combat else 2
                 self.blackboard.request_production(
                     unit_type=unit_type,
@@ -421,7 +421,7 @@ class UnitFactory:
                 logger.info(f"Production requested: {unit_requests}")
 
         else:
-            # Fallback: ProductionController에 위임 (���접 생산 방지로 중복 제거)
+            # Fallback: ProductionController에 위임 (???접 생산 방지로 중복 제거)
             prod_ctrl = getattr(self.bot, "production_controller", None)
             to_spend = 0
             for larva_unit in larva:
@@ -466,7 +466,7 @@ class UnitFactory:
             UnitTypeId.ROACH: UnitTypeId.ROACHWARREN,
             UnitTypeId.RAVAGER: UnitTypeId.ROACHWARREN,
             UnitTypeId.HYDRALISK: UnitTypeId.HYDRALISKDEN,
-            UnitTypeId.LURKER: UnitTypeId.LURKERDENMP,
+            UnitTypeId.LURKERMP: UnitTypeId.LURKERDENMP,
         }
         required = requirements.get(unit_type)
         if not required:
@@ -484,7 +484,7 @@ class UnitFactory:
         larva_count: int,
         can_spend_gas: bool,
     ) -> List[object]:
-        # ★ 공중 위협 시 히드라 강제 생산 ★
+        # * 공중 위협 시 히드라 강제 생산 *
         force_hydra = getattr(self, "_force_hydra", False)
         if force_hydra:
             # 히드라 굴 있고 가스 충분하면 히드라 최우선
@@ -507,7 +507,7 @@ class UnitFactory:
 
         queue: List[object] = []
 
-        # ★ Strategy Manager에서 공중 위협 감지시 히드라 우선 ★
+        # * Strategy Manager에서 공중 위협 감지시 히드라 우선 *
         strategy = getattr(self.bot, "strategy_manager", None)
         if (
             strategy
@@ -630,7 +630,7 @@ class UnitFactory:
             UnitTypeId.ROACH,
             UnitTypeId.RAVAGER,
             UnitTypeId.HYDRALISK,
-            UnitTypeId.LURKER,
+            UnitTypeId.LURKERMP,
             UnitTypeId.ULTRALISK,
         }
         return sum(1 for unit in units if unit.type_id in combat_types)
@@ -643,7 +643,7 @@ class UnitFactory:
             UnitTypeId.ROACH,
             UnitTypeId.RAVAGER,
             UnitTypeId.HYDRALISK,
-            UnitTypeId.LURKER,
+            UnitTypeId.LURKERMP,
             UnitTypeId.ULTRALISK,
         }
         return sum(1 for unit in units if unit.type_id in gas_types)
@@ -660,7 +660,7 @@ class UnitFactory:
 
     def _check_protoss_threat_boost(self) -> bool:
         """
-        ★★★ 핵심 위협 유닛(공중 주력) 감지 ★★★
+        *** 핵심 위협 유닛(공중 주력) 감지 ***
         """
         if not hasattr(self.bot, "enemy_units"):
             return False
@@ -704,7 +704,7 @@ class UnitFactory:
             if unit_counts.get(unit_type, 0) >= threshold:
                 if self.bot.iteration % 50 == 0:
                     logger.info(
-                        f"Threat: {unit_type} x{unit_counts[unit_type]} → Gas Boost!"
+                        f"Threat: {unit_type} x{unit_counts[unit_type]} -> Gas Boost!"
                     )
                 return True
 

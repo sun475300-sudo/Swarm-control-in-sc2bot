@@ -84,7 +84,7 @@ class CreepDenialSystem:
         self.tumors_detected = 0
         self.detection_by_unit_type: Dict[str, int] = defaultdict(int)
 
-        # ★ 설정 (GameConfig에서 로드) ★
+        # * 설정 (GameConfig에서 로드) *
         self.min_overseers = GameConfig.CREEP_DENIAL_MIN_OVERSEERS
         self.tumor_memory_duration = GameConfig.CREEP_DENIAL_TUMOR_MEMORY_DURATION
         self.detection_radius = GameConfig.CREEP_DENIAL_DETECTION_RADIUS
@@ -97,7 +97,7 @@ class CreepDenialSystem:
         self.last_tumor_scan = 0
         self.last_attack_dispatch = 0
 
-        # ★ UnitAuthorityManager 통합 ★
+        # * UnitAuthorityManager 통합 *
         self.unit_authority = None  # 초기화 시 설정됨
         self.managed_units: Set[int] = set()  # 현재 관리 중인 유닛 태그
 
@@ -128,11 +128,11 @@ class CreepDenialSystem:
         if iteration % GameConfig.CREEP_DENIAL_CLEANUP_INTERVAL == 0:
             self._cleanup_old_tumor_data(game_time)
 
-        # 6. ★ 관리 중인 유닛 정리 및 반환 ★
+        # 6. * 관리 중인 유닛 정리 및 반환 *
         if iteration % GameConfig.CREEP_DENIAL_ATTACK_DISPATCH_INTERVAL == 0:
             self._cleanup_managed_units()
 
-        # 7. ★ 후퇴 로직 (위협 감지 및 안전한 철수) ★
+        # 7. * 후퇴 로직 (위협 감지 및 안전한 철수) *
         if iteration % GameConfig.CREEP_DENIAL_ATTACK_DISPATCH_INTERVAL == 0:
             await self._check_and_retreat_units(game_time)
 
@@ -316,7 +316,7 @@ class CreepDenialSystem:
         if not self._has_lair():
             return
 
-        # 대군주 → 감시군주 변이
+        # 대군주 -> 감시군주 변이
         overlord = overlords.first
         if overlord.is_idle:
             self.bot.do(overlord(AbilityId.MORPH_OVERSEER))
@@ -440,7 +440,7 @@ class CreepDenialSystem:
                 if not self._is_unit_available_for_tumor_attack(unit):
                     continue
 
-                # ★ UnitAuthorityManager를 통해 유닛 요청 ★
+                # * UnitAuthorityManager를 통해 유닛 요청 *
                 if self.unit_authority.request_unit(
                     unit.tag, "creep_denial", AuthorityLevel.CREEP  # 낮은 우선순위 (20)
                 ):
@@ -476,7 +476,7 @@ class CreepDenialSystem:
         2. 근처에 적이 있으면 사용하지 않음
         3. 체력이 낮은 유닛은 사용하지 않음
         """
-        # ★ 전투 중인 유닛 보호 ★
+        # * 전투 중인 유닛 보호 *
         # 근처에 적 유닛이 있으면 사용 불가
         if hasattr(self.bot, "enemy_units"):
             nearby_enemies = self.bot.enemy_units.closer_than(
@@ -485,7 +485,7 @@ class CreepDenialSystem:
             if nearby_enemies:
                 return False
 
-        # ★ 체력이 낮은 유닛 보호 ★
+        # * 체력이 낮은 유닛 보호 *
         # 체력이 최소 비율 미만이면 사용 불가
         if hasattr(unit, "health") and hasattr(unit, "health_max"):
             if (
@@ -494,7 +494,7 @@ class CreepDenialSystem:
             ):
                 return False
 
-        # ★ 대기 중이거나 이미 creep denial 임무 중인 유닛만 사용 ★
+        # * 대기 중이거나 이미 creep denial 임무 중인 유닛만 사용 *
         if unit.is_idle:
             return True
 
@@ -585,7 +585,7 @@ class CreepDenialSystem:
                         f"[CREEP_DENIAL] [*] Tumor destroyed at {tumor.position}! [*]"
                     )
 
-                    # ★ 할당된 유닛들 반환 ★
+                    # * 할당된 유닛들 반환 *
                     self._release_tumor_units(tumor)
 
         for tumor_id in to_remove:
@@ -649,7 +649,7 @@ class CreepDenialSystem:
 
     async def _check_and_retreat_units(self, game_time: float) -> None:
         """
-        ★ 위협 감지 및 후퇴 로직 ★
+        * 위협 감지 및 후퇴 로직 *
 
         관리 중인 유닛이 적 주력과 마주치면:
         1. 위협 감지 (IntelManager 활용)
@@ -664,7 +664,7 @@ class CreepDenialSystem:
         if not intel:
             return
 
-        # ★ 1. 위협 감지 ★
+        # * 1. 위협 감지 *
         # IntelManager의 위협 정보 사용
         is_under_attack = getattr(intel, "is_under_attack", lambda: False)()
         threat_level = getattr(intel, "get_threat_level", lambda: "none")()
@@ -674,7 +674,7 @@ class CreepDenialSystem:
             # 위협이 없으면 추가 체크
             return
 
-        # ★ 2. 관리 중인 유닛 중 위협에 노출된 유닛 찾기 ★
+        # * 2. 관리 중인 유닛 중 위협에 노출된 유닛 찾기 *
         units_to_retreat = []
 
         for unit_tag in self.managed_units:
@@ -702,7 +702,7 @@ class CreepDenialSystem:
         if not units_to_retreat:
             return
 
-        # ★ 3. 후퇴 명령 실행 ★
+        # * 3. 후퇴 명령 실행 *
         retreat_count = 0
         for unit_tag, unit in units_to_retreat:
             # 가장 가까운 아군 기지 찾기
@@ -722,7 +722,7 @@ class CreepDenialSystem:
 
         if retreat_count > 0:
             self.logger.info(
-                f"[CREEP_DENIAL] ★ {retreat_count} units retreating from threat! ★"
+                f"[CREEP_DENIAL] * {retreat_count} units retreating from threat! *"
             )
 
     def _get_retreat_position(self, unit: Unit) -> Optional[Point2]:

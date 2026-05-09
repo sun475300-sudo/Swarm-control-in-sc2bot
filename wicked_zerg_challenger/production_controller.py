@@ -98,11 +98,11 @@ class ProductionController:
         # 3. Overlord 자동 생산 (보급 차단 방지)
         await self._auto_produce_overlords()
 
-        # 4. ★ Phase 13: 비율 기반 군대 자동 생산 ★
+        # 4. * Phase 13: 비율 기반 군대 자동 생산 *
         if iteration % 4 == 0:  # 4프레임마다
             await self._auto_produce_army_by_ratio()
 
-        # 5. ★ Phase 19: 미네랄 뱅킹 소비 — 1500+ 시 저글링 스팸 ★
+        # 5. * Phase 19: 미네랄 뱅킹 소비 - 1500+ 시 저글링 스팸 *
         if iteration % 8 == 0:
             await self._consume_mineral_bank()
 
@@ -124,7 +124,7 @@ class ProductionController:
         # 생산 요청 처리 (우선순위 순)
         processed_count = 0
 
-        # ★ SMART REMAX: Dynamic production limit ★
+        # * SMART REMAX: Dynamic production limit *
         # Zerg's key strength is producing massive units instantly when resources allow
         from game_config import GameConfig
 
@@ -169,7 +169,7 @@ class ProductionController:
                 )
                 break  # 자원 부족 시 더 이상 처리 안 함
 
-        # ★ 대량 생산 로깅 (Smart Remax 추적) ★
+        # * 대량 생산 로깅 (Smart Remax 추적) *
         if processed_count > self.max_produced_per_frame:
             self.max_produced_per_frame = processed_count
 
@@ -177,8 +177,8 @@ class ProductionController:
         if processed_count >= 20:
             game_time = getattr(self.bot, "time", 0)
             self.logger.info(
-                f"[REMAX][{int(game_time)}s] ★ Instant Remax: {processed_count} units produced "
-                f"(max_limit: {max_per_frame}, larvae: {len(larvae) if larvae else 0}) ★"
+                f"[REMAX][{int(game_time)}s] * Instant Remax: {processed_count} units produced "
+                f"(max_limit: {max_per_frame}, larvae: {len(larvae) if larvae else 0}) *"
             )
 
     async def _produce_unit(self, unit_type: Any, count: int, requester: str) -> int:
@@ -253,7 +253,7 @@ class ProductionController:
         if supply_cap >= 200:
             return
 
-        # ★ Phase 23: 서플라이 블록 완전 제거 — 선행 생산 ★
+        # * Phase 23: 서플라이 블록 완전 제거 - 선행 생산 *
         game_time = getattr(self.bot, "time", 0)
         supply_used = supply_cap - supply_left
 
@@ -295,7 +295,7 @@ class ProductionController:
         except Exception as e:
             self.production_failures += 1
 
-    # ========== ★ Phase 13: 비율 기반 군대 자동 생산 ★ ==========
+    # ========== * Phase 13: 비율 기반 군대 자동 생산 * ==========
 
     async def _auto_produce_army_by_ratio(self) -> None:
         """
@@ -304,7 +304,7 @@ class ProductionController:
         빌드오더 종료 후(5분+), 라바가 있고 자원이 있으면
         현재 비율에 맞춰 부족한 유닛을 자동 생산합니다.
         """
-        # ★ Phase 25: Blackboard 기반 전환 (빌드오더 완료 전이면 대기)
+        # * Phase 25: Blackboard 기반 전환 (빌드오더 완료 전이면 대기)
         bo_complete = True  # 기본값: 빌드오더 없으면 항상 생산
         if self.blackboard:
             bo_complete = getattr(
@@ -351,8 +351,8 @@ class ProductionController:
         }
 
         # 건물 요구사항 매핑
-        # ★ Phase 37: GREATERSPIRE 추가 (SPIRE → GREATERSPIRE 변이 후 뮤탈/코럽터 생산 불가 수정)
-        # ★ Phase 37: VIPER → HIVE 요구사항 추가 (이전: 없어서 Hive 없이 생산 시도)
+        # * Phase 37: GREATERSPIRE 추가 (SPIRE -> GREATERSPIRE 변이 후 뮤탈/코럽터 생산 불가 수정)
+        # * Phase 37: VIPER -> HIVE 요구사항 추가 (이전: 없어서 Hive 없이 생산 시도)
         tech_requirements = {
             UnitTypeId.ROACH: UnitTypeId.ROACHWARREN,
             UnitTypeId.HYDRALISK: UnitTypeId.HYDRALISKDEN,
@@ -360,7 +360,7 @@ class ProductionController:
             UnitTypeId.CORRUPTOR: UnitTypeId.SPIRE,  # GREATERSPIRE도 허용 (아래 별도 체크)
             UnitTypeId.INFESTOR: UnitTypeId.INFESTATIONPIT,
             UnitTypeId.ULTRALISK: UnitTypeId.ULTRALISKCAVERN,
-            UnitTypeId.VIPER: UnitTypeId.HIVE,  # ★ Phase 37: Viper requires Hive
+            UnitTypeId.VIPER: UnitTypeId.HIVE,  # * Phase 37: Viper requires Hive
         }
 
         # 현재 유닛 수 계산
@@ -395,7 +395,7 @@ class ProductionController:
             if uid in tech_requirements:
                 req_building = tech_requirements[uid]
                 has_building = self.bot.structures(req_building).ready.exists
-                # ★ Phase 37: SPIRE 요구 유닛은 GREATERSPIRE도 허용 (변이 후 생산 차단 수정)
+                # * Phase 37: SPIRE 요구 유닛은 GREATERSPIRE도 허용 (변이 후 생산 차단 수정)
                 if not has_building and req_building == UnitTypeId.SPIRE:
                     has_building = self.bot.structures(
                         UnitTypeId.GREATERSPIRE
@@ -428,7 +428,7 @@ class ProductionController:
 
     async def _consume_mineral_bank(self):
         """
-        ★ Phase 19: 미네랄 뱅킹 소비 ★
+        * Phase 19: 미네랄 뱅킹 소비 *
 
         미네랄 1500+ 누적 시:
         - 저글링 스팸 (라바 있는 만큼)

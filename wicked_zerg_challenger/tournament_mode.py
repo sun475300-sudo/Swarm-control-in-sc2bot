@@ -156,10 +156,10 @@ class TournamentManager:
                 return p
         return None
 
-    # ── 토너먼트 시작 ──────────────────────────
+    # -- 토너먼트 시작 --------------------------
 
     def start(self) -> None:
-        """토너먼트 시작 — 형식별 매칭 큐를 생성한다."""
+        """토너먼트 시작 - 형식별 매칭 큐를 생성한다."""
         if len(self.participants) < 2:
             logger.warning("참가자 2명 이상 필요 (현재 %d명)", len(self.participants))
             return
@@ -184,7 +184,7 @@ class TournamentManager:
         )
 
     def _build_round_robin(self) -> None:
-        """라운드 로빈 매칭 생성 — 모든 참가자 쌍."""
+        """라운드 로빈 매칭 생성 - 모든 참가자 쌍."""
         names = [p.name for p in self.participants]
         self._pending_matches = []
         for i in range(len(names)):
@@ -215,7 +215,7 @@ class TournamentManager:
             bye = self._bracket[-1]
             logger.info("부전승: %s", bye)
 
-    # ── 매칭 ──────────────────────────────────
+    # -- 매칭 ----------------------------------
 
     def get_next_match(self) -> Optional[Tuple[str, str, str]]:
         """다음 경기 정보 반환. 남은 매치가 없으면 None."""
@@ -223,10 +223,10 @@ class TournamentManager:
             return None
         return self._pending_matches[0]
 
-    # ── 결과 보고 ─────────────────────────────
+    # -- 결과 보고 -----------------------------
 
     def report_result(self, result: MatchResult) -> None:
-        """경기 결과 보고 — 전적/ELO 업데이트 + 큐에서 제거."""
+        """경기 결과 보고 - 전적/ELO 업데이트 + 큐에서 제거."""
         self.matches.append(result)
 
         p1 = self._find_participant(result.player1)
@@ -274,10 +274,10 @@ class TournamentManager:
                 self.current_round += 1
                 self._generate_elim_round()
 
-    # ── 리더보드 / 완료 체크 ──────────────────
+    # -- 리더보드 / 완료 체크 ------------------
 
     def get_leaderboard(self) -> List[Dict[str, Any]]:
-        """리더보드 반환 — ELO 기준 내림차순."""
+        """리더보드 반환 - ELO 기준 내림차순."""
         sorted_participants = sorted(
             self.participants,
             key=lambda p: (p.elo_rating, p.wins, -p.losses),
@@ -286,7 +286,7 @@ class TournamentManager:
         return [p.to_dict() for p in sorted_participants]
 
     def is_complete(self) -> bool:
-        """토너먼트 완료 여부 — 남은 매치가 없으면 완료."""
+        """토너먼트 완료 여부 - 남은 매치가 없으면 완료."""
         if not self.is_running:
             return False
         return len(self._pending_matches) == 0

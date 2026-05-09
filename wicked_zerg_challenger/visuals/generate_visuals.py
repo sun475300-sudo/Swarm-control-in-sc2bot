@@ -2,7 +2,7 @@
 Swarm-Net Presentation Visual Asset Generator
 ==============================================
 텍스트 없는 순수 도형/라인 기반 시각자료 생성
-PPTX 텍스트와 겹침 방지 — 장식용 배경 그래픽 전용
+PPTX 텍스트와 겹침 방지 - 장식용 배경 그래픽 전용
 """
 
 import logging

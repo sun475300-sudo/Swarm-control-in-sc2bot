@@ -19,6 +19,93 @@ import numpy as np
 logger = logging.getLogger("ImprovedHierarchicalRl")
 
 
+def _softmax_np(values: np.ndarray) -> np.ndarray:
+    shifted = values - np.max(values, axis=-1, keepdims=True)
+    exp_values = np.exp(shifted)
+    return exp_values / (np.sum(exp_values, axis=-1, keepdims=True) + 1e-9)
+
+
+class ActorCriticNetwork:
+    """Small Actor-Critic network used by INFRA validation and RL experiments."""
+
+    def __init__(
+        self,
+        obs_dim: int = 16,
+        action_dim: int = 7,
+        hidden_dim: int = 128,
+        input_dim: Optional[int] = None,
+    ):
+        self.input_dim = int(input_dim or obs_dim)
+        self.obs_dim = self.input_dim
+        self.hidden_dim = int(hidden_dim)
+        self.action_dim = int(action_dim)
+
+        scale1 = np.sqrt(2.0 / (self.input_dim + self.hidden_dim))
+        scale2 = np.sqrt(2.0 / (self.hidden_dim + self.action_dim))
+        scale3 = np.sqrt(2.0 / (self.hidden_dim + 1))
+
+        self.W_shared = np.random.randn(self.input_dim, self.hidden_dim).astype(np.float32) * scale1
+        self.b_shared = np.zeros(self.hidden_dim, dtype=np.float32)
+        self.W_actor = np.random.randn(self.hidden_dim, self.action_dim).astype(np.float32) * scale2
+        self.b_actor = np.zeros(self.action_dim, dtype=np.float32)
+        self.W_critic = np.random.randn(self.hidden_dim, 1).astype(np.float32) * scale3
+        self.b_critic = np.zeros(1, dtype=np.float32)
+
+        self.gamma = 0.99
+        self.gae_lambda = 0.95
+
+    def __call__(self, state):
+        return self.forward(state)
+
+    def forward(self, state):
+        """Return (policy_probs, state_value) for numpy arrays or torch tensors."""
+        module_name = type(state).__module__
+        if module_name.startswith("torch"):
+            import torch
+
+            x = state.float()
+            if x.ndim == 1:
+                x = x.unsqueeze(0)
+            device = x.device
+            dtype = x.dtype
+            w_shared = torch.as_tensor(self.W_shared, device=device, dtype=dtype)
+            b_shared = torch.as_tensor(self.b_shared, device=device, dtype=dtype)
+            w_actor = torch.as_tensor(self.W_actor, device=device, dtype=dtype)
+            b_actor = torch.as_tensor(self.b_actor, device=device, dtype=dtype)
+            w_critic = torch.as_tensor(self.W_critic, device=device, dtype=dtype)
+            b_critic = torch.as_tensor(self.b_critic, device=device, dtype=dtype)
+            shared = torch.relu(x.matmul(w_shared) + b_shared)
+            policy = torch.softmax(shared.matmul(w_actor) + b_actor, dim=-1)
+            value = shared.matmul(w_critic) + b_critic
+            return policy, value
+
+        x = np.asarray(state, dtype=np.float32)
+        if x.ndim == 1:
+            x = x.reshape(1, -1)
+        shared = np.maximum(0.0, np.dot(x, self.W_shared) + self.b_shared)
+        policy = _softmax_np(np.dot(shared, self.W_actor) + self.b_actor)
+        value = np.dot(shared, self.W_critic) + self.b_critic
+        return policy, value
+
+    def compute_gae(self, rewards, values, dones):
+        """Compute generalized advantage estimates and returns."""
+        rewards = np.asarray(rewards, dtype=np.float32)
+        values = np.asarray(values, dtype=np.float32)
+        dones = np.asarray(dones, dtype=np.float32)
+        advantages = np.zeros_like(rewards, dtype=np.float32)
+        last_gae = 0.0
+
+        for step in reversed(range(len(rewards))):
+            next_value = 0.0 if step == len(rewards) - 1 else values[step + 1]
+            non_terminal = 1.0 - dones[step]
+            delta = rewards[step] + self.gamma * next_value * non_terminal - values[step]
+            last_gae = delta + self.gamma * self.gae_lambda * non_terminal * last_gae
+            advantages[step] = last_gae
+
+        returns = advantages + values
+        return advantages, returns
+
+
 class CommanderAgent:
     """
     사령관 에이전트 (Commander Agent)
@@ -117,6 +204,9 @@ class HierarchicalRLSystem:
     def __init__(self):
         """계층적 강화학습 시스템 초기화"""
         self.commander = CommanderAgent()
+        self.curriculum_stage = 1
+        self.stage3_transfer_initialized = False
+        self.stage3_initial_weights: Dict[str, Any] = {}
         # CombatAgent와 QueenAgent는 제거되었습니다. (각 Manager가 담당)
 
     @staticmethod
@@ -187,6 +277,56 @@ class HierarchicalRLSystem:
             # error_msg = str(e).encode('ascii', 'ignore').decode('ascii')
             # print(f"[WARNING] Hierarchical RL step error: {error_msg}")
             return {"strategy_mode": "ECONOMY", "error": str(e)}
+
+    def configure_stage3(
+        self,
+        stage1_weights: Optional[Dict[str, Any]] = None,
+        stage2_weights: Optional[Dict[str, Any]] = None,
+    ) -> Dict[str, Any]:
+        """Enable curriculum Stage 3 using Stage 1/2 weights as initialization."""
+        self.curriculum_stage = 3
+        self.stage3_initial_weights = self.initialize_stage3_from_previous(
+            stage1_weights or {}, stage2_weights or {}
+        )
+        self.stage3_transfer_initialized = True
+        return self.stage3_initial_weights
+
+    def initialize_stage3_from_previous(
+        self, stage1_weights: Dict[str, Any], stage2_weights: Dict[str, Any]
+    ) -> Dict[str, Any]:
+        """Merge Stage 1 macro and Stage 2 combat weights for Stage 3."""
+        merged: Dict[str, Any] = {}
+        for key in set(stage1_weights) | set(stage2_weights):
+            left = stage1_weights.get(key)
+            right = stage2_weights.get(key)
+            if left is None:
+                merged[key] = right
+            elif right is None:
+                merged[key] = left
+            else:
+                try:
+                    merged[key] = (np.asarray(left) + np.asarray(right)) / 2.0
+                except Exception:
+                    merged[key] = {"stage1": left, "stage2": right}
+        return merged
+
+    @staticmethod
+    def calculate_stage3_reward(
+        game_won: Optional[bool] = None,
+        enemy_units_killed: int = 0,
+        resources_collected: float = 0.0,
+        supply_block_count: int = 0,
+    ) -> float:
+        """ROADMAP Sprint 6 Stage 3 integrated reward function."""
+        reward = 0.0
+        if game_won is True:
+            reward += 10.0
+        elif game_won is False:
+            reward -= 10.0
+        reward += 0.1 * max(0, enemy_units_killed)
+        reward += 0.01 * (max(0.0, float(resources_collected)) / 100.0)
+        reward -= 0.5 * max(0, supply_block_count)
+        return reward
 
     def _calculate_army_value(self, units) -> float:
         """군사력 가치 계산 (단순 유닛 수 * 100)"""

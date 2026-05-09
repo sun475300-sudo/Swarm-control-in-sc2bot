@@ -118,7 +118,7 @@ class TrainingVisualizer:
             
             # 주석 추가
             for h in history:
-                icon = "▲" if h["action"] == "increase" else "▼"
+                icon = "^" if h["action"] == "increase" else "v"
                 ax1.annotate(f"{icon}", (h["game"], h["new_lr"]), 
                              xytext=(0, 5), textcoords='offset points', ha='center',
                              fontsize=8, color='blue' if h["action"]=="increase" else 'red')

@@ -1,15 +1,15 @@
 # -*- coding: utf-8 -*-
 """
-���� �ڵ� ���� �� �Ʒ� ��ũ�÷ο�
+???? ?ڵ? ???? ?? ?Ʒ? ??ũ?/ο?
 
-1. ���� ���� �� ���� ���� (�ݺ�)
-2. ���� �˻�
-3. �ڵ� ��Ÿ�� ����ȭ
-4. ���÷��� �н� ���� �� ��ü ���� �˻�
-5. ���а˻� �� ���� �н� ����
-6. ������ ���� �˻� �� ���� Ȯ�� �� ���� ���� �� ���� Ȯ�� �� ���� ����
-7. ���÷��� �� �н� ���α׷� ���� �� ������ ���� �� �Ʒ� ����
-8. ���÷��� �н� ������ �� �м� �� �н� ����
+1. ???? ???? ?? ???? ???? (?ݺ?)
+2. ???? ???
+3. ?ڵ? ??Ÿ?? ????ȭ
+4. ???/??? ?н? ???? ?? ??ü ???? ???
+5. ???а?? ?? ???? ?н? ????
+6. ?????? ???? ??? ?? ???? Ȯ?? ?? ???? ???? ?? ???? Ȯ?? ?? ???? ????
+7. ???/??? ?? ?н? ???α׷? ???? ?? ?????? ???? ?? ?Ʒ? ????
+8. ???/??? ?н? ?????? ?? ?м? ?? ?н? ????
 """
 
 import logging
@@ -55,18 +55,18 @@ def run_command(cmd: List[str], cwd: Path, description: str, timeout: int = 3600
 
 
 def fix_errors_iteratively(project_root: Path, max_iterations: int = 10) -> bool:
-    """���� ������ �ݺ������� ���� (������ ���� �۵��� ������)"""
+    """???? ?????? ?ݺ??????? ???? (?????? ???? ?۵??? ??????)"""
     logger.info(f"\n{'#'*70}")
-    logger.info("# PHASE 1: ���� ���� �� ���� ���� (�ݺ�)")
+    logger.info("# PHASE 1: ???? ???? ?? ???? ???? (?ݺ?)")
     logger.info(f"{'#'*70}\n")
     
     auto_error_fixer = project_root / "tools" / "auto_error_fixer.py"
     logic_checker = project_root / "tools" / "logic_checker.py"
     
     for iteration in range(1, max_iterations + 1):
-        logger.info(f"\n[ITERATION {iteration}/{max_iterations}] ���� ���� ��...")
+        logger.info(f"\n[ITERATION {iteration}/{max_iterations}] ???? ???? ??...")
         
-        # 1. �ڵ� ���� ����
+        # 1. ?ڵ? ???? ????
         success1, _ = run_command(
             [sys.executable, str(auto_error_fixer), "--all"],
             project_root,
@@ -74,7 +74,7 @@ def fix_errors_iteratively(project_root: Path, max_iterations: int = 10) -> bool
             timeout=600
         )
         
-        # 2. ���� �˻�
+        # 2. ???? ???
         success2, output2 = run_command(
             [sys.executable, str(logic_checker), "--all"],
             project_root,
@@ -82,16 +82,16 @@ def fix_errors_iteratively(project_root: Path, max_iterations: int = 10) -> bool
             timeout=600
         )
         
-        # ���� �˻� ��� �м�
-        if "�ߺ� ����: 0��" in output2 and "�ߺ� ����: 0��" in output2 and "���� ����: 0��" in output2:
-            logger.info(f"\n[SUCCESS] ��� ������ ���װ� �����Ǿ����ϴ�! (Iteration {iteration})")
+        # ???? ??? ??? ?м?
+        if "?ߺ? ????: 0??" in output2 and "?ߺ? ????: 0??" in output2 and "???? ????: 0??" in output2:
+            logger.info(f"\n[SUCCESS] ??? ?????? ???װ? ?????Ǿ????ϴ?! (Iteration {iteration})")
             return True
         
         if iteration < max_iterations:
-            logger.info(f"\n[INFO] ������ �����ֽ��ϴ�. ��� ���� ��... (Iteration {iteration}/{max_iterations})")
+            logger.info(f"\n[INFO] ?????? ?????ֽ??ϴ?. ??? ???? ??... (Iteration {iteration}/{max_iterations})")
             time.sleep(2)
     
-    logger.warning(f"\n[WARNING] �ִ� �ݺ� Ƚ��({max_iterations})�� �����߽��ϴ�.")
+    logger.warning(f"\n[WARNING] ?ִ? ?ݺ? Ƚ??({max_iterations})?? ?????߽??ϴ?.")
     return False
 
 
@@ -99,17 +99,17 @@ def main():
     project_root = Path(__file__).parent.parent
     
     logger.info("=" * 70)
-    logger.info("���� �ڵ� ���� �� �Ʒ� ��ũ�÷ο�")
+    logger.info("???? ?ڵ? ???? ?? ?Ʒ? ??ũ?/ο?")
     logger.info("=" * 70)
-    logger.info("\n�� ��ũ�÷ο�� ���� �ܰ踦 �����մϴ�:")
-    logger.info("  1. ���� ���� �� ���� ���� (�ݺ�)")
-    logger.info("  2. ���� �˻�")
-    logger.info("  3. �ڵ� ��Ÿ�� ����ȭ")
-    logger.info("  4. ���÷��� �н� ���� �� ��ü ���� �˻�")
-    logger.info("  5. ���а˻� �� ���� �н� ����")
-    logger.info("  6. ������ ���� �˻� �� ���� Ȯ�� �� ���� ���� �� ���� Ȯ�� �� ���� ����")
-    logger.info("  7. ���÷��� �� �н� ���α׷� ���� �� ������ ���� �� �Ʒ� ����")
-    logger.info("  8. ���÷��� �н� ������ �� �м� �� �н� ����")
+    logger.info("\n?? ??ũ?/ο?? ???? ?ܰ踦 ?????մϴ?:")
+    logger.info("  1. ???? ???? ?? ???? ???? (?ݺ?)")
+    logger.info("  2. ???? ???")
+    logger.info("  3. ?ڵ? ??Ÿ?? ????ȭ")
+    logger.info("  4. ???/??? ?н? ???? ?? ??ü ???? ???")
+    logger.info("  5. ???а?? ?? ???? ?н? ????")
+    logger.info("  6. ?????? ???? ??? ?? ???? Ȯ?? ?? ???? ???? ?? ???? Ȯ?? ?? ???? ????")
+    logger.info("  7. ???/??? ?? ?н? ???α׷? ???? ?? ?????? ???? ?? ?Ʒ? ????")
+    logger.info("  8. ???/??? ?н? ?????? ?? ?м? ?? ?н? ????")
     logger.info("=" * 70)
     
     # Script paths
@@ -135,13 +135,13 @@ def main():
             logger.error(f"{name} script not found: {script}")
             sys.exit(1)
     
-    # PHASE 1: ���� ���� �� ���� ���� (�ݺ�)
+    # PHASE 1: ???? ???? ?? ???? ???? (?ݺ?)
     if not fix_errors_iteratively(project_root, max_iterations=10):
-        logger.warning("�Ϻ� ������ �������� �� �ֽ��ϴ�. ��� �����մϴ�...")
+        logger.warning("?Ϻ? ?????? ???????? ?? ?ֽ??ϴ?. ??? ?????մϴ?...")
     
-    # PHASE 2: ���� �˻�
+    # PHASE 2: ???? ???
     logger.info(f"\n{'#'*70}")
-    logger.info("# PHASE 2: ���� �˻�")
+    logger.info("# PHASE 2: ???? ???")
     logger.info(f"{'#'*70}\n")
     
     success_logic, output_logic = run_command(
@@ -151,9 +151,9 @@ def main():
         timeout=600
     )
     
-    # PHASE 3: �ڵ� ��Ÿ�� ����ȭ
+    # PHASE 3: ?ڵ? ??Ÿ?? ????ȭ
     logger.info(f"\n{'#'*70}")
-    logger.info("# PHASE 3: �ڵ� ��Ÿ�� ����ȭ")
+    logger.info("# PHASE 3: ?ڵ? ??Ÿ?? ????ȭ")
     logger.info(f"{'#'*70}\n")
     
     success_style, _ = run_command(
@@ -163,12 +163,12 @@ def main():
         timeout=600
     )
     
-    # PHASE 4: ���÷��� �н� ���� �� ��ü ���� �˻�
+    # PHASE 4: ???/??? ?н? ???? ?? ??ü ???? ???
     logger.info(f"\n{'#'*70}")
-    logger.info("# PHASE 4: ���÷��� �н� ���� �� ��ü ���� �˻�")
+    logger.info("# PHASE 4: ???/??? ?н? ???? ?? ??ü ???? ???")
     logger.info(f"{'#'*70}\n")
     
-    # 4-1. ��ü ���� �˻�
+    # 4-1. ??ü ???? ???
     success_logic2, _ = run_command(
         [sys.executable, str(logic_checker), "--all"],
         project_root,
@@ -176,7 +176,7 @@ def main():
         timeout=600
     )
     
-    # 4-2. ���÷��� �н�
+    # 4-2. ???/??? ?н?
     success_replay1, _ = run_command(
         [sys.executable, str(replay_learner)],
         project_root,
@@ -184,12 +184,12 @@ def main():
         timeout=1800
     )
     
-    # PHASE 5: ���а˻� �� ���� �н� ����
+    # PHASE 5: ???а?? ?? ???? ?н? ????
     logger.info(f"\n{'#'*70}")
-    logger.info("# PHASE 5: ���а˻� �� ���� �н� ����")
+    logger.info("# PHASE 5: ???а?? ?? ???? ?н? ????")
     logger.info(f"{'#'*70}\n")
     
-    # 5-1. ���а˻� (���� ���� + �ڵ� ǰ��)
+    # 5-1. ???а?? (???? ???? + ?ڵ? ǰ??)
     success_precise1, _ = run_command(
         [sys.executable, str(auto_error_fixer), "--all"],
         project_root,
@@ -204,10 +204,10 @@ def main():
         timeout=600
     )
     
-    # 5-2. ���� �н� ����
-    logger.info(f"\n[INFO] ���� �н��� �����մϴ�...")
-    logger.info(f"������ ���� �۵��ϴ��� Ȯ���ϼ���.")
-    logger.info(f"Ctrl+C�� ���� �ߴ��� �� �ֽ��ϴ�.")
+    # 5-2. ???? ?н? ????
+    logger.info(f"\n[INFO] ???? ?н??? ?????մϴ?...")
+    logger.info(f"?????? ???? ?۵??ϴ??? Ȯ???ϼ???.")
+    logger.info(f"Ctrl+C?? ???? ?ߴ??? ?? ?ֽ??ϴ?.")
     success_training, _ = run_command(
         [sys.executable, str(run_training)],
         project_root,
@@ -215,12 +215,12 @@ def main():
         timeout=3600  # 60 minutes
     )
     
-    # PHASE 6: ������ ���� �˻� �� ���� Ȯ�� �� ���� ���� �� ���� Ȯ�� �� ���� ����
+    # PHASE 6: ?????? ???? ??? ?? ???? Ȯ?? ?? ???? ???? ?? ???? Ȯ?? ?? ???? ????
     logger.info(f"\n{'#'*70}")
-    logger.info("# PHASE 6: ���� �˻� �� ���� Ȯ�� �� ���� ���� �� ���� Ȯ�� �� ���� ����")
+    logger.info("# PHASE 6: ???? ??? ?? ???? Ȯ?? ?? ???? ???? ?? ???? Ȯ?? ?? ???? ????")
     logger.info(f"{'#'*70}\n")
     
-    # 6-1. ���� �˻�
+    # 6-1. ???? ???
     success_logic3, output_logic3 = run_command(
         [sys.executable, str(logic_checker), "--all"],
         project_root,
@@ -228,7 +228,7 @@ def main():
         timeout=600
     )
     
-    # 6-2. ���� Ȯ�� �� ����
+    # 6-2. ???? Ȯ?? ?? ????
     success_error_fix, _ = run_command(
         [sys.executable, str(auto_error_fixer), "--all"],
         project_root,
@@ -236,7 +236,7 @@ def main():
         timeout=600
     )
     
-    # 6-3. ���� Ȯ�� �� ���� (���� �˻� �ٽ�)
+    # 6-3. ???? Ȯ?? ?? ???? (???? ??? ?ٽ?)
     success_bug_fix, _ = run_command(
         [sys.executable, str(logic_checker), "--all"],
         project_root,
@@ -244,12 +244,12 @@ def main():
         timeout=600
     )
     
-    # PHASE 7: ���÷��� �� �н� ���α׷� ���� �� ������ ���� �� �Ʒ� ����
+    # PHASE 7: ???/??? ?? ?н? ???α׷? ???? ?? ?????? ???? ?? ?Ʒ? ????
     logger.info(f"\n{'#'*70}")
-    logger.info("# PHASE 7: ���÷��� �� �н� ���α׷� ���� �� ������ ���� �� �Ʒ� ����")
+    logger.info("# PHASE 7: ???/??? ?? ?н? ???α׷? ???? ?? ?????? ???? ?? ?Ʒ? ????")
     logger.info(f"{'#'*70}\n")
     
-    # 7-1. ���÷��� �� �н�
+    # 7-1. ???/??? ?? ?н?
     success_replay2, _ = run_command(
         [sys.executable, str(replay_learner)],
         project_root,
@@ -257,10 +257,10 @@ def main():
         timeout=1800
     )
     
-    # 7-2. ������ ���� �� �Ʒ� ����
+    # 7-2. ?????? ???? ?? ?Ʒ? ????
     if success_replay2:
-        logger.info(f"\n[INFO] �н��� �����Ͱ� �ڵ� ����Ǿ����ϴ�.")
-        logger.info(f"�߰� �Ʒ��� �����մϴ�...")
+        logger.info(f"\n[INFO] ?н??? ?????Ͱ? ?ڵ? ????Ǿ????ϴ?.")
+        logger.info(f"?߰? ?Ʒ??? ?????մϴ?...")
         
         success_training2, _ = run_command(
             [sys.executable, str(run_training)],
@@ -269,9 +269,9 @@ def main():
             timeout=3600
         )
     
-    # PHASE 8: ���÷��� �н� ������ �� �м� �� �н� ����
+    # PHASE 8: ???/??? ?н? ?????? ?? ?м? ?? ?н? ????
     logger.info(f"\n{'#'*70}")
-    logger.info("# PHASE 8: ���÷��� �н� ������ �� �м� �� �н� ����")
+    logger.info("# PHASE 8: ???/??? ?н? ?????? ?? ?м? ?? ?н? ????")
     logger.info(f"{'#'*70}\n")
     
     success_audit, _ = run_command(
@@ -281,19 +281,19 @@ def main():
         timeout=1800
     )
     
-    # ���� ���
+    # ???? ???
     logger.info(f"\n\n{'#'*70}")
-    logger.info("# ��ü ��ũ�÷ο� �Ϸ�")
+    logger.info("# ??ü ??ũ?/ο? ?Ϸ?")
     logger.info(f"{'#'*70}\n")
     
-    logger.info("���� ���:")
-    logger.error(f"  - ���� ����: {'?' if success_error_fix else '?'}")
-    logger.info(f"  - �ڵ� ��Ÿ�� ����ȭ: {'?' if success_style else '?'}")
-    logger.info(f"  - ���� �˻�: {'?' if success_logic else '?'}")
-    logger.info(f"  - ���÷��� �н�: {'?' if success_replay1 else '?'}")
-    logger.info(f"  - ���� �н�: {'?' if success_training else '?'}")
-    logger.info(f"  - ���÷��� �� �н�: {'?' if success_replay2 else '?'}")
-    logger.info(f"  - �� �м�: {'?' if success_audit else '?'}")
+    logger.info("???? ???:")
+    logger.error(f"  - ???? ????: {'?' if success_error_fix else '?'}")
+    logger.info(f"  - ?ڵ? ??Ÿ?? ????ȭ: {'?' if success_style else '?'}")
+    logger.info(f"  - ???? ???: {'?' if success_logic else '?'}")
+    logger.info(f"  - ???/??? ?н?: {'?' if success_replay1 else '?'}")
+    logger.info(f"  - ???? ?н?: {'?' if success_training else '?'}")
+    logger.info(f"  - ???/??? ?? ?н?: {'?' if success_replay2 else '?'}")
+    logger.info(f"  - ?? ?м?: {'?' if success_audit else '?'}")
     
     logger.info(f"\n{'#'*70}")
 
@@ -302,7 +302,7 @@ if __name__ == "__main__":
     try:
         main()
     except KeyboardInterrupt:
-        print("\n\n??  Workflow interrupted by user")
+        print("\n\n[DRONE]  Workflow interrupted by user")
         sys.exit(1)
     except Exception as e:
         print(f"\n\n? Fatal error: {e}")

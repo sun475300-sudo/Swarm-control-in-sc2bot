@@ -27,15 +27,15 @@ class GameConfig:
     MID_GAME_END = 720  # 12분 (중반 종료)
 
     # 빌드 오더 전환
-    BUILD_ORDER_SWITCH_TIME = 300  # 5분 (Rule-based → RL 전환)
+    BUILD_ORDER_SWITCH_TIME = 300  # 5분 (Rule-based -> RL 전환)
 
     # ========== 경제 설정 ==========
 
     # 드론 제한
     DRONE_LIMIT_PER_BASE = (
-        16  # ★ FIX: 20 → 16 (미네랄 포화 = 16, 초과 포화는 자원 낭비) ★
+        16  # * FIX: 20 -> 16 (미네랄 포화 = 16, 초과 포화는 자원 낭비) *
     )
-    DRONE_LIMIT_PER_BASE_GAS = 22  # ★ FIX: 26 → 22 (16 미네랄 + 6 가스 = 22) ★
+    DRONE_LIMIT_PER_BASE_GAS = 22  # * FIX: 26 -> 22 (16 미네랄 + 6 가스 = 22) *
     MIN_DRONES = 22  # 최소 드론 수 (절대값)
     MAX_DRONES = 80  # 최대 드론 수
 
@@ -44,8 +44,8 @@ class GameConfig:
     MINERAL_OVERFLOW = 1500  # 미네랄 넘침 (확장 필요)
     MINERAL_CRITICAL = 2000  # 미네랄 심각 (긴급 소비)
 
-    GAS_OVERFLOW_THRESHOLD = 300  # ★ Phase 16: 500→300 (가스 뱅킹 조기 감지)
-    GAS_CRITICAL = 800  # ★ Phase 16: 1000→800 (가스 심각 — 더 빠른 대응)
+    GAS_OVERFLOW_THRESHOLD = 300  # * Phase 16: 500->300 (가스 뱅킹 조기 감지)
+    GAS_CRITICAL = 800  # * Phase 16: 1000->800 (가스 심각 - 더 빠른 대응)
 
     # 자원 비율
     MINERAL_TO_GAS_RATIO = 2.0  # 미네랄:가스 = 2:1 목표
@@ -54,8 +54,8 @@ class GameConfig:
 
     # Overlord 생산 타이밍
     SUPPLY_BUFFER_OPENING = 6  # 초반 보급 여유분 (0-3분)
-    SUPPLY_BUFFER_EARLY = 6  # ★ FIX: 4→6 (초반 보급 여유분, 3-6분)
-    SUPPLY_BUFFER_MID = 8  # ★ FIX: 3→8 (중반 보급 여유분, 6분+ — 블록 방지)
+    SUPPLY_BUFFER_EARLY = 6  # * FIX: 4->6 (초반 보급 여유분, 3-6분)
+    SUPPLY_BUFFER_MID = 8  # * FIX: 3->8 (중반 보급 여유분, 6분+ - 블록 방지)
     SUPPLY_BUFFER_HIGH_GAS = 10  # 가스 많을 때 여유분
 
     SUPPLY_CAP = 200  # 최대 보급

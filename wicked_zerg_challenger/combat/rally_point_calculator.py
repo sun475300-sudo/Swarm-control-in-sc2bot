@@ -61,7 +61,7 @@ def update_rally_point(manager):
     try:
         from sc2.position import Point2
 
-        # ★ Phase 38: 랠리 기준을 본진(townhalls.first)이 아닌 맵 중앙 최근접 기지로 변경
+        # * Phase 38: 랠리 기준을 본진(townhalls.first)이 아닌 맵 중앙 최근접 기지로 변경
         # (이전: 3, 4 베이스 이후에도 본진 앞에 집결지 고정)
         if manager.bot.townhalls.amount > 1:
             try:
@@ -78,7 +78,7 @@ def update_rally_point(manager):
             else our_base
         )
 
-        # ★ Phase 18: 크립 위 교전 유도 — 랠리 포인트를 크립 위에 설정 ★
+        # * Phase 18: 크립 위 교전 유도 - 랠리 포인트를 크립 위에 설정 *
         # 30%~50% 사이에서 크립이 있는 가장 전진된 위치를 선택
         best_rally = None
         for ratio in [0.45, 0.40, 0.35, 0.30, 0.25]:
@@ -128,7 +128,7 @@ async def gather_at_rally_point(manager, army_units, iteration: int):
             if is_idle and distance_to_rally > 5:
                 manager.bot.do(unit.move(manager._rally_point))
             elif distance_to_rally > 20:
-                # ★ Phase 38: 전투 중인 유닛은 강제 이동 금지 (이전: 모든 원거리 유닛 후퇴)
+                # * Phase 38: 전투 중인 유닛은 강제 이동 금지 (이전: 모든 원거리 유닛 후퇴)
                 # 근처에 적이 있으면 이동 명령 생략
                 nearby_enemies = (
                     manager.bot.enemy_units.closer_than(12, unit)

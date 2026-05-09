@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Real-time Awareness Engine — 실시간 상황 인식 + 자동 대응 시스템
+Real-time Awareness Engine - 실시간 상황 인식 + 자동 대응 시스템
 
 봇이 매 프레임마다 상황을 이해하고, 문제를 감지하고,
 즉각적으로 행동을 수정하는 자율 시스템.
@@ -80,7 +80,7 @@ class RealtimeAwarenessEngine:
     매 프레임:
     1. 상황 스냅샷 생성
     2. 문제 감지 (14가지 패턴)
-    3. 처방 생성 → 행동 오버라이드
+    3. 처방 생성 -> 행동 오버라이드
     4. 봇에 직접 명령 전달
     """
 
@@ -105,7 +105,7 @@ class RealtimeAwarenessEngine:
 
     def on_step(self, iteration: int) -> List[Override]:
         """
-        매 프레임 호출 — 상황 진단 → 문제 감지 → 자동 대응
+        매 프레임 호출 - 상황 진단 -> 문제 감지 -> 자동 대응
 
         Returns:
             List[Override]: 봇이 즉시 실행해야 할 오버라이드 명령들
@@ -122,7 +122,7 @@ class RealtimeAwarenessEngine:
             # Step 2: 문제 감지
             self.active_problems = self._detect_problems()
 
-            # Step 3: 처방 → 오버라이드
+            # Step 3: 처방 -> 오버라이드
             self.active_overrides = self._generate_overrides(game_time)
 
             # Step 4: 직접 행동 실행
@@ -253,7 +253,7 @@ class RealtimeAwarenessEngine:
                 Problem(
                     "combat",
                     "critical",
-                    f"군대 전멸! (army {self._last_army_supply}→{s.army_supply})",
+                    f"군대 전멸! (army {self._last_army_supply}->{s.army_supply})",
                     "모든 라바로 군대 유닛 즉시 생산. 드론 생산 중지.",
                     priority=1,
                 )
@@ -369,7 +369,7 @@ class RealtimeAwarenessEngine:
                 Problem(
                     "economy",
                     "high",
-                    "가스 건물 0개 — 테크 불가",
+                    "가스 건물 0개 - 테크 불가",
                     "즉시 익스트랙터 건설",
                     priority=3,
                 )
@@ -413,7 +413,7 @@ class RealtimeAwarenessEngine:
                 Problem(
                     "strategy",
                     "high",
-                    "6분인데 아직 해처리 테크 — 레어 필요",
+                    "6분인데 아직 해처리 테크 - 레어 필요",
                     "즉시 레어 변태 시작",
                     priority=4,
                 )
@@ -425,7 +425,7 @@ class RealtimeAwarenessEngine:
                 Problem(
                     "defense",
                     "critical",
-                    f"기지 상실! ({self._last_base_count}→{s.base_count})",
+                    f"기지 상실! ({self._last_base_count}->{s.base_count})",
                     "방어 강화 + 재확장 준비",
                     priority=1,
                 )
@@ -438,7 +438,7 @@ class RealtimeAwarenessEngine:
                 Problem(
                     "scouting",
                     "medium",
-                    "적 시야 0 — 정찰 공백",
+                    "적 시야 0 - 정찰 공백",
                     "오버시어/저글링 정찰 파견",
                     priority=6,
                 )
@@ -697,7 +697,7 @@ class RealtimeAwarenessEngine:
             logger.info(f"{len(critical)} CRITICAL problems:")
             for p in critical[:3]:
                 logger.info(f"  [{p.severity.upper()}] {p.description}")
-                logger.info(f"    → action required (see logs)")
+                logger.info(f"    -> action required (see logs)")
 
     def get_situation_summary(self) -> str:
         """현재 상황 요약"""

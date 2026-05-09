@@ -33,7 +33,7 @@ except ImportError:
 
 class CreepHighwayManager:
     """
-    ★ Creep Highway Manager ★
+    * Creep Highway Manager *
 
     기지 간 연결을 최우선으로 점막을 확장합니다.
     적 기지 방향보다 아군 기지 연결이 우선입니다.
@@ -43,27 +43,27 @@ class CreepHighwayManager:
         self.bot = bot
         self.logger = get_logger("CreepHighway")
 
-        # ★ 체크 주기 ★
+        # * 체크 주기 *
         self.last_check = 0
         self.check_interval = 44  # 약 2초마다
 
-        # ★ 고속도로 계획 ★
+        # * 고속도로 계획 *
         self.highways: List[Dict] = (
             []
         )  # [{from: pos, to: pos, progress: 0-100, waypoints: []}]
         self.highway_waypoints: Set[Tuple[int, int]] = set()  # 고속도로 경유지
 
-        # ★ 우선순위 ★
+        # * 우선순위 *
         self.priority_mode = "HIGHWAY"  # HIGHWAY, ENEMY, BALANCED
 
-        # ★ 통계 ★
+        # * 통계 *
         self.highways_completed = 0
         self.total_creep_tumors = 0
 
     async def on_step(self, iteration: int):
         """매 프레임 실행"""
         try:
-            # ★ CreepAutomationV2가 활성이면 스킵 (퀸 명령 충돌 방지) ★
+            # * CreepAutomationV2가 활성이면 스킵 (퀸 명령 충돌 방지) *
             if hasattr(self.bot, "creep_v2") and self.bot.creep_v2:
                 return
 
@@ -72,13 +72,13 @@ class CreepHighwayManager:
 
             self.last_check = iteration
 
-            # ★ 1. 기지 간 고속도로 계획 업데이트 ★
+            # * 1. 기지 간 고속도로 계획 업데이트 *
             await self._update_highway_plan()
 
-            # ★ 2. 고속도로 건설 ★
+            # * 2. 고속도로 건설 *
             await self._build_highways(iteration)
 
-            # ★ 3. 적 방향 점막 확장 (고속도로 완료 후) ★
+            # * 3. 적 방향 점막 확장 (고속도로 완료 후) *
             if self._are_highways_complete():
                 await self._expand_toward_enemy(iteration)
 
@@ -97,13 +97,13 @@ class CreepHighwayManager:
         if townhalls.amount < 2:
             return
 
-        # ★ 기존 고속도로 목록 ★
+        # * 기존 고속도로 목록 *
         existing_highways = set()
         for highway in self.highways:
             key = (highway["from"], highway["to"])
             existing_highways.add(key)
 
-        # ★ 모든 기지 쌍에 대해 고속도로 계획 ★
+        # * 모든 기지 쌍에 대해 고속도로 계획 *
         bases = list(townhalls)
         new_highways = []
 
@@ -202,12 +202,12 @@ class CreepHighwayManager:
             highway["completed"] = True
             return
 
-        # ★ 점막 확산 퀸 찾기 ★
+        # * 점막 확산 퀸 찾기 *
         creep_queens = self._get_creep_queens()
         if not creep_queens:
             return
 
-        # ★ 경유지 중 점막이 없는 곳 찾기 ★
+        # * 경유지 중 점막이 없는 곳 찾기 *
         for i, waypoint in enumerate(waypoints):
             # 점막 확인
             if self.bot.has_creep(waypoint):
@@ -240,7 +240,7 @@ class CreepHighwayManager:
                 self.bot.do(queen.move(waypoint))
                 break
 
-        # ★ 진행률 업데이트 ★
+        # * 진행률 업데이트 *
         covered = sum(1 for wp in waypoints if self.bot.has_creep(wp))
         progress = int((covered / len(waypoints)) * 100) if waypoints else 100
         highway["progress"] = progress

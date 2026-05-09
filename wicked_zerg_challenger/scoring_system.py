@@ -1,21 +1,21 @@
 # -*- coding: utf-8 -*-
 """
-Comprehensive Scoring System — 종합 점수 기반 실시간 학습 엔진
+Comprehensive Scoring System - 종합 점수 기반 실시간 학습 엔진
 
 모든 봇 행동에 점수를 부여하여 실시간으로 학습하고
 10게임 단위로 점수를 누적/차감합니다.
 
 Scoring Domains:
-1. Combat (전투)        — 교전 승패, 유닛 교환비, 집중 사격, 후퇴 판단
-2. Production (생산)    — 자원 활용률, 가스 지출, 유닛 믹스, 서플 관리
-3. Scouting (시야)      — 정찰 빈도, 적 빌드 감지, 미니맵 커버리지
-4. Economy (경제)       — 일꾼 최적화, 확장 타이밍, 자원 균형
-5. Defense (방어)       — 러시 방어, 스파인/포자 배치, 퀸 인젝트
-6. Strategy (전략)      — 빌드오더 이행, 전략 전환, 테크 타이밍
-7. Micro (마이크로)     — 스터터스텝, 바네링 효율, 뮤탈 견제
-8. Macro (매크로)       — 라바 활용, 인젝트 빈도, 크립 확산
-9. Adaptation (적응)    — 카운터 유닛 선택, 전략 변경 속도
-10. Survival (생존)     — 게임 지속 시간, 군대 유지, 재건 속도
+1. Combat (전투)        - 교전 승패, 유닛 교환비, 집중 사격, 후퇴 판단
+2. Production (생산)    - 자원 활용률, 가스 지출, 유닛 믹스, 서플 관리
+3. Scouting (시야)      - 정찰 빈도, 적 빌드 감지, 미니맵 커버리지
+4. Economy (경제)       - 일꾼 최적화, 확장 타이밍, 자원 균형
+5. Defense (방어)       - 러시 방어, 스파인/포자 배치, 퀸 인젝트
+6. Strategy (전략)      - 빌드오더 이행, 전략 전환, 테크 타이밍
+7. Micro (마이크로)     - 스터터스텝, 바네링 효율, 뮤탈 견제
+8. Macro (매크로)       - 라바 활용, 인젝트 빈도, 크립 확산
+9. Adaptation (적응)    - 카운터 유닛 선택, 전략 변경 속도
+10. Survival (생존)     - 게임 지속 시간, 군대 유지, 재건 속도
 """
 
 import json
@@ -70,7 +70,7 @@ class DomainScore:
 
 class ScoringSystem:
     """
-    종합 점수 시스템 — 실시간 행동 평가 + 10게임 단위 누적
+    종합 점수 시스템 - 실시간 행동 평가 + 10게임 단위 누적
 
     사용법:
         scoring = ScoringSystem(bot)
@@ -135,7 +135,7 @@ class ScoringSystem:
     # =========================================================================
 
     def on_step(self, iteration: int) -> None:
-        """매 프레임 호출 — 모든 도메인 실시간 평가"""
+        """매 프레임 호출 - 모든 도메인 실시간 평가"""
         game_time = getattr(self.bot, "time", 0.0)
         if game_time - self.last_update_time < self.update_interval:
             return
@@ -190,7 +190,7 @@ class ScoringSystem:
             ):
                 # 아군 반토막, 적 유지 = 교전 패배
                 self.domains["combat"].add(
-                    -5, f"교전 패배 (army {army_supply}→{self._last_army_supply})"
+                    -5, f"교전 패배 (army {army_supply}->{self._last_army_supply})"
                 )
                 self._engagements_lost += 1
 
@@ -237,7 +237,7 @@ class ScoringSystem:
         # 가스 축적 패널티 (가장 큰 문제!)
         if vespene > 1000 and game_time > 180:
             self.domains["production"].add(
-                -5, f"가스 과잉 축적: {vespene} — 가스 유닛 생산 필요!"
+                -5, f"가스 과잉 축적: {vespene} - 가스 유닛 생산 필요!"
             )
         elif vespene > 500 and game_time > 120:
             self.domains["production"].add(-2, f"가스 축적 경고: {vespene}")
@@ -253,7 +253,7 @@ class ScoringSystem:
             growth = supply_used - self._peak_supply
             if growth >= 10:
                 self.domains["production"].add(
-                    +2, f"서플 성장: {self._peak_supply}→{supply_used}"
+                    +2, f"서플 성장: {self._peak_supply}->{supply_used}"
                 )
             self._peak_supply = supply_used
 
@@ -296,7 +296,7 @@ class ScoringSystem:
         # 정찰 공백 패널티
         if game_time > 120 and visible_structures == 0 and visible_units == 0:
             if game_time - self._last_scout_time > 60:
-                self.domains["scouting"].add(-3, "60초+ 정찰 공백 — 적 정보 없음!")
+                self.domains["scouting"].add(-3, "60초+ 정찰 공백 - 적 정보 없음!")
         else:
             self._last_scout_time = game_time
 
@@ -346,7 +346,7 @@ class ScoringSystem:
 
         if base_count > self._last_base_count:
             self.domains["economy"].add(
-                +5, f"확장 성공! ({self._last_base_count}→{base_count})"
+                +5, f"확장 성공! ({self._last_base_count}->{base_count})"
             )
             self._last_base_count = base_count
 
@@ -375,7 +375,7 @@ class ScoringSystem:
         # 기지 방어 성공/실패
         if base_count < self._last_base_count and self._last_base_count > 0:
             self.domains["defense"].add(
-                -8, f"기지 파괴됨! ({self._last_base_count}→{base_count})"
+                -8, f"기지 파괴됨! ({self._last_base_count}->{base_count})"
             )
         elif base_count >= self._last_base_count and len(enemy_units) > 5:
             # 적이 많은데 기지 유지 = 방어 성공
@@ -407,7 +407,7 @@ class ScoringSystem:
                         and game_time > 120
                     ):
                         self.domains["defense"].add(
-                            -1, f"유휴 퀸 {idle_queens.amount}마리 — 인젝트 필요"
+                            -1, f"유휴 퀸 {idle_queens.amount}마리 - 인젝트 필요"
                         )
             except Exception:
                 pass
@@ -452,7 +452,7 @@ class ScoringSystem:
                 self.domains["strategy"].add(+3, f"후반 맥서플: {supply_used}")
             elif supply_used < 100:
                 self.domains["strategy"].add(
-                    -3, f"후반인데 서플 {supply_used} — 생산 부족"
+                    -3, f"후반인데 서플 {supply_used} - 생산 부족"
                 )
 
     # =========================================================================
@@ -460,7 +460,7 @@ class ScoringSystem:
     # =========================================================================
 
     def _evaluate_micro(self, game_time: float) -> None:
-        """마이크로 점수 — 유닛 컨트롤 품질"""
+        """마이크로 점수 - 유닛 컨트롤 품질"""
         units = getattr(self.bot, "units", None)
         if not units:
             return
@@ -477,7 +477,7 @@ class ScoringSystem:
             ]
             if len(idle_army) > 5 and game_time > 120:
                 self.domains["micro"].add(
-                    -2, f"유휴 군대 {len(idle_army)}기 — 명령 필요"
+                    -2, f"유휴 군대 {len(idle_army)}기 - 명령 필요"
                 )
         except Exception:
             pass
@@ -487,14 +487,14 @@ class ScoringSystem:
     # =========================================================================
 
     def _evaluate_macro(self, game_time: float) -> None:
-        """매크로 점수 — 생산 인프라 관리"""
+        """매크로 점수 - 생산 인프라 관리"""
         larva = getattr(self.bot, "larva", None)
         larva_count = len(larva) if larva and hasattr(larva, "__len__") else 0
 
         # 라바 과잉 = 생산 안 하고 있음
         if larva_count > 10 and game_time > 120:
             self.domains["macro"].add(
-                -3, f"라바 {larva_count}마리 방치 — 즉시 생산 필요!"
+                -3, f"라바 {larva_count}마리 방치 - 즉시 생산 필요!"
             )
         elif larva_count <= 3 and game_time > 60:
             self.domains["macro"].add(+1, "라바 효율적 사용")
@@ -516,13 +516,13 @@ class ScoringSystem:
     # =========================================================================
 
     def _evaluate_adaptation(self, game_time: float) -> None:
-        """적응 점수 — 카운터 유닛 선택"""
+        """적응 점수 - 카운터 유닛 선택"""
         vespene = getattr(self.bot, "vespene", 0)
 
         # 가스 유닛 생산 체크 (핵심!)
         if vespene > 1500 and game_time > 300:
             self.domains["adaptation"].add(
-                -5, "가스 1500+ 축적 — 히드라/뮤탈/바퀴 즉시 생산!"
+                -5, "가스 1500+ 축적 - 히드라/뮤탈/바퀴 즉시 생산!"
             )
 
         # 적 구성에 맞는 카운터 유닛 생산 확인
@@ -539,7 +539,7 @@ class ScoringSystem:
     # =========================================================================
 
     def _evaluate_survival(self, game_time: float) -> None:
-        """생존 점수 — 게임 지속"""
+        """생존 점수 - 게임 지속"""
         supply_used = getattr(self.bot, "supply_used", 0)
 
         # 게임 시간에 따른 생존 보너스
@@ -581,13 +581,13 @@ class ScoringSystem:
             # 초반 패배 추가 패널티
             if game_time < 240:
                 self.domains["defense"].add(
-                    -15, f"초반 패배 ({game_time:.0f}초) — 러시 방어 실패"
+                    -15, f"초반 패배 ({game_time:.0f}초) - 러시 방어 실패"
                 )
             # 가스 축적 패배
             vespene = getattr(self.bot, "vespene", 0)
             if vespene > 2000:
                 self.domains["production"].add(
-                    -15, f"가스 {vespene} 축적 채 패배 — 심각한 생산 문제"
+                    -15, f"가스 {vespene} 축적 채 패배 - 심각한 생산 문제"
                 )
 
         # 종합 리포트 생성
@@ -636,7 +636,7 @@ class ScoringSystem:
     # =========================================================================
 
     def _evaluate_session_block(self) -> None:
-        """10게임 블록 평가 — 점수 누적/차감"""
+        """10게임 블록 평가 - 점수 누적/차감"""
         block = self._session_scores[-10:]
         wins = sum(1 for g in block if g["result"] == "win")
         losses = 10 - wins
@@ -706,24 +706,24 @@ class ScoringSystem:
 
         # 긴급 권고
         if vespene > 1000:
-            advice.append("URGENT: GAS_SPEND — 가스 유닛(히드라/뮤탈/바퀴) 즉시 생산")
+            advice.append("URGENT: GAS_SPEND - 가스 유닛(히드라/뮤탈/바퀴) 즉시 생산")
         if minerals > 1000:
-            advice.append("URGENT: MINERAL_SPEND — 저글링/확장/드론 즉시 생산")
+            advice.append("URGENT: MINERAL_SPEND - 저글링/확장/드론 즉시 생산")
         if supply_left <= 0 and supply_used < 200:
-            advice.append("URGENT: SUPPLY_BLOCKED — 오버로드 즉시 생산")
+            advice.append("URGENT: SUPPLY_BLOCKED - 오버로드 즉시 생산")
         if self._army_wipe_count > 0 and not self._last_army_alive:
-            advice.append("URGENT: ARMY_REBUILD — 모든 라바로 군대 유닛 즉시 생산")
+            advice.append("URGENT: ARMY_REBUILD - 모든 라바로 군대 유닛 즉시 생산")
 
         # 일반 권고
         if game_time > 300 and supply_used < 80:
-            advice.append("WARNING: LOW_SUPPLY — 5분인데 서플 80 미만, 생산 가속 필요")
+            advice.append("WARNING: LOW_SUPPLY - 5분인데 서플 80 미만, 생산 가속 필요")
         if game_time > 120 and self._last_base_count < 2:
-            advice.append("WARNING: EXPAND — 2분인데 미확장, 즉시 해처리 건설")
+            advice.append("WARNING: EXPAND - 2분인데 미확장, 즉시 해처리 건설")
 
         return advice
 
     def get_worst_domain(self) -> str:
-        """가장 점수가 낮은 도메인 반환 — 개선 우선순위"""
+        """가장 점수가 낮은 도메인 반환 - 개선 우선순위"""
         return min(self.domains, key=lambda k: self.domains[k].score)
 
     def get_summary(self) -> str:

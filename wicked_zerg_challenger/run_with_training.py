@@ -112,7 +112,7 @@ def main():
     logger.info("   ? Auto-update learned parameters on victory")
     logger.info("? Model save location: local_training/models/zerg_net_model.pt")
     logger.info("? Build order data: local_training/scripts/learned_build_orders.json")
-    logger.info("??  Press Ctrl+C to stop training")
+    logger.info("[DRONE]  Press Ctrl+C to stop training")
     logger.info("=" * 70)
     # 1. Run on AI Arena server (when --LadderServer flag is present)
     if "--LadderServer" in sys.argv:
@@ -328,7 +328,7 @@ def main():
 
             if consecutive_failures > 0:
                 logger.info(
-                    f"\n??  [RETRY] Current consecutive failures: {consecutive_failures}/{max_consecutive_failures}"
+                    f"\n[DRONE]  [RETRY] Current consecutive failures: {consecutive_failures}/{max_consecutive_failures}"
                 )
                 if consecutive_failures >= max_consecutive_failures:
                     logger.error(
@@ -641,11 +641,11 @@ def main():
                     )
                     logger.info(f"Errors: {stats['errors']}")
                     logger.info("=" * 70)
-                # ★ NEW: Auto Replay Learning (every 10 games) ★
+                # * NEW: Auto Replay Learning (every 10 games) *
                 if auto_replay_learner and game_count % 10 == 0:
                     logger.info(f"\n{'='*70}")
                     logger.info(
-                        "🎮 [AUTO REPLAY LEARNING] Downloading and learning from pro replays..."
+                        "[GAME] [AUTO REPLAY LEARNING] Downloading and learning from pro replays..."
                     )
                     logger.info("=" * 70)
                     try:
@@ -667,7 +667,7 @@ def main():
             except Exception as game_error:
                 consecutive_failures += 1
 
-                # ★ CRITICAL FIX: Save experience data even when game fails ★
+                # * CRITICAL FIX: Save experience data even when game fails *
                 logger.info(
                     f"\n[RECOVERY] Attempting to save experience data from failed game..."
                 )
@@ -774,7 +774,7 @@ def main():
         except KeyboardInterrupt:
             logger.info("\n[STOP] Training stopped by user.")
 
-            # ★ MANUAL FEEDBACK FOR INTERRUPTED GAME ★
+            # * MANUAL FEEDBACK FOR INTERRUPTED GAME *
             try:
                 logger.info("\n" + "=" * 50)
                 logger.info("MANUAL TERMINATION DETECTED")

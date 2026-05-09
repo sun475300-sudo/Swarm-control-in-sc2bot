@@ -40,11 +40,11 @@ class CreepExpansionSystem:
         self.tumors_created = 0
         self.map_coverage = 0.0
 
-        # ★ Phase 45: 점막 목표 우선순위/안전 제약 ★
+        # * Phase 45: 점막 목표 우선순위/안전 제약 *
         self.target_batch_size = 80
         self.enemy_avoid_radius = 14.0
 
-        # ★ Phase 46: 경로 점수 기반 목표 선택 ★
+        # * Phase 46: 경로 점수 기반 목표 선택 *
         self.path_step_distance = 7.0
         self.expansion_lane_weight = 0.55
         self.center_lane_weight = 0.30
@@ -126,7 +126,7 @@ class CreepExpansionSystem:
                 if self.bot.in_map_bounds(pos):
                     self.target_creep_positions.append(pos)
 
-        # ★ Phase 45: 중복 제거 + 우선순위 정렬(안전/확장 효율 기반) ★
+        # * Phase 45: 중복 제거 + 우선순위 정렬(안전/확장 효율 기반) *
         self.target_creep_positions = self._prioritize_targets(
             self.target_creep_positions
         )
@@ -174,7 +174,7 @@ class CreepExpansionSystem:
         map_center = self.bot.game_info.map_center
         expansion_points = list(getattr(self.bot, "expansion_locations_list", []))
 
-        # ★ Phase 46: 확장 경로/중앙 진출/안전도 기반 점수로 정렬 ★
+        # * Phase 46: 확장 경로/중앙 진출/안전도 기반 점수로 정렬 *
         safe_candidates.sort(
             key=lambda p: self._score_target(
                 anchor=anchor,

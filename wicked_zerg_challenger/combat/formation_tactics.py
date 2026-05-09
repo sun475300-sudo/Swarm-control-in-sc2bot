@@ -54,7 +54,7 @@ class ConcaveFormationController:
                 UnitTypeId.ROACH,
                 UnitTypeId.RAVAGER,
                 UnitTypeId.HYDRALISK,
-                UnitTypeId.LURKER,
+                UnitTypeId.LURKERMP,
                 UnitTypeId.QUEEN,
             }
 
@@ -189,7 +189,7 @@ class BurrowController:
             self.burrow_unit_types = {
                 UnitTypeId.ROACH,
                 UnitTypeId.ROACHBURROWED,
-                UnitTypeId.LURKER,  # Likely LURKERMP
+                UnitTypeId.LURKERMP,  # Likely LURKERMP
                 UnitTypeId.LURKERMP,
                 UnitTypeId.LURKERMPBURROWED,
                 UnitTypeId.BANELING,
@@ -281,7 +281,7 @@ class BurrowController:
                     return unit(up_ability)
                 return None
 
-        # ★★★ FIX: Lurker burrow hysteresis (unburrow only when enemies beyond 10 range) ★★★
+        # *** FIX: Lurker burrow hysteresis (unburrow only when enemies beyond 10 range) ***
         if UnitTypeId and unit.type_id == UnitTypeId.LURKERMPBURROWED:
             # Lurker: Unburrow only when NO enemies within 10.0 range (hysteresis)
             if not self._enemy_within(enemy_units, unit, 10.0):
@@ -311,12 +311,12 @@ class BurrowController:
             if down_ability:
                 return unit(down_ability)
 
-        # ★ FIX: Lurkers must burrow to attack! ★
+        # * FIX: Lurkers must burrow to attack! *
         if UnitTypeId and unit.type_id == UnitTypeId.LURKERMP:
             # 적이 공격 사거리(9) 내에 있으면 잠복
             # NOTE: enemy_units not in scope here (existing bug). Conservative: skip burrow logic.
             if down_ability and getattr(unit, "is_idle", False):  # noqa: F821
-                pass  # placeholder — original logic referenced undefined enemy_units
+                pass  # placeholder - original logic referenced undefined enemy_units
 
         return None
 

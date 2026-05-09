@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 """
-Swarm-Net Airspace Manager — PoC Simulation
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-군집 드론 레이더망 내 유저 드론 감지 → 타이머 → 경고 → 퇴각
+Swarm-Net Airspace Manager - PoC Simulation
+-------------------------------------------
+군집 드론 레이더망 내 유저 드론 감지 -> 타이머 -> 경고 -> 퇴각
 파이썬 기반 백엔드 로직 시뮬레이션
 
 실행: python poc_simulation.py
@@ -24,9 +24,9 @@ if sys.platform == "win32":
     sys.stdout.reconfigure(encoding="utf-8")
 
 
-# ═══════════════════════════════════════════════════════
+# =======================================================
 # 1. 데이터 모델
-# ═══════════════════════════════════════════════════════
+# =======================================================
 
 
 class DroneStatus(Enum):
@@ -88,9 +88,9 @@ class UserDrone:
         return max(0, self.timer_seconds - elapsed)
 
 
-# ═══════════════════════════════════════════════════════
+# =======================================================
 # 2. 레이더 메쉬 네트워크 (Sentinel Swarm)
-# ═══════════════════════════════════════════════════════
+# =======================================================
 
 
 class RadarMeshNetwork:
@@ -155,9 +155,9 @@ class RadarMeshNetwork:
         )
 
 
-# ═══════════════════════════════════════════════════════
+# =======================================================
 # 3. 세션 매니저 (Redis 시뮬레이션)
-# ═══════════════════════════════════════════════════════
+# =======================================================
 
 
 class SessionManager:
@@ -179,7 +179,7 @@ class SessionManager:
         )
 
     def check_timers(self) -> List[dict]:
-        """모든 세션 타이머 체크 → 이벤트 리스트 반환"""
+        """모든 세션 타이머 체크 -> 이벤트 리스트 반환"""
         events = []
         for drone_id, drone in list(self.sessions.items()):
             remaining = drone.remaining_time()
@@ -210,9 +210,9 @@ class SessionManager:
             del self.sessions[drone_id]
 
 
-# ═══════════════════════════════════════════════════════
+# =======================================================
 # 4. 알림 시스템 (FCM/MQTT 시뮬레이션)
-# ═══════════════════════════════════════════════════════
+# =======================================================
 
 
 class NotificationService:
@@ -242,9 +242,9 @@ class NotificationService:
         logger.info(f"          착륙 유도 경로 전송 완료")
 
 
-# ═══════════════════════════════════════════════════════
+# =======================================================
 # 5. 관제 시스템 (메인 오케스트레이터)
-# ═══════════════════════════════════════════════════════
+# =======================================================
 
 
 class AirspaceController:
@@ -260,7 +260,7 @@ class AirspaceController:
         self.event_log: List[dict] = []
 
     async def scan_cycle(self, user_drones: List[UserDrone]):
-        """1회 스캔 사이클: 감지 → 식별 → 등록 → 타이머 체크 → 알림"""
+        """1회 스캔 사이클: 감지 -> 식별 -> 등록 -> 타이머 체크 -> 알림"""
 
         # (1) 탐지
         for drone in user_drones:
@@ -335,25 +335,25 @@ class AirspaceController:
                 DroneStatus.EXPIRED: "[XX]",
                 DroneStatus.UNAUTHORIZED: "[XX]",
                 DroneStatus.EVICTING: "[>>]",
-            }.get(d.status, "[??]")
+            }.get(d.status, "[[DRONE]]")
             lines.append(
                 f"    {status_icon} {did}: {d.status.value} | 잔여 {rem:.0f}s | 위치 {d.position}"
             )
         return "\n".join(lines)
 
 
-# ═══════════════════════════════════════════════════════
+# =======================================================
 # 6. 시뮬레이션 실행
-# ═══════════════════════════════════════════════════════
+# =======================================================
 
 
 async def run_simulation():
     """전체 시나리오 시뮬레이션"""
     logger.info("=" * 65)
-    logger.info("  SWARM-NET AIRSPACE MANAGER — PoC Simulation")
+    logger.info("  SWARM-NET AIRSPACE MANAGER - PoC Simulation")
     logger.info("=" * 65)
 
-    # ── 1단계: 레이더 망 구축 ──
+    # -- 1단계: 레이더 망 구축 --
     logger.info("\n[PHASE 1] 레이더 Mesh Network 구축")
     mesh = RadarMeshNetwork(
         center=Position(0, 100, 0),  # 중심 좌표, 고도 100m
@@ -361,14 +361,14 @@ async def run_simulation():
         n_sentinels=7,
     )
 
-    # ── 관제 시스템 초기화 ──
+    # -- 관제 시스템 초기화 --
     controller = AirspaceController(
         mesh=mesh,
         timer=30.0,  # 데모용: 30초 타이머
         warn_at=10.0,  # 10초 전 경고
     )
 
-    # ── 유저 드론 시나리오 ──
+    # -- 유저 드론 시나리오 --
     user_drones = [
         UserDrone(
             id="UD-001",
@@ -383,15 +383,15 @@ async def run_simulation():
         UserDrone(
             id="UD-003",
             rf_signature="AA:BB:CC:DD:EE:03",
-            position=Position(100, 80, 100),  # 레이더 밖 → 나중에 진입
+            position=Position(100, 80, 100),  # 레이더 밖 -> 나중에 진입
         ),
     ]
 
-    # ── 2단계: 초기 탐지 ──
+    # -- 2단계: 초기 탐지 --
     logger.info("\n[PHASE 2] 유저 드론 탐지 및 식별")
     await controller.scan_cycle(user_drones)
 
-    # ── 3단계: 실시간 추적 + 타이머 ──
+    # -- 3단계: 실시간 추적 + 타이머 --
     logger.info("\n[PHASE 3] 실시간 추적 및 타이머 카운트다운")
     logger.info("-" * 65)
 
@@ -440,7 +440,7 @@ async def run_simulation():
             logger.info(f"\n  === [t={sim_ticks:3d}s] 상태 요약 ===")
             logger.info(controller.get_status_summary())
 
-    # ── 최종 결과 ──
+    # -- 최종 결과 --
     logger.info("\n" + "=" * 65)
     logger.info("  SIMULATION COMPLETE")
     logger.info("=" * 65)

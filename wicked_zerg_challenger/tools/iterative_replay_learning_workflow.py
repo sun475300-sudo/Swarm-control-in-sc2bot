@@ -3,15 +3,15 @@
 """
 Iterative Replay Learning Workflow
 
-���ΰ��̸� ���÷��� �н� �� ������� �н� �� ���� �Ʒ� ���� �� ���� (30ȸ �ݺ�)
+???ΰ??̸? ???/??? ?н? ?? ??????? ?н? ?? ???? ?Ʒ? ???? ?? ???? (30ȸ ?ݺ?)
 
-��ü ��ũ�÷ο�:
-1. ���ΰ��̸� ���÷��̿��� ������� �н� (30�� ���÷���)
-2. �н��� ��������� learned_build_orders.json�� ����
-3. ���� �Ʒ� ���� (�н��� ������� �ڵ� ����)
-4. �Ʒ� ������ ���� �� �� �м�
-5. ������ �Ķ���͸� ���� ���ӿ� ����
-6. 1-5 �ܰ踦 �ݺ��Ͽ� ������ ����
+??ü ??ũ?/ο?:
+1. ???ΰ??̸? ???/??̿??? ??????? ?н? (30?? ???/???)
+2. ?н??? ????????? learned_build_orders.json?? ????
+3. ???? ?Ʒ? ???? (?н??? ??????? ?ڵ? ????)
+4. ?Ʒ? ?????? ???? ?? ?? ?м?
+5. ?????? ?Ķ???͸? ???? ???ӿ? ????
+6. 1-5 ?ܰ踦 ?ݺ??Ͽ? ?????? ????
 """
 
 import json
@@ -35,7 +35,7 @@ PROJECT_ROOT = Path(__file__).parent.parent
 
 
 class IterativeReplayLearningWorkflow:
-    """�ݺ� ���÷��� �н� ��ũ�÷ο�"""
+    """?ݺ? ???/??? ?н? ??ũ?/ο?"""
 
     def __init__(self):
         self.project_root = PROJECT_ROOT
@@ -45,12 +45,12 @@ class IterativeReplayLearningWorkflow:
         self.extract_train_path = self.project_root / "tools" / "extract_and_train_from_training.py"
         self.run_training_path = self.project_root / "run_with_training.py"
         
-        # �ݺ� �н� ���
+        # ?ݺ? ?н? ???
         self.iteration_history: List[Dict[str, Any]] = []
         self.history_path = self.project_root / "local_training" / "scripts" / "iterative_learning_history.json"
     
     def learn_from_replays(self, max_replays: int = 30) -> bool:
-        """���ΰ��̸� ���÷��̿��� ������� �н�"""
+        """???ΰ??̸? ???/??̿??? ??????? ?н?"""
         if not self.replay_learner_path.exists():
             logger.error(f"Replay learner script not found: {self.replay_learner_path}")
             return False
@@ -88,7 +88,7 @@ class IterativeReplayLearningWorkflow:
             return False
     
     def collect_training_data(self) -> bool:
-        """���� �Ʒ� ������ ����"""
+        """???? ?Ʒ? ?????? ????"""
         if not self.collect_data_path.exists():
             logger.warning(f"Collect training data script not found")
             return True  # Optional step
@@ -107,7 +107,7 @@ class IterativeReplayLearningWorkflow:
             return True  # Optional step
     
     def extract_and_learn_from_training(self) -> bool:
-        """�Ʒ� �����Ϳ��� ���� �� �н�"""
+        """?Ʒ? ?????Ϳ??? ???? ?? ?н?"""
         if not self.extract_train_path.exists():
             logger.warning(f"Extract and train script not found")
             return True  # Optional step
@@ -126,7 +126,7 @@ class IterativeReplayLearningWorkflow:
             return True  # Optional step
     
     def verify_learned_parameters(self) -> Dict[str, Any]:
-        """�н��� �Ķ���� Ȯ��"""
+        """?н??? ?Ķ???? Ȯ??"""
         if not self.learned_build_orders_path.exists():
             return {}
         
@@ -139,7 +139,7 @@ class IterativeReplayLearningWorkflow:
             return {}
     
     def save_iteration_history(self):
-        """�ݺ� �н� ��� ����"""
+        """?ݺ? ?н? ??? ????"""
         try:
             self.history_path.parent.mkdir(parents=True, exist_ok=True)
             
@@ -160,7 +160,7 @@ class IterativeReplayLearningWorkflow:
             logger.error(f"Failed to save iteration history: {e}")
     
     def run_game_training(self, num_games: int = 1) -> bool:
-        """���� �Ʒ� ���� (�н��� ������� �ڵ� ����)"""
+        """???? ?Ʒ? ???? (?н??? ??????? ?ڵ? ????)"""
         if not self.run_training_path.exists():
             logger.warning(f"Game training script not found: {self.run_training_path}")
             return True  # Optional step for iterative learning
@@ -178,7 +178,7 @@ class IterativeReplayLearningWorkflow:
             return True  # Optional step
     
     def run_single_iteration(self, iteration: int, max_replays: int = 30, run_game_training: bool = False) -> Dict[str, Any]:
-        """���� �ݺ� �н� ����"""
+        """???? ?ݺ? ?н? ????"""
         iteration_start = datetime.now()
         
         logger.info("\n" + "=" * 70)
@@ -270,10 +270,10 @@ class IterativeReplayLearningWorkflow:
         return iteration_result
     
     def run_iterative_workflow(self, max_iterations: int = 30, max_replays: int = 30, run_game_training: bool = False):
-        """�ݺ� �н� ��ũ�÷ο� ����"""
+        """?ݺ? ?н? ??ũ?/ο? ????"""
         logger.info("\n" + "=" * 70)
         logger.info("ITERATIVE REPLAY LEARNING WORKFLOW")
-        logger.info(f"���ΰ��̸� ���÷��� �н� �� ������� �н� �� ���� �Ʒ� ���� �� ���� ({max_iterations}ȸ �ݺ�)")
+        logger.info(f"???ΰ??̸? ???/??? ?н? ?? ??????? ?н? ?? ???? ?Ʒ? ???? ?? ???? ({max_iterations}ȸ ?ݺ?)")
         logger.info("=" * 70)
         logger.info(f"Project root: {self.project_root}")
         logger.info(f"Max iterations: {max_iterations}")

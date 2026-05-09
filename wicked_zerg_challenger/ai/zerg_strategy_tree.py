@@ -229,32 +229,32 @@ def create_zerg_behavior_tree() -> BehaviorTree:
 
     트리 구조:
     Root (Selector)
-    ├─ 긴급 상황 처리 (Sequence)
-    │  ├─ is_under_attack?
-    │  └─ defend_bases
-    ├─ 초반 전략 (Sequence)
-    │  ├─ is_early_game?
-    │  └─ 초반 액션 (Parallel)
-    │     ├─ produce_workers
-    │     ├─ scout_enemy
-    │     └─ build_expansion
-    ├─ 중반 전략 (Sequence)
-    │  ├─ is_mid_game?
-    │  └─ 중반 액션 (Parallel)
-    │     ├─ build_army
-    │     ├─ spread_creep
-    │     ├─ upgrade_tech
-    │     └─ 공중 대응 (Sequence)
-    │        ├─ has_air_threat?
-    │        └─ counter_air
-    └─ 후반 전략 (Sequence)
-       ├─ is_late_game?
-       └─ 후반 액션 (Selector)
-          ├─ 승리 푸시 (Sequence)
-          │  ├─ enemy_structures_low?
-          │  ├─ has_army_advantage?
-          │  └─ victory_push
-          └─ standard_attack
+    +- 긴급 상황 처리 (Sequence)
+    |  +- is_under_attack?
+    |  +- defend_bases
+    +- 초반 전략 (Sequence)
+    |  +- is_early_game?
+    |  +- 초반 액션 (Parallel)
+    |     +- produce_workers
+    |     +- scout_enemy
+    |     +- build_expansion
+    +- 중반 전략 (Sequence)
+    |  +- is_mid_game?
+    |  +- 중반 액션 (Parallel)
+    |     +- build_army
+    |     +- spread_creep
+    |     +- upgrade_tech
+    |     +- 공중 대응 (Sequence)
+    |        +- has_air_threat?
+    |        +- counter_air
+    +- 후반 전략 (Sequence)
+       +- is_late_game?
+       +- 후반 액션 (Selector)
+          +- 승리 푸시 (Sequence)
+          |  +- enemy_structures_low?
+          |  +- has_army_advantage?
+          |  +- victory_push
+          +- standard_attack
     """
 
     # === 긴급 상황 처리 ===

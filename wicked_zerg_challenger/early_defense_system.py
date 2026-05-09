@@ -58,6 +58,10 @@ class EarlyDefenseSystem:
 
         # Early threat detection
         self.early_threats: Set = set()
+        self.proxy_structure_tags: Set = set()
+        self.proxy_response_active = False
+        self._proxy_spines_requested = 0
+        self._proxy_worker_tags: Set = set()
 
     async def execute(self, iteration: int) -> None:
         """
@@ -66,6 +70,10 @@ class EarlyDefenseSystem:
         # Disable early defense after 3 minutes
         if self.bot.time > self.early_game_threshold:
             return
+
+        await self._detect_proxy_structure_rush()
+        if self.proxy_response_active:
+            await self._proxy_structure_response()
 
         # 1. Detect early enemy units (Check every 0.5s)
         if self.bot.time - self.last_enemy_check > 0.5:
@@ -115,6 +123,208 @@ class EarlyDefenseSystem:
                 f"[WARNING] Early rush detected! {nearby_enemies.amount} enemies found (Game Time: {int(self.bot.time)}s)"
             )
             logger.info(f"Emergency Defense Mode ACTIVATED!")
+
+    async def _detect_proxy_structure_rush(self) -> None:
+        """Detect proxy Barracks or cannon rush structures near our base."""
+        if float(getattr(self.bot, "time", 0.0) or 0.0) > 150.0:
+            if self.proxy_response_active:
+                self._clear_proxy_response_if_destroyed()
+            return
+
+        main_base = self._main_base()
+        if not main_base:
+            return
+
+        proxy_names = {"BARRACKS", "PHOTONCANNON", "BUNKER", "PYLON"}
+        nearby_structures = []
+        for structure in getattr(self.bot, "enemy_structures", []) or []:
+            name = self._type_name(structure)
+            if name not in proxy_names:
+                continue
+            try:
+                distance = structure.distance_to(main_base)
+            except Exception:
+                position = getattr(structure, "position", None)
+                distance = position.distance_to(main_base) if position else 999.0
+            if distance <= 40.0:
+                nearby_structures.append(structure)
+
+        if not nearby_structures:
+            self._clear_proxy_response_if_destroyed()
+            return
+
+        self.proxy_response_active = True
+        self.emergency_mode = True
+        self.early_rush_detected = True
+        self.proxy_structure_tags = {
+            getattr(structure, "tag", id(structure)) for structure in nearby_structures
+        }
+        self._publish_proxy_response_flags(True)
+        logger.warning(
+            f"[PROXY DEFENSE] Proxy structure rush detected at {int(self.bot.time)}s"
+        )
+
+    async def _proxy_structure_response(self) -> None:
+        """Execute the Sprint 5.1 proxy/cannon immediate response."""
+        targets = self._current_proxy_structures()
+        if not targets:
+            self._clear_proxy_response_if_destroyed()
+            return
+
+        target = min(targets, key=lambda s: self._distance_to_main(s))
+        await self._request_proxy_spines()
+        self._pull_workers_to_proxy(target, desired_count=6)
+        self._train_all_larva_as_zerglings()
+
+    async def _request_proxy_spines(self) -> None:
+        if self._proxy_spines_requested >= 2:
+            return
+
+        main_base = self._main_base()
+        if not main_base:
+            return
+
+        target_pos = getattr(main_base, "position", main_base)
+        map_center = getattr(getattr(self.bot, "game_info", None), "map_center", None)
+        if hasattr(target_pos, "towards") and map_center is not None:
+            target_pos = target_pos.towards(map_center, 8)
+
+        tech_coordinator = getattr(self.bot, "tech_coordinator", None)
+        if tech_coordinator and hasattr(tech_coordinator, "request_structure"):
+            while self._proxy_spines_requested < 2:
+                tech_coordinator.request_structure(
+                    UnitTypeId.SPINECRAWLER,
+                    target_pos,
+                    95,
+                    "EarlyDefenseSystem-Proxy",
+                )
+                self._proxy_spines_requested += 1
+            return
+
+        if not hasattr(self.bot, "find_placement") or not getattr(self.bot, "workers", None):
+            return
+
+        try:
+            location = await self.bot.find_placement(
+                UnitTypeId.SPINECRAWLER,
+                target_pos,
+                max_distance=8,
+                placement_step=2,
+            )
+        except Exception:
+            location = None
+        if not location:
+            return
+
+        worker = self._closest_worker(location)
+        if worker:
+            self.bot.do(worker.build(UnitTypeId.SPINECRAWLER, location))
+            self._proxy_spines_requested += 1
+
+    def _pull_workers_to_proxy(self, target, desired_count: int = 6) -> None:
+        workers = getattr(self.bot, "workers", None)
+        if not workers:
+            return
+
+        if hasattr(workers, "closest_n_units"):
+            pulled = workers.closest_n_units(getattr(target, "position", target), desired_count)
+        else:
+            worker_list = list(workers)
+            pulled = sorted(worker_list, key=lambda w: w.distance_to(target))[:desired_count]
+
+        for worker in pulled:
+            try:
+                self.bot.do(worker.attack(target))
+                self._proxy_worker_tags.add(worker.tag)
+            except Exception:
+                continue
+
+    def _train_all_larva_as_zerglings(self) -> None:
+        larvae = list(getattr(self.bot, "larva", []) or [])
+        if not larvae or getattr(self.bot, "minerals", 0) < 50:
+            return
+
+        max_larvae = min(len(larvae), int(getattr(self.bot, "minerals", 0) // 50))
+        for larva in larvae[:max_larvae]:
+            try:
+                self.bot.do(larva.train(UnitTypeId.ZERGLING))
+            except Exception:
+                continue
+
+    def _current_proxy_structures(self):
+        if not self.proxy_structure_tags:
+            return []
+        current = []
+        for structure in getattr(self.bot, "enemy_structures", []) or []:
+            tag = getattr(structure, "tag", id(structure))
+            if tag in self.proxy_structure_tags:
+                current.append(structure)
+        return current
+
+    def _clear_proxy_response_if_destroyed(self) -> None:
+        if not self.proxy_response_active:
+            return
+        if self._current_proxy_structures():
+            return
+
+        self.proxy_response_active = False
+        self.proxy_structure_tags.clear()
+        self._proxy_worker_tags.clear()
+        if not self.early_threats:
+            self.emergency_mode = False
+        self._publish_proxy_response_flags(False)
+        logger.info("Proxy structures cleared. Early defense returning to normal.")
+
+    def _publish_proxy_response_flags(self, active: bool) -> None:
+        blackboard = getattr(self.bot, "blackboard", None)
+        if not blackboard or not hasattr(blackboard, "set"):
+            return
+        blackboard.set("proxy_structure_rush", active)
+        blackboard.set("cheese_detected", active)
+        blackboard.set("enemy_aggression", active)
+        blackboard.set("worker_pull_requested", active)
+        blackboard.set("spend_larva_on_army", active)
+        blackboard.set("drone_production_policy", "HALT" if active else "NORMAL")
+        if active:
+            blackboard.set("urgent_spine_count", 2)
+            blackboard.set("urgent_spine_all_bases", True)
+
+    def _main_base(self):
+        townhalls = getattr(self.bot, "townhalls", None)
+        if not townhalls:
+            return None
+        first = getattr(townhalls, "first", None)
+        if first is not None:
+            return first
+        try:
+            return list(townhalls)[0]
+        except Exception:
+            return None
+
+    def _closest_worker(self, position):
+        workers = getattr(self.bot, "workers", None)
+        if not workers:
+            return None
+        if hasattr(workers, "closest_to"):
+            return workers.closest_to(position)
+        try:
+            return min(workers, key=lambda worker: worker.distance_to(position))
+        except Exception:
+            return None
+
+    def _distance_to_main(self, obj) -> float:
+        main_base = self._main_base()
+        if not main_base:
+            return 999.0
+        try:
+            return obj.distance_to(main_base)
+        except Exception:
+            position = getattr(obj, "position", None)
+            return position.distance_to(main_base) if position else 999.0
+
+    @staticmethod
+    def _type_name(unit_or_structure) -> str:
+        return getattr(getattr(unit_or_structure, "type_id", None), "name", "").upper()
 
     async def _build_early_pool(self) -> None:
         """
@@ -282,7 +492,7 @@ class EarlyDefenseSystem:
             )
 
             for worker in workers_to_defend:
-                # ★ CRITICAL: Ensure workers don't go further than 12 distance from base ★
+                # * CRITICAL: Ensure workers don't go further than 12 distance from base *
                 if worker.distance_to(main_base) > 12:
                     # Return if too far
                     if self.bot.mineral_field:
@@ -331,7 +541,7 @@ class EarlyDefenseSystem:
         return " | ".join(status_parts)
 
     # =============================================
-    # ★ FIX 4: Zergling Speed Upgrade ASAP ★
+    # * FIX 4: Zergling Speed Upgrade ASAP *
     # =============================================
     async def _research_zergling_speed_early(self) -> None:
         """
@@ -375,7 +585,7 @@ class EarlyDefenseSystem:
             logger.error(f"Zergling speed research failed: {e}")
 
     # =============================================
-    # ★ FIX 3: Early Spine Crawler (2 minutes) ★
+    # * FIX 3: Early Spine Crawler (2 minutes) *
     # =============================================
     async def _build_early_spine_crawler(self) -> None:
         """
@@ -446,7 +656,7 @@ class EarlyDefenseSystem:
             logger.error(f"Spine crawler build failed: {e}")
 
     # =============================================
-    # ★ FIX 5: Worker Pull Defense ★
+    # * FIX 5: Worker Pull Defense *
     # =============================================
     async def _worker_pull_defense(self) -> None:
         """

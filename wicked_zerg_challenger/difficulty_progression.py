@@ -158,7 +158,7 @@ class DifficultyProgression:
             next_diff = self._get_next_difficulty(difficulty)
             if next_diff:
                 logger.info(f"\n{'='*70}")
-                logger.info(f"🎉 DIFFICULTY PROGRESSION! 🎉")
+                logger.info(f"[OK] DIFFICULTY PROGRESSION! [OK]")
                 logger.info(f"{'='*70}")
                 logger.info(f"  Map: {map_name}")
                 logger.info(f"  Opponent: {opponent_race.name}")

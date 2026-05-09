@@ -4,10 +4,10 @@
 노는 병력이 없도록 모든 유닛을 자동으로 관리합니다.
 
 기능:
-1. 대기 중인 군사 유닛 → 주력 부대 합류
-2. 고립된 유닛 → 집결지로 복귀
-3. 부상당한 유닛 → 자동 후퇴
-4. 소수 병력 → 자동 견제
+1. 대기 중인 군사 유닛 -> 주력 부대 합류
+2. 고립된 유닛 -> 집결지로 복귀
+3. 부상당한 유닛 -> 자동 후퇴
+4. 소수 병력 -> 자동 견제
 """
 
 from typing import Optional, Set
@@ -49,7 +49,7 @@ class IdleUnitManager:
         self.last_rally_update = 0
 
     def _is_unit_managed_by_other_system(self, unit_tag: int) -> bool:
-        """★ 다른 시스템이 제어 중인 유닛인지 확인 ★"""
+        """* 다른 시스템이 제어 중인 유닛인지 확인 *"""
         # UnitAuthority 체크
         authority = getattr(self.bot, "unit_authority", None)
         if authority and unit_tag in authority.authorities:
@@ -144,7 +144,7 @@ class IdleUnitManager:
             if unit.is_attacking:
                 continue
 
-            # ★ 다른 시스템이 제어 중인 유닛 제외 ★
+            # * 다른 시스템이 제어 중인 유닛 제외 *
             if self._is_unit_managed_by_other_system(unit.tag):
                 continue
 
@@ -202,7 +202,7 @@ class IdleUnitManager:
         )
 
         for unit in combat_units:
-            # ★ 다른 시스템이 제어 중인 유닛 제외 ★
+            # * 다른 시스템이 제어 중인 유닛 제외 *
             if self._is_unit_managed_by_other_system(unit.tag):
                 continue
 

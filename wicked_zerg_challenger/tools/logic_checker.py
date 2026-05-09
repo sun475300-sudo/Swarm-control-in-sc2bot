@@ -52,7 +52,7 @@ class LogicChecker:
                     # Check for a consecutive cluster.
                     consecutive = []
                     for i, line_num in enumerate(line_numbers):
-                        if i == 0 or line_num - line_numbers[i - 1] <= 5:  # 5�� �̳�
+                        if i == 0 or line_num - line_numbers[i - 1] <= 5:  # 5?? ?̳?
                             consecutive.append(line_num)
                         else:
                             if len(consecutive) >= 3:
@@ -142,7 +142,7 @@ class LogicChecker:
                 if "async def" in content:
                     # Heuristic only; intentionally skipped for now.
                     if re.search(r"\b\w+\(.*\)", line) and "await" not in line:
-                        # �̰� ��Ȯ���� �����Ƿ� �����
+                        # ?̰? ??Ȯ???? ?????Ƿ? ?????
                         pass
 
             # Pattern 3: file/network operations without try/except.

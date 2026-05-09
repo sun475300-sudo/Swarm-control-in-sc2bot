@@ -1,13 +1,13 @@
 # -*- coding: utf-8 -*-
 """
 군집 드론 레이더 망 + 유저 드론 ATC 시스템 시각화
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+----------------------------------------------
 
 개념:
   1. 군집 드론(Sentinel)이 공역에 배치되어 레이더 망을 형성
   2. 레이더 망 내부로 진입하는 유저 드론을 감지
   3. 유저 드론에게 비행 시간(Time Slot)을 할당
-  4. 시간 만료 시 알림 전송 → 착륙 유도
+  4. 시간 만료 시 알림 전송 -> 착륙 유도
 
 python generate_radar_mesh_atc.py
 """
@@ -30,9 +30,9 @@ def save(fig, name):
     logger.info(f"  -> {path}")
 
 
-# ═══════════════════════════════════════════════════════
+# =======================================================
 # 1. 전체 시스템 개요 (가장 중요한 한 장)
-# ═══════════════════════════════════════════════════════
+# =======================================================
 
 
 def radar_system_overview():
@@ -44,7 +44,7 @@ def radar_system_overview():
 
     fig = go.Figure()
 
-    # ── 군집 드론 (Sentinel) 배치: 정육각형 격자 ──
+    # -- 군집 드론 (Sentinel) 배치: 정육각형 격자 --
     sentinel_positions = []
     RADIUS = 8  # 전체 공역 반경
     SPACING = 4  # 드론 간 간격
@@ -60,7 +60,7 @@ def radar_system_overview():
     sy = [p[1] for p in sentinel_positions]
     sz = [sentinel_alt] * len(sentinel_positions)
 
-    # 군집 드론 마커 (라벨 없이 hover로 표시 — 겹침 방지)
+    # 군집 드론 마커 (라벨 없이 hover로 표시 - 겹침 방지)
     fig.add_trace(
         go.Scatter3d(
             x=sx,
@@ -80,7 +80,7 @@ def radar_system_overview():
         )
     )
 
-    # ── 레이더 망 (드론 간 연결선) ──
+    # -- 레이더 망 (드론 간 연결선) --
     for i in range(len(sentinel_positions)):
         for j in range(i + 1, len(sentinel_positions)):
             dx = sentinel_positions[i][0] - sentinel_positions[j][0]
@@ -100,7 +100,7 @@ def radar_system_overview():
                     )
                 )
 
-    # ── 레이더 감지 범위 (아래로 원뿔형) ──
+    # -- 레이더 감지 범위 (아래로 원뿔형) --
     cone_angles = np.linspace(0, 2 * math.pi, 40)
     for sp in sentinel_positions[::3]:  # 일부만 표시 (시인성)
         cone_r = 3.0
@@ -108,7 +108,7 @@ def radar_system_overview():
         cy = sp[1] + cone_r * np.sin(cone_angles)
         cz = np.full_like(cone_angles, sentinel_alt - 40)
 
-        # 꼭대기 → 바닥 원
+        # 꼭대기 -> 바닥 원
         fig.add_trace(
             go.Scatter3d(
                 x=np.append(cx, sp[0]),
@@ -122,7 +122,7 @@ def radar_system_overview():
             )
         )
 
-    # ── 레이더 망 커버리지 (바닥 원) ──
+    # -- 레이더 망 커버리지 (바닥 원) --
     cover_r = RADIUS + 2
     cover_theta = np.linspace(0, 2 * math.pi, 60)
     fig.add_trace(
@@ -147,7 +147,7 @@ def radar_system_overview():
         )
     )
 
-    # ── 유저 드론 (내부 비행 중) — 간격 확보 + hover로 상세정보 ──
+    # -- 유저 드론 (내부 비행 중) - 간격 확보 + hover로 상세정보 --
     n_users = 6
     # 겹치지 않도록 수동 배치
     user_x = np.array([-5.5, 4.0, -2.0, 5.5, -4.5, 1.0])
@@ -186,7 +186,7 @@ def radar_system_overview():
         )
     )
 
-    # 유저 드론 → 지면 투영선 (위치 파악용)
+    # 유저 드론 -> 지면 투영선 (위치 파악용)
     for i in range(n_users):
         fig.add_trace(
             go.Scatter3d(
@@ -201,7 +201,7 @@ def radar_system_overview():
             )
         )
 
-    # ── 경고 드론 (시간 임박) ──
+    # -- 경고 드론 (시간 임박) --
     # User 4에 경고 링
     warn_theta = np.linspace(0, 2 * math.pi, 30)
     wr = 1.5
@@ -216,7 +216,7 @@ def radar_system_overview():
         )
     )
 
-    # ── 지상국 (GCS) ──
+    # -- 지상국 (GCS) --
     fig.add_trace(
         go.Scatter3d(
             x=[0],
@@ -236,7 +236,7 @@ def radar_system_overview():
         )
     )
 
-    # GCS ↔ 군집 드론 통신선
+    # GCS <-> 군집 드론 통신선
     fig.add_trace(
         go.Scatter3d(
             x=[0, 0],
@@ -250,7 +250,7 @@ def radar_system_overview():
         )
     )
 
-    # ── 고도 라벨 (충분히 떨어진 위치) ──
+    # -- 고도 라벨 (충분히 떨어진 위치) --
     fig.add_trace(
         go.Scatter3d(
             x=[-RADIUS - 5],
@@ -324,9 +324,9 @@ def radar_system_overview():
     save(fig, "radar_1_system_overview")
 
 
-# ═══════════════════════════════════════════════════════
+# =======================================================
 # 2. 레이더 망 구조 (Mesh Network)
-# ═══════════════════════════════════════════════════════
+# =======================================================
 
 
 def radar_mesh_network():
@@ -419,7 +419,7 @@ def radar_mesh_network():
             )
         )
 
-        # 수직 감지 콘 (드론 → 지면)
+        # 수직 감지 콘 (드론 -> 지면)
         for ang_sample in range(0, 360, 60):
             rad = math.radians(ang_sample)
             fig.add_trace(
@@ -455,7 +455,7 @@ def radar_mesh_network():
                     )
                 )
 
-    # 중첩 감지 영역 — 2곳만 표시 (겹침 방지)
+    # 중첩 감지 영역 - 2곳만 표시 (겹침 방지)
     for i in [0, 3]:
         ang = i * math.pi / 3 + math.pi / 6
         mid_r = 2.8
@@ -492,7 +492,7 @@ def radar_mesh_network():
             y=[0],
             z=[50],
             mode="text",
-            text=["감지 범위 중첩 →\n빈틈 없는 망 형성"],
+            text=["감지 범위 중첩 ->\n빈틈 없는 망 형성"],
             textfont=dict(size=10, color="#666"),
             showlegend=False,
         )
@@ -519,21 +519,21 @@ def radar_mesh_network():
     save(fig, "radar_2_mesh_network")
 
 
-# ═══════════════════════════════════════════════════════
+# =======================================================
 # 3. 유저 드론 감지 + 시간 할당 시나리오
-# ═══════════════════════════════════════════════════════
+# =======================================================
 
 
 def radar_user_detection():
     """
-    유저 드론 진입 → 감지 → 시간 할당 → 비행 → 알림 → 착륙
+    유저 드론 진입 -> 감지 -> 시간 할당 -> 비행 -> 알림 -> 착륙
     전체 운용 시나리오를 타임라인으로 시각화
     """
     logger.info("유저 드론 감지 + 시간 할당 시나리오")
 
     fig = go.Figure()
 
-    # 시나리오 타임라인 (왼→오, 간격 넓힘)
+    # 시나리오 타임라인 (왼->오, 간격 넓힘)
     events = [
         {
             "time": 0,
@@ -627,7 +627,7 @@ def radar_user_detection():
             )
         )
 
-        # 이벤트 라벨 (위/아래 교대 배치 — 겹침 방지)
+        # 이벤트 라벨 (위/아래 교대 배치 - 겹침 방지)
         label_z = 5.5 if is_top else 0.5
         fig.add_trace(
             go.Scatter3d(
@@ -663,7 +663,7 @@ def radar_user_detection():
             y=[0],
             z=[7.5],
             mode="text",
-            text=["유저 드론 운용 타임라인 ────────▶"],
+            text=["유저 드론 운용 타임라인 -------->"],
             textfont=dict(size=13, color="#333", family="Arial Black"),
             showlegend=False,
         )
@@ -704,12 +704,12 @@ def radar_user_detection():
 
     fig.update_layout(
         title=dict(
-            text="유저 드론 운용 시나리오: 진입 → 감지 → 시간할당 → 알림 → 착륙",
+            text="유저 드론 운용 시나리오: 진입 -> 감지 -> 시간할당 -> 알림 -> 착륙",
             font=dict(size=18, family="Arial Black"),
             x=0.5,
         ),
         scene=dict(
-            xaxis=dict(title="시간 →", range=[-2, 28]),
+            xaxis=dict(title="시간 ->", range=[-2, 28]),
             yaxis=dict(visible=False, range=[-3, 3]),
             zaxis=dict(visible=False, range=[-3, 9]),
             camera=dict(eye=dict(x=0, y=-2.5, z=0.5)),
@@ -723,9 +723,9 @@ def radar_user_detection():
     save(fig, "radar_3_user_scenario")
 
 
-# ═══════════════════════════════════════════════════════
+# =======================================================
 # 4. 전체 운용 개념도 (조감도)
-# ═══════════════════════════════════════════════════════
+# =======================================================
 
 
 def radar_operation_concept():
@@ -739,7 +739,7 @@ def radar_operation_concept():
 
     np.random.seed(123)
 
-    # ── 지면 (도시 그리드) ──
+    # -- 지면 (도시 그리드) --
     for x in range(-10, 11, 2):
         fig.add_trace(
             go.Scatter3d(
@@ -799,7 +799,7 @@ def radar_operation_concept():
             )
         )
 
-    # ── 군집 드론 (고도 100m, 정육각형) ──
+    # -- 군집 드론 (고도 100m, 정육각형) --
     sentinel_alt = 100
     sentinel_pos = []
     for i in range(6):
@@ -858,7 +858,7 @@ def radar_operation_concept():
         )
     )
 
-    # ── 유저 드론 (다양한 고도, 간격 확보) ──
+    # -- 유저 드론 (다양한 고도, 간격 확보) --
     users = [
         {
             "x": 4,
@@ -948,7 +948,7 @@ def radar_operation_concept():
         )
     )
 
-    # 착륙 유도 경로 (User D → 지면)
+    # 착륙 유도 경로 (User D -> 지면)
     land_t = np.linspace(0, 1, 20)
     fig.add_trace(
         go.Scatter3d(
@@ -1038,9 +1038,9 @@ def radar_operation_concept():
     save(fig, "radar_4_operation_concept")
 
 
-# ═══════════════════════════════════════════════════════
+# =======================================================
 # Main
-# ═══════════════════════════════════════════════════════
+# =======================================================
 
 if __name__ == "__main__":
     print("=" * 60)

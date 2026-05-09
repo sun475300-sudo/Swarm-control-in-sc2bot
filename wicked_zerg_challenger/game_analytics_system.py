@@ -246,7 +246,7 @@ class GameAnalytics:
         # 개선 제안
         suggestions = self._get_improvement_suggestions(game_record)
         if suggestions:
-            lines.append(f"\n💡 개선 제안:")
+            lines.append(f"\n[IDEA] 개선 제안:")
             for suggestion in suggestions:
                 lines.append(f"  - {suggestion}")
 
@@ -345,7 +345,7 @@ class GameAnalytics:
         lines.append(f"\n[ADVICE] vs {opponent_race} 조언:")
 
         if win_rate < 20:
-            lines.append(f"  🚨 승률 매우 낮음 ({win_rate:.1f}%) - 전략 재검토 필요")
+            lines.append(f"  [!] 승률 매우 낮음 ({win_rate:.1f}%) - 전략 재검토 필요")
             lines.append(f"  - {opponent_race}에 특화된 빌드 오더 연구")
             lines.append(f"  - {opponent_race}의 주요 전략 파악")
 

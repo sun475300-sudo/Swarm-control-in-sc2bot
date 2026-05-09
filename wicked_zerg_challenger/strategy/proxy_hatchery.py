@@ -84,5 +84,5 @@ class ProxyHatchery:
             self.proxy_location = proxy_location
 
             self.logger.info(
-                f"[{int(self.bot.time)}s] ★★★ PROXY HATCHERY ATTEMPTED! Location: {proxy_location} ★★★"
+                f"[{int(self.bot.time)}s] *** PROXY HATCHERY ATTEMPTED! Location: {proxy_location} ***"
             )

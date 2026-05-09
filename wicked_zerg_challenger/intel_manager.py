@@ -12,6 +12,103 @@ from typing import Optional
 
 logger = logging.getLogger(__name__)
 
+BUILD_PATTERNS = {
+    "proxy_barracks": {
+        "response": ["zergling", "queen", "spine_crawler"],
+        "units": ["MARINE", "REAPER"],
+        "confidence_bonus": 0.35,
+    },
+    "2_1_1_medivac_drop": {
+        "response": ["queen", "zergling", "baneling"],
+        "units": ["MARINE", "MEDIVAC"],
+        "confidence_bonus": 0.25,
+    },
+    "battlecruiser_rush": {
+        "response": ["queen", "hydralisk", "corruptor", "spore_crawler"],
+        "units": ["BATTLECRUISER"],
+        "confidence_bonus": 0.35,
+    },
+    "mech_transition": {
+        "response": ["ravager", "swarmhost", "hydralisk"],
+        "units": ["SIEGETANK", "THOR", "HELLION", "CYCLONE"],
+        "confidence_bonus": 0.25,
+    },
+    "widow_mine_drop": {
+        "response": ["queen", "zergling", "overseer"],
+        "units": ["WIDOWMINE", "MEDIVAC"],
+        "confidence_bonus": 0.30,
+    },
+    "cannon_rush": {
+        "response": ["zergling", "queen", "spine_crawler"],
+        "units": ["PHOTONCANNON"],
+        "confidence_bonus": 0.35,
+    },
+    "dt_rush": {
+        "response": ["spore_crawler", "overseer", "queen"],
+        "units": ["DARKTEMPLAR"],
+        "confidence_bonus": 0.35,
+    },
+    "void_ray_rush": {
+        "response": ["queen", "hydralisk", "spore_crawler"],
+        "units": ["VOIDRAY"],
+        "confidence_bonus": 0.30,
+    },
+    "immortal_allin": {
+        "response": ["zergling", "roach", "ravager"],
+        "units": ["IMMORTAL", "SENTRY"],
+        "confidence_bonus": 0.25,
+    },
+    "archon_transition": {
+        "response": ["roach", "hydralisk", "lurker"],
+        "units": ["HIGHTEMPLAR", "ARCHON"],
+        "confidence_bonus": 0.25,
+    },
+    "ling_rush": {
+        "response": ["zergling", "queen", "spine_crawler"],
+        "units": ["ZERGLING"],
+        "confidence_bonus": 0.35,
+    },
+    "muta_rush": {
+        "response": ["queen", "hydralisk", "spore_crawler"],
+        "units": ["MUTALISK"],
+        "confidence_bonus": 0.30,
+    },
+    "nydus_rush": {
+        "response": ["zergling", "roach", "spine_crawler"],
+        "units": ["QUEEN", "ROACH", "HYDRALISK"],
+        "confidence_bonus": 0.35,
+    },
+}
+
+AIR_TECH_STRUCTURES = {"STARPORT", "STARGATE", "FUSIONCORE", "FLEETBEACON", "SPIRE"}
+AIR_THREAT_UNITS = {
+    "BANSHEE",
+    "BATTLECRUISER",
+    "LIBERATOR",
+    "MEDIVAC",
+    "VIKINGFIGHTER",
+    "VOIDRAY",
+    "ORACLE",
+    "PHOENIX",
+    "CARRIER",
+    "TEMPEST",
+    "MUTALISK",
+    "CORRUPTOR",
+    "BROODLORD",
+    "VIPER",
+}
+BASE_STRUCTURE_TYPES = {
+    "COMMANDCENTER",
+    "COMMANDCENTERFLYING",
+    "ORBITALCOMMAND",
+    "ORBITALCOMMANDFLYING",
+    "PLANETARYFORTRESS",
+    "NEXUS",
+    "HATCHERY",
+    "LAIR",
+    "HIVE",
+}
+
 
 class IntelManager:
     """Collects intel and bridges update() to on_step()."""
@@ -36,6 +133,7 @@ class IntelManager:
         self._last_attack_time = 0.0
         self._threat_level = "none"  # none, light, medium, heavy, critical
         self._high_threat_units_detected = False
+        self.enemy_all_in_detected = False
 
         # Enemy unit type counts
         self.enemy_unit_counts = {}
@@ -61,7 +159,7 @@ class IntelManager:
             "HIGHTEMPLAR",
         }
 
-        # ★ NEW: Hidden tech tracking (정찰로 확인해야 하는 위험 테크)
+        # * NEW: Hidden tech tracking (정찰로 확인해야 하는 위험 테크)
         self._hidden_tech_alerts = {
             "DARKSHRINE": "DT_INCOMING",
             "STARGATE": "AIR_INCOMING",
@@ -78,7 +176,7 @@ class IntelManager:
         self._enemy_build_pattern = "unknown"
         self._recommended_response = []
 
-        # ★ NEW: Destructible structures tracking
+        # * NEW: Destructible structures tracking
         self.destructible_rocks = []  # 파괴 가능한 중립 구조물
         self.all_enemy_structures = []  # 모든 적 구조물 (승리 조건용)
         self._last_structure_update = 0.0
@@ -116,11 +214,12 @@ class IntelManager:
 
         # Update threat status
         self._update_threat_status()
+        self._detect_all_in_pressure()
 
-        # ★ NEW: Update destructible structures
+        # * NEW: Update destructible structures
         self._update_destructible_structures()
 
-        # ★ NEW: Update all enemy structures
+        # * NEW: Update all enemy structures
         self._update_all_enemy_structures()
 
     def _update_enemy_composition(self) -> None:
@@ -128,7 +227,7 @@ class IntelManager:
         enemy_units = getattr(self.bot, "enemy_units", [])
         enemy_structures = getattr(self.bot, "enemy_structures", [])
 
-        # ★ Update enemy main base location ★
+        # * Update enemy main base location *
         self._update_enemy_main_base(enemy_structures)
 
         # Count enemy units by type
@@ -136,7 +235,7 @@ class IntelManager:
         self.enemy_army_supply = 0
         self.enemy_worker_count = 0
 
-        # ★ Phase 42: supply_cost 속성 없음 — 정확한 룩업 테이블 사용
+        # * Phase 42: supply_cost 속성 없음 - 정확한 룩업 테이블 사용
         _ENEMY_SUPPLY = {
             "ZERGLING": 0.5,
             "BANELING": 0.5,
@@ -188,7 +287,7 @@ class IntelManager:
                 self.enemy_unit_counts.get(type_name, 0) + 1
             )
 
-            # ★ Phase 42: 룩업 테이블 우선, 없으면 1
+            # * Phase 42: 룩업 테이블 우선, 없으면 1
             supply = _ENEMY_SUPPLY.get(type_name.upper(), 1)
             if type_name.upper() in worker_names:
                 self.enemy_worker_count += 1
@@ -240,16 +339,17 @@ class IntelManager:
             if getattr(s.type_id, "name", "").upper() in tech_buildings
         }
 
-        # ★ NEW: Hidden tech alert system
+        # * NEW: Hidden tech alert system
         self._check_hidden_tech_alerts()
+        self._update_air_threat_flags()
 
         # Detect enemy build pattern
         self._detect_enemy_build_pattern(enemy_structures, enemy_units)
 
-        # ★ Phase 20: 적 확장/테크 상태 → Blackboard 전파 (공격 타이밍용) ★
+        # * Phase 20: 적 확장/테크 상태 -> Blackboard 전파 (공격 타이밍용) *
         self._detect_enemy_vulnerability(enemy_structures)
 
-        # ★ Phase 42: 적 공격 타이밍 예측 → Blackboard 전파 ★
+        # * Phase 42: 적 공격 타이밍 예측 -> Blackboard 전파 *
         self._predict_enemy_attack_timing()
 
     def _update_enemy_main_base(self, enemy_structures) -> None:
@@ -309,7 +409,7 @@ class IntelManager:
 
         current_time = getattr(self.bot, "time", 0.0)
 
-        # ★ 캐시 사용 (1초 TTL) ★
+        # * 캐시 사용 (1초 TTL) *
         if hasattr(self.bot, "data_cache") and self.bot.data_cache:
             cached_threat = self.bot.data_cache.get_threat_level()
             if cached_threat:
@@ -332,7 +432,7 @@ class IntelManager:
             "WIDOWMINE",
         }
 
-        # ★ O(n) 최적화: 적 유닛 1회 순회, 타운홀 위치 캐시 ★
+        # * O(n) 최적화: 적 유닛 1회 순회, 타운홀 위치 캐시 *
         th_positions = [th.position for th in townhalls]
         base_detection_range = 40 if current_time < 180 else 30
         found_critical = False
@@ -382,6 +482,88 @@ class IntelManager:
             self._threat_level = "none"
             self._high_threat_units_detected = False
 
+    def _detect_all_in_pressure(self) -> None:
+        """Detect no-expand all-ins and publish flags for strategy response."""
+        blackboard = getattr(self.bot, "blackboard", None)
+        game_time = float(getattr(self.bot, "time", 0.0) or 0.0)
+        if game_time < 300.0:
+            self.enemy_all_in_detected = False
+            return
+
+        enemy_expanded = self.enemy_base_count >= 2
+        if blackboard and hasattr(blackboard, "get"):
+            enemy_expanded = enemy_expanded or bool(
+                blackboard.get("enemy_expand_confirmed", False)
+            )
+
+        enemy_power_ratio = self._enemy_army_power_ratio()
+        approaching = self._enemy_force_approaching_our_base()
+        self.enemy_all_in_detected = (
+            not enemy_expanded and enemy_power_ratio >= 1.5 and approaching
+        )
+
+        if blackboard and hasattr(blackboard, "set"):
+            blackboard.set("enemy_all_in", self.enemy_all_in_detected)
+            blackboard.set("enemy_all_in_detected", self.enemy_all_in_detected)
+            blackboard.set("enemy_army_power_ratio", enemy_power_ratio)
+            if self.enemy_all_in_detected:
+                blackboard.set("enemy_army_approaching", True)
+                blackboard.set("drone_production_policy", "HALT")
+                blackboard.set("urgent_spine_count", 4)
+                blackboard.set("urgent_spine_all_bases", True)
+
+    def _enemy_army_power_ratio(self) -> float:
+        enemy_power = self._unit_power(getattr(self.bot, "enemy_units", []) or [])
+        own_power = self._unit_power(getattr(self.bot, "units", []) or [])
+        if own_power <= 0:
+            supply_army = float(getattr(self.bot, "supply_army", 0.0) or 0.0)
+            if supply_army > 0:
+                own_power = supply_army * 45.0
+        if own_power <= 0:
+            return 99.0 if enemy_power > 0 else 0.0
+        return enemy_power / own_power
+
+    @staticmethod
+    def _unit_power(units) -> float:
+        worker_names = {"SCV", "PROBE", "DRONE"}
+        ignored_names = {"OVERLORD", "OVERSEER", "OBSERVER"}
+        try:
+            iterator = iter(units)
+        except TypeError:
+            return 0.0
+
+        total = 0.0
+        for unit in iterator:
+            name = getattr(getattr(unit, "type_id", None), "name", "").upper()
+            if name in worker_names or name in ignored_names:
+                continue
+            total += float(getattr(unit, "health", 0.0) or 0.0)
+            total += float(getattr(unit, "shield", 0.0) or 0.0)
+        return total
+
+    def _enemy_force_approaching_our_base(self) -> bool:
+        townhalls = getattr(self.bot, "townhalls", []) or []
+        try:
+            bases = list(townhalls)
+        except TypeError:
+            bases = []
+        if not bases:
+            start = getattr(self.bot, "start_location", None)
+            bases = [start] if start is not None else []
+        if not bases:
+            return False
+
+        nearby = 0
+        for enemy in getattr(self.bot, "enemy_units", []) or []:
+            for base in bases:
+                try:
+                    if enemy.distance_to(base) <= 60.0:
+                        nearby += 1
+                        break
+                except Exception:
+                    continue
+        return nearby >= 8
+
     def is_under_attack(self) -> bool:
         """Check if any base is under attack."""
         return self._under_attack
@@ -416,17 +598,17 @@ class IntelManager:
 
     def _predict_enemy_attack_timing(self) -> None:
         """
-        ★ Phase 42: 적 테크 건물 기반 공격 타이밍 예측 ★
+        * Phase 42: 적 테크 건물 기반 공격 타이밍 예측 *
 
-        관측된 테크 건물 → 예상 공격 시점(초) 추정 → Blackboard 전파
+        관측된 테크 건물 -> 예상 공격 시점(초) 추정 -> Blackboard 전파
         전략 매니저가 이를 읽어 방어 준비 타이밍 조정.
 
         예측 규칙 (보수적 하한 추정):
-          FACTORY / BARRACKS 기반 → 3:30 공격 가능
-          STARGATE / STARPORT   → 4:00 공격 가능
-          ROBOTICSFACILITY      → 5:00 공격 가능 (Immortal/Colossus)
-          DARKSHRINE            → 4:30 공격 가능 (DT)
-          적 supply > 20        → 현재 ~ +60초 내 공격 가능
+          FACTORY / BARRACKS 기반 -> 3:30 공격 가능
+          STARGATE / STARPORT   -> 4:00 공격 가능
+          ROBOTICSFACILITY      -> 5:00 공격 가능 (Immortal/Colossus)
+          DARKSHRINE            -> 4:30 공격 가능 (DT)
+          적 supply > 20        -> 현재 ~ +60초 내 공격 가능
         """
         blackboard = getattr(self.bot, "blackboard", None)
         if not blackboard or not hasattr(blackboard, "set"):
@@ -463,13 +645,13 @@ class IntelManager:
 
         if imminent and game_time % 30 < 1:  # 30초마다 로그
             logger.info(
-                f"[INTEL] [{int(game_time)}s] ★ ENEMY ATTACK IMMINENT "
+                f"[INTEL] [{int(game_time)}s] * ENEMY ATTACK IMMINENT "
                 f"(predicted: {int(predicted_attack_time)}s, supply: {self.enemy_army_supply:.0f})"
             )
 
     def _detect_enemy_vulnerability(self, enemy_structures) -> None:
         """
-        ★ Phase 20: 적 확장/테크 취약 시점 감지 ★
+        * Phase 20: 적 확장/테크 취약 시점 감지 *
 
         적이 확장 중이거나 고비용 테크를 올리는 중이면
         Blackboard에 플래그를 세워 공격 타이밍으로 활용.
@@ -527,9 +709,14 @@ class IntelManager:
         # Detect pattern
         detected_pattern = "unknown"
         recommended_response = []
+        expanded_pattern = self._match_expanded_build_pattern(
+            structure_counts, enemy_structures, game_time
+        )
+        if expanded_pattern:
+            detected_pattern, recommended_response = expanded_pattern
 
         # === TERRAN DETECTION ===
-        if "BARRACKS" in structure_counts:
+        if detected_pattern == "unknown" and "BARRACKS" in structure_counts:
             barracks_count = structure_counts.get("BARRACKS", 0)
             factory_count = structure_counts.get("FACTORY", 0)
             starport_count = structure_counts.get("STARPORT", 0)
@@ -553,7 +740,9 @@ class IntelManager:
                 recommended_response = ["zergling", "spine_crawler", "queen"]
 
         # === PROTOSS DETECTION ===
-        elif "GATEWAY" in structure_counts or "NEXUS" in structure_counts:
+        elif detected_pattern == "unknown" and (
+            "GATEWAY" in structure_counts or "NEXUS" in structure_counts
+        ):
             gateway_count = structure_counts.get("GATEWAY", 0)
             robo_count = structure_counts.get("ROBOTICSFACILITY", 0)
             stargate_count = structure_counts.get("STARGATE", 0)
@@ -582,7 +771,9 @@ class IntelManager:
                 recommended_response = ["zergling", "spine_crawler", "queen"]
 
         # === ZERG DETECTION ===
-        elif "SPAWNINGPOOL" in structure_counts or "HATCHERY" in structure_counts:
+        elif detected_pattern == "unknown" and (
+            "SPAWNINGPOOL" in structure_counts or "HATCHERY" in structure_counts
+        ):
             baneling_nest = "BANELINGNEST" in structure_counts
             roach_warren = "ROACHWARREN" in structure_counts
             spire = "SPIRE" in structure_counts or "GREATERSPIRE" in structure_counts
@@ -611,13 +802,14 @@ class IntelManager:
         # Store detected pattern
         self._enemy_build_pattern = detected_pattern
         self._recommended_response = recommended_response
+        self._publish_build_pattern_flags(detected_pattern)
 
-        # ★ Calculate confidence score ★
+        # * Calculate confidence score *
         self._build_pattern_confidence = self._calculate_build_confidence(
             detected_pattern, structure_counts, enemy_units, game_time
         )
 
-        # ★ Determine confidence status ★
+        # * Determine confidence status *
         if self._build_pattern_confidence >= 0.7:
             self._build_pattern_status = "confirmed"
         elif self._build_pattern_confidence >= 0.3:
@@ -625,7 +817,7 @@ class IntelManager:
         else:
             self._build_pattern_status = "unknown"
 
-        # ★ Push to Blackboard ★
+        # * Push to Blackboard *
         self._push_intel_to_blackboard(detected_pattern)
 
         # Log detection (every 30 seconds)
@@ -636,6 +828,166 @@ class IntelManager:
                     f"[{int(game_time)}s] Enemy build: {detected_pattern} ({self._build_pattern_status}, {confidence_pct}%)"
                 )
                 logger.info(f"Recommended counter: {recommended_response}")
+
+    def _match_expanded_build_pattern(
+        self, structure_counts: dict, enemy_structures, game_time: float
+    ):
+        """Detect roadmap Sprint 2 rush and tech patterns before generic fallback."""
+        if (
+            game_time < 180
+            and self._structure_near_our_base(enemy_structures, {"BARRACKS"})
+        ):
+            return self._pattern_response("proxy_barracks")
+
+        if structure_counts.get("FUSIONCORE", 0) >= 1 and game_time < 480:
+            return self._pattern_response("battlecruiser_rush")
+
+        if (
+            structure_counts.get("BARRACKS", 0) >= 2
+            and structure_counts.get("FACTORY", 0) >= 1
+            and structure_counts.get("STARPORT", 0) >= 1
+            and game_time < 330
+        ):
+            return self._pattern_response("2_1_1_medivac_drop")
+
+        if (
+            structure_counts.get("FACTORY", 0) >= 1
+            and structure_counts.get("STARPORT", 0) >= 1
+            and not self._has_starport_reactor(structure_counts)
+            and game_time < 330
+        ):
+            return self._pattern_response("widow_mine_drop")
+
+        if structure_counts.get("FACTORY", 0) >= 2 and structure_counts.get("ARMORY", 0):
+            return self._pattern_response("mech_transition")
+
+        if game_time < 180 and (
+            self._structure_near_our_base(enemy_structures, {"PHOTONCANNON"})
+            or (
+                structure_counts.get("FORGE", 0) >= 1
+                and self._structure_near_our_base(enemy_structures, {"PYLON"})
+            )
+        ):
+            return self._pattern_response("cannon_rush")
+
+        if structure_counts.get("DARKSHRINE", 0) >= 1 and game_time < 360:
+            return self._pattern_response("dt_rush")
+
+        if (
+            structure_counts.get("STARGATE", 0) >= 1
+            and self.enemy_unit_counts.get("VOIDRAY", 0) >= 2
+            and game_time < 360
+        ):
+            return self._pattern_response("void_ray_rush")
+
+        if (
+            structure_counts.get("ROBOTICSFACILITY", 0) >= 1
+            and not self._has_enemy_expansion(structure_counts)
+            and game_time < 330
+        ):
+            return self._pattern_response("immortal_allin")
+
+        if (
+            structure_counts.get("TEMPLARARCHIVE", 0) >= 1
+            and self.enemy_unit_counts.get("HIGHTEMPLAR", 0) >= 3
+        ):
+            return self._pattern_response("archon_transition")
+
+        if (
+            structure_counts.get("SPAWNINGPOOL", 0) >= 1
+            and not self._has_enemy_expansion(structure_counts)
+            and game_time < 100
+        ):
+            return self._pattern_response("ling_rush")
+
+        if structure_counts.get("SPIRE", 0) >= 1 and game_time < 390:
+            return self._pattern_response("muta_rush")
+
+        if (
+            structure_counts.get("NYDUSNETWORK", 0) >= 1
+            or structure_counts.get("NYDUSCANAL", 0) >= 1
+        ) and game_time < 330:
+            return self._pattern_response("nydus_rush")
+
+        return None
+
+    def _pattern_response(self, pattern: str):
+        return pattern, list(BUILD_PATTERNS[pattern]["response"])
+
+    def _has_starport_reactor(self, structure_counts: dict) -> bool:
+        return any(
+            structure_counts.get(name, 0) > 0
+            for name in ("STARPORTREACTOR", "REACTOR")
+        )
+
+    def _has_enemy_expansion(self, structure_counts: dict) -> bool:
+        base_count = sum(structure_counts.get(name, 0) for name in BASE_STRUCTURE_TYPES)
+        return base_count >= 2
+
+    def _structure_near_our_base(
+        self, enemy_structures, structure_names: set, radius: float = 45.0
+    ) -> bool:
+        base_position = self._own_base_position()
+        if base_position is None:
+            return False
+
+        for structure in enemy_structures:
+            name = getattr(getattr(structure, "type_id", None), "name", "").upper()
+            if name not in structure_names:
+                continue
+            position = getattr(structure, "position", None)
+            if position is None:
+                continue
+            try:
+                if position.distance_to(base_position) <= radius:
+                    return True
+            except Exception:
+                try:
+                    dx = float(position.x) - float(base_position.x)
+                    dy = float(position.y) - float(base_position.y)
+                    if (dx * dx + dy * dy) ** 0.5 <= radius:
+                        return True
+                except Exception:
+                    continue
+        return False
+
+    def _own_base_position(self):
+        townhalls = getattr(self.bot, "townhalls", []) or []
+        first = getattr(townhalls, "first", None)
+        if first is not None:
+            return getattr(first, "position", first)
+        try:
+            if townhalls:
+                return getattr(townhalls[0], "position", townhalls[0])
+        except Exception:
+            pass
+        return getattr(self.bot, "start_location", None)
+
+    def _publish_build_pattern_flags(self, pattern: str) -> None:
+        blackboard = getattr(self.bot, "blackboard", None)
+        if not blackboard or pattern == "unknown":
+            return
+
+        try:
+            blackboard.set("expanded_build_pattern", pattern)
+            if pattern in {
+                "proxy_barracks",
+                "cannon_rush",
+                "ling_rush",
+                "nydus_rush",
+                "immortal_allin",
+            }:
+                blackboard.set("enemy_aggression", True)
+                blackboard.set("urgent_spine_all_bases", True)
+            if pattern in {"battlecruiser_rush", "void_ray_rush", "muta_rush"}:
+                blackboard.set("AIR_THREAT_INCOMING", True)
+                blackboard.set("urgent_spore_all_bases", True)
+            if pattern == "dt_rush":
+                blackboard.set("cloak_tech_detected", True)
+                blackboard.set("urgent_overseer", True)
+                blackboard.set("urgent_spore_all_bases", True)
+        except (AttributeError, TypeError) as e:
+            logger.warning(f"[IntelManager] build flag publish suppressed: {e}")
 
     def _calculate_build_confidence(
         self, pattern: str, structure_counts: dict, enemy_units, game_time: float
@@ -675,6 +1027,8 @@ class IntelManager:
             "zerg_roach": ["ROACH", "RAVAGER"],
             "zerg_ling_bane": ["ZERGLING", "BANELING"],
         }
+        for name, spec in BUILD_PATTERNS.items():
+            related_unit_patterns[name] = list(spec.get("units", []))
 
         pattern_units = related_unit_patterns.get(pattern, [])
         related_unit_count = sum(
@@ -691,6 +1045,9 @@ class IntelManager:
         if "rush" in pattern or "proxy" in pattern or "12pool" in pattern:
             if game_time < 180:  # First 3 minutes
                 confidence += 0.2  # High confidence for early aggression
+
+        if pattern in BUILD_PATTERNS:
+            confidence += BUILD_PATTERNS[pattern].get("confidence_bonus", 0.0)
 
         # Cap at 1.0
         return min(confidence, 1.0)
@@ -763,13 +1120,36 @@ class IntelManager:
         except (AttributeError, TypeError) as e:
             logger.warning(f"[IntelManager] Blackboard update suppressed: {e}")
 
+    def _update_air_threat_flags(self) -> None:
+        """Publish early air-tech and visible-air warnings to the blackboard."""
+        blackboard = getattr(self.bot, "blackboard", None)
+        if not blackboard:
+            return
+
+        incoming_air = any(tech in self.enemy_tech_buildings for tech in AIR_TECH_STRUCTURES)
+        active_air_count = sum(
+            self.enemy_unit_counts.get(unit_name, 0) for unit_name in AIR_THREAT_UNITS
+        )
+
+        try:
+            if incoming_air:
+                blackboard.set("AIR_THREAT_INCOMING", True)
+                blackboard.set("urgent_spore_all_bases", True)
+            if active_air_count > 0:
+                blackboard.set("AIR_THREAT_ACTIVE", True)
+                blackboard.set("AIR_THREAT_INCOMING", True)
+                blackboard.set("air_threat_unit_count", active_air_count)
+                blackboard.set("urgent_spore_all_bases", True)
+        except (AttributeError, TypeError) as e:
+            logger.warning(f"[IntelManager] Air threat flag update suppressed: {e}")
+
     def _check_hidden_tech_alerts(self) -> None:
         """
-        ★ NEW: 위험 테크 건물 발견 시 즉시 경고 + Blackboard 알림
+        * NEW: 위험 테크 건물 발견 시 즉시 경고 + Blackboard 알림
 
-        DarkShrine → 스포어 크롤러 + 오버시어 필요
-        Stargate → 스포어 크롤러 + 퀸/히드라 필요
-        FusionCore → BC 대비 코럽터/히드라 필요
+        DarkShrine -> 스포어 크롤러 + 오버시어 필요
+        Stargate -> 스포어 크롤러 + 퀸/히드라 필요
+        FusionCore -> BC 대비 코럽터/히드라 필요
         """
         game_time = getattr(self.bot, "time", 0.0)
 
@@ -790,7 +1170,7 @@ class IntelManager:
                     blackboard.set("latest_tech_alert", alert_type)
                     blackboard.set("latest_tech_alert_time", game_time)
 
-                    # ★ Phase 17: 위협 테크 감지 시 즉시 방어 플래그 설정 ★
+                    # * Phase 17: 위협 테크 감지 시 즉시 방어 플래그 설정 *
                     if alert_type in (
                         "DT_INCOMING",
                         "AIR_INCOMING",
@@ -798,6 +1178,15 @@ class IntelManager:
                         "CARRIER_INCOMING",
                     ):
                         blackboard.set("urgent_spore_all_bases", True)
+                    if alert_type in (
+                        "AIR_INCOMING",
+                        "BC_INCOMING",
+                        "CARRIER_INCOMING",
+                    ):
+                        blackboard.set("AIR_THREAT_INCOMING", True)
+                    if alert_type == "DT_INCOMING":
+                        blackboard.set("cloak_tech_detected", True)
+                        blackboard.set("urgent_overseer", True)
                     if alert_type == "NYDUS_INCOMING":
                         blackboard.set("urgent_spine_all_bases", True)
 
@@ -815,7 +1204,7 @@ class IntelManager:
 
     def _update_destructible_structures(self) -> None:
         """
-        ★ NEW: 파괴 가능한 중립 구조물 감지
+        * NEW: 파괴 가능한 중립 구조물 감지
 
         Destructible Rocks, Debris 등 확장 경로를 막는 구조물 추적
         """
@@ -880,7 +1269,7 @@ class IntelManager:
 
     def _update_all_enemy_structures(self) -> None:
         """
-        ★ NEW: 모든 적 구조물 추적 (승리 조건용)
+        * NEW: 모든 적 구조물 추적 (승리 조건용)
 
         모든 적 건물을 파괴해야 승리할 수 있음
         """
@@ -925,7 +1314,7 @@ class IntelManager:
         return len(self.all_enemy_structures)
 
     # ==========================================================
-    # ★ NEW: Data Backup System (데이터 백업 및 복구) ★
+    # * NEW: Data Backup System (데이터 백업 및 복구) *
     # ==========================================================
 
     def save_data(self, file_path: str = "data/intel_data.json") -> bool:

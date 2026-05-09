@@ -3,7 +3,7 @@
 Spatial Optimizer - 공간 해싱 및 거리 계산 최적화
 
 맵을 그리드로 나누어 인접 그리드만 검사하여
-O(N^2) → O(N) 연산량 감소 (70% 절감)
+O(N^2) -> O(N) 연산량 감소 (70% 절감)
 """
 
 from collections import defaultdict
@@ -19,7 +19,7 @@ except ImportError:
 
 class SpatialOptimizer:
     """
-    ★ Spatial Optimizer ★
+    * Spatial Optimizer *
 
     공간 해싱을 사용하여 거리 계산 최적화
     - 맵을 그리드로 분할
@@ -31,19 +31,19 @@ class SpatialOptimizer:
         self.bot = bot
         self.logger = get_logger("SpatialOptimizer")
 
-        # ★ 그리드 설정 ★
+        # * 그리드 설정 *
         self.grid_size = max(grid_size, 1)  # 각 그리드 크기 (10x10), 0 방지
         self.grids: Dict[Tuple[int, int], Set[int]] = defaultdict(set)
 
-        # ★ 유닛 위치 캐시 ★
+        # * 유닛 위치 캐시 *
         self.unit_positions: Dict[int, Point2] = {}
         self.unit_grids: Dict[int, Tuple[int, int]] = {}
 
-        # ★ 업데이트 주기 ★
+        # * 업데이트 주기 *
         self.last_update = 0
         self.update_interval = 3  # 3프레임마다 (매우 빈번)
 
-        # ★ 통계 ★
+        # * 통계 *
         self.queries_optimized = 0
         self.queries_total = 0
 
@@ -55,7 +55,7 @@ class SpatialOptimizer:
 
             self.last_update = iteration
 
-            # ★ 그리드 업데이트 ★
+            # * 그리드 업데이트 *
             self._update_grids()
 
         except Exception as e:
@@ -74,11 +74,11 @@ class SpatialOptimizer:
         if not hasattr(self.bot, "units") or not hasattr(self.bot, "enemy_units"):
             return
 
-        # ★ 아군 유닛 ★
+        # * 아군 유닛 *
         for unit in self.bot.units:
             self._add_unit_to_grid(unit.tag, unit.position)
 
-        # ★ 적 유닛 ★
+        # * 적 유닛 *
         for unit in self.bot.enemy_units:
             self._add_unit_to_grid(unit.tag, unit.position)
 
@@ -114,16 +114,16 @@ class SpatialOptimizer:
         """
         self.queries_total += 1
 
-        # ★ 1. 중심 위치의 그리드 계산 ★
+        # * 1. 중심 위치의 그리드 계산 *
         center_grid_x = int(center.x / self.grid_size)
         center_grid_y = int(center.y / self.grid_size)
 
-        # ★ 2. 검색할 그리드 범위 계산 ★
+        # * 2. 검색할 그리드 범위 계산 *
         grid_radius = int(radius / self.grid_size) + 1
 
         nearby_units = []
 
-        # ★ 3. 인접 그리드만 검사 ★
+        # * 3. 인접 그리드만 검사 *
         for dx in range(-grid_radius, grid_radius + 1):
             for dy in range(-grid_radius, grid_radius + 1):
                 grid_key = (center_grid_x + dx, center_grid_y + dy)

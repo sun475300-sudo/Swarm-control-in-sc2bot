@@ -25,7 +25,7 @@ class CreepHighway:
     """
     A* 기반 점막 고속도로 경로 계획기
 
-    1. 아군 → 적 A* 최단 경로 계산
+    1. 아군 -> 적 A* 최단 경로 계산
     2. 경로를 종양 확산 간격(9.0)으로 웨이포인트 변환
     3. 점막 퀸이 순서대로 웨이포인트 따라 종양 설치
     """
@@ -59,7 +59,7 @@ class CreepHighway:
         if not path:
             path = self._straight_line_path(start, goal)
 
-        # 경로 → 웨이포인트 변환
+        # 경로 -> 웨이포인트 변환
         self.highway_waypoints = self._path_to_waypoints(path)
         self._computed = True
         return self.highway_waypoints

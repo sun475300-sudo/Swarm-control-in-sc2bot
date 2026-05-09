@@ -55,9 +55,14 @@ class EconomyConstants:
     OPTIMAL_WORKERS_PER_GAS = 3  # 가스당 최적 일꾼 3명
     MAX_WORKERS_PER_BASE = 24  # 과포화 최대값
 
+    TARGET_DRONES_LOW = 66
+    TARGET_DRONES_MEDIUM = 55
+    TARGET_DRONES_HIGH = 44
+    MACRO_HATCH_CHECK_INTERVAL = 50
+    MINERAL_FLOAT_WARNING = 300
     # Gas timing
     GAS_RESERVE_THRESHOLD = 100  # 가스 비축 임계값
-    GAS_WORKER_TRANSITION = 75  # 가스→미네랄 전환 임계값
+    GAS_WORKER_TRANSITION = 75  # 가스->미네랄 전환 임계값
 
     # Expansion timing
     EXPANSION_COOLDOWN = 6.0  # 확장 쿨다운 (초)
@@ -138,7 +143,7 @@ class StrategyConstants:
     # Build order timing
     POOL_TIMING = 24  # 산란못 타이밍 (인구수)
     GAS_TIMING = 17  # 가스 타이밍 (인구수)
-    LAIR_TIMING = 270  # 레어 업그레이드 타이밍 (초) ★ 프로 기준 270s ★
+    LAIR_TIMING = 270  # 레어 업그레이드 타이밍 (초) * 프로 기준 270s *
 
     # Supply management
     SUPPLY_BUFFER = 2  # 보급 버퍼
