@@ -70,7 +70,36 @@
 
 ---
 
-## Cycle 3 (예정) — 코드 품질 / 정적 분석 / 잠재적 결함 (계속)
+## Cycle 3 (완료) — F841 / E713 정리 + 변경 파일 black 포맷
+
+### 발견된 이슈
+
+| # | 카테고리 | 이슈 | 우선순위 |
+|---|---|---|---|
+| C3.1 | Real bug | `bot_step_integration.py:1225-1229` `micro_interval` 변수가 두 번 할당되지만 어디에도 사용되지 않음 (`micro_focus.update()`의 반환값 사용처 없음) | Low (no behavior loss, just dead) |
+| C3.2 | Real bug | `bot_step_integration.py:2907` `current_mode_str = "Unknown"` 후 사용처 없음 (의도된 로깅이 누락된 흔적) | Low |
+| C3.3 | Lint | `bot_step_integration.py`에 silent exception swallow 패턴 11곳 (`except Exception as e:` + `if debug_mode: raise`) — `e`만 미사용 | Low |
+| C3.4 | Lint | `base_destruction_coordinator.py:189`, `combat/infestor_tactics.py:256` E713: `not x in y` → `x not in y` (가독성) | Low |
+| C3.5 | CI | PR #128의 sc2bot-ci.yml `Lint & Type Check (3.11)`가 black 검사에서 실패 — Cycle 1/2 변경 파일이 black 미적용 | Medium |
+
+### Cycle 3 적용된 fix
+
+- C3.1: `micro_interval` 변수 제거, `self.bot.micro_focus.update(iteration)` 반환값 무시 + 코멘트 추가
+- C3.2: `current_mode_str = "Unknown"` 라인 삭제
+- C3.3: 11건의 `except Exception as e:` → `except Exception:` (e 미사용)
+- C3.4: 두 곳 `not x in y` → `x not in y`
+- C3.5: 변경한 9개 파일에 `black` 적용 (touched-files-only 정책 준수)
+
+### Cycle 3 결과
+
+- F841 (production code): **30+ → 19** (남은 19건은 cycle 4+에서 검토)
+- E713: **2 → 0**
+- pytest: **429 pass / 16 skip 유지**
+- black: 변경 파일 9개 모두 통과
+
+---
+
+## Cycle 4 (예정) — 잔여 F841 + 함수 중복 추가 audit + CI fail-fast 검토
 
 ### 후보 작업 영역
 
