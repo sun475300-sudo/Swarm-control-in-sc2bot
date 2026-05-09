@@ -1367,8 +1367,7 @@ class BotStepIntegrator:
                     elif iteration % 110 == 0:
                         astar_hw.update_progress()
                 except Exception as e:
-                    if error_handler.debug_mode:
-                        raise
+                    error_handler.log_step_error("CreepHighwayAStar", e, self.logger)
 
             # 0.061 *** Creep Highway Manager (기지 간 연결) ***
             if hasattr(self.bot, "creep_highway") and self.bot.creep_highway:
