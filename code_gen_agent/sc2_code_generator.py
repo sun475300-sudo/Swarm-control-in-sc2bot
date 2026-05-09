@@ -899,13 +899,32 @@ class StrategyCodeGen:
         return default
 
     def _fallback_generation(self, description: str) -> GeneratedCode:
-        """Generate a stub function when no template matches."""
-        safe_name = re.sub(r"\W+", "_", description.lower())[:40].strip("_")
+        """Generate a safe-default stub when no template matches.
+
+        대신 silent ``pass`` 대신 logger 경고를 남겨 운영자가 누락된 템플릿을
+        쉽게 발견할 수 있게 한다. 안전한 기본 동작(no-op)을 유지하되,
+        호출 자체는 실패하지 않는다.
+        """
+        safe_name = re.sub(r"\W+", "_", description.lower())[:40].strip("_") or "generated_strategy"
+        prompt_repr = description[:120].replace('"""', "'''")
         code = textwrap.dedent(f"""\
+            import logging
+
+            _logger = logging.getLogger(__name__)
+
+
             async def {safe_name}(bot) -> None:
-                \"\"\"Generated from: {description[:80]}\"\"\"
-                # TODO: Implement strategy logic
-                pass
+                \"\"\"Auto-generated stub for: {prompt_repr}
+
+                템플릿 매칭에 실패해 fallback이 생성한 no-op 전략. 실제 로직은
+                StrategyCodeGen 템플릿을 추가하거나 수동으로 구현해야 한다.
+                \"\"\"
+                _logger.warning(
+                    "fallback strategy '{safe_name}' invoked — no template matched; "
+                    "skipping (prompt=%r)",
+                    {prompt_repr!r},
+                )
+                return None
         """)
         return GeneratedCode(
             source_prompt=description,

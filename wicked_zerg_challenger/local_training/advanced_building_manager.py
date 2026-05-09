@@ -86,6 +86,13 @@ class AdvancedBuildingManager:
         else:
             self.placement_helper = None
 
+        # * 일꾼 끼임 감지: tag → (last_position, last_iteration, stuck_streak) *
+        # rescue_stuck_workers()가 매 호출 시 위치를 비교해 "이동 중인데 제자리"
+        # 케이스를 감지한다. 임계치는 이동 거리 0.5 셀 미만, 연속 2회.
+        self._worker_position_history: Dict[int, Tuple[Tuple[float, float], int, int]] = {}
+        self._stuck_position_epsilon = 0.5  # 이 거리 미만이면 "제자리"로 간주
+        self._stuck_streak_threshold = 2  # 이 이상 연속 정체면 stuck
+
     # ==================== 1. 중복 코드 제거: 공통 변태 로직 ====================
 
     async def morph_unit_safely(
@@ -763,19 +770,52 @@ class AdvancedBuildingManager:
         return False
 
     async def rescue_stuck_workers(self) -> int:
-        """* 끼인 일꾼 구출 (강화됨) *"""
+        """* 끼인 일꾼 구출 (강화됨) *
+
+        두 가지 stuck 판정:
+        1) idle 상태
+        2) 이동 명령 중인데 직전 호출 대비 위치가 epsilon 미만으로만 이동한 상태가
+           연속 _stuck_streak_threshold회 이상 — 좁은 통로/건물 사이 끼임
+        """
         if not hasattr(self.bot, "workers"):
             return 0
 
         rescued = 0
+        current_iter = getattr(self.bot, "iteration", 0)
+        seen_tags: set = set()
+
         for worker in self.bot.workers:
             try:
-                # 1. Idle 상태인 경우
+                tag = getattr(worker, "tag", None)
+                if tag is None:
+                    continue
+                seen_tags.add(tag)
+
                 is_stuck = False
+                # 1. Idle 상태인 경우
                 if hasattr(worker, "is_idle") and worker.is_idle:
                     is_stuck = True
 
-                # 2. 움직이지만 제자리인 경우 (TODO: 위치 기록 필요, 여기선 생략)
+                # 2. 움직이지만 제자리인 경우 — 위치 히스토리 비교
+                pos = getattr(worker, "position", None)
+                if pos is not None:
+                    cur_xy = (float(getattr(pos, "x", pos[0])), float(getattr(pos, "y", pos[1])))
+                    prev = self._worker_position_history.get(tag)
+                    streak = 0
+                    if prev is not None:
+                        last_xy, _last_iter, last_streak = prev
+                        dx = cur_xy[0] - last_xy[0]
+                        dy = cur_xy[1] - last_xy[1]
+                        moved = math.hypot(dx, dy)
+                        # idle이 아닌데 거의 안 움직였으면 streak 증가
+                        worker_idle = getattr(worker, "is_idle", False)
+                        if not worker_idle and moved < self._stuck_position_epsilon:
+                            streak = last_streak + 1
+                        else:
+                            streak = 0
+                    self._worker_position_history[tag] = (cur_xy, current_iter, streak)
+                    if streak >= self._stuck_streak_threshold:
+                        is_stuck = True
 
                 if is_stuck:
                     if hasattr(self.bot, "structures"):
@@ -800,7 +840,17 @@ class AdvancedBuildingManager:
                                 if self.bot.iteration % 100 == 0:
                                     logger.info(f"Saved stuck worker {worker.tag}")
                                 rescued += 1
+                                # 구출 명령을 내렸으니 streak 리셋 (다음 호출에서 재트리거 방지)
+                                hist = self._worker_position_history.get(tag)
+                                if hist is not None:
+                                    self._worker_position_history[tag] = (hist[0], hist[1], 0)
             except Exception:
                 continue
+
+        # 죽은 일꾼의 히스토리 정리 — 메모리 누수 방지
+        if seen_tags:
+            stale_tags = [t for t in self._worker_position_history if t not in seen_tags]
+            for t in stale_tags:
+                self._worker_position_history.pop(t, None)
 
         return rescued
