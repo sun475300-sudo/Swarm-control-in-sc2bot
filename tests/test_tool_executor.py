@@ -28,7 +28,10 @@ _stub._ast_check_python_code = lambda c: (True, "")
 _stub.__file__ = __file__
 sys.modules["discord_jarvis"] = _stub
 
-from jarvis_features.tool_executor import DANGEROUS_TOOLS, ToolExecutor
+from jarvis_features.tool_executor import (  # noqa: E402  (after sys.modules stub above)
+    DANGEROUS_TOOLS,
+    ToolExecutor,
+)
 
 
 @pytest.fixture
