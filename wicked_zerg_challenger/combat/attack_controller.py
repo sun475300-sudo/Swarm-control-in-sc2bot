@@ -247,7 +247,7 @@ class AttackController:
         Returns:
             공격 타겟 위치 또는 유닛
         """
-        game_time = getattr(self.bot, "time", 0)
+        getattr(self.bot, "time", 0)
         enemy_structures = getattr(self.bot, "enemy_structures", None)
 
         # 적 건물이 있으면 우선 공격

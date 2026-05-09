@@ -2422,7 +2422,6 @@ class CombatManager:
             )
         else:
             combat_ready = list(mutalisks)
-            regenerating = []
 
         if not combat_ready:
             return  # All units regenerating
@@ -2868,7 +2867,6 @@ class CombatManager:
             )
         else:
             combat_ready = list(mutalisks)
-            regenerating = []
 
         if not combat_ready:
             return  # All units regenerating

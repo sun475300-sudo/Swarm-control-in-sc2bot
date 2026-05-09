@@ -192,7 +192,6 @@ class AirUnitManager:
             )
         else:
             combat_ready = list(mutalisks)
-            regenerating = []
 
         if not combat_ready:
             return
@@ -326,7 +325,6 @@ class AirUnitManager:
             )
         else:
             combat_ready = list(mutalisks)
-            regenerating = []
 
         if not combat_ready:
             return
