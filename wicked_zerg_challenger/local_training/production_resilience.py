@@ -756,9 +756,8 @@ class ProductionResilience:
         """
         b = self.bot
         game_time = getattr(b, "time", 0)
-        if (
-            self._should_reserve_third_base_minerals()
-            and self._check_min_defense_met(game_time)
+        if self._should_reserve_third_base_minerals() and self._check_min_defense_met(
+            game_time
         ):
             return False
 
@@ -849,9 +848,8 @@ class ProductionResilience:
         """
         b = self.bot
         game_time = getattr(b, "time", 0)
-        if (
-            self._should_reserve_third_base_minerals()
-            and self._check_min_defense_met(game_time)
+        if self._should_reserve_third_base_minerals() and self._check_min_defense_met(
+            game_time
         ):
             return
 

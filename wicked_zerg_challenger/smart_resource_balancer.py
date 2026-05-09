@@ -348,9 +348,15 @@ class SmartResourceBalancer:
         except (TypeError, ValueError):
             return False
 
-        if gas >= self.gas_critical_threshold and minerals < self.gas_lock_mineral_threshold:
+        if (
+            gas >= self.gas_critical_threshold
+            and minerals < self.gas_lock_mineral_threshold
+        ):
             return True
-        if gas >= self.gas_excess_threshold and minerals < self.mineral_shortage_threshold:
+        if (
+            gas >= self.gas_excess_threshold
+            and minerals < self.mineral_shortage_threshold
+        ):
             return True
         return gas > max(300, minerals * 3) and minerals < 800
 
@@ -369,7 +375,9 @@ class SmartResourceBalancer:
             try:
                 structure_units = structures(UnitTypeId.EXTRACTOR)
                 extractors.extend(
-                    self._as_unit_list(getattr(structure_units, "ready", structure_units))
+                    self._as_unit_list(
+                        getattr(structure_units, "ready", structure_units)
+                    )
                 )
             except Exception:
                 pass
