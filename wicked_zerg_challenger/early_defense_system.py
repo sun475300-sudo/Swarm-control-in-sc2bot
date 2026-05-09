@@ -63,6 +63,11 @@ class EarlyDefenseSystem:
         self._proxy_spines_requested = 0
         self._proxy_worker_tags: Set = set()
 
+        # FIX C3: Initialize missing attributes
+        self._zergling_speed_researched = False
+        self._spine_crawler_built = False
+        self._spine_crawler_ordered = False
+
     async def execute(self, iteration: int) -> None:
         """
         Execute early defense logic every step
@@ -95,7 +100,14 @@ class EarlyDefenseSystem:
         ):
             await self._produce_first_queen()
 
-        # 5. Emergency defense mode (If enemy detected)
+        # 5. Zergling speed research ASAP (FIX: was never called)
+        await self._research_zergling_speed_early()
+
+        # 6. Early spine crawler at ~2 minutes (FIX: was never called)
+        if self.bot.time >= 120.0:
+            await self._build_early_spine_crawler()
+
+        # 7. Emergency defense mode (If enemy detected)
         if self.emergency_mode or self.early_threats:
             await self._emergency_defense()
 
