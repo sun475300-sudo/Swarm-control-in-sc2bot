@@ -1,6 +1,9 @@
 """Tests for QueenTransfusionManager — priority, dedup, and cooldown logic.
 
-These tests use MagicMock so no SC2 game instance is required.
+These tests use MagicMock so no running SC2 instance is required, but
+they still need the burnysc2 package available for `UnitTypeId`. When
+`sc2` is unavailable (e.g. CI without burnysc2 install), skip the whole
+module instead of failing collection.
 """
 from __future__ import annotations
 
@@ -8,7 +11,12 @@ from types import SimpleNamespace
 from unittest.mock import MagicMock, patch
 
 import pytest
-from sc2.ids.unit_typeid import UnitTypeId
+
+sc2_unit_typeid = pytest.importorskip(
+    "sc2.ids.unit_typeid",
+    reason="burnysc2 not installed in this environment",
+)
+UnitTypeId = sc2_unit_typeid.UnitTypeId
 
 # ---------------------------------------------------------------------------
 # Minimal stubs so we can import without a running SC2 environment
