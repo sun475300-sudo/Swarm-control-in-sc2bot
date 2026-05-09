@@ -53,15 +53,16 @@ current branch; the rest are picked off in priority order.
 | 5.1 | `tests/test_combat_phase_fsm.py` swapped 5× `asyncio.get_event_loop().run_until_complete(...)` for `asyncio.run(...)` | The deprecated API was raising `RuntimeError: There is no current event loop` when the combined run interleaved with pytest-asyncio's auto-mode loops |
 | 5.2 | Combined suite `wicked_zerg_challenger/tests/ + tests/` now reports **1160 passed / 14 skipped / 0 failed** | Was **12 failed** in the combined run before |
 
-## Iteration 6 — Quality-of-life follow-ups (in progress)
+## Iteration 6 — Silent-async-test cleanup (done)
 
 | ID  | Item | Status |
 | --- | --- | --- |
 | 6.1 | `TestOpponentModeling` extended `unittest.TestCase`, so 8 `async def test_*` methods returned coroutines that were never awaited (silent passes). Switched to `unittest.IsolatedAsyncioTestCase` so they actually run. | Done — 32/32 pass after also fixing the production bug below |
 | 6.2 | **Production bug surfaced**: `OpponentModeling` had two `on_step` methods; the duplicate at line ~777 silently shadowed the canonical one at line ~341. The canonical step ran the full pipeline (build-order tracking, timing-attack detection, blackboard sync); the duplicate only detected early-game signals. Removed the duplicate. | Done |
 | 6.3 | `OpponentModeling` mixed two attribute names for the same concept (`current_opponent` set in the integration helpers vs `current_opponent_id` everywhere else). Added a `current_opponent` property that aliases `current_opponent_id` so both lifecycle APIs stay in sync. | Done |
-| 6.4 | Combined-suite warnings dropped from 38 → 19 after these fixes. | Done |
-| 6.5 | Pre-existing repo-wide `black --check .` fails on 66 unrelated files; CI's `Lint & Type Check (3.11)` is red as a result. Out-of-scope here, but a one-shot black format pass would clear it. | Pending (out of scope) |
+| 6.4 | `TestProductionResilience` had the same silent-async issue. Switched the base class. The newly-running tests then exposed three counter-unit tests calling an obsolete `_get_counter_unit("Terran")` signature. The real method now takes `(enemy_units, has_roach_warren, has_hydra_den, has_spire)`. Rewrote those three tests against the current API, covering armored-ground, air, and empty-enemies branches. | Done |
+| 6.5 | Combined-suite warnings dropped 38 → **1**, and the suite now exercises 22 test cases that used to be silently skipped. | Done |
+| 6.6 | Pre-existing repo-wide `black --check .` fails on 66 unrelated files; CI's `Lint & Type Check (3.11)` is red as a result. Out-of-scope here, but a one-shot black format pass would clear it. | Pending (out of scope) |
 
 ## Iteration N — Continuous loop instructions
 
