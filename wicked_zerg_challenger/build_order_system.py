@@ -13,6 +13,19 @@ import logging
 from enum import Enum
 from typing import Any, Dict, List
 
+try:
+    from config.constants import (
+        BUILD_ORDER_END_TIME,
+        MAX_STEP_RETRIES,
+        EXPANSION_TIMING_TARGET,
+        THREAT_CACHE_TTL,
+    )
+except ImportError:
+    BUILD_ORDER_END_TIME = 300.0
+    MAX_STEP_RETRIES = 50
+    EXPANSION_TIMING_TARGET = 60.0
+    THREAT_CACHE_TTL = 0.5
+
 from knowledge_manager import KnowledgeManager  # NEW
 
 logger = logging.getLogger("BuildOrderSystem")
@@ -351,15 +364,15 @@ class BuildOrderSystem:
         }
 
         # Build Order End Time
-        self.build_order_end_time = 300.0  # 5 minutes hard cutoff
+        self.build_order_end_time = BUILD_ORDER_END_TIME
 
         # * Phase 25: 스텝 재시도 시스템 *
         self._step_retry_count = 0
-        self._max_retries_before_skip = 50  # ~50프레임(2초) 재시도 후 다음 스텝으로
+        self._max_retries_before_skip = MAX_STEP_RETRIES
         self._skipped_steps: List[BuildOrderStep] = []  # 건너뛴 스텝 (나중에 재실행)
 
         # * Phase 22: 확장 타이밍 검증 *
-        self.expansion_timing_target = 60.0  # 1분 멀티 목표
+        self.expansion_timing_target = EXPANSION_TIMING_TARGET
         self.expansion_actual_time = 0.0  # 실제 확장 시작 시간
         self.expansion_timing_verified = False
 
@@ -917,7 +930,7 @@ class BuildOrderSystem:
         # 0.5s frame cache — avoids O(bases×enemies) on every mineral-reserve call
         current_time = getattr(self.bot, "time", 0.0)
         cached = getattr(self, "_threat_cache", None)
-        if cached is not None and abs(current_time - cached[0]) < 0.5:
+        if cached is not None and abs(current_time - cached[0]) < THREAT_CACHE_TTL:
             return cached[1]
 
         result = self.__has_active_base_threat_uncached()

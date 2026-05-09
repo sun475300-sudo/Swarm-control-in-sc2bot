@@ -13,8 +13,19 @@ Zerg Specialized Reward System (Reward Shaping)
 """
 
 import logging
+import sys
+from pathlib import Path
 
 import numpy as np
+
+_parent = str(Path(__file__).parent.parent)
+if _parent not in sys.path:
+    sys.path.insert(0, _parent)
+
+try:
+    from config.constants import REWARD_NORM_SCALE
+except ImportError:
+    REWARD_NORM_SCALE = 5.0
 
 logger = logging.getLogger("RewardSystem")
 
@@ -109,7 +120,7 @@ class ZergRewardSystem:
 
         # Normalize to [-1, 1] to prevent scale imbalance
         # (creep_reward peaks at +15, strategic_decision at ±0.05 — 300x gap)
-        return float(np.tanh(reward / 5.0))
+        return float(np.tanh(reward / REWARD_NORM_SCALE))
 
     def _calculate_creep_reward(self, bot) -> float:
         """

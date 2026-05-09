@@ -10,6 +10,21 @@ Purpose: Counter early rushes and improve initial survival rate
 import logging
 from typing import Set
 
+try:
+    from config.constants import (
+        EARLY_GAME_END_SECONDS,
+        ENEMY_DETECT_RADIUS,
+        PROXY_DETECT_RADIUS,
+        PROXY_DEFENSE_WORKERS,
+        MAX_WORKER_DEFENSE,
+    )
+except ImportError:
+    EARLY_GAME_END_SECONDS = 180.0
+    ENEMY_DETECT_RADIUS = 20.0
+    PROXY_DETECT_RADIUS = 40.0
+    PROXY_DEFENSE_WORKERS = 6
+    MAX_WORKER_DEFENSE = 6
+
 logger = logging.getLogger("EarlyDefenseSystem")
 try:
     from sc2.bot_ai import BotAI
@@ -49,7 +64,7 @@ class EarlyDefenseSystem:
 
     def __init__(self, bot: BotAI):
         self.bot = bot
-        self.early_game_threshold = 180.0  # 3 minutes = 180 seconds
+        self.early_game_threshold = EARLY_GAME_END_SECONDS
         self.early_rush_detected = False
         self.pool_started = False
         self.queen_started = False
@@ -141,14 +156,18 @@ class EarlyDefenseSystem:
         """
         # Check if enemy units are near our base
         if not self.bot.enemy_units:
+            if self.early_rush_detected and not self.proxy_response_active:
+                self.early_rush_detected = False
+                self.emergency_mode = False
+                self.early_threats = set()
+                logger.info("[*] Early rush threat cleared (no visible enemies) — returning to normal mode [*]")
             return
 
         main_base = self.bot.townhalls.first if self.bot.townhalls else None
         if not main_base:
             return
 
-        # Check for enemies within 20 distance of main base
-        nearby_enemies = self.bot.enemy_units.closer_than(20, main_base.position)
+        nearby_enemies = self.bot.enemy_units.closer_than(ENEMY_DETECT_RADIUS, main_base.position)
 
         if nearby_enemies:
             self.early_rush_detected = True
