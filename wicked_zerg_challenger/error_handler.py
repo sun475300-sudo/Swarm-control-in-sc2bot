@@ -140,6 +140,23 @@ class ErrorHandler:
 
         return decorator
 
+    def log_step_error(self, key: str, exc: Exception, log) -> None:
+        """try/except 블록에서 호출 — debug면 raise, 아니면 카운트+제한 로깅.
+
+        Args:
+            key: 에러 분류 키 (예: "MicroFocusMode")
+            exc: 잡힌 예외
+            log: 로거 (self.logger 등)
+
+        Raises:
+            exc: debug_mode가 True면 그대로 재던짐.
+        """
+        if self.debug_mode:
+            raise exc
+        self.error_counts[key] += 1
+        if self.error_counts[key] <= self.max_error_logs:
+            log.error(f"[ERROR] {key} error: {exc}")
+
     def get_error_summary(self) -> dict:
         """에러 통계 반환"""
         return dict(self.error_counts)
