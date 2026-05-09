@@ -269,9 +269,15 @@ class OpponentModeling:
         self.logger = get_logger("OpponentModeling")
         self.data_file = data_file
 
-        # Opponent models
+        # Opponent models. `current_opponent_id` is set by `on_start` (the
+        # async lifecycle entry) and `current_opponent` is set by
+        # `on_game_start` (the sync entry called from the main bot
+        # lifecycle). Both must be initialized here so on_step / on_game_end
+        # / get_predicted_strategy don't AttributeError if step() runs
+        # before whichever lifecycle hook is wired up.
         self.opponent_models: Dict[str, OpponentModel] = {}
         self.current_opponent_id: Optional[str] = None
+        self.current_opponent: Optional[str] = None
         self.current_game_history: Optional[GameHistory] = None
 
         # Current game tracking
