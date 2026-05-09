@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import importlib.util
 import json
 import os
 import sys
@@ -7,9 +8,27 @@ import unittest
 from pathlib import Path
 
 os.environ["PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION"] = "python"
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..")))
+_PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+if _PROJECT_ROOT not in sys.path:
+    sys.path.insert(0, _PROJECT_ROOT)
 
-from scripts.meta_adapter import MetaAdapter
+
+def _load_meta_adapter():
+    # 다른 테스트의 ``sys.path`` 변경으로 ``scripts`` namespace package가
+    # 잘못된 위치에 캐시될 수 있어 파일 경로로 직접 로드한다. ``dataclasses``는
+    # 모듈을 ``sys.modules``에서 조회하므로 exec 전에 등록해두어야 한다.
+    mod_name = "scripts_meta_adapter"
+    src = os.path.join(_PROJECT_ROOT, "scripts", "meta_adapter.py")
+    spec = importlib.util.spec_from_file_location(mod_name, src)
+    if spec is None or spec.loader is None:
+        raise ImportError(f"cannot load {src}")
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[mod_name] = module
+    spec.loader.exec_module(module)
+    return module.MetaAdapter
+
+
+MetaAdapter = _load_meta_adapter()
 
 
 class TestMetaAdapter(unittest.TestCase):

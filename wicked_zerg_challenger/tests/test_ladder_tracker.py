@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import importlib.util
 import os
 import sys
 import tempfile
@@ -6,9 +7,28 @@ import unittest
 from pathlib import Path
 
 os.environ["PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION"] = "python"
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..")))
+_PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+if _PROJECT_ROOT not in sys.path:
+    sys.path.insert(0, _PROJECT_ROOT)
 
-from scripts.ladder_tracker import LadderTracker
+
+def _load_ladder_tracker():
+    # 다른 테스트가 ``sys.path`` 순서를 바꾸면 ``scripts`` namespace package가
+    # 잘못된 디렉토리에 캐시되어 ``scripts.ladder_tracker``를 찾지 못하는 경우가
+    # 있다. 파일 경로로 직접 로드해 그 경합을 우회한다. ``dataclasses``는 모듈을
+    # ``sys.modules``에서 조회하므로 exec 전에 등록해두어야 한다.
+    mod_name = "scripts_ladder_tracker"
+    src = os.path.join(_PROJECT_ROOT, "scripts", "ladder_tracker.py")
+    spec = importlib.util.spec_from_file_location(mod_name, src)
+    if spec is None or spec.loader is None:
+        raise ImportError(f"cannot load {src}")
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[mod_name] = module
+    spec.loader.exec_module(module)
+    return module.LadderTracker
+
+
+LadderTracker = _load_ladder_tracker()
 
 
 class TestLadderTracker(unittest.TestCase):
