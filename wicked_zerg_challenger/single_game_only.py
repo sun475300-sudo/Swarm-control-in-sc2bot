@@ -23,8 +23,8 @@ project_root = Path(__file__).parent
 if str(project_root) not in sys.path:
     sys.path.insert(0, str(project_root))
 
-from game_statistics import GameStatistics
-from wicked_zerg_bot_pro_impl import WickedZergBotProImpl
+from game_statistics import GameStatistics  # noqa: E402  (after sys.path setup)
+from wicked_zerg_bot_pro_impl import WickedZergBotProImpl  # noqa: E402
 
 # Lock 파일
 LOCK_FILE = Path("game_running.lock")

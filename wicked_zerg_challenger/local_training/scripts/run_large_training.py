@@ -34,7 +34,7 @@ sys.path.insert(
 )
 
 # SC2ZergEnv 시뮬레이터
-from gymnasium_env.sc2_gym_env import SC2ZergEnv
+from gymnasium_env.sc2_gym_env import SC2ZergEnv  # noqa: E402  (after sys.path setup)
 
 
 def train_ppo_agent(n_episodes: int, save_dir: str, max_frames: int = 2000):

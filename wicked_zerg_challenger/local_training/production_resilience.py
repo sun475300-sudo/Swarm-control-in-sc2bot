@@ -96,7 +96,7 @@ except ImportError:
     BuildingPlacementHelper = None
 
 # Import production modules
-from local_training.production import (
+from local_training.production import (  # noqa: E402  (after BuildingPlacementHelper try/except)
     can_expand_safely,
     safe_train,
 )

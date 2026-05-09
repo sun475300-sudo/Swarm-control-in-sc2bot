@@ -19,8 +19,8 @@ project_root = script_dir.parent.parent
 if str(project_root) not in sys.path:
     sys.path.insert(0, str(project_root))
 
-from wicked_zerg_challenger.local_training.rl_agent import RLAgent
-from wicked_zerg_challenger.tools.background_parallel_learner import (
+from wicked_zerg_challenger.local_training.rl_agent import RLAgent  # noqa: E402  (after sys.path setup)
+from wicked_zerg_challenger.tools.background_parallel_learner import (  # noqa: E402
     BackgroundParallelLearner,
 )
 

@@ -30,7 +30,7 @@ project_root = script_dir.parent
 if str(project_root) not in sys.path:
     sys.path.insert(0, str(project_root))
 
-from local_training.rl_agent import RLAgent
+from local_training.rl_agent import RLAgent  # noqa: E402  (after sys.path setup)
 
 
 class BackgroundParallelLearner:
