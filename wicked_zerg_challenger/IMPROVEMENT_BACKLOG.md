@@ -64,6 +64,20 @@ current branch; the rest are picked off in priority order.
 | 6.5 | Combined-suite warnings dropped 38 → **1**, and the suite now exercises 22 test cases that used to be silently skipped. | Done |
 | 6.6 | Pre-existing repo-wide `black --check .` fails on 66 unrelated files; CI's `Lint & Type Check (3.11)` is red as a result. Out-of-scope here, but a one-shot black format pass would clear it. | Pending (out of scope) |
 
+## Iteration 7 — Shadowed-method scan (in progress)
+
+A small AST scan (`ast.walk` over `ClassDef.body`) found four classes with two
+`def` for the same name. Python keeps the *last* definition, so the first is
+unreachable dead code. Each case below was inspected:
+
+| ID  | File:line | Disposition |
+| --- | --- | --- |
+| 7.1 | `combat_manager.py:2809 _find_harass_target` (first) vs `:5005` (second) | Deleted the first; the second is strictly more capable (workers > isolated tech > base fallback). 1160/1160 still pass. |
+| 7.2 | `economy_manager.py:1681 _prevent_resource_banking` vs `:3258` | **Architectural — needs human review.** First focuses on extra Queens + spore/spine static defense after the 3rd base. Second focuses on macro hatcheries + tech upgrades + gas-worker reduction. Both meaningful; merging requires a product decision (e.g. compose them, or choose). Leaving in place for now. |
+| 7.3 | `economy_manager.py:3391 _reduce_gas_workers` vs `:4082` | Same kind of split – two different approaches to reducing gas. Needs human review. |
+| 7.4 | `local_training/production_resilience.py:105 build_terran_counters` x2 | Needs human review. |
+| 7.5 | `opponent_modeling.py current_opponent` x2 | False positive — getter + setter for the property added in iteration 6. Intentional. |
+
 ## Iteration N — Continuous loop instructions
 
 After each iteration:
