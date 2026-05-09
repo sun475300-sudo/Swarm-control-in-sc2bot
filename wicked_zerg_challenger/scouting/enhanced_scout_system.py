@@ -25,6 +25,9 @@ Features:
 """
 
 import warnings
+from typing import Dict, List, Optional, Set, Tuple
+
+from utils.logger import get_logger
 
 warnings.warn(
     "EnhancedScoutSystem is deprecated. Use AdvancedScoutingSystemV2 from "
@@ -32,10 +35,6 @@ warnings.warn(
     DeprecationWarning,
     stacklevel=2,
 )
-
-from typing import Dict, List, Optional, Set, Tuple
-
-from utils.logger import get_logger
 
 try:
     from sc2.bot_ai import BotAI

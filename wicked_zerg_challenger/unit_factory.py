@@ -1,7 +1,4 @@
 #!/usr/bin/env python3
-import logging
-
-logger = logging.getLogger("UnitFactory")
 # -*- coding: utf-8 -*-
 """
 Unit factory - larva production with gas reservation logic.
@@ -9,12 +6,15 @@ Unit factory - larva production with gas reservation logic.
 Keeps gas-heavy units from being starved by mineral-only spam.
 """
 
+import logging
 from typing import List, Optional
 
 try:
     from sc2.ids.unit_typeid import UnitTypeId
 except ImportError:  # Fallbacks for tooling environments
     UnitTypeId = None
+
+logger = logging.getLogger("UnitFactory")
 
 
 class UnitFactory:

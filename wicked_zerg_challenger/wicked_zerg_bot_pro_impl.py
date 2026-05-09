@@ -1,8 +1,3 @@
-import logging
-
-logger = logging.getLogger("WickedZergBotProImpl")
-
-
 # -*- coding: utf-8 -*-
 """
 WickedZergBotPro Implementation - on_step implementation
@@ -12,15 +7,8 @@ It can be integrated into the existing wicked_zerg_bot_pro.py file,
 or imported and used separately.
 """
 
-try:
-    from sc2.bot_ai import BotAI
-except ImportError:
-
-    class BotAI:
-        pass
-
-
 import json
+import logging
 import shutil
 import time
 import traceback
@@ -28,12 +16,22 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
+try:
+    from sc2.bot_ai import BotAI
+except ImportError:
+
+    class BotAI:  # type: ignore[no-redef]
+        pass
+
+
 from blackboard import Blackboard
 from bot_step_integration import BotStepIntegrator
 from difficulty_progression import DifficultyProgression
 from personality_module import PersonalityMode, PersonalityModule
 
 from utils.logger import setup_logger
+
+logger = logging.getLogger("WickedZergBotProImpl")
 
 
 class WickedZergBotProImpl(BotAI):
@@ -686,8 +684,6 @@ class WickedZergBotProImpl(BotAI):
 
             except Exception as e:
                 self.logger.info(f"[WARNING] Training end logic error: {e}")
-                import traceback
-
                 traceback.print_exc()
 
         # *** 게임 간 매니저 상태 초기화 (훈련 에피소드 안정성) ***

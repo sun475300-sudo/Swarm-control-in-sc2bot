@@ -7,8 +7,6 @@
 
 import logging
 
-logger = logging.getLogger("ZergStrategyTree")
-
 from .behavior_tree import (
     BehaviorTree,
     NodeStatus,
@@ -18,6 +16,8 @@ from .behavior_tree import (
     create_selector,
     create_sequence,
 )
+
+logger = logging.getLogger("ZergStrategyTree")
 
 # ==================== 조건 함수들 ====================
 
