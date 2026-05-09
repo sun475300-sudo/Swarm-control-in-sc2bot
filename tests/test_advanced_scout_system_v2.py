@@ -4,13 +4,13 @@ Unit Tests for Advanced Scout System V2
 Tests dynamic scouting intervals, scout assignment, and intel reporting.
 """
 
-from unittest.mock import MagicMock, Mock, patch
+from unittest.mock import Mock, patch
 
 import pytest
 
 try:
-    from sc2.ids.unit_typeid import UnitTypeId
-    from sc2.position import Point2
+    from sc2.ids.unit_typeid import UnitTypeId  # noqa: F401  (skip-guard probe)
+    from sc2.position import Point2  # noqa: F401  (skip-guard probe)
 except ImportError:
     pytest.skip("sc2 library not available", allow_module_level=True)
 

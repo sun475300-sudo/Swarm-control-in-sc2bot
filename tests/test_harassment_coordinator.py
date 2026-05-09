@@ -4,13 +4,13 @@ Unit Tests for Harassment Coordinator
 Tests aggressive modes, baneling drops, squad locking, and multi-angle attacks.
 """
 
-from unittest.mock import MagicMock, Mock
+from unittest.mock import Mock
 
 import pytest
 
 try:
-    from sc2.ids.unit_typeid import UnitTypeId
-    from sc2.position import Point2
+    from sc2.ids.unit_typeid import UnitTypeId  # noqa: F401  (skip-guard probe)
+    from sc2.position import Point2  # noqa: F401  (skip-guard probe)
 except ImportError:
     pytest.skip("sc2 library not available", allow_module_level=True)
 
