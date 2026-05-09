@@ -52,9 +52,7 @@ class TestContractTesting:
         # Real exports: Contract, ContractStatus, HttpMethod, SchemaType.
         cls = _safe_import("contract_testing.sc2_contract_tester", "Contract")
         if cls is None:
-            cls = _safe_import(
-                "contract_testing.sc2_contract_tester", "ContractStatus"
-            )
+            cls = _safe_import("contract_testing.sc2_contract_tester", "ContractStatus")
         assert cls is not None, "contract_testing.sc2_contract_tester is not importable"
 
 

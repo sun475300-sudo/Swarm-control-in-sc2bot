@@ -129,8 +129,13 @@ class Race:
     Protoss = _NamedToken("Protoss")
     Random = _NamedToken("Random")
     NoRace = _NamedToken("NoRace")
-    _ALL = {"Zerg": Zerg, "Terran": Terran, "Protoss": Protoss,
-            "Random": Random, "NoRace": NoRace}
+    _ALL = {
+        "Zerg": Zerg,
+        "Terran": Terran,
+        "Protoss": Protoss,
+        "Random": Random,
+        "NoRace": NoRace,
+    }
 
     def __class_getitem__(cls, key):
         return cls._ALL.get(key, _NamedToken(str(key)))
@@ -155,10 +160,16 @@ class Difficulty:
     CheatMoney = _NamedToken("CheatMoney")
     CheatInsane = _NamedToken("CheatInsane")
     _ALL = {
-        "VeryEasy": VeryEasy, "Easy": Easy, "Medium": Medium,
-        "MediumHard": MediumHard, "Hard": Hard, "Harder": Harder,
-        "VeryHard": VeryHard, "CheatVision": CheatVision,
-        "CheatMoney": CheatMoney, "CheatInsane": CheatInsane,
+        "VeryEasy": VeryEasy,
+        "Easy": Easy,
+        "Medium": Medium,
+        "MediumHard": MediumHard,
+        "Hard": Hard,
+        "Harder": Harder,
+        "VeryHard": VeryHard,
+        "CheatVision": CheatVision,
+        "CheatMoney": CheatMoney,
+        "CheatInsane": CheatInsane,
     }
 
     def __class_getitem__(cls, key):
@@ -187,8 +198,9 @@ class Point2(tuple):
         oy = getattr(other, "y", other[1])
         dx, dy = ox - self.x, oy - self.y
         length = (dx * dx + dy * dy) ** 0.5 or 1.0
-        return Point2((self.x + dx / length * distance,
-                       self.y + dy / length * distance))
+        return Point2(
+            (self.x + dx / length * distance, self.y + dy / length * distance)
+        )
 
     def __add__(self, other):
         return Point2((self.x + other[0], self.y + other[1]))
@@ -216,15 +228,21 @@ class Units(list):
 
     def closer_than(self, distance, target):
         return Units(
-            [u for u in self if hasattr(u, "distance_to")
-             and u.distance_to(target) < distance],
+            [
+                u
+                for u in self
+                if hasattr(u, "distance_to") and u.distance_to(target) < distance
+            ],
             self._bot_object,
         )
 
     def further_than(self, distance, target):
         return Units(
-            [u for u in self if hasattr(u, "distance_to")
-             and u.distance_to(target) >= distance],
+            [
+                u
+                for u in self
+                if hasattr(u, "distance_to") and u.distance_to(target) >= distance
+            ],
             self._bot_object,
         )
 
@@ -284,6 +302,7 @@ def install() -> bool:
     """
     try:
         import sc2  # noqa: F401
+
         return False
     except ImportError:
         pass
@@ -305,19 +324,11 @@ def install() -> bool:
     sys.modules["sc2.ids.unit_typeid"] = _mod(
         "sc2.ids.unit_typeid", UnitTypeId=UnitTypeId
     )
-    sys.modules["sc2.ids.upgrade_id"] = _mod(
-        "sc2.ids.upgrade_id", UpgradeId=UpgradeId
-    )
-    sys.modules["sc2.ids.ability_id"] = _mod(
-        "sc2.ids.ability_id", AbilityId=AbilityId
-    )
+    sys.modules["sc2.ids.upgrade_id"] = _mod("sc2.ids.upgrade_id", UpgradeId=UpgradeId)
+    sys.modules["sc2.ids.ability_id"] = _mod("sc2.ids.ability_id", AbilityId=AbilityId)
     sys.modules["sc2.ids.buff_id"] = _mod("sc2.ids.buff_id", BuffId=BuffId)
-    sys.modules["sc2.ids.effect_id"] = _mod(
-        "sc2.ids.effect_id", EffectId=EffectId
-    )
-    sys.modules["sc2.position"] = _mod(
-        "sc2.position", Point2=Point2, Point3=Point3
-    )
+    sys.modules["sc2.ids.effect_id"] = _mod("sc2.ids.effect_id", EffectId=EffectId)
+    sys.modules["sc2.position"] = _mod("sc2.position", Point2=Point2, Point3=Point3)
     sys.modules["sc2.data"] = _mod(
         "sc2.data", Race=Race, Result=Result, Difficulty=Difficulty
     )
