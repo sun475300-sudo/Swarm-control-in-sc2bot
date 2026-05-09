@@ -12,7 +12,6 @@ Unit Tests for CombatManager
 """
 
 from typing import List
-from unittest.mock import MagicMock, Mock, patch
 
 import pytest
 
@@ -231,13 +230,12 @@ class TestRallyPoint:
             # 랠리 포인트가 설정될 수 있음 (None일 수도 있음)
             # 이 경우 테스트는 크래시 없이 완료되어야 함
             if combat._rally_point is not None:
-                # 랠리 포인트는 기지와 다른 위치여야 함
+                # 랠리 포인트는 기지와 다른 위치여야 함 (>= 0 거리 보장)
                 base_to_rally = (
                     (combat._rally_point[0] - 50) ** 2
                     + (combat._rally_point[1] - 50) ** 2
                 ) ** 0.5
-                # 랠리 포인트가 설정되었다면 기지에서 멀리 있을 수 있음
-                assert True  # 크래시 없이 실행되면 통과
+                assert base_to_rally >= 0
         else:
             # 메서드가 없으면 스킵
             pytest.skip("_update_rally_point method not available")
@@ -262,7 +260,7 @@ class TestArmyManagement:
     def test_army_composition_tracking(self):
         """병력 구성 추적 테스트"""
         bot = MockBot()
-        combat = CombatManager(bot)
+        CombatManager(bot)  # smoke: construction must not raise
 
         # 다양한 유닛 추가
         units = [
@@ -287,7 +285,7 @@ class TestThreatAssessment:
     def test_threat_level_calculation(self):
         """위협 레벨 계산 테스트"""
         bot = MockBot()
-        combat = CombatManager(bot)
+        CombatManager(bot)  # smoke: construction must not raise
 
         # 아군 병력
         friendly_units = [MockUnit(i, "ZERGLING", (50, 50)) for i in range(10)]
@@ -308,7 +306,7 @@ class TestRetreatConditions:
     def test_retreat_on_low_health(self):
         """체력 낮을 때 후퇴 테스트"""
         bot = MockBot()
-        combat = CombatManager(bot)
+        CombatManager(bot)  # smoke: construction must not raise
 
         # 체력이 낮은 유닛
         damaged_unit = MockUnit(1, "ZERGLING", (50, 50), health=10.0, health_max=35.0)
@@ -321,7 +319,7 @@ class TestRetreatConditions:
     def test_retreat_on_overwhelming_enemy(self):
         """압도적 적 병력 시 후퇴 테스트"""
         bot = MockBot()
-        combat = CombatManager(bot)
+        CombatManager(bot)  # smoke: construction must not raise
 
         # 소수 아군
         friendly_units = [MockUnit(i, "ZERGLING", (50, 50)) for i in range(5)]
@@ -380,8 +378,8 @@ class TestCombatStatistics:
         # 기본 전투 관련 필드 확인
         assert hasattr(combat, "_base_defense_active")
         assert hasattr(combat, "_victory_push_active")
-        assert combat._base_defense_active == False
-        assert combat._victory_push_active == False
+        assert not combat._base_defense_active
+        assert not combat._victory_push_active
 
     def test_kd_ratio_tracking(self):
         """전투 추적 시스템 테스트"""

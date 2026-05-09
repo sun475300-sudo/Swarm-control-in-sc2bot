@@ -19,8 +19,8 @@ project_root = script_dir.parent.parent
 if str(project_root) not in sys.path:
     sys.path.insert(0, str(project_root))
 
-from wicked_zerg_challenger.local_training.rl_agent import RLAgent
-from wicked_zerg_challenger.tools.background_parallel_learner import (
+from wicked_zerg_challenger.local_training.rl_agent import RLAgent  # noqa: E402  (after sys.path setup)
+from wicked_zerg_challenger.tools.background_parallel_learner import (  # noqa: E402
     BackgroundParallelLearner,
 )
 
@@ -93,7 +93,7 @@ def test_rl_agent_batch_training():
 
     # RLAgent 생성
     agent = RLAgent(model_path=str(temp_model_path))
-    logger.info(f"Created RLAgent")
+    logger.info("Created RLAgent")
 
     # 더미 경험 데이터 생성
     experiences = []
@@ -115,7 +115,7 @@ def test_rl_agent_batch_training():
 
     # 배치 학습
     stats = agent.train_from_batch(experiences)
-    logger.info(f"Batch training complete:")
+    logger.info("Batch training complete:")
     logger.info(f"  - Loss: {stats['loss']:.4f}")
     logger.info(f"  - Total steps: {stats['steps']}")
 
@@ -221,13 +221,13 @@ def test_background_learner_lifecycle():
     # 통계 확인
     time.sleep(2)
     stats = learner.get_stats()
-    logger.info(f"Stats retrieved:")
+    logger.info("Stats retrieved:")
     for key, value in stats.items():
         logger.info(f"  - {key}: {value}")
 
     # 중지
     learner.stop()
-    logger.info(f"Learner stopped")
+    logger.info("Learner stopped")
     logger.info(f"  - Running: {learner.running}")
 
     time.sleep(1)
@@ -251,7 +251,7 @@ def run_all_tests():
         elapsed = time.time() - start_time
 
         logger.info("\n" + "="*70)
-        logger.info(f"  ALL TESTS PASSED [OK]")
+        logger.info("  ALL TESTS PASSED [OK]")
         logger.info(f"  Total time: {elapsed:.2f}s")
         logger.info("="*70 + "\n")
 

@@ -190,7 +190,7 @@ class TestConfigLoader:
         from config_loader import get, load_config
 
         config_loader._config = None
-        cfg = load_config()
+        load_config()
         port = get("proxy.port")
         assert port == 9999
 

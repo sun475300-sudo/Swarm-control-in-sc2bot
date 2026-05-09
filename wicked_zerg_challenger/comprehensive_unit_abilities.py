@@ -489,7 +489,7 @@ class ComprehensiveUnitAbilities:
 
         # === 1. LURKER: 적 근처에서 잠복 (공격 전 필수) ===
         lurkers = self.bot.units(UnitTypeId.LURKERMP).filter(
-            lambda l: not l.is_burrowed
+            lambda lurker: not lurker.is_burrowed
         )
         for lurker in lurkers:
             # 적이 사거리 내에 있거나 근처에 있으면 잠복

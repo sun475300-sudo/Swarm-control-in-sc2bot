@@ -6,16 +6,16 @@ PPTX 텍스트와 겹침 방지 — 장식용 배경 그래픽 전용
 """
 
 import logging
+from pathlib import Path
 
 import matplotlib
 import numpy as np
 
 logger = logging.getLogger("GenerateVisuals")
-matplotlib.use("Agg")
-from pathlib import Path
+matplotlib.use("Agg")  # must be set BEFORE importing pyplot
 
-import matplotlib.pyplot as plt
-from matplotlib.patches import FancyBboxPatch, Polygon
+import matplotlib.pyplot as plt  # noqa: E402  (after matplotlib.use)
+from matplotlib.patches import FancyBboxPatch, Polygon  # noqa: E402
 
 # ===== Color constants (matching PPTX theme) =====
 BG_DARK = "#0B101F"

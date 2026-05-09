@@ -14,3 +14,10 @@ known_first_party = [
   "scripts",
   "tools",
 ]
+
+[tool.ruff.lint.per-file-ignores]
+# Ursina presentation script uses ``from ursina import *`` deliberately — its
+# API is wide, dynamic, and the file is a standalone visualization tool rather
+# than bot code. Suppress the star-import warning + cascading undefined-name
+# warnings only for this file.
+"wicked_zerg_challenger/visuals/swarm_3d_ursina.py" = ["F403", "F405"]

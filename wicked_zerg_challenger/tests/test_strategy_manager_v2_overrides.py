@@ -9,8 +9,8 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 # Mock StrategyConfig before importing StrategyManagerV2
 sys.modules["config.unit_configs"] = MagicMock()
 
-from strategy_manager import StrategyMode
-from strategy_manager_v2 import StrategyManagerV2
+from strategy_manager import StrategyMode  # noqa: E402  (after sys.path + sys.modules stub)
+from strategy_manager_v2 import StrategyManagerV2  # noqa: E402
 
 
 class TestStrategyManagerV2Overrides(unittest.TestCase):

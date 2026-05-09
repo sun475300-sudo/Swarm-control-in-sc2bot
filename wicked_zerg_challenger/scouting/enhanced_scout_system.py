@@ -33,9 +33,9 @@ warnings.warn(
     stacklevel=2,
 )
 
-from typing import Dict, List, Optional, Set, Tuple
+from typing import Dict, List, Optional, Set, Tuple  # noqa: E402  (after warnings.warn)
 
-from utils.logger import get_logger
+from utils.logger import get_logger  # noqa: E402
 
 try:
     from sc2.bot_ai import BotAI

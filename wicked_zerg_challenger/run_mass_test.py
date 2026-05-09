@@ -40,11 +40,11 @@ def _ensure_sc2_path():
 
 _ensure_sc2_path()
 
-from sc2 import maps
-from sc2.data import Difficulty, Race
-from sc2.main import run_game
-from sc2.player import Bot, Computer
-from wicked_zerg_bot_pro_impl import WickedZergBotProImpl
+from sc2 import maps  # noqa: E402  (after _ensure_sc2_path)
+from sc2.data import Difficulty, Race  # noqa: E402
+from sc2.main import run_game  # noqa: E402
+from sc2.player import Bot, Computer  # noqa: E402
+from wicked_zerg_bot_pro_impl import WickedZergBotProImpl  # noqa: E402
 
 # GPU setup
 try:
@@ -166,7 +166,7 @@ def main():
     # Final summary
     total_time = time.time() - start_time
     logger.info(f"\n{'='*70}")
-    logger.info(f"  MASS TEST COMPLETE")
+    logger.info("  MASS TEST COMPLETE")
     logger.info(f"{'='*70}")
     logger.info(f"  Total Games: {total}")
     logger.error(f"  Results: {wins}W / {losses}L / {errors}E")
@@ -176,7 +176,7 @@ def main():
     logger.info(f"  Avg Time/Game: {total_time/max(len(results),1):.1f}s")
 
     # Per-difficulty breakdown
-    logger.info(f"\n  --- By Difficulty ---")
+    logger.info("\n  --- By Difficulty ---")
     for _, diff_name in DIFFICULTIES:
         d_results = [r for r in results if r.get("difficulty") == diff_name]
         d_wins = sum(1 for r in d_results if r.get("won"))
@@ -185,7 +185,7 @@ def main():
         logger.info(f"  {diff_name:12s}: {d_wins}W/{d_total-d_wins}L ({wr:.0f}%)")
 
     # Per-race breakdown
-    logger.info(f"\n  --- By Race ---")
+    logger.info("\n  --- By Race ---")
     for race in RACES:
         r_results = [r for r in results if r.get("race") == race.name]
         r_wins = sum(1 for r in r_results if r.get("won"))

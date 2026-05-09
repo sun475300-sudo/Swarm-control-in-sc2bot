@@ -4,11 +4,18 @@ These tests use MagicMock so no SC2 game instance is required.
 """
 from __future__ import annotations
 
-from types import SimpleNamespace
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
 import pytest
-from sc2.ids.unit_typeid import UnitTypeId
+
+try:
+    from sc2.ids.unit_typeid import UnitTypeId
+except ImportError:
+    pytest.skip("sc2 library not available", allow_module_level=True)
+
+from wicked_zerg_challenger.economy.queen_transfusion_manager import (
+    QueenTransfusionManager,
+)
 
 # ---------------------------------------------------------------------------
 # Minimal stubs so we can import without a running SC2 environment
@@ -42,9 +49,6 @@ def _make_bot(time=120.0):
     bot.time = time
     bot.do = MagicMock()
     return bot
-
-
-from wicked_zerg_challenger.economy.queen_transfusion_manager import QueenTransfusionManager
 
 
 # ---------------------------------------------------------------------------

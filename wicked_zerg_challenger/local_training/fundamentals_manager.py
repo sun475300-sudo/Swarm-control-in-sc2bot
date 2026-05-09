@@ -30,9 +30,10 @@ except ImportError:
             return _logging.getLogger(name)
 
 
+from pathlib import Path  # noqa: E402  (after sys.path setup above)
+from typing import Dict, List  # noqa: E402
+
 logger = _get_logger("FundamentalsManager")
-from pathlib import Path
-from typing import Dict, List
 
 
 class FundamentalSkill:

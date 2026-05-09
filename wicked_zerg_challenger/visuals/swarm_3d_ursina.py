@@ -14,7 +14,7 @@
 import math
 import random
 
-from ursina import *
+from ursina import *  # see [tool.ruff.lint.per-file-ignores] — wide dynamic API
 
 app = Ursina(
     title="Swarm-Net Airspace Control",
