@@ -62,6 +62,8 @@ class EarlyDefenseSystem:
         self.proxy_response_active = False
         self._proxy_spines_requested = 0
         self._proxy_worker_tags: Set = set()
+        self._pulled_worker_tags: Set = set()
+        self._workers_pulled: bool = False
 
         # FIX C3: Initialize missing attributes
         self._zergling_speed_researched = False
@@ -84,6 +86,8 @@ class EarlyDefenseSystem:
         self.proxy_response_active = False
         self._proxy_spines_requested = 0
         self._proxy_worker_tags = set()
+        self._pulled_worker_tags = set()
+        self._workers_pulled = False
         self._zergling_speed_researched = False
         self._spine_crawler_built = False
         self._spine_crawler_ordered = False
@@ -155,6 +159,13 @@ class EarlyDefenseSystem:
                 f"[WARNING] Early rush detected! {nearby_enemies.amount} enemies found (Game Time: {int(self.bot.time)}s)"
             )
             logger.info(f"Emergency Defense Mode ACTIVATED!")
+        else:
+            # Reset flags when threat has cleared
+            if self.early_rush_detected and not self.proxy_response_active:
+                self.early_rush_detected = False
+                self.emergency_mode = False
+                self.early_threats = set()
+                logger.info("[*] Early rush threat cleared — returning to normal mode [*]")
 
     async def _detect_proxy_structure_rush(self) -> None:
         """Detect proxy Barracks or cannon rush structures near our base."""

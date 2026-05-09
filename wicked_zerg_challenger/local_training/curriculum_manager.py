@@ -3,7 +3,18 @@
 import json
 import logging
 import os
+import tempfile
 from pathlib import Path
+
+
+def _atomic_json_save(path: str, data: object) -> None:
+    """Write JSON atomically via temp-file + rename to prevent corruption on crash."""
+    dir_name = os.path.dirname(os.path.abspath(path))
+    with tempfile.NamedTemporaryFile("w", dir=dir_name, delete=False,
+                                     suffix=".tmp", encoding="utf-8") as f:
+        json.dump(data, f, indent=2, ensure_ascii=False)
+        tmp_name = f.name
+    os.replace(tmp_name, path)
 
 logger = logging.getLogger("CurriculumManager")
 
@@ -155,9 +166,8 @@ class CurriculumManager:
                     "win_rate": round(win_rate, 2),
                 }
 
-            with open(race_stats_file, "w", encoding="utf-8") as f:
-                json.dump(stats_with_rates, f, indent=2, ensure_ascii=False)
-        except IOError as e:
+            _atomic_json_save(str(race_stats_file), stats_with_rates)
+        except (IOError, OSError) as e:
             logger.error(f"Failed to save race stats: {e}")
 
     def save_level(self):
@@ -170,10 +180,9 @@ class CurriculumManager:
                 "losses_at_current_level": self.losses_at_current_level,
                 "wins_required": self.wins_required_per_level.get(self.current_idx, 10),
             }
-            with open(self.stats_file, "w", encoding="utf-8") as f:
-                json.dump(data, f, indent=2)
-        except IOError:
-            pass
+            _atomic_json_save(str(self.stats_file), data)
+        except (IOError, OSError) as e:
+            logger.error(f"Failed to save level stats: {e}")
 
     def get_difficulty(self) -> Difficulty:
         """Get current difficulty level."""
@@ -236,9 +245,16 @@ class CurriculumManager:
         )
         logger.info(f"{'='*70}\n")
 
-        # 승격 체크: 필요한 승리 횟수 달성
-        if self.wins_at_current_level >= wins_required:
+        # 승격 체크: 필요한 승리 횟수 AND 최소 승률 40% 달성
+        total_games = self.wins_at_current_level + self.losses_at_current_level
+        win_rate = self.wins_at_current_level / total_games if total_games > 0 else 0.0
+        if self.wins_at_current_level >= wins_required and win_rate >= 0.40:
             return self._promote_to_next_level()
+        elif self.wins_at_current_level >= wins_required and win_rate < 0.40:
+            logger.info(
+                f"[HOLD] 승리 수 달성 ({self.wins_at_current_level}/{wins_required}) "
+                f"but 승률 {win_rate*100:.1f}% < 40% — 승격 보류"
+            )
 
         self.save_level()
         return False

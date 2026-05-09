@@ -19,11 +19,23 @@ Victory & Defeat Conditions Learning System
 
 import json
 import logging
+import os
+import tempfile
 from datetime import datetime
 from pathlib import Path
 from typing import Dict, List, Tuple
 
 logger = logging.getLogger("VictoryConditions")
+
+
+def _atomic_json_save(path: str, data: object) -> None:
+    """Write JSON atomically via temp-file + rename to prevent corruption on crash."""
+    dir_name = os.path.dirname(os.path.abspath(path))
+    with tempfile.NamedTemporaryFile("w", dir=dir_name, delete=False,
+                                     suffix=".tmp", encoding="utf-8") as f:
+        json.dump(data, f, indent=2, ensure_ascii=False)
+        tmp_name = f.name
+    os.replace(tmp_name, path)
 
 
 class VictoryCondition:
@@ -118,8 +130,7 @@ class VictoryConditionsLearner:
                 "last_updated": datetime.now().isoformat(),
             }
 
-            with open(self.conditions_file, "w", encoding="utf-8") as f:
-                json.dump(data, f, indent=2, ensure_ascii=False)
+            _atomic_json_save(str(self.conditions_file), data)
         except Exception as e:
             logger.error(f"Failed to save data: {e}")
 

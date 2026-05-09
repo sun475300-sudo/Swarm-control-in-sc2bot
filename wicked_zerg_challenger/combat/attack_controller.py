@@ -120,7 +120,8 @@ class AttackController:
                     for unit in group_units:
                         try:
                             self.bot.do(unit.attack(target))
-                        except Exception:
+                        except Exception as e:
+                            self.logger.debug(f"unit {unit.tag} attack failed: {e}")
                             continue
 
                 if iteration % 50 == 0:
@@ -135,7 +136,8 @@ class AttackController:
                     try:
                         self.bot.do(unit.attack(attack_target))
                         attack_count += 1
-                    except Exception:
+                    except Exception as e:
+                        self.logger.debug(f"unit {unit.tag} attack failed: {e}")
                         continue
 
                 if iteration % 50 == 0:
