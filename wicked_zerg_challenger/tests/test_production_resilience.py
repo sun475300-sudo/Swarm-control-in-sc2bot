@@ -180,6 +180,17 @@ class TestProductionResilience(unittest.IsolatedAsyncioTestCase):
         ]
         self.assertIn(result, valid_counters)
 
+    def test_build_terran_counters_override_is_intentional(self):
+        """ProductionResilience defines build_terran_counters twice (~1450
+        and ~1960); the second is the TechCoordinator-aware version and
+        intentionally shadows the simpler legacy one. Lock in that
+        contract: the bound method should mention tech_coordinator."""
+        import inspect
+
+        active_source = inspect.getsource(self.resilience.build_terran_counters)
+        self.assertIn("tech_coordinator", active_source)
+        self.assertIn("PRIORITY_MACRO", active_source)
+
     def test_get_counter_unit_returns_none_without_enemies(self):
         """Empty enemy list yields no counter recommendation"""
         result = self.resilience._get_counter_unit(
