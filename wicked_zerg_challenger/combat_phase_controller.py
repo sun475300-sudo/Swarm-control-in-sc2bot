@@ -24,6 +24,7 @@ except ImportError:
     Point2 = tuple
     UnitTypeId = None
 
+from game_config import GameConfig
 from utils.logger import get_logger
 from utils.position_utils import get_center_position
 
@@ -347,7 +348,7 @@ class CombatPhaseController:
 
         for unit in group_units:
             # 체력이 낮은 유닛 우선 후퇴
-            if unit.health_percentage < 0.5:
+            if unit.health_percentage < GameConfig.UNIT_LOW_HP_RETREAT_THRESHOLD:
                 self.bot.do(unit.move(retreat_target))
             else:
                 # 후위 유닛은 적을 견제하면서 후퇴
@@ -444,7 +445,7 @@ class CombatPhaseController:
         if unit.type_id == UnitTypeId.ZERGLING:
             if unit.weapon_cooldown == 0:
                 self.bot.do(unit.attack(closest_enemy))
-            elif unit.health_percentage < 0.3:
+            elif unit.health_percentage < GameConfig.UNIT_CRITICAL_HP_THRESHOLD:
                 # 체력 낮으면 후퇴
                 retreat_pos = unit.position.towards(closest_enemy, -2)
                 self.bot.do(unit.move(retreat_pos))

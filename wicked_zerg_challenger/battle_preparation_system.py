@@ -17,6 +17,7 @@ from typing import Dict, List, Tuple
 from sc2.ids.unit_typeid import UnitTypeId
 from sc2.position import Point2
 
+from game_config import GameConfig
 from utils.logger import get_logger
 from utils.position_utils import get_center_position
 
@@ -269,7 +270,7 @@ class BattlePreparationSystem:
 
         for unit in our_units:
             # 체력 낮은 유닛 우선 후퇴
-            if unit.health_percentage < 0.5:
+            if unit.health_percentage < GameConfig.UNIT_LOW_HP_RETREAT_THRESHOLD:
                 self.bot.do(unit.move(retreat_pos))
 
     async def _manage_active_battles(self):

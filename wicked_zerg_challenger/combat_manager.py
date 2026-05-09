@@ -60,6 +60,7 @@ from combat.rally_point_calculator import (
     update_rally_point,
 )
 
+from game_config import GameConfig
 from utils.frame_cache import FrameCache
 from utils.distance_cache import DistanceCache
 from utils.game_constants import GameFrequencies
@@ -950,7 +951,7 @@ class CombatManager:
                                     retreat_units.append(u)
                                 continue
                             # Low HP -> retreat
-                            if u.health_percentage < 0.30:
+                            if u.health_percentage < GameConfig.UNIT_CRITICAL_HP_THRESHOLD:
                                 self._harass_retreating_tags.add(u.tag)
                                 retreat_units.append(u)
                                 continue
@@ -2931,7 +2932,7 @@ class CombatManager:
                     retreat_units.append(ling)
                 continue
             # Low HP -> retreat
-            if ling.health_percentage < 0.30:
+            if ling.health_percentage < GameConfig.UNIT_CRITICAL_HP_THRESHOLD:
                 self._harass_retreating_tags.add(ling.tag)
                 retreat_units.append(ling)
                 continue
@@ -3348,7 +3349,7 @@ class CombatManager:
                 "WIDOWMINE",
             ]:
                 siege.append(enemy)
-            elif enemy.health_percentage < 0.3:
+            elif enemy.health_percentage < GameConfig.ENEMY_LOW_HP_PRIORITY_THRESHOLD:
                 low_hp.append(enemy)
             else:
                 other.append(enemy)
