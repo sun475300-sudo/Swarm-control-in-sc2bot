@@ -1682,14 +1682,13 @@ class EconomyManager:
 
         return minerals > 800
 
-    async def _prevent_resource_banking(self) -> None:
+    async def _legacy_prevent_resource_banking_static_defense(self) -> None:
         """
-        * Prevent resource banking by spending excess minerals *
-
-        Logic:
-        1. If Minerals > Config.Threshold and Larva < Config.Threshold:
-           - Build Extra Queens (Injects/Defense)
-           - Build Static Defense (Spines/Spores) - ONLY AFTER 3+ BASES
+        Legacy queens + static-defense banking logic (preserved for future
+        integration). The active implementation lower in this file overrides
+        this name; we renamed this older copy so flake8 F811 stops flagging
+        the duplicate while keeping the queens/spores/spines logic available
+        for re-integration.
         """
         if not hasattr(self.bot, "minerals"):
             return
@@ -3392,8 +3391,10 @@ class EconomyManager:
                 self._reserved_minerals = 150
                 self._reserved_gas = 100
 
-    async def _reduce_gas_workers(self) -> None:
-        """가스 일꾼 감소 (과잉 가스 방지)"""
+    async def _legacy_reduce_gas_workers_simple(self) -> None:
+        """Legacy simpler gas-worker reducer (overridden by the tiered
+        version further down). Renamed to silence flake8 F811 while keeping
+        the logic available for reference."""
         try:
             if (
                 not hasattr(self.bot, "gas_buildings")

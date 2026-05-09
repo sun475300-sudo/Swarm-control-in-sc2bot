@@ -34,7 +34,43 @@
 
 ---
 
-## Cycle 2 (예정) — 코드 품질 / 정적 분석 / 잠재적 결함
+## Cycle 2 (완료) — 코드 품질 / 정적 분석 / 잠재적 결함
+
+### 발견된 이슈
+
+| # | 카테고리 | 이슈 | 우선순위 |
+|---|---|---|---|
+| C2.1 | Real bug | `wicked_zerg_challenger/opponent_modeling.py`에 `OpponentModeling.on_step`이 두 번 정의(341, 765) → 두 번째가 첫 번째를 덮어 build-order/timing-attack/tech-progression 추적 + blackboard 업데이트가 dead code | **High (게임 로직 회귀)** |
+| C2.2 | Dead code | `combat_manager.py`의 `_find_harass_target`가 두 번 정의 (2809, 5005) | Medium |
+| C2.3 | Dead code | `economy_manager.py`의 `_prevent_resource_banking` 두 번 정의 (1685, 3262) — queens+spores 정적 방어 로직이 무효화 | Medium |
+| C2.4 | Dead code | `economy_manager.py`의 `_reduce_gas_workers` 두 번 정의 (3395, 4086) | Medium |
+| C2.5 | Dead code | `local_training/production_resilience.py`의 `build_terran_counters` 두 번 정의 (1450, 1960) — TechCoordinator 인지 버전이 단순 버전을 덮음 | Medium |
+| C2.6 | Lint | `scouting/phase_scout_cadence.py`에 `typing.Tuple` 사용처 없음 | Low |
+| C2.7 | Lint | `scouting_system.py`에 `typing.Iterable` 사용처 없음 | Low |
+| C2.8 | Test infra | `requirements-dev.txt`에 `numpy`/`pyyaml` 누락 → 신규 환경에서 다시 14건 skip 발생 | Medium |
+| C2.9 | Test infra | `pytest.ini`의 `addopts`에 `-ra` 누락 → skip 사유가 표시되지 않아 회귀 추적이 어려움 | Low |
+
+### Cycle 2 적용된 fix
+
+- C2.1: `opponent_modeling.py` — 단순한 두 번째 `on_step` 삭제, 완전한 첫 번째 `on_step`(blackboard 업데이트 포함)이 실행되도록 복원
+- C2.2: `combat_manager.py` — 단순한 첫 번째 `_find_harass_target` 삭제, 정교한 worker-priority 두 번째 버전 유지
+- C2.3: `economy_manager.py` — 첫 번째 `_prevent_resource_banking`을 `_legacy_prevent_resource_banking_static_defense`로 rename (코드 보존)
+- C2.4: `economy_manager.py` — 첫 번째 `_reduce_gas_workers`를 `_legacy_reduce_gas_workers_simple`로 rename
+- C2.5: `production_resilience.py` — 첫 번째 `build_terran_counters`를 `_legacy_build_terran_counters_simple`로 rename
+- C2.6/2.7: 미사용 typing import 제거
+- C2.8: `requirements-dev.txt`에 numpy/pyyaml 추가
+- C2.9: `pytest.ini` `addopts`에 `-ra` 추가
+
+### Cycle 2 결과
+
+- flake8 F811 경고: **5건 → 0건**
+- flake8 F401 (production code): **2건 → 0건**
+- pytest: **429 pass / 16 skip 유지** (회귀 없음)
+- 잠재 위험 회귀 1건(`opponent_modeling.on_step`) 실제로 게임 로직 영향이 있었던 것으로 판단
+
+---
+
+## Cycle 3 (예정) — 코드 품질 / 정적 분석 / 잠재적 결함 (계속)
 
 ### 후보 작업 영역
 

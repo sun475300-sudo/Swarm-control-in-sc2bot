@@ -6,6 +6,10 @@ pytest>=7.0.0
 pytest-asyncio>=0.23.0
 pytest-timeout>=2.1.0
 pytest-mock>=3.10.0
+# Test runtime deps used by tests/test_new_modules.py, test_p606_modules.py,
+# config_loader-style tests. Without these, ~14 tests are silently skipped.
+numpy>=1.24
+pyyaml>=6.0
 
 # Code quality (matches sc2bot-ci.yml versions)
 black==26.3.1

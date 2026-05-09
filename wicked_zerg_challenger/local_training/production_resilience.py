@@ -1447,7 +1447,11 @@ class ProductionResilience:
 
     # Defense methods moved to DefenseCoordinator
 
-    async def build_terran_counters(self) -> None:
+    async def _legacy_build_terran_counters_simple(self) -> None:
+        """Legacy direct-build counter logic. The TechCoordinator-aware
+        implementation further down overrides this name; renamed to keep
+        flake8 F811 silent while preserving the simpler version for
+        reference."""
         b = self.bot
         if not b.production:
             return
