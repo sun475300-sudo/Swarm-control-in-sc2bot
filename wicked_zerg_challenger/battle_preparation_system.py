@@ -18,6 +18,7 @@ from sc2.ids.unit_typeid import UnitTypeId
 from sc2.position import Point2
 
 from utils.logger import get_logger
+from utils.position_utils import get_center_position
 
 
 class BattleZone:
@@ -162,11 +163,7 @@ class BattlePreparationSystem:
             ]
 
             if nearby:
-                # 클러스터 중심 계산
-                center_x = sum(u.position.x for u in nearby) / len(nearby)
-                center_y = sum(u.position.y for u in nearby) / len(nearby)
-                center = Point2((center_x, center_y))
-
+                center = get_center_position(nearby)
                 clusters.append((center, nearby))
 
                 for u in nearby:
