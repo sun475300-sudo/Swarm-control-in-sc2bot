@@ -773,16 +773,11 @@ class OpponentModeling:
                 f"[OPPONENT_MODELING] Known opponent: {opponent_id} ({self.opponent_models[opponent_id].games_played} games)"
             )
 
-    async def on_step(self, iteration: int):
-        """매 프레임 호출 - 신호 감지"""
-        if not self.current_opponent_id or not self.bot:
-            return
-
-        game_time = self.bot.time
-
-        # Only detect signals in early game (0-180s)
-        if game_time <= 180.0:
-            await self._detect_early_signals(game_time)
+    # NOTE: on_step is intentionally NOT redefined here. The earlier
+    # async on_step (build-order tracking, timing-attack detection, tech
+    # progression, blackboard updates) is the canonical entry point.
+    # A simpler duplicate used to live here, silently shadowing the rich
+    # version under Python's late-binding rules.
 
     def on_game_end(self, won: bool, lost: bool):
         """게임 종료 시 호출 - 데이터 저장"""
@@ -792,9 +787,9 @@ class OpponentModeling:
         # Update game history
         self.current_game_history.game_won = won
         self.current_game_history.game_lost = lost
-        self.current_game_history.early_signals = [
-            s.value for s in self.observed_signals
-        ]
+        # observed_signals is Set[str] of signal-name strings — already
+        # populated via signal.value, so just snapshot it as a list.
+        self.current_game_history.early_signals = list(self.observed_signals)
 
         # Detect strategy (placeholder - would need more logic)
         if self.intel:
@@ -822,10 +817,10 @@ class OpponentModeling:
 
         model = self.opponent_models[self.current_opponent_id]
 
-        # If we have observed signals, use them for prediction
+        # If we have observed signals, use them for prediction.
+        # observed_signals is already Set[str] of signal-name strings.
         if self.observed_signals:
-            signal_strings = [s.value for s in self.observed_signals]
-            return model.predict_strategy(signal_strings)
+            return model.predict_strategy(list(self.observed_signals))
 
         # Otherwise, return most common strategy
         if model.strategy_frequency:
