@@ -22,10 +22,10 @@ import matplotlib
 import numpy as np
 
 logger = logging.getLogger("GenerateAnimatedGifs")
-matplotlib.use("Agg")
-import matplotlib.patches as mpatches
-import matplotlib.pyplot as plt
-from matplotlib.animation import FuncAnimation, PillowWriter
+matplotlib.use("Agg")  # must be set BEFORE importing pyplot
+import matplotlib.patches as mpatches  # noqa: E402  (after matplotlib.use)
+import matplotlib.pyplot as plt  # noqa: E402  (after matplotlib.use)
+from matplotlib.animation import FuncAnimation, PillowWriter  # noqa: E402
 
 OUTPUT_DIR = os.path.dirname(os.path.abspath(__file__))
 DPI = 100

@@ -40,11 +40,11 @@ def _ensure_sc2_path():
 
 _ensure_sc2_path()
 
-from sc2 import maps
-from sc2.data import Difficulty, Race
-from sc2.main import run_game
-from sc2.player import Bot, Computer
-from wicked_zerg_bot_pro_impl import WickedZergBotProImpl
+from sc2 import maps  # noqa: E402  (after _ensure_sc2_path)
+from sc2.data import Difficulty, Race  # noqa: E402
+from sc2.main import run_game  # noqa: E402
+from sc2.player import Bot, Computer  # noqa: E402
+from wicked_zerg_bot_pro_impl import WickedZergBotProImpl  # noqa: E402
 
 # GPU setup
 try:
