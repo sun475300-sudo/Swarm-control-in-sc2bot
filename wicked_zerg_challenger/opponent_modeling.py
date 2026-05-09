@@ -272,6 +272,8 @@ class OpponentModeling:
         # Opponent models
         self.opponent_models: Dict[str, OpponentModel] = {}
         self.current_opponent_id: Optional[str] = None
+        # Alias used by integration-layer methods (on_game_start/on_step/on_game_end)
+        self.current_opponent: Optional[str] = None
         self.current_game_history: Optional[GameHistory] = None
 
         # Current game tracking
@@ -304,6 +306,8 @@ class OpponentModeling:
             # In real games, opponent_id would be player name/ID
             # For now, use race as identifier
             self.current_opponent_id = f"opponent_{race_name}"
+            # Keep integration-layer alias in sync
+            self.current_opponent = self.current_opponent_id
 
             # Load or create model
             if self.current_opponent_id not in self.opponent_models:
