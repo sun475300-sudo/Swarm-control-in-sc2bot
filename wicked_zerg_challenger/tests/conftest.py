@@ -27,13 +27,21 @@ def _install_sc2_stub() -> None:
     except ImportError:
         pass
 
-    class _IdToken(str):
-        __slots__ = ("_id_name",)
+    class _IdToken:
+        """Stub stand-in for an sc2 enum member.
 
-        def __new__(cls, qualified, short):
-            obj = str.__new__(cls, qualified)
-            obj._id_name = short
-            return obj
+        Mirrors the parts of an IntEnum that bot code touches: `.name`,
+        `.value`, equality, hashability, and string formatting. Crucially
+        not a `str` subclass, so `isinstance(token, str)` is False — real
+        sc2 IDs are IntEnum members, and bot code distinguishes string
+        upgrade names from enum unit ids using exactly that check.
+        """
+
+        __slots__ = ("_id_qualified", "_id_name")
+
+        def __init__(self, qualified, short):
+            self._id_qualified = qualified
+            self._id_name = short
 
         @property
         def name(self):
@@ -42,6 +50,28 @@ def _install_sc2_stub() -> None:
         @property
         def value(self):
             return self._id_name
+
+        def __repr__(self):
+            return self._id_qualified
+
+        def __str__(self):
+            return self._id_qualified
+
+        def __eq__(self, other):
+            if isinstance(other, _IdToken):
+                return self._id_qualified == other._id_qualified
+            if isinstance(other, str):
+                return self._id_qualified == other or self._id_name == other
+            return NotImplemented
+
+        def __ne__(self, other):
+            result = self.__eq__(other)
+            if result is NotImplemented:
+                return result
+            return not result
+
+        def __hash__(self):
+            return hash(self._id_qualified)
 
     class _IdMeta(type):
         _cache: dict = {}
