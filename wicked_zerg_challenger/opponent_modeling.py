@@ -310,6 +310,7 @@ class OpponentModeling:
             # In real games, opponent_id would be player name/ID
             # For now, use race as identifier
             self.current_opponent_id = f"opponent_{race_name}"
+            self.current_opponent = self.current_opponent_id
 
             # Load or create model
             if self.current_opponent_id not in self.opponent_models:
@@ -738,6 +739,7 @@ class OpponentModeling:
     def on_game_start(self, opponent_id: str, opponent_race=None):
         """게임 시작 시 호출 - 적 추적 시작"""
         self.current_opponent = opponent_id
+        self.current_opponent_id = opponent_id
         # * FIX: GameHistory dataclass에 맞는 필드로 초기화
         race_name = (
             opponent_race.name
