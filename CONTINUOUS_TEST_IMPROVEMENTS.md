@@ -99,7 +99,39 @@
 
 ---
 
-## Cycle 4 (예정) — 잔여 F841 + 함수 중복 추가 audit + CI fail-fast 검토
+## Cycle 4 (완료) — 잔여 F841 의심 항목 4건 + 추가 정적분석 후속
+
+### 발견된 이슈
+
+| # | 카테고리 | 이슈 | 우선순위 |
+|---|---|---|---|
+| C4.1 | Dead code | `combat_manager.py:3482` `non_combat_names` set이 정의만 되고 필터에 적용되지 않음 (`nearby_combat`은 `combat_unit_names`만 사용) | Low |
+| C4.2 | Dead code | `economy_manager.py:328` `early_window = game_time <= 240.0` — pressure 게이트 리팩터링 후 잔재 | Low |
+| C4.3 | Latent config bypass | `creep_manager.py:280` `spread_range = self.TUMOR_SPREAD_RANGE` 후 하드코딩 `[7.0, 9.0]` 사용. 변수만 죽었지만 동시에 config 상수가 무력화됨을 노출 | Medium (config-vs-hardcode 일관성) |
+| C4.4 | Latent priority bypass | `build_order_system.py:1058` `PRIORITY_EXPANSION = 55` 정의 후 `tech_coordinator.request_structure(...)`를 호출하지 않고 `worker.build` 직접 호출 → 우선순위 시스템 우회 | Medium (TechCoordinator 일관성) |
+
+### Cycle 4 적용된 fix
+
+- C4.1: 사용되지 않던 `non_combat_names` 삭제
+- C4.2: `early_window` 변수 삭제
+- C4.3: `spread_range` 변수 삭제 + 하드코딩 의도를 코멘트로 명시 (실제 배선은 cycle 5+에서)
+- C4.4: `PRIORITY_EXPANSION` 변수 삭제 + 우선순위 미배선이 의도적이라기보다 누락임을 코멘트로 표시 (실제 배선은 cycle 5+에서)
+
+### Cycle 4 결과
+
+- F841 (production code, non-e): 30+ → **26** (의심 4건 정리)
+- pytest: 429 pass / 16 skip 유지
+- C4.3, C4.4는 후속 사이클에서 본격 배선 검토 필요한 latent bug로 식별
+
+---
+
+## Cycle 5 (예정)
+
+- C4.3: `creep_manager.py` distance ring을 `TUMOR_SPREAD_RANGE` 기반으로 결정하도록 배선 검토
+- C4.4: `build_order_system.py`의 expansion 빌드를 `tech_coordinator.request_structure(UnitTypeId.HATCHERY, 55, near=location)`로 라우팅
+- 잔여 F841 26건 추가 audit (`game_time`, `regenerating`, `current_time` 패턴)
+- `bot_step_integration.py` silent-swallow 11곳에 logger.warning 추가 (canonical 패턴 901-912 따라)
+- `comprehensive_test_suite.py` 하드코딩 결과 → 실제 pytest 호출로 교체
 
 ### 후보 작업 영역
 

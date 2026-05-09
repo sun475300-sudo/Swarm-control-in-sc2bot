@@ -3478,20 +3478,6 @@ class CombatManager:
             "PHOENIX",
         }
 
-        # 비전투 유닛 (정찰용, 위협이 낮음)
-        non_combat_names = {
-            "SCV",
-            "PROBE",
-            "DRONE",
-            "MULE",
-            "OBSERVER",
-            "OVERLORD",
-            "OVERSEER",
-            "WARPPRISM",
-            "RAVEN",
-            "CHANGELING",
-        }
-
         for th in self.bot.townhalls:
             # 일반 감지 거리
             base_range = 25 if game_time >= 180 else 30  # 초반 더 민감
