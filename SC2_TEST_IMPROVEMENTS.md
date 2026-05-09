@@ -90,9 +90,28 @@
 
 ## 실행 계획
 
-| 배치 | 작업 | 예상 효과 |
+| 배치 | 작업 | 결과 |
 |---|---|---|
-| **Batch 1** | async TestCase → IsolatedAsyncioTestCase | 18개 테스트가 실제 실행되도록 복구. 137 → ~5 warnings |
-| **Batch 2** | run_mass_test mpyq guard + scout stub safety | sprint8_qa 수집 가능, 스텁 누락 조기 감지 |
-| **Batch 3** | dev requirements 정리 + security test guard + pytest.ini cleanup | 신규 contributor 셋업 시간 단축, CI 신뢰도 향상 |
-| **Batch 4+** | 추가 사이클 — 매 사이클마다 테스트 재실행 후 신규 발견 사항 처리 | 지속적 개선 |
+| **Batch 1** ✅ | async TestCase → IsolatedAsyncioTestCase + 4 hidden bug 수정 | 659 → 660 pass, 138 → 102 warnings |
+| **Batch 2** ✅ | run_mass_test mpyq guard + scout 스텁 안전화 | 660 → **662 pass** (sprint8_qa 복구) |
+| **Batch 3** ✅ | pytest.ini cleanup + EnhancedScout lazy-import + dev deps | **662 pass, 0 warnings** (was 102) |
+| **Batch 4+** | 추가 사이클 — 매 사이클마다 테스트 재실행 후 신규 발견 사항 처리 | 진행 중 |
+
+## Batch 1-3 누적 성과
+
+| 지표 | Before | After |
+|---|---|---|
+| 테스트 통과 수 | 659 | **662** |
+| 수집 오류 | 1 | **0** |
+| 경고 | 138 | **0** |
+| 숨겨진 버그 (async 미실행으로 가려진) | 4 | **0** |
+| `pytest.ini --disable-warnings` 차단막 | 활성 | 제거됨 (filterwarnings로 대체) |
+
+## 다음 사이클 후보 (Batch 4+)
+
+- [ ] 루트 `tests/test_security.py` 5건 실패 — pyo3_runtime 환경 의존성 graceful skip
+- [ ] mypy strict 도입 가능 영역 측정 (PR #28에서 누락된 항목)
+- [ ] 봇 핵심 모듈 커버리지 측정 (`pytest-cov` + `--cov-fail-under=70`)
+- [ ] 다른 `try/except ImportError` 스텁 패턴 (`enhanced_scout_system.py`, `phase_scout_cadence.py`)에도 lenient stub 적용 검토
+- [ ] CI 워크플로의 `pip install`을 `uv pip install`로 교체 (resolution-too-deep 해결)
+- [ ] `mpyq`를 optional extra로 분리 (e.g. `pip install ".[replay]"`)
