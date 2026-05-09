@@ -3,7 +3,6 @@
 import math
 
 import pytest
-
 from src.bot.swarm import (
     BEHAVIORS,
     NUM_BEHAVIORS,
