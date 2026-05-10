@@ -547,19 +547,19 @@ class WickedZergBotProImpl(BotAI):
                 lost = "DEFEAT" in result_str or "LOSS" in result_str
 
                 # Record game outcome
-                self.opponent_modeling.on_game_end(won, lost)
+                await self.opponent_modeling.on_game_end(won, lost)
                 self.logger.info(
                     "[OPPONENT_MODELING] Game data saved. Opponent model updated."
                 )
 
                 # Print learning summary every 5 games
-                if self.opponent_modeling.current_opponent:
-                    model = self.opponent_modeling.models.get(
-                        self.opponent_modeling.current_opponent
+                if self.opponent_modeling.current_opponent_id:
+                    model = self.opponent_modeling.opponent_models.get(
+                        self.opponent_modeling.current_opponent_id
                     )
                     if model and model.games_played > 0 and model.games_played % 5 == 0:
                         self.logger.info(
-                            f"[OPPONENT_MODELING] Opponent: {self.opponent_modeling.current_opponent}"
+                            f"[OPPONENT_MODELING] Opponent: {self.opponent_modeling.current_opponent_id}"
                         )
                         self.logger.info(
                             f"Games: {model.games_played}, Wins: {model.games_won}, Losses: {model.games_lost}"
