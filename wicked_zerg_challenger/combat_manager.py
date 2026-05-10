@@ -84,8 +84,8 @@ from combat.rally_point_calculator import (
     update_rally_point,
 )
 
-from utils.frame_cache import FrameCache
 from utils.distance_cache import DistanceCache
+from utils.frame_cache import FrameCache
 from utils.game_constants import GameFrequencies
 
 # Import common helpers to reduce code duplication

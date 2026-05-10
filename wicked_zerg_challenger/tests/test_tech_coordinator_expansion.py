@@ -10,6 +10,7 @@ os.environ["PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION"] = "python"
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 import pytest as _sc2_pytest
+
 _sc2_pytest.importorskip("sc2", reason="python-sc2 library not installed")
 from sc2.ids.unit_typeid import UnitTypeId
 from sc2.position import Point2

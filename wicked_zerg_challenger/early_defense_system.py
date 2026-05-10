@@ -14,9 +14,9 @@ try:
     from config.constants import (
         EARLY_GAME_END_SECONDS,
         ENEMY_DETECT_RADIUS,
-        PROXY_DETECT_RADIUS,
-        PROXY_DEFENSE_WORKERS,
         MAX_WORKER_DEFENSE,
+        PROXY_DEFENSE_WORKERS,
+        PROXY_DETECT_RADIUS,
     )
 except ImportError:
     EARLY_GAME_END_SECONDS = 180.0

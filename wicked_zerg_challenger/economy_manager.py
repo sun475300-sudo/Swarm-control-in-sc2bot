@@ -3,8 +3,8 @@
 Economy Manager - deterministic worker production with macro hatcheries.
 """
 
-from enum import Enum
 import inspect
+from enum import Enum
 from typing import Optional
 
 try:

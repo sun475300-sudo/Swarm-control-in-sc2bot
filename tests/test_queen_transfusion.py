@@ -48,8 +48,9 @@ def _make_bot(time=120.0):
     return bot
 
 
-from wicked_zerg_challenger.economy.queen_transfusion_manager import QueenTransfusionManager
-
+from wicked_zerg_challenger.economy.queen_transfusion_manager import (
+    QueenTransfusionManager,
+)
 
 # ---------------------------------------------------------------------------
 # Helper

@@ -18,7 +18,7 @@ from strategy_manager import (
     EnemyRace,
     StrategyManager,
 )
-from upgrade_manager import EvolutionUpgradeManager, MATCHUP_UPGRADE_PRIORITY
+from upgrade_manager import MATCHUP_UPGRADE_PRIORITY, EvolutionUpgradeManager
 
 
 class Blackboard:

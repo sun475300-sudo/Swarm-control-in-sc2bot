@@ -15,8 +15,8 @@ try:
     from swarm_rust_accel import (
         compute_feedback_priority as _compute_feedback_priority_rust,
     )
-    from swarm_rust_accel import formation_positions as _formation_positions_rust
     from swarm_rust_accel import find_unit_clusters as _find_unit_clusters_rust
+    from swarm_rust_accel import formation_positions as _formation_positions_rust
     from swarm_rust_accel import nearest_point_index as _nearest_point_index_rust
     from swarm_rust_accel import path_distance as _path_distance_rust
     from swarm_rust_accel import route_distance as _route_distance_rust

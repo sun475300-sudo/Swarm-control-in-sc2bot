@@ -13,6 +13,7 @@ from building_manager import BuildingManager, UnitTypeId
 from core.manager_registry import get_all_manager_configs
 from economy_manager import EconomyManager
 from strategy_manager import StrategyManager
+
 from utils.distance_cache import DistanceCache
 
 

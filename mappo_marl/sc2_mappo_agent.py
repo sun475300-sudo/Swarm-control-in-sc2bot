@@ -44,6 +44,7 @@ try:
 except ImportError:
     HAS_TORCH = False
     import types as _types
+
     # Lightweight stubs so Torch-dependent class bodies can be *defined* at
     # module level without torch installed.  They are never *instantiated*
     # because construction is guarded by `self.use_torch` / HAS_TORCH checks.
