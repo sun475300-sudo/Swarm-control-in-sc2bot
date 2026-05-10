@@ -4,7 +4,6 @@ pytest 공통 fixtures (#171)
 모든 테스트 파일에서 공유할 수 있는 fixture와 설정을 정의한다.
 """
 
-import os
 import shutil
 import sys
 import tempfile
