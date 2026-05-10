@@ -97,8 +97,10 @@ class NydusNetworkTrainer:
         # 2. 병력 투입
         await self._load_units_into_network(network)
 
-        # 3. 배치된 유닛 관리
-        await self._command_deployed_units()
+        # 3. 배치된 유닛 명령은 _manage_active_worms() 가 매 프레임 처리한다
+        # (이전: self._command_deployed_units() 호출 — 해당 메서드가 존재하지
+        # 않아 5초마다 AttributeError 발생 → on_step 의 except 로 swallow 되어
+        # 조용히 실패하고 있었음. 실제 로직은 _command_worm_units 가 담당.)
 
     async def _plan_new_worm(self, network, game_time: float):
         """새 Worm 계획"""
