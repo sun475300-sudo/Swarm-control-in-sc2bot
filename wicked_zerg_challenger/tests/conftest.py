@@ -22,6 +22,7 @@ def _install_sc2_stub() -> None:
     """Register a tiny in-memory ``sc2`` package when burnysc2 is missing."""
     try:
         import sc2  # noqa: F401  (real package present — no stub needed)
+
         return
     except ImportError:
         pass
@@ -118,11 +119,31 @@ def _install_sc2_stub() -> None:
         "sc2.ids.unit_typeid",
         exported_class="UnitTypeId",
         members=(
-            "DRONE", "OVERLORD", "ZERGLING", "ROACH", "QUEEN", "HATCHERY",
-            "LAIR", "HIVE", "EXTRACTOR", "SPAWNINGPOOL", "EVOLUTIONCHAMBER",
-            "BANELING", "MUTALISK", "HYDRALISK", "LURKER", "ULTRALISK",
-            "BROODLORD", "CORRUPTOR", "INFESTOR", "SWARMHOSTMP", "VIPER",
-            "SPINECRAWLER", "SPORECRAWLER", "CREEPTUMOR", "CREEPTUMORQUEEN",
+            "DRONE",
+            "OVERLORD",
+            "ZERGLING",
+            "ROACH",
+            "QUEEN",
+            "HATCHERY",
+            "LAIR",
+            "HIVE",
+            "EXTRACTOR",
+            "SPAWNINGPOOL",
+            "EVOLUTIONCHAMBER",
+            "BANELING",
+            "MUTALISK",
+            "HYDRALISK",
+            "LURKER",
+            "ULTRALISK",
+            "BROODLORD",
+            "CORRUPTOR",
+            "INFESTOR",
+            "SWARMHOSTMP",
+            "VIPER",
+            "SPINECRAWLER",
+            "SPORECRAWLER",
+            "CREEPTUMOR",
+            "CREEPTUMORQUEEN",
             "CREEPTUMORBURROWED",
         ),
     )
@@ -130,11 +151,17 @@ def _install_sc2_stub() -> None:
         "sc2.ids.upgrade_id",
         exported_class="UpgradeId",
         members=(
-            "ZERGMELEEWEAPONSLEVEL1", "ZERGMELEEWEAPONSLEVEL2",
-            "ZERGMELEEWEAPONSLEVEL3", "ZERGMISSILEWEAPONSLEVEL1",
-            "ZERGGROUNDARMORSLEVEL1", "ZERGFLYERWEAPONSLEVEL1",
-            "ZERGFLYERARMORSLEVEL1", "GLIALRECONSTITUTION",
-            "TUNNELINGCLAWS", "CENTRIFICALHOOKS", "ZERGLINGMOVEMENTSPEED",
+            "ZERGMELEEWEAPONSLEVEL1",
+            "ZERGMELEEWEAPONSLEVEL2",
+            "ZERGMELEEWEAPONSLEVEL3",
+            "ZERGMISSILEWEAPONSLEVEL1",
+            "ZERGGROUNDARMORSLEVEL1",
+            "ZERGFLYERWEAPONSLEVEL1",
+            "ZERGFLYERARMORSLEVEL1",
+            "GLIALRECONSTITUTION",
+            "TUNNELINGCLAWS",
+            "CENTRIFICALHOOKS",
+            "ZERGLINGMOVEMENTSPEED",
             "ZERGLINGATTACKSPEED",
         ),
     )
@@ -143,11 +170,20 @@ def _install_sc2_stub() -> None:
         "sc2.ids.ability_id",
         exported_class="AbilityId",
         members=(
-            "BUILD_HATCHERY", "BUILD_EXTRACTOR", "BUILD_SPAWNINGPOOL",
-            "BUILD_SPINECRAWLER", "BUILD_SPORECRAWLER", "RESEARCH_BURROW",
-            "EFFECT_INJECTLARVA", "EFFECT_TRANSFUSION",
-            "BUILD_CREEPTUMOR_QUEEN", "BUILD_CREEPTUMOR_TUMOR",
-            "BUILD_CREEPTUMOR", "MORPH_LURKER", "MORPH_LAIR", "MORPH_HIVE",
+            "BUILD_HATCHERY",
+            "BUILD_EXTRACTOR",
+            "BUILD_SPAWNINGPOOL",
+            "BUILD_SPINECRAWLER",
+            "BUILD_SPORECRAWLER",
+            "RESEARCH_BURROW",
+            "EFFECT_INJECTLARVA",
+            "EFFECT_TRANSFUSION",
+            "BUILD_CREEPTUMOR_QUEEN",
+            "BUILD_CREEPTUMOR_TUMOR",
+            "BUILD_CREEPTUMOR",
+            "MORPH_LURKER",
+            "MORPH_LAIR",
+            "MORPH_HIVE",
         ),
     )
     buff_id_mod = _make_enum_module(
@@ -218,10 +254,21 @@ def _install_sc2_stub() -> None:
 
     Race = _make_string_enum("Race", ("Zerg", "Terran", "Protoss", "Random"))
     Result = _make_string_enum("Result", ("Victory", "Defeat", "Tie"))
-    Difficulty = _make_string_enum("Difficulty", (
-        "VeryEasy", "Easy", "Medium", "MediumHard", "Hard", "Harder",
-        "VeryHard", "CheatVision", "CheatMoney", "CheatInsane",
-    ))
+    Difficulty = _make_string_enum(
+        "Difficulty",
+        (
+            "VeryEasy",
+            "Easy",
+            "Medium",
+            "MediumHard",
+            "Hard",
+            "Harder",
+            "VeryHard",
+            "CheatVision",
+            "CheatMoney",
+            "CheatInsane",
+        ),
+    )
     data_mod.Race = Race
     data_mod.Result = Result
     data_mod.Difficulty = Difficulty
@@ -266,8 +313,7 @@ def _install_sc2_stub() -> None:
 
     player_mod = types.ModuleType("sc2.player")
     player_mod.Bot = type("Bot", (), {"__init__": lambda self, *a, **k: None})
-    player_mod.Computer = type("Computer", (),
-                               {"__init__": lambda self, *a, **k: None})
+    player_mod.Computer = type("Computer", (), {"__init__": lambda self, *a, **k: None})
     player_mod.Human = type("Human", (), {"__init__": lambda self, *a, **k: None})
     sys.modules.setdefault("sc2.player", player_mod)
 
@@ -276,8 +322,9 @@ def _install_sc2_stub() -> None:
     sys.modules.setdefault("sc2.client", client_mod)
 
     protocol_mod = types.ModuleType("sc2.protocol")
-    protocol_mod.ConnectionAlreadyClosed = type("ConnectionAlreadyClosed",
-                                                (Exception,), {})
+    protocol_mod.ConnectionAlreadyClosed = type(
+        "ConnectionAlreadyClosed", (Exception,), {}
+    )
     sys.modules.setdefault("sc2.protocol", protocol_mod)
 
     portconfig_mod = types.ModuleType("sc2.portconfig")
