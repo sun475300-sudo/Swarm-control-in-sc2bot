@@ -439,7 +439,7 @@ class ProductionController:
             self.bot.do(larvae.first.train(UnitTypeId.OVERLORD))
             self.logger.info(f"Auto Overlord (supply: {supply_left}/{supply_cap})")
 
-        except Exception as e:
+        except Exception:
             self.production_failures += 1
 
     # ========== * Phase 13: 비율 기반 군대 자동 생산 * ==========
@@ -563,7 +563,6 @@ class ProductionController:
 
             if deficit > max_deficit:
                 max_deficit = deficit
-                best_unit = name
                 best_uid = uid
 
         # 가장 부족한 유닛 생산
