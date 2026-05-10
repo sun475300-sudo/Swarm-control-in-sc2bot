@@ -272,8 +272,8 @@ class UnitFactory:
                                 logger.info(
                                     f"[*] Preemptive Overlord (supply_left={self.bot.supply_left}) [*]"
                                 )
-                    except Exception:
-                        pass
+                    except Exception as exc:
+                        logger.debug("unit_factory: %s", exc, exc_info=True)
 
         # * COMBAT REINFORCEMENT: 전투 모드 체크 *
         in_combat = self._check_combat_mode(iteration)
@@ -365,8 +365,8 @@ class UnitFactory:
                             )
                         else:
                             self.bot.do(larva.first.train(UnitTypeId.OVERLORD))
-                    except Exception:
-                        pass
+                    except Exception as exc:
+                        logger.debug("unit_factory: %s", exc, exc_info=True)
             return
 
         # 종족별 가스 비율 업데이트 (StrategyManager 없을 때 fallback)

@@ -8,6 +8,7 @@ Overlord Safety Manager - 대군주 안전 관리 시스템
 3. 맵 전역 감시를 위한 분산 배치
 """
 
+import logging
 import random
 from typing import Dict, List, Optional, Set
 
@@ -15,6 +16,8 @@ from sc2.ids.unit_typeid import UnitTypeId
 from sc2.position import Point2
 
 from utils.logger import get_logger
+
+logger = logging.getLogger("OverlordSafetyManager")
 
 
 class OverlordSafetyManager:
@@ -445,16 +448,16 @@ class OverlordSafetyManager:
                     if len(expansions) >= 3:
                         enemy_third = expansions[2]
                         positions.append(enemy_third)
-                except Exception:
-                    pass
+                except Exception as exc:
+                    logger.debug("overlord_safety_manager: %s", exc, exc_info=True)
 
         # 3. Xel'Naga watchtowers
         try:
             if hasattr(self.bot, "watchtowers") and self.bot.watchtowers:
                 for tower in self.bot.watchtowers:
                     positions.append(tower.position)
-        except Exception:
-            pass
+        except Exception as exc:
+            logger.debug("overlord_safety_manager: %s", exc, exc_info=True)
 
         # 4. If no watchtowers found, add midpoints between bases
         if len(positions) < 4 and enemy_start:
@@ -473,8 +476,8 @@ class OverlordSafetyManager:
                         )
                     )
                     positions.append(mid)
-            except Exception:
-                pass
+            except Exception as exc:
+                logger.debug("overlord_safety_manager: %s", exc, exc_info=True)
 
         self.logger.info(
             f"[SCOUT] Optimal scout positions: {len(positions)} locations identified"
