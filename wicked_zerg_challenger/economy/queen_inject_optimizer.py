@@ -32,14 +32,47 @@ except ImportError:
     class BotAI:
         pass
 
-    class UnitTypeId:
-        QUEEN = "QUEEN"
-        HATCHERY = "HATCHERY"
-        LAIR = "LAIR"
-        HIVE = "HIVE"
+    class _SC2StubSymbol:
+        """Sentinel sc2 enum member used when python-sc2 is unavailable.
 
-    class AbilityId:
-        EFFECT_INJECTLARVA = "EFFECT_INJECTLARVA"
+        Hashable, comparable, stringifies to its name, but is *not* a
+        Python ``str`` so build-order classifiers can distinguish stub
+        enum members from upgrade-name strings."""
+
+        __slots__ = ("_name",)
+
+        def __init__(self, name):
+            self._name = name
+
+        def __eq__(self, other):
+            if isinstance(other, _SC2StubSymbol):
+                return other._name == self._name
+            return NotImplemented
+
+        def __hash__(self):
+            return hash(("_SC2StubSymbol", self._name))
+
+        def __repr__(self):
+            return self._name
+
+        def __str__(self):
+            return self._name
+
+    class _SC2StubMeta(type):
+        _cache: dict = {}
+
+        def __getattr__(cls, name):
+            key = (cls.__name__, name)
+            sym = cls._cache.get(key)
+            if sym is None:
+                sym = _SC2StubSymbol(name)
+                cls._cache[key] = sym
+            return sym
+    class UnitTypeId(metaclass=_SC2StubMeta):
+        pass
+
+    class AbilityId(metaclass=_SC2StubMeta):
+        pass
 
     Unit = None
 

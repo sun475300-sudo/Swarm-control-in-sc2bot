@@ -9,7 +9,17 @@ from pathlib import Path
 os.environ["PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION"] = "python"
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..")))
 
-from scripts.meta_adapter import MetaAdapter
+# See test_ladder_tracker.py for why we go through importlib here.
+import importlib.util as _ilu
+
+_MA_PATH = os.path.abspath(
+    os.path.join(os.path.dirname(__file__), "..", "..", "scripts", "meta_adapter.py")
+)
+_MA_SPEC = _ilu.spec_from_file_location("scripts_meta_adapter", _MA_PATH)
+_MA_MOD = _ilu.module_from_spec(_MA_SPEC)
+sys.modules[_MA_SPEC.name] = _MA_MOD
+_MA_SPEC.loader.exec_module(_MA_MOD)
+MetaAdapter = _MA_MOD.MetaAdapter
 
 
 class TestMetaAdapter(unittest.TestCase):

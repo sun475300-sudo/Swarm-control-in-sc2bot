@@ -537,12 +537,17 @@ class GameStateBlackboard:
             and self.game_phase != GamePhase.OPENING
         )
 
+    # Hatchery costs 300 minerals; bank a little overhead so workers can keep
+    # mining while the expansion drone is in transit.
+    MIN_MINERALS_TO_EXPAND = 300
+
     def should_expand(self) -> bool:
         """확장 가능한 상황인가?"""
         return (
             self.threat.level == ThreatLevel.NONE
-            and not self.resources.is_supply_block
+            and not self.resources.is_supply_blocked
             and not self.is_under_attack
+            and self.resources.minerals >= self.MIN_MINERALS_TO_EXPAND
         )
 
 

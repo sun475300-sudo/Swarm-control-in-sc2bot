@@ -15,9 +15,46 @@ try:
     from sc2.ids.upgrade_id import UpgradeId
     from sc2.position import Point2
 except ImportError:  # Fallbacks for tooling environments
-    UnitTypeId = None
-    AbilityId = None
-    UpgradeId = None
+    class _SC2StubSymbol:
+        __slots__ = ("_name",)
+
+        def __init__(self, name):
+            self._name = name
+
+        def __eq__(self, other):
+            if isinstance(other, _SC2StubSymbol):
+                return other._name == self._name
+            return NotImplemented
+
+        def __hash__(self):
+            return hash(("_SC2StubSymbol", self._name))
+
+        def __repr__(self):
+            return self._name
+
+        def __str__(self):
+            return self._name
+
+    class _SC2StubMeta(type):
+        _cache: dict = {}
+
+        def __getattr__(cls, name):
+            key = (cls.__name__, name)
+            sym = cls._cache.get(key)
+            if sym is None:
+                sym = _SC2StubSymbol(name)
+                cls._cache[key] = sym
+            return sym
+
+    class UnitTypeId(metaclass=_SC2StubMeta):
+        pass
+
+    class AbilityId(metaclass=_SC2StubMeta):
+        pass
+
+    class UpgradeId(metaclass=_SC2StubMeta):
+        pass
+
     Point2 = None
 
 try:
