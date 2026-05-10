@@ -2543,9 +2543,6 @@ class ProductionResilience:
         if minerals <= 600:
             return
 
-        # Calculate how much to spend
-        excess = minerals - 600
-
         larvae = b.units(UnitTypeId.LARVA)
         if not larvae.exists:
             # No larvae - try to build hatchery or queens
