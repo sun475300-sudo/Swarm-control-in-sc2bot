@@ -229,8 +229,11 @@ class TestHarassmentCoordinator:
         # Should not crash
         try:
             await self.coordinator.coordinate_multi_angle_attack(iteration=0)
+        except AttributeError:
+            # AttributeError points at a missing method — that is a real regression
+            raise
         except Exception:
-            # May fail in test environment
+            # Other exceptions can be triggered by the mock environment
             pass
 
     # ===== Harassment Target Selection Tests =====

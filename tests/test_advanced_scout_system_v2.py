@@ -295,8 +295,11 @@ class TestAdvancedScoutSystemV2:
         # Should not crash
         try:
             self.scout_system._print_report()
+        except AttributeError:
+            # AttributeError = method removed/renamed; surface it
+            raise
         except Exception:
-            # May fail in test env, just verify it exists
+            # Mock-call side effects are tolerated
             pass
 
     def test_emergency_mode_detection(self):
