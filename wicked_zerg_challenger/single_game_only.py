@@ -111,7 +111,7 @@ def main():
         logger.info("=" * 70)
         logger.info(f"Map: {selected_map}")
         logger.info(f"Enemy: {enemy_race.name}")
-        logger.info(f"Difficulty: Easy")
+        logger.info("Difficulty: Easy")
         logger.info("=" * 70 + "\n")
 
         # * 5. 게임 실행 (하나만) *

@@ -193,10 +193,10 @@ def gif_boids_swarm():
 
     # 레전드
     legend_elements = [
-        mpatches.Patch(color="#8BC34A", label=f"Zergling x20"),
-        mpatches.Patch(color="#2E7D32", label=f"Roach x15"),
-        mpatches.Patch(color="#1976D2", label=f"Hydralisk x15"),
-        mpatches.Patch(color="#7B1FA2", label=f"Mutalisk x10"),
+        mpatches.Patch(color="#8BC34A", label="Zergling x20"),
+        mpatches.Patch(color="#2E7D32", label="Roach x15"),
+        mpatches.Patch(color="#1976D2", label="Hydralisk x15"),
+        mpatches.Patch(color="#7B1FA2", label="Mutalisk x10"),
     ]
     ax.legend(
         handles=legend_elements,
@@ -285,7 +285,7 @@ def gif_formation_flight():
                 interp = current_pos * (1 - alpha) + next_pos * alpha
                 noise = np.random.randn(N, 2) * 0.08
                 all_frames.append(interp + noise)
-                all_labels.append(f"TRANSITIONING...")
+                all_labels.append("TRANSITIONING...")
             current_pos = next_pos.copy()
 
     fig, ax = plt.subplots(figsize=(10, 8), facecolor="#0a1628")
@@ -559,7 +559,12 @@ def gif_sim_to_real():
 
     stages = [
         (1.5, "SC2\nSimulation", "#1565C0", "[GAME] Boids + FSM\n10,000+ games"),
-        (4.5, "3D Sim\n(Gazebo)", "#6A1B9A", "[SCREEN]️ ROS2 + Gazebo\n2D->3D transfer"),
+        (
+            4.5,
+            "3D Sim\n(Gazebo)",
+            "#6A1B9A",
+            "[SCREEN]️ ROS2 + Gazebo\n2D->3D transfer",
+        ),
         (7.5, "Real Drone\n(PX4)", "#2E7D32", "[DRONE] Pixhawk + RPi\n3-drone flight"),
         (10.5, "ATC\nScale-up", "#E65100", "[AIR]️ 100+ drones\nCity airspace"),
     ]
