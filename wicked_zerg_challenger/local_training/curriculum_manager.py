@@ -21,11 +21,13 @@ except ImportError:
 def _atomic_json_save(path: str, data: object) -> None:
     """Write JSON atomically via temp-file + rename to prevent corruption on crash."""
     dir_name = os.path.dirname(os.path.abspath(path))
-    with tempfile.NamedTemporaryFile("w", dir=dir_name, delete=False,
-                                     suffix=".tmp", encoding="utf-8") as f:
+    with tempfile.NamedTemporaryFile(
+        "w", dir=dir_name, delete=False, suffix=".tmp", encoding="utf-8"
+    ) as f:
         json.dump(data, f, indent=2, ensure_ascii=False)
         tmp_name = f.name
     os.replace(tmp_name, path)
+
 
 logger = logging.getLogger("CurriculumManager")
 
@@ -144,7 +146,9 @@ class CurriculumManager:
             self.wins_at_current_level = data.get("wins_at_current_level", 0)
             self.losses_at_current_level = data.get("losses_at_current_level", 0)
             # Recalculate to fix historical inconsistency (games != wins + losses)
-            self.games_at_current_level = self.wins_at_current_level + self.losses_at_current_level
+            self.games_at_current_level = (
+                self.wins_at_current_level + self.losses_at_current_level
+            )
         except (IOError, json.JSONDecodeError):
             pass
 
@@ -261,9 +265,15 @@ class CurriculumManager:
         # 승격 체크: 필요한 승리 횟수 AND 최소 승률 40% 달성
         total_games = self.wins_at_current_level + self.losses_at_current_level
         win_rate = self.wins_at_current_level / total_games if total_games > 0 else 0.0
-        if self.wins_at_current_level >= wins_required and win_rate >= MIN_WIN_RATE_FOR_PROMOTION:
+        if (
+            self.wins_at_current_level >= wins_required
+            and win_rate >= MIN_WIN_RATE_FOR_PROMOTION
+        ):
             return self._promote_to_next_level()
-        elif self.wins_at_current_level >= wins_required and win_rate < MIN_WIN_RATE_FOR_PROMOTION:
+        elif (
+            self.wins_at_current_level >= wins_required
+            and win_rate < MIN_WIN_RATE_FOR_PROMOTION
+        ):
             logger.info(
                 f"[HOLD] 승리 수 달성 ({self.wins_at_current_level}/{wins_required}) "
                 f"but 승률 {win_rate*100:.1f}% < 40% — 승격 보류"
