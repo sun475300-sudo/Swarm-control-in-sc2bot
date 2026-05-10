@@ -1227,6 +1227,8 @@ class BotStepIntegrator:
                 start_time = self._logic_tracker.start_logic("MicroFocusMode")
                 try:
                     micro_interval = self.bot.micro_focus.update(iteration)
+                    # Publish on bot so micro_v3 / consumers can throttle by focus level.
+                    self.bot.micro_focus_interval = micro_interval
                 except Exception as e:
                     if error_handler.debug_mode:
                         raise
