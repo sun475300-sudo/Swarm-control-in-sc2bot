@@ -115,7 +115,9 @@ class TestRLMicroDeployment(unittest.TestCase):
     def test_micro_observation_is_16d_and_inference_has_7_actions(self):
         bot = FakeBot()
         units = [FakeUnit(i, "ROACH", Point(i, 0), health=100) for i in range(3)]
-        enemies = [FakeUnit(100 + i, "MARINE", Point(5 + i, 0), health=45) for i in range(5)]
+        enemies = [
+            FakeUnit(100 + i, "MARINE", Point(5 + i, 0), health=45) for i in range(5)
+        ]
         agent = RLAgent()
 
         observation = agent.build_micro_observation(bot, units, enemies)
@@ -129,7 +131,9 @@ class TestRLMicroDeployment(unittest.TestCase):
     def test_combat_manager_uses_rl_micro_when_enabled_and_confident(self):
         bot = FakeBot()
         units = [FakeUnit(i, "ROACH", Point(i, 0), health=100) for i in range(3)]
-        enemies = [FakeUnit(100 + i, "MARINE", Point(5 + i, 0), health=45) for i in range(5)]
+        enemies = [
+            FakeUnit(100 + i, "MARINE", Point(5 + i, 0), health=45) for i in range(5)
+        ]
         manager = make_manager(bot)
 
         handled = asyncio.run(manager._try_rl_micro(units, enemies))
@@ -177,7 +181,9 @@ class TestSelfPlayPipeline(unittest.TestCase):
             pipeline = TrainingPipeline(tmp)
 
             self.assertIsNone(
-                pipeline.maybe_checkpoint_episode(49, FakeSavingAgent(), {"win_rate": 0.5})
+                pipeline.maybe_checkpoint_episode(
+                    49, FakeSavingAgent(), {"win_rate": 0.5}
+                )
             )
             version = pipeline.maybe_checkpoint_episode(
                 50, FakeSavingAgent(), {"win_rate": 0.55, "games": 50}

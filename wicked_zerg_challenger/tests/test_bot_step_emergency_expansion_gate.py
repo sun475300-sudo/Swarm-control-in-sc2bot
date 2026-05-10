@@ -65,7 +65,9 @@ class TestBotStepEmergencyExpansionGate(unittest.TestCase):
         bot = SimpleNamespace(
             time=165.0,
             strategy_manager=strategy,
-            townhalls=FakeUnits([FakeUnit(FakePoint(0, 0)), FakeUnit(FakePoint(80, 0))]),
+            townhalls=FakeUnits(
+                [FakeUnit(FakePoint(0, 0)), FakeUnit(FakePoint(80, 0))]
+            ),
             enemy_units=FakeUnits(enemy_units or []),
             build=AsyncMock(),
             can_afford=Mock(return_value=True),

@@ -45,7 +45,11 @@ class PostGameReport:
             "final_workers": workers[-1],
             "max_bases": max(bases),
             "first_expansion_time": next(
-                (frame.get("game_time") for frame in frames if frame.get("base_count", 0) >= 2),
+                (
+                    frame.get("game_time")
+                    for frame in frames
+                    if frame.get("base_count", 0) >= 2
+                ),
                 None,
             ),
         }

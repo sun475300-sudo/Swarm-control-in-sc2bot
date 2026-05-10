@@ -271,7 +271,9 @@ except ImportError:
 # Advanced Scout System V2
 try:
     # NOTE: class is AdvancedScoutingSystemV2 (with "ing"); alias kept for compat
-    from scouting.advanced_scout_system_v2 import AdvancedScoutingSystemV2 as AdvancedScoutSystemV2
+    from scouting.advanced_scout_system_v2 import (
+        AdvancedScoutingSystemV2 as AdvancedScoutSystemV2,
+    )
 except ImportError:
     AdvancedScoutSystemV2 = None
 
@@ -1690,9 +1692,7 @@ class BotStepIntegrator:
                     elif defeat_status.get("should_surrender", False):
                         game_time = getattr(self.bot, "time", 0)
                         reason = defeat_status.get("defeat_reason", "알 수 없음")
-                        self.logger.info(
-                            "\n[SURRENDER] [*][*][*] 게임 포기! [*][*][*]"
-                        )
+                        self.logger.info("\n[SURRENDER] [*][*][*] 게임 포기! [*][*][*]")
                         self.logger.info(f"  - 게임 시간: {int(game_time)}초")
                         self.logger.info(f"  - 이유: {reason}")
                         self.logger.info("  - 다음 게임으로 이동...\n")
@@ -2110,7 +2110,9 @@ class BotStepIntegrator:
                     if iteration % 50 == 0:
                         self.logger.warning(f"[WARNING] Building Manager error: {e}")
                 finally:
-                    self._logic_tracker.end_logic("BuildingManager", start_time, success)
+                    self._logic_tracker.end_logic(
+                        "BuildingManager", start_time, success
+                    )
 
             if hasattr(self.bot, "advanced_building_manager"):
                 start_time = self._logic_tracker.start_logic("AdvancedBuilding")

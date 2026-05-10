@@ -26,18 +26,44 @@ BOT_DIR = PROJECT_ROOT / "wicked_zerg_challenger"
 
 # Directories to exclude from packaging
 EXCLUDE_DIRS = {
-    "__pycache__", "logs", "tests", "docs", "replays",
-    "replays_processed", "temp_downloads", "models", "bat",
-    "sc2-ai-dashboard", "sc2-mobile-app", "scripts", ".git",
-    ".cursor", ".claude", "archived_sessions", "comparison_reports",
-    "background_results", "checkpoints", "stats", "games",
-    "monitoring", "debug", "htmlcov", "local_training",
+    "__pycache__",
+    "logs",
+    "tests",
+    "docs",
+    "replays",
+    "replays_processed",
+    "temp_downloads",
+    "models",
+    "bat",
+    "sc2-ai-dashboard",
+    "sc2-mobile-app",
+    "scripts",
+    ".git",
+    ".cursor",
+    ".claude",
+    "archived_sessions",
+    "comparison_reports",
+    "background_results",
+    "checkpoints",
+    "stats",
+    "games",
+    "monitoring",
+    "debug",
+    "htmlcov",
+    "local_training",
 }
 
 # File patterns to exclude
 EXCLUDE_FILE_PATTERNS = {
-    ".log", ".bat", ".ps1", ".md", ".pyc", ".pyo",
-    ".egg-info", ".coverage", ".pytest_cache",
+    ".log",
+    ".bat",
+    ".ps1",
+    ".md",
+    ".pyc",
+    ".pyo",
+    ".egg-info",
+    ".coverage",
+    ".pytest_cache",
 }
 
 # File extensions to include

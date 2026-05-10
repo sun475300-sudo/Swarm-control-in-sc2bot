@@ -51,15 +51,15 @@ def create_dummy_experience_data(path: Path, num_steps: int = 50) -> None:
         path,
         states=np.array(states),
         actions=np.array(actions),
-        rewards=np.array(rewards)
+        rewards=np.array(rewards),
     )
 
 
 def test_experience_data_save_load():
     """테스트 1: 경험 데이터 저장 및 로드"""
-    logger.info("\n" + "="*60)
+    logger.info("\n" + "=" * 60)
     logger.info("TEST 1: Experience Data Save/Load")
-    logger.info("="*60)
+    logger.info("=" * 60)
 
     test_dir = project_root / "local_training" / "data" / "test_buffer"
     test_dir.mkdir(parents=True, exist_ok=True)
@@ -83,9 +83,9 @@ def test_experience_data_save_load():
 
 def test_rl_agent_batch_training():
     """테스트 2: RLAgent 배치 학습"""
-    logger.info("\n" + "="*60)
+    logger.info("\n" + "=" * 60)
     logger.info("TEST 2: RLAgent Batch Training")
-    logger.info("="*60)
+    logger.info("=" * 60)
 
     # 임시 모델 경로
     temp_model_path = project_root / "local_training" / "models" / "test_rl_agent.npz"
@@ -100,16 +100,14 @@ def test_rl_agent_batch_training():
     for i in range(3):  # 3개 게임 시뮬레이션
         states = np.random.rand(20, 50).astype(np.float32)
         actions = np.random.randint(0, 4, size=20)
-        rewards = np.concatenate([
-            np.full(19, 0.05),  # 중간 보상
-            np.array([1.0 if i % 2 == 0 else -0.5])  # 마지막: 승/패
-        ])
+        rewards = np.concatenate(
+            [
+                np.full(19, 0.05),  # 중간 보상
+                np.array([1.0 if i % 2 == 0 else -0.5]),  # 마지막: 승/패
+            ]
+        )
 
-        experiences.append({
-            'states': states,
-            'actions': actions,
-            'rewards': rewards
-        })
+        experiences.append({"states": states, "actions": actions, "rewards": rewards})
 
     logger.info(f"Created {len(experiences)} experience sets")
 
@@ -133,9 +131,9 @@ def test_rl_agent_batch_training():
 
 def test_background_learner_processing():
     """테스트 3: BackgroundParallelLearner 파일 처리"""
-    logger.info("\n" + "="*60)
+    logger.info("\n" + "=" * 60)
     logger.info("TEST 3: Background Learner Processing")
-    logger.info("="*60)
+    logger.info("=" * 60)
 
     # 테스트 디렉토리 설정
     test_buffer_dir = project_root / "local_training" / "data" / "test_buffer"
@@ -206,9 +204,9 @@ def test_background_learner_processing():
 
 def test_background_learner_lifecycle():
     """테스트 4: BackgroundParallelLearner 라이프사이클"""
-    logger.info("\n" + "="*60)
+    logger.info("\n" + "=" * 60)
     logger.info("TEST 4: Background Learner Lifecycle")
-    logger.info("="*60)
+    logger.info("=" * 60)
 
     learner = BackgroundParallelLearner(enable_model_training=True)
 
@@ -236,9 +234,9 @@ def test_background_learner_lifecycle():
 
 def run_all_tests():
     """모든 테스트 실행"""
-    logger.info("\n" + "="*70)
+    logger.info("\n" + "=" * 70)
     logger.info("  BACKGROUND TRAINING SYSTEM - TEST SUITE")
-    logger.info("="*70)
+    logger.info("=" * 70)
 
     start_time = time.time()
 
@@ -250,14 +248,15 @@ def run_all_tests():
 
         elapsed = time.time() - start_time
 
-        logger.info("\n" + "="*70)
+        logger.info("\n" + "=" * 70)
         logger.info("  ALL TESTS PASSED [OK]")
         logger.info(f"  Total time: {elapsed:.2f}s")
-        logger.info("="*70 + "\n")
+        logger.info("=" * 70 + "\n")
 
     except Exception as e:
         logger.error(f"\n[FAIL] TEST FAILED: {e}")
         import traceback
+
         traceback.print_exc()
 
 

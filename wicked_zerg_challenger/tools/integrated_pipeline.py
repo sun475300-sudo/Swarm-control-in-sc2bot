@@ -51,9 +51,12 @@ def validate_replays(replays: list) -> list:
     """Validate replay files using sc2reader if available."""
     try:
         import sc2reader
+
         sc2reader_available = True
     except ImportError:
-        logger.warning("   [WARNING] sc2reader not installed. Skipping metadata validation.")
+        logger.warning(
+            "   [WARNING] sc2reader not installed. Skipping metadata validation."
+        )
         return replays
 
     validated = []
@@ -65,24 +68,24 @@ def validate_replays(replays: list) -> list:
             replay = sc2reader.load_replay(str(replay_path), load_map=True)
 
             # Check if replay has players
-            if not hasattr(replay, 'players') or len(replay.players) < 2:
+            if not hasattr(replay, "players") or len(replay.players) < 2:
                 continue
 
             # Check if at least one player is Zerg
             has_zerg = any(
-                hasattr(p, 'play_race') and str(p.play_race).lower() == "zerg"
+                hasattr(p, "play_race") and str(p.play_race).lower() == "zerg"
                 for p in replay.players
             )
             if not has_zerg:
                 continue
 
             # Check game time
-            if hasattr(replay, 'length'):
+            if hasattr(replay, "length"):
                 if replay.length.seconds < MIN_GAME_TIME_SECONDS:
                     continue
 
             # Check LotV patch
-            if hasattr(replay, 'date'):
+            if hasattr(replay, "date"):
                 if replay.date < LOTV_RELEASE_DATE:
                     continue
 
@@ -90,7 +93,9 @@ def validate_replays(replays: list) -> list:
         except Exception:
             continue
 
-    logger.info(f"   [VALIDATE] Valid: {len(validated)}, Skipped: {len(replays) - len(validated)}")
+    logger.info(
+        f"   [VALIDATE] Valid: {len(validated)}, Skipped: {len(replays) - len(validated)}"
+    )
     return validated
 
 
@@ -139,7 +144,11 @@ def run_training(epochs: int) -> bool:
     cmd = [PYTHON_EXECUTABLE, str(hybrid_learning_script), "--epochs", str(epochs)]
     logger.info(f"   [EXEC] Executing: {' '.join(cmd)}")
 
-    script_dir = hybrid_learning_script.parent if hybrid_learning_script.parent != Path(".") else Path.cwd()
+    script_dir = (
+        hybrid_learning_script.parent
+        if hybrid_learning_script.parent != Path(".")
+        else Path.cwd()
+    )
     result = subprocess.run(cmd, cwd=str(script_dir))
 
     return result.returncode == 0
@@ -181,9 +190,13 @@ def main():
         else:
             default_source = "D:/replays/replays"
 
-    parser.add_argument("--source-replays", default=default_source, help="Source replays folder")
+    parser.add_argument(
+        "--source-replays", default=default_source, help="Source replays folder"
+    )
     parser.add_argument("--cleanup", action="store_true", help="Move processed files")
-    parser.add_argument("--validate-only", action="store_true", help="Only validate, no training")
+    parser.add_argument(
+        "--validate-only", action="store_true", help="Only validate, no training"
+    )
     args = parser.parse_args()
 
     logger.info(f"\n{'='*80}")
@@ -202,7 +215,9 @@ def main():
 
     # Validate replays
     current_replays = validate_replays(current_replays)
-    logger.info(f"   [TARGET] Total validated replays ready for training: {len(current_replays)}")
+    logger.info(
+        f"   [TARGET] Total validated replays ready for training: {len(current_replays)}"
+    )
 
     if len(current_replays) == 0:
         logger.error("   [ERROR] No valid replays found!")

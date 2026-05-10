@@ -73,7 +73,9 @@ class TelemetryCollector:
             enemy_race=enemy_race,
             map_name=map_name,
         )
-        logger.info("[TELEMETRY] Game started: %s vs %s on %s", game_id, enemy_race, map_name)
+        logger.info(
+            "[TELEMETRY] Game started: %s vs %s on %s", game_id, enemy_race, map_name
+        )
 
     def record_frame(self, bot, iteration: int, frame_time_ms: float) -> None:
         if not self.current_game or iteration % self._sample_interval != 0:
@@ -93,12 +95,14 @@ class TelemetryCollector:
             base_count=_amount(getattr(bot, "townhalls", [])),
             enemy_units_visible=_amount(getattr(bot, "enemy_units", [])),
             army_value=sum(
-                float(getattr(unit, "health", 0) or 0) + float(getattr(unit, "shield", 0) or 0)
+                float(getattr(unit, "health", 0) or 0)
+                + float(getattr(unit, "shield", 0) or 0)
                 for unit in units
                 if getattr(unit, "can_attack", False)
             ),
             enemy_army_value=sum(
-                float(getattr(unit, "health", 0) or 0) + float(getattr(unit, "shield", 0) or 0)
+                float(getattr(unit, "health", 0) or 0)
+                + float(getattr(unit, "shield", 0) or 0)
                 for unit in enemy_units
             ),
             frame_time_ms=float(frame_time_ms),
