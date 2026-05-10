@@ -9,7 +9,10 @@ Features:
 4. Escape: Burrow move away from threats
 """
 
+import logging
 from typing import Dict, Optional, Set
+
+logger = logging.getLogger("InfestorTactics")
 
 try:
     from sc2.ids.ability_id import AbilityId
@@ -241,8 +244,8 @@ class InfestorTacticsController:
                             self.escaping.add(unit_tag)
                             acted_tags.add(unit_tag)
                             continue
-                        except Exception:
-                            pass
+                        except Exception as exc:
+                            logger.debug("infestor_tactics: %s", exc, exc_info=True)
 
             elif unit_tag in self.escaping and health_ratio >= 0.8:
                 # Stop escaping when healed
@@ -266,8 +269,8 @@ class InfestorTacticsController:
                             try:
                                 actions.append(infestor(burrow_ability))
                                 acted_tags.add(unit_tag)
-                            except Exception:
-                                pass
+                            except Exception as exc:
+                                logger.debug("infestor_tactics: %s", exc, exc_info=True)
 
             # Execute infiltration
             if unit_tag in self.infiltrating:
@@ -284,16 +287,16 @@ class InfestorTacticsController:
                                 self.infiltrating.pop(unit_tag)
                                 acted_tags.add(unit_tag)
                                 continue
-                            except Exception:
-                                pass
+                            except Exception as exc:
+                                logger.debug("infestor_tactics: %s", exc, exc_info=True)
                 else:
                     # Move towards target while burrowed
                     if is_burrowed:
                         try:
                             actions.append(infestor.move(target_pos))
                             acted_tags.add(unit_tag)
-                        except Exception:
-                            pass
+                        except Exception as exc:
+                            logger.debug("infestor_tactics: %s", exc, exc_info=True)
 
             # * FLANKING MODE: Enemy army detected *
             elif enemy_army_center and energy >= self.energy_threshold:
@@ -310,16 +313,16 @@ class InfestorTacticsController:
                             try:
                                 actions.append(infestor(burrow_ability))
                                 acted_tags.add(unit_tag)
-                            except Exception:
-                                pass
+                            except Exception as exc:
+                                logger.debug("infestor_tactics: %s", exc, exc_info=True)
 
                     # Move to flank position
                     if is_burrowed:
                         try:
                             actions.append(infestor.move(flank_pos))
                             acted_tags.add(unit_tag)
-                        except Exception:
-                            pass
+                        except Exception as exc:
+                            logger.debug("infestor_tactics: %s", exc, exc_info=True)
 
         if actions:
             for action in actions:
@@ -327,8 +330,8 @@ class InfestorTacticsController:
                     result = bot.do(action)
                     if hasattr(result, "__await__"):
                         await result
-                except Exception:
-                    pass
+                except Exception as exc:
+                    logger.debug("infestor_tactics: %s", exc, exc_info=True)
 
         return acted_tags
 
