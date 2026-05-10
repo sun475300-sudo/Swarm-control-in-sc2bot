@@ -22,11 +22,10 @@ from pathlib import Path
 # Fix protobuf compatibility with sc2 library (s2clientprotocol).
 os.environ.setdefault("PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION", "python")
 
-# Make the wicked_zerg_challenger package directory importable so that
-# bare imports like ``from blackboard import GameStateBlackboard`` resolve.
-_PKG_ROOT = Path(__file__).resolve().parent.parent
-if str(_PKG_ROOT) not in sys.path:
-    sys.path.insert(0, str(_PKG_ROOT))
+# Note: each wicked_zerg_challenger test file performs its own
+# ``sys.path.insert(0, "..")`` so we deliberately do not mutate sys.path
+# here — adding the package directory globally would shadow project-root
+# namespace packages such as ``scripts``.
 
 
 def _install_sc2_stub() -> None:
@@ -42,13 +41,16 @@ def _install_sc2_stub() -> None:
 
     try:
         import sc2  # noqa: F401  (real library present, nothing to do)
+
         return
     except Exception:
         pass
 
     class _StubMeta(type):
         def __getattr__(cls, name):  # type: ignore[override]
-            value = type(name, (), {"name": name, "value": name, "__repr__": lambda self: name})
+            value = type(
+                name, (), {"name": name, "value": name, "__repr__": lambda self: name}
+            )
             setattr(cls, name, value)
             return value
 
@@ -95,8 +97,16 @@ def _install_sc2_stub() -> None:
 
         def distance_to(self, other):
             try:
-                ox = other[0] if hasattr(other, "__getitem__") else getattr(other, "x", 0)
-                oy = other[1] if hasattr(other, "__getitem__") else getattr(other, "y", 0)
+                ox = (
+                    other[0]
+                    if hasattr(other, "__getitem__")
+                    else getattr(other, "x", 0)
+                )
+                oy = (
+                    other[1]
+                    if hasattr(other, "__getitem__")
+                    else getattr(other, "y", 0)
+                )
             except Exception:
                 ox, oy = 0, 0
             dx = self.x - ox
@@ -132,8 +142,16 @@ def _install_sc2_stub() -> None:
     Difficulty = enum.Enum(
         "Difficulty",
         [
-            "VeryEasy", "Easy", "Medium", "MediumHard", "Hard", "Harder",
-            "VeryHard", "CheatVision", "CheatMoney", "CheatInsane",
+            "VeryEasy",
+            "Easy",
+            "Medium",
+            "MediumHard",
+            "Hard",
+            "Harder",
+            "VeryHard",
+            "CheatVision",
+            "CheatMoney",
+            "CheatInsane",
         ],
     )
     Result = enum.Enum("Result", ["Victory", "Defeat", "Tie", "Undecided"])
@@ -142,35 +160,44 @@ def _install_sc2_stub() -> None:
     for name, attrs in (
         ("bot_ai", {"BotAI": type("BotAI", (), {})}),
         ("unit", {"Unit": type("Unit", (), {})}),
-        ("units", {
-            "Units": type(
-                "Units",
-                (list,),
-                {
-                    "__init__": lambda self, items=(), bot_object=None: list.__init__(
-                        self, items
-                    ),
-                    "filter": lambda self, fn: type(self)(
-                        [u for u in self if fn(u)], None
-                    ),
-                    "closer_than": lambda self, r, p: type(self)([], None),
-                    "amount": property(lambda self: len(self)),
-                },
-            ),
-        }),
-        ("data", {
-            "Race": Race,
-            "Difficulty": Difficulty,
-            "Result": Result,
-        }),
+        (
+            "units",
+            {
+                "Units": type(
+                    "Units",
+                    (list,),
+                    {
+                        "__init__": lambda self, items=(), bot_object=None: list.__init__(
+                            self, items
+                        ),
+                        "filter": lambda self, fn: type(self)(
+                            [u for u in self if fn(u)], None
+                        ),
+                        "closer_than": lambda self, r, p: type(self)([], None),
+                        "amount": property(lambda self: len(self)),
+                    },
+                ),
+            },
+        ),
+        (
+            "data",
+            {
+                "Race": Race,
+                "Difficulty": Difficulty,
+                "Result": Result,
+            },
+        ),
         ("constants", {}),
         ("maps", {"get": staticmethod(lambda name: name)}),
         ("main", {"run_game": staticmethod(lambda *a, **kw: None)}),
-        ("player", {
-            "Bot": type("Bot", (), {}),
-            "Computer": type("Computer", (), {}),
-            "Human": type("Human", (), {}),
-        }),
+        (
+            "player",
+            {
+                "Bot": type("Bot", (), {}),
+                "Computer": type("Computer", (), {}),
+                "Human": type("Human", (), {}),
+            },
+        ),
     ):
         m = _make_module(f"sc2.{name}")
         for k, v in attrs.items():
