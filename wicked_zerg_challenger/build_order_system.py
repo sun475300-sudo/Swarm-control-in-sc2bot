@@ -1079,23 +1079,28 @@ class BuildOrderSystem:
         if not location:
             location = await self.bot.get_next_expansion()
         if location:
-            # Use TechCoordinator if available
+            # Use TechCoordinator if available so the request goes through the
+            # central queue (priority/conflict resolution); otherwise fall back
+            # to a direct build order below.
             tech_coordinator = getattr(self.bot, "tech_coordinator", None)
             PRIORITY_EXPANSION = 55  # * Phase 22: 확장 우선순위 상향 (50 -> 55)
 
             if tech_coordinator:
                 if not tech_coordinator.is_planned(UnitTypeId.HATCHERY):
-                    if not self.bot.workers.exists:
-                        return False
-                    worker = self.bot.workers.closest_to(location)
-                    if not worker:
-                        return False
-                    self.bot.do(worker.build(UnitTypeId.HATCHERY, location))
-                    self.expansion_actual_time = self.bot.time
-                    logger.info(
-                        f"[*] Natural expansion ordered at {int(self.bot.time)}s [*]"
+                    accepted = tech_coordinator.request_structure(
+                        UnitTypeId.HATCHERY,
+                        location,
+                        PRIORITY_EXPANSION,
+                        "BuildOrderSystem.natural_expansion",
                     )
-                    return True
+                    if accepted:
+                        self.expansion_actual_time = self.bot.time
+                        logger.info(
+                            f"[*] Natural expansion queued (P{PRIORITY_EXPANSION}) "
+                            f"at {int(self.bot.time)}s [*]"
+                        )
+                        return True
+                    return False
             else:
                 if not self.bot.workers.exists:
                     return False
