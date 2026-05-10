@@ -96,8 +96,10 @@ class MetaGameAnalyzer:
 
     def recommend_strategy(self, enemy_race: str, map_name: str) -> Dict[str, Any]:
         """Recommend best strategy based on current meta"""
-        race_perf = self.race_performance.get(enemy_race, {"wins": 0})
-        map_perf = self.map_performance.get(map_name, {"wins": 0})
+        race_perf = self.race_performance.get(
+            enemy_race, {"wins": 0, "losses": 0}
+        )
+        map_perf = self.map_performance.get(map_name, {"wins": 0, "losses": 0})
 
         best_strategies = {
             ("terran", "small"): "RUSH",
@@ -111,10 +113,20 @@ class MetaGameAnalyzer:
         map_size = "small" if map_name in ["GroundZero", "Corridor"] else "large"
         recommended = best_strategies.get((enemy_race.lower(), map_size), "MACRO")
 
+        # Confidence is driven by the larger of race / map sample sizes:
+        # 0 games → 0.75 baseline; saturates at 0.95 once we have ≥10 games.
+        race_total = race_perf.get("wins", 0) + race_perf.get("losses", 0)
+        map_total = map_perf.get("wins", 0) + map_perf.get("losses", 0)
+        sample = max(race_total, map_total)
+        confidence = 0.75 + min(0.20, sample / 50.0)
+
         return {
             "recommended_strategy": recommended,
-            "confidence": 0.75,
-            "reasoning": f"Based on vs {enemy_race} on {map_name}",
+            "confidence": round(confidence, 3),
+            "reasoning": (
+                f"Based on vs {enemy_race} on {map_name} "
+                f"(race sample={race_total}, map sample={map_total})"
+            ),
             "alternatives": ["RUSH", "MACRO", "TIMING"],
             "meta_analysis": self.get_current_meta_strategies()[:3],
         }
