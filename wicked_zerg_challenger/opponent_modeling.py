@@ -782,17 +782,16 @@ class OpponentModeling:
     def get_predicted_strategy(self) -> Tuple[Optional[str], float]:
         """현재 적의 전략 예측"""
         if (
-            not self.current_opponent
-            or self.current_opponent not in self.opponent_models
+            not self.current_opponent_id
+            or self.current_opponent_id not in self.opponent_models
         ):
             return (None, 0.0)
 
-        model = self.opponent_models[self.current_opponent]
+        model = self.opponent_models[self.current_opponent_id]
 
         # If we have observed signals, use them for prediction
         if self.observed_signals:
-            signal_strings = [s.value for s in self.observed_signals]
-            return model.predict_strategy(signal_strings)
+            return model.predict_strategy(list(self.observed_signals))
 
         # Otherwise, return most common strategy
         if model.strategy_frequency:

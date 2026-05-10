@@ -2180,9 +2180,10 @@ class ProductionResilience:
             # vs Light: Banelings > Roaches
             has_baneling_nest = b.structures(UnitTypeId.BANELINGNEST).ready.exists
             if has_baneling_nest:
-                # Note: Banelings are morphed from Zerglings, not trained from larvae
-                # Return None here; baneling morphing should be handled separately
-                pass
+                # Banelings are morphed from Zerglings (not trained from larvae);
+                # defer to baneling-morphing logic — do NOT fall back to Roaches,
+                # which would waste larvae away from the preferred counter.
+                return None
             if has_roach_warren and b.can_afford(UnitTypeId.ROACH):
                 return UnitTypeId.ROACH
 
