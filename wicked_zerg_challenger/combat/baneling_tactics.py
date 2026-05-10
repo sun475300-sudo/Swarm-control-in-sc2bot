@@ -9,7 +9,10 @@ Features:
 4. Expansion path mining
 """
 
+import logging
 from typing import Dict, List, Set, Tuple
+
+logger = logging.getLogger("BanelingTactics")
 
 try:
     from sc2.ids.ability_id import AbilityId
@@ -249,8 +252,8 @@ class BanelingTacticsController:
                     result = bot.do(action)
                     if hasattr(result, "__await__"):
                         await result
-                except Exception:
-                    pass
+                except Exception as exc:
+                    logger.debug("baneling_tactics: %s", exc, exc_info=True)
 
         return deployed
 
@@ -327,8 +330,8 @@ class BanelingTacticsController:
                     result = bot.do(action)
                     if hasattr(result, "__await__"):
                         await result
-                except Exception:
-                    pass
+                except Exception as exc:
+                    logger.debug("baneling_tactics: %s", exc, exc_info=True)
 
         return acted_tags
 
