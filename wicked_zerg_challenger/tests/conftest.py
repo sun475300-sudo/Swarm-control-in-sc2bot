@@ -93,8 +93,30 @@ def _install_sc2_stub() -> None:
         def y(self):
             return self[1] if len(self) > 1 else 0
 
-        def distance_to(self, other):  # pragma: no cover — stub
-            return 0.0
+        def distance_to(self, other):
+            try:
+                ox = other[0] if hasattr(other, "__getitem__") else getattr(other, "x", 0)
+                oy = other[1] if hasattr(other, "__getitem__") else getattr(other, "y", 0)
+            except Exception:
+                ox, oy = 0, 0
+            dx = self.x - ox
+            dy = self.y - oy
+            return (dx * dx + dy * dy) ** 0.5
+
+        def distance_to_point2(self, other):
+            return self.distance_to(other)
+
+        def __sub__(self, other):
+            try:
+                return Point2((self.x - other[0], self.y - other[1]))
+            except Exception:
+                return Point2((self.x, self.y))
+
+        def __add__(self, other):
+            try:
+                return Point2((self.x + other[0], self.y + other[1]))
+            except Exception:
+                return Point2((self.x, self.y))
 
     class Point3(Point2):
         pass
@@ -102,6 +124,19 @@ def _install_sc2_stub() -> None:
     pos_mod.Point2 = Point2
     pos_mod.Point3 = Point3
     sc2.position = pos_mod  # type: ignore[attr-defined]
+
+    # Real Enums for sc2.data (so things like Race[name] and isinstance work)
+    import enum
+
+    Race = enum.Enum("Race", ["NoRace", "Terran", "Zerg", "Protoss", "Random"])
+    Difficulty = enum.Enum(
+        "Difficulty",
+        [
+            "VeryEasy", "Easy", "Medium", "MediumHard", "Hard", "Harder",
+            "VeryHard", "CheatVision", "CheatMoney", "CheatInsane",
+        ],
+    )
+    Result = enum.Enum("Result", ["Victory", "Defeat", "Tie", "Undecided"])
 
     # sc2.bot_ai / sc2.unit / sc2.units / sc2.data / sc2.constants / sc2.maps / sc2.main / sc2.player
     for name, attrs in (
@@ -124,9 +159,9 @@ def _install_sc2_stub() -> None:
             ),
         }),
         ("data", {
-            "Race": type("Race", (_StubEnum,), {}),
-            "Difficulty": type("Difficulty", (_StubEnum,), {}),
-            "Result": type("Result", (_StubEnum,), {}),
+            "Race": Race,
+            "Difficulty": Difficulty,
+            "Result": Result,
         }),
         ("constants", {}),
         ("maps", {"get": staticmethod(lambda name: name)}),
