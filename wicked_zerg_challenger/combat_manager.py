@@ -63,6 +63,9 @@ from combat.rally_point_calculator import (
 from utils.frame_cache import FrameCache
 from utils.distance_cache import DistanceCache
 from utils.game_constants import GameFrequencies
+import logging
+
+logger = logging.getLogger("combat_manager")
 
 # Import common helpers to reduce code duplication
 try:
@@ -2141,13 +2144,13 @@ class CombatManager:
         if hasattr(point, "offset"):
             try:
                 return point.offset((dx, dy))
-            except Exception:
-                pass
+            except Exception as exc:
+                logger.debug("combat_manager: %s", exc, exc_info=True)
         if Point2 and hasattr(point, "x") and hasattr(point, "y"):
             try:
                 return Point2((point.x + dx, point.y + dy))
-            except Exception:
-                pass
+            except Exception as exc:
+                logger.debug("combat_manager: %s", exc, exc_info=True)
         return point
 
     def _group_distance_to_target(self, group, target) -> float:

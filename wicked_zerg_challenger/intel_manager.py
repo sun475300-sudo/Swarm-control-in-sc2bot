@@ -959,8 +959,8 @@ class IntelManager:
         try:
             if townhalls:
                 return getattr(townhalls[0], "position", townhalls[0])
-        except Exception:
-            pass
+        except Exception as exc:
+            logger.debug("intel_manager: %s", exc, exc_info=True)
         return getattr(self.bot, "start_location", None)
 
     def _publish_build_pattern_flags(self, pattern: str) -> None:

@@ -25,6 +25,9 @@ except ImportError:
     Units = None
 
 from utils.logger import get_logger
+import logging
+
+logger = logging.getLogger("viper_tactics")
 
 
 class ViperTacticsManager:
@@ -392,8 +395,8 @@ class ViperTacticsManager:
                         AbilityId.VIPERCONSUMESTRUCTURE_YOURBUILDINGS, target_building
                     )
                 )
-            except Exception:
-                pass
+            except Exception as exc:
+                logger.debug("viper_tactics: %s", exc, exc_info=True)
 
     async def _maintain_safe_distance(self, viper: Unit, enemy_units):
         """바이퍼 안전 거리 유지"""

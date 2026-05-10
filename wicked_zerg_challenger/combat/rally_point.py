@@ -25,6 +25,9 @@ else:
         Point2 = tuple
 
 from utils.logger import get_logger
+import logging
+
+logger = logging.getLogger("rally_point")
 
 
 class RallyPointManager:
@@ -129,8 +132,8 @@ class RallyPointManager:
                 target_base = self.bot.townhalls.closest_to(
                     self.bot.game_info.map_center
                 )
-            except Exception:
-                pass
+            except Exception as exc:
+                logger.debug("rally_point: %s", exc, exc_info=True)
 
         # 기지와 맵 중앙 사이 (전진 배치)
         if hasattr(self.bot, "game_info"):

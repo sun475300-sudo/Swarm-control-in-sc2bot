@@ -141,8 +141,8 @@ class ReplayActionExtractor:
                         "action": action,
                         "ability_name": ability,
                     }
-        except Exception:
-            pass
+        except Exception as exc:
+            logger.debug("imitation_learner: %s", exc, exc_info=True)
         return None
 
     def _map_ability_to_action(self, ability_name: str) -> Optional[int]:

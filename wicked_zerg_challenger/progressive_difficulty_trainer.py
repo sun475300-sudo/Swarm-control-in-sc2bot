@@ -89,8 +89,8 @@ def kill_all_sc2_processes():
             ["taskkill", "/F", "/IM", "SC2.exe"], capture_output=True, timeout=5
         )
         time.sleep(2)
-    except Exception:
-        pass
+    except Exception as exc:
+        logger.debug("progressive_difficulty_trainer: %s", exc, exc_info=True)
 
 
 class ProgressiveTrainer:

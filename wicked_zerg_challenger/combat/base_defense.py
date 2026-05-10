@@ -28,6 +28,9 @@ else:
         Point2 = tuple
 
 from utils.logger import get_logger
+import logging
+
+logger = logging.getLogger("base_defense")
 
 
 class BaseDefenseSystem:
@@ -679,8 +682,8 @@ class BaseDefenseSystem:
         try:
             if hasattr(townhalls, "exists") and not townhalls.exists:
                 return []
-        except Exception:
-            pass
+        except Exception as exc:
+            logger.debug("base_defense: %s", exc, exc_info=True)
         return list(townhalls)
 
     def _base_index(self, base) -> int:
