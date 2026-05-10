@@ -153,9 +153,13 @@ except ImportError:
 
 # *** PHASE 8/9 SYSTEMS ***
 
-# Enhanced Scouting System
+# Enhanced Scouting System (legacy fallback for AdvancedScoutingSystemV2)
 try:
-    from scouting.enhanced_scout_system import EnhancedScoutSystem
+    import warnings as _warnings
+
+    with _warnings.catch_warnings():
+        _warnings.simplefilter("ignore", DeprecationWarning)
+        from scouting.enhanced_scout_system import EnhancedScoutSystem
 except ImportError:
     EnhancedScoutSystem = None
 
