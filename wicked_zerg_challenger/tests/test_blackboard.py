@@ -239,6 +239,12 @@ class TestProductionQueue(unittest.TestCase):
         self.assertEqual(result[0], "ROACH")
         self.assertIsNone(self.bb.get_next_production())
 
+    def test_unknown_priority_does_not_raise(self):
+        # Defensive: callers may pass arbitrary priority ints
+        self.bb.request_production("VIPER", 1, "Custom", priority=42)
+        result = self.bb.get_next_production()
+        self.assertEqual(result, ("VIPER", 1, "Custom"))
+
 
 class TestBuildingReservation(unittest.TestCase):
     def setUp(self):
