@@ -44,9 +44,14 @@ class ActorCriticNetwork:
         scale2 = np.sqrt(2.0 / (self.hidden_dim + self.action_dim))
         scale3 = np.sqrt(2.0 / (self.hidden_dim + 1))
 
-        self.W_shared = np.random.randn(self.input_dim, self.hidden_dim).astype(np.float32) * scale1
+        self.W_shared = (
+            np.random.randn(self.input_dim, self.hidden_dim).astype(np.float32) * scale1
+        )
         self.b_shared = np.zeros(self.hidden_dim, dtype=np.float32)
-        self.W_actor = np.random.randn(self.hidden_dim, self.action_dim).astype(np.float32) * scale2
+        self.W_actor = (
+            np.random.randn(self.hidden_dim, self.action_dim).astype(np.float32)
+            * scale2
+        )
         self.b_actor = np.zeros(self.action_dim, dtype=np.float32)
         self.W_critic = np.random.randn(self.hidden_dim, 1).astype(np.float32) * scale3
         self.b_critic = np.zeros(1, dtype=np.float32)
@@ -98,7 +103,9 @@ class ActorCriticNetwork:
         for step in reversed(range(len(rewards))):
             next_value = 0.0 if step == len(rewards) - 1 else values[step + 1]
             non_terminal = 1.0 - dones[step]
-            delta = rewards[step] + self.gamma * next_value * non_terminal - values[step]
+            delta = (
+                rewards[step] + self.gamma * next_value * non_terminal - values[step]
+            )
             last_gae = delta + self.gamma * self.gae_lambda * non_terminal * last_gae
             advantages[step] = last_gae
 

@@ -833,9 +833,8 @@ class IntelManager:
         self, structure_counts: dict, enemy_structures, game_time: float
     ):
         """Detect roadmap Sprint 2 rush and tech patterns before generic fallback."""
-        if (
-            game_time < 180
-            and self._structure_near_our_base(enemy_structures, {"BARRACKS"})
+        if game_time < 180 and self._structure_near_our_base(
+            enemy_structures, {"BARRACKS"}
         ):
             return self._pattern_response("proxy_barracks")
 
@@ -858,7 +857,9 @@ class IntelManager:
         ):
             return self._pattern_response("widow_mine_drop")
 
-        if structure_counts.get("FACTORY", 0) >= 2 and structure_counts.get("ARMORY", 0):
+        if structure_counts.get("FACTORY", 0) >= 2 and structure_counts.get(
+            "ARMORY", 0
+        ):
             return self._pattern_response("mech_transition")
 
         if game_time < 180 and (
@@ -916,8 +917,7 @@ class IntelManager:
 
     def _has_starport_reactor(self, structure_counts: dict) -> bool:
         return any(
-            structure_counts.get(name, 0) > 0
-            for name in ("STARPORTREACTOR", "REACTOR")
+            structure_counts.get(name, 0) > 0 for name in ("STARPORTREACTOR", "REACTOR")
         )
 
     def _has_enemy_expansion(self, structure_counts: dict) -> bool:
@@ -1126,7 +1126,9 @@ class IntelManager:
         if not blackboard:
             return
 
-        incoming_air = any(tech in self.enemy_tech_buildings for tech in AIR_TECH_STRUCTURES)
+        incoming_air = any(
+            tech in self.enemy_tech_buildings for tech in AIR_TECH_STRUCTURES
+        )
         active_air_count = sum(
             self.enemy_unit_counts.get(unit_name, 0) for unit_name in AIR_THREAT_UNITS
         )
