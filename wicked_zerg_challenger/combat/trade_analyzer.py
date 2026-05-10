@@ -141,6 +141,9 @@ class TradeAnalyzer:
 
         if enemy_value_lost > 0:
             self.current_trade_ratio = friendly_value_lost / enemy_value_lost
+        elif friendly_value_lost > 0:
+            # 우리가 손실을 봤지만 적은 안 죽은 경우 — 매우 불리한 교환
+            self.current_trade_ratio = float("inf")
         else:
             self.current_trade_ratio = 1.0
 
