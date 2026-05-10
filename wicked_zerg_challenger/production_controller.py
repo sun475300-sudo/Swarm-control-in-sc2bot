@@ -404,7 +404,6 @@ class ProductionController:
             return
 
         # * Phase 23: 서플라이 블록 완전 제거 - 선행 생산 *
-        game_time = getattr(self.bot, "time", 0)
         supply_used = supply_cap - supply_left
 
         # 동적 버퍼: 서플라이 사용량에 비례
