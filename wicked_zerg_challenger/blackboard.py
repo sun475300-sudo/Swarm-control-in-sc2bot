@@ -539,8 +539,27 @@ class GameStateBlackboard:
 
     def should_expand(self) -> bool:
         """확장 가능한 상황인가?"""
+        # Hatchery costs 300 minerals; require enough to actually start one.
+        HATCHERY_MINERAL_COST = 300
         return (
             self.threat.level == ThreatLevel.NONE
-            and not self.resources.is_supply_block
+            and not self.resources.is_supply_blocked
             and not self.is_under_attack
+            and self.resources.minerals >= HATCHERY_MINERAL_COST
         )
+
+
+# Backwards-compatible alias: external code (wicked_zerg_bot_pro_impl, tests)
+# imports `Blackboard` while the canonical class is `GameStateBlackboard`.
+Blackboard = GameStateBlackboard
+
+__all__ = [
+    "AuthorityMode",
+    "Blackboard",
+    "GamePhase",
+    "GameStateBlackboard",
+    "ResourceState",
+    "ThreatInfo",
+    "ThreatLevel",
+    "UnitCounts",
+]
