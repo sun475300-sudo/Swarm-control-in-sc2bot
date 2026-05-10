@@ -527,12 +527,6 @@ class ProductionResilience:
         # * EXPANSION RESERVE: 2기지 이하 + 150초 이후면 확장 비용 예약 *
         # FIX: Never block army production. Only suppress drone production when
         # saving for expansion. After 300s, stop suppressing entirely.
-        bases = b.townhalls.amount if hasattr(b, "townhalls") else 1
-        pending_hatch = (
-            b.already_pending(UnitTypeId.HATCHERY)
-            if hasattr(b, "already_pending")
-            else 0
-        )
         game_time = getattr(b, "time", 0)
         expansion_reserve_active = self._should_reserve_third_base_minerals()
         # NOTE: We do NOT return here. Army production continues below.
@@ -785,11 +779,6 @@ class ProductionResilience:
         # Get current unit counts
         zergling_count = (
             b.units(UnitTypeId.ZERGLING).amount if hasattr(b, "units") else 0
-        )
-        roach_count = b.units(UnitTypeId.ROACH).amount if hasattr(b, "units") else 0
-        hydra_count = b.units(UnitTypeId.HYDRALISK).amount if hasattr(b, "units") else 0
-        mutalisk_count = (
-            b.units(UnitTypeId.MUTALISK).amount if hasattr(b, "units") else 0
         )
 
         # Check available tech
