@@ -124,6 +124,22 @@ class TestThreat(unittest.TestCase):
         self.bb.update_threat(ThreatLevel.LOW)
         self.assertEqual(self.bb.threat.detected_at, 0.0)
 
+    def test_threat_episode_resets_when_cleared(self):
+        # 첫 위협 에피소드: detected_at 기록
+        self.bb.game_time = 100.0
+        self.bb.update_threat(ThreatLevel.MEDIUM)
+        self.assertEqual(self.bb.threat.detected_at, 100.0)
+
+        # 위협 해소
+        self.bb.game_time = 200.0
+        self.bb.update_threat(ThreatLevel.NONE)
+        self.assertEqual(self.bb.threat.detected_at, 0.0)
+
+        # 새 에피소드 시작 시 새 timestamp
+        self.bb.game_time = 500.0
+        self.bb.update_threat(ThreatLevel.HIGH)
+        self.assertEqual(self.bb.threat.detected_at, 500.0)
+
 
 class TestAuthorityMode(unittest.TestCase):
     def setUp(self):

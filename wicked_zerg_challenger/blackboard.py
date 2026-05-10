@@ -281,9 +281,13 @@ class GameStateBlackboard:
         if threat_position:
             self.threat.threat_position = threat_position
 
-        # 위협 감지 시간 기록
-        if level >= ThreatLevel.MEDIUM and self.threat.detected_at == 0.0:
-            self.threat.detected_at = self.game_time
+        # 위협 감지 시간 기록 — 새 위협 에피소드 시작 시점을 추적
+        if level >= ThreatLevel.MEDIUM:
+            if self.threat.detected_at == 0.0:
+                self.threat.detected_at = self.game_time
+        else:
+            # 위협이 해소되면 다음 에피소드를 위해 리셋
+            self.threat.detected_at = 0.0
 
     # ========== Dynamic Authority System ==========
 
