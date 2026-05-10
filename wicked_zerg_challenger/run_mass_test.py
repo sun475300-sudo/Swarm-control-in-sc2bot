@@ -41,11 +41,47 @@ def _ensure_sc2_path():
 
 _ensure_sc2_path()
 
-from sc2 import maps
-from sc2.data import Difficulty, Race
-from sc2.main import run_game
-from sc2.player import Bot, Computer
-from wicked_zerg_bot_pro_impl import WickedZergBotProImpl
+# Heavy sc2 imports are deferred so that pure CLI helpers (parse_args /
+# build_test_cases) remain importable even when optional native deps such as
+# `mpyq` are unavailable (CI/lint environments).
+try:
+    from sc2 import maps  # noqa: F401
+    from sc2.data import Difficulty, Race
+    from sc2.main import run_game
+    from sc2.player import Bot, Computer
+    from wicked_zerg_bot_pro_impl import WickedZergBotProImpl
+
+    _SC2_AVAILABLE = True
+except ImportError as _sc2_err:
+    _SC2_AVAILABLE = False
+    _sc2_import_error = _sc2_err
+
+    class _NamedEnumStub:
+        def __init__(self, name):
+            self.name = name
+
+        def __repr__(self):
+            return f"<stub:{self.name}>"
+
+    class Race:  # type: ignore[no-redef]
+        Terran = _NamedEnumStub("Terran")
+        Protoss = _NamedEnumStub("Protoss")
+        Zerg = _NamedEnumStub("Zerg")
+
+    class Difficulty:  # type: ignore[no-redef]
+        VeryEasy = _NamedEnumStub("VeryEasy")
+        Easy = _NamedEnumStub("Easy")
+        Medium = _NamedEnumStub("Medium")
+        MediumHard = _NamedEnumStub("MediumHard")
+        Hard = _NamedEnumStub("Hard")
+        Harder = _NamedEnumStub("Harder")
+        VeryHard = _NamedEnumStub("VeryHard")
+
+    maps = None
+    run_game = None
+    Bot = None
+    Computer = None
+    WickedZergBotProImpl = None
 
 # GPU setup
 try:
