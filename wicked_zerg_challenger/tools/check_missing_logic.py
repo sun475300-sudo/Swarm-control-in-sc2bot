@@ -1,8 +1,10 @@
 # -*- coding: utf-8 -*-
-"""
-?????? ???? ??? ????
+"""Check for missing implementations.
 
-ȣ??????? ???ǵ??? ???? ?޼???, pass ???? ?ִ? ?޼???, TODO ?ּ??? ã???ϴ?.
+Scans Python files to find:
+- Methods that are called via ``self.foo(...)`` but never defined
+- Functions whose body is a single ``pass`` placeholder
+- ``TODO`` / ``FIXME`` / ``XXX`` comments
 """
 
 import ast
@@ -16,213 +18,222 @@ logger = logging.getLogger("CheckMissingLogic")
 
 PROJECT_ROOT = Path(__file__).parent.parent
 
+EXCLUDED_DIR_PARTS = {
+    "__pycache__",
+    ".git",
+    "node_modules",
+    ".venv",
+    "venv",
+    "models",
+    ".pytest_cache",
+}
+
 
 class MissingLogicChecker:
-    """?????? ???? ????"""
-    
+    """Walk the project tree and collect missing-logic signals."""
+
     def __init__(self):
-        self.defined_methods: Dict[str, Set[str]] = defaultdict(set)  # file -> methods
-        self.called_methods: Dict[str, Set[str]] = defaultdict(set)  # file -> methods
-        self.pass_statements: Dict[str, List[int]] = defaultdict(list)  # file -> line numbers
-        self.todo_comments: Dict[str, List[Tuple[int, str]]] = defaultdict(list)  # file -> (line, comment)
+        self.defined_methods: Dict[str, Set[str]] = defaultdict(set)
+        self.called_methods: Dict[str, Set[str]] = defaultdict(set)
+        self.pass_statements: Dict[str, List[int]] = defaultdict(list)
+        self.todo_comments: Dict[str, List[Tuple[int, str]]] = defaultdict(list)
         self.missing_implementations: List[Dict] = []
-    
+
     def extract_methods_from_file(self, file_path: Path) -> Set[str]:
-        """???Ͽ??? ???ǵ? ?޼??? ????"""
-        methods = set()
+        """Return the set of function/method names defined in ``file_path``."""
+        methods: Set[str] = set()
         try:
-            with open(file_path, 'r', encoding='utf-8', errors='replace') as f:
+            with open(file_path, "r", encoding="utf-8", errors="replace") as f:
                 content = f.read()
-            
+
             try:
                 tree = ast.parse(content, filename=str(file_path))
-                for node in ast.walk(tree):
-                    if isinstance(node, ast.FunctionDef):
-                        methods.add(node.name)
-                    elif isinstance(node, ast.AsyncFunctionDef):
-                        methods.add(node.name)
-            except SyntaxError:
-                pass
-        except Exception:
-            pass
+            except SyntaxError as exc:
+                logger.debug("SyntaxError parsing %s: %s", file_path, exc)
+                return methods
+
+            for node in ast.walk(tree):
+                if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                    methods.add(node.name)
+        except OSError as exc:
+            logger.debug("Could not read %s: %s", file_path, exc)
         return methods
-    
+
     def extract_calls_from_file(self, file_path: Path) -> Set[str]:
-        """???Ͽ??? ȣ??? ?޼??? ????"""
-        calls = set()
+        """Return the set of ``self.<name>(...)`` calls found in ``file_path``."""
+        calls: Set[str] = set()
         try:
-            with open(file_path, 'r', encoding='utf-8', errors='replace') as f:
+            with open(file_path, "r", encoding="utf-8", errors="replace") as f:
                 content = f.read()
-                lines = content.splitlines()
-            
-            # self._method() ???? ã??
-            for i, line in enumerate(lines, 1):
-                # await self._method() ?Ǵ? self._method() ????
-                matches = re.findall(r'(?:await\s+)?self\.(_[a-zA-Z_][a-zA-Z0-9_]*)\s*\(', line)
+
+            for line in content.splitlines():
+                # Matches "self._foo(", "await self._foo(", "self.foo(" — pulls out the attribute.
+                matches = re.findall(
+                    r"(?:await\s+)?self\.([a-zA-Z_][a-zA-Z0-9_]*)\s*\(",
+                    line,
+                )
                 calls.update(matches)
-                
-                # await self.method() ?Ǵ? self.method() ???? (public methods)
-                matches2 = re.findall(r'(?:await\s+)?self\.([a-zA-Z_][a-zA-Z0-9_]*)\s*\(', line)
-                calls.update(matches2)
-        except Exception:
-            pass
+        except OSError as exc:
+            logger.debug("Could not read %s: %s", file_path, exc)
         return calls
-    
+
     def find_pass_statements(self, file_path: Path) -> List[int]:
-        """pass ???? ?ִ? ???? ã??"""
-        pass_lines = []
+        """Return line numbers where a function body is just ``pass``."""
+        pass_lines: List[int] = []
         try:
-            with open(file_path, 'r', encoding='utf-8', errors='replace') as f:
+            with open(file_path, "r", encoding="utf-8", errors="replace") as f:
                 lines = f.readlines()
-            
+
             for i, line in enumerate(lines, 1):
                 stripped = line.strip()
-                # ?ܵ? pass ???? ã?? (?ּ??̳? ?ٸ? ?ڵ?? ?Բ? ?ִ? ???? ????)
-                if stripped == 'pass' or (stripped.startswith('pass') and len(stripped) == 4):
-                    # ?Լ? ???? ?????? pass???? Ȯ??
-                    context = '\n'.join(lines[max(0, i-10):i])
-                    if 'def ' in context or 'async def ' in context:
+                if stripped == "pass":
+                    # Heuristic: only count `pass` that follows a function definition recently.
+                    context = "\n".join(lines[max(0, i - 10) : i])
+                    if "def " in context or "async def " in context:
                         pass_lines.append(i)
-        except Exception:
-            pass
+        except OSError as exc:
+            logger.debug("Could not read %s: %s", file_path, exc)
         return pass_lines
-    
+
     def find_todo_comments(self, file_path: Path) -> List[Tuple[int, str]]:
-        """TODO ?ּ? ã??"""
-        todos = []
+        """Return ``(line_number, line_text)`` for TODO/FIXME/XXX comments."""
+        todos: List[Tuple[int, str]] = []
         try:
-            with open(file_path, 'r', encoding='utf-8', errors='replace') as f:
+            with open(file_path, "r", encoding="utf-8", errors="replace") as f:
                 lines = f.readlines()
-            
+
             for i, line in enumerate(lines, 1):
-                if 'TODO' in line.upper() or 'FIXME' in line.upper() or 'XXX' in line.upper():
+                upper = line.upper()
+                if "TODO" in upper or "FIXME" in upper or "XXX" in upper:
                     todos.append((i, line.strip()))
-        except Exception:
-            pass
+        except OSError as exc:
+            logger.debug("Could not read %s: %s", file_path, exc)
         return todos
-    
-    def scan_file(self, file_path: Path):
-        """???? ??ĵ"""
+
+    def scan_file(self, file_path: Path) -> None:
+        """Scan a single Python file and record findings."""
         rel_path = str(file_path.relative_to(PROJECT_ROOT))
-        
+
         defined = self.extract_methods_from_file(file_path)
         called = self.extract_calls_from_file(file_path)
         pass_lines = self.find_pass_statements(file_path)
         todos = self.find_todo_comments(file_path)
-        
+
         self.defined_methods[rel_path] = defined
         self.called_methods[rel_path] = called
         if pass_lines:
             self.pass_statements[rel_path] = pass_lines
         if todos:
             self.todo_comments[rel_path] = todos
-        
-        # ???? ???? ?????? ȣ??Ǿ????? ???ǵ??? ???? ?޼??? ã??
+
+        # Same-file private-call check: self._foo() called but _foo not defined here.
         missing = called - defined
         if missing:
             for method in missing:
-                self.missing_implementations.append({
-                    'file': rel_path,
-                    'method': method,
-                    'type': 'missing_in_same_file'
-                })
-    
+                if not method.startswith("_"):
+                    continue
+                self.missing_implementations.append(
+                    {
+                        "file": rel_path,
+                        "method": method,
+                        "type": "missing_in_same_file",
+                    }
+                )
+
     def scan_all(self) -> Dict:
-        """??ü ??ĵ"""
-        for root, dirs, files in Path(PROJECT_ROOT).rglob('*.py'):
-            # ?????? ???丮
-            if any(excluded in str(root) for excluded in ['__pycache__', '.git', 'node_modules', '.venv', 'venv', 'models', '.pytest_cache']):
+        """Walk the whole project and return a summary."""
+        for path in PROJECT_ROOT.rglob("*.py"):
+            if any(part in EXCLUDED_DIR_PARTS for part in path.parts):
                 continue
-            
-            if root.is_file():
-                self.scan_file(root)
-        
-        # ??ü ??????Ʈ???? ȣ??Ǿ????? ???ǵ??? ???? ?޼??? ã??
-        all_defined = set()
+            if not path.is_file():
+                continue
+            self.scan_file(path)
+
+        # Project-wide check: any private call that isn't defined anywhere.
+        all_defined: Set[str] = set()
         for methods in self.defined_methods.values():
             all_defined.update(methods)
-        
+
         for file_path, called in self.called_methods.items():
             for method in called:
-                if method not in all_defined and method.startswith('_'):
-                    # private method?? ???ǵ??? ?ʾ???
-                    self.missing_implementations.append({
-                        'file': file_path,
-                        'method': method,
-                        'type': 'missing_in_project'
-                    })
-        
+                if method.startswith("_") and method not in all_defined:
+                    self.missing_implementations.append(
+                        {
+                            "file": file_path,
+                            "method": method,
+                            "type": "missing_in_project",
+                        }
+                    )
+
         return {
-            'missing_implementations': self.missing_implementations,
-            'pass_statements': dict(self.pass_statements),
-            'todo_comments': dict(self.todo_comments),
-            'files_with_pass': len(self.pass_statements),
-            'files_with_todos': len(self.todo_comments),
-            'total_missing': len(self.missing_implementations)
+            "missing_implementations": self.missing_implementations,
+            "pass_statements": dict(self.pass_statements),
+            "todo_comments": dict(self.todo_comments),
+            "files_with_pass": len(self.pass_statements),
+            "files_with_todos": len(self.todo_comments),
+            "total_missing": len(self.missing_implementations),
         }
 
 
-def main():
-    """???? ?Լ?"""
-    
+def main() -> None:
+    """Entry point: scan the project and log a report."""
     logger.info("=" * 70)
-    logger.info("?????? ???? ??? ????")
+    logger.info("Missing-logic checker")
     logger.info("=" * 70)
     checker = MissingLogicChecker()
-    logger.info("??ĵ ??...")
+    logger.info("Scanning ...")
     results = checker.scan_all()
-    
-    logger.info(f"\n??? ?Ϸ?!")
-    logger.info(f"  - ?????? ?޼???: {results['total_missing']}??")
-    logger.info(f"  - pass ???? ?ִ? ????: {results['files_with_pass']}??")
-    logger.info(f"  - TODO ?ּ??? ?ִ? ????: {results['files_with_todos']}??")
-    # ?????? ?޼??? ???
-    if results['missing_implementations']:
+
+    logger.info("Scan complete.")
+    logger.info("  - missing methods: %d", results["total_missing"])
+    logger.info("  - files with bare 'pass': %d", results["files_with_pass"])
+    logger.info("  - files with TODO/FIXME/XXX: %d", results["files_with_todos"])
+
+    if results["missing_implementations"]:
         logger.info("=" * 70)
-        logger.info("?????? ?޼???:")
+        logger.info("Missing methods:")
         logger.info("=" * 70)
-        
+
         by_file = defaultdict(list)
-        for item in results['missing_implementations']:
-            by_file[item['file']].append(item['method'])
-        
+        for item in results["missing_implementations"]:
+            by_file[item["file"]].append(item["method"])
+
         for file_path, methods in sorted(by_file.items()):
-            logger.info(f"\n{file_path}:")
+            logger.info("\n%s:", file_path)
             for method in sorted(set(methods)):
-                logger.info(f"  - {method}")
-    
-    # pass ???? ???? ???? ???
-    if results['pass_statements']:
+                logger.info("  - %s", method)
+
+    if results["pass_statements"]:
         logger.info("\n" + "=" * 70)
-        logger.info("pass ???? ???? ???? (???? 10??):")
+        logger.info("Top files by bare-'pass' count (top 10):")
         logger.info("=" * 70)
-        
+
         sorted_files = sorted(
-            results['pass_statements'].items(),
+            results["pass_statements"].items(),
             key=lambda x: len(x[1]),
-            reverse=True
+            reverse=True,
         )[:10]
-        
+
         for file_path, lines in sorted_files:
-            logger.info(f"\n{file_path}: {len(lines)}?? pass ??")
+            logger.info("\n%s: %d 'pass' lines", file_path, len(lines))
+            preview = ", ".join(map(str, lines[:20]))
             if len(lines) <= 20:
-                logger.info(f"  ????: {', '.join(map(str, lines[:20]))}")
+                logger.info("  lines: %s", preview)
             else:
-                logger.info(f"  ????: {', '.join(map(str, lines[:20]))} ... (?? {len(lines)}??)")
-    
-    # TODO ?ּ? ???
-    if results['todo_comments']:
+                logger.info("  lines: %s ... (total %d)", preview, len(lines))
+
+    if results["todo_comments"]:
         logger.info("\n" + "=" * 70)
-        logger.info("TODO ?ּ? (???? 20??):")
+        logger.info("TODO comments (first 20):")
         logger.info("=" * 70)
-        
+
         count = 0
-        for file_path, todos in sorted(results['todo_comments'].items()):
+        for file_path, todos in sorted(results["todo_comments"].items()):
             for line_num, comment in todos:
                 if count >= 20:
                     break
-                logger.info(f"\n{file_path}:{line_num}")
-                logger.info(f"  {comment[:100]}")
+                logger.info("\n%s:%d", file_path, line_num)
+                logger.info("  %s", comment[:100])
                 count += 1
             if count >= 20:
                 break
