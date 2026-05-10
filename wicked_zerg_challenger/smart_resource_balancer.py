@@ -11,6 +11,9 @@ Smart Resource Balancer - 실시간 일꾼 재배치로 자원 효율 극대화
 from typing import Dict, Tuple
 
 from utils.logger import get_logger
+import logging
+
+logger = logging.getLogger("smart_resource_balancer")
 
 try:
     from sc2.ids.unit_typeid import UnitTypeId
@@ -420,8 +423,8 @@ class SmartResourceBalancer:
                 extractors.extend(
                     self._as_unit_list(getattr(structure_units, "ready", structure_units))
                 )
-            except Exception:
-                pass
+            except Exception as exc:
+                logger.debug("smart_resource_balancer: %s", exc, exc_info=True)
 
         unique = {}
         for extractor in extractors:

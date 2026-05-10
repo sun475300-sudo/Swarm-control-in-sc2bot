@@ -14,9 +14,12 @@ Dynamic Authority 기반 생산 관리:
 참고: LOGIC_IMPROVEMENT_REPORT.md - Section 3 (Dynamic Authority)
 """
 
+import logging
 from typing import Any, Dict, Optional
 
 from utils.logger import get_logger
+
+logger = logging.getLogger("ProductionController")
 
 try:
     from sc2.bot_ai import BotAI
@@ -572,8 +575,8 @@ class ProductionController:
                 try:
                     larva = larvae.first
                     self.bot.do(larva.train(best_uid))
-                except Exception:
-                    pass
+                except Exception as exc:
+                    logger.debug("production_controller: %s", exc, exc_info=True)
 
     async def _consume_mineral_bank(self):
         """
@@ -627,8 +630,8 @@ class ProductionController:
                 try:
                     larva = larvae.first
                     self.bot.do(larva.train(UnitTypeId.ULTRALISK))
-                except Exception:
-                    pass
+                except Exception as exc:
+                    logger.debug("production_controller: %s", exc, exc_info=True)
 
     # ========== 상태 조회 ==========
 

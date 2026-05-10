@@ -9,6 +9,9 @@ Combat Execution - 전투 실행 시스템
 """
 
 import inspect
+import logging
+
+logger = logging.getLogger("CombatExecution")
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -156,8 +159,8 @@ class CombatExecution:
                 for unit, target_pos in formation_positions[:30]:
                     try:
                         self.bot.do(unit.move(target_pos))
-                    except Exception:
-                        pass
+                    except Exception as exc:
+                        logger.debug("combat_execution: %s", exc, exc_info=True)
 
             # 길목 회피 확인
             if hasattr(self.bot, "townhalls") and self.bot.townhalls.exists:
@@ -175,8 +178,8 @@ class CombatExecution:
                         for unit in units[:30]:  # * Phase 22: 10 -> 30 *
                             try:
                                 self.bot.do(unit.move(retreat_pos))
-                            except Exception:
-                                pass
+                            except Exception as exc:
+                                logger.debug("combat_execution: %s", exc, exc_info=True)
 
         except Exception as e:
             if hasattr(self.bot, "iteration") and self.bot.iteration % 50 == 0:

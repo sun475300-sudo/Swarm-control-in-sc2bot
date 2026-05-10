@@ -598,8 +598,8 @@ def main():
                                     stdout=subprocess.DEVNULL,
                                     stderr=subprocess.DEVNULL,
                                 )
-                        except Exception:
-                            pass
+                        except Exception as exc:
+                            logger.debug("run_with_training: %s", exc, exc_info=True)
                 except (ImportError, Exception):
                     # Fallback: try to kill SC2, then sleep
                     try:
@@ -617,8 +617,8 @@ def main():
                                 stdout=subprocess.DEVNULL,
                                 stderr=subprocess.DEVNULL,
                             )
-                    except Exception:
-                        pass
+                    except Exception as exc:
+                        logger.debug("run_with_training: %s", exc, exc_info=True)
                     time.sleep(wait_between_games)
 
                 # IMPROVED: Print background learning stats periodically
@@ -811,8 +811,8 @@ def main():
                         logger.info(
                             f"[MANUAL] Recorded result: {game_result_str} ({reason})"
                         )
-            except Exception:
-                pass
+            except Exception as exc:
+                logger.debug("run_with_training: %s", exc, exc_info=True)
 
             # Stop local monitoring server on interrupt
             if local_server_manager:

@@ -9,10 +9,13 @@ both dashboard.py (HTTP server) and dashboard_api.py (FastAPI).
 
 
 import json
+import logging
 import os
 from glob import glob
 from pathlib import Path
 from typing import Any, Dict, Optional
+
+logger = logging.getLogger("MonitoringUtils")
 
 
 def get_base_dir() -> Path:
@@ -37,8 +40,8 @@ def load_json(path: Path) -> Optional[Dict[str, Any]]:
         if path.exists():
             with path.open("r", encoding="utf-8") as f:
                 return json.load(f)
-    except Exception:
-        pass
+    except Exception as exc:
+        logger.debug("monitoring_utils: %s", exc, exc_info=True)
     return None
 
 
@@ -57,8 +60,8 @@ def find_latest_instance_status(base_dir: Path) -> Optional[Dict[str, Any]]:
         if files:
             latest = max(files, key=lambda p: Path(p).stat().st_mtime)
             return load_json(Path(latest))
-    except Exception:
-        pass
+    except Exception as exc:
+        logger.debug("monitoring_utils: %s", exc, exc_info=True)
     return None
 
 

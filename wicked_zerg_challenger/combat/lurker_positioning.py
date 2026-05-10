@@ -13,7 +13,10 @@ Feature #95: 럴커 포지셔닝 매니저
 - LurkerPositionManager: 초크 포인트 방어 배치 (방어적/전략적)
 """
 
+import logging
 from enum import Enum
+
+logger = logging.getLogger("LurkerPositioning")
 from typing import Dict, List, Optional
 
 try:
@@ -397,8 +400,8 @@ class LurkerPositionManager:
             if AbilityId.BURROWDOWN_LURKER in abilities:
                 self.bot.do(lurker(AbilityId.BURROWDOWN_LURKER))
                 self.lurker_burrowed[lurker.tag] = True
-        except Exception:
-            pass
+        except Exception as exc:
+            logger.debug("lurker_positioning: %s", exc, exc_info=True)
 
     async def _unburrow_lurker(self, lurker: Unit):
         """럴커 언버로우"""
@@ -410,8 +413,8 @@ class LurkerPositionManager:
             if AbilityId.BURROWUP_LURKER in abilities:
                 self.bot.do(lurker(AbilityId.BURROWUP_LURKER))
                 self.lurker_burrowed[lurker.tag] = False
-        except Exception:
-            pass
+        except Exception as exc:
+            logger.debug("lurker_positioning: %s", exc, exc_info=True)
 
     def _check_enemies_nearby(self, lurker: Unit, distance: float) -> bool:
         """주변 적 유닛 확인"""

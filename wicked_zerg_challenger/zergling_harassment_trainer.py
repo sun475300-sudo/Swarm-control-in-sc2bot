@@ -17,6 +17,9 @@ from sc2.ids.upgrade_id import UpgradeId
 from sc2.position import Point2
 
 from utils.logger import get_logger
+import logging
+
+logger = logging.getLogger("zergling_harassment_trainer")
 
 
 class ZerglingSquad:
@@ -121,8 +124,8 @@ class ZerglingHarassmentTrainer:
             self.has_adrenal_glands = (
                 UpgradeId.ZERGLINGATTACKSPEED in self.bot.state.upgrades
             )
-        except Exception:
-            pass
+        except Exception as exc:
+            logger.debug("zergling_harassment_trainer: %s", exc, exc_info=True)
 
     def _update_squads(self, zerglings, game_time: float):
         """

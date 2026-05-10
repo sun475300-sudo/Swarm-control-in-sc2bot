@@ -22,6 +22,9 @@ except ImportError:
     AbilityId = None
 
 from utils.logger import get_logger
+import logging
+
+logger = logging.getLogger("unit_morph_manager")
 
 
 class UnitMorphManager:
@@ -442,8 +445,8 @@ class UnitMorphManager:
             self.logger.info(
                 f"[{int(self.bot.time)}s] Morphed Overseer (Active: {overseers.amount}/{target_count})"
             )
-        except Exception:
-            pass
+        except Exception as exc:
+            logger.debug("unit_morph_manager: %s", exc, exc_info=True)
 
     def _get_enemy_race(self) -> str:
         """상대 종족 확인"""

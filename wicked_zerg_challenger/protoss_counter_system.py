@@ -15,6 +15,9 @@ Protoss Counter System - Advanced counter logic for Protoss opponents
 from typing import Dict, List
 
 from utils.logger import get_logger
+import logging
+
+logger = logging.getLogger("protoss_counter_system")
 
 try:
     from sc2.ids.ability_id import AbilityId
@@ -261,8 +264,8 @@ class ProtossCounterSystem:
                             f"[{int(self.bot.time)}s] [*][*][*] EMERGENCY SPORE vs DT! [*][*][*]"
                         )
                         return  # 한 번에 1개씩만
-                    except Exception:
-                        pass
+                    except Exception as exc:
+                        logger.debug("protoss_counter_system: %s", exc, exc_info=True)
 
     async def _pull_workers_from_threat(self):
         """일꾼을 위협 지역에서 대피"""

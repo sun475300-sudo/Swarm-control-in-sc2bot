@@ -170,8 +170,8 @@ class BuildingManager:
         if building_coord and hasattr(building_coord, "get_building_count"):
             try:
                 return building_coord.get_building_count(structure_type)
-            except Exception:
-                pass
+            except Exception as exc:
+                logger.debug("building_manager: %s", exc, exc_info=True)
         structures = getattr(self.bot, "structures", None)
         try:
             existing = structures(structure_type).amount if structures else 0

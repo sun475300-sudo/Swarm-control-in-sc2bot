@@ -1,7 +1,10 @@
 # -*- coding: utf-8 -*-
 """Scouting helpers used by roadmap and matchup-specific systems."""
 
+import logging
 from typing import Dict, Iterable, List, Optional, Set
+
+logger = logging.getLogger("ScoutingSystem")
 
 try:
     from sc2.ids.ability_id import AbilityId
@@ -284,8 +287,8 @@ class ScoutingSystem:
         if overlord and ability:
             try:
                 self._issue(overlord(ability))
-            except Exception:
-                pass
+            except Exception as exc:
+                logger.debug("scouting_system: %s", exc, exc_info=True)
 
     def _find_available_overseer(self, target=None):
         units = getattr(self.bot, "units", None)
@@ -390,8 +393,8 @@ class ScoutingSystem:
     def _issue(self, action) -> None:
         try:
             self.bot.do(action)
-        except Exception:
-            pass
+        except Exception as exc:
+            logger.debug("scouting_system: %s", exc, exc_info=True)
 
     def _set(self, key: str, value) -> None:
         if self.blackboard and hasattr(self.blackboard, "set"):

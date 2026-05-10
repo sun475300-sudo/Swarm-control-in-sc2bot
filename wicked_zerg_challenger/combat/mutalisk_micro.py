@@ -8,7 +8,10 @@ Features:
 3. Bounce targeting optimization
 """
 
+import logging
 import math
+
+logger = logging.getLogger("MutaliskMicro")
 from typing import Dict, List, Optional, Set, Tuple
 
 try:
@@ -327,8 +330,8 @@ class MutaliskMicroController:
                     if muta.distance_to(stack_point) > 1.5 and len(combat_ready) >= 3:
                         actions.append(muta.move(stack_point))
                         continue
-                except Exception:
-                    pass
+                except Exception as exc:
+                    logger.debug("mutalisk_micro: %s", exc, exc_info=True)
             if target:
                 actions.append(muta.attack(target))
 
@@ -444,5 +447,5 @@ class MutaliskMicroController:
                 result = bot.do(action)
                 if hasattr(result, "__await__"):
                     await result
-            except Exception:
-                pass
+            except Exception as exc:
+                logger.debug("mutalisk_micro: %s", exc, exc_info=True)

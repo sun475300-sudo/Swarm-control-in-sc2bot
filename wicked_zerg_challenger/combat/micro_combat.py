@@ -8,6 +8,9 @@ from __future__ import annotations
 
 import asyncio
 from typing import Iterable, List, Optional, Set, Tuple
+import logging
+
+logger = logging.getLogger("micro_combat")
 
 try:
     from sc2.ids.ability_id import AbilityId
@@ -714,8 +717,8 @@ class ZvZMicroAdjustments(ZvTMicroAdjustments):
                     actions.append(ling.move(ling.position.towards(closest_bane.position, -4)))
                     handled.add(tag)
                     continue
-            except Exception:
-                pass
+            except Exception as exc:
+                logger.debug("micro_combat: %s", exc, exc_info=True)
             target = self._closest_to(enemy_lings, ling)
             if target:
                 actions.append(ling.attack(target))

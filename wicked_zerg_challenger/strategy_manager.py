@@ -1293,8 +1293,8 @@ class StrategyManager:
                     requester="StrategyManager",
                 )
                 return
-            except Exception:
-                pass
+            except Exception as exc:
+                self.logger.debug("strategy_manager: %s", exc, exc_info=True)
 
         # BuildingCoordination이 있으면 요청 등록
         building_coord = getattr(self.bot, "building_coord", None)
@@ -1336,8 +1336,8 @@ class StrategyManager:
                         f"[{int(game_time)}s] Spire build requested via BuildingManager"
                     )
                 return
-            except Exception:
-                pass
+            except Exception as exc:
+                self.logger.debug("strategy_manager: %s", exc, exc_info=True)
 
         if building_coord:
             try:
@@ -1350,8 +1350,8 @@ class StrategyManager:
                     self.logger.info(
                         f"[{int(game_time)}s] Spire build requested via BuildingCoordination"
                     )
-            except Exception:
-                pass
+            except Exception as exc:
+                self.logger.debug("strategy_manager: %s", exc, exc_info=True)
         else:
             # Fallback: 로그만 남기고, BotStepIntegrator/AggressiveTechBuilder가 처리
             if int(game_time) % 30 == 0 and self.bot.iteration % 22 == 0:
@@ -1373,22 +1373,22 @@ class StrategyManager:
         if economy and hasattr(economy, "bot") and hasattr(economy.bot, "workers"):
             try:
                 return economy.bot.workers.amount
-            except Exception:
-                pass
+            except Exception as exc:
+                self.logger.debug("strategy_manager: %s", exc, exc_info=True)
 
         # Fallback: 직접 조회
         if hasattr(self.bot, "workers"):
             try:
                 return self.bot.workers.amount
-            except Exception:
-                pass
+            except Exception as exc:
+                self.logger.debug("strategy_manager: %s", exc, exc_info=True)
 
         if hasattr(self.bot, "units"):
             try:
                 drones = self.bot.units.filter(lambda u: u.type_id.name == "DRONE")
                 return drones.amount if hasattr(drones, "amount") else len(drones)
-            except Exception:
-                pass
+            except Exception as exc:
+                self.logger.debug("strategy_manager: %s", exc, exc_info=True)
 
         return 0
 

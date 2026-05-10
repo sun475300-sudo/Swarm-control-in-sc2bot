@@ -186,5 +186,5 @@ def cleanup_build_reservations(resilience) -> None:
         stale = [sid for sid, ts in reservations.items() if now - ts > 45.0]
         for sid in stale:
             reservations.pop(sid, None)
-    except Exception:
-        pass
+    except Exception as exc:
+        logger.debug("expansion_manager: %s", exc, exc_info=True)

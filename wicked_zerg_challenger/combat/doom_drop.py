@@ -33,6 +33,9 @@ except ImportError:
     Units = None
 
 from utils.logger import get_logger
+import logging
+
+logger = logging.getLogger("doom_drop")
 
 
 class DoomDropPhase(Enum):
@@ -534,8 +537,8 @@ class DoomDropManager:
                             f"[{int(self.bot.time)}s] [DOOM_DROP] "
                             f"오버로드 위험! 긴급 투하"
                         )
-                    except Exception:
-                        pass
+                    except Exception as exc:
+                        logger.debug("doom_drop: %s", exc, exc_info=True)
 
     def _find_unit(self, tag: int) -> Optional[Unit]:
         """태그로 유닛 찾기"""

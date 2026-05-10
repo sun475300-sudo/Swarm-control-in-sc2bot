@@ -21,6 +21,9 @@ except ImportError:  # Fallbacks for tooling environments
     UpgradeId = None
 
 from utils.logger import get_logger
+import logging
+
+logger = logging.getLogger("upgrade_manager")
 
 
 def _upgrade_id(name: str):
@@ -1568,8 +1571,8 @@ class EvolutionUpgradeManager:
             if hasattr(self.bot, "calculate_cost"):
                 cost = self.bot.calculate_cost(upgrade_id)
                 return (cost.minerals, cost.vespene)
-        except Exception:
-            pass
+        except Exception as exc:
+            logger.debug("upgrade_manager: %s", exc, exc_info=True)
         # Fallback: most Zerg upgrades cost 100/100 or 150/150 or 200/200
         return (100, 100)
 
