@@ -2611,8 +2611,8 @@ class StrategyManager:
             for k in current_ratios:
                 current_ratios[k] /= total
 
-    def _request_spire_build(self) -> None:
-        """스파이어 긴급 건설 요청 - 제거됨 (AggressiveTechBuilder로 통합)"""
+    # Note: `_request_spire_build` was removed; spire building is now handled
+    # by AggressiveTechBuilder. The empty stub had no callers.
 
     def should_force_hydra(self) -> bool:
         """히드라 강제 생산 여부"""

@@ -1293,12 +1293,37 @@ class HarassmentCoordinator:
         )
 
     async def _trigger_zergling_runby(self) -> None:
-        """Trigger zergling run-by (placeholder for existing logic)"""
-        # This would call existing zergling run-by logic
+        """Trigger zergling run-by.
+
+        NOTE: this is a placeholder. The real zergling run-by lives at
+        ``combat_manager._zergling_early_harass`` and needs a unit/army
+        reference that the HarassmentCoordinator does not currently hold.
+        Until the wiring is added we log a one-shot warning so the no-op
+        is visible to operators reading the logs (silent no-op in the
+        previous version made multi-angle attack reports misleading).
+        """
+        if not getattr(self, "_warned_runby_unwired", False):
+            self.logger.warning(
+                "[HARASS] zergling run-by trigger fired but is not yet wired to "
+                "combat_manager._zergling_early_harass — multi-angle attack will "
+                "register the vector without actually executing it"
+            )
+            self._warned_runby_unwired = True
 
     async def _trigger_mutalisk_harassment(self) -> None:
-        """Trigger mutalisk harassment (placeholder for existing logic)"""
-        # This would call existing mutalisk harassment logic
+        """Trigger mutalisk harassment.
+
+        NOTE: placeholder. The real implementation is
+        ``combat_manager._mutalisk_harass`` / ``_execute_harass``. Until
+        wiring is added we log once so the no-op is visible.
+        """
+        if not getattr(self, "_warned_muta_unwired", False):
+            self.logger.warning(
+                "[HARASS] mutalisk harassment trigger fired but is not yet wired "
+                "to combat_manager._mutalisk_harass — multi-angle attack will "
+                "register the vector without actually executing it"
+            )
+            self._warned_muta_unwired = True
 
     # ============================================================================
     # Phase 21.3: Unit Persistence System (Squad Lock)
@@ -1594,10 +1619,7 @@ class HarassmentCoordinator:
         elif current_enemy_workers > self.last_worker_kill_count:
             # Enemy rebuilt workers. Log raid summary if a raid just ended
             # and reset the per-raid counter so we don't double-count.
-            if (
-                not harassment_active
-                and self._current_raid_workers_killed > 0
-            ):
+            if not harassment_active and self._current_raid_workers_killed > 0:
                 self.logger.info(
                     f"[{int(self.bot.time)}s] Raid #{self.raids_executed} summary:"
                     f" {self._current_raid_workers_killed} workers killed."
