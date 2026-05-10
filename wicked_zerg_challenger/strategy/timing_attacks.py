@@ -62,6 +62,7 @@ except ImportError:
                 sym = _SC2StubSymbol(name)
                 cls._cache[key] = sym
             return sym
+
     class UnitTypeId(metaclass=_SC2StubMeta):
         pass
 

@@ -53,6 +53,7 @@ except ImportError:
                 sym = _SC2StubSymbol(name)
                 cls._cache[key] = sym
             return sym
+
     class UnitTypeId(metaclass=_SC2StubMeta):
         pass
 
@@ -429,9 +430,15 @@ class SmartResourceBalancer:
         except (TypeError, ValueError):
             return False
 
-        if gas >= self.gas_critical_threshold and minerals < self.gas_lock_mineral_threshold:
+        if (
+            gas >= self.gas_critical_threshold
+            and minerals < self.gas_lock_mineral_threshold
+        ):
             return True
-        if gas >= self.gas_excess_threshold and minerals < self.mineral_shortage_threshold:
+        if (
+            gas >= self.gas_excess_threshold
+            and minerals < self.mineral_shortage_threshold
+        ):
             return True
         # FIX P0-7: 가스 워커 이동 임계값 완화 (3배→2배)
         return gas > max(200, minerals * 2) and minerals < 800
@@ -451,7 +458,9 @@ class SmartResourceBalancer:
             try:
                 structure_units = structures(UnitTypeId.EXTRACTOR)
                 extractors.extend(
-                    self._as_unit_list(getattr(structure_units, "ready", structure_units))
+                    self._as_unit_list(
+                        getattr(structure_units, "ready", structure_units)
+                    )
                 )
             except Exception:
                 pass

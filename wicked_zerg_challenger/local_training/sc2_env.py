@@ -8,6 +8,7 @@ import numpy as np
 try:
     from sc2.ids.unit_typeid import UnitTypeId
 except Exception:
+
     class _SC2StubSymbol:
         """Sentinel value used in place of real SC2 enum members.
 
@@ -44,7 +45,6 @@ except Exception:
                 sym = _SC2StubSymbol(name)
                 cls._cache[key] = sym
             return sym
-
 
     class UnitTypeId(metaclass=_SC2StubMeta):
         pass

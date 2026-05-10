@@ -39,10 +39,8 @@ class TestProductionControllerThirdBaseReserve(unittest.TestCase):
         townhalls.ready.amount = ready_bases
         townhalls.__iter__.return_value = iter([])
         bot.townhalls = townhalls
-        bot.already_pending.side_effect = (
-            lambda unit_type: pending_hatcheries
-            if unit_type == UnitTypeId.HATCHERY
-            else 0
+        bot.already_pending.side_effect = lambda unit_type: (
+            pending_hatcheries if unit_type == UnitTypeId.HATCHERY else 0
         )
         bot.enemy_units.closer_than.return_value.amount = 0
 
@@ -63,9 +61,7 @@ class TestProductionControllerThirdBaseReserve(unittest.TestCase):
 
     def test_reserve_blocks_queen_while_natural_is_pending(self):
         bot = self._make_bot(time=150.0, ready_bases=1, pending_hatcheries=1)
-        blackboard = self._make_blackboard(
-            (UnitTypeId.QUEEN, 1, "DefenseCoordinator")
-        )
+        blackboard = self._make_blackboard((UnitTypeId.QUEEN, 1, "DefenseCoordinator"))
         controller = ProductionController(bot, blackboard)
 
         asyncio.run(controller._process_production_queue())
@@ -79,9 +75,7 @@ class TestProductionControllerThirdBaseReserve(unittest.TestCase):
         bot = self._make_bot(time=150.0, ready_bases=1, pending_hatcheries=1)
         bot.townhalls.amount = 2
         bot.townhalls.ready.amount = 1
-        blackboard = self._make_blackboard(
-            (UnitTypeId.QUEEN, 1, "DefenseCoordinator")
-        )
+        blackboard = self._make_blackboard((UnitTypeId.QUEEN, 1, "DefenseCoordinator"))
         controller = ProductionController(bot, blackboard)
 
         asyncio.run(controller._process_production_queue())
@@ -95,9 +89,7 @@ class TestProductionControllerThirdBaseReserve(unittest.TestCase):
         bot = self._make_bot(time=190.0, ready_bases=2, pending_hatcheries=1)
         townhall = MagicMock()
         bot.townhalls.ready.idle = [townhall]
-        blackboard = self._make_blackboard(
-            (UnitTypeId.QUEEN, 1, "DefenseCoordinator")
-        )
+        blackboard = self._make_blackboard((UnitTypeId.QUEEN, 1, "DefenseCoordinator"))
         controller = ProductionController(bot, blackboard)
 
         asyncio.run(controller._process_production_queue())
@@ -107,9 +99,7 @@ class TestProductionControllerThirdBaseReserve(unittest.TestCase):
 
     def test_fourth_base_reserve_blocks_queen_on_three_bases(self):
         bot = self._make_bot(time=370.0, ready_bases=3, pending_hatcheries=0)
-        blackboard = self._make_blackboard(
-            (UnitTypeId.QUEEN, 1, "DefenseCoordinator")
-        )
+        blackboard = self._make_blackboard((UnitTypeId.QUEEN, 1, "DefenseCoordinator"))
         controller = ProductionController(bot, blackboard)
 
         asyncio.run(controller._process_production_queue())
@@ -123,9 +113,7 @@ class TestProductionControllerThirdBaseReserve(unittest.TestCase):
         bot = self._make_bot(time=370.0, ready_bases=3, pending_hatcheries=1)
         townhall = MagicMock()
         bot.townhalls.ready.idle = [townhall]
-        blackboard = self._make_blackboard(
-            (UnitTypeId.QUEEN, 1, "DefenseCoordinator")
-        )
+        blackboard = self._make_blackboard((UnitTypeId.QUEEN, 1, "DefenseCoordinator"))
         controller = ProductionController(bot, blackboard)
 
         asyncio.run(controller._process_production_queue())

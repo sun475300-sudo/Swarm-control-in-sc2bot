@@ -37,7 +37,6 @@ except ImportError:
     class BotAI:
         pass
 
-
     class _SC2StubSymbol:
         """Sentinel value used in place of real SC2 enum members.
 
@@ -198,14 +197,18 @@ class EarlyDefenseSystem:
                 self.early_rush_detected = False
                 self.emergency_mode = False
                 self.early_threats = set()
-                logger.info("[*] Early rush threat cleared (no visible enemies) — returning to normal mode [*]")
+                logger.info(
+                    "[*] Early rush threat cleared (no visible enemies) — returning to normal mode [*]"
+                )
             return
 
         main_base = self.bot.townhalls.first if self.bot.townhalls else None
         if not main_base:
             return
 
-        nearby_enemies = self.bot.enemy_units.closer_than(ENEMY_DETECT_RADIUS, main_base.position)
+        nearby_enemies = self.bot.enemy_units.closer_than(
+            ENEMY_DETECT_RADIUS, main_base.position
+        )
 
         if nearby_enemies:
             self.early_rush_detected = True
@@ -215,14 +218,16 @@ class EarlyDefenseSystem:
             logger.warning(
                 f"[WARNING] Early rush detected! {nearby_enemies.amount} enemies found (Game Time: {int(self.bot.time)}s)"
             )
-            logger.info(f"Emergency Defense Mode ACTIVATED!")
+            logger.info("Emergency Defense Mode ACTIVATED!")
         else:
             # Reset flags when threat has cleared
             if self.early_rush_detected and not self.proxy_response_active:
                 self.early_rush_detected = False
                 self.emergency_mode = False
                 self.early_threats = set()
-                logger.info("[*] Early rush threat cleared — returning to normal mode [*]")
+                logger.info(
+                    "[*] Early rush threat cleared — returning to normal mode [*]"
+                )
 
     async def _detect_proxy_structure_rush(self) -> None:
         """Detect proxy Barracks or cannon rush structures near our base."""
@@ -301,7 +306,9 @@ class EarlyDefenseSystem:
                 self._proxy_spines_requested += 1
             return
 
-        if not hasattr(self.bot, "find_placement") or not getattr(self.bot, "workers", None):
+        if not hasattr(self.bot, "find_placement") or not getattr(
+            self.bot, "workers", None
+        ):
             return
 
         try:
@@ -327,10 +334,14 @@ class EarlyDefenseSystem:
             return
 
         if hasattr(workers, "closest_n_units"):
-            pulled = workers.closest_n_units(getattr(target, "position", target), desired_count)
+            pulled = workers.closest_n_units(
+                getattr(target, "position", target), desired_count
+            )
         else:
             worker_list = list(workers)
-            pulled = sorted(worker_list, key=lambda w: w.distance_to(target))[:desired_count]
+            pulled = sorted(worker_list, key=lambda w: w.distance_to(target))[
+                :desired_count
+            ]
 
         for worker in pulled:
             try:
@@ -473,7 +484,7 @@ class EarlyDefenseSystem:
                     f"[OK] Spawning Pool requested via TechCoordinator (Game Time: {int(self.bot.time)}s)"
                 )
             elif not tech_coordinator:
-                logger.warning(f"[WARNING] TechCoordinator not available")
+                logger.warning("[WARNING] TechCoordinator not available")
         except Exception as e:
             logger.error(f"Failed to request Pool construction: {e}")
 
@@ -571,7 +582,7 @@ class EarlyDefenseSystem:
             # Threat cleared
             self.early_threats.clear()
             self.emergency_mode = False
-            logger.info(f"Early threat cleared. Returning to normal mode.")
+            logger.info("Early threat cleared. Returning to normal mode.")
             return
 
         # Closest enemy

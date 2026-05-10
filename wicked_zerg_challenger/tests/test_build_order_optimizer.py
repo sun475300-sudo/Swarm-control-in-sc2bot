@@ -46,8 +46,8 @@ class TestBuildOrderOptimizerOpeningExpansion(unittest.TestCase):
         bot.townhalls.amount = 1
         bot.townhalls.exists = True
         bot.townhalls.first = SimpleNamespace(position=MagicMock())
-        bot.already_pending.side_effect = (
-            lambda unit_type: 1 if unit_type == UnitTypeId.HATCHERY else 0
+        bot.already_pending.side_effect = lambda unit_type: (
+            1 if unit_type == UnitTypeId.HATCHERY else 0
         )
         bot.find_placement = AsyncMock(return_value=None)
         bot.vespene_geyser.closer_than.return_value = []
@@ -104,10 +104,8 @@ class TestBuildOrderOptimizerOpeningExpansion(unittest.TestCase):
         bot.townhalls.ready.amount = 2
         bot.already_pending.return_value = 0
         bot.structures.return_value.ready.amount = 1
-        bot.units.side_effect = (
-            lambda unit_type: SimpleNamespace(amount=20)
-            if unit_type == UnitTypeId.DRONE
-            else MagicMock()
+        bot.units.side_effect = lambda unit_type: (
+            SimpleNamespace(amount=20) if unit_type == UnitTypeId.DRONE else MagicMock()
         )
 
         optimizer = BuildOrderOptimizer(bot)
@@ -121,8 +119,8 @@ class TestBuildOrderOptimizerOpeningExpansion(unittest.TestCase):
         bot.time = 190.0
         bot.townhalls.amount = 2
         bot.townhalls.ready.amount = 2
-        bot.already_pending.side_effect = (
-            lambda unit_type: 1 if unit_type == UnitTypeId.HATCHERY else 0
+        bot.already_pending.side_effect = lambda unit_type: (
+            1 if unit_type == UnitTypeId.HATCHERY else 0
         )
 
         optimizer = BuildOrderOptimizer(bot)
@@ -145,8 +143,8 @@ class TestBuildOrderOptimizerOpeningExpansion(unittest.TestCase):
         bot.time = 370.0
         bot.townhalls.amount = 3
         bot.townhalls.ready.amount = 3
-        bot.already_pending.side_effect = (
-            lambda unit_type: 1 if unit_type == UnitTypeId.HATCHERY else 0
+        bot.already_pending.side_effect = lambda unit_type: (
+            1 if unit_type == UnitTypeId.HATCHERY else 0
         )
 
         optimizer = BuildOrderOptimizer(bot)
@@ -158,8 +156,8 @@ class TestBuildOrderOptimizerOpeningExpansion(unittest.TestCase):
         bot.time = 150.0
         bot.townhalls.amount = 1
         bot.townhalls.ready.amount = 1
-        bot.already_pending.side_effect = (
-            lambda unit_type: 1 if unit_type == UnitTypeId.HATCHERY else 0
+        bot.already_pending.side_effect = lambda unit_type: (
+            1 if unit_type == UnitTypeId.HATCHERY else 0
         )
 
         optimizer = BuildOrderOptimizer(bot)
@@ -171,8 +169,8 @@ class TestBuildOrderOptimizerOpeningExpansion(unittest.TestCase):
         bot.time = 150.0
         bot.townhalls.amount = 2
         bot.townhalls.ready.amount = 1
-        bot.already_pending.side_effect = (
-            lambda unit_type: 1 if unit_type == UnitTypeId.HATCHERY else 0
+        bot.already_pending.side_effect = lambda unit_type: (
+            1 if unit_type == UnitTypeId.HATCHERY else 0
         )
 
         optimizer = BuildOrderOptimizer(bot)

@@ -193,7 +193,9 @@ class MutaliskMicroController:
                 try:
                     townhall_list = list(townhalls or [])
                     if townhall_list:
-                        main_base = getattr(townhall_list[0], "position", townhall_list[0])
+                        main_base = getattr(
+                            townhall_list[0], "position", townhall_list[0]
+                        )
                 except TypeError:
                     main_base = None
 

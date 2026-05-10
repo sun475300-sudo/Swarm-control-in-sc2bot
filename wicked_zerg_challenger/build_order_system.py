@@ -77,6 +77,7 @@ except ImportError:
                 sym = _SC2StubSymbol(name)
                 cls._cache[key] = sym
             return sym
+
     class UnitTypeId(metaclass=_SC2StubMeta):
         pass
 
@@ -269,9 +270,7 @@ class BuildOrderType(Enum):
 class BuildOrderStep:
     """Build Order Step"""
 
-    def __init__(
-        self, supply: int, action: str, unit_type: Any, description: str = ""
-    ):
+    def __init__(self, supply: int, action: str, unit_type: Any, description: str = ""):
         self.supply = supply  # Supply to execute at
         self.action = action  # "build", "train", "expand", "morph", "upgrade"
         self.unit_type = unit_type
@@ -440,11 +439,11 @@ class BuildOrderSystem:
             self.current_matchup_build_key = build_key
             self.current_build_transition = build_data.get("transition")
             self.build_steps = self._build_steps_from_order(build_data.get("order", []))
-            logger.info(
-                f"Loaded ZvT build '{build_data.get('name')}' ({build_key})"
-            )
+            logger.info(f"Loaded ZvT build '{build_data.get('name')}' ({build_key})")
             self.current_step_index = 0
-            logger.info(f"Build Order Set: {self.current_build_order.value}:{build_key}")
+            logger.info(
+                f"Build Order Set: {self.current_build_order.value}:{build_key}"
+            )
             logger.info(f"Total {len(self.build_steps)} steps")
             return
 
@@ -454,11 +453,11 @@ class BuildOrderSystem:
             self.current_matchup_build_key = build_key
             self.current_build_transition = build_data.get("transition")
             self.build_steps = self._build_steps_from_order(build_data.get("order", []))
-            logger.info(
-                f"Loaded ZvP build '{build_data.get('name')}' ({build_key})"
-            )
+            logger.info(f"Loaded ZvP build '{build_data.get('name')}' ({build_key})")
             self.current_step_index = 0
-            logger.info(f"Build Order Set: {self.current_build_order.value}:{build_key}")
+            logger.info(
+                f"Build Order Set: {self.current_build_order.value}:{build_key}"
+            )
             logger.info(f"Total {len(self.build_steps)} steps")
             return
 
@@ -468,11 +467,11 @@ class BuildOrderSystem:
             self.current_matchup_build_key = build_key
             self.current_build_transition = build_data.get("transition")
             self.build_steps = self._build_steps_from_order(build_data.get("order", []))
-            logger.info(
-                f"Loaded ZvZ build '{build_data.get('name')}' ({build_key})"
-            )
+            logger.info(f"Loaded ZvZ build '{build_data.get('name')}' ({build_key})")
             self.current_step_index = 0
-            logger.info(f"Build Order Set: {self.current_build_order.value}:{build_key}")
+            logger.info(
+                f"Build Order Set: {self.current_build_order.value}:{build_key}"
+            )
             logger.info(f"Total {len(self.build_steps)} steps")
             return
 
@@ -515,9 +514,9 @@ class BuildOrderSystem:
             "enemy_one_base", False
         ):
             return "aggressive_pool_first"
-        if self._blackboard_get("enemy_expand_confirmed", False) and not self._blackboard_get(
-            "enemy_aggression", False
-        ):
+        if self._blackboard_get(
+            "enemy_expand_confirmed", False
+        ) and not self._blackboard_get("enemy_aggression", False):
             return "fast_lair_macro"
         return "hatch_first_16"
 
@@ -914,7 +913,11 @@ class BuildOrderSystem:
         pending_hatch = self._pending_hatchery_count()
 
         if base_count >= 3:
-            if getattr(self.bot, "time", 0.0) >= 360.0 and base_count < 4 and pending_hatch == 0:
+            if (
+                getattr(self.bot, "time", 0.0) >= 360.0
+                and base_count < 4
+                and pending_hatch == 0
+            ):
                 return not self._has_active_base_threat()
             return False
         if base_count < 2:
@@ -1194,7 +1197,9 @@ class BuildOrderSystem:
         if blackboard and hasattr(blackboard, "set"):
             blackboard.set("matchup_build_key", new_build)
             blackboard.set("build_transition", new_build)
-            blackboard.set("build_transition_reason", self.transition_manager.last_reason)
+            blackboard.set(
+                "build_transition_reason", self.transition_manager.last_reason
+            )
             blackboard.set(
                 "build_transition_locked",
                 self.transition_manager.transition_triggered,
@@ -1220,7 +1225,7 @@ class BuildOrderSystem:
         actual = self.expansion_actual_time
 
         if actual == 0:
-            logger.info(f"[!] Expansion timing: NOT RECORDED")
+            logger.info("[!] Expansion timing: NOT RECORDED")
             return
 
         target = self.expansion_timing_target

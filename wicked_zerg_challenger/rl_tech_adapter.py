@@ -58,6 +58,7 @@ except ImportError:
                 sym = _SC2StubSymbol(name)
                 cls._cache[key] = sym
             return sym
+
     class UnitTypeId(metaclass=_SC2StubMeta):
         pass
 
@@ -413,6 +414,6 @@ class RLTechAdapter:
             memory_file = Path(__file__).parent / "rl_tech_memory.json"
             with open(memory_file, "w", encoding="utf-8") as f:
                 json.dump(self.success_memory, f, indent=2)
-            self.logger.info(f"[RL_TECH] Saved learning memory")
+            self.logger.info("[RL_TECH] Saved learning memory")
         except Exception as e:
             self.logger.warning(f"[RL_TECH] Failed to save memory: {e}")

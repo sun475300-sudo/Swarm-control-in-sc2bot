@@ -33,7 +33,6 @@ except ImportError:
         VIPER = "VIPER"
         CORRUPTOR = "CORRUPTOR"
 
-
     class _SC2StubSymbol:
         """Sentinel value used in place of real SC2 enum members.
 

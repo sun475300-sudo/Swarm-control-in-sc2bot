@@ -32,7 +32,9 @@ class TestMetaAdapter(unittest.TestCase):
                 "vs_zerg": {"total": 3, "winrate": 66.0},
                 "weaknesses": {},
             }
-            Path(tmp, "analytics.json").write_text(json.dumps(analytics), encoding="utf-8")
+            Path(tmp, "analytics.json").write_text(
+                json.dumps(analytics), encoding="utf-8"
+            )
 
             adjustments = MetaAdapter(tmp).generate_strategy_adjustments()
 

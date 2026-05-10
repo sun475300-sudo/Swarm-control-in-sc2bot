@@ -41,7 +41,6 @@ except ImportError:
         FUNGALGROWTH_FUNGALGROWTH = "FUNGALGROWTH_FUNGALGROWTH"
         SPAWNCHANGELING_SPAWNCHANGELING = "SPAWNCHANGELING_SPAWNCHANGELING"
 
-
     class _SC2StubSymbol:
         """Sentinel value used in place of real SC2 enum members.
 

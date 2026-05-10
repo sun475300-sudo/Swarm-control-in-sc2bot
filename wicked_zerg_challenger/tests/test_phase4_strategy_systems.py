@@ -126,7 +126,9 @@ class TestMatchupUpgradePriority(unittest.TestCase):
         bot.time = 360.0
         manager = EvolutionUpgradeManager(bot)
 
-        names = [upgrade_name(upgrade) for upgrade in manager.get_matchup_upgrade_priority()]
+        names = [
+            upgrade_name(upgrade) for upgrade in manager.get_matchup_upgrade_priority()
+        ]
 
         self.assertEqual(names[0], "ZERGMISSILEWEAPONSLEVEL1")
         self.assertIn("EVOLVEGROOVEDSPINES", names)

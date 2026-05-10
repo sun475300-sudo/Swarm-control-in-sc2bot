@@ -52,6 +52,7 @@ except ImportError:
                 sym = _SC2StubSymbol(name)
                 cls._cache[key] = sym
             return sym
+
     class UpgradeId(metaclass=_SC2StubMeta):
         # Zerg Upgrades
         ZERGMISSILEWEAPONSLEVEL1 = "ZERGMISSILEWEAPONSLEVEL1"
