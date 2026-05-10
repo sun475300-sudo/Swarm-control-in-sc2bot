@@ -563,7 +563,6 @@ class ProductionController:
 
             if deficit > max_deficit:
                 max_deficit = deficit
-                best_unit = name
                 best_uid = uid
 
         # 가장 부족한 유닛 생산

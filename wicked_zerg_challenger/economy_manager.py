@@ -319,7 +319,6 @@ class EconomyManager:
             self.blackboard.get("early_scout_cheese_suspected", False)
         )
         fresh = last_report > 0 and (game_time - last_report) <= 75.0
-        early_window = game_time <= 240.0
         cheese_active = fresh and cheese_suspected
         fast_gas = fresh and gas_time is not None and gas_time < 90.0
         # * FIX: natural_confirmed=False만으로 확장 차단 금지
