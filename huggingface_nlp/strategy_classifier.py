@@ -125,7 +125,10 @@ def fine_tune(
     epochs: int = 6,
     lr: float = 2e-5,
     batch_size: int = 8,
-) -> None:
+):
+    # NOTE: 반환 타입을 'None' 으로 명시했었으나 함수 마지막에서 (model, device)
+    # 튜플을 반환하고 caller (line 203) 가 'model, device = fine_tune(...)'
+    # 로 unpack 한다. 시그니처를 실제 동작과 일치시키기 위해 annotation 제거.
     dataset = SC2SituationDataset(SC2_SITUATIONS, tokenizer)
     dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=True)
 
