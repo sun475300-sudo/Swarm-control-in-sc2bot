@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """Scouting helpers used by roadmap and matchup-specific systems."""
 
-from typing import Dict, Iterable, List, Optional, Set
+from typing import Dict, List, Optional, Set
 
 try:
     from sc2.ids.ability_id import AbilityId
