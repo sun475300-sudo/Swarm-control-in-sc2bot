@@ -198,8 +198,8 @@ class ProductionResilience:
                         # Check reservation (5 second cooldown for unique buildings)
                         if ts is not None and now - ts < 5.0:
                             return None
-                    except Exception:
-                        pass
+                    except Exception as exc:
+                        logger.debug("production_resilience: %s", exc, exc_info=True)
 
                 # Skip if recently reserved (another manager already issued the build)
                 if ts is not None and now - ts < 30.0:
@@ -369,8 +369,8 @@ class ProductionResilience:
             stale = [sid for sid, ts in reservations.items() if now - ts > 45.0]
             for sid in stale:
                 reservations.pop(sid, None)
-        except Exception:
-            pass
+        except Exception as exc:
+            logger.debug("production_resilience: %s", exc, exc_info=True)
 
     async def fix_production_bottleneck(self) -> None:
         """
@@ -410,8 +410,8 @@ class ProductionResilience:
                             logger.info(
                                 f"[{int(time)}s] Expanding at 1min+ with {int(b.minerals)} minerals (bases: {bases})"
                             )
-                    except Exception:
-                        pass
+                    except Exception as exc:
+                        logger.debug("production_resilience: %s", exc, exc_info=True)
 
         # === MINERAL OVERFLOW PREVENTION: Spend minerals when > 600 ===
         # *** FIX: 임계값 상향 (200->600) + 확장 중엔 소비 금지 ***
@@ -975,8 +975,8 @@ class ProductionResilience:
                     try:
                         if await self._try_expand():
                             logger.info(f"Building expansion to dump minerals")
-                    except Exception:
-                        pass
+                    except Exception as exc:
+                        logger.debug("production_resilience: %s", exc, exc_info=True)
 
     async def _boost_early_game(self) -> None:
         """
@@ -1218,8 +1218,8 @@ class ProductionResilience:
                         pool = spawning_pool_query.first
                         if pool.build_progress >= 0.99:
                             spawning_pool_ready = True
-                    except Exception:
-                        pass
+                    except Exception as exc:
+                        logger.debug("production_resilience: %s", exc, exc_info=True)
 
                 roach_warren_query = b.structures(UnitTypeId.ROACHWARREN)
                 roach_warren_ready = False
@@ -1230,8 +1230,8 @@ class ProductionResilience:
                         warren = roach_warren_query.first
                         if warren.build_progress >= 0.99:
                             roach_warren_ready = True
-                    except Exception:
-                        pass
+                    except Exception as exc:
+                        logger.debug("production_resilience: %s", exc, exc_info=True)
 
                 hydralisk_den_query = b.structures(UnitTypeId.HYDRALISKDEN)
                 hydralisk_den_ready = False
@@ -1242,8 +1242,8 @@ class ProductionResilience:
                         den = hydralisk_den_query.first
                         if den.build_progress >= 0.99:
                             hydralisk_den_ready = True
-                    except Exception:
-                        pass
+                    except Exception as exc:
+                        logger.debug("production_resilience: %s", exc, exc_info=True)
                 can_afford_zergling = b.can_afford(UnitTypeId.ZERGLING)
                 can_afford_roach = b.can_afford(UnitTypeId.ROACH)
                 can_afford_hydralisk = b.can_afford(UnitTypeId.HYDRALISK)
@@ -1388,8 +1388,8 @@ class ProductionResilience:
                         try:
                             roaches_ready.random(AbilityId.MORPHTORAVAGER_RAVAGER)
                             return
-                        except Exception:
-                            pass
+                        except Exception as exc:
+                            logger.debug("production_resilience: %s", exc, exc_info=True)
                 elif max_deficit_unit == UnitTypeId.BANELING:
                     zerglings_ready = b.units(UnitTypeId.ZERGLING).ready
                     if (
@@ -1402,8 +1402,8 @@ class ProductionResilience:
                                     AbilityId.MORPHZERGLINGTOBANELING_BANELING
                                 )
                                 return
-                            except Exception:
-                                pass
+                            except Exception as exc:
+                                logger.debug("production_resilience: %s", exc, exc_info=True)
                 elif max_deficit_unit == UnitTypeId.ZERGLING:
                     if b.units(UnitTypeId.SPAWNINGPOOL).ready.exists and b.can_afford(
                         UnitTypeId.ZERGLING
@@ -1422,8 +1422,8 @@ class ProductionResilience:
                         if larva.is_ready:
                             if await self._safe_train(larva, unit_to_produce):
                                 break
-            except Exception:
-                pass
+            except Exception as exc:
+                logger.debug("production_resilience: %s", exc, exc_info=True)
 
     async def force_resource_dump(self) -> None:
         b = self.bot
@@ -1433,8 +1433,8 @@ class ProductionResilience:
         ):
             try:
                 await self._try_expand()
-            except Exception:
-                pass
+            except Exception as exc:
+                logger.debug("production_resilience: %s", exc, exc_info=True)
         if self._should_reserve_third_base_minerals():
             return
         if b.units(UnitTypeId.LARVA).exists:
@@ -1551,8 +1551,8 @@ class ProductionResilience:
                                     f"[{int(game_time)}s] Building Roach Warren"
                                 )
                                 return
-                        except Exception:
-                            pass
+                        except Exception as exc:
+                            logger.debug("production_resilience: %s", exc, exc_info=True)
 
         # 4:00+ : Lair
         if game_time >= 240:
@@ -1607,8 +1607,8 @@ class ProductionResilience:
                                     f"[{int(game_time)}s] Building Evolution Chamber"
                                 )
                                 return
-                        except Exception:
-                            pass
+                        except Exception as exc:
+                            logger.debug("production_resilience: %s", exc, exc_info=True)
 
         # 5:00+ : Hydralisk Den (requires Lair)
         if game_time >= 300:
@@ -1657,8 +1657,8 @@ class ProductionResilience:
                                         f"[{int(game_time)}s] Building Hydralisk Den"
                                     )
                                     return
-                            except Exception:
-                                pass
+                            except Exception as exc:
+                                logger.debug("production_resilience: %s", exc, exc_info=True)
 
         # 6:00+ : Spire (requires Lair)
         if game_time >= 360:
@@ -1688,8 +1688,8 @@ class ProductionResilience:
                                 self._last_tech_build_time = game_time
                                 logger.info(f"[{int(game_time)}s] Building Spire")
                                 return
-                            except Exception:
-                                pass
+                            except Exception as exc:
+                                logger.debug("production_resilience: %s", exc, exc_info=True)
 
     async def _auto_build_extractors(self, game_time: float) -> None:
         """
@@ -2000,8 +2000,8 @@ class ProductionResilience:
                             await b.build(
                                 UnitTypeId.BANELINGNEST, near=b.townhalls.first.position
                             )
-                        except Exception:
-                            pass
+                        except Exception as exc:
+                            logger.debug("production_resilience: %s", exc, exc_info=True)
         # NOTE: Roach Warren building is now handled by _auto_build_tech_structures()
         # Removed duplicate code to prevent building spam
 
@@ -2092,8 +2092,8 @@ class ProductionResilience:
                         await b.build(
                             UnitTypeId.BANELINGNEST, near=b.townhalls.first.position
                         )
-                    except Exception:
-                        pass
+                    except Exception as exc:
+                        logger.debug("production_resilience: %s", exc, exc_info=True)
 
     async def _determine_ideal_composition(self) -> Dict[UnitTypeId, float]:
         """Reuses bot's composition logic via in-module call."""
@@ -2375,8 +2375,8 @@ class ProductionResilience:
                 if targets:
                     try:
                         self.bot.do(ling.move(targets[0]))
-                    except Exception:
-                        pass
+                    except Exception as exc:
+                        logger.debug("production_resilience: %s", exc, exc_info=True)
 
         # Update detected enemies
         await self._update_detected_enemies()
@@ -2467,8 +2467,8 @@ class ProductionResilience:
                 try:
                     await b.expand_now()
                     logger.info(f"Building Macro Hatchery (no larvae, gas: {int(gas)})")
-                except Exception:
-                    pass
+                except Exception as exc:
+                    logger.debug("production_resilience: %s", exc, exc_info=True)
             return
 
         larvae_list = list(larvae.ready) if hasattr(larvae, "ready") else list(larvae)
@@ -2654,16 +2654,16 @@ class ProductionResilience:
                             # bot.do() is NOT async in python-sc2
                             b.do(hatch.train(UnitTypeId.QUEEN))
                             return
-                        except Exception:
-                            pass
+                        except Exception as exc:
+                            logger.debug("production_resilience: %s", exc, exc_info=True)
 
         # Build expansion if minerals > 300
         if b.minerals > 300 and b.already_pending(UnitTypeId.HATCHERY) == 0:
             try:
                 if await self._try_expand():
                     return
-            except Exception:
-                pass
+            except Exception as exc:
+                logger.debug("production_resilience: %s", exc, exc_info=True)
 
         # Build macro hatchery if minerals > 400
         if b.minerals > 400 and b.townhalls.exists:
@@ -2671,8 +2671,8 @@ class ProductionResilience:
             if b.townhalls.amount < 5:
                 try:
                     await b.build(UnitTypeId.HATCHERY, near=b.townhalls.first.position)
-                except Exception:
-                    pass
+                except Exception as exc:
+                    logger.debug("production_resilience: %s", exc, exc_info=True)
 
     async def _build_gas_heavy_tech(self) -> None:
         """
@@ -2718,8 +2718,8 @@ class ProductionResilience:
                     if result is not None:  # Only print if build actually succeeded
                         logger.info(f"Building Hydralisk Den (100 gas)")
                         return
-                except Exception:
-                    pass
+                except Exception as exc:
+                    logger.debug("production_resilience: %s", exc, exc_info=True)
 
         # Morph to Hive if we have Lair (150 gas) - need Infestation Pit
         if (
@@ -2738,8 +2738,8 @@ class ProductionResilience:
                         if result is not None:
                             logger.info(f"Building Infestation Pit (100 gas)")
                             return
-                    except Exception:
-                        pass
+                    except Exception as exc:
+                        logger.debug("production_resilience: %s", exc, exc_info=True)
 
         # Morph to Lair if we don't have one (100 gas)
         if not has_lair and b.structures(UnitTypeId.SPAWNINGPOOL).ready.exists:
