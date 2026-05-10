@@ -19,17 +19,23 @@
 | C8 | F541 f-string 빈 placeholder 254건 (lint noise) | `wicked_zerg_challenger/**/*.py` | ✅ FIXED (ruff --fix) |
 | C9 | F401 사용되지 않는 import 4건 | `wicked_zerg_challenger/**/*.py` | ✅ FIXED (ruff --fix) |
 
-## 🟠 High Priority (Iteration 2+에서 처리 예정)
+## 🟠 High Priority
 
-| ID | 이슈 | 위치 | 우선순위 |
+| ID | 이슈 | 위치 | 우선순위 / 상태 |
 |----|------|------|----------|
-| H1 | `EconomyManager._prevent_resource_banking` 재정의 (F811) | `economy_manager.py` (REMAINING_ISSUES N2) | 🟠 |
-| H2 | `EconomyManager._reduce_gas_workers` 재정의 (F811) | `economy_manager.py` (REMAINING_ISSUES N2) | 🟠 |
-| H3 | `combat_manager._find_harass_target` 재정의 (line 2377 vs 4278) | `combat_manager.py` (REMAINING_ISSUES N3) | 🟠 |
-| H4 | `production_resilience.build_terran_counters` 재정의 | `production_resilience.py` (REMAINING_ISSUES N4) | ✅ 본 사이클에서 처리 |
+| H1 | `EconomyManager._prevent_resource_banking` 재정의 (F811) | `economy_manager.py` | ✅ Iter 2에서 처리 |
+| H2 | `EconomyManager._reduce_gas_workers` 재정의 (F811) | `economy_manager.py` | ✅ Iter 2에서 처리 |
+| H3 | `combat_manager._find_harass_target` 재정의 (line 2809 vs 5005) | `combat_manager.py` | ✅ Iter 2에서 처리 |
+| H4 | `production_resilience.build_terran_counters` 재정의 | `production_resilience.py` | ✅ Iter 1에서 처리 |
 | H5 | bare `except Exception:` 360+건 (silent failure 위험) | 전체 코드 | 🟡 점진적 |
 | H6 | F841 unused-variable 131건 (잠재 버그/dead code) | 전체 코드 | 🟡 |
 | H7 | F405 undefined-local-with-import-star 95건 (네임스페이스 오염) | 전체 코드 | 🟡 |
+| H8 | black/isort 67/4 violations (Lint & Type Check CI fail) | 전체 코드 | ✅ Iter 2에서 처리 |
+| H9 | `Blackboard` alias 부재 (production_controller import 깨짐) | `blackboard.py` | ✅ Iter 3에서 처리 |
+| H10 | `should_expand()` typo `is_supply_block` (실제 attribute는 `is_supply_blocked`) | `blackboard.py:549` | ✅ Iter 3에서 처리 |
+| H11 | `should_expand()` 미네랄 체크 누락 (Hatchery 300원 미달도 True 반환) | `blackboard.py` | ✅ Iter 3에서 처리 |
+| H12 | `difficulty_progression._serialize_stats` 외부 stub과 호환 안됨 | `difficulty_progression.py:89` | ✅ Iter 3에서 처리 |
+| H13 | wicked_zerg_challenger tests 24건 collection error (sc2 미설치) | `wicked_zerg_challenger/tests/` | ✅ Iter 3에서 처리 (conftest sc2 stub) |
 
 ## 🟡 Medium Priority
 
@@ -53,16 +59,27 @@
 | L5 | detect-secrets 결과 점검 | 보안 |
 | L6 | 16개 열린 PR redundancy 분석 | PR 위생 |
 
-## 📊 메트릭 (Iteration 1 종료 시점)
+## 📊 메트릭 추이
 
+### Iteration 1 종료
 - 테스트: tests/ 392 passed, 34 skipped, 0 failed
 - 정적 분석: critical errors 0건 (E9/F811/F823/F401/F541 → 0)
-- 나머지 lint: 318건 (대부분 cosmetic)
-- wicked_zerg_challenger/tests: sc2 의존성으로 24 collect error (환경 제약)
+- wicked_zerg_challenger/tests: 24 collect error
+
+### Iteration 2 종료
+- 테스트: 변동 없음 (392 passed)
+- 정적 분석: F811 0건 유지
+- black 67건 위반 → 0건, isort 4건 위반 → 0건
+- CI Lint & Type Check 통과 가능 상태
+
+### Iteration 3 종료
+- 테스트: tests/ 392 passed + wicked_zerg_challenger/tests/ 651 passed (합계 1043 passed)
+- 신규 발견 + 처리: H9-H12 (Blackboard 관련 진짜 버그 4건)
+- wicked_zerg_challenger tests collection error 0건
 
 ## 🔁 다음 사이클 계획
 
-1. H1-H3 처리 (EconomyManager/CombatManager 중복 메서드 제거)
-2. F841 unused-variable 안전한 항목부터 정리
-3. bare except 가운데 silent-fail 위험 큰 곳 식별 후 logging 추가
-4. sc2 stub conftest 도입으로 wicked_zerg_challenger 테스트 collect 가능하게
+1. F841 unused-variable 131건 중 안전한 항목 식별
+2. bare except 가운데 silent-fail 위험 큰 곳 식별 후 logging 추가
+3. F405 namespace 오염 정리 (특히 import * 사용 모듈 식별)
+4. tests/ + wicked_zerg_challenger/tests/ 통합 실행 시 event loop 충돌 분석

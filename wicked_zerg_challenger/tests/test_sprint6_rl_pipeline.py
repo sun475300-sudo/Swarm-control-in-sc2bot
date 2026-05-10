@@ -10,7 +10,9 @@ import unittest
 from pathlib import Path
 from types import SimpleNamespace
 
-import numpy as np
+import pytest
+
+np = pytest.importorskip("numpy")
 
 os.environ["PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION"] = "python"
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))

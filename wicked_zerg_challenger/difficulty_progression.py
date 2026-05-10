@@ -86,10 +86,10 @@ class DifficultyProgression:
         for map_name, map_data in stats.items():
             serialized[map_name] = {}
             for race, race_data in map_data.items():
-                race_str = race.name if isinstance(race, Race) else str(race)
+                race_str = getattr(race, "name", None) or str(race)
                 serialized[map_name][race_str] = {}
                 for diff, diff_data in race_data.items():
-                    diff_str = diff.name if isinstance(diff, Difficulty) else str(diff)
+                    diff_str = getattr(diff, "name", None) or str(diff)
                     serialized[map_name][race_str][diff_str] = diff_data
         return serialized
 
