@@ -11,14 +11,20 @@ os.environ["PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION"] = "python"
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 sys.path.insert(0, os.path.join(ROOT, "wicked_zerg_challenger"))
 
-from build_order_system import BuildOrderSystem, BuildOrderTransition, BuildOrderType
-from combat.base_defense import BaseDefenseSystem
-from combat.micro_combat import (
+# Imports below depend on the sys.path adjustment above, so they intentionally
+# follow non-import statements; suppress E402 for this section only.
+from build_order_system import (  # noqa: E402
+    BuildOrderSystem,
+    BuildOrderTransition,
+    BuildOrderType,
+)
+from combat.base_defense import BaseDefenseSystem  # noqa: E402
+from combat.micro_combat import (  # noqa: E402
     ZvPMicroAdjustments,
     ZvTMicroAdjustments,
     ZvZMicroAdjustments,
 )
-from strategy_manager import EnemyRace, GamePhase, StrategyManager
+from strategy_manager import EnemyRace, GamePhase, StrategyManager  # noqa: E402
 
 
 class Blackboard:

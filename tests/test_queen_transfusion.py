@@ -11,6 +11,10 @@ import pytest
 
 try:
     from sc2.ids.unit_typeid import UnitTypeId
+
+    from wicked_zerg_challenger.economy.queen_transfusion_manager import (
+        QueenTransfusionManager,
+    )
 except ImportError:
     pytest.skip("sc2 library not available", allow_module_level=True)
 
@@ -57,10 +61,6 @@ def _make_bot(time=120.0):
     bot.do = MagicMock()
     return bot
 
-
-from wicked_zerg_challenger.economy.queen_transfusion_manager import (
-    QueenTransfusionManager,
-)
 
 # ---------------------------------------------------------------------------
 # Helper
