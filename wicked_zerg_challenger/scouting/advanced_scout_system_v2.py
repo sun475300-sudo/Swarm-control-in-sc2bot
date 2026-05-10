@@ -30,13 +30,17 @@ except ImportError:
     class BotAI:
         pass
 
-    class UnitTypeId:
+    class _StubIdMeta(type):
+        def __getattr__(cls, name):
+            return name
+
+    class UnitTypeId(metaclass=_StubIdMeta):
         pass
 
-    class AbilityId:
+    class AbilityId(metaclass=_StubIdMeta):
         pass
 
-    class UpgradeId:
+    class UpgradeId(metaclass=_StubIdMeta):
         pass
 
     class Point2:

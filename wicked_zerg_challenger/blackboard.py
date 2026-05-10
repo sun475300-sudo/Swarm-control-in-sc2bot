@@ -544,3 +544,7 @@ class GameStateBlackboard:
             and not self.resources.is_supply_block
             and not self.is_under_attack
         )
+
+
+# Backwards-compatible alias: legacy modules import `Blackboard`.
+Blackboard = GameStateBlackboard
