@@ -168,6 +168,8 @@ class OpponentModel:
                 total_signal_count = sum(
                     self.early_signal_correlations[signal].values()
                 )
+                if total_signal_count <= 0:
+                    continue
                 for strategy, count in self.early_signal_correlations[signal].items():
                     # Normalized score
                     strategy_scores[strategy] += count / total_signal_count
@@ -176,7 +178,9 @@ class OpponentModel:
             # Fallback to most frequent strategy
             if self.strategy_frequency:
                 most_common = max(self.strategy_frequency.items(), key=lambda x: x[1])
-                confidence = most_common[1] / self.games_played
+                confidence = (
+                    most_common[1] / self.games_played if self.games_played else 0.0
+                )
                 return (most_common[0], confidence)
             return ("unknown", 0.0)
 
