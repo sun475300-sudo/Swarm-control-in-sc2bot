@@ -204,7 +204,9 @@ class IntegrationHub:
         return [(cx, cy)] * count
 
     def generate_test_script(self, output_path: Path) -> str:
-        script = f'''#!/usr/bin/env python3
+        # NOTE: regular triple-quoted string (not f-string) — the {len(positions)}
+        # inside is a placeholder in the GENERATED script, not in this module.
+        script = '''#!/usr/bin/env python3
 """Phase 66 Integration Test Script"""
 
 import sys

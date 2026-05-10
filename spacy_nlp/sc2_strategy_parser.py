@@ -1327,8 +1327,8 @@ class StrategyParser:
 
         # Add entity labels
         labels = set()
-        for _, annotations in training_data:
-            for ent in annotations.get("entities", []):
+        for _, sample_annotations in training_data:
+            for ent in sample_annotations.get("entities", []):
                 labels.add(ent[2])
         for label in labels:
             ner.add_label(label)
