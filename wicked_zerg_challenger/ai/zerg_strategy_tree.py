@@ -88,6 +88,10 @@ def should_expand(bot) -> bool:
     if game_time < 600 and base_count >= 4:  # 10분: 4베이스
         return False
 
+    if not bot.townhalls.exists:
+        # 베이스가 전부 파괴된 상태 — 재확장은 다른 로직(re-expand)에서 처리
+        return False
+
     # 미네랄 충분하면 확장
     return bot.minerals >= 300 and not bot.already_pending(bot.townhalls.first.type_id)
 
