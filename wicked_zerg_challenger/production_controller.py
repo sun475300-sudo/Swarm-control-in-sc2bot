@@ -250,8 +250,11 @@ class ProductionController:
                 if self.bot.time < 300:
                     self.logger.info(f"{unit_type.name} requested by {requester}")
 
-            except Exception:
+            except Exception as exc:
                 self.production_failures += 1
+                self.logger.debug(
+                    f"[PRODUCTION] train({unit_type}) failed for {requester}: {exc}"
+                )
                 break
 
         return produced
@@ -442,8 +445,9 @@ class ProductionController:
             self.bot.do(larvae.first.train(UnitTypeId.OVERLORD))
             self.logger.info(f"Auto Overlord (supply: {supply_left}/{supply_cap})")
 
-        except Exception:
+        except Exception as exc:
             self.production_failures += 1
+            self.logger.debug(f"[PRODUCTION] Auto-Overlord train failed: {exc}")
 
     # ========== * Phase 13: 비율 기반 군대 자동 생산 * ==========
 
@@ -575,8 +579,10 @@ class ProductionController:
                 try:
                     larva = larvae.first
                     self.bot.do(larva.train(best_uid))
-                except Exception:
-                    pass
+                except Exception as exc:
+                    self.logger.debug(
+                        f"[PRODUCTION] ratio-based {best_unit} train failed: {exc}"
+                    )
 
     async def _consume_mineral_bank(self):
         """
@@ -616,7 +622,10 @@ class ProductionController:
                         larva = larvae[i] if i < larvae.amount else None
                         if larva:
                             self.bot.do(larva.train(UnitTypeId.ZERGLING))
-                    except Exception:
+                    except Exception as exc:
+                        self.logger.debug(
+                            f"[PRODUCTION] mineral-bank zergling spam failed: {exc}"
+                        )
                         break
 
         # 미네랄 800+ & 가스 200+ : 고비용 유닛 (울트라리스크 우선)
@@ -630,8 +639,10 @@ class ProductionController:
                 try:
                     larva = larvae.first
                     self.bot.do(larva.train(UnitTypeId.ULTRALISK))
-                except Exception:
-                    pass
+                except Exception as exc:
+                    self.logger.debug(
+                        f"[PRODUCTION] ultralisk consume-bank failed: {exc}"
+                    )
 
     # ========== 상태 조회 ==========
 
