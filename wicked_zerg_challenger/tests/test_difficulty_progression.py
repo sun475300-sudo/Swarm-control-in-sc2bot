@@ -16,6 +16,10 @@ import tempfile
 import unittest
 from io import StringIO
 
+import pytest
+
+pytest.importorskip("sc2", reason="python-sc2 library not installed")
+
 # Add parent directory to path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 

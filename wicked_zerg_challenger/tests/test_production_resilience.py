@@ -24,6 +24,8 @@ sys.path.insert(
 )
 
 from local_training.production_resilience import ProductionResilience
+import pytest as _sc2_pytest
+_sc2_pytest.importorskip("sc2", reason="python-sc2 library not installed")
 from sc2.ids.unit_typeid import UnitTypeId
 from sc2.position import Point2
 
