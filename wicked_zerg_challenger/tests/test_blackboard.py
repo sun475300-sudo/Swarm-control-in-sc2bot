@@ -354,6 +354,23 @@ class TestStateQueries(unittest.TestCase):
         self.bb.update_resources(500, 100, 50, 100)
         self.assertFalse(self.bb.should_expand())
 
+    def test_should_not_expand_when_supply_blocked(self):
+        self.bb.update_threat(ThreatLevel.NONE)
+        # supply_used == supply_cap => is_supply_blocked is True
+        self.bb.update_resources(500, 100, 100, 100)
+        self.assertFalse(self.bb.should_expand())
+
+    def test_should_not_expand_when_under_attack(self):
+        self.bb.update_threat(ThreatLevel.NONE)
+        self.bb.update_resources(500, 100, 50, 100)
+        self.bb.is_under_attack = True
+        self.assertFalse(self.bb.should_expand())
+
+    def test_should_expand_at_exact_hatchery_cost(self):
+        self.bb.update_threat(ThreatLevel.NONE)
+        self.bb.update_resources(300, 0, 50, 100)
+        self.assertTrue(self.bb.should_expand())
+
 
 class TestBackwardCompatibility(unittest.TestCase):
     def setUp(self):
