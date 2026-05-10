@@ -60,8 +60,6 @@ class AirUnitManager:
         3. 고립된 유닛 제거
         4. 메인 병력과 함께 공격
         """
-        game_time = getattr(self.bot, "time", 0)
-
         # 기지 공격 확인
         base_threatened = self._is_base_under_attack()
 
