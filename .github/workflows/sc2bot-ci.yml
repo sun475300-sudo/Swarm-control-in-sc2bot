@@ -73,30 +73,33 @@ jobs:
           cache: pip
 
       - name: Install test dependencies (minimal)
-        # Install pytest and the lightweight runtime libs the unit suite
-        # actually touches first. Heavy/optional ML and game packages are
-        # gated through try/except in the source — they shouldn't block
-        # the test job when they fail to install (e.g. transient PyPI
-        # issues or platform-specific wheels missing).
+        # The unit suites are designed to run without burnysc2 / numpy /
+        # torch / pyautogui — every heavy import is wrapped in try/except
+        # in the source modules and the wicked_zerg_challenger tests
+        # provide an in-memory sc2 stub via conftest. Installing the
+        # whole kitchen-sink requirements.txt brought in wheels that are
+        # either unavailable or broken on the CI runner and was producing
+        # a worker-crash exit code 2; we keep this job tight and rely on
+        # the stubs instead.
         run: |
           pip install --upgrade pip
           pip install pytest pytest-cov pytest-asyncio pytest-timeout
           pip install pyyaml aiohttp
-          # Best-effort install of the full requirements; failure is
-          # non-fatal because the test stubs cover missing modules.
-          pip install -r requirements.txt || echo "::warning::requirements.txt partial install — continuing"
 
       - name: Run root unit tests
         # tests/unit doesn't exist; the unit suite lives at tests/ and
         # wicked_zerg_challenger/tests/. They're invoked separately to
         # avoid sys.path collisions between the two `scripts/` packages.
-        run: pytest tests/ -v --tb=short --timeout=60
+        # `--timeout-method=thread` is safer than the default signal
+        # mode on the GitHub runner (signals can leave C extensions in
+        # an unrecoverable state and crash the worker with exit 2).
+        run: pytest tests/ -v --tb=short --timeout=60 --timeout-method=thread
 
       - name: Run wicked_zerg_challenger unit tests
-        run: pytest wicked_zerg_challenger/tests/ -v --tb=short --timeout=60
+        run: pytest wicked_zerg_challenger/tests/ -v --tb=short --timeout=60 --timeout-method=thread
 
       - name: Run integration tests
-        run: pytest tests/integration -v --timeout=120 || echo "::warning::integration tests partial"
+        run: pytest tests/integration -v --timeout=120 --timeout-method=thread || echo "::warning::integration tests partial"
 
       - name: Upload coverage
         uses: codecov/codecov-action@v4
