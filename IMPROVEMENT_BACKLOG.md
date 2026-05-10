@@ -77,9 +77,44 @@
 - 신규 발견 + 처리: H9-H12 (Blackboard 관련 진짜 버그 4건)
 - wicked_zerg_challenger tests collection error 0건
 
+### Iteration 4 종료
+- F841 130 → 75 (-55): except 절 `e` 47건 + regenerating/dead variables
+- PR #147 CI: Lint & Type Check (3.10/3.11/3.12) 모두 success
+
+### Iteration 5 종료
+- production_controller bare-except 5건에 debug 로깅 추가 (silent fail 제거)
+
+### Iteration 6 종료
+- 실제 버그: integration_hub.py f-string {len(positions)} → 일반 문자열 (런타임 NameError 위험 제거, F821)
+- F811 import 중복 2건 (discord_advanced_features, jax_flax_rl)
+- F402 loop var가 future-import shadow (spacy_nlp/sc2_strategy_parser)
+
+### Iteration 7 종료
+- F841 75 → 66: game_time 미사용 변수 8건 일괄 제거
+
+### Iteration 8 종료
+- F841 66 → 60: micro_interval, current_mode_str, can_afford_*, excess
+
+### Iteration 9 종료
+- F841 60 → 58: start_loc, early_window, current_time
+
+## 📈 누적 임팩트
+
+- **실제 버그 수정**: 8건
+  - SyntaxError 1건 (game_analytics_system)
+  - UnboundLocalError 위험 1건 (wicked_zerg_bot_pro_impl traceback)
+  - 중복 정의로 인한 silent override 4건 (build_terran_counters, on_step, _prevent_resource_banking, _reduce_gas_workers, _find_harass_target)
+  - AttributeError 1건 (is_supply_block typo)
+  - NameError 위험 1건 (integration_hub f-string)
+- **테스트 인프라**: 392 → 1043 테스트 활성 (sc2 stub conftest)
+- **CI 상태**: 모든 Lint & Type Check (3.10/3.11/3.12) 통과
+- **F-class lint**: 489 → ~280건 (-209)
+- **black/isort**: 67/4 violations → 0
+
 ## 🔁 다음 사이클 계획
 
-1. F841 unused-variable 131건 중 안전한 항목 식별
-2. bare except 가운데 silent-fail 위험 큰 곳 식별 후 logging 추가
-3. F405 namespace 오염 정리 (특히 import * 사용 모듈 식별)
-4. tests/ + wicked_zerg_challenger/tests/ 통합 실행 시 event loop 충돌 분석
+1. F841 잔여 58건 점진적 정리
+2. F405 import-star 95건 (네임스페이스 명시화)
+3. bare except 470+건 (위험도 별 logging 우선순위 적용)
+4. E402 module-import-not-at-top 66건
+5. tests/ + wicked_zerg_challenger/tests/ 통합 실행 isolation 분석
