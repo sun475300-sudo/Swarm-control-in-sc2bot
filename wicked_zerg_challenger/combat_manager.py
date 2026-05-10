@@ -3540,8 +3540,14 @@ class CombatManager:
             if len(nearby_combat) >= 1:
                 return True
 
-            # 비전투 유닛만 있는 경우 (정찰 등) - 3기 이상이어야 위협
-            if len(nearby_enemies) >= 3:
+            # 비전투 유닛(정찰 등)만 있는 경우 — 3기 이상이어야 위협으로 간주
+            # (이전: len(nearby_enemies) 사용 → non_combat_names 필터가 누락된 버그)
+            nearby_non_combat = [
+                e
+                for e in nearby_enemies
+                if getattr(e.type_id, "name", "").upper() in non_combat_names
+            ]
+            if len(nearby_non_combat) >= 3:
                 return True
 
         return False
