@@ -140,6 +140,21 @@ class TestThreat(unittest.TestCase):
         self.bb.update_threat(ThreatLevel.HIGH)
         self.assertEqual(self.bb.threat.detected_at, 500.0)
 
+    def test_threat_position_cleared_when_threat_drops(self):
+        sentinel = object()
+        self.bb.update_threat(ThreatLevel.HIGH, threat_position=sentinel)
+        self.assertIs(self.bb.threat.threat_position, sentinel)
+
+        self.bb.update_threat(ThreatLevel.NONE)
+        self.assertIsNone(self.bb.threat.threat_position)
+
+    def test_threat_position_preserved_on_subsequent_high_update(self):
+        sentinel = object()
+        self.bb.update_threat(ThreatLevel.HIGH, threat_position=sentinel)
+        # 동일 에피소드 후속 업데이트가 position 없이 들어와도 유지
+        self.bb.update_threat(ThreatLevel.HIGH)
+        self.assertIs(self.bb.threat.threat_position, sentinel)
+
 
 class TestAuthorityMode(unittest.TestCase):
     def setUp(self):

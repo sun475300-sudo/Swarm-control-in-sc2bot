@@ -280,6 +280,9 @@ class GameStateBlackboard:
 
         if threat_position:
             self.threat.threat_position = threat_position
+        elif level < ThreatLevel.MEDIUM:
+            # 위협 해소 시 stale position 잔재 제거
+            self.threat.threat_position = None
 
         # 위협 감지 시간 기록 — 새 위협 에피소드 시작 시점을 추적
         if level >= ThreatLevel.MEDIUM:
