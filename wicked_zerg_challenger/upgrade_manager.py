@@ -330,7 +330,6 @@ class EvolutionUpgradeManager:
         6. 원거리 +2 (Missile +2)
         """
         composition = self._get_unit_composition()
-        enemy_race = self._normalize_enemy_race(getattr(self.bot, "enemy_race", ""))
 
         # *** Phase 18: IntelManager 연동 - 적 유닛 구성 확인 ***
         self._update_intel_based_priorities()
