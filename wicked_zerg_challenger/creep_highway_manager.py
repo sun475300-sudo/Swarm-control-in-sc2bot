@@ -257,22 +257,22 @@ class CreepHighwayManager:
                 f"  Total Highways: {self.highways_completed}"
             )
 
-    def _get_creep_queens(self) -> List:
+    def _get_creep_queens(self):
         """
-        점막 확산 전용 퀸 반환
+        점막 확산 전용 퀸 반환.
 
         Returns:
-            퀸 리스트
+            sc2 Units (energy >= 25 인 퀸만 포함). 호출측이 .closest_to() 등
+            Units API 를 사용하므로 list 가 아닌 Units 를 반환한다.
         """
         if not hasattr(self.bot, "units"):
             return []
 
         queens = self.bot.units(UnitTypeId.QUEEN)
 
-        # 에너지 25 이상인 퀸만
-        creep_queens = [q for q in queens if q.energy >= 25]
-
-        return creep_queens
+        # 에너지 25 이상인 퀸만 — list 컴프리헨션 대신 Units.filter 로 유지
+        # (이전: list 반환 → .closest_to(...) 호출이 AttributeError)
+        return queens.filter(lambda q: q.energy >= 25)
 
     async def _expand_toward_enemy(self, iteration: int):
         """
