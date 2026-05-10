@@ -356,7 +356,16 @@ class GameStateBlackboard:
     def auto_adjust_authority(self):
         """상황에 따라 권한 모드 자동 조정"""
         # 긴급 상황: 러시 감지 또는 CRITICAL 위협
+        # FIX P0-2: EMERGENCY 모드 30초 타임아웃 추가
         if self.threat.is_rushing or self.threat.level == ThreatLevel.CRITICAL:
+            emergency_duration = self.game_time - getattr(self, "authority_changed_at", 0)
+            if self.authority_mode == AuthorityMode.EMERGENCY and emergency_duration > 30:
+                # 30초 이상 EMERGENCY 지속 → COMBAT으로 다운그레이드
+                self.set_authority_mode(
+                    AuthorityMode.COMBAT,
+                    f"Emergency timeout ({emergency_duration:.0f}s) -> Combat",
+                )
+                return
             self.set_authority_mode(AuthorityMode.EMERGENCY, "Rush detected")
             return
 
@@ -532,14 +541,6 @@ class GameStateBlackboard:
         """확장 가능한 상황인가?"""
         return (
             self.threat.level == ThreatLevel.NONE
-            and not self.resources.is_supply_blocked
-            and self.resources.minerals >= 300
+            and not self.resources.is_supply_block
+            and not self.is_under_attack
         )
-
-    def get_army_value(self) -> float:
-        # Simplification for reference
-        return 0.0
-
-
-# Alias for backward compatibility
-Blackboard = GameStateBlackboard

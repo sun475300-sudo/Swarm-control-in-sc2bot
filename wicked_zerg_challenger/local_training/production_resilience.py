@@ -379,11 +379,15 @@ class ProductionResilience:
         b = self.bot
         self._cleanup_build_reservations()
 
+        # FIX P0-4: REMAX 시스템 — 군대 전멸 시 즉시 재건
+        await self._check_remax_needed()
+
         # * EconomyManager 드론 요청 플래그 소비 (매 호출마다 리셋)
         self._economy_drone_requested = getattr(self, "_economy_drone_requested", False)
 
-        # === GAS OVERFLOW PREVENTION: Spend gas when > 1500 ===
-        if b.vespene > 1500:
+        # === GAS OVERFLOW PREVENTION: Spend gas when > 500 ===
+        # FIX P0-1: 가스 오버플로 임계값 1500→500 (가스 부유 방지)
+        if b.vespene > 500:
             await self._spend_excess_gas()
 
         # *** EXPANSION RESERVE: 기지 부족 시 미네랄 비축 ***
@@ -398,10 +402,22 @@ class ProductionResilience:
         # *** FIX: 확장 체크를 미네랄 소비보다 먼저 실행 ***
         # === AGGRESSIVE EXPANSION: Prioritize expansion BEFORE spending minerals ===
         # Zerg needs expansions for macro advantage
-        if time >= 60 and b.minerals >= 300:  # 300원부터 확장 고려
-            bases = b.townhalls.amount if hasattr(b, "townhalls") else 1
-            pending_hatcheries = b.already_pending(UnitTypeId.HATCHERY)
+        bases = b.townhalls.amount if hasattr(b, "townhalls") else 1
+        pending_hatcheries = b.already_pending(UnitTypeId.HATCHERY)
 
+        # FIX P0-5: 3기지 강제 확장 (240초/4분 이후)
+        # 로그 분석: 3기지가 2500초(41분)에 시도 → 4분으로 강제
+        if time >= 240 and bases < 3 and pending_hatcheries == 0:
+            if b.can_afford(UnitTypeId.HATCHERY):
+                try:
+                    if await self._try_expand():
+                        logger.info(
+                            f"[{int(time)}s] FORCED 3rd base expansion (bases: {bases})"
+                        )
+                except Exception:
+                    pass
+        # 일반 확장 로직
+        elif time >= 60 and b.minerals >= 300:
             # 확장 중이 아니고, 기지가 부족하면 확장 시도
             if pending_hatcheries == 0 and bases < 5:
                 if b.can_afford(UnitTypeId.HATCHERY):
@@ -418,9 +434,10 @@ class ProductionResilience:
         pending_hatcheries = b.already_pending(UnitTypeId.HATCHERY)
         bases = b.townhalls.amount if hasattr(b, "townhalls") else 1
 
-        # 확장 중이거나 기지가 1개뿐이면 미네랄 소비 금지 (확장 우선)
-        # 2025-01-25 FIX: Threshold raised to 600 to guarantee Hatchery funds (300) + buffer
-        if pending_hatcheries == 0 and bases >= 2 and b.minerals > 600:
+        # FIX P0-8: 1기지에서도 미네랄 오버플로 처리 (기존: bases>=2 조건 제거)
+        # 2기지+: 600 초과 시, 1기지: 400 초과 시 소비
+        mineral_threshold = 600 if bases >= 2 else 400
+        if pending_hatcheries == 0 and b.minerals > mineral_threshold:
             await self._spend_excess_minerals()
 
         # === RESOURCE MANAGEMENT: Optimize worker assignment ===
@@ -1316,10 +1333,10 @@ class ProductionResilience:
         if not b.units(UnitTypeId.LARVA).exists:
             return
         larvae = b.units(UnitTypeId.LARVA).ready
-        if b.supply_left < 5 and b.supply_cap < 200:
-            if b.can_afford(UnitTypeId.OVERLORD) and not b.already_pending(
-                UnitTypeId.OVERLORD
-            ):
+        # FIX P0-6: 서플라이 블록 예방 강화 (5→6, 2개 동시 허용)
+        if b.supply_left < 6 and b.supply_cap < 200:
+            pending_overlords = b.already_pending(UnitTypeId.OVERLORD)
+            if b.can_afford(UnitTypeId.OVERLORD) and pending_overlords < 2:
                 if larvae.exists:
                     larvae_list = list(larvae)
                     if larvae_list:
@@ -2428,6 +2445,82 @@ class ProductionResilience:
 
         return composition
 
+    # === FIX P0-4: REMAX SYSTEM ===
+
+    async def _check_remax_needed(self) -> None:
+        """
+        군대 전멸 시 즉시 재건 (리맥스).
+        86%의 패배가 최종 서플라이 0~9로 끝남 → 군대 회복 메커니즘 필수.
+        """
+        b = self.bot
+        try:
+            # 전투 유닛 서플라이 계산
+            army_supply = 0
+            worker_count = 0
+            for unit in b.units:
+                if hasattr(unit, "is_structure") and unit.is_structure:
+                    continue
+                if hasattr(unit, "type_id") and unit.type_id == UnitTypeId.DRONE:
+                    worker_count += 1
+                    continue
+                if hasattr(unit, "type_id") and unit.type_id == UnitTypeId.OVERLORD:
+                    continue
+                if hasattr(unit, "can_attack") and unit.can_attack:
+                    army_supply += getattr(unit, "supply_cost", 1)
+
+            # 조건: 일꾼 20+ 있는데 군대 서플라이 < 15 → 리맥스 필요
+            if army_supply >= 15 or worker_count < 20:
+                return
+
+            game_time = getattr(b, "time", 0)
+            if game_time < 180:  # 3분 전엔 스킵 (초반 빌드)
+                return
+
+            # 쿨다운: 10초에 1번만 실행
+            last_remax = getattr(self, "_last_remax_time", 0)
+            if game_time - last_remax < 10:
+                return
+            self._last_remax_time = game_time
+
+            larvae = b.units(UnitTypeId.LARVA)
+            if not larvae.exists:
+                return
+
+            larvae_list = list(larvae)
+            produced = 0
+
+            for larva in larvae_list:
+                if b.supply_left < 2:
+                    # 서플라이 부족 시 오버로드 먼저
+                    if b.can_afford(UnitTypeId.OVERLORD):
+                        if await self._safe_train(larva, UnitTypeId.OVERLORD):
+                            produced += 1
+                    continue
+
+                # 가스 있으면 히드라/바퀴, 없으면 저글링
+                trained = False
+                if b.vespene >= 50 and b.structures(UnitTypeId.HYDRALISKDEN).ready.exists:
+                    if b.can_afford(UnitTypeId.HYDRALISK):
+                        trained = await self._safe_train(larva, UnitTypeId.HYDRALISK)
+                elif b.vespene >= 25 and b.structures(UnitTypeId.ROACHWARREN).ready.exists:
+                    if b.can_afford(UnitTypeId.ROACH):
+                        trained = await self._safe_train(larva, UnitTypeId.ROACH)
+
+                if not trained and b.structures(UnitTypeId.SPAWNINGPOOL).ready.exists:
+                    if b.can_afford(UnitTypeId.ZERGLING):
+                        trained = await self._safe_train(larva, UnitTypeId.ZERGLING)
+
+                if trained:
+                    produced += 1
+
+            if produced > 0:
+                logger.info(
+                    f"[REMAX] Army supply {army_supply} < 15, produced {produced} units "
+                    f"(M:{int(b.minerals)} G:{int(b.vespene)})"
+                )
+        except Exception as e:
+            logger.debug(f"Remax check error: {e}")
+
     # === GAS OVERFLOW PREVENTION ===
 
     async def _spend_excess_gas(self) -> None:
@@ -2618,9 +2711,32 @@ class ProductionResilience:
                             total_produced += 1
                             larvae_list = [l for l in larvae_list if l.tag != larva.tag]
 
-        # Priority 3: Zerglings (25 minerals each, very cost-effective)
+        # Priority 3: Gas-consuming units FIRST if gas is floating
+        # FIX P0-1: 가스 부유 해결 — 가스 > 200이면 가스 소비 유닛 우선 생산
+        if b.minerals > 200 and b.vespene > 200:
+            # Try gas-heavy units first to burn gas
+            gas_units_to_try = []
+            if b.structures(UnitTypeId.HYDRALISKDEN).ready.exists:
+                gas_units_to_try.append(UnitTypeId.HYDRALISK)  # 100m 50g
+            if b.structures(UnitTypeId.ROACHWARREN).ready.exists:
+                gas_units_to_try.append(UnitTypeId.ROACH)  # 75m 25g
+            if b.structures(UnitTypeId.SPIRE).ready.exists:
+                gas_units_to_try.append(UnitTypeId.MUTALISK)  # 100m 100g
+
+            for unit_type in gas_units_to_try:
+                if b.vespene <= 150:
+                    break  # Gas sufficiently spent
+                for larva in larvae_list[:5]:
+                    if b.minerals < 75 or b.supply_left < 2:
+                        break
+                    if b.can_afford(unit_type):
+                        if await self._safe_train(larva, unit_type):
+                            total_produced += 1
+                            larvae_list = [l for l in larvae_list if l.tag != larva.tag]
+
+        # Priority 4: Zerglings (25 minerals each, only when gas is low)
         if b.minerals > 200 and b.structures(UnitTypeId.SPAWNINGPOOL).ready.exists:
-            zerglings_to_make = min(10, (b.minerals - 150) // 25)  # Leave 150 buffer
+            zerglings_to_make = min(10, (b.minerals - 150) // 25)
             for larva in larvae_list[:zerglings_to_make]:
                 if b.minerals < 50 or b.supply_left < 1:
                     break
@@ -2629,118 +2745,4 @@ class ProductionResilience:
                         total_produced += 1
                         larvae_list = [l for l in larvae_list if l.tag != larva.tag]
 
-        if total_produced > 0 and b.iteration % 100 == 0:
-            logger.info(
-                f"Produced {total_produced} units (M: {int(minerals)} -> {int(b.minerals)})"
-            )
-
-    async def _spend_minerals_without_larvae(self) -> None:
-        """Spend minerals when no larvae available."""
-        b = self.bot
-
-        if b.minerals <= 200:
-            return
-
-        # Build Queens (150 minerals each, provides larvae inject)
-        queen_count = b.units(UnitTypeId.QUEEN).amount if hasattr(b, "units") else 0
-        base_count = b.townhalls.amount if hasattr(b, "townhalls") else 1
-
-        if queen_count < base_count and b.minerals >= 150:
-            idle_hatcheries = b.townhalls.ready.idle
-            if idle_hatcheries.exists:
-                for hatch in idle_hatcheries:
-                    if b.can_afford(UnitTypeId.QUEEN):
-                        try:
-                            # bot.do() is NOT async in python-sc2
-                            b.do(hatch.train(UnitTypeId.QUEEN))
-                            return
-                        except Exception:
-                            pass
-
-        # Build expansion if minerals > 300
-        if b.minerals > 300 and b.already_pending(UnitTypeId.HATCHERY) == 0:
-            try:
-                if await self._try_expand():
-                    return
-            except Exception:
-                pass
-
-        # Build macro hatchery if minerals > 400
-        if b.minerals > 400 and b.townhalls.exists:
-            # Check if we don't have too many hatcheries already
-            if b.townhalls.amount < 5:
-                try:
-                    await b.build(UnitTypeId.HATCHERY, near=b.townhalls.first.position)
-                except Exception:
-                    pass
-
-    async def _build_gas_heavy_tech(self) -> None:
-        """
-        Build gas-heavy tech buildings to spend excess gas.
-        Uses existing tech building methods to avoid duplication.
-
-        Buildings (gas cost):
-        - Spire: 200 gas
-        - Hydralisk Den: 100 gas
-        - Infestation Pit: 100 gas
-        - Hive upgrade: 150 gas
-        """
-        b = self.bot
-        gas = b.vespene
-
-        if gas <= 1500:
-            return
-
-        # Need Lair for most gas-heavy tech
-        has_lair = (
-            b.structures(UnitTypeId.LAIR).ready.exists
-            or b.structures(UnitTypeId.HIVE).ready.exists
-        )
-
-        # Build Spire using existing method (200 gas)
-        if has_lair:
-            result = await self._build_spire()
-            if result:
-                logger.info(f"Building Spire (200 gas)")
-                return
-
-        # Build Hydralisk Den if don't have one (100 gas)
-        if (
-            has_lair
-            and not b.structures(UnitTypeId.HYDRALISKDEN).exists
-            and b.already_pending(UnitTypeId.HYDRALISKDEN) == 0
-        ):
-            if b.can_afford(UnitTypeId.HYDRALISKDEN) and b.townhalls.exists:
-                try:
-                    result = await b.build(
-                        UnitTypeId.HYDRALISKDEN, near=b.townhalls.first.position
-                    )
-                    if result is not None:  # Only print if build actually succeeded
-                        logger.info(f"Building Hydralisk Den (100 gas)")
-                        return
-                except Exception:
-                    pass
-
-        # Morph to Hive if we have Lair (150 gas) - need Infestation Pit
-        if (
-            b.structures(UnitTypeId.LAIR).ready.exists
-            and not b.structures(UnitTypeId.HIVE).exists
-        ):
-            if (
-                not b.structures(UnitTypeId.INFESTATIONPIT).exists
-                and b.already_pending(UnitTypeId.INFESTATIONPIT) == 0
-            ):
-                if b.can_afford(UnitTypeId.INFESTATIONPIT) and b.townhalls.exists:
-                    try:
-                        result = await b.build(
-                            UnitTypeId.INFESTATIONPIT, near=b.townhalls.first.position
-                        )
-                        if result is not None:
-                            logger.info(f"Building Infestation Pit (100 gas)")
-                            return
-                    except Exception:
-                        pass
-
-        # Morph to Lair if we don't have one (100 gas)
-        if not has_lair and b.structures(UnitTypeId.SPAWNINGPOOL).ready.exists:
-            await self._morph_to_lair()
+        return total_produced

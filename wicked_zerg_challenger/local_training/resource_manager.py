@@ -219,18 +219,22 @@ class ResourceManager:
                 pass
 
     def _should_prioritize_minerals_over_gas(self) -> bool:
-        """Return True when gas is banked and minerals are the bottleneck."""
+        """Return True when gas is banked and minerals are the bottleneck.
+        FIX P0-7: 더 적극적인 가스 워커 이동 (기존: gas > minerals * 3 → gas > minerals * 2)
+        """
         try:
             minerals = int(getattr(self.bot, "minerals", 0) or 0)
             gas = int(getattr(self.bot, "vespene", 0) or 0)
         except (TypeError, ValueError):
             return False
 
-        if gas >= 2000 and minerals < 500:
+        if gas >= 500 and minerals < 300:
             return True
-        if gas >= 1000 and minerals < 250:
+        if gas >= 1000 and minerals < 500:
             return True
-        return gas > max(300, minerals * 3) and minerals < 800
+        if gas >= 2000:
+            return True
+        return gas > max(200, minerals * 2) and minerals < 800
 
     async def _move_gas_workers_to_minerals(self, extractors) -> int:
         """Move a small batch of gas workers back to mineral patches."""
@@ -502,5 +506,3 @@ class ResourceManager:
 
             if (has_spire or has_hydra_den) and gas < 300:
                 return True
-
-        return False

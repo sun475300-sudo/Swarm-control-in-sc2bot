@@ -401,7 +401,8 @@ class SmartResourceBalancer:
             return True
         if gas >= self.gas_excess_threshold and minerals < self.mineral_shortage_threshold:
             return True
-        return gas > max(300, minerals * 3) and minerals < 800
+        # FIX P0-7: 가스 워커 이동 임계값 완화 (3배→2배)
+        return gas > max(200, minerals * 2) and minerals < 800
 
     def _get_ready_extractors(self) -> list:
         """Collect ready extractors from common python-sc2 bot accessors."""

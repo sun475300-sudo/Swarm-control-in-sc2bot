@@ -1329,6 +1329,7 @@ class IntelManager:
         """
         import json
         import os
+        import tempfile
 
         try:
             # 디렉토리 생성
@@ -1336,8 +1337,11 @@ class IntelManager:
             if directory and not os.path.exists(directory):
                 os.makedirs(directory)
 
+            map_name = getattr(getattr(self.bot, "game_info", None), "map_name", None)
+
             # 데이터 직렬화
             data = {
+                "map_name": map_name,
                 "enemy_race_name": self.enemy_race_name,
                 "enemy_unit_counts": self.enemy_unit_counts,
                 "enemy_tech_buildings": list(self.enemy_tech_buildings),  # set -> list
@@ -1347,8 +1351,11 @@ class IntelManager:
                 "enemy_build_pattern": getattr(self, "_enemy_build_pattern", "unknown"),
             }
 
-            with open(file_path, "w", encoding="utf-8") as f:
-                json.dump(data, f, indent=2)
+            dir_ = os.path.dirname(os.path.abspath(file_path))
+            with tempfile.NamedTemporaryFile("w", dir=dir_, delete=False, suffix=".tmp", encoding="utf-8") as tmp:
+                json.dump(data, tmp, indent=2)
+                tmp_path = tmp.name
+            os.replace(tmp_path, file_path)
 
             logger.info(f"Data saved to {file_path}")
             return True
@@ -1388,20 +1395,23 @@ class IntelManager:
             self.enemy_tech_buildings = set(data.get("enemy_tech_buildings", []))
             self._enemy_build_pattern = data.get("enemy_build_pattern", "unknown")
 
-            # Scouted Locations 복원 (tuple -> Point2)
-            scouted = data.get("scouted_locations", [])
-            self.scouted_locations = {Point2(loc) for loc in scouted}
+            # 맵 불일치 시 좌표 데이터 폐기 (다른 맵의 scouted_locations는 무의미)
+            stored_map = data.get("map_name")
+            current_map = getattr(getattr(self.bot, "game_info", None), "map_name", None)
+            if stored_map and current_map and stored_map != current_map:
+                logger.warning(
+                    f"Intel map mismatch: stored={stored_map!r}, current={current_map!r}. "
+                    "Discarding scouted_locations."
+                )
+                self.scouted_locations = set()
+            else:
+                # Scouted Locations 복원 (tuple -> Point2)
+                scouted = data.get("scouted_locations", [])
+                self.scouted_locations = {Point2(loc) for loc in scouted}
 
             logger.info(f"Data loaded from {file_path}")
-            logger.info(f"  - Enemy Race: {self.enemy_race_name}")
-            logger.info(f"  - Build Pattern: {self._enemy_build_pattern}")
-            logger.info(f"  - Scouted Locations: {len(self.scouted_locations)}")
-
             return True
 
-        except (IOError, OSError) as e:
-            logger.error(f"Failed to load data (I/O error): {e}")
-            return False
-        except (TypeError, ValueError, KeyError) as e:
-            logger.error(f"Failed to load data (parsing error): {e}")
+        except Exception as e:
+            logger.warning(f"Failed to load intel data: {e}")
             return False

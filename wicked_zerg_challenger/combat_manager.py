@@ -4002,7 +4002,7 @@ class CombatManager:
             UnitTypeId.VIPER,
         }
 
-        army_units = [u for u in self.bot.units if u.type_id in army_types]
+        army_units = self.bot.units.filter(lambda u: u.type_id in army_types)
 
         if not army_units:
             return

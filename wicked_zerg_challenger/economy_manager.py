@@ -1113,12 +1113,12 @@ class EconomyManager:
         # *** FIX: 가스가 넘치면 가스 일꾼 배치 중단 (tug-of-war 방지) ***
         gas = getattr(self.bot, "vespene", 0)
         minerals = getattr(self.bot, "minerals", 0)
-        if gas > 300 and minerals < 400:
+        if gas > 200 and minerals < 300:
             return  # 가스 과잉 + 미네랄 부족 -> 가스 일꾼 추가 금지
-        if gas > 500:
-            return  # 가스 500+ -> 가스 일꾼 추가 금지
-        if gas > 0 and minerals >= 0 and gas > minerals * 3 and gas > 200:
-            return  # 가스:미네랄 비율 3:1 초과 -> 가스 일꾼 추가 금지
+        if gas > 400:
+            return  # FIX P0-7: 가스 400+ -> 가스 일꾼 추가 금지 (기존 500)
+        if gas > 0 and minerals >= 0 and gas > minerals * 2 and gas > 150:
+            return  # FIX P0-7: 가스:미네랄 비율 2:1 초과 (기존 3:1)
 
         extractors = self.bot.gas_buildings.ready
         if not extractors:
@@ -4035,8 +4035,8 @@ class EconomyManager:
         gas = self.bot.vespene
         minerals = self.bot.minerals
 
-        # * FIX: 가스 > 미네랄 * 3 이면 즉시 감소 (시간 제한 없음, 심각한 불균형) *
-        if gas > 0 and minerals >= 0 and gas > minerals * 3 and gas > 200:
+        # FIX P0-7: 가스 > 미네랄 * 2 이면 즉시 감소 (기존 3배→2배)
+        if gas > 0 and minerals >= 0 and gas > minerals * 2 and gas > 150:
             await self._reduce_gas_workers()
             return
 
