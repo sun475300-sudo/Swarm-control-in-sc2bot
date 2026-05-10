@@ -950,7 +950,7 @@ reward_system = ZergRewardSystem()
 
 async def on_step(self, iteration: int):
     # ... game logic ...
-    
+
     # Calculate step reward
     step_reward = reward_system.calculate_step_reward(self)
 """

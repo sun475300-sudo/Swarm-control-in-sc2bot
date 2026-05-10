@@ -299,10 +299,10 @@ def main():
 Examples:
   # Learn from 30 replays (default)
   python integrated_replay_learning_workflow.py
-  
+
   # Learn from 50 replays
   python integrated_replay_learning_workflow.py --max-replays 50
-  
+
   # Skip training data collection
   python integrated_replay_learning_workflow.py --skip-training-data
         """,

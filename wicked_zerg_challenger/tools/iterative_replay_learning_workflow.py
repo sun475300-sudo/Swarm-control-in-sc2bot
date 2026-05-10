@@ -424,10 +424,10 @@ def main():
 Examples:
   # 30 iterations with 30 replays each (default)
   python iterative_replay_learning_workflow.py
-  
+
   # 50 iterations with 30 replays each
   python iterative_replay_learning_workflow.py --max-iterations 50
-  
+
   # 30 iterations with 50 replays each
   python iterative_replay_learning_workflow.py --max-replays 50
         """,
