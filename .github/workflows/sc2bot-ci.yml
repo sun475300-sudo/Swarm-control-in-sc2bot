@@ -80,11 +80,12 @@ jobs:
         # whole kitchen-sink requirements.txt brought in wheels that are
         # either unavailable or broken on the CI runner and was producing
         # a worker-crash exit code 2; we keep this job tight and rely on
-        # the stubs instead.
+        # the stubs instead. requirements-dev.txt is the source of
+        # truth for test dependency versions.
         run: |
           pip install --upgrade pip
-          pip install pytest pytest-cov pytest-asyncio pytest-timeout
-          pip install pyyaml aiohttp
+          pip install -r requirements-dev.txt
+          pip install pytest-cov pyyaml aiohttp
 
       - name: Run root unit tests
         # tests/unit doesn't exist; the unit suite lives at tests/ and
