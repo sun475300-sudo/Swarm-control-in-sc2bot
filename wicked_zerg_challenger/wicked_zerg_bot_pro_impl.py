@@ -23,7 +23,6 @@ except ImportError:
 import json
 import shutil
 import time
-import traceback
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional
@@ -221,8 +220,9 @@ class WickedZergBotProImpl(BotAI):
                 await self.map_memory.on_start()
                 self.logger.info("MapMemorySystem started - Enemy tracking active")
             except Exception as e:
-                self.logger.warning(f"MapMemorySystem on_start failed: {e}")
-                traceback.print_exc()
+                self.logger.warning(
+                    f"MapMemorySystem on_start failed: {e}", exc_info=True
+                )
 
         # === Personality Module (Jarvis) ===
         try:
@@ -248,8 +248,9 @@ class WickedZergBotProImpl(BotAI):
                 f"[*] PersonalityModule initialized (Jarvis active, Mode: {mode.value})"
             )
         except Exception as e:
-            self.logger.warning(f"Failed to initialize PersonalityModule: {e}")
-            traceback.print_exc()
+            self.logger.warning(
+                f"Failed to initialize PersonalityModule: {e}", exc_info=True
+            )
 
         # === RL Agent initialization (train_mode only) ===
         self.rl_agent = None
@@ -277,8 +278,9 @@ class WickedZergBotProImpl(BotAI):
             except ImportError as e:
                 self.logger.info(f"[RL_AGENT] Not available: {e}")
             except Exception as e:
-                self.logger.info(f"[RL_AGENT] Initialization failed: {e}")
-                traceback.print_exc()
+                self.logger.info(
+                    f"[RL_AGENT] Initialization failed: {e}", exc_info=True
+                )
 
         # === Model Hot Reloader (게임 중 모델 자동 갱신) ===
         self.hot_reloader = None
@@ -307,8 +309,9 @@ class WickedZergBotProImpl(BotAI):
         except ImportError as e:
             self.logger.info(f"[HIERARCHICAL_RL] Not available: {e}")
         except Exception as e:
-            self.logger.info(f"[HIERARCHICAL_RL] Initialization failed: {e}")
-            traceback.print_exc()
+            self.logger.info(
+                f"[HIERARCHICAL_RL] Initialization failed: {e}", exc_info=True
+            )
 
         # === Situational Awareness Module Integration (Stage 5) ===
         self.situational_awareness = None
@@ -322,8 +325,9 @@ class WickedZergBotProImpl(BotAI):
         except ImportError as e:
             self.logger.info(f"[SITUATIONAL_AWARENESS] Not available: {e}")
         except Exception as e:
-            self.logger.info(f"[SITUATIONAL_AWARENESS] Initialization failed: {e}")
-            traceback.print_exc()
+            self.logger.info(
+                f"[SITUATIONAL_AWARENESS] Initialization failed: {e}", exc_info=True
+            )
 
         # === Step integrator initialization ===
         self._step_integrator = BotStepIntegrator(self)
@@ -344,8 +348,9 @@ class WickedZergBotProImpl(BotAI):
                     "[OK] Applied learned economy fundamentals to EconomyCombatBalancer"
                 )
         except Exception as e:
-            self.logger.info(f"[WARNING] Failed to apply learned economy weights: {e}")
-            traceback.print_exc()
+            self.logger.warning(
+                f"Failed to apply learned economy weights: {e}", exc_info=True
+            )
 
         # *** Opponent Modeling - Load previous data and start tracking ***
         if hasattr(self, "opponent_modeling") and self.opponent_modeling:
@@ -382,8 +387,9 @@ class WickedZergBotProImpl(BotAI):
                         f"[OPPONENT_MODELING] Recommended counters: {counter_units}"
                     )
             except Exception as e:
-                self.logger.warning(f"OpponentModeling on_start error: {e}")
-                traceback.print_exc()
+                self.logger.warning(
+                    f"OpponentModeling on_start error: {e}", exc_info=True
+                )
 
         # === Scoring System + Real-time Awareness Engine ===
         try:
@@ -568,8 +574,9 @@ class WickedZergBotProImpl(BotAI):
                             f"Win rate: {model.games_won / model.games_played * 100:.1f}%"
                         )
             except Exception as e:
-                self.logger.warning(f"OpponentModeling on_end error: {e}")
-                traceback.print_exc()
+                self.logger.warning(
+                    f"OpponentModeling on_end error: {e}", exc_info=True
+                )
 
         # Performance Optimizer cleanup
         # if self.performance_optimizer:
@@ -685,10 +692,9 @@ class WickedZergBotProImpl(BotAI):
                     self._reward_system.reset()
 
             except Exception as e:
-                self.logger.info(f"[WARNING] Training end logic error: {e}")
-                import traceback
-
-                traceback.print_exc()
+                self.logger.warning(
+                    f"Training end logic error: {e}", exc_info=True
+                )
 
         # *** 게임 간 매니저 상태 초기화 (훈련 에피소드 안정성) ***
         self._reset_all_managers()
