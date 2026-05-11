@@ -39,7 +39,17 @@ Ongoing test-driven iteration log. Each cycle: run tests → list issues → fix
 ### Tests
 - 1156 passed, 14 skipped — unchanged.
 
-## Cycle 4 (planned)
+## Cycle 4
+
+### Functional bugs (silent loss of behavior)
+- [x] **`opponent_modeling.py`: `OpponentModeling.on_step` defined twice** (lines 341 and 765). The second simpler version shadowed the comprehensive one. As a result the live per-frame opponent modeling only did `_detect_early_signals(<= 180s)`, silently skipping: strategy prediction at mid-game transition, build-order tracking, timing-attack detection, tech-progression tracking, and blackboard updates with `predicted_strategy` / `prediction_confidence` / `observed_signals`. Removed the shadowing version; added a `if not self.bot: return` safety guard to the comprehensive one.
+- [x] **`combat_manager.py`: `_find_harass_target` defined twice** (lines 2809 and 5005). The second (more sophisticated: worker-first → tech-buildings → main base) was the live one; the first (main-base-only) was dead. Removed the dead one.
+
+### Notes
+- `opponent_modeling.py` also has two parallel naming conventions inside the same class (`current_opponent_id` vs `current_opponent`). The remaining duplicate-naming hazard is documented but not refactored here to keep this cycle's change surgical — flag for cycle 5/6.
+
+## Cycle 5 (planned)
 - Audit `except Exception as e: ...` where `e` is unused — silent error swallowing.
-- Look for `local variable 'X' is assigned to but never used` cases that hint at incomplete code.
+- Reconcile `current_opponent_id` vs `current_opponent` naming in `opponent_modeling.py`.
+- Hunt remaining pyflakes duplicate-def warnings.
 - Make test collection robust to combined runs (`scripts.*` resolution).
