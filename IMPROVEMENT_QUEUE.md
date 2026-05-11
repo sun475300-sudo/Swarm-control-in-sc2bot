@@ -48,8 +48,17 @@ Ongoing test-driven iteration log. Each cycle: run tests → list issues → fix
 ### Notes
 - `opponent_modeling.py` also has two parallel naming conventions inside the same class (`current_opponent_id` vs `current_opponent`). The remaining duplicate-naming hazard is documented but not refactored here to keep this cycle's change surgical — flag for cycle 5/6.
 
-## Cycle 5 (planned)
-- Audit `except Exception as e: ...` where `e` is unused — silent error swallowing.
-- Reconcile `current_opponent_id` vs `current_opponent` naming in `opponent_modeling.py`.
-- Hunt remaining pyflakes duplicate-def warnings.
+## Cycle 5
+
+### Dead code
+- [x] **`local_training/production_resilience.py`: `build_terran_counters` defined twice** (lines 1467 and 1977). This is the canonical production-resilience module used by tests and the manager registry (not a local-only copy). The first version directly called `b.build` without coordinator routing; the second uses `TechCoordinator` for conflict resolution and is the intended live implementation. Removed the dead first.
+
+### Audit pass
+- Re-ran `pyflakes` over every non-test bot file: **zero remaining `redefinition of unused` warnings.** All silent shadowed-duplicate bugs are eliminated.
+- All 55 `test_production_resilience.py` tests still pass.
+
+## Cycle 6 (planned)
+- Audit `except Exception as e:` blocks where `e` is unused (silent error swallowing).
+- Reconcile `current_opponent_id` vs `current_opponent` in `opponent_modeling.py`.
+- Investigate unused-local hints from pyflakes (potential missing logic).
 - Make test collection robust to combined runs (`scripts.*` resolution).
