@@ -8,7 +8,11 @@ from types import SimpleNamespace
 from unittest.mock import MagicMock, patch
 
 import pytest
-from sc2.ids.unit_typeid import UnitTypeId
+
+# Skip the entire module if the optional `sc2` package isn't installed —
+# otherwise pytest collection aborts and silences every other test.
+_sc2_typeid = pytest.importorskip("sc2.ids.unit_typeid")
+UnitTypeId = _sc2_typeid.UnitTypeId
 
 # ---------------------------------------------------------------------------
 # Minimal stubs so we can import without a running SC2 environment

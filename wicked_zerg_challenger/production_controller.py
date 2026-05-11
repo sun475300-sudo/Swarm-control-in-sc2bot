@@ -26,8 +26,7 @@ except ImportError:
     UnitTypeId = None
 
 try:
-    from blackboard import AuthorityMode
-    from blackboard import Blackboard as GameStateBlackboard
+    from blackboard import AuthorityMode, GameStateBlackboard
 except ImportError:
     GameStateBlackboard = None
     AuthorityMode = None

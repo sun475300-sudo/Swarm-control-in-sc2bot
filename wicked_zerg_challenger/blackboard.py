@@ -537,10 +537,22 @@ class GameStateBlackboard:
             and self.game_phase != GamePhase.OPENING
         )
 
+    # Minimum minerals to commit to a Hatchery (300 base + small buffer
+    # to leave room for queueing a drone).
+    _EXPANSION_MIN_MINERALS = 300
+
     def should_expand(self) -> bool:
         """확장 가능한 상황인가?"""
         return (
             self.threat.level == ThreatLevel.NONE
-            and not self.resources.is_supply_block
+            and not self.resources.is_supply_blocked
             and not self.is_under_attack
+            and self.resources.minerals >= self._EXPANSION_MIN_MINERALS
         )
+
+
+# Public alias — historical code (wicked_zerg_bot_pro_impl, production_controller,
+# tests/test_blackboard.py) imports `Blackboard`. Keep both names exported so
+# the bot and the test suite can import without an extra shim.
+Blackboard = GameStateBlackboard
+
