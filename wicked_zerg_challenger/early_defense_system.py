@@ -381,8 +381,15 @@ class EarlyDefenseSystem:
         try:
             return obj.distance_to(main_base)
         except Exception:
-            position = getattr(obj, "position", None)
-            return position.distance_to(main_base) if position else 999.0
+            # Point2.distance_to() expects another Point2, not a Unit — compare
+            # position-to-position so the proxy-target picker (min(..., key=...))
+            # never silently degrades to the 999.0 sentinel.
+            obj_pos = getattr(obj, "position", obj)
+            base_pos = getattr(main_base, "position", main_base)
+            try:
+                return obj_pos.distance_to(base_pos)
+            except Exception:
+                return 999.0
 
     @staticmethod
     def _type_name(unit_or_structure) -> str:
