@@ -218,7 +218,7 @@ class TechCoordinator:
 
         blackboard = getattr(self.bot, "blackboard", None)
         threat = getattr(blackboard, "threat", None)
-        if threat is not None and getattr(threat, "is_rushing", False) is True:
+        if threat is not None and getattr(threat, "is_rushing", False):
             return False
 
         return True
