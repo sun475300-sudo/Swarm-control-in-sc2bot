@@ -134,6 +134,11 @@ class QueenManager:
                 self.bot.townhalls.ready if hasattr(self.bot, "townhalls") else []
             )
 
+            # Prune cooldown / assignment dicts so dead queen tags don't
+            # accumulate forever (memory leak in long games).
+            if iteration % 100 == 0 and queens:
+                self._prune_dead_queen_state(queens)
+
             if not queens or not hatcheries:
                 return
 
@@ -242,6 +247,29 @@ class QueenManager:
                 f"PUMP:{counts['pump']} CREEP:{counts['creep']} COMBAT:{counts['combat']} "
                 f"| Highway: {progress}"
             )
+
+    def _prune_dead_queen_state(self, alive_queens) -> None:
+        """Drop tag-keyed cooldown / assignment entries for queens that died.
+
+        Without this, ``last_transfuse_time`` / ``last_creep_time`` /
+        ``assigned_queen_tags`` grow unboundedly across a long game and
+        eventually waste memory + slow down ``.get`` lookups.
+        """
+        try:
+            alive_tags = {q.tag for q in alive_queens}
+        except Exception:
+            return
+
+        for d in (
+            self.last_transfuse_time,
+            self.last_creep_time,
+        ):
+            for tag in [t for t in d if t not in alive_tags]:
+                del d[tag]
+
+        # Set: discard in-place
+        self.assigned_queen_tags &= alive_tags
+        self.dedicated_creep_queens &= alive_tags
 
     async def _train_queens(self, iteration: int) -> None:
         """Train queens based on base count and need."""

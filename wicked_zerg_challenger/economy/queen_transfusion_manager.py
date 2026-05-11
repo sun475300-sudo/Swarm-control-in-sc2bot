@@ -5,7 +5,7 @@ Provides intelligent transfusion targeting for queens, prioritizing high-value u
 and optimizing healing efficiency in combat situations.
 """
 
-from typing import TYPE_CHECKING, Dict, Optional
+from typing import TYPE_CHECKING, Any, Dict, Optional
 
 from sc2.ids.ability_id import AbilityId
 from sc2.ids.unit_typeid import UnitTypeId
@@ -93,6 +93,14 @@ class QueenTransfusionManager:
         # Clear deduplication set for this iteration (even on early return
         # so stale tags don't carry over to the next call)
         self._targeted_this_iter.clear()
+
+        # Prune cooldown entries for queens that have died — otherwise this
+        # dict grows unboundedly across a long game.
+        if queens:
+            alive_tags = {q.tag for q in queens}
+            stale = [t for t in self._queen_last_cast if t not in alive_tags]
+            for t in stale:
+                del self._queen_last_cast[t]
 
         if not queens or not damaged_units:
             return
@@ -230,7 +238,7 @@ class QueenTransfusionManager:
         hp_restored = min(hp_missing, self.TRANSFUSION_HP_RESTORE)
         self.hp_healed_total += hp_restored
 
-    def get_statistics(self) -> Dict[str, any]:
+    def get_statistics(self) -> Dict[str, Any]:
         """
         Get transfusion statistics
 

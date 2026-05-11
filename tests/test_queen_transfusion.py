@@ -182,6 +182,33 @@ class TestQueenCastCooldown:
         skip = mgr._queen_last_cast.get(queen.tag, 0.0) + mgr.QUEEN_CAST_COOLDOWN > bot.time
         assert not skip, "First-time queen must not be in cooldown"
 
+    def test_dead_queen_cooldown_pruned(self):
+        """When a queen dies, her tag must be evicted from _queen_last_cast.
+
+        Otherwise the dict grows unboundedly across a long game. Round 2 fix:
+        execute_transfusions() prunes any cooldown entry not in the live queen
+        roster.
+        """
+        import asyncio
+
+        mgr, bot = _mgr(time=200.0)
+
+        # Pretend three queens have cast in the past.
+        mgr._queen_last_cast = {1: 100.0, 2: 150.0, 3: 175.0}
+
+        # Only queens 1 and 3 are still alive — queen 2 died.
+        alive = [_make_queen(tag=1, energy=100), _make_queen(tag=3, energy=100)]
+
+        async def _run():
+            # No damaged units → method returns early but should still prune.
+            await mgr.execute_transfusions(alive, [], iteration=10)
+
+        asyncio.run(_run())
+
+        assert 2 not in mgr._queen_last_cast, "Dead queen tag must be pruned"
+        assert 1 in mgr._queen_last_cast and 3 in mgr._queen_last_cast, \
+            "Live queens must keep their cooldowns"
+
 
 # ---------------------------------------------------------------------------
 # Tests: priority ordering
