@@ -549,4 +549,3 @@ class GameStateBlackboard:
 
 # Backwards-compatible alias - many modules import ``Blackboard`` directly
 Blackboard = GameStateBlackboard
-
