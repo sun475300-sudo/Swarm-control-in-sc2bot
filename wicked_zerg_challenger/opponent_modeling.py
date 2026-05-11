@@ -751,7 +751,18 @@ class OpponentModeling:
             early_signals=[],
             tech_progression=[],
         )
+        # Reset per-game tracking state so prior-game observations don't
+        # bleed into the new game when one OpponentModeling instance is
+        # reused across multiple games (e.g. training session, ladder runs).
         self.observed_signals.clear()
+        self.build_order_observed.clear()
+        self.tech_progression.clear()
+        self.timing_attacks_detected.clear()
+        self.predicted_strategy = None
+        self.prediction_confidence = 0.0
+        self.prediction_made_at = 0.0
+        self.last_update = 0
+        self.early_game_phase = True
 
         # Load opponent model if exists
         if opponent_id not in self.opponent_models:
