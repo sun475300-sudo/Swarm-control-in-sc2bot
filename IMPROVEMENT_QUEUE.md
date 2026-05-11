@@ -70,8 +70,12 @@ Ongoing test-driven iteration log. Each cycle: run tests → list issues → fix
 ### Why it matters
 - Bug class "bot can't even load" was previously undetected because every manager was tested in isolation with mocks. The smoke test now flags it in ~0.5s.
 
-## Cycle 7 (planned)
+## Cycle 7
+
+### Naming consistency (latent state-corruption bug)
+- [x] **`opponent_modeling.py`: unified `current_opponent_id` (canonical) — the integration methods (`on_game_start`, `on_game_end`, `get_predicted_strategy`) were writing to `self.current_opponent` (no `_id` suffix) while the rest of the class — and external readers in `personality_module.py` — read `self.current_opponent_id`. So an external reader after `on_game_start` would see the old value from `__init__`, not the current opponent. Fixed by canonicalizing on `current_opponent_id`. 1162 tests still pass.
+
+## Cycle 8 (planned)
 - Audit `except Exception as e:` blocks where `e` is unused (silent error swallowing).
-- Reconcile `current_opponent_id` vs `current_opponent` in `opponent_modeling.py`.
 - Investigate unused-local hints from pyflakes (potential missing logic).
 - Make test collection robust to combined runs (`scripts.*` resolution).
