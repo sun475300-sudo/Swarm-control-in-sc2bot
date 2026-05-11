@@ -278,12 +278,17 @@ class GameStateBlackboard:
         self.state["is_rush_detected"] = is_rushing
         self.state["threat_level"] = int(level)
 
-        if threat_position:
+        if threat_position is not None:
             self.threat.threat_position = threat_position
 
-        # 위협 감지 시간 기록
-        if level >= ThreatLevel.MEDIUM and self.threat.detected_at == 0.0:
-            self.threat.detected_at = self.game_time
+        # 위협 감지 시간 기록: MEDIUM 이상으로 처음 진입할 때 기록.
+        # 위협이 사라지면 (LOW 이하로 복귀) detected_at 을 0 으로 리셋해
+        # 다음 위협 사이클의 지속시간을 새로 측정한다.
+        if level >= ThreatLevel.MEDIUM:
+            if self.threat.detected_at == 0.0:
+                self.threat.detected_at = self.game_time
+        else:
+            self.threat.detected_at = 0.0
 
     # ========== Dynamic Authority System ==========
 

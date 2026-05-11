@@ -510,7 +510,9 @@ class DefenseCoordinator:
 
         self.blackboard.is_under_attack = is_under_attack
 
-        # 공격받은 기지 태그 업데이트
+        # 공격받은 기지 태그 업데이트 — 매 프레임 다시 계산해야
+        # 한 번 공격받은 기지가 영구히 attacked_bases 에 남는 버그를 막는다.
+        self.blackboard.attacked_bases.clear()
         if is_under_attack:
             for base in self.bot.townhalls:
                 nearby_enemies = self.bot.enemy_units.closer_than(15, base.position)
