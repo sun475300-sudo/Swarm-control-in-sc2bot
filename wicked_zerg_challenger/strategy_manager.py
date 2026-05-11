@@ -452,6 +452,48 @@ class StrategyManager:
         self.early_scout_fast_gas = False
         self.early_scout_cheese_active = False
 
+    def reset(self) -> None:
+        """게임 간 전략 상태 초기화 (훈련 에피소드 안정성).
+
+        config/race ratios/knowledge 같은 정적 데이터는 보존하고,
+        현재 게임 한정의 상태 플래그·카운터·검출 결과만 초기화한다.
+        ML 학습 결과인 learned_* dict 는 의도적으로 유지한다.
+        """
+        self.current_mode = StrategyMode.NORMAL
+        self.detected_enemy_race = EnemyRace.UNKNOWN
+        self.game_phase = GamePhase.EARLY
+
+        self.emergency_active = False
+        self.emergency_start_time = 0.0
+
+        self.last_air_threat_log = 0
+        self.last_major_attack_log = 0
+        self.last_high_templar_log = 0
+        self.last_disruptor_log = 0
+
+        self.early_harassment_active = False
+        self.last_harassment_time = 0
+
+        self.emergency_spine_requested = False
+        self.emergency_spore_requested = False
+
+        self.defense_mode_start_time = 0.0
+        self.last_major_attack_time = 0.0
+
+        self.rogue_tactics_active = False
+        self.larva_saving_mode = False
+
+        self.rush_persistence_count = 0
+
+        self.target_priority = "military"
+        self.expansion_timing = "normal"
+        self.preferred_comp = "balanced"
+        self.custom_unit_weights = None
+        self.early_scout_pressure_active = False
+        self.early_scout_greed_suppressed = False
+        self.early_scout_fast_gas = False
+        self.early_scout_cheese_active = False
+
     def _load_ratios(self, race_name: str) -> Dict[GamePhase, Dict[str, float]]:
         """KnowledgeManager에서 유닛 비율 로드"""
         ratios = {}
