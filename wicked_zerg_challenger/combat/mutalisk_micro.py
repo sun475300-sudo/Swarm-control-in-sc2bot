@@ -183,9 +183,6 @@ class MutaliskMicroController:
         Returns:
             Safe position away from enemies
         """
-        if not Point2:
-            return None
-
         # Retreat towards our main base
         townhalls = getattr(bot, "townhalls", None)
         main_base = None
@@ -202,8 +199,7 @@ class MutaliskMicroController:
                 except TypeError:
                     main_base = None
 
-        if main_base is not None:
-
+        if main_base is not None and Point2 is not None:
             # Move 10 units towards base from current position
             direction_x = main_base.x - unit.position.x
             direction_y = main_base.y - unit.position.y
@@ -217,11 +213,12 @@ class MutaliskMicroController:
                     (unit.position.x + norm_x * 10, unit.position.y + norm_y * 10)
                 )
 
-        # Fallback: move away from current position
-        if hasattr(bot, "start_location"):
-            return bot.start_location
+        # Fallback: retreat to start_location even when Point2 is unavailable.
+        start_location = getattr(bot, "start_location", None)
+        if start_location is not None:
+            return start_location
 
-        return None
+        return main_base
 
     def get_anti_air_threats(self, enemy_units, around=None) -> List:
         """Return anti-air threats close enough to zone Mutalisks."""

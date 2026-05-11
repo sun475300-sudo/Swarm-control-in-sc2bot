@@ -48,6 +48,7 @@ except ImportError:
         HATCHERY = "HATCHERY"
         EXTRACTOR = "EXTRACTOR"
         ZERGLING = "ZERGLING"
+        BANELING = "BANELING"
         QUEEN = "QUEEN"
         BANELINGNEST = "BANELINGNEST"
         ROACHWARREN = "ROACHWARREN"
@@ -55,6 +56,7 @@ except ImportError:
         HYDRALISKDEN = "HYDRALISKDEN"
         ROACH = "ROACH"
         HYDRALISK = "HYDRALISK"
+        MARINE = "MARINE"
 
     class AbilityId:
         RESEARCH_ZERGLINGMETABOLICBOOST = "RESEARCH_ZERGLINGMETABOLICBOOST"
@@ -539,8 +541,8 @@ class BuildOrderSystem:
         return steps
 
     def _infer_zvt_action(self, unit_type: Any) -> str:
-        if isinstance(unit_type, str):
-            return "upgrade"
+        # Check known UnitTypeId tokens first so this works whether `unit_type`
+        # is a real burnysc2 enum or one of our string stub fallbacks.
         if unit_type == getattr(UnitTypeId, "HATCHERY", None):
             return "expand"
         if unit_type == getattr(UnitTypeId, "LAIR", None):
@@ -555,6 +557,9 @@ class BuildOrderSystem:
         }
         if unit_type in train_types:
             return "train"
+        # Plain strings (e.g. "METABOLIC_BOOST") are upgrade markers.
+        if isinstance(unit_type, str):
+            return "upgrade"
         return "build"
 
     def _parse_build_steps(self, steps_data: List[Dict]) -> List[BuildOrderStep]:

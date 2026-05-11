@@ -15,8 +15,25 @@ try:
     from sc2.ids.upgrade_id import UpgradeId
     from sc2.position import Point2
 except ImportError:  # Fallbacks for tooling environments
-    UnitTypeId = None
-    AbilityId = None
+
+    class UnitTypeId:  # type: ignore[no-redef]
+        # Stub class so identity checks and getattr() lookups still work
+        # when burnysc2 isn't installed (unit tests, lint).
+        BANELING = "BANELING"
+        LURKERMP = "LURKERMP"
+        LURKERMPBURROWED = "LURKERMPBURROWED"
+        QUEEN = "QUEEN"
+        ROACH = "ROACH"
+        ROACHBURROWED = "ROACHBURROWED"
+        SPORECRAWLER = "SPORECRAWLER"
+        ZERGLING = "ZERGLING"
+
+    class AbilityId:  # type: ignore[no-redef]
+        BURROWDOWN_LURKER = "BURROWDOWN_LURKER"
+        BURROWDOWN_LURKERMP = "BURROWDOWN_LURKERMP"
+        BURROWUP_LURKER = "BURROWUP_LURKER"
+        BURROWUP_LURKERMP = "BURROWUP_LURKERMP"
+
     UpgradeId = None
     Point2 = None
 
