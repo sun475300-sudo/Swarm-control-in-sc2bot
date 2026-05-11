@@ -89,6 +89,40 @@ class EarlyScoutSystem:
         self._overlord_rescout_interval = 30.0  # Re-scout enemy base every 30s
         self._last_overlord_rescout_time = 0.0
 
+    def reset(self) -> None:
+        """게임 간 초반 정찰 시스템 상태 초기화.
+
+        죽은 스카웃 유닛 태그/이전 맵 웨이포인트가 다음 게임으로 새는 것을
+        막는다. 또한 적 타이밍 정보(풀, 가스, 내추럴)도 새 게임용으로
+        초기화한다.
+        """
+        self.scout_ling_tags = []
+        self.ling_scouts_assigned = False
+
+        self.scout_overlord_tag = None
+        self.overlord_scout_sent = False
+
+        self.ling_waypoints = {}
+        self.ling_current_wp = {}
+        self.overlord_waypoints = []
+        self.overlord_current_wp = 0
+
+        self.enemy_pool_timing = None
+        self.enemy_gas_timing = None
+        self.enemy_natural_timing = None
+        self.enemy_early_units = set()
+        self.proxy_detected = False
+        self.cheese_suspected = False
+
+        self.main_base_scouted = False
+        self.natural_scouted = False
+        self.third_scouted = False
+
+        self._last_update = 0.0
+        self._last_report_time = 0.0
+        self._last_rescout_time = 0.0
+        self._last_overlord_rescout_time = 0.0
+
     def _get_blackboard(self) -> Any:
         return getattr(self.bot, "blackboard", None)
 
