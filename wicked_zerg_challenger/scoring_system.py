@@ -152,8 +152,16 @@ class ScoringSystem:
             self._evaluate_macro(game_time)
             self._evaluate_adaptation(game_time)
             self._evaluate_survival(game_time)
-        except Exception:
-            pass
+        except Exception as exc:
+            # Scoring is a soft feature — never let it kill the bot loop.
+            # Throttle to once every 5s to avoid log spam if an evaluator
+            # is consistently broken.
+            if (
+                not hasattr(self, "_last_eval_error_log")
+                or game_time - getattr(self, "_last_eval_error_log", 0) > 5.0
+            ):
+                logger.warning(f"[ScoringSystem] evaluator failed: {exc}")
+                self._last_eval_error_log = game_time
 
     # =========================================================================
     # 1. Combat (전투) 평가

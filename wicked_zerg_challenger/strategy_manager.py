@@ -1045,22 +1045,28 @@ class StrategyManager:
         if economy and hasattr(economy, "bot") and hasattr(economy.bot, "workers"):
             try:
                 return economy.bot.workers.amount
-            except Exception:
-                pass
+            except Exception as exc:
+                self.logger.debug(
+                    f"[StrategyManager] economy.bot.workers.amount lookup failed: {exc}"
+                )
 
         # Fallback: 직접 조회
         if hasattr(self.bot, "workers"):
             try:
                 return self.bot.workers.amount
-            except Exception:
-                pass
+            except Exception as exc:
+                self.logger.debug(
+                    f"[StrategyManager] bot.workers.amount lookup failed: {exc}"
+                )
 
         if hasattr(self.bot, "units"):
             try:
                 drones = self.bot.units.filter(lambda u: u.type_id.name == "DRONE")
                 return drones.amount if hasattr(drones, "amount") else len(drones)
-            except Exception:
-                pass
+            except Exception as exc:
+                self.logger.debug(
+                    f"[StrategyManager] bot.units drone filter failed: {exc}"
+                )
 
         return 0
 
