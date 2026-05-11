@@ -29,8 +29,17 @@ Ongoing test-driven iteration log. Each cycle: run tests → list issues → fix
 ### Tests
 - 1156 tests pass (14 skipped) after dedup. No behavior change because Python class semantics already let the second def win — the cleanup just makes the code match what was actually running.
 
-## Cycle 3 (planned)
-- Address pyflakes f-string-without-placeholders findings (likely format bugs).
-- Audit `except Exception as e: ...` blocks where `e` is unused → look for swallowed errors that should at least log.
-- Investigate stale `local variable 'X' is assigned to but never used` for hidden missing logic.
-- Cross-suite collection conflict (`scripts.*` shadowing) — make tests robust to combined runs.
+## Cycle 3
+
+### Dead code after `return`
+- [x] **`economy_manager._force_expansion_if_stuck`**: ~37 lines of an old fallback path (`bot.expand_now` + gold-priority manual build) were left after a `return`, totally unreachable. Removed; the live path now correctly delegates to `_perform_smart_expansion`.
+- [x] **`economy_manager._check_proactive_expansion`**: similar ~40 lines of pre-refactor expansion fallback after the `return`. Removed. Same reasoning — `_perform_smart_expansion` is the modern path.
+- [x] Cleaned a few `f""` strings with no placeholders into plain strings while I was in there.
+
+### Tests
+- 1156 passed, 14 skipped — unchanged.
+
+## Cycle 4 (planned)
+- Audit `except Exception as e: ...` where `e` is unused — silent error swallowing.
+- Look for `local variable 'X' is assigned to but never used` cases that hint at incomplete code.
+- Make test collection robust to combined runs (`scripts.*` resolution).
