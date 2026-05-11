@@ -20,7 +20,17 @@ Ongoing test-driven iteration log. Each cycle: run tests → list issues → fix
 - [ ] Audit remaining `is_supply_block` / `is_supply_blocked` mismatches in dependent managers (already verified: no other call sites).
 - [ ] Investigate other `from <X> import` aliases that could regress.
 
-## Cycle 2 (next)
-- Examine `economy_manager`, `production_controller`, `tech_coordinator` for similar broken imports / typos.
-- Look for managers that call methods on the blackboard that don't exist.
-- Investigate logger / error-handling consistency.
+## Cycle 2
+
+### Real bugs (silent — caught by pyflakes)
+- [x] **`economy_manager.py`: `_prevent_resource_banking` defined twice** at lines 1681 and 3258 — the first ~108-line implementation was dead code, fully shadowed by the second definition. The first version had unique spore/spine-build logic that was never reachable. Removed the dead duplicate; the live (and more sophisticated) version stays.
+- [x] **`economy_manager.py`: `_reduce_gas_workers` defined twice** at lines 3391 and 4082 — the early simple version was shadowed by a more sophisticated banking-severity-aware version. Removed the dead version.
+
+### Tests
+- 1156 tests pass (14 skipped) after dedup. No behavior change because Python class semantics already let the second def win — the cleanup just makes the code match what was actually running.
+
+## Cycle 3 (planned)
+- Address pyflakes f-string-without-placeholders findings (likely format bugs).
+- Audit `except Exception as e: ...` blocks where `e` is unused → look for swallowed errors that should at least log.
+- Investigate stale `local variable 'X' is assigned to but never used` for hidden missing logic.
+- Cross-suite collection conflict (`scripts.*` shadowing) — make tests robust to combined runs.
