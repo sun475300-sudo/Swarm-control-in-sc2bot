@@ -17,7 +17,26 @@
 After Round 1: collection runs without ImportError, and 4 previously
 "skipped — not importable" tests now exercise real symbols.
 
-## Round 2 — Code Quality & Inspection (open queue)
+## Round 2 — Phase 10 isolation hardening
+
+| # | Issue | File | Severity | Status |
+|---|-------|------|----------|--------|
+| 6 | `tests/test_phase10_improvements.py` silently skipped **11 of 25** tests when run in isolation (`pytest tests/test_phase10_improvements.py`). Setup methods imported `wicked_zerg_challenger.strategy_manager` etc., which internally use bare `from utils.logger` / `from config.config_loader`. The project also has a top-level `./utils/` package without `logger.py`; pytest's rootdir prepend re-orders sys.path after our module-level insert, so the wrong `utils` resolved first. In the full suite these tests pass only because earlier files (e.g. `test_economy_manager.py`) had already mutated sys.path. | `tests/test_phase10_improvements.py` | MED | DONE |
+
+Fix: introduced a `_ensure_wzc_on_syspath()` helper that (1) re-asserts
+`wicked_zerg_challenger/` at sys.path position 0 inside every setup_method,
+and (2) evicts a stale `utils` module if it was loaded from outside wzc/.
+Also split each setup into "import → maybe skip → instantiate" so
+unrelated `AttributeError`/`TypeError` during construction surface instead
+of being swallowed by the catch-all `ImportError`.
+
+Result: `pytest tests/test_phase10_improvements.py` → **25 passed**
+(prev: 14 passed, 11 skipped). Full-suite count is unchanged (those 25
+already passed when run as part of the suite) but the file no longer
+silently degrades when tested in isolation or under different collection
+orders.
+
+## Round 3+ — open queue
 
 Pending items get filled as the loop progresses. Each round records what
 was found, what was fixed, and any leftovers escalated for the next round.
