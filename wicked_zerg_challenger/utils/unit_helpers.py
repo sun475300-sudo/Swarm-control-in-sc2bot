@@ -9,18 +9,16 @@ Unit Helpers - 유닛 관련 공통 유틸리티 함수
 - calculate_unit_supply: Supply 계산
 """
 
-from typing import Any, Callable, List, Optional
+from typing import Callable
 
 from utils.logger import get_logger
 
 try:
-    from sc2.position import Point2
     from sc2.unit import Unit
     from sc2.units import Units
 except ImportError:
     Unit = None
     Units = None
-    Point2 = None
 
 logger = get_logger("UnitHelpers")
 

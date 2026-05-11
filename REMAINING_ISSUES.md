@@ -33,11 +33,22 @@
 
 ## 🟡 MEDIUM Priority Issues (still open)
 
-### Issue #3: Transfusion 우선순위 개선 필요
+### ✅ Issue #3 (RESOLVED 2026-05-11): Transfusion 우선순위 — 구현 확인됨
+
+이전 보고서 작성 시점에는 미구현 상태였으나, 현재
+`wicked_zerg_challenger/economy/queen_transfusion_manager.py:21` 에
+`QueenTransfusionManager` 가 `HEAL_PRIORITY` (13종 유닛, ULTRALISK=100,
+BROODLORD=90, …, ZERGLING=30) 와 `CANNOT_HEAL` (12종 일회/수송 유닛)
+을 클래스 상수로 보유하고 있으며, `execute_transfusions()` 가 거리·
+HP·우선순위 기반으로 대상을 선택해 시전한다. 본 이슈는 닫는다.
+
+회귀 방지 테스트는 `tests/test_queen_transfusion_manager.py` 참조.
+
+### Issue #3-OLD (Archived) — 기존 제안 내용 (참고용)
 
 **위치**: `queen_manager.py` 또는 `spell_unit_manager.py`
 
-**현재 문제**:
+**현재 문제 (당시)**:
 - Transfusion 로직이 단순함
 - 고가 유닛(울트라, 브루드로드) 우선순위 없음
 - 군단 숙주, 맹독충 등 치료 불가 유닛에 낭비 가능성
