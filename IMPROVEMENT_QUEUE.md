@@ -57,7 +57,20 @@ Ongoing test-driven iteration log. Each cycle: run tests → list issues → fix
 - Re-ran `pyflakes` over every non-test bot file: **zero remaining `redefinition of unused` warnings.** All silent shadowed-duplicate bugs are eliminated.
 - All 55 `test_production_resilience.py` tests still pass.
 
-## Cycle 6 (planned)
+## Cycle 6
+
+### Regression coverage
+- [x] **Added `wicked_zerg_challenger/tests/test_bot_smoke.py`** — 6 cheap end-to-end checks:
+  - `blackboard` exports both `Blackboard` and `GameStateBlackboard` and they're the same object (catches cycle 1's bug).
+  - `wicked_zerg_bot_pro_impl` module imports cleanly (catches any future `from blackboard import X` / similar wiring breakage across managers).
+  - `WickedZergBotProImpl()` constructs and exposes the BotAI lifecycle hooks (`on_start`, `on_step`, `on_end`).
+  - `should_expand()` blocks correctly on (a) insufficient minerals, (b) under-attack, (c) supply block.
+- Total tests: **1162 passing** (was 1156 pre-cycle, +6 smoke).
+
+### Why it matters
+- Bug class "bot can't even load" was previously undetected because every manager was tested in isolation with mocks. The smoke test now flags it in ~0.5s.
+
+## Cycle 7 (planned)
 - Audit `except Exception as e:` blocks where `e` is unused (silent error swallowing).
 - Reconcile `current_opponent_id` vs `current_opponent` in `opponent_modeling.py`.
 - Investigate unused-local hints from pyflakes (potential missing logic).
