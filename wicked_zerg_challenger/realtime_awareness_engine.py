@@ -133,8 +133,18 @@ class RealtimeAwarenessEngine:
             if self.active_problems and iteration % 100 == 0:
                 self._log_problems()
 
-        except Exception:
-            pass
+        except Exception as exc:
+            # Real-time awareness must never kill the bot loop. Throttle
+            # the warning to once every 10s so a consistently broken step
+            # doesn't flood the log.
+            if (
+                not hasattr(self, "_last_on_step_err_log")
+                or game_time - getattr(self, "_last_on_step_err_log", 0.0) > 10.0
+            ):
+                logger.warning(
+                    f"[RealtimeAwarenessEngine] on_step pipeline failed: {exc}"
+                )
+                self._last_on_step_err_log = game_time
 
         return self.active_overrides
 
