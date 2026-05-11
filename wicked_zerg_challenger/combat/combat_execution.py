@@ -39,6 +39,18 @@ class CombatExecution:
     - 기본 공격 로직
     """
 
+    # --- Tuning constants ----------------------------------------------------
+    # 한 프레임에 진형 이동/공격 명령을 내릴 최대 유닛 수.
+    # Phase 22 에서 10 → 30 으로 늘림 (대규모 교전 지원). 더 늘리면 SC2
+    # API 호출 비용이 커지므로 30 으로 캡함.
+    MAX_UNITS_PER_FRAME = 30
+    # form_concave 시 형성 반경(맵 유닛 단위).
+    CONCAVE_FORMATION_RADIUS = 8.0
+    # Concave 진형 형성을 시작하기 위한 최소 원거리 유닛 수.
+    MIN_RANGED_UNITS_FOR_CONCAVE = 3
+    # 에러 로그를 게임루프에서 도배하지 않기 위한 throttle 주기.
+    ERROR_LOG_THROTTLE = 50
+
     def __init__(self, bot, targeting=None, micro_combat=None):
         self.bot = bot
         self.logger = get_logger("CombatExecution")
@@ -110,7 +122,10 @@ class CombatExecution:
                 await self.basic_attack(units, enemy_units)
 
         except Exception as e:
-            if hasattr(self.bot, "iteration") and self.bot.iteration % 50 == 0:
+            if (
+                hasattr(self.bot, "iteration")
+                and self.bot.iteration % self.ERROR_LOG_THROTTLE == 0
+            ):
                 self.logger.warning(f"Combat execution error: {e}")
             # 에러 발생 시 기본 공격
             await self.basic_attack(units, enemy_units)
@@ -146,18 +161,22 @@ class CombatExecution:
                 units, ["HYDRALISK", "ROACH", "RAVAGER"]
             )
 
-            if self._has_units(ranged_units) and self._units_amount(ranged_units) >= 3:
+            if (
+                self._has_units(ranged_units)
+                and self._units_amount(ranged_units) >= self.MIN_RANGED_UNITS_FOR_CONCAVE
+            ):
                 # Concave 진형 형성
                 formation_positions = formation_manager.form_concave(
-                    ranged_units, enemy_center, formation_radius=8.0
+                    ranged_units,
+                    enemy_center,
+                    formation_radius=self.CONCAVE_FORMATION_RADIUS,
                 )
 
-                # * Phase 22: Increased formation limit 10 -> 30 *
-                for unit, target_pos in formation_positions[:30]:
+                for unit, target_pos in formation_positions[: self.MAX_UNITS_PER_FRAME]:
                     try:
                         self.bot.do(unit.move(target_pos))
-                    except Exception:
-                        pass
+                    except (AttributeError, TypeError) as e:
+                        self.logger.debug(f"Concave move failed: {e}")
 
             # 길목 회피 확인
             if hasattr(self.bot, "townhalls") and self.bot.townhalls.exists:
@@ -172,14 +191,17 @@ class CombatExecution:
                         units, enemy_units, our_base
                     )
                     if retreat_pos:
-                        for unit in units[:30]:  # * Phase 22: 10 -> 30 *
+                        for unit in units[: self.MAX_UNITS_PER_FRAME]:
                             try:
                                 self.bot.do(unit.move(retreat_pos))
-                            except Exception:
-                                pass
+                            except (AttributeError, TypeError) as e:
+                                self.logger.debug(f"Retreat move failed: {e}")
 
         except Exception as e:
-            if hasattr(self.bot, "iteration") and self.bot.iteration % 50 == 0:
+            if (
+                hasattr(self.bot, "iteration")
+                and self.bot.iteration % self.ERROR_LOG_THROTTLE == 0
+            ):
                 self.logger.warning(f"Formation error: {e}")
 
     async def basic_attack(self, units, enemy_units):
@@ -198,7 +220,7 @@ class CombatExecution:
             from sc2.ids.unit_typeid import UnitTypeId
         except ImportError:
             # Fallback: simple attack
-            for unit in list(units)[:30]:
+            for unit in list(units)[: self.MAX_UNITS_PER_FRAME]:
                 target = self._closest_enemy(enemy_units, unit)
                 if target:
                     self.bot.do(unit.attack(target))
@@ -213,7 +235,7 @@ class CombatExecution:
             UnitTypeId.SPORECRAWLER,
         }
 
-        for unit in list(units)[:30]:  # 최대 30개만 처리
+        for unit in list(units)[: self.MAX_UNITS_PER_FRAME]:
             target = None
 
             # 대공 가능 유닛은 공중 유닛 우선 타겟팅
