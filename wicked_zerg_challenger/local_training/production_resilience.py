@@ -1462,7 +1462,15 @@ class ProductionResilience:
 
     # Defense methods moved to DefenseCoordinator
 
-    async def build_terran_counters(self) -> None:
+    async def build_terran_counters_legacy(self) -> None:
+        """Legacy anti-Terran counter-build path.
+
+        Originally `build_terran_counters` but silently shadowed by the later
+        TechCoordinator-aware definition; this simpler version that directly
+        calls `b.build()` is preserved here for reference. The active code
+        path uses TechCoordinator and dispatches the request via the priority
+        queue.
+        """
         b = self.bot
         if not b.production:
             return

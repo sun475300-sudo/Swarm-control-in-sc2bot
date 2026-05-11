@@ -1688,14 +1688,13 @@ class EconomyManager:
 
         return minerals > 800
 
-    async def _prevent_resource_banking(self) -> None:
-        """
-        * Prevent resource banking by spending excess minerals *
+    async def _prevent_resource_banking_legacy(self) -> None:
+        """Legacy resource-banking prevention (queens / static defense path).
 
-        Logic:
-        1. If Minerals > Config.Threshold and Larva < Config.Threshold:
-           - Build Extra Queens (Injects/Defense)
-           - Build Static Defense (Spines/Spores) - ONLY AFTER 3+ BASES
+        Originally named `_prevent_resource_banking` but silently shadowed by
+        the later definition in this class (which uses larva-aware macro
+        hatch + tech upgrade triggers via the blackboard). Preserved here so
+        the queen/static-defense logic is not lost.
         """
         if not hasattr(self.bot, "minerals"):
             return
@@ -3405,8 +3404,14 @@ class EconomyManager:
                 self._reserved_minerals = 150
                 self._reserved_gas = 100
 
-    async def _reduce_gas_workers(self) -> None:
-        """가스 일꾼 감소 (과잉 가스 방지)"""
+    async def _reduce_gas_workers_legacy(self) -> None:
+        """Legacy gas-worker reduction.
+
+        Originally named `_reduce_gas_workers` but silently shadowed by the
+        more sophisticated method later in this class (per-tier min-worker
+        scaling). Kept here as a fallback / reference so the older simpler
+        logic is not lost; the active path is the later definition.
+        """
         try:
             if (
                 not hasattr(self.bot, "gas_buildings")

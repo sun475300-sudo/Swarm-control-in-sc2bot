@@ -338,8 +338,16 @@ class OpponentModeling:
             tech_progression=[],
         )
 
-    async def on_step(self, iteration: int):
-        """매 프레임 실행"""
+    async def _on_step_full_legacy(self, iteration: int):
+        """Full per-frame model update (legacy).
+
+        NOTE: This method was originally named `on_step` and a second, simpler
+        `on_step` later in the class silently shadowed it (Python F811). The
+        active hook is the simpler version below; this richer one — which
+        tracks build orders, timing attacks, tech progression, and writes
+        predictions into the blackboard — is preserved here so the logic is
+        not lost and can be re-enabled deliberately.
+        """
         if iteration - self.last_update < self.update_interval:
             return
 

@@ -2811,8 +2811,13 @@ class CombatManager:
             if self._has_units(enemy_units):
                 await self._mutalisk_attack(mutalisks, enemy_units)
 
-    def _find_harass_target(self):
-        """Find best harassment target (enemy base with workers)."""
+    def _find_harass_target_legacy(self):
+        """Legacy harass-target selector (base-first fallback).
+
+        Originally named `_find_harass_target` but silently shadowed by the
+        later definition (worker-first targeting with isolated-tech fallback).
+        Kept for reference; the worker-first variant is the active path.
+        """
         # Try enemy main base
         if (
             hasattr(self.bot, "enemy_start_locations")
