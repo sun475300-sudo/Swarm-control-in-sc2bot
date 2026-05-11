@@ -16,27 +16,49 @@ working. Modules can opt in with::
     except ImportError:
         from utils.sc2_compat import UnitTypeId
 """
+
 from __future__ import annotations
 
 
-class _IdMeta(type):
-    """Metaclass that turns any attribute access into a string token.
+class _IdToken(str):
+    """String-backed enum stand-in.
 
-    The returned value is also cached on the class so equality holds across
-    multiple accesses (``UnitTypeId.MARINE is UnitTypeId.MARINE``).
+    Behaves like a string for legacy code paths that compare to bare names,
+    but also exposes an enum-style ``.name`` and ``.value`` so callers that
+    used the real burnysc2 enums keep working.
+    """
+
+    __slots__ = ()
+
+    @property
+    def name(self):  # type: ignore[override]
+        return str.__str__(self).rsplit(".", 1)[-1]
+
+    @property
+    def value(self):
+        return self.name
+
+    def __repr__(self):
+        return str.__str__(self)
+
+
+class _IdMeta(type):
+    """Metaclass that turns any attribute access into a stable ``_IdToken``.
+
+    The returned value is cached on the class so identity holds across
+    repeated lookups (``UnitTypeId.MARINE is UnitTypeId.MARINE``).
     """
 
     def __getattr__(cls, name):  # noqa: D401 - dunder doc not required
         if name.startswith("_"):
             raise AttributeError(name)
-        value = f"{cls.__name__}.{name}"
-        # Cache so repeated lookups return the same string instance
-        setattr(cls, name, value)
-        return value
+        token = _IdToken(f"{cls.__name__}.{name}")
+        setattr(cls, name, token)
+        return token
 
 
 class UnitTypeId(metaclass=_IdMeta):
-    """Stub UnitTypeId. Attribute access returns ``"UnitTypeId.NAME"``."""
+    """Stub UnitTypeId. Attribute access returns an ``_IdToken``."""
 
 
 class AbilityId(metaclass=_IdMeta):
@@ -96,10 +118,12 @@ class Point2:
         if ox is None or oy is None:
             ox, oy = other[0], other[1]
         total = ((ox - self.x) ** 2 + (oy - self.y) ** 2) ** 0.5 or 1.0
-        return Point2((
-            self.x + (ox - self.x) / total * distance,
-            self.y + (oy - self.y) / total * distance,
-        ))
+        return Point2(
+            (
+                self.x + (ox - self.x) / total * distance,
+                self.y + (oy - self.y) / total * distance,
+            )
+        )
 
     def offset(self, delta) -> "Point2":
         return Point2((self.x + delta[0], self.y + delta[1]))
