@@ -292,7 +292,7 @@ class TestIdleToGathering:
     def _run(self, controller, group, our, enemies, game_time=5.0):
         import asyncio
 
-        asyncio.get_event_loop().run_until_complete(
+        asyncio.run(
             controller._handle_idle_phase(
                 "g1", group, FakeUnits(our), enemies, game_time
             )
@@ -340,7 +340,7 @@ class TestGatheringToPositioning:
     def _run(self, controller, group, all_units, game_time=10.0):
         import asyncio
 
-        asyncio.get_event_loop().run_until_complete(
+        asyncio.run(
             controller._handle_gathering_phase(
                 "g1", group, FakeUnits(all_units), game_time
             )
@@ -382,7 +382,7 @@ class TestPositioningToEngagement:
         with patch.object(
             controller, "_calculate_formation_positions", return_value=[]
         ):
-            asyncio.get_event_loop().run_until_complete(
+            asyncio.run(
                 controller._handle_positioning_phase(
                     "g1", group, FakeUnits(our), enemies, game_time
                 )
@@ -418,7 +418,7 @@ class TestEngagementToActiveCombat:
         import asyncio
 
         with patch.object(controller, "_get_priority_target", return_value=None):
-            asyncio.get_event_loop().run_until_complete(
+            asyncio.run(
                 controller._handle_engagement_phase(
                     "g1", group, FakeUnits(our), enemies, game_time
                 )
@@ -464,7 +464,7 @@ class TestActiveCombatToRegrouping:
         group = _make_group(CombatPhase.ACTIVE_COMBAT, {u.tag for u in our})
         import asyncio
 
-        asyncio.get_event_loop().run_until_complete(
+        asyncio.run(
             controller._handle_active_combat_phase(
                 "g1", group, FakeUnits(our), enemies, 20.0, iteration=100
             )
