@@ -2,10 +2,10 @@
 try:
     from .sc2_comm_agent import (
         CommConfig,
-        SC2CommAgent,
         NumpyCommNet,
         NumpyTarMAC,
         ProtocolAnalyzer,
+        SC2CommAgent,
     )
 except ImportError:
     CommConfig = None
@@ -22,6 +22,7 @@ TarMAC = NumpyTarMAC
 
 class CommChannel:
     """Stub retained for API compatibility. No-op placeholder."""
+
     pass
 
 

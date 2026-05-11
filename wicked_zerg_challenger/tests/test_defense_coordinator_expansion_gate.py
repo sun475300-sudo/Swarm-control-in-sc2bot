@@ -75,8 +75,12 @@ class TestDefenseCoordinatorExpansionGate(unittest.TestCase):
         self.bot.game_info = SimpleNamespace(map_center=FakePoint(100, 100))
         self.bot.do = Mock()
         self.bot.can_afford = Mock(return_value=True)
-        self.bot.calculate_cost = Mock(return_value=SimpleNamespace(minerals=100, vespene=0))
-        self.bot.resource_manager = SimpleNamespace(try_reserve=AsyncMock(return_value=True))
+        self.bot.calculate_cost = Mock(
+            return_value=SimpleNamespace(minerals=100, vespene=0)
+        )
+        self.bot.resource_manager = SimpleNamespace(
+            try_reserve=AsyncMock(return_value=True)
+        )
 
         pool = FakeUnits([FakeUnit(FakePoint(5, 5))])
         empty = FakeUnits()
@@ -85,7 +89,9 @@ class TestDefenseCoordinatorExpansionGate(unittest.TestCase):
             UnitTypeId.SPINECRAWLER: empty,
             UnitTypeId.SPORECRAWLER: empty,
         }
-        self.bot.structures = Mock(side_effect=lambda unit_type: self.structures[unit_type])
+        self.bot.structures = Mock(
+            side_effect=lambda unit_type: self.structures[unit_type]
+        )
 
         self.blackboard = SimpleNamespace(
             threat=None,
@@ -163,9 +169,7 @@ class TestDefenseCoordinatorExpansionGate(unittest.TestCase):
             [self.main, self.natural, FakeUnit(FakePoint(120, 0))]
         )
         self.bot.already_pending = Mock(
-            side_effect=lambda unit_type: 1
-            if unit_type == UnitTypeId.HATCHERY
-            else 0
+            side_effect=lambda unit_type: 1 if unit_type == UnitTypeId.HATCHERY else 0
         )
 
         self.assertFalse(self.manager._should_preserve_third_base_minerals())
