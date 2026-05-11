@@ -995,8 +995,11 @@ class StrategyManager:
                     building_coord.request_building(
                         UnitTypeId.SPORECRAWLER, "StrategyManager"
                     )
-            except Exception:
-                pass  # Fallback to flag-based system
+            except Exception as exc:
+                self.logger.debug(
+                    f"[StrategyManager] BuildingCoord static-defense request failed,"
+                    f" falling back to flag-based system: {exc}"
+                )
 
     def _request_spire_via_coordinator(self, game_time: float) -> None:
         """
@@ -1017,8 +1020,10 @@ class StrategyManager:
                     self.logger.info(
                         f"[{int(game_time)}s] Spire build requested via BuildingCoordination"
                     )
-            except Exception:
-                pass
+            except Exception as exc:
+                self.logger.debug(
+                    f"[StrategyManager] Spire request via BuildingCoord failed: {exc}"
+                )
         else:
             # Fallback: 로그만 남기고, BotStepIntegrator/AggressiveTechBuilder가 처리
             if int(game_time) % 30 == 0 and self.bot.iteration % 22 == 0:
@@ -1566,10 +1571,6 @@ class StrategyManager:
         if total > 0:
             for k in current_ratios:
                 current_ratios[k] /= total
-
-    def _request_spire_build(self) -> None:
-        """스파이어 긴급 건설 요청 - 제거됨 (AggressiveTechBuilder로 통합)"""
-        pass
 
     def should_force_hydra(self) -> bool:
         """히드라 강제 생산 여부"""
