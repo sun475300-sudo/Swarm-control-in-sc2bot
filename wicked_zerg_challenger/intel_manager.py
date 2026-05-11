@@ -181,6 +181,41 @@ class IntelManager:
         self.all_enemy_structures = []  # 모든 적 구조물 (승리 조건용)
         self._last_structure_update = 0.0
 
+    def reset(self) -> None:
+        """게임 간 인텔 상태 초기화 (훈련 에피소드 안정성).
+
+        이전 게임의 적 정찰 정보가 다음 게임으로 새지 않도록 모든 누적
+        상태(적 구성, 위협, 알림, 파괴 가능 구조물 등)를 초기화한다.
+        """
+        self.last_update = 0
+        self.enemy_race_name = None
+        self.enemy_main_base_location = None
+
+        self.enemy_army_supply = 0
+        self.enemy_worker_count = 0
+        self.enemy_base_count = 0
+        self.enemy_tech_buildings = set()
+        self.scouted_locations = set()
+        self.enemy_unit_counts = {}
+
+        self._under_attack = False
+        self._attack_position = None
+        self._last_attack_time = 0.0
+        self._threat_level = "none"
+        self._high_threat_units_detected = False
+        self.enemy_all_in_detected = False
+
+        self._detected_tech_alerts = set()
+
+        self._build_pattern_confidence = 0.0
+        self._build_pattern_status = "unknown"
+        self._enemy_build_pattern = "unknown"
+        self._recommended_response = []
+
+        self.destructible_rocks = []
+        self.all_enemy_structures = []
+        self._last_structure_update = 0.0
+
     async def on_step(self, iteration: int) -> None:
         if iteration - self.last_update < self.update_interval:
             return
