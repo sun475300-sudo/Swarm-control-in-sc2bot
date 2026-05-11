@@ -95,10 +95,14 @@ class MetaGameAnalyzer:
         return (perf["wins"] / total) * 100
 
     def recommend_strategy(self, enemy_race: str, map_name: str) -> Dict[str, Any]:
-        """Recommend best strategy based on current meta"""
-        race_perf = self.race_performance.get(enemy_race, {"wins": 0})
-        map_perf = self.map_performance.get(map_name, {"wins": 0})
+        """Recommend best strategy based on current meta.
 
+        NOTE: the per-race/per-map win-rate tables on this analyzer
+        (`race_performance`, `map_performance`) are currently not
+        consulted here — the recommendation is purely a lookup against
+        a hardcoded race+map_size matrix. Wiring those win rates into
+        the decision is a future improvement.
+        """
         best_strategies = {
             ("terran", "small"): "RUSH",
             ("terran", "large"): "MACRO",
