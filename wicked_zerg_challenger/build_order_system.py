@@ -380,6 +380,38 @@ class BuildOrderSystem:
             self.current_matchup_build_key or self.current_build_order.value
         )
 
+    def reset(self) -> None:
+        """게임 간 빌드오더 상태 초기화 (훈련 에피소드 안정성).
+
+        진행 중 스텝 인덱스/타이밍/재시도 카운터가 다음 게임으로 새는 것을
+        막는다. ML 누적 통계인 build_order_stats 는 보존한다.
+        """
+        self.enabled = True
+        self.build_order_active = True
+
+        # 다음 게임 적 종족 기반으로 빌드 재선택
+        self.current_build_order = self._select_build_by_enemy_race()
+        self.current_matchup_build_key = None
+        self.current_build_transition = None
+        self.transition_manager = BuildOrderTransition()
+        self.build_steps = []
+        self.current_step_index = 0
+
+        self.step_timings = {}
+        self.missed_timings = []
+
+        self._step_retry_count = 0
+        self._skipped_steps = []
+
+        self.expansion_actual_time = 0.0
+        self.expansion_timing_verified = False
+
+        # Re-setup build order for the new game
+        self._setup_build_order()
+        self.transition_manager.current_build = (
+            self.current_matchup_build_key or self.current_build_order.value
+        )
+
     def _select_build_by_enemy_race(self) -> BuildOrderType:
         """
         Select best build order by enemy race
