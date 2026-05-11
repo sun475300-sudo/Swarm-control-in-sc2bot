@@ -91,7 +91,29 @@ and were left in place to minimise diff surface.
 
 Verification: `pytest tests/` → 429 passed, 16 skipped (no regressions).
 
-## Round 5+ — open queue
+## Round 5 — `"SWARMHOST"` / `"WIDOWMINEBURROWED"` mismatch sweep
+
+Same class of bug as Round 4, different units:
+
+- **Swarm hosts** report as `"SWARMHOSTMP"` in SC2; the bare key
+  `"SWARMHOST"` never matched.
+- **Burrowed widow mines** report as `"WIDOWMINEBURROWED"`; the form
+  that's *about to fire* was silently missing from threat / priority
+  / siege classifications.
+
+| # | File | What it broke |
+|---|------|---------------|
+| 17 | `wicked_zerg_challenger/defeat_detection.py:451` (`"SWARMHOST": 200`) | Lost swarm hosts not credited toward defeat-signal scoring. |
+| 18 | `wicked_zerg_challenger/micro_focus_mode.py:151` (army-type set) | Friendly swarm hosts excluded from micro-focus army count. |
+| 19 | `wicked_zerg_challenger/upgrade_coordination_system.py:329` (army-type set) | Friendly swarm hosts excluded from supply tally used by upgrade triggers. |
+| 20 | `wicked_zerg_challenger/combat_manager.py:1327` (`high_priority_targets`, focus-fire) | Burrowed widow mines (the firing form) weren't priority targets. Also added missing `"LIBERATORAG"` to the siege classifier on line 3383. |
+| 21 | `wicked_zerg_challenger/combat_manager.py:3383` (`siege` bucket in priority filter) | Same as #20 for the second classification pipeline. |
+| 22 | `wicked_zerg_challenger/combat_manager.py:3484` (combat-unit set in `_detect_attack`) | Same as #20 for attack detection. |
+| 23 | `wicked_zerg_challenger/intel_manager.py:158, 432` (`_high_threat_types` and combat-unit set) | Same as #20 in intel. |
+
+Verification: `pytest tests/` → 429 passed, 16 skipped (no regressions).
+
+## Round 6+ — open queue
 
 Pending items get filled as the loop progresses. Each round records what
 was found, what was fixed, and any leftovers escalated for the next round.

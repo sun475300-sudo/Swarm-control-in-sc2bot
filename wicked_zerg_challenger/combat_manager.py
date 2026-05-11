@@ -1318,6 +1318,8 @@ class CombatManager:
             return
 
         # 고위협 유닛 목록 (우선 집중 공격)
+        # NOTE: WIDOWMINEBURROWED is the form that's about to fire — drop it
+        # and the priority target set misses the most dangerous state.
         high_priority_targets = {
             "SIEGETANK",
             "SIEGETANKSIEGED",
@@ -1325,6 +1327,7 @@ class CombatManager:
             "DISRUPTOR",
             "HIGHTEMPLAR",
             "WIDOWMINE",
+            "WIDOWMINEBURROWED",
             "LIBERATOR",
             "LIBERATORAG",
             "IMMORTAL",
@@ -3380,7 +3383,9 @@ class CombatManager:
                 "SIEGETANKSIEGED",
                 "COLOSSUS",
                 "LIBERATOR",
+                "LIBERATORAG",
                 "WIDOWMINE",
+                "WIDOWMINEBURROWED",
             ]:
                 siege.append(enemy)
             elif enemy.health_percentage < 0.3:
@@ -3482,6 +3487,7 @@ class CombatManager:
             "SIEGETANK",
             "SIEGETANKSIEGED",
             "WIDOWMINE",
+            "WIDOWMINEBURROWED",
             "HYDRALISK",
             "MUTALISK",
             "CORRUPTOR",

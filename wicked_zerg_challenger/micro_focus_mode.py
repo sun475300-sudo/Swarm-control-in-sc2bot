@@ -148,7 +148,8 @@ class MicroFocusMode:
             "LURKERMP",
             "MUTALISK",
             "CORRUPTOR",
-            "SWARMHOST",
+            # SC2 reports swarm hosts as "SWARMHOSTMP"; bare key never matched.
+            "SWARMHOSTMP",
             "ULTRALISK",
             "BROODLORD",
         }

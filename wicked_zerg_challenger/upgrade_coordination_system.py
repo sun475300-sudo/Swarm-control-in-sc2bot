@@ -326,7 +326,8 @@ class UpgradeCoordinationSystem:
             "ULTRALISK",
             "VIPER",
             "INFESTOR",
-            "SWARMHOST",
+            # SC2 reports swarm hosts as "SWARMHOSTMP"; bare key never matched.
+            "SWARMHOSTMP",
         }
 
         total_supply = 0
