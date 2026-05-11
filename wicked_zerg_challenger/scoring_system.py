@@ -141,7 +141,9 @@ class ScoringSystem:
         self.last_update_time = 0.0
 
         # 새 게임용 빈 DomainScore 객체로 재생성 (메서드 시그니처 보존)
-        self.domains = {name: DomainScore(score.name) for name, score in self.domains.items()}
+        self.domains = {
+            name: DomainScore(score.name) for name, score in self.domains.items()
+        }
 
         self._last_supply = 0
         self._last_minerals = 0
