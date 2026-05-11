@@ -1464,7 +1464,14 @@ class ProductionResilience:
 
     # Defense methods moved to DefenseCoordinator
 
-    async def build_terran_counters(self) -> None:
+    async def build_terran_counters_legacy_v1(self) -> None:
+        """(LEGACY) older anti-Terran build path.
+
+        Round 6: a TechCoordinator-aware variant of `build_terran_counters`
+        is defined later in this file. Python kept the last definition,
+        so this older logic was dead. Renamed to silence pyflakes F811
+        and to preserve the historical reference for any future merge.
+        """
         b = self.bot
         if not b.production:
             return
