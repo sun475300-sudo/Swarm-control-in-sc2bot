@@ -113,7 +113,28 @@ Same class of bug as Round 4, different units:
 
 Verification: `pytest tests/` → 429 passed, 16 skipped (no regressions).
 
-## Round 6+ — open queue
+## Round 6 — `Dict[str, any]` → `Dict[str, Any]` (typing import correctness)
+
+Lowercase `any` is the builtin all-iterable function. Using it as a type
+annotation (`Dict[str, any]`, `List[Tuple[str, any, int]]`) is semantically
+wrong: it tells type-checkers "values must be the `any` function" rather
+than "values may be of any type". `mypy --strict` and pyright both flag
+this. Runtime is unaffected but the annotation contract is broken.
+
+| # | File | Annotation fixed |
+|---|------|------------------|
+| 24 | `wicked_zerg_challenger/economy/queen_transfusion_manager.py:233` | `get_statistics() -> Dict[str, any]` → `Any` |
+| 25 | `wicked_zerg_challenger/advanced_micro_controller_v3.py:1405` | `get_status() -> Dict[str, any]` → `Any` |
+| 26 | `wicked_zerg_challenger/combat/multitasking.py:95` | `create_task_list(...) -> List[Tuple[str, any, int]]` → `Any` |
+| 27 | `wicked_zerg_challenger/combat/spatial_query_optimizer.py:262` | `get_statistics() -> Dict[str, any]` → `Any` |
+| 28 | `wicked_zerg_challenger/strategy/adaptive_build_order.py:64` | `timing_attack_details: Dict[str, any]` → `Any` |
+| 29 | `wicked_zerg_challenger/core/resource_manager.py:189` | `get_statistics() -> Dict[str, any]` → `Any` |
+
+Each file also has `Any` added to its `from typing import ...` line.
+
+Verification: `pytest tests/` → 429 passed, 16 skipped (no regressions).
+
+## Round 7+ — open queue
 
 Pending items get filled as the loop progresses. Each round records what
 was found, what was fixed, and any leftovers escalated for the next round.
