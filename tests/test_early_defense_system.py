@@ -101,3 +101,46 @@ class TestDistanceToMainFallback:
         far = _Unit(90.0, 90.0, refuse_unit_distance=True)   # ~56 away
         chosen = min([far, near], key=lambda s: sys_._distance_to_main(s))
         assert chosen is near
+
+
+class _StructureUnit(_Unit):
+    """Stand-in for an enemy structure with type_id like burnysc2 exposes."""
+
+    def __init__(self, x, y, name: str, *, refuse_unit_distance: bool = False) -> None:
+        super().__init__(x, y, refuse_unit_distance=refuse_unit_distance)
+        self.type_id = SimpleNamespace(name=name)
+        self.tag = id(self)
+
+
+class TestProxyDetectionFallback:
+    """The same Point2-vs-Unit fallback bug lived in _detect_proxy_structure_rush
+    at line 210: when `structure.distance_to(main_base)` raised, the fallback
+    computed `position.distance_to(main_base)` which also raised, so distance
+    silently became 999.0 — well outside the 40-tile proxy gate. Real proxy
+    Barracks at 35 tiles away would then go undetected.
+    """
+
+    @pytest.mark.asyncio
+    async def test_proxy_detected_when_unit_distance_raises(self):
+        bot = _make_bot(main_pos=(50.0, 50.0))
+        # A proxy Barracks 5 tiles from our main, with refuse_unit_distance=True
+        # so the structure.distance_to(main_base) call raises and forces the
+        # fallback branch.
+        proxy = _StructureUnit(53.0, 54.0, "BARRACKS", refuse_unit_distance=True)
+        bot.enemy_structures = [proxy]
+        sys_ = EarlyDefenseSystem(bot)
+        await sys_._detect_proxy_structure_rush()
+        # Pre-fix the fallback returned 999.0 (> 40), so proxy_response_active
+        # stayed False even though the structure is right next to our base.
+        assert sys_.proxy_response_active is True
+        assert proxy.tag in sys_.proxy_structure_tags
+
+    @pytest.mark.asyncio
+    async def test_proxy_ignored_when_far_under_fallback(self):
+        """And conversely: a genuinely-far structure still doesn't trip the gate."""
+        bot = _make_bot(main_pos=(50.0, 50.0))
+        far_proxy = _StructureUnit(120.0, 120.0, "BARRACKS", refuse_unit_distance=True)
+        bot.enemy_structures = [far_proxy]
+        sys_ = EarlyDefenseSystem(bot)
+        await sys_._detect_proxy_structure_rush()
+        assert sys_.proxy_response_active is False
