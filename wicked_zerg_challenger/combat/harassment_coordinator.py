@@ -1289,14 +1289,53 @@ class HarassmentCoordinator:
         )
 
     async def _trigger_zergling_runby(self) -> None:
-        """Trigger zergling run-by (placeholder for existing logic)"""
-        # This would call existing zergling run-by logic
-        pass
+        """Trigger zergling run-by — currently a no-op pending integration.
+
+        Delegates to ``self.bot.zergling_runby.execute()`` if the host bot
+        exposes a zergling run-by sub-manager. Otherwise logs once per
+        attempt so the unhandled trigger is visible during play instead of
+        silently dropping the harassment vector.
+        """
+        runby = getattr(self.bot, "zergling_runby", None)
+        execute = getattr(runby, "execute", None) if runby is not None else None
+        if callable(execute):
+            try:
+                result = execute()
+                if hasattr(result, "__await__"):
+                    await result
+                return
+            except Exception as exc:
+                self.logger.error(f"[HARASSMENT] zergling_runby execute failed: {exc}")
+                return
+        self.logger.warning(
+            "[HARASSMENT] zergling run-by triggered but no executor wired; "
+            "attach bot.zergling_runby.execute() to enable this vector"
+        )
 
     async def _trigger_mutalisk_harassment(self) -> None:
-        """Trigger mutalisk harassment (placeholder for existing logic)"""
-        # This would call existing mutalisk harassment logic
-        pass
+        """Trigger mutalisk harassment — currently a no-op pending integration.
+
+        Mirrors ``_trigger_zergling_runby``: delegates to
+        ``self.bot.mutalisk_harass.execute()`` if available, otherwise logs
+        a warning so the missing wiring is visible at runtime.
+        """
+        harass = getattr(self.bot, "mutalisk_harass", None)
+        execute = getattr(harass, "execute", None) if harass is not None else None
+        if callable(execute):
+            try:
+                result = execute()
+                if hasattr(result, "__await__"):
+                    await result
+                return
+            except Exception as exc:
+                self.logger.error(
+                    f"[HARASSMENT] mutalisk_harass execute failed: {exc}"
+                )
+                return
+        self.logger.warning(
+            "[HARASSMENT] mutalisk harass triggered but no executor wired; "
+            "attach bot.mutalisk_harass.execute() to enable this vector"
+        )
 
     # ============================================================================
     # Phase 21.3: Unit Persistence System (Squad Lock)
