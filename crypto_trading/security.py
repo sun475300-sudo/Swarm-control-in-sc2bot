@@ -672,6 +672,15 @@ class EncryptedTradeLog:
                 type(exc).__name__,
             )
 
+    def is_encryption_active(self) -> bool:
+        """Fernet 암호화가 실제로 활성 상태인지 반환한다.
+
+        cryptography 라이브러리 import 실패 또는 패닉으로 인해 base64 폴백
+        모드로 전환되면 False를 반환한다. 거래/감사 로그를 다루는 호출자는
+        이 값으로 안전 한도(예: 라이브 거래 차단)를 결정할 수 있다.
+        """
+        return bool(self._use_fernet and self._fernet is not None)
+
     def _encrypt(self, plaintext: str) -> str:
         """문자열 암호화"""
         if self._use_fernet and self._fernet:
@@ -1142,6 +1151,16 @@ class SecretManager:
             self._fernet = None
             self._use_fernet = False
 
+    def is_encryption_active(self) -> bool:
+        """Fernet 암호화가 실제로 활성 상태인지 반환한다.
+
+        cryptography 라이브러리 import 실패 또는 패닉으로 인해 base64 폴백
+        모드로 전환되면 False를 반환한다. 시크릿을 다루는 호출자는 이 값으로
+        실제 거래 차단 등 안전 정책을 적용해야 한다 (base64는 난독화일 뿐
+        암호화가 아니다).
+        """
+        return bool(self._use_fernet and self._fernet is not None)
+
     def _encrypt_value(self, value: str) -> str:
         """값 암호화 — Bug #7 Fix: Fernet 사용, 미설치 시 base64 폴백"""
         if self._use_fernet and self._fernet:
@@ -1155,16 +1174,13 @@ class SecretManager:
                 return self._fernet.decrypt(encrypted.encode("utf-8")).decode("utf-8")
             except Exception:
                 # H-7: 구 SHA-256 키로 암호화된 데이터 복호화 시도 (마이그레이션 호환)
-                try:
-                    import hashlib as _hlib
+                import hashlib as _hlib
 
-                    from cryptography.fernet import Fernet as _Fernet
+                from cryptography.fernet import Fernet as _Fernet
 
-                    old_key = _hlib.sha256(self._master_key.encode("utf-8")).digest()
-                    old_fernet = _Fernet(base64.urlsafe_b64encode(old_key))
-                    return old_fernet.decrypt(encrypted.encode("utf-8")).decode("utf-8")
-                except Exception:
-                    raise
+                old_key = _hlib.sha256(self._master_key.encode("utf-8")).digest()
+                old_fernet = _Fernet(base64.urlsafe_b64encode(old_key))
+                return old_fernet.decrypt(encrypted.encode("utf-8")).decode("utf-8")
         return base64.b64decode(encrypted.encode("utf-8")).decode("utf-8")
 
     def set_secret(self, name: str, value: str):

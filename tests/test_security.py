@@ -214,3 +214,24 @@ class TestFernetFallback:
         assert log._fernet is None
         encoded = log._encrypt("payload")
         assert log._decrypt(encoded) == "payload"
+
+    def test_is_encryption_active_reports_panic_fallback(self, monkeypatch, tmp_path):
+        """패닉 폴백 시 두 클래스 모두 is_encryption_active() == False 를 보고한다."""
+        import builtins
+
+        real_import = builtins.__import__
+
+        def panicking_import(name, *args, **kwargs):
+            if name == "cryptography.fernet" or name.startswith("cryptography.fernet"):
+                raise BaseException("simulated pyo3 panic")
+            return real_import(name, *args, **kwargs)
+
+        monkeypatch.setattr(builtins, "__import__", panicking_import)
+
+        from crypto_trading.security import EncryptedTradeLog, SecretManager
+
+        mgr = SecretManager(secrets_file=tmp_path / "secrets.enc")
+        log = EncryptedTradeLog(log_dir=tmp_path / "logs")
+        # 호출자는 이 플래그로 라이브 거래 차단 등 안전 정책을 적용해야 한다.
+        assert mgr.is_encryption_active() is False
+        assert log.is_encryption_active() is False
