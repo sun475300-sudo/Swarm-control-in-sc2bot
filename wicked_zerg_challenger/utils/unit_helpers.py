@@ -19,8 +19,17 @@ try:
     from sc2.units import Units
 except ImportError:
     Unit = None
-    Units = None
     Point2 = None
+
+    # Minimal Units shim so helpers can still construct empty collections
+    # in environments where burnysc2 isn't installed (unit tests, lint, etc.).
+    class Units(list):  # type: ignore[no-redef]
+        def __init__(self, units=None, bot_object=None):
+            super().__init__(units or [])
+
+        def filter(self, predicate):
+            return Units([u for u in self if predicate(u)], None)
+
 
 logger = get_logger("UnitHelpers")
 
