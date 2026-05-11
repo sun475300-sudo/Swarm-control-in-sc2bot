@@ -619,6 +619,63 @@ class TestOpponentModeling(unittest.TestCase):
         self.assertEqual(stats["most_common_strategy"], "zerg_rush")
 
 
+class TestOnStepIsRichVersion(unittest.TestCase):
+    """Round 5 regression: a placeholder `on_step` was shadowing the rich
+    one (with strategy prediction + blackboard sync). This test confirms
+    that ``on_step`` writes the prediction-related keys to the blackboard.
+    """
+
+    def setUp(self):
+        self.bot = Mock()
+        self.bot.time = 0.0
+        self.bot.iteration = 0
+        self.bot.enemy_race = Mock()
+        self.bot.enemy_race.name = "Zerg"
+        self.bot.enemy_structures = []
+        self.bot.enemy_units = []
+        self.bot.start_location = Point2((50, 50))
+
+        self.bb = Mock()
+        self.bb.set = Mock()
+        self.bot.blackboard = self.bb
+
+        self.temp_file = tempfile.NamedTemporaryFile(
+            mode="w", delete=False, suffix=".json"
+        )
+        self.temp_file.close()
+
+        self.modeling = OpponentModeling(
+            self.bot, intel_manager=Mock(), data_file=self.temp_file.name
+        )
+        # ensure the throttle does not block the first call
+        self.modeling.last_update = -1000
+        self.modeling.update_interval = 1
+
+    def tearDown(self):
+        if os.path.exists(self.temp_file.name):
+            os.unlink(self.temp_file.name)
+
+    async def test_on_step_writes_prediction_keys_to_blackboard(self):
+        # Force "transition out of early game" branch at iteration 1, t=200s
+        self.bot.time = 200.0
+        self.modeling.early_game_phase = True
+
+        await self.modeling.on_step(1)
+
+        keys_written = {call.args[0] for call in self.bb.set.call_args_list}
+        # The rich on_step must publish at least these keys:
+        for required in (
+            "predicted_strategy",
+            "prediction_confidence",
+            "observed_signals",
+        ):
+            self.assertIn(
+                required,
+                keys_written,
+                f"on_step must publish '{required}' — placeholder shadow regression?",
+            )
+
+
 # Run tests
 if __name__ == "__main__":
     unittest.main(verbosity=2)
