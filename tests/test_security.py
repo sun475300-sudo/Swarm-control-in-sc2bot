@@ -235,3 +235,36 @@ class TestFernetFallback:
         # 호출자는 이 플래그로 라이브 거래 차단 등 안전 정책을 적용해야 한다.
         assert mgr.is_encryption_active() is False
         assert log.is_encryption_active() is False
+
+    def test_write_log_warns_once_when_unencrypted(self, monkeypatch, tmp_path, caplog):
+        """폴백 상태에서 write_log가 프로세스당 한 번 WARNING을 남긴다."""
+        import builtins
+        import logging
+
+        real_import = builtins.__import__
+
+        def panicking_import(name, *args, **kwargs):
+            if name == "cryptography.fernet" or name.startswith("cryptography.fernet"):
+                raise BaseException("simulated pyo3 panic")
+            return real_import(name, *args, **kwargs)
+
+        monkeypatch.setattr(builtins, "__import__", panicking_import)
+
+        from crypto_trading.security import EncryptedTradeLog
+
+        # 다른 테스트에서 이미 경고를 발생시켰을 수 있으므로 플래그를 리셋
+        EncryptedTradeLog._unencrypted_write_warned = False
+
+        log = EncryptedTradeLog(log_dir=tmp_path / "logs")
+        with caplog.at_level(logging.WARNING, logger="crypto.security"):
+            log.write_log({"side": "BUY", "ticker": "KRW-BTC"})
+            log.write_log({"side": "SELL", "ticker": "KRW-BTC"})
+
+        warn_messages = [
+            r.message for r in caplog.records
+            if r.levelno >= logging.WARNING and "암호화되지 않은" in r.message
+        ]
+        assert len(warn_messages) == 1, (
+            f"unencrypted write should warn exactly once per process, "
+            f"got {len(warn_messages)} warnings"
+        )

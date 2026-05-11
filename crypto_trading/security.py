@@ -695,6 +695,8 @@ class EncryptedTradeLog:
         else:
             return base64.b64decode(ciphertext.encode("utf-8")).decode("utf-8")
 
+    _unencrypted_write_warned: bool = False
+
     def write_log(self, entry: dict) -> Path:
         """암호화된 로그 엔트리 기록
 
@@ -707,6 +709,17 @@ class EncryptedTradeLog:
         entry["_logged_at"] = datetime.now().isoformat()
         plaintext = json.dumps(entry, ensure_ascii=False)
         encrypted = self._encrypt(plaintext)
+
+        # Fernet 폴백 상태에서 거래 로그가 base64(=평문)로 저장되고 있음을
+        # 운영자에게 명확히 알린다. 디버그 로그는 묻혀 보이지 않으므로
+        # 프로세스당 한 번 WARNING으로 노출한다.
+        if not self.is_encryption_active() and not EncryptedTradeLog._unencrypted_write_warned:
+            logger.warning(
+                "EncryptedTradeLog: 거래 로그가 암호화되지 않은 채(base64) "
+                "기록되고 있습니다 — cryptography 모듈을 복구하거나 "
+                "운영 환경에서 라이브 거래를 중단하세요."
+            )
+            EncryptedTradeLog._unencrypted_write_warned = True
 
         log_file = self.log_dir / f"trade_log_{datetime.now().strftime('%Y%m%d')}.enc"
         with open(log_file, "a", encoding="utf-8") as f:
