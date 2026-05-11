@@ -400,7 +400,6 @@ class ProductionController:
             return
 
         # * Phase 23: 서플라이 블록 완전 제거 - 선행 생산 *
-        game_time = getattr(self.bot, "time", 0)
         supply_used = supply_cap - supply_left
 
         # 동적 버퍼: 서플라이 사용량에 비례
@@ -571,8 +570,13 @@ class ProductionController:
                 try:
                     larva = larvae.first
                     self.bot.do(larva.train(best_uid))
-                except Exception:
-                    pass
+                    if self.logger and best_unit:
+                        self.logger.debug(
+                            f"[Production] training {best_unit} (deficit={max_deficit:.2f})"
+                        )
+                except Exception as e:
+                    if self.logger:
+                        self.logger.debug(f"[Production] train failed: {e}")
 
     async def _consume_mineral_bank(self):
         """
