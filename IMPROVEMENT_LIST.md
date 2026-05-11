@@ -36,7 +36,32 @@ already passed when run as part of the suite) but the file no longer
 silently degrades when tested in isolation or under different collection
 orders.
 
-## Round 3+ — open queue
+## Round 3 — Asyncio loop & expansion-timing isolation
+
+| # | Issue | File | Severity | Status |
+|---|-------|------|----------|--------|
+| 7 | `tests/test_combat_phase_fsm.py` blew up with `RuntimeError: There is no current event loop in thread 'MainThread'` (12+ failures) whenever it ran after a file that uses pytest-asyncio's auto loop (e.g. `tests/test_matchup_strategies.py`). The cause: five `_run` helpers called `asyncio.get_event_loop().run_until_complete(...)`, but pytest-asyncio (mode=auto) closes the main-thread loop between async tests, and `get_event_loop()` on Python 3.10+ refuses to auto-create a new one. In isolation the file passed; in the full suite it survived only by accident of collection order. | `tests/test_combat_phase_fsm.py` | HIGH (order-dependent CI failures) | DONE |
+| 8 | `tests/test_expansion_timing.py` silently skipped all 22 tests when run in isolation. Same root cause as item #6: the module-level `from wicked_zerg_challenger.economy_manager import EconomyManager` fails because economy_manager's internals use bare `from utils...`/`from config...` imports that need wzc/ on sys.path. | `tests/test_expansion_timing.py` | MED | DONE |
+
+Fixes:
+- `test_combat_phase_fsm.py`: introduced `_run_coro(coro)` helper at module
+  scope that creates a fresh `asyncio.new_event_loop()` each call, runs the
+  coroutine to completion, and closes the loop. Replaced all five
+  `asyncio.get_event_loop().run_until_complete(...)` callsites with it.
+- `test_expansion_timing.py`: prepended `wicked_zerg_challenger/` to
+  `sys.path` at module top (idempotent guard so it doesn't grow on
+  re-imports), mirroring the pattern in `test_economy_manager.py`.
+
+Verification:
+- `pytest tests/test_combat_phase_fsm.py` → 23 passed (was 23 alone but
+  0–23 failing in combos like `test_matchup_strategies.py + this`).
+- `pytest tests/test_matchup_strategies.py tests/test_combat_phase_fsm.py` →
+  42 passed (was 19 + 11 fail + 12 fail).
+- `pytest tests/test_expansion_timing.py` → 22 passed (was 22 skipped).
+- `pytest tests/` → 429 passed, 16 skipped (unchanged in full suite, as
+  expected; the bugs were collection-order dependent).
+
+## Round 4+ — open queue
 
 Pending items get filled as the loop progresses. Each round records what
 was found, what was fixed, and any leftovers escalated for the next round.

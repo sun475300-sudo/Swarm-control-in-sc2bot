@@ -11,13 +11,30 @@ Phase graph (happy path):
   REGROUPING -> IDLE                       (health restored)
 """
 
-import sys
+import asyncio
 import os
+import sys
 from dataclasses import dataclass, field
 from typing import List, Optional, Set
 from unittest.mock import MagicMock, patch, patch as mock_patch
 
 import pytest
+
+
+def _run_coro(coro):
+    """Run an async coroutine to completion in a fresh event loop.
+
+    Using ``asyncio.get_event_loop()`` here is fragile: pytest-asyncio (with
+    ``asyncio_mode = auto``) closes the main-thread loop between async tests,
+    so a non-async test that calls ``get_event_loop()`` afterwards raises
+    ``RuntimeError: There is no current event loop in thread 'MainThread'``.
+    We instead spin up a private loop, run the coroutine, and discard it.
+    """
+    loop = asyncio.new_event_loop()
+    try:
+        return loop.run_until_complete(coro)
+    finally:
+        loop.close()
 
 # ---------------------------------------------------------------------------
 # Path setup
@@ -280,8 +297,7 @@ class TestRetreatTrigger:
 
 class TestIdleToGathering:
     def _run(self, controller, group, our, enemies, game_time=5.0):
-        import asyncio
-        asyncio.get_event_loop().run_until_complete(
+        _run_coro(
             controller._handle_idle_phase("g1", group, FakeUnits(our), enemies, game_time)
         )
 
@@ -323,8 +339,7 @@ class TestIdleToGathering:
 
 class TestGatheringToPositioning:
     def _run(self, controller, group, all_units, game_time=10.0):
-        import asyncio
-        asyncio.get_event_loop().run_until_complete(
+        _run_coro(
             controller._handle_gathering_phase(
                 "g1", group, FakeUnits(all_units), game_time
             )
@@ -357,9 +372,8 @@ class TestGatheringToPositioning:
 
 class TestPositioningToEngagement:
     def _run(self, controller, group, our, enemies, game_time=15.0):
-        import asyncio
         with patch.object(controller, "_calculate_formation_positions", return_value=[]):
-            asyncio.get_event_loop().run_until_complete(
+            _run_coro(
                 controller._handle_positioning_phase(
                     "g1", group, FakeUnits(our), enemies, game_time
                 )
@@ -390,9 +404,8 @@ class TestPositioningToEngagement:
 
 class TestEngagementToActiveCombat:
     def _run(self, controller, group, our, enemies, game_time):
-        import asyncio
         with patch.object(controller, "_get_priority_target", return_value=None):
-            asyncio.get_event_loop().run_until_complete(
+            _run_coro(
                 controller._handle_engagement_phase(
                     "g1", group, FakeUnits(our), enemies, game_time
                 )
@@ -433,8 +446,7 @@ class TestActiveCombatToRegrouping:
         our = [FakeUnit(i, FakePoint2(0, 0)) for i in range(5)]
         enemies = FakeUnits([])
         group = _make_group(CombatPhase.ACTIVE_COMBAT, {u.tag for u in our})
-        import asyncio
-        asyncio.get_event_loop().run_until_complete(
+        _run_coro(
             controller._handle_active_combat_phase(
                 "g1", group, FakeUnits(our), enemies, 20.0, iteration=100
             )

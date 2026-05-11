@@ -15,6 +15,8 @@ Assertions:
 """
 from __future__ import annotations
 
+import os
+import sys
 from types import SimpleNamespace
 from typing import Optional
 from unittest.mock import MagicMock, patch
@@ -24,6 +26,14 @@ import pytest
 # ---------------------------------------------------------------------------
 # Minimal stubs so the module imports without an SC2 environment
 # ---------------------------------------------------------------------------
+
+# economy_manager.py uses bare `from utils.logger` / `from config.unit_configs`
+# imports that resolve only when wicked_zerg_challenger/ is on sys.path. Mirror
+# the pattern from test_economy_manager.py so this file works in isolation —
+# not just when an earlier sibling has already mutated sys.path.
+_WZC_PATH = os.path.join(os.path.dirname(__file__), "..", "wicked_zerg_challenger")
+if _WZC_PATH not in sys.path:
+    sys.path.insert(0, _WZC_PATH)
 
 try:
     from wicked_zerg_challenger.economy_manager import EconomyManager
