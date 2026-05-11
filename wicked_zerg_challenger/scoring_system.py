@@ -130,6 +130,42 @@ class ScoringSystem:
 
         os.makedirs(self.SAVE_PATH, exist_ok=True)
 
+    def reset(self) -> None:
+        """게임 간 점수 시스템 상태 초기화.
+
+        도메인 점수와 매 프레임 트래킹 변수를 새 게임 시작값으로 초기화한다.
+        _session_scores 와 _cumulative_score (cross-game 누적 통계) 는
+        의도적으로 보존한다.
+        """
+        self.game_start_time = time.time()
+        self.last_update_time = 0.0
+
+        # 새 게임용 빈 DomainScore 객체로 재생성 (메서드 시그니처 보존)
+        self.domains = {name: DomainScore(score.name) for name, score in self.domains.items()}
+
+        self._last_supply = 0
+        self._last_minerals = 0
+        self._last_vespene = 0
+        self._last_worker_count = 0
+        self._last_army_supply = 0
+        self._last_base_count = 0
+        self._last_enemy_count = 0
+        self._peak_supply = 0
+        self._inject_count = 0
+        self._last_inject_check = 0.0
+        self._engagements_won = 0
+        self._engagements_lost = 0
+        self._gas_spent_on_units = 0
+        self._total_gas_mined = 0
+        self._scout_coverage = set()
+        self._last_scout_time = 0.0
+        self._army_wipe_count = 0
+        self._last_army_alive = True
+        self._counter_unit_produced = 0
+        self._wrong_unit_produced = 0
+        self._creep_tumor_count = 0
+        self._larva_wasted = 0
+
     # =========================================================================
     # 실시간 평가 (매 프레임)
     # =========================================================================
