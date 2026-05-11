@@ -12,7 +12,7 @@ Features:
 """
 
 import asyncio
-from typing import TYPE_CHECKING, Dict, Optional, Tuple
+from typing import TYPE_CHECKING, Any, Dict, Optional, Tuple
 
 from wicked_zerg_challenger.utils.logger import get_logger
 
@@ -186,7 +186,7 @@ class ResourceManager:
         """
         return manager_name in self._reservations
 
-    def get_statistics(self) -> Dict[str, any]:
+    def get_statistics(self) -> Dict[str, Any]:
         """
         Get resource manager statistics
 
