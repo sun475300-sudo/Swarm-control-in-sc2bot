@@ -234,22 +234,25 @@ def get_unit_range(unit: Unit) -> float:
     """
     유닛의 공격 사거리 가져오기
 
+    Returns the maximum of ground_range and air_range so anti-air-only
+    units (Corruptor, Hydralisk vs flying, etc.) report a non-zero range.
+    Callers that need to distinguish between ground and air targets should
+    consult the unit's range attributes directly.
+
     Args:
         unit: 대상 유닛
 
     Returns:
-        공격 사거리, 없으면 0
+        공격 사거리 (max of ground/air), 없으면 0
     """
     if not unit:
         return 0.0
 
     try:
-        if hasattr(unit, "ground_range"):
-            return unit.ground_range
-        elif hasattr(unit, "air_range"):
-            return unit.air_range
-        return 0.0
-    except AttributeError:
+        ground = float(getattr(unit, "ground_range", 0.0) or 0.0)
+        air = float(getattr(unit, "air_range", 0.0) or 0.0)
+        return max(ground, air)
+    except (AttributeError, TypeError, ValueError):
         return 0.0
 
 

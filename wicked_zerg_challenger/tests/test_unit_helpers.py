@@ -370,6 +370,17 @@ class TestGetUnitRange(unittest.TestCase):
         """Test with None unit"""
         self.assertEqual(get_unit_range(None), 0.0)
 
+    def test_air_only_unit_reports_air_range(self):
+        """Anti-air-only units (Corruptor) have ground_range=0; must not
+        return 0 — return the air range instead."""
+        unit = MockUnit(ground_range=0.0, air_range=8.0)
+        self.assertEqual(get_unit_range(unit), 8.0)
+
+    def test_max_of_ground_and_air(self):
+        """Units that attack both should report the larger of the two."""
+        unit = MockUnit(ground_range=5.0, air_range=6.0)
+        self.assertEqual(get_unit_range(unit), 6.0)
+
 
 class TestCanUnitAttack(unittest.TestCase):
     """Test can_unit_attack function"""
