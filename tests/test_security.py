@@ -162,3 +162,55 @@ class TestTradeConfig:
         assert (
             MAX_TOTAL_INVESTMENT_RATIO <= 0.8
         ), f"최대 투자 비율이 너무 높습니다: {MAX_TOTAL_INVESTMENT_RATIO * 100}%"
+
+
+class TestFernetFallback:
+    """cryptography 초기화 실패 시 base64 폴백 회귀 테스트.
+
+    `pyo3_runtime.PanicException`은 `BaseException`이므로 `except ImportError`나
+    `except Exception`만으로는 잡히지 않는다. SecretManager/EncryptedTradeLog 모두
+    초기화 단계에서 BaseException을 흡수하고 base64 폴백으로 전환해야 한다.
+    """
+
+    def test_secret_manager_falls_back_on_panic(self, monkeypatch, tmp_path):
+        """Fernet import가 BaseException으로 실패하면 SecretManager는 base64 폴백한다."""
+        import builtins
+
+        real_import = builtins.__import__
+
+        def panicking_import(name, *args, **kwargs):
+            if name == "cryptography.fernet" or name.startswith("cryptography.fernet"):
+                raise BaseException("simulated pyo3 panic")
+            return real_import(name, *args, **kwargs)
+
+        monkeypatch.setattr(builtins, "__import__", panicking_import)
+
+        from crypto_trading.security import SecretManager
+
+        mgr = SecretManager(secrets_file=tmp_path / ".secrets.enc")
+        assert mgr._use_fernet is False
+        assert mgr._fernet is None
+        # base64 폴백 경로가 동작하는지 라운드트립 확인
+        encoded = mgr._encrypt_value("hello")
+        assert mgr._decrypt_value(encoded) == "hello"
+
+    def test_encrypted_trade_log_falls_back_on_panic(self, monkeypatch, tmp_path):
+        """Fernet import가 BaseException으로 실패하면 EncryptedTradeLog도 base64 폴백한다."""
+        import builtins
+
+        real_import = builtins.__import__
+
+        def panicking_import(name, *args, **kwargs):
+            if name == "cryptography.fernet" or name.startswith("cryptography.fernet"):
+                raise BaseException("simulated pyo3 panic")
+            return real_import(name, *args, **kwargs)
+
+        monkeypatch.setattr(builtins, "__import__", panicking_import)
+
+        from crypto_trading.security import EncryptedTradeLog
+
+        log = EncryptedTradeLog(log_dir=tmp_path / "enc_logs")
+        assert log._use_fernet is False
+        assert log._fernet is None
+        encoded = log._encrypt("payload")
+        assert log._decrypt(encoded) == "payload"
