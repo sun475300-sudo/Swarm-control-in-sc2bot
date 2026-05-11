@@ -134,7 +134,23 @@ Each file also has `Any` added to its `from typing import ...` line.
 
 Verification: `pytest tests/` → 429 passed, 16 skipped (no regressions).
 
-## Round 7+ — open queue
+## Round 7 — extend counter / composition tables to real burrowed forms
 
-Pending items get filled as the loop progresses. Each round records what
-was found, what was fixed, and any leftovers escalated for the next round.
+Continuing the unit-name fix theme into the two remaining tables that
+key on enemy `type_id.name.upper()`:
+
+| # | File | Site | Effect |
+|---|------|------|--------|
+| 30 | `wicked_zerg_challenger/composition_optimizer.py:153` (`COUNTER_MATRIX["WIDOWMINE"]`) | Burrowed widow mines weren't counted toward counter-unit scoring → recommended composition under-weighted zergling/roach prep. Added `WIDOWMINEBURROWED` mirror entry. |
+| 31 | `wicked_zerg_challenger/composition_optimizer.py:174` (`COUNTER_MATRIX["LURKER"]/["LURKERMP"]`) | Burrowed lurkers (the actually-shooting form) missed the matrix. Added `LURKERMPBURROWED` mirror entry. |
+| 32 | `wicked_zerg_challenger/dynamic_counter_system.py:173` (`counter_rules["LURKER"]`) | The counter-activation rule keyed on `"LURKER"` never fired because SC2 reports lurkers as `LURKERMP`/`LURKERMPBURROWED`. Registered both real names with identical rule data (left `"LURKER"` for compatibility). |
+
+Each new entry duplicates the existing values so behavior is identical —
+the only difference is that the lookup *actually matches* the unit name
+the engine returns.
+
+Verification: `pytest tests/` → 429 passed, 16 skipped (no regressions).
+
+## Round 8+ — open queue
+
+Pending items get filled as the loop progresses.
