@@ -79,9 +79,12 @@ def get_health_ratio(unit: Unit) -> float:
     try:
         if hasattr(unit, "health") and hasattr(unit, "health_max"):
             if unit.health_max > 0:
-                return unit.health / unit.health_max
+                # Clamp to [0.0, 1.0] — SC2 buffs/heals can transiently push
+                # health above health_max and downstream callers (transfusion
+                # priority, retreat heuristics) assume a normalized ratio.
+                return max(0.0, min(1.0, unit.health / unit.health_max))
         return 0.0
-    except (AttributeError, ZeroDivisionError) as e:
+    except (AttributeError, ZeroDivisionError, TypeError) as e:
         logger.debug(f"get_health_ratio error: {e}")
         return 0.0
 
@@ -102,9 +105,9 @@ def get_shield_ratio(unit: Unit) -> float:
     try:
         if hasattr(unit, "shield") and hasattr(unit, "shield_max"):
             if unit.shield_max > 0:
-                return unit.shield / unit.shield_max
+                return max(0.0, min(1.0, unit.shield / unit.shield_max))
         return 0.0
-    except (AttributeError, ZeroDivisionError) as e:
+    except (AttributeError, ZeroDivisionError, TypeError) as e:
         logger.debug(f"get_shield_ratio error: {e}")
         return 0.0
 

@@ -165,6 +165,16 @@ class TestGetHealthRatio(unittest.TestCase):
         unit = Mock(spec=[])
         self.assertEqual(get_health_ratio(unit), 0.0)
 
+    def test_overheal_clamped_to_one(self):
+        """Transient buffs can push health above health_max; clamp at 1.0."""
+        unit = MockUnit(health=150, health_max=100)
+        self.assertEqual(get_health_ratio(unit), 1.0)
+
+    def test_negative_health_clamped_to_zero(self):
+        """Bad data should not produce a negative ratio."""
+        unit = MockUnit(health=-10, health_max=100)
+        self.assertEqual(get_health_ratio(unit), 0.0)
+
 
 class TestGetShieldRatio(unittest.TestCase):
     """Test get_shield_ratio function"""
@@ -187,6 +197,11 @@ class TestGetShieldRatio(unittest.TestCase):
     def test_none_unit(self):
         """Test with None unit"""
         self.assertEqual(get_shield_ratio(None), 0.0)
+
+    def test_overcharge_clamped_to_one(self):
+        """Guardian Shield / overcharge can push shield above shield_max."""
+        unit = MockUnit(shield=120, shield_max=100)
+        self.assertEqual(get_shield_ratio(unit), 1.0)
 
 
 class TestFilterWorkersByTask(unittest.TestCase):
