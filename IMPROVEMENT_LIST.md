@@ -61,7 +61,37 @@ Verification:
 - `pytest tests/` → 429 passed, 16 skipped (unchanged in full suite, as
   expected; the bugs were collection-order dependent).
 
-## Round 4+ — open queue
+## Round 4 — `"LURKER"` → `"LURKERMP"` production bug sweep
+
+The README's P44 entry flags `UnitTypeId.LURKER` → `UnitTypeId.LURKERMP`
+as a "critical API bug fix" — but the patch only covered the *action*
+side (issuing morph commands). Six other call-sites still compared
+enemy `type_id.name.upper()` against the literal string `"LURKER"`,
+which never matches a real SC2 lurker (the engine reports them as
+`"LURKERMP"` or `"LURKERMPBURROWED"`). Result: lurkers were invisible
+to several gameplay systems.
+
+| # | File | What it broke |
+|---|------|---------------|
+| 9  | `wicked_zerg_challenger/combat_manager.py:1199` (high-threat set in `_assess_threat`) | Lurker drops/sieges never escalated base threat to CRITICAL → no emergency defense response. |
+| 10 | `wicked_zerg_challenger/combat_manager.py:3485` (combat-unit names set in `_detect_attack`) | Lurkers near a hatchery weren't classified as a real attack → defenders weren't pulled. |
+| 11 | `wicked_zerg_challenger/spellcaster_automation.py:357` (`UNIT_VALUE` for viper abduct scorer) | Viper never targeted lurkers for abduct → loses one of the strongest counter plays. |
+| 12 | `wicked_zerg_challenger/combat/base_defense.py:71` (`high_threat_units`) | Same as #9 but on the dedicated base-defense path. |
+| 13 | `wicked_zerg_challenger/combat/trade_analyzer.py:51` (`UNIT_COSTS`) | Lurker kills/losses were valued at the default 100 instead of 275 → trade ratio under-credited lurker-heavy engagements. |
+| 14 | `wicked_zerg_challenger/combat/victory_tracker.py:231` (army filter) | Friendly lurkers were filtered out of "army units" → composition stats wrong. |
+| 15 | `wicked_zerg_challenger/defeat_detection.py:453` (unit-value table) | Lost lurkers didn't count toward "you're losing" detection. |
+| 16 | `wicked_zerg_challenger/data_cache_manager.py:306` (army composition snapshot) | Friendly lurkers vanished from cached army composition. |
+
+Fixes: every site now matches both `"LURKERMP"` (ready) and
+`"LURKERMPBURROWED"` (the burrowed, dangerous form). Two other files
+already had both `"LURKER"` and `"LURKERMP"` defensively
+(`upgrade_coordination_system.py`, `optimum_defense_squad.py`,
+`micro_focus_mode.py`); the dead `"LURKER"` strings there are harmless
+and were left in place to minimise diff surface.
+
+Verification: `pytest tests/` → 429 passed, 16 skipped (no regressions).
+
+## Round 5+ — open queue
 
 Pending items get filled as the loop progresses. Each round records what
 was found, what was fixed, and any leftovers escalated for the next round.

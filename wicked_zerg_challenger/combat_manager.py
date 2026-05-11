@@ -1184,6 +1184,10 @@ class CombatManager:
         game_time = getattr(self.bot, "time", 0)
 
         # 고위협 유닛 (중후반 푸쉬의 핵심)
+        # NOTE: SC2 UnitTypeId.LURKERMP.name is "LURKERMP" (not "LURKER"); a
+        # burrowed lurker reports as "LURKERMPBURROWED". The old "LURKER"
+        # string never matched, so lurker pushes silently bypassed the
+        # CRITICAL threat tier.
         high_threat_units = {
             "SIEGETANK",
             "SIEGETANKSIEGED",
@@ -1196,7 +1200,8 @@ class CombatManager:
             "ULTRALISK",
             "BROODLORD",
             "RAVAGER",
-            "LURKER",
+            "LURKERMP",
+            "LURKERMPBURROWED",
         }
 
         # 위협 수준: light (1-2), medium (3-5), heavy (6+), critical (고위협 유닛 포함)
@@ -3482,7 +3487,10 @@ class CombatManager:
             "CORRUPTOR",
             "BROODLORD",
             "RAVAGER",
-            "LURKER",
+            # SC2 reports lurkers as "LURKERMP" / "LURKERMPBURROWED"; the bare
+            # "LURKER" string never matched a real unit.
+            "LURKERMP",
+            "LURKERMPBURROWED",
             "ULTRALISK",
             "INFESTOR",
             "COLOSSUS",

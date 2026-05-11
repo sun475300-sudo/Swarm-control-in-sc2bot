@@ -342,6 +342,9 @@ class SpellCasterAutomation:
         3. 적 진형 가장자리 유닛 보너스
         """
         # 고가치 유닛 점수 (높을수록 우선)
+        # NOTE: SC2 reports lurkers as "LURKERMP" / "LURKERMPBURROWED"; the
+        # bare "LURKER" key never matched and lurkers slipped past the
+        # viper abduct scorer.
         UNIT_VALUE = {
             "COLOSSUS": 10,
             "CARRIER": 10,
@@ -354,7 +357,8 @@ class SpellCasterAutomation:
             "MOTHERSHIP": 10,
             "BROODLORD": 7,
             "ULTRALISK": 7,
-            "LURKER": 6,
+            "LURKERMP": 6,
+            "LURKERMPBURROWED": 6,
             "RAVAGER": 5,
             "DISRUPTOR": 8,
         }
