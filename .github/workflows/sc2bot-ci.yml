@@ -83,15 +83,32 @@ jobs:
           pip install 'setuptools<69' wheel
           pip install -r requirements.txt pytest pytest-cov pytest-asyncio
 
+      - name: Diagnostic — dump environment
+        # Helps figure out why pytest exits 2 on CI when the same command
+        # passes locally. Prints versions of every plugin pytest will
+        # auto-load and the result of trying to import the heavyweights.
+        run: |
+          python --version
+          pip list | grep -iE 'pytest|burnysc2|sc2|numpy|cryptography|coverage' || true
+          python -c "import sys; print('sys.path:', sys.path)"
+          python -c "
+          try:
+              from sc2.ids.unit_typeid import UnitTypeId
+              print('sc2 import OK:', UnitTypeId.OVERLORD)
+          except Exception as e:
+              print('sc2 import FAIL:', type(e).__name__, e)
+          " || true
+
       - name: Run unit tests
         # tests/ is the repo's unit-test root (no separate tests/unit dir);
         # excluding tests/integration to keep this step focused on fast tests.
-        # Coverage is collected in a separate, non-blocking step below so a
-        # coverage plugin / config mismatch can't take the whole test run
-        # out as it has been (exit code 2 from --cov initialization on CI
-        # despite the same command succeeding locally).
+        # -p no:cacheprovider so a stale cache doesn't survive between CI runs.
+        # Coverage is collected in a separate, non-blocking step below.
         run: |
-          python -m pytest tests/ --ignore=tests/integration
+          python -m pytest tests/ \
+            --ignore=tests/integration \
+            -p no:cacheprovider \
+            --tb=long
 
       - name: Collect coverage (non-blocking)
         continue-on-error: true
