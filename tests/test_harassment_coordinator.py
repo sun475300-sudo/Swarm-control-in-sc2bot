@@ -136,12 +136,12 @@ class TestHarassmentCoordinator:
         """Test checking if unit is locked"""
         unit_tag = 12345
 
-        assert self.coordinator.is_unit_locked(unit_tag) == False
+        assert self.coordinator.is_unit_locked(unit_tag) is False
 
         # Lock unit
         self.coordinator.lock_unit_to_squad(unit_tag, "zergling_runby")
 
-        assert self.coordinator.is_unit_locked(unit_tag) == True
+        assert self.coordinator.is_unit_locked(unit_tag) is True
 
     def test_get_locked_units_by_squad(self):
         """Test retrieving locked units by squad name"""
@@ -180,7 +180,7 @@ class TestHarassmentCoordinator:
 
     def test_baneling_drop_initialization(self):
         """Test baneling drop system initialization"""
-        assert self.coordinator.baneling_drop_active == False
+        assert self.coordinator.baneling_drop_active is False
         assert self.coordinator.baneling_drop_overlord_tag is None
         assert isinstance(self.coordinator.baneling_drop_baneling_tags, set)
         assert self.coordinator.baneling_drop_interval == 120  # 2 minutes
@@ -210,7 +210,7 @@ class TestHarassmentCoordinator:
 
         # Initially false due to missing units or cooldown
         assert isinstance(can_execute, bool)
-        assert can_execute == False
+        assert can_execute is False
 
     # ===== Multi-Angle Attack Tests =====
 

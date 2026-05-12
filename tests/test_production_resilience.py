@@ -251,7 +251,7 @@ class TestSafeTrain:
         result = await resilience._safe_train(None, "ZERGLING")
 
         # Should return False for invalid unit
-        assert result == False
+        assert result is False
 
 
 class TestCanExpandSafely:
@@ -614,7 +614,7 @@ class TestMorphToLair:
         result = await resilience._morph_to_lair()
 
         # Should return False without spawning pool
-        assert result == False
+        assert result is False
 
 
 class TestBuildSpire:
