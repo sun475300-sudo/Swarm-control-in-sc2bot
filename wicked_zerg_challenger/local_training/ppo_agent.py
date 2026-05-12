@@ -31,7 +31,16 @@ try:
 except ImportError:
     TORCH_AVAILABLE = False
     torch = None
-    nn = None
+    optim = None
+    Categorical = None
+
+    # Lightweight stub so `class X(nn.Module):` at module load time doesn't
+    # crash with 'NoneType' object has no attribute 'Module'.
+    class _NNStub:
+        class Module:
+            pass
+
+    nn = _NNStub()
 
 
 # ============================================================
