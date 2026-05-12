@@ -708,7 +708,11 @@ class PPOAgent:
         """모델 로드"""
         try:
             if self.model_path.exists():
-                checkpoint = torch.load(str(self.model_path), map_location=self.device)
+                checkpoint = torch.load(
+                    str(self.model_path),
+                    map_location=self.device,
+                    weights_only=True,
+                )
                 self.network.load_state_dict(checkpoint["network_state_dict"])
                 self.optimizer.load_state_dict(checkpoint["optimizer_state_dict"])
                 self.episode_count = checkpoint.get("episode_count", 0)
