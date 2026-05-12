@@ -542,10 +542,20 @@ class GameStateBlackboard:
             and self.game_phase != GamePhase.OPENING
         )
 
+    # SC2 Hatchery cost is 300 minerals. Expanding when minerals are below
+    # that threshold would queue a build that immediately stalls, so the
+    # blackboard should report should_expand=False in that state.
+    EXPAND_MINERAL_THRESHOLD = 300
+
     def should_expand(self) -> bool:
         """확장 가능한 상황인가?"""
         return (
             self.threat.level == ThreatLevel.NONE
-            and not self.resources.is_supply_block
+            and not self.resources.is_supply_blocked
             and not self.is_under_attack
+            and self.resources.minerals >= self.EXPAND_MINERAL_THRESHOLD
         )
+
+
+# Backwards-compatible alias used by tests and wicked_zerg_bot_pro_impl
+Blackboard = GameStateBlackboard
