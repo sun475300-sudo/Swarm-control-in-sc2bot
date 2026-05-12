@@ -45,7 +45,9 @@ class TestCryptoImports:
         assert hasattr(upbit_client, "UpbitClient")
 
     @pytest.mark.skipif(
-        not all(__import__("importlib").util.find_spec(m) for m in ["pyupbit", "pandas"]),
+        not all(
+            __import__("importlib").util.find_spec(m) for m in ["pyupbit", "pandas"]
+        ),
         reason="pyupbit or pandas not installed",
     )
     def test_import_auto_trader(self):
@@ -65,7 +67,9 @@ class TestCryptoImports:
         assert hasattr(portfolio_tracker, "PortfolioTracker")
 
     @pytest.mark.skipif(
-        not all(__import__("importlib").util.find_spec(m) for m in ["pyupbit", "pandas"]),
+        not all(
+            __import__("importlib").util.find_spec(m) for m in ["pyupbit", "pandas"]
+        ),
         reason="pyupbit or pandas not installed",
     )
     def test_import_market_analyzer(self):
@@ -163,9 +167,7 @@ class TestConfigLoader:
         # Wrap load_config to default to the example when no real config exists.
         original = config_loader.load_config
 
-        def _patched_load_config(
-            config_path=None, apply_env=True, resolve_refs=True
-        ):
+        def _patched_load_config(config_path=None, apply_env=True, resolve_refs=True):
             return original(
                 config_path=config_path or path,
                 apply_env=apply_env,
