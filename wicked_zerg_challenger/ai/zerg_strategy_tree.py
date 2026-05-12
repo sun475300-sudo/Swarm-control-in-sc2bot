@@ -113,10 +113,10 @@ def enemy_structures_low(bot) -> bool:
 
 
 async def defend_bases(bot) -> NodeStatus:
-    """기지 방어"""
+    """기지 방어 - CombatManager.manage_combat() routes to defense when bases are threatened."""
     try:
-        if hasattr(bot, "combat"):
-            await bot.combat.defend_bases()
+        if hasattr(bot, "combat") and bot.combat:
+            await bot.combat.manage_combat(getattr(bot, "iteration", 0))
         return NodeStatus.SUCCESS
     except Exception:
         return NodeStatus.FAILURE

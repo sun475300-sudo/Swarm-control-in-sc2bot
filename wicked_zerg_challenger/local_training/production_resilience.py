@@ -668,21 +668,28 @@ class ProductionResilience:
                         force_army = True
                 # With 0 produced so far, allow one drone check below
 
-            # Consider strategy preference
+            # Consider strategy preference (methods are optional - guard with hasattr).
+            # Older StrategyManager(V2) revisions exposed these helpers; current ones
+            # do not, so a bare call would raise AttributeError every step.
+            sm = self.strategy_manager
+            prefer_drones = bool(
+                sm
+                and getattr(sm, "should_prioritize_drones", None)
+                and sm.should_prioritize_drones()
+            )
+            prefer_early_army = bool(
+                sm
+                and getattr(sm, "should_early_aggression", None)
+                and sm.should_early_aggression()
+            )
             if force_army:
                 should_train_drone = False
-            elif (
-                self.strategy_manager
-                and self.strategy_manager.should_prioritize_drones()
-            ):
+            elif prefer_drones:
                 # Strategy prefers drones, but still check balancer
                 should_train_drone = self.balancer.should_train_drone() or (
                     drone_count < target_drones
                 )
-            elif (
-                self.strategy_manager
-                and self.strategy_manager.should_early_aggression()
-            ):
+            elif prefer_early_army:
                 # Strategy prefers early army
                 should_train_drone = False
             else:
@@ -1034,7 +1041,10 @@ class ProductionResilience:
             # Called from _auto_build_tech_structures() for consistent timing
 
             # *** IMPROVED: Spawning Pool timing (TechCoordinator ONLY) ***
-            if self.strategy_manager:
+            # get_pool_supply() is optional - older StrategyManager exposed it; current does not.
+            if self.strategy_manager and hasattr(
+                self.strategy_manager, "get_pool_supply"
+            ):
                 spawning_pool_supply = self.strategy_manager.get_pool_supply()
             else:
                 # *** FIX: 17 -> 13으로 변경 (13풀 표준) ***
@@ -1097,7 +1107,10 @@ class ProductionResilience:
                         )
 
             # Natural Expansion timing
-            if self.strategy_manager:
+            # get_expansion_supply() is optional - older StrategyManager exposed it; current does not.
+            if self.strategy_manager and hasattr(
+                self.strategy_manager, "get_expansion_supply"
+            ):
                 natural_expansion_supply = self.strategy_manager.get_expansion_supply()
                 natural_expansion_supply_max = (
                     natural_expansion_supply + 2.0
