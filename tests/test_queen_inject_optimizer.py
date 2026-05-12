@@ -13,15 +13,30 @@ Covers the two regressions fixed in Batch 2b:
 from __future__ import annotations
 
 import asyncio
-from types import SimpleNamespace
+import os
+import sys
 from unittest.mock import MagicMock
 
 import pytest
 
+# Make the in-tree ``utils`` package visible — queen_inject_optimizer.py uses
+# ``from utils.logger import get_logger`` which expects wicked_zerg_challenger
+# to be on sys.path.
+_WZC = os.path.join(os.path.dirname(__file__), "..", "wicked_zerg_challenger")
+if os.path.isdir(_WZC) and _WZC not in sys.path:
+    sys.path.insert(0, _WZC)
+
 try:
     from sc2.ids.unit_typeid import UnitTypeId  # noqa: F401
+
+    from wicked_zerg_challenger.economy.queen_inject_optimizer import (
+        QueenInjectOptimizer,
+    )
 except ImportError:
-    pytest.skip("sc2 library not available", allow_module_level=True)
+    pytest.skip(
+        "sc2 library or QueenInjectOptimizer not available",
+        allow_module_level=True,
+    )
 
 
 class _Point:
@@ -74,10 +89,6 @@ def _make_bot(queens, hatcheries):
 
 
 def _make_optimizer(bot):
-    from wicked_zerg_challenger.economy.queen_inject_optimizer import (
-        QueenInjectOptimizer,
-    )
-
     opt = QueenInjectOptimizer(bot)
 
     # Force the can_inject / role / dedup checks to pass so the test exercises
