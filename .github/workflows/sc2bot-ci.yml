@@ -133,6 +133,14 @@ jobs:
           tail -300 pytest-unit.log || echo "(no log file)"
           echo "===========================================/end"
 
+      - name: Upload pytest log as artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pytest-unit-log
+          path: pytest-unit.log
+          retention-days: 7
+
       - name: Fail job if pytest failed
         run: |
           echo "pytest exit code was: ${PYTEST_RC:-unknown}"
