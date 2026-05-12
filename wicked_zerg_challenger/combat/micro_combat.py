@@ -15,10 +15,33 @@ try:
     from sc2.ids.upgrade_id import UpgradeId
     from sc2.position import Point2
 except ImportError:  # Fallbacks for tooling environments
-    UnitTypeId = None
-    AbilityId = None
-    UpgradeId = None
-    Point2 = None
+
+    class _StubEnumMeta(type):
+        """Allow ``StubEnum.ANY_NAME`` lookups when sc2 is absent. Returns a
+        cached placeholder subclass per name so equality/identity work and
+        ``.name`` matches the real sc2 enum interface (used by
+        ``_unit_name`` and similar helpers)."""
+
+        _cache: dict = {}
+
+        def __getattr__(cls, name):
+            key = (cls.__name__, name)
+            placeholder = _StubEnumMeta._cache.get(key)
+            if placeholder is None:
+                placeholder = type(cls)(name, (cls,), {"name": name, "_name": name})
+                _StubEnumMeta._cache[key] = placeholder
+            return placeholder
+
+    class UnitTypeId(metaclass=_StubEnumMeta):  # type: ignore[no-redef]
+        pass
+
+    class AbilityId(metaclass=_StubEnumMeta):  # type: ignore[no-redef]
+        pass
+
+    class UpgradeId(metaclass=_StubEnumMeta):  # type: ignore[no-redef]
+        pass
+
+    Point2 = None  # type: ignore[assignment]
 
 try:
     from combat.terrain_analysis import ChokePointDetector

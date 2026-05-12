@@ -38,29 +38,34 @@ try:
     from sc2.position import Point2
 except ImportError:
 
+    class _StubEnumMeta(type):
+        """Allow ``StubEnum.ANY_NAME`` lookups when sc2 is absent. Returns a
+        cached placeholder subclass keyed by the name so equality and string
+        identity work consistently across imports. The placeholder class
+        exposes a ``name`` attribute so ``_unit_name``-style helpers see the
+        same field the real sc2 enums expose."""
+
+        _cache: dict = {}
+
+        def __getattr__(cls, name):
+            key = (cls.__name__, name)
+            placeholder = _StubEnumMeta._cache.get(key)
+            if placeholder is None:
+                placeholder = type(cls)(name, (cls,), {"name": name, "_name": name})
+                _StubEnumMeta._cache[key] = placeholder
+            return placeholder
+
     class BotAI:
         pass
 
-    class UnitTypeId:
-        DRONE = "DRONE"
-        OVERLORD = "OVERLORD"
-        SPAWNINGPOOL = "SPAWNINGPOOL"
-        HATCHERY = "HATCHERY"
-        EXTRACTOR = "EXTRACTOR"
-        ZERGLING = "ZERGLING"
-        QUEEN = "QUEEN"
-        BANELINGNEST = "BANELINGNEST"
-        ROACHWARREN = "ROACHWARREN"
-        LAIR = "LAIR"
-        HYDRALISKDEN = "HYDRALISKDEN"
-        ROACH = "ROACH"
-        HYDRALISK = "HYDRALISK"
+    class UnitTypeId(metaclass=_StubEnumMeta):
+        pass
 
-    class AbilityId:
-        RESEARCH_ZERGLINGMETABOLICBOOST = "RESEARCH_ZERGLINGMETABOLICBOOST"
+    class AbilityId(metaclass=_StubEnumMeta):
+        pass
 
-    class UpgradeId:
-        ZERGLINGMOVEMENTSPEED = "ZERGLINGMOVEMENTSPEED"
+    class UpgradeId(metaclass=_StubEnumMeta):
+        pass
 
     class Point2:
         pass

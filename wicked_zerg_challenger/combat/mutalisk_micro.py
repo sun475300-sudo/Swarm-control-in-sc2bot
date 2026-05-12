@@ -17,8 +17,27 @@ try:
     from sc2.unit import Unit
 except ImportError:
     UnitTypeId = None
-    Point2 = None
-    Unit = None
+    Unit = None  # type: ignore[assignment]
+
+    class Point2(tuple):  # type: ignore[no-redef]
+        """Minimal Point2 stub used only when sc2 isn't installed.
+
+        ``get_regen_position`` and similar callers previously short-circuited
+        with ``None`` when sc2 was missing, which made unit-level tests
+        unable to verify retreat behavior. The stub keeps the (x, y) tuple
+        contract so the test FakeUnit.move(target) sees a position-shaped
+        object."""
+
+        def __new__(cls, xy):
+            return super().__new__(cls, tuple(xy))
+
+        @property
+        def x(self) -> float:
+            return self[0]
+
+        @property
+        def y(self) -> float:
+            return self[1]
 
 
 ANTI_AIR_THREAT_NAMES = {"THOR", "ARCHON", "QUEEN", "MARINE", "HYDRALISK"}
