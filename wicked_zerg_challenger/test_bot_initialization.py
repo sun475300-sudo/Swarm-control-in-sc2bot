@@ -157,10 +157,22 @@ def verify_code_patterns():
     # are no longer instantiated by the bot impl directly; they live in the
     # registry, and their per-step calls happen inside bot_step_integration.
     checks = [
-        ("BotStepIntegrator initialization (impl)", "BotStepIntegrator(self)", impl_content),
+        (
+            "BotStepIntegrator initialization (impl)",
+            "BotStepIntegrator(self)",
+            impl_content,
+        ),
         ("ManagerFactory wired (impl)", "ManagerFactory(self)", impl_content),
-        ("ProductionResilience registered (registry)", "production_resilience", registry_content),
-        ("strategy_manager.update() call (integrator)", "strategy_manager.update()", integrator_content),
+        (
+            "ProductionResilience registered (registry)",
+            "production_resilience",
+            registry_content,
+        ),
+        (
+            "strategy_manager.update() call (integrator)",
+            "strategy_manager.update()",
+            integrator_content,
+        ),
         ("rogue_tactics step call (integrator)", '"rogue_tactics"', integrator_content),
         ("end_frame() call (integrator)", "end_frame()", integrator_content),
         ("unit_factory uses _safe_train", "_safe_train", factory_content),

@@ -181,9 +181,7 @@ class IntegrationTester:
             logger.info(
                 f"     - Ravager cooldowns: {status.get('ravager_cooldowns', 0)}"
             )
-            logger.info(
-                f"     - Lurker burrowed: {status.get('lurker_burrowed', 0)}"
-            )
+            logger.info(f"     - Lurker burrowed: {status.get('lurker_burrowed', 0)}")
             logger.info(
                 f"     - Focus fire assignments: {status.get('focus_fire_assignments', 0)}"
             )
@@ -266,9 +264,7 @@ class IntegrationTester:
         # factory wiring is present in both files.
         registry_file = self.base_dir / "core" / "manager_registry.py"
         registry_content = (
-            registry_file.read_text(encoding="utf-8")
-            if registry_file.exists()
-            else ""
+            registry_file.read_text(encoding="utf-8") if registry_file.exists() else ""
         )
 
         integration_checks = {
