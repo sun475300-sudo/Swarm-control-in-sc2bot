@@ -86,15 +86,20 @@ jobs:
       - name: Run unit tests
         # tests/ is the repo's unit-test root (no separate tests/unit dir);
         # excluding tests/integration to keep this step focused on fast tests.
-        # Coverage scope deliberately narrowed from '.' (all 938 .py) to the
-        # two source roots — collecting over the whole repo triggered slow
-        # imports on side-effecting top-level scripts and pushed pytest over
-        # the per-test timeout, which surfaces as exit code 2.
+        # Coverage is collected in a separate, non-blocking step below so a
+        # coverage plugin / config mismatch can't take the whole test run
+        # out as it has been (exit code 2 from --cov initialization on CI
+        # despite the same command succeeding locally).
         run: |
-          python -m pytest tests/ \
-            --ignore=tests/integration \
+          python -m pytest tests/ --ignore=tests/integration
+
+      - name: Collect coverage (non-blocking)
+        continue-on-error: true
+        run: |
+          python -m pytest tests/ --ignore=tests/integration \
             --cov=src --cov=wicked_zerg_challenger \
-            --cov-report=xml --cov-report=term
+            --cov-report=xml --cov-report=term \
+            -p no:cacheprovider || true
 
       - name: Run integration tests
         run: pytest tests/integration -v --timeout=120
