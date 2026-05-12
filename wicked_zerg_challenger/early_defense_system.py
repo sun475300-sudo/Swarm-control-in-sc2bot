@@ -34,16 +34,22 @@ try:
     from sc2.position import Point2
 except ImportError:
 
+    class _StubEnumMeta(type):
+        """Allow ``StubEnum.ANY_NAME`` lookups when sc2 is absent."""
+
+        def __getattr__(cls, name):
+            return type(cls)(name, (cls,), {"_name": name})
+
     class BotAI:
         pass
 
-    class UnitTypeId:
+    class UnitTypeId(metaclass=_StubEnumMeta):
         pass
 
-    class AbilityId:
+    class AbilityId(metaclass=_StubEnumMeta):
         pass
 
-    class UpgradeId:
+    class UpgradeId(metaclass=_StubEnumMeta):
         pass
 
     class Point2:
