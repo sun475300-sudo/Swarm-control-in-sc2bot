@@ -416,7 +416,3 @@ class GameAnalytics:
 
         except Exception as e:
             logger.info(f"로드 실패 (새로 시작): {e}")
-                logger.info(f"통계 로드 완료 - {self.total_games}게임")
-
-        except Exception as e:
-            logger.info(f"로드 실패 (새로 시작): {e}")
