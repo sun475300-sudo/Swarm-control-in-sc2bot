@@ -21,6 +21,7 @@ from unittest.mock import AsyncMock, Mock
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 from build_order_system import BuildOrderSystem, BuildOrderType, UnitTypeId
+
 import pytest
 
 try:
@@ -347,9 +348,7 @@ class TestOpeningExpansionPriority(unittest.TestCase):
         bot.townhalls.amount = 2
         bot.townhalls.ready = Mock(amount=2)
         bot.already_pending = Mock(
-            side_effect=lambda unit_type: 1
-            if unit_type == UnitTypeId.HATCHERY
-            else 0
+            side_effect=lambda unit_type: 1 if unit_type == UnitTypeId.HATCHERY else 0
         )
 
         system = BuildOrderSystem(bot)
@@ -373,9 +372,7 @@ class TestOpeningExpansionPriority(unittest.TestCase):
         bot.townhalls.amount = 3
         bot.townhalls.ready = Mock(amount=3)
         bot.already_pending = Mock(
-            side_effect=lambda unit_type: 1
-            if unit_type == UnitTypeId.HATCHERY
-            else 0
+            side_effect=lambda unit_type: 1 if unit_type == UnitTypeId.HATCHERY else 0
         )
 
         system = BuildOrderSystem(bot)
@@ -388,9 +385,7 @@ class TestOpeningExpansionPriority(unittest.TestCase):
         bot.townhalls.amount = 1
         bot.townhalls.ready = Mock(amount=1)
         bot.already_pending = Mock(
-            side_effect=lambda unit_type: 1
-            if unit_type == UnitTypeId.HATCHERY
-            else 0
+            side_effect=lambda unit_type: 1 if unit_type == UnitTypeId.HATCHERY else 0
         )
 
         system = BuildOrderSystem(bot)
@@ -403,9 +398,7 @@ class TestOpeningExpansionPriority(unittest.TestCase):
         bot.townhalls.amount = 2
         bot.townhalls.ready = Mock(amount=1)
         bot.already_pending = Mock(
-            side_effect=lambda unit_type: 1
-            if unit_type == UnitTypeId.HATCHERY
-            else 0
+            side_effect=lambda unit_type: 1 if unit_type == UnitTypeId.HATCHERY else 0
         )
 
         system = BuildOrderSystem(bot)

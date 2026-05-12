@@ -26,6 +26,7 @@ from opponent_modeling import (
     OpponentModeling,
     OpponentStyle,
 )
+
 import pytest
 
 try:

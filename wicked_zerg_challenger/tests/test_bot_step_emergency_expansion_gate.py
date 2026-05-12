@@ -10,6 +10,7 @@ os.environ["PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION"] = "python"
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 from bot_step_integration import BotStepIntegrator
+
 import pytest
 
 try:
@@ -70,7 +71,9 @@ class TestBotStepEmergencyExpansionGate(unittest.TestCase):
         bot = SimpleNamespace(
             time=165.0,
             strategy_manager=strategy,
-            townhalls=FakeUnits([FakeUnit(FakePoint(0, 0)), FakeUnit(FakePoint(80, 0))]),
+            townhalls=FakeUnits(
+                [FakeUnit(FakePoint(0, 0)), FakeUnit(FakePoint(80, 0))]
+            ),
             enemy_units=FakeUnits(enemy_units or []),
             build=AsyncMock(),
             can_afford=Mock(return_value=True),

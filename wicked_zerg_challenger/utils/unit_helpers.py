@@ -35,6 +35,7 @@ except ImportError:
         def closer_than(self, distance, unit):  # pragma: no cover - stub
             return Units([], None)
 
+
 logger = get_logger("UnitHelpers")
 
 

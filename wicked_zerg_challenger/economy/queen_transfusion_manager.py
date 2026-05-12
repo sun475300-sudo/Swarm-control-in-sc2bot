@@ -125,7 +125,10 @@ class QueenTransfusionManager:
         for queen in available_queens:
             # Skip queen if it cast too recently (avoid energy double-spend on lag)
             now = self.bot.time
-            if self._queen_last_cast.get(queen.tag, 0.0) + self.QUEEN_CAST_COOLDOWN > now:
+            if (
+                self._queen_last_cast.get(queen.tag, 0.0) + self.QUEEN_CAST_COOLDOWN
+                > now
+            ):
                 continue
 
             target = self._find_best_transfusion_target(queen, damaged_units)

@@ -9,6 +9,7 @@ import unittest
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 from combat_manager import CombatManager
+
 import pytest
 
 try:
@@ -49,7 +50,9 @@ class FakeUnits(list):
         return min(self, key=lambda unit: unit.distance_to(target))
 
     def closest_n_units(self, target, count):
-        return FakeUnits(sorted(self, key=lambda unit: unit.distance_to(target))[:count])
+        return FakeUnits(
+            sorted(self, key=lambda unit: unit.distance_to(target))[:count]
+        )
 
 
 class UnitSource(FakeUnits):
@@ -91,14 +94,9 @@ class FakeBot:
         self.actions = []
         self.start_location = Point2((50, 50))
         self.enemy_start_locations = [Point2((100, 100))]
-        self.townhalls = FakeUnits(
-            [FakeUnit(1, UnitTypeId.HATCHERY, Point2((50, 50)))]
-        )
+        self.townhalls = FakeUnits([FakeUnit(1, UnitTypeId.HATCHERY, Point2((50, 50)))])
         self.workers = FakeUnits(
-            [
-                FakeUnit(10 + i, UnitTypeId.DRONE, Point2((52 + i, 50)))
-                for i in range(5)
-            ]
+            [FakeUnit(10 + i, UnitTypeId.DRONE, Point2((52 + i, 50))) for i in range(5)]
         )
         self.queen = FakeUnit(30, UnitTypeId.QUEEN, Point2((51, 51)))
         self.units = UnitSource([self.queen])

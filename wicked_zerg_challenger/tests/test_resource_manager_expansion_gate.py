@@ -12,6 +12,7 @@ sys.path.insert(
 )
 
 from local_training.resource_manager import ResourceManager
+
 import pytest
 
 try:

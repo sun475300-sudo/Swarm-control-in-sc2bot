@@ -24,6 +24,7 @@ sys.path.insert(
 )
 
 from local_training.production_resilience import ProductionResilience
+
 import pytest
 
 try:
