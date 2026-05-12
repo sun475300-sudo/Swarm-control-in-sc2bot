@@ -9,7 +9,6 @@
   - 설정 파일 내 민감 정보 유무 검사
 """
 
-import os
 import sys
 from pathlib import Path
 

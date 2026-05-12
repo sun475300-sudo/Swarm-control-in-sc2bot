@@ -15,9 +15,7 @@ from types import SimpleNamespace
 import pytest
 from wicked_zerg_challenger.scouting.phase_scout_cadence import (
     PHASE_1_CADENCE_S,
-    PHASE_1_END_S,
     PHASE_2_CADENCE_S,
-    PHASE_2_END_S,
     PHASE_3_CADENCE_S,
     PhaseScoutCadence,
     ScoutPhase,

@@ -16,9 +16,7 @@ Assertions:
 
 from __future__ import annotations
 
-from types import SimpleNamespace
-from typing import Optional
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
 import pytest
 

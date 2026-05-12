@@ -5,7 +5,6 @@ import pytest
 from jarvis_features.model_selector import (
     CLAUDE_CASCADE,
     GEMINI_CASCADE,
-    ModelPlan,
     ModelSelector,
 )
 
