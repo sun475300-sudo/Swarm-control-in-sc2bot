@@ -104,26 +104,39 @@ jobs:
       - name: Run unit tests
         # tests/ is the repo's unit-test root (no separate tests/unit dir);
         # excluding tests/integration to keep this step focused on fast tests.
-        # -p no:cacheprovider so a stale cache doesn't survive between CI runs.
-        # Coverage is collected in a separate, non-blocking step below.
-        # Output is tee'd to a log so we can re-print the tail on failure —
-        # the GitHub Actions log viewer truncates pytest's traceback when
-        # there are many test files involved.
+        # Plugin disables:
+        #   -p no:cacheprovider — stale cache between CI runs.
+        #   -p no:cov           — pytest-cov auto-activates as a plugin even
+        #                          without --cov and was suspected of slowing
+        #                          startup; the explicit coverage step below
+        #                          re-enables it when wanted.
+        # set +e + capture so we always reach the dump step regardless of
+        # pytest's exit code.
         run: |
-          set -o pipefail
+          set +e
           python -m pytest tests/ \
             --ignore=tests/integration \
             -p no:cacheprovider \
+            -p no:cov \
             --tb=short \
             -q \
             2>&1 | tee pytest-unit.log
+          rc=${PIPESTATUS[0]}
+          echo "pytest exit code: $rc"
+          echo "PYTEST_RC=$rc" >> $GITHUB_ENV
+          exit 0
 
       - name: Dump pytest output (always, even on failure)
         if: always()
         run: |
-          echo "=========== last 200 lines of pytest-unit.log =========="
-          tail -200 pytest-unit.log || echo "(no log file)"
-          echo "==========================================="
+          echo "=========== last 300 lines of pytest-unit.log =========="
+          tail -300 pytest-unit.log || echo "(no log file)"
+          echo "===========================================/end"
+
+      - name: Fail job if pytest failed
+        run: |
+          echo "pytest exit code was: ${PYTEST_RC:-unknown}"
+          test "${PYTEST_RC:-1}" = "0"
 
       - name: Collect coverage (non-blocking)
         continue-on-error: true
