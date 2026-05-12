@@ -1415,6 +1415,9 @@ def install_pre_commit_hook():
         f.write(hook_content)  # pre-commit hook script, not sensitive data
 
     if sys.platform != "win32":
-        os.chmod(hook_path, 0o755)
+        # Owner-only rwx; git pre-commit hooks never need to be readable
+        # by group/other, so use the minimal permission set that satisfies
+        # both git (needs +x) and bandit B103.
+        os.chmod(hook_path, 0o700)
 
     return f"Pre-commit hook 설치 완료: {hook_path}"
