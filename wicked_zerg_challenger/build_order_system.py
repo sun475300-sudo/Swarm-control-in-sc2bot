@@ -41,29 +41,12 @@ except ImportError:
     class BotAI:
         pass
 
-    class UnitTypeId:
-        DRONE = "DRONE"
-        OVERLORD = "OVERLORD"
-        SPAWNINGPOOL = "SPAWNINGPOOL"
-        HATCHERY = "HATCHERY"
-        EXTRACTOR = "EXTRACTOR"
-        ZERGLING = "ZERGLING"
-        QUEEN = "QUEEN"
-        BANELINGNEST = "BANELINGNEST"
-        ROACHWARREN = "ROACHWARREN"
-        LAIR = "LAIR"
-        HYDRALISKDEN = "HYDRALISKDEN"
-        ROACH = "ROACH"
-        HYDRALISK = "HYDRALISK"
-
-    class AbilityId:
-        RESEARCH_ZERGLINGMETABOLICBOOST = "RESEARCH_ZERGLINGMETABOLICBOOST"
-
-    class UpgradeId:
-        ZERGLINGMOVEMENTSPEED = "ZERGLINGMOVEMENTSPEED"
-
-    class Point2:
-        pass
+    from utils.sc2_stubs import (  # noqa: F401
+        AbilityId,
+        Point2,
+        UnitTypeId,
+        UpgradeId,
+    )
 
 
 ZVT_BUILDS = {

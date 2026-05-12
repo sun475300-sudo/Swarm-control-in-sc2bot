@@ -33,21 +33,13 @@ try:
     from sc2.ids.upgrade_id import UpgradeId
     from sc2.position import Point2
 except ImportError:
-
-    class BotAI:
-        pass
-
-    class UnitTypeId:
-        pass
-
-    class AbilityId:
-        pass
-
-    class UpgradeId:
-        pass
-
-    class Point2:
-        pass
+    from utils.sc2_stubs import (  # noqa: F401
+        AbilityId,
+        BotAI,
+        Point2,
+        UnitTypeId,
+        UpgradeId,
+    )
 
 
 class EarlyDefenseSystem:
