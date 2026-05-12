@@ -86,10 +86,15 @@ jobs:
       - name: Run unit tests
         # tests/ is the repo's unit-test root (no separate tests/unit dir);
         # excluding tests/integration to keep this step focused on fast tests.
+        # Coverage scope deliberately narrowed from '.' (all 938 .py) to the
+        # two source roots — collecting over the whole repo triggered slow
+        # imports on side-effecting top-level scripts and pushed pytest over
+        # the per-test timeout, which surfaces as exit code 2.
         run: |
-          pytest tests/ \
+          python -m pytest tests/ \
             --ignore=tests/integration \
-            -v --cov=. --cov-report=xml --cov-report=term
+            --cov=src --cov=wicked_zerg_challenger \
+            --cov-report=xml --cov-report=term
 
       - name: Run integration tests
         run: pytest tests/integration -v --timeout=120
