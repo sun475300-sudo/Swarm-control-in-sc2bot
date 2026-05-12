@@ -537,12 +537,23 @@ class GameStateBlackboard:
             and self.game_phase != GamePhase.OPENING
         )
 
+    # Hatchery mineral cost (gas-free), used as the floor for ``should_expand``.
+    HATCHERY_MINERAL_COST = 300
+
     def should_expand(self) -> bool:
-        """확장 가능한 상황인가?"""
+        """확장 가능한 상황인가?
+
+        Returns ``True`` only when (1) no threat is active, (2) we are not
+        under attack, (3) we are not supply-blocked, and (4) we have enough
+        minerals to actually start a Hatchery. The mineral floor avoids
+        scheduling an expansion the bot cannot pay for, which was previously
+        only enforced downstream and let callers act on stale truthy signals.
+        """
         return (
             self.threat.level == ThreatLevel.NONE
-            and not self.resources.is_supply_block
+            and not self.resources.is_supply_blocked
             and not self.is_under_attack
+            and self.resources.minerals >= self.HATCHERY_MINERAL_COST
         )
 
 
