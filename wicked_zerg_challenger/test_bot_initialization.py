@@ -142,45 +142,39 @@ def verify_code_patterns():
     logger.info("Verifying Critical Code Patterns")
     logger.info("=" * 60)
 
-    # Check wicked_zerg_bot_pro_impl.py
-    impl_path = os.path.join(os.path.dirname(__file__), "wicked_zerg_bot_pro_impl.py")
-    with open(impl_path, "r", encoding="utf-8") as f:
-        impl_content = f.read()
+    base = os.path.dirname(__file__)
 
+    def _read(rel):
+        with open(os.path.join(base, rel), "r", encoding="utf-8") as f:
+            return f.read()
+
+    impl_content = _read("wicked_zerg_bot_pro_impl.py")
+    integrator_content = _read("bot_step_integration.py")
+    factory_content = _read("unit_factory.py")
+    registry_content = _read(os.path.join("core", "manager_registry.py"))
+
+    # After the ManagerFactory refactor production_resilience and rogue_tactics
+    # are no longer instantiated by the bot impl directly; they live in the
+    # registry, and their per-step calls happen inside bot_step_integration.
     checks = [
-        ("ProductionResilience initialization", "ProductionResilience(self)"),
-        ("strategy_manager.update() call", "self.strategy_manager.update()"),
-        ("rogue_tactics.update() call", "self.rogue_tactics.update(iteration)"),
-        ("_step_integrator initialization", "BotStepIntegrator(self)"),
+        ("BotStepIntegrator initialization (impl)", "BotStepIntegrator(self)", impl_content),
+        ("ManagerFactory wired (impl)", "ManagerFactory(self)", impl_content),
+        ("ProductionResilience registered (registry)", "production_resilience", registry_content),
+        ("strategy_manager.update() call (integrator)", "strategy_manager.update()", integrator_content),
+        ("rogue_tactics step call (integrator)", '"rogue_tactics"', integrator_content),
+        ("end_frame() call (integrator)", "end_frame()", integrator_content),
+        ("unit_factory uses _safe_train", "_safe_train", factory_content),
     ]
 
-    for name, pattern in checks:
-        if pattern in impl_content:
+    all_ok = True
+    for name, pattern, content in checks:
+        if pattern in content:
             logger.info(f"Found: {name}")
         else:
             logger.info(f"Missing: {name}")
+            all_ok = False
 
-    # Check unit_factory.py
-    factory_path = os.path.join(os.path.dirname(__file__), "unit_factory.py")
-    with open(factory_path, "r", encoding="utf-8") as f:
-        factory_content = f.read()
-
-    if "_safe_train" in factory_content:
-        logger.info("unit_factory.py uses _safe_train")
-    else:
-        logger.info("unit_factory.py doesn't use _safe_train")
-
-    # Check bot_step_integration.py
-    integrator_path = os.path.join(os.path.dirname(__file__), "bot_step_integration.py")
-    with open(integrator_path, "r", encoding="utf-8") as f:
-        integrator_content = f.read()
-
-    if "end_frame()" in integrator_content:
-        logger.info("bot_step_integration.py calls end_frame()")
-    else:
-        logger.info("bot_step_integration.py doesn't call end_frame()")
-
-    return True
+    return all_ok
 
 
 def main():
