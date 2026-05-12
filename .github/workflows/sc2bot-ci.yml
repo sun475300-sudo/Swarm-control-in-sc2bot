@@ -76,7 +76,12 @@ jobs:
         run: pip install -r requirements.txt pytest pytest-cov pytest-asyncio
 
       - name: Run unit tests
-        run: pytest tests/unit -v --cov=. --cov-report=xml --cov-report=term
+        # tests/ is the repo's unit-test root (no separate tests/unit dir);
+        # excluding tests/integration to keep this step focused on fast tests.
+        run: |
+          pytest tests/ \
+            --ignore=tests/integration \
+            -v --cov=. --cov-report=xml --cov-report=term
 
       - name: Run integration tests
         run: pytest tests/integration -v --timeout=120
