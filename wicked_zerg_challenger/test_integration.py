@@ -175,17 +175,17 @@ class IntegrationTester:
             micro_v3 = AdvancedMicroControllerV3(mock_bot)
             logger.info("  [OK] AdvancedMicroControllerV3 initialized successfully")
 
-            # Test status retrieval
+            # Test status retrieval - get_status() returns int counts, not collections
             status = micro_v3.get_status()
             logger.info(f"  [OK] Status retrieved: {len(status)} fields")
             logger.info(
-                f"     - Ravager cooldowns: {len(status.get('ravager_cooldowns', {}))}"
+                f"     - Ravager cooldowns: {status.get('ravager_cooldowns', 0)}"
             )
             logger.info(
-                f"     - Lurker burrowed: {len(status.get('lurker_burrowed', {}))}"
+                f"     - Lurker burrowed: {status.get('lurker_burrowed', 0)}"
             )
             logger.info(
-                f"     - Focus fire assignments: {len(status.get('focus_fire_assignments', {}))}"
+                f"     - Focus fire assignments: {status.get('focus_fire_assignments', 0)}"
             )
 
             self.results["micro_v3"]["initialization"] = "success"
@@ -260,15 +260,24 @@ class IntegrationTester:
         with open(impl_file, "r", encoding="utf-8") as f:
             impl_content = f.read()
 
+        # After the factory pattern refactor managers are registered in
+        # core/manager_registry.py and instantiated via ManagerFactory rather
+        # than imported/constructed directly in the impl file. Verify the
+        # factory wiring is present in both files.
+        registry_file = self.base_dir / "core" / "manager_registry.py"
+        registry_content = (
+            registry_file.read_text(encoding="utf-8")
+            if registry_file.exists()
+            else ""
+        )
+
         integration_checks = {
-            "OpponentModeling import": "from opponent_modeling import OpponentModeling"
+            "ManagerFactory wired": "from core.manager_factory import ManagerFactory"
             in impl_content,
-            "AdvancedMicroV3 import": "from advanced_micro_controller_v3 import AdvancedMicroControllerV3"
-            in impl_content,
-            "OpponentModeling init": "self.opponent_modeling = OpponentModeling()"
-            in impl_content,
-            "AdvancedMicroV3 init": "self.micro_v3 = AdvancedMicroControllerV3(self)"
-            in impl_content,
+            "OpponentModeling registered": 'module_path="opponent_modeling"'
+            in registry_content,
+            "AdvancedMicroV3 registered": 'module_path="advanced_micro_controller_v3"'
+            in registry_content,
             "OpponentModeling on_game_start": "self.opponent_modeling.on_game_start"
             in impl_content,
             "OpponentModeling on_game_end": "self.opponent_modeling.on_game_end"

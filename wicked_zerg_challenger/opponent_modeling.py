@@ -260,12 +260,12 @@ class OpponentModeling:
 
     def __init__(
         self,
-        bot: BotAI,
+        bot: Optional[BotAI] = None,
         intel_manager=None,
         data_file: str = "data/opponent_models.json",
     ):
         self.bot = bot
-        self.intel = intel_manager or getattr(bot, "intel", None)
+        self.intel = intel_manager or (getattr(bot, "intel", None) if bot else None)
         self.logger = get_logger("OpponentModeling")
         self.data_file = data_file
 
