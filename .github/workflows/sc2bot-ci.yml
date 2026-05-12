@@ -73,7 +73,15 @@ jobs:
           cache: pip
 
       - name: Install dependencies
-        run: pip install -r requirements.txt pytest pytest-cov pytest-asyncio
+        # Pinning setuptools<69 + upgrading pip before -r requirements.txt
+        # mirrors what the other CI jobs do; without it the mpyq sdist
+        # (transitive dependency of burnysc2) fails to build on newer
+        # setuptools because it still uses the deprecated install_layout
+        # attribute.
+        run: |
+          python -m pip install --upgrade pip
+          pip install 'setuptools<69' wheel
+          pip install -r requirements.txt pytest pytest-cov pytest-asyncio
 
       - name: Run unit tests
         # tests/ is the repo's unit-test root (no separate tests/unit dir);
