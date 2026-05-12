@@ -272,6 +272,12 @@ class OpponentModeling:
         # Opponent models
         self.opponent_models: Dict[str, OpponentModel] = {}
         self.current_opponent_id: Optional[str] = None
+        # Same id, kept as a separate attr for the second-pass on_step /
+        # on_game_end methods that read self.current_opponent. It is set
+        # by on_game_start(); declaring it None here prevents AttributeError
+        # when on_step fires before on_game_start (e.g. in tests, or when
+        # a match starts before the bot detects the opponent race).
+        self.current_opponent: Optional[str] = None
         self.current_game_history: Optional[GameHistory] = None
 
         # Current game tracking
