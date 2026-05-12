@@ -129,8 +129,12 @@ jobs:
       - name: Dump pytest output (always, even on failure)
         if: always()
         run: |
-          echo "=========== last 300 lines of pytest-unit.log =========="
-          tail -300 pytest-unit.log || echo "(no log file)"
+          echo "=========== FAILED test lines from pytest-unit.log =========="
+          grep -E '^(FAILED|ERROR) ' pytest-unit.log || echo "(no FAILED/ERROR lines)"
+          echo "=========== short test summary section =========="
+          awk '/short test summary info/,EOF' pytest-unit.log || true
+          echo "=========== full pytest-unit.log =========="
+          cat pytest-unit.log || echo "(no log file)"
           echo "===========================================/end"
 
       - name: Upload pytest log as artifact
