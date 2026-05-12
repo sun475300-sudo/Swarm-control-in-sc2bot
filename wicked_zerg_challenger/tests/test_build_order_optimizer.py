@@ -9,8 +9,13 @@ from unittest.mock import AsyncMock, MagicMock
 os.environ["PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION"] = "python"
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from sc2.ids.unit_typeid import UnitTypeId
-from sc2.ids.upgrade_id import UpgradeId
+import pytest
+
+try:
+    from sc2.ids.unit_typeid import UnitTypeId
+    from sc2.ids.upgrade_id import UpgradeId
+except ImportError:  # pragma: no cover
+    pytest.skip("sc2 library not available", allow_module_level=True)
 from strategy.build_order_optimizer import BuildOrderOptimizer
 
 

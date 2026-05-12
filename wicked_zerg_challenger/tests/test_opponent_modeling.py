@@ -26,7 +26,12 @@ from opponent_modeling import (
     OpponentModeling,
     OpponentStyle,
 )
-from sc2.position import Point2
+import pytest
+
+try:
+    from sc2.position import Point2
+except ImportError:  # pragma: no cover
+    pytest.skip("sc2 library not available", allow_module_level=True)
 
 
 class TestOpponentModel(unittest.TestCase):

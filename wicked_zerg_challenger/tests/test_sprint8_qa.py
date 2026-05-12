@@ -5,10 +5,17 @@ import os
 import sys
 import unittest
 
+import pytest
+
 os.environ["PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION"] = "python"
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from run_mass_test import build_test_cases, parse_args
+try:
+    from run_mass_test import build_test_cases, parse_args
+except ImportError:  # pragma: no cover
+    pytest.skip(
+        "run_mass_test requires sc2 (game client)", allow_module_level=True
+    )
 
 
 class TestRunMassTestCli(unittest.TestCase):

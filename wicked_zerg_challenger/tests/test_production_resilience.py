@@ -24,8 +24,13 @@ sys.path.insert(
 )
 
 from local_training.production_resilience import ProductionResilience
-from sc2.ids.unit_typeid import UnitTypeId
-from sc2.position import Point2
+import pytest
+
+try:
+    from sc2.ids.unit_typeid import UnitTypeId
+    from sc2.position import Point2
+except ImportError:  # pragma: no cover
+    pytest.skip("sc2 library not available", allow_module_level=True)
 
 
 class TestProductionResilience(unittest.TestCase):

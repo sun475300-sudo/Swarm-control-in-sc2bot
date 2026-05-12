@@ -20,8 +20,13 @@ from unittest.mock import AsyncMock, Mock
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 from economy_manager import EconomyManager, ThreatLevel
-from sc2.ids.unit_typeid import UnitTypeId
-from sc2.position import Point2
+import pytest
+
+try:
+    from sc2.ids.unit_typeid import UnitTypeId
+    from sc2.position import Point2
+except ImportError:  # pragma: no cover
+    pytest.skip("sc2 library not available", allow_module_level=True)
 
 
 class TestEconomyManager(unittest.TestCase):
