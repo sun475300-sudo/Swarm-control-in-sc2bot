@@ -93,14 +93,15 @@ class TestSensitiveDataProtection:
                 ), f"config.py에 의심스러운 하드코딩 값 발견: {match[:10]}..."
 
     def test_no_hardcoded_keys_in_yaml(self):
-        """config.yaml에 실제 API 키가 하드코딩되어 있지 않은지 확인한다."""
-        yaml_path = Path(__file__).parent.parent / "config.yaml"
+        """config.yaml(또는 example)에 실제 API 키가 하드코딩되어 있지 않은지 확인한다."""
+        root = Path(__file__).parent.parent
+        yaml_path = root / "config.yaml"
         if not yaml_path.exists():
-            pytest.skip("config.yaml 파일이 없습니다.")
+            yaml_path = root / "config.yaml.example"
+        if not yaml_path.exists():
+            pytest.skip("config.yaml 또는 config.yaml.example 파일이 없습니다.")
         content = self._read_file(yaml_path)
         # API 키 필드에 환경변수 참조 ${...} 또는 빈 값이 있어야 한다
-        import re
-
         for line in content.split("\n"):
             if "access_key:" in line or "secret_key:" in line or "password:" in line:
                 # 환경변수 참조 패턴이 있거나 빈 값이어야 함
@@ -109,7 +110,7 @@ class TestSensitiveDataProtection:
                     or line.strip().endswith('""')
                     or line.strip().endswith("''")
                     or line.strip().endswith(":")
-                ), f"config.yaml에 민감 정보가 하드코딩된 것 같습니다: {line.strip()}"
+                ), f"{yaml_path.name}에 민감 정보가 하드코딩된 것 같습니다: {line.strip()}"
 
     def test_gitignore_includes_env(self):
         """.gitignore에 .env 파일이 포함되어 있는지 확인한다."""
