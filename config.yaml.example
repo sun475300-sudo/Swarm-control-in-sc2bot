@@ -1,0 +1,67 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# JARVIS / SC2 commander bot — example configuration
+#
+# Copy this file to `config.yaml` and replace the ${ENV_VAR} placeholders with
+# values from your environment.  `config.yaml` is gitignored, so secrets stay
+# off the repo.
+#
+# Override individual values via environment variables.  Key path is
+# uppercased and joined with underscores, e.g.:
+#   proxy.port            → PROXY_PORT=8080
+#   crypto.trading.dry_run → CRYPTO_TRADING_DRY_RUN=false
+# ─────────────────────────────────────────────────────────────────────────────
+
+project:
+  name: "Swarm-control-in-sc2bot"
+  version: "1.0.0"
+  environment: "development"
+
+proxy:
+  host: "127.0.0.1"
+  port: 3456
+  timeout_seconds: 30
+
+crypto:
+  trading:
+    dry_run: true                # set to false only after thorough testing
+    fiat: "KRW"
+    watch_list:
+      - "KRW-BTC"
+      - "KRW-ETH"
+    min_order_amount: 5000
+    max_single_order_ratio: 0.1
+    max_total_investment_ratio: 0.5
+    default_stop_loss_pct: -3.0
+    default_take_profit_pct: 5.0
+  upbit:
+    access_key: "${UPBIT_ACCESS_KEY}"
+    secret_key: "${UPBIT_SECRET_KEY}"
+
+discord:
+  token: "${DISCORD_TOKEN}"
+  command_prefix: "!"
+
+logging:
+  level: "INFO"
+  format: "%(asctime)s [%(levelname)s] %(name)s: %(message)s"
+  file: "logs/jarvis.log"
+
+sc2:
+  bot:
+    race: "Zerg"
+    name: "JARVIS-Commander"
+    aggression_level: 0.6
+    expansion_priority: "balanced"
+  ladder:
+    realtime: false
+    step_size: 1
+
+security:
+  api:
+    allowed_ips:
+      - "127.0.0.1"
+      - "::1"
+    enable_mtls: false
+    rate_limit_per_minute: 60
+  secrets:
+    master_password: "${JARVIS_MASTER_PASSWORD}"
