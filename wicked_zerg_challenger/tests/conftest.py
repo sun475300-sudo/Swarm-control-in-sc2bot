@@ -22,6 +22,7 @@ os.environ["PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION"] = "python"
 def _install_sc2_stub() -> None:
     try:
         import sc2  # noqa: F401
+
         return
     except ImportError:
         pass
