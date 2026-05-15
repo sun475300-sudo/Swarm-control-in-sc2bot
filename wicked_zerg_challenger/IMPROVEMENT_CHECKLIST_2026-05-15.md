@@ -5,19 +5,36 @@
 > 테스트 환경: pytest 9.0.3 / Python 3.11.15 / 661 tests
 
 ## 0. 즉시 픽스 완료 (이 PR에서)
+### Blackboard (Single Source of Truth)
 - [x] **F-001** `blackboard.py`: `Blackboard` 별칭 export 누락 → 2개 테스트 모듈 collection 실패
 - [x] **F-002** `blackboard.py:should_expand`: 존재하지 않는 `is_supply_block` 속성 참조 → AttributeError
 - [x] **F-003** `blackboard.py:should_expand`: minerals < 300이어도 True 반환 → Hatchery 비용 미체크
-- [x] **F-004** `game_analytics_system.py`: 중복된 try/except 블록으로 SyntaxError (라인 419)
 - [x] **F-005** `blackboard.py:auto_adjust_authority`: 지속되는 CRITICAL 위협에서 EMERGENCY↔COMBAT 30초 진동 버그 → sticky timeout-lock 추가
 - [x] **F-006** `blackboard.py:request_production`: 0..3 범위 밖 priority 전달 시 KeyError → 최저(3)으로 demote
+
+### 게임 로직 (Combat / Harassment / Awareness)
+- [x] **F-008** `combat_manager._execute_roach_hydra_formation`: retreat 모드에서 로치가 후퇴 안 함 (둘 다 attack(target)) → retreat anchor로 attack-move
+- [x] **F-009** `combat_manager` 공중 견제: hasattr(closer_than) 빠른 경로가 사용되지 않고 두 분기 모두 느린 distance_to 사용 → fast path 실제 사용
+- [x] **F-010** `harassment_coordinator.auto_adjust_aggressive_mode`: 경제+군사 둘 다 열세 시 OPPORTUNISTIC 유지(독스트링은 PASSIVE) → PASSIVE로 수정
+- [x] **F-011** `core/situational_awareness._assess_threat_level`: 블랙보드 위협 분기가 `pass`로 무시 → IntEnum↔str-enum 매핑 추가
+
+### 외부 모듈 안정성
+- [x] **F-004** `game_analytics_system.py`: 중복된 try/except 블록으로 SyntaxError (라인 419)
 - [x] **F-007** `opponent_modeling.py:predict_strategy`: 두 곳의 ZeroDivisionError 가드 (corrupted load 시나리오)
+- [x] **F-012** `adaptive_trainer.py`: 게임 결과 분기에서 `logger.info("")` (의도 없는 빈 호출) → 실제 결과 로깅
+
+### 인프라 / 와이어링
 - [x] **I-001** `FrameSkipManager` 봇에 와이어링 + blackboard 위협 상태 기반 combat-mode 자동 전환
 - [x] **L-001** `production_controller.py` Blackboard 별칭 indirection 제거 (직접 import)
 - [x] **L-002** `EnhancedScoutSystem` deprecation 경고 정리 (lazy import)
 - [x] **T-001** `pytest-asyncio` deprecation 경고 정리
 - [x] **Q-001a** `on_step`/`scoring_system.on_step`/`awareness_engine.on_step` 의 silent except를 throttled debug log로 교체
 - [x] **CI-001** 전체 레포에 `black .` + `isort .` 적용 — CI lint 잡 main에서도 실패하던 것 해소
+- [x] **CI-002** `check_no_empty_logger_calls.py` 가드 강화 시도 후 의도된 빈-문자열 호출 케이스 식별 → 가드 의도를 명확히 코멘트화
+
+### 테스트
+- 시작 시: 661 통과 + 2 collection 에러 + 2 실패
+- 현재: **677 통과** (16개 신규 회귀 테스트 추가)
 
 ### 잘못 판정된 항목 (취소)
 - ~~**D-001** `ai/behavior_tree.py:tick()`~~ → false positive: `@abstractmethod` 데코레이터 있음
