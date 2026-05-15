@@ -914,6 +914,7 @@ class BotStepIntegrator:
                         report = self.bot.creep_denial.get_creep_denial_report()
                         self.logger.info(report)
                 except Exception as e:
+                    self.logger.debug("subsystem on_step failed: %r", e)
                     if error_handler.debug_mode:
                         raise
                     else:
@@ -938,6 +939,7 @@ class BotStepIntegrator:
                 try:
                     await self.bot.spatial_optimizer.on_step(iteration)
                 except Exception as e:
+                    self.logger.debug("subsystem on_step failed: %r", e)
                     if error_handler.debug_mode:
                         raise
 
@@ -945,6 +947,7 @@ class BotStepIntegrator:
                 try:
                     await self.bot.data_cache.on_step(iteration)
                 except Exception as e:
+                    self.logger.debug("subsystem on_step failed: %r", e)
                     if error_handler.debug_mode:
                         raise
 
@@ -953,6 +956,7 @@ class BotStepIntegrator:
                 try:
                     await self.bot.base_destruction.on_step(iteration)
                 except Exception as e:
+                    self.logger.debug("subsystem on_step failed: %r", e)
                     if error_handler.debug_mode:
                         raise
 
@@ -961,6 +965,7 @@ class BotStepIntegrator:
                 try:
                     await self.bot.building_destroyer.on_step(iteration)
                 except Exception as e:
+                    self.logger.debug("subsystem on_step failed: %r", e)
                     if error_handler.debug_mode:
                         raise
 
@@ -969,6 +974,7 @@ class BotStepIntegrator:
                 try:
                     await self.bot.self_healing.on_step(iteration)
                 except Exception as e:
+                    self.logger.debug("subsystem on_step failed: %r", e)
                     if error_handler.debug_mode:
                         raise
 
@@ -977,6 +983,7 @@ class BotStepIntegrator:
                 try:
                     await self.bot.personality.on_step(iteration)
                 except Exception as e:
+                    self.logger.debug("subsystem on_step failed: %r", e)
                     if error_handler.debug_mode:
                         raise
 
@@ -985,6 +992,7 @@ class BotStepIntegrator:
                 try:
                     await self.bot.battle_prep.on_step(iteration)
                 except Exception as e:
+                    self.logger.debug("subsystem on_step failed: %r", e)
                     if error_handler.debug_mode:
                         raise
 
@@ -997,6 +1005,7 @@ class BotStepIntegrator:
 
                     await self.bot.destructible_aware.on_step(iteration)
                 except Exception as e:
+                    self.logger.debug("subsystem on_step failed: %r", e)
                     if error_handler.debug_mode:
                         raise
 
@@ -1005,6 +1014,7 @@ class BotStepIntegrator:
                 try:
                     await self.bot.nydus_trainer.on_step(iteration)
                 except Exception as e:
+                    self.logger.debug("subsystem on_step failed: %r", e)
                     if error_handler.debug_mode:
                         raise
 
@@ -1013,6 +1023,7 @@ class BotStepIntegrator:
                 try:
                     await self.bot.overlord_safety.on_step(iteration)
                 except Exception as e:
+                    self.logger.debug("subsystem on_step failed: %r", e)
                     if error_handler.debug_mode:
                         raise
 
@@ -1082,6 +1093,7 @@ class BotStepIntegrator:
                                     )
 
                         except Exception as e:
+                            self.logger.debug("subsystem on_step failed: %r", e)
                             if error_handler.debug_mode:
                                 raise
                             else:
@@ -1110,6 +1122,7 @@ class BotStepIntegrator:
                             progress = self.bot.build_order_system.get_progress()
                             self.logger.info(f"[BUILD_ORDER] {progress}")
                     except Exception as e:
+                        self.logger.debug("subsystem on_step failed: %r", e)
                         if error_handler.debug_mode:
                             raise
                         else:
@@ -1142,6 +1155,7 @@ class BotStepIntegrator:
                             f"[DEFENSE] Threat: {threat}, Status: {status}"
                         )
                 except Exception as e:
+                    self.logger.debug("subsystem on_step failed: %r", e)
                     if error_handler.debug_mode:
                         raise
                     else:
@@ -1164,6 +1178,7 @@ class BotStepIntegrator:
                 try:
                     await self.bot.early_defense.on_step(iteration)
                 except Exception as e:
+                    self.logger.debug("subsystem on_step failed: %r", e)
                     if error_handler.debug_mode:
                         raise
                     else:
@@ -1184,6 +1199,7 @@ class BotStepIntegrator:
                 try:
                     await self.bot.worker_combat.on_step()
                 except Exception as e:
+                    self.logger.debug("subsystem on_step failed: %r", e)
                     if error_handler.debug_mode:
                         raise
                     else:
@@ -1204,6 +1220,7 @@ class BotStepIntegrator:
                 try:
                     await self.bot.upgrade_priority.on_step()
                 except Exception as e:
+                    self.logger.debug("subsystem on_step failed: %r", e)
                     if error_handler.debug_mode:
                         raise
                     else:
@@ -1224,6 +1241,7 @@ class BotStepIntegrator:
                 try:
                     await self.bot.rl_tech_adapter.on_step(iteration)
                 except Exception as e:
+                    self.logger.debug("subsystem on_step failed: %r", e)
                     if error_handler.debug_mode:
                         raise
                     else:
@@ -1243,6 +1261,7 @@ class BotStepIntegrator:
                 try:
                     micro_interval = self.bot.micro_focus.update(iteration)
                 except Exception as e:
+                    self.logger.debug("subsystem on_step failed: %r", e)
                     if error_handler.debug_mode:
                         raise
                     else:
@@ -1277,6 +1296,7 @@ class BotStepIntegrator:
                             self.bot.current_gas_ratio
                         )
                 except Exception as e:
+                    self.logger.debug("subsystem on_step failed: %r", e)
                     if error_handler.debug_mode:
                         raise
                     else:
@@ -1295,6 +1315,7 @@ class BotStepIntegrator:
                 try:
                     await self.bot.smart_balancer.on_step(iteration)
                 except Exception as e:
+                    self.logger.debug("subsystem on_step failed: %r", e)
                     if error_handler.debug_mode:
                         raise
                     else:
@@ -1385,12 +1406,13 @@ class BotStepIntegrator:
                         astar_hw.compute_highway()
                         if astar_hw.highway_waypoints:
                             self.logger.info(
-                                f"[CREEP_HIGHWAY_ASTAR] A* 경로 계산 완료: "
+                                "[CREEP_HIGHWAY_ASTAR] A* 경로 계산 완료: "
                                 f"{len(astar_hw.highway_waypoints)} waypoints"
                             )
                     elif iteration % 110 == 0:
                         astar_hw.update_progress()
                 except Exception as e:
+                    self.logger.debug("subsystem on_step failed: %r", e)
                     if error_handler.debug_mode:
                         raise
 
@@ -1400,6 +1422,7 @@ class BotStepIntegrator:
                 try:
                     await self.bot.creep_highway.on_step(iteration)
                 except Exception as e:
+                    self.logger.debug("subsystem on_step failed: %r", e)
                     if error_handler.debug_mode:
                         raise
                     else:
@@ -1418,6 +1441,7 @@ class BotStepIntegrator:
                 try:
                     await self.bot.flanking_coord.on_step(iteration)
                 except Exception as e:
+                    self.logger.debug("subsystem on_step failed: %r", e)
                     if error_handler.debug_mode:
                         raise
                     else:
@@ -1438,6 +1462,7 @@ class BotStepIntegrator:
                 try:
                     await self.bot.spellcaster.on_step(iteration)
                 except Exception as e:
+                    self.logger.debug("subsystem on_step failed: %r", e)
                     if error_handler.debug_mode:
                         raise
                     else:
@@ -1472,6 +1497,7 @@ class BotStepIntegrator:
                 try:
                     await self.bot.upgrade_coord.on_step(iteration)
                 except Exception as e:
+                    self.logger.debug("subsystem on_step failed: %r", e)
                     if error_handler.debug_mode:
                         raise
                     else:
@@ -1509,6 +1535,7 @@ class BotStepIntegrator:
                             status = self.bot.early_scout.get_scout_status()
                             self.logger.info(f"[EARLY_SCOUT] {status}")
                     except Exception as e:
+                        self.logger.debug("subsystem on_step failed: %r", e)
                         if error_handler.debug_mode:
                             raise
                         else:
@@ -1538,6 +1565,7 @@ class BotStepIntegrator:
                             f"Lost:{report.get('scouts_lost',0)}"
                         )
                 except Exception as e:
+                    self.logger.debug("subsystem on_step failed: %r", e)
                     if error_handler.debug_mode:
                         raise
                     else:
@@ -1558,6 +1586,7 @@ class BotStepIntegrator:
                 try:
                     await self.bot.build_order_opt.on_step(iteration)
                 except Exception as e:
+                    self.logger.debug("subsystem on_step failed: %r", e)
                     if error_handler.debug_mode:
                         raise
                     else:
@@ -1578,6 +1607,7 @@ class BotStepIntegrator:
                 try:
                     await self.bot.multi_test.on_step(iteration)
                 except Exception as e:
+                    self.logger.debug("subsystem on_step failed: %r", e)
                     if error_handler.debug_mode:
                         raise
                     else:
@@ -1627,6 +1657,7 @@ class BotStepIntegrator:
                             return
 
                 except Exception as e:
+                    self.logger.debug("subsystem on_step failed: %r", e)
                     if error_handler.debug_mode:
                         raise
                     else:
@@ -1654,6 +1685,7 @@ class BotStepIntegrator:
                 try:
                     self.bot.situational_awareness.on_step(iteration)
                 except Exception as e:
+                    self.logger.debug("subsystem on_step failed: %r", e)
                     if error_handler.debug_mode:
                         raise
                     else:
@@ -1681,7 +1713,7 @@ class BotStepIntegrator:
                     if defeat_status.get("last_stand_required", False):
                         if iteration % 50 == 0:
                             self.logger.info(
-                                f"[DEFEAT DETECTION] [*] 패배 직전! 마지막 방어 시도! [*]"
+                                "[DEFEAT DETECTION] [*] 패배 직전! 마지막 방어 시도! [*]"
                             )
                             self.logger.info(
                                 f"  - 패배 수준: {self.bot.defeat_detection.get_defeat_level_name()}"
@@ -1761,6 +1793,7 @@ class BotStepIntegrator:
                                 f"[OPPONENT_MODELING] Strategy: {predicted_strategy} ({confidence:.1%} confidence)"
                             )
                 except Exception as e:
+                    self.logger.debug("subsystem on_step failed: %r", e)
                     if error_handler.debug_mode:
                         raise
                     else:
@@ -1818,6 +1851,7 @@ class BotStepIntegrator:
                             f"[PRODUCTION] Authority: {stats['authority_mode']}, Queue: {stats['queue_size']}"
                         )
                 except Exception as e:
+                    self.logger.debug("subsystem on_step failed: %r", e)
                     if error_handler.debug_mode:
                         raise
                     else:
@@ -1892,6 +1926,7 @@ class BotStepIntegrator:
                         report = self.bot.worker_optimizer.get_efficiency_report()
                         self.logger.info(report)
                 except Exception as e:
+                    self.logger.debug("subsystem on_step failed: %r", e)
                     if error_handler.debug_mode:
                         raise
                     else:
@@ -1942,6 +1977,7 @@ class BotStepIntegrator:
                             f"Queens: {stats['queens_assigned']}"
                         )
                 except Exception as e:
+                    self.logger.debug("subsystem on_step failed: %r", e)
                     if error_handler.debug_mode:
                         raise
                     else:
@@ -1979,6 +2015,7 @@ class BotStepIntegrator:
                     self.bot.queen_transfusion.log_statistics(iteration)
 
                 except Exception as e:
+                    self.logger.debug("subsystem on_step failed: %r", e)
                     if error_handler.debug_mode:
                         raise
                     else:
@@ -2006,6 +2043,7 @@ class BotStepIntegrator:
                         )
 
                 except Exception as e:
+                    self.logger.debug("subsystem on_step failed: %r", e)
                     if error_handler.debug_mode:
                         raise
                     else:
@@ -2028,6 +2066,7 @@ class BotStepIntegrator:
                     self.bot.spatial_query.log_statistics(iteration)
 
                 except Exception as e:
+                    self.logger.debug("subsystem on_step failed: %r", e)
                     if error_handler.debug_mode:
                         raise
                     else:
@@ -2046,6 +2085,7 @@ class BotStepIntegrator:
                 try:
                     await self.bot.vision_network.on_step(iteration)
                 except Exception as e:
+                    self.logger.debug("subsystem on_step failed: %r", e)
                     if error_handler.debug_mode:
                         raise
                     else:
@@ -2066,6 +2106,7 @@ class BotStepIntegrator:
                 try:
                     await self.bot.creep_v2.on_step(iteration)
                 except Exception as e:
+                    self.logger.debug("subsystem on_step failed: %r", e)
                     if error_handler.debug_mode:
                         raise
                     else:
@@ -2098,6 +2139,7 @@ class BotStepIntegrator:
                         report = self.bot.upgrade_planner.get_upgrade_progress_report()
                         self.logger.info(report)
                 except Exception as e:
+                    self.logger.debug("subsystem on_step failed: %r", e)
                     if error_handler.debug_mode:
                         raise
                     else:
@@ -2208,6 +2250,7 @@ class BotStepIntegrator:
                 try:
                     await self.bot.idle_units.on_step(iteration)
                 except Exception as e:
+                    self.logger.debug("subsystem on_step failed: %r", e)
                     if error_handler.debug_mode:
                         raise
                     else:
@@ -2233,6 +2276,7 @@ class BotStepIntegrator:
                         report = self.bot.combat_phase.get_combat_report()
                         self.logger.info(report)
                 except Exception as e:
+                    self.logger.debug("subsystem on_step failed: %r", e)
                     if error_handler.debug_mode:
                         raise
                     else:
@@ -2253,6 +2297,7 @@ class BotStepIntegrator:
                 try:
                     await self.bot.harassment_coord.on_step(iteration)
                 except Exception as e:
+                    self.logger.debug("subsystem on_step failed: %r", e)
                     if error_handler.debug_mode:
                         raise
                     else:
@@ -2273,6 +2318,7 @@ class BotStepIntegrator:
                 try:
                     await self.bot.multi_prong.on_step(iteration)
                 except Exception as e:
+                    self.logger.debug("subsystem on_step failed: %r", e)
                     if error_handler.debug_mode:
                         raise
                     else:
@@ -2293,6 +2339,7 @@ class BotStepIntegrator:
                 try:
                     await self.bot.trade_analyzer.on_step(iteration)
                 except Exception as e:
+                    self.logger.debug("subsystem on_step failed: %r", e)
                     if error_handler.debug_mode:
                         raise
                     else:
@@ -2380,6 +2427,7 @@ class BotStepIntegrator:
                             f"Focus fire: {status.get('focus_fire_assignments', 0)} assignments"
                         )
                 except Exception as e:
+                    self.logger.debug("subsystem on_step failed: %r", e)
                     if error_handler.debug_mode:
                         raise
                     else:
@@ -2423,6 +2471,7 @@ class BotStepIntegrator:
                 try:
                     await self.bot.late_game_opt.on_step(iteration)
                 except Exception as e:
+                    self.logger.debug("subsystem on_step failed: %r", e)
                     if error_handler.debug_mode:
                         raise
                     else:
@@ -2443,6 +2492,7 @@ class BotStepIntegrator:
                 try:
                     await self.bot.adaptive_build.on_step(iteration)
                 except Exception as e:
+                    self.logger.debug("subsystem on_step failed: %r", e)
                     if error_handler.debug_mode:
                         raise
                     else:
@@ -2463,6 +2513,7 @@ class BotStepIntegrator:
                 try:
                     await self.bot.timing_attacks.on_step(iteration)
                 except Exception as e:
+                    self.logger.debug("subsystem on_step failed: %r", e)
                     if error_handler.debug_mode:
                         raise
                     else:
@@ -2483,6 +2534,7 @@ class BotStepIntegrator:
                 try:
                     await self.bot.proxy_hatch.on_step(iteration)
                 except Exception as e:
+                    self.logger.debug("subsystem on_step failed: %r", e)
                     if error_handler.debug_mode:
                         raise
                     else:
@@ -2638,7 +2690,7 @@ class BotStepIntegrator:
                         self.logger.debug(f"[DEBUG] Expansion check error: {e}")
 
             # 4. 텍스트 표시
-            debug_text = f"""
+            debug_text = """
             [WickedZergBot Pro]
             Time: {int(b.time // 60)}:{int(b.time % 60):02d}
             Strategy: {strategy_mode}
@@ -2831,7 +2883,7 @@ class BotStepIntegrator:
 
                     # * 상태 벡터 로깅 (30초마다) - 실제 값 확인 *
                     if iteration % 660 == 0:  # 30초
-                        self.logger.info(f"[RL_STATE] 게임 상태 벡터 (15차원):")
+                        self.logger.info("[RL_STATE] 게임 상태 벡터 (15차원):")
                         self.logger.info(
                             f"  미네랄: {game_state[0]:.3f}, 가스: {game_state[1]:.3f}"
                         )
@@ -2964,7 +3016,7 @@ class BotStepIntegrator:
                             f"[STRATEGY] 규칙 기반 결정: {new_mode} (RLAgent 없음)"
                         )
                     else:
-                        self.logger.info(f"[STRATEGY] 현행 유지 (Shadow Mode)")
+                        self.logger.info("[STRATEGY] 현행 유지 (Shadow Mode)")
 
                 # * 불일치 경고 (RL이 있는데 사용 안 됨) *
                 if (
@@ -2974,7 +3026,7 @@ class BotStepIntegrator:
                 ):
                     if iteration % 220 == 0:
                         self.logger.warning(
-                            f"[WARNING] [*] RLAgent가 있지만 결정이 사용되지 않음! [*]"
+                            "[WARNING] [*] RLAgent가 있지만 결정이 사용되지 않음! [*]"
                         )
 
         except Exception as e:

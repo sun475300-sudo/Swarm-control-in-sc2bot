@@ -316,7 +316,7 @@ class BuildFeedbackSystem:
             logger.info(
                 f"  - 승리가 너무 느림 ({avg_victory_time:.0f}s) -> 더 공격적인 전략 필요"
             )
-            logger.info(f"    -> 제안: 3분 저글링 공격, 5분 바퀴 푸시")
+            logger.info("    -> 제안: 3분 저글링 공격, 5분 바퀴 푸시")
         elif avg_victory_time < 300:  # 5분 미만
             logger.info(
                 f"  - 매우 빠른 승리! ({avg_victory_time:.0f}s) -> 현재 전략 유지"
@@ -352,7 +352,7 @@ class BuildFeedbackSystem:
                         unit_usage[unit].append(count)
 
             if unit_usage:
-                logger.info(f"  - 승리 시 주력 유닛:")
+                logger.info("  - 승리 시 주력 유닛:")
                 for unit, counts in sorted(
                     unit_usage.items(), key=lambda x: sum(x[1]), reverse=True
                 )[:3]:
