@@ -11,11 +11,11 @@ Game Analytics System - 게임 분석 및 통계 시스템
 
 import json
 import logging
+import uuid
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
 from typing import Dict, List, Optional
-import uuid
 
 logger = logging.getLogger("GameAnalyticsSystem")
 
