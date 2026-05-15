@@ -2553,6 +2553,12 @@ class StrategyManager:
             self._adjust_unit_ratio("hydra", 0.3)
             self._adjust_unit_ratio("roach", 0.3)
 
+        # 레이바저 3+ -> 히드라 우위 (히드라 사거리 5 > 레이바저 베어크/바일은 매스로 분산)
+        if ravager_count >= 3:
+            self._adjust_unit_ratio("hydra", 0.45)
+            self._adjust_unit_ratio("roach", 0.30)
+            self._adjust_unit_ratio("zergling", 0.10)
+
         # 뮤탈리스크 -> 히드라 + 스포어
         if mutalisk_count >= 3:
             # * Phase 34: "hydralisk" 오타 수정 -> "hydra" (내부 키 통일)
