@@ -18,7 +18,10 @@ from unittest.mock import MagicMock
 
 
 class _IdLike:
-    """Enum 흉내 — ``UnitTypeId.OVERLORD`` 같은 어떤 속성도 동일한 sentinel."""
+    """Enum 흉내 — ``UnitTypeId.OVERLORD`` 같은 어떤 속성도 동일한 sentinel.
+
+    실제 sc2 의 enum 값은 ``.name`` / ``.value`` 속성을 노출하므로 동등하게 지원한다.
+    """
 
     _instances: dict[tuple[str, str], "_IdLike"] = {}
 
@@ -31,8 +34,19 @@ class _IdLike:
             cls._instances[key] = obj
         return cls._instances[key]
 
+    @property
+    def name(self) -> str:
+        return self._name
+
+    @property
+    def value(self) -> str:
+        return self._name
+
     def __repr__(self) -> str:
         return f"<{self._namespace}.{self._name}>"
+
+    def __str__(self) -> str:
+        return f"{self._namespace}.{self._name}"
 
     def __eq__(self, other: object) -> bool:
         return isinstance(other, _IdLike) and (self._namespace, self._name) == (
@@ -45,12 +59,25 @@ class _IdLike:
 
 
 class _IdCatalog(type):
-    """``__getattr__`` 로 모든 속성에 sentinel 을 돌려주는 metaclass."""
+    """``__getattr__`` 로 모든 속성에 sentinel 을 돌려주는 metaclass.
+
+    또한 ``Race["Zerg"]`` 같은 indexed access (실제 Enum API) 도 지원한다.
+    """
 
     def __getattr__(cls, name: str) -> _IdLike:  # noqa: D401
         if name.startswith("__"):
             raise AttributeError(name)
         return _IdLike(cls.__name__, name)
+
+    def __getitem__(cls, name: str) -> _IdLike:  # ``Race["Zerg"]``
+        return _IdLike(cls.__name__, name)
+
+    def __iter__(cls):  # 일부 코드가 list(UnitTypeId) 를 호출
+        return iter(())
+
+    def __instancecheck__(cls, obj) -> bool:
+        # 실제 sc2.Enum 처럼 ``isinstance(Race.Terran, Race)`` 가 True 가 되도록.
+        return isinstance(obj, _IdLike) and obj._namespace == cls.__name__
 
 
 class UnitTypeId(metaclass=_IdCatalog):
@@ -73,7 +100,7 @@ class EffectId(metaclass=_IdCatalog):
     pass
 
 
-class Race:
+class Race(metaclass=_IdCatalog):
     Zerg = _IdLike("Race", "Zerg")
     Terran = _IdLike("Race", "Terran")
     Protoss = _IdLike("Race", "Protoss")
@@ -81,7 +108,7 @@ class Race:
     NoRace = _IdLike("Race", "NoRace")
 
 
-class Difficulty:
+class Difficulty(metaclass=_IdCatalog):
     VeryEasy = _IdLike("Difficulty", "VeryEasy")
     Easy = _IdLike("Difficulty", "Easy")
     Medium = _IdLike("Difficulty", "Medium")

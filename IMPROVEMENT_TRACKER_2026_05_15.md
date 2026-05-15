@@ -73,9 +73,17 @@
 - 컬렉션 에러: **27 → 0**
 - 컬렉트된 테스트: **715 → 1174 (+459)**
 
-### Cycle 2: 런타임 실패 처리
-- [ ] 컬렉트 후 실제 실행 시 실패한 테스트 분류
-- [ ] 핵심 매니저 (queen, economy, combat) 우선 정상화
+### Cycle 2 (완료): 런타임 실패 처리
+- [x] 컬렉트 후 실제 실행 시 실패한 테스트 분류 (105 failed / 1055 passed)
+- [x] pytest-asyncio / pytest-timeout 설치 (async def 함수 86개 normalize)
+- [x] sc2 스텁 강화: `_IdLike.name` / `_IdLike.value` 속성 노출
+- [x] sc2 스텁 강화: `Race["Zerg"]` 인덱스 액세스 지원
+- [x] sc2 스텁 강화: `__instancecheck__` 로 `isinstance(Race.Terran, Race)` 가 True
+- [x] **봇 버그 수정**: `GameStateBlackboard.should_expand` — `is_supply_block` 오타 → `is_supply_blocked`
+- [x] **봇 버그 수정**: `GameStateBlackboard.should_expand` — 미네랄 여유 체크 누락 → 300 마이너스 요건 추가
+
+### 결과
+- 테스트 실행: **105 failed / 1055 passed → 0 failed / 1160 passed**, 14 skipped
 
 ### Cycle 3: 봇 로직 개선
 - [ ] MASTER_TODO_SC2.md 잔존 항목 정리
