@@ -56,12 +56,19 @@
 
 ---
 
-## ✅ 작업 순서
+## ✅ 작업 순서 — 사이클 #1 진행 상황
 
-1. **Phase 1**: H1/H2/H3 — 수집 차단/PyO3 패닉 회피해서 테스트가 깨끗이 통과
-2. **Phase 2**: C1 — opponent_modeling on_step 중복 해소
-3. **Phase 3**: C2/C3 — economy_manager 중복
-4. **Phase 4**: C4 — combat_manager 중복
-5. **Phase 5**: C5 — production_resilience 중복
-6. **Phase 6**: 전체 테스트 재실행 + 커밋/푸시
-7. **다음 사이클**: 결과 점검 후 신규 발견 항목 처리
+| Phase | 항목 | 상태 |
+|-------|------|------|
+| 1 | H1/H2/H3 테스트 수집 차단/PyO3 패닉 해소 | ✅ **완료** (commit 35e2776) |
+| 2 | C1 — opponent_modeling on_step + current_opponent_id 통일 | ✅ **완료** |
+| 3 | C2/C3 — economy_manager `_prevent_resource_banking`/`_reduce_gas_workers` 중복 제거 | ✅ **완료** |
+| 4 | C4 — combat_manager `_find_harass_target` 중복 제거 | ✅ **완료** |
+| 5 | C5 — production_resilience `build_terran_counters` 중복 제거 | ✅ **완료** |
+| 6 | 전체 테스트 재실행 + 커밋/푸시 | ✅ **완료** (365 passed / 25 skipped / 0 failed) |
+
+다음 사이클 후보 (추가 점검 필요):
+- M1 — bare `except Exception:` 360+ 곳 정리 (점진)
+- 추가 F811 잔여 확인 (다른 매니저 파일)
+- 통합 테스트(`tests/integration/`) 실행 가능성 점검
+- `wicked_zerg_challenger/tests/` 별도 테스트 디렉토리 가시화
