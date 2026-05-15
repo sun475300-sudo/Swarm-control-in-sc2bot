@@ -191,6 +191,41 @@ class TestOpponentModel(unittest.TestCase):
         self.assertEqual(strategy, "terran_bio")
         self.assertGreater(confidence, 0.0)
 
+    def test_strategy_prediction_handles_corrupted_load(self):
+        """
+        Regression: a model loaded from data where strategy_frequency has
+        entries but games_played==0 must not raise ZeroDivisionError when
+        falling back to most-frequent.
+        """
+        # Simulate corrupted/partial state: strategies exist but no game count
+        from collections import defaultdict
+
+        self.model.strategy_frequency = defaultdict(int, {"protoss_4gate": 3})
+        self.model.games_played = 0
+        # Unknown signal forces the fallback branch
+        strategy, confidence = self.model.predict_strategy(["unknown_signal"])
+        # We expect a graceful 'unknown' rather than a crash.
+        self.assertEqual(strategy, "unknown")
+        self.assertEqual(confidence, 0.0)
+
+    def test_predict_strategy_skips_empty_correlation_bucket(self):
+        """
+        Regression: an empty entry in early_signal_correlations (e.g. after a
+        corrupted load) must not divide by zero — just be skipped silently.
+        """
+        from collections import defaultdict
+
+        self.model.early_signal_correlations = defaultdict(
+            lambda: defaultdict(int),
+            {
+                "early_pool": {},  # empty bucket — total_signal_count == 0
+            },
+        )
+        # No exception, returns gracefully
+        strategy, confidence = self.model.predict_strategy(["early_pool"])
+        self.assertEqual(strategy, "unknown")
+        self.assertEqual(confidence, 0.0)
+
     # ==================== Timing Attack Prediction Tests ====================
 
     def test_expected_timing_attacks(self):

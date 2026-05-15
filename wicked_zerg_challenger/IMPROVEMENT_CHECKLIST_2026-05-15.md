@@ -9,6 +9,12 @@
 - [x] **F-002** `blackboard.py:should_expand`: 존재하지 않는 `is_supply_block` 속성 참조 → AttributeError
 - [x] **F-003** `blackboard.py:should_expand`: minerals < 300이어도 True 반환 → Hatchery 비용 미체크
 - [x] **F-004** `game_analytics_system.py`: 중복된 try/except 블록으로 SyntaxError (라인 419)
+- [x] **F-005** `blackboard.py:auto_adjust_authority`: 지속되는 CRITICAL 위협에서 EMERGENCY↔COMBAT 30초 진동 버그 → sticky timeout-lock 추가
+- [x] **I-001** `FrameSkipManager` 봇에 와이어링 + blackboard 위협 상태 기반 combat-mode 자동 전환
+- [x] **L-002** `EnhancedScoutSystem` deprecation 경고 정리 (lazy import)
+- [x] **T-001** `pytest-asyncio` deprecation 경고 정리
+- [x] **Q-001a** `on_step`/`scoring_system.on_step`/`awareness_engine.on_step` 의 silent except를 throttled debug log로 교체
+- [x] **CI-001** 전체 레포에 `black .` + `isort .` 적용 — CI lint 잡 main에서도 실패하던 것 해소
 
 ## 1. 미사용 인프라 (구현되어 있지만 와이어링 안됨)
 - [ ] **I-001** `utils/frame_skip.FrameSkipManager` — 클래스 정의·테스트 있지만 실제 봇 코드 어디에서도 import/사용 안 함
