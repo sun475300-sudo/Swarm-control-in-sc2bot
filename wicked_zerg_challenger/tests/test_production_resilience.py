@@ -28,8 +28,13 @@ from sc2.ids.unit_typeid import UnitTypeId
 from sc2.position import Point2
 
 
-class TestProductionResilience(unittest.TestCase):
-    """Test suite for ProductionResilience"""
+class TestProductionResilience(unittest.IsolatedAsyncioTestCase):
+    """Test suite for ProductionResilience.
+
+    ``IsolatedAsyncioTestCase`` is required because many tests below are
+    ``async def`` — under plain ``unittest.TestCase`` the framework would
+    silently leave the coroutine unawaited and report a false PASS.
+    """
 
     def setUp(self):
         """Set up test fixtures"""
@@ -115,17 +120,24 @@ class TestProductionResilience(unittest.TestCase):
 
     # ==================== Counter Unit Selection Tests ====================
 
-    async def test_get_counter_unit_terran_marine(self):
-        """Test counter selection against Terran marines"""
-        # Mock enemy composition with marines
+    def test_get_counter_unit_terran_marine(self):
+        """Test counter selection against Terran marines.
+
+        ``_get_counter_unit`` 의 현재 시그니처는
+        ``(enemy_units, has_roach_warren, has_hydra_den, has_spire)`` 이며
+        sync 메서드이다. 가벼운 보병에 대해서는 Roach Warren 보유 시
+        Roach 를 권고하는 분기를 검증한다.
+        """
         mock_marine = Mock()
         mock_marine.type_id = UnitTypeId.MARINE
-        self.bot.enemy_units = [mock_marine]
 
-        # Should recommend banelings against marines
-        result = await self.resilience._get_counter_unit("Terran")
+        result = self.resilience._get_counter_unit(
+            [mock_marine],
+            has_roach_warren=True,
+            has_hydra_den=False,
+            has_spire=False,
+        )
 
-        # Result could be BANELING, ROACH, or MUTALISK (all valid counters)
         valid_counters = [
             UnitTypeId.BANELING,
             UnitTypeId.ROACH,
@@ -134,11 +146,18 @@ class TestProductionResilience(unittest.TestCase):
         ]
         self.assertIn(result, valid_counters)
 
-    async def test_get_counter_unit_protoss(self):
-        """Test counter selection against Protoss"""
-        result = await self.resilience._get_counter_unit("Protoss")
+    def test_get_counter_unit_protoss(self):
+        """Test counter selection against Protoss (Stalker)."""
+        mock_stalker = Mock()
+        mock_stalker.type_id = UnitTypeId.STALKER
 
-        # Common Protoss counters
+        result = self.resilience._get_counter_unit(
+            [mock_stalker],
+            has_roach_warren=True,
+            has_hydra_den=True,
+            has_spire=False,
+        )
+
         valid_counters = [
             UnitTypeId.ROACH,
             UnitTypeId.HYDRALISK,
@@ -147,11 +166,18 @@ class TestProductionResilience(unittest.TestCase):
         ]
         self.assertIn(result, valid_counters)
 
-    async def test_get_counter_unit_zerg(self):
-        """Test counter selection against Zerg"""
-        result = await self.resilience._get_counter_unit("Zerg")
+    def test_get_counter_unit_zerg(self):
+        """Test counter selection against Zerg (Roach)."""
+        mock_roach = Mock()
+        mock_roach.type_id = UnitTypeId.ROACH
 
-        # Common Zerg counters
+        result = self.resilience._get_counter_unit(
+            [mock_roach],
+            has_roach_warren=True,
+            has_hydra_den=True,
+            has_spire=False,
+        )
+
         valid_counters = [
             UnitTypeId.ROACH,
             UnitTypeId.MUTALISK,

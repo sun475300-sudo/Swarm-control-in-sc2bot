@@ -728,78 +728,24 @@ class OpponentModeling:
     # ============================================================
     # Integration Methods (for main bot lifecycle)
     # ============================================================
+    #
+    # NOTE: 이전 버전에서는 ``on_game_start`` / ``on_step`` / ``on_game_end``
+    # 메서드가 여기 별도로 정의되어 있었으나, 이미 위쪽(클래스 상단)에서
+    # 정의된 ``on_start`` / ``on_step`` / ``on_end`` 와 의미가 중복되고
+    # ``self.current_opponent_id`` 대신 존재하지 않는 ``self.current_opponent``
+    # 를 참조하는 문제가 있었다. Python 동일 클래스 내 동일 이름 메서드
+    # 재정의가 ``on_step`` 을 오버라이드하여 실제 신호 감지/예측 로직이
+    # 통째로 사라지는 회귀가 발생했었음. 중복 메서드는 제거하고
+    # ``current_opponent`` 는 ``current_opponent_id`` 의 alias 로 노출한다.
 
-    def on_game_start(self, opponent_id: str, opponent_race=None):
-        """게임 시작 시 호출 - 적 추적 시작"""
-        self.current_opponent = opponent_id
-        # * FIX: GameHistory dataclass에 맞는 필드로 초기화
-        race_name = (
-            opponent_race.name
-            if opponent_race and hasattr(opponent_race, "name")
-            else "Unknown"
-        )
-        self.current_game_history = GameHistory(
-            game_id=f"game_{opponent_id}",
-            opponent_race=race_name,
-            opponent_style="unknown",
-            detected_strategy="unknown",
-            build_order_observed=[],
-            timing_attacks=[],
-            final_composition={},
-            game_result="unknown",
-            game_duration=0.0,
-            early_signals=[],
-            tech_progression=[],
-        )
-        self.observed_signals.clear()
+    @property
+    def current_opponent(self) -> Optional[str]:
+        """``current_opponent_id`` 와 동일한 alias (구버전 호출자 호환)."""
+        return self.current_opponent_id
 
-        # Load opponent model if exists
-        if opponent_id not in self.opponent_models:
-            self.opponent_models[opponent_id] = OpponentModel(opponent_id)
-            self.logger.info(f"[OPPONENT_MODELING] New opponent: {opponent_id}")
-        else:
-            self.logger.info(
-                f"[OPPONENT_MODELING] Known opponent: {opponent_id} ({self.opponent_models[opponent_id].games_played} games)"
-            )
-
-    async def on_step(self, iteration: int):
-        """매 프레임 호출 - 신호 감지"""
-        if not self.current_opponent or not self.bot:
-            return
-
-        game_time = self.bot.time
-
-        # Only detect signals in early game (0-180s)
-        if game_time <= 180.0:
-            await self._detect_early_signals(game_time)
-
-    def on_game_end(self, won: bool, lost: bool):
-        """게임 종료 시 호출 - 데이터 저장"""
-        if not self.current_opponent or not self.current_game_history:
-            return
-
-        # Update game history
-        self.current_game_history.game_won = won
-        self.current_game_history.game_lost = lost
-        self.current_game_history.early_signals = [
-            s.value for s in self.observed_signals
-        ]
-
-        # Detect strategy (placeholder - would need more logic)
-        if self.intel:
-            # Try to detect strategy from intel data
-            pass
-
-        # Update opponent model
-        model = self.opponent_models[self.current_opponent]
-        model.update_from_game(self.current_game_history)
-
-        # Save to disk
-        self.save_models()
-
-        self.logger.info(
-            f"[OPPONENT_MODELING] Game data saved for {self.current_opponent}"
-        )
+    @current_opponent.setter
+    def current_opponent(self, value: Optional[str]) -> None:
+        self.current_opponent_id = value
 
     def get_predicted_strategy(self) -> Tuple[Optional[str], float]:
         """현재 적의 전략 예측"""
