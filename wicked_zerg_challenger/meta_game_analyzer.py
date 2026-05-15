@@ -35,15 +35,24 @@ class MetaGameAnalyzer:
         """Record a game result for analysis"""
         self.game_history.append({**result, "timestamp": datetime.now().isoformat()})
 
-        strategy = result.get("strategy", "unknown")
-        self.strategy_performance[strategy]["wins"] += result.get("win", 0)
-        self.strategy_performance[strategy]["losses"] += 1 - result.get("win", 0)
+        # 정규화된 승/패 카운트. result.get("win")이 None/False/0이면 패배.
+        won = 1 if result.get("win") else 0
+        lost = 1 - won
 
+        strategy = result.get("strategy", "unknown")
+        self.strategy_performance[strategy]["wins"] += won
+        self.strategy_performance[strategy]["losses"] += lost
+
+        # 이전 버전은 race_performance / map_performance의 losses를
+        # 절대 증가시키지 않아 통계가 영구적으로 한쪽으로 치우치는 결함이
+        # 있었음. 동일하게 won/lost로 기록한다.
         race = result.get("enemy_race", "unknown")
-        self.race_performance[race]["wins"] += result.get("win", 0)
+        self.race_performance[race]["wins"] += won
+        self.race_performance[race]["losses"] += lost
 
         map_name = result.get("map", "unknown")
-        self.map_performance[map_name]["wins"] += result.get("win", 0)
+        self.map_performance[map_name]["wins"] += won
+        self.map_performance[map_name]["losses"] += lost
 
     def get_current_meta_strategies(self) -> List[MetaStrategy]:
         """Get current meta strategies based on win rates"""
