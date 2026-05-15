@@ -91,3 +91,24 @@ pyflakes 전체 스캔으로 새로 발견된 항목.
 - f-string is missing placeholders 249곳 (스타일/일부 누락된 변수 보간 가능성) — 파일별로 정리 필요
 - 미사용 지역 변수 (`game_time`, `regenerating`, `strategy_manager`, `non_combat_names` 등) — 죽은 코드 단서일 수 있음 ⇒ 각 케이스 검토 필요
 - ursina 모듈의 `from ursina import *` 별 정의 누락 경고 (visuals 패키지) — 외부 라이브러리이므로 영향 작음
+
+---
+
+## 🔁 사이클 #3 — blackboard 모듈 (2026-05-15)
+
+### 🔥 Critical
+
+| ID | 파일/라인 | 문제 | 상태 |
+|----|-----------|------|------|
+| C8 | `wicked_zerg_challenger/blackboard.py` | `Blackboard` alias 누락. `wicked_zerg_bot_pro_impl.py:31` 가 `from blackboard import Blackboard` 사용 — **봇 메인 import 시 ImportError 크래시** | ✅ **수정** — `Blackboard = GameStateBlackboard` alias 추가 |
+| C9 | `wicked_zerg_challenger/blackboard.py:544` | `should_expand()` 가 `self.resources.is_supply_block` 참조 — 실제 attribute 명은 `is_supply_blocked` (typo) → AttributeError | ✅ **수정** — `is_supply_blocked` 로 정정 |
+| C10 | `wicked_zerg_challenger/blackboard.py` `should_expand()` | minerals 체크 누락 — 미네랄 부족 상황에서도 True 반환 (해처리 코스트 300 미충족) | ✅ **수정** — `minerals >= 300` 조건 추가, 테스트 통과 (55/55) |
+
+영향 평가: C8 은 봇 메인 모듈 import 차단 → 게임 시작 불가능한 심각한 버그.
+테스트가 있었으나 collection 차단으로 발견되지 못함 (Catch-22).
+이번 사이클의 정확한 의의: **테스트 인프라 수정(사이클 #1) → 테스트 실행 가능 → 실제 봇 버그 자동 발견**.
+
+### 작업 결과
+
+- `wicked_zerg_challenger/tests/test_blackboard.py`: 0 → 55 passing
+- 메인 `tests/`: 365 passing (변동 없음)
