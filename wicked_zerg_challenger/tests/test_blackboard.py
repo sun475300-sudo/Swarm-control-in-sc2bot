@@ -262,6 +262,25 @@ class TestProductionQueue(unittest.TestCase):
         result = self.bb.get_next_production()
         self.assertEqual(result, ("ROACH", 5, "UnitFactory"))
 
+    def test_out_of_range_priority_falls_back_to_lowest(self):
+        """
+        Regression: passing a priority outside the known [0..3] range
+        previously raised KeyError. Now it should be demoted to 3 (lowest)
+        and still be retrievable via get_next_production.
+        """
+        self.bb.request_production("OVERLORD", 1, "SupplyMgr", priority=99)
+        result = self.bb.get_next_production()
+        self.assertEqual(result, ("OVERLORD", 1, "SupplyMgr"))
+
+    def test_out_of_range_priority_demoted_below_known_priorities(self):
+        """Out-of-range priority should sort behind any 0-3 request."""
+        self.bb.request_production("OVERLORD", 1, "SupplyMgr", priority=99)
+        self.bb.request_production("DRONE", 1, "EconomyManager", priority=2)
+        first = self.bb.get_next_production()
+        self.assertEqual(first, ("DRONE", 1, "EconomyManager"))
+        second = self.bb.get_next_production()
+        self.assertEqual(second, ("OVERLORD", 1, "SupplyMgr"))
+
     def test_priority_order(self):
         self.bb.request_production("DRONE", 1, "EconomyManager", priority=3)
         self.bb.request_production("ZERGLING", 4, "DefenseCoordinator", priority=0)

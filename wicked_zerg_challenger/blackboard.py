@@ -425,6 +425,17 @@ class GameStateBlackboard:
         if priority is None:
             priority = self.get_authority_priority(requester)
 
+        # Defensive: clamp priority into the known range [0..3] so a caller
+        # passing an out-of-range value (e.g. 5 from a misconfigured manager)
+        # gets demoted to lowest-priority instead of raising KeyError.
+        if priority not in self.production_queue:
+            self.logger.debug(
+                "request_production: unknown priority %r from %s, treating as 3 (low)",
+                priority,
+                requester,
+            )
+            priority = 3
+
         # 중복 요청 체크
         queue = self.production_queue[priority]
         for i, (utype, _, req) in enumerate(queue):
