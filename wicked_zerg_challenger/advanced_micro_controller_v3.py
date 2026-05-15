@@ -17,6 +17,7 @@ Integration:
 - Energy and cooldown management
 """
 
+import math
 from collections import defaultdict
 from typing import Dict, Optional, Set
 
@@ -83,7 +84,7 @@ class RavagerMicro:
         Returns:
             Predicted position
         """
-        if not Point2:
+        if Point2 is None:
             return None
 
         pos = enemy.position
@@ -96,9 +97,6 @@ class RavagerMicro:
                 vx = enemy.velocity.x if hasattr(enemy.velocity, "x") else 0
                 vy = enemy.velocity.y if hasattr(enemy.velocity, "y") else 0
             elif hasattr(enemy, "is_moving") and enemy.is_moving:
-                # Estimate direction from facing angle
-                import math
-
                 if hasattr(enemy, "facing"):
                     speed = enemy.movement_speed
                     angle = enemy.facing
@@ -1328,7 +1326,7 @@ class AdvancedMicroControllerV3:
         - 적이 사거리 9~11 -> 공격
         - 적 대공 유닛 감지 -> 즉시 후퇴
         """
-        if not UnitTypeId:
+        if UnitTypeId is None:
             return
 
         broodlords = self.bot.units(UnitTypeId.BROODLORD)

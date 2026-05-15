@@ -398,7 +398,7 @@ class RogueTacticsManager:
 
     async def _manage_active_drops(self) -> None:
         """진행 중인 드랍 관리"""
-        if not UnitTypeId:
+        if UnitTypeId is None:
             return
 
         try:

@@ -442,7 +442,7 @@ class SpellUnitManager:
         if not hasattr(self.bot, "structures"):
             return None
 
-        if not UnitTypeId:
+        if UnitTypeId is None:
             return None
 
         candidate_ids = self._unit_type_ids(
@@ -758,7 +758,7 @@ class SpellUnitManager:
 
     @staticmethod
     def _unit_type_ids(names: List[str]) -> List[object]:
-        if not UnitTypeId:
+        if UnitTypeId is None:
             return []
         unit_ids = []
         for name in names:

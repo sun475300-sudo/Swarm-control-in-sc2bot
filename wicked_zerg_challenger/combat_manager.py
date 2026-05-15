@@ -3664,7 +3664,7 @@ class CombatManager:
     def _get_enemy_center(self, enemy_units):
         if HELPERS_AVAILABLE:
             return centroid(enemy_units)
-        if not Point2:
+        if Point2 is None:
             return None
         items = list(enemy_units)
         if not items:

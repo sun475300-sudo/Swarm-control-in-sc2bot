@@ -41,11 +41,33 @@ def _ensure_sc2_path():
 
 _ensure_sc2_path()
 
-from sc2 import maps
-from sc2.data import Difficulty, Race
-from sc2.main import run_game
-from sc2.player import Bot, Computer
-from wicked_zerg_bot_pro_impl import WickedZergBotProImpl
+# `sc2.main` depends on mpyq, which is unavailable in many test/lint sandboxes.
+# Keep the lightweight enums at the top (Race/Difficulty are used by parse_args /
+# build_test_cases) but defer the heavy `run_game` import to run_single_test so
+# pytest can collect tests/test_sprint8_qa.py without mpyq.
+try:
+    from sc2 import maps
+    from sc2.data import Difficulty, Race
+    from sc2.player import Bot, Computer
+    _SC2_DATA_AVAILABLE = True
+except (ImportError, TypeError) as _sc2_import_err:
+    maps = None
+    Difficulty = None
+    Race = None
+    Bot = None
+    Computer = None
+    _SC2_DATA_AVAILABLE = False
+    logger.debug("sc2 data layer unavailable at import: %s", _sc2_import_err)
+
+try:
+    from sc2.main import run_game
+    from wicked_zerg_bot_pro_impl import WickedZergBotProImpl
+    _SC2_RUNTIME_AVAILABLE = _SC2_DATA_AVAILABLE
+except (ImportError, TypeError) as _sc2_runtime_err:
+    run_game = None
+    WickedZergBotProImpl = None
+    _SC2_RUNTIME_AVAILABLE = False
+    logger.debug("sc2 runtime (mpyq) unavailable at import: %s", _sc2_runtime_err)
 
 # GPU setup
 try:
@@ -60,31 +82,39 @@ except ImportError:
 
 # Test matrix
 MAPS = ["AbyssalReefLE", "AscensiontoAiurLE", "OdysseyLE"]
-RACES = [Race.Protoss, Race.Terran, Race.Zerg]
-DIFFICULTIES = [
-    (Difficulty.VeryEasy, "VeryEasy"),
-    (Difficulty.Easy, "Easy"),
-    (Difficulty.Medium, "Medium"),
-    (Difficulty.MediumHard, "MediumHard"),
-]
+if _SC2_DATA_AVAILABLE:
+    RACES = [Race.Protoss, Race.Terran, Race.Zerg]
+    DIFFICULTIES = [
+        (Difficulty.VeryEasy, "VeryEasy"),
+        (Difficulty.Easy, "Easy"),
+        (Difficulty.Medium, "Medium"),
+        (Difficulty.MediumHard, "MediumHard"),
+    ]
+else:
+    # Placeholder values for environments without sc2 data enums (tests, lint).
+    RACES = []
+    DIFFICULTIES = []
 
 GAMES_PER_MATCHUP = 1  # 1 game per combination = 36 total games
 
-RACE_BY_NAME = {
-    "Terran": Race.Terran,
-    "Protoss": Race.Protoss,
-    "Zerg": Race.Zerg,
-}
-
-DIFFICULTY_BY_NAME = {
-    "VeryEasy": Difficulty.VeryEasy,
-    "Easy": Difficulty.Easy,
-    "Medium": Difficulty.Medium,
-    "MediumHard": Difficulty.MediumHard,
-    "Hard": Difficulty.Hard,
-    "Harder": Difficulty.Harder,
-    "VeryHard": Difficulty.VeryHard,
-}
+if _SC2_DATA_AVAILABLE:
+    RACE_BY_NAME = {
+        "Terran": Race.Terran,
+        "Protoss": Race.Protoss,
+        "Zerg": Race.Zerg,
+    }
+    DIFFICULTY_BY_NAME = {
+        "VeryEasy": Difficulty.VeryEasy,
+        "Easy": Difficulty.Easy,
+        "Medium": Difficulty.Medium,
+        "MediumHard": Difficulty.MediumHard,
+        "Hard": Difficulty.Hard,
+        "Harder": Difficulty.Harder,
+        "VeryHard": Difficulty.VeryHard,
+    }
+else:
+    RACE_BY_NAME = {}
+    DIFFICULTY_BY_NAME = {}
 
 
 def parse_args(argv=None):
@@ -153,6 +183,11 @@ def build_test_cases(args):
 
 def run_single_test(map_name, race, difficulty, diff_name, game_num, total):
     """Run a single test game."""
+    if not _SC2_RUNTIME_AVAILABLE:
+        raise RuntimeError(
+            "sc2 runtime not available (mpyq/sc2.main failed to import); "
+            "cannot launch live game."
+        )
     race_name = race.name
     logger.info(f"\n{'='*60}")
     logger.info(f"  GAME {game_num}/{total}")

@@ -261,7 +261,7 @@ class CreepDenialSystem:
 
     async def _manage_overseers(self, game_time: float, is_zvz: bool) -> None:
         """감시군주 생산 및 배치 관리"""
-        if not UnitTypeId:
+        if UnitTypeId is None:
             return
 
         # 현재 감시군주 수 확인

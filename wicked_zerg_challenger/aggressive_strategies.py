@@ -221,7 +221,7 @@ class AggressiveStrategyExecutor:
         return 0
 
     def _pending_hatchery_count(self) -> int:
-        if not UnitTypeId:
+        if UnitTypeId is None:
             return 0
         already_pending = getattr(self.bot, "already_pending", None)
         if not callable(already_pending):
@@ -233,7 +233,7 @@ class AggressiveStrategyExecutor:
 
     def _should_preserve_third_base_minerals(self) -> bool:
         """Pause all-in spending until the third Hatchery is at least started."""
-        if not UnitTypeId:
+        if UnitTypeId is None:
             return False
 
         try:

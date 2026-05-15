@@ -240,7 +240,7 @@ class GameDataLogger:
             UnitTypeId.EVOLUTIONCHAMBER,
         ]
 
-        if not UnitTypeId:
+        if UnitTypeId is None:
             return
 
         for structure in self.bot.structures:

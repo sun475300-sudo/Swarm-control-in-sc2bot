@@ -548,7 +548,7 @@ class RealtimeAwarenessEngine:
 
     def _execute_emergency_actions(self, game_time: float) -> None:
         """가장 긴급한 행동을 봇에 직접 실행"""
-        if not UnitTypeId:
+        if UnitTypeId is None:
             return
 
         s = self.situation

@@ -316,7 +316,7 @@ class BoidsController:
             enemy_units: Enemy units
             skip_units: Set of unit tags to skip (e.g., burrowing units)
         """
-        if not Point2:
+        if Point2 is None:
             return
         skip_units = skip_units or set()
 
@@ -426,7 +426,7 @@ class BoidsController:
 
         Uses simple center-avoidance to spread units apart.
         """
-        if not Point2:
+        if Point2 is None:
             return
 
         actions = []

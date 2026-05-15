@@ -175,7 +175,7 @@ class CreepManager:
         return targets
 
     def _get_attack_path_targets(self) -> List[object]:
-        if not Point2:
+        if Point2 is None:
             return []
 
         # * A* 고속도로 웨이포인트 우선 사용 *
@@ -205,7 +205,7 @@ class CreepManager:
 
     @staticmethod
     def _dedupe_positions(positions: Iterable[object]) -> List[object]:
-        if not Point2:
+        if Point2 is None:
             return list(positions)
         deduped: List[object] = []
         for pos in positions:
@@ -273,7 +273,7 @@ class CreepManager:
         3. Filter: not too close to existing unused tumors (dist >= 10)
         4. Sort by distance to nearest uncreeped position (key optimization)
         """
-        if not Point2:
+        if Point2 is None:
             return None
 
         origin = tumor.position
@@ -650,7 +650,7 @@ class CreepSpreadManager:
             iteration: 현재 게임 반복 횟수
         """
         try:
-            if not UnitTypeId:
+            if UnitTypeId is None:
                 return
 
             game_time = getattr(self.bot, "time", 0.0)
@@ -687,7 +687,7 @@ class CreepSpreadManager:
         ):
             return
 
-        if not Point2:
+        if Point2 is None:
             return
 
         start = self.bot.start_location
@@ -871,7 +871,7 @@ class CreepSpreadManager:
         Returns:
             최적 배치 위치 또는 None
         """
-        if not Point2:
+        if Point2 is None:
             return None
 
         spread_range = self.TUMOR_SPREAD_RANGE if is_tumor_spread else 8.0
