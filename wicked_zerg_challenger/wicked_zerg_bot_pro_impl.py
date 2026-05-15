@@ -779,10 +779,9 @@ class WickedZergBotProImpl(BotAI):
                 # 게임 분석 기록
                 self.game_analytics.record_game(
                     game_id=getattr(self, "game_count", 0),
-                    map_name=(
-                        str(getattr(self, "game_info", {}).get("map_name", "Unknown"))
-                        if hasattr(self, "game_info")
-                        else "Unknown"
+                    map_name=str(
+                        getattr(getattr(self, "game_info", None), "map_name", "Unknown")
+                        or "Unknown"
                     ),
                     opponent_race=str(getattr(self, "enemy_race", "Unknown")).replace(
                         "Race.", ""
@@ -801,14 +800,9 @@ class WickedZergBotProImpl(BotAI):
                     and self.difficulty_progression
                 ):
                     try:
-                        map_name = (
-                            str(
-                                getattr(self, "game_info", {}).get(
-                                    "map_name", "Unknown"
-                                )
-                            )
-                            if hasattr(self, "game_info")
-                            else "Unknown"
+                        map_name = str(
+                            getattr(getattr(self, "game_info", None), "map_name", "Unknown")
+                            or "Unknown"
                         )
                         opponent_race = getattr(self, "enemy_race", None)
                         won = str(game_result) == "Victory"
