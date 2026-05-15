@@ -194,6 +194,64 @@ class TestAuthorityMode(unittest.TestCase):
         self.bb.auto_adjust_authority()
         self.assertEqual(self.bb.authority_mode, AuthorityMode.BALANCED)
 
+    def test_emergency_timeout_does_not_oscillate(self):
+        """
+        Regression: persistent CRITICAL threat shouldn't cause endless
+        EMERGENCY↔COMBAT ping-pong every 30s. After the EMERGENCY timeout
+        downgrades us to COMBAT, COMBAT should *stick* for the duration of
+        the same threat instead of being re-promoted back to EMERGENCY on
+        the very next tick.
+        """
+        # T=0: rush detected → EMERGENCY
+        self.bb.game_time = 0.0
+        self.bb.update_threat(ThreatLevel.CRITICAL, is_rushing=True)
+        self.bb.auto_adjust_authority()
+        self.assertEqual(self.bb.authority_mode, AuthorityMode.EMERGENCY)
+        first_change = self.bb.authority_changed_at
+
+        # T=31s: still rushing → EMERGENCY times out → COMBAT
+        self.bb.game_time = 31.0
+        self.bb.auto_adjust_authority()
+        self.assertEqual(self.bb.authority_mode, AuthorityMode.COMBAT)
+
+        # T=31.1s: still rushing, one tick later. The bug: we were
+        # immediately re-promoted to EMERGENCY, restarting the timer.
+        # Expected: stay in COMBAT until the threat actually changes.
+        self.bb.game_time = 31.1
+        self.bb.auto_adjust_authority()
+        self.assertEqual(self.bb.authority_mode, AuthorityMode.COMBAT)
+
+        # T=60s: still rushing (e.g. opponent contains us). Same expectation.
+        self.bb.game_time = 60.0
+        self.bb.auto_adjust_authority()
+        self.assertEqual(self.bb.authority_mode, AuthorityMode.COMBAT)
+
+    def test_emergency_re_triggers_on_new_threat_episode(self):
+        """
+        After EMERGENCY timed out and threat cleared, a brand-new rush
+        episode must be able to trigger EMERGENCY again.
+        """
+        # First episode: EMERGENCY then timeout to COMBAT
+        self.bb.game_time = 0.0
+        self.bb.update_threat(ThreatLevel.CRITICAL, is_rushing=True)
+        self.bb.auto_adjust_authority()
+        self.assertEqual(self.bb.authority_mode, AuthorityMode.EMERGENCY)
+        self.bb.game_time = 31.0
+        self.bb.auto_adjust_authority()
+        self.assertEqual(self.bb.authority_mode, AuthorityMode.COMBAT)
+
+        # Threat clears
+        self.bb.game_time = 60.0
+        self.bb.update_threat(ThreatLevel.NONE)
+        self.bb.auto_adjust_authority()
+        # not EMERGENCY anymore (BALANCED in MID_GAME default)
+
+        # New rush at T=120s should trigger EMERGENCY again
+        self.bb.game_time = 120.0
+        self.bb.update_threat(ThreatLevel.CRITICAL, is_rushing=True)
+        self.bb.auto_adjust_authority()
+        self.assertEqual(self.bb.authority_mode, AuthorityMode.EMERGENCY)
+
 
 class TestProductionQueue(unittest.TestCase):
     def setUp(self):
