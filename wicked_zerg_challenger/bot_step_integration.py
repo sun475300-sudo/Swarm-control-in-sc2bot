@@ -716,7 +716,12 @@ class BotStepIntegrator:
         blackboard.worker_count = self.bot.workers.amount
 
         # 4. 주요 유닛 카운트 업데이트
-        if UnitTypeId:
+        # already_pending() iterates the bot's structures + orders for each unit
+        # type, which is non-trivial; refresh ~2x/sec (every 11 frames at 22 FPS)
+        # instead of every step. The `current`/`pending` numbers feed strategy
+        # decisions that themselves cap their re-evaluation, so 11-frame
+        # staleness is invisible at the consumer layer.
+        if UnitTypeId and iteration % 11 == 0:
             key_units = [
                 UnitTypeId.DRONE,
                 UnitTypeId.OVERLORD,
