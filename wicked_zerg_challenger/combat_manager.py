@@ -2806,35 +2806,10 @@ class CombatManager:
             if self._has_units(enemy_units):
                 await self._mutalisk_attack(mutalisks, enemy_units)
 
-    def _find_harass_target(self):
-        """Find best harassment target (enemy base with workers)."""
-        # Try enemy main base
-        if (
-            hasattr(self.bot, "enemy_start_locations")
-            and self.bot.enemy_start_locations
-        ):
-            return self.bot.enemy_start_locations[0]
-
-        # Try known enemy structures
-        enemy_structures = getattr(self.bot, "enemy_structures", [])
-        if enemy_structures:
-            # Find townhalls
-            townhall_names = [
-                "NEXUS",
-                "COMMANDCENTER",
-                "ORBITALCOMMAND",
-                "PLANETARYFORTRESS",
-                "HATCHERY",
-                "LAIR",
-                "HIVE",
-            ]
-            for struct in enemy_structures:
-                if getattr(struct.type_id, "name", "") in townhall_names:
-                    return struct.position
-            # Any structure as fallback
-            return enemy_structures[0].position
-
-        return None
+    # NOTE: ``_find_harass_target`` 의 활성 구현은 본 클래스 후반부에 정의된
+    # 버전이다 (워커 → 테크 건물 → 적 본진 우선순위). 이전에는 이 위치에도
+    # 단순한 enemy-base-only 구현이 있었으나, 같은 이름으로 후방에서 재정의되어
+    # 런타임에는 항상 후자가 사용되고 있었다. 죽은 코드 제거.
 
     async def _execute_harass(self, mutalisks, enemy_units):
         """
