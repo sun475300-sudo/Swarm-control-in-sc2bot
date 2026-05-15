@@ -93,9 +93,14 @@
 - [x] E713 (not in 안티패턴 2건) auto-fix
 - [x] F401 unused imports 4건 auto-fix
 
-### Cycle 4 (다음): 후속 개선 후보
+### Cycle 4 (완료): 추가 정밀 점검
+- [x] `wicked_zerg_challenger/tests/test_blackboard.py`: 회귀 가드 테스트 2건 추가 (`test_should_not_expand_when_supply_blocked`, `test_should_not_expand_under_attack`)
+- [x] `wicked_zerg_challenger/bot_step_integration.py:2166`: B023 — for-loop 안에서 `lambda: self._build_tech(tech_type)` 가 loop variable 을 캡처. 매 iteration 마다 같은 변수를 참조하므로 비동기 호출 / 저장 시 마지막 값만 쓰이는 위험. default 인자 바인딩으로 수정.
+
+### Cycle 5 (계속): 남은 정적 분석 카테고리
+- [ ] B023 다른 후보 (advanced_worker_optimizer, battle_preparation_system) — 즉시 평가되므로 영향 적으나 안전성 위해 일괄 정리 검토
 - [ ] E741 ambiguous variable names (23건)
-- [ ] F541 f-string missing placeholders (254건)
+- [ ] F541 f-string missing placeholders (254건) — 단순 스타일
 - [ ] F841 unused-variable (131건)
 - [ ] STRATEGY_PLAN.md 미구현 단계 추적
 - [ ] BUG_ERROR_LOG.md 미해결 잔존

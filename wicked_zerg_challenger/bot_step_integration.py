@@ -2161,9 +2161,12 @@ class BotStepIntegrator:
                                 await self.bot.aggressive_tech_builder.recommend_tech_builds()
                             )
                             for tech_type, base_supply, priority in recommendations:
+                                # default 인자 바인딩으로 loop variable 캡처 (B023).
+                                # 람다가 build_tech_aggressively 내부에서 비동기 호출/저장될
+                                # 경우 마지막 iteration 값만 항상 쓰이는 버그를 방지한다.
                                 await self.bot.aggressive_tech_builder.build_tech_aggressively(
                                     tech_type,
-                                    lambda: self._build_tech(tech_type),
+                                    lambda t=tech_type: self._build_tech(t),
                                     base_supply,
                                     priority,
                                 )
