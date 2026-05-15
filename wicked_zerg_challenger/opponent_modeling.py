@@ -339,7 +339,15 @@ class OpponentModeling:
         )
 
     async def on_step(self, iteration: int):
-        """매 프레임 실행"""
+        """매 프레임 실행 — early signals + 빌드/타이밍/테크 트래킹 + blackboard 동기화.
+
+        주의: 과거에 같은 클래스 안에 ``on_step`` 이 두 개 정의되어 있었고 (line ~765)
+        뒷쪽 정의가 Python class scoping 으로 인해 이 풍부한 구현을 덮어쓰는 회귀가
+        있었다. 안전 가드(``current_opponent`` / ``bot`` None 체크) 를 여기 통합해
+        두 번째 정의를 제거했다.
+        """
+        if not getattr(self, "bot", None):
+            return
         if iteration - self.last_update < self.update_interval:
             return
 
@@ -761,17 +769,6 @@ class OpponentModeling:
             self.logger.info(
                 f"[OPPONENT_MODELING] Known opponent: {opponent_id} ({self.opponent_models[opponent_id].games_played} games)"
             )
-
-    async def on_step(self, iteration: int):
-        """매 프레임 호출 - 신호 감지"""
-        if not self.current_opponent or not self.bot:
-            return
-
-        game_time = self.bot.time
-
-        # Only detect signals in early game (0-180s)
-        if game_time <= 180.0:
-            await self._detect_early_signals(game_time)
 
     def on_game_end(self, won: bool, lost: bool):
         """게임 종료 시 호출 - 데이터 저장"""

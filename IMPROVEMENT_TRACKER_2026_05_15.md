@@ -85,8 +85,18 @@
 ### 결과
 - 테스트 실행: **105 failed / 1055 passed → 0 failed / 1160 passed**, 14 skipped
 
-### Cycle 3: 봇 로직 개선
-- [ ] MASTER_TODO_SC2.md 잔존 항목 정리
+### Cycle 3 (완료): 정적 분석 / 봇 로직 버그
+- [x] `wicked_zerg_challenger/game_analytics_system.py`: IndentationError + 중복 except 블록 — 봇 임포트 자체가 실패하던 syntax bug
+- [x] `wicked_zerg_challenger/wicked_zerg_bot_pro_impl.py:572`: F823 — `traceback` UnboundLocalError. 함수 안쪽의 local `import traceback` 제거.
+- [x] `wicked_zerg_challenger/opponent_modeling.py`: F811 — `OpponentModeling.on_step` 이 같은 클래스에서 두 번 정의되어 풍부한 구현(빌드/타이밍/테크 트래킹)이 minimal 구현에 덮여 dead code 였음. 안전 가드 통합 후 단일 메서드로 정리.
+- [x] `wicked_zerg_challenger/local_training/production_resilience.py`: F811 — `build_terran_counters` 중복 정의. TechCoordinator 통합본만 유지.
+- [x] E713 (not in 안티패턴 2건) auto-fix
+- [x] F401 unused imports 4건 auto-fix
+
+### Cycle 4 (다음): 후속 개선 후보
+- [ ] E741 ambiguous variable names (23건)
+- [ ] F541 f-string missing placeholders (254건)
+- [ ] F841 unused-variable (131건)
 - [ ] STRATEGY_PLAN.md 미구현 단계 추적
 - [ ] BUG_ERROR_LOG.md 미해결 잔존
 
