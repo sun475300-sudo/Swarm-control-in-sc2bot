@@ -624,6 +624,35 @@ class TestOpponentModeling(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(stats["most_common_strategy"], "zerg_rush")
 
 
+class TestOpponentModelingFieldNameRegression(unittest.TestCase):
+    """Regression guard: every lifecycle method must reference the same opponent-id
+    attribute. Earlier `on_step`/`on_game_start`/`on_game_end`/`get_predicted_strategy`
+    referenced `current_opponent` while `__init__`/`on_start` set `current_opponent_id`,
+    so on_step crashed with AttributeError when run for real.
+
+    The async tests masked this by silently passing as un-awaited coroutines.
+    """
+
+    def test_no_bare_current_opponent_reference_remains(self):
+        path = os.path.join(
+            os.path.dirname(__file__), "..", "opponent_modeling.py"
+        )
+        with open(path, "r", encoding="utf-8") as fh:
+            src = fh.read()
+        # Anything matching `current_opponent` followed by NOT an underscore is the bug.
+        # The legal token is `current_opponent_id`. `current_opponent_models` is fine
+        # too because the next char is `_`. We only want to fail on a word-boundary
+        # case like `self.current_opponent or` / `self.current_opponent not in ...`.
+        import re
+        offenders = re.findall(r"self\.current_opponent\b(?!_)", src)
+        self.assertEqual(
+            offenders,
+            [],
+            "Bare `self.current_opponent` reference returned; this attribute does "
+            "not exist (canonical name is `self.current_opponent_id`).",
+        )
+
+
 # Run tests
 if __name__ == "__main__":
     unittest.main(verbosity=2)

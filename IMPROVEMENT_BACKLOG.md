@@ -54,8 +54,20 @@ opponent_modeling.py, overlord_vision_network.py, production_controller.py
 
 Each cycle = (1) run tests → (2) fix top issues → (3) commit → (4) push → repeat.
 
-- Cycle 1: P0.1 + P0.3 (blackboard alias + sc2 import hardening, batch 1)
-- Cycle 2: P0.3 batch 2 + P0.2 (lazy import of sc2.main)
-- Cycle 3: P2.1 + P3.1 + P3.2 (predict_enemy_position robustness)
-- Cycle 4: P2.4 (visibility logging for fallback imports)
+- Cycle 1: P0.1 + P0.3 (blackboard alias + sc2 import hardening, batch 1) ✅
+- Cycle 2: P0.2 + P3.1/P3.2 (lazy sc2.main import + brittle-guard cleanup) ✅
+- Cycle 3: Async test runner fix + opponent_modeling field unification ✅
+- Cycle 4: Silent-except visibility logging + regression test for cycle 3 bug ✅
 - Cycle 5: Continued sweeps + code quality
+
+## Issues surfaced after Cycle 3 (live discoveries)
+
+| # | Item | State |
+|---|------|-------|
+| L1 | `async def test_*` on `unittest.TestCase` silently pass (return coroutine, never awaited) | Fixed for 2 known classes; regression test added |
+| L2 | `OpponentModeling.current_opponent` vs `current_opponent_id` split-brain | Fixed + regression test |
+| L3 | `ProductionResilience._get_counter_unit` tests targeted dead old API | Fixed; tests rewritten against current signature |
+| L4 | `wicked_zerg_bot_pro_impl.on_step` bare `except Exception: pass` silenced scoring/awareness errors | Now logged at WARN |
+| L5 | `macro_cycle.py` 4× `except Exception: pass` silenced overlord/larva/creep failures | Now logged at DEBUG |
+| L6 | `pytest.ini` referenced missing `timeout` option (warning) and missing asyncio loop scope | Fixed |
+| L7 | Module-import time DeprecationWarning from `EnhancedScoutSystem` even when V2 active | Fixed by lazy load |
