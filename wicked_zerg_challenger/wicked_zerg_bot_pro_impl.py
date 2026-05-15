@@ -33,6 +33,7 @@ from bot_step_integration import BotStepIntegrator
 from difficulty_progression import DifficultyProgression
 from personality_module import PersonalityMode, PersonalityModule
 
+from utils.frame_skip import FrameSkipManager
 from utils.logger import setup_logger
 
 
@@ -67,6 +68,9 @@ class WickedZergBotProImpl(BotAI):
 
         # Initialize managers (lazy loading)
         self.blackboard = Blackboard()  # * Blackboard (Single Source of Truth) *
+        # * Frame-skip throttler: managers consult self.frame_skip.should_execute()
+        #   so heavy systems (intel/upgrade/creep) can opt into combat-aware throttling.
+        self.frame_skip = FrameSkipManager()
         self.defense_coordinator = None  # * DefenseCoordinator (Unified Defense) *
         self.early_defense = None  # * EarlyDefenseSystem (0-3 min rush defense) *
         self.production_controller = (
@@ -430,6 +434,21 @@ class WickedZergBotProImpl(BotAI):
 
         # Store iteration as attribute for other modules to access
         self.iteration = iteration
+
+        # * Sync frame-skip combat-mode flag from blackboard threat state so
+        #   downstream managers checking self.frame_skip.should_execute() get
+        #   the correct (combat vs. peace) intervals automatically.
+        if self.frame_skip is not None and self.blackboard is not None:
+            try:
+                threat = getattr(self.blackboard, "threat", None)
+                in_combat = bool(
+                    getattr(self.blackboard, "is_under_attack", False)
+                    or (threat is not None and getattr(threat, "is_rushing", False))
+                )
+                self.frame_skip.set_combat_mode(in_combat)
+            except Exception:
+                # Never let frame-skip bookkeeping abort a game step.
+                pass
 
         # * Feature 86: Cache our unit tags for unit lost tracking *
         if iteration % 22 == 0:
