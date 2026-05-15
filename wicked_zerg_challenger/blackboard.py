@@ -544,3 +544,7 @@ class GameStateBlackboard:
             and not self.resources.is_supply_block
             and not self.is_under_attack
         )
+
+
+# 호환 alias — 기존 코드 / 테스트에서 ``Blackboard`` 라는 이름으로 임포트
+Blackboard = GameStateBlackboard

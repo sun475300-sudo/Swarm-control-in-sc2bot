@@ -18,6 +18,66 @@ PROJECT_ROOT = Path(__file__).parent.parent
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
+# wicked_zerg_challenger 의 ``from utils.logger import ...`` 같은 상대 import 패턴이
+# 작동하려면 패키지 루트가 프로젝트 루트보다 sys.path 앞쪽에 있어야 한다. 그렇지 않으면
+# 프로젝트 루트의 다른 ``utils`` 패키지(jarvis_features 용 ``openclaw_helper``)가 먼저
+# 캐시되어 blackboard.py 등에서 ``utils.logger`` 를 찾지 못한다.
+#
+# pytest 가 import-mode=prepend 로 PROJECT_ROOT 를 [0] 에 다시 끼워넣기 때문에 WZC 를
+# 단순히 한 번 더 prepend 한 뒤, ``pytest_configure`` 훅에서도 한 번 더 보정한다.
+_WZC_PKG = PROJECT_ROOT / "wicked_zerg_challenger"
+
+
+def _ensure_wzc_first() -> None:
+    """``wicked_zerg_challenger`` 디렉토리가 sys.path 최상단에 오도록 강제한다."""
+    s = str(_WZC_PKG)
+    if not _WZC_PKG.is_dir():
+        return
+    # 모든 기존 occurrence 제거 후 맨 앞에 삽입
+    while s in sys.path:
+        sys.path.remove(s)
+    sys.path.insert(0, s)
+
+
+# ``scripts`` 처럼 두 곳에 동일 이름이 존재하는 패키지는 부분 캐시 문제를 일으킨다.
+# 한 테스트가 ``local_training/scripts`` (regular package) 를 캐시해 두면 그 다음에 컬렉트되는
+# 테스트가 진짜 ``scripts.ladder_tracker`` 를 찾지 못한다. 매 컬렉트 시작 시 namespace
+# 패키지 캐시를 비워 다음 import 가 fresh 한 namespace 검색을 하도록 한다.
+_AMBIGUOUS_NAMESPACES = ("scripts",)
+
+
+def _refresh_ambiguous_namespaces() -> None:
+    for n in _AMBIGUOUS_NAMESPACES:
+        m = sys.modules.get(n)
+        if m is None:
+            continue
+        if getattr(m, "__file__", None) is None:
+            sys.modules.pop(n, None)
+            for key in list(sys.modules.keys()):
+                if key.startswith(n + "."):
+                    sys.modules.pop(key, None)
+
+
+_ensure_wzc_first()
+
+
+def pytest_configure(config):  # pragma: no cover - 훅
+    _ensure_wzc_first()
+
+
+def pytest_collectstart(collector):  # pragma: no cover - 훅
+    _ensure_wzc_first()
+    _refresh_ambiguous_namespaces()
+
+# burnysc2 미설치 환경에서도 컬렉션이 통과하도록 공용 stub 주입.
+# 실제 sc2 라이브러리가 설치된 경우엔 no-op.
+try:
+    import sc2  # type: ignore  # noqa: F401
+except ImportError:
+    from tests._sc2_stub import install_sc2_stub
+
+    install_sc2_stub()
+
 
 # ═══════════════════════════════════════════════════════
 # 경로 관련 Fixtures
@@ -163,3 +223,4 @@ def mock_logger():
     mock.error = MagicMock()
     mock.critical = MagicMock()
     return mock
+
