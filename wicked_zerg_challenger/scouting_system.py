@@ -2,7 +2,7 @@
 """Scouting helpers used by roadmap and matchup-specific systems."""
 
 import logging
-from typing import Dict, Iterable, List, Optional, Set
+from typing import Dict, List, Optional, Set
 
 _logger = logging.getLogger("ScoutingSystem")
 
