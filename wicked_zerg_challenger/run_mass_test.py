@@ -7,12 +7,12 @@ All difficulties x All races = comprehensive test matrix
 GPU acceleration enabled for all computations.
 """
 
+import argparse
 import json
 import logging
 import os
 import sys
 import time
-import argparse
 from datetime import datetime
 from pathlib import Path
 
@@ -54,11 +54,12 @@ def _import_runtime():
     """
     from sc2 import maps as _maps  # noqa: WPS433
     from sc2.main import run_game as _run_game  # noqa: WPS433
-    from sc2.player import Bot as _Bot, Computer as _Computer  # noqa: WPS433
-    from wicked_zerg_bot_pro_impl import (  # noqa: WPS433
-        WickedZergBotProImpl as _Impl,
-    )
+    from sc2.player import Bot as _Bot  # noqa: WPS433
+    from sc2.player import Computer as _Computer
+    from wicked_zerg_bot_pro_impl import WickedZergBotProImpl as _Impl  # noqa: WPS433
+
     return _maps, _run_game, _Bot, _Computer, _Impl
+
 
 # GPU setup
 try:
@@ -136,9 +137,7 @@ def build_test_cases(args):
     if not selected_maps:
         selected_maps = list(MAPS)
 
-    selected_races = (
-        [RACE_BY_NAME[args.opponent]] if args.opponent else list(RACES)
-    )
+    selected_races = [RACE_BY_NAME[args.opponent]] if args.opponent else list(RACES)
     selected_difficulties = (
         [(DIFFICULTY_BY_NAME[args.difficulty], args.difficulty)]
         if args.difficulty
@@ -232,7 +231,9 @@ def main(argv=None):
 
     if args.dry_run:
         for i, (map_name, race, _difficulty, diff_name) in enumerate(test_cases, 1):
-            logger.info("  DRY %02d/%02d: %s vs %s %s", i, total, map_name, race.name, diff_name)
+            logger.info(
+                "  DRY %02d/%02d: %s vs %s %s", i, total, map_name, race.name, diff_name
+            )
         logger.info("  Dry run complete; no SC2 games launched.")
         return
 
