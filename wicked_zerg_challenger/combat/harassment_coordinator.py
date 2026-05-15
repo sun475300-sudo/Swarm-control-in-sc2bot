@@ -1546,7 +1546,11 @@ class HarassmentCoordinator:
         elif economic_advantage or military_advantage:
             self.set_aggressive_mode(AggressiveMode.OPPORTUNISTIC)
         else:
-            self.set_aggressive_mode(AggressiveMode.OPPORTUNISTIC)
+            # Bug fix: previously this also returned OPPORTUNISTIC, so the
+            # bot kept committing 10% of its army to harassment even when
+            # behind in both economy *and* military — the exact scenario
+            # where the docstring says we should go PASSIVE ("방어 필요").
+            self.set_aggressive_mode(AggressiveMode.PASSIVE)
 
     # ================================================================
     # * Phase 22: 일꾼 처치 추적 *
