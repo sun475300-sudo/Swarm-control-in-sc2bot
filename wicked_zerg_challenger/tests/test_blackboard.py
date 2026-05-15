@@ -194,6 +194,54 @@ class TestAuthorityMode(unittest.TestCase):
         self.bb.auto_adjust_authority()
         self.assertEqual(self.bb.authority_mode, AuthorityMode.BALANCED)
 
+    def test_emergency_timeout_sticks_to_combat(self):
+        # Regression: the 30s EMERGENCY → COMBAT downgrade used to last
+        # exactly one frame. The next call would see "still rushing" and
+        # the timeout branch (which only fires when authority_mode is
+        # EMERGENCY) wouldn't re-trigger, so the function fell through
+        # to `set_authority_mode(EMERGENCY, "Rush detected")` and flipped
+        # straight back. Pin COMBAT until the threat clears.
+        self.bb.threat.is_rushing = True
+        self.bb.game_time = 0.0
+        self.bb.auto_adjust_authority()
+        self.assertEqual(self.bb.authority_mode, AuthorityMode.EMERGENCY)
+
+        self.bb.game_time = 35.0
+        self.bb.auto_adjust_authority()
+        self.assertEqual(self.bb.authority_mode, AuthorityMode.COMBAT)
+
+        # Still rushing on the next tick — must stay COMBAT, not flip back.
+        self.bb.game_time = 35.5
+        self.bb.auto_adjust_authority()
+        self.assertEqual(self.bb.authority_mode, AuthorityMode.COMBAT)
+
+        self.bb.game_time = 60.0
+        self.bb.auto_adjust_authority()
+        self.assertEqual(self.bb.authority_mode, AuthorityMode.COMBAT)
+
+    def test_emergency_timeout_resets_when_threat_clears(self):
+        # After the timeout sticks, a *new* rush episode must re-enter
+        # EMERGENCY — the sticky flag clears the moment threat goes away.
+        self.bb.threat.is_rushing = True
+        self.bb.game_time = 0.0
+        self.bb.auto_adjust_authority()
+        self.bb.game_time = 35.0
+        self.bb.auto_adjust_authority()
+        self.assertEqual(self.bb.authority_mode, AuthorityMode.COMBAT)
+
+        # Threat clears
+        self.bb.threat.is_rushing = False
+        self.bb.update_threat(ThreatLevel.NONE)
+        self.bb.game_time = 70.0
+        self.bb.auto_adjust_authority()
+        self.assertNotEqual(self.bb.authority_mode, AuthorityMode.EMERGENCY)
+
+        # New rush
+        self.bb.threat.is_rushing = True
+        self.bb.game_time = 80.0
+        self.bb.auto_adjust_authority()
+        self.assertEqual(self.bb.authority_mode, AuthorityMode.EMERGENCY)
+
 
 class TestProductionQueue(unittest.TestCase):
     def setUp(self):
