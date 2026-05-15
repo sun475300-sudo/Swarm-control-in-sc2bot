@@ -21,7 +21,7 @@ from utils.logger import get_logger
 try:
     from sc2.ids.unit_typeid import UnitTypeId
     from sc2.position import Point2
-except ImportError:
+except (ImportError, TypeError):
     UnitTypeId = None
     Point2 = None
 
@@ -538,9 +538,14 @@ class GameStateBlackboard:
         )
 
     def should_expand(self) -> bool:
-        """확장 가능한 상황인가?"""
+        """확장 가능한 상황인가? (해처리 자원 300 이상 필요)"""
         return (
             self.threat.level == ThreatLevel.NONE
-            and not self.resources.is_supply_block
+            and not self.resources.is_supply_blocked
             and not self.is_under_attack
+            and self.resources.minerals >= 300
         )
+
+
+# Backward-compatible alias — older modules and tests import `Blackboard`.
+Blackboard = GameStateBlackboard

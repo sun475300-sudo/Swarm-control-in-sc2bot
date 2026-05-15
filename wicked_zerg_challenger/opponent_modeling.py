@@ -23,7 +23,7 @@ from utils.logger import get_logger
 
 try:
     from sc2.bot_ai import BotAI
-except ImportError:
+except (ImportError, TypeError):
     pass
 
 

@@ -19,7 +19,7 @@ else:
         from sc2.position import Point2
         from sc2.unit import Unit
         from sc2.units import Units
-    except ImportError:
+    except (ImportError, TypeError):
         Units = object
         Unit = object
         Point2 = tuple
@@ -517,7 +517,7 @@ class CombatManager:
                             self.logger.info(
                                 f"[{int(game_time)}s] KILL SQUAD ACTIVATED: Hunting {target.type_id.name}"
                             )
-            except ImportError:
+            except (ImportError, TypeError):
                 pass
 
         # === TASK 2.3: * ULTRA-AGGRESSIVE Early Zergling Harass (1분-7분) * ===
@@ -553,7 +553,7 @@ class CombatManager:
                             self.logger.info(
                                 f"[{int(game_time)}s] EARLY HARASS: StrategyManager triggered!"
                             )
-            except ImportError:
+            except (ImportError, TypeError):
                 pass
 
         # === TASK 2.5: Counter Attack (after winning a battle) ===
@@ -595,7 +595,7 @@ class CombatManager:
                             self.logger.info(
                                 f"[{int(game_time)}s] [*] EARLY PRESSURE: {len(zerglings)} lings! [*]"
                             )
-            except ImportError:
+            except (ImportError, TypeError):
                 pass
 
         # === TASK 2.6: * MID-GAME TIMING ATTACK (5-8분) * ===
@@ -627,7 +627,7 @@ class CombatManager:
                     if enemy_base:
                         # Priority 75 (higher than counter_attack)
                         tasks_to_execute.append(("mid_timing_attack", enemy_base, 75))
-            except ImportError:
+            except (ImportError, TypeError):
                 pass
 
         # === TASK 2.7: *** 10-15분 강력한 타이밍 공격 *** ===
@@ -649,7 +649,7 @@ class CombatManager:
                             self.logger.info(
                                 f"[{int(game_time)}s] [*][*][*] MAJOR TIMING ATTACK: {army_supply} supply army! [*][*][*]"
                             )
-            except ImportError:
+            except (ImportError, TypeError):
                 pass
 
         # === TASK 2.8: * EXPANSION DENIAL (확장 견제) * ===
@@ -1060,7 +1060,7 @@ class CombatManager:
 
                 try:
                     from sc2.ids.unit_typeid import UnitTypeId
-                except ImportError:
+                except (ImportError, TypeError):
                     continue
 
                 # 1. 공격 부대 선별 (저글링 위주, 빠른 기동성)
@@ -1302,7 +1302,7 @@ class CombatManager:
 
         try:
             from sc2.ids.unit_typeid import UnitTypeId
-        except ImportError:
+        except (ImportError, TypeError):
             # Fallback to simple attack
             for unit in units:
                 try:
@@ -2460,7 +2460,7 @@ class CombatManager:
 
                 for x, y in corners:
                     search_locations.append(Point2((x, y)))
-            except ImportError:
+            except (ImportError, TypeError):
                 pass
 
         # 3. 맵 중앙
@@ -3921,7 +3921,7 @@ class CombatManager:
                     from sc2.position import Point2
 
                     threat_position = Point2((x_sum / count, y_sum / count))
-                except ImportError:
+                except (ImportError, TypeError):
                     threat_position = nearby_enemies[0].position
 
         # 위협이 없으면 방어 모드 해제
@@ -3975,7 +3975,7 @@ class CombatManager:
 
         try:
             from sc2.ids.unit_typeid import UnitTypeId
-        except ImportError:
+        except (ImportError, TypeError):
             return
 
         # * 패배 직감 시스템 연동 *
@@ -4688,7 +4688,7 @@ class CombatManager:
 
         try:
             from sc2.ids.unit_typeid import UnitTypeId
-        except ImportError:
+        except (ImportError, TypeError):
             return
 
         army_units = self._filter_army_units(self.bot.units)
@@ -4941,7 +4941,7 @@ class CombatManager:
                 if len(enemy_threats) >= 6:  # 6+ enemies
                     return True
 
-        except ImportError:
+        except (ImportError, TypeError):
             pass
 
         return False
@@ -5055,7 +5055,7 @@ class CombatManager:
             ):
                 return self.bot.enemy_start_locations[0]
 
-        except ImportError:
+        except (ImportError, TypeError):
             pass
 
         return None

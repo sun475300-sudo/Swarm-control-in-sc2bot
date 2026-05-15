@@ -96,7 +96,7 @@ class LogicActivityTracker:
 try:
     from sc2.bot_ai import BotAI
     from sc2.ids.unit_typeid import UnitTypeId
-except ImportError:
+except (ImportError, TypeError):
 
     class BotAI:
         pass
