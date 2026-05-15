@@ -537,10 +537,21 @@ class GameStateBlackboard:
             and self.game_phase != GamePhase.OPENING
         )
 
+    # Minimum minerals to even consider expansion. A Zerg Hatchery
+    # costs 300; the gate is kept slightly below so callers can stage a
+    # drone toward the build site while minerals are still mining in.
+    EXPAND_MINERAL_GATE: int = 275
+
     def should_expand(self) -> bool:
         """확장 가능한 상황인가?"""
         return (
             self.threat.level == ThreatLevel.NONE
-            and not self.resources.is_supply_block
+            and not self.resources.is_supply_blocked
             and not self.is_under_attack
+            and self.resources.minerals >= self.EXPAND_MINERAL_GATE
         )
+
+
+# Public alias: production code and tests import `Blackboard`,
+# while the canonical class name remains `GameStateBlackboard`.
+Blackboard = GameStateBlackboard

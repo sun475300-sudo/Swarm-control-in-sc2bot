@@ -41,11 +41,9 @@ def _ensure_sc2_path():
 
 _ensure_sc2_path()
 
-from sc2 import maps
+# CLI parsing should not require the SC2 runtime stack (mpyq/run_game),
+# so heavy imports are deferred to `main()` / `run_single_test()`.
 from sc2.data import Difficulty, Race
-from sc2.main import run_game
-from sc2.player import Bot, Computer
-from wicked_zerg_bot_pro_impl import WickedZergBotProImpl
 
 # GPU setup
 try:
@@ -153,6 +151,13 @@ def build_test_cases(args):
 
 def run_single_test(map_name, race, difficulty, diff_name, game_num, total):
     """Run a single test game."""
+    # Deferred imports — these pull in mpyq/run_game and are only needed
+    # when actually launching a match.
+    from sc2 import maps
+    from sc2.main import run_game
+    from sc2.player import Bot, Computer
+    from wicked_zerg_bot_pro_impl import WickedZergBotProImpl
+
     race_name = race.name
     logger.info(f"\n{'='*60}")
     logger.info(f"  GAME {game_num}/{total}")
