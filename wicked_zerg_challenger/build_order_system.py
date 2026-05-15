@@ -41,26 +41,38 @@ except ImportError:
     class BotAI:
         pass
 
-    class UnitTypeId:
-        DRONE = "DRONE"
-        OVERLORD = "OVERLORD"
-        SPAWNINGPOOL = "SPAWNINGPOOL"
-        HATCHERY = "HATCHERY"
-        EXTRACTOR = "EXTRACTOR"
-        ZERGLING = "ZERGLING"
-        QUEEN = "QUEEN"
-        BANELINGNEST = "BANELINGNEST"
-        ROACHWARREN = "ROACHWARREN"
-        LAIR = "LAIR"
-        HYDRALISKDEN = "HYDRALISKDEN"
-        ROACH = "ROACH"
-        HYDRALISK = "HYDRALISK"
+    class _StubId:
+        """Sentinel value used for fallback enum members.
 
-    class AbilityId:
-        RESEARCH_ZERGLINGMETABOLICBOOST = "RESEARCH_ZERGLINGMETABOLICBOOST"
+        Keeps a name attribute and unique identity so callers can compare
+        without colliding with plain strings in `_infer_zvt_action` etc.
+        """
 
-    class UpgradeId:
-        ZERGLINGMOVEMENTSPEED = "ZERGLINGMOVEMENTSPEED"
+        __slots__ = ("name",)
+
+        def __init__(self, name):
+            self.name = name
+
+        def __repr__(self):
+            return f"<StubId {self.name}>"
+
+        def __hash__(self):
+            return hash(("_StubId", self.name))
+
+        def __eq__(self, other):
+            return isinstance(other, _StubId) and self.name == other.name
+
+    class _StubEnum:
+        """Auto-vivifying attribute container returning stable `_StubId` values."""
+
+        def __getattr__(self, name):
+            value = _StubId(name)
+            object.__setattr__(self, name, value)
+            return value
+
+    UnitTypeId = _StubEnum()
+    AbilityId = _StubEnum()
+    UpgradeId = _StubEnum()
 
     class Point2:
         pass

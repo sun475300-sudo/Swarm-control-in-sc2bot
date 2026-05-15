@@ -37,14 +37,32 @@ except ImportError:
     class BotAI:
         pass
 
-    class UnitTypeId:
-        pass
+    class _StubId:
+        """Sentinel value used for fallback enum members."""
 
-    class AbilityId:
-        pass
+        __slots__ = ("name",)
 
-    class UpgradeId:
-        pass
+        def __init__(self, name):
+            self.name = name
+
+        def __repr__(self):
+            return f"<StubId {self.name}>"
+
+        def __hash__(self):
+            return hash(("_StubId", self.name))
+
+        def __eq__(self, other):
+            return isinstance(other, _StubId) and self.name == other.name
+
+    class _StubEnum:
+        def __getattr__(self, name):
+            value = _StubId(name)
+            object.__setattr__(self, name, value)
+            return value
+
+    UnitTypeId = _StubEnum()
+    AbilityId = _StubEnum()
+    UpgradeId = _StubEnum()
 
     class Point2:
         pass

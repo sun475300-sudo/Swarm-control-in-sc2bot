@@ -15,9 +15,30 @@ try:
     from sc2.ids.upgrade_id import UpgradeId
     from sc2.position import Point2
 except ImportError:  # Fallbacks for tooling environments
-    UnitTypeId = None
-    AbilityId = None
-    UpgradeId = None
+    class _StubId:
+        __slots__ = ("name",)
+
+        def __init__(self, name):
+            self.name = name
+
+        def __repr__(self):
+            return f"<StubId {self.name}>"
+
+        def __hash__(self):
+            return hash(("_StubId", self.name))
+
+        def __eq__(self, other):
+            return isinstance(other, _StubId) and self.name == other.name
+
+    class _StubEnum:
+        def __getattr__(self, name):
+            value = _StubId(name)
+            object.__setattr__(self, name, value)
+            return value
+
+    UnitTypeId = _StubEnum()
+    AbilityId = _StubEnum()
+    UpgradeId = _StubEnum()
     Point2 = None
 
 try:
@@ -825,9 +846,6 @@ class MicroCombat:
 
     def manage_lurker_positioning(self, iteration: int = 0) -> Set[int]:
         """Position Lurkers on nearby chokes and burrow with LURKERMP ids."""
-        if not UnitTypeId:
-            return set()
-
         if self.lurker_choke_detector:
             self.lurker_choke_detector.update_chokepoints(iteration)
             chokepoints = list(getattr(self.lurker_choke_detector, "chokepoints", []))

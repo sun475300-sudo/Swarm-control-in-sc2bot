@@ -183,9 +183,6 @@ class MutaliskMicroController:
         Returns:
             Safe position away from enemies
         """
-        if not Point2:
-            return None
-
         # Retreat towards our main base
         townhalls = getattr(bot, "townhalls", None)
         main_base = None
@@ -211,9 +208,19 @@ class MutaliskMicroController:
                 norm_x = direction_x / length
                 norm_y = direction_y / length
 
-                return Point2(
-                    (unit.position.x + norm_x * 10, unit.position.y + norm_y * 10)
-                )
+                target_x = unit.position.x + norm_x * 10
+                target_y = unit.position.y + norm_y * 10
+                if Point2 is not None:
+                    try:
+                        return Point2((target_x, target_y))
+                    except Exception:
+                        pass
+                # Fallback: use unit.position.towards if available
+                if hasattr(unit.position, "towards"):
+                    try:
+                        return unit.position.towards(main_base, 10)
+                    except Exception:
+                        pass
 
         # Fallback: move away from current position
         if hasattr(bot, "start_location"):
