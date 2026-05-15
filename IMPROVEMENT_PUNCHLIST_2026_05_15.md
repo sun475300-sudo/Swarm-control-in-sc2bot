@@ -120,10 +120,45 @@
 
 ### 누적 결과
 
-- 코드 수정: 7개 파일 (Blackboard, run_mass_test, scouting/phase_scout_cadence,
-  utils/frame_cache, utils/logger, utils/error_handler, sc2_coach)
-- 신규 테스트 파일: 8개 (134개 신규 테스트)
-- 테스트 통과 수: 604개 → 778개 (+174개)
+#### 수정한 결함
+
+- B1: `Blackboard` 별칭 누락 → `wicked_zerg_bot_pro_impl` 임포트 실패
+- B1.1: `should_expand` 미네랄 미체크 + `is_supply_block` 오타
+- B2: `run_mass_test` 모듈 임포트 시 SC2 런타임 강제 의존
+- BB1: `request_production`의 priority KeyError 가능성
+- BB2: `building_reservations`가 무한 누적
+- phase_scout_cadence: `_infer_enemy_main`이 빈 리스트를 None 대신 반환
+- frame_cache: `cached_per_frame`이 kwargs를 캐시 키에 미포함
+- logger: setup_logger에 의미 없는 `pass` dead code
+- error_handler: `retry_on_failure` 안의 미사용 `last_exception` 변수
+- **proxy_detector: factory/starport 프록시 탐지 누락** (ProxyType과 분리)
+- **meta_game_analyzer: race/map_performance.losses 절대 갱신 안됨**
+- **map_manager: `_load_stats`가 self.logger 사용 전 호출되어 손상 JSON 시 크래시**
+- sc2_coach: 코칭 패턴 10 → 20개 확장 (점막/은폐/업그레이드/런바이/올인/라바)
+
+#### 추가한 테스트 (14개 파일, 약 195개 테스트)
+
+- test_phase_scout_cadence.py (12)
+- test_sc2_coach.py (19, repo 루트)
+- test_game_constants.py (18)
+- test_frame_cache.py (10)
+- test_adaptive_build.py (13)
+- test_common_helpers.py (27)
+- test_error_handler.py (19)
+- test_personality_module.py (14)
+- test_adaptive_learning_rate.py (11)
+- test_scoring_system.py (10)
+- test_proxy_detector.py (13)
+- test_meta_game_analyzer.py (18)
+- test_map_manager.py (11)
+- test_unit_authority_manager.py (14)
+- test_micro_focus_mode.py (15)
+
+#### 테스트 통과 수
+
+- 작업 전: 604개
+- 작업 후: **870개** (+266개)
+- 모든 신규 테스트는 SC2 런타임 없이 실행 가능 (stub 기반)
 
 ### 남은 항목 (다음 세션)
 
@@ -131,5 +166,5 @@
 - G1~G5: 봇 로직 개선 (정찰 사이클, opponent modeling, 견제, 인젝트, 점막)
 - P1~P3: combat_manager / economy_manager 분할, frame_skip 적용 확대
 - D1~D3: README/ARCHITECTURE 최신화, 런타임 산출물 분리
-
-각 단계 완료 시 커밋&푸시 후 다음 항목 진행.
+- CI 측 black/isort: main 자체에 67개 미정형 파일이 있어 lint job이
+  지속적으로 fail 중. 이 PR 범위 외이므로 별도 정리 PR이 필요.
