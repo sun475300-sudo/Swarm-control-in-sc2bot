@@ -72,3 +72,22 @@
 - 추가 F811 잔여 확인 (다른 매니저 파일)
 - 통합 테스트(`tests/integration/`) 실행 가능성 점검
 - `wicked_zerg_challenger/tests/` 별도 테스트 디렉토리 가시화
+
+---
+
+## 🔁 사이클 #2 — 추가 발견 (2026-05-15)
+
+pyflakes 전체 스캔으로 새로 발견된 항목.
+
+### 🔥 Critical
+
+| ID | 파일/라인 | 문제 | 상태 |
+|----|-----------|------|------|
+| C6 | `wicked_zerg_challenger/game_analytics_system.py:419` | **IndentationError** — 중복된 `logger.info`와 `except` 블록 garbled. 파일이 import 불가능 | ✅ **수정** — 중복 4줄 삭제, 파싱 정상화 |
+| C7 | `wicked_zerg_challenger/bot_step_integration.py` (11곳) | `except Exception as e: if debug_mode: raise` — 프로덕션에서 에러가 소리없이 사라짐. SpatialOptimizer / DataCache / BaseDestruction / BuildingDestroyer / SelfHealing / Personality / BattlePrep / DestructibleAwareness / NydusTrainer / OverlordSafety / CreepHighwayAStar 11개 서브시스템 영향 | ✅ **수정** — 기존 CreepDenial 패턴(rate-limited logger.error)으로 11곳 통일 |
+
+### 🟡 Medium — 다음 사이클 후보
+
+- f-string is missing placeholders 249곳 (스타일/일부 누락된 변수 보간 가능성) — 파일별로 정리 필요
+- 미사용 지역 변수 (`game_time`, `regenerating`, `strategy_manager`, `non_combat_names` 등) — 죽은 코드 단서일 수 있음 ⇒ 각 케이스 검토 필요
+- ursina 모듈의 `from ursina import *` 별 정의 누락 경고 (visuals 패키지) — 외부 라이브러리이므로 영향 작음
