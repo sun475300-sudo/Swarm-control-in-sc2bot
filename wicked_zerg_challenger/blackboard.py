@@ -538,10 +538,11 @@ class GameStateBlackboard:
         )
 
     def should_expand(self) -> bool:
-        """확장 가능한 상황인가? (위협 없음 + 자원 + 보급 여유)"""
+        """확장 가능한 상황인가? (위협 없음 + 자원 + 보급 여유 + 러시 미감지)"""
         HATCHERY_MINERAL_COST = 300
         return (
             self.threat.level == ThreatLevel.NONE
+            and not self.threat.is_rushing
             and not self.resources.is_supply_blocked
             and not self.is_under_attack
             and self.resources.minerals >= HATCHERY_MINERAL_COST
