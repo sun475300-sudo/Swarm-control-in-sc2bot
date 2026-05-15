@@ -141,19 +141,31 @@ class ScoringSystem:
             return
         self.last_update_time = game_time
 
-        try:
-            self._evaluate_combat(game_time)
-            self._evaluate_production(game_time)
-            self._evaluate_scouting(game_time)
-            self._evaluate_economy(game_time)
-            self._evaluate_defense(game_time)
-            self._evaluate_strategy(game_time)
-            self._evaluate_micro(game_time)
-            self._evaluate_macro(game_time)
-            self._evaluate_adaptation(game_time)
-            self._evaluate_survival(game_time)
-        except Exception:
-            pass
+        # Isolate each evaluator: previously a single
+        # `try / except Exception: pass` wrapped all ten calls, so the
+        # first one that raised silently skipped the remaining nine
+        # (e.g. a combat-evaluator hiccup would also kill production,
+        # scouting, economy, defense, strategy, micro, macro,
+        # adaptation, and survival scoring on the same tick).
+        evaluators = (
+            ("combat", self._evaluate_combat),
+            ("production", self._evaluate_production),
+            ("scouting", self._evaluate_scouting),
+            ("economy", self._evaluate_economy),
+            ("defense", self._evaluate_defense),
+            ("strategy", self._evaluate_strategy),
+            ("micro", self._evaluate_micro),
+            ("macro", self._evaluate_macro),
+            ("adaptation", self._evaluate_adaptation),
+            ("survival", self._evaluate_survival),
+        )
+        for name, evaluator in evaluators:
+            try:
+                evaluator(game_time)
+            except Exception as exc:
+                # Rate-limit to avoid log spam on persistent failures.
+                if iteration % 500 == 0:
+                    logger.warning("[scoring] %s evaluator failed: %s", name, exc)
 
     # =========================================================================
     # 1. Combat (전투) 평가
