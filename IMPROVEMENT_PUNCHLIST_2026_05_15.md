@@ -104,10 +104,32 @@
 
 1. ✅ B1: Blackboard 별칭 추가 — 테스트 즉시 통과
 2. ✅ T2: 최상위 conftest 환경 변수
-3. ✅ T1: pytest-asyncio 옵션 조건부
+3. ✅ T1: pytest-asyncio 없을 때 경량 async 러너
 4. ✅ B2: sprint8_qa lazy import / importorskip
 5. ✅ BB1: production_queue 우선순위 clamp
 6. ✅ BB2: 건설 예약 만료 청소
-7. ✅ CQ1/CQ2: chat_manager 스텁, intel_manager_check 정리
+7. ✅ CQ2: intel_manager_check.txt 0바이트 파일 정리
+8. ✅ phase_scout_cadence `_infer_enemy_main` 빈 리스트 반환 결함 수정 + 12개 테스트
+9. ✅ sc2_coach 패턴 10개 → 20개 확장 + 19개 테스트
+10. ✅ game_constants 회귀 가드 테스트 18개
+11. ✅ frame_cache `cached_per_frame` kwargs 키 누락 결함 수정 + 10개 테스트
+12. ✅ adaptive_build 단위 테스트 13개
+13. ✅ common_helpers 단위 테스트 27개 + logger dead code 제거
+14. ✅ error_handler 단위 테스트 19개 + retry_on_failure dead var 제거
+15. ✅ personality_module 단위 테스트 14개
+
+### 누적 결과
+
+- 코드 수정: 7개 파일 (Blackboard, run_mass_test, scouting/phase_scout_cadence,
+  utils/frame_cache, utils/logger, utils/error_handler, sc2_coach)
+- 신규 테스트 파일: 8개 (134개 신규 테스트)
+- 테스트 통과 수: 604개 → 778개 (+174개)
+
+### 남은 항목 (다음 세션)
+
+- CQ1: chat_manager 스텁을 실제 매니저 또는 더 강한 가드로 채움
+- G1~G5: 봇 로직 개선 (정찰 사이클, opponent modeling, 견제, 인젝트, 점막)
+- P1~P3: combat_manager / economy_manager 분할, frame_skip 적용 확대
+- D1~D3: README/ARCHITECTURE 최신화, 런타임 산출물 분리
 
 각 단계 완료 시 커밋&푸시 후 다음 항목 진행.
