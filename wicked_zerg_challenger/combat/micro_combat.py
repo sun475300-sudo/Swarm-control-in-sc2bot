@@ -15,9 +15,33 @@ try:
     from sc2.ids.upgrade_id import UpgradeId
     from sc2.position import Point2
 except ImportError:  # Fallbacks for tooling environments
-    UnitTypeId = None
-    AbilityId = None
-    UpgradeId = None
+    class _StubIds:
+        """Sentinel ID class for ability/unit lookups when sc2 is unavailable.
+
+        ``getattr(_StubIds, "ANY_NAME", None)`` returns a string identifier so
+        guards like ``if ability_id: ...`` evaluate truthy and downstream code
+        can issue placeholder actions in tests.
+        """
+
+        def __class_getitem__(cls, name):  # pragma: no cover - convenience
+            return name
+
+        def __getattr__(self, name):  # pragma: no cover - instance fallback
+            return name
+
+    class _StubIdsMeta(type):
+        def __getattr__(cls, name):
+            return name
+
+    class UnitTypeId(metaclass=_StubIdsMeta):
+        pass
+
+    class AbilityId(metaclass=_StubIdsMeta):
+        pass
+
+    class UpgradeId(metaclass=_StubIdsMeta):
+        pass
+
     Point2 = None
 
 try:
@@ -825,9 +849,6 @@ class MicroCombat:
 
     def manage_lurker_positioning(self, iteration: int = 0) -> Set[int]:
         """Position Lurkers on nearby chokes and burrow with LURKERMP ids."""
-        if not UnitTypeId:
-            return set()
-
         if self.lurker_choke_detector:
             self.lurker_choke_detector.update_chokepoints(iteration)
             chokepoints = list(getattr(self.lurker_choke_detector, "chokepoints", []))

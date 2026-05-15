@@ -38,13 +38,34 @@ except ImportError:
         pass
 
     class UnitTypeId:
-        pass
+        # Structures
+        HATCHERY = "HATCHERY"
+        LAIR = "LAIR"
+        HIVE = "HIVE"
+        SPAWNINGPOOL = "SPAWNINGPOOL"
+        EXTRACTOR = "EXTRACTOR"
+        SPINECRAWLER = "SPINECRAWLER"
+        SPORECRAWLER = "SPORECRAWLER"
+        EVOLUTIONCHAMBER = "EVOLUTIONCHAMBER"
+        ROACHWARREN = "ROACHWARREN"
+        BANELINGNEST = "BANELINGNEST"
+        HYDRALISKDEN = "HYDRALISKDEN"
+        # Units
+        DRONE = "DRONE"
+        OVERLORD = "OVERLORD"
+        QUEEN = "QUEEN"
+        LARVA = "LARVA"
+        ZERGLING = "ZERGLING"
+        BANELING = "BANELING"
+        ROACH = "ROACH"
+        RAVAGER = "RAVAGER"
+        HYDRALISK = "HYDRALISK"
 
     class AbilityId:
         pass
 
     class UpgradeId:
-        pass
+        ZERGLINGMOVEMENTSPEED = "ZERGLINGMOVEMENTSPEED"
 
     class Point2:
         pass

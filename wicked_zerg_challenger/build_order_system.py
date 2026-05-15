@@ -42,19 +42,70 @@ except ImportError:
         pass
 
     class UnitTypeId:
-        DRONE = "DRONE"
-        OVERLORD = "OVERLORD"
-        SPAWNINGPOOL = "SPAWNINGPOOL"
+        # Zerg structures
         HATCHERY = "HATCHERY"
+        LAIR = "LAIR"
+        HIVE = "HIVE"
         EXTRACTOR = "EXTRACTOR"
-        ZERGLING = "ZERGLING"
-        QUEEN = "QUEEN"
+        SPAWNINGPOOL = "SPAWNINGPOOL"
         BANELINGNEST = "BANELINGNEST"
         ROACHWARREN = "ROACHWARREN"
-        LAIR = "LAIR"
         HYDRALISKDEN = "HYDRALISKDEN"
+        LURKERDEN = "LURKERDEN"
+        LURKERDENMP = "LURKERDENMP"
+        INFESTATIONPIT = "INFESTATIONPIT"
+        SPIRE = "SPIRE"
+        GREATERSPIRE = "GREATERSPIRE"
+        ULTRALISKCAVERN = "ULTRALISKCAVERN"
+        NYDUSNETWORK = "NYDUSNETWORK"
+        NYDUSCANAL = "NYDUSCANAL"
+        SPINECRAWLER = "SPINECRAWLER"
+        SPORECRAWLER = "SPORECRAWLER"
+        EVOLUTIONCHAMBER = "EVOLUTIONCHAMBER"
+        CREEPTUMOR = "CREEPTUMOR"
+        CREEPTUMORBURROWED = "CREEPTUMORBURROWED"
+        CREEPTUMORQUEEN = "CREEPTUMORQUEEN"
+        # Zerg units
+        DRONE = "DRONE"
+        OVERLORD = "OVERLORD"
+        OVERLORDTRANSPORT = "OVERLORDTRANSPORT"
+        OVERSEER = "OVERSEER"
+        QUEEN = "QUEEN"
+        ZERGLING = "ZERGLING"
+        BANELING = "BANELING"
         ROACH = "ROACH"
+        ROACHBURROWED = "ROACHBURROWED"
+        RAVAGER = "RAVAGER"
         HYDRALISK = "HYDRALISK"
+        LURKER = "LURKER"
+        LURKERMP = "LURKERMP"
+        LURKERMPBURROWED = "LURKERMPBURROWED"
+        MUTALISK = "MUTALISK"
+        CORRUPTOR = "CORRUPTOR"
+        BROODLORD = "BROODLORD"
+        INFESTOR = "INFESTOR"
+        SWARMHOST = "SWARMHOST"
+        VIPER = "VIPER"
+        ULTRALISK = "ULTRALISK"
+        LARVA = "LARVA"
+        EGG = "EGG"
+        # Terran reference
+        MARINE = "MARINE"
+        MARAUDER = "MARAUDER"
+        SCV = "SCV"
+        SIEGETANK = "SIEGETANK"
+        MEDIVAC = "MEDIVAC"
+        # Protoss reference
+        PROBE = "PROBE"
+        ZEALOT = "ZEALOT"
+        STALKER = "STALKER"
+        SENTRY = "SENTRY"
+        ARCHON = "ARCHON"
+        HIGHTEMPLAR = "HIGHTEMPLAR"
+        PHOENIX = "PHOENIX"
+        TEMPEST = "TEMPEST"
+        THOR = "THOR"
+        THORAP = "THORAP"
 
     class AbilityId:
         RESEARCH_ZERGLINGMETABOLICBOOST = "RESEARCH_ZERGLINGMETABOLICBOOST"
@@ -540,12 +591,37 @@ class BuildOrderSystem:
             )
         return steps
 
+    # Tokens that appear in build orders as plain strings and denote upgrades
+    _UPGRADE_TOKENS = frozenset(
+        {
+            "METABOLIC_BOOST",
+            "GLIAL_RECONSTITUTION",
+            "BURROW",
+            "PNEUMATIZED_CARAPACE",
+            "ADRENAL_GLANDS",
+            "CENTRIFUGAL_HOOKS",
+            "MUSCULAR_AUGMENTS",
+            "GROOVED_SPINES",
+            "TUNNELING_CLAWS",
+            "ANABOLIC_SYNTHESIS",
+            "CHITINOUS_PLATING",
+            "FLYER_ATTACKS",
+            "FLYER_CARAPACE",
+            "MELEE_ATTACKS",
+            "MISSILE_ATTACKS",
+            "GROUND_CARAPACE",
+        }
+    )
+
     def _infer_zvt_action(self, unit_type: Any) -> str:
-        if isinstance(unit_type, str):
+        if isinstance(unit_type, str) and unit_type in self._UPGRADE_TOKENS:
             return "upgrade"
         if unit_type == getattr(UnitTypeId, "HATCHERY", None):
             return "expand"
-        if unit_type == getattr(UnitTypeId, "LAIR", None):
+        if unit_type in {
+            getattr(UnitTypeId, "LAIR", None),
+            getattr(UnitTypeId, "HIVE", None),
+        }:
             return "morph"
         train_types = {
             getattr(UnitTypeId, "DRONE", None),
@@ -554,7 +630,18 @@ class BuildOrderSystem:
             getattr(UnitTypeId, "ZERGLING", None),
             getattr(UnitTypeId, "ROACH", None),
             getattr(UnitTypeId, "HYDRALISK", None),
+            getattr(UnitTypeId, "BANELING", None),
+            getattr(UnitTypeId, "MUTALISK", None),
+            getattr(UnitTypeId, "CORRUPTOR", None),
+            getattr(UnitTypeId, "ULTRALISK", None),
+            getattr(UnitTypeId, "VIPER", None),
+            getattr(UnitTypeId, "SWARMHOST", None),
+            getattr(UnitTypeId, "INFESTOR", None),
+            getattr(UnitTypeId, "RAVAGER", None),
+            getattr(UnitTypeId, "LURKER", None),
+            getattr(UnitTypeId, "LURKERMP", None),
         }
+        train_types.discard(None)
         if unit_type in train_types:
             return "train"
         return "build"
