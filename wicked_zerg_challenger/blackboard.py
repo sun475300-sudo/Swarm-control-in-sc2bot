@@ -407,6 +407,14 @@ class GameStateBlackboard:
         if priority is None:
             priority = self.get_authority_priority(requester)
 
+        # 우선순위는 production_queue가 보유한 키 범위(0~3)로 clamp.
+        # 외부 호출자가 임의 정수를 넘기더라도 KeyError를 막는다.
+        valid_priorities = sorted(self.production_queue.keys())
+        if priority < valid_priorities[0]:
+            priority = valid_priorities[0]
+        elif priority > valid_priorities[-1]:
+            priority = valid_priorities[-1]
+
         # 중복 요청 체크
         queue = self.production_queue[priority]
         for i, (utype, _, req) in enumerate(queue):
@@ -488,6 +496,30 @@ class GameStateBlackboard:
 
         reserved_time, _ = self.building_reservations[building_type]
         return self.game_time - reserved_time < duration
+
+    def cleanup_expired_reservations(self, duration: float = 10.0) -> int:
+        """만료된 건설 예약을 제거하고 정리한 개수를 반환한다.
+
+        주기적으로 호출하지 않으면 `building_reservations`가 무한히 누적된다.
+        BotStepIntegrator의 정기 정리 루틴이나 frame skip 슬롯에서 호출 권장.
+
+        Args:
+            duration: 예약 유지 시간 (초). reserve_building의 기본값과 동일.
+
+        Returns:
+            정리된 예약 개수.
+        """
+        if not self.building_reservations:
+            return 0
+
+        expired = [
+            btype
+            for btype, (reserved_time, _) in self.building_reservations.items()
+            if self.game_time - reserved_time >= duration
+        ]
+        for btype in expired:
+            del self.building_reservations[btype]
+        return len(expired)
 
     # ========== 캐시 시스템 ==========
 
