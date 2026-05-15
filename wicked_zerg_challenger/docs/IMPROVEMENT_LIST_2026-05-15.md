@@ -11,6 +11,10 @@
 | 1차 수정 후 | 263 | 0 | 28 파일 |
 | 2차 수정 후 (sc2 스텁) | 661 | 0 | 0 |
 | 3차 수정 후 (psutil/pyyaml) | 668 | 0 | 0 |
+| 4차 수정 후 (black/isort) | 668 | 0 | 0 |
+| 5차 수정 후 (opponent_modeling) | 668 | 0 | 0 |
+
+루트 `tests/` 도 별도로 499 passed, 14 skipped (총 1,167 패스).
 
 ## 완료된 개선 사항
 
@@ -39,6 +43,16 @@
       `is_supply_block` 오타 수정, `should_expand` 가 미네랄 조건도 확인하도록 보강.
 - [x] **A10**: 루트 `tests/conftest.py` 및 `wicked_zerg_challenger/tests/conftest.py`
       에서 sc2 스텁 패키지를 sys.path 에 자동 주입.
+- [x] **A11**: 사전 존재하던 `game_analytics_system.py::_load_stats` 의 중복
+      `except` 블록 + 잘못된 들여쓰기로 인한 `E999 IndentationError` 수정.
+      CI 의 critical flake8 (E9,F63,F7,F82) 단계가 처음으로 통과.
+- [x] **A12**: 저장소 전체 black 26.3.1 + isort 일괄 정리 (66 파일). CI 의
+      `Lint & Type Check` 매트릭스 (3.10/3.11/3.12) 의 `black --check`,
+      `isort --check-only` 단계 차단 해제.
+- [x] **A13**: `opponent_modeling.py::on_step` 중복 정의 제거. 첫 번째 정의
+      (line 341, 전체 추적) 이 두 번째 정의 (line 765, early-signal 만)
+      에 의해 가려져 빌드오더/타이밍어택/테크 진행 추적이 무력화되어
+      있던 버그 수정.
 
 ## 추가 점검 결과 (잔존 항목 — 후속 작업 후보)
 
@@ -70,3 +84,10 @@
       README 에 명확히 분리.
 - [ ] **E2**: `early_defense_system.py` 의 폴백 `UpgradeId` 가 비어있어 `getattr`
       체인이 None 반환. 주요 업그레이드 키 사전 등록.
+- [ ] **E3**: 잔존 F811 중복 정의 — 각각 동작상의 미묘한 차이를 검증한 뒤 정리:
+      `combat_manager.py::_find_harass_target` (2814 vs 5014),
+      `economy_manager.py::_prevent_resource_banking` (1691 vs 3275),
+      `economy_manager.py::_reduce_gas_workers` (3408 vs 4099),
+      `local_training/production_resilience.py::build_terran_counters`.
+- [ ] **E4**: F841 미사용 지역 변수 ~100여 건 (대부분 `except Exception as e:` 의 `e`
+      미사용). 보너스 작업.
