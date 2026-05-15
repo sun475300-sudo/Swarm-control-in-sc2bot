@@ -97,13 +97,37 @@
 - [x] `wicked_zerg_challenger/tests/test_blackboard.py`: 회귀 가드 테스트 2건 추가 (`test_should_not_expand_when_supply_blocked`, `test_should_not_expand_under_attack`)
 - [x] `wicked_zerg_challenger/bot_step_integration.py:2166`: B023 — for-loop 안에서 `lambda: self._build_tech(tech_type)` 가 loop variable 을 캡처. 매 iteration 마다 같은 변수를 참조하므로 비동기 호출 / 저장 시 마지막 값만 쓰이는 위험. default 인자 바인딩으로 수정.
 
-### Cycle 5 (계속): 남은 정적 분석 카테고리
-- [ ] B023 다른 후보 (advanced_worker_optimizer, battle_preparation_system) — 즉시 평가되므로 영향 적으나 안전성 위해 일괄 정리 검토
-- [ ] E741 ambiguous variable names (23건)
-- [ ] F541 f-string missing placeholders (254건) — 단순 스타일
-- [ ] F841 unused-variable (131건)
-- [ ] STRATEGY_PLAN.md 미구현 단계 추적
-- [ ] BUG_ERROR_LOG.md 미해결 잔존
+### Cycle 5 (완료): dead-code 정리
+- [x] `build_order_system.py`: 미사용 `PRIORITY_EXPANSION` 변수 + TechCoordinator 우회 의도 주석화
+
+### Cycle 6 (완료): logger format 버그
+- [x] `check_proxy.py`: PLE1205 — `logger.info("Return code:", result.returncode)` 가 두 번째 인자를 무시. `%s` 포맷으로 수정.
+
+### Cycle 7 (완료): should_expand 일관성
+- [x] `blackboard.py`: `should_defend` 는 `is_rushing` 체크하지만 `should_expand` 는 누락. 가드 추가 + 회귀 테스트.
+
+### Cycle 8 (완료): F841 economy_manager
+- [x] `economy_manager.py`: 두 곳의 unused 로컬 변수 (`early_window`, `vespene`) 제거 + 의도 주석화
+
+### 누적 결과 (2026-05-15 19:52 기준)
+| 단계 | 시작 | 끝 |
+|---|---|---|
+| 컬렉션 errors | 27 | **0** |
+| 컬렉트된 테스트 | 715 | **1163** |
+| 런타임 실패 | 105 | **0** |
+| F823 (UnboundLocalError) | 1 | **0** |
+| F811 (redefinition 회귀) | 3+ | **0** |
+| PLE1205 (logger format 버그) | 1 | **0** |
+| 봇 임포트 가능 여부 | SyntaxError | OK |
+| 발견된 봇 실제 버그 | — | **9건 픽스** |
+
+### 남은 후속 후보 (다음 PR)
+- B023 다른 후보 (advanced_worker_optimizer, battle_preparation_system) — 즉시 평가되므로 영향 적으나 안전성 위해 일괄 정리 검토
+- E741 ambiguous variable names (23건)
+- F541 f-string missing placeholders (254건) — 단순 스타일
+- F841 나머지 ~129건 (다수)
+- realtime_awareness_engine 의 RUF006 dangling-task (8건) — 실제 발동 가능성은 낮으나 잠재적 leak
+- 60 파일 black 포맷팅 (별 PR, MASTER_TODO 정책에 따라)
 
 ## D. 측정 가능한 진척 지표
 - collection errors: 27 → 0
