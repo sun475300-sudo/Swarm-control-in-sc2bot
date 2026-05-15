@@ -110,6 +110,72 @@ class SC2Coach:
                 "가스 집약 유닛 테크로 전환하거나, 일꾼을 가스에서 빼세요.",
                 "severity": "medium",
             },
+            {
+                "pattern": r"no.?creep|크립.?부족|점막.?없",
+                "category": "macro",
+                "advice": "크립 종양이 부족합니다. 종양은 시야와 이동 속도 모두에 영향을 줍니다. "
+                "퀸 한 마리당 분당 1개 이상 종양 부착을 목표로 하세요.",
+                "severity": "medium",
+            },
+            {
+                "pattern": (
+                    r"cloak.?detect|missed.?cloak|detector.?miss"
+                    r"|은폐.?미감지|다크.?missed|밴시.?missed"
+                ),
+                "category": "scouting",
+                "advice": "은폐 유닛 탐지 실패. 오버시어 또는 광역 탐지기를 미리 배치하세요. "
+                "다크 템플러/밴시 등 전형적 견제 빌드는 8~10분에 들어옵니다.",
+                "severity": "critical",
+            },
+            {
+                "pattern": r"no.?upgrade|업그레이드.?지연|missing.?upgrade",
+                "category": "macro",
+                "advice": "업그레이드가 지연되고 있습니다. 진화소(Evolution Chamber)는 6분 이전,"
+                " 1단계 공격/방어 업그레이드는 10분 이전에 끝내는 것이 표준입니다.",
+                "severity": "high",
+            },
+            {
+                "pattern": r"low.?worker|일꾼.?부족|드론.?부족",
+                "category": "economy",
+                "advice": "일꾼 수가 부족합니다. 베이스당 미네랄 16, 가스 6명을 우선 채우고 "
+                "추가 베이스마다 22명 풀 채취까지 목표로 두세요.",
+                "severity": "high",
+            },
+            {
+                "pattern": r"oversaturate|과채취|too.?many.?worker",
+                "category": "economy",
+                "advice": "일부 베이스에 일꾼이 과잉 배치되어 있습니다. "
+                "분배기를 활용해 채취 효율이 떨어진 미네랄에서 새 베이스로 옮기세요.",
+                "severity": "low",
+            },
+            {
+                "pattern": r"runby|뒷치기|sneak.?attack",
+                "category": "defense",
+                "advice": "뒷치기/run-by 공격 의심. 자기 미네랄 라인에 상시 방어 유닛 2~4기를 두고, "
+                "퀸/스포어 위치를 자원선 안쪽으로 배치하세요.",
+                "severity": "high",
+            },
+            {
+                "pattern": r"tech.?rush|기술.?러시|fast.?tech",
+                "category": "scouting",
+                "advice": "상대의 빠른 테크 러시가 의심됩니다. 3분 정찰에서 가스/생산 건물이 "
+                "부족하면 올인 또는 빠른 테크일 확률이 높습니다.",
+                "severity": "high",
+            },
+            {
+                "pattern": r"queen.?dead|퀸.?사망|hatchery.?dead|해처리.?파괴",
+                "category": "defense",
+                "advice": "핵심 매크로 유닛/건물 손실. 퀸과 해처리는 게임의 척추입니다. "
+                "방어 라인을 미리 구축하고, 잃을 것 같으면 유닛부터 후퇴시키세요.",
+                "severity": "critical",
+            },
+            {
+                "pattern": r"banked.?larva|라바.?과잉|larva.?float",
+                "category": "macro",
+                "advice": "라바가 쌓이고 있습니다. 인젝트 직후 자원이 충분하면 즉시 유닛/드론을 "
+                "찍어야 합니다. 큐 시스템을 사용하면 손이 덜 갑니다.",
+                "severity": "medium",
+            },
         ]
 
     def get_coaching_advice(self, game_log: str) -> list:
