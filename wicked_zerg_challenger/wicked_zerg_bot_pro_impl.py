@@ -554,13 +554,19 @@ class WickedZergBotProImpl(BotAI):
                 )
 
                 # Print learning summary every 5 games
-                if self.opponent_modeling.current_opponent:
-                    model = self.opponent_modeling.models.get(
-                        self.opponent_modeling.current_opponent
+                if self.opponent_modeling.current_opponent_id:
+                    # Canonical field is `opponent_models` (`models` does not exist);
+                    # falling back to getattr keeps this resilient if either name is
+                    # patched in tests.
+                    models_dict = getattr(
+                        self.opponent_modeling, "opponent_models", None
+                    ) or getattr(self.opponent_modeling, "models", {})
+                    model = models_dict.get(
+                        self.opponent_modeling.current_opponent_id
                     )
                     if model and model.games_played > 0 and model.games_played % 5 == 0:
                         self.logger.info(
-                            f"[OPPONENT_MODELING] Opponent: {self.opponent_modeling.current_opponent}"
+                            f"[OPPONENT_MODELING] Opponent: {self.opponent_modeling.current_opponent_id}"
                         )
                         self.logger.info(
                             f"Games: {model.games_played}, Wins: {model.games_won}, Losses: {model.games_lost}"

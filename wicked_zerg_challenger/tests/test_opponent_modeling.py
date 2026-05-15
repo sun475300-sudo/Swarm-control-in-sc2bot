@@ -634,22 +634,27 @@ class TestOpponentModelingFieldNameRegression(unittest.TestCase):
     """
 
     def test_no_bare_current_opponent_reference_remains(self):
-        path = os.path.join(
-            os.path.dirname(__file__), "..", "opponent_modeling.py"
-        )
-        with open(path, "r", encoding="utf-8") as fh:
-            src = fh.read()
-        # Anything matching `current_opponent` followed by NOT an underscore is the bug.
-        # The legal token is `current_opponent_id`. `current_opponent_models` is fine
-        # too because the next char is `_`. We only want to fail on a word-boundary
-        # case like `self.current_opponent or` / `self.current_opponent not in ...`.
         import re
-        offenders = re.findall(r"self\.current_opponent\b(?!_)", src)
+
+        bot_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+        # Scan every module in the bot package — earlier the same typo also lived
+        # in wicked_zerg_bot_pro_impl.py (.current_opponent + .models),
+        # not just opponent_modeling.py.
+        pattern = re.compile(r"\.current_opponent\b(?!_)")
+        offenders = []
+        for fname in sorted(os.listdir(bot_dir)):
+            if not fname.endswith(".py"):
+                continue
+            with open(os.path.join(bot_dir, fname), encoding="utf-8") as fh:
+                src = fh.read()
+            for i, line in enumerate(src.split("\n"), start=1):
+                if pattern.search(line):
+                    offenders.append(f"{fname}:{i}: {line.strip()}")
         self.assertEqual(
             offenders,
             [],
-            "Bare `self.current_opponent` reference returned; this attribute does "
-            "not exist (canonical name is `self.current_opponent_id`).",
+            "Bare `.current_opponent` reference returned; canonical name is "
+            "`.current_opponent_id`:\n" + "\n".join(offenders),
         )
 
 
