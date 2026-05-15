@@ -142,8 +142,14 @@ class Point2:
         return ((self.x - ox) ** 2 + (self.y - oy) ** 2) ** 0.5
 
     def towards(self, other, distance: float) -> "Point2":
-        dx = getattr(other, "x", other[0] if hasattr(other, "__getitem__") else 0) - self.x
-        dy = getattr(other, "y", other[1] if hasattr(other, "__getitem__") else 0) - self.y
+        dx = (
+            getattr(other, "x", other[0] if hasattr(other, "__getitem__") else 0)
+            - self.x
+        )
+        dy = (
+            getattr(other, "y", other[1] if hasattr(other, "__getitem__") else 0)
+            - self.y
+        )
         length = (dx * dx + dy * dy) ** 0.5 or 1.0
         return Point2(self.x + dx / length * distance, self.y + dy / length * distance)
 
@@ -155,7 +161,9 @@ class Point2:
         return (self.x, self.y)[idx]
 
     def __eq__(self, other):
-        return getattr(other, "x", None) == self.x and getattr(other, "y", None) == self.y
+        return (
+            getattr(other, "x", None) == self.x and getattr(other, "y", None) == self.y
+        )
 
     def __hash__(self):
         return hash((self.x, self.y))
@@ -327,7 +335,9 @@ def install_sc2_stub() -> None:
     data_mod = types.ModuleType("sc2.data")
     data_mod.Race = Race
     data_mod.Difficulty = Difficulty
-    data_mod.Result = type("Result", (), {"Victory": "Victory", "Defeat": "Defeat", "Tie": "Tie"})
+    data_mod.Result = type(
+        "Result", (), {"Victory": "Victory", "Defeat": "Defeat", "Tie": "Tie"}
+    )
     data_mod.AIBuild = type("AIBuild", (), {"RandomBuild": "RandomBuild"})
     sys.modules["sc2.data"] = data_mod
     sc2_pkg.data = data_mod  # type: ignore[attr-defined]

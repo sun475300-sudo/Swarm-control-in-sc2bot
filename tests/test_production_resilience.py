@@ -39,9 +39,7 @@ try:
     # ``wicked_zerg_challenger/local_training`` 자체를 sys.path 상단에 끼우면
     # 그 하위 ``scripts/`` 디렉토리가 top-level ``scripts`` 모듈로 노출되어
     # 다른 테스트의 ``from scripts.ladder_tracker import ...`` 와 충돌한다.
-    _wzc_path = os.path.join(
-        os.path.dirname(__file__), "..", "wicked_zerg_challenger"
-    )
+    _wzc_path = os.path.join(os.path.dirname(__file__), "..", "wicked_zerg_challenger")
     if _wzc_path not in sys.path:
         sys.path.insert(0, _wzc_path)
     from local_training.production_resilience import ProductionResilience

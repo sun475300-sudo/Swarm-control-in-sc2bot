@@ -69,6 +69,7 @@ def pytest_collectstart(collector):  # pragma: no cover - 훅
     _ensure_wzc_first()
     _refresh_ambiguous_namespaces()
 
+
 # burnysc2 미설치 환경에서도 컬렉션이 통과하도록 공용 stub 주입.
 # 실제 sc2 라이브러리가 설치된 경우엔 no-op.
 try:
@@ -223,4 +224,3 @@ def mock_logger():
     mock.error = MagicMock()
     mock.critical = MagicMock()
     return mock
-
