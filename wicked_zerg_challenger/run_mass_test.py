@@ -41,11 +41,24 @@ def _ensure_sc2_path():
 
 _ensure_sc2_path()
 
-from sc2 import maps
+# Lightweight imports used at module scope (test-friendly).
 from sc2.data import Difficulty, Race
-from sc2.main import run_game
-from sc2.player import Bot, Computer
-from wicked_zerg_bot_pro_impl import WickedZergBotProImpl
+
+
+def _import_runtime():
+    """SC2 런타임 의존 모듈을 지연 임포트한다.
+
+    `run_single_test`, `main`처럼 실제 게임 실행 시점에만 필요한 의존성을
+    분리해, CI/단위 테스트가 `sc2.main`이나 `portpicker`, `wicked_zerg_bot_pro_impl`
+    없이도 `parse_args`/`build_test_cases`만 검증할 수 있게 한다.
+    """
+    from sc2 import maps as _maps  # noqa: WPS433
+    from sc2.main import run_game as _run_game  # noqa: WPS433
+    from sc2.player import Bot as _Bot, Computer as _Computer  # noqa: WPS433
+    from wicked_zerg_bot_pro_impl import (  # noqa: WPS433
+        WickedZergBotProImpl as _Impl,
+    )
+    return _maps, _run_game, _Bot, _Computer, _Impl
 
 # GPU setup
 try:
@@ -153,6 +166,7 @@ def build_test_cases(args):
 
 def run_single_test(map_name, race, difficulty, diff_name, game_num, total):
     """Run a single test game."""
+    maps, run_game, Bot, Computer, WickedZergBotProImpl = _import_runtime()
     race_name = race.name
     logger.info(f"\n{'='*60}")
     logger.info(f"  GAME {game_num}/{total}")
