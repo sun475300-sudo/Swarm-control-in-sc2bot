@@ -446,9 +446,12 @@ class WickedZergBotProImpl(BotAI):
                     or (threat is not None and getattr(threat, "is_rushing", False))
                 )
                 self.frame_skip.set_combat_mode(in_combat)
-            except Exception:
-                # Never let frame-skip bookkeeping abort a game step.
-                pass
+            except Exception as e:
+                # Never let frame-skip bookkeeping abort a game step, but
+                # surface the breakage on a slow cadence so it doesn't go
+                # silent.
+                if iteration % 224 == 0:
+                    self.logger.debug(f"[FRAME_SKIP] sync error: {e}")
 
         # * Feature 86: Cache our unit tags for unit lost tracking *
         if iteration % 22 == 0:
@@ -498,15 +501,23 @@ class WickedZergBotProImpl(BotAI):
         if self.scoring_system:
             try:
                 self.scoring_system.on_step(iteration)
-            except Exception:
-                pass
+            except Exception as e:
+                # Throttle the log so a broken scoring system doesn't spam
+                # every frame, but keep enough breadcrumbs to debug regressions.
+                if iteration % 224 == 0:
+                    self.logger.debug(
+                        f"[SCORING] on_step error (iter {iteration}): {e}"
+                    )
 
         # * Awareness Engine: 실시간 상황 인식 + 자동 대응 *
         if self.awareness_engine:
             try:
                 self.awareness_engine.on_step(iteration)
-            except Exception:
-                pass
+            except Exception as e:
+                if iteration % 224 == 0:
+                    self.logger.debug(
+                        f"[AWARENESS] on_step error (iter {iteration}): {e}"
+                    )
 
         # Personality module is called in bot_step_integration.py; do not call here.
 
@@ -543,8 +554,8 @@ class WickedZergBotProImpl(BotAI):
                 self.logger.info(
                     f"[AWARENESS] Final: {self.awareness_engine.get_situation_summary()}"
                 )
-            except Exception:
-                pass
+            except Exception as e:
+                self.logger.warning(f"AwarenessEngine summary error: {e}")
 
         # * NEW: Personality Module - Send GG message
         if hasattr(self, "personality") and self.personality:

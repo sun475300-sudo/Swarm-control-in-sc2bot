@@ -132,8 +132,12 @@ class RealtimeAwarenessEngine:
             if self.active_problems and iteration % 100 == 0:
                 self._log_problems()
 
-        except Exception:
-            pass
+        except Exception as e:
+            # Throttled debug log: keep frame rate stable but surface
+            # breakage so a broken detector/override doesn't go silent for
+            # the whole game.
+            if iteration % 224 == 0:
+                logger.debug(f"[AWARENESS] on_step error (iter {iteration}): {e}")
 
         return self.active_overrides
 
