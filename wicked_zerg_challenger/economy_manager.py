@@ -324,7 +324,10 @@ class EconomyManager:
         fast_gas = fresh and gas_time is not None and gas_time < 90.0
         # * FIX: natural_confirmed=False만으로 확장 차단 금지
         # 실제 치즈 의심이나 빠른 가스 같은 구체적 위협 시에만 지연
-        pressure_active = cheese_active or fast_gas
+        # * Gate by early_window: pressure response is meaningful only in
+        #   the opening 4 minutes — past that, the early-scout signals are
+        #   stale and shouldn't keep suppressing drone/expansion greed. *
+        pressure_active = (cheese_active or fast_gas) and early_window
 
         state.update(
             {
