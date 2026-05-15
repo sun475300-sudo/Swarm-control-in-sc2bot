@@ -354,6 +354,36 @@ class TestStateQueries(unittest.TestCase):
         self.bb.update_resources(500, 100, 50, 100)
         self.assertFalse(self.bb.should_expand())
 
+    def test_should_not_expand_when_supply_blocked(self):
+        # Regression: prior to the fix, should_expand crashed with
+        # AttributeError on `resources.is_supply_block` (missing 'ed').
+        # Even with healthy minerals + no threat, a supply block should
+        # gate the expansion decision so a drone isn't pulled off mining
+        # while we're stalled on Overlords.
+        self.bb.update_threat(ThreatLevel.NONE)
+        self.bb.update_resources(500, 100, 100, 100)
+        self.assertTrue(self.bb.resources.is_supply_blocked)
+        self.assertFalse(self.bb.should_expand())
+
+    def test_should_expand_at_mineral_gate_boundary(self):
+        # Regression: should_expand previously ignored minerals, which
+        # let it return True with as little as 100 minerals. The gate is
+        # EXPAND_MINERAL_GATE (275), so 274 must be False, 275 True.
+        self.bb.update_threat(ThreatLevel.NONE)
+        self.bb.update_resources(self.bb.EXPAND_MINERAL_GATE - 1, 0, 50, 100)
+        self.assertFalse(self.bb.should_expand())
+        self.bb.update_resources(self.bb.EXPAND_MINERAL_GATE, 0, 50, 100)
+        self.assertTrue(self.bb.should_expand())
+
+    def test_blackboard_alias_matches_canonical_class(self):
+        # Regression: production code (`wicked_zerg_bot_pro_impl.py`,
+        # `production_controller.py`) imports `Blackboard`, but only
+        # `GameStateBlackboard` existed in the module. The alias must
+        # stay in place or bot startup fails with ImportError.
+        from blackboard import Blackboard as ImportedAlias
+
+        self.assertIs(ImportedAlias, GameStateBlackboard)
+
 
 class TestBackwardCompatibility(unittest.TestCase):
     def setUp(self):
