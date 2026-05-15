@@ -72,7 +72,10 @@ def cached_per_frame(func: Callable) -> Callable:
         if cache is None:
             return func(self, *args, **kwargs)
 
-        key = f"{func.__name__}:{hash(args)}"
+        # kwargs도 키에 포함해야 같은 함수의 다른 호출 모양이 같은
+        # 결과를 공유하는 오류를 막을 수 있다. 정렬된 튜플로 안정 해시.
+        kwargs_key = tuple(sorted(kwargs.items())) if kwargs else ()
+        key = f"{func.__name__}:{hash((args, kwargs_key))}"
         if cache.has(key):
             return cache.get(key)
 
