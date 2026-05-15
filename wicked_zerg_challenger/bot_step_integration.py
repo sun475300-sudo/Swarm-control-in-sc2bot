@@ -716,12 +716,12 @@ class BotStepIntegrator:
         blackboard.worker_count = self.bot.workers.amount
 
         # 4. 주요 유닛 카운트 업데이트
-        # already_pending() iterates the bot's structures + orders for each unit
-        # type, which is non-trivial; refresh ~2x/sec (every 11 frames at 22 FPS)
-        # instead of every step. The `current`/`pending` numbers feed strategy
-        # decisions that themselves cap their re-evaluation, so 11-frame
-        # staleness is invisible at the consumer layer.
-        if UnitTypeId and iteration % 11 == 0:
+        # Keep this every-frame: in burnysc2 7.x `already_pending` is an O(1)
+        # lookup into the per-step `_abilities_count_and_build_progress` cache,
+        # and AggressiveStrategies / DefenseCoordinator gate timing-attack and
+        # queen-defense decisions on these counts — even ~0.5s staleness is
+        # enough to over-train zerglings or mis-time a defense.
+        if UnitTypeId:
             key_units = [
                 UnitTypeId.DRONE,
                 UnitTypeId.OVERLORD,
