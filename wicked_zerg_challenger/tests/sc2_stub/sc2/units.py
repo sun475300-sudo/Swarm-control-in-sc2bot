@@ -44,7 +44,12 @@ class Units(list):
         return Units([u for u in self if fn(u)], self._bot_object)
 
     def of_type(self, type_id):
-        return Units([u for u in self if getattr(u, "type_id", None) == type_id], self._bot_object)
+        return Units(
+            [u for u in self if getattr(u, "type_id", None) == type_id],
+            self._bot_object,
+        )
 
     def ready(self):
-        return Units([u for u in self if getattr(u, "is_ready", True)], self._bot_object)
+        return Units(
+            [u for u in self if getattr(u, "is_ready", True)], self._bot_object
+        )

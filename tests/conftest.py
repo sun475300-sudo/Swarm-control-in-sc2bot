@@ -19,6 +19,22 @@ if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
 
+def _ensure_sc2_stub_available() -> None:
+    """Install sc2 stub on sys.path if real python-sc2 is unavailable."""
+    try:
+        import sc2  # noqa: F401
+
+        return
+    except Exception:
+        pass
+    stub_dir = PROJECT_ROOT / "wicked_zerg_challenger" / "tests" / "sc2_stub"
+    if stub_dir.is_dir() and str(stub_dir) not in sys.path:
+        sys.path.insert(0, str(stub_dir))
+
+
+_ensure_sc2_stub_available()
+
+
 # ═══════════════════════════════════════════════════════
 # 경로 관련 Fixtures
 # ═══════════════════════════════════════════════════════
