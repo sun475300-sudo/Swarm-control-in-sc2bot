@@ -38,7 +38,9 @@ class Point2(tuple):
             ox, oy = other
         dx, dy = ox - self.x, oy - self.y
         length = math.hypot(dx, dy) or 1.0
-        return Point2((self.x + dx / length * distance, self.y + dy / length * distance))
+        return Point2(
+            (self.x + dx / length * distance, self.y + dy / length * distance)
+        )
 
     def offset(self, delta) -> "Point2":
         try:

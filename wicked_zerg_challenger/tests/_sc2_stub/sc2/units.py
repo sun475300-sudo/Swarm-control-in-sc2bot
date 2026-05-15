@@ -34,7 +34,9 @@ class Units(list):
 
     def closer_than(self, distance, position) -> "Units":
         return Units(
-            u for u in self if getattr(u, "distance_to", lambda _o: 0)(position) < distance
+            u
+            for u in self
+            if getattr(u, "distance_to", lambda _o: 0)(position) < distance
         )
 
     def filter(self, predicate) -> "Units":
@@ -48,4 +50,6 @@ class Units(list):
     def closest_to(self, position):
         if not self:
             return None
-        return min(self, key=lambda u: getattr(u, "distance_to", lambda _o: 0)(position))
+        return min(
+            self, key=lambda u: getattr(u, "distance_to", lambda _o: 0)(position)
+        )
