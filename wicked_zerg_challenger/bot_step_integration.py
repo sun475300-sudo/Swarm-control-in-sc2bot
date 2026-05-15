@@ -2689,18 +2689,17 @@ class BotStepIntegrator:
                     if getattr(self, "iteration", 0) % 1000 == 0:  # Log occasionally
                         self.logger.debug(f"[DEBUG] Expansion check error: {e}")
 
-            # 4. 텍스트 표시
-            debug_text = """
-            [WickedZergBot Pro]
-            Time: {int(b.time // 60)}:{int(b.time % 60):02d}
-            Strategy: {strategy_mode}
-
-            Resources: M {minerals} / G {gas}
-            Supply: {supply}
-            Eco: {bases} Bases / {workers} Drones
-
-            Expansion: {expand_status}
-            """
+            # 4. 텍스트 표시 — bug fix: previously a plain triple-quoted string
+            # so the placeholders rendered literally ("{minerals}") on screen.
+            debug_text = (
+                f"\n            [WickedZergBot Pro]\n"
+                f"            Time: {int(b.time // 60)}:{int(b.time % 60):02d}\n"
+                f"            Strategy: {strategy_mode}\n\n"
+                f"            Resources: M {minerals} / G {gas}\n"
+                f"            Supply: {supply}\n"
+                f"            Eco: {bases} Bases / {workers} Drones\n\n"
+                f"            Expansion: {expand_status}\n            "
+            )
 
             # 화면 좌측 상단 (0.01, 0.01)에 표시
             client.debug_text_screen(
@@ -2971,7 +2970,6 @@ class BotStepIntegrator:
             # 전략 모드 적용 (StrategyManager에게 전달)
             if result and "strategy_mode" in result:
                 new_mode = result["strategy_mode"]
-                current_mode_str = "Unknown"
 
                 # StrategyManager에 모드 적용
                 if hasattr(self.bot, "strategy_manager") and self.bot.strategy_manager:
