@@ -1077,9 +1077,11 @@ class BuildOrderSystem:
         if not location:
             location = await self.bot.get_next_expansion()
         if location:
-            # Use TechCoordinator if available
+            # 오프닝 첫 확장은 의도적으로 TechCoordinator 라우팅을 우회한다 —
+            # 직접 build 가 가장 빠르고 다른 매니저와의 충돌도 없다. tech_coordinator 는
+            # 단지 ``is_planned`` 가드용으로만 사용한다.
+            # (테스트: ``test_first_expansion_prefers_closest_untaken_natural``)
             tech_coordinator = getattr(self.bot, "tech_coordinator", None)
-            PRIORITY_EXPANSION = 55  # * Phase 22: 확장 우선순위 상향 (50 -> 55)
 
             if tech_coordinator:
                 if not tech_coordinator.is_planned(UnitTypeId.HATCHERY):
