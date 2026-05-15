@@ -116,9 +116,13 @@ def run_single_game(
         stats.record_game(map_name, difficulty_name, enemy_race.name, victory)
 
         if victory:
-            logger.info("")
+            logger.info(
+                f"Game {game_num}/{total} VICTORY ({map_name} vs {enemy_race.name})"
+            )
         else:
-            logger.info("")
+            logger.info(
+                f"Game {game_num}/{total} DEFEAT ({map_name} vs {enemy_race.name})"
+            )
 
         return victory
 

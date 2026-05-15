@@ -2059,7 +2059,12 @@ class CombatManager:
         for roach in roaches:
             try:
                 if retreat and retreat_anchor is not None:
-                    self.bot.do(roach.attack(target))
+                    # Bug fix: previously this branch *also* attacked the
+                    # forward target, leaving roaches charging while the
+                    # hydras behind them retreated — the formation broke
+                    # and the roaches died for nothing. Attack-move toward
+                    # the retreat anchor instead.
+                    self.bot.do(roach.attack(retreat_anchor))
                 else:
                     self.bot.do(roach.attack(target))
                 handled.add(roach.tag)
@@ -2887,9 +2892,15 @@ class CombatManager:
         ]
 
         if hasattr(enemy_units, "closer_than"):
-            # Use SC2 Units collection for better performance
+            # Use SC2 Units collection for better performance: let the C-side
+            # distance index narrow the candidate set first, then filter to
+            # worker types in Python. (Previously both branches did the slow
+            # manual distance pass, defeating the optimization.)
+            nearby_enemies = enemy_units.closer_than(15, self._air_harass_target)
             enemy_workers = [
-                w for w in workers_only if w.distance_to(self._air_harass_target) < 15
+                w
+                for w in nearby_enemies
+                if getattr(w.type_id, "name", "") in ["SCV", "PROBE", "DRONE"]
             ]
         else:
             enemy_workers = [
