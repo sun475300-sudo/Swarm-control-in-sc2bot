@@ -72,7 +72,9 @@ def cached_per_frame(func: Callable) -> Callable:
         if cache is None:
             return func(self, *args, **kwargs)
 
-        key = f"{func.__name__}:{hash(args)}"
+        # 캐시 키에 kwargs 도 포함 (이전엔 누락되어 f(x=1)과 f(x=2)가 충돌)
+        kwargs_key = tuple(sorted(kwargs.items())) if kwargs else ()
+        key = f"{func.__name__}:{hash((args, kwargs_key))}"
         if cache.has(key):
             return cache.get(key)
 
