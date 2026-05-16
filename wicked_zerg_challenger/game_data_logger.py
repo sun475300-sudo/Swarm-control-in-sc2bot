@@ -15,7 +15,7 @@ logger = logging.getLogger("GameDataLogger")
 
 try:
     from sc2.ids.unit_typeid import UnitTypeId
-except ImportError:
+except (ImportError, TypeError):
     UnitTypeId = None
 
 

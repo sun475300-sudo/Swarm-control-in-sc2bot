@@ -23,7 +23,7 @@ try:
     from sc2.bot_ai import BotAI
     from sc2.ids.unit_typeid import UnitTypeId
     from sc2.unit import Unit
-except ImportError:
+except (ImportError, TypeError):
 
     class BotAI:
         pass

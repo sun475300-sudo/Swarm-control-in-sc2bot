@@ -25,7 +25,7 @@ try:
     from sc2.ids.unit_typeid import UnitTypeId
     from sc2.unit import Unit
     from sc2.units import Units
-except ImportError:
+except (ImportError, TypeError):
     BotAI = object
     UnitTypeId = object
     AbilityId = object

@@ -22,7 +22,7 @@ logger = logging.getLogger("UpgradeTiming")
 try:
     from sc2.ids.unit_typeid import UnitTypeId
     from sc2.ids.upgrade_id import UpgradeId
-except ImportError:
+except (ImportError, TypeError):
     UnitTypeId = None
     UpgradeId = None
 

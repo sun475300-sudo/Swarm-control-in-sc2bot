@@ -39,7 +39,7 @@ logger = logging.getLogger(__name__)
 try:
     from sc2.ids.ability_id import AbilityId
     from sc2.ids.unit_typeid import UnitTypeId
-except ImportError:
+except (ImportError, TypeError):
 
     class UnitTypeId:
         QUEEN = "QUEEN"
@@ -597,7 +597,7 @@ class QueenManager:
                     from sc2.position import Point2
 
                     threat_position = Point2((x_sum / count, y_sum / count))
-                except ImportError:
+                except (ImportError, TypeError):
                     threat_position = nearby_enemies[0].position
                 break
 

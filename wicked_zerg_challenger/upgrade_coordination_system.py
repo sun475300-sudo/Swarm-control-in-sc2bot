@@ -14,7 +14,7 @@ from utils.logger import get_logger
 
 try:
     from sc2.ids.upgrade_id import UpgradeId
-except ImportError:
+except (ImportError, TypeError):
 
     class UpgradeId:
         # Zerg Upgrades

@@ -6,7 +6,7 @@ from typing import Dict, Iterable, List, Optional, Set
 try:
     from sc2.ids.ability_id import AbilityId
     from sc2.ids.unit_typeid import UnitTypeId
-except ImportError:
+except (ImportError, TypeError):
 
     class AbilityId:
         MORPH_OVERSEER = "MORPH_OVERSEER"

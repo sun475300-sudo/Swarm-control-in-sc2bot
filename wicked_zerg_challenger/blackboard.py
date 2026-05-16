@@ -21,7 +21,9 @@ from utils.logger import get_logger
 try:
     from sc2.ids.unit_typeid import UnitTypeId
     from sc2.position import Point2
-except ImportError:
+except (ImportError, TypeError):
+    # ImportError: sc2 패키지가 없음
+    # TypeError: protobuf descriptor 충돌 (PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION 미설정)
     UnitTypeId = None
     Point2 = None
 

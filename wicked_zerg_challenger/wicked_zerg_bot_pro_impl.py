@@ -14,7 +14,7 @@ or imported and used separately.
 
 try:
     from sc2.bot_ai import BotAI
-except ImportError:
+except (ImportError, TypeError):
 
     class BotAI:
         pass
@@ -177,7 +177,7 @@ class WickedZergBotProImpl(BotAI):
 
                     self.current_difficulty = Difficulty.Easy
                     self.logger.info("[DIFFICULTY] Using fallback difficulty: Easy")
-                except ImportError:
+                except (ImportError, TypeError):
                     self.current_difficulty = None
         except Exception as e:
             self.logger.info(f"[DIFFICULTY] Error getting recommended difficulty: {e}")
@@ -185,7 +185,7 @@ class WickedZergBotProImpl(BotAI):
                 from sc2.data import Difficulty
 
                 self.current_difficulty = Difficulty.Easy
-            except ImportError:
+            except (ImportError, TypeError):
                 self.current_difficulty = None
 
         # ========== MANAGER INITIALIZATION (Factory Pattern) ==========

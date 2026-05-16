@@ -21,7 +21,7 @@ from utils.logger import get_logger
 try:
     from sc2.bot_ai import BotAI
     from sc2.ids.unit_typeid import UnitTypeId
-except ImportError:
+except (ImportError, TypeError):
     BotAI = None
     UnitTypeId = None
 

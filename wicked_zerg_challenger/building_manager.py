@@ -8,7 +8,7 @@ from typing import Any, Optional
 
 try:
     from sc2.ids.unit_typeid import UnitTypeId
-except ImportError:
+except (ImportError, TypeError):
 
     class UnitTypeId:
         HATCHERY = "HATCHERY"

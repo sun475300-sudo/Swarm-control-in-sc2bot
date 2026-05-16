@@ -20,7 +20,7 @@ from utils.logger import get_logger
 
 try:
     from sc2.ids.unit_typeid import UnitTypeId
-except ImportError:
+except (ImportError, TypeError):
 
     class UnitTypeId:
         ROACHWARREN = "ROACHWARREN"

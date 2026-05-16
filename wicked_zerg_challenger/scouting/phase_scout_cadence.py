@@ -48,7 +48,7 @@ try:
     from sc2.bot_ai import BotAI  # type: ignore
     from sc2.ids.unit_typeid import UnitTypeId  # type: ignore
     from sc2.position import Point2  # type: ignore
-except ImportError:
+except (ImportError, TypeError):
     # Allow running this module on systems without the SC2 bindings.
     BotAI = object  # type: ignore
     Point2 = tuple  # type: ignore
