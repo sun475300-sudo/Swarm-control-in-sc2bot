@@ -33,6 +33,12 @@ After iteration 1: **661 passing**, no collection errors.
 - [x] **P3.2** Added `test_iteration1_regressions.py` — pins the iteration-1 fixes (Blackboard alias, opponent_modeling on_step richness + state attribute, should_expand typo + mineral gate)
 - [ ] **P3.3** Add `pyflakes` step to CI to prevent regression of unused-local / duplicate-method patterns
 - [ ] **P3.4** Add a CI check that all bot modules import cleanly (would have caught the `game_analytics_system.py` syntax error from iteration 2)
+- [x] **P3.5** Added `test_no_unreachable_code.py` — parametrized AST scan that fails when code follows a `return` / `raise` / `break` / `continue` in the same block. Would have caught the iteration-7 dead blocks (`smart_resource_balancer._get_current_worker_ratio` had a duplicated 24-line body after `return`, etc.)
+
+## Priority 4 - Dead-Body Cleanup (iteration 7)
+
+- [x] **P4.1** `smart_resource_balancer.py` — two functions had duplicate bodies pasted *after* their own `return` statement (24 + 24 lines unreachable). Removed
+- [x] **P4.2** `economy_manager.py` — `_force_expansion_if_stuck` (39 dead lines after `return`) and `_check_proactive_expansion` (40 dead lines after `return`). Removed
 
 ## Methodology
 
