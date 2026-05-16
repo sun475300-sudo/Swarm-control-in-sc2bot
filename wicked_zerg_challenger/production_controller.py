@@ -152,8 +152,9 @@ class ProductionController:
             unit_type, count, requester = request
 
             # 생산 시도
-            if self._should_reserve_third_base_minerals() and not self._can_spend_during_third_base_reserve(
-                unit_type, requester
+            if (
+                self._should_reserve_third_base_minerals()
+                and not self._can_spend_during_third_base_reserve(unit_type, requester)
             ):
                 priority = self.blackboard.get_authority_priority(requester)
                 self.blackboard.request_production(
@@ -281,7 +282,9 @@ class ProductionController:
 
         return not self._has_active_base_threat()
 
-    def _can_spend_during_third_base_reserve(self, unit_type: Any, requester: str) -> bool:
+    def _can_spend_during_third_base_reserve(
+        self, unit_type: Any, requester: str
+    ) -> bool:
         """Allow supply safety and a small defensive floor during third reserve."""
         if unit_type == UnitTypeId.OVERLORD:
             return True
@@ -401,7 +404,6 @@ class ProductionController:
             return
 
         # * Phase 23: 서플라이 블록 완전 제거 - 선행 생산 *
-        game_time = getattr(self.bot, "time", 0)
         supply_used = supply_cap - supply_left
 
         # 동적 버퍼: 서플라이 사용량에 비례
@@ -528,7 +530,6 @@ class ProductionController:
 
         # 가장 부족한 유닛 찾기
         max_deficit = -1.0
-        best_unit = None
         best_uid = None
 
         for name, target_ratio in ratios.items():
@@ -563,7 +564,6 @@ class ProductionController:
 
             if deficit > max_deficit:
                 max_deficit = deficit
-                best_unit = name
                 best_uid = uid
 
         # 가장 부족한 유닛 생산
