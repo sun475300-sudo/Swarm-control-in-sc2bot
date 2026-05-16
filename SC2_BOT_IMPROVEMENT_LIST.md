@@ -19,9 +19,10 @@ After iteration 1: **661 passing**, no collection errors.
 
 ## Priority 2 - Code Quality (silent failures, lint smells)
 
-- [ ] **P2.1** 136 f-string-with-no-placeholders across managers — likely missed interpolations
-- [ ] **P2.2** 81 unused locals — many caught-but-ignored exception vars `e` that should be logged or renamed `_`
-- [ ] **P2.3** Unused imports in core modules
+- [x] **P2.1** 141 f-string-with-no-placeholders fixed (mechanical f"" → "")
+- [x] **P2.2** 46 caught-but-ignored exception vars `e` cleaned up (`except E as e:` → `except E:`)
+- [x] **P2.3** `game_analytics_system.py` had a **syntax error** (duplicated paste artifact at line 419) that made the entire module unimportable — this was hidden behind pyflakes order, now fixed
+- [ ] **P2.4** ~35 remaining "unused local" warnings — these are genuine algorithm bugs (computed value never used). Manual review per-case
 
 ## Priority 3 - Test Coverage / Robustness
 
