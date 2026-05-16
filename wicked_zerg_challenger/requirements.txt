@@ -3,3 +3,10 @@ numpy>=1.20.0
 matplotlib>=3.3.0
 psutil>=5.8.0
 s2clientprotocol>=4.19.0.0
+
+# Test dependencies — pytest.ini sets `asyncio_mode = auto` and tests use
+# `@pytest.mark.asyncio`, so pytest-asyncio is required. Without it, all
+# async test functions fail with "async def functions are not natively
+# supported."
+pytest>=7.0.0
+pytest-asyncio>=0.21.0

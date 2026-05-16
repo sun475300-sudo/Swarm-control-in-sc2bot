@@ -187,7 +187,9 @@ class EconomyManager:
         self._target_drone_count = THREAT_DRONE_TARGETS[ThreatLevel.LOW]
         self._last_float_log_time = -999.0
 
-    def _distance_between(self, unit_or_pos_a, unit_or_pos_b, frame: int = None) -> float:
+    def _distance_between(
+        self, unit_or_pos_a, unit_or_pos_b, frame: int = None
+    ) -> float:
         current_frame = (
             frame if frame is not None else int(getattr(self.bot, "iteration", 0) or 0)
         )
@@ -918,7 +920,10 @@ class EconomyManager:
             not force_army
             and getattr(self.bot, "supply_left", 0) < 3
             and getattr(self.bot, "supply_cap", 0) < 200
-            and getattr(self.bot, "already_pending", lambda unit_type: 0)(UnitTypeId.OVERLORD) == 0
+            and getattr(self.bot, "already_pending", lambda unit_type: 0)(
+                UnitTypeId.OVERLORD
+            )
+            == 0
             and self.bot.can_afford(UnitTypeId.OVERLORD)
         ):
             return await self._train_larva_unit(larva_unit, UnitTypeId.OVERLORD)
@@ -1059,7 +1064,9 @@ class EconomyManager:
     async def _train_larva_unit(self, larva_unit, unit_type) -> bool:
         try:
             production = getattr(self.bot, "production", None)
-            safe_train = getattr(production, "_safe_train", None) if production else None
+            safe_train = (
+                getattr(production, "_safe_train", None) if production else None
+            )
             if callable(safe_train):
                 result = safe_train(larva_unit, unit_type)
                 if hasattr(result, "__await__"):
@@ -1088,7 +1095,10 @@ class EconomyManager:
     def _get_gas_timing_by_matchup(self) -> int:
         """Return worker count threshold for first extractor by matchup."""
         enemy_race = getattr(self.bot, "enemy_race", None)
-        race_name = getattr(enemy_race, "name", None) or str(enemy_race or "Unknown").split(".")[-1]
+        race_name = (
+            getattr(enemy_race, "name", None)
+            or str(enemy_race or "Unknown").split(".")[-1]
+        )
         if race_name == "Zerg":
             return 13
         if race_name == "Terran":
@@ -2120,50 +2130,8 @@ class EconomyManager:
 
         expansion_success = await self._perform_smart_expansion(reason)
         if expansion_success:
-            self.logger.info(
-                f"[FORCE EXPAND] [{int(game_time)}s] {reason} - SUCCESS"
-            )
+            self.logger.info(f"[FORCE EXPAND] [{int(game_time)}s] {reason} - SUCCESS")
         else:
-            self.logger.info(f"[FORCE EXPAND] ALL METHODS FAILED")
-        return
-
-        expansion_success = False
-        try:
-            if hasattr(self.bot, "expand_now"):
-                result = await self.bot.expand_now()
-                if result is not False:
-                    self.logger.info(
-                        f"[FORCE EXPAND] [{int(game_time)}s] {reason} - SUCCESS"
-                    )
-                    expansion_success = True
-                else:
-                    self.logger.info(f"[FORCE EXPAND] expand_now returned False")
-            else:
-                # expand_now가 없으면 직접 위치 찾아서 건설
-                # *** USE GOLD PRIORITY ***
-                expansion_locations = (
-                    await self._get_best_expansion_with_gold_priority()
-                )
-                if (
-                    expansion_locations
-                    and hasattr(self.bot, "workers")
-                    and self.bot.workers
-                ):
-                    worker = self.bot.workers.closest_to(expansion_locations)
-                    if worker:
-                        is_gold = self._is_gold_expansion(expansion_locations)
-                        gold_marker = "[GOLD] GOLD" if is_gold else ""
-                        self.bot.do(
-                            worker.build(UnitTypeId.HATCHERY, expansion_locations)
-                        )
-                        self.logger.info(
-                            f"[FORCE EXPAND] [{int(game_time)}s] Manual expansion {gold_marker} - SUCCESS"
-                        )
-                        expansion_success = True
-        except Exception as e:
-            self.logger.info(f"[FORCE EXPAND] Failed: {e}")
-
-        if not expansion_success:
             self.logger.info(f"[FORCE EXPAND] ALL METHODS FAILED")
 
     async def _check_proactive_expansion(self) -> None:
@@ -2360,47 +2328,6 @@ class EconomyManager:
             return
 
         self.logger.info(f"[EXPAND] ALL METHODS FAILED - Check bot state")
-        return
-
-        # * 확장 실행 - bot.expand_now() 우선 사용 (안정적) *
-        expansion_success = False
-
-        try:
-            # 방법 1: expand_now 우선 사용 (가장 안정적)
-            if hasattr(self.bot, "expand_now"):
-                result = await self.bot.expand_now()
-                # expand_now()가 성공하면 None 또는 True 반환
-                if result is not False:  # False가 아니면 성공으로 간주
-                    self.logger.info(
-                        f"[PROACTIVE EXPAND] [{int(game_time)}s] {expand_reason} - SUCCESS"
-                    )
-                    expansion_success = True
-                else:
-                    self.logger.info(
-                        f"[EXPAND] expand_now returned False (no valid location?)"
-                    )
-        except Exception as e:
-            self.logger.info(f"[EXPAND] expand_now failed: {e}")
-
-        if not expansion_success:
-            try:
-                # 방법 2: 황금 기지 우선 확장 시도
-                gold_pos = await self._get_best_expansion_with_gold_priority()
-                if gold_pos and hasattr(self.bot, "workers") and self.bot.workers:
-                    worker = self.bot.workers.closest_to(gold_pos)
-                    if worker and not worker.is_constructing_scv:
-                        self.bot.do(worker.build(UnitTypeId.HATCHERY, gold_pos))
-                        is_gold = self._is_gold_expansion(gold_pos)
-                        gold_tag = " [GOLD!]" if is_gold else ""
-                        self.logger.info(
-                            f"[PROACTIVE EXPAND] [{int(game_time)}s] {expand_reason}{gold_tag} - SUCCESS"
-                        )
-                        expansion_success = True
-            except Exception as e:
-                self.logger.info(f"[EXPAND] Gold expansion failed: {e}")
-
-        if not expansion_success:
-            self.logger.info(f"[EXPAND] ALL METHODS FAILED - Check bot state")
 
     async def _get_hidden_expansion_location(self) -> Optional[Point2]:
         """
@@ -2512,7 +2439,9 @@ class EconomyManager:
         owned_positions = self._owned_base_positions()
         active_requests = []
         for position, requested_at in getattr(self, "_recent_expansion_requests", []):
-            if any(self._distance_safe(position, owned) < 12.0 for owned in owned_positions):
+            if any(
+                self._distance_safe(position, owned) < 12.0 for owned in owned_positions
+            ):
                 continue
             if game_time - requested_at <= self._expansion_request_ttl:
                 active_requests.append((position, requested_at))
@@ -2538,7 +2467,9 @@ class EconomyManager:
         self._prune_recent_expansion_requests()
         if self._has_recent_expansion_request(location):
             return
-        self._recent_expansion_requests.append((location, getattr(self.bot, "time", 0.0)))
+        self._recent_expansion_requests.append(
+            (location, getattr(self.bot, "time", 0.0))
+        )
 
     def _is_expansion_location_taken(
         self, location, radius: float = 12.0, include_recent: bool = True
@@ -2667,7 +2598,9 @@ class EconomyManager:
             return
         self.first_expansion_time = getattr(self.bot, "time", 0.0)
         self.first_expansion_reported = True
-        self.logger.info(f"[EXPANSION] First expansion at {self.first_expansion_time:.1f}s")
+        self.logger.info(
+            f"[EXPANSION] First expansion at {self.first_expansion_time:.1f}s"
+        )
 
     async def _issue_hatchery_build(self, target_pos, worker) -> bool:
         """Issue a Hatchery build through BotAI.build when available."""
@@ -2719,7 +2652,9 @@ class EconomyManager:
                 return False
             if ready_base_count < 3 and pending_hatcheries > 0:
                 return False
-            if ready_base_count < 3 and self._has_recent_expansion_request(max_age=45.0):
+            if ready_base_count < 3 and self._has_recent_expansion_request(
+                max_age=45.0
+            ):
                 return False
 
             # 1. Hidden Base
@@ -2763,7 +2698,8 @@ class EconomyManager:
 
             if target_pos:
                 resolved_pos = await self._resolve_expansion_target(
-                    target_pos, allow_gold=not prefer_standard_third or method == "Hidden"
+                    target_pos,
+                    allow_gold=not prefer_standard_third or method == "Hidden",
                 )
                 if not resolved_pos:
                     return False
@@ -3081,7 +3017,9 @@ class EconomyManager:
         try:
             # Check enemy bases
             enemy_expansions = set()
-            for struct in self._as_unit_list(getattr(self.bot, "enemy_structures", None)):
+            for struct in self._as_unit_list(
+                getattr(self.bot, "enemy_structures", None)
+            ):
                 if hasattr(struct, "is_structure") and struct.is_structure:
                     enemy_expansions.add(struct.position)
 
@@ -3152,9 +3090,7 @@ class EconomyManager:
             game_time = getattr(self.bot, "time", 0)
 
             # * Phase 1: 황금 기지 최우선 확인 *
-            gold_expansions = (
-                self._get_gold_expansion_locations() if allow_gold else []
-            )
+            gold_expansions = self._get_gold_expansion_locations() if allow_gold else []
 
             if gold_expansions:
                 best_gold = None
