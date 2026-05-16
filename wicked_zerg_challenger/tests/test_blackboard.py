@@ -354,6 +354,32 @@ class TestStateQueries(unittest.TestCase):
         self.bb.update_resources(500, 100, 50, 100)
         self.assertFalse(self.bb.should_expand())
 
+    def test_should_not_expand_when_supply_blocked(self):
+        """공급 막힘 상태에서는 확장 금지 (T1-01 회귀 방지)"""
+        self.bb.update_threat(ThreatLevel.NONE)
+        # supply_used == supply_cap 이고 supply_cap < 200 -> supply blocked
+        self.bb.update_resources(500, 100, 100, 100)
+        self.assertFalse(self.bb.should_expand())
+
+    def test_should_not_expand_under_active_attack(self):
+        """공격 받는 동안 확장 금지"""
+        self.bb.update_threat(ThreatLevel.NONE)
+        self.bb.update_resources(500, 100, 50, 100)
+        self.bb.is_under_attack = True
+        self.assertFalse(self.bb.should_expand())
+
+    def test_should_expand_exact_threshold(self):
+        """광물 정확히 300이면 확장 가능 (해처리 비용)"""
+        self.bb.update_threat(ThreatLevel.NONE)
+        self.bb.update_resources(300, 0, 50, 100)
+        self.assertTrue(self.bb.should_expand())
+
+    def test_should_not_expand_one_below_threshold(self):
+        """광물 299면 확장 불가"""
+        self.bb.update_threat(ThreatLevel.NONE)
+        self.bb.update_resources(299, 0, 50, 100)
+        self.assertFalse(self.bb.should_expand())
+
 
 class TestBackwardCompatibility(unittest.TestCase):
     def setUp(self):

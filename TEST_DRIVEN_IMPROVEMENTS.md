@@ -33,3 +33,25 @@
 - [ ] T1-12: queen_transfusion 쿨다운 및 타겟 중복 제거 확인
 
 이후 Iteration N+1 에서 매번 새로운 발견 항목을 추가한다.
+
+## Iteration 2 발견 (2026-05-16)
+
+### Fixed
+- [x] T2-01: `game_analytics_system.py:418` 중복된 `except` 블록/잘못된 들여쓰기로 인한 SyntaxError 수정
+- [x] T2-02: 80개 SC2 모듈의 `try:from sc2... except ImportError:` 를 `except (ImportError, TypeError):` 로 확장. protobuf descriptor 충돌 회피.
+- [x] T2-03: blackboard.py 자체에 동일 import 처리 적용
+
+### Pending (위험도 있음)
+- [ ] T2-04: `opponent_modeling.py` 의 `on_step` 메서드가 같은 클래스에 두 번 정의됨 (line 341 vs 765). 두 번째가 첫 번째를 가림. Version A(341)이 더 풍부한 기능을 가지지만 Version B(765)만 실행됨.
+- [ ] T2-05: `economy_manager.py` 의 `_prevent_resource_banking` (1681 vs 3258), `_reduce_gas_workers` (3391 vs 4082) 중복
+- [ ] T2-06: `combat_manager.py` 의 `_find_harass_target` (2809 vs 5005) 중복
+
+### Code smells (low priority, automated cleanup 가능)
+- [ ] T2-07: `economy_manager.py` 다수의 F541 (empty f-string), F841 (unused local) 경고
+- [ ] T2-08: 전체적으로 dead-code 제거 캠페인 필요
+
+## Iteration 3 계획
+- 추가 테스트 커버리지 (블랙보드 헬퍼, queen, economy 등)
+- 더 많은 syntax/lint 점검
+- combat 모듈 통합 테스트
+
