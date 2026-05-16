@@ -73,6 +73,11 @@ class CombatPhaseController:
     - 병력 수 대비 교전 성공률 학습
     """
 
+    # 전투 설정 기본값 (서브클래스/캘리브레이션이 인스턴스에서 덮어쓸 수 있음)
+    DEFAULT_MIN_ARMY_FOR_ATTACK = 8  # 최소 공격 병력
+    DEFAULT_RETREAT_HP_THRESHOLD = 0.3  # 후퇴 HP 임계값 (0..1)
+    DEFAULT_REGROUP_DISTANCE = 15  # 재집결 거리 (game units)
+
     def __init__(self, bot):
         self.bot = bot
         self.logger = get_logger("CombatPhaseController")
@@ -80,10 +85,10 @@ class CombatPhaseController:
         # 전투 그룹 관리
         self.combat_groups: Dict[str, CombatGroup] = {}  # group_id -> CombatGroup
 
-        # 전투 설정
-        self.min_army_for_attack = 8  # 최소 공격 병력
-        self.retreat_hp_threshold = 0.3  # 후퇴 HP 임계값
-        self.regroup_distance = 15  # 재집결 거리
+        # 전투 설정 (클래스 상수에서 초기화)
+        self.min_army_for_attack = self.DEFAULT_MIN_ARMY_FOR_ATTACK
+        self.retreat_hp_threshold = self.DEFAULT_RETREAT_HP_THRESHOLD
+        self.regroup_distance = self.DEFAULT_REGROUP_DISTANCE
 
         # 학습 데이터
         self.combat_history = []  # [(phase, unit_count, enemy_count, outcome)]
