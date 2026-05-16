@@ -152,8 +152,9 @@ class ScoringSystem:
             self._evaluate_macro(game_time)
             self._evaluate_adaptation(game_time)
             self._evaluate_survival(game_time)
-        except Exception:
-            pass
+        except Exception as e:
+            if iteration % 220 == 0:
+                logger.warning(f"[SCORING] evaluate suppressed: {e}")
 
     # =========================================================================
     # 1. Combat (전투) 평가
@@ -385,8 +386,8 @@ class ScoringSystem:
                     for enemy in enemy_units:
                         if hasattr(enemy, "distance_to") and enemy.distance_to(th) < 20:
                             near_base_enemies += 1
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug(f"[SCORING] suppressed: {e}")
             if near_base_enemies > 3:
                 self.domains["defense"].add(
                     +3, f"기지 근접 적 {near_base_enemies}기 방어 중"
@@ -409,8 +410,8 @@ class ScoringSystem:
                         self.domains["defense"].add(
                             -1, f"유휴 퀸 {idle_queens.amount}마리 - 인젝트 필요"
                         )
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug(f"[SCORING] suppressed: {e}")
 
     # =========================================================================
     # 6. Strategy (전략) 평가
@@ -444,8 +445,8 @@ class ScoringSystem:
                     )
                     if has_lair:
                         self.domains["strategy"].add(+2, "레어/하이브 테크업 완료")
-                except Exception:
-                    pass
+                except Exception as e:
+                    logger.debug(f"[SCORING] suppressed: {e}")
         else:
             # 후반: 200 서플 + 공격
             if supply_used >= 180:
@@ -479,8 +480,8 @@ class ScoringSystem:
                 self.domains["micro"].add(
                     -2, f"유휴 군대 {len(idle_army)}기 - 명령 필요"
                 )
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug(f"[SCORING] suppressed: {e}")
 
     # =========================================================================
     # 8. Macro (매크로) 평가
@@ -508,8 +509,8 @@ class ScoringSystem:
                 if tumors.amount > self._creep_tumor_count:
                     self.domains["macro"].add(+1, "크립 종양 확산")
                     self._creep_tumor_count = tumors.amount
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug(f"[SCORING] suppressed: {e}")
 
     # =========================================================================
     # 9. Adaptation (적응) 평가
@@ -754,8 +755,8 @@ class ScoringSystem:
                 existing = existing[-200:]
             with open(filepath, "w", encoding="utf-8") as f:
                 json.dump(existing, f, indent=2, ensure_ascii=False)
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug(f"[SCORING] suppressed: {e}")
 
     def _load_cumulative_score(self) -> Dict:
         """누적 점수 로드"""
@@ -764,8 +765,8 @@ class ScoringSystem:
             if os.path.exists(filepath):
                 with open(filepath, "r", encoding="utf-8") as f:
                     return json.load(f)
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug(f"[SCORING] suppressed: {e}")
         return {"total": 0, "blocks": []}
 
     def _save_cumulative_score(self) -> None:
@@ -774,5 +775,5 @@ class ScoringSystem:
         try:
             with open(filepath, "w", encoding="utf-8") as f:
                 json.dump(self._cumulative_score, f, indent=2, ensure_ascii=False)
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug(f"[SCORING] suppressed: {e}")
