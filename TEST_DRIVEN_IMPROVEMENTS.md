@@ -55,3 +55,16 @@
 - 더 많은 syntax/lint 점검
 - combat 모듈 통합 테스트
 
+## Iteration 4 (완료)
+- [x] T4-01: 전체 트리에서 254개의 placeholder 없는 f-string 제거 (F541 lint clean)
+
+## Iteration 5 (진행 중)
+### CI 진단
+- [ ] T5-01: PR CI `Lint & Type Check` 의 black 단계 실패 → main 자체에서도 black 비호환이므로 PR 변경과 무관 (사전 존재 이슈)
+- [x] T5-02: critical flake8 (E9,F63,F7,F82) 통과 확인 → 0 errors
+- [ ] T5-03: CI 의 black 단계는 향후 일괄 black format PR 필요 (대규모 diff 위험)
+
+### 추가 개선 후보 (low risk)
+- [ ] T5-04: F841 unused-local 정리 (economy_manager.py 5건 등) — 안전, 의미 없는 변수만 제거
+- [ ] T5-05: 더 많은 회귀 테스트 추가
+
