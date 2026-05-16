@@ -22,8 +22,9 @@ After iteration 1: **661 passing**, no collection errors.
 - [x] **P2.1** 141 f-string-with-no-placeholders fixed (mechanical f"" → "")
 - [x] **P2.2** 46 caught-but-ignored exception vars `e` cleaned up (`except E as e:` → `except E:`)
 - [x] **P2.3** `game_analytics_system.py` had a **syntax error** (duplicated paste artifact at line 419) that made the entire module unimportable — this was hidden behind pyflakes order, now fixed
-- [x] **P2.4** Triaged ~15 unused-local warnings: dropped genuinely-dead assignments in `combat_manager`, `economy_manager`, `strategy_manager`, `production_controller`, `meta_game_analyzer`, `aggressive_strategies`, `adaptive_trainer`, `air_threat_response_trainer`. Several encoded silent algorithm gaps (e.g., `ravager_count` computed in ZvZ counter logic but never branched on). Remaining ~19 are very small files / one-off scripts and lower-risk
+- [x] **P2.4** Triaged ~34 unused-local warnings: dropped genuinely-dead assignments in `combat_manager`, `economy_manager`, `strategy_manager`, `production_controller`, `meta_game_analyzer`, `aggressive_strategies`, `adaptive_trainer`, `air_threat_response_trainer`, `combat_phase_controller`, `creep_expansion_system`, `creep_manager`, `defeat_detection`, `personality_module`, `unit_factory`, `upgrade_manager`, `idle_unit_manager`, `macro_cycle`, `opponent_modeling`, `proxy_detector`, `run_with_training`, `game_data_logger`, `bot_step_integration`, `build_order_system`. Several encoded silent algorithm gaps documented inline
 - [x] **P2.5** Applied `black` + `isort` to all touched files (CI was failing on format check)
+- [x] **P2.6** Pyflakes clean across `wicked_zerg_challenger/` (was 225 warnings, now **0**)
 
 ## Priority 3 - Test Coverage / Robustness
 
