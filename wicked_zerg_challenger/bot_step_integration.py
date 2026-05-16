@@ -925,6 +925,8 @@ class BotStepIntegrator:
                 except Exception as e:
                     if error_handler.debug_mode:
                         raise
+                    if self.bot.iteration % 110 == 0:
+                        self.logger.warning(f"[on_step] module error suppressed: {e}")
 
             if hasattr(self.bot, "data_cache") and self.bot.data_cache:
                 try:
@@ -932,6 +934,8 @@ class BotStepIntegrator:
                 except Exception as e:
                     if error_handler.debug_mode:
                         raise
+                    if self.bot.iteration % 110 == 0:
+                        self.logger.warning(f"[on_step] module error suppressed: {e}")
 
             # *** Base Destruction Coordinator (모든 적 기지 파괴) ***
             if hasattr(self.bot, "base_destruction") and self.bot.base_destruction:
@@ -940,6 +944,8 @@ class BotStepIntegrator:
                 except Exception as e:
                     if error_handler.debug_mode:
                         raise
+                    if self.bot.iteration % 110 == 0:
+                        self.logger.warning(f"[on_step] module error suppressed: {e}")
 
             # *** Building Destroyer (건물 파괴 전문) ***
             if hasattr(self.bot, "building_destroyer") and self.bot.building_destroyer:
@@ -948,6 +954,8 @@ class BotStepIntegrator:
                 except Exception as e:
                     if error_handler.debug_mode:
                         raise
+                    if self.bot.iteration % 110 == 0:
+                        self.logger.warning(f"[on_step] module error suppressed: {e}")
 
             # *** Runtime Self-Healing (실행 중 자동 복구) ***
             if hasattr(self.bot, "self_healing") and self.bot.self_healing:
@@ -956,6 +964,8 @@ class BotStepIntegrator:
                 except Exception as e:
                     if error_handler.debug_mode:
                         raise
+                    if self.bot.iteration % 110 == 0:
+                        self.logger.warning(f"[on_step] module error suppressed: {e}")
 
             # *** Personality Module (채팅/성격) ***
             if hasattr(self.bot, "personality") and self.bot.personality:
@@ -964,6 +974,8 @@ class BotStepIntegrator:
                 except Exception as e:
                     if error_handler.debug_mode:
                         raise
+                    if self.bot.iteration % 110 == 0:
+                        self.logger.warning(f"[on_step] module error suppressed: {e}")
 
             # *** Battle Preparation System (교전 대비) ***
             if hasattr(self.bot, "battle_prep") and self.bot.battle_prep:
@@ -972,6 +984,8 @@ class BotStepIntegrator:
                 except Exception as e:
                     if error_handler.debug_mode:
                         raise
+                    if self.bot.iteration % 110 == 0:
+                        self.logger.warning(f"[on_step] module error suppressed: {e}")
 
             # *** Destructible Awareness System (파괴 가능 구조물) ***
             if hasattr(self.bot, "destructible_aware") and self.bot.destructible_aware:
@@ -984,6 +998,8 @@ class BotStepIntegrator:
                 except Exception as e:
                     if error_handler.debug_mode:
                         raise
+                    if self.bot.iteration % 110 == 0:
+                        self.logger.warning(f"[on_step] module error suppressed: {e}")
 
             # *** Nydus Network Trainer (땅굴망 학습) ***
             if hasattr(self.bot, "nydus_trainer") and self.bot.nydus_trainer:
@@ -992,6 +1008,8 @@ class BotStepIntegrator:
                 except Exception as e:
                     if error_handler.debug_mode:
                         raise
+                    if self.bot.iteration % 110 == 0:
+                        self.logger.warning(f"[on_step] module error suppressed: {e}")
 
             # *** Overlord Safety Manager (대군주 안전) ***
             if hasattr(self.bot, "overlord_safety") and self.bot.overlord_safety:
@@ -1000,6 +1018,8 @@ class BotStepIntegrator:
                 except Exception as e:
                     if error_handler.debug_mode:
                         raise
+                    if self.bot.iteration % 110 == 0:
+                        self.logger.warning(f"[on_step] module error suppressed: {e}")
 
             # 0.03 *** Build Order System (빌드 오더 - 최최우선) ***
             if self.bot.time < 300.0:  # 5분 이내 (Roach Rush 지원)
@@ -1378,6 +1398,8 @@ class BotStepIntegrator:
                 except Exception as e:
                     if error_handler.debug_mode:
                         raise
+                    if self.bot.iteration % 110 == 0:
+                        self.logger.warning(f"[on_step] module error suppressed: {e}")
 
             # 0.061 *** Creep Highway Manager (기지 간 연결) ***
             if hasattr(self.bot, "creep_highway") and self.bot.creep_highway:
@@ -2347,8 +2369,10 @@ class BotStepIntegrator:
                     self.bot.micro.set_focus_mode(is_focused)
 
             # * MicroV3가 활성이면 Boids Micro 스킵 (명령 덮어쓰기 방지) *
+            # * Focus Mode interval: micro_focus.update()가 반환한 간격을 존중 *
             if not (hasattr(self.bot, "micro_v3") and self.bot.micro_v3):
-                await self._safe_manager_step(self.bot.micro, iteration, "Micro")
+                if iteration % max(1, micro_interval) == 0:
+                    await self._safe_manager_step(self.bot.micro, iteration, "Micro")
 
             # 10.1 *** Advanced Micro Controller V3 (Phase 15 - 고급 마이크로) ***
             if hasattr(self.bot, "micro_v3") and self.bot.micro_v3:
@@ -2904,7 +2928,6 @@ class BotStepIntegrator:
             # 전략 모드 적용 (StrategyManager에게 전달)
             if result and "strategy_mode" in result:
                 new_mode = result["strategy_mode"]
-                current_mode_str = "Unknown"
 
                 # StrategyManager에 모드 적용
                 if hasattr(self.bot, "strategy_manager") and self.bot.strategy_manager:
@@ -3552,6 +3575,19 @@ class BotStepIntegrator:
                     self.logger.warning(
                         f"[BotStepIntegrator] Hot reloader suppressed: {e}"
                     )
+
+    def _handle_module_error(self, module_name: str, exc: Exception) -> None:
+        """Log a module's on_step error with rate-limiting via error_handler counters.
+
+        Re-raises when debug_mode is on so failures surface in development.
+        """
+        if error_handler.debug_mode:
+            raise exc
+        error_handler.error_counts[module_name] = (
+            error_handler.error_counts.get(module_name, 0) + 1
+        )
+        if error_handler.error_counts[module_name] <= error_handler.max_error_logs:
+            self.logger.error(f"[ERROR] {module_name} error: {exc}")
 
     async def on_step(self, iteration: int):
         """
