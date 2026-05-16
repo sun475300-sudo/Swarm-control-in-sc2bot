@@ -24,11 +24,10 @@ import time
 from datetime import datetime
 from pathlib import Path
 
-import sc2
-from sc2 import maps
 from sc2.data import Difficulty, Race
-from sc2.main import run_game
-from sc2.player import Bot, Computer
+
+# Heavy imports (sc2.main pulls in mpyq, sc2.maps depends on SC2 client)
+# are deferred to run_single_game() so this module is importable in CI/tests.
 
 logger = logging.getLogger("ProgressiveDifficultyTrainer")
 
@@ -36,8 +35,6 @@ logger = logging.getLogger("ProgressiveDifficultyTrainer")
 project_root = Path(__file__).parent
 if str(project_root) not in sys.path:
     sys.path.insert(0, str(project_root))
-
-from wicked_zerg_bot_pro_impl import WickedZergBotProImpl
 
 # 사용 가능한 맵 리스트 (다양성 개선)
 AVAILABLE_MAPS = [
@@ -127,6 +124,12 @@ class ProgressiveTrainer:
 
     def run_single_game(self, difficulty: Difficulty, game_num: int, total_games: int):
         """단일 게임 실행"""
+        import sc2
+        from sc2 import maps
+        from sc2.main import run_game
+        from sc2.player import Bot, Computer
+        from wicked_zerg_bot_pro_impl import WickedZergBotProImpl
+
         # *** 게임 시작 전 모든 SC2 프로세스 종료 ***
         kill_all_sc2_processes()
 

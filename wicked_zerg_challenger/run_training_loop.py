@@ -10,11 +10,10 @@ import sys
 import time
 
 from difficulty_progression import DifficultyProgression
-from sc2 import maps
 from sc2.data import Race
-from sc2.main import run_game
-from sc2.player import Bot, Computer
-from wicked_zerg_bot_pro_impl import WickedZergBotProImpl as WickedZergBotPro
+
+# Heavy imports are deferred to run_single_game() so this module is
+# importable in CI/test environments without the SC2 client.
 
 logger = logging.getLogger("RunTrainingLoop")
 
@@ -60,6 +59,11 @@ def _ensure_sc2_path():
 
 def run_single_game(game_num, progression_system):
     """Run a single game."""
+    from sc2 import maps
+    from sc2.main import run_game
+    from sc2.player import Bot, Computer
+    from wicked_zerg_bot_pro_impl import WickedZergBotProImpl as WickedZergBotPro
+
     _ensure_sc2_path()
 
     logger.info("\n" + "=" * 60)
