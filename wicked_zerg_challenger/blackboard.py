@@ -537,10 +537,28 @@ class GameStateBlackboard:
             and self.game_phase != GamePhase.OPENING
         )
 
+    # Minimum mineral bank before should_expand() greenlights expansion.
+    EXPANSION_MIN_MINERALS = 300
+
     def should_expand(self) -> bool:
         """확장 가능한 상황인가?"""
         return (
             self.threat.level == ThreatLevel.NONE
-            and not self.resources.is_supply_block
+            and not self.resources.is_supply_blocked
             and not self.is_under_attack
+            and self.resources.minerals >= self.EXPANSION_MIN_MINERALS
         )
+
+
+Blackboard = GameStateBlackboard
+
+__all__ = [
+    "AuthorityMode",
+    "Blackboard",
+    "GamePhase",
+    "GameStateBlackboard",
+    "ResourceState",
+    "ThreatInfo",
+    "ThreatLevel",
+    "UnitCounts",
+]
