@@ -41,22 +41,26 @@ def _ensure_sc2_path():
 
 _ensure_sc2_path()
 
-from sc2 import maps
 from sc2.data import Difficulty, Race
-from sc2.main import run_game
-from sc2.player import Bot, Computer
-from wicked_zerg_bot_pro_impl import WickedZergBotProImpl
 
-# GPU setup
-try:
-    import torch
+# Heavy imports (sc2.main pulls in mpyq) are deferred to run_single_test so
+# this module stays importable in CI/test environments without the SC2 client.
+GPU_AVAILABLE = False
 
-    GPU_AVAILABLE = torch.cuda.is_available()
-    if GPU_AVAILABLE:
-        torch.set_default_device("cuda")
-        logger.info(f"{torch.cuda.get_device_name(0)} - CUDA {torch.version.cuda}")
-except ImportError:
-    GPU_AVAILABLE = False
+
+def _init_gpu():
+    global GPU_AVAILABLE
+    try:
+        import torch
+
+        GPU_AVAILABLE = torch.cuda.is_available()
+        if GPU_AVAILABLE:
+            torch.set_default_device("cuda")
+            logger.info(
+                f"{torch.cuda.get_device_name(0)} - CUDA {torch.version.cuda}"
+            )
+    except ImportError:
+        GPU_AVAILABLE = False
 
 # Test matrix
 MAPS = ["AbyssalReefLE", "AscensiontoAiurLE", "OdysseyLE"]
@@ -153,6 +157,11 @@ def build_test_cases(args):
 
 def run_single_test(map_name, race, difficulty, diff_name, game_num, total):
     """Run a single test game."""
+    from sc2 import maps
+    from sc2.main import run_game
+    from sc2.player import Bot, Computer
+    from wicked_zerg_bot_pro_impl import WickedZergBotProImpl
+
     race_name = race.name
     logger.info(f"\n{'='*60}")
     logger.info(f"  GAME {game_num}/{total}")
@@ -199,6 +208,7 @@ def run_single_test(map_name, race, difficulty, diff_name, game_num, total):
 
 def main(argv=None):
     args = parse_args(argv)
+    _init_gpu()
     start_time = time.time()
 
     test_cases = build_test_cases(args)
@@ -211,9 +221,12 @@ def main(argv=None):
         f"Races: {len(set(case[1] for case in test_cases))} | "
         f"Difficulties: {len(set(case[3] for case in test_cases))}"
     )
-    logger.info(
-        f"  GPU: {'YES - ' + torch.cuda.get_device_name(0) if GPU_AVAILABLE else 'CPU only'}"
-    )
+    if GPU_AVAILABLE:
+        import torch
+
+        logger.info(f"  GPU: YES - {torch.cuda.get_device_name(0)}")
+    else:
+        logger.info("  GPU: CPU only")
     logger.info(f"{'='*70}\n")
 
     if args.dry_run:
