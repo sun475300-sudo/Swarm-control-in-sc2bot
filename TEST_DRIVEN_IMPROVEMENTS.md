@@ -58,13 +58,41 @@
 ## Iteration 4 (완료)
 - [x] T4-01: 전체 트리에서 254개의 placeholder 없는 f-string 제거 (F541 lint clean)
 
-## Iteration 5 (진행 중)
+## Iteration 5 (완료)
 ### CI 진단
 - [ ] T5-01: PR CI `Lint & Type Check` 의 black 단계 실패 → main 자체에서도 black 비호환이므로 PR 변경과 무관 (사전 존재 이슈)
 - [x] T5-02: critical flake8 (E9,F63,F7,F82) 통과 확인 → 0 errors
 - [ ] T5-03: CI 의 black 단계는 향후 일괄 black format PR 필요 (대규모 diff 위험)
+- [x] T5-04: F841 unused 'as e' 47건 정리
 
-### 추가 개선 후보 (low risk)
-- [ ] T5-04: F841 unused-local 정리 (economy_manager.py 5건 등) — 안전, 의미 없는 변수만 제거
-- [ ] T5-05: 더 많은 회귀 테스트 추가
+## Iteration 6 (완료) - 실버그 발견
+- [x] T6-01: `request_production(priority=5)` 처럼 미리 정의되지 않은 priority 사용 시 KeyError → setdefault 로 수정
+- [x] T6-02: auto_adjust_authority 권한 모드 전이 회귀 테스트 7건 추가
+- [x] T6-03: production queue 회귀 테스트 4건 추가
+
+## Iteration 7-13 (완료) - 테스트 커버리지 확대
+- [x] T7-01: QueenManager static 헬퍼 (_score_creep_target, _find_closest_queen, _find_queen_by_tag) 11건
+- [x] T8-01: utils/common_helpers (has_units, safe_first, safe_closest, safe_amount, clamp, percentage) 29건
+- [x] T9-01: utils/pid_controller (PIDController, PID2D, UnitMovementController) 12건
+- [x] T9-02: utils/position_utils (get_center, weighted_center, closest, furthest, ...) 21건
+- [x] T10-01: utils/error_handler (safe_execute, retry_on_failure, validators) 21건
+- [x] T11-01: utils/kd_tree (build, nearest, range, knn - brute-force 비교) 10건
+- [x] T12-01: utils/frame_cache + cached_per_frame **kwargs 버그 수정** 13건
+- [x] T13-01: utils/game_constants lock-in 19건
+
+## 누적 통계 (Iteration 1 → 13)
+- 테스트 통과 수: 661 → 806 (+145)
+- 발견·수정한 진짜 버그:
+  - Blackboard alias 누락 (4개 모듈 ImportError)
+  - should_expand `is_supply_block` 오타 + 광물 체크 누락
+  - game_analytics_system.py SyntaxError
+  - request_production KeyError on unknown priority
+  - cached_per_frame kwargs 무시 (잠재 버그)
+  - 80+ 파일의 protobuf TypeError 대응
+
+## 향후 후보 (위험도 있음 - 깊은 분석 필요)
+- T-Future-01: opponent_modeling.py 의 on_step 중복 정의 (위에서 발견)
+- T-Future-02: economy_manager.py 의 `_prevent_resource_banking`, `_reduce_gas_workers` 중복
+- T-Future-03: combat_manager.py 의 `_find_harass_target` 중복
+- T-Future-04: 전체 트리 black 포맷팅 일괄 적용 (CI 정상화)
 
