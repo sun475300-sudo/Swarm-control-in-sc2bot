@@ -250,7 +250,7 @@ class GameAnalytics:
         # 개선 제안
         suggestions = self._get_improvement_suggestions(game_record)
         if suggestions:
-            lines.append(f"\n[IDEA] 개선 제안:")
+            lines.append("\n[IDEA] 개선 제안:")
             for suggestion in suggestions:
                 lines.append(f"  - {suggestion}")
 
@@ -289,7 +289,7 @@ class GameAnalytics:
         """통계 요약"""
         lines = []
         lines.append(f"\n{'='*60}")
-        lines.append(f"[GAME ANALYTICS] 전체 통계")
+        lines.append("[GAME ANALYTICS] 전체 통계")
         lines.append(f"{'='*60}")
 
         # 전체 승률
@@ -302,7 +302,7 @@ class GameAnalytics:
         lines.append(f"평균 게임 시간: {int(self.timing_stats['avg_game_time'])}초")
 
         # 종족별 승률
-        lines.append(f"\n종족별 승률:")
+        lines.append("\n종족별 승률:")
         for race, stats in self.race_stats.items():
             if stats["games"] > 0:
                 race_wr = stats["wins"] / stats["games"] * 100
@@ -311,7 +311,7 @@ class GameAnalytics:
                 )
 
         # 맵별 승률 (상위 5개)
-        lines.append(f"\n맵별 승률 (상위 5개):")
+        lines.append("\n맵별 승률 (상위 5개):")
         sorted_maps = sorted(
             self.map_stats.items(), key=lambda x: x[1]["games"], reverse=True
         )[:5]
@@ -323,7 +323,7 @@ class GameAnalytics:
                 )
 
         # 패배 원인 Top 3
-        lines.append(f"\n주요 패배 원인:")
+        lines.append("\n주요 패배 원인:")
         sorted_reasons = sorted(
             self.defeat_reasons.items(), key=lambda x: x[1], reverse=True
         )[:3]
