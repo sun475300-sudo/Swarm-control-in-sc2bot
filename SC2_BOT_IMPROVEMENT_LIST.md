@@ -27,8 +27,10 @@ After iteration 1: **661 passing**, no collection errors.
 
 ## Priority 3 - Test Coverage / Robustness
 
-- [ ] **P3.1** No test exists for the shadowed `on_step` behavior — would have caught P1.2
-- [ ] **P3.2** Add lint gate (pyflakes) to CI to prevent regressions
+- [x] **P3.1** Added `test_no_shadowed_methods.py` — parametrized regression guard that AST-walks every bot module and fails if any class redefines a method (would have caught P1.2 / P1.4 / P1.5 / P1.6 instantly). Currently scans 138 modules
+- [x] **P3.2** Added `test_iteration1_regressions.py` — pins the iteration-1 fixes (Blackboard alias, opponent_modeling on_step richness + state attribute, should_expand typo + mineral gate)
+- [ ] **P3.3** Add `pyflakes` step to CI to prevent regression of unused-local / duplicate-method patterns
+- [ ] **P3.4** Add a CI check that all bot modules import cleanly (would have caught the `game_analytics_system.py` syntax error from iteration 2)
 
 ## Methodology
 
