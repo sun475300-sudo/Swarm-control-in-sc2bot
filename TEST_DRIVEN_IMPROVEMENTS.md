@@ -80,19 +80,48 @@
 - [x] T12-01: utils/frame_cache + cached_per_frame **kwargs 버그 수정** 13건
 - [x] T13-01: utils/game_constants lock-in 19건
 
-## 누적 통계 (Iteration 1 → 13)
-- 테스트 통과 수: 661 → 806 (+145)
-- 발견·수정한 진짜 버그:
-  - Blackboard alias 누락 (4개 모듈 ImportError)
-  - should_expand `is_supply_block` 오타 + 광물 체크 누락
-  - game_analytics_system.py SyntaxError
-  - request_production KeyError on unknown priority
-  - cached_per_frame kwargs 무시 (잠재 버그)
-  - 80+ 파일의 protobuf TypeError 대응
+## 누적 통계 (Iteration 1 → 18)
+- 테스트 통과 수: 661 → 861 (+200, +30%)
+- 새 테스트 파일 8개 추가, 기존 4개 확장
+- 발견·수정한 진짜 버그 6건:
+  1. Blackboard alias 누락 (4개 모듈 ImportError)
+  2. should_expand `is_supply_block` 오타 + 광물 체크 누락
+  3. game_analytics_system.py SyntaxError (중복 except 블록)
+  4. request_production KeyError on unknown priority
+  5. cached_per_frame 가 kwargs 를 캐시 키에서 무시
+  6. 80+ 파일의 protobuf TypeError 임포트 처리 미흡
+- 추가 정리 작업:
+  - 254개의 placeholder 없는 f-string 정리
+  - 47개의 사용되지 않는 except .. as e 정리
+
+## 이터레이션별 commit/push 추적
+| iter | commit | tests |
+|------|--------|-------|
+| 1 | da4c3df | 661 → 716 (incl. blackboard fix) |
+| 2 | 539b8a9 | -- |
+| 3 | 6144fcd | +4 |
+| 4 | 9a0f598 | -- |
+| 5 | 43228a8 | -- |
+| 6 | 8ffc72e | +9 |
+| 7 | 4e1334b | +11 |
+| 8 | bf5e133 | +29 |
+| 9 | 46cd26c | +33 |
+| 10 | e633243 | +21 |
+| 11 | 2c8f9b7 | +10 |
+| 12 | f2b5961 | +13 |
+| 13 | e1608a3 | +19 |
+| 14 | 7b82dc6 | +13 |
+| 15 | 5b9b262 | +8 |
+| 16 | 6230710 | +5 |
+| 17 | 43c9aa6 | +14 |
+| 18 | 7f80c74 | +15 |
 
 ## 향후 후보 (위험도 있음 - 깊은 분석 필요)
 - T-Future-01: opponent_modeling.py 의 on_step 중복 정의 (위에서 발견)
+  → Version A (line 341) 가 더 풍부하지만 Version B (line 765) 가 가림
+  → 효과적으로 strategy prediction 동작 안 함
 - T-Future-02: economy_manager.py 의 `_prevent_resource_banking`, `_reduce_gas_workers` 중복
 - T-Future-03: combat_manager.py 의 `_find_harass_target` 중복
-- T-Future-04: 전체 트리 black 포맷팅 일괄 적용 (CI 정상화)
+- T-Future-04: 전체 트리 black 포맷팅 일괄 적용 (CI 정상화 — 대형 PR)
+- T-Future-05: 더 많은 매니저 클래스 통합 테스트 (특히 economy_manager, combat_manager 의 동기 함수)
 
