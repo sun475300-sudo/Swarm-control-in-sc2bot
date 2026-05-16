@@ -409,8 +409,10 @@ class GameStateBlackboard:
         if priority is None:
             priority = self.get_authority_priority(requester)
 
+        # 미리 정의되지 않은 priority 도 허용 (KeyError 방지)
+        queue = self.production_queue.setdefault(priority, [])
+
         # 중복 요청 체크
-        queue = self.production_queue[priority]
         for i, (utype, _, req) in enumerate(queue):
             if utype == unit_type and req == requester:
                 # 기존 요청 업데이트
@@ -418,7 +420,7 @@ class GameStateBlackboard:
                 return
 
         # 새 요청 추가
-        self.production_queue[priority].append((unit_type, count, requester))
+        queue.append((unit_type, count, requester))
 
     def get_next_production(self) -> Optional[tuple]:
         """
