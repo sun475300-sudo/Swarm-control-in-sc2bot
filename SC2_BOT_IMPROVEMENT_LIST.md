@@ -25,6 +25,7 @@ After iteration 1: **661 passing**, no collection errors.
 - [x] **P2.4** Triaged ~34 unused-local warnings: dropped genuinely-dead assignments in `combat_manager`, `economy_manager`, `strategy_manager`, `production_controller`, `meta_game_analyzer`, `aggressive_strategies`, `adaptive_trainer`, `air_threat_response_trainer`, `combat_phase_controller`, `creep_expansion_system`, `creep_manager`, `defeat_detection`, `personality_module`, `unit_factory`, `upgrade_manager`, `idle_unit_manager`, `macro_cycle`, `opponent_modeling`, `proxy_detector`, `run_with_training`, `game_data_logger`, `bot_step_integration`, `build_order_system`. Several encoded silent algorithm gaps documented inline
 - [x] **P2.5** Applied `black` + `isort` to all touched files (CI was failing on format check)
 - [x] **P2.6** Pyflakes clean across `wicked_zerg_challenger/` (was 225 warnings, now **0**)
+- [x] **P2.7** Full `black` + `isort` pass across `wicked_zerg_challenger/` (45 files reformatted) — CI lint check requires `black --check` to pass and a chunk of files were pre-existing-dirty
 
 ## Priority 3 - Test Coverage / Robustness
 
