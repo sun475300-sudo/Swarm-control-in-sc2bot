@@ -544,3 +544,7 @@ class GameStateBlackboard:
             and not self.resources.is_supply_block
             and not self.is_under_attack
         )
+
+
+# Backward-compatible alias: several importers expect `Blackboard`.
+Blackboard = GameStateBlackboard

@@ -4734,7 +4734,7 @@ class CombatManager:
                 f"[EXPANSION DEFENSE] [{int(current_time)}s] {len(defense_force)} units defending expansion (enemies: {len(nearby_enemies)})"
             )
 
-    async def _counterattack_after_base_loss(self, destroyed_base_tags, iteration: int):
+    async def _counterattack_after_base_loss(self, _destroyed_base_tags, iteration: int):
         """
         확장 기지 파괴 후 반격
 
