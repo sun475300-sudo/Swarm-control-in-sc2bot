@@ -1083,12 +1083,12 @@ class BuildOrderSystem:
 
             if tech_coordinator:
                 if not tech_coordinator.is_planned(UnitTypeId.HATCHERY):
-                    if not self.bot.workers.exists:
-                        return False
-                    worker = self.bot.workers.closest_to(location)
-                    if not worker:
-                        return False
-                    self.bot.do(worker.build(UnitTypeId.HATCHERY, location))
+                    tech_coordinator.request_structure(
+                        UnitTypeId.HATCHERY,
+                        location,
+                        PRIORITY_EXPANSION,
+                        "BuildOrderSystem.Natural",
+                    )
                     self.expansion_actual_time = self.bot.time
                     logger.info(
                         f"[*] Natural expansion ordered at {int(self.bot.time)}s [*]"

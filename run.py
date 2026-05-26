@@ -69,13 +69,15 @@ async def _run_ladder_game(
         )
         logger.info(f"Game result: {result}")
 
+        # Best-effort cleanup; the connection may already be torn down
+        # by the ladder server when we get here, which is fine.
         try:
             await client.leave()
-        except (ConnectionAlreadyClosed, Exception):
+        except Exception:
             pass
         try:
             await client.quit()
-        except (ConnectionAlreadyClosed, Exception):
+        except Exception:
             pass
 
         return result
@@ -88,6 +90,10 @@ async def _run_ladder_game(
 
 
 def main():
+    # Configure logging once, before any logger.* call so that early
+    # argument-validation errors are formatted/handled consistently.
+    logging.basicConfig(level=logging.INFO)
+
     parser = argparse.ArgumentParser(description="WickedZergBotPro - AI Arena Entry")
     parser.add_argument(
         "--LadderServer", action="store_true", help="Run in AI Arena ladder mode"
@@ -127,7 +133,6 @@ def main():
                 host = sys.argv[i + 1]
                 break
 
-        logging.basicConfig(level=logging.INFO)
         logger.info(
             f"Starting ladder game: host={host}, GamePort={args.GamePort}, StartPort={args.StartPort}"
         )

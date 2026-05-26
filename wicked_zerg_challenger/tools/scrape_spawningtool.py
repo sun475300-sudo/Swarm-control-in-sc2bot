@@ -27,7 +27,9 @@ def get_replay_links(page_num):
     url = f"{SEARCH_URL}{page_num}"
     try:
         logger.info(f"Fetching page {page_num}...")
-        response = requests.get(url, headers={'User-Agent': 'Mozilla/5.0'})
+        response = requests.get(
+            url, headers={'User-Agent': 'Mozilla/5.0'}, timeout=30
+        )
         if response.status_code != 200:
             logger.error(f"Failed to fetch page {page_num}: Status {response.status_code}")
             return []
@@ -50,8 +52,10 @@ def download_and_extract(replay_id):
     download_url = f"{BASE_URL}/{replay_id}/download/"
     try:
         logger.info(f"Fetching replay {replay_id}...")
-        response = requests.get(download_url, headers={'User-Agent': 'Mozilla/5.0'})
-        
+        response = requests.get(
+            download_url, headers={'User-Agent': 'Mozilla/5.0'}, timeout=60
+        )
+
         if response.status_code != 200:
             logger.error(f"Failed download {replay_id}: {response.status_code}")
             return

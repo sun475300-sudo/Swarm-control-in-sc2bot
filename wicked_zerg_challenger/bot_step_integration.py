@@ -383,6 +383,25 @@ class BotStepIntegrator:
         self._managers_initialized = False
         self._logic_tracker = LogicActivityTracker()
 
+    def _log_step_error(self, key: str, exc: Exception) -> None:
+        """Rate-limited per-system on_step error reporting.
+
+        Re-raises in debug mode; in production, logs the first ``max_error_logs``
+        occurrences per ``key`` through the application logger (with traceback)
+        so live-game failures are visible in log files instead of silently
+        swallowed. Subsequent occurrences are suppressed to prevent spam.
+        """
+        if error_handler.debug_mode:
+            raise exc
+        error_handler.error_counts[key] = error_handler.error_counts.get(key, 0) + 1
+        count = error_handler.error_counts[key]
+        if count <= error_handler.max_error_logs:
+            self.logger.warning(f"[{key}] on_step error: {exc}", exc_info=True)
+            if count == error_handler.max_error_logs:
+                self.logger.warning(
+                    f"[{key}] further on_step errors will be suppressed"
+                )
+
         # 건물 배치 헬퍼
         if BuildingPlacementHelper:
             self.placement_helper = BuildingPlacementHelper(bot)
@@ -923,55 +942,48 @@ class BotStepIntegrator:
                 try:
                     await self.bot.spatial_optimizer.on_step(iteration)
                 except Exception as e:
-                    if error_handler.debug_mode:
-                        raise
+                    self._log_step_error("SpatialOptimizer", e)
 
             if hasattr(self.bot, "data_cache") and self.bot.data_cache:
                 try:
                     await self.bot.data_cache.on_step(iteration)
                 except Exception as e:
-                    if error_handler.debug_mode:
-                        raise
+                    self._log_step_error("DataCache", e)
 
             # *** Base Destruction Coordinator (모든 적 기지 파괴) ***
             if hasattr(self.bot, "base_destruction") and self.bot.base_destruction:
                 try:
                     await self.bot.base_destruction.on_step(iteration)
                 except Exception as e:
-                    if error_handler.debug_mode:
-                        raise
+                    self._log_step_error("BaseDestruction", e)
 
             # *** Building Destroyer (건물 파괴 전문) ***
             if hasattr(self.bot, "building_destroyer") and self.bot.building_destroyer:
                 try:
                     await self.bot.building_destroyer.on_step(iteration)
                 except Exception as e:
-                    if error_handler.debug_mode:
-                        raise
+                    self._log_step_error("BuildingDestroyer", e)
 
             # *** Runtime Self-Healing (실행 중 자동 복구) ***
             if hasattr(self.bot, "self_healing") and self.bot.self_healing:
                 try:
                     await self.bot.self_healing.on_step(iteration)
                 except Exception as e:
-                    if error_handler.debug_mode:
-                        raise
+                    self._log_step_error("RuntimeSelfHealing", e)
 
             # *** Personality Module (채팅/성격) ***
             if hasattr(self.bot, "personality") and self.bot.personality:
                 try:
                     await self.bot.personality.on_step(iteration)
                 except Exception as e:
-                    if error_handler.debug_mode:
-                        raise
+                    self._log_step_error("Personality", e)
 
             # *** Battle Preparation System (교전 대비) ***
             if hasattr(self.bot, "battle_prep") and self.bot.battle_prep:
                 try:
                     await self.bot.battle_prep.on_step(iteration)
                 except Exception as e:
-                    if error_handler.debug_mode:
-                        raise
+                    self._log_step_error("BattlePrep", e)
 
             # *** Destructible Awareness System (파괴 가능 구조물) ***
             if hasattr(self.bot, "destructible_aware") and self.bot.destructible_aware:
@@ -982,24 +994,21 @@ class BotStepIntegrator:
 
                     await self.bot.destructible_aware.on_step(iteration)
                 except Exception as e:
-                    if error_handler.debug_mode:
-                        raise
+                    self._log_step_error("DestructibleAwareness", e)
 
             # *** Nydus Network Trainer (땅굴망 학습) ***
             if hasattr(self.bot, "nydus_trainer") and self.bot.nydus_trainer:
                 try:
                     await self.bot.nydus_trainer.on_step(iteration)
                 except Exception as e:
-                    if error_handler.debug_mode:
-                        raise
+                    self._log_step_error("NydusTrainer", e)
 
             # *** Overlord Safety Manager (대군주 안전) ***
             if hasattr(self.bot, "overlord_safety") and self.bot.overlord_safety:
                 try:
                     await self.bot.overlord_safety.on_step(iteration)
                 except Exception as e:
-                    if error_handler.debug_mode:
-                        raise
+                    self._log_step_error("OverlordSafety", e)
 
             # 0.03 *** Build Order System (빌드 오더 - 최최우선) ***
             if self.bot.time < 300.0:  # 5분 이내 (Roach Rush 지원)
@@ -1376,8 +1385,7 @@ class BotStepIntegrator:
                     elif iteration % 110 == 0:
                         astar_hw.update_progress()
                 except Exception as e:
-                    if error_handler.debug_mode:
-                        raise
+                    self._log_step_error("CreepHighwayAStar", e)
 
             # 0.061 *** Creep Highway Manager (기지 간 연결) ***
             if hasattr(self.bot, "creep_highway") and self.bot.creep_highway:
