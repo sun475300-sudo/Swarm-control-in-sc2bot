@@ -278,12 +278,17 @@ class GameStateBlackboard:
         self.state["is_rush_detected"] = is_rushing
         self.state["threat_level"] = int(level)
 
-        if threat_position:
+        if threat_position is not None:
             self.threat.threat_position = threat_position
 
-        # 위협 감지 시간 기록
-        if level >= ThreatLevel.MEDIUM and self.threat.detected_at == 0.0:
-            self.threat.detected_at = self.game_time
+        # 위협 감지 시간 기록: MEDIUM 이상으로 처음 진입할 때 기록.
+        # 위협이 사라지면 (LOW 이하로 복귀) detected_at 을 0 으로 리셋해
+        # 다음 위협 사이클의 지속시간을 새로 측정한다.
+        if level >= ThreatLevel.MEDIUM:
+            if self.threat.detected_at == 0.0:
+                self.threat.detected_at = self.game_time
+        else:
+            self.threat.detected_at = 0.0
 
     # ========== Dynamic Authority System ==========
 
@@ -358,8 +363,13 @@ class GameStateBlackboard:
         # 긴급 상황: 러시 감지 또는 CRITICAL 위협
         # FIX P0-2: EMERGENCY 모드 30초 타임아웃 추가
         if self.threat.is_rushing or self.threat.level == ThreatLevel.CRITICAL:
-            emergency_duration = self.game_time - getattr(self, "authority_changed_at", 0)
-            if self.authority_mode == AuthorityMode.EMERGENCY and emergency_duration > 30:
+            emergency_duration = self.game_time - getattr(
+                self, "authority_changed_at", 0
+            )
+            if (
+                self.authority_mode == AuthorityMode.EMERGENCY
+                and emergency_duration > 30
+            ):
                 # 30초 이상 EMERGENCY 지속 → COMBAT으로 다운그레이드
                 self.set_authority_mode(
                     AuthorityMode.COMBAT,
@@ -538,9 +548,14 @@ class GameStateBlackboard:
         )
 
     def should_expand(self) -> bool:
-        """확장 가능한 상황인가?"""
+        """확장 가능한 상황인가? (해처리 비용 300 mineral 이상 보유 필요)"""
+        HATCHERY_MINERAL_COST = 300
         return (
             self.threat.level == ThreatLevel.NONE
-            and not self.resources.is_supply_block
+            and not self.resources.is_supply_blocked
             and not self.is_under_attack
+            and self.resources.minerals >= HATCHERY_MINERAL_COST
         )
+
+
+Blackboard = GameStateBlackboard

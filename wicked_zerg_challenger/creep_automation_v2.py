@@ -57,6 +57,17 @@ class CreepAutomationV2:
         # Creep queens
         self.creep_queen_tags: Set[int] = set()
 
+    def reset(self) -> None:
+        """게임 간 크립 자동화 상태 초기화.
+
+        이전 게임 맵의 종양 위치와 죽은 퀸 태그가 새 게임으로 새지 않도록
+        모든 위치/태그/쿨다운을 초기화한다.
+        """
+        self.creep_targets = []
+        self.tumor_positions = set()
+        self._tumor_cooldowns = {}
+        self.creep_queen_tags = set()
+
     async def on_step(self, iteration: int):
         """매 프레임 실행"""
         try:

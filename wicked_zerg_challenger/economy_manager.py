@@ -3,8 +3,8 @@
 Economy Manager - deterministic worker production with macro hatcheries.
 """
 
-from enum import Enum
 import inspect
+from enum import Enum
 from typing import Optional
 
 try:
@@ -189,7 +189,9 @@ class EconomyManager:
         self._target_drone_count = THREAT_DRONE_TARGETS[ThreatLevel.LOW]
         self._last_float_log_time = -999.0
 
-    def _distance_between(self, unit_or_pos_a, unit_or_pos_b, frame: int = None) -> float:
+    def _distance_between(
+        self, unit_or_pos_a, unit_or_pos_b, frame: int = None
+    ) -> float:
         current_frame = (
             frame if frame is not None else int(getattr(self.bot, "iteration", 0) or 0)
         )
@@ -941,7 +943,10 @@ class EconomyManager:
             not force_army
             and getattr(self.bot, "supply_left", 0) < 3
             and getattr(self.bot, "supply_cap", 0) < 200
-            and getattr(self.bot, "already_pending", lambda unit_type: 0)(UnitTypeId.OVERLORD) == 0
+            and getattr(self.bot, "already_pending", lambda unit_type: 0)(
+                UnitTypeId.OVERLORD
+            )
+            == 0
             and self.bot.can_afford(UnitTypeId.OVERLORD)
         ):
             return await self._train_larva_unit(larva_unit, UnitTypeId.OVERLORD)
@@ -1086,7 +1091,9 @@ class EconomyManager:
     async def _train_larva_unit(self, larva_unit, unit_type) -> bool:
         try:
             production = getattr(self.bot, "production", None)
-            safe_train = getattr(production, "_safe_train", None) if production else None
+            safe_train = (
+                getattr(production, "_safe_train", None) if production else None
+            )
             if callable(safe_train):
                 result = safe_train(larva_unit, unit_type)
                 if hasattr(result, "__await__"):
@@ -1115,7 +1122,10 @@ class EconomyManager:
     def _get_gas_timing_by_matchup(self) -> int:
         """Return worker count threshold for first extractor by matchup."""
         enemy_race = getattr(self.bot, "enemy_race", None)
-        race_name = getattr(enemy_race, "name", None) or str(enemy_race or "Unknown").split(".")[-1]
+        race_name = (
+            getattr(enemy_race, "name", None)
+            or str(enemy_race or "Unknown").split(".")[-1]
+        )
         if race_name == "Zerg":
             return 13
         if race_name == "Terran":
@@ -1705,114 +1715,6 @@ class EconomyManager:
 
         return minerals > 800
 
-    async def _prevent_resource_banking(self) -> None:
-        """
-        * Prevent resource banking by spending excess minerals *
-
-        Logic:
-        1. If Minerals > Config.Threshold and Larva < Config.Threshold:
-           - Build Extra Queens (Injects/Defense)
-           - Build Static Defense (Spines/Spores) - ONLY AFTER 3+ BASES
-        """
-        if not hasattr(self.bot, "minerals"):
-            return
-
-        minerals = self.bot.minerals
-        vespene = self.bot.vespene
-        larva_count = len(self.bot.larva) if hasattr(self.bot, "larva") else 0
-        game_time = getattr(self.bot, "time", 0)
-        base_count = self.bot.townhalls.amount if hasattr(self.bot, "townhalls") else 1
-
-        # * CRITICAL: 초반 (3분 이전) 또는 3베이스 이전에는 방어 건물 금지! *
-        # 확장이 최우선이므로 미네랄 낭비 방지 (Config 기반)
-        can_build_defense = (
-            game_time >= EconomyConfig.BANKING_DEFENSE_TIME_REQ
-            and base_count >= EconomyConfig.BANKING_DEFENSE_BASE_REQ
-        ) and minerals > 2000  # * FIX: or -> and (2000미네랄이어도 초반엔 방어건물 금지)
-
-        # 임계값: 미네랄 1000, 라바 부족 시 (Config 기반)
-        if (
-            minerals > EconomyConfig.BANKING_MINERAL_THRESHOLD
-            and larva_count < EconomyConfig.BANKING_LARVA_THRESHOLD
-        ):
-            # 1. 퀸 추가 생산 (주사기 + 수비)
-            if self.bot.supply_left >= 2 and self.bot.can_afford(UnitTypeId.QUEEN):
-                for th in self.bot.townhalls.ready.idle:
-                    if not self.bot.units(UnitTypeId.QUEEN).closer_than(5, th).exists:
-                        self.bot.do(th.train(UnitTypeId.QUEEN))
-                        if minerals < 800:
-                            break
-
-            # 2. 방어 건물 건설 (본진/멀티) - * 3베이스 이후에만! *
-            if (
-                can_build_defense
-                and minerals > 1500
-                and hasattr(self.bot, "workers")
-                and self.bot.workers
-            ):
-                for th in self.bot.townhalls.ready:
-                    # * 안전한 건설 위치: 미네랄 라인 근처 (맵 중앙 방향 X -> 기지 뒤쪽) *
-                    mineral_fields = self.bot.mineral_field.closer_than(10, th)
-                    if mineral_fields:
-                        mineral_center = mineral_fields.center
-                        base_pos = th.position
-
-                        # 기지 당 포자촉수 1개 유지
-                        spores = self.bot.structures(
-                            UnitTypeId.SPORECRAWLER
-                        ).closer_than(10, th)
-                        if not spores.exists and self.bot.can_afford(
-                            UnitTypeId.SPORECRAWLER
-                        ):
-                            # * 미네랄 라인 방향으로 건설 (안전한 위치) *
-                            pos = base_pos.towards(mineral_center, 4)
-                            # * 안전 체크: 근처 적이 없는지 확인 *
-                            enemies_near = (
-                                self.bot.enemy_units.closer_than(15, pos)
-                                if self.bot.enemy_units
-                                else []
-                            )
-                            if not enemies_near:
-                                worker = self.bot.workers.closest_to(pos)
-                                if worker:
-                                    try:
-                                        await self.bot.build(
-                                            UnitTypeId.SPORECRAWLER, near=pos
-                                        )
-                                        minerals -= 75
-                                    except Exception as e:
-                                        self.logger.warning(
-                                            f"[ECONOMY_WARN] Spore build failed: {e}"
-                                        )
-
-                        # 기지 당 가시촉수 1개 유지 (미네랄 2000+ 일 때만)
-                        if minerals > 2000:
-                            spines = self.bot.structures(
-                                UnitTypeId.SPINECRAWLER
-                            ).closer_than(10, th)
-                            if not spines.exists and self.bot.can_afford(
-                                UnitTypeId.SPINECRAWLER
-                            ):
-                                # * 맵 중앙 방향으로 건설 (방어 최전방) *
-                                pos = base_pos.towards(self.bot.game_info.map_center, 6)
-                                enemies_near = (
-                                    self.bot.enemy_units.closer_than(15, pos)
-                                    if self.bot.enemy_units
-                                    else []
-                                )
-                                if not enemies_near:
-                                    worker = self.bot.workers.closest_to(pos)
-                                    if worker:
-                                        try:
-                                            await self.bot.build(
-                                                UnitTypeId.SPINECRAWLER, near=pos
-                                            )
-                                            minerals -= 100
-                                        except Exception as e:
-                                            self.logger.warning(
-                                                f"[ECONOMY_WARN] Spine build failed: {e}"
-                                            )
-
     def _get_first_larva(self):
         larva = getattr(self.bot, "larva", None)
         if not larva:
@@ -2147,9 +2049,7 @@ class EconomyManager:
 
         expansion_success = await self._perform_smart_expansion(reason)
         if expansion_success:
-            self.logger.info(
-                f"[FORCE EXPAND] [{int(game_time)}s] {reason} - SUCCESS"
-            )
+            self.logger.info(f"[FORCE EXPAND] [{int(game_time)}s] {reason} - SUCCESS")
         else:
             self.logger.info(f"[FORCE EXPAND] ALL METHODS FAILED")
         return
@@ -2539,7 +2439,9 @@ class EconomyManager:
         owned_positions = self._owned_base_positions()
         active_requests = []
         for position, requested_at in getattr(self, "_recent_expansion_requests", []):
-            if any(self._distance_safe(position, owned) < 12.0 for owned in owned_positions):
+            if any(
+                self._distance_safe(position, owned) < 12.0 for owned in owned_positions
+            ):
                 continue
             if game_time - requested_at <= self._expansion_request_ttl:
                 active_requests.append((position, requested_at))
@@ -2565,7 +2467,9 @@ class EconomyManager:
         self._prune_recent_expansion_requests()
         if self._has_recent_expansion_request(location):
             return
-        self._recent_expansion_requests.append((location, getattr(self.bot, "time", 0.0)))
+        self._recent_expansion_requests.append(
+            (location, getattr(self.bot, "time", 0.0))
+        )
 
     def _is_expansion_location_taken(
         self, location, radius: float = 12.0, include_recent: bool = True
@@ -2694,7 +2598,9 @@ class EconomyManager:
             return
         self.first_expansion_time = getattr(self.bot, "time", 0.0)
         self.first_expansion_reported = True
-        self.logger.info(f"[EXPANSION] First expansion at {self.first_expansion_time:.1f}s")
+        self.logger.info(
+            f"[EXPANSION] First expansion at {self.first_expansion_time:.1f}s"
+        )
 
     async def _issue_hatchery_build(self, target_pos, worker) -> bool:
         """Issue a Hatchery build through BotAI.build when available."""
@@ -2746,7 +2652,9 @@ class EconomyManager:
                 return False
             if ready_base_count < 3 and pending_hatcheries > 0:
                 return False
-            if ready_base_count < 3 and self._has_recent_expansion_request(max_age=45.0):
+            if ready_base_count < 3 and self._has_recent_expansion_request(
+                max_age=45.0
+            ):
                 return False
 
             # 1. Hidden Base
@@ -2790,7 +2698,8 @@ class EconomyManager:
 
             if target_pos:
                 resolved_pos = await self._resolve_expansion_target(
-                    target_pos, allow_gold=not prefer_standard_third or method == "Hidden"
+                    target_pos,
+                    allow_gold=not prefer_standard_third or method == "Hidden",
                 )
                 if not resolved_pos:
                     return False
@@ -3108,7 +3017,9 @@ class EconomyManager:
         try:
             # Check enemy bases
             enemy_expansions = set()
-            for struct in self._as_unit_list(getattr(self.bot, "enemy_structures", None)):
+            for struct in self._as_unit_list(
+                getattr(self.bot, "enemy_structures", None)
+            ):
                 if hasattr(struct, "is_structure") and struct.is_structure:
                     enemy_expansions.add(struct.position)
 
@@ -3179,9 +3090,7 @@ class EconomyManager:
             game_time = getattr(self.bot, "time", 0)
 
             # * Phase 1: 황금 기지 최우선 확인 *
-            gold_expansions = (
-                self._get_gold_expansion_locations() if allow_gold else []
-            )
+            gold_expansions = self._get_gold_expansion_locations() if allow_gold else []
 
             if gold_expansions:
                 best_gold = None
@@ -3414,33 +3323,6 @@ class EconomyManager:
             if not lairs.exists:
                 self._reserved_minerals = 150
                 self._reserved_gas = 100
-
-    async def _reduce_gas_workers(self) -> None:
-        """가스 일꾼 감소 (과잉 가스 방지)"""
-        try:
-            if (
-                not hasattr(self.bot, "gas_buildings")
-                or not self.bot.gas_buildings.ready
-            ):
-                return
-
-            for extractor in self.bot.gas_buildings.ready:
-                if extractor.assigned_harvesters >= 3:
-                    # 가스에서 일꾼 1명 이동
-                    workers_on_gas = self.bot.workers.filter(
-                        lambda w: w.is_gathering and w.order_target == extractor.tag
-                    )
-                    if workers_on_gas:
-                        worker = workers_on_gas.first
-                        # 가까운 미네랄로 이동
-                        closest_mineral = self.bot.mineral_field.closest_to(worker)
-                        if closest_mineral:
-                            self.bot.do(worker.gather(closest_mineral))
-                            return  # 한 번에 하나만
-
-        except (AttributeError, TypeError) as e:
-            if self.bot.iteration % 50 == 0:
-                self.logger.warning(f"[ECONOMY_WARN] Gas worker reduction failed: {e}")
 
     async def _build_extractors(self) -> None:
         """가스 익스트랙터 건설 (가스 부족 시)"""

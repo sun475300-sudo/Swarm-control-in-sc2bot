@@ -112,6 +112,22 @@ class QueenManager:
         self.transfuse_cooldown = GameConfig.QUEEN_TRANSFUSE_COOLDOWN_SEC
         self.transfuse_health_threshold = GameConfig.QUEEN_TRANSFUSE_HP_THRESHOLD
 
+    def reset(self) -> None:
+        """게임 간 퀸 상태 초기화 (훈련 에피소드 안정성).
+
+        이전 게임의 죽은 퀸/해처리 태그가 다음 게임의 살아있는 유닛 태그와
+        충돌하지 않도록 모든 태그 기반 상태를 초기화한다.
+        """
+        self.inject_assignments = {}
+        self.last_inject_time = {}
+        self.last_creep_time = {}
+        self.last_transfuse_time = {}
+        self.assigned_queen_tags = set()
+        self.dedicated_creep_queens = set()
+        self.secondary_inject_assignments = {}
+        self.creep_tumor_count = 0
+        self.last_tumor_check = 0
+
     async def on_step(self, iteration: int) -> None:
         """
         Main queen management loop.

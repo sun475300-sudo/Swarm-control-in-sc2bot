@@ -16,8 +16,8 @@ from typing import Any, Dict, List
 try:
     from config.constants import (
         BUILD_ORDER_END_TIME,
-        MAX_STEP_RETRIES,
         EXPANSION_TIMING_TARGET,
+        MAX_STEP_RETRIES,
         THREAT_CACHE_TTL,
     )
 except ImportError:
@@ -245,9 +245,7 @@ class BuildOrderType(Enum):
 class BuildOrderStep:
     """Build Order Step"""
 
-    def __init__(
-        self, supply: int, action: str, unit_type: Any, description: str = ""
-    ):
+    def __init__(self, supply: int, action: str, unit_type: Any, description: str = ""):
         self.supply = supply  # Supply to execute at
         self.action = action  # "build", "train", "expand", "morph", "upgrade"
         self.unit_type = unit_type
@@ -382,6 +380,38 @@ class BuildOrderSystem:
             self.current_matchup_build_key or self.current_build_order.value
         )
 
+    def reset(self) -> None:
+        """게임 간 빌드오더 상태 초기화 (훈련 에피소드 안정성).
+
+        진행 중 스텝 인덱스/타이밍/재시도 카운터가 다음 게임으로 새는 것을
+        막는다. ML 누적 통계인 build_order_stats 는 보존한다.
+        """
+        self.enabled = True
+        self.build_order_active = True
+
+        # 다음 게임 적 종족 기반으로 빌드 재선택
+        self.current_build_order = self._select_build_by_enemy_race()
+        self.current_matchup_build_key = None
+        self.current_build_transition = None
+        self.transition_manager = BuildOrderTransition()
+        self.build_steps = []
+        self.current_step_index = 0
+
+        self.step_timings = {}
+        self.missed_timings = []
+
+        self._step_retry_count = 0
+        self._skipped_steps = []
+
+        self.expansion_actual_time = 0.0
+        self.expansion_timing_verified = False
+
+        # Re-setup build order for the new game
+        self._setup_build_order()
+        self.transition_manager.current_build = (
+            self.current_matchup_build_key or self.current_build_order.value
+        )
+
     def _select_build_by_enemy_race(self) -> BuildOrderType:
         """
         Select best build order by enemy race
@@ -416,11 +446,11 @@ class BuildOrderSystem:
             self.current_matchup_build_key = build_key
             self.current_build_transition = build_data.get("transition")
             self.build_steps = self._build_steps_from_order(build_data.get("order", []))
-            logger.info(
-                f"Loaded ZvT build '{build_data.get('name')}' ({build_key})"
-            )
+            logger.info(f"Loaded ZvT build '{build_data.get('name')}' ({build_key})")
             self.current_step_index = 0
-            logger.info(f"Build Order Set: {self.current_build_order.value}:{build_key}")
+            logger.info(
+                f"Build Order Set: {self.current_build_order.value}:{build_key}"
+            )
             logger.info(f"Total {len(self.build_steps)} steps")
             return
 
@@ -430,11 +460,11 @@ class BuildOrderSystem:
             self.current_matchup_build_key = build_key
             self.current_build_transition = build_data.get("transition")
             self.build_steps = self._build_steps_from_order(build_data.get("order", []))
-            logger.info(
-                f"Loaded ZvP build '{build_data.get('name')}' ({build_key})"
-            )
+            logger.info(f"Loaded ZvP build '{build_data.get('name')}' ({build_key})")
             self.current_step_index = 0
-            logger.info(f"Build Order Set: {self.current_build_order.value}:{build_key}")
+            logger.info(
+                f"Build Order Set: {self.current_build_order.value}:{build_key}"
+            )
             logger.info(f"Total {len(self.build_steps)} steps")
             return
 
@@ -444,11 +474,11 @@ class BuildOrderSystem:
             self.current_matchup_build_key = build_key
             self.current_build_transition = build_data.get("transition")
             self.build_steps = self._build_steps_from_order(build_data.get("order", []))
-            logger.info(
-                f"Loaded ZvZ build '{build_data.get('name')}' ({build_key})"
-            )
+            logger.info(f"Loaded ZvZ build '{build_data.get('name')}' ({build_key})")
             self.current_step_index = 0
-            logger.info(f"Build Order Set: {self.current_build_order.value}:{build_key}")
+            logger.info(
+                f"Build Order Set: {self.current_build_order.value}:{build_key}"
+            )
             logger.info(f"Total {len(self.build_steps)} steps")
             return
 
@@ -491,9 +521,9 @@ class BuildOrderSystem:
             "enemy_one_base", False
         ):
             return "aggressive_pool_first"
-        if self._blackboard_get("enemy_expand_confirmed", False) and not self._blackboard_get(
-            "enemy_aggression", False
-        ):
+        if self._blackboard_get(
+            "enemy_expand_confirmed", False
+        ) and not self._blackboard_get("enemy_aggression", False):
             return "fast_lair_macro"
         return "hatch_first_16"
 
@@ -890,7 +920,11 @@ class BuildOrderSystem:
         pending_hatch = self._pending_hatchery_count()
 
         if base_count >= 3:
-            if getattr(self.bot, "time", 0.0) >= 360.0 and base_count < 4 and pending_hatch == 0:
+            if (
+                getattr(self.bot, "time", 0.0) >= 360.0
+                and base_count < 4
+                and pending_hatch == 0
+            ):
                 return not self._has_active_base_threat()
             return False
         if base_count < 2:
@@ -1170,7 +1204,9 @@ class BuildOrderSystem:
         if blackboard and hasattr(blackboard, "set"):
             blackboard.set("matchup_build_key", new_build)
             blackboard.set("build_transition", new_build)
-            blackboard.set("build_transition_reason", self.transition_manager.last_reason)
+            blackboard.set(
+                "build_transition_reason", self.transition_manager.last_reason
+            )
             blackboard.set(
                 "build_transition_locked",
                 self.transition_manager.transition_triggered,

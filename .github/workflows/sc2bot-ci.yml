@@ -73,10 +73,31 @@ jobs:
           cache: pip
 
       - name: Install dependencies
-        run: pip install -r requirements.txt pytest pytest-cov pytest-asyncio
+        run: |
+          set -euxo pipefail
+          python -m pip install --upgrade pip
+          # Install only the packages actually needed by tests/ + the
+          # sc2-bot test suite.  The full requirements.txt pulls in heavy
+          # extras (torch, pyautogui, mcp, claude-code-sdk, ...) that the
+          # unit tests don't use and that have a history of failing the
+          # install step on ubuntu-latest, which previously masked the
+          # Test Suite as a silent failure.
+          pip install pytest pytest-cov pytest-asyncio pytest-timeout
+          pip install pyyaml aiohttp numpy
+          # burnysc2 is required by wicked_zerg_challenger imports.  Allow
+          # the install to fail loudly so the failure points at the dep,
+          # not at pytest collection.
+          pip install burnysc2 || (echo "::error::burnysc2 install failed"; exit 1)
+
+      - name: Show installed packages
+        run: pip list
 
       - name: Run unit tests
-        run: pytest tests/unit -v --cov=. --cov-report=xml --cov-report=term
+        run: |
+          pytest tests/ \
+            --ignore=tests/integration \
+            -v --cov=tests --cov=wicked_zerg_challenger \
+            --cov-report=xml --cov-report=term
 
       - name: Run integration tests
         run: pytest tests/integration -v --timeout=120

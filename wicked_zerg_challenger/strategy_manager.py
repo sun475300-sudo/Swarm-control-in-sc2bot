@@ -280,7 +280,12 @@ TIMING_ATTACKS = {
 EMERGENCY_RESPONSES = {
     "proxy_barracks": {
         "detection": "Barracks distance_to(our_base) < 40 AND game_time < 180",
-        "immediate": ["cancel_expansion", "spine_crawler_x2", "zergling_x6", "queen_defend"],
+        "immediate": [
+            "cancel_expansion",
+            "spine_crawler_x2",
+            "zergling_x6",
+            "queen_defend",
+        ],
         "drone_production": "HALT",
     },
     "hellion_runby": {
@@ -442,6 +447,48 @@ class StrategyManager:
 
         # * Feature 89: Custom unit weights from JARVIS *
         self.custom_unit_weights: Optional[Dict[str, float]] = None
+        self.early_scout_pressure_active = False
+        self.early_scout_greed_suppressed = False
+        self.early_scout_fast_gas = False
+        self.early_scout_cheese_active = False
+
+    def reset(self) -> None:
+        """게임 간 전략 상태 초기화 (훈련 에피소드 안정성).
+
+        config/race ratios/knowledge 같은 정적 데이터는 보존하고,
+        현재 게임 한정의 상태 플래그·카운터·검출 결과만 초기화한다.
+        ML 학습 결과인 learned_* dict 는 의도적으로 유지한다.
+        """
+        self.current_mode = StrategyMode.NORMAL
+        self.detected_enemy_race = EnemyRace.UNKNOWN
+        self.game_phase = GamePhase.EARLY
+
+        self.emergency_active = False
+        self.emergency_start_time = 0.0
+
+        self.last_air_threat_log = 0
+        self.last_major_attack_log = 0
+        self.last_high_templar_log = 0
+        self.last_disruptor_log = 0
+
+        self.early_harassment_active = False
+        self.last_harassment_time = 0
+
+        self.emergency_spine_requested = False
+        self.emergency_spore_requested = False
+
+        self.defense_mode_start_time = 0.0
+        self.last_major_attack_time = 0.0
+
+        self.rogue_tactics_active = False
+        self.larva_saving_mode = False
+
+        self.rush_persistence_count = 0
+
+        self.target_priority = "military"
+        self.expansion_timing = "normal"
+        self.preferred_comp = "balanced"
+        self.custom_unit_weights = None
         self.early_scout_pressure_active = False
         self.early_scout_greed_suppressed = False
         self.early_scout_fast_gas = False
@@ -1799,9 +1846,7 @@ class StrategyManager:
         ):
             return "skytoss_transition"
 
-        if comp.get("HIGHTEMPLAR", 0) >= 2 or self._blackboard_flag(
-            "templar_archives"
-        ):
+        if comp.get("HIGHTEMPLAR", 0) >= 2 or self._blackboard_flag("templar_archives"):
             return "storm_templar"
 
         if comp.get("WARPPRISM", 0) > 0 and self._enemy_unit_near_own_base(
@@ -1857,7 +1902,9 @@ class StrategyManager:
             self.blackboard.set("timing_attack_active", False)
             self.blackboard.set("timing_attack_retreat", True)
             self.blackboard.set("timing_attack_key", attack_key)
-            self.blackboard.set("timing_attack_retreat_reason", attack_data["retreat_if"])
+            self.blackboard.set(
+                "timing_attack_retreat_reason", attack_data["retreat_if"]
+            )
             return
 
         self.current_mode = StrategyMode.AGGRESSIVE
@@ -1885,11 +1932,17 @@ class StrategyManager:
         if matchup == "ZvT" and attack_key == "ling_speed_timing":
             return self._speed_upgrade_done() and self._own_unit_count("ZERGLING") >= 16
         if matchup == "ZvT" and attack_key == "roach_ravager_push":
-            return self._own_unit_count("ROACH") >= 8 and self._own_unit_count("RAVAGER") >= 3
+            return (
+                self._own_unit_count("ROACH") >= 8
+                and self._own_unit_count("RAVAGER") >= 3
+            )
         if matchup == "ZvP" and attack_key == "roach_timing":
             return self._own_unit_count("ROACH") >= 10 and self._roach_speed_done()
         if matchup == "ZvP" and attack_key == "ling_nydus_harass":
-            return self._own_structure_count("NYDUSNETWORK") > 0 and self._own_unit_count("ZERGLING") >= 20
+            return (
+                self._own_structure_count("NYDUSNETWORK") > 0
+                and self._own_unit_count("ZERGLING") >= 20
+            )
         if matchup == "ZvZ" and attack_key == "ling_bane_allin":
             return (
                 self._speed_upgrade_done()
@@ -1979,7 +2032,8 @@ class StrategyManager:
             return "enemy_all_in"
 
         if self._blackboard_flag("proxy_barracks") or (
-            game_time < 180.0 and self._enemy_structure_near_own_base({"BARRACKS"}, 40.0)
+            game_time < 180.0
+            and self._enemy_structure_near_own_base({"BARRACKS"}, 40.0)
         ):
             return "proxy_barracks"
 
@@ -1994,9 +2048,9 @@ class StrategyManager:
         ):
             return "12pool_rush"
 
-        if comp.get("HELLION", 0) + comp.get("HELLIONTANK", 0) >= 4 and self._enemy_unit_near_own_base(
-            {"HELLION", "HELLIONTANK"}, 18.0
-        ):
+        if comp.get("HELLION", 0) + comp.get(
+            "HELLIONTANK", 0
+        ) >= 4 and self._enemy_unit_near_own_base({"HELLION", "HELLIONTANK"}, 18.0):
             return "hellion_runby"
 
         if comp.get("BANELING", 0) >= 8 and self._enemy_unit_near_own_base(
@@ -2036,9 +2090,10 @@ class StrategyManager:
             return False
 
         enemy_power_ratio = self._enemy_army_power_ratio()
-        approaching = self._blackboard_flag(
-            "enemy_army_approaching"
-        ) or self._large_enemy_force_near_base()
+        approaching = (
+            self._blackboard_flag("enemy_army_approaching")
+            or self._large_enemy_force_near_base()
+        )
 
         if enemy_power_ratio < 1.5 or not approaching:
             return False
