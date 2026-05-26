@@ -69,9 +69,13 @@ class MapManager:
 
     def __init__(self, stats_file: str = "map_performance.json"):
         self.stats_file = Path(stats_file)
+        # logger를 _load_stats 호출 이전에 초기화해야 한다.
+        # 이전 버전은 _load_stats 안에서 self.logger.warning을 호출하지만
+        # 그 시점엔 아직 self.logger가 설정되지 않아 손상된 JSON 파일을
+        # 만나면 AttributeError로 깨졌다.
+        self.logger = logging.getLogger(__name__)
         self.stats: Dict[str, Dict[str, int]] = self._load_stats()
         self.current_map_index = 0
-        self.logger = logging.getLogger(__name__)
 
     def _load_stats(self) -> Dict[str, Dict[str, int]]:
         if not self.stats_file.exists():

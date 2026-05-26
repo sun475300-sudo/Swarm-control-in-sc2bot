@@ -268,6 +268,41 @@ class TestBuildingReservation(unittest.TestCase):
     def test_unreserved_building(self):
         self.assertFalse(self.bb.is_building_reserved("ROACHWARREN"))
 
+    def test_cleanup_expired_reservations(self):
+        self.bb.game_time = 100.0
+        self.bb.reserve_building("SPAWNINGPOOL", "A", duration=5.0)
+        self.bb.reserve_building("ROACHWARREN", "B", duration=5.0)
+        # 시간 경과 → 두 예약 모두 만료
+        self.bb.game_time = 110.0
+        cleared = self.bb.cleanup_expired_reservations(duration=5.0)
+        self.assertEqual(cleared, 2)
+        self.assertFalse(self.bb.is_building_reserved("SPAWNINGPOOL"))
+        self.assertFalse(self.bb.is_building_reserved("ROACHWARREN"))
+
+    def test_cleanup_keeps_active_reservations(self):
+        self.bb.game_time = 100.0
+        self.bb.reserve_building("HATCHERY", "A", duration=10.0)
+        # 만료 전이면 정리하지 않음
+        self.bb.game_time = 103.0
+        cleared = self.bb.cleanup_expired_reservations(duration=10.0)
+        self.assertEqual(cleared, 0)
+        self.assertTrue(self.bb.is_building_reserved("HATCHERY", duration=10.0))
+
+
+class TestProductionPriorityClamp(unittest.TestCase):
+    def setUp(self):
+        self.bb = GameStateBlackboard()
+
+    def test_priority_below_range_clamped_to_top(self):
+        # 큐 키 범위: 0~3, 음수는 0으로 clamp
+        self.bb.request_production("ZERGLING", 1, "X", priority=-5)
+        self.assertEqual(len(self.bb.production_queue[0]), 1)
+
+    def test_priority_above_range_clamped_to_bottom(self):
+        # 큐 키 범위: 0~3, 큰 값은 3으로 clamp
+        self.bb.request_production("DRONE", 1, "X", priority=999)
+        self.assertEqual(len(self.bb.production_queue[3]), 1)
+
 
 class TestCache(unittest.TestCase):
     def setUp(self):

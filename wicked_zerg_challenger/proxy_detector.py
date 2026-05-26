@@ -38,6 +38,18 @@ class ProxyDetector:
         """Initialize known expansion locations"""
         self.normal_expansion_locations = locations
 
+    # 프록시 후보 건물 — ProxyType과 동기화된 목록.
+    # 이전 버전은 factory/starport를 누락하여 테란 메크/공중 빌드 프록시가
+    # 탐지되지 않는 결함이 있었다.
+    PROXY_CANDIDATE_BUILDINGS = (
+        "pylon",
+        "gateway",
+        "forge",
+        "barracks",
+        "factory",
+        "starport",
+    )
+
     def analyze_enemy_building(
         self, position: Tuple[int, int], building_type: str
     ) -> ProxyDetectionResult:
@@ -46,9 +58,9 @@ class ProxyDetector:
 
         is_near_expansion = self._is_near_expansion(position)
         is_near_start = self._is_near_start(position)
-        distance_to_base = self._distance_to_enemy_base(position)
+        _ = self._distance_to_enemy_base(position)  # 로깅/디버깅용 (이후 활용)
 
-        if building_type.lower() in ["pylon", "gateway", "forge", "barracks"]:
+        if building_type.lower() in self.PROXY_CANDIDATE_BUILDINGS:
             if not is_near_expansion and not is_near_start:
                 result.is_proxy = True
                 result.confidence = 0.8
