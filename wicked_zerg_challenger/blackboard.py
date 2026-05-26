@@ -358,8 +358,13 @@ class GameStateBlackboard:
         # 긴급 상황: 러시 감지 또는 CRITICAL 위협
         # FIX P0-2: EMERGENCY 모드 30초 타임아웃 추가
         if self.threat.is_rushing or self.threat.level == ThreatLevel.CRITICAL:
-            emergency_duration = self.game_time - getattr(self, "authority_changed_at", 0)
-            if self.authority_mode == AuthorityMode.EMERGENCY and emergency_duration > 30:
+            emergency_duration = self.game_time - getattr(
+                self, "authority_changed_at", 0
+            )
+            if (
+                self.authority_mode == AuthorityMode.EMERGENCY
+                and emergency_duration > 30
+            ):
                 # 30초 이상 EMERGENCY 지속 → COMBAT으로 다운그레이드
                 self.set_authority_mode(
                     AuthorityMode.COMBAT,
@@ -537,10 +542,19 @@ class GameStateBlackboard:
             and self.game_phase != GamePhase.OPENING
         )
 
+    # Hatchery costs 300 minerals; bank a little overhead so workers can keep
+    # mining while the expansion drone is in transit.
+    MIN_MINERALS_TO_EXPAND = 300
+
     def should_expand(self) -> bool:
         """확장 가능한 상황인가?"""
         return (
             self.threat.level == ThreatLevel.NONE
-            and not self.resources.is_supply_block
+            and not self.resources.is_supply_blocked
             and not self.is_under_attack
+            and self.resources.minerals >= self.MIN_MINERALS_TO_EXPAND
         )
+
+
+# Backwards-compat alias
+Blackboard = GameStateBlackboard

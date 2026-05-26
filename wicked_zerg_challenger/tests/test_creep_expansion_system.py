@@ -9,8 +9,11 @@ from unittest.mock import AsyncMock, Mock
 os.environ["PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION"] = "python"
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from sc2.ids.unit_typeid import UnitTypeId
+import pytest as _sc2_pytest
+
+_sc2_pytest.importorskip("sc2", reason="python-sc2 library not installed")
 from creep_expansion_system import CreepExpansionSystem
+from sc2.ids.unit_typeid import UnitTypeId
 
 
 class FakePoint:
@@ -54,9 +57,9 @@ class TestCreepExpansionSystemGuards(unittest.TestCase):
         bot.has_creep = Mock(return_value=False)
         bot.get_available_abilities = AsyncMock(side_effect=AssertionError())
         bot.units = Mock(
-            side_effect=lambda unit_type: FakeUnits([unit])
-            if unit_type == UnitTypeId.QUEEN
-            else FakeUnits()
+            side_effect=lambda unit_type: (
+                FakeUnits([unit]) if unit_type == UnitTypeId.QUEEN else FakeUnits()
+            )
         )
         bot.structures = Mock(
             return_value=SimpleNamespace(amount=0, ready=FakeUnits([unit]))

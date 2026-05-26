@@ -19,8 +19,30 @@ try:
     from sc2.units import Units
 except ImportError:
     Unit = None
-    Units = None
     Point2 = None
+
+    class Units(list):
+        """Fallback Units container used when ``sc2`` is unavailable.
+
+        Mimics the constructor signature ``Units(units, bot_object=None)``
+        and behaves as a plain list so helper utilities and their unit
+        tests can run without the real SC2 client library installed."""
+
+        def __init__(self, units=(), bot_object=None):
+            super().__init__(units or [])
+
+        def filter(self, predicate):
+            return Units([u for u in self if predicate(u)])
+
+        def closer_than(self, distance, position):
+            return Units(
+                [
+                    u
+                    for u in self
+                    if hasattr(u, "distance_to") and u.distance_to(position) < distance
+                ]
+            )
+
 
 logger = get_logger("UnitHelpers")
 

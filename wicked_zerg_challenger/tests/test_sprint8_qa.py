@@ -5,6 +5,10 @@ import os
 import sys
 import unittest
 
+import pytest
+
+pytest.importorskip("sc2", reason="python-sc2 library not installed")
+
 os.environ["PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION"] = "python"
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
@@ -41,7 +45,9 @@ class TestRunMassTestCli(unittest.TestCase):
         cases = build_test_cases(args)
 
         self.assertTrue(args.dry_run)
-        self.assertEqual([case[0] for case in cases], ["AbyssalReefLE", "OdysseyLE", "AbyssalReefLE"])
+        self.assertEqual(
+            [case[0] for case in cases], ["AbyssalReefLE", "OdysseyLE", "AbyssalReefLE"]
+        )
 
 
 if __name__ == "__main__":

@@ -10,11 +10,46 @@ try:
     from sc2.ids.unit_typeid import UnitTypeId
 except ImportError:
 
-    class UnitTypeId:
-        HATCHERY = "HATCHERY"
-        SPINECRAWLER = "SPINECRAWLER"
-        SPORECRAWLER = "SPORECRAWLER"
-        SPIRE = "SPIRE"
+    class _SC2StubSymbol:
+        """Sentinel sc2 enum member used when python-sc2 is unavailable.
+
+        Hashable, comparable, stringifies to its name, but is *not* a
+        Python ``str`` so build-order classifiers can distinguish stub
+        enum members from upgrade-name strings."""
+
+        __slots__ = ("_name",)
+
+        def __init__(self, name):
+            self._name = name
+
+        def __eq__(self, other):
+            if isinstance(other, _SC2StubSymbol):
+                return other._name == self._name
+            return NotImplemented
+
+        def __hash__(self):
+            return hash(("_SC2StubSymbol", self._name))
+
+        def __repr__(self):
+            return self._name
+
+        def __str__(self):
+            return self._name
+
+    class _SC2StubMeta(type):
+        _cache: dict = {}
+
+        def __getattr__(cls, name):
+            key = (cls.__name__, name)
+            sym = cls._cache.get(key)
+            if sym is None:
+                sym = _SC2StubSymbol(name)
+                cls._cache[key] = sym
+            return sym
+
+    class UnitTypeId(metaclass=_SC2StubMeta):
+        pass
+
 
 from utils.game_constants import GameFrequencies
 
@@ -110,9 +145,9 @@ class BuildingManager:
         tech_coordinator = getattr(self.bot, "tech_coordinator", None)
         if tech_coordinator and hasattr(tech_coordinator, "request_structure"):
             try:
-                if hasattr(tech_coordinator, "is_planned") and tech_coordinator.is_planned(
-                    structure_type
-                ):
+                if hasattr(
+                    tech_coordinator, "is_planned"
+                ) and tech_coordinator.is_planned(structure_type):
                     return False
                 return bool(
                     tech_coordinator.request_structure(
@@ -147,7 +182,9 @@ class BuildingManager:
                 return True
         return True
 
-    def pick_build_location(self, structure_type: Any, near: Optional[Any] = None) -> Any:
+    def pick_build_location(
+        self, structure_type: Any, near: Optional[Any] = None
+    ) -> Any:
         """Choose a coarse anchor for construction requests."""
         if near is not None:
             return getattr(near, "position", near)

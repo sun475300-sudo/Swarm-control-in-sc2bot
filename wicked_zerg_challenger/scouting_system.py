@@ -1,27 +1,55 @@
 # -*- coding: utf-8 -*-
 """Scouting helpers used by roadmap and matchup-specific systems."""
 
-from typing import Dict, Iterable, List, Optional, Set
+from typing import Dict, List, Optional, Set
 
 try:
     from sc2.ids.ability_id import AbilityId
     from sc2.ids.unit_typeid import UnitTypeId
 except ImportError:
 
-    class AbilityId:
-        MORPH_OVERSEER = "MORPH_OVERSEER"
-        SPAWNCHANGELING_SPAWNCHANGELING = "SPAWNCHANGELING_SPAWNCHANGELING"
+    class _SC2StubSymbol:
+        """Sentinel sc2 enum member used when python-sc2 is unavailable.
 
-    class UnitTypeId:
-        OVERLORD = "OVERLORD"
-        OVERSEER = "OVERSEER"
-        ZERGLING = "ZERGLING"
-        DARKTEMPLAR = "DARKTEMPLAR"
-        BANSHEE = "BANSHEE"
-        LURKERMP = "LURKERMP"
-        WIDOWMINE = "WIDOWMINE"
-        WIDOWMINEBURROWED = "WIDOWMINEBURROWED"
-        GHOST = "GHOST"
+        Hashable, comparable, stringifies to its name, but is *not* a
+        Python ``str`` so build-order classifiers can distinguish stub
+        enum members from upgrade-name strings."""
+
+        __slots__ = ("_name",)
+
+        def __init__(self, name):
+            self._name = name
+
+        def __eq__(self, other):
+            if isinstance(other, _SC2StubSymbol):
+                return other._name == self._name
+            return NotImplemented
+
+        def __hash__(self):
+            return hash(("_SC2StubSymbol", self._name))
+
+        def __repr__(self):
+            return self._name
+
+        def __str__(self):
+            return self._name
+
+    class _SC2StubMeta(type):
+        _cache: dict = {}
+
+        def __getattr__(cls, name):
+            key = (cls.__name__, name)
+            sym = cls._cache.get(key)
+            if sym is None:
+                sym = _SC2StubSymbol(name)
+                cls._cache[key] = sym
+            return sym
+
+    class AbilityId(metaclass=_SC2StubMeta):
+        pass
+
+    class UnitTypeId(metaclass=_SC2StubMeta):
+        pass
 
 
 OVERLORD_SCOUT_INTERVAL_EARLY = 15.0
@@ -215,7 +243,9 @@ class ScoutingSystem:
         structures = list(getattr(self.bot, "enemy_structures", []) or [])
         for structure in structures:
             if self._is_enemy_expansion(structure):
-                self._set("enemy_expansion_spotted", getattr(structure, "position", None))
+                self._set(
+                    "enemy_expansion_spotted", getattr(structure, "position", None)
+                )
                 self._set("enemy_expand_confirmed", True)
         if enemies:
             self._set("last_enemy_seen_time", getattr(self.bot, "time", 0.0))
@@ -265,7 +295,9 @@ class ScoutingSystem:
             if self._type_name(structure) in CLOAK_TECH_STRUCTURES:
                 self._set("cloak_tech_detected", True)
                 return getattr(structure, "position", None) or self._enemy_start()
-        if self._get("cloak_threat_detected", False) or self._get("cloak_tech_detected", False):
+        if self._get("cloak_threat_detected", False) or self._get(
+            "cloak_tech_detected", False
+        ):
             return self._get("cloak_threat_position", None) or self._enemy_start()
         return None
 
@@ -485,8 +517,12 @@ class ZvTScoutingSystem:
             self._set("terran_structure_counts", counts)
             self._set("factory_count", counts.get("FACTORY", 0))
             self._set("enemy_gas_count", counts.get("REFINERY", 0))
-            self._set("tech_lab_count", sum(counts.get(name, 0) for name in self.TECH_LABS))
-            self._set("reactor_count", sum(counts.get(name, 0) for name in self.REACTORS))
+            self._set(
+                "tech_lab_count", sum(counts.get(name, 0) for name in self.TECH_LABS)
+            )
+            self._set(
+                "reactor_count", sum(counts.get(name, 0) for name in self.REACTORS)
+            )
 
     def record_scouted_structure(self, structure) -> None:
         name = self._type_name(structure)
@@ -498,7 +534,9 @@ class ZvTScoutingSystem:
                 self._set("planetary_fortress", True)
             if self._is_enemy_expansion(structure):
                 self._set("enemy_expand_confirmed", True)
-                self._set("enemy_expansion_spotted", getattr(structure, "position", None))
+                self._set(
+                    "enemy_expansion_spotted", getattr(structure, "position", None)
+                )
         elif name == "REFINERY":
             self._increment("enemy_gas_count")
         elif name == "FACTORY":
@@ -726,7 +764,9 @@ class ZvPScoutingSystem:
         if name in self.PROTOSS_BASES:
             if self._is_enemy_expansion(structure):
                 self._set("enemy_expand_confirmed", True)
-                self._set("enemy_expansion_spotted", getattr(structure, "position", None))
+                self._set(
+                    "enemy_expansion_spotted", getattr(structure, "position", None)
+                )
         elif name == "FORGE":
             self._set("forge_timing", True)
             if self._near_our_base(structure):

@@ -18,20 +18,24 @@ MAX_PAGES = 5  # Start with 5 pages to test (approx 100-125 replays)
 DELAY_MIN = 1.0
 DELAY_MAX = 3.0
 
+
 def setup_directories():
     if not DOWNLOAD_DIR.exists():
         DOWNLOAD_DIR.mkdir(parents=True)
     logger.info(f"Download directory: {DOWNLOAD_DIR}")
 
+
 def get_replay_links(page_num):
     url = f"{SEARCH_URL}{page_num}"
     try:
         logger.info(f"Fetching page {page_num}...")
-        response = requests.get(url, headers={'User-Agent': 'Mozilla/5.0'})
+        response = requests.get(url, headers={"User-Agent": "Mozilla/5.0"})
         if response.status_code != 200:
-            logger.error(f"Failed to fetch page {page_num}: Status {response.status_code}")
+            logger.error(
+                f"Failed to fetch page {page_num}: Status {response.status_code}"
+            )
             return []
-        
+
         # Simple regex to find replay links mostly like /12345/
         # Format: <a href="/12345/">
         links = re.findall(r'href="/(\d+)/"', response.text)
@@ -42,23 +46,24 @@ def get_replay_links(page_num):
         logger.error(f"{e}")
         return []
 
+
 def download_and_extract(replay_id):
     # Check if already exists (heuristic)
-    # We don't know the exact filename yet, but we can check if we processed this ID? 
+    # We don't know the exact filename yet, but we can check if we processed this ID?
     # For now, just try download.
-    
+
     download_url = f"{BASE_URL}/{replay_id}/download/"
     try:
         logger.info(f"Fetching replay {replay_id}...")
-        response = requests.get(download_url, headers={'User-Agent': 'Mozilla/5.0'})
-        
+        response = requests.get(download_url, headers={"User-Agent": "Mozilla/5.0"})
+
         if response.status_code != 200:
             logger.error(f"Failed download {replay_id}: {response.status_code}")
             return
 
         # Check content type
-        content_type = response.headers.get('content-type', '')
-        
+        content_type = response.headers.get("content-type", "")
+
         # Try to unzip
         try:
             with zipfile.ZipFile(io.BytesIO(response.content)) as z:
@@ -69,44 +74,52 @@ def download_and_extract(replay_id):
                         # Rename if exists
                         if target_path.exists():
                             timestamp = int(time.time())
-                            target_path = DOWNLOAD_DIR / f"{Path(filename).stem}_{timestamp}.SC2Replay"
-                            
-                        with z.open(filename) as source, open(target_path, "wb") as target:
+                            target_path = (
+                                DOWNLOAD_DIR
+                                / f"{Path(filename).stem}_{timestamp}.SC2Replay"
+                            )
+
+                        with (
+                            z.open(filename) as source,
+                            open(target_path, "wb") as target,
+                        ):
                             target.write(source.read())
                         logger.info(f"Extracted: {target_path.name}")
         except zipfile.BadZipFile:
             # Maybe it's not a zip, just a replay file?
             # Spawning tool usually sends zips, but just in case
-            if response.content.startswith(b"MPQ"): # SC2Replay signature start
-                 target_path = DOWNLOAD_DIR / f"{replay_id}.SC2Replay"
-                 with open(target_path, "wb") as f:
-                     f.write(response.content)
-                 logger.info(f"Saved directly: {target_path.name}")
+            if response.content.startswith(b"MPQ"):  # SC2Replay signature start
+                target_path = DOWNLOAD_DIR / f"{replay_id}.SC2Replay"
+                with open(target_path, "wb") as f:
+                    f.write(response.content)
+                logger.info(f"Saved directly: {target_path.name}")
             else:
-                 logger.warning(f"Content is not ZIP nor SC2Replay for {replay_id}")
+                logger.warning(f"Content is not ZIP nor SC2Replay for {replay_id}")
 
     except Exception as e:
         logger.error(f"Failed processing {replay_id}: {e}")
 
+
 def main():
     setup_directories()
-    
+
     total_downloaded = 0
     for page in range(1, MAX_PAGES + 1):
         replay_ids = get_replay_links(page)
-        
+
         if not replay_ids:
             logger.error("No more replays found or error.")
             break
-            
+
         for rid in replay_ids:
             download_and_extract(rid)
             time.sleep(random.uniform(DELAY_MIN, DELAY_MAX))
             total_downloaded += 1
-            
+
         logger.info(f"Page {page} done.")
-        
+
     logger.info(f"Total processed: {total_downloaded}")
+
 
 if __name__ == "__main__":
     main()

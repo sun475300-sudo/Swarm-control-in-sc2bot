@@ -17,12 +17,45 @@ try:
     from sc2.position import Point2
 except ImportError:
 
-    class UnitTypeId:
-        DRONE = "DRONE"
-        EXTRACTOR = "EXTRACTOR"
-        HATCHERY = "HATCHERY"
-        LAIR = "LAIR"
-        HIVE = "HIVE"
+    class _SC2StubSymbol:
+        """Sentinel sc2 enum member used when python-sc2 is unavailable.
+
+        Hashable, comparable, stringifies to its name, but is *not* a
+        Python ``str`` so build-order classifiers can distinguish stub
+        enum members from upgrade-name strings."""
+
+        __slots__ = ("_name",)
+
+        def __init__(self, name):
+            self._name = name
+
+        def __eq__(self, other):
+            if isinstance(other, _SC2StubSymbol):
+                return other._name == self._name
+            return NotImplemented
+
+        def __hash__(self):
+            return hash(("_SC2StubSymbol", self._name))
+
+        def __repr__(self):
+            return self._name
+
+        def __str__(self):
+            return self._name
+
+    class _SC2StubMeta(type):
+        _cache: dict = {}
+
+        def __getattr__(cls, name):
+            key = (cls.__name__, name)
+            sym = cls._cache.get(key)
+            if sym is None:
+                sym = _SC2StubSymbol(name)
+                cls._cache[key] = sym
+            return sym
+
+    class UnitTypeId(metaclass=_SC2StubMeta):
+        pass
 
     Point2 = tuple
 
@@ -397,9 +430,15 @@ class SmartResourceBalancer:
         except (TypeError, ValueError):
             return False
 
-        if gas >= self.gas_critical_threshold and minerals < self.gas_lock_mineral_threshold:
+        if (
+            gas >= self.gas_critical_threshold
+            and minerals < self.gas_lock_mineral_threshold
+        ):
             return True
-        if gas >= self.gas_excess_threshold and minerals < self.mineral_shortage_threshold:
+        if (
+            gas >= self.gas_excess_threshold
+            and minerals < self.mineral_shortage_threshold
+        ):
             return True
         # FIX P0-7: 가스 워커 이동 임계값 완화 (3배→2배)
         return gas > max(200, minerals * 2) and minerals < 800
@@ -419,7 +458,9 @@ class SmartResourceBalancer:
             try:
                 structure_units = structures(UnitTypeId.EXTRACTOR)
                 extractors.extend(
-                    self._as_unit_list(getattr(structure_units, "ready", structure_units))
+                    self._as_unit_list(
+                        getattr(structure_units, "ready", structure_units)
+                    )
                 )
             except Exception:
                 pass

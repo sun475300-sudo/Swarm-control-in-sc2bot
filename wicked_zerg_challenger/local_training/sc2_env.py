@@ -8,12 +8,46 @@ import numpy as np
 try:
     from sc2.ids.unit_typeid import UnitTypeId
 except Exception:
-    class UnitTypeId:
-        LAIR = "LAIR"
-        QUEEN = "QUEEN"
-        ZERGLING = "ZERGLING"
-        ROACH = "ROACH"
-        HYDRALISK = "HYDRALISK"
+
+    class _SC2StubSymbol:
+        """Sentinel value used in place of real SC2 enum members.
+
+        Hashable, comparable, and stringifies to the symbol name, but is
+        explicitly not a ``str`` so callers can distinguish it from real
+        upgrade-name strings used elsewhere in build orders."""
+
+        __slots__ = ("_name",)
+
+        def __init__(self, name):
+            self._name = name
+
+        def __eq__(self, other):
+            if isinstance(other, _SC2StubSymbol):
+                return other._name == self._name
+            return NotImplemented
+
+        def __hash__(self):
+            return hash(("_SC2StubSymbol", self._name))
+
+        def __repr__(self):
+            return self._name
+
+        def __str__(self):
+            return self._name
+
+    class _SC2StubMeta(type):
+        _cache = {}
+
+        def __getattr__(cls, name):
+            key = (cls.__name__, name)
+            sym = cls._cache.get(key)
+            if sym is None:
+                sym = _SC2StubSymbol(name)
+                cls._cache[key] = sym
+            return sym
+
+    class UnitTypeId(metaclass=_SC2StubMeta):
+        pass
 
 
 def _amount(collection) -> int:

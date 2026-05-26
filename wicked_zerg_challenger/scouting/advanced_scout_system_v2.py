@@ -30,13 +30,22 @@ except ImportError:
     class BotAI:
         pass
 
-    class UnitTypeId:
+    class _StubMeta(type):
+        """Metaclass that returns a sentinel for any attribute access.
+
+        Lets ``UnitTypeId.FOO``-style class-level lookups work when the
+        ``sc2`` library is unavailable (e.g. in unit-test environments)."""
+
+        def __getattr__(cls, name):
+            return name
+
+    class UnitTypeId(metaclass=_StubMeta):
         pass
 
-    class AbilityId:
+    class AbilityId(metaclass=_StubMeta):
         pass
 
-    class UpgradeId:
+    class UpgradeId(metaclass=_StubMeta):
         pass
 
     class Point2:

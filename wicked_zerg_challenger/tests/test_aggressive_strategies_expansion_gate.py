@@ -9,6 +9,10 @@ os.environ["PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION"] = "python"
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 from aggressive_strategies import AggressiveStrategyExecutor, AggressiveStrategyType
+
+import pytest as _sc2_pytest
+
+_sc2_pytest.importorskip("sc2", reason="python-sc2 library not installed")
 from sc2.ids.unit_typeid import UnitTypeId
 
 
@@ -28,9 +32,9 @@ class TestAggressiveStrategiesExpansionGate(unittest.TestCase):
         bot.time = game_time
         bot.townhalls = FakeUnits([object() for _ in range(ready_bases)])
         bot.already_pending = Mock(
-            side_effect=lambda unit_type: pending_hatcheries
-            if unit_type == UnitTypeId.HATCHERY
-            else 0
+            side_effect=lambda unit_type: (
+                pending_hatcheries if unit_type == UnitTypeId.HATCHERY else 0
+            )
         )
         bot.do = Mock()
         bot.structures = Mock()

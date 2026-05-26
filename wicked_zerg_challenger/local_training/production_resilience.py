@@ -10,45 +10,48 @@ try:
     from sc2.ids.unit_typeid import UnitTypeId
 except ImportError:
     # Mock for testing
-    class UnitTypeId:
-        SPAWNINGPOOL = "SPAWNINGPOOL"
-        EXTRACTOR = "EXTRACTOR"
-        HATCHERY = "HATCHERY"
-        OVERLORD = "OVERLORD"
-        LARVA = "LARVA"
-        ZERGLING = "ZERGLING"
-        LAIR = "LAIR"
-        HIVE = "HIVE"
-        SPIRE = "SPIRE"
-        MUTALISK = "MUTALISK"
-        ROACH = "ROACH"
-        HYDRALISK = "HYDRALISK"
-        ROACHWARREN = "ROACHWARREN"
-        HYDRALISKDEN = "HYDRALISKDEN"
-        BANELINGNEST = "BANELINGNEST"
-        EVOLUTIONCHAMBER = "EVOLUTIONCHAMBER"
-        DRONE = "DRONE"
-        BANELING = "BANELING"
-        CORRUPTOR = "CORRUPTOR"
-        RAVAGER = "RAVAGER"
-        LURKERMP = "LURKERMP"
-        ULTRALISK = "ULTRALISK"
-        BROODLORD = "BROODLORD"
-        VIPER = "VIPER"
-        INFESTOR = "INFESTOR"
-        GREATERSPIRE = "GREATERSPIRE"
-        ULTRALISKCAVERN = "ULTRALISKCAVERN"
-        INFESTATIONPIT = "INFESTATIONPIT"
-        LURKERDENMP = "LURKERDENMP"
-        QUEEN = "QUEEN"
-        SPINECRAWLER = "SPINECRAWLER"
-        SPORECRAWLER = "SPORECRAWLER"
+    class _SC2StubSymbol:
+        """Sentinel value used in place of real SC2 enum members.
 
-    class AbilityId:
-        MORPHTORAVAGER_RAVAGER = "MORPHTORAVAGER_RAVAGER"
-        MORPHZERGLINGTOBANELING_BANELING = "MORPHZERGLINGTOBANELING_BANELING"
-        UPGRADETOLAIR_LAIR = "UPGRADETOLAIR_LAIR"
-        UPGRADETOHIVE_HIVE = "UPGRADETOHIVE_HIVE"
+        Hashable, comparable, and stringifies to the symbol name, but is
+        explicitly not a ``str`` so callers can distinguish it from real
+        upgrade-name strings used elsewhere in build orders."""
+
+        __slots__ = ("_name",)
+
+        def __init__(self, name):
+            self._name = name
+
+        def __eq__(self, other):
+            if isinstance(other, _SC2StubSymbol):
+                return other._name == self._name
+            return NotImplemented
+
+        def __hash__(self):
+            return hash(("_SC2StubSymbol", self._name))
+
+        def __repr__(self):
+            return self._name
+
+        def __str__(self):
+            return self._name
+
+    class _SC2StubMeta(type):
+        _cache = {}
+
+        def __getattr__(cls, name):
+            key = (cls.__name__, name)
+            sym = cls._cache.get(key)
+            if sym is None:
+                sym = _SC2StubSymbol(name)
+                cls._cache[key] = sym
+            return sym
+
+    class UnitTypeId(metaclass=_SC2StubMeta):
+        pass
+
+    class AbilityId(metaclass=_SC2StubMeta):
+        pass
 
 
 try:
@@ -609,7 +612,7 @@ class ProductionResilience:
             if b.supply_left < 1:
                 if b.can_afford(UnitTypeId.OVERLORD):
                     if await self._safe_train(larva, UnitTypeId.OVERLORD):
-                        logger.info(f"Produced Overlord for supply")
+                        logger.info("Produced Overlord for supply")
                     break
                 continue
 
@@ -773,9 +776,8 @@ class ProductionResilience:
         """
         b = self.bot
         game_time = getattr(b, "time", 0)
-        if (
-            self._should_reserve_third_base_minerals()
-            and self._check_min_defense_met(game_time)
+        if self._should_reserve_third_base_minerals() and self._check_min_defense_met(
+            game_time
         ):
             return False
 
@@ -866,9 +868,8 @@ class ProductionResilience:
         """
         b = self.bot
         game_time = getattr(b, "time", 0)
-        if (
-            self._should_reserve_third_base_minerals()
-            and self._check_min_defense_met(game_time)
+        if self._should_reserve_third_base_minerals() and self._check_min_defense_met(
+            game_time
         ):
             return
 
@@ -891,7 +892,7 @@ class ProductionResilience:
             if b.supply_left < 1:
                 if b.can_afford(UnitTypeId.OVERLORD) and larvae_list:
                     if await self._safe_train(larvae_list[0], UnitTypeId.OVERLORD):
-                        logger.info(f"Produced Overlord for supply")
+                        logger.info("Produced Overlord for supply")
                     if not flush_mode:
                         break
                 continue
@@ -991,7 +992,7 @@ class ProductionResilience:
                 if b.townhalls.exists and len(b.townhalls) < 3:
                     try:
                         if await self._try_expand():
-                            logger.info(f"Building expansion to dump minerals")
+                            logger.info("Building expansion to dump minerals")
                     except Exception:
                         pass
 
@@ -1093,7 +1094,7 @@ class ProductionResilience:
                     elif not tech_coordinator:
                         # Fallback only if TechCoordinator not available (should not happen in normal operation)
                         logger.warning(
-                            f"TechCoordinator not available, Spawning Pool build skipped"
+                            "TechCoordinator not available, Spawning Pool build skipped"
                         )
 
             # Natural Expansion timing
@@ -1285,7 +1286,7 @@ class ProductionResilience:
                     # Only log critical issues at INFO level
                     if larvae_count == 0:
                         loguru_logger.warning(
-                            f"[PRODUCTION] NO LARVAE - Production blocked!"
+                            "[PRODUCTION] NO LARVAE - Production blocked!"
                         )
                     elif (
                         larvae_count >= 3
@@ -1295,7 +1296,7 @@ class ProductionResilience:
                         and b.supply_left >= 2
                     ):
                         loguru_logger.warning(
-                            f"[PRODUCTION] Should produce Zerglings but not producing!"
+                            "[PRODUCTION] Should produce Zerglings but not producing!"
                         )
                 else:
                     # Non-training mode or no logger: Use print (for debugging)
@@ -1315,7 +1316,7 @@ class ProductionResilience:
                         )
 
                     if larvae_count == 0:
-                        logger.warning(f"NO LARVAE - Production blocked!")
+                        logger.warning("NO LARVAE - Production blocked!")
                     elif (
                         larvae_count >= 3
                         and b.minerals > 500
@@ -1323,7 +1324,7 @@ class ProductionResilience:
                         and can_afford_zergling
                         and b.supply_left >= 2
                     ):
-                        logger.warning(f"Should produce Zerglings but not producing!")
+                        logger.warning("Should produce Zerglings but not producing!")
         except Exception as e:
             if iteration % 100 == 0:
                 logger.error(f"Production diagnosis error: {e}")
@@ -2499,10 +2500,16 @@ class ProductionResilience:
 
                 # 가스 있으면 히드라/바퀴, 없으면 저글링
                 trained = False
-                if b.vespene >= 50 and b.structures(UnitTypeId.HYDRALISKDEN).ready.exists:
+                if (
+                    b.vespene >= 50
+                    and b.structures(UnitTypeId.HYDRALISKDEN).ready.exists
+                ):
                     if b.can_afford(UnitTypeId.HYDRALISK):
                         trained = await self._safe_train(larva, UnitTypeId.HYDRALISK)
-                elif b.vespene >= 25 and b.structures(UnitTypeId.ROACHWARREN).ready.exists:
+                elif (
+                    b.vespene >= 25
+                    and b.structures(UnitTypeId.ROACHWARREN).ready.exists
+                ):
                     if b.can_afford(UnitTypeId.ROACH):
                         trained = await self._safe_train(larva, UnitTypeId.ROACH)
 

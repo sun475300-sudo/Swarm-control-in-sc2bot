@@ -15,9 +15,47 @@ try:
     from sc2.ids.upgrade_id import UpgradeId
     from sc2.position import Point2
 except ImportError:  # Fallbacks for tooling environments
-    UnitTypeId = None
-    AbilityId = None
-    UpgradeId = None
+
+    class _SC2StubSymbol:
+        __slots__ = ("_name",)
+
+        def __init__(self, name):
+            self._name = name
+
+        def __eq__(self, other):
+            if isinstance(other, _SC2StubSymbol):
+                return other._name == self._name
+            return NotImplemented
+
+        def __hash__(self):
+            return hash(("_SC2StubSymbol", self._name))
+
+        def __repr__(self):
+            return self._name
+
+        def __str__(self):
+            return self._name
+
+    class _SC2StubMeta(type):
+        _cache: dict = {}
+
+        def __getattr__(cls, name):
+            key = (cls.__name__, name)
+            sym = cls._cache.get(key)
+            if sym is None:
+                sym = _SC2StubSymbol(name)
+                cls._cache[key] = sym
+            return sym
+
+    class UnitTypeId(metaclass=_SC2StubMeta):
+        pass
+
+    class AbilityId(metaclass=_SC2StubMeta):
+        pass
+
+    class UpgradeId(metaclass=_SC2StubMeta):
+        pass
+
     Point2 = None
 
 try:
@@ -358,7 +396,9 @@ class ZvTMicroAdjustments:
 
     @staticmethod
     def _unit_name(unit) -> str:
-        return getattr(getattr(unit, "type_id", None), "name", str(getattr(unit, "type_id", ""))).upper()
+        return getattr(
+            getattr(unit, "type_id", None), "name", str(getattr(unit, "type_id", ""))
+        ).upper()
 
     def _units_of_type(self, units: Iterable, names: Set[str]) -> List:
         wanted = {getattr(UnitTypeId, name, None) for name in names if UnitTypeId}
@@ -561,7 +601,9 @@ class ZvPMicroAdjustments(ZvTMicroAdjustments):
                 continue
             try:
                 if unit.distance_to(closest) < 7.0:
-                    actions.append(unit.move(unit.position.towards(closest.position, -2)))
+                    actions.append(
+                        unit.move(unit.position.towards(closest.position, -2))
+                    )
                     handled.add(tag)
             except Exception:
                 continue
@@ -579,7 +621,9 @@ class ZvPMicroAdjustments(ZvTMicroAdjustments):
         handled: Set[int] = set()
         actions = []
         bases = list(getattr(self.bot, "townhalls", []) or [])
-        defenders = self._units_of_type(own_units + self._bot_units_list(), {"QUEEN", "HYDRALISK"})
+        defenders = self._units_of_type(
+            own_units + self._bot_units_list(), {"QUEEN", "HYDRALISK"}
+        )
         for base in bases:
             nearby_oracles = self._within(oracles, base, 18.0)
             if not nearby_oracles:
@@ -711,7 +755,9 @@ class ZvZMicroAdjustments(ZvTMicroAdjustments):
             closest_bane = self._closest_to(enemy_banes, ling)
             try:
                 if closest_bane and ling.distance_to(closest_bane) < 4.0:
-                    actions.append(ling.move(ling.position.towards(closest_bane.position, -4)))
+                    actions.append(
+                        ling.move(ling.position.towards(closest_bane.position, -4))
+                    )
                     handled.add(tag)
                     continue
             except Exception:
@@ -859,9 +905,10 @@ class MicroCombat:
             if choke is None:
                 continue
 
-            is_burrowed = getattr(lurker, "is_burrowed", False) or self._unit_name(
-                lurker
-            ) == "LURKERMPBURROWED"
+            is_burrowed = (
+                getattr(lurker, "is_burrowed", False)
+                or self._unit_name(lurker) == "LURKERMPBURROWED"
+            )
             try:
                 if not is_burrowed:
                     if lurker.distance_to(choke) < 3.0 and burrow_down:
