@@ -340,6 +340,9 @@ class OpponentModeling:
 
     async def on_step(self, iteration: int):
         """매 프레임 실행"""
+        # Guard: nothing to model until on_game_start has identified the opponent.
+        if not getattr(self, "current_opponent", None) or not self.bot:
+            return
         if iteration - self.last_update < self.update_interval:
             return
 
@@ -487,11 +490,13 @@ class OpponentModeling:
     async def _send_prediction_to_strategy_manager(
         self, strategy: str, confidence: float
     ):
-        """예측을 StrategyManagerV2에 전달"""
+        """예측을 StrategyManagerV2에 전달.
+
+        StrategyManager는 직접 prediction-receive API를 노출하지 않으므로
+        blackboard 채널을 경유한다.
+        """
         if not hasattr(self.bot, "strategy_manager"):
             return
-
-        strategy_manager = self.bot.strategy_manager
 
         # Set blackboard recommendations
         if hasattr(self.bot, "blackboard") and self.bot.blackboard:
@@ -761,17 +766,6 @@ class OpponentModeling:
             self.logger.info(
                 f"[OPPONENT_MODELING] Known opponent: {opponent_id} ({self.opponent_models[opponent_id].games_played} games)"
             )
-
-    async def on_step(self, iteration: int):
-        """매 프레임 호출 - 신호 감지"""
-        if not self.current_opponent or not self.bot:
-            return
-
-        game_time = self.bot.time
-
-        # Only detect signals in early game (0-180s)
-        if game_time <= 180.0:
-            await self._detect_early_signals(game_time)
 
     def on_game_end(self, won: bool, lost: bool):
         """게임 종료 시 호출 - 데이터 저장"""

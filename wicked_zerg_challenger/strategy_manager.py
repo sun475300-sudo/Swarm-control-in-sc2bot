@@ -2553,6 +2553,11 @@ class StrategyManager:
             self._adjust_unit_ratio("hydra", 0.3)
             self._adjust_unit_ratio("roach", 0.3)
 
+        # 적 라바저 3+ -> 사거리 우위(6 > 5)인 히드라 + 럴커로 카운터
+        if ravager_count >= 3:
+            self._adjust_unit_ratio("hydra", 0.45)
+            self._adjust_unit_ratio("lurker", 0.15)
+
         # 뮤탈리스크 -> 히드라 + 스포어
         if mutalisk_count >= 3:
             # * Phase 34: "hydralisk" 오타 수정 -> "hydra" (내부 키 통일)
@@ -2904,7 +2909,7 @@ class StrategyManager:
         game_time = getattr(self.bot, "time", 0.0)
         supply_used = getattr(self.bot, "supply_used", 0)
 
-        # 강제 전환 조건 (시간보다 상황 우선)
+        # 강제 전환 조건 (상황 기반이 시간보다 우선 — 더 강력한 신호)
 
         # 서플라이 100 이상이면 후반으로 강제 전환
         if self.game_phase == GamePhase.MID and supply_used >= 100:
@@ -2919,6 +2924,15 @@ class StrategyManager:
         if self.game_phase == GamePhase.EARLY and base_count >= 3 and supply_used >= 40:
             self.game_phase = GamePhase.MID
             return f"3기지 + 서플라이 {supply_used} -> 중반 전환"
+
+        # 시간 기반 안전망 — 상황 기반이 늦거나 누락된 경우 보정
+        # EARLY → MID @ 4:30 (270 s), MID → LATE @ 9:00 (540 s)
+        if self.game_phase == GamePhase.EARLY and game_time >= 270:
+            self.game_phase = GamePhase.MID
+            return f"{int(game_time)}s 경과 -> 중반 전환"
+        if self.game_phase == GamePhase.MID and game_time >= 540:
+            self.game_phase = GamePhase.LATE
+            return f"{int(game_time)}s 경과 -> 후반 전환"
 
         return None
 

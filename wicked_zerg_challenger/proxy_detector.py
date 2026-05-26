@@ -46,12 +46,15 @@ class ProxyDetector:
 
         is_near_expansion = self._is_near_expansion(position)
         is_near_start = self._is_near_start(position)
-        distance_to_base = self._distance_to_enemy_base(position)
+        distance_to_enemy_base = self._distance_to_enemy_base(position)
 
         if building_type.lower() in ["pylon", "gateway", "forge", "barracks"]:
             if not is_near_expansion and not is_near_start:
                 result.is_proxy = True
-                result.confidence = 0.8
+                # Buildings far from the enemy's expected base are higher-
+                # confidence proxies; nearby misplaced ones may just be a
+                # quirky build order.
+                result.confidence = 0.95 if distance_to_enemy_base > 60 else 0.8
                 result.proxy_type = self._classify_proxy(building_type)
                 result.location = position
                 result.threat_level = "HIGH"

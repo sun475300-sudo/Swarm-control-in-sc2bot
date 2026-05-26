@@ -441,9 +441,12 @@ class ProductionController:
         # Overlord 생산
         try:
             self.bot.do(larvae.first.train(UnitTypeId.OVERLORD))
-            self.logger.info(f"Auto Overlord (supply: {supply_left}/{supply_cap})")
+            self.logger.info(
+                f"Auto Overlord [{int(game_time)}s] "
+                f"(supply: {supply_left}/{supply_cap})"
+            )
 
-        except Exception as e:
+        except Exception:
             self.production_failures += 1
 
     # ========== * Phase 13: 비율 기반 군대 자동 생산 * ==========

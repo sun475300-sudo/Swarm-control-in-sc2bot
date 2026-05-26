@@ -4,7 +4,7 @@
 
 통합 문제 해결 후 발견된 추가 개선 사항들입니다.
 
-**Last refreshed:** 2026-04-27 (Issue #1, #2 → Resolved; Issue #6 partially resolved via Batch 3)
+**Last refreshed:** 2026-05-10 (PR #146 — N1–N4 closed; new findings T1–T6 added)
 
 ---
 
@@ -14,14 +14,33 @@
 
 | ID | 설명 | 우선순위 | 상태 |
 |----|------|---------|------|
-| N1 | `OpponentModeling.on_step` 중복 정의 (line 341 vs 765 — F811) | 🟠 HIGH | open — 동작 영향(상위 on_step이 미실행) 가능 |
-| N2 | `EconomyManager._prevent_resource_banking` / `_reduce_gas_workers` 재정의 (F811) | 🟡 MED | open |
-| N3 | `combat_manager._find_harass_target` 재정의 (line 2377 vs 4278) | 🟡 MED | open |
-| N4 | `production_resilience.build_terran_counters` 재정의 (1369 vs 1866) | 🟡 MED | open |
+| N1 | `OpponentModeling.on_step` 중복 정의 (line 341 vs 765 — F811) | 🟠 HIGH | ✅ resolved (PR #146) — 종합 on_step 유지, narrow 중복 삭제, `current_opponent` 가드 추가 |
+| N2 | `EconomyManager._prevent_resource_banking` / `_reduce_gas_workers` 재정의 (F811) | 🟡 MED | ✅ resolved (PR #146) — dead 첫 정의 삭제, 살아있는 두번째 버전(블랙보드 통합/심각도 기반)을 유지 |
+| N3 | `combat_manager._find_harass_target` 재정의 (line 2377 vs 4278) | 🟡 MED | ✅ resolved (PR #146) — dead 첫 정의 삭제, 두번째(워커/테크 빌딩 우선) 유지 |
+| N4 | `production_resilience.build_terran_counters` 재정의 (1369 vs 1866) | 🟡 MED | ✅ resolved (PR #146) — dead 첫 정의 삭제, 두번째(TechCoordinator 사용) 유지 |
 | N5 | bare `except Exception:` 다수 (≈360+) — 이번 PR에서 12건 처리, 잔여 다수 | 🟢 LOW | partial |
 | N6 | F841 unused local variables (visuals/make_pptx 등) | 🟢 LOW | open (presentation 코드라 영향 작음) |
 
-검증 권장: PR 분리 (N1 단독 PR 권장 — 동작 변화 가능성).
+---
+
+## 🆕 신규 발견 (PR #146, 2026-05-10)
+
+이번 사이클(테스트 → 코드 검사 → 개선 → 커밋/푸시 반복)에서 추가로 식별된 항목.
+
+| ID | 설명 | 우선순위 | 상태 |
+|----|------|---------|------|
+| T1 | `wicked_zerg_challenger/game_analytics_system.py:418` — `IndentationError` (중복 except 블록 + 잘못 들여쓴 logger.info). flake8 E9 / py_compile 차단. | 🔴 CRITICAL | ✅ resolved (PR #146) |
+| T2 | `blackboard.GameStateBlackboard.should_expand` 가 `is_supply_block` 오타 호출 + 미네랄 임계값 누락 (Hatchery 300 미만에서도 True) | 🟠 HIGH | ✅ resolved (PR #146) |
+| T3 | `blackboard` 모듈에서 backward-compat alias `Blackboard = GameStateBlackboard` 누락 → import 실패 | 🟢 LOW | ✅ resolved (PR #146) |
+| T4 | `proxy_detector.analyze_enemy_building` 가 `distance_to_base` 를 계산하고 무시 — 적 본진에서 멀리 떨어진 프록시의 신뢰도가 0.80 으로 고정 | 🟡 MED | ✅ resolved (PR #146) — 60타일 이상이면 0.95 |
+| T5 | `meta_game_analyzer.recommend_strategy` 가 race/map performance 를 fetch 하고 사용하지 않음 — confidence 가 항상 0.75 | 🟡 MED | ✅ resolved (PR #146) — 표본 수에 따라 0.75–0.95 ramp |
+| T6 | wicked_zerg_challenger 테스트 24개가 sc2 미설치 환경에서 collection 실패. `bot_step_integration → advanced_scout_system_v2.py` 모듈 로드 시 `UnitTypeId.OVERLORD` 접근으로 폴백 stub 깨짐. | 🟠 HIGH | ✅ resolved (PR #146) — 테스트용 sc2 stub 패키지를 conftest 에 등록 (Real Enums for Race/Difficulty/Result, Euclidean Point2, Units(items, bot)) |
+
+추가 후속 작업 후보 (이번 PR 범위 밖):
+- T7: 65 개 .py 파일이 `black --check .` 에 실패. CI lint job 차단. 기능 변경 없는 대량 reformat 필요 (별도 PR 권장).
+- T8: `tests/` 와 `wicked_zerg_challenger/tests/` 를 동시에 실행할 때 namespace package `scripts` 가 wicked_zerg_challenger/scripts 로 캐시되어 `test_meta_adapter` / `test_ladder_tracker` collection 실패 (CI 는 분리 실행이라 영향 없음).
+- T9: F841 잔여 (≈111 건) — 대부분 visuals/make_pptx 와 ML 학습 스크립트. 영향도 낮음.
+- T10: `error_handler.retry_on_failure` 가 모든 재시도 실패 후 silent `None` 반환. 호출자가 실패를 구별 못 함 (현재 호출자 0).
 
 ---
 

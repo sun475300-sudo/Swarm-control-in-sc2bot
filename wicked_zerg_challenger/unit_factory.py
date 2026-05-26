@@ -379,7 +379,8 @@ class UnitFactory:
                                 race.value if hasattr(race, "value") else str(race)
                             )
                             logger.info(
-                                f"vs {race_name}: gas_ratio_target = {self.gas_unit_ratio_target:.2f}"
+                                f"vs {race_name} [{strategy_mode}]: "
+                                f"gas_ratio_target = {self.gas_unit_ratio_target:.2f}"
                             )
 
         # Rogue Tactics 라바 세이빙 체크

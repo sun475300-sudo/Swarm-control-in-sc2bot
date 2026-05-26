@@ -405,6 +405,22 @@ class EvolutionUpgradeManager:
             priorities.append("air_attack")
             priorities.append("air_armor")
 
+        # *** Phase 18: race-modifier nudge ***
+        # If the enemy race has a strong preference for a lane (>1.2 weight),
+        # surface one extra of that lane near the front so it gets researched
+        # one tier earlier than the default cadence. Conservative — never
+        # removes lanes, only inserts.
+        if race_modifiers:
+            top_lane = max(
+                race_modifiers.items(), key=lambda item: item[1], default=(None, 1.0)
+            )
+            if (
+                top_lane[0]
+                and top_lane[1] > 1.2
+                and (not priorities or priorities[0] != top_lane[0])
+            ):
+                priorities.insert(0, top_lane[0])
+
         # === 업그레이드 순서 생성 (중복 제거) ===
         upgrade_order: List[object] = []
         seen_upgrades = set()
