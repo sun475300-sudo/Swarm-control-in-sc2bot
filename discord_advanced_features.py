@@ -907,7 +907,6 @@ class TTSManager:
             logger.warning("TTS 합성 결과 없음")
             return False
         # 임시 파일에 저장 후 재생
-        import os
         import tempfile
 
         try:

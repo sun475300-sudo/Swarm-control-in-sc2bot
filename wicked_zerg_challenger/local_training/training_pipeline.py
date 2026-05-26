@@ -138,7 +138,11 @@ class TrainingPipeline:
     def get_opponent_pool(self) -> List[Dict[str, object]]:
         """Return recent checkpoints plus the rule-based bot."""
         pool = [
-            {"id": "rule_based", "type": "rule_based", "elo": self.elo_ratings["rule_based"]}
+            {
+                "id": "rule_based",
+                "type": "rule_based",
+                "elo": self.elo_ratings["rule_based"],
+            }
         ]
         recent_versions = self.versions[-self.opponent_pool_size :]
         for version in recent_versions:
@@ -154,13 +158,17 @@ class TrainingPipeline:
             )
         return pool
 
-    def select_opponent(self, player_elo: float = 1500.0, rng=None) -> Dict[str, object]:
+    def select_opponent(
+        self, player_elo: float = 1500.0, rng=None
+    ) -> Dict[str, object]:
         """Select a self-play opponent within 200 ELO when available."""
         rng = rng or random
         pool = self.get_opponent_pool()
         candidates = [p for p in pool if abs(float(p["elo"]) - player_elo) <= 200.0]
         if not candidates:
-            candidates = sorted(pool, key=lambda p: abs(float(p["elo"]) - player_elo))[:1]
+            candidates = sorted(pool, key=lambda p: abs(float(p["elo"]) - player_elo))[
+                :1
+            ]
         return rng.choice(candidates)
 
     def record_self_play_result(self, winner_id: str, loser_id: str, k: int = 32):

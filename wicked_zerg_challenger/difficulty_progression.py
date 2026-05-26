@@ -66,7 +66,7 @@ class DifficultyProgression:
                 self.stats = {}
         else:
             self.stats = {}
-            logger.info(f"No existing progression data, starting fresh")
+            logger.info("No existing progression data, starting fresh")
 
     def _save_stats(self) -> None:
         """통계 데이터 저장"""
@@ -76,7 +76,7 @@ class DifficultyProgression:
             serialized = self._serialize_stats(self.stats)
             with open(self.data_file, "w", encoding="utf-8") as f:
                 json.dump(serialized, f, indent=2, ensure_ascii=False)
-            logger.info(f"Saved progression data")
+            logger.info("Saved progression data")
         except Exception as e:
             logger.info(f"Error saving stats: {e}")
 
@@ -86,10 +86,10 @@ class DifficultyProgression:
         for map_name, map_data in stats.items():
             serialized[map_name] = {}
             for race, race_data in map_data.items():
-                race_str = race.name if isinstance(race, Race) else str(race)
+                race_str = getattr(race, "name", None) or str(race)
                 serialized[map_name][race_str] = {}
                 for diff, diff_data in race_data.items():
-                    diff_str = diff.name if isinstance(diff, Difficulty) else str(diff)
+                    diff_str = getattr(diff, "name", None) or str(diff)
                     serialized[map_name][race_str][diff_str] = diff_data
         return serialized
 
@@ -158,7 +158,7 @@ class DifficultyProgression:
             next_diff = self._get_next_difficulty(difficulty)
             if next_diff:
                 logger.info(f"\n{'='*70}")
-                logger.info(f"[OK] DIFFICULTY PROGRESSION! [OK]")
+                logger.info("[OK] DIFFICULTY PROGRESSION! [OK]")
                 logger.info(f"{'='*70}")
                 logger.info(f"  Map: {map_name}")
                 logger.info(f"  Opponent: {opponent_race.name}")

@@ -152,8 +152,9 @@ class ProductionController:
             unit_type, count, requester = request
 
             # 생산 시도
-            if self._should_reserve_third_base_minerals() and not self._can_spend_during_third_base_reserve(
-                unit_type, requester
+            if (
+                self._should_reserve_third_base_minerals()
+                and not self._can_spend_during_third_base_reserve(unit_type, requester)
             ):
                 priority = self.blackboard.get_authority_priority(requester)
                 self.blackboard.request_production(
@@ -249,8 +250,11 @@ class ProductionController:
                 if self.bot.time < 300:
                     self.logger.info(f"{unit_type.name} requested by {requester}")
 
-            except Exception as e:
+            except Exception as exc:
                 self.production_failures += 1
+                self.logger.debug(
+                    f"[PRODUCTION] train({unit_type}) failed for {requester}: {exc}"
+                )
                 break
 
         return produced
@@ -281,7 +285,9 @@ class ProductionController:
 
         return not self._has_active_base_threat()
 
-    def _can_spend_during_third_base_reserve(self, unit_type: Any, requester: str) -> bool:
+    def _can_spend_during_third_base_reserve(
+        self, unit_type: Any, requester: str
+    ) -> bool:
         """Allow supply safety and a small defensive floor during third reserve."""
         if unit_type == UnitTypeId.OVERLORD:
             return True
@@ -405,7 +411,6 @@ class ProductionController:
             return
 
         # * Phase 23: 서플라이 블록 완전 제거 - 선행 생산 *
-        game_time = getattr(self.bot, "time", 0)
         supply_used = supply_cap - supply_left
 
         # 동적 버퍼: 서플라이 사용량에 비례
@@ -443,8 +448,9 @@ class ProductionController:
             self.bot.do(larvae.first.train(UnitTypeId.OVERLORD))
             self.logger.info(f"Auto Overlord (supply: {supply_left}/{supply_cap})")
 
-        except Exception as e:
+        except Exception as exc:
             self.production_failures += 1
+            self.logger.debug(f"[PRODUCTION] Auto-Overlord train failed: {exc}")
 
     # ========== * Phase 13: 비율 기반 군대 자동 생산 * ==========
 
@@ -576,8 +582,10 @@ class ProductionController:
                 try:
                     larva = larvae.first
                     self.bot.do(larva.train(best_uid))
-                except Exception:
-                    pass
+                except Exception as exc:
+                    self.logger.debug(
+                        f"[PRODUCTION] ratio-based {best_unit} train failed: {exc}"
+                    )
 
     async def _consume_mineral_bank(self):
         """
@@ -617,7 +625,10 @@ class ProductionController:
                         larva = larvae[i] if i < larvae.amount else None
                         if larva:
                             self.bot.do(larva.train(UnitTypeId.ZERGLING))
-                    except Exception:
+                    except Exception as exc:
+                        self.logger.debug(
+                            f"[PRODUCTION] mineral-bank zergling spam failed: {exc}"
+                        )
                         break
 
         # 미네랄 800+ & 가스 200+ : 고비용 유닛 (울트라리스크 우선)
@@ -631,8 +642,10 @@ class ProductionController:
                 try:
                     larva = larvae.first
                     self.bot.do(larva.train(UnitTypeId.ULTRALISK))
-                except Exception:
-                    pass
+                except Exception as exc:
+                    self.logger.debug(
+                        f"[PRODUCTION] ultralisk consume-bank failed: {exc}"
+                    )
 
     # ========== 상태 조회 ==========
 

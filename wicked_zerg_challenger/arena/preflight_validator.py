@@ -61,7 +61,9 @@ class PreflightValidator:
         dist_dir = self.project_root / "dist"
         if not dist_dir.exists():
             return 0.0
-        packages = sorted(dist_dir.glob("*.zip"), key=lambda p: p.stat().st_mtime, reverse=True)
+        packages = sorted(
+            dist_dir.glob("*.zip"), key=lambda p: p.stat().st_mtime, reverse=True
+        )
         if not packages:
             return 0.0
         return packages[0].stat().st_size / 1024 / 1024
