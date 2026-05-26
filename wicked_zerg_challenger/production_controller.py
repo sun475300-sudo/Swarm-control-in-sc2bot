@@ -355,7 +355,7 @@ class ProductionController:
         except (TypeError, ValueError):
             return 0
 
-    def _has_active_base_threat(self) -> bool:
+    def _has_active_base_threat(self, min_enemies: int = 4) -> bool:
         enemy_units = getattr(self.bot, "enemy_units", None)
         townhalls = getattr(self.bot, "townhalls", None)
         if enemy_units is None or townhalls is None:
@@ -375,14 +375,18 @@ class ProductionController:
             except Exception:
                 continue
 
-            amount = getattr(nearby, "amount", 0)
-            if isinstance(amount, (int, float)) and amount > 0:
-                return True
+            raw_amount = getattr(nearby, "amount", None)
+            if raw_amount is None:
+                try:
+                    raw_amount = len(nearby)
+                except TypeError:
+                    raw_amount = 0
             try:
-                if len(nearby) > 0:
-                    return True
-            except TypeError:
-                pass
+                amount = int(raw_amount or 0)
+            except (TypeError, ValueError):
+                amount = 0
+            if amount >= min_enemies:
+                return True
 
         return False
 

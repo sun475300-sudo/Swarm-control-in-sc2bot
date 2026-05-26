@@ -191,3 +191,22 @@ class TestBoidsController:
             assert os.path.exists(
                 os.path.join(base, f)
             ), f"Missing combat submodule: {f}"
+
+
+@pytest.mark.skipif(
+    ProductionController is None, reason="production_controller not importable"
+)
+def test_production_controller_base_threat_requires_multiple_enemies():
+    bot = MagicMock()
+    bot.townhalls = [object()]
+    bot.enemy_units = MagicMock()
+    nearby = MagicMock()
+    nearby.amount = 3
+    bot.enemy_units.closer_than.return_value = nearby
+
+    ctrl = ProductionController(bot)
+
+    assert ctrl._has_active_base_threat() is False
+
+    nearby.amount = 4
+    assert ctrl._has_active_base_threat() is True

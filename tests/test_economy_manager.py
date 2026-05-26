@@ -522,6 +522,34 @@ class TestProactiveExpansion:
         # Function should complete
         assert True
 
+    def test_followup_reserves_fourth_hatch_without_real_threat(self):
+        bot = MockBot()
+        bot.time = 280.0
+        bot.townhalls = MockUnits(
+            [MockUnit(i, "HATCHERY", (50 + i, 50)) for i in range(3)]
+        )
+        bot.workers = MockUnits([MockUnit(i, "DRONE", (50, 50)) for i in range(36)])
+        bot.already_pending = Mock(return_value=0)
+
+        manager = EconomyManager(bot)
+        manager._count_enemy_units_near_bases = Mock(return_value=3)
+
+        assert manager._should_reserve_followup_expansion() is True
+
+    def test_followup_blocks_fourth_hatch_under_serious_base_threat(self):
+        bot = MockBot()
+        bot.time = 280.0
+        bot.townhalls = MockUnits(
+            [MockUnit(i, "HATCHERY", (50 + i, 50)) for i in range(3)]
+        )
+        bot.workers = MockUnits([MockUnit(i, "DRONE", (50, 50)) for i in range(36)])
+        bot.already_pending = Mock(return_value=0)
+
+        manager = EconomyManager(bot)
+        manager._count_enemy_units_near_bases = Mock(return_value=4)
+
+        assert manager._should_reserve_followup_expansion() is False
+
 
 class TestForceExpansion:
     """테스트 14: 강제 확장"""

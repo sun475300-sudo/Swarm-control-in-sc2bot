@@ -115,6 +115,43 @@ class UnitFactory:
             return getattr(strategy, "emergency_active", False)
         return False
 
+    def _has_serious_base_threat(self, min_enemies: int = 4) -> bool:
+        enemy_units = getattr(self.bot, "enemy_units", None)
+        townhalls = getattr(self.bot, "townhalls", None)
+        if enemy_units is None or townhalls is None:
+            return False
+
+        ready = getattr(townhalls, "ready", townhalls)
+        try:
+            bases = list(ready)
+        except TypeError:
+            try:
+                bases = list(townhalls)
+            except TypeError:
+                first_base = getattr(townhalls, "first", None)
+                bases = [first_base] if first_base else []
+
+        for base in bases:
+            if not base:
+                continue
+            try:
+                nearby = enemy_units.closer_than(30, base)
+            except Exception:
+                continue
+            amount = getattr(nearby, "amount", None)
+            if amount is None:
+                try:
+                    amount = len(nearby)
+                except TypeError:
+                    amount = 0
+            try:
+                if int(amount or 0) >= min_enemies:
+                    return True
+            except (TypeError, ValueError):
+                continue
+
+        return False
+
     def _check_combat_mode(self, iteration: int) -> bool:
         """
         전투 모드 확인 - 전투 중이면 병력 충원 모드 활성화
@@ -181,10 +218,13 @@ class UnitFactory:
 
         # * FIX: 전투 중에는 확장 대기하지 않음 (생존 우선) *
         strategy = getattr(self.bot, "strategy_manager", None)
-        under_attack = False
+        under_attack = self._has_serious_base_threat()
         if strategy:
-            under_attack = getattr(strategy, "emergency_active", False) or getattr(
+            strategic_alert = getattr(strategy, "emergency_active", False) or getattr(
                 strategy, "defense_active", False
+            )
+            under_attack = under_attack or (
+                strategic_alert and self._has_serious_base_threat()
             )
 
         # * OPTIMIZATION: 2분 내 멀티 보장 (60초부터 자원 모으기 시작) *

@@ -71,6 +71,8 @@ class EconomyManager:
     OPENING_HATCH_RESERVE_END = 120.0
     OPENING_HATCH_RESERVE_WORKERS = 15
     OPENING_HATCH_RESERVE_MINERALS = 75
+    FOURTH_HATCH_RESERVE_START = 280.0
+    FOURTH_HATCH_RESERVE_WORKERS = 36
 
     def __init__(self, bot):
         self.bot = bot
@@ -669,6 +671,27 @@ class EconomyManager:
                     continue
         return count
 
+    def _has_serious_base_threat(self, min_enemies: int = 4) -> bool:
+        return self._count_enemy_units_near_bases() >= min_enemies
+
+    def _blackboard_has_serious_base_threat(self) -> bool:
+        blackboard = getattr(self.bot, "blackboard", None)
+        threat = getattr(blackboard, "threat", None)
+        if threat is None:
+            return False
+
+        level = str(getattr(threat, "level", "") or "").lower()
+        if "critical" not in level:
+            return False
+
+        enemy_supply = getattr(threat, "enemy_supply", None)
+        if enemy_supply is None:
+            enemy_supply = getattr(threat, "enemy_army_supply", None)
+        try:
+            return float(enemy_supply or 0) >= 8.0
+        except (TypeError, ValueError):
+            return False
+
     async def _train_overlord_if_needed(self) -> None:
         # [FIX] Prevent execution multiple times per frame
         if getattr(self, "_overlord_checked_frame", -1) == self.bot.iteration:
@@ -998,10 +1021,14 @@ class EconomyManager:
             return False
         if effective_bases < 2:
             return False
-        blackboard = getattr(self.bot, "blackboard", None)
-        threat = getattr(blackboard, "threat", None)
-        if threat is not None and getattr(threat, "is_rushing", False) is True:
+        if self._has_serious_base_threat() or self._blackboard_has_serious_base_threat():
             return False
+        if base_count == 3:
+            return (
+                pending_hatch == 0
+                and game_time >= self.FOURTH_HATCH_RESERVE_START
+                and worker_count >= self.FOURTH_HATCH_RESERVE_WORKERS
+            )
         if effective_bases >= 3:
             return False
         if effective_bases == 2 and game_time >= 145.0:
