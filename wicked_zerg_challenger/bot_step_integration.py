@@ -716,6 +716,11 @@ class BotStepIntegrator:
         blackboard.worker_count = self.bot.workers.amount
 
         # 4. 주요 유닛 카운트 업데이트
+        # Keep this every-frame: in burnysc2 7.x `already_pending` is an O(1)
+        # lookup into the per-step `_abilities_count_and_build_progress` cache,
+        # and AggressiveStrategies / DefenseCoordinator gate timing-attack and
+        # queen-defense decisions on these counts — even ~0.5s staleness is
+        # enough to over-train zerglings or mis-time a defense.
         if UnitTypeId:
             key_units = [
                 UnitTypeId.DRONE,
@@ -2163,7 +2168,7 @@ class BotStepIntegrator:
                             for tech_type, base_supply, priority in recommendations:
                                 await self.bot.aggressive_tech_builder.build_tech_aggressively(
                                     tech_type,
-                                    lambda: self._build_tech(tech_type),
+                                    lambda t=tech_type: self._build_tech(t),
                                     base_supply,
                                     priority,
                                 )

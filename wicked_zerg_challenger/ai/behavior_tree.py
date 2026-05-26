@@ -119,8 +119,8 @@ class Parallel(BehaviorNode):
         self,
         name: str,
         children: List[BehaviorNode],
-        success_threshold: int = None,
-        failure_threshold: int = None,
+        success_threshold: Optional[int] = None,
+        failure_threshold: Optional[int] = None,
     ):
         super().__init__(name)
         self.children = children
