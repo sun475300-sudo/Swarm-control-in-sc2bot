@@ -122,8 +122,8 @@ class QuantumPolicyNetwork:
 
     def _init_weights(self) -> None:
         if self.use_quantum:
-            import numpy as np
-
+            # `use_quantum` is True only when PENNYLANE_AVAILABLE, so the
+            # module-level `numpy as np` import is guaranteed to be live.
             self.weights = np.random.uniform(
                 -math.pi, math.pi, size=(N_LAYERS, N_QUBITS, 3)
             )
@@ -137,8 +137,6 @@ class QuantumPolicyNetwork:
     def select_action(self, state_vec: list[float]) -> tuple[int, float]:
         """Returns (action_idx, log_prob)."""
         if self.use_quantum:
-            import numpy as np
-
             measurements = quantum_policy_circuit(np.array(state_vec), self.weights)
             action = decode_action(list(measurements))
             log_prob = math.log(1.0 / N_ACTIONS)  # uniform approximation

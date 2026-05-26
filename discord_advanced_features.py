@@ -455,7 +455,6 @@ class ScheduledReporter(commands.Cog):
         """실제 포트폴리오 데이터 조회 (더미 데이터 대체)."""
         try:
             import json
-            import os
 
             # portfolio_history.json에서 실제 데이터 조회
             base = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -907,7 +906,6 @@ class TTSManager:
             logger.warning("TTS 합성 결과 없음")
             return False
         # 임시 파일에 저장 후 재생
-        import os
         import tempfile
 
         try:
@@ -920,8 +918,6 @@ class TTSManager:
                 tmp_path = tmp.name
             result = await voice_manager.play_audio(guild_id, tmp_path)
             # 재생 후 정리 (5초 대기)
-            import asyncio
-
             await asyncio.sleep(5)
             try:
                 os.unlink(tmp_path)

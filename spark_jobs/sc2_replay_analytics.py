@@ -8,7 +8,7 @@ import math
 import random
 import sys
 from collections import defaultdict
-from dataclasses import dataclass, field, fields
+from dataclasses import dataclass, field
 from datetime import datetime
 from statistics import mean, stdev
 from typing import Any, Callable, Dict, Iterable, List, Optional, Tuple

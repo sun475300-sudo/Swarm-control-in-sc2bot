@@ -8,6 +8,7 @@ import os
 import shutil
 import sys
 import tempfile
+import types
 from pathlib import Path
 from unittest.mock import MagicMock
 
@@ -17,6 +18,129 @@ import pytest
 PROJECT_ROOT = Path(__file__).parent.parent
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
+
+
+# ─────────────────────────────────────────────
+# Minimal sc2 stub injection (for tests only)
+# ─────────────────────────────────────────────
+#
+# python-sc2 / burnysc2 cannot be `pip install`ed in many CI / dev
+# environments because mpyq fails to build a wheel. We don't actually
+# need the live SC2 client to unit-test pure-logic helpers — we only
+# need the IDs module to expose `UnitTypeId.<NAME>` and
+# `AbilityId.<NAME>` as typed-enough placeholders. Inject these into
+# `sys.modules` BEFORE any test/wicked_zerg_challenger module imports
+# `from sc2...`.
+#
+# Real sc2 always wins: we only inject if the real package is missing.
+def _install_sc2_stubs() -> None:
+    try:  # real sc2 present — leave it alone
+        import sc2  # noqa: F401
+
+        return
+    except ImportError:
+        pass
+
+    class _Member:
+        """Hashable stand-in for an sc2 enum member (e.g. UnitTypeId.QUEEN)."""
+
+        __slots__ = ("name", "value", "_kind")
+
+        def __init__(self, kind: str, name: str) -> None:
+            self._kind = kind
+            self.name = name
+            self.value = name
+
+        def __repr__(self) -> str:  # pragma: no cover - cosmetic
+            return f"{self._kind}.{self.name}"
+
+        def __eq__(self, other) -> bool:
+            return (
+                isinstance(other, _Member)
+                and self._kind == other._kind
+                and self.name == other.name
+            )
+
+        def __hash__(self) -> int:
+            return hash((self._kind, self.name))
+
+    class _Identifier:
+        """Stand-in for sc2 ID enums (UnitTypeId / AbilityId / UpgradeId).
+
+        Attribute access returns a hashable `_Member` with `.name == "<ATTR>"`,
+        so production code that does `UnitTypeId.ULTRALISK` and uses it as
+        a dict key keeps working.
+        """
+
+        def __init__(self, kind: str) -> None:
+            self._kind = kind
+            self._cache: dict = {}
+
+        def __getattr__(self, name: str):
+            cached = self._cache.get(name)
+            if cached is None:
+                cached = _Member(self._kind, name)
+                self._cache[name] = cached
+            return cached
+
+    class _Point2(tuple):
+        def __new__(cls, xy):
+            return tuple.__new__(cls, (float(xy[0]), float(xy[1])))
+
+        @property
+        def x(self) -> float:
+            return self[0]
+
+        @property
+        def y(self) -> float:
+            return self[1]
+
+        def distance_to(self, other) -> float:
+            ox, oy = other[0], other[1]
+            return ((self[0] - ox) ** 2 + (self[1] - oy) ** 2) ** 0.5
+
+    class _Unit:  # pragma: no cover - placeholder type
+        pass
+
+    class _Units(list):  # pragma: no cover - placeholder type
+        pass
+
+    class _BotAI:  # pragma: no cover - placeholder type
+        pass
+
+    sc2 = types.ModuleType("sc2")
+    sc2_ids = types.ModuleType("sc2.ids")
+    sc2_ids_unit = types.ModuleType("sc2.ids.unit_typeid")
+    sc2_ids_ability = types.ModuleType("sc2.ids.ability_id")
+    sc2_ids_upgrade = types.ModuleType("sc2.ids.upgrade_id")
+    sc2_position = types.ModuleType("sc2.position")
+    sc2_unit = types.ModuleType("sc2.unit")
+    sc2_units = types.ModuleType("sc2.units")
+    sc2_bot_ai = types.ModuleType("sc2.bot_ai")
+
+    sc2_ids_unit.UnitTypeId = _Identifier("UnitTypeId")
+    sc2_ids_ability.AbilityId = _Identifier("AbilityId")
+    sc2_ids_upgrade.UpgradeId = _Identifier("UpgradeId")
+    sc2_position.Point2 = _Point2
+    sc2_unit.Unit = _Unit
+    sc2_units.Units = _Units
+    sc2_bot_ai.BotAI = _BotAI
+
+    for mod in (
+        sc2,
+        sc2_ids,
+        sc2_ids_unit,
+        sc2_ids_ability,
+        sc2_ids_upgrade,
+        sc2_position,
+        sc2_unit,
+        sc2_units,
+        sc2_bot_ai,
+    ):
+        sys.modules[mod.__name__] = mod
+
+
+_install_sc2_stubs()
 
 
 # ═══════════════════════════════════════════════════════

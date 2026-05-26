@@ -277,9 +277,11 @@ class CreepManager:
             return None
 
         origin = tumor.position
-        spread_range = self.TUMOR_SPREAD_RANGE
 
-        # Generate circle positions (CreepyBot: trigonometric sampling)
+        # Generate circle positions (CreepyBot: trigonometric sampling).
+        # NOTE: distances are intentionally hardcoded at 7.0 / 9.0 here even
+        # though `self.TUMOR_SPREAD_RANGE = 10.0` exists; the spread range
+        # constant is used by other code paths (e.g. line 877).
         candidates = []
         for angle_deg in range(0, 360, 20):  # 18 candidate positions
             rad = math.radians(angle_deg)

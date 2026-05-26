@@ -50,8 +50,6 @@ if TIANSHOU_AVAILABLE:
         def forward(self, obs, state=None):
             if isinstance(obs, dict):
                 obs = obs.get("obs", obs)
-            import torch
-
             if not isinstance(obs, torch.Tensor):
                 obs = torch.FloatTensor(obs)
             return self.net(obs), state
@@ -68,8 +66,6 @@ if TIANSHOU_AVAILABLE:
             )
 
         def forward(self, obs, state=None):
-            import torch
-
             if not isinstance(obs, torch.Tensor):
                 obs = torch.FloatTensor(obs)
             return self.net(obs)
@@ -83,7 +79,6 @@ if TIANSHOU_AVAILABLE:
 def build_ppo_agent():
     if not TIANSHOU_AVAILABLE:
         return None
-    import torch
     import torch.optim as optim
     from torch.distributions import Categorical
 
