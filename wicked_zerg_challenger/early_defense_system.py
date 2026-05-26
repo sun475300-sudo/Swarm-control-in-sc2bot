@@ -14,9 +14,9 @@ try:
     from config.constants import (
         EARLY_GAME_END_SECONDS,
         ENEMY_DETECT_RADIUS,
-        PROXY_DETECT_RADIUS,
-        PROXY_DEFENSE_WORKERS,
         MAX_WORKER_DEFENSE,
+        PROXY_DEFENSE_WORKERS,
+        PROXY_DETECT_RADIUS,
     )
 except ImportError:
     EARLY_GAME_END_SECONDS = 180.0
@@ -37,14 +37,32 @@ except ImportError:
     class BotAI:
         pass
 
-    class UnitTypeId:
-        pass
+    class _StubId:
+        """Sentinel value used for fallback enum members."""
 
-    class AbilityId:
-        pass
+        __slots__ = ("name",)
 
-    class UpgradeId:
-        pass
+        def __init__(self, name):
+            self.name = name
+
+        def __repr__(self):
+            return f"<StubId {self.name}>"
+
+        def __hash__(self):
+            return hash(("_StubId", self.name))
+
+        def __eq__(self, other):
+            return isinstance(other, _StubId) and self.name == other.name
+
+    class _StubEnum:
+        def __getattr__(self, name):
+            value = _StubId(name)
+            object.__setattr__(self, name, value)
+            return value
+
+    UnitTypeId = _StubEnum()
+    AbilityId = _StubEnum()
+    UpgradeId = _StubEnum()
 
     class Point2:
         pass
@@ -160,14 +178,18 @@ class EarlyDefenseSystem:
                 self.early_rush_detected = False
                 self.emergency_mode = False
                 self.early_threats = set()
-                logger.info("[*] Early rush threat cleared (no visible enemies) — returning to normal mode [*]")
+                logger.info(
+                    "[*] Early rush threat cleared (no visible enemies) — returning to normal mode [*]"
+                )
             return
 
         main_base = self.bot.townhalls.first if self.bot.townhalls else None
         if not main_base:
             return
 
-        nearby_enemies = self.bot.enemy_units.closer_than(ENEMY_DETECT_RADIUS, main_base.position)
+        nearby_enemies = self.bot.enemy_units.closer_than(
+            ENEMY_DETECT_RADIUS, main_base.position
+        )
 
         if nearby_enemies:
             self.early_rush_detected = True
@@ -184,7 +206,9 @@ class EarlyDefenseSystem:
                 self.early_rush_detected = False
                 self.emergency_mode = False
                 self.early_threats = set()
-                logger.info("[*] Early rush threat cleared — returning to normal mode [*]")
+                logger.info(
+                    "[*] Early rush threat cleared — returning to normal mode [*]"
+                )
 
     async def _detect_proxy_structure_rush(self) -> None:
         """Detect proxy Barracks or cannon rush structures near our base."""
@@ -263,7 +287,9 @@ class EarlyDefenseSystem:
                 self._proxy_spines_requested += 1
             return
 
-        if not hasattr(self.bot, "find_placement") or not getattr(self.bot, "workers", None):
+        if not hasattr(self.bot, "find_placement") or not getattr(
+            self.bot, "workers", None
+        ):
             return
 
         try:
@@ -289,10 +315,14 @@ class EarlyDefenseSystem:
             return
 
         if hasattr(workers, "closest_n_units"):
-            pulled = workers.closest_n_units(getattr(target, "position", target), desired_count)
+            pulled = workers.closest_n_units(
+                getattr(target, "position", target), desired_count
+            )
         else:
             worker_list = list(workers)
-            pulled = sorted(worker_list, key=lambda w: w.distance_to(target))[:desired_count]
+            pulled = sorted(worker_list, key=lambda w: w.distance_to(target))[
+                :desired_count
+            ]
 
         for worker in pulled:
             try:
