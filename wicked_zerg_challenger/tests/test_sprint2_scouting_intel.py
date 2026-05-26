@@ -26,7 +26,9 @@ class FakePoint:
         if total == 0:
             return FakePoint(self.x, self.y)
         ratio = distance / total
-        return FakePoint(self.x + (other.x - self.x) * ratio, self.y + (other.y - self.y) * ratio)
+        return FakePoint(
+            self.x + (other.x - self.x) * ratio, self.y + (other.y - self.y) * ratio
+        )
 
     def offset(self, delta):
         return FakePoint(self.x + delta[0], self.y + delta[1])
@@ -80,7 +82,11 @@ class FakeUnits(list):
         return FakeUnits([unit for unit in self if predicate(unit)])
 
     def closest_to(self, target):
-        return min(self, key=lambda unit: unit.position.distance_to(target)) if self else None
+        return (
+            min(self, key=lambda unit: unit.position.distance_to(target))
+            if self
+            else None
+        )
 
     def find_by_tag(self, tag):
         for unit in self:

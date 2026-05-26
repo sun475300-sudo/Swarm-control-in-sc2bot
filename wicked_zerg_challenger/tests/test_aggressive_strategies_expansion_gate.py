@@ -28,9 +28,9 @@ class TestAggressiveStrategiesExpansionGate(unittest.TestCase):
         bot.time = game_time
         bot.townhalls = FakeUnits([object() for _ in range(ready_bases)])
         bot.already_pending = Mock(
-            side_effect=lambda unit_type: pending_hatcheries
-            if unit_type == UnitTypeId.HATCHERY
-            else 0
+            side_effect=lambda unit_type: (
+                pending_hatcheries if unit_type == UnitTypeId.HATCHERY else 0
+            )
         )
         bot.do = Mock()
         bot.structures = Mock()

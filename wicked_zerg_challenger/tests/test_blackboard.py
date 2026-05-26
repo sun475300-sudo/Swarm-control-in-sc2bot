@@ -83,6 +83,31 @@ class TestResources(unittest.TestCase):
         self.bb.update_resources(100, 50, 200, 200)
         self.assertFalse(self.bb.resources.is_supply_blocked)
 
+    def test_negative_inputs_clamped_to_zero(self):
+        """Transient negative readings from the SC2 client must not propagate."""
+        self.bb.update_resources(-100, -50, -10, -200)
+        self.assertEqual(self.bb.resources.minerals, 0)
+        self.assertEqual(self.bb.resources.vespene, 0)
+        self.assertEqual(self.bb.resources.supply_used, 0)
+        self.assertEqual(self.bb.resources.supply_cap, 0)
+        self.assertEqual(self.bb.resources.supply_left, 0)
+        # flat accessors mirror the clamped values
+        self.assertEqual(self.bb.minerals, 0)
+        self.assertEqual(self.bb.vespene, 0)
+
+    def test_supply_left_never_negative(self):
+        """supply_used > supply_cap shouldn't yield negative supply_left."""
+        self.bb.update_resources(100, 50, 50, 30)
+        self.assertEqual(self.bb.resources.supply_left, 0)
+
+    def test_float_inputs_coerced_to_int(self):
+        """Some callers may pass numpy floats; ensure they're coerced cleanly."""
+        self.bb.update_resources(123.7, 45.9, 12.3, 60.0)
+        self.assertEqual(self.bb.resources.minerals, 123)
+        self.assertEqual(self.bb.resources.vespene, 45)
+        self.assertEqual(self.bb.resources.supply_used, 12)
+        self.assertEqual(self.bb.resources.supply_cap, 60)
+
 
 class TestUnitCounts(unittest.TestCase):
     def setUp(self):
