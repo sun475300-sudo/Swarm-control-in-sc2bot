@@ -539,8 +539,17 @@ class GameStateBlackboard:
 
     def should_expand(self) -> bool:
         """확장 가능한 상황인가?"""
+        # 300 = Hatchery mineral cost — without this, the method would say
+        # "expand now" when we can't actually afford the building.
         return (
             self.threat.level == ThreatLevel.NONE
-            and not self.resources.is_supply_block
+            and not self.resources.is_supply_blocked
             and not self.is_under_attack
+            and self.resources.minerals >= 300
         )
+
+
+# Backwards-compatible alias — wicked_zerg_bot_pro_impl.py and others
+# import `Blackboard` directly, and tests/test_blackboard.py asserts that
+# `Blackboard is GameStateBlackboard`.
+Blackboard = GameStateBlackboard

@@ -8,7 +8,15 @@ from types import SimpleNamespace
 from unittest.mock import MagicMock, patch
 
 import pytest
-from sc2.ids.unit_typeid import UnitTypeId
+
+# `sc2` (burnysc2) is the live game framework — not required for these mocked
+# unit tests in a CI/dev environment where it may not be installed. Skip the
+# whole module cleanly instead of breaking test collection for everyone else.
+sc2_ids = pytest.importorskip(
+    "sc2.ids.unit_typeid",
+    reason="burnysc2 (sc2) not installed; QueenTransfusion tests skipped",
+)
+UnitTypeId = sc2_ids.UnitTypeId
 
 # ---------------------------------------------------------------------------
 # Minimal stubs so we can import without a running SC2 environment
