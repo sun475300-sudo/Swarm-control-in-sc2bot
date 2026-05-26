@@ -29,7 +29,16 @@ try:
 except ImportError:
     TORCH_AVAILABLE = False
     torch = None
-    nn = None
+    optim = None
+
+    # Lightweight stub so `class X(nn.Module):` at module load time doesn't
+    # crash with 'NoneType' object has no attribute 'Module'. The classes
+    # themselves raise ImportError in __init__ when TORCH_AVAILABLE is False.
+    class _NNStub:
+        class Module:
+            pass
+
+    nn = _NNStub()
 
 
 class ReplayActionExtractor:
@@ -493,7 +502,11 @@ class ImitationLearner:
         """모델 로드"""
         try:
             if self.model_path.exists():
-                checkpoint = torch.load(str(self.model_path), map_location=self.device)
+                checkpoint = torch.load(
+                    str(self.model_path),
+                    map_location=self.device,
+                    weights_only=True,
+                )
                 self.network.load_state_dict(checkpoint["network_state_dict"])
                 self.optimizer.load_state_dict(checkpoint["optimizer_state_dict"])
                 self.epoch_count = checkpoint.get("epoch_count", 0)

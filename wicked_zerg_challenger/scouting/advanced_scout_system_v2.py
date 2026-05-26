@@ -27,22 +27,29 @@ try:
     from sc2.unit import Unit
 except ImportError:
 
-    class BotAI:
+    # sc2 fallback stubs: any attribute access returns None so module-level
+    # references like UnitTypeId.OVERLORD don't crash at import time when the
+    # sc2 library is unavailable (e.g., static analysis without burnysc2).
+    class _StubMeta(type):
+        def __getattr__(cls, name):
+            return None
+
+    class BotAI(metaclass=_StubMeta):
         pass
 
-    class UnitTypeId:
+    class UnitTypeId(metaclass=_StubMeta):
         pass
 
-    class AbilityId:
+    class AbilityId(metaclass=_StubMeta):
         pass
 
-    class UpgradeId:
+    class UpgradeId(metaclass=_StubMeta):
         pass
 
-    class Point2:
+    class Point2(metaclass=_StubMeta):
         pass
 
-    class Unit:
+    class Unit(metaclass=_StubMeta):
         pass
 
 

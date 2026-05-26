@@ -73,13 +73,93 @@ jobs:
           cache: pip
 
       - name: Install dependencies
-        run: pip install -r requirements.txt pytest pytest-cov pytest-asyncio
+        # Pinning setuptools<69 + upgrading pip before -r requirements.txt
+        # mirrors what the other CI jobs do; without it the mpyq sdist
+        # (transitive dependency of burnysc2) fails to build on newer
+        # setuptools because it still uses the deprecated install_layout
+        # attribute. pytest-timeout is added because the Run integration
+        # tests step below passes --timeout=120, which would otherwise
+        # be 'unrecognized argument' (pytest exit 4 / job failure).
+        run: |
+          python -m pip install --upgrade pip
+          pip install 'setuptools<69' wheel
+          pip install -r requirements.txt pytest pytest-cov pytest-asyncio pytest-timeout
+
+      - name: Diagnostic — dump environment
+        # Helps figure out why pytest exits 2 on CI when the same command
+        # passes locally. Prints versions of every plugin pytest will
+        # auto-load and the result of trying to import the heavyweights.
+        run: |
+          python --version
+          pip list | grep -iE 'pytest|burnysc2|sc2|numpy|cryptography|coverage' || true
+          python -c "import sys; print('sys.path:', sys.path)"
+          python -c "
+          try:
+              from sc2.ids.unit_typeid import UnitTypeId
+              print('sc2 import OK:', UnitTypeId.OVERLORD)
+          except Exception as e:
+              print('sc2 import FAIL:', type(e).__name__, e)
+          " || true
 
       - name: Run unit tests
-        run: pytest tests/unit -v --cov=. --cov-report=xml --cov-report=term
+        # tests/ is the repo's unit-test root (no separate tests/unit dir);
+        # excluding tests/integration to keep this step focused on fast tests.
+        # Plugin disables:
+        #   -p no:cacheprovider — stale cache between CI runs.
+        #   -p no:cov           — pytest-cov auto-activates as a plugin even
+        #                          without --cov and was suspected of slowing
+        #                          startup; the explicit coverage step below
+        #                          re-enables it when wanted.
+        # set +e + capture so we always reach the dump step regardless of
+        # pytest's exit code.
+        run: |
+          set +e
+          python -m pytest tests/ \
+            --ignore=tests/integration \
+            -p no:cacheprovider \
+            -p no:cov \
+            --tb=short \
+            -q \
+            2>&1 | tee pytest-unit.log
+          rc=${PIPESTATUS[0]}
+          echo "pytest exit code: $rc"
+          echo "PYTEST_RC=$rc" >> $GITHUB_ENV
+          exit 0
+
+      - name: Dump pytest output (always, even on failure)
+        if: always()
+        run: |
+          echo "=========== FAILED test lines from pytest-unit.log =========="
+          grep -E '^(FAILED|ERROR) ' pytest-unit.log || echo "(no FAILED/ERROR lines)"
+          echo "=========== short test summary section =========="
+          awk '/short test summary info/,EOF' pytest-unit.log || true
+          echo "=========== full pytest-unit.log =========="
+          cat pytest-unit.log || echo "(no log file)"
+          echo "===========================================/end"
+
+      - name: Upload pytest log as artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pytest-unit-log
+          path: pytest-unit.log
+          retention-days: 7
+
+      - name: Fail job if pytest failed
+        run: |
+          echo "pytest exit code was: ${PYTEST_RC:-unknown}"
+          test "${PYTEST_RC:-1}" = "0"
+
+      - name: Collect coverage (non-blocking)
+        continue-on-error: true
+        run: |
+          python -m pytest tests/ --ignore=tests/integration \
+            --cov=src --cov=wicked_zerg_challenger \
+            --cov-report=xml --cov-report=term \
+            -p no:cacheprovider || true
 
       - name: Run integration tests
-        run: pytest tests/integration -v --timeout=120
+        run: python -m pytest tests/integration -v --timeout=120
 
       - name: Upload coverage
         uses: codecov/codecov-action@v4

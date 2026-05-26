@@ -519,11 +519,15 @@ class CoverageTracker:
         self._edge_counts: Dict[int, int] = {}
 
     def compute_coverage_hash(self, execution_trace: List[str]) -> str:
-        """Compute a hash of the execution trace to identify unique paths."""
+        """Compute a hash of the execution trace to identify unique paths.
+
+        MD5 is fine here — used only as a fast non-cryptographic
+        fingerprint for de-duplicating execution paths, not for security.
+        """
         if not execution_trace:
-            return hashlib.md5(b"empty").hexdigest()[:16]
+            return hashlib.md5(b"empty", usedforsecurity=False).hexdigest()[:16]
         trace_str = "|".join(execution_trace)
-        return hashlib.md5(trace_str.encode()).hexdigest()[:16]
+        return hashlib.md5(trace_str.encode(), usedforsecurity=False).hexdigest()[:16]
 
     def record_execution(
         self, fuzz_input: FuzzInput, execution_trace: List[str]

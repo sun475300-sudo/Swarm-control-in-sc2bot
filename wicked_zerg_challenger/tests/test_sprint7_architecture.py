@@ -9,10 +9,11 @@ from unittest.mock import MagicMock
 os.environ["PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION"] = "python"
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from building_manager import BuildingManager, UnitTypeId
+from building_manager import BuildingManager
 from core.manager_registry import get_all_manager_configs
 from economy_manager import EconomyManager
 from strategy_manager import StrategyManager
+
 from utils.distance_cache import DistanceCache
 
 
@@ -135,9 +136,7 @@ class TestSprint7Architecture(unittest.TestCase):
         strategy.emergency_spine_requested = False
         strategy.emergency_spore_requested = False
 
-        StrategyManager._request_defensive_building(
-            strategy, spine=True, spore=True
-        )
+        StrategyManager._request_defensive_building(strategy, spine=True, spore=True)
 
         self.assertTrue(strategy.emergency_spine_requested)
         self.assertTrue(strategy.emergency_spore_requested)

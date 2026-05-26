@@ -5,7 +5,6 @@ Tests the thread-safe resource reservation system.
 """
 
 import asyncio
-from unittest.mock import Mock
 
 import pytest
 
@@ -34,7 +33,7 @@ class TestResourceManager:
         """Test successful resource reservation"""
         result = await self.manager.try_reserve(200, 100, "TestManager")
 
-        assert result == True
+        assert result is True
         assert self.manager._reserved_minerals == 200
         assert self.manager._reserved_gas == 100
 
@@ -44,7 +43,7 @@ class TestResourceManager:
         # Try to reserve more than available
         result = await self.manager.try_reserve(2000, 100, "TestManager")
 
-        assert result == False
+        assert result is False
         assert self.manager._reserved_minerals == 0
         assert self.manager._reserved_gas == 0
 
@@ -64,8 +63,8 @@ class TestResourceManager:
         result1 = await self.manager.try_reserve(300, 100, "Manager1")
         result2 = await self.manager.try_reserve(300, 100, "Manager2")
 
-        assert result1 == True
-        assert result2 == True  # Should succeed (1000 - 300 - 300 = 400 left)
+        assert result1 is True
+        assert result2 is True  # Should succeed (1000 - 300 - 300 = 400 left)
         assert self.manager._reserved_minerals == 600
         assert self.manager._reserved_gas == 200
 

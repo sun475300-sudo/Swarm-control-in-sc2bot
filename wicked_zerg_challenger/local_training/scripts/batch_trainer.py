@@ -65,7 +65,11 @@ class BatchTrainer:
             if self.model_path.exists():
                 try:
                     self.model.load_state_dict(
-                        torch.load(self.model_path, map_location=self.device)
+                        torch.load(
+                            self.model_path,
+                            map_location=self.device,
+                            weights_only=True,
+                        )
                     )
                     logger.info(f"Loaded existing model from {self.model_path}")
                 except Exception as e:

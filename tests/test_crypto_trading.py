@@ -45,7 +45,9 @@ class TestCryptoImports:
         assert hasattr(upbit_client, "UpbitClient")
 
     @pytest.mark.skipif(
-        not all(__import__("importlib").util.find_spec(m) for m in ["pyupbit", "pandas"]),
+        not all(
+            __import__("importlib").util.find_spec(m) for m in ["pyupbit", "pandas"]
+        ),
         reason="pyupbit or pandas not installed",
     )
     def test_import_auto_trader(self):
@@ -65,7 +67,9 @@ class TestCryptoImports:
         assert hasattr(portfolio_tracker, "PortfolioTracker")
 
     @pytest.mark.skipif(
-        not all(__import__("importlib").util.find_spec(m) for m in ["pyupbit", "pandas"]),
+        not all(
+            __import__("importlib").util.find_spec(m) for m in ["pyupbit", "pandas"]
+        ),
         reason="pyupbit or pandas not installed",
     )
     def test_import_market_analyzer(self):
@@ -134,12 +138,48 @@ class TestCryptoConfig:
         assert DATA_DIR.exists(), f"데이터 디렉토리가 없습니다: {DATA_DIR}"
 
 
+def _resolve_config_path():
+    """Return path to config.yaml, falling back to config.yaml.example."""
+    root = os.path.join(os.path.dirname(__file__), "..")
+    real = os.path.join(root, "config.yaml")
+    example = os.path.join(root, "config.yaml.example")
+    if os.path.exists(real):
+        return real
+    if os.path.exists(example):
+        return example
+    return None
+
+
 @pytest.mark.skipif(
-    not os.path.exists(os.path.join(os.path.dirname(__file__), "..", "config.yaml")),
-    reason="config.yaml not found",
+    _resolve_config_path() is None,
+    reason="neither config.yaml nor config.yaml.example present",
 )
 class TestConfigLoader:
     """config_loader 모듈의 기능을 테스트한다."""
+
+    @pytest.fixture(autouse=True)
+    def _reset_config_cache(self):
+        """Clear module-level cache + force loads to use resolved path."""
+        import config_loader
+
+        config_loader._config = None
+        path = _resolve_config_path()
+        # Wrap load_config to default to the example when no real config exists.
+        original = config_loader.load_config
+
+        def _patched_load_config(config_path=None, apply_env=True, resolve_refs=True):
+            return original(
+                config_path=config_path or path,
+                apply_env=apply_env,
+                resolve_refs=resolve_refs,
+            )
+
+        config_loader.load_config = _patched_load_config
+        try:
+            yield
+        finally:
+            config_loader.load_config = original
+            config_loader._config = None
 
     def test_import_config_loader(self):
         """config_loader 모듈을 import할 수 있는지 확인한다."""
@@ -190,7 +230,7 @@ class TestConfigLoader:
         from config_loader import get, load_config
 
         config_loader._config = None
-        cfg = load_config()
+        load_config()
         port = get("proxy.port")
         assert port == 9999
 

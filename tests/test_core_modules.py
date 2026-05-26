@@ -7,7 +7,7 @@ SC2 라이브러리 미설치 환경에서 Mock 기반으로 테스트합니다.
 
 import os
 import sys
-from unittest.mock import AsyncMock, MagicMock, Mock
+from unittest.mock import MagicMock
 
 import pytest
 

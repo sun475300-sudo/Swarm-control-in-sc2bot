@@ -31,7 +31,13 @@ def _validate_url(url: str) -> bool:
         parsed = urlparse(url)
         if parsed.scheme not in ("http", "https"):
             return False
-        if parsed.hostname in ("localhost", "127.0.0.1", "0.0.0.0", "::1"):
+        # noqa: B104 — 0.0.0.0 here is a hostname being *rejected*, not a bind target.
+        if parsed.hostname in (
+            "localhost",
+            "127.0.0.1",
+            "0.0.0.0",
+            "::1",
+        ):  # nosec B104
             return False
         return bool(parsed.hostname)
     except Exception:
