@@ -33,7 +33,7 @@ else:
         from sc2.ids.unit_typeid import UnitTypeId
         from sc2.position import Point2
         from sc2.unit import Unit
-    except ImportError:
+    except (ImportError, TypeError):
         Unit = None
         Point2 = None
         UnitTypeId = None
@@ -442,7 +442,7 @@ class SpellUnitManager:
         if not hasattr(self.bot, "structures"):
             return None
 
-        if not UnitTypeId:
+        if UnitTypeId is None:
             return None
 
         candidate_ids = self._unit_type_ids(
@@ -758,7 +758,7 @@ class SpellUnitManager:
 
     @staticmethod
     def _unit_type_ids(names: List[str]) -> List[object]:
-        if not UnitTypeId:
+        if UnitTypeId is None:
             return []
         unit_ids = []
         for name in names:

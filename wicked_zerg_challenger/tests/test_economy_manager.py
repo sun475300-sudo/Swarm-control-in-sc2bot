@@ -1114,5 +1114,46 @@ class TestEconomyManager(unittest.TestCase):
         self.manager._build_macro_hatchery_if_needed.assert_awaited()
 
 
+class TestNoDuplicateMethodDefinitions(unittest.TestCase):
+    """Regression guard: a class must not redefine the same method name twice.
+    Earlier `EconomyManager._prevent_resource_banking` and `_reduce_gas_workers`
+    had two definitions each — the second silently overrode the first, hiding
+    the older implementation as dead code. Same pattern in
+    `OpponentModeling.on_step` and `CombatManager._find_harass_target`.
+    """
+
+    def test_no_class_has_duplicate_method_names(self):
+        import ast
+        from collections import Counter
+
+        offenders = []
+        bot_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+        for fname in sorted(os.listdir(bot_dir)):
+            if not fname.endswith(".py"):
+                continue
+            path = os.path.join(bot_dir, fname)
+            try:
+                with open(path, encoding="utf-8") as fh:
+                    tree = ast.parse(fh.read())
+            except SyntaxError:
+                continue
+            for node in ast.walk(tree):
+                if isinstance(node, ast.ClassDef):
+                    names = [
+                        item.name
+                        for item in node.body
+                        if isinstance(item, (ast.FunctionDef, ast.AsyncFunctionDef))
+                    ]
+                    dupes = {n: c for n, c in Counter(names).items() if c > 1}
+                    if dupes:
+                        offenders.append(f"{fname}::{node.name} -> {dupes}")
+        self.assertEqual(
+            offenders,
+            [],
+            "Classes with duplicate method names (second silently overrides first):\n"
+            + "\n".join(offenders),
+        )
+
+
 if __name__ == "__main__":
     unittest.main()

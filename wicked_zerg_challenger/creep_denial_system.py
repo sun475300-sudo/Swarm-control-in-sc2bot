@@ -22,7 +22,7 @@ try:
     from sc2.position import Point2
     from sc2.unit import Unit
     from sc2.units import Units
-except ImportError:
+except (ImportError, TypeError):
     Unit = object
     Units = object
     Point2 = tuple
@@ -261,7 +261,7 @@ class CreepDenialSystem:
 
     async def _manage_overseers(self, game_time: float, is_zvz: bool) -> None:
         """감시군주 생산 및 배치 관리"""
-        if not UnitTypeId:
+        if UnitTypeId is None:
             return
 
         # 현재 감시군주 수 확인

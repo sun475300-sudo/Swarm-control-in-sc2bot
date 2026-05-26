@@ -19,7 +19,7 @@ logger = logging.getLogger("MicroController")
 try:
     from sc2.ids.unit_typeid import UnitTypeId
     from sc2.position import Point2
-except ImportError:
+except (ImportError, TypeError):
     UnitTypeId = None
     Point2 = None
 
@@ -229,7 +229,7 @@ class BoidsController:
                         high_priority_units.append(unit)
                     else:
                         low_priority_units.append(unit)
-                except (AttributeError, ValueError) as e:
+                except (AttributeError, ValueError):
                     # Unit has no ground_range or distance calculation failed
                     low_priority_units.append(unit)
         else:
@@ -316,7 +316,7 @@ class BoidsController:
             enemy_units: Enemy units
             skip_units: Set of unit tags to skip (e.g., burrowing units)
         """
-        if not Point2:
+        if Point2 is None:
             return
         skip_units = skip_units or set()
 
@@ -426,7 +426,7 @@ class BoidsController:
 
         Uses simple center-avoidance to spread units apart.
         """
-        if not Point2:
+        if Point2 is None:
             return
 
         actions = []

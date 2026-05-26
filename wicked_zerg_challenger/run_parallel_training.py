@@ -131,7 +131,7 @@ def main():
     logger.info(f"  Maps: {len(MAP_POOL)} | Races: {len(RACE_POOL)}")
     logger.info(f"  Difficulty Ladder: {[d.name for d in DIFFICULTY_LADDER]}")
     logger.info(f"  GPU: {GPU_NAME}")
-    logger.info(f"  Mode: Sequential Fast (realtime=False)")
+    logger.info("  Mode: Sequential Fast (realtime=False)")
     logger.info(f"{'='*70}\n")
 
     results = []

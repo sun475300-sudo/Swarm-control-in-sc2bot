@@ -19,7 +19,7 @@ try:
     from sc2.ids.unit_typeid import UnitTypeId
     from sc2.ids.upgrade_id import UpgradeId
     from sc2.position import Point2
-except ImportError:
+except (ImportError, TypeError):
     UnitTypeId = None
     AbilityId = None
     UpgradeId = None
@@ -398,7 +398,7 @@ class RogueTacticsManager:
 
     async def _manage_active_drops(self) -> None:
         """진행 중인 드랍 관리"""
-        if not UnitTypeId:
+        if UnitTypeId is None:
             return
 
         try:

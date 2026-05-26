@@ -16,7 +16,7 @@ from utils.logger import get_logger
 try:
     from sc2.ids.unit_typeid import UnitTypeId
     from sc2.position import Point2
-except ImportError:
+except (ImportError, TypeError):
     UnitTypeId = None
     Point2 = None
 
@@ -45,7 +45,7 @@ class MultiBaseDefense:
 
     async def on_step(self, iteration: int):
         """메인 업데이트 루프"""
-        if not UnitTypeId:
+        if UnitTypeId is None:
             return
 
         if iteration - self.last_defense_check < self.defense_check_interval:

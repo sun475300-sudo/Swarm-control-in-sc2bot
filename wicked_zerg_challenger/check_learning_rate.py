@@ -34,7 +34,7 @@ if adaptive_lr_path.exists():
     if data["total_games"] > 0:
         logger.info(f"[OK] 전체 승률: {data['total_wins']/data['total_games']:.2%}")
     else:
-        logger.info(f"[OK] 전체 승률: 0.00%")
+        logger.info("[OK] 전체 승률: 0.00%")
     logger.info(f"[OK] 개선 없음: {data['games_without_improvement']}/10게임")
 
     if data.get("adjustment_history"):
@@ -51,11 +51,11 @@ if adaptive_lr_path.exists():
 else:
     logger.info("\n[INFO] 적응형 학습률 통계 없음 (아직 게임 실행 안 함)")
     logger.info(f"\n[INIT] 초기 설정값:")
-    logger.info(f"  - 초기 학습률: 0.001000")
-    logger.info(f"  - 최소 학습률: 0.000100")
-    logger.info(f"  - 최대 학습률: 0.010000")
-    logger.info(f"  - 조정 배율: 1.2 (+/-20%)")
-    logger.info(f"  - Patience: 10게임")
+    logger.info("  - 초기 학습률: 0.001000")
+    logger.info("  - 최소 학습률: 0.000100")
+    logger.info("  - 최대 학습률: 0.010000")
+    logger.info("  - 조정 배율: 1.2 (+/-20%)")
+    logger.info("  - Patience: 10게임")
 
 # 2. RL Agent 모델 확인
 model_path = Path("local_training/models/rl_agent_model.npz")
@@ -128,10 +128,10 @@ if adaptive_lr_path.exists():
     if games_until_adjustment > 0:
         logger.info(f"[NEXT] 다음 조정까지: {games_until_adjustment}게임")
     else:
-        logger.warning(f"[WARNING] 다음 게임에서 학습률 조정 가능")
+        logger.warning("[WARNING] 다음 게임에서 학습률 조정 가능")
 else:
     logger.info(f"\n[CURRENT] 초기 학습률: 0.001000 (아직 게임 실행 안 함)")
-    logger.info(f"[INFO] 첫 게임 실행 후 적응형 학습률 시작")
+    logger.info("[INFO] 첫 게임 실행 후 적응형 학습률 시작")
 
 logger.info("\n" + "=" * 60)
 logger.info("\n게임 실행: python run_with_training.py")

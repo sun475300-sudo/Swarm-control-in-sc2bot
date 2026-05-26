@@ -515,7 +515,7 @@ class EvolutionUpgradeManager:
 
     @staticmethod
     def _melee_unit_types() -> List[object]:
-        if not UnitTypeId:
+        if UnitTypeId is None:
             return []
         return [
             UnitTypeId.ZERGLING,
@@ -525,7 +525,7 @@ class EvolutionUpgradeManager:
 
     @staticmethod
     def _ranged_unit_types() -> List[object]:
-        if not UnitTypeId:
+        if UnitTypeId is None:
             return []
         return [
             UnitTypeId.ROACH,
@@ -536,7 +536,7 @@ class EvolutionUpgradeManager:
 
     @staticmethod
     def _air_unit_types() -> List[object]:
-        if not UnitTypeId:
+        if UnitTypeId is None:
             return []
         return [
             UnitTypeId.MUTALISK,
@@ -592,7 +592,7 @@ class EvolutionUpgradeManager:
         return False
 
     def _tech_requirement_met(self, upgrade_id) -> bool:
-        if not UnitTypeId:
+        if UnitTypeId is None:
             return True
 
         name = getattr(upgrade_id, "name", "")

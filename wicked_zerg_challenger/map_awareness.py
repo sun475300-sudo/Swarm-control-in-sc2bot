@@ -20,12 +20,12 @@ logger = logging.getLogger("MapAwareness")
 
 try:
     from sc2.position import Point2
-except ImportError:
+except (ImportError, TypeError):
     Point2 = None
 
 try:
     from sc2.ids.unit_typeid import UnitTypeId
-except ImportError:
+except (ImportError, TypeError):
     UnitTypeId = None
 
 

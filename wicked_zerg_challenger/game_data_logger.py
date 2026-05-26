@@ -15,7 +15,7 @@ logger = logging.getLogger("GameDataLogger")
 
 try:
     from sc2.ids.unit_typeid import UnitTypeId
-except ImportError:
+except (ImportError, TypeError):
     UnitTypeId = None
 
 
@@ -240,7 +240,7 @@ class GameDataLogger:
             UnitTypeId.EVOLUTIONCHAMBER,
         ]
 
-        if not UnitTypeId:
+        if UnitTypeId is None:
             return
 
         for structure in self.bot.structures:

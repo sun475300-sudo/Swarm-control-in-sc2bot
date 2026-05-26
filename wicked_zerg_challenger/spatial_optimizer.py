@@ -13,7 +13,7 @@ from utils.logger import get_logger
 
 try:
     from sc2.position import Point2
-except ImportError:
+except (ImportError, TypeError):
     Point2 = tuple
 
 

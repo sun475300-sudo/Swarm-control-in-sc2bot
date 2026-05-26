@@ -20,7 +20,7 @@ try:
     from sc2.ids.ability_id import AbilityId
     from sc2.ids.unit_typeid import UnitTypeId
     from sc2.position import Point2
-except ImportError:
+except (ImportError, TypeError):
     UnitTypeId = None
     AbilityId = None
     Point2 = None
@@ -52,7 +52,7 @@ class ProtossCounterSystem:
 
     async def on_step(self, iteration: int):
         """메인 업데이트 루프"""
-        if not UnitTypeId:
+        if UnitTypeId is None:
             return
 
         game_time = getattr(self.bot, "time", 0)

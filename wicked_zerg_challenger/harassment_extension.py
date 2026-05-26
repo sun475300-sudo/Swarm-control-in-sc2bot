@@ -113,7 +113,7 @@ class HarassmentExtensionMixin:
                 if len(enemy_threats) >= 6:  # 6+ enemies
                     return True
 
-        except ImportError:
+        except (ImportError, TypeError):
             pass
 
         return False
@@ -227,7 +227,7 @@ class HarassmentExtensionMixin:
             ):
                 return self.bot.enemy_start_locations[0]
 
-        except ImportError:
+        except (ImportError, TypeError):
             pass
 
         return None

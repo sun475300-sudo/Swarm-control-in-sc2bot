@@ -14,7 +14,7 @@ or imported and used separately.
 
 try:
     from sc2.bot_ai import BotAI
-except ImportError:
+except (ImportError, TypeError):
 
     class BotAI:
         pass
@@ -185,7 +185,7 @@ class WickedZergBotProImpl(BotAI):
                 from sc2.data import Difficulty
 
                 self.current_difficulty = Difficulty.Easy
-            except ImportError:
+            except (ImportError, TypeError):
                 self.current_difficulty = None
 
         # ========== MANAGER INITIALIZATION (Factory Pattern) ==========
@@ -303,7 +303,7 @@ class WickedZergBotProImpl(BotAI):
             )
 
             self.hierarchical_rl = HierarchicalRLSystem()
-            self.logger.info(f"[HIERARCHICAL_RL] Initialized (Shadow Mode Active)")
+            self.logger.info("[HIERARCHICAL_RL] Initialized (Shadow Mode Active)")
         except ImportError as e:
             self.logger.info(f"[HIERARCHICAL_RL] Not available: {e}")
         except Exception as e:
@@ -317,7 +317,7 @@ class WickedZergBotProImpl(BotAI):
 
             self.situational_awareness = SituationalAwareness(self)
             self.logger.info(
-                f"[SITUATIONAL_AWARENESS] Initialized (SITREP Generation Active)"
+                "[SITUATIONAL_AWARENESS] Initialized (SITREP Generation Active)"
             )
         except ImportError as e:
             self.logger.info(f"[SITUATIONAL_AWARENESS] Not available: {e}")
@@ -479,15 +479,16 @@ class WickedZergBotProImpl(BotAI):
         if self.scoring_system:
             try:
                 self.scoring_system.on_step(iteration)
-            except Exception:
-                pass
+            except Exception as exc:
+                # Don't kill the step loop, but stop silently swallowing the cause.
+                self.logger.warning("[scoring] on_step failed: %r", exc)
 
         # * Awareness Engine: 실시간 상황 인식 + 자동 대응 *
         if self.awareness_engine:
             try:
                 self.awareness_engine.on_step(iteration)
-            except Exception:
-                pass
+            except Exception as exc:
+                self.logger.warning("[awareness] on_step failed: %r", exc)
 
         # Personality module is called in bot_step_integration.py; do not call here.
 
@@ -524,8 +525,8 @@ class WickedZergBotProImpl(BotAI):
                 self.logger.info(
                     f"[AWARENESS] Final: {self.awareness_engine.get_situation_summary()}"
                 )
-            except Exception:
-                pass
+            except Exception as exc:
+                self.logger.warning("[awareness] final summary failed: %r", exc)
 
         # * NEW: Personality Module - Send GG message
         if hasattr(self, "personality") and self.personality:
@@ -549,17 +550,23 @@ class WickedZergBotProImpl(BotAI):
                 # Record game outcome
                 self.opponent_modeling.on_game_end(won, lost)
                 self.logger.info(
-                    f"[OPPONENT_MODELING] Game data saved. Opponent model updated."
+                    "[OPPONENT_MODELING] Game data saved. Opponent model updated."
                 )
 
                 # Print learning summary every 5 games
-                if self.opponent_modeling.current_opponent:
-                    model = self.opponent_modeling.models.get(
-                        self.opponent_modeling.current_opponent
+                if self.opponent_modeling.current_opponent_id:
+                    # Canonical field is `opponent_models` (`models` does not exist);
+                    # falling back to getattr keeps this resilient if either name is
+                    # patched in tests.
+                    models_dict = getattr(
+                        self.opponent_modeling, "opponent_models", None
+                    ) or getattr(self.opponent_modeling, "models", {})
+                    model = models_dict.get(
+                        self.opponent_modeling.current_opponent_id
                     )
                     if model and model.games_played > 0 and model.games_played % 5 == 0:
                         self.logger.info(
-                            f"[OPPONENT_MODELING] Opponent: {self.opponent_modeling.current_opponent}"
+                            f"[OPPONENT_MODELING] Opponent: {self.opponent_modeling.current_opponent_id}"
                         )
                         self.logger.info(
                             f"Games: {model.games_played}, Wins: {model.games_won}, Losses: {model.games_lost}"
@@ -649,7 +656,7 @@ class WickedZergBotProImpl(BotAI):
                     # Check if learning occurred (steps > 0 means rewards were collected)
                     if training_stats.get("steps", 0) > 0:
                         self.parameters_updated = 1  # Mark that learning occurred
-                        self.logger.info(f"[TRAINING] [OK] Neural network updated!")
+                        self.logger.info("[TRAINING] [OK] Neural network updated!")
                         self.logger.info(
                             f"Loss: {training_stats.get('loss', 0):.4f}, Avg Reward: {training_stats.get('avg_reward', 0):.3f}"
                         )
@@ -658,7 +665,7 @@ class WickedZergBotProImpl(BotAI):
                         )
                     else:
                         self.logger.info(
-                            f"[TRAINING] No learning this episode (no rewards collected)"
+                            "[TRAINING] No learning this episode (no rewards collected)"
                         )
 
                     # 모델 검증 (게임 결과 기록)
@@ -670,7 +677,7 @@ class WickedZergBotProImpl(BotAI):
                         ready, reason = self.rl_agent.is_ready_for_deployment()
                         if ready:
                             self.logger.info(
-                                f"[RL_AGENT] [*] MODEL READY FOR DEPLOYMENT [*]"
+                                "[RL_AGENT] [*] MODEL READY FOR DEPLOYMENT [*]"
                             )
                         else:
                             self.logger.info(f"[RL_AGENT] Training progress: {reason}")
@@ -745,7 +752,7 @@ class WickedZergBotProImpl(BotAI):
                 f"[CURRICULUM] 현재 단계: {progress['level_name']} "
                 f"({progress['wins_at_current_level']}/{progress['wins_required']}승)"
             )
-            self.logger.info(f"[CURRICULUM] 최종 목표: CheatInsane AI 격파!")
+            self.logger.info("[CURRICULUM] 최종 목표: CheatInsane AI 격파!")
 
             # * 종족별 승률 출력 *
             curriculum.print_race_stats()

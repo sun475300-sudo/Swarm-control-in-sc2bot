@@ -36,7 +36,7 @@ try:
     from sc2.ids.unit_typeid import UnitTypeId
     from sc2.ids.upgrade_id import UpgradeId
     from sc2.position import Point2
-except ImportError:
+except (ImportError, TypeError):
 
     class BotAI:
         pass
@@ -1079,7 +1079,6 @@ class BuildOrderSystem:
         if location:
             # Use TechCoordinator if available
             tech_coordinator = getattr(self.bot, "tech_coordinator", None)
-            PRIORITY_EXPANSION = 55  # * Phase 22: 확장 우선순위 상향 (50 -> 55)
 
             if tech_coordinator:
                 if not tech_coordinator.is_planned(UnitTypeId.HATCHERY):
@@ -1196,7 +1195,7 @@ class BuildOrderSystem:
         actual = self.expansion_actual_time
 
         if actual == 0:
-            logger.info(f"[!] Expansion timing: NOT RECORDED")
+            logger.info("[!] Expansion timing: NOT RECORDED")
             return
 
         target = self.expansion_timing_target

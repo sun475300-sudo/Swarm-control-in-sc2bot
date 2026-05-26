@@ -295,8 +295,13 @@ class TestOpponentModel(unittest.TestCase):
         self.assertEqual(model.dominant_style, OpponentStyle.AGGRESSIVE)
 
 
-class TestOpponentModeling(unittest.TestCase):
-    """Test suite for OpponentModeling system"""
+class TestOpponentModeling(unittest.IsolatedAsyncioTestCase):
+    """Test suite for OpponentModeling system.
+
+    Inherits IsolatedAsyncioTestCase so `async def test_*` methods are
+    actually awaited — previously they returned coroutines silently and
+    every async test reported as passing without executing.
+    """
 
     def setUp(self):
         """Set up test fixtures"""
@@ -617,6 +622,40 @@ class TestOpponentModeling(unittest.TestCase):
         self.assertEqual(stats["win_rate"], 0.6)
         self.assertEqual(stats["dominant_style"], "aggressive")
         self.assertEqual(stats["most_common_strategy"], "zerg_rush")
+
+
+class TestOpponentModelingFieldNameRegression(unittest.TestCase):
+    """Regression guard: every lifecycle method must reference the same opponent-id
+    attribute. Earlier `on_step`/`on_game_start`/`on_game_end`/`get_predicted_strategy`
+    referenced `current_opponent` while `__init__`/`on_start` set `current_opponent_id`,
+    so on_step crashed with AttributeError when run for real.
+
+    The async tests masked this by silently passing as un-awaited coroutines.
+    """
+
+    def test_no_bare_current_opponent_reference_remains(self):
+        import re
+
+        bot_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+        # Scan every module in the bot package — earlier the same typo also lived
+        # in wicked_zerg_bot_pro_impl.py (.current_opponent + .models),
+        # not just opponent_modeling.py.
+        pattern = re.compile(r"\.current_opponent\b(?!_)")
+        offenders = []
+        for fname in sorted(os.listdir(bot_dir)):
+            if not fname.endswith(".py"):
+                continue
+            with open(os.path.join(bot_dir, fname), encoding="utf-8") as fh:
+                src = fh.read()
+            for i, line in enumerate(src.split("\n"), start=1):
+                if pattern.search(line):
+                    offenders.append(f"{fname}:{i}: {line.strip()}")
+        self.assertEqual(
+            offenders,
+            [],
+            "Bare `.current_opponent` reference returned; canonical name is "
+            "`.current_opponent_id`:\n" + "\n".join(offenders),
+        )
 
 
 # Run tests
