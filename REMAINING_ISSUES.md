@@ -14,12 +14,23 @@
 
 | ID | 설명 | 우선순위 | 상태 |
 |----|------|---------|------|
-| N1 | `OpponentModeling.on_step` 중복 정의 (line 341 vs 765 — F811) | 🟠 HIGH | open — 동작 영향(상위 on_step이 미실행) 가능 |
-| N2 | `EconomyManager._prevent_resource_banking` / `_reduce_gas_workers` 재정의 (F811) | 🟡 MED | open |
-| N3 | `combat_manager._find_harass_target` 재정의 (line 2377 vs 4278) | 🟡 MED | open |
-| N4 | `production_resilience.build_terran_counters` 재정의 (1369 vs 1866) | 🟡 MED | open |
+| N1 | `OpponentModeling.on_step` 중복 정의 (line 341 vs 765 — F811) | 🟠 HIGH | open — 두 갈래 API(test API vs 프로덕션 API) 통합 필요 |
+| N2 | `EconomyManager._prevent_resource_banking` / `_reduce_gas_workers` 재정의 (F811) | 🟡 MED | ✅ resolved (PR #150 — 데드 코드 첫 정의 삭제) |
+| N3 | `combat_manager._find_harass_target` 재정의 | 🟡 MED | ✅ resolved (PR #150 — 데드 코드 첫 정의 삭제) |
+| N4 | `production_resilience.build_terran_counters` 재정의 | 🟡 MED | ✅ resolved (PR #150 — 데드 코드 첫 정의 삭제) |
 | N5 | bare `except Exception:` 다수 (≈360+) — 이번 PR에서 12건 처리, 잔여 다수 | 🟢 LOW | partial |
-| N6 | F841 unused local variables (visuals/make_pptx 등) | 🟢 LOW | open (presentation 코드라 영향 작음) |
+| N6 | F841 unused local variables (visuals/make_pptx 등) | 🟢 LOW | partial — PR #150에서 핵심 production 모듈(production_controller, proxy_detector, strategy_manager, unit_factory, upgrade_manager, utils/error_handler) 정리 |
+
+## 🆕 PR #150 추가 수정 (2026-05-10)
+
+자동 점검 사이클에서 발견 + 해결한 import-time / 정합성 결함.
+
+| 항목 | 위치 | 상태 |
+|------|------|------|
+| `IndentationError` (orphan duplicated `except`) | `wicked_zerg_challenger/game_analytics_system.py:419` | ✅ resolved |
+| `ImportError: cannot import name 'Blackboard'` (legacy 모듈이 `Blackboard`를 import) | `wicked_zerg_challenger/blackboard.py` | ✅ resolved (`Blackboard = GameStateBlackboard` alias 추가) |
+| `AttributeError: UnitTypeId has no attribute 'OVERLORD'` — class-body default arg가 stub UnitTypeId 평가 시 크래시 | `wicked_zerg_challenger/scouting/advanced_scout_system_v2.py:33` | ✅ resolved (`__getattr__` 메타클래스 stub) |
+| `SystemExit: 1` on `import` (Windows 전용 경로 점검이 모듈 top-level에서 실행) | `wicked_zerg_challenger/check_proxy.py` | ✅ resolved (`if __name__ == "__main__"` 가드) |
 
 검증 권장: PR 분리 (N1 단독 PR 권장 — 동작 변화 가능성).
 

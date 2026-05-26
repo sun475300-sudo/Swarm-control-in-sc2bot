@@ -166,31 +166,6 @@ class SmartResourceBalancer:
 
         return mineral_workers / gas_workers
 
-        mineral_workers = 0
-        gas_workers = 0
-
-        for worker in self.bot.workers:
-            if worker.is_gathering and hasattr(worker, "order_target"):
-                target = worker.order_target
-                if target:
-                    # 가스 채취 중
-                    if hasattr(target, "type_id"):
-                        type_name = getattr(target.type_id, "name", "").upper()
-                        if (
-                            "EXTRACTOR" in type_name
-                            or "ASSIMILATOR" in type_name
-                            or "REFINERY" in type_name
-                        ):
-                            gas_workers += 1
-                            continue
-                    # 미네랄 채취 중
-                    mineral_workers += 1
-
-        if gas_workers == 0:
-            return 10.0  # 가스 일꾼 없음
-
-        return mineral_workers / gas_workers
-
     def _needs_rebalancing(
         self,
         minerals: int,
@@ -304,30 +279,6 @@ class SmartResourceBalancer:
                 moved += 1
 
         return moved
-        target_moves = 3  # 한번에 3명씩 이동
-
-        # 가스 채취 중인 일꾼 찾기
-        gas_workers = []
-        for worker in self.bot.workers:
-            if worker.is_gathering and hasattr(worker, "order_target"):
-                target = worker.order_target
-                if target and hasattr(target, "type_id"):
-                    type_name = getattr(target.type_id, "name", "").upper()
-                    if "EXTRACTOR" in type_name:
-                        gas_workers.append(worker)
-
-        # 가장 가까운 기지의 미네랄로 이동
-        for worker in gas_workers[:target_moves]:
-            closest_base = self.bot.townhalls.closest_to(worker)
-            if closest_base:
-                # 미네랄 필드 찾기
-                mineral_fields = self.bot.mineral_field.closer_than(10, closest_base)
-                if mineral_fields:
-                    closest_mineral = mineral_fields.closest_to(worker)
-                    self.bot.do(worker.gather(closest_mineral))
-                    moved += 1
-
-        return moved
 
     async def _move_workers_to_gas(self) -> int:
         """
@@ -397,9 +348,15 @@ class SmartResourceBalancer:
         except (TypeError, ValueError):
             return False
 
-        if gas >= self.gas_critical_threshold and minerals < self.gas_lock_mineral_threshold:
+        if (
+            gas >= self.gas_critical_threshold
+            and minerals < self.gas_lock_mineral_threshold
+        ):
             return True
-        if gas >= self.gas_excess_threshold and minerals < self.mineral_shortage_threshold:
+        if (
+            gas >= self.gas_excess_threshold
+            and minerals < self.mineral_shortage_threshold
+        ):
             return True
         # FIX P0-7: 가스 워커 이동 임계값 완화 (3배→2배)
         return gas > max(200, minerals * 2) and minerals < 800
@@ -419,7 +376,9 @@ class SmartResourceBalancer:
             try:
                 structure_units = structures(UnitTypeId.EXTRACTOR)
                 extractors.extend(
-                    self._as_unit_list(getattr(structure_units, "ready", structure_units))
+                    self._as_unit_list(
+                        getattr(structure_units, "ready", structure_units)
+                    )
                 )
             except Exception:
                 pass
