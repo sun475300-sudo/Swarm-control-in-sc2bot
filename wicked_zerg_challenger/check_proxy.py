@@ -25,8 +25,8 @@ try:
     result = subprocess.run(
         [proxy_path, "-help"], capture_output=True, text=True, timeout=5
     )
-    logger.info("Return code:", result.returncode)
-    logger.info("Stdout:", result.stdout[:200])
-    logger.info("Stderr:", result.stderr[:200])
+    logger.info(f"Return code: {result.returncode}")
+    logger.info(f"Stdout: {result.stdout[:200]}")
+    logger.info(f"Stderr: {result.stderr[:200]}")
 except Exception as e:
     logger.error(f"Execution failed: {e}")

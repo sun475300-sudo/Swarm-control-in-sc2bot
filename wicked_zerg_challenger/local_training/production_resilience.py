@@ -668,21 +668,28 @@ class ProductionResilience:
                         force_army = True
                 # With 0 produced so far, allow one drone check below
 
-            # Consider strategy preference
+            # Consider strategy preference (methods are optional - guard with hasattr).
+            # Older StrategyManager(V2) revisions exposed these helpers; current ones
+            # do not, so a bare call would raise AttributeError every step.
+            sm = self.strategy_manager
+            prefer_drones = bool(
+                sm
+                and getattr(sm, "should_prioritize_drones", None)
+                and sm.should_prioritize_drones()
+            )
+            prefer_early_army = bool(
+                sm
+                and getattr(sm, "should_early_aggression", None)
+                and sm.should_early_aggression()
+            )
             if force_army:
                 should_train_drone = False
-            elif (
-                self.strategy_manager
-                and self.strategy_manager.should_prioritize_drones()
-            ):
+            elif prefer_drones:
                 # Strategy prefers drones, but still check balancer
                 should_train_drone = self.balancer.should_train_drone() or (
                     drone_count < target_drones
                 )
-            elif (
-                self.strategy_manager
-                and self.strategy_manager.should_early_aggression()
-            ):
+            elif prefer_early_army:
                 # Strategy prefers early army
                 should_train_drone = False
             else:
@@ -773,9 +780,8 @@ class ProductionResilience:
         """
         b = self.bot
         game_time = getattr(b, "time", 0)
-        if (
-            self._should_reserve_third_base_minerals()
-            and self._check_min_defense_met(game_time)
+        if self._should_reserve_third_base_minerals() and self._check_min_defense_met(
+            game_time
         ):
             return False
 
@@ -866,9 +872,8 @@ class ProductionResilience:
         """
         b = self.bot
         game_time = getattr(b, "time", 0)
-        if (
-            self._should_reserve_third_base_minerals()
-            and self._check_min_defense_met(game_time)
+        if self._should_reserve_third_base_minerals() and self._check_min_defense_met(
+            game_time
         ):
             return
 
@@ -1034,7 +1039,10 @@ class ProductionResilience:
             # Called from _auto_build_tech_structures() for consistent timing
 
             # *** IMPROVED: Spawning Pool timing (TechCoordinator ONLY) ***
-            if self.strategy_manager:
+            # get_pool_supply() is optional - older StrategyManager exposed it; current does not.
+            if self.strategy_manager and hasattr(
+                self.strategy_manager, "get_pool_supply"
+            ):
                 spawning_pool_supply = self.strategy_manager.get_pool_supply()
             else:
                 # *** FIX: 17 -> 13으로 변경 (13풀 표준) ***
@@ -1097,7 +1105,10 @@ class ProductionResilience:
                         )
 
             # Natural Expansion timing
-            if self.strategy_manager:
+            # get_expansion_supply() is optional - older StrategyManager exposed it; current does not.
+            if self.strategy_manager and hasattr(
+                self.strategy_manager, "get_expansion_supply"
+            ):
                 natural_expansion_supply = self.strategy_manager.get_expansion_supply()
                 natural_expansion_supply_max = (
                     natural_expansion_supply + 2.0
@@ -1463,30 +1474,7 @@ class ProductionResilience:
                         await self._safe_train(larva, UnitTypeId.ZERGLING)
 
     # Defense methods moved to DefenseCoordinator
-
-    async def build_terran_counters(self) -> None:
-        b = self.bot
-        if not b.production:
-            return
-        if self._should_reserve_third_base_minerals():
-            return
-        baneling_nests = [
-            s for s in b.units(UnitTypeId.BANELINGNEST).structure if s.is_ready
-        ]
-        if (
-            not baneling_nests
-            and b.already_pending(UnitTypeId.BANELINGNEST) == 0
-            and b.can_afford(UnitTypeId.BANELINGNEST)
-        ):
-            # CRITICAL: Check for duplicate construction before building
-            if not b.structures(UnitTypeId.BANELINGNEST).exists:
-                spawning_pools = [
-                    s for s in b.units(UnitTypeId.SPAWNINGPOOL).structure if s.is_ready
-                ]
-                if spawning_pools:
-                    await b.build(UnitTypeId.BANELINGNEST, near=spawning_pools[0])
-        # NOTE: Roach Warren building is now handled by _auto_build_tech_structures()
-        # Removed duplicate code to prevent building spam
+    # NOTE: build_terran_counters() canonical impl is below (uses TechCoordinator).
 
     async def _auto_build_tech_structures(self) -> None:
         """
@@ -2499,10 +2487,16 @@ class ProductionResilience:
 
                 # 가스 있으면 히드라/바퀴, 없으면 저글링
                 trained = False
-                if b.vespene >= 50 and b.structures(UnitTypeId.HYDRALISKDEN).ready.exists:
+                if (
+                    b.vespene >= 50
+                    and b.structures(UnitTypeId.HYDRALISKDEN).ready.exists
+                ):
                     if b.can_afford(UnitTypeId.HYDRALISK):
                         trained = await self._safe_train(larva, UnitTypeId.HYDRALISK)
-                elif b.vespene >= 25 and b.structures(UnitTypeId.ROACHWARREN).ready.exists:
+                elif (
+                    b.vespene >= 25
+                    and b.structures(UnitTypeId.ROACHWARREN).ready.exists
+                ):
                     if b.can_afford(UnitTypeId.ROACH):
                         trained = await self._safe_train(larva, UnitTypeId.ROACH)
 
