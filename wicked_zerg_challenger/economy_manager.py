@@ -1705,11 +1705,21 @@ class EconomyManager:
 
         return minerals > 800
 
-    async def _prevent_resource_banking(self) -> None:
+    async def _prevent_resource_banking_legacy_defense(self) -> None:
         """
-        * Prevent resource banking by spending excess minerals *
+        * (LEGACY) Prevent resource banking by spending excess minerals *
 
-        Logic:
+        NOTE — round 6: This method was shadowed by another
+        `_prevent_resource_banking` defined later in the file (currently
+        ~line 3258, the macro-hatchery / gas-reduction variant). Python
+        keeps the last definition, so this defense-oriented spending
+        logic (extra queens + spines + spores after 3 bases) was
+        completely unreachable. Renamed so pyflakes F811 is silenced and
+        so the call site can intentionally pick which strategy to run.
+        Not yet wired back into `on_step` — needs human review of which
+        spending strategy belongs in the active code path.
+
+        Original behavior:
         1. If Minerals > Config.Threshold and Larva < Config.Threshold:
            - Build Extra Queens (Injects/Defense)
            - Build Static Defense (Spines/Spores) - ONLY AFTER 3+ BASES
@@ -3415,8 +3425,14 @@ class EconomyManager:
                 self._reserved_minerals = 150
                 self._reserved_gas = 100
 
-    async def _reduce_gas_workers(self) -> None:
-        """가스 일꾼 감소 (과잉 가스 방지)"""
+    async def _reduce_gas_workers_legacy_v1(self) -> None:
+        """(LEGACY) 가스 일꾼 감소 (과잉 가스 방지).
+
+        Round 6: a smarter gas-banking-aware variant of `_reduce_gas_workers`
+        is defined later in the file (~line 4091). Python kept the last
+        definition, so this older basic version was dead code. Renamed to
+        silence pyflakes F811 and to make the active strategy explicit.
+        """
         try:
             if (
                 not hasattr(self.bot, "gas_buildings")

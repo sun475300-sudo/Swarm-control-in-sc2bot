@@ -51,7 +51,11 @@ class ProxyDetector:
         if building_type.lower() in ["pylon", "gateway", "forge", "barracks"]:
             if not is_near_expansion and not is_near_start:
                 result.is_proxy = True
-                result.confidence = 0.8
+                # Round 5: boost confidence when the building is far from the
+                # enemy base — true proxies sit in midfield (>60 tiles away).
+                # Closer-to-enemy-base buildings might still be unscouted
+                # expansions, so we keep a slightly lower confidence.
+                result.confidence = 0.95 if distance_to_base > 60 else 0.8
                 result.proxy_type = self._classify_proxy(building_type)
                 result.location = position
                 result.threat_level = "HIGH"

@@ -2806,35 +2806,11 @@ class CombatManager:
             if self._has_units(enemy_units):
                 await self._mutalisk_attack(mutalisks, enemy_units)
 
-    def _find_harass_target(self):
-        """Find best harassment target (enemy base with workers)."""
-        # Try enemy main base
-        if (
-            hasattr(self.bot, "enemy_start_locations")
-            and self.bot.enemy_start_locations
-        ):
-            return self.bot.enemy_start_locations[0]
-
-        # Try known enemy structures
-        enemy_structures = getattr(self.bot, "enemy_structures", [])
-        if enemy_structures:
-            # Find townhalls
-            townhall_names = [
-                "NEXUS",
-                "COMMANDCENTER",
-                "ORBITALCOMMAND",
-                "PLANETARYFORTRESS",
-                "HATCHERY",
-                "LAIR",
-                "HIVE",
-            ]
-            for struct in enemy_structures:
-                if getattr(struct.type_id, "name", "") in townhall_names:
-                    return struct.position
-            # Any structure as fallback
-            return enemy_structures[0].position
-
-        return None
+    # NOTE: a richer `_find_harass_target` (worker-/tech-targeting) is defined
+    # later in this file. The earlier basic-stub definition that used to live
+    # here was dead code — Python keeps the last definition, so the smarter
+    # one already wins. Removed in round 3 to silence pyflakes F811 and
+    # prevent accidental future shadowing.
 
     async def _execute_harass(self, mutalisks, enemy_units):
         """
@@ -3535,13 +3511,21 @@ class CombatManager:
                 for e in nearby_enemies
                 if getattr(e.type_id, "name", "").upper() in combat_unit_names
             ]
+            nearby_non_combat = [
+                e
+                for e in nearby_enemies
+                if getattr(e.type_id, "name", "").upper() in non_combat_names
+            ]
 
             # 전투 유닛이 1기 이상이면 위협 (실제 공격 의도)
             if len(nearby_combat) >= 1:
                 return True
 
-            # 비전투 유닛만 있는 경우 (정찰 등) - 3기 이상이어야 위협
-            if len(nearby_enemies) >= 3:
+            # 비전투(정찰) 유닛만 다수가 있는 경우 — 3기 이상이어야 위협.
+            # Round 3 fix: previously this used `len(nearby_enemies) >= 3`,
+            # which would trigger on ANY 3 nearby units (e.g. drones in
+            # mineral line) rather than 3+ scouts as intended.
+            if len(nearby_non_combat) >= 3:
                 return True
 
         return False

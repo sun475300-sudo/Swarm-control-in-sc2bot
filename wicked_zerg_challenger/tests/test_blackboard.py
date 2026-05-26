@@ -354,6 +354,20 @@ class TestStateQueries(unittest.TestCase):
         self.bb.update_resources(500, 100, 50, 100)
         self.assertFalse(self.bb.should_expand())
 
+    def test_should_not_expand_supply_blocked(self):
+        # Round 1 fix: should_expand reads `is_supply_blocked` (not the
+        # historical `is_supply_block` typo). Verify the gate fires when
+        # supply_left == 0.
+        self.bb.update_threat(ThreatLevel.NONE)
+        self.bb.update_resources(500, 100, 100, 100)  # supply_left = 0
+        self.assertFalse(self.bb.should_expand())
+
+    def test_should_expand_at_exact_minerals_threshold(self):
+        # 300 minerals = Hatchery base cost; gate should allow at-or-above.
+        self.bb.update_threat(ThreatLevel.NONE)
+        self.bb.update_resources(300, 0, 50, 100)
+        self.assertTrue(self.bb.should_expand())
+
 
 class TestBackwardCompatibility(unittest.TestCase):
     def setUp(self):

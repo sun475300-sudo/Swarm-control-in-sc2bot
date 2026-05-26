@@ -762,16 +762,11 @@ class OpponentModeling:
                 f"[OPPONENT_MODELING] Known opponent: {opponent_id} ({self.opponent_models[opponent_id].games_played} games)"
             )
 
-    async def on_step(self, iteration: int):
-        """매 프레임 호출 - 신호 감지"""
-        if not self.current_opponent or not self.bot:
-            return
-
-        game_time = self.bot.time
-
-        # Only detect signals in early game (0-180s)
-        if game_time <= 180.0:
-            await self._detect_early_signals(game_time)
+    # NOTE: a richer `on_step` (strategy prediction + build-order tracking +
+    # tech-progression + blackboard sync) is defined earlier in this class.
+    # Removed a near-empty duplicate that lived here in round 5 — Python's
+    # last-definition-wins meant the simpler version was silently shadowing
+    # all the strategy logic. (pyflakes F811.)
 
     def on_game_end(self, won: bool, lost: bool):
         """게임 종료 시 호출 - 데이터 저장"""

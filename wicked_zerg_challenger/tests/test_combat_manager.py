@@ -272,6 +272,63 @@ class TestCombatManager(unittest.TestCase):
         result = self.manager._is_base_under_attack()
         self.assertTrue(result)
 
+    def test_is_base_under_attack_only_drones_is_safe(self):
+        """Round 3 fix: 2 drones near a base should NOT count as a threat.
+
+        The previous logic counted any 3 nearby enemies as a threat — meaning
+        2 drones + 1 overlord would still be 'safe' but 3 drones in our
+        mineral line would falsely trigger emergency mode. The new logic
+        gates only on combat units OR 3+ scout-class non-combat units.
+        """
+        mock_hatch = Mock()
+        mock_hatch.position = Point2((50, 50))
+
+        def make_drone(x, y):
+            d = Mock()
+            d.position = Point2((x, y))
+            d.type_id = Mock()
+            d.type_id.name = "DRONE"
+            d.distance_to = lambda pos: (
+                (pos.x - x) ** 2 + (pos.y - y) ** 2
+            ) ** 0.5
+            return d
+
+        # 2 drones close to the hatchery — not a scout swarm.
+        self.bot.enemy_units = [make_drone(52, 52), make_drone(53, 53)]
+        mock_townhalls = Mock()
+        mock_townhalls.exists = True
+        mock_townhalls.__iter__ = Mock(return_value=iter([mock_hatch]))
+        self.bot.townhalls = mock_townhalls
+
+        self.assertFalse(self.manager._is_base_under_attack())
+
+    def test_is_base_under_attack_three_overlords_triggers(self):
+        """3+ scout-class non-combat units should still trigger the threat."""
+        mock_hatch = Mock()
+        mock_hatch.position = Point2((50, 50))
+
+        def make_overlord(x, y):
+            o = Mock()
+            o.position = Point2((x, y))
+            o.type_id = Mock()
+            o.type_id.name = "OVERLORD"
+            o.distance_to = lambda pos: (
+                (pos.x - x) ** 2 + (pos.y - y) ** 2
+            ) ** 0.5
+            return o
+
+        self.bot.enemy_units = [
+            make_overlord(52, 52),
+            make_overlord(53, 53),
+            make_overlord(54, 54),
+        ]
+        mock_townhalls = Mock()
+        mock_townhalls.exists = True
+        mock_townhalls.__iter__ = Mock(return_value=iter([mock_hatch]))
+        self.bot.townhalls = mock_townhalls
+
+        self.assertTrue(self.manager._is_base_under_attack())
+
     def test_evaluate_base_threat_no_enemies(self):
         """Test evaluate base threat with no enemies"""
         mock_hatch = Mock()
