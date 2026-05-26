@@ -7,12 +7,12 @@ All difficulties x All races = comprehensive test matrix
 GPU acceleration enabled for all computations.
 """
 
+import argparse
 import json
 import logging
 import os
 import sys
 import time
-import argparse
 from datetime import datetime
 from pathlib import Path
 
@@ -41,11 +41,9 @@ def _ensure_sc2_path():
 
 _ensure_sc2_path()
 
-from sc2 import maps
+# CLI parsing should not require the SC2 runtime stack (mpyq/run_game),
+# so heavy imports are deferred to `main()` / `run_single_test()`.
 from sc2.data import Difficulty, Race
-from sc2.main import run_game
-from sc2.player import Bot, Computer
-from wicked_zerg_bot_pro_impl import WickedZergBotProImpl
 
 # GPU setup
 try:
@@ -123,9 +121,7 @@ def build_test_cases(args):
     if not selected_maps:
         selected_maps = list(MAPS)
 
-    selected_races = (
-        [RACE_BY_NAME[args.opponent]] if args.opponent else list(RACES)
-    )
+    selected_races = [RACE_BY_NAME[args.opponent]] if args.opponent else list(RACES)
     selected_difficulties = (
         [(DIFFICULTY_BY_NAME[args.difficulty], args.difficulty)]
         if args.difficulty
@@ -153,6 +149,13 @@ def build_test_cases(args):
 
 def run_single_test(map_name, race, difficulty, diff_name, game_num, total):
     """Run a single test game."""
+    # Deferred imports — these pull in mpyq/run_game and are only needed
+    # when actually launching a match.
+    from sc2 import maps
+    from sc2.main import run_game
+    from sc2.player import Bot, Computer
+    from wicked_zerg_bot_pro_impl import WickedZergBotProImpl
+
     race_name = race.name
     logger.info(f"\n{'='*60}")
     logger.info(f"  GAME {game_num}/{total}")
@@ -218,7 +221,9 @@ def main(argv=None):
 
     if args.dry_run:
         for i, (map_name, race, _difficulty, diff_name) in enumerate(test_cases, 1):
-            logger.info("  DRY %02d/%02d: %s vs %s %s", i, total, map_name, race.name, diff_name)
+            logger.info(
+                "  DRY %02d/%02d: %s vs %s %s", i, total, map_name, race.name, diff_name
+            )
         logger.info("  Dry run complete; no SC2 games launched.")
         return
 

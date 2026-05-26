@@ -115,25 +115,38 @@ class RealtimeAwarenessEngine:
             return self.active_overrides
         self.last_update = game_time
 
-        try:
-            # Step 1: 상황 스냅샷
-            self._capture_situation(game_time)
+        # Isolate each stage. The original `try / except Exception: pass`
+        # wrapped all five, so a hiccup in `_capture_situation` (Step 1)
+        # silently cancelled detection, override generation, emergency
+        # actions, and logging on the same tick — and the engine would
+        # keep returning the stale `active_overrides` from the previous
+        # successful run.
+        stages = (
+            ("capture", lambda: self._capture_situation(game_time)),
+            (
+                "detect",
+                lambda: setattr(self, "active_problems", self._detect_problems()),
+            ),
+            (
+                "generate",
+                lambda: setattr(
+                    self, "active_overrides", self._generate_overrides(game_time)
+                ),
+            ),
+            ("execute", lambda: self._execute_emergency_actions(game_time)),
+        )
+        for name, fn in stages:
+            try:
+                fn()
+            except Exception as exc:
+                if iteration % 500 == 0:
+                    logger.warning("[awareness] %s stage failed: %s", name, exc)
 
-            # Step 2: 문제 감지
-            self.active_problems = self._detect_problems()
-
-            # Step 3: 처방 -> 오버라이드
-            self.active_overrides = self._generate_overrides(game_time)
-
-            # Step 4: 직접 행동 실행
-            self._execute_emergency_actions(game_time)
-
-            # Step 5: 로깅
-            if self.active_problems and iteration % 100 == 0:
+        if self.active_problems and iteration % 100 == 0:
+            try:
                 self._log_problems()
-
-        except Exception:
-            pass
+            except Exception:
+                pass
 
         return self.active_overrides
 

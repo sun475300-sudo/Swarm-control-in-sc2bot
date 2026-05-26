@@ -142,6 +142,9 @@ class GameStateBlackboard:
         # === 권한 모드 (Dynamic Authority) ===
         self.authority_mode: AuthorityMode = AuthorityMode.BALANCED
         self.authority_changed_at: float = 0.0
+        # Sticky flag: once an EMERGENCY episode has timed out into
+        # COMBAT, stay in COMBAT until the threat clears.
+        self._emergency_timed_out: bool = False
 
         # === 전략 정보 ===
         self.enemy_race: str = "Unknown"
@@ -358,9 +361,25 @@ class GameStateBlackboard:
         # 긴급 상황: 러시 감지 또는 CRITICAL 위협
         # FIX P0-2: EMERGENCY 모드 30초 타임아웃 추가
         if self.threat.is_rushing or self.threat.level == ThreatLevel.CRITICAL:
-            emergency_duration = self.game_time - getattr(self, "authority_changed_at", 0)
-            if self.authority_mode == AuthorityMode.EMERGENCY and emergency_duration > 30:
+            # Once an EMERGENCY episode has timed out, keep COMBAT for the
+            # remainder of that episode — the previous logic flipped right
+            # back to EMERGENCY on the next call because the timeout branch
+            # only fires when authority_mode is still EMERGENCY.
+            if self._emergency_timed_out:
+                self.set_authority_mode(
+                    AuthorityMode.COMBAT, "Emergency timeout (held)"
+                )
+                return
+
+            emergency_duration = self.game_time - getattr(
+                self, "authority_changed_at", 0
+            )
+            if (
+                self.authority_mode == AuthorityMode.EMERGENCY
+                and emergency_duration > 30
+            ):
                 # 30초 이상 EMERGENCY 지속 → COMBAT으로 다운그레이드
+                self._emergency_timed_out = True
                 self.set_authority_mode(
                     AuthorityMode.COMBAT,
                     f"Emergency timeout ({emergency_duration:.0f}s) -> Combat",
@@ -368,6 +387,9 @@ class GameStateBlackboard:
                 return
             self.set_authority_mode(AuthorityMode.EMERGENCY, "Rush detected")
             return
+
+        # Threat episode is over — let the next rush re-enter EMERGENCY.
+        self._emergency_timed_out = False
 
         # 위협 상황: HIGH 위협
         if self.threat.level >= ThreatLevel.HIGH:
@@ -537,10 +559,21 @@ class GameStateBlackboard:
             and self.game_phase != GamePhase.OPENING
         )
 
+    # Minimum minerals to even consider expansion. A Zerg Hatchery
+    # costs 300; the gate is kept slightly below so callers can stage a
+    # drone toward the build site while minerals are still mining in.
+    EXPAND_MINERAL_GATE: int = 275
+
     def should_expand(self) -> bool:
         """확장 가능한 상황인가?"""
         return (
             self.threat.level == ThreatLevel.NONE
-            and not self.resources.is_supply_block
+            and not self.resources.is_supply_blocked
             and not self.is_under_attack
+            and self.resources.minerals >= self.EXPAND_MINERAL_GATE
         )
+
+
+# Public alias: production code and tests import `Blackboard`,
+# while the canonical class name remains `GameStateBlackboard`.
+Blackboard = GameStateBlackboard

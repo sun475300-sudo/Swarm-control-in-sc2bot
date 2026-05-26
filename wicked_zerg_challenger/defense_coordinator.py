@@ -28,7 +28,12 @@ except ImportError:
     Point2 = None
 
 try:
-    from game_state_blackboard import AuthorityMode, GameStateBlackboard, ThreatLevel
+    # The canonical module is `blackboard.py` (exposes
+    # GameStateBlackboard + `Blackboard` alias). An older name
+    # `game_state_blackboard` was referenced here, but the file
+    # never existed in this tree — the ImportError fallback below
+    # was silently disabling threat-level handling.
+    from blackboard import AuthorityMode, GameStateBlackboard, ThreatLevel
 except ImportError:
     GameStateBlackboard = None
     ThreatLevel = None
