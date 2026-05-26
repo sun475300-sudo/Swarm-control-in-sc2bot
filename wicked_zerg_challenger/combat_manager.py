@@ -2806,36 +2806,6 @@ class CombatManager:
             if self._has_units(enemy_units):
                 await self._mutalisk_attack(mutalisks, enemy_units)
 
-    def _find_harass_target(self):
-        """Find best harassment target (enemy base with workers)."""
-        # Try enemy main base
-        if (
-            hasattr(self.bot, "enemy_start_locations")
-            and self.bot.enemy_start_locations
-        ):
-            return self.bot.enemy_start_locations[0]
-
-        # Try known enemy structures
-        enemy_structures = getattr(self.bot, "enemy_structures", [])
-        if enemy_structures:
-            # Find townhalls
-            townhall_names = [
-                "NEXUS",
-                "COMMANDCENTER",
-                "ORBITALCOMMAND",
-                "PLANETARYFORTRESS",
-                "HATCHERY",
-                "LAIR",
-                "HIVE",
-            ]
-            for struct in enemy_structures:
-                if getattr(struct.type_id, "name", "") in townhall_names:
-                    return struct.position
-            # Any structure as fallback
-            return enemy_structures[0].position
-
-        return None
-
     async def _execute_harass(self, mutalisks, enemy_units):
         """
         Execute harassment - attack workers, retreat from anti-air.
@@ -3540,8 +3510,14 @@ class CombatManager:
             if len(nearby_combat) >= 1:
                 return True
 
-            # 비전투 유닛만 있는 경우 (정찰 등) - 3기 이상이어야 위협
-            if len(nearby_enemies) >= 3:
+            # 비전투 유닛(정찰 등)만 있는 경우 — 3기 이상이어야 위협으로 간주
+            # (이전: len(nearby_enemies) 사용 → non_combat_names 필터가 누락된 버그)
+            nearby_non_combat = [
+                e
+                for e in nearby_enemies
+                if getattr(e.type_id, "name", "").upper() in non_combat_names
+            ]
+            if len(nearby_non_combat) >= 3:
                 return True
 
         return False

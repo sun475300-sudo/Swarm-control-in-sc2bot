@@ -10,12 +10,16 @@ for candidate in (str(ROOT), str(PACKAGE_ROOT)):
     if candidate not in sys.path:
         sys.path.insert(0, candidate)
 
-import pytest
-from wicked_zerg_challenger.blackboard import GameStateBlackboard
-from wicked_zerg_challenger.early_scout_system import EarlyScoutSystem
-from wicked_zerg_challenger.economy_manager import EconomyManager
-from wicked_zerg_challenger.strategy_manager import StrategyManager, StrategyMode
-from wicked_zerg_challenger.training_automation import (
+# Imports below depend on the sys.path adjustment above, so E402 is expected.
+import pytest  # noqa: E402
+from wicked_zerg_challenger.blackboard import GameStateBlackboard  # noqa: E402
+from wicked_zerg_challenger.early_scout_system import EarlyScoutSystem  # noqa: E402
+from wicked_zerg_challenger.economy_manager import EconomyManager  # noqa: E402
+from wicked_zerg_challenger.strategy_manager import (  # noqa: E402
+    StrategyManager,
+    StrategyMode,
+)
+from wicked_zerg_challenger.training_automation import (  # noqa: E402
     GameResult,
     build_enemy_race_sequence,
     build_training_summary,

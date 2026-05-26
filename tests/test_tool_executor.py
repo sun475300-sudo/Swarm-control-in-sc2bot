@@ -3,7 +3,7 @@
 
 import sys
 import types
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
@@ -28,7 +28,8 @@ _stub._ast_check_python_code = lambda c: (True, "")
 _stub.__file__ = __file__
 sys.modules["discord_jarvis"] = _stub
 
-from jarvis_features.tool_executor import DANGEROUS_TOOLS, ToolExecutor
+# Import below depends on the discord_jarvis stub installed above; E402 expected.
+from jarvis_features.tool_executor import DANGEROUS_TOOLS, ToolExecutor  # noqa: E402
 
 
 @pytest.fixture
