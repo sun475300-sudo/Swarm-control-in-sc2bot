@@ -142,6 +142,9 @@ class GameStateBlackboard:
         # === 권한 모드 (Dynamic Authority) ===
         self.authority_mode: AuthorityMode = AuthorityMode.BALANCED
         self.authority_changed_at: float = 0.0
+        # EMERGENCY timeout sticky-lock: see auto_adjust_authority for the
+        # oscillation regression this guards against.
+        self._emergency_timeout_locked: bool = False
 
         # === 전략 정보 ===
         self.enemy_race: str = "Unknown"
@@ -357,17 +360,32 @@ class GameStateBlackboard:
         """상황에 따라 권한 모드 자동 조정"""
         # 긴급 상황: 러시 감지 또는 CRITICAL 위협
         # FIX P0-2: EMERGENCY 모드 30초 타임아웃 추가
+        # FIX (regression): 타임아웃으로 COMBAT으로 다운그레이드된 뒤에는
+        # 같은 위협이 끝날 때까지 EMERGENCY로 다시 승격하지 않도록 sticky 처리.
+        # 이전 구현은 EMERGENCY→COMBAT→EMERGENCY 진동을 발생시켰음.
         if self.threat.is_rushing or self.threat.level == ThreatLevel.CRITICAL:
-            emergency_duration = self.game_time - getattr(self, "authority_changed_at", 0)
-            if self.authority_mode == AuthorityMode.EMERGENCY and emergency_duration > 30:
-                # 30초 이상 EMERGENCY 지속 → COMBAT으로 다운그레이드
-                self.set_authority_mode(
-                    AuthorityMode.COMBAT,
-                    f"Emergency timeout ({emergency_duration:.0f}s) -> Combat",
+            if self.authority_mode == AuthorityMode.EMERGENCY:
+                emergency_duration = self.game_time - getattr(
+                    self, "authority_changed_at", 0
                 )
+                if emergency_duration > 30:
+                    # 30초 이상 EMERGENCY 지속 → COMBAT으로 다운그레이드
+                    self.set_authority_mode(
+                        AuthorityMode.COMBAT,
+                        f"Emergency timeout ({emergency_duration:.0f}s) -> Combat",
+                    )
+                    self._emergency_timeout_locked = True
+                return
+            # COMBAT으로 잠긴 상태에서 같은 위협이 지속되면 EMERGENCY 재승격 차단.
+            # 위협이 해소되면 (아래 분기들에서) 다른 모드로 빠져나가면서 잠금이 풀린다.
+            if getattr(self, "_emergency_timeout_locked", False):
+                self.set_authority_mode(AuthorityMode.COMBAT, "Emergency lock active")
                 return
             self.set_authority_mode(AuthorityMode.EMERGENCY, "Rush detected")
             return
+
+        # 위협이 사라졌으면 EMERGENCY 잠금 해제 — 다음 새로운 러시는 정상 트리거
+        self._emergency_timeout_locked = False
 
         # 위협 상황: HIGH 위협
         if self.threat.level >= ThreatLevel.HIGH:
@@ -406,6 +424,17 @@ class GameStateBlackboard:
         """
         if priority is None:
             priority = self.get_authority_priority(requester)
+
+        # Defensive: clamp priority into the known range [0..3] so a caller
+        # passing an out-of-range value (e.g. 5 from a misconfigured manager)
+        # gets demoted to lowest-priority instead of raising KeyError.
+        if priority not in self.production_queue:
+            self.logger.debug(
+                "request_production: unknown priority %r from %s, treating as 3 (low)",
+                priority,
+                requester,
+            )
+            priority = 3
 
         # 중복 요청 체크
         queue = self.production_queue[priority]
@@ -539,8 +568,25 @@ class GameStateBlackboard:
 
     def should_expand(self) -> bool:
         """확장 가능한 상황인가?"""
+        # Hatchery 비용 = 300 minerals; 자원이 부족하면 확장 권장 안함
+        HATCHERY_MINERAL_COST = 300
         return (
             self.threat.level == ThreatLevel.NONE
-            and not self.resources.is_supply_block
+            and not self.resources.is_supply_blocked
             and not self.is_under_attack
+            and self.resources.minerals >= HATCHERY_MINERAL_COST
         )
+
+
+Blackboard = GameStateBlackboard
+
+__all__ = [
+    "ThreatLevel",
+    "GamePhase",
+    "AuthorityMode",
+    "UnitCounts",
+    "ThreatInfo",
+    "ResourceState",
+    "GameStateBlackboard",
+    "Blackboard",
+]

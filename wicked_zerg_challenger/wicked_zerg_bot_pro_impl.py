@@ -33,6 +33,7 @@ from bot_step_integration import BotStepIntegrator
 from difficulty_progression import DifficultyProgression
 from personality_module import PersonalityMode, PersonalityModule
 
+from utils.frame_skip import FrameSkipManager
 from utils.logger import setup_logger
 
 
@@ -67,6 +68,9 @@ class WickedZergBotProImpl(BotAI):
 
         # Initialize managers (lazy loading)
         self.blackboard = Blackboard()  # * Blackboard (Single Source of Truth) *
+        # * Frame-skip throttler: managers consult self.frame_skip.should_execute()
+        #   so heavy systems (intel/upgrade/creep) can opt into combat-aware throttling.
+        self.frame_skip = FrameSkipManager()
         self.defense_coordinator = None  # * DefenseCoordinator (Unified Defense) *
         self.early_defense = None  # * EarlyDefenseSystem (0-3 min rush defense) *
         self.production_controller = (
@@ -431,6 +435,24 @@ class WickedZergBotProImpl(BotAI):
         # Store iteration as attribute for other modules to access
         self.iteration = iteration
 
+        # * Sync frame-skip combat-mode flag from blackboard threat state so
+        #   downstream managers checking self.frame_skip.should_execute() get
+        #   the correct (combat vs. peace) intervals automatically.
+        if self.frame_skip is not None and self.blackboard is not None:
+            try:
+                threat = getattr(self.blackboard, "threat", None)
+                in_combat = bool(
+                    getattr(self.blackboard, "is_under_attack", False)
+                    or (threat is not None and getattr(threat, "is_rushing", False))
+                )
+                self.frame_skip.set_combat_mode(in_combat)
+            except Exception as e:
+                # Never let frame-skip bookkeeping abort a game step, but
+                # surface the breakage on a slow cadence so it doesn't go
+                # silent.
+                if iteration % 224 == 0:
+                    self.logger.debug(f"[FRAME_SKIP] sync error: {e}")
+
         # * Feature 86: Cache our unit tags for unit lost tracking *
         if iteration % 22 == 0:
             if not hasattr(self, "_known_unit_tags"):
@@ -479,15 +501,23 @@ class WickedZergBotProImpl(BotAI):
         if self.scoring_system:
             try:
                 self.scoring_system.on_step(iteration)
-            except Exception:
-                pass
+            except Exception as e:
+                # Throttle the log so a broken scoring system doesn't spam
+                # every frame, but keep enough breadcrumbs to debug regressions.
+                if iteration % 224 == 0:
+                    self.logger.debug(
+                        f"[SCORING] on_step error (iter {iteration}): {e}"
+                    )
 
         # * Awareness Engine: 실시간 상황 인식 + 자동 대응 *
         if self.awareness_engine:
             try:
                 self.awareness_engine.on_step(iteration)
-            except Exception:
-                pass
+            except Exception as e:
+                if iteration % 224 == 0:
+                    self.logger.debug(
+                        f"[AWARENESS] on_step error (iter {iteration}): {e}"
+                    )
 
         # Personality module is called in bot_step_integration.py; do not call here.
 
@@ -524,8 +554,8 @@ class WickedZergBotProImpl(BotAI):
                 self.logger.info(
                     f"[AWARENESS] Final: {self.awareness_engine.get_situation_summary()}"
                 )
-            except Exception:
-                pass
+            except Exception as e:
+                self.logger.warning(f"AwarenessEngine summary error: {e}")
 
         # * NEW: Personality Module - Send GG message
         if hasattr(self, "personality") and self.personality:

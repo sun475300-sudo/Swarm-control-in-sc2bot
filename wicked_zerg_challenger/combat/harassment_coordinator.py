@@ -1546,7 +1546,11 @@ class HarassmentCoordinator:
         elif economic_advantage or military_advantage:
             self.set_aggressive_mode(AggressiveMode.OPPORTUNISTIC)
         else:
-            self.set_aggressive_mode(AggressiveMode.OPPORTUNISTIC)
+            # Bug fix: previously this also returned OPPORTUNISTIC, so the
+            # bot kept committing 10% of its army to harassment even when
+            # behind in both economy *and* military — the exact scenario
+            # where the docstring says we should go PASSIVE ("방어 필요").
+            self.set_aggressive_mode(AggressiveMode.PASSIVE)
 
     # ================================================================
     # * Phase 22: 일꾼 처치 추적 *
@@ -1594,10 +1598,7 @@ class HarassmentCoordinator:
         elif current_enemy_workers > self.last_worker_kill_count:
             # Enemy rebuilt workers. Log raid summary if a raid just ended
             # and reset the per-raid counter so we don't double-count.
-            if (
-                not harassment_active
-                and self._current_raid_workers_killed > 0
-            ):
+            if not harassment_active and self._current_raid_workers_killed > 0:
                 self.logger.info(
                     f"[{int(self.bot.time)}s] Raid #{self.raids_executed} summary:"
                     f" {self._current_raid_workers_killed} workers killed."

@@ -152,8 +152,12 @@ class ScoringSystem:
             self._evaluate_macro(game_time)
             self._evaluate_adaptation(game_time)
             self._evaluate_survival(game_time)
-        except Exception:
-            pass
+        except Exception as e:
+            # Throttled debug log: never crash the game step, but don't go
+            # fully silent — a broken evaluator that fires every tick should
+            # leave a breadcrumb so it surfaces in QA.
+            if iteration % 224 == 0:
+                logger.debug(f"[SCORING] evaluator error (iter {iteration}): {e}")
 
     # =========================================================================
     # 1. Combat (전투) 평가
@@ -754,8 +758,8 @@ class ScoringSystem:
                 existing = existing[-200:]
             with open(filepath, "w", encoding="utf-8") as f:
                 json.dump(existing, f, indent=2, ensure_ascii=False)
-        except Exception:
-            pass
+        except (OSError, json.JSONDecodeError) as e:
+            logger.warning(f"[SCORING] _save_game_score failed ({filepath}): {e}")
 
     def _load_cumulative_score(self) -> Dict:
         """누적 점수 로드"""
@@ -764,8 +768,8 @@ class ScoringSystem:
             if os.path.exists(filepath):
                 with open(filepath, "r", encoding="utf-8") as f:
                     return json.load(f)
-        except Exception:
-            pass
+        except (OSError, json.JSONDecodeError) as e:
+            logger.warning(f"[SCORING] _load_cumulative_score failed ({filepath}): {e}")
         return {"total": 0, "blocks": []}
 
     def _save_cumulative_score(self) -> None:
@@ -774,5 +778,5 @@ class ScoringSystem:
         try:
             with open(filepath, "w", encoding="utf-8") as f:
                 json.dump(self._cumulative_score, f, indent=2, ensure_ascii=False)
-        except Exception:
-            pass
+        except OSError as e:
+            logger.warning(f"[SCORING] _save_cumulative_score failed ({filepath}): {e}")

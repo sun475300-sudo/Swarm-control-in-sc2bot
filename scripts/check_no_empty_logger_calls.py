@@ -24,7 +24,11 @@ import re
 import sys
 from pathlib import Path
 
-# logger.<level>(   <whitespace>   )       — and only on a single line
+# logger.<level>(   <whitespace>   )       — and only on a single line.
+# NOTE: we deliberately do NOT match logger.info("") here — there are a
+# handful of intentional empty-string calls used as visual separators in
+# CLI workflows. The bug class this guard targets is the literal no-arg
+# call left behind by the print→logger migration.
 EMPTY_CALL_RE = re.compile(
     r"\blogger\.(?:debug|info|warning|warn|error|critical|exception)\(\s*\)"
 )

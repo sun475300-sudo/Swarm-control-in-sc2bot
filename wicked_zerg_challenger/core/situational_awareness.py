@@ -146,21 +146,49 @@ class SituationalAwareness:
         """Return the most recent SITREP"""
         return self.last_sitrep
 
+    # Map from blackboard.ThreatLevel (IntEnum 0..4) to the local
+    # string-based ThreatLevel. Kept in sync with blackboard.py.
+    _BB_LEVEL_TO_LOCAL = {
+        0: ThreatLevel.NONE,
+        1: ThreatLevel.LOW,
+        2: ThreatLevel.MEDIUM,
+        3: ThreatLevel.HIGH,
+        4: ThreatLevel.CRITICAL,
+    }
+    _LOCAL_LEVEL_ORDER = {
+        ThreatLevel.NONE: 0,
+        ThreatLevel.LOW: 1,
+        ThreatLevel.MEDIUM: 2,
+        ThreatLevel.HIGH: 3,
+        ThreatLevel.CRITICAL: 4,
+    }
+
     def _assess_threat_level(self) -> ThreatLevel:
         """Determine current threat level using blackboard and game state"""
         # Default
         level = ThreatLevel.NONE
 
-        # Check explicit threats from Blackboard
-        if hasattr(self.bot, "blackboard") and self.bot.blackboard:
-            # If Defcon or existing threat logic is present
-            if hasattr(self.bot.blackboard, "threat"):
-                # Map existing threat to local enum if needed
-                pass
-
-        # Check for immediate danger (Attacked notifications)
-        # Note: This is simplified. Real logic would verify unit proximity.
-        # if self.bot.Client.debug_text... (Not accessible)
+        # Check explicit threats from Blackboard. Previously this branch
+        # walked into a `pass` and the blackboard threat was silently
+        # ignored, defeating the entire purpose of the central state.
+        bb = getattr(self.bot, "blackboard", None)
+        if bb is not None:
+            threat = getattr(bb, "threat", None)
+            if threat is not None:
+                bb_level = getattr(threat, "level", None)
+                if bb_level is not None:
+                    try:
+                        mapped = self._BB_LEVEL_TO_LOCAL.get(int(bb_level))
+                        if (
+                            mapped is not None
+                            and self._LOCAL_LEVEL_ORDER[mapped]
+                            > self._LOCAL_LEVEL_ORDER[level]
+                        ):
+                            level = mapped
+                    except (ValueError, TypeError):
+                        # blackboard.ThreatLevel and local ThreatLevel may
+                        # diverge across versions; treat unknown as NONE.
+                        pass
 
         # Base under attack check (Simplified)
         if hasattr(self.bot, "townhalls"):
@@ -172,8 +200,6 @@ class SituationalAwareness:
                         enemies_near = self.bot.enemy_units.closer_than(15, base)
                         if enemies_near.exists:
                             return ThreatLevel.CRITICAL
-
-        # Supply block check causing vulnerability?
 
         return level
 

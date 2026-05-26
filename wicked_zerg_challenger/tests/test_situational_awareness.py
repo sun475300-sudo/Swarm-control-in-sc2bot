@@ -9,6 +9,7 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 from core.situational_awareness import (
     OpportunityIndex,
     SituationalAwareness,
+    ThreatLevel,
 )
 
 
@@ -86,6 +87,53 @@ class TestSituationalAwareness(unittest.TestCase):
             self.sa.update_sitrep()
 
         self.assertEqual(self.sa.opportunity_index, OpportunityIndex.HIGH)
+
+
+class TestAssessThreatLevel(unittest.TestCase):
+    """
+    Regression coverage for _assess_threat_level — the blackboard threat
+    used to be silently ignored (the branch contained a bare `pass`).
+    """
+
+    def setUp(self):
+        from blackboard import GameStateBlackboard
+        from blackboard import ThreatLevel as BBThreatLevel
+
+        self.BBThreatLevel = BBThreatLevel
+        self.bot = MagicMock()
+        self.bot.time = 100.0
+        self.bot.iteration = 0
+        self.bot.minerals = 0
+        self.bot.vespene = 0
+        self.bot.supply_used = 0
+        self.bot.supply_cap = 0
+        self.bot.strategy_manager = None
+        self.bot.blackboard = GameStateBlackboard()
+        # No townhalls / enemy_units so the base-health branch can't fire
+        self.bot.townhalls = MagicMock()
+        self.bot.townhalls.__iter__ = lambda self_: iter([])
+        self.bot.enemy_units = None
+        self.sa = SituationalAwareness(self.bot)
+
+    def test_blackboard_none_threat_stays_none(self):
+        self.bot.blackboard.update_threat(self.BBThreatLevel.NONE)
+        self.assertEqual(self.sa._assess_threat_level(), ThreatLevel.NONE)
+
+    def test_blackboard_medium_threat_maps_to_local_medium(self):
+        self.bot.blackboard.update_threat(self.BBThreatLevel.MEDIUM)
+        self.assertEqual(self.sa._assess_threat_level(), ThreatLevel.MEDIUM)
+
+    def test_blackboard_high_threat_maps_to_local_high(self):
+        self.bot.blackboard.update_threat(self.BBThreatLevel.HIGH)
+        self.assertEqual(self.sa._assess_threat_level(), ThreatLevel.HIGH)
+
+    def test_blackboard_critical_threat_maps_to_local_critical(self):
+        self.bot.blackboard.update_threat(self.BBThreatLevel.CRITICAL)
+        self.assertEqual(self.sa._assess_threat_level(), ThreatLevel.CRITICAL)
+
+    def test_no_blackboard_returns_none(self):
+        self.bot.blackboard = None
+        self.assertEqual(self.sa._assess_threat_level(), ThreatLevel.NONE)
 
 
 if __name__ == "__main__":
