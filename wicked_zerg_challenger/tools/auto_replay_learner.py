@@ -26,10 +26,12 @@ logger = logging.getLogger("AutoReplayLearner")
 class AutoReplayLearner:
     """자동 리플레이 다운로드 및 학습 시스템"""
 
-    def __init__(self,
-                 download_dir: str = "data/replays/downloaded",
-                 processed_dir: str = "data/replays/processed",
-                 archive_dir: str = "data/replays/archive"):
+    def __init__(
+        self,
+        download_dir: str = "data/replays/downloaded",
+        processed_dir: str = "data/replays/processed",
+        archive_dir: str = "data/replays/archive",
+    ):
         """
         Args:
             download_dir: 다운로드한 리플레이 저장 경로
@@ -65,7 +67,7 @@ class AutoReplayLearner:
         id_file = self.archive_dir / "processed_ids.json"
         if id_file.exists():
             try:
-                with open(id_file, 'r') as f:
+                with open(id_file, "r") as f:
                     data = json.load(f)
                     return set(data.get("replay_ids", []))
             except Exception:
@@ -76,18 +78,21 @@ class AutoReplayLearner:
         """처리한 리플레이 ID 저장"""
         id_file = self.archive_dir / "processed_ids.json"
         try:
-            with open(id_file, 'w') as f:
-                json.dump({
-                    "replay_ids": list(self.processed_replay_ids),
-                    "last_updated": datetime.now().isoformat()
-                }, f, indent=2)
+            with open(id_file, "w") as f:
+                json.dump(
+                    {
+                        "replay_ids": list(self.processed_replay_ids),
+                        "last_updated": datetime.now().isoformat(),
+                    },
+                    f,
+                    indent=2,
+                )
         except Exception as e:
             logger.error(f"Failed to save processed IDs: {e}")
 
-    def search_replays(self,
-                      limit: int = 10,
-                      race: str = "Zerg",
-                      min_mmr: int = 4000) -> List[Dict]:
+    def search_replays(
+        self, limit: int = 10, race: str = "Zerg", min_mmr: int = 4000
+    ) -> List[Dict]:
         """
         Spawning Tool에서 고수 저그 리플레이 검색
 
@@ -99,7 +104,9 @@ class AutoReplayLearner:
         Returns:
             리플레이 정보 리스트
         """
-        logger.info(f"\n[AUTO_REPLAY] Searching for {race} replays (MMR >= {min_mmr})...")
+        logger.info(
+            f"\n[AUTO_REPLAY] Searching for {race} replays (MMR >= {min_mmr})..."
+        )
 
         try:
             # Spawning Tool API로 리플레이 검색
@@ -119,7 +126,7 @@ class AutoReplayLearner:
                 params=params,
                 headers=headers,
                 timeout=30,
-                verify=True
+                verify=True,
             )
 
             if response.status_code != 200:
@@ -158,6 +165,7 @@ class AutoReplayLearner:
         except Exception as e:
             logger.error(f"Search failed: {e}")
             import traceback
+
             traceback.print_exc()
             return []
 
@@ -191,16 +199,20 @@ class AutoReplayLearner:
             }
 
             # 다운로드
-            response = requests.get(download_url, headers=headers, timeout=60, verify=True)
+            response = requests.get(
+                download_url, headers=headers, timeout=60, verify=True
+            )
             if response.status_code != 200:
                 logger.error(f"Download failed: {response.status_code}")
                 return None
 
             # 저장
-            with open(filepath, 'wb') as f:
+            with open(filepath, "wb") as f:
                 f.write(response.content)
 
-            logger.info(f"[OK] Downloaded: {filepath.name} ({len(response.content)} bytes)")
+            logger.info(
+                f"[OK] Downloaded: {filepath.name} ({len(response.content)} bytes)"
+            )
             self.stats["replays_downloaded"] += 1
             return filepath
 
@@ -246,7 +258,9 @@ class AutoReplayLearner:
         Returns:
             학습 성공 여부
         """
-        logger.info(f"\n[AUTO_REPLAY] Learning from {replay_path.name} ({iterations} iterations)...")
+        logger.info(
+            f"\n[AUTO_REPLAY] Learning from {replay_path.name} ({iterations} iterations)..."
+        )
 
         try:
             # ReplayBuildOrderLearner import
@@ -257,7 +271,9 @@ class AutoReplayLearner:
 
             # 여러 번 반복 학습
             for i in range(iterations):
-                logger.info(f"\n[AUTO_REPLAY] === Learning iteration {i+1}/{iterations} ===")
+                logger.info(
+                    f"\n[AUTO_REPLAY] === Learning iteration {i+1}/{iterations} ==="
+                )
 
                 try:
                     # 리플레이 분석 및 학습
@@ -282,6 +298,7 @@ class AutoReplayLearner:
         except Exception as e:
             logger.error(f"Learning failed: {e}")
             import traceback
+
             traceback.print_exc()
             self.stats["replays_failed"] += 1
             return False
@@ -311,10 +328,9 @@ class AutoReplayLearner:
         except Exception as e:
             logger.error(f"Failed to archive replay: {e}")
 
-    def run_auto_learning_cycle(self,
-                                 num_replays: int = 5,
-                                 learning_iterations: int = 5,
-                                 min_mmr: int = 4000):
+    def run_auto_learning_cycle(
+        self, num_replays: int = 5, learning_iterations: int = 5, min_mmr: int = 4000
+    ):
         """
         자동 리플레이 학습 사이클 실행
 
@@ -323,13 +339,13 @@ class AutoReplayLearner:
             learning_iterations: 각 리플레이당 학습 반복 횟수
             min_mmr: 최소 MMR
         """
-        logger.info("\n" + "="*70)
+        logger.info("\n" + "=" * 70)
         logger.info("[AUTO REPLAY LEARNING CYCLE] STARTING")
-        logger.info("="*70)
+        logger.info("=" * 70)
         logger.info(f"Target replays: {num_replays}")
         logger.info(f"Learning iterations per replay: {learning_iterations}")
         logger.info(f"Minimum MMR: {min_mmr}")
-        logger.info("="*70)
+        logger.info("=" * 70)
 
         # 1. 리플레이 검색
         replays = self.search_replays(limit=num_replays, min_mmr=min_mmr)
@@ -341,7 +357,9 @@ class AutoReplayLearner:
         # 2. 각 리플레이 처리
         for idx, replay_info in enumerate(replays, 1):
             replay_id = replay_info.get("id")
-            logger.info(f"\n[AUTO_REPLAY] Processing replay {idx}/{len(replays)} (ID: {replay_id})")
+            logger.info(
+                f"\n[AUTO_REPLAY] Processing replay {idx}/{len(replays)} (ID: {replay_id})"
+            )
 
             # 2.1 다운로드
             downloaded_path = self.download_replay(replay_info)
@@ -354,7 +372,9 @@ class AutoReplayLearner:
                 continue
 
             # 2.3 학습 (N회 반복)
-            success = self.learn_from_replay(processed_path, iterations=learning_iterations)
+            success = self.learn_from_replay(
+                processed_path, iterations=learning_iterations
+            )
 
             # 2.4 아카이브
             if success:
@@ -370,15 +390,15 @@ class AutoReplayLearner:
 
     def print_stats(self):
         """학습 통계 출력"""
-        logger.info("\n" + "="*70)
+        logger.info("\n" + "=" * 70)
         logger.info("[AUTO REPLAY LEARNING] STATISTICS")
-        logger.info("="*70)
+        logger.info("=" * 70)
         logger.info(f"Replays Downloaded:     {self.stats['replays_downloaded']}")
         logger.info(f"Replays Processed:      {self.stats['replays_processed']}")
         logger.error(f"Replays Failed:         {self.stats['replays_failed']}")
         logger.info(f"Total Learning Runs:    {self.stats['total_learning_runs']}")
         logger.info(f"Processed IDs Tracked:  {len(self.processed_replay_ids)}")
-        logger.info("="*70)
+        logger.info("=" * 70)
 
 
 def main():
@@ -386,11 +406,7 @@ def main():
     learner = AutoReplayLearner()
 
     # 5개 리플레이 다운로드하여 각 5회씩 학습
-    learner.run_auto_learning_cycle(
-        num_replays=5,
-        learning_iterations=5,
-        min_mmr=4000
-    )
+    learner.run_auto_learning_cycle(num_replays=5, learning_iterations=5, min_mmr=4000)
 
 
 if __name__ == "__main__":

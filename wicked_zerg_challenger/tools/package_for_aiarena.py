@@ -26,18 +26,44 @@ BOT_DIR = PROJECT_ROOT / "wicked_zerg_challenger"
 
 # Directories to exclude from packaging
 EXCLUDE_DIRS = {
-    "__pycache__", "logs", "tests", "docs", "replays",
-    "replays_processed", "temp_downloads", "models", "bat",
-    "sc2-ai-dashboard", "sc2-mobile-app", "scripts", ".git",
-    ".cursor", ".claude", "archived_sessions", "comparison_reports",
-    "background_results", "checkpoints", "stats", "games",
-    "monitoring", "debug", "htmlcov", "local_training",
+    "__pycache__",
+    "logs",
+    "tests",
+    "docs",
+    "replays",
+    "replays_processed",
+    "temp_downloads",
+    "models",
+    "bat",
+    "sc2-ai-dashboard",
+    "sc2-mobile-app",
+    "scripts",
+    ".git",
+    ".cursor",
+    ".claude",
+    "archived_sessions",
+    "comparison_reports",
+    "background_results",
+    "checkpoints",
+    "stats",
+    "games",
+    "monitoring",
+    "debug",
+    "htmlcov",
+    "local_training",
 }
 
 # File patterns to exclude
 EXCLUDE_FILE_PATTERNS = {
-    ".log", ".bat", ".ps1", ".md", ".pyc", ".pyo",
-    ".egg-info", ".coverage", ".pytest_cache",
+    ".log",
+    ".bat",
+    ".ps1",
+    ".md",
+    ".pyc",
+    ".pyo",
+    ".egg-info",
+    ".coverage",
+    ".pytest_cache",
 }
 
 # File extensions to include
@@ -105,19 +131,19 @@ def main() -> None:
         # 1. run.py (entry point)
         zf.write(run_py, "run.py")
         file_count += 1
-        logger.info(f"  + run.py")
+        logger.info("  + run.py")
 
         # 2. ladderbots.json (AI Arena config)
         zf.write(lb_json, "ladderbots.json")
         file_count += 1
-        logger.info(f"  + ladderbots.json")
+        logger.info("  + ladderbots.json")
 
         # 3. requirements.txt
         req = BOT_DIR / "requirements.txt"
         if req.exists():
             zf.write(req, "requirements.txt")
             file_count += 1
-            logger.info(f"  + requirements.txt")
+            logger.info("  + requirements.txt")
 
         # 4. Bot code (wicked_zerg_challenger/)
         logger.info(f"\n  Scanning bot directory: {BOT_DIR}")

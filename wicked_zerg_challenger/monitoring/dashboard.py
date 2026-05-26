@@ -14,14 +14,23 @@ logger = logging.getLogger("Dashboard")
 class DashboardServer:
     """Read telemetry files and generate a compact HTML dashboard."""
 
-    def __init__(self, telemetry_dir: str = "data/telemetry", port: int = 8765, data_dir: str = None):
+    def __init__(
+        self,
+        telemetry_dir: str = "data/telemetry",
+        port: int = 8765,
+        data_dir: str = None,
+    ):
         self.telemetry_dir = Path(data_dir or telemetry_dir)
         self.telemetry_dir.mkdir(parents=True, exist_ok=True)
         self.port = int(port)
 
     def get_recent_games(self, limit: int = 20) -> List[Dict]:
         files = sorted(
-            [path for path in self.telemetry_dir.glob("*.json") if path.name != "analytics.json"],
+            [
+                path
+                for path in self.telemetry_dir.glob("*.json")
+                if path.name != "analytics.json"
+            ],
             key=lambda path: path.stat().st_mtime,
             reverse=True,
         )
@@ -53,7 +62,9 @@ class DashboardServer:
         by_race: Dict[str, Dict] = {}
         for race in ["Terran", "Protoss", "Zerg"]:
             race_games = [game for game in games if game["enemy_race"] == race]
-            race_wins = sum(1 for game in race_games if game["result"] in {"Victory", "win", "Win"})
+            race_wins = sum(
+                1 for game in race_games if game["result"] in {"Victory", "win", "Win"}
+            )
             by_race[race] = {
                 "total": len(race_games),
                 "wins": race_wins,

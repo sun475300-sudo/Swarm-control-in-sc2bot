@@ -80,6 +80,11 @@ class AdvancedBuildingManager:
         self.min_distance_from_townhall = 5.0  # 해처리에서 최소 거리
         self.worker_path_width = 2.0  # 일꾼 이동 경로 폭
 
+        # * 정지 일꾼 감지: tag → (last_position, last_check_time) *
+        self._worker_position_history: Dict = {}
+        self._stuck_position_threshold = 0.5  # 0.5 distance over the window
+        self._stuck_time_window = 3.0  # check movement over a 3s window
+
         # * 점막 체크 헬퍼 *
         if BuildingPlacementHelper:
             self.placement_helper = BuildingPlacementHelper(bot)
@@ -767,15 +772,36 @@ class AdvancedBuildingManager:
         if not hasattr(self.bot, "workers"):
             return 0
 
+        now = getattr(self.bot, "time", 0.0)
+        live_tags = set()
         rescued = 0
         for worker in self.bot.workers:
             try:
+                live_tags.add(worker.tag)
                 # 1. Idle 상태인 경우
                 is_stuck = False
                 if hasattr(worker, "is_idle") and worker.is_idle:
                     is_stuck = True
 
-                # 2. 움직이지만 제자리인 경우 (TODO: 위치 기록 필요, 여기선 생략)
+                # 2. 움직이지만 제자리인 경우 — position 변화량으로 감지
+                if not is_stuck:
+                    history = self._worker_position_history.get(worker.tag)
+                    if history is None:
+                        self._worker_position_history[worker.tag] = (
+                            worker.position,
+                            now,
+                        )
+                    else:
+                        last_pos, last_time = history
+                        if now - last_time >= self._stuck_time_window:
+                            moved = worker.position.distance_to(last_pos)
+                            if moved < self._stuck_position_threshold:
+                                is_stuck = True
+                            # 윈도 갱신 (스틱 여부와 무관하게)
+                            self._worker_position_history[worker.tag] = (
+                                worker.position,
+                                now,
+                            )
 
                 if is_stuck:
                     if hasattr(self.bot, "structures"):
@@ -802,5 +828,11 @@ class AdvancedBuildingManager:
                                 rescued += 1
             except Exception:
                 continue
+
+        # GC: drop history entries for dead workers to keep dict bounded.
+        if self._worker_position_history:
+            dead = [t for t in self._worker_position_history if t not in live_tags]
+            for t in dead:
+                self._worker_position_history.pop(t, None)
 
         return rescued
