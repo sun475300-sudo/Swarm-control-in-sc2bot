@@ -19,7 +19,7 @@ if TYPE_CHECKING:
     from sc2.unit import Unit
     from sc2.position import Point2
 
-from wicked_zerg_challenger.utils.logger import get_logger
+from utils.logger import get_logger
 
 
 class SpatialQueryOptimizer:

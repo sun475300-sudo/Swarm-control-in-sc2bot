@@ -10,11 +10,18 @@ Formation Manager - 지형 활용 및 대형 제어
 
 from typing import List, Optional, Tuple
 
-from sc2.game_info import GameInfo
-from sc2.ids.unit_typeid import UnitTypeId
-from sc2.position import Point2
-from sc2.unit import Unit
-from sc2.units import Units
+try:
+    from sc2.game_info import GameInfo
+    from sc2.ids.unit_typeid import UnitTypeId
+    from sc2.position import Point2
+    from sc2.unit import Unit
+    from sc2.units import Units
+except ImportError:  # tooling/test environments without burnysc2
+    GameInfo = None
+    UnitTypeId = None
+    Point2 = None
+    Unit = None
+    Units = None
 
 
 class FormationManager:

@@ -4,6 +4,7 @@ pytest 공통 fixtures (#171)
 모든 테스트 파일에서 공유할 수 있는 fixture와 설정을 정의한다.
 """
 
+import importlib
 import os
 import shutil
 import sys
@@ -17,6 +18,26 @@ import pytest
 PROJECT_ROOT = Path(__file__).parent.parent
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
+
+
+def _ensure_sc2_stub() -> None:
+    """Fall back to the shared sc2 stub when burnysc2 is unavailable.
+
+    The stub lives under ``wicked_zerg_challenger/tests/_sc2_stub`` so it is
+    versioned alongside the bot tests; the root suite reuses it.
+    """
+    try:
+        importlib.import_module("sc2.ids.unit_typeid")
+        return
+    except ImportError:
+        pass
+
+    stub_root = PROJECT_ROOT / "wicked_zerg_challenger" / "tests" / "_sc2_stub"
+    if stub_root.exists():
+        sys.path.insert(0, str(stub_root))
+
+
+_ensure_sc2_stub()
 
 
 # ═══════════════════════════════════════════════════════

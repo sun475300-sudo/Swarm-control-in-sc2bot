@@ -16,8 +16,8 @@ from typing import Any, Dict, List
 try:
     from config.constants import (
         BUILD_ORDER_END_TIME,
-        MAX_STEP_RETRIES,
         EXPANSION_TIMING_TARGET,
+        MAX_STEP_RETRIES,
         THREAT_CACHE_TTL,
     )
 except ImportError:
@@ -42,19 +42,70 @@ except ImportError:
         pass
 
     class UnitTypeId:
-        DRONE = "DRONE"
-        OVERLORD = "OVERLORD"
-        SPAWNINGPOOL = "SPAWNINGPOOL"
+        # Zerg structures
         HATCHERY = "HATCHERY"
+        LAIR = "LAIR"
+        HIVE = "HIVE"
         EXTRACTOR = "EXTRACTOR"
-        ZERGLING = "ZERGLING"
-        QUEEN = "QUEEN"
+        SPAWNINGPOOL = "SPAWNINGPOOL"
         BANELINGNEST = "BANELINGNEST"
         ROACHWARREN = "ROACHWARREN"
-        LAIR = "LAIR"
         HYDRALISKDEN = "HYDRALISKDEN"
+        LURKERDEN = "LURKERDEN"
+        LURKERDENMP = "LURKERDENMP"
+        INFESTATIONPIT = "INFESTATIONPIT"
+        SPIRE = "SPIRE"
+        GREATERSPIRE = "GREATERSPIRE"
+        ULTRALISKCAVERN = "ULTRALISKCAVERN"
+        NYDUSNETWORK = "NYDUSNETWORK"
+        NYDUSCANAL = "NYDUSCANAL"
+        SPINECRAWLER = "SPINECRAWLER"
+        SPORECRAWLER = "SPORECRAWLER"
+        EVOLUTIONCHAMBER = "EVOLUTIONCHAMBER"
+        CREEPTUMOR = "CREEPTUMOR"
+        CREEPTUMORBURROWED = "CREEPTUMORBURROWED"
+        CREEPTUMORQUEEN = "CREEPTUMORQUEEN"
+        # Zerg units
+        DRONE = "DRONE"
+        OVERLORD = "OVERLORD"
+        OVERLORDTRANSPORT = "OVERLORDTRANSPORT"
+        OVERSEER = "OVERSEER"
+        QUEEN = "QUEEN"
+        ZERGLING = "ZERGLING"
+        BANELING = "BANELING"
         ROACH = "ROACH"
+        ROACHBURROWED = "ROACHBURROWED"
+        RAVAGER = "RAVAGER"
         HYDRALISK = "HYDRALISK"
+        LURKER = "LURKER"
+        LURKERMP = "LURKERMP"
+        LURKERMPBURROWED = "LURKERMPBURROWED"
+        MUTALISK = "MUTALISK"
+        CORRUPTOR = "CORRUPTOR"
+        BROODLORD = "BROODLORD"
+        INFESTOR = "INFESTOR"
+        SWARMHOST = "SWARMHOST"
+        VIPER = "VIPER"
+        ULTRALISK = "ULTRALISK"
+        LARVA = "LARVA"
+        EGG = "EGG"
+        # Terran reference
+        MARINE = "MARINE"
+        MARAUDER = "MARAUDER"
+        SCV = "SCV"
+        SIEGETANK = "SIEGETANK"
+        MEDIVAC = "MEDIVAC"
+        # Protoss reference
+        PROBE = "PROBE"
+        ZEALOT = "ZEALOT"
+        STALKER = "STALKER"
+        SENTRY = "SENTRY"
+        ARCHON = "ARCHON"
+        HIGHTEMPLAR = "HIGHTEMPLAR"
+        PHOENIX = "PHOENIX"
+        TEMPEST = "TEMPEST"
+        THOR = "THOR"
+        THORAP = "THORAP"
 
     class AbilityId:
         RESEARCH_ZERGLINGMETABOLICBOOST = "RESEARCH_ZERGLINGMETABOLICBOOST"
@@ -245,9 +296,7 @@ class BuildOrderType(Enum):
 class BuildOrderStep:
     """Build Order Step"""
 
-    def __init__(
-        self, supply: int, action: str, unit_type: Any, description: str = ""
-    ):
+    def __init__(self, supply: int, action: str, unit_type: Any, description: str = ""):
         self.supply = supply  # Supply to execute at
         self.action = action  # "build", "train", "expand", "morph", "upgrade"
         self.unit_type = unit_type
@@ -416,11 +465,11 @@ class BuildOrderSystem:
             self.current_matchup_build_key = build_key
             self.current_build_transition = build_data.get("transition")
             self.build_steps = self._build_steps_from_order(build_data.get("order", []))
-            logger.info(
-                f"Loaded ZvT build '{build_data.get('name')}' ({build_key})"
-            )
+            logger.info(f"Loaded ZvT build '{build_data.get('name')}' ({build_key})")
             self.current_step_index = 0
-            logger.info(f"Build Order Set: {self.current_build_order.value}:{build_key}")
+            logger.info(
+                f"Build Order Set: {self.current_build_order.value}:{build_key}"
+            )
             logger.info(f"Total {len(self.build_steps)} steps")
             return
 
@@ -430,11 +479,11 @@ class BuildOrderSystem:
             self.current_matchup_build_key = build_key
             self.current_build_transition = build_data.get("transition")
             self.build_steps = self._build_steps_from_order(build_data.get("order", []))
-            logger.info(
-                f"Loaded ZvP build '{build_data.get('name')}' ({build_key})"
-            )
+            logger.info(f"Loaded ZvP build '{build_data.get('name')}' ({build_key})")
             self.current_step_index = 0
-            logger.info(f"Build Order Set: {self.current_build_order.value}:{build_key}")
+            logger.info(
+                f"Build Order Set: {self.current_build_order.value}:{build_key}"
+            )
             logger.info(f"Total {len(self.build_steps)} steps")
             return
 
@@ -444,11 +493,11 @@ class BuildOrderSystem:
             self.current_matchup_build_key = build_key
             self.current_build_transition = build_data.get("transition")
             self.build_steps = self._build_steps_from_order(build_data.get("order", []))
-            logger.info(
-                f"Loaded ZvZ build '{build_data.get('name')}' ({build_key})"
-            )
+            logger.info(f"Loaded ZvZ build '{build_data.get('name')}' ({build_key})")
             self.current_step_index = 0
-            logger.info(f"Build Order Set: {self.current_build_order.value}:{build_key}")
+            logger.info(
+                f"Build Order Set: {self.current_build_order.value}:{build_key}"
+            )
             logger.info(f"Total {len(self.build_steps)} steps")
             return
 
@@ -491,9 +540,9 @@ class BuildOrderSystem:
             "enemy_one_base", False
         ):
             return "aggressive_pool_first"
-        if self._blackboard_get("enemy_expand_confirmed", False) and not self._blackboard_get(
-            "enemy_aggression", False
-        ):
+        if self._blackboard_get(
+            "enemy_expand_confirmed", False
+        ) and not self._blackboard_get("enemy_aggression", False):
             return "fast_lair_macro"
         return "hatch_first_16"
 
@@ -540,12 +589,37 @@ class BuildOrderSystem:
             )
         return steps
 
+    # Tokens that appear in build orders as plain strings and denote upgrades
+    _UPGRADE_TOKENS = frozenset(
+        {
+            "METABOLIC_BOOST",
+            "GLIAL_RECONSTITUTION",
+            "BURROW",
+            "PNEUMATIZED_CARAPACE",
+            "ADRENAL_GLANDS",
+            "CENTRIFUGAL_HOOKS",
+            "MUSCULAR_AUGMENTS",
+            "GROOVED_SPINES",
+            "TUNNELING_CLAWS",
+            "ANABOLIC_SYNTHESIS",
+            "CHITINOUS_PLATING",
+            "FLYER_ATTACKS",
+            "FLYER_CARAPACE",
+            "MELEE_ATTACKS",
+            "MISSILE_ATTACKS",
+            "GROUND_CARAPACE",
+        }
+    )
+
     def _infer_zvt_action(self, unit_type: Any) -> str:
-        if isinstance(unit_type, str):
+        if isinstance(unit_type, str) and unit_type in self._UPGRADE_TOKENS:
             return "upgrade"
         if unit_type == getattr(UnitTypeId, "HATCHERY", None):
             return "expand"
-        if unit_type == getattr(UnitTypeId, "LAIR", None):
+        if unit_type in {
+            getattr(UnitTypeId, "LAIR", None),
+            getattr(UnitTypeId, "HIVE", None),
+        }:
             return "morph"
         train_types = {
             getattr(UnitTypeId, "DRONE", None),
@@ -554,7 +628,18 @@ class BuildOrderSystem:
             getattr(UnitTypeId, "ZERGLING", None),
             getattr(UnitTypeId, "ROACH", None),
             getattr(UnitTypeId, "HYDRALISK", None),
+            getattr(UnitTypeId, "BANELING", None),
+            getattr(UnitTypeId, "MUTALISK", None),
+            getattr(UnitTypeId, "CORRUPTOR", None),
+            getattr(UnitTypeId, "ULTRALISK", None),
+            getattr(UnitTypeId, "VIPER", None),
+            getattr(UnitTypeId, "SWARMHOST", None),
+            getattr(UnitTypeId, "INFESTOR", None),
+            getattr(UnitTypeId, "RAVAGER", None),
+            getattr(UnitTypeId, "LURKER", None),
+            getattr(UnitTypeId, "LURKERMP", None),
         }
+        train_types.discard(None)
         if unit_type in train_types:
             return "train"
         return "build"
@@ -890,7 +975,11 @@ class BuildOrderSystem:
         pending_hatch = self._pending_hatchery_count()
 
         if base_count >= 3:
-            if getattr(self.bot, "time", 0.0) >= 360.0 and base_count < 4 and pending_hatch == 0:
+            if (
+                getattr(self.bot, "time", 0.0) >= 360.0
+                and base_count < 4
+                and pending_hatch == 0
+            ):
                 return not self._has_active_base_threat()
             return False
         if base_count < 2:
@@ -1170,7 +1259,9 @@ class BuildOrderSystem:
         if blackboard and hasattr(blackboard, "set"):
             blackboard.set("matchup_build_key", new_build)
             blackboard.set("build_transition", new_build)
-            blackboard.set("build_transition_reason", self.transition_manager.last_reason)
+            blackboard.set(
+                "build_transition_reason", self.transition_manager.last_reason
+            )
             blackboard.set(
                 "build_transition_locked",
                 self.transition_manager.transition_triggered,
