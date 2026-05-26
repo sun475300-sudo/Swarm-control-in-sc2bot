@@ -9,7 +9,12 @@ from unittest.mock import Mock
 os.environ["PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION"] = "python"
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from sc2.ids.unit_typeid import UnitTypeId
+import pytest
+
+try:
+    from sc2.ids.unit_typeid import UnitTypeId
+except ImportError:  # pragma: no cover
+    pytest.skip("sc2 library not available", allow_module_level=True)
 from strategy.proxy_hatchery import ProxyHatchery
 
 
@@ -50,10 +55,8 @@ class TestProxyHatcheryExpansionGate(unittest.TestCase):
         bot.townhalls = Mock()
         bot.townhalls.ready.amount = ready_bases
         bot.townhalls.amount = ready_bases
-        bot.already_pending.side_effect = (
-            lambda unit_type: pending_hatcheries
-            if unit_type == UnitTypeId.HATCHERY
-            else 0
+        bot.already_pending.side_effect = lambda unit_type: (
+            pending_hatcheries if unit_type == UnitTypeId.HATCHERY else 0
         )
         return bot
 

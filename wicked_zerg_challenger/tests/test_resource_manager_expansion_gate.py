@@ -12,7 +12,13 @@ sys.path.insert(
 )
 
 from local_training.resource_manager import ResourceManager
-from sc2.ids.unit_typeid import UnitTypeId
+
+import pytest
+
+try:
+    from sc2.ids.unit_typeid import UnitTypeId
+except ImportError:  # pragma: no cover
+    pytest.skip("sc2 library not available", allow_module_level=True)
 
 
 class UnitList(list):

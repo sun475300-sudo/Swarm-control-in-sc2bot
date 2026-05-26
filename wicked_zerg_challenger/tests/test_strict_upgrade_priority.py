@@ -8,8 +8,13 @@ from unittest.mock import MagicMock
 os.environ["PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION"] = "python"
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from sc2.ids.unit_typeid import UnitTypeId
-from sc2.ids.upgrade_id import UpgradeId
+import pytest
+
+try:
+    from sc2.ids.unit_typeid import UnitTypeId
+    from sc2.ids.upgrade_id import UpgradeId
+except ImportError:  # pragma: no cover
+    pytest.skip("sc2 library not available", allow_module_level=True)
 from strict_upgrade_priority import StrictUpgradePriority
 
 
@@ -36,8 +41,8 @@ class TestStrictUpgradePriorityExpansionReserve(unittest.TestCase):
         bot.minerals = 100
         bot.vespene = 100
         bot.townhalls.amount = 2
-        bot.already_pending.side_effect = (
-            lambda unit_type: 1 if unit_type == UnitTypeId.HATCHERY else 0
+        bot.already_pending.side_effect = lambda unit_type: (
+            1 if unit_type == UnitTypeId.HATCHERY else 0
         )
         bot.state.upgrades = set()
 
@@ -62,8 +67,8 @@ class TestStrictUpgradePriorityExpansionReserve(unittest.TestCase):
         bot.minerals = 100
         bot.vespene = 100
         bot.townhalls.amount = 1
-        bot.already_pending.side_effect = (
-            lambda unit_type: 1 if unit_type == UnitTypeId.HATCHERY else 0
+        bot.already_pending.side_effect = lambda unit_type: (
+            1 if unit_type == UnitTypeId.HATCHERY else 0
         )
         bot.state.upgrades = set()
 
@@ -81,8 +86,8 @@ class TestStrictUpgradePriorityExpansionReserve(unittest.TestCase):
         bot.vespene = 100
         bot.townhalls.amount = 2
         bot.townhalls.ready.amount = 1
-        bot.already_pending.side_effect = (
-            lambda unit_type: 1 if unit_type == UnitTypeId.HATCHERY else 0
+        bot.already_pending.side_effect = lambda unit_type: (
+            1 if unit_type == UnitTypeId.HATCHERY else 0
         )
         bot.state.upgrades = set()
 
@@ -116,8 +121,8 @@ class TestStrictUpgradePriorityExpansionReserve(unittest.TestCase):
         bot.vespene = 100
         bot.townhalls.amount = 3
         bot.townhalls.ready.amount = 3
-        bot.already_pending.side_effect = (
-            lambda unit_type: 1 if unit_type == UnitTypeId.HATCHERY else 0
+        bot.already_pending.side_effect = lambda unit_type: (
+            1 if unit_type == UnitTypeId.HATCHERY else 0
         )
         bot.state.upgrades = set()
 

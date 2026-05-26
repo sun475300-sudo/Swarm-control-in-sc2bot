@@ -18,9 +18,23 @@ try:
     from sc2.unit import Unit
     from sc2.units import Units
 except ImportError:
-    Unit = None
-    Units = None
-    Point2 = None
+    Unit = None  # type: ignore[assignment]
+    Point2 = None  # type: ignore[assignment]
+
+    class Units(list):  # type: ignore[no-redef]
+        """Minimal stub of sc2.Units used only when sc2 isn't installed.
+
+        Behaves like an empty/iterable list; the helpers below only need
+        ``Units([], game_data)`` to be constructable and iterable for tests
+        and lint runs.
+        """
+
+        def __init__(self, units=None, game_data=None):
+            super().__init__(units or [])
+
+        def closer_than(self, distance, unit):  # pragma: no cover - stub
+            return Units([], None)
+
 
 logger = get_logger("UnitHelpers")
 

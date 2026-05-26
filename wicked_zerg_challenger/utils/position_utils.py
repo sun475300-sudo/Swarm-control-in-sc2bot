@@ -7,7 +7,24 @@ across the codebase. Uses efficient algorithms and consistent interfaces.
 
 from typing import TYPE_CHECKING, List, Optional, Union
 
-from sc2.position import Point2
+try:
+    from sc2.position import Point2
+except ImportError:
+
+    class Point2(tuple):
+        """Minimal Point2 stub used only when sc2 is absent (CI/test envs)."""
+
+        def __new__(cls, xy):
+            return super().__new__(cls, tuple(xy))
+
+        @property
+        def x(self) -> float:
+            return self[0]
+
+        @property
+        def y(self) -> float:
+            return self[1]
+
 
 if TYPE_CHECKING:
     from sc2.unit import Unit

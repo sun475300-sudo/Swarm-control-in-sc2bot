@@ -16,8 +16,8 @@ from typing import Any, Dict, List
 try:
     from config.constants import (
         BUILD_ORDER_END_TIME,
-        MAX_STEP_RETRIES,
         EXPANSION_TIMING_TARGET,
+        MAX_STEP_RETRIES,
         THREAT_CACHE_TTL,
     )
 except ImportError:
@@ -38,29 +38,34 @@ try:
     from sc2.position import Point2
 except ImportError:
 
+    class _StubEnumMeta(type):
+        """Allow ``StubEnum.ANY_NAME`` lookups when sc2 is absent. Returns a
+        cached placeholder subclass keyed by the name so equality and string
+        identity work consistently across imports. The placeholder class
+        exposes a ``name`` attribute so ``_unit_name``-style helpers see the
+        same field the real sc2 enums expose."""
+
+        _cache: dict = {}
+
+        def __getattr__(cls, name):
+            key = (cls.__name__, name)
+            placeholder = _StubEnumMeta._cache.get(key)
+            if placeholder is None:
+                placeholder = type(cls)(name, (cls,), {"name": name, "_name": name})
+                _StubEnumMeta._cache[key] = placeholder
+            return placeholder
+
     class BotAI:
         pass
 
-    class UnitTypeId:
-        DRONE = "DRONE"
-        OVERLORD = "OVERLORD"
-        SPAWNINGPOOL = "SPAWNINGPOOL"
-        HATCHERY = "HATCHERY"
-        EXTRACTOR = "EXTRACTOR"
-        ZERGLING = "ZERGLING"
-        QUEEN = "QUEEN"
-        BANELINGNEST = "BANELINGNEST"
-        ROACHWARREN = "ROACHWARREN"
-        LAIR = "LAIR"
-        HYDRALISKDEN = "HYDRALISKDEN"
-        ROACH = "ROACH"
-        HYDRALISK = "HYDRALISK"
+    class UnitTypeId(metaclass=_StubEnumMeta):
+        pass
 
-    class AbilityId:
-        RESEARCH_ZERGLINGMETABOLICBOOST = "RESEARCH_ZERGLINGMETABOLICBOOST"
+    class AbilityId(metaclass=_StubEnumMeta):
+        pass
 
-    class UpgradeId:
-        ZERGLINGMOVEMENTSPEED = "ZERGLINGMOVEMENTSPEED"
+    class UpgradeId(metaclass=_StubEnumMeta):
+        pass
 
     class Point2:
         pass
@@ -245,9 +250,7 @@ class BuildOrderType(Enum):
 class BuildOrderStep:
     """Build Order Step"""
 
-    def __init__(
-        self, supply: int, action: str, unit_type: Any, description: str = ""
-    ):
+    def __init__(self, supply: int, action: str, unit_type: Any, description: str = ""):
         self.supply = supply  # Supply to execute at
         self.action = action  # "build", "train", "expand", "morph", "upgrade"
         self.unit_type = unit_type
@@ -416,11 +419,11 @@ class BuildOrderSystem:
             self.current_matchup_build_key = build_key
             self.current_build_transition = build_data.get("transition")
             self.build_steps = self._build_steps_from_order(build_data.get("order", []))
-            logger.info(
-                f"Loaded ZvT build '{build_data.get('name')}' ({build_key})"
-            )
+            logger.info(f"Loaded ZvT build '{build_data.get('name')}' ({build_key})")
             self.current_step_index = 0
-            logger.info(f"Build Order Set: {self.current_build_order.value}:{build_key}")
+            logger.info(
+                f"Build Order Set: {self.current_build_order.value}:{build_key}"
+            )
             logger.info(f"Total {len(self.build_steps)} steps")
             return
 
@@ -430,11 +433,11 @@ class BuildOrderSystem:
             self.current_matchup_build_key = build_key
             self.current_build_transition = build_data.get("transition")
             self.build_steps = self._build_steps_from_order(build_data.get("order", []))
-            logger.info(
-                f"Loaded ZvP build '{build_data.get('name')}' ({build_key})"
-            )
+            logger.info(f"Loaded ZvP build '{build_data.get('name')}' ({build_key})")
             self.current_step_index = 0
-            logger.info(f"Build Order Set: {self.current_build_order.value}:{build_key}")
+            logger.info(
+                f"Build Order Set: {self.current_build_order.value}:{build_key}"
+            )
             logger.info(f"Total {len(self.build_steps)} steps")
             return
 
@@ -444,11 +447,11 @@ class BuildOrderSystem:
             self.current_matchup_build_key = build_key
             self.current_build_transition = build_data.get("transition")
             self.build_steps = self._build_steps_from_order(build_data.get("order", []))
-            logger.info(
-                f"Loaded ZvZ build '{build_data.get('name')}' ({build_key})"
-            )
+            logger.info(f"Loaded ZvZ build '{build_data.get('name')}' ({build_key})")
             self.current_step_index = 0
-            logger.info(f"Build Order Set: {self.current_build_order.value}:{build_key}")
+            logger.info(
+                f"Build Order Set: {self.current_build_order.value}:{build_key}"
+            )
             logger.info(f"Total {len(self.build_steps)} steps")
             return
 
@@ -491,9 +494,9 @@ class BuildOrderSystem:
             "enemy_one_base", False
         ):
             return "aggressive_pool_first"
-        if self._blackboard_get("enemy_expand_confirmed", False) and not self._blackboard_get(
-            "enemy_aggression", False
-        ):
+        if self._blackboard_get(
+            "enemy_expand_confirmed", False
+        ) and not self._blackboard_get("enemy_aggression", False):
             return "fast_lair_macro"
         return "hatch_first_16"
 
@@ -890,7 +893,11 @@ class BuildOrderSystem:
         pending_hatch = self._pending_hatchery_count()
 
         if base_count >= 3:
-            if getattr(self.bot, "time", 0.0) >= 360.0 and base_count < 4 and pending_hatch == 0:
+            if (
+                getattr(self.bot, "time", 0.0) >= 360.0
+                and base_count < 4
+                and pending_hatch == 0
+            ):
                 return not self._has_active_base_threat()
             return False
         if base_count < 2:
@@ -1170,7 +1177,9 @@ class BuildOrderSystem:
         if blackboard and hasattr(blackboard, "set"):
             blackboard.set("matchup_build_key", new_build)
             blackboard.set("build_transition", new_build)
-            blackboard.set("build_transition_reason", self.transition_manager.last_reason)
+            blackboard.set(
+                "build_transition_reason", self.transition_manager.last_reason
+            )
             blackboard.set(
                 "build_transition_locked",
                 self.transition_manager.transition_triggered,

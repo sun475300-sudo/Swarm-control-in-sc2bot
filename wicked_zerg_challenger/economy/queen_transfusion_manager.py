@@ -7,15 +7,30 @@ and optimizing healing efficiency in combat situations.
 
 from typing import TYPE_CHECKING, Dict, Optional
 
-from sc2.ids.ability_id import AbilityId
-from sc2.ids.unit_typeid import UnitTypeId
-from sc2.unit import Unit
-from sc2.units import Units
+try:
+    from sc2.ids.ability_id import AbilityId
+    from sc2.ids.unit_typeid import UnitTypeId
+    from sc2.unit import Unit
+    from sc2.units import Units
+except ImportError:
+
+    class _StubEnumMeta(type):
+        def __getattr__(cls, name):
+            return type(cls)(name, (cls,), {"_name": name})
+
+    class AbilityId(metaclass=_StubEnumMeta):
+        pass
+
+    class UnitTypeId(metaclass=_StubEnumMeta):
+        pass
+
+    Unit = None  # type: ignore[assignment]
+    Units = None  # type: ignore[assignment]
 
 if TYPE_CHECKING:
     from sc2.bot_ai import BotAI
 
-from wicked_zerg_challenger.utils.logger import get_logger
+from utils.logger import get_logger
 
 
 class QueenTransfusionManager:
@@ -110,7 +125,10 @@ class QueenTransfusionManager:
         for queen in available_queens:
             # Skip queen if it cast too recently (avoid energy double-spend on lag)
             now = self.bot.time
-            if self._queen_last_cast.get(queen.tag, 0.0) + self.QUEEN_CAST_COOLDOWN > now:
+            if (
+                self._queen_last_cast.get(queen.tag, 0.0) + self.QUEEN_CAST_COOLDOWN
+                > now
+            ):
                 continue
 
             target = self._find_best_transfusion_target(queen, damaged_units)

@@ -9,7 +9,12 @@ os.environ["PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION"] = "python"
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 sys.modules.pop("utils", None)
 
-from sc2.ids.unit_typeid import UnitTypeId
+import pytest
+
+try:
+    from sc2.ids.unit_typeid import UnitTypeId
+except ImportError:  # pragma: no cover
+    pytest.skip("sc2 library not available", allow_module_level=True)
 from upgrade_manager import EvolutionUpgradeManager
 
 
@@ -45,8 +50,8 @@ class TestUpgradeManagerExpansionReserve(unittest.TestCase):
         """A pending fourth Hatchery releases the upgrade manager reserve."""
         self.bot.time = 370
         self.bot.townhalls.amount = 3
-        self.bot.already_pending.side_effect = (
-            lambda unit_type: 1 if unit_type == UnitTypeId.HATCHERY else 0
+        self.bot.already_pending.side_effect = lambda unit_type: (
+            1 if unit_type == UnitTypeId.HATCHERY else 0
         )
 
         self.assertFalse(self.manager._should_reserve_for_third_base())

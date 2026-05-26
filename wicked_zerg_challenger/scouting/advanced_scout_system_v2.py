@@ -27,16 +27,25 @@ try:
     from sc2.unit import Unit
 except ImportError:
 
+    class _StubEnumMeta(type):
+        """Metaclass so any ``StubEnum.ANY_NAME`` lookup returns a placeholder
+        instead of raising ``AttributeError``. Required so module-level
+        defaults like ``UnitTypeId.OVERLORD`` work when ``sc2`` is absent."""
+
+        def __getattr__(cls, name):
+            placeholder = type(cls)(name, (cls,), {"_name": name})
+            return placeholder
+
     class BotAI:
         pass
 
-    class UnitTypeId:
+    class UnitTypeId(metaclass=_StubEnumMeta):
         pass
 
-    class AbilityId:
+    class AbilityId(metaclass=_StubEnumMeta):
         pass
 
-    class UpgradeId:
+    class UpgradeId(metaclass=_StubEnumMeta):
         pass
 
     class Point2:

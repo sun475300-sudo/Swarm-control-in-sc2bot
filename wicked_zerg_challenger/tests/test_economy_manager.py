@@ -20,8 +20,14 @@ from unittest.mock import AsyncMock, Mock
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 from economy_manager import EconomyManager, ThreatLevel
-from sc2.ids.unit_typeid import UnitTypeId
-from sc2.position import Point2
+
+import pytest
+
+try:
+    from sc2.ids.unit_typeid import UnitTypeId
+    from sc2.position import Point2
+except ImportError:  # pragma: no cover
+    pytest.skip("sc2 library not available", allow_module_level=True)
 
 
 class TestEconomyManager(unittest.TestCase):
@@ -328,7 +334,9 @@ class TestEconomyManager(unittest.TestCase):
         townhalls.__iter__ = Mock(return_value=iter([townhall]))
 
         worker = Mock()
-        worker.build = Mock(return_value=("build", UnitTypeId.HATCHERY, Point2((60, 60))))
+        worker.build = Mock(
+            return_value=("build", UnitTypeId.HATCHERY, Point2((60, 60)))
+        )
         workers = Mock()
         workers.closest_to = Mock(return_value=worker)
 
@@ -517,9 +525,7 @@ class TestEconomyManager(unittest.TestCase):
         result = asyncio.run(self.manager._perform_smart_expansion("third base"))
 
         self.assertTrue(result)
-        self.assertEqual(
-            actions, [("build", UnitTypeId.HATCHERY, standard_position)]
-        )
+        self.assertEqual(actions, [("build", UnitTypeId.HATCHERY, standard_position)])
 
     def test_gold_expansion_allowed_after_three_ready_bases(self):
         """Gold expansion priority resumes after a standard third is secured."""
@@ -589,7 +595,9 @@ class TestEconomyManager(unittest.TestCase):
         townhalls.__iter__ = Mock(side_effect=lambda: iter([main]))
 
         worker = Mock()
-        worker.build = Mock(side_effect=lambda unit_type, position: ("build", unit_type, position))
+        worker.build = Mock(
+            side_effect=lambda unit_type, position: ("build", unit_type, position)
+        )
         workers = Mock()
         workers.closest_to = Mock(return_value=worker)
 
@@ -623,7 +631,9 @@ class TestEconomyManager(unittest.TestCase):
         townhalls.__iter__ = Mock(side_effect=lambda: iter([main, natural]))
 
         worker = Mock()
-        worker.build = Mock(side_effect=lambda unit_type, position: ("build", unit_type, position))
+        worker.build = Mock(
+            side_effect=lambda unit_type, position: ("build", unit_type, position)
+        )
         workers = Mock()
         workers.closest_to = Mock(return_value=worker)
 
@@ -695,7 +705,9 @@ class TestEconomyManager(unittest.TestCase):
         townhalls.__iter__ = Mock(side_effect=lambda: iter([main, natural]))
 
         worker = Mock()
-        worker.build = Mock(side_effect=lambda unit_type, position: ("build", unit_type, position))
+        worker.build = Mock(
+            side_effect=lambda unit_type, position: ("build", unit_type, position)
+        )
         workers = Mock()
         workers.closest_to = Mock(return_value=worker)
         enemy = Mock()
@@ -743,9 +755,7 @@ class TestEconomyManager(unittest.TestCase):
 
         import asyncio
 
-        target = asyncio.run(
-            self.manager._resolve_expansion_target(Point2((60, 60)))
-        )
+        target = asyncio.run(self.manager._resolve_expansion_target(Point2((60, 60))))
 
         self.assertEqual(target, Point2((75, 75)))
 

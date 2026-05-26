@@ -13,9 +13,21 @@ ZvZ 매치업에서 특히 중요합니다.
 
 from typing import Dict, List
 
-from sc2.ids.unit_typeid import UnitTypeId
-from sc2.position import Point2
-from sc2.unit import Unit
+try:
+    from sc2.ids.unit_typeid import UnitTypeId
+    from sc2.position import Point2
+    from sc2.unit import Unit
+except ImportError:
+
+    class _StubEnumMeta(type):
+        def __getattr__(cls, name):
+            return type(cls)(name, (cls,), {"_name": name})
+
+    class UnitTypeId(metaclass=_StubEnumMeta):
+        pass
+
+    Point2 = None  # type: ignore[assignment]
+    Unit = None  # type: ignore[assignment]
 
 from utils.logger import get_logger
 
