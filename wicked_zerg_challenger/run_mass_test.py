@@ -7,12 +7,12 @@ All difficulties x All races = comprehensive test matrix
 GPU acceleration enabled for all computations.
 """
 
+import argparse
 import json
 import logging
 import os
 import sys
 import time
-import argparse
 from datetime import datetime
 from pathlib import Path
 
@@ -41,11 +41,47 @@ def _ensure_sc2_path():
 
 _ensure_sc2_path()
 
-from sc2 import maps
-from sc2.data import Difficulty, Race
-from sc2.main import run_game
-from sc2.player import Bot, Computer
-from wicked_zerg_bot_pro_impl import WickedZergBotProImpl
+# Heavy sc2 imports are deferred so that pure CLI helpers (parse_args /
+# build_test_cases) remain importable even when optional native deps such as
+# `mpyq` are unavailable (CI/lint environments).
+try:
+    from sc2 import maps  # noqa: F401
+    from sc2.data import Difficulty, Race
+    from sc2.main import run_game
+    from sc2.player import Bot, Computer
+    from wicked_zerg_bot_pro_impl import WickedZergBotProImpl
+
+    _SC2_AVAILABLE = True
+except ImportError as _sc2_err:
+    _SC2_AVAILABLE = False
+    _sc2_import_error = _sc2_err
+
+    class _NamedEnumStub:
+        def __init__(self, name):
+            self.name = name
+
+        def __repr__(self):
+            return f"<stub:{self.name}>"
+
+    class Race:  # type: ignore[no-redef]
+        Terran = _NamedEnumStub("Terran")
+        Protoss = _NamedEnumStub("Protoss")
+        Zerg = _NamedEnumStub("Zerg")
+
+    class Difficulty:  # type: ignore[no-redef]
+        VeryEasy = _NamedEnumStub("VeryEasy")
+        Easy = _NamedEnumStub("Easy")
+        Medium = _NamedEnumStub("Medium")
+        MediumHard = _NamedEnumStub("MediumHard")
+        Hard = _NamedEnumStub("Hard")
+        Harder = _NamedEnumStub("Harder")
+        VeryHard = _NamedEnumStub("VeryHard")
+
+    maps = None
+    run_game = None
+    Bot = None
+    Computer = None
+    WickedZergBotProImpl = None
 
 # GPU setup
 try:
@@ -123,9 +159,7 @@ def build_test_cases(args):
     if not selected_maps:
         selected_maps = list(MAPS)
 
-    selected_races = (
-        [RACE_BY_NAME[args.opponent]] if args.opponent else list(RACES)
-    )
+    selected_races = [RACE_BY_NAME[args.opponent]] if args.opponent else list(RACES)
     selected_difficulties = (
         [(DIFFICULTY_BY_NAME[args.difficulty], args.difficulty)]
         if args.difficulty
@@ -218,7 +252,9 @@ def main(argv=None):
 
     if args.dry_run:
         for i, (map_name, race, _difficulty, diff_name) in enumerate(test_cases, 1):
-            logger.info("  DRY %02d/%02d: %s vs %s %s", i, total, map_name, race.name, diff_name)
+            logger.info(
+                "  DRY %02d/%02d: %s vs %s %s", i, total, map_name, race.name, diff_name
+            )
         logger.info("  Dry run complete; no SC2 games launched.")
         return
 

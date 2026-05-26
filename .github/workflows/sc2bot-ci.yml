@@ -73,12 +73,27 @@ jobs:
           cache: pip
 
       - name: Install dependencies
-        run: pip install -r requirements.txt pytest pytest-cov pytest-asyncio
+        # `burnysc2` pulls `mpyq`, whose sdist no longer builds on modern
+        # Python. Install with `--no-deps` and bring its runtime deps in
+        # explicitly, omitting `mpyq` (only needed for replay parsing,
+        # which the unit tests don't exercise).
+        run: |
+          pip install pytest pytest-cov pytest-asyncio pytest-timeout
+          pip install --no-deps "burnysc2>=5.0.0"
+          pip install numpy scipy portpicker pys2clientprotocol pyyaml aiohttp loguru
+          pip install -r requirements-dev.txt 2>/dev/null || true
 
       - name: Run unit tests
-        run: pytest tests/unit -v --cov=. --cov-report=xml --cov-report=term
+        env:
+          PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION: python
+        # Source of truth for the bot's unit tests is
+        # wicked_zerg_challenger/tests (662 tests). The legacy
+        # tests/unit path doesn't exist.
+        run: pytest wicked_zerg_challenger/tests -v --cov=wicked_zerg_challenger --cov-report=xml --cov-report=term
 
       - name: Run integration tests
+        env:
+          PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION: python
         run: pytest tests/integration -v --timeout=120
 
       - name: Upload coverage
