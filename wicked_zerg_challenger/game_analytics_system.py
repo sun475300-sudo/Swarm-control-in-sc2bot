@@ -11,11 +11,11 @@ Game Analytics System - 게임 분석 및 통계 시스템
 
 import json
 import logging
+import uuid
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
 from typing import Dict, List, Optional
-import uuid
 
 logger = logging.getLogger("GameAnalyticsSystem")
 
@@ -412,10 +412,6 @@ class GameAnalytics:
                 self.timing_stats = data.get("timing_stats", self.timing_stats)
                 self.games = data.get("recent_games", [])
 
-                logger.info(f"통계 로드 완료 - {self.total_games}게임")
-
-        except Exception as e:
-            logger.info(f"로드 실패 (새로 시작): {e}")
                 logger.info(f"통계 로드 완료 - {self.total_games}게임")
 
         except Exception as e:

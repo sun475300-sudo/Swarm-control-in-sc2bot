@@ -31,7 +31,22 @@ except ImportError:
         pass
 
     class UnitTypeId:
-        pass
+        # Stub attributes used as default arg values / class-level constants.
+        # Real values come from burnysc2 when installed.
+        OVERLORD = "OVERLORD"
+        OVERSEER = "OVERSEER"
+        ZERGLING = "ZERGLING"
+        BUNKER = "BUNKER"
+        PHOTONCANNON = "PHOTONCANNON"
+        MISSILETURRET = "MISSILETURRET"
+        SPORECRAWLER = "SPORECRAWLER"
+        PLANETARYFORTRESS = "PLANETARYFORTRESS"
+        CHANGELING = "CHANGELING"
+        CHANGELINGMARINE = "CHANGELINGMARINE"
+        CHANGELINGMARINESHIELD = "CHANGELINGMARINESHIELD"
+        CHANGELINGZEALOT = "CHANGELINGZEALOT"
+        CHANGELINGZERGLING = "CHANGELINGZERGLING"
+        CHANGELINGZERGLINGWINGS = "CHANGELINGZERGLINGWINGS"
 
     class AbilityId:
         pass

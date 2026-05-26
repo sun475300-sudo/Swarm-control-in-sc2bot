@@ -53,14 +53,23 @@ class LadderTracker:
         self._update_analytics()
         return match
 
-    def get_winrate(self, vs_race: Optional[str] = None, last_n: Optional[int] = None) -> Dict:
+    def get_winrate(
+        self, vs_race: Optional[str] = None, last_n: Optional[int] = None
+    ) -> Dict:
         matches = self.matches
         if vs_race:
             matches = [m for m in matches if m.opponent_race.lower() == vs_race.lower()]
         if last_n:
             matches = matches[-last_n:]
         if not matches:
-            return {"total": 0, "wins": 0, "losses": 0, "crashes": 0, "winrate": 0.0, "crash_rate": 0.0}
+            return {
+                "total": 0,
+                "wins": 0,
+                "losses": 0,
+                "crashes": 0,
+                "winrate": 0.0,
+                "crash_rate": 0.0,
+            }
 
         wins = sum(1 for m in matches if m.result == "win")
         losses = sum(1 for m in matches if m.result == "loss")
@@ -81,19 +90,30 @@ class LadderTracker:
         map_losses: Dict[str, int] = {}
         opponent_losses: Dict[str, int] = {}
         for match in losses:
-            race_losses[match.opponent_race] = race_losses.get(match.opponent_race, 0) + 1
+            race_losses[match.opponent_race] = (
+                race_losses.get(match.opponent_race, 0) + 1
+            )
             map_losses[match.map_name] = map_losses.get(match.map_name, 0) + 1
             opponent_losses[match.opponent] = opponent_losses.get(match.opponent, 0) + 1
         return {
-            "worst_matchup": max(race_losses, key=race_losses.get) if race_losses else None,
+            "worst_matchup": (
+                max(race_losses, key=race_losses.get) if race_losses else None
+            ),
             "worst_map": max(map_losses, key=map_losses.get) if map_losses else None,
-            "hardest_opponent": max(opponent_losses, key=opponent_losses.get) if opponent_losses else None,
+            "hardest_opponent": (
+                max(opponent_losses, key=opponent_losses.get)
+                if opponent_losses
+                else None
+            ),
             "race_breakdown": race_losses,
             "crash_reasons": [m.crash_reason for m in losses if m.crash_reason],
         }
 
     def get_elo_history(self) -> List[Dict]:
-        return [{"date": m.date, "elo": m.our_elo_after, "opponent": m.opponent} for m in self.matches]
+        return [
+            {"date": m.date, "elo": m.our_elo_after, "opponent": m.opponent}
+            for m in self.matches
+        ]
 
     def _update_analytics(self) -> None:
         report = {
