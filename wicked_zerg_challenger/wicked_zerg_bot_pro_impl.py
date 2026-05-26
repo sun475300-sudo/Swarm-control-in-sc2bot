@@ -686,8 +686,10 @@ class WickedZergBotProImpl(BotAI):
 
             except Exception as e:
                 self.logger.info(f"[WARNING] Training end logic error: {e}")
-                import traceback
-
+                # 모듈 최상단에 ``import traceback`` 이 이미 있다. 함수 내부에서
+                # 재import 하면 동일 함수의 앞쪽 ``traceback.print_exc()`` 호출
+                # (line ~572) 이 local variable referenced before assignment 로
+                # 깨진다 (Python 의 함수 단위 scoping).
                 traceback.print_exc()
 
         # *** 게임 간 매니저 상태 초기화 (훈련 에피소드 안정성) ***

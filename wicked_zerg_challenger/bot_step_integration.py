@@ -271,7 +271,9 @@ except ImportError:
 # Advanced Scout System V2
 try:
     # NOTE: class is AdvancedScoutingSystemV2 (with "ing"); alias kept for compat
-    from scouting.advanced_scout_system_v2 import AdvancedScoutingSystemV2 as AdvancedScoutSystemV2
+    from scouting.advanced_scout_system_v2 import (
+        AdvancedScoutingSystemV2 as AdvancedScoutSystemV2,
+    )
 except ImportError:
     AdvancedScoutSystemV2 = None
 
@@ -2108,7 +2110,9 @@ class BotStepIntegrator:
                     if iteration % 50 == 0:
                         self.logger.warning(f"[WARNING] Building Manager error: {e}")
                 finally:
-                    self._logic_tracker.end_logic("BuildingManager", start_time, success)
+                    self._logic_tracker.end_logic(
+                        "BuildingManager", start_time, success
+                    )
 
             if hasattr(self.bot, "advanced_building_manager"):
                 start_time = self._logic_tracker.start_logic("AdvancedBuilding")
@@ -2161,9 +2165,12 @@ class BotStepIntegrator:
                                 await self.bot.aggressive_tech_builder.recommend_tech_builds()
                             )
                             for tech_type, base_supply, priority in recommendations:
+                                # default 인자 바인딩으로 loop variable 캡처 (B023).
+                                # 람다가 build_tech_aggressively 내부에서 비동기 호출/저장될
+                                # 경우 마지막 iteration 값만 항상 쓰이는 버그를 방지한다.
                                 await self.bot.aggressive_tech_builder.build_tech_aggressively(
                                     tech_type,
-                                    lambda: self._build_tech(tech_type),
+                                    lambda t=tech_type: self._build_tech(t),
                                     base_supply,
                                     priority,
                                 )

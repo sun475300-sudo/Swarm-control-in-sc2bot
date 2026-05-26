@@ -354,6 +354,25 @@ class TestStateQueries(unittest.TestCase):
         self.bb.update_resources(500, 100, 50, 100)
         self.assertFalse(self.bb.should_expand())
 
+    def test_should_not_expand_when_supply_blocked(self):
+        # 보급 막힘 상태: supply_used == supply_cap, minerals 충분, 위협 없음
+        self.bb.update_threat(ThreatLevel.NONE)
+        self.bb.update_resources(600, 100, 100, 100)
+        self.assertFalse(self.bb.should_expand())
+
+    def test_should_not_expand_under_attack(self):
+        self.bb.update_threat(ThreatLevel.NONE)
+        self.bb.update_resources(600, 100, 50, 100)
+        self.bb.is_under_attack = True
+        self.assertFalse(self.bb.should_expand())
+
+    def test_should_not_expand_when_enemy_is_rushing(self):
+        # threat.level 은 NONE 이지만 is_rushing 이 True 인 케이스
+        # (early rush 감지 휴리스틱이 흔히 그렇게 셋팅한다)
+        self.bb.update_threat(ThreatLevel.NONE, is_rushing=True)
+        self.bb.update_resources(600, 100, 50, 100)
+        self.assertFalse(self.bb.should_expand())
+
 
 class TestBackwardCompatibility(unittest.TestCase):
     def setUp(self):
