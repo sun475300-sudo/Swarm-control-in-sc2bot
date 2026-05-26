@@ -16,9 +16,7 @@ try:
     from sc2.position import Point2
     from sc2.unit import Unit
 except ImportError:
-    UnitTypeId = None
-    Point2 = None
-    Unit = None
+    from utils.sc2_compat import Point2, Unit, UnitTypeId  # type: ignore[no-redef]
 
 
 ANTI_AIR_THREAT_NAMES = {"THOR", "ARCHON", "QUEEN", "MARINE", "HYDRALISK"}

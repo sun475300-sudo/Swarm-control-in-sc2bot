@@ -37,33 +37,13 @@ try:
     from sc2.ids.upgrade_id import UpgradeId
     from sc2.position import Point2
 except ImportError:
-
-    class BotAI:
-        pass
-
-    class UnitTypeId:
-        DRONE = "DRONE"
-        OVERLORD = "OVERLORD"
-        SPAWNINGPOOL = "SPAWNINGPOOL"
-        HATCHERY = "HATCHERY"
-        EXTRACTOR = "EXTRACTOR"
-        ZERGLING = "ZERGLING"
-        QUEEN = "QUEEN"
-        BANELINGNEST = "BANELINGNEST"
-        ROACHWARREN = "ROACHWARREN"
-        LAIR = "LAIR"
-        HYDRALISKDEN = "HYDRALISKDEN"
-        ROACH = "ROACH"
-        HYDRALISK = "HYDRALISK"
-
-    class AbilityId:
-        RESEARCH_ZERGLINGMETABOLICBOOST = "RESEARCH_ZERGLINGMETABOLICBOOST"
-
-    class UpgradeId:
-        ZERGLINGMOVEMENTSPEED = "ZERGLINGMOVEMENTSPEED"
-
-    class Point2:
-        pass
+    from utils.sc2_compat import (  # type: ignore[no-redef]
+        AbilityId,
+        BotAI,
+        Point2,
+        UnitTypeId,
+        UpgradeId,
+    )
 
 
 ZVT_BUILDS = {
@@ -540,22 +520,49 @@ class BuildOrderSystem:
             )
         return steps
 
+    # Canonical name used for action inference. Keeps the logic working
+    # regardless of whether ``UnitTypeId`` is the real enum or a string stub.
+    _UPGRADE_MARKERS = {"METABOLIC_BOOST", "GLIAL_RECONSTITUTION", "BURROW"}
+    _TRAIN_NAMES = {
+        "DRONE",
+        "OVERLORD",
+        "QUEEN",
+        "ZERGLING",
+        "ROACH",
+        "HYDRALISK",
+        "BANELING",
+        "MUTALISK",
+        "CORRUPTOR",
+        "RAVAGER",
+        "VIPER",
+        "ULTRALISK",
+        "INFESTOR",
+        "OVERSEER",
+        "BROODLORD",
+        "SWARMHOSTMP",
+    }
+    _MORPH_NAMES = {"LAIR", "HIVE", "GREATERSPIRE", "BANELING", "OVERSEER", "RAVAGER"}
+
+    @staticmethod
+    def _canonical_name(unit_type: Any) -> str:
+        """Return uppercase short name for an enum/stub/string token."""
+        name = getattr(unit_type, "name", None)
+        if name is None:
+            name = str(unit_type)
+        # Strip class prefix (e.g. ``UnitTypeId.MARINE`` -> ``MARINE``)
+        if "." in name:
+            name = name.rsplit(".", 1)[-1]
+        return name.upper()
+
     def _infer_zvt_action(self, unit_type: Any) -> str:
-        if isinstance(unit_type, str):
+        name = self._canonical_name(unit_type)
+        if name in self._UPGRADE_MARKERS:
             return "upgrade"
-        if unit_type == getattr(UnitTypeId, "HATCHERY", None):
+        if name == "HATCHERY":
             return "expand"
-        if unit_type == getattr(UnitTypeId, "LAIR", None):
+        if name in self._MORPH_NAMES:
             return "morph"
-        train_types = {
-            getattr(UnitTypeId, "DRONE", None),
-            getattr(UnitTypeId, "OVERLORD", None),
-            getattr(UnitTypeId, "QUEEN", None),
-            getattr(UnitTypeId, "ZERGLING", None),
-            getattr(UnitTypeId, "ROACH", None),
-            getattr(UnitTypeId, "HYDRALISK", None),
-        }
-        if unit_type in train_types:
+        if name in self._TRAIN_NAMES:
             return "train"
         return "build"
 

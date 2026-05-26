@@ -479,15 +479,23 @@ class WickedZergBotProImpl(BotAI):
         if self.scoring_system:
             try:
                 self.scoring_system.on_step(iteration)
-            except Exception:
-                pass
+            except Exception as exc:
+                # Throttle: at most once per 10 game seconds so a recurring
+                # bug doesn't spam the log every frame.
+                last = getattr(self, "_scoring_error_logged_at", -1e9)
+                if self.time - last > 10:
+                    self.logger.warning("scoring_system.on_step failed: %s", exc)
+                    self._scoring_error_logged_at = self.time
 
         # * Awareness Engine: 실시간 상황 인식 + 자동 대응 *
         if self.awareness_engine:
             try:
                 self.awareness_engine.on_step(iteration)
-            except Exception:
-                pass
+            except Exception as exc:
+                last = getattr(self, "_awareness_error_logged_at", -1e9)
+                if self.time - last > 10:
+                    self.logger.warning("awareness_engine.on_step failed: %s", exc)
+                    self._awareness_error_logged_at = self.time
 
         # Personality module is called in bot_step_integration.py; do not call here.
 

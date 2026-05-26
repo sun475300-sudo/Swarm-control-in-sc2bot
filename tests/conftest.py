@@ -18,6 +18,26 @@ PROJECT_ROOT = Path(__file__).parent.parent
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
+# sc2 import 폴백을 위해 wicked_zerg_challenger 디렉토리를 sys.path에 추가하고
+# 테스트 conftest의 스텁 주입 함수를 재사용한다.
+_WZC = PROJECT_ROOT / "wicked_zerg_challenger"
+if _WZC.exists() and str(_WZC) not in sys.path:
+    sys.path.insert(0, str(_WZC))
+
+try:
+    import types
+
+    import sc2  # noqa: F401
+except ImportError:  # pragma: no cover - only used when burnysc2 is missing
+    try:
+        from wicked_zerg_challenger.tests.conftest import (
+            _inject_sc2_stubs as _wzc_inject,
+        )
+
+        _wzc_inject()
+    except Exception:
+        pass
+
 
 # ═══════════════════════════════════════════════════════
 # 경로 관련 Fixtures

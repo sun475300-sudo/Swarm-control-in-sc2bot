@@ -19,8 +19,21 @@ try:
     from sc2.units import Units
 except ImportError:
     Unit = None
-    Units = None
     Point2 = None
+
+    class _EmptyUnits(list):
+        """Minimal Units stand-in used when ``sc2`` is unavailable."""
+
+        def __init__(self, items=None, _bot=None):
+            super().__init__(items or [])
+
+        def closer_than(self, distance, target):
+            return _EmptyUnits()
+
+        def filter(self, predicate):
+            return _EmptyUnits([item for item in self if predicate(item)])
+
+    Units = _EmptyUnits
 
 logger = get_logger("UnitHelpers")
 
