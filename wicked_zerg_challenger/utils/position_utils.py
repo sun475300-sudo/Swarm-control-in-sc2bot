@@ -7,7 +7,23 @@ across the codebase. Uses efficient algorithms and consistent interfaces.
 
 from typing import TYPE_CHECKING, List, Optional, Union
 
-from sc2.position import Point2
+try:
+    from sc2.position import Point2
+except ImportError:  # sc2 unavailable (e.g. CI without burnysc2)
+    # Minimal stand-in so this module can still be imported for type hints
+    # and pure-Python smoke tests. Real game runs always have sc2 installed.
+    class Point2(tuple):  # type: ignore[no-redef]
+        def __new__(cls, xy):
+            return super().__new__(cls, xy)
+
+        @property
+        def x(self):
+            return self[0]
+
+        @property
+        def y(self):
+            return self[1]
+
 
 if TYPE_CHECKING:
     from sc2.unit import Unit

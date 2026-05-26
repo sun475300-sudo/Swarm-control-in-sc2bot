@@ -110,6 +110,41 @@ class SC2Coach:
                 "가스 집약 유닛 테크로 전환하거나, 일꾼을 가스에서 빼세요.",
                 "severity": "medium",
             },
+            {
+                "pattern": r"no.?upgrade|업그레이드.?없|업글.?지연",
+                "category": "macro",
+                "advice": "업그레이드(공방업)가 지연되고 있습니다. 진화장(에볼루션 챔버)에서 "
+                "공격력/방어력 업그레이드는 항상 중첩 진행하세요. 후반 교전력 차이가 큽니다.",
+                "severity": "medium",
+            },
+            {
+                "pattern": r"slow.?tech|테크.?지연|테크.?느림",
+                "category": "macro",
+                "advice": "상위 테크(레어/하이브) 진행이 느립니다. 상대 빌드 대응이 늦어질 수 있습니다. "
+                "정찰 정보를 바탕으로 테크 타이밍을 조정하세요.",
+                "severity": "medium",
+            },
+            {
+                "pattern": r"worker.?over|일꾼.?과잉|드론.?과다",
+                "category": "economy",
+                "advice": "일꾼이 과잉 생산되고 있습니다. 베이스당 16(미네랄)+6(가스), 최대 70~80기 "
+                "이후로는 추가 생산을 멈추고 군대로 전환하세요.",
+                "severity": "low",
+            },
+            {
+                "pattern": r"queen.?short|퀸.?부족|퀸.?적음",
+                "category": "macro",
+                "advice": "퀸이 부족합니다. 해처리당 1퀸은 인젝트 전용, 추가 퀸으로 크립 전파/방어를 "
+                "병행하세요. 보통 4~6 해처리 시 6~8퀸이 적정선.",
+                "severity": "high",
+            },
+            {
+                "pattern": r"no.?detection|디텍.?없|관측기.?없|오버시어.?없",
+                "category": "defense",
+                "advice": "디텍션(은신 탐지)이 없습니다. 오버시어 또는 포자포로 클로킹 유닛/번저 등에 "
+                "대비하세요. 테란 밴시·프로토스 다크템플러는 디텍 없으면 즉시 패배합니다.",
+                "severity": "critical",
+            },
         ]
 
     def get_coaching_advice(self, game_log: str) -> list:
