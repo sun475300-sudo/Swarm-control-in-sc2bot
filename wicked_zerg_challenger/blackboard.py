@@ -538,9 +538,25 @@ class GameStateBlackboard:
         )
 
     def should_expand(self) -> bool:
-        """확장 가능한 상황인가?"""
+        """확장 가능한 상황인가? (해처리 비용 300, 약간의 여유 포함)"""
         return (
             self.threat.level == ThreatLevel.NONE
-            and not self.resources.is_supply_block
+            and not self.resources.is_supply_blocked
             and not self.is_under_attack
+            and self.resources.minerals >= 300
         )
+
+
+# Backwards-compatible alias — older code (and tests) imports `Blackboard`.
+Blackboard = GameStateBlackboard
+
+__all__ = [
+    "AuthorityMode",
+    "Blackboard",
+    "GamePhase",
+    "GameStateBlackboard",
+    "ResourceState",
+    "ThreatInfo",
+    "ThreatLevel",
+    "UnitCounts",
+]
