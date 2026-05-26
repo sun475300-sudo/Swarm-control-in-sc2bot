@@ -222,7 +222,12 @@ class TestEconomyManager(unittest.TestCase):
     # ==================== Configuration Tests ====================
 
     def test_config_none_defaults(self):
-        """Test default values when config is None"""
+        """Test default values when config is None.
+
+        Threshold lowered from 600 to 550 in commit a2d57e9
+        ("optimize macro hatchery mineral threshold to 550") - earlier
+        macro hatch construction tightens the build-order timing.
+        """
         # Manager initialized with config=None in setUp
         self.assertEqual(self.manager.macro_hatchery_mineral_threshold, 550)
         self.assertEqual(self.manager.macro_hatchery_larva_threshold, 3)

@@ -224,6 +224,26 @@ class WickedZergBotProImpl(BotAI):
                 self.logger.warning(f"MapMemorySystem on_start failed: {e}")
                 traceback.print_exc()
 
+        # === Opponent Modeling (must come before PersonalityModule which depends on it) ===
+        # Without explicit instantiation here, all downstream `self.opponent_modeling`
+        # references silently no-op via hasattr() guards, leaving the entire
+        # opponent-modeling subsystem dead. Initialize it once with the bot reference;
+        # data persistence and game-start tracking happen in dedicated callbacks below.
+        self.opponent_modeling = None
+        try:
+            from opponent_modeling import OpponentModeling
+
+            self.opponent_modeling = OpponentModeling(
+                self,
+                intel_manager=getattr(self, "intel", None),
+            )
+            self.logger.info("[OPPONENT_MODELING] Initialized (Phase 15)")
+        except ImportError as e:
+            self.logger.info(f"[OPPONENT_MODELING] Not available: {e}")
+        except Exception as e:
+            self.logger.warning(f"[OPPONENT_MODELING] Initialization failed: {e}")
+            traceback.print_exc()
+
         # === Personality Module (Jarvis) ===
         try:
             mode = PersonalityMode.NEUTRAL
