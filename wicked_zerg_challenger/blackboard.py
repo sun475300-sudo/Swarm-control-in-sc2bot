@@ -358,8 +358,13 @@ class GameStateBlackboard:
         # 긴급 상황: 러시 감지 또는 CRITICAL 위협
         # FIX P0-2: EMERGENCY 모드 30초 타임아웃 추가
         if self.threat.is_rushing or self.threat.level == ThreatLevel.CRITICAL:
-            emergency_duration = self.game_time - getattr(self, "authority_changed_at", 0)
-            if self.authority_mode == AuthorityMode.EMERGENCY and emergency_duration > 30:
+            emergency_duration = self.game_time - getattr(
+                self, "authority_changed_at", 0
+            )
+            if (
+                self.authority_mode == AuthorityMode.EMERGENCY
+                and emergency_duration > 30
+            ):
                 # 30초 이상 EMERGENCY 지속 → COMBAT으로 다운그레이드
                 self.set_authority_mode(
                     AuthorityMode.COMBAT,
@@ -538,9 +543,19 @@ class GameStateBlackboard:
         )
 
     def should_expand(self) -> bool:
-        """확장 가능한 상황인가?"""
+        """확장 가능한 상황인가?
+
+        Hatchery는 300 미네랄이 필요하므로, 미네랄이 부족한 상태(< 300)에서는
+        확장을 권장하지 않는다.
+        """
         return (
             self.threat.level == ThreatLevel.NONE
-            and not self.resources.is_supply_block
+            and not self.resources.is_supply_blocked
             and not self.is_under_attack
+            and self.resources.minerals >= 300
         )
+
+
+# Public alias: the rest of the codebase and tests refer to the blackboard as
+# simply ``Blackboard``; ``GameStateBlackboard`` is the canonical class name.
+Blackboard = GameStateBlackboard

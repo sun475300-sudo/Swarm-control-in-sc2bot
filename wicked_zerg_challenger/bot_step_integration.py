@@ -153,11 +153,14 @@ except ImportError:
 
 # *** PHASE 8/9 SYSTEMS ***
 
-# Enhanced Scouting System
-try:
-    from scouting.enhanced_scout_system import EnhancedScoutSystem
-except ImportError:
-    EnhancedScoutSystem = None
+# Enhanced Scouting System (legacy)
+#
+# ``EnhancedScoutSystem`` 모듈은 AdvancedScoutingSystemV2 가 등장하면서
+# DeprecationWarning 을 발행하도록 변경되었다. 우리는 V2 가 없을 때만
+# fallback 으로 사용하므로, V2 가 이미 import 가능한 환경에서는 모듈을
+# 아예 import 하지 않아 경고도 발생시키지 않는다. (V2 import 는 line 274
+# 부근의 advanced_scout_system_v2 블록에서 처리.)
+EnhancedScoutSystem = None  # populated lazily below if V2 unavailable
 
 # Harassment Coordinator
 try:
@@ -271,9 +274,24 @@ except ImportError:
 # Advanced Scout System V2
 try:
     # NOTE: class is AdvancedScoutingSystemV2 (with "ing"); alias kept for compat
-    from scouting.advanced_scout_system_v2 import AdvancedScoutingSystemV2 as AdvancedScoutSystemV2
+    from scouting.advanced_scout_system_v2 import (
+        AdvancedScoutingSystemV2 as AdvancedScoutSystemV2,
+    )
 except ImportError:
     AdvancedScoutSystemV2 = None
+
+# Lazy fallback: legacy EnhancedScoutSystem 은 V2 가 없을 때만 import 한다.
+# (직접 import 하면 모듈 자체가 DeprecationWarning 을 던지므로 import 자체를
+# 회피하는 것이 깔끔하다.)
+if AdvancedScoutSystemV2 is None:
+    try:
+        import warnings
+
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", DeprecationWarning)
+            from scouting.enhanced_scout_system import EnhancedScoutSystem
+    except ImportError:
+        pass  # EnhancedScoutSystem remains None (set near top of file)
 
 # Flanking Coordinator (2순위 - 양각 포위 전술)
 try:
@@ -2108,7 +2126,9 @@ class BotStepIntegrator:
                     if iteration % 50 == 0:
                         self.logger.warning(f"[WARNING] Building Manager error: {e}")
                 finally:
-                    self._logic_tracker.end_logic("BuildingManager", start_time, success)
+                    self._logic_tracker.end_logic(
+                        "BuildingManager", start_time, success
+                    )
 
             if hasattr(self.bot, "advanced_building_manager"):
                 start_time = self._logic_tracker.start_logic("AdvancedBuilding")
