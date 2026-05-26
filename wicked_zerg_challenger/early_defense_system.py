@@ -177,7 +177,7 @@ class EarlyDefenseSystem:
             logger.warning(
                 f"[WARNING] Early rush detected! {nearby_enemies.amount} enemies found (Game Time: {int(self.bot.time)}s)"
             )
-            logger.info(f"Emergency Defense Mode ACTIVATED!")
+            logger.info("Emergency Defense Mode ACTIVATED!")
         else:
             # Reset flags when threat has cleared
             if self.early_rush_detected and not self.proxy_response_active:
@@ -208,7 +208,7 @@ class EarlyDefenseSystem:
             except Exception:
                 position = getattr(structure, "position", None)
                 distance = position.distance_to(main_base) if position else 999.0
-            if distance <= 40.0:
+            if distance <= PROXY_DETECT_RADIUS:
                 nearby_structures.append(structure)
 
         if not nearby_structures:
@@ -283,7 +283,7 @@ class EarlyDefenseSystem:
             self.bot.do(worker.build(UnitTypeId.SPINECRAWLER, location))
             self._proxy_spines_requested += 1
 
-    def _pull_workers_to_proxy(self, target, desired_count: int = 6) -> None:
+    def _pull_workers_to_proxy(self, target, desired_count: int = PROXY_DEFENSE_WORKERS) -> None:
         workers = getattr(self.bot, "workers", None)
         if not workers:
             return
@@ -435,7 +435,7 @@ class EarlyDefenseSystem:
                     f"[OK] Spawning Pool requested via TechCoordinator (Game Time: {int(self.bot.time)}s)"
                 )
             elif not tech_coordinator:
-                logger.warning(f"[WARNING] TechCoordinator not available")
+                logger.warning("[WARNING] TechCoordinator not available")
         except Exception as e:
             logger.error(f"Failed to request Pool construction: {e}")
 
@@ -533,7 +533,7 @@ class EarlyDefenseSystem:
             # Threat cleared
             self.early_threats.clear()
             self.emergency_mode = False
-            logger.info(f"Early threat cleared. Returning to normal mode.")
+            logger.info("Early threat cleared. Returning to normal mode.")
             return
 
         # Closest enemy
@@ -548,7 +548,7 @@ class EarlyDefenseSystem:
 
         # Worker Defense (Only if enemy is very close)
         if closest_enemy.distance_to(main_base) < 10:
-            defending_workers = min(6, len(self.bot.workers))  # Max 6 workers
+            defending_workers = min(MAX_WORKER_DEFENSE, len(self.bot.workers))
             workers_to_defend = self.bot.workers.closest_n_units(
                 closest_enemy.position, defending_workers
             )
