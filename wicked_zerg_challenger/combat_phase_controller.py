@@ -79,6 +79,7 @@ class CombatPhaseController:
 
         # 전투 그룹 관리
         self.combat_groups: Dict[str, CombatGroup] = {}  # group_id -> CombatGroup
+        self._next_group_seq: int = 0  # monotonic id; never reused on delete
 
         # 전투 설정
         self.min_army_for_attack = 8  # 최소 공격 병력
@@ -475,7 +476,9 @@ class CombatPhaseController:
 
     def _create_new_group(self, units: List[Unit], game_time: float) -> str:
         """새 전투 그룹 생성"""
-        group_id = f"group_{len(self.combat_groups)}"
+        # monotonic counter: avoid id collisions when groups are deleted
+        group_id = f"group_{self._next_group_seq}"
+        self._next_group_seq += 1
 
         group = CombatGroup(
             units=set(u.tag for u in units),

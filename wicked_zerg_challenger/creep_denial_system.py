@@ -568,31 +568,27 @@ class CreepDenialSystem:
 
     def _cleanup_old_tumor_data(self, game_time: float) -> None:
         """오래된 종양 데이터 정리"""
-        to_remove = []
+        # 만료 + 파괴 케이스가 동시에 매치돼도 중복 추가되지 않도록 set 사용
+        to_remove: set = set()
 
         for tumor_id, tumor in self.detected_tumors.items():
             # 60초 동안 안 본 종양은 제거
             if game_time - tumor.last_seen > self.tumor_memory_duration:
-                to_remove.append(tumor_id)
+                to_remove.add(tumor_id)
 
             # 종양이 파괴되었는지 확인
-            if tumor.unit_tag:
-                # 유닛 태그로 확인
-                if not self._tumor_exists(tumor.unit_tag):
-                    to_remove.append(tumor_id)
+            if tumor.unit_tag and not self._tumor_exists(tumor.unit_tag):
+                if tumor_id not in to_remove:
                     self.tumors_destroyed += 1
                     self.logger.info(
                         f"[CREEP_DENIAL] [*] Tumor destroyed at {tumor.position}! [*]"
                     )
-
-                    # * 할당된 유닛들 반환 *
-                    self._release_tumor_units(tumor)
+                to_remove.add(tumor_id)
 
         for tumor_id in to_remove:
-            tumor = self.detected_tumors[tumor_id]
-            # 제거되는 종양의 유닛들도 반환
-            self._release_tumor_units(tumor)
-            del self.detected_tumors[tumor_id]
+            tumor = self.detected_tumors.pop(tumor_id, None)
+            if tumor is not None:
+                self._release_tumor_units(tumor)
 
     def _release_tumor_units(self, tumor: DetectedTumor) -> None:
         """종양에 할당된 유닛들을 UnitAuthorityManager에 반환"""

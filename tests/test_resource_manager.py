@@ -80,6 +80,28 @@ class TestResourceManager:
         assert self.manager._reserved_gas == 150
 
     @pytest.mark.asyncio
+    async def test_replacement_succeeds_when_only_old_held_capacity(self):
+        """Re-reservation must account for the caller's own prior hold.
+
+        Regression: previously, the availability check did not deduct the
+        caller's own prior reservation, so increasing a near-cap hold could
+        be rejected even though releasing the old hold first would have
+        cleared it.
+        """
+        self.bot.minerals = 100
+        self.bot.vespene = 100
+
+        # Manager A reserves 80 — uses most of pool
+        assert await self.manager.try_reserve(80, 0, "ManagerA") is True
+
+        # Manager A now wants 90; this is only possible because A's own
+        # 80 is logically released as part of the replacement.
+        result = await self.manager.try_reserve(90, 0, "ManagerA")
+        assert result is True
+        assert self.manager._reserved_minerals == 90
+        assert self.manager._reservations["ManagerA"] == (90, 0)
+
+    @pytest.mark.asyncio
     async def test_get_available_resources(self):
         """Test getting available resources"""
         await self.manager.try_reserve(200, 100, "TestManager")

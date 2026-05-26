@@ -45,10 +45,15 @@ class ConfigLoader:
                 return config
         except FileNotFoundError:
             logger.warning(f"Strategy config not found: {config_path}")
-            return ConfigLoader._get_default_config()
+            defaults = ConfigLoader._get_default_config()
+            # 매 호출마다 경고 + 파일 I/O 재시도를 막기 위해 fallback도 캐싱
+            ConfigLoader._config_cache["strategy"] = defaults
+            return defaults
         except json.JSONDecodeError as e:
             logger.error(f"Invalid JSON in strategy config: {e}")
-            return ConfigLoader._get_default_config()
+            defaults = ConfigLoader._get_default_config()
+            ConfigLoader._config_cache["strategy"] = defaults
+            return defaults
 
     @staticmethod
     def get_scouting_config() -> Dict[str, Any]:

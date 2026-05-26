@@ -55,21 +55,18 @@ class ResourceManager:
             True if successful, False if insufficient resources
         """
         async with self._lock:
-            # Calculate currently available resources
-            available_m = self.bot.minerals - self._reserved_minerals
-            available_g = self.bot.vespene - self._reserved_gas
+            # 같은 매니저가 이미 예약을 가지고 있다면 그 양만큼은 가용 자원으로 본다
+            prior_m, prior_g = self._reservations.get(manager_name, (0, 0))
+
+            # Calculate currently available resources (excluding our own prior reservation)
+            available_m = self.bot.minerals - (self._reserved_minerals - prior_m)
+            available_g = self.bot.vespene - (self._reserved_gas - prior_g)
 
             # Check if we have enough resources
             if available_m >= minerals and available_g >= gas:
-                # Reserve resources
-                self._reserved_minerals += minerals
-                self._reserved_gas += gas
-
-                # Release any previous reservation from this manager
-                if manager_name in self._reservations:
-                    old_m, old_g = self._reservations[manager_name]
-                    self._reserved_minerals -= old_m
-                    self._reserved_gas -= old_g
+                # Replace any previous reservation from this manager atomically
+                self._reserved_minerals = self._reserved_minerals - prior_m + minerals
+                self._reserved_gas = self._reserved_gas - prior_g + gas
 
                 # Record new reservation
                 self._reservations[manager_name] = (minerals, gas)

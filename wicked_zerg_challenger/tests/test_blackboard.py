@@ -124,6 +124,37 @@ class TestThreat(unittest.TestCase):
         self.bb.update_threat(ThreatLevel.LOW)
         self.assertEqual(self.bb.threat.detected_at, 0.0)
 
+    def test_threat_episode_resets_when_cleared(self):
+        # 첫 위협 에피소드: detected_at 기록
+        self.bb.game_time = 100.0
+        self.bb.update_threat(ThreatLevel.MEDIUM)
+        self.assertEqual(self.bb.threat.detected_at, 100.0)
+
+        # 위협 해소
+        self.bb.game_time = 200.0
+        self.bb.update_threat(ThreatLevel.NONE)
+        self.assertEqual(self.bb.threat.detected_at, 0.0)
+
+        # 새 에피소드 시작 시 새 timestamp
+        self.bb.game_time = 500.0
+        self.bb.update_threat(ThreatLevel.HIGH)
+        self.assertEqual(self.bb.threat.detected_at, 500.0)
+
+    def test_threat_position_cleared_when_threat_drops(self):
+        sentinel = object()
+        self.bb.update_threat(ThreatLevel.HIGH, threat_position=sentinel)
+        self.assertIs(self.bb.threat.threat_position, sentinel)
+
+        self.bb.update_threat(ThreatLevel.NONE)
+        self.assertIsNone(self.bb.threat.threat_position)
+
+    def test_threat_position_preserved_on_subsequent_high_update(self):
+        sentinel = object()
+        self.bb.update_threat(ThreatLevel.HIGH, threat_position=sentinel)
+        # 동일 에피소드 후속 업데이트가 position 없이 들어와도 유지
+        self.bb.update_threat(ThreatLevel.HIGH)
+        self.assertIs(self.bb.threat.threat_position, sentinel)
+
 
 class TestAuthorityMode(unittest.TestCase):
     def setUp(self):
@@ -239,6 +270,12 @@ class TestProductionQueue(unittest.TestCase):
         self.assertEqual(result[0], "ROACH")
         self.assertIsNone(self.bb.get_next_production())
 
+    def test_unknown_priority_does_not_raise(self):
+        # Defensive: callers may pass arbitrary priority ints
+        self.bb.request_production("VIPER", 1, "Custom", priority=42)
+        result = self.bb.get_next_production()
+        self.assertEqual(result, ("VIPER", 1, "Custom"))
+
 
 class TestBuildingReservation(unittest.TestCase):
     def setUp(self):
@@ -353,6 +390,23 @@ class TestStateQueries(unittest.TestCase):
         self.bb.update_threat(ThreatLevel.LOW)
         self.bb.update_resources(500, 100, 50, 100)
         self.assertFalse(self.bb.should_expand())
+
+    def test_should_not_expand_when_supply_blocked(self):
+        self.bb.update_threat(ThreatLevel.NONE)
+        # supply_used == supply_cap => is_supply_blocked is True
+        self.bb.update_resources(500, 100, 100, 100)
+        self.assertFalse(self.bb.should_expand())
+
+    def test_should_not_expand_when_under_attack(self):
+        self.bb.update_threat(ThreatLevel.NONE)
+        self.bb.update_resources(500, 100, 50, 100)
+        self.bb.is_under_attack = True
+        self.assertFalse(self.bb.should_expand())
+
+    def test_should_expand_at_exact_hatchery_cost(self):
+        self.bb.update_threat(ThreatLevel.NONE)
+        self.bb.update_resources(300, 0, 50, 100)
+        self.assertTrue(self.bb.should_expand())
 
 
 class TestBackwardCompatibility(unittest.TestCase):

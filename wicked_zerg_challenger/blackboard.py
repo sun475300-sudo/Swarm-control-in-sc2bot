@@ -280,10 +280,17 @@ class GameStateBlackboard:
 
         if threat_position:
             self.threat.threat_position = threat_position
+        elif level < ThreatLevel.MEDIUM:
+            # 위협 해소 시 stale position 잔재 제거
+            self.threat.threat_position = None
 
-        # 위협 감지 시간 기록
-        if level >= ThreatLevel.MEDIUM and self.threat.detected_at == 0.0:
-            self.threat.detected_at = self.game_time
+        # 위협 감지 시간 기록 — 새 위협 에피소드 시작 시점을 추적
+        if level >= ThreatLevel.MEDIUM:
+            if self.threat.detected_at == 0.0:
+                self.threat.detected_at = self.game_time
+        else:
+            # 위협이 해소되면 다음 에피소드를 위해 리셋
+            self.threat.detected_at = 0.0
 
     # ========== Dynamic Authority System ==========
 
@@ -407,8 +414,8 @@ class GameStateBlackboard:
         if priority is None:
             priority = self.get_authority_priority(requester)
 
-        # 중복 요청 체크
-        queue = self.production_queue[priority]
+        # 사전에 정의되지 않은 우선순위가 들어와도 KeyError 없이 처리
+        queue = self.production_queue.setdefault(priority, [])
         for i, (utype, _, req) in enumerate(queue):
             if utype == unit_type and req == requester:
                 # 기존 요청 업데이트
@@ -416,7 +423,7 @@ class GameStateBlackboard:
                 return
 
         # 새 요청 추가
-        self.production_queue[priority].append((unit_type, count, requester))
+        queue.append((unit_type, count, requester))
 
     def get_next_production(self) -> Optional[tuple]:
         """
@@ -539,8 +546,13 @@ class GameStateBlackboard:
 
     def should_expand(self) -> bool:
         """확장 가능한 상황인가?"""
+        HATCHERY_MINERAL_COST = 300
         return (
             self.threat.level == ThreatLevel.NONE
-            and not self.resources.is_supply_block
+            and not self.resources.is_supply_blocked
             and not self.is_under_attack
+            and self.resources.minerals >= HATCHERY_MINERAL_COST
         )
+
+
+Blackboard = GameStateBlackboard

@@ -510,12 +510,14 @@ class DefenseCoordinator:
 
         self.blackboard.is_under_attack = is_under_attack
 
-        # 공격받은 기지 태그 업데이트
+        # 공격받은 기지 태그를 매 프레임마다 재계산해 stale 태그 누적을 방지한다
+        currently_attacked = set()
         if is_under_attack:
             for base in self.bot.townhalls:
                 nearby_enemies = self.bot.enemy_units.closer_than(15, base.position)
                 if nearby_enemies:
-                    self.blackboard.attacked_bases.add(base.tag)
+                    currently_attacked.add(base.tag)
+        self.blackboard.attacked_bases = currently_attacked
 
     # ========== 초반 방어 (0-3분) ==========
 
