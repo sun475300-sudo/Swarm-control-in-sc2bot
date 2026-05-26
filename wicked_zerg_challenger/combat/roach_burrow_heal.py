@@ -20,7 +20,7 @@ else:
         from sc2.position import Point2
         from sc2.unit import Unit
         from sc2.units import Units
-    except ImportError:
+    except (ImportError, TypeError):
         Units = object
         Unit = object
         Point2 = tuple
@@ -93,7 +93,7 @@ class RoachBurrowHeal:
         """
         try:
             from sc2.ids.upgrade_id import UpgradeId
-        except ImportError:
+        except (ImportError, TypeError):
             return
 
         # Burrow 업그레이드 확인
@@ -125,7 +125,7 @@ class RoachBurrowHeal:
 
         try:
             from sc2.ids.unit_typeid import UnitTypeId
-        except ImportError:
+        except (ImportError, TypeError):
             return
 
         game_time = getattr(self.bot, "time", 0)
@@ -183,7 +183,7 @@ class RoachBurrowHeal:
         """
         try:
             from sc2.ids.ability_id import AbilityId
-        except ImportError:
+        except (ImportError, TypeError):
             return
 
         try:
@@ -212,7 +212,7 @@ class RoachBurrowHeal:
         """
         try:
             from sc2.ids.ability_id import AbilityId
-        except ImportError:
+        except (ImportError, TypeError):
             return
 
         try:
@@ -315,7 +315,7 @@ class RoachBurrowHeal:
 
         try:
             from sc2.ids.unit_typeid import UnitTypeId
-        except ImportError:
+        except (ImportError, TypeError):
             return
 
         # 현재 살아있는 바퀴 태그

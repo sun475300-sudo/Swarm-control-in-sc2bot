@@ -25,7 +25,7 @@ try:
     from sc2.ids.upgrade_id import UpgradeId
     from sc2.position import Point2
     from sc2.unit import Unit
-except ImportError:
+except (ImportError, TypeError):
 
     class BotAI:
         pass
@@ -51,7 +51,7 @@ from unit_authority_manager import AuthorityLevel
 # 백과사전 임포트 (상성 데이터 활용)
 try:
     from sc2_encyclopedia import COUNTER_MATRIX, get_counter
-except ImportError:
+except (ImportError, TypeError):
     get_counter = None
     COUNTER_MATRIX = {}
 

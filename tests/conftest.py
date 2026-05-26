@@ -11,6 +11,10 @@ import tempfile
 from pathlib import Path
 from unittest.mock import MagicMock
 
+# s2clientprotocol는 protobuf descriptor를 직접 생성하기 때문에
+# 최신 protobuf C++ 구현과 충돌한다. 순수 파이썬 구현을 사용하면 회피된다.
+os.environ.setdefault("PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION", "python")
+
 import pytest
 
 # 프로젝트 루트를 sys.path에 추가

@@ -36,7 +36,7 @@ try:
     from sc2.ids.unit_typeid import UnitTypeId
     from sc2.ids.upgrade_id import UpgradeId
     from sc2.position import Point2
-except ImportError:
+except (ImportError, TypeError):
 
     class BotAI:
         pass
@@ -1196,7 +1196,7 @@ class BuildOrderSystem:
         actual = self.expansion_actual_time
 
         if actual == 0:
-            logger.info(f"[!] Expansion timing: NOT RECORDED")
+            logger.info("[!] Expansion timing: NOT RECORDED")
             return
 
         target = self.expansion_timing_target

@@ -29,7 +29,7 @@ try:
     from sc2.units import Units
 
     SC2_AVAILABLE = True
-except ImportError:
+except (ImportError, TypeError):
     BotAI = object
     UnitTypeId = None
     AbilityId = None
@@ -338,7 +338,7 @@ class LurkerAmbushSystem:
                 self.LURKER_RANGE = (
                     10  # Base 9 + 1 (upgrade gives +2 but we use 10 for safety)
                 )
-        except ImportError as e:
+        except (ImportError, TypeError) as e:
             self.logger.error(f"[LurkerAmbush] Failed to import UpgradeId: {e}")
         except AttributeError as e:
             self.logger.error(f"[LurkerAmbush] Bot state not available: {e}")

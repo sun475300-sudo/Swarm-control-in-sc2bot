@@ -354,6 +354,129 @@ class TestStateQueries(unittest.TestCase):
         self.bb.update_resources(500, 100, 50, 100)
         self.assertFalse(self.bb.should_expand())
 
+    def test_should_not_expand_when_supply_blocked(self):
+        """공급 막힘 상태에서는 확장 금지 (T1-01 회귀 방지)"""
+        self.bb.update_threat(ThreatLevel.NONE)
+        # supply_used == supply_cap 이고 supply_cap < 200 -> supply blocked
+        self.bb.update_resources(500, 100, 100, 100)
+        self.assertFalse(self.bb.should_expand())
+
+    def test_should_not_expand_under_active_attack(self):
+        """공격 받는 동안 확장 금지"""
+        self.bb.update_threat(ThreatLevel.NONE)
+        self.bb.update_resources(500, 100, 50, 100)
+        self.bb.is_under_attack = True
+        self.assertFalse(self.bb.should_expand())
+
+    def test_should_expand_exact_threshold(self):
+        """광물 정확히 300이면 확장 가능 (해처리 비용)"""
+        self.bb.update_threat(ThreatLevel.NONE)
+        self.bb.update_resources(300, 0, 50, 100)
+        self.assertTrue(self.bb.should_expand())
+
+    def test_should_not_expand_one_below_threshold(self):
+        """광물 299면 확장 불가"""
+        self.bb.update_threat(ThreatLevel.NONE)
+        self.bb.update_resources(299, 0, 50, 100)
+        self.assertFalse(self.bb.should_expand())
+
+
+class TestAutoAdjustAuthority(unittest.TestCase):
+    """auto_adjust_authority 시스템 결정 로직 회귀 방지"""
+
+    def setUp(self):
+        self.bb = GameStateBlackboard()
+
+    def test_rush_triggers_emergency(self):
+        self.bb.threat.is_rushing = True
+        self.bb.auto_adjust_authority()
+        self.assertEqual(self.bb.authority_mode, AuthorityMode.EMERGENCY)
+
+    def test_critical_threat_triggers_emergency(self):
+        self.bb.update_threat(ThreatLevel.CRITICAL)
+        self.bb.auto_adjust_authority()
+        self.assertEqual(self.bb.authority_mode, AuthorityMode.EMERGENCY)
+
+    def test_emergency_timeout_downgrades_to_combat(self):
+        """30초 이상 EMERGENCY 지속 시 COMBAT 으로 다운그레이드"""
+        self.bb.threat.is_rushing = True
+        self.bb.set_authority_mode(AuthorityMode.EMERGENCY, "initial rush")
+        self.bb.game_time = 0.0
+        self.bb.authority_changed_at = 0.0
+        # 31초 경과
+        self.bb.game_time = 31.0
+        self.bb.auto_adjust_authority()
+        self.assertEqual(self.bb.authority_mode, AuthorityMode.COMBAT)
+
+    def test_high_threat_triggers_combat(self):
+        self.bb.update_threat(ThreatLevel.HIGH)
+        self.bb.auto_adjust_authority()
+        self.assertEqual(self.bb.authority_mode, AuthorityMode.COMBAT)
+
+    def test_strategy_active_uses_strategy_mode(self):
+        self.bb.update_threat(ThreatLevel.LOW)
+        self.bb.current_strategy = "ROACH_ALL_IN"
+        self.bb.build_order_complete = False
+        self.bb.auto_adjust_authority()
+        self.assertEqual(self.bb.authority_mode, AuthorityMode.STRATEGY)
+
+    def test_opening_with_no_threat_uses_economy(self):
+        self.bb.update_threat(ThreatLevel.NONE)
+        self.bb.game_phase = GamePhase.OPENING
+        self.bb.current_strategy = "none"
+        self.bb.auto_adjust_authority()
+        self.assertEqual(self.bb.authority_mode, AuthorityMode.ECONOMY)
+
+    def test_default_balanced(self):
+        """위협 없음, OPENING 아님, 전략 없음 → BALANCED"""
+        self.bb.update_threat(ThreatLevel.NONE)
+        self.bb.game_phase = GamePhase.MID_GAME
+        self.bb.current_strategy = "none"
+        self.bb.build_order_complete = True
+        self.bb.auto_adjust_authority()
+        self.assertEqual(self.bb.authority_mode, AuthorityMode.BALANCED)
+
+
+class TestProductionQueue(unittest.TestCase):
+    """request_production / get_next_production 동작 회귀 방지"""
+
+    def setUp(self):
+        self.bb = GameStateBlackboard()
+
+    def test_priority_ordering(self):
+        # priority가 작을수록 먼저 (sorted ascending)
+        self.bb.request_production("zergling", count=3, priority=5, requester="combat")
+        self.bb.request_production("drone", count=2, priority=1, requester="economy")
+        next_request = self.bb.get_next_production()
+        self.assertIsNotNone(next_request)
+        unit_type, count, requester = next_request
+        self.assertEqual(unit_type, "drone")
+        self.assertEqual(count, 2)
+        self.assertEqual(requester, "economy")
+
+    def test_clear_by_requester(self):
+        self.bb.request_production("zergling", count=1, priority=1, requester="combat")
+        self.bb.request_production("drone", count=1, priority=2, requester="economy")
+        self.bb.clear_production_requests(requester="combat")
+        # economy 의 drone 은 남아 있어야 함
+        rest = self.bb.get_next_production()
+        self.assertIsNotNone(rest)
+        self.assertEqual(rest[0], "drone")
+
+    def test_clear_all(self):
+        self.bb.request_production("zergling", count=1, priority=1, requester="combat")
+        self.bb.clear_requests()
+        self.assertIsNone(self.bb.get_next_production())
+
+    def test_duplicate_request_updates_count(self):
+        """같은 unit_type + requester 재요청 시 count 업데이트 (중복 추가 X)"""
+        self.bb.request_production("zergling", count=2, priority=1, requester="combat")
+        self.bb.request_production("zergling", count=5, priority=1, requester="combat")
+        next_request = self.bb.get_next_production()
+        self.assertEqual(next_request, ("zergling", 5, "combat"))
+        # 두 번째 호출은 없어야 함
+        self.assertIsNone(self.bb.get_next_production())
+
 
 class TestBackwardCompatibility(unittest.TestCase):
     def setUp(self):

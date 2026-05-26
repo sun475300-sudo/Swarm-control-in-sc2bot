@@ -21,7 +21,9 @@ from utils.logger import get_logger
 try:
     from sc2.ids.unit_typeid import UnitTypeId
     from sc2.position import Point2
-except ImportError:
+except (ImportError, TypeError):
+    # ImportError: sc2 패키지가 없음
+    # TypeError: protobuf descriptor 충돌 (PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION 미설정)
     UnitTypeId = None
     Point2 = None
 
@@ -407,8 +409,10 @@ class GameStateBlackboard:
         if priority is None:
             priority = self.get_authority_priority(requester)
 
+        # 미리 정의되지 않은 priority 도 허용 (KeyError 방지)
+        queue = self.production_queue.setdefault(priority, [])
+
         # 중복 요청 체크
-        queue = self.production_queue[priority]
         for i, (utype, _, req) in enumerate(queue):
             if utype == unit_type and req == requester:
                 # 기존 요청 업데이트
@@ -416,7 +420,7 @@ class GameStateBlackboard:
                 return
 
         # 새 요청 추가
-        self.production_queue[priority].append((unit_type, count, requester))
+        queue.append((unit_type, count, requester))
 
     def get_next_production(self) -> Optional[tuple]:
         """
@@ -538,9 +542,16 @@ class GameStateBlackboard:
         )
 
     def should_expand(self) -> bool:
-        """확장 가능한 상황인가?"""
+        """확장 가능한 상황인가? (자원/위협/공급 종합 판단)"""
+        # 해처리 건설 최소 비용 300 광물.
+        HATCHERY_MINERAL_COST = 300
         return (
             self.threat.level == ThreatLevel.NONE
-            and not self.resources.is_supply_block
+            and not self.resources.is_supply_blocked
             and not self.is_under_attack
+            and self.resources.minerals >= HATCHERY_MINERAL_COST
         )
+
+
+# Backwards-compatible alias. Many modules import `Blackboard` directly.
+Blackboard = GameStateBlackboard

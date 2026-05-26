@@ -17,7 +17,7 @@ from typing import Dict, List, Optional, Set, Tuple
 
 try:
     from sc2.position import Point2
-except ImportError:
+except (ImportError, TypeError):
     Point2 = None
 
 

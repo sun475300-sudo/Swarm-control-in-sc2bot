@@ -22,7 +22,7 @@ logger = logging.getLogger("RealtimeAwarenessEngine")
 try:
     from sc2.ids.unit_typeid import UnitTypeId
     from sc2.ids.upgrade_id import UpgradeId
-except ImportError:
+except (ImportError, TypeError):
     UnitTypeId = None
     UpgradeId = None
 
@@ -697,7 +697,7 @@ class RealtimeAwarenessEngine:
             logger.info(f"{len(critical)} CRITICAL problems:")
             for p in critical[:3]:
                 logger.info(f"  [{p.severity.upper()}] {p.description}")
-                logger.info(f"    -> action required (see logs)")
+                logger.info("    -> action required (see logs)")
 
     def get_situation_summary(self) -> str:
         """현재 상황 요약"""

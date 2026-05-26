@@ -33,7 +33,7 @@ try:
     from sc2.position import Point2
     from sc2.unit import Unit
     from sc2.units import Units
-except ImportError:
+except (ImportError, TypeError):
     # Fallback for tooling
     BotAI = object
     UnitTypeId = object

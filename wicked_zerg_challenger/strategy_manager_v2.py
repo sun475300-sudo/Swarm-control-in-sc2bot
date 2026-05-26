@@ -21,7 +21,7 @@ from utils.logger import get_logger
 
 try:
     from sc2.data import Race
-except ImportError:
+except (ImportError, TypeError):
 
     class Race:
         Terran = "Terran"

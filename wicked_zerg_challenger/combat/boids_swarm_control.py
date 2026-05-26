@@ -25,7 +25,7 @@ else:
 # Runtime imports with fallback
 try:
     from sc2.position import Point2 as _Point2
-except ImportError:
+except (ImportError, TypeError):
     _Point2 = None  # type: ignore
 
 

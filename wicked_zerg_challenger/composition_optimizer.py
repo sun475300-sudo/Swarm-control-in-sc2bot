@@ -18,7 +18,7 @@ from typing import Any, Dict, List, Tuple
 
 try:
     from sc2.ids.unit_typeid import UnitTypeId
-except ImportError:
+except (ImportError, TypeError):
     UnitTypeId = None
 
 

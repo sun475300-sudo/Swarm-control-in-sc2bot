@@ -10,7 +10,7 @@ from typing import Iterable, List, Optional, Tuple
 
 try:
     from sc2.position import Point2
-except ImportError:
+except (ImportError, TypeError):
     Point2 = None
 
 
@@ -140,7 +140,7 @@ class PotentialFieldController:
                     splash_strength = strength * self.splash_weight
                     repulsion_x += (dx / (dist + 0.1)) * splash_strength
                     repulsion_y += (dy / (dist + 0.1)) * splash_strength
-            except (AttributeError, ZeroDivisionError) as e:
+            except (AttributeError, ZeroDivisionError):
                 # Unit position or attribute access failed, skip this unit
                 continue
 
