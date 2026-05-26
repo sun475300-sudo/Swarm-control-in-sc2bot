@@ -773,9 +773,8 @@ class ProductionResilience:
         """
         b = self.bot
         game_time = getattr(b, "time", 0)
-        if (
-            self._should_reserve_third_base_minerals()
-            and self._check_min_defense_met(game_time)
+        if self._should_reserve_third_base_minerals() and self._check_min_defense_met(
+            game_time
         ):
             return False
 
@@ -818,15 +817,22 @@ class ProductionResilience:
         max_zerglings = self._get_zergling_cap(game_time, ignore_caps)
 
         # === Late/Mid Game Priority ===
-        # Late game (10min+)
+        # Late game (10min+) — Priority: Muta > Hydra > Roach > Zergling
         if game_time > 600 and has_spire:
-            # Priority: Muta > Hydra > Roach > Zergling
+            if b.can_afford(UnitTypeId.MUTALISK) and b.supply_left >= 2:
+                return await self._safe_train(larva, UnitTypeId.MUTALISK)
             if (
                 has_hydra_den
                 and b.can_afford(UnitTypeId.HYDRALISK)
                 and b.supply_left >= 2
             ):
                 return await self._safe_train(larva, UnitTypeId.HYDRALISK)
+            if (
+                has_roach_warren
+                and b.can_afford(UnitTypeId.ROACH)
+                and b.supply_left >= 2
+            ):
+                return await self._safe_train(larva, UnitTypeId.ROACH)
 
         # Mid game (5min+)
         if game_time > 300:
@@ -866,9 +872,8 @@ class ProductionResilience:
         """
         b = self.bot
         game_time = getattr(b, "time", 0)
-        if (
-            self._should_reserve_third_base_minerals()
-            and self._check_min_defense_met(game_time)
+        if self._should_reserve_third_base_minerals() and self._check_min_defense_met(
+            game_time
         ):
             return
 
@@ -2499,10 +2504,16 @@ class ProductionResilience:
 
                 # 가스 있으면 히드라/바퀴, 없으면 저글링
                 trained = False
-                if b.vespene >= 50 and b.structures(UnitTypeId.HYDRALISKDEN).ready.exists:
+                if (
+                    b.vespene >= 50
+                    and b.structures(UnitTypeId.HYDRALISKDEN).ready.exists
+                ):
                     if b.can_afford(UnitTypeId.HYDRALISK):
                         trained = await self._safe_train(larva, UnitTypeId.HYDRALISK)
-                elif b.vespene >= 25 and b.structures(UnitTypeId.ROACHWARREN).ready.exists:
+                elif (
+                    b.vespene >= 25
+                    and b.structures(UnitTypeId.ROACHWARREN).ready.exists
+                ):
                     if b.can_afford(UnitTypeId.ROACH):
                         trained = await self._safe_train(larva, UnitTypeId.ROACH)
 

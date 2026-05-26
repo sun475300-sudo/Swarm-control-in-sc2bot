@@ -268,31 +268,43 @@ class QueenInjectOptimizer:
             # * 이 Hatchery에 할당된 Queen 찾기 *
             assigned_queen_tags = self.hatchery_queens.get(hatchery.tag, set())
 
+            # Treat as eligible any queen with enough energy that is on the
+            # ground (idle filter alone misses queens with passive orders like
+            # rallying or returning from creep duty — a known cause of
+            # missed injects).
+            def _eligible(queen):
+                if queen is None:
+                    return False
+                if getattr(queen, "energy", 0) < self.INJECT_ENERGY_COST:
+                    return False
+                if getattr(queen, "is_flying", False):
+                    return False
+                return True
+
             if not assigned_queen_tags:
                 # 할당된 Queen이 없으면 가장 가까운 Queen 사용
-                idle_queens = queens.idle
-                if idle_queens:
-                    queen = min(
-                        idle_queens,
-                        key=lambda q: q.position.distance_to(hatchery.position),
-                    )
-                else:
+                candidates = [q for q in queens if _eligible(q)]
+                if not candidates:
                     continue
+                queen = min(
+                    candidates,
+                    key=lambda q: q.position.distance_to(hatchery.position),
+                )
             else:
-                # 할당된 Queen 중 사용 가능한 Queen 찾기
-                available_queen = None
-
+                # 할당된 Queen 중 사용 가능한 Queen — 거리 기준으로 가장 가까운 Queen 선택
+                candidates = []
                 for queen_tag in assigned_queen_tags:
-                    queen = self.bot.units.find_by_tag(queen_tag)
+                    q = self.bot.units.find_by_tag(queen_tag)
+                    if _eligible(q):
+                        candidates.append(q)
 
-                    if queen and queen.energy >= self.INJECT_ENERGY_COST:
-                        available_queen = queen
-                        break
-
-                if not available_queen:
+                if not candidates:
                     continue
 
-                queen = available_queen
+                queen = min(
+                    candidates,
+                    key=lambda q: q.position.distance_to(hatchery.position),
+                )
 
             # * Phase 18: 역할 체크 - Inject 역할만 인젝트 수행 *
             if not self.can_queen_do_inject(queen.tag):

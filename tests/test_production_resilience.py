@@ -371,6 +371,50 @@ class TestProduceArmyUnit:
         # Should return False without spawning pool
         assert isinstance(result, bool)
 
+    @pytest.mark.asyncio
+    async def test_late_game_with_spire_prefers_mutalisk(self):
+        """Late-game (>10min) with a Spire ready should attempt to train a Mutalisk
+        before falling back to Hydralisk / Roach.
+
+        Regression: the original branch advertised ``# Priority: Muta > Hydra > Roach``
+        but only called ``_safe_train`` with ``HYDRALISK``, so Spires were built
+        and never used. This test pins the new priority order."""
+        bot = MockBot()
+        bot.time = 700.0  # > 10 min
+        bot.minerals = 1000
+        bot.vespene = 1000
+        bot.supply_left = 10
+        larva = MockUnit(1, "LARVA", (50, 50))
+        bot._structures = MockUnits(
+            [
+                MockUnit(200, "SPAWNINGPOOL", (52, 52), is_ready=True),
+                MockUnit(201, "SPIRE", (53, 53), is_ready=True),
+                MockUnit(202, "HYDRALISKDEN", (54, 54), is_ready=True),
+                MockUnit(203, "ROACHWARREN", (55, 55), is_ready=True),
+            ]
+        )
+
+        resilience = ProductionResilience(bot)
+        # Force min-defense / third-base-reserve checks to clear.
+        resilience._check_min_defense_met = Mock(return_value=True)
+        resilience._should_reserve_third_base_minerals = Mock(return_value=False)
+        resilience._get_counter_unit = Mock(return_value=None)
+
+        trained = []
+
+        async def _capture(_larva, unit_type):
+            trained.append(str(unit_type))
+            return True
+
+        resilience._safe_train = _capture
+
+        await resilience._produce_army_unit(larva, ignore_caps=True)
+
+        assert trained, "Should have trained a unit"
+        assert (
+            "MUTALISK" in trained[0].upper()
+        ), f"Late-game w/ Spire ready should train Mutalisk, trained={trained}"
+
 
 class TestEmergencyZerglingProduction:
     """테스트 8: 긴급 저글링 생산"""

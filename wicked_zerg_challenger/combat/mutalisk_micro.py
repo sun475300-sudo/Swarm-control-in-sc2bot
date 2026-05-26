@@ -16,8 +16,8 @@ try:
     from sc2.position import Point2
     from sc2.unit import Unit
 except ImportError:
-    UnitTypeId = None
-    Point2 = None
+    from utils.sc2_stubs import Point2, UnitTypeId  # noqa: F401
+
     Unit = None
 
 
@@ -196,7 +196,9 @@ class MutaliskMicroController:
                 try:
                     townhall_list = list(townhalls or [])
                     if townhall_list:
-                        main_base = getattr(townhall_list[0], "position", townhall_list[0])
+                        main_base = getattr(
+                            townhall_list[0], "position", townhall_list[0]
+                        )
                 except TypeError:
                     main_base = None
 

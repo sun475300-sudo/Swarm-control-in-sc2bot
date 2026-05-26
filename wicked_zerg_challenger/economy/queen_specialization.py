@@ -127,7 +127,6 @@ class QueenSpecializationManager:
 
         # === Phase 2: CREEP 퀸 (2기지당 1마리, 최소 1) ===
         creep_count = max(1, len(hatcheries) // 2) if len(hatcheries) >= 2 else 0
-        unassigned = [q for q in queens if q.tag not in assigned]
 
         # 기존 CREEP 퀸 유지
         existing_creep = [
@@ -141,12 +140,15 @@ class QueenSpecializationManager:
             assigned.add(qt)
             creep_count -= 1
 
-        # 추가 CREEP 배정
-        for queen in unassigned[:creep_count]:
-            if queen.tag in assigned:
-                continue
-            self.specializations[queen.tag] = QueenSpecialization.CREEP
-            assigned.add(queen.tag)
+        # 추가 CREEP 배정 — 위의 existing-creep 루프 이후 다시 unassigned를
+        # 계산해야 한다. 그렇지 않으면 ``unassigned[:creep_count]`` 슬라이스가
+        # 방금 CREEP으로 확정된 퀸들을 먼저 포함해 ``creep_count``를 소진하고,
+        # 새 CREEP 퀸이 한 마리도 배정되지 않는 결함이 발생한다.
+        if creep_count > 0:
+            still_unassigned = [q for q in queens if q.tag not in assigned]
+            for queen in still_unassigned[:creep_count]:
+                self.specializations[queen.tag] = QueenSpecialization.CREEP
+                assigned.add(queen.tag)
 
         # === Phase 3: COMBAT 퀸 (나머지 전부) ===
         for queen in queens:
