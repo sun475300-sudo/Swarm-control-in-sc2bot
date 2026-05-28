@@ -21,7 +21,9 @@ sys.path.insert(
 try:
     from unit_factory import UnitFactory
 except ImportError:
-    pytest.skip("unit_factory not importable (SC2 env required)", allow_module_level=True)
+    pytest.skip(
+        "unit_factory not importable (SC2 env required)", allow_module_level=True
+    )
 
 from unittest.mock import MagicMock
 
