@@ -732,6 +732,8 @@ class OpponentModeling:
     def on_game_start(self, opponent_id: str, opponent_race=None):
         """게임 시작 시 호출 - 적 추적 시작"""
         self.current_opponent = opponent_id
+        # Keep current_opponent_id in sync so on_step strategy prediction works
+        self.current_opponent_id = opponent_id
         # * FIX: GameHistory dataclass에 맞는 필드로 초기화
         race_name = (
             opponent_race.name
