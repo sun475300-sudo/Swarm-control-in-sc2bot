@@ -1444,7 +1444,7 @@ class ProductionResilience:
                 pass
         if (
             self._should_reserve_third_base_minerals()
-            and game_time < 300
+            and getattr(b, "time", 0.0) < 300
             and b.structures(UnitTypeId.ROACHWARREN).exists
         ):
             return
