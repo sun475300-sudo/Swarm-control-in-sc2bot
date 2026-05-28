@@ -5,6 +5,13 @@ pytest 공통 fixtures (#171)
 """
 
 import os
+
+# s2clientprotocol의 생성된 *_pb2.py는 구버전 protobuf용이라, 최신 protobuf
+# C 확장에서 "Descriptors cannot be created directly" 오류가 난다. 순수 파이썬
+# 구현으로 강제하면 sc2 임포트가 안정적으로 동작한다. protobuf가 로드되기 전,
+# 즉 어떤 sc2 임포트보다도 먼저 설정되어야 하므로 conftest 최상단에 둔다.
+os.environ.setdefault("PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION", "python")
+
 import shutil
 import sys
 import tempfile
