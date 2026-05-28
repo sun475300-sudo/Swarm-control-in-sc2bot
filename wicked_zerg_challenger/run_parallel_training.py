@@ -14,6 +14,7 @@ import json
 import logging
 import os
 import random
+import subprocess
 import sys
 import time
 from datetime import datetime
@@ -74,6 +75,26 @@ DIFFICULTY_LADDER = [
 ]
 
 
+def _cleanup_sc2_processes():
+    """Best-effort SC2 process cleanup to avoid stale transport issues."""
+    if sys.platform != "win32":
+        return
+    for exe in ("SC2_x64.exe", "SC2.exe"):
+        try:
+            subprocess.run(
+                ["taskkill", "/F", "/IM", exe],
+                capture_output=True,
+                timeout=3,
+            )
+        except Exception:
+            pass
+
+
+def _is_win_result(result_text: str) -> bool:
+    upper = (result_text or "").upper()
+    return "VICTORY" in upper or "WIN" in upper
+
+
 def run_training_game(game_num, total, difficulty_idx=0):
     """Run a single training game with random matchup."""
     map_name = random.choice(MAP_POOL)
@@ -87,40 +108,95 @@ def run_training_game(game_num, total, difficulty_idx=0):
     )
     logger.info(f"{'='*60}")
 
-    bot = Bot(Race.Zerg, WickedZergBotProImpl(train_mode=True))
+    # Transport close errors can happen right after on_end; retry once and
+    # recover from bot-side stored result when available.
+    max_attempts = 2
 
-    try:
+    for attempt in range(1, max_attempts + 1):
+        _cleanup_sc2_processes()
+        bot_ai = WickedZergBotProImpl(train_mode=True)
+        bot = Bot(Race.Zerg, bot_ai)
         start = time.time()
-        result = run_game(
-            maps.get(map_name),
-            [bot, Computer(enemy_race, difficulty)],
-            realtime=False,
-        )
-        elapsed = time.time() - start
+        try:
+            result = run_game(
+                maps.get(map_name),
+                [bot, Computer(enemy_race, difficulty)],
+                realtime=False,
+            )
+            elapsed = time.time() - start
+            won = _is_win_result(str(result))
+            tag = "WIN" if won else "LOSS"
+            logger.info(f"  {tag} in {elapsed:.0f}s | {enemy_race.name} {diff_name}")
+            _cleanup_sc2_processes()
+            return {
+                "game": game_num,
+                "map": map_name,
+                "race": enemy_race.name,
+                "difficulty": diff_name,
+                "won": won,
+                "time": round(elapsed, 1),
+            }
+        except Exception as e:
+            elapsed = time.time() - start
+            error_text = str(e)
+            lower_error = error_text.lower()
+            is_transport_error = (
+                "connection already closed" in lower_error
+                or "cannot write to closing transport" in lower_error
+            )
 
-        won = str(result) == "Result.Victory"
-        tag = "WIN" if won else "LOSS"
-        logger.info(f"  {tag} in {elapsed:.0f}s | {enemy_race.name} {diff_name}")
+            training_result = getattr(bot_ai, "_training_result", {}) or {}
+            reported_result = str(training_result.get("game_result", ""))
+            has_reported_result = any(
+                token in reported_result.upper()
+                for token in ("VICTORY", "WIN", "DEFEAT", "LOSS")
+            )
 
-        return {
-            "game": game_num,
-            "map": map_name,
-            "race": enemy_race.name,
-            "difficulty": diff_name,
-            "won": won,
-            "time": round(elapsed, 1),
-        }
-    except Exception as e:
-        logger.error(f"  ERROR: {e}")
-        return {
-            "game": game_num,
-            "map": map_name,
-            "race": enemy_race.name,
-            "difficulty": diff_name,
-            "won": False,
-            "error": str(e),
-            "time": 0,
-        }
+            if is_transport_error and has_reported_result:
+                won = _is_win_result(reported_result)
+                logger.warning(
+                    "  Transport closed after on_end; recovered result from bot state."
+                )
+                _cleanup_sc2_processes()
+                return {
+                    "game": game_num,
+                    "map": map_name,
+                    "race": enemy_race.name,
+                    "difficulty": diff_name,
+                    "won": won,
+                    "time": round(elapsed, 1),
+                    "recovered": True,
+                    "error": error_text,
+                }
+
+            if is_transport_error and attempt < max_attempts:
+                logger.warning(
+                    f"  Transport error on attempt {attempt}/{max_attempts}: {error_text}"
+                )
+                time.sleep(1.5)
+                continue
+
+            logger.error(f"  ERROR: {error_text}")
+            _cleanup_sc2_processes()
+            return {
+                "game": game_num,
+                "map": map_name,
+                "race": enemy_race.name,
+                "difficulty": diff_name,
+                "won": False,
+                "error": error_text,
+                "time": round(elapsed, 1),
+            }
+
+    return {
+        "game": game_num,
+        "map": map_name,
+        "race": enemy_race.name,
+        "difficulty": diff_name,
+        "won": False,
+        "error": "retry_exhausted",
+        "time": 0,
+    }
 
 
 def main():

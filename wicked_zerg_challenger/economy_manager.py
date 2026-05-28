@@ -2243,7 +2243,8 @@ class EconomyManager:
         if base_count < 4 and game_time >= 120 and minerals >= 250:
             should_expand = True
             expand_reason = f"CRITICAL: Maintain 4+ bases! (current: {base_count}, time: {int(game_time)}s)"
-            self.logger.error(f"[ECONOMY_CRITICAL] {expand_reason}")
+            # Operational urgency, not a runtime exception.
+            self.logger.warning(f"[ECONOMY_CRITICAL] {expand_reason}")
             # 바로 확장 실행 로직으로 이동 (아래 타이밍 조건 스킵)
 
         # 1베이스 -> 2베이스 (내츄럴): *** HATCH FIRST (최대한 빠른 확장) ***
@@ -2972,7 +2973,7 @@ class EconomyManager:
 
             # 1.5분 지났는데 앞마당 없으면 즉시 확장 (미네랄 350+ - 공격적 확장)
             if townhalls.amount < 2 and game_time > 90 and minerals >= 350:
-                self.logger.error(
+                self.logger.warning(
                     f"[ECONOMY] [*] CRITICAL EXPANSION: Forcing natural expansion @ {int(game_time)}s (minerals: {minerals}) [*]"
                 )
                 if hasattr(self.bot, "expand_now"):

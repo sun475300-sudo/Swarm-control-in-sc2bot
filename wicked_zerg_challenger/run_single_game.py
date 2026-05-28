@@ -1,13 +1,15 @@
-# -*- coding: utf-8 -*-
+﻿# -*- coding: utf-8 -*-
 """
 Run a single game for testing.
-단일 게임 테스트용 스크립트.
+?⑥씪 寃뚯엫 ?뚯뒪?몄슜 ?ㅽ겕由쏀듃.
 """
 
 import argparse
 import logging
 import os
+import subprocess
 import sys
+import time
 
 from sc2 import maps
 from sc2.data import Difficulty, Race
@@ -88,6 +90,21 @@ def _parse_difficulty(name: str):
     return Difficulty.Easy
 
 
+def _cleanup_sc2_processes():
+    """Best-effort cleanup for stale SC2 processes before websocket connect."""
+    if sys.platform != "win32":
+        return
+    for exe in ("SC2_x64.exe", "SC2.exe"):
+        try:
+            subprocess.run(
+                ["taskkill", "/F", "/IM", exe],
+                capture_output=True,
+                timeout=3,
+            )
+        except Exception:
+            pass
+
+
 def main():
     """Run a single test game."""
     args = _parse_args()
@@ -107,23 +124,44 @@ def main():
     logger.info(f"  Difficulty: {difficulty.name}")
     logger.info("=" * 60)
 
-    # Create bot
-    bot = Bot(Race.Zerg, WickedZergBotPro(train_mode=False))
-
-    # Run game
     map_instance = maps.get(map_name)
     if map_instance is None:
         logger.error(f"Map '{map_name}' not found!")
         return
 
-    run_game(
-        map_instance,
-        [bot, Computer(opponent_race, difficulty)],
-        realtime=False,  # False = 빠른 속도로 훈련
-    )
+    # Retry once for transient websocket startup failures.
+    last_error = None
+    for attempt in range(1, 3):
+        _cleanup_sc2_processes()
+        bot = Bot(Race.Zerg, WickedZergBotPro(train_mode=False))
+        try:
+            run_game(
+                map_instance,
+                [bot, Computer(opponent_race, difficulty)],
+                realtime=False,  # False = faster simulation mode
+            )
+            logger.info("\n[GAME FINISHED]")
+            _cleanup_sc2_processes()
+            return
+        except Exception as e:
+            last_error = e
+            error_text = str(e).lower()
+            is_connection_error = (
+                "websocket" in error_text
+                or "connection already closed" in error_text
+                or "closing transport" in error_text
+            )
+            if is_connection_error and attempt < 2:
+                logger.warning(
+                    f"Connection issue during simulator start; retrying ({attempt}/2): {e}"
+                )
+                time.sleep(2)
+                continue
+            break
 
-    logger.info("\n[GAME FINISHED]")
+    logger.error(f"[GAME FAILED] {last_error}")
 
 
 if __name__ == "__main__":
     main()
+

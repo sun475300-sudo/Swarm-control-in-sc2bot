@@ -303,7 +303,12 @@ class PersonalityModule:
             self.last_message_time = game_time
             self.logger.info(f"[{int(game_time)}s] CHAT: {message}")
         except Exception as e:
-            self.logger.error(f"[PERSONALITY] Failed to send message: {e}")
+            error_text = str(e)
+            # Game can end between scheduling and chat send.
+            if "already ended" in error_text.lower():
+                self.logger.info(f"[PERSONALITY] Chat skipped after game end: {message}")
+            else:
+                self.logger.warning(f"[PERSONALITY] Failed to send message: {e}")
 
     def _get_game_phase(self, game_time: float) -> GamePhase:
         """게임 단계 판단"""

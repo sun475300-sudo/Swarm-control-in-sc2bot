@@ -245,7 +245,11 @@ class ManagerFactory:
         logger.info("=" * 70)
         logger.info(f"Total Managers: {stats['total']}")
         logger.info(f"Succeeded: {stats['succeeded']}")
-        logger.error(f"Failed: {stats['failed']}")
+        # Keep failed=0 out of error telemetry noise.
+        if stats["failed"] > 0:
+            logger.error(f"Failed: {stats['failed']}")
+        else:
+            logger.info(f"Failed: {stats['failed']}")
         logger.info(f"Success Rate: {stats['success_rate']:.1f}%")
 
         if stats["failed_managers"]:
