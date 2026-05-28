@@ -541,6 +541,9 @@ class GameStateBlackboard:
         """확장 가능한 상황인가?"""
         return (
             self.threat.level == ThreatLevel.NONE
-            and not self.resources.is_supply_block
+            and not self.resources.is_supply_blocked
             and not self.is_under_attack
         )
+
+
+Blackboard = GameStateBlackboard

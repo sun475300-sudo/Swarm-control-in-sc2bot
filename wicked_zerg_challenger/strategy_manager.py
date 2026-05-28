@@ -2485,10 +2485,10 @@ class StrategyManager:
         elif race == EnemyRace.PROTOSS:
             fallback_ratios = {
                 "zergling": 0.10,
-                "roach": 0.35,
-                "hydralisk": 0.30,
-                "ravager": 0.15,
-                "corruptor": 0.10,
+                "roach": 0.30,
+                "hydra": 0.30,
+                "ravager": 0.25,
+                "corruptor": 0.05,
             }
             # 포자 건설 요청 (DT/Oracle 대비)
             self._request_defensive_building(spore=True)

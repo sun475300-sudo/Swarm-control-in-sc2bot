@@ -1,0 +1,60 @@
+============================================================
+  GAME RESULT REPORT - DEFEAT
+============================================================
+  Map: 어비설 리프 - 래더
+  Opponent: Protoss
+  Duration: 1:45
+  Date: 2026-05-28 15:55
+
+--- TIMELINE ---
+  [1:15] Build: UnitTypeId.SPAWNINGPOOL (Supply 18)
+  [1:41] Build: UnitTypeId.EXTRACTOR (Supply 19)
+  [1:47] Build: UnitTypeId.HATCHERY (Supply 19)
+  [3:37] Build: UnitTypeId.CREEPTUMORQUEEN (Supply 37)
+  [3:48] Build: UnitTypeId.SPORECRAWLER (Supply 38)
+  [4:05] Build: UnitTypeId.CREEPTUMORQUEEN (Supply 40)
+  [4:05] Build: UnitTypeId.CREEPTUMOR (Supply 40)
+  [4:12] Build: UnitTypeId.SPORECRAWLER (Supply 38)
+  [4:15] Harassment: UnitTypeId.PYLON
+  [4:20] Build: UnitTypeId.CREEPTUMORQUEEN (Supply 37)
+  [4:21] Harassment: UnitTypeId.PYLON
+  [4:37] Build: UnitTypeId.CREEPTUMORQUEEN (Supply 38)
+  [4:37] Build: UnitTypeId.CREEPTUMOR (Supply 38)
+  [4:37] Build: UnitTypeId.CREEPTUMOR (Supply 38)
+  [4:44] Build: UnitTypeId.CREEPTUMORQUEEN (Supply 41)
+  [4:45] Build: UnitTypeId.CREEPTUMORQUEEN (Supply 41)
+  [4:52] Build: UnitTypeId.CREEPTUMOR (Supply 41)
+  [6:36] Expansion #1 started
+  [8:18] Harassment: UnitTypeId.NEXUS
+  [8:24] Harassment: UnitTypeId.NEXUS
+
+--- ECONOMY ---
+  Peak Minerals: 245
+  Peak Vespene: 416
+  Peak Workers: 24
+
+--- TIMINGS ---
+  Expansion #1: 6:36 
+  Tech: UnitTypeId.EVOLUTIONCHAMBER at 7:40
+
+--- COMBAT ---
+  No engagement data recorded
+
+--- UNIT COMPOSITION ---
+  UnitTypeId.ZERGLING: 90 produced
+
+--- RESULT ANALYSIS ---
+  EARLY DEFEAT: Possible rush defense failure
+
+--- IMPROVEMENT SUGGESTIONS ---
+  1. Natural expansion at 396s - aim for sub-60s with Hatch First build
+  2. Lost before 4 minutes - review early defense (spine crawlers, queens, zerglings)
+
+--- FINAL STATS ---
+  Workers: 23
+  Army Supply: 44
+  Bases: 3
+  Minerals: 0
+  Vespene: 608
+
+============================================================

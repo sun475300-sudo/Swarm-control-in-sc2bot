@@ -773,11 +773,6 @@ class ProductionResilience:
         """
         b = self.bot
         game_time = getattr(b, "time", 0)
-        if (
-            self._should_reserve_third_base_minerals()
-            and self._check_min_defense_met(game_time)
-        ):
-            return False
 
         # Auto-ignore caps if very rich
         if b.minerals > 1500:
@@ -866,11 +861,6 @@ class ProductionResilience:
         """
         b = self.bot
         game_time = getattr(b, "time", 0)
-        if (
-            self._should_reserve_third_base_minerals()
-            and self._check_min_defense_met(game_time)
-        ):
-            return
 
         units_produced = 0
         larvae_list = list(larvae) if larvae.exists else []
@@ -1452,7 +1442,11 @@ class ProductionResilience:
                 await self._try_expand()
             except Exception:
                 pass
-        if self._should_reserve_third_base_minerals():
+        if (
+            self._should_reserve_third_base_minerals()
+            and game_time < 300
+            and b.structures(UnitTypeId.ROACHWARREN).exists
+        ):
             return
         if b.units(UnitTypeId.LARVA).exists:
             larvae = b.units(UnitTypeId.LARVA).ready
@@ -1745,7 +1739,15 @@ class ProductionResilience:
         if base_count < 3 and total_extractors >= 1:
             return
 
-        target_extractors = base_count * 2
+        minerals = getattr(b, "minerals", 0)
+        vespene = getattr(b, "vespene", 0)
+        if vespene > max(300, minerals * 3) and minerals < 600:
+            return
+
+        # Keep gas lean until the bot proves it can spend minerals again.
+        target_extractors = min(base_count * 2, max(1, base_count + 1))
+        if game_time > 720 and minerals > 1000:
+            target_extractors = base_count * 2
 
         # Early game timing:
         # 1:30 (90s): First extractor
@@ -1812,7 +1814,8 @@ class ProductionResilience:
         Lair is required for: Hydralisk Den, Spire, Infestation Pit, etc.
         """
         b = self.bot
-        if self._should_reserve_third_base_minerals():
+        game_time = getattr(b, "time", 0)
+        if self._should_reserve_third_base_minerals() and game_time < 300:
             return False
 
         # Check if we already have Lair or Hive
@@ -1824,7 +1827,6 @@ class ProductionResilience:
             return False
 
         # Cooldown check to prevent spam
-        game_time = getattr(b, "time", 0)
         last_lair_morph = getattr(self, "_last_lair_morph_time", 0)
         if game_time - last_lair_morph < 30:  # 30 second cooldown
             return False

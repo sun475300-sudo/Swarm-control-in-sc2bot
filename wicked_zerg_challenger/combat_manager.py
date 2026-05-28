@@ -1640,6 +1640,9 @@ class CombatManager:
             formation_manager = getattr(self, "formation_manager", None)
             if formation_manager is None and _FORMATION_MANAGER_AVAILABLE:
                 formation_manager = _FormationManager(self.bot)
+                self.formation_manager = formation_manager
+            if formation_manager is None:
+                return
 
             if not self._has_units(enemy_units) or not self._has_units(units):
                 return
@@ -1670,7 +1673,10 @@ class CombatManager:
             # 길목 회피 확인
             if hasattr(self.bot, "townhalls") and self.bot.townhalls.exists:
                 our_base = self.bot.townhalls.first.position
-                chokepoint = formation_manager.find_chokepoint(enemy_units, our_base)
+                if hasattr(enemy_units, "center"):
+                    chokepoint = formation_manager.find_chokepoint(enemy_units, our_base)
+                else:
+                    chokepoint = our_base.towards(enemy_center, 15.0)
 
                 if chokepoint and formation_manager.should_avoid_chokepoint(
                     units, chokepoint, enemy_units

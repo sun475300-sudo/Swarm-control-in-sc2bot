@@ -7,14 +7,14 @@
   },
   "Protoss": {
     "wins": 27,
-    "losses": 114,
-    "games": 141,
-    "win_rate": 19.15
+    "losses": 115,
+    "games": 142,
+    "win_rate": 19.01
   },
   "Zerg": {
     "wins": 8,
-    "losses": 23,
-    "games": 31,
-    "win_rate": 25.81
+    "losses": 24,
+    "games": 32,
+    "win_rate": 25.0
   }
 }
