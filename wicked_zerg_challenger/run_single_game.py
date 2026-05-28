@@ -70,6 +70,13 @@ def _parse_args() -> argparse.Namespace:
         choices=["Terran", "Protoss", "Zerg", "Random"],
     )
     parser.add_argument("--difficulty", default="Easy")
+    parser.add_argument(
+        "--time-limit",
+        dest="time_limit",
+        type=int,
+        default=420,
+        help="Maximum in-game seconds before forced end",
+    )
     return parser.parse_args()
 
 
@@ -122,6 +129,7 @@ def main():
     logger.info(f"  Map: {map_name}")
     logger.info(f"  Opponent: {opponent_race.name}")
     logger.info(f"  Difficulty: {difficulty.name}")
+    logger.info(f"  Time Limit: {args.time_limit}s")
     logger.info("=" * 60)
 
     map_instance = maps.get(map_name)
@@ -139,6 +147,7 @@ def main():
                 map_instance,
                 [bot, Computer(opponent_race, difficulty)],
                 realtime=False,  # False = faster simulation mode
+                game_time_limit=args.time_limit,
             )
             logger.info("\n[GAME FINISHED]")
             _cleanup_sc2_processes()
