@@ -28,6 +28,7 @@ except ImportError:
     Units = None
 
 from utils.logger import get_logger
+from utils.unit_helpers import unit_supply_cost
 
 
 class ProngStatus(Enum):
@@ -199,7 +200,7 @@ class MultiprongAttackManager:
         total_supply = 0
         for unit in self.bot.units:
             if unit.type_id in combat_types:
-                supply = getattr(unit, "supply_cost", 1)
+                supply = unit_supply_cost(unit, 1)
                 total_supply += max(supply, 1)
         return total_supply
 

@@ -7,6 +7,8 @@
 
 import logging
 
+from utils.unit_helpers import unit_supply_cost
+
 logger = logging.getLogger("ZergStrategyTree")
 
 from .behavior_tree import (
@@ -97,7 +99,9 @@ def has_army_advantage(bot) -> bool:
     if not hasattr(bot, "units"):
         return False
 
-    our_army_supply = sum(u.supply_cost for u in bot.units if not u.is_worker)
+    our_army_supply = sum(
+        unit_supply_cost(u, 1) for u in bot.units if not u.is_worker
+    )
     enemy_supply = getattr(bot, "enemy_army_supply", 0)
 
     return our_army_supply >= enemy_supply * 1.2

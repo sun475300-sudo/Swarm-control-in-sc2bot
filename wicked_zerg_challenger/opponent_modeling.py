@@ -20,6 +20,7 @@ from enum import Enum
 from typing import Dict, List, Optional, Set, Tuple
 
 from utils.logger import get_logger
+from utils.unit_helpers import unit_supply_cost
 
 try:
     from sc2.bot_ai import BotAI
@@ -432,7 +433,7 @@ class OpponentModeling:
 
         # Early army detection
         army_supply = sum(
-            getattr(u, "supply_cost", 1) for u in enemy_units if not u.is_worker
+            unit_supply_cost(u, 1) for u in enemy_units if not u.is_worker
         )
         if game_time < 150 and army_supply >= 15:
             self._add_signal(StrategySignal.EARLY_ARMY)

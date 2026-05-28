@@ -36,6 +36,11 @@ from utils.unit_helpers import (
     is_unit_idle,
 )
 
+try:
+    from sc2.ids.unit_typeid import UnitTypeId
+except ImportError:
+    UnitTypeId = None
+
 
 class MockUnit:
     """Mock unit for testing"""
@@ -54,6 +59,7 @@ class MockUnit:
         is_flying=False,
         ground_range=5.0,
         air_range=0.0,
+        type_id=None,
     ):
         self.tag = tag
         self.health = health
@@ -68,7 +74,7 @@ class MockUnit:
         self.air_range = air_range
         self.is_attacking = False
         self.orders = []
-        self.type_id = Mock(name="ZERGLING")
+        self.type_id = type_id if type_id is not None else Mock(name="ZERGLING")
 
     def distance_to(self, target):
         """Calculate distance to target"""
@@ -250,15 +256,19 @@ class TestExecuteUnitAction(unittest.TestCase):
 class TestCalculateUnitSupply(unittest.TestCase):
     """Test calculate_unit_supply function"""
 
+    @unittest.skipIf(UnitTypeId is None, "sc2 not installed")
     def test_calculate_total_supply(self):
-        """Test calculating total supply"""
-        unit1 = MockUnit(supply_cost=2)
-        unit2 = MockUnit(supply_cost=1)
-        unit3 = MockUnit(supply_cost=3)
-        units = MockUnits([unit1, unit2, unit3])
-
+        """Total supply is looked up by type_id (Unit has no supply_cost)."""
+        # Roach (2) + Ultralisk (6) + Zergling (0.5) = 8.5
+        units = MockUnits(
+            [
+                MockUnit(type_id=UnitTypeId.ROACH),
+                MockUnit(type_id=UnitTypeId.ULTRALISK),
+                MockUnit(type_id=UnitTypeId.ZERGLING),
+            ]
+        )
         result = calculate_unit_supply(units)
-        self.assertEqual(result, 6)
+        self.assertEqual(result, 8.5)
 
     def test_empty_collection(self):
         """Test with empty collection"""
@@ -271,12 +281,13 @@ class TestCalculateUnitSupply(unittest.TestCase):
         result = calculate_unit_supply(None)
         self.assertEqual(result, 0)
 
-    def test_units_without_supply_cost(self):
-        """Test units without supply_cost attribute"""
-        unit = Mock(spec=[])
+    def test_units_with_unknown_type(self):
+        """Unknown unit types fall back to the default of 1."""
+        unit = Mock(spec=["type_id"])
+        unit.type_id = "UNKNOWN_TYPE"
         units = MockUnits([unit])
         result = calculate_unit_supply(units)
-        self.assertEqual(result, 1)  # Fallback to count
+        self.assertEqual(result, 1)  # Fallback default
 
 
 class TestIsUnitIdle(unittest.TestCase):

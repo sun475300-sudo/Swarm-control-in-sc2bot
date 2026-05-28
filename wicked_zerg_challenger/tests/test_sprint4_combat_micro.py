@@ -155,9 +155,9 @@ class TestSprint4CombatManager(unittest.TestCase):
     def test_multi_prong_splits_large_army_into_three_groups(self):
         bot = FakeBot()
         manager = make_manager(bot)
+        # 10 Ultralisks = 60 supply, the multi-prong trigger threshold.
         army = [
-            FakeUnit(index, "ZERGLING", Point(index, 0), supply_cost=6)
-            for index in range(10)
+            FakeUnit(index, "ULTRALISK", Point(index, 0)) for index in range(10)
         ]
 
         result = manager._execute_multi_prong_attack(army, [Point(100, 100)], 200)

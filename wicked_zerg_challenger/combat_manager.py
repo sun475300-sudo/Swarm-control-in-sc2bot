@@ -63,6 +63,7 @@ from combat.rally_point_calculator import (
 from utils.frame_cache import FrameCache
 from utils.distance_cache import DistanceCache
 from utils.game_constants import GameFrequencies
+from utils.unit_helpers import unit_supply_cost
 
 # Import common helpers to reduce code duplication
 try:
@@ -637,7 +638,7 @@ class CombatManager:
             try:
                 from sc2.ids.unit_typeid import UnitTypeId
 
-                army_supply = sum(getattr(u, "supply_cost", 1) for u in ground_army)
+                army_supply = sum(unit_supply_cost(u, 1) for u in ground_army)
 
                 # * 서플라이 40 이상이면 강력한 타이밍 공격
                 if army_supply >= 40:
@@ -1873,7 +1874,7 @@ class CombatManager:
                 army_units = [u for u in army_units if u.tag not in defense_tags]
 
             # 최소 군대 서플라이 확인
-            army_supply = sum(getattr(u, "supply_cost", 1) for u in army_units)
+            army_supply = sum(unit_supply_cost(u, 1) for u in army_units)
 
             # * Phase 20: 서플라이 기반 점진적 공격 임계값 *
             # * Anti-Protoss: Protoss shields regenerate, so small attacks are wasted.
@@ -1928,7 +1929,7 @@ class CombatManager:
 
             # * Phase 30: 사전 전투력 비교 - 적보다 압도적으로 약하면 공격 자제
             visible_enemy_supply = sum(
-                getattr(e, "supply_cost", 1)
+                unit_supply_cost(e, 1)
                 for e in self.bot.enemy_units
                 if hasattr(e, "can_attack") and e.can_attack
             )
@@ -2089,7 +2090,7 @@ class CombatManager:
         units = list(army_units or [])
         if not units or not attack_targets:
             return False
-        army_supply = sum(getattr(unit, "supply_cost", 1) for unit in units)
+        army_supply = sum(unit_supply_cost(unit, 1) for unit in units)
         if army_supply < 60:
             return False
 
@@ -2811,36 +2812,6 @@ class CombatManager:
             # No harass target, attack normally
             if self._has_units(enemy_units):
                 await self._mutalisk_attack(mutalisks, enemy_units)
-
-    def _find_harass_target(self):
-        """Find best harassment target (enemy base with workers)."""
-        # Try enemy main base
-        if (
-            hasattr(self.bot, "enemy_start_locations")
-            and self.bot.enemy_start_locations
-        ):
-            return self.bot.enemy_start_locations[0]
-
-        # Try known enemy structures
-        enemy_structures = getattr(self.bot, "enemy_structures", [])
-        if enemy_structures:
-            # Find townhalls
-            townhall_names = [
-                "NEXUS",
-                "COMMANDCENTER",
-                "ORBITALCOMMAND",
-                "PLANETARYFORTRESS",
-                "HATCHERY",
-                "LAIR",
-                "HIVE",
-            ]
-            for struct in enemy_structures:
-                if getattr(struct.type_id, "name", "") in townhall_names:
-                    return struct.position
-            # Any structure as fallback
-            return enemy_structures[0].position
-
-        return None
 
     async def _execute_harass(self, mutalisks, enemy_units):
         """
@@ -3727,9 +3698,9 @@ class CombatManager:
             return False
 
         # Calculate army supplies
-        our_supply = sum(getattr(u, "supply_cost", 1) for u in army_units)
+        our_supply = sum(unit_supply_cost(u, 1) for u in army_units)
         enemy_supply = (
-            sum(getattr(u, "supply_cost", 1) for u in enemy_units) if enemy_units else 0
+            sum(unit_supply_cost(u, 1) for u in enemy_units) if enemy_units else 0
         )
 
         # Check cooldown (prevent spamming counter attacks)
@@ -4578,7 +4549,7 @@ class CombatManager:
 
         for unit in army_units:
             try:
-                supply = getattr(unit, "supply_cost", 1)
+                supply = unit_supply_cost(unit, 1)
                 if isinstance(supply, (int, float)):
                     total_supply += supply
             except (AttributeError, TypeError) as e:

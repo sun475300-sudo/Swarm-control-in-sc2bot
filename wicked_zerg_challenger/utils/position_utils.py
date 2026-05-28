@@ -8,6 +8,7 @@ across the codebase. Uses efficient algorithms and consistent interfaces.
 from typing import TYPE_CHECKING, List, Optional, Union
 
 from sc2.position import Point2
+from utils.unit_helpers import unit_supply_cost
 
 if TYPE_CHECKING:
     from sc2.unit import Unit
@@ -79,12 +80,13 @@ def get_weighted_center(
 
     # Supply-weighted
     if weight_by_supply:
-        total_supply = sum(u.supply_cost for u in units)
+        weights = [(u, unit_supply_cost(u, 1)) for u in units]
+        total_supply = sum(w for _, w in weights)
         if total_supply == 0:
             return get_center_position(units)
 
-        center_x = sum(u.position.x * u.supply_cost for u in units) / total_supply
-        center_y = sum(u.position.y * u.supply_cost for u in units) / total_supply
+        center_x = sum(u.position.x * w for u, w in weights) / total_supply
+        center_y = sum(u.position.y * w for u, w in weights) / total_supply
         return Point2((center_x, center_y))
 
     # Default: geometric center

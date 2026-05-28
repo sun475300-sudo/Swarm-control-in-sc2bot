@@ -25,6 +25,7 @@ else:
         Point2 = tuple
 
 from utils.logger import get_logger
+from utils.unit_helpers import unit_supply_cost
 
 
 class ThreatAssessment:
@@ -137,10 +138,10 @@ class ThreatAssessment:
         # * Phase 22: Use cached supply calculations (updated every 2s) *
         if game_time - self._supply_cache_time >= 2.0:
             self._cached_our_supply = sum(
-                getattr(u, "supply_cost", 1) for u in army_units
+                unit_supply_cost(u, 1) for u in army_units
             )
             self._cached_enemy_supply = (
-                sum(getattr(u, "supply_cost", 1) for u in enemy_units)
+                sum(unit_supply_cost(u, 1) for u in enemy_units)
                 if enemy_units
                 else 0
             )
@@ -213,7 +214,7 @@ class ThreatAssessment:
 
         power = 0.0
         for unit in units:
-            supply_cost = getattr(unit, "supply_cost", 1)
+            supply_cost = unit_supply_cost(unit, 1)
             health_percentage = getattr(unit, "health_percentage", 1.0)
 
             # 기본 전투력 = 서플라이 * 체력 비율

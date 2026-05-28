@@ -23,6 +23,7 @@ from config.config_loader import ConfigLoader
 from racial_counter_manager import RacialCounterManager
 
 from utils.logger import get_logger
+from utils.unit_helpers import unit_supply_cost
 
 try:
     from knowledge_manager import KnowledgeManager
@@ -2697,12 +2698,12 @@ class StrategyManager:
         if hasattr(self.bot, "units"):
             for unit in self.bot.units:
                 if unit.can_attack and unit.type_id.name != "DRONE":
-                    our_army += getattr(unit, "supply_cost", 1)
+                    our_army += unit_supply_cost(unit, 1)
 
         if hasattr(self.bot, "enemy_units"):
             for unit in self.bot.enemy_units:
                 if unit.can_attack:
-                    enemy_army += getattr(unit, "supply_cost", 1)
+                    enemy_army += unit_supply_cost(unit, 1)
 
         # 공급량 기반 공격 (적 정보가 없어도 공격)
         army_supply = getattr(self.bot, "supply_army", 0)

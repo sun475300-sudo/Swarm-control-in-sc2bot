@@ -32,6 +32,7 @@ except ImportError:
 from game_config import GameConfig
 
 from utils.logger import get_logger
+from utils.unit_helpers import unit_supply_cost
 
 
 @dataclass
@@ -692,7 +693,7 @@ class CreepDenialSystem:
                 if nearby_enemies:
                     # 적 전투력 추정
                     enemy_supply = sum(
-                        getattr(enemy, "supply_cost", 1) for enemy in nearby_enemies
+                        unit_supply_cost(enemy, 1) for enemy in nearby_enemies
                     )
 
                     # 우리 유닛이 1개뿐이고 적이 2보급 이상이면 후퇴

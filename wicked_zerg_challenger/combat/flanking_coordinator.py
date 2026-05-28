@@ -15,6 +15,7 @@ from __future__ import annotations
 import logging
 import math
 from typing import Dict, List
+from utils.unit_helpers import unit_supply_cost
 
 logger = logging.getLogger(__name__)
 
@@ -89,7 +90,7 @@ class FlankingCoordinator:
         if not army:
             return False
 
-        army_supply = sum(getattr(u, "supply_cost", 1) for u in army)
+        army_supply = sum(unit_supply_cost(u, 1) for u in army)
         if army_supply < self.MIN_ARMY_SUPPLY:
             return False
 

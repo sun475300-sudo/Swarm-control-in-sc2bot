@@ -10,6 +10,7 @@ import asyncio
 import logging
 import time
 from typing import Dict, List
+from utils.unit_helpers import unit_supply_cost
 
 # Error Handler 통합
 from error_handler import error_handler
@@ -3518,7 +3519,7 @@ class BotStepIntegrator:
                             self.bot.townhalls.ready.amount if self.bot.townhalls else 0
                         )
                         army_supply = sum(
-                            getattr(u, "supply_cost", 1)
+                            unit_supply_cost(u, 1)
                             for u in self.bot.units
                             if not u.is_structure
                             and u.type_id != UnitTypeId.DRONE

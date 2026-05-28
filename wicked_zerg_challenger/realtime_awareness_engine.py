@@ -16,6 +16,7 @@ Real-time Awareness Engine - 실시간 상황 인식 + 자동 대응 시스템
 import logging
 from dataclasses import dataclass
 from typing import Dict, List
+from utils.unit_helpers import unit_supply_cost
 
 logger = logging.getLogger("RealtimeAwarenessEngine")
 
@@ -184,7 +185,7 @@ class RealtimeAwarenessEngine:
         units = getattr(self.bot, "units", None)
         if units and hasattr(units, "__iter__"):
             s.army_supply = sum(
-                getattr(u, "supply_cost", 1)
+                unit_supply_cost(u, 1)
                 for u in units
                 if not getattr(u, "is_structure", False)
                 and getattr(u.type_id, "name", "")

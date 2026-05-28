@@ -25,6 +25,7 @@ import time
 from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Dict, List
+from utils.unit_helpers import unit_supply_cost
 
 logger = logging.getLogger("ScoringSystem")
 
@@ -167,7 +168,7 @@ class ScoringSystem:
             return
 
         army_supply = sum(
-            getattr(u, "supply_cost", 1)
+            unit_supply_cost(u, 1)
             for u in units
             if not getattr(u, "is_structure", False)
             and getattr(u.type_id, "name", "") != "DRONE"

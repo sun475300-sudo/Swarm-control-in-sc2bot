@@ -1,5 +1,6 @@
 import logging
 from typing import Any, Dict
+from utils.unit_helpers import unit_supply_cost
 
 from config.unit_configs import EconomyConfig
 
@@ -800,6 +801,12 @@ class ProductionResilience:
                     return await self._safe_train(larva, UnitTypeId.ZERGLING)
                 return False  # Wait for resources
 
+        # Once minimum defense exists, hold larvae while minerals are being
+        # reserved for the third Hatchery — same gating used by the auto tech
+        # and extractor builders.
+        if not ignore_caps and self._should_reserve_third_base_minerals():
+            return False
+
         # === COUNTER ENEMY COMPOSITION ===
         enemy_units = getattr(b, "enemy_units", [])
         counter_unit = self._get_counter_unit(
@@ -1444,7 +1451,7 @@ class ProductionResilience:
                 pass
         if (
             self._should_reserve_third_base_minerals()
-            and game_time < 300
+            and getattr(b, "time", 0.0) < 300
             and b.structures(UnitTypeId.ROACHWARREN).exists
         ):
             return
@@ -1458,27 +1465,6 @@ class ProductionResilience:
 
     # Defense methods moved to DefenseCoordinator
 
-    async def build_terran_counters(self) -> None:
-        b = self.bot
-        if not b.production:
-            return
-        if self._should_reserve_third_base_minerals():
-            return
-        baneling_nests = [
-            s for s in b.units(UnitTypeId.BANELINGNEST).structure if s.is_ready
-        ]
-        if (
-            not baneling_nests
-            and b.already_pending(UnitTypeId.BANELINGNEST) == 0
-            and b.can_afford(UnitTypeId.BANELINGNEST)
-        ):
-            # CRITICAL: Check for duplicate construction before building
-            if not b.structures(UnitTypeId.BANELINGNEST).exists:
-                spawning_pools = [
-                    s for s in b.units(UnitTypeId.SPAWNINGPOOL).structure if s.is_ready
-                ]
-                if spawning_pools:
-                    await b.build(UnitTypeId.BANELINGNEST, near=spawning_pools[0])
         # NOTE: Roach Warren building is now handled by _auto_build_tech_structures()
         # Removed duplicate code to prevent building spam
 
@@ -2468,7 +2454,7 @@ class ProductionResilience:
                 if hasattr(unit, "type_id") and unit.type_id == UnitTypeId.OVERLORD:
                     continue
                 if hasattr(unit, "can_attack") and unit.can_attack:
-                    army_supply += getattr(unit, "supply_cost", 1)
+                    army_supply += unit_supply_cost(unit, 1)
 
             # 조건: 일꾼 20+ 있는데 군대 서플라이 < 15 → 리맥스 필요
             if army_supply >= 15 or worker_count < 20:
