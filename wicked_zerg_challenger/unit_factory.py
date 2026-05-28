@@ -436,7 +436,8 @@ class UnitFactory:
         if self.blackboard:
             to_request = min(self.max_larva_spend_per_step, len(larva))
 
-            # ???Β?띾쭡??筌믨퀡彛??????????ル늅筌???????ヂ嚥?肉???숆강筌?쓣爾??            unit_requests = {}
+            # 유닛 타입별로 생산 요청 그룹화
+            unit_requests = {}
             for _ in range(to_request):
                 unit_type = self._pick_unit(queue)
                 if not unit_type:
