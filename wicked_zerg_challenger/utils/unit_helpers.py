@@ -14,6 +14,7 @@ from typing import Callable
 from utils.logger import get_logger
 
 try:
+    from sc2.ids.unit_typeid import UnitTypeId
     from sc2.position import Point2
     from sc2.unit import Unit
     from sc2.units import Units
@@ -21,8 +22,96 @@ except ImportError:
     Unit = None
     Units = None
     Point2 = None
+    UnitTypeId = None
 
 logger = get_logger("UnitHelpers")
+
+
+# burnysc2's Unit has no `supply_cost` attribute, so any
+# ``getattr(unit, "supply_cost", 1)`` silently collapses to 1 (a unit count).
+# Use this static table — standard SC2 food_required values — so army-strength
+# math is supply-weighted as intended.
+_SUPPLY_COST = (
+    {
+        # Zerg
+        UnitTypeId.DRONE: 1,
+        UnitTypeId.QUEEN: 2,
+        UnitTypeId.ZERGLING: 0.5,
+        UnitTypeId.BANELING: 0.5,
+        UnitTypeId.ROACH: 2,
+        UnitTypeId.RAVAGER: 3,
+        UnitTypeId.HYDRALISK: 2,
+        UnitTypeId.LURKERMP: 3,
+        UnitTypeId.INFESTOR: 2,
+        UnitTypeId.SWARMHOSTMP: 3,
+        UnitTypeId.ULTRALISK: 6,
+        UnitTypeId.MUTALISK: 2,
+        UnitTypeId.CORRUPTOR: 2,
+        UnitTypeId.BROODLORD: 4,
+        UnitTypeId.VIPER: 3,
+        UnitTypeId.OVERLORD: 0,
+        UnitTypeId.OVERSEER: 0,
+        UnitTypeId.LOCUSTMP: 0,
+        UnitTypeId.BROODLING: 0,
+        UnitTypeId.CHANGELING: 0,
+        # Terran
+        UnitTypeId.SCV: 1,
+        UnitTypeId.MARINE: 1,
+        UnitTypeId.MARAUDER: 2,
+        UnitTypeId.REAPER: 1,
+        UnitTypeId.GHOST: 2,
+        UnitTypeId.HELLION: 2,
+        UnitTypeId.HELLIONTANK: 2,
+        UnitTypeId.WIDOWMINE: 2,
+        UnitTypeId.CYCLONE: 3,
+        UnitTypeId.SIEGETANK: 3,
+        UnitTypeId.SIEGETANKSIEGED: 3,
+        UnitTypeId.THOR: 6,
+        UnitTypeId.THORAP: 6,
+        UnitTypeId.VIKINGFIGHTER: 2,
+        UnitTypeId.VIKINGASSAULT: 2,
+        UnitTypeId.MEDIVAC: 2,
+        UnitTypeId.LIBERATOR: 3,
+        UnitTypeId.LIBERATORAG: 3,
+        UnitTypeId.BANSHEE: 3,
+        UnitTypeId.RAVEN: 2,
+        UnitTypeId.BATTLECRUISER: 6,
+        UnitTypeId.MULE: 0,
+        UnitTypeId.AUTOTURRET: 0,
+        # Protoss
+        UnitTypeId.PROBE: 1,
+        UnitTypeId.ZEALOT: 2,
+        UnitTypeId.STALKER: 2,
+        UnitTypeId.SENTRY: 2,
+        UnitTypeId.ADEPT: 2,
+        UnitTypeId.HIGHTEMPLAR: 2,
+        UnitTypeId.DARKTEMPLAR: 2,
+        UnitTypeId.ARCHON: 4,
+        UnitTypeId.IMMORTAL: 4,
+        UnitTypeId.COLOSSUS: 6,
+        UnitTypeId.DISRUPTOR: 3,
+        UnitTypeId.OBSERVER: 1,
+        UnitTypeId.WARPPRISM: 2,
+        UnitTypeId.PHOENIX: 2,
+        UnitTypeId.VOIDRAY: 4,
+        UnitTypeId.ORACLE: 3,
+        UnitTypeId.TEMPEST: 5,
+        UnitTypeId.CARRIER: 6,
+        UnitTypeId.MOTHERSHIP: 8,
+        UnitTypeId.INTERCEPTOR: 0,
+        UnitTypeId.ADEPTPHASESHIFT: 0,
+    }
+    if UnitTypeId is not None
+    else {}
+)
+
+
+def unit_supply_cost(unit, default: float = 1.0) -> float:
+    """Supply cost for a unit via static lookup (Unit has no supply_cost attr)."""
+    type_id = getattr(unit, "type_id", None)
+    if type_id is None:
+        return default
+    return _SUPPLY_COST.get(type_id, default)
 
 
 def find_nearby_enemies(unit: Unit, enemy_units: Units, range: float) -> Units:
@@ -144,7 +233,7 @@ def execute_unit_action(unit: Unit, action: Callable, *args, **kwargs) -> bool:
         return False
 
 
-def calculate_unit_supply(units: Units) -> int:
+def calculate_unit_supply(units: Units) -> float:
     """
     유닛 컬렉션의 총 Supply 계산
 
@@ -158,15 +247,7 @@ def calculate_unit_supply(units: Units) -> int:
         return 0
 
     try:
-        # Supply 값이 있는 유닛만 합산
-        total_supply = 0
-        for unit in units:
-            if hasattr(unit, "supply_cost"):
-                total_supply += unit.supply_cost
-            else:
-                # 기본값 (알 수 없는 유닛은 1)
-                total_supply += 1
-        return total_supply
+        return sum(unit_supply_cost(unit) for unit in units)
     except Exception as e:
         logger.debug(f"calculate_unit_supply error: {e}")
         return len(units)  # 폴백: 유닛 개수
