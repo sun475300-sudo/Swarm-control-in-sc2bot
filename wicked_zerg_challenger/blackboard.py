@@ -543,6 +543,7 @@ class GameStateBlackboard:
             self.threat.level == ThreatLevel.NONE
             and not self.resources.is_supply_blocked
             and not self.is_under_attack
+            and self.resources.minerals >= 300  # afford a Hatchery before expanding
         )
 
 
