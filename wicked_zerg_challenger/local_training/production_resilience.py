@@ -800,6 +800,12 @@ class ProductionResilience:
                     return await self._safe_train(larva, UnitTypeId.ZERGLING)
                 return False  # Wait for resources
 
+        # Once minimum defense exists, hold larvae while minerals are being
+        # reserved for the third Hatchery — same gating used by the auto tech
+        # and extractor builders.
+        if not ignore_caps and self._should_reserve_third_base_minerals():
+            return False
+
         # === COUNTER ENEMY COMPOSITION ===
         enemy_units = getattr(b, "enemy_units", [])
         counter_unit = self._get_counter_unit(
