@@ -777,7 +777,7 @@ class BuildOrderSystem:
                         else:
                             worker = self.bot.workers.closest_to(geyser)
                             if worker:
-                                worker.build_gas(geyser)
+                                self.bot.do(worker.build_gas(geyser))
                                 built_any = True
                 if built_any:
                     return True
