@@ -10,6 +10,7 @@ import logging
 import os
 from datetime import datetime
 from typing import Any, Dict
+from utils.unit_helpers import unit_supply_cost
 
 logger = logging.getLogger("GameDataLogger")
 
@@ -479,7 +480,7 @@ class GameDataLogger:
 
         for unit in self.bot.units:
             unit_type = str(unit.type_id)
-            supply = getattr(unit, "supply_cost", 1)
+            supply = unit_supply_cost(unit, 1)
 
             if unit_type not in composition:
                 composition[unit_type] = {"count": 0, "supply": 0}

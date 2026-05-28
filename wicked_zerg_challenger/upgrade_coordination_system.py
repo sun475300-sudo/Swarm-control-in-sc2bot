@@ -11,6 +11,7 @@ Upgrade Coordination System - 업그레이드 전략 타이밍
 from typing import Dict, List, Optional, Tuple
 
 from utils.logger import get_logger
+from utils.unit_helpers import unit_supply_cost
 
 try:
     from sc2.ids.upgrade_id import UpgradeId
@@ -334,7 +335,7 @@ class UpgradeCoordinationSystem:
         for unit in self.bot.units:
             type_name = getattr(unit.type_id, "name", "").upper()
             if type_name in army_types:
-                supply_cost = getattr(unit, "supply_cost", 0)
+                supply_cost = unit_supply_cost(unit, 0)
                 total_supply += supply_cost
 
         return total_supply

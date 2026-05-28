@@ -33,6 +33,7 @@ except ImportError:
     Units = None
 
 from utils.logger import get_logger
+from utils.unit_helpers import unit_supply_cost
 
 
 class DoomDropPhase(Enum):
@@ -242,7 +243,7 @@ class DoomDropManager:
                     if unit.type_id == UnitTypeId.ZERGLING:
                         total += 1  # 0.5 * 2 (pair)
                     else:
-                        supply = getattr(unit, "supply_cost", 2)
+                        supply = unit_supply_cost(unit, 2)
                         total += supply if supply > 0 else 2
             except Exception:
                 continue

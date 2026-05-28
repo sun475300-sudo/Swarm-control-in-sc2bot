@@ -106,12 +106,31 @@ _SUPPLY_COST = (
 )
 
 
+_SUPPLY_COST_BY_NAME = {
+    getattr(type_id, "name", str(type_id)): cost
+    for type_id, cost in _SUPPLY_COST.items()
+}
+
+
 def unit_supply_cost(unit, default: float = 1.0) -> float:
-    """Supply cost for a unit via static lookup (Unit has no supply_cost attr)."""
+    """Supply cost for a unit via static lookup (Unit has no supply_cost attr).
+
+    Resolves by UnitTypeId, falling back to the type's name so it also works
+    with string or namespace-style type ids used in tests.
+    """
     type_id = getattr(unit, "type_id", None)
     if type_id is None:
         return default
-    return _SUPPLY_COST.get(type_id, default)
+    try:
+        if type_id in _SUPPLY_COST:
+            return _SUPPLY_COST[type_id]
+    except TypeError:
+        pass  # unhashable type id (e.g. a test namespace) -> resolve by name
+    name = getattr(type_id, "name", type_id)
+    try:
+        return _SUPPLY_COST_BY_NAME.get(name, default)
+    except TypeError:
+        return default
 
 
 def find_nearby_enemies(unit: Unit, enemy_units: Units, range: float) -> Units:

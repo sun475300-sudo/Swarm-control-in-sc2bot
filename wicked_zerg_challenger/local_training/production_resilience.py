@@ -1,5 +1,6 @@
 import logging
 from typing import Any, Dict
+from utils.unit_helpers import unit_supply_cost
 
 from config.unit_configs import EconomyConfig
 
@@ -2474,7 +2475,7 @@ class ProductionResilience:
                 if hasattr(unit, "type_id") and unit.type_id == UnitTypeId.OVERLORD:
                     continue
                 if hasattr(unit, "can_attack") and unit.can_attack:
-                    army_supply += getattr(unit, "supply_cost", 1)
+                    army_supply += unit_supply_cost(unit, 1)
 
             # 조건: 일꾼 20+ 있는데 군대 서플라이 < 15 → 리맥스 필요
             if army_supply >= 15 or worker_count < 20:

@@ -26,6 +26,7 @@ else:
         Point2 = tuple
 
 from utils.logger import get_logger
+from utils.unit_helpers import unit_supply_cost
 
 
 class AttackController:
@@ -70,7 +71,7 @@ class AttackController:
             game_time = getattr(self.bot, "time", 0)
 
             # 최소 병력 확인
-            army_supply = sum(getattr(u, "supply_cost", 1) for u in army_units)
+            army_supply = sum(unit_supply_cost(u, 1) for u in army_units)
 
             # 초반에는 더 낮은 임계값
             min_attack_threshold = 3 if game_time < 240 else 6
