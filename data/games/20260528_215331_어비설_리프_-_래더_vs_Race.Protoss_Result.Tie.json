@@ -1,0 +1,75 @@
+{
+  "meta": {
+    "timestamp": "2026-05-28T21:53:31.025868",
+    "map_name": "어비설 리프 - 래더",
+    "opponent_race": "Race.Protoss",
+    "bot_race": "Zerg",
+    "game_version": "5.0.12"
+  },
+  "build_order": [
+    {
+      "time": 74.1,
+      "supply": 18,
+      "action": "build_start",
+      "unit_type": "UnitTypeId.SPAWNINGPOOL",
+      "position": [
+        157.5,
+        24.5
+      ]
+    },
+    {
+      "time": 97.3,
+      "supply": 18,
+      "action": "build_start",
+      "unit_type": "UnitTypeId.EXTRACTOR",
+      "position": [
+        158.5,
+        14.5
+      ]
+    },
+    {
+      "time": 107.1,
+      "supply": 19,
+      "action": "build_start",
+      "unit_type": "UnitTypeId.HATCHERY",
+      "position": [
+        157.5,
+        50.5
+      ]
+    }
+  ],
+  "expansions": [],
+  "unit_production": [],
+  "tech_upgrades": [],
+  "engagements": [],
+  "resource_snapshots": [
+    {
+      "time": 60.0,
+      "minerals": 175,
+      "vespene": 0,
+      "supply_used": 17,
+      "supply_cap": 38,
+      "supply_army": 0,
+      "supply_workers": 16,
+      "bases": 1,
+      "workers": 16
+    }
+  ],
+  "decision_log": [],
+  "game_result": {
+    "result": "Result.Tie",
+    "duration": 6.9,
+    "final_supply": 20,
+    "final_minerals": 215,
+    "final_vespene": 0,
+    "final_bases": 2,
+    "end_time": "2026-05-28T21:53:37.943535"
+  },
+  "enemy_scouts": [],
+  "harassment": [],
+  "defense_events": [],
+  "unit_composition": [],
+  "upgrade_sequence": [],
+  "map_control": [],
+  "enemy_build_detected": {}
+}

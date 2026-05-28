@@ -25,6 +25,17 @@ logger = logging.getLogger("RunParallelTraining")
 sys.path.insert(0, str(Path(__file__).parent))
 
 
+def _configure_logging():
+    """Ensure runner logs are visible when script is launched directly."""
+    if logging.getLogger().handlers:
+        return
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+        datefmt="%H:%M:%S",
+    )
+
+
 def _ensure_sc2_path():
     if sys.platform != "win32":
         return
@@ -63,8 +74,9 @@ except (ImportError, OSError):
     logger.info("Not available, running on CPU")
     torch = None
 
-# Training config
-TOTAL_GAMES = 20
+# Training config (env overrides allow quick simulator validation runs)
+TOTAL_GAMES = int(os.getenv("SC2_TOTAL_GAMES", "20"))
+GAME_TIME_LIMIT = int(os.getenv("SC2_GAME_TIME_LIMIT", "420"))
 MAP_POOL = ["AbyssalReefLE", "AscensiontoAiurLE", "OdysseyLE"]
 RACE_POOL = [Race.Protoss, Race.Terran, Race.Zerg]
 DIFFICULTY_LADDER = [
@@ -122,6 +134,7 @@ def run_training_game(game_num, total, difficulty_idx=0):
                 maps.get(map_name),
                 [bot, Computer(enemy_race, difficulty)],
                 realtime=False,
+                game_time_limit=GAME_TIME_LIMIT,
             )
             elapsed = time.time() - start
             won = _is_win_result(str(result))
@@ -200,12 +213,14 @@ def run_training_game(game_num, total, difficulty_idx=0):
 
 
 def main():
+    _configure_logging()
     start_time = time.time()
 
     logger.info(f"\n{'='*70}")
     logger.info(f"  PARALLEL TRAINING: {TOTAL_GAMES} games")
     logger.info(f"  Maps: {len(MAP_POOL)} | Races: {len(RACE_POOL)}")
     logger.info(f"  Difficulty Ladder: {[d.name for d in DIFFICULTY_LADDER]}")
+    logger.info(f"  Game Time Limit: {GAME_TIME_LIMIT}s")
     logger.info(f"  GPU: {GPU_NAME}")
     logger.info(f"  Mode: Sequential Fast (realtime=False)")
     logger.info(f"{'='*70}\n")

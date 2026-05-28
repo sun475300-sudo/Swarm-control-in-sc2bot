@@ -1,0 +1,41 @@
+============================================================
+  GAME RESULT REPORT - DEFEAT
+============================================================
+  Map: 어비설 리프 - 래더
+  Opponent: Protoss
+  Duration: 0:10
+  Date: 2026-05-28 21:53
+
+--- TIMELINE ---
+  [1:14] Build: UnitTypeId.EXTRACTOR (Supply 17)
+  [1:25] Build: UnitTypeId.HATCHERY (Supply 18)
+  [1:41] Build: UnitTypeId.SPAWNINGPOOL (Supply 18)
+
+--- ECONOMY ---
+  Peak Minerals: 185
+  Peak Vespene: 56
+  Peak Workers: 19
+
+--- TIMINGS ---
+  No timing data available
+
+--- COMBAT ---
+  No engagement data recorded
+
+--- UNIT COMPOSITION ---
+  UnitTypeId.ZERGLING: 6 produced
+
+--- RESULT ANALYSIS ---
+  EARLY DEFEAT: Possible rush defense failure
+
+--- IMPROVEMENT SUGGESTIONS ---
+  1. Lost before 4 minutes - review early defense (spine crawlers, queens, zerglings)
+
+--- FINAL STATS ---
+  Workers: 19
+  Army Supply: 0
+  Bases: 2
+  Minerals: 35
+  Vespene: 104
+
+============================================================

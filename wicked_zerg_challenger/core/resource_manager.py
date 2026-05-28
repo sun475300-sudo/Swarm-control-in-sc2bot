@@ -14,7 +14,12 @@ Features:
 import asyncio
 from typing import TYPE_CHECKING, Dict, Optional, Tuple
 
-from wicked_zerg_challenger.utils.logger import get_logger
+try:
+    # Package import path (when installed as module)
+    from wicked_zerg_challenger.utils.logger import get_logger
+except ImportError:
+    # Local script execution path (python wicked_zerg_challenger/run_*.py)
+    from utils.logger import get_logger
 
 if TYPE_CHECKING:
     from sc2.bot_ai import BotAI

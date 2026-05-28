@@ -20,6 +20,17 @@ from wicked_zerg_bot_pro_impl import WickedZergBotProImpl as WickedZergBotPro
 logger = logging.getLogger("RunSingleGame")
 
 
+def _configure_logging():
+    """Ensure local runner logs are visible in terminal executions."""
+    if logging.getLogger().handlers:
+        return
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+        datefmt="%H:%M:%S",
+    )
+
+
 def _ensure_sc2_path():
     """Set SC2PATH environment variable."""
     if sys.platform != "win32":
@@ -114,6 +125,7 @@ def _cleanup_sc2_processes():
 
 def main():
     """Run a single test game."""
+    _configure_logging()
     args = _parse_args()
     _ensure_sc2_path()
 
@@ -135,7 +147,7 @@ def main():
     map_instance = maps.get(map_name)
     if map_instance is None:
         logger.error(f"Map '{map_name}' not found!")
-        return
+        return 1
 
     # Retry once for transient websocket startup failures.
     last_error = None
@@ -151,7 +163,7 @@ def main():
             )
             logger.info("\n[GAME FINISHED]")
             _cleanup_sc2_processes()
-            return
+            return 0
         except Exception as e:
             last_error = e
             error_text = str(e).lower()
@@ -169,8 +181,9 @@ def main():
             break
 
     logger.error(f"[GAME FAILED] {last_error}")
+    return 1
 
 
 if __name__ == "__main__":
-    main()
+    raise SystemExit(main())
 

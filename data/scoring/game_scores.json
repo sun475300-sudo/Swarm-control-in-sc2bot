@@ -2704,5 +2704,169 @@
     "engagements_lost": 0,
     "army_wipes": 0,
     "peak_supply": 76
+  },
+  {
+    "timestamp": "2026-05-28T21:53:04.561084",
+    "result": "loss",
+    "game_time": 180.0,
+    "total_score": -39.0,
+    "domains": {
+      "combat": {
+        "score": -10.0,
+        "grade": "F",
+        "positive": 0,
+        "negative": 1,
+        "total": 1
+      },
+      "production": {
+        "score": -56.0,
+        "grade": "F",
+        "positive": 5,
+        "negative": 14,
+        "total": 19
+      },
+      "scouting": {
+        "score": -10.0,
+        "grade": "F",
+        "positive": 0,
+        "negative": 1,
+        "total": 1
+      },
+      "economy": {
+        "score": 14.0,
+        "grade": "D",
+        "positive": 16,
+        "negative": 1,
+        "total": 17
+      },
+      "defense": {
+        "score": -25.0,
+        "grade": "F",
+        "positive": 0,
+        "negative": 2,
+        "total": 2
+      },
+      "strategy": {
+        "score": 31.0,
+        "grade": "C",
+        "positive": 41,
+        "negative": 1,
+        "total": 42
+      },
+      "micro": {
+        "score": -10.0,
+        "grade": "F",
+        "positive": 0,
+        "negative": 1,
+        "total": 1
+      },
+      "macro": {
+        "score": 47.0,
+        "grade": "B",
+        "positive": 57,
+        "negative": 1,
+        "total": 58
+      },
+      "adaptation": {
+        "score": -10.0,
+        "grade": "F",
+        "positive": 0,
+        "negative": 1,
+        "total": 1
+      },
+      "survival": {
+        "score": -10.0,
+        "grade": "F",
+        "positive": 0,
+        "negative": 1,
+        "total": 1
+      }
+    },
+    "engagements_won": 0,
+    "engagements_lost": 0,
+    "army_wipes": 0,
+    "peak_supply": 32
+  },
+  {
+    "timestamp": "2026-05-28T21:53:37.937180",
+    "result": "loss",
+    "game_time": 119.82142857142858,
+    "total_score": -90.0,
+    "domains": {
+      "combat": {
+        "score": -10.0,
+        "grade": "F",
+        "positive": 0,
+        "negative": 1,
+        "total": 1
+      },
+      "production": {
+        "score": -57.0,
+        "grade": "F",
+        "positive": 4,
+        "negative": 14,
+        "total": 18
+      },
+      "scouting": {
+        "score": -10.0,
+        "grade": "F",
+        "positive": 0,
+        "negative": 1,
+        "total": 1
+      },
+      "economy": {
+        "score": 24.0,
+        "grade": "C",
+        "positive": 26,
+        "negative": 1,
+        "total": 27
+      },
+      "defense": {
+        "score": -25.0,
+        "grade": "F",
+        "positive": 0,
+        "negative": 2,
+        "total": 2
+      },
+      "strategy": {
+        "score": 0.0,
+        "grade": "D",
+        "positive": 10,
+        "negative": 1,
+        "total": 11
+      },
+      "micro": {
+        "score": -10.0,
+        "grade": "F",
+        "positive": 0,
+        "negative": 1,
+        "total": 1
+      },
+      "macro": {
+        "score": 18.0,
+        "grade": "D",
+        "positive": 28,
+        "negative": 1,
+        "total": 29
+      },
+      "adaptation": {
+        "score": -10.0,
+        "grade": "F",
+        "positive": 0,
+        "negative": 1,
+        "total": 1
+      },
+      "survival": {
+        "score": -10.0,
+        "grade": "F",
+        "positive": 0,
+        "negative": 1,
+        "total": 1
+      }
+    },
+    "engagements_won": 0,
+    "engagements_lost": 0,
+    "army_wipes": 0,
+    "peak_supply": 20
   }
 ]

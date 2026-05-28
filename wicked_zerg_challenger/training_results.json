@@ -1,171 +1,18 @@
 {
-  "timestamp": "2026-04-14T22:03:10.652629",
-  "total": 20,
-  "wins": 11,
-  "losses": 9,
+  "timestamp": "2026-05-28T21:41:04.778070",
+  "total": 1,
+  "wins": 0,
+  "losses": 1,
   "final_difficulty": "Easy",
   "games": [
     {
       "game": 1,
-      "map": "OdysseyLE",
-      "race": "Zerg",
-      "difficulty": "Easy",
-      "won": true,
-      "time": 101.0
-    },
-    {
-      "game": 2,
-      "map": "AscensiontoAiurLE",
-      "race": "Zerg",
-      "difficulty": "Easy",
-      "won": true,
-      "time": 128.2
-    },
-    {
-      "game": 3,
       "map": "AbyssalReefLE",
       "race": "Zerg",
       "difficulty": "Easy",
       "won": false,
-      "error": "['Not in a game']",
-      "time": 0
-    },
-    {
-      "game": 4,
-      "map": "AscensiontoAiurLE",
-      "race": "Terran",
-      "difficulty": "Easy",
-      "won": true,
-      "time": 154.2
-    },
-    {
-      "game": 5,
-      "map": "AscensiontoAiurLE",
-      "race": "Protoss",
-      "difficulty": "Easy",
-      "won": false,
-      "time": 169.1
-    },
-    {
-      "game": 6,
-      "map": "AbyssalReefLE",
-      "race": "Terran",
-      "difficulty": "Easy",
-      "won": true,
-      "time": 99.1
-    },
-    {
-      "game": 7,
-      "map": "AscensiontoAiurLE",
-      "race": "Protoss",
-      "difficulty": "Easy",
-      "won": true,
-      "time": 135.4
-    },
-    {
-      "game": 8,
-      "map": "OdysseyLE",
-      "race": "Zerg",
-      "difficulty": "Easy",
-      "won": true,
-      "time": 101.2
-    },
-    {
-      "game": 9,
-      "map": "AbyssalReefLE",
-      "race": "Protoss",
-      "difficulty": "Medium",
-      "won": false,
-      "time": 140.6
-    },
-    {
-      "game": 10,
-      "map": "AscensiontoAiurLE",
-      "race": "Terran",
-      "difficulty": "Medium",
-      "won": false,
-      "time": 271.9
-    },
-    {
-      "game": 11,
-      "map": "AscensiontoAiurLE",
-      "race": "Protoss",
-      "difficulty": "Medium",
-      "won": false,
-      "time": 245.0
-    },
-    {
-      "game": 12,
-      "map": "AbyssalReefLE",
-      "race": "Zerg",
-      "difficulty": "Easy",
-      "won": true,
-      "time": 188.0
-    },
-    {
-      "game": 13,
-      "map": "AscensiontoAiurLE",
-      "race": "Zerg",
-      "difficulty": "Easy",
-      "won": true,
-      "time": 117.4
-    },
-    {
-      "game": 14,
-      "map": "OdysseyLE",
-      "race": "Terran",
-      "difficulty": "Easy",
-      "won": true,
-      "time": 216.5
-    },
-    {
-      "game": 15,
-      "map": "OdysseyLE",
-      "race": "Zerg",
-      "difficulty": "Medium",
-      "won": true,
-      "time": 100.4
-    },
-    {
-      "game": 16,
-      "map": "AbyssalReefLE",
-      "race": "Terran",
-      "difficulty": "Medium",
-      "won": false,
-      "time": 318.3
-    },
-    {
-      "game": 17,
-      "map": "AscensiontoAiurLE",
-      "race": "Terran",
-      "difficulty": "Medium",
-      "won": true,
-      "time": 171.8
-    },
-    {
-      "game": 18,
-      "map": "OdysseyLE",
-      "race": "Terran",
-      "difficulty": "Medium",
-      "won": false,
-      "time": 114.0
-    },
-    {
-      "game": 19,
-      "map": "AscensiontoAiurLE",
-      "race": "Protoss",
-      "difficulty": "Medium",
-      "won": false,
-      "time": 329.5
-    },
-    {
-      "game": 20,
-      "map": "AscensiontoAiurLE",
-      "race": "Terran",
-      "difficulty": "Medium",
-      "won": false,
-      "error": "['Not in a game']",
-      "time": 0
+      "error": "Websocket",
+      "time": 545.9
     }
   ]
 }

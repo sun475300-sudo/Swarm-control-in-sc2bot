@@ -1,20 +1,8 @@
 {
-  "enemy_race_name": "Terran",
-  "enemy_unit_counts": {
-    "MARAUDER": 4,
-    "RAVEN": 3,
-    "MARINE": 12,
-    "CYCLONE": 1,
-    "REAPER": 2,
-    "MEDIVAC": 2,
-    "SIEGETANKSIEGED": 1
-  },
-  "enemy_tech_buildings": [
-    "ARMORY",
-    "STARPORT",
-    "FUSIONCORE",
-    "FACTORY"
-  ],
+  "map_name": "\uc5b4\ube44\uc124 \ub9ac\ud504 - \ub798\ub354",
+  "enemy_race_name": "Protoss",
+  "enemy_unit_counts": {},
+  "enemy_tech_buildings": [],
   "scouted_locations": [
     [
       42.5,
@@ -85,5 +73,5 @@
       26.57684338233711
     ]
   ],
-  "enemy_build_pattern": "mech_transition"
+  "enemy_build_pattern": "unknown"
 }

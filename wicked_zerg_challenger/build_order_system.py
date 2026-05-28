@@ -375,6 +375,8 @@ class BuildOrderSystem:
         self.expansion_timing_target = EXPANSION_TIMING_TARGET
         self.expansion_actual_time = 0.0  # 실제 확장 시작 시간
         self.expansion_timing_verified = False
+        # Rate-limit delayed expansion warning to once per 10-second bucket.
+        self._last_expansion_delay_warning_bucket = -1
 
         # Initialization
         self._setup_build_order()
@@ -1063,7 +1065,12 @@ class BuildOrderSystem:
                 and self.expansion_actual_time == 0
             ):
                 # * FIX: 스팸 방지 - 10초마다 1회만 출력
-                if int(self.bot.time) % 10 == 0:
+                current_bucket = int(self.bot.time) // 10
+                if (
+                    int(self.bot.time) % 10 == 0
+                    and current_bucket != self._last_expansion_delay_warning_bucket
+                ):
+                    self._last_expansion_delay_warning_bucket = current_bucket
                     logger.warning(
                         f"[!] WARNING: Natural expansion delayed! ({int(self.bot.time)}s > {int(self.expansion_timing_target)}s target)"
                     )
