@@ -494,17 +494,25 @@ class AdvancedWorkerOptimizer:
 
     def _detect_depleting_minerals(self) -> None:
         """미네랄 고갈 감지"""
-        if not hasattr(self.bot, "mineral_field"):
+        if not hasattr(self.bot, "mineral_field") or not hasattr(self.bot, "townhalls"):
             return
 
+        # Scan only around ready bases to avoid map-wide noise.
+        nearby_tags = set()
+        for base in self.bot.townhalls.ready:
+            for mineral in self.bot.mineral_field.closer_than(12, base):
+                nearby_tags.add(mineral.tag)
+
         for mineral in self.bot.mineral_field:
+            if mineral.tag not in nearby_tags:
+                continue
             if (
-                mineral.mineral_contents < 200
+                mineral.mineral_contents < 100
                 and mineral.tag not in self.depleting_patches
             ):
                 self.depleting_patches.add(mineral.tag)
                 self.logger.info(
-                    f"[WORKER] Mineral patch {mineral.tag} is depleting (<200)"
+                    f"[WORKER] Mineral patch {mineral.tag} is depleting (<100)"
                 )
 
     def _count_workers_on_mineral(self, mineral_tag: int) -> int:
