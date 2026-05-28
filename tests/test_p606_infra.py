@@ -41,16 +41,17 @@ class TestFuzzTesting:
         cls = _safe_import("fuzz_testing.sc2_fuzzer", "FuzzTarget")
         if cls is None:
             # try alternate class name
-            mod = _safe_import("fuzz_testing.sc2_fuzzer", "FuzzConfig")
-            if mod is None:
-                pytest.skip("not importable")
+            cls = _safe_import("fuzz_testing.sc2_fuzzer", "SC2Fuzzer")
+        if cls is None:
+            pytest.skip("not importable")
+        assert cls is not None
 
 
 class TestContractTesting:
     def test_import(self):
         cls = _safe_import("contract_testing.sc2_contract_tester", "ContractViolation")
         if cls is None:
-            cls = _safe_import("contract_testing.sc2_contract_tester", "ContractType")
+            cls = _safe_import("contract_testing.sc2_contract_tester", "ContractTester")
         if cls is None:
             pytest.skip("not importable")
         assert cls is not None
@@ -80,7 +81,7 @@ class TestSBOMManager:
     def test_import(self):
         cls = _safe_import("sbom_manager.sc2_sbom_generator", "PackageType")
         if cls is None:
-            cls = _safe_import("sbom_manager.sc2_sbom_generator", "SBOMFormat")
+            cls = _safe_import("sbom_manager.sc2_sbom_generator", "SBOMGenerator")
         if cls is None:
             pytest.skip("not importable")
         assert cls is not None
@@ -130,7 +131,7 @@ class TestPerformanceProfiler:
     def test_import(self):
         cls = _safe_import("performance_profiler.sc2_profiler", "ProfileMetric")
         if cls is None:
-            cls = _safe_import("performance_profiler.sc2_profiler", "ProfilingConfig")
+            cls = _safe_import("performance_profiler.sc2_profiler", "SC2Profiler")
         if cls is None:
             pytest.skip("not importable")
         assert cls is not None
