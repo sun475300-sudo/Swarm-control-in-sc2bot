@@ -799,6 +799,10 @@ class ProductionResilience:
                 if b.can_afford(UnitTypeId.ZERGLING) and b.supply_left >= 1:
                     return await self._safe_train(larva, UnitTypeId.ZERGLING)
                 return False  # Wait for resources
+            # Minimum defense exists: hold larvae for the third Hatchery while we
+            # are reserving minerals for the expansion.
+            if self._should_reserve_third_base_minerals():
+                return False
 
         # === COUNTER ENEMY COMPOSITION ===
         enemy_units = getattr(b, "enemy_units", [])
