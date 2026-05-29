@@ -106,11 +106,18 @@
 
 결과: 인코딩 깨짐으로 인한 "주석 안에 코드" 패턴 0건 (`grep` 광역 스캔으로 확인). 테스트 1161/1161 유지.
 
-### Sweep #5+ 후보 (미수정, 다음 라운드)
+### Sweep #5 (커밋 `5331597`) — black + isort 포맷팅
+- [x] #16 내가 sweep #1-#4 에서 수정한 모든 파일에 `black` + `isort` 적용. CI 의 black 체크가 통과되도록 (전체 repo 는 미수정).
+
+### Sweep #6 (이번 커밋)
+- [x] #17 pytest.ini 에 `asyncio_default_fixture_loop_scope = function` 추가 — `PytestDeprecationWarning` 제거 (sweep마다 30개 정도씩 누적되던 노이즈)
+- [x] #18 CI failure 분석: Lint & Type Check (3.11) 가 `black --check .` (전체 repo) 에서 실패. 이는 sweep #5 이전부터 기존 문제 — 내가 만든 회귀 아님. 향후 PR 분리 권장.
+
+### Sweep #7+ 후보
 - [ ] #7 should_expand API 의미 분리 (보류, 동작 변경 위험)
-- [ ] 137개 pytest warning 분류/정리 (`PytestUnraisableExceptionWarning`, deprecated `asyncio_default_fixture_loop_scope` 등)
-- [ ] F541 (f-string-missing-placeholders) 250건 — 거의 무해하지만 정리
+- [ ] F541 (f-string-missing-placeholders) 250건 — 거의 무해하지만 정리 가능
 - [ ] F841 (unused-variable) 132건 — 일부는 실수일 수 있음, 케이스별 검토
 - [ ] E402 (module-import-not-at-top-of-file) 66건 — 일부는 의도된 lazy import
-- [ ] 깨진 한글 docstring 도 광역 인코딩 복구 (사람 가독성)
-- [ ] CI 로그에서 실패 패턴 식별 후 반영
+- [ ] adaptive_trainer.calculate_win_rate 의 race_name 인자가 무시되는 잠재 spec 버그 (확인 필요)
+- [ ] `s2clientprotocol` 의 deprecated `FileDescriptor()` 호출은 외부 라이브러리 — 우리 코드에서 warning suppress 만 가능
+- [ ] 462개 `except Exception:` 의 광역 검토 (defensive 인지 silent failure 인지)
