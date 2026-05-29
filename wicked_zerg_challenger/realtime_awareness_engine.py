@@ -220,9 +220,12 @@ class RealtimeAwarenessEngine:
             except Exception:
                 pass
 
-        # Intel
-        if hasattr(self.bot, "intel_manager"):
-            intel = self.bot.intel_manager
+        # Intel — bot side stores this as `intel` (manager_registry attribute_name);
+        # also accept legacy `intel_manager` name for safety.
+        intel = getattr(self.bot, "intel", None) or getattr(
+            self.bot, "intel_manager", None
+        )
+        if intel is not None:
             s.enemy_build_pattern = getattr(intel, "_enemy_build_pattern", "unknown")
             s.threat_level = getattr(intel, "_threat_level", "none")
 

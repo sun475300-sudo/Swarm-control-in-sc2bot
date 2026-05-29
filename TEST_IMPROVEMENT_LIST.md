@@ -156,10 +156,23 @@
 - 테스트 인프라: 6건
 - 회귀 가드 테스트: 5건
 
-### Sweep #11+ 후보
-- [ ] F841 (unused-variable) 132건 케이스별 검토
-- [ ] E402 66건
-- [ ] mypy 타입 검사
-- [ ] CI 의 black --check 점진적 적용
-- [ ] bot_step_integration 의 on_step 메소드 smoke test 추가
-- [ ] 더 많은 manager 의 attribute drift 가드 추가
+### Sweep #11 (이번 커밋) — `bot.intel` vs `bot.intel_manager` drift
+- [x] #28 AST-기반 스캐너로 `self.bot.<X>` 를 읽지만 어디에서도 set 되지 않는 attribute 광역 탐색. `intel_manager` 가 발견됨.
+- [x] #29 `manager_registry.py` 는 IntelManager 를 `bot.intel` 로 등록하지만 4개 파일이 `bot.intel_manager` 로 잘못 읽고 있었음. `intel` 우선, `intel_manager` 폴백으로 통일:
+  - `realtime_awareness_engine.py:225` — SITREP 의 enemy_build_pattern, threat_level 가 항상 unknown/none 이었던 잠재 버그
+  - `combat/creep_denial_system.py:205` — crep tumor placement 의 위험 판단이 항상 비활성화되던 버그
+  - `scoring_system.py:305, 530` — 스코어링 시스템의 적 빌드 인지 보너스가 항상 0점이던 버그
+  - `composition_optimizer.py:246` — historical enemy unit counts 가 항상 무시되던 버그
+
+### 결과 누적 (sweep #1~#11)
+- 테스트: **1166 통과**, 0 실패, 0 silent-skip
+- 경고: 0 표시
+- 실제 production 버그: **13개** (4개 추가)
+- 테스트 인프라: 6건
+- 회귀 가드 테스트: 5건
+
+### Sweep #12+ 후보
+- [ ] 다른 manager 이름 drift 검사 (`combat_manager`, `creep_manager`, `upgrade_manager`, `unit_factory`, `smart_balancer`, `building_manager`, `spell_manager`, `protoss_counter`, `multi_base_defense` 등이 비슷한 패턴 가능성)
+- [ ] F841 / E402
+- [ ] mypy
+- [ ] black 점진적 적용
