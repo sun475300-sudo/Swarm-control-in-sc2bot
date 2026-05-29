@@ -637,7 +637,9 @@ class CombatManager:
             try:
                 from sc2.ids.unit_typeid import UnitTypeId
 
-                army_supply = sum(getattr(u, "supply_cost", 1) for u in ground_army)
+                army_supply = sum(
+                    self._SUPPLY_TABLE.get(u.type_id, 1) for u in ground_army
+                )
 
                 # * 서플라이 40 이상이면 강력한 타이밍 공격
                 if army_supply >= 40:
@@ -1873,7 +1875,9 @@ class CombatManager:
                 army_units = [u for u in army_units if u.tag not in defense_tags]
 
             # 최소 군대 서플라이 확인
-            army_supply = sum(getattr(u, "supply_cost", 1) for u in army_units)
+            army_supply = sum(
+                self._SUPPLY_TABLE.get(u.type_id, 1) for u in army_units
+            )
 
             # * Phase 20: 서플라이 기반 점진적 공격 임계값 *
             # * Anti-Protoss: Protoss shields regenerate, so small attacks are wasted.
@@ -1928,7 +1932,7 @@ class CombatManager:
 
             # * Phase 30: 사전 전투력 비교 - 적보다 압도적으로 약하면 공격 자제
             visible_enemy_supply = sum(
-                getattr(e, "supply_cost", 1)
+                self._SUPPLY_TABLE.get(e.type_id, 1)
                 for e in self.bot.enemy_units
                 if hasattr(e, "can_attack") and e.can_attack
             )
@@ -2089,7 +2093,7 @@ class CombatManager:
         units = list(army_units or [])
         if not units or not attack_targets:
             return False
-        army_supply = sum(getattr(unit, "supply_cost", 1) for unit in units)
+        army_supply = sum(self._SUPPLY_TABLE.get(unit.type_id, 1) for unit in units)
         if army_supply < 60:
             return False
 
@@ -3727,9 +3731,11 @@ class CombatManager:
             return False
 
         # Calculate army supplies
-        our_supply = sum(getattr(u, "supply_cost", 1) for u in army_units)
+        our_supply = sum(self._SUPPLY_TABLE.get(u.type_id, 1) for u in army_units)
         enemy_supply = (
-            sum(getattr(u, "supply_cost", 1) for u in enemy_units) if enemy_units else 0
+            sum(self._SUPPLY_TABLE.get(u.type_id, 1) for u in enemy_units)
+            if enemy_units
+            else 0
         )
 
         # Check cooldown (prevent spamming counter attacks)
@@ -4578,7 +4584,7 @@ class CombatManager:
 
         for unit in army_units:
             try:
-                supply = getattr(unit, "supply_cost", 1)
+                supply = self._SUPPLY_TABLE.get(unit.type_id, 1)
                 if isinstance(supply, (int, float)):
                     total_supply += supply
             except (AttributeError, TypeError) as e:

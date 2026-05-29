@@ -28,6 +28,11 @@ try:
 except ImportError:
     pytest.skip("CombatManager not available", allow_module_level=True)
 
+try:
+    from sc2.ids.unit_typeid import UnitTypeId
+except ImportError:
+    UnitTypeId = None
+
 
 class MockUnit:
     """Mock SC2 Unit"""
@@ -468,6 +473,49 @@ class TestCombatPerformance:
 
         # 10 프레임이 1초 이내에 완료되어야 함 (100ms/frame)
         assert elapsed < 1.0, f"Performance issue: {elapsed:.2f}s for 10 frames"
+
+
+@pytest.mark.skipif(UnitTypeId is None, reason="sc2 library not available")
+class TestSupplyWeighting:
+    """Phase 41 regression: army strength must be supply-weighted, not unit counts.
+
+    burnysc2 ``Unit`` has no ``supply_cost`` attribute, so the old
+    ``getattr(u, "supply_cost", 1)`` collapsed every army-strength comparison to
+    a raw unit count. These tests lock in the ``_SUPPLY_TABLE``-based math.
+    """
+
+    def test_supply_table_populated(self):
+        combat = CombatManager(MockBot())
+        assert combat._SUPPLY_TABLE, "_SUPPLY_TABLE must not be empty"
+        assert combat._SUPPLY_TABLE.get(UnitTypeId.ZERGLING) == 0.5
+        assert combat._SUPPLY_TABLE.get(UnitTypeId.ULTRALISK) == 6
+
+    def test_army_supply_is_weighted_not_counted(self):
+        """10 zerglings == 5.0 supply (the exact expression used at the fixed
+        engage/retreat/counterattack sites), NOT 10."""
+        combat = CombatManager(MockBot())
+        lings = [MockUnit(i, UnitTypeId.ZERGLING, (0, 0)) for i in range(10)]
+        army_supply = sum(combat._SUPPLY_TABLE.get(u.type_id, 1) for u in lings)
+        assert army_supply == 5.0
+
+    def test_unknown_unit_defaults_to_one(self):
+        combat = CombatManager(MockBot())
+        drone = MockUnit(1, UnitTypeId.DRONE, (0, 0))  # not in table
+        assert combat._SUPPLY_TABLE.get(drone.type_id, 1) == 1
+
+    def test_combat_power_weights_by_supply_and_hp(self):
+        combat = CombatManager(MockBot())
+        # 1 full-HP Ultralisk (6) outweighs 4 full-HP zerglings (4 * 0.5 = 2.0)
+        ultra = [MockUnit(1, UnitTypeId.ULTRALISK, (0, 0), health=500, health_max=500)]
+        lings = [
+            MockUnit(i, UnitTypeId.ZERGLING, (0, 0), health=35, health_max=35)
+            for i in range(4)
+        ]
+        assert combat._combat_power(ultra) > combat._combat_power(lings)
+        # HP damage reduces power
+        hurt = [MockUnit(1, UnitTypeId.ROACH, (0, 0), health=29, health_max=145)]
+        full = [MockUnit(2, UnitTypeId.ROACH, (0, 0), health=145, health_max=145)]
+        assert combat._combat_power(hurt) < combat._combat_power(full)
 
 
 if __name__ == "__main__":

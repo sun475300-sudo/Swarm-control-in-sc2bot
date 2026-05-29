@@ -215,7 +215,7 @@ class CreepAutomationV2:
             # 쿨다운 체크 (50프레임 최소 간격)
             tag = tumor.tag
             last_spread = self._tumor_cooldowns.get(tag, 0)
-            current_iter = getattr(self.bot, "_game_loop", 0)
+            current_iter = getattr(getattr(self.bot, "state", None), "game_loop", 0) or 0
             if current_iter and current_iter - last_spread < 50:
                 continue
 
