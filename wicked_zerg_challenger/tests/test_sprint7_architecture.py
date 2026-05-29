@@ -135,9 +135,7 @@ class TestSprint7Architecture(unittest.TestCase):
         strategy.emergency_spine_requested = False
         strategy.emergency_spore_requested = False
 
-        StrategyManager._request_defensive_building(
-            strategy, spine=True, spore=True
-        )
+        StrategyManager._request_defensive_building(strategy, spine=True, spore=True)
 
         self.assertTrue(strategy.emergency_spine_requested)
         self.assertTrue(strategy.emergency_spore_requested)

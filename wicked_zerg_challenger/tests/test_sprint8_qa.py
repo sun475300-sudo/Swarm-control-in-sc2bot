@@ -46,7 +46,9 @@ class TestRunMassTestCli(unittest.TestCase):
         cases = build_test_cases(args)
 
         self.assertTrue(args.dry_run)
-        self.assertEqual([case[0] for case in cases], ["AbyssalReefLE", "OdysseyLE", "AbyssalReefLE"])
+        self.assertEqual(
+            [case[0] for case in cases], ["AbyssalReefLE", "OdysseyLE", "AbyssalReefLE"]
+        )
 
 
 if __name__ == "__main__":

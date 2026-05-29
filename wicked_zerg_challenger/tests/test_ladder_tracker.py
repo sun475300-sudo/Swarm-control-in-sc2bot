@@ -26,8 +26,12 @@ class TestLadderTracker(unittest.TestCase):
     def test_record_match_updates_winrate_and_files(self):
         with tempfile.TemporaryDirectory() as tmp:
             tracker = LadderTracker(tmp)
-            tracker.record_match("MediumAI", "Terran", "Simple64", "win", our_elo_after=1016)
-            tracker.record_match("MediumAI", "Terran", "Simple64", "loss", our_elo_after=1000)
+            tracker.record_match(
+                "MediumAI", "Terran", "Simple64", "win", our_elo_after=1016
+            )
+            tracker.record_match(
+                "MediumAI", "Terran", "Simple64", "loss", our_elo_after=1000
+            )
 
             stats = tracker.get_winrate(vs_race="Terran")
 
@@ -40,7 +44,9 @@ class TestLadderTracker(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             tracker = LadderTracker(tmp)
             tracker.record_match("BioAI", "Terran", "MapA", "loss", crash_reason="")
-            tracker.record_match("SkytossAI", "Protoss", "MapB", "crash", crash_reason="timeout")
+            tracker.record_match(
+                "SkytossAI", "Protoss", "MapB", "crash", crash_reason="timeout"
+            )
 
             report = tracker.get_weakness_report()
 

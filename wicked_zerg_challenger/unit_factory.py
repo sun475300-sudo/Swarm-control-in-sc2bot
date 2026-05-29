@@ -40,8 +40,12 @@ class UnitFactory:
             self.larva_pressure_threshold = 6
 
         self.min_mineral_reserve_for_gas = 150
-        self.gas_unit_ratio_target = 0.50  # * BALANCED: 0.60 -> 0.50 (??筌먦끉?????Β?띾쭡) *
-        self.larva_gas_ratio = 0.45  # * BALANCED: 0.6 -> 0.45 (雅?퍔瑗띰㎖?덈빝?????ル늅筌?55%) *
+        self.gas_unit_ratio_target = (
+            0.50  # * BALANCED: 0.60 -> 0.50 (??筌먦끉?????Β?띾쭡) *
+        )
+        self.larva_gas_ratio = (
+            0.45  # * BALANCED: 0.6 -> 0.45 (雅?퍔瑗띰㎖?덈빝?????ル늅筌?55%) *
+        )
         self.max_larva_spend_per_step = 5
 
         # * COMBAT REINFORCEMENT SYSTEM *
@@ -373,7 +377,9 @@ class UnitFactory:
                             self.gas_unit_ratio_target = min(gas_ratio, 0.60)
                         if iteration % 100 == 0:
                             race = getattr(strategy, "detected_enemy_race", None)
-                            race_name = race.value if hasattr(race, "value") else str(race)
+                            race_name = (
+                                race.value if hasattr(race, "value") else str(race)
+                            )
                             logger.info(
                                 f"vs {race_name}: gas_ratio_target = {self.gas_unit_ratio_target:.2f}"
                             )
