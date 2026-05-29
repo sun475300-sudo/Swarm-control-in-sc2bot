@@ -135,12 +135,20 @@
 - 진짜 production 버그: 8개 (#1~#3, #11~#13, #20, #24의 시그니처 mismatch)
 - 테스트 인프라: 5건 (#4, #5, #9, #10, #19, #23)
 
-### Sweep #9+ 후보
+### Sweep #9 (이번 커밋)
+- [x] #25 `adaptive_trainer.calculate_win_rate` 의 race_name 인자가 무시되던 spec 버그 해결. GameStatistics 가 `by_difficulty` 와 `by_race` 만 가지므로 결합 카운트는 마지널의 평균과 min 으로 추정. 호출자가 없는 dead code 지만 spec 일치.
+- [x] #26 `pytest.ini` 에 `filterwarnings` 추가 — `s2clientprotocol.*` 과 `google.protobuf.*` 의 외부 deprecation 노이즈 제거. 경고 100 → **0** 으로 표시.
+
+### 결과 누적 (sweep #1~#9)
+- 테스트: **1161 통과**, 0 실패, 0 silent-skip
+- 경고: 137 → **0 (표시)** (외부는 필터, 내부는 모두 수정)
+- 실제 production 버그: 9개 (#1~#3, #11~#13, #20, #24, #25)
+- 테스트 인프라: 6건 (#4, #5, #9, #10, #19, #23)
+
+### Sweep #10+ 후보
 - [ ] F841 (unused-variable) 132건 케이스별 검토
 - [ ] E402 (module-import-not-at-top-of-file) 66건
-- [ ] adaptive_trainer.calculate_win_rate dead code (race_name 무시) — 호출자 없음
-- [ ] `s2clientprotocol` deprecated descriptor 호출 (외부) → `filterwarnings` 로 처리
-- [ ] 462개 `except Exception:` 광역 검토
+- [ ] 462개 `except Exception:` 광역 검토 (Silent failure 후보)
 - [ ] mypy 실행해서 타입 일치 검사
-- [ ] CI 의 black --check 가 전체 repo 에서 fail → 점진적 black 적용 계획 수립
-- [ ] integration 테스트 추가 — 실제 게임 시뮬 없이 봇 lifecycle (on_start → on_step → on_end) smoke test
+- [ ] CI 의 black --check 점진적 적용 계획
+- [ ] integration 테스트 — 봇 lifecycle smoke test (on_start → on_step → on_end)
