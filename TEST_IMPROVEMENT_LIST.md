@@ -253,8 +253,20 @@
 - 테스트 인프라: 6건
 - 회귀 가드: 5건
 
-### Sweep #18+ 후보
-- [ ] `combat/__init__.py` 의 `Cannot assign to a type` 패턴 (try/except 폴백 클래스의 잘못된 패턴)
-- [ ] more mypy 광역 확대
-- [ ] F841 / E402 정리
-- [ ] black 점진적 적용
+### Sweep #18 (이번 커밋) — strategy_manager 타입 안정성
+- [x] #42 `strategy_manager._blackboard_number` 가 `default: float = 0.0` 으로 선언되었지만 호출자들이 `default=None` 을 명시적으로 sentinel 로 사용. 시그니처를 `Optional[float]` 로 확장하고 docstring 명시.
+- [x] #43 `strategy_manager._has_upgrade` 의 `upgrades` 변수 타입 어노테이션 추가.
+
+### 결과 누적 (sweep #1~#18)
+- 테스트: **1166 통과**, 0 실패
+- 경고: 0 표시
+- 실제 production 버그: 23개
+- 타입 정리: 5건
+- 테스트 인프라: 6건
+- 회귀 가드: 5건
+
+### Sweep #19+ 후보 (장기 작업)
+- [ ] `combat/__init__.py` 의 try/except 폴백 클래스 mypy 패턴 (광범위, 보류)
+- [ ] F841 (132건) / E402 (66건) 일괄 정리
+- [ ] black 점진적 적용 — root → wicked_zerg_challenger 순
+- [ ] integration 테스트 확대 (각 manager 의 on_step smoke test)
