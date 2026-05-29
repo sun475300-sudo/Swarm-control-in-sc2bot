@@ -432,14 +432,14 @@ class OpponentModeling:
 
         # Early army detection
         army_supply = sum(
-            getattr(u, "supply_cost", 1) for u in enemy_units if not u.is_worker
+            getattr(u, "supply_cost", 1) for u in enemy_units if getattr(u.type_id, "name", "").upper() not in {"DRONE", "SCV", "PROBE", "MULE"}
         )
         if game_time < 150 and army_supply >= 15:
             self._add_signal(StrategySignal.EARLY_ARMY)
 
         # Air units early
         air_units = [
-            u for u in enemy_units if getattr(u, "is_flying", False) and not u.is_worker
+            u for u in enemy_units if getattr(u, "is_flying", False) and getattr(u.type_id, "name", "").upper() not in {"DRONE", "SCV", "PROBE", "MULE"}
         ]
         if game_time < 180 and len(air_units) >= 2:
             self._add_signal(StrategySignal.AIR_UNITS_EARLY)
