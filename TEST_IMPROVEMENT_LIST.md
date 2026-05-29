@@ -182,9 +182,20 @@
 - 테스트 인프라: 6건
 - 회귀 가드: 5건
 
-### Sweep #13+ 후보
-- [ ] manager_registry 의 일관성 강제 (예: __init__ 에서 `bot.<legacy_name> = self` 자동 alias 등)
+### Sweep #13 (이번 커밋) — opponent_modeling 의 3가지 mypy 실제 버그
+- [x] #32 `opponent_modeling.py:765` — `async def on_step` 이 두 번 정의되어 두 번째가 첫 번째를 가림. 첫 번째 (line 341) 가 update_interval throttling + build-order tracking + timing-attack detection + tech-progression + blackboard update 등 다 하는데, 두 번째 (line 765) 는 early-signal detection 만 함. Python silently used the second. shadowing 정의 삭제, 첫 번째에 current_opponent_id 가드 통합.
+- [x] #33 `opponent_modeling.py:783-784` — GameHistory dataclass 에 `game_won`/`game_lost` 필드 없는데 dynamic attribute 로 set. 실제 필드 `game_result: str` 에 "win"/"loss"/"unknown" 으로 매핑.
+- [x] #34 `opponent_modeling.py:786, 824` — `observed_signals` 는 `Set[str]` 인데 `s.value` 로 enum 처럼 접근. AttributeError 위험. `list(self.observed_signals)` 로 변경.
+
+### 결과 누적 (sweep #1~#13)
+- 테스트: **1166 통과**, 0 실패, 0 silent-skip
+- 경고: 0 표시
+- 실제 production 버그: **18개** (3개 추가)
+- 테스트 인프라: 6건
+- 회귀 가드: 5건
+
+### Sweep #14+ 후보
+- [ ] mypy 전체 codebase 적용 (현재 unit_factory.py, blackboard.py, opponent_modeling.py 만 확인)
+- [ ] `utils/kd_tree.py:121` mypy 에러 (return type mismatch)
 - [ ] F841 / E402
-- [ ] mypy
-- [ ] black 점진적 적용 - root 디렉토리부터
-- [ ] performance_optimizer 같은 매니저들의 silent failure 검사
+- [ ] 다른 파일에서 같은 `def 중복 정의` 패턴 검색 (mypy 광역)

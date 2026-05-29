@@ -340,6 +340,10 @@ class OpponentModeling:
 
     async def on_step(self, iteration: int):
         """매 프레임 실행"""
+        # Bail early if on_game_start/on_start hasn't run yet (mirrors the
+        # guard the previously-shadowing on_step at line 765 had).
+        if not self.current_opponent_id or not self.bot:
+            return
         if iteration - self.last_update < self.update_interval:
             return
 
@@ -762,28 +766,32 @@ class OpponentModeling:
                 f"[OPPONENT_MODELING] Known opponent: {opponent_id} ({self.opponent_models[opponent_id].games_played} games)"
             )
 
-    async def on_step(self, iteration: int):
-        """매 프레임 호출 - 신호 감지"""
-        if not self.current_opponent_id or not self.bot:
-            return
-
-        game_time = self.bot.time
-
-        # Only detect signals in early game (0-180s)
-        if game_time <= 180.0:
-            await self._detect_early_signals(game_time)
+    # NOTE: A second `async def on_step` used to live here that shadowed the
+    # full-fat on_step at line ~341 (which throttles by update_interval and
+    # also runs build-order tracking, timing-attack detection, tech-progression
+    # tracking, and blackboard updates). Python silently kept only the second
+    # definition, so all of those features were dead code in production. The
+    # shadowing definition has been removed; on_step now lives only at line
+    # 341. Discovered via `mypy --ignore-missing-imports` (no-redef).
 
     def on_game_end(self, won: bool, lost: bool):
         """게임 종료 시 호출 - 데이터 저장"""
         if not self.current_opponent_id or not self.current_game_history:
             return
 
-        # Update game history
-        self.current_game_history.game_won = won
-        self.current_game_history.game_lost = lost
-        self.current_game_history.early_signals = [
-            s.value for s in self.observed_signals
-        ]
+        # Update game history. GameHistory only carries `game_result: str`
+        # ("win"/"loss"/"unknown"); the previous code set non-existent
+        # `game_won`/`game_lost` attributes that downstream consumers never
+        # read. We also previously did `s.value for s in self.observed_signals`
+        # which crashed at runtime if signals were ever non-enum strings —
+        # observed_signals is declared `Set[str]` (the values, not the enum).
+        if won:
+            self.current_game_history.game_result = "win"
+        elif lost:
+            self.current_game_history.game_result = "loss"
+        else:
+            self.current_game_history.game_result = "unknown"
+        self.current_game_history.early_signals = list(self.observed_signals)
 
         # Detect strategy (placeholder - would need more logic)
         if self.intel:
@@ -811,10 +819,10 @@ class OpponentModeling:
 
         model = self.opponent_models[self.current_opponent_id]
 
-        # If we have observed signals, use them for prediction
+        # If we have observed signals, use them for prediction.
+        # observed_signals is Set[str] (raw values from _add_signal); no .value.
         if self.observed_signals:
-            signal_strings = [s.value for s in self.observed_signals]
-            return model.predict_strategy(signal_strings)
+            return model.predict_strategy(list(self.observed_signals))
 
         # Otherwise, return most common strategy
         if model.strategy_frequency:
