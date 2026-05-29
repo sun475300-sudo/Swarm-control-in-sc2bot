@@ -280,7 +280,12 @@ TIMING_ATTACKS = {
 EMERGENCY_RESPONSES = {
     "proxy_barracks": {
         "detection": "Barracks distance_to(our_base) < 40 AND game_time < 180",
-        "immediate": ["cancel_expansion", "spine_crawler_x2", "zergling_x6", "queen_defend"],
+        "immediate": [
+            "cancel_expansion",
+            "spine_crawler_x2",
+            "zergling_x6",
+            "queen_defend",
+        ],
         "drone_production": "HALT",
     },
     "hellion_runby": {
@@ -1799,9 +1804,7 @@ class StrategyManager:
         ):
             return "skytoss_transition"
 
-        if comp.get("HIGHTEMPLAR", 0) >= 2 or self._blackboard_flag(
-            "templar_archives"
-        ):
+        if comp.get("HIGHTEMPLAR", 0) >= 2 or self._blackboard_flag("templar_archives"):
             return "storm_templar"
 
         if comp.get("WARPPRISM", 0) > 0 and self._enemy_unit_near_own_base(
@@ -1857,7 +1860,9 @@ class StrategyManager:
             self.blackboard.set("timing_attack_active", False)
             self.blackboard.set("timing_attack_retreat", True)
             self.blackboard.set("timing_attack_key", attack_key)
-            self.blackboard.set("timing_attack_retreat_reason", attack_data["retreat_if"])
+            self.blackboard.set(
+                "timing_attack_retreat_reason", attack_data["retreat_if"]
+            )
             return
 
         self.current_mode = StrategyMode.AGGRESSIVE
@@ -1885,11 +1890,17 @@ class StrategyManager:
         if matchup == "ZvT" and attack_key == "ling_speed_timing":
             return self._speed_upgrade_done() and self._own_unit_count("ZERGLING") >= 16
         if matchup == "ZvT" and attack_key == "roach_ravager_push":
-            return self._own_unit_count("ROACH") >= 8 and self._own_unit_count("RAVAGER") >= 3
+            return (
+                self._own_unit_count("ROACH") >= 8
+                and self._own_unit_count("RAVAGER") >= 3
+            )
         if matchup == "ZvP" and attack_key == "roach_timing":
             return self._own_unit_count("ROACH") >= 10 and self._roach_speed_done()
         if matchup == "ZvP" and attack_key == "ling_nydus_harass":
-            return self._own_structure_count("NYDUSNETWORK") > 0 and self._own_unit_count("ZERGLING") >= 20
+            return (
+                self._own_structure_count("NYDUSNETWORK") > 0
+                and self._own_unit_count("ZERGLING") >= 20
+            )
         if matchup == "ZvZ" and attack_key == "ling_bane_allin":
             return (
                 self._speed_upgrade_done()
@@ -1979,7 +1990,8 @@ class StrategyManager:
             return "enemy_all_in"
 
         if self._blackboard_flag("proxy_barracks") or (
-            game_time < 180.0 and self._enemy_structure_near_own_base({"BARRACKS"}, 40.0)
+            game_time < 180.0
+            and self._enemy_structure_near_own_base({"BARRACKS"}, 40.0)
         ):
             return "proxy_barracks"
 
@@ -1994,9 +2006,9 @@ class StrategyManager:
         ):
             return "12pool_rush"
 
-        if comp.get("HELLION", 0) + comp.get("HELLIONTANK", 0) >= 4 and self._enemy_unit_near_own_base(
-            {"HELLION", "HELLIONTANK"}, 18.0
-        ):
+        if comp.get("HELLION", 0) + comp.get(
+            "HELLIONTANK", 0
+        ) >= 4 and self._enemy_unit_near_own_base({"HELLION", "HELLIONTANK"}, 18.0):
             return "hellion_runby"
 
         if comp.get("BANELING", 0) >= 8 and self._enemy_unit_near_own_base(
@@ -2036,9 +2048,10 @@ class StrategyManager:
             return False
 
         enemy_power_ratio = self._enemy_army_power_ratio()
-        approaching = self._blackboard_flag(
-            "enemy_army_approaching"
-        ) or self._large_enemy_force_near_base()
+        approaching = (
+            self._blackboard_flag("enemy_army_approaching")
+            or self._large_enemy_force_near_base()
+        )
 
         if enemy_power_ratio < 1.5 or not approaching:
             return False
@@ -2135,7 +2148,7 @@ class StrategyManager:
         if any(self._blackboard_flag(flag) for flag in blackboard_flags):
             return True
         state = getattr(self.bot, "state", None)
-        upgrades = getattr(state, "upgrades", set()) if state else set()
+        upgrades: Any = getattr(state, "upgrades", set()) if state else set()
         for upgrade in upgrades or []:
             name = getattr(upgrade, "name", str(upgrade)).upper()
             if upgrade_name.upper() in name:
@@ -2169,7 +2182,16 @@ class StrategyManager:
                 count += 1
         return count
 
-    def _blackboard_number(self, key: str, default: float = 0.0) -> float:
+    def _blackboard_number(
+        self, key: str, default: Optional[float] = 0.0
+    ) -> Optional[float]:
+        """Read a numeric value from the blackboard.
+
+        Returns `default` (which may be None) when the key is missing,
+        the value is None, or it can't be coerced to float. Callers
+        that pass `default=None` use that as "I want None back if the
+        value isn't there" — see `_enemy_army_power_ratio`.
+        """
         if not self.blackboard or not hasattr(self.blackboard, "get"):
             return default
         try:

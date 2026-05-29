@@ -132,17 +132,31 @@ def run_single_game(
 
 
 def calculate_win_rate(stats: GameStatistics, difficulty_name: str, race_name: str):
-    """특정 난이도/종족 조합의 승률 계산"""
-    key = f"{difficulty_name}_{race_name}"
+    """특정 난이도/종족 조합의 승률 계산.
 
-    # 난이도별 통계 확인
-    if difficulty_name in stats.stats["by_difficulty"]:
-        diff_stats = stats.stats["by_difficulty"][difficulty_name]
-        total = diff_stats["wins"] + diff_stats["losses"]
-        if total > 0:
-            return (diff_stats["wins"] / total * 100), total
+    GameStatistics 는 difficulty 와 race 를 별도 인덱스로만 추적하므로,
+    조합 승률은 두 조건의 교집합 (둘 다 매칭되는 게임이 존재해야 의미가 있음)
+    으로 계산한다. 어느 한쪽이라도 통계가 없으면 0% 반환.
+    """
+    by_diff = stats.stats["by_difficulty"].get(difficulty_name)
+    by_race = stats.stats["by_race"].get(race_name)
+    if not by_diff or not by_race:
+        return 0.0, 0
 
-    return 0.0, 0
+    diff_total = by_diff["wins"] + by_diff["losses"]
+    race_total = by_race["wins"] + by_race["losses"]
+    if diff_total == 0 or race_total == 0:
+        return 0.0, 0
+
+    # Combine the two marginals: take the smaller sample as the upper bound
+    # on the joint count, and average the two marginal winrates as a rough
+    # estimate of the conditional winrate. This is a heuristic; for an exact
+    # joint count we would need a `by_difficulty_race` index.
+    diff_winrate = by_diff["wins"] / diff_total
+    race_winrate = by_race["wins"] / race_total
+    combined_winrate = (diff_winrate + race_winrate) / 2 * 100
+    estimated_games = min(diff_total, race_total)
+    return combined_winrate, estimated_games
 
 
 def train_difficulty_with_random_races(

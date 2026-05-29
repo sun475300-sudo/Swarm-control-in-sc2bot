@@ -1,0 +1,27 @@
+# Test dependencies for SC2 Swarm Control bot
+# Install with: pip install -r requirements-test.txt
+#
+# NOTE: protobuf must stay <3.21 because the bundled s2clientprotocol-5.0.x
+# generated code is incompatible with protobuf>=4 ("Descriptors cannot be
+# created directly" / "cannot import name 'runtime_version'").
+# Do NOT install pys2clientprotocol in the same env — it pulls protobuf>=6
+# and breaks sc2's protobuf imports.
+
+# Test framework
+pytest>=8.0
+pytest-asyncio>=0.23
+pytest-timeout>=2.3
+
+# SC2 stack (compatible combo)
+sc2==0.11.2
+s2clientprotocol==5.0.15.95299.0
+protobuf>=3.19,<3.21
+
+# Runtime libs imported during test collection
+loguru>=0.7
+scipy>=1.11
+numpy>=1.24
+
+# cryptography (PyO3-backed) needs cffi at runtime; without it the rust
+# binding panics with "Python API call failed".
+cffi>=1.16

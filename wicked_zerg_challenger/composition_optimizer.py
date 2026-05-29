@@ -243,7 +243,10 @@ class CompositionOptimizer:
                 continue
 
         # Use IntelManager historical data to keep units that moved out of vision.
-        intel = getattr(self.bot, "intel_manager", None)
+        # manager_registry registers IntelManager as `intel`, not `intel_manager`.
+        intel = getattr(self.bot, "intel", None) or getattr(
+            self.bot, "intel_manager", None
+        )
         historical = getattr(intel, "enemy_unit_counts", None) if intel else None
         if isinstance(historical, dict):
             for unit_name, count in historical.items():

@@ -201,8 +201,11 @@ class CreepDenialSystem:
         해당 위치가 위험한지 판단 (IntelManager 연동 + 설정값 사용)
         """
         # * IntelManager 위협 정보 활용 (Phase 17 개선) *
-        if hasattr(self.bot, "intel_manager"):
-            intel = self.bot.intel_manager
+        # manager_registry sets this as `intel`; accept `intel_manager` for back-compat.
+        intel = getattr(self.bot, "intel", None) or getattr(
+            self.bot, "intel_manager", None
+        )
+        if intel is not None:
             # IntelManager가 공격 중으로 판단하면, 공격 위치 근처는 위험
             if intel.is_under_attack():
                 attack_pos = intel.get_attack_position()

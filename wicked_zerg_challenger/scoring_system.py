@@ -300,15 +300,16 @@ class ScoringSystem:
         else:
             self._last_scout_time = game_time
 
-        # 적 빌드 패턴 감지 보너스
-        if hasattr(self.bot, "intel_manager"):
-            intel = self.bot.intel_manager
-            if hasattr(intel, "_build_pattern_confidence"):
-                confidence = getattr(intel, "_build_pattern_confidence", 0)
-                if confidence > 0.7:
-                    self.domains["scouting"].add(
-                        +3, f"적 빌드 패턴 감지 (신뢰도 {confidence:.0%})"
-                    )
+        # 적 빌드 패턴 감지 보너스 — manager_registry 는 `intel` 로 등록
+        intel = getattr(self.bot, "intel", None) or getattr(
+            self.bot, "intel_manager", None
+        )
+        if intel is not None and hasattr(intel, "_build_pattern_confidence"):
+            confidence = getattr(intel, "_build_pattern_confidence", 0)
+            if confidence > 0.7:
+                self.domains["scouting"].add(
+                    +3, f"적 빌드 패턴 감지 (신뢰도 {confidence:.0%})"
+                )
 
     # =========================================================================
     # 4. Economy (경제) 평가
@@ -525,9 +526,11 @@ class ScoringSystem:
                 -5, "가스 1500+ 축적 - 히드라/뮤탈/바퀴 즉시 생산!"
             )
 
-        # 적 구성에 맞는 카운터 유닛 생산 확인
-        if hasattr(self.bot, "intel_manager"):
-            intel = self.bot.intel_manager
+        # 적 구성에 맞는 카운터 유닛 생산 확인 — `intel` 또는 legacy `intel_manager`
+        intel = getattr(self.bot, "intel", None) or getattr(
+            self.bot, "intel_manager", None
+        )
+        if intel is not None:
             pattern = getattr(intel, "_enemy_build_pattern", "unknown")
             if pattern != "unknown":
                 self.domains["adaptation"].add(

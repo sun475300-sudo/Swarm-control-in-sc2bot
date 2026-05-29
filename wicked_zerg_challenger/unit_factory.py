@@ -40,8 +40,12 @@ class UnitFactory:
             self.larva_pressure_threshold = 6
 
         self.min_mineral_reserve_for_gas = 150
-        self.gas_unit_ratio_target = 0.50  # * BALANCED: 0.60 -> 0.50 (??筌먦끉?????Β?띾쭡) *
-        self.larva_gas_ratio = 0.45  # * BALANCED: 0.6 -> 0.45 (雅?퍔瑗띰㎖?덈빝?????ル늅筌?55%) *
+        self.gas_unit_ratio_target = (
+            0.50  # * BALANCED: 0.60 -> 0.50 (??筌먦끉?????Β?띾쭡) *
+        )
+        self.larva_gas_ratio = (
+            0.45  # * BALANCED: 0.6 -> 0.45 (雅?퍔瑗띰㎖?덈빝?????ル늅筌?55%) *
+        )
         self.max_larva_spend_per_step = 5
 
         # * COMBAT REINFORCEMENT SYSTEM *
@@ -88,7 +92,8 @@ class UnitFactory:
         """
         ??? ???ろ꼥??????ㅻ깹????좊읈??????ル늅筌??????????깆뱾 ?釉뚰???
         """
-        # Strategy Manager????????ろ꼥???嶺뚮㉡?€쾮???좊읈??嶺뚮ㅎ?닸쾮濡㏓섀?        strategy = getattr(self.bot, "strategy_manager", None)
+        # Strategy Manager 에서 적 종족 정보를 우선 조회
+        strategy = getattr(self.bot, "strategy_manager", None)
         if strategy:
             race = getattr(strategy, "detected_enemy_race", None)
             if race:
@@ -163,7 +168,7 @@ class UnitFactory:
         self._last_combat_check = iteration
         in_combat = False
 
-        # ??ш낄援????좊즴?? ?釉뚰???쨨??        in_combat = False
+        # Combat 모드 기본값
 
         # 1. Strategy Manager??emergency_active 癲ル슪???띿물?
         strategy = getattr(self.bot, "strategy_manager", None)
@@ -181,7 +186,7 @@ class UnitFactory:
                 nearby_enemies = [
                     e for e in enemy_units if e.distance_to(th.position) < 35
                 ]
-                if len(nearby_enemies) >= 3:  # 3?????⑤?彛?????ㅼ굣???????뗫쐩??                    in_combat = True
+                if len(nearby_enemies) >= 3:  # 3기 이상 근접 시 전투 모드
                     in_combat = True
                     break
 
@@ -212,7 +217,7 @@ class UnitFactory:
         pending_hatch = self.bot.already_pending(UnitTypeId.HATCHERY)
 
         # 1. ???????癲ル슪???띿물?(1??癲ル슣???????1?類?ｄ펺????醫딅뱠 ??????嶺뚮ㅎ?닻??
-        # ?? ???? ???⑤챸諭??癲꾧퀗????빝?濚욌꼬?댄꺍??ル쵐異?pending) ?嶺뚮ㅎ?닻???????????        pending_hatch = self.bot.already_pending(UnitTypeId.HATCHERY)
+        # 진행 중인 추가 Hatchery 를 카운트에 포함
 
         # * FIX: ??ш낄援??濚욌꼬?댄꺍????嶺뚮Ĳ???????れ삀????壤? ???怨룹쓱 (??獄쎼뀙?????Β?띾쭡) *
         strategy = getattr(self.bot, "strategy_manager", None)
@@ -372,7 +377,9 @@ class UnitFactory:
                             self.gas_unit_ratio_target = min(gas_ratio, 0.60)
                         if iteration % 100 == 0:
                             race = getattr(strategy, "detected_enemy_race", None)
-                            race_name = race.value if hasattr(race, "value") else str(race)
+                            race_name = (
+                                race.value if hasattr(race, "value") else str(race)
+                            )
                             logger.info(
                                 f"vs {race_name}: gas_ratio_target = {self.gas_unit_ratio_target:.2f}"
                             )
@@ -435,7 +442,8 @@ class UnitFactory:
         if self.blackboard:
             to_request = min(self.max_larva_spend_per_step, len(larva))
 
-            # ???Β?띾쭡??筌믨퀡彛??????????ル늅筌???????ヂ嚥?肉???숆강筌?쓣爾??            unit_requests = {}
+            # 생산 요청들을 모아 카운트를 묶어 한번에 보냄
+            unit_requests = {}
             for _ in range(to_request):
                 unit_type = self._pick_unit(queue)
                 if not unit_type:

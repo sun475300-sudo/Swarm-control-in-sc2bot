@@ -301,7 +301,9 @@ class RLAgent:
                 obs = np.concatenate(
                     [
                         obs,
-                        np.zeros(self.micro_observation_dim - len(obs), dtype=np.float32),
+                        np.zeros(
+                            self.micro_observation_dim - len(obs), dtype=np.float32
+                        ),
                     ]
                 )
             obs = obs[: self.micro_observation_dim]
@@ -333,7 +335,9 @@ class RLAgent:
     def _average_unit_value(units, attr: str) -> float:
         if not units:
             return 0.0
-        return float(np.mean([float(getattr(unit, attr, 0.0) or 0.0) for unit in units]))
+        return float(
+            np.mean([float(getattr(unit, attr, 0.0) or 0.0) for unit in units])
+        )
 
     @staticmethod
     def _fraction(units, attr: str) -> float:
@@ -553,7 +557,7 @@ class RLAgent:
                         f"[OK] Experience data saved: {exp_path.name} (Size: {len(self.states)})"
                     )
                 else:
-                    logger.error(f"[ERROR] Failed to save experience data")
+                    logger.error("[ERROR] Failed to save experience data")
             except Exception as e:
                 logger.error(f"[ERROR] Exception during save: {e}")
 
@@ -637,11 +641,11 @@ class RLAgent:
     def save_experience_data(self, path: str) -> bool:
         """현재 에피소드의 경험 데이터를 파일로 저장 (Atomic Save 적용)"""
         try:
-            path = Path(path)
-            path.parent.mkdir(parents=True, exist_ok=True)
+            path_obj = Path(path)
+            path_obj.parent.mkdir(parents=True, exist_ok=True)
 
             # 임시 파일 경로 생성 (.npz 제거 후 .tmp 추가 - savez_compressed가 .npz를 자동 추가)
-            path_str = str(path)
+            path_str = str(path_obj)
             base_no_ext = path_str[:-4] if path_str.endswith(".npz") else path_str
             temp_base = base_no_ext + ".tmp"
 

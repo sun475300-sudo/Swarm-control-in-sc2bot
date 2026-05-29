@@ -431,7 +431,7 @@ class LurkerPositionManager:
 
     def _print_report(self, game_time: float):
         """럴커 포지셔닝 보고"""
-        role_counts = {}
+        role_counts: Dict[str, int] = {}
         for role in self.lurker_assignments.values():
             role_counts[role.value] = role_counts.get(role.value, 0) + 1
 
@@ -449,7 +449,7 @@ class LurkerPositionManager:
         Returns:
             통계 딕셔너리
         """
-        role_counts = {}
+        role_counts: Dict[str, int] = {}
         for role in self.lurker_assignments.values():
             role_counts[role.value] = role_counts.get(role.value, 0) + 1
 
