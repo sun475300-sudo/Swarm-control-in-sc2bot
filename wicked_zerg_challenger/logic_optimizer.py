@@ -549,22 +549,32 @@ class LogicOptimizer:
     def apply_combat_improvements(self):
         """전투 로직 개선: 마이크로 컨트롤 및 타겟팅 우선순위 강화"""
         self.logger.info("Applying combat improvements...")
-        if hasattr(self.bot, "combat_manager"):
+        # manager_registry 는 CombatManager 를 `combat` 로 등록 (legacy: combat_manager)
+        combat = getattr(self.bot, "combat", None) or getattr(
+            self.bot, "combat_manager", None
+        )
+        if combat is not None and hasattr(combat, "task_priorities"):
             # 공중 유닛 타겟팅 우선순위 강화 (위협적인 유닛 우선)
-            self.bot.combat_manager.task_priorities["air_harassment"] = 60
+            combat.task_priorities["air_harassment"] = 60
             # 방어 시 일꾼 보호 로직 강화
-            self.bot.combat_manager.task_priorities["worker_defense"] = 110
+            combat.task_priorities["worker_defense"] = 110
 
     def apply_economy_improvements(self):
         """경제 로직 개선: 최적화된 일꾼 생산 및 자원 관리"""
         self.logger.info("Applying economy improvements...")
-        if hasattr(self.bot, "economy_manager"):
+        # manager_registry 는 EconomyManager 를 `economy` 로 등록
+        economy = getattr(self.bot, "economy", None) or getattr(
+            self.bot, "economy_manager", None
+        )
+        if economy is not None:
             # 가스 채취 효율 최적화
-            self.bot.economy_manager.gas_worker_adjustment_interval = 22  # 더 자주 조정
+            if hasattr(economy, "gas_worker_adjustment_interval"):
+                economy.gas_worker_adjustment_interval = 22  # 더 자주 조정
             # 매크로 해처리 타이밍 최적화
-            self.bot.economy_manager.macro_hatchery_mineral_threshold = (
-                500  # 더 공격적인 인프라 확장
-            )
+            if hasattr(economy, "macro_hatchery_mineral_threshold"):
+                economy.macro_hatchery_mineral_threshold = (
+                    500  # 더 공격적인 인프라 확장
+                )
 
     def apply_strategy_improvements(self, difficulty):
         """전략 로직 개선: 난이도별 맞춤형 전략 적용"""

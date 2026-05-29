@@ -171,8 +171,20 @@
 - 테스트 인프라: 6건
 - 회귀 가드 테스트: 5건
 
-### Sweep #12+ 후보
-- [ ] 다른 manager 이름 drift 검사 (`combat_manager`, `creep_manager`, `upgrade_manager`, `unit_factory`, `smart_balancer`, `building_manager`, `spell_manager`, `protoss_counter`, `multi_base_defense` 등이 비슷한 패턴 가능성)
+### Sweep #12 (이번 커밋) — combat/economy manager drift
+- [x] #30 manager_registry 의 36개 attribute_name 을 자동 스캔. `combat` 와 `economy` 가 drift 발견.
+- [x] #31 `logic_optimizer.apply_combat_improvements` 와 `apply_economy_improvements` — `combat_manager` / `economy_manager` 로 잘못 읽고 있어서 difficulty 별 적용되어야 할 task priority/economy threshold 가 항상 무시되던 잠재 버그. 4번째 silent-failure 카테고리.
+
+### 결과 누적 (sweep #1~#12)
+- 테스트: **1166 통과**, 0 실패, 0 silent-skip
+- 경고: 0 표시
+- 실제 production 버그: **15개** (2개 추가)
+- 테스트 인프라: 6건
+- 회귀 가드: 5건
+
+### Sweep #13+ 후보
+- [ ] manager_registry 의 일관성 강제 (예: __init__ 에서 `bot.<legacy_name> = self` 자동 alias 등)
 - [ ] F841 / E402
 - [ ] mypy
-- [ ] black 점진적 적용
+- [ ] black 점진적 적용 - root 디렉토리부터
+- [ ] performance_optimizer 같은 매니저들의 silent failure 검사
