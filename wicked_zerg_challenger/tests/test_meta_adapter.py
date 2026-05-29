@@ -7,9 +7,20 @@ import unittest
 from pathlib import Path
 
 os.environ["PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION"] = "python"
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..")))
 
-from scripts.meta_adapter import MetaAdapter
+# Load scripts.meta_adapter by absolute path so prior tests that injected
+# wicked_zerg_challenger/ into sys.path don't shadow the top-level scripts/
+# namespace package.
+import importlib.util as _ilu
+
+_REPO_ROOT = Path(__file__).resolve().parent.parent.parent
+_META_PATH = _REPO_ROOT / "scripts" / "meta_adapter.py"
+_MODNAME = "scripts_meta_adapter"
+_spec = _ilu.spec_from_file_location(_MODNAME, _META_PATH)
+_mod = _ilu.module_from_spec(_spec)
+sys.modules[_MODNAME] = _mod  # dataclasses needs the module registered
+_spec.loader.exec_module(_mod)
+MetaAdapter = _mod.MetaAdapter
 
 
 class TestMetaAdapter(unittest.TestCase):

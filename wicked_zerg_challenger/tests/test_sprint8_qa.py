@@ -5,6 +5,11 @@ import os
 import sys
 import unittest
 
+import pytest
+
+# run_mass_test pulls in sc2.main → mpyq; skip cleanly if unavailable
+pytest.importorskip("mpyq")
+
 os.environ["PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION"] = "python"
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
