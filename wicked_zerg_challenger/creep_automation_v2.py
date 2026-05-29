@@ -179,7 +179,11 @@ class CreepAutomationV2:
 
                 if self.bot.has_creep(placement):
                     self.bot.do(queen(AbilityId.BUILD_CREEPTUMOR_QUEEN, placement))
-                    self.tumor_positions.add((placement.x, placement.y))
+                    # Use the same rounded key format as _tumor_relay_toward_enemy
+                    # so the cross-method duplicate-placement guard actually matches.
+                    self.tumor_positions.add(
+                        (round(placement.x, 0), round(placement.y, 0))
+                    )
 
     async def _tumor_relay_toward_enemy(self):
         """
