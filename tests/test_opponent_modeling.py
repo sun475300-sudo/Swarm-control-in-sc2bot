@@ -77,3 +77,19 @@ class TestLiveLifecycle:
         om.on_game_start("Persisted", None)
         om.on_game_end(won=True, lost=False)
         assert os.path.exists(om.data_file)
+
+
+class TestOpponentStats:
+    """get_opponent_stats is keyed by `current_opponent` (the live attribute
+    personality_module reads); ensure that lookup path returns real data."""
+
+    def test_stats_for_live_current_opponent(self, om):
+        om.on_game_start("StatRival", None)
+        om.on_game_end(won=False, lost=True)  # opponent won
+        stats = om.get_opponent_stats(om.current_opponent)
+        assert stats is not None
+        assert stats["games_played"] == 1
+        assert stats["win_rate"] == 1.0  # opponent's win rate against us
+
+    def test_stats_none_for_unknown_opponent(self, om):
+        assert om.get_opponent_stats("NeverSeen") is None
