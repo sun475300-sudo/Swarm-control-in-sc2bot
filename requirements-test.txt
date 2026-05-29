@@ -21,3 +21,7 @@ protobuf>=3.19,<3.21
 loguru>=0.7
 scipy>=1.11
 numpy>=1.24
+
+# cryptography (PyO3-backed) needs cffi at runtime; without it the rust
+# binding panics with "Python API call failed".
+cffi>=1.16

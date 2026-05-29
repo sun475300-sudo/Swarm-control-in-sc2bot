@@ -74,11 +74,29 @@
 
 ## 진행 로그
 
-- [ ] #1 unit_factory.py 줄바꿈 수정
-- [ ] #2 blackboard.should_expand 미네랄 체크
-- [ ] #3 _produce_army_unit third-base 게이트
-- [ ] #4 test_sprint8_qa importorskip
-- [ ] #5 requirements-test.txt
-- [ ] #6 _get_counter_unit iterable 가드
-- [ ] #7 should_expand API 분리 (보류)
-- [ ] #8 의존성 문서화
+### Sweep #1 (커밋 `1cb55d5`)
+- [x] #1 unit_factory.py 줄바꿈 수정
+- [x] #2 blackboard.should_expand 미네랄 체크
+- [x] #3 _produce_army_unit third-base 게이트
+- [x] #4 test_sprint8_qa importorskip
+- [x] #5 requirements-test.txt 생성
+- [x] #6 _get_counter_unit iterable 가드
+- [x] 추가: test_ladder_tracker / test_meta_adapter importlib 절대경로 로드
+
+### Sweep #2 (이번 커밋)
+- [x] #9 test_combat_phase_fsm.py: `asyncio.get_event_loop()` → `asyncio.run()` (Py 3.10+ 호환)
+- [x] #10 cffi 의존성 추가 (`cryptography._rust` PyO3 panic 해결)
+
+### 현재 상태
+- 수집: 1176 tests
+- 통과: **1161**
+- 실패: 0
+- 스킵: 15 (네이티브/외부 의존성으로 의도적 스킵)
+
+### Sweep #3+ 후보 (미수정, 다음 라운드)
+- [ ] #7 should_expand API 의미 분리 (보류, 동작 변경 위험)
+- [ ] sc2 봇 본체 import warning 정리 (137개 warning)
+- [ ] `wicked_zerg_challenger/scouting/advanced_scout_system_v2.py` 의 `try/except ImportError` 폴백 클래스 단순화
+- [ ] flake8/ruff 실행해서 정적 분석 이슈 식별
+- [ ] mypy 타입 검사 결과 반영
+- [ ] CI에서 `mpyq` 설치하거나 가드 일관성
