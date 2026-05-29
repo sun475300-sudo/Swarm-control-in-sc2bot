@@ -500,14 +500,15 @@ class CombatManager:
                 )
                 if targets:
                     # * FIX: available_air 미정의 방지 - 잠금된 유닛 제외하여 사전 계산 *
+                    # BotStepIntegrator attaches HarassmentCoordinator as
+                    # `harassment_coord` (not `harassment_coordinator`), so we
+                    # check both spellings to avoid silently skipping the lock.
                     _locked = set()
-                    if (
-                        hasattr(self.bot, "harassment_coordinator")
-                        and self.bot.harassment_coordinator
-                    ):
-                        _locked = getattr(
-                            self.bot.harassment_coordinator, "locked_units", set()
-                        )
+                    harass = getattr(self.bot, "harassment_coord", None) or getattr(
+                        self.bot, "harassment_coordinator", None
+                    )
+                    if harass:
+                        _locked = getattr(harass, "locked_units", set())
                     hunters = [
                         u
                         for u in air_units
@@ -788,13 +789,14 @@ class CombatManager:
         tasks_to_execute.sort(key=lambda x: x[2], reverse=True)
 
         # * CRITICAL: Exclude locked units from harassment missions *
-        # Get locked units from harassment_coordinator to prevent reassignment
+        # Get locked units from harassment_coordinator to prevent reassignment.
+        # BotStepIntegrator stores it as `harassment_coord` (not `_coordinator`).
         locked_units = set()
-        if (
-            hasattr(self.bot, "harassment_coordinator")
-            and self.bot.harassment_coordinator
-        ):
-            locked_units = self.bot.harassment_coordinator.locked_units.copy()
+        harass = getattr(self.bot, "harassment_coord", None) or getattr(
+            self.bot, "harassment_coordinator", None
+        )
+        if harass and hasattr(harass, "locked_units"):
+            locked_units = harass.locked_units.copy()
             if locked_units and iteration % 220 == 0:  # Log every 10 seconds
                 self.logger.info(
                     f"[CombatManager] {len(locked_units)} units locked in harassment missions "

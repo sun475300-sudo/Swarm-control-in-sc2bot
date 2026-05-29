@@ -225,8 +225,22 @@
 - 테스트 인프라: 6건
 - 회귀 가드: 5건
 
-### Sweep #16+ 후보
-- [ ] mypy 광역 확대 (다른 핵심 파일들)
+### Sweep #16 (이번 커밋) — harassment_coord vs harassment_coordinator + dead-feature 식별
+- [x] #38 `combat_manager.py:506, 794` 가 `self.bot.harassment_coordinator` 로 읽지만 `BotStepIntegrator:437` 가 `self.bot.harassment_coord` 로 attach. 두 spot 모두 unit lock 체크가 항상 비활성화되던 버그. 두 이름 모두 받도록 수정 (해러스 미션에 락된 유닛이 메인 공격에 재할당되는 버그가 production 에 존재했을 가능성 매우 높음).
+- [x] hasattr-target AST 스캐너로 dead feature 식별:
+  - `CompleteDestructionTrainer` 클래스는 정의되어 있지만 어디서도 instantiate 되지 않음 → `bot.complete_destruction` 가드는 항상 false. 4개 파일의 관련 코드 전체가 dead. (수정 보류 — feature design 결정 필요)
+  - `MapMemorySystem` 도 동일 패턴. (수정 보류)
+
+### 결과 누적 (sweep #1~#16)
+- 테스트: **1166 통과**, 0 실패
+- 경고: 0 표시
+- 실제 production 버그: **23개**
+- Dead feature 발견: 2개 (CompleteDestruction, MapMemory) — 문서화만
+- 테스트 인프라: 6건
+- 회귀 가드: 5건
+
+### Sweep #17+ 후보
+- [ ] BotStepIntegrator 의 다른 `bot.X_coord` 등록 vs 소비자 일치 검사 (단축어/축약 패턴)
 - [ ] F841 / E402 정리
-- [ ] 다른 silent-failure 패턴 탐색 (e.g., 모든 `hasattr` 가드가 typo 잡는지 광역 검증)
-- [ ] black 점진적 적용 — root 부터
+- [ ] black 점진적 적용
+- [ ] integration 테스트 확대
