@@ -179,7 +179,11 @@ class CreepAutomationV2:
 
                 if self.bot.has_creep(placement):
                     self.bot.do(queen(AbilityId.BUILD_CREEPTUMOR_QUEEN, placement))
-                    self.tumor_positions.add((placement.x, placement.y))
+                    # Use the same rounded key format as _tumor_relay_toward_enemy
+                    # so the cross-method duplicate-placement guard actually matches.
+                    self.tumor_positions.add(
+                        (round(placement.x, 0), round(placement.y, 0))
+                    )
 
     async def _tumor_relay_toward_enemy(self):
         """
@@ -215,7 +219,7 @@ class CreepAutomationV2:
             # 쿨다운 체크 (50프레임 최소 간격)
             tag = tumor.tag
             last_spread = self._tumor_cooldowns.get(tag, 0)
-            current_iter = getattr(self.bot, "_game_loop", 0)
+            current_iter = getattr(getattr(self.bot, "state", None), "game_loop", 0) or 0
             if current_iter and current_iter - last_spread < 50:
                 continue
 

@@ -1646,7 +1646,8 @@ class EconomyManager:
                     lambda w: w.distance_to(over_th) < 15 and w.is_gathering
                 )
 
-                for under_th, deficit in under_saturated[:]:
+                for entry in under_saturated[:]:
+                    under_th, deficit = entry
                     if excess <= 0 or deficit <= 0:
                         continue
 
@@ -1672,9 +1673,10 @@ class EconomyManager:
                                 excess -= 1
                                 deficit -= 1
 
-                    # Update under-saturated list
+                    # Update under-saturated list (remove the original tuple,
+                    # not the mutated copy — deficit has been decremented above)
                     if deficit <= 0:
-                        under_saturated.remove((under_th, deficit))
+                        under_saturated.remove(entry)
 
         except (AttributeError, TypeError, ValueError) as e:
             if self.bot.iteration % 50 == 0:
@@ -2077,8 +2079,11 @@ class EconomyManager:
 
         force_expand = False
         reason = ""
+        # Default; overwritten with the min_req of the trigger that actually fires
+        min_minerals = 300
 
-        # Table-driven check using EconomyConfig
+        # Table-driven check using EconomyConfig. Triggers are sorted by time, so
+        # the first match is the most urgent one that applies.
         for time_req, min_req, target_bases in EconomyConfig.FORCE_EXPAND_TRIGGERS:
             # Check if condition met: Time passed AND Base count below target
             if game_time >= time_req and base_count < target_bases:
@@ -2086,23 +2091,13 @@ class EconomyManager:
                 if min_req == 0 or minerals >= min_req:
                     force_expand = True
                     reason = f"{time_req}s Force Expand (Target: {target_bases} bases)"
-                    # Keep checking later triggers? No, finding one valid trigger is enough logic-wise?
-                    # The original code prioritized later (stricter) conditions, so we iterate all and keep the last one or just break?
-                    # Actually, if any trigger matches, we force expand. The specific reason might matter for logging.
-                    # We can pick the most urgent one. Since the list is sorted by time, later ones are more advanced.
-                    # Let's use the matching one.
+                    min_minerals = min_req
                     break
 
         if not force_expand:
             return
 
-        # * 비용 체크 (Config 기반) *
-        triggers = EconomyConfig.FORCE_EXPAND_TRIGGERS
-        min_minerals = 300  # Default
-        for time_req, min_req, target_bases in triggers:
-            if game_time >= time_req and base_count < target_bases:
-                min_minerals = min_req
-
+        # * 비용 체크 (Config 기반) - use the trigger that actually fired *
         if minerals < min_minerals:
             if int(game_time) % 30 == 0:
                 self.logger.info(
@@ -2153,45 +2148,6 @@ class EconomyManager:
         else:
             self.logger.info(f"[FORCE EXPAND] ALL METHODS FAILED")
         return
-
-        expansion_success = False
-        try:
-            if hasattr(self.bot, "expand_now"):
-                result = await self.bot.expand_now()
-                if result is not False:
-                    self.logger.info(
-                        f"[FORCE EXPAND] [{int(game_time)}s] {reason} - SUCCESS"
-                    )
-                    expansion_success = True
-                else:
-                    self.logger.info(f"[FORCE EXPAND] expand_now returned False")
-            else:
-                # expand_now가 없으면 직접 위치 찾아서 건설
-                # *** USE GOLD PRIORITY ***
-                expansion_locations = (
-                    await self._get_best_expansion_with_gold_priority()
-                )
-                if (
-                    expansion_locations
-                    and hasattr(self.bot, "workers")
-                    and self.bot.workers
-                ):
-                    worker = self.bot.workers.closest_to(expansion_locations)
-                    if worker:
-                        is_gold = self._is_gold_expansion(expansion_locations)
-                        gold_marker = "[GOLD] GOLD" if is_gold else ""
-                        self.bot.do(
-                            worker.build(UnitTypeId.HATCHERY, expansion_locations)
-                        )
-                        self.logger.info(
-                            f"[FORCE EXPAND] [{int(game_time)}s] Manual expansion {gold_marker} - SUCCESS"
-                        )
-                        expansion_success = True
-        except Exception as e:
-            self.logger.info(f"[FORCE EXPAND] Failed: {e}")
-
-        if not expansion_success:
-            self.logger.info(f"[FORCE EXPAND] ALL METHODS FAILED")
 
     async def _check_proactive_expansion(self) -> None:
         """
