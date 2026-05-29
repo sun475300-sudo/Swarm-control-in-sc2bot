@@ -93,10 +93,17 @@
 - 실패: 0
 - 스킵: 15 (네이티브/외부 의존성으로 의도적 스킵)
 
-### Sweep #3+ 후보 (미수정, 다음 라운드)
+### Sweep #3 (이번 커밋) — 정적 분석 (ruff E9/F63/F7/F82)
+- [x] #11 `unit_factory.py:439` — 깨진 한글 주석이 `unit_requests = {}` 와 같은 줄에 붙어 F821 (5개 위치에서 undefined-name)
+- [x] #12 `production_resilience.py:1451` — `force_resource_dump()` 안에서 `game_time` 정의 누락 (F821)
+- [x] #13 `wicked_zerg_bot_pro_impl.py:689` — 함수 안에서 `import traceback` 이 모듈 임포트를 가려 F823 (같은 함수의 line 572 가 정의 전 참조)
+
+결과: ruff syntax-level (E9/F63/F7/F82) 0 errors. 테스트 1161/1161 유지.
+
+### Sweep #4+ 후보 (미수정, 다음 라운드)
 - [ ] #7 should_expand API 의미 분리 (보류, 동작 변경 위험)
-- [ ] sc2 봇 본체 import warning 정리 (137개 warning)
-- [ ] `wicked_zerg_challenger/scouting/advanced_scout_system_v2.py` 의 `try/except ImportError` 폴백 클래스 단순화
-- [ ] flake8/ruff 실행해서 정적 분석 이슈 식별
+- [ ] 137개 pytest warning 분류/정리
+- [ ] `try/except ImportError` 폴백 클래스 패턴 단순화 (광범위)
+- [ ] ruff full (F541 250개, F841 132개, E402 66개 등) 정리
 - [ ] mypy 타입 검사 결과 반영
-- [ ] CI에서 `mpyq` 설치하거나 가드 일관성
+- [ ] `wicked_zerg_challenger` 와 root `tests/` 간 sys.path 충돌 구조적 해결
