@@ -1708,7 +1708,7 @@ class CombatManager:
             return None
         try:
             best = None
-            best_score = 999
+            best_score = None
             worker_types = {"SCV", "PROBE", "DRONE", "MULE", "LARVA", "EGG"}
             for e in enemy_units:
                 if not hasattr(e, "health_percentage"):
@@ -1718,9 +1718,11 @@ class CombatManager:
                     continue
                 if e.is_structure:
                     continue
-                # 점수 = 체력 비율 (낮을수록 우선) + 체력/1000 (같으면 약한 유닛 우선)
-                score = e.health_percentage + (e.health / 1000.0)
-                if score < best_score:
+                # 체력 비율(낮을수록 우선) 우선, 동률이면 절대 체력이 낮은 유닛 우선.
+                # 튜플 비교로 비율과 절대값을 분리해야 큰 체력 유닛이 비율 정렬을
+                # 뒤집지 못한다 (이전 health/1000 가중치는 풀피 울트라 등에서 오작동).
+                score = (e.health_percentage, e.health)
+                if best_score is None or score < best_score:
                     best_score = score
                     best = e
             return best

@@ -518,5 +518,44 @@ class TestSupplyWeighting:
         assert combat._combat_power(hurt) < combat._combat_power(full)
 
 
+@pytest.mark.skipif(UnitTypeId is None, reason="sc2 library not available")
+class TestWeakestEnemyTargeting:
+    """Regression: weakest-enemy selection must rank by HP fraction first.
+
+    The old score ``health_percentage + health/1000`` let a high-max-HP unit's
+    raw-health term dominate, flipping the intended lowest-fraction ordering.
+    """
+
+    def _enemy(self, tag, type_id, health, health_max):
+        u = MockUnit(tag, type_id, (0, 0), health=health, health_max=health_max)
+        u.is_structure = False
+        return u
+
+    def test_picks_lower_fraction_over_low_absolute_health(self):
+        combat = CombatManager(MockBot())
+        # 50%-HP Ultralisk (250/500) is weaker by fraction than a 70%-HP
+        # zergling (24.5/35), even though the zergling has far less raw HP.
+        ultra = self._enemy(1, UnitTypeId.ULTRALISK, 250, 500)
+        ling = self._enemy(2, UnitTypeId.ZERGLING, 24.5, 35)
+        weakest = combat._find_weakest_enemy(MockUnits([ling, ultra]))
+        assert weakest is ultra
+
+    def test_tiebreak_prefers_lower_absolute_health(self):
+        combat = CombatManager(MockBot())
+        # Equal 50% fraction -> prefer the one with lower absolute HP.
+        big = self._enemy(1, UnitTypeId.ROACH, 72.5, 145)
+        small = self._enemy(2, UnitTypeId.ZERGLING, 17.5, 35)
+        weakest = combat._find_weakest_enemy(MockUnits([big, small]))
+        assert weakest is small
+
+    def test_skips_structures(self):
+        combat = CombatManager(MockBot())
+        ling = self._enemy(1, UnitTypeId.ZERGLING, 10, 35)
+        building = self._enemy(2, UnitTypeId.HATCHERY, 5, 1500)
+        building.is_structure = True
+        weakest = combat._find_weakest_enemy(MockUnits([building, ling]))
+        assert weakest is ling
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
