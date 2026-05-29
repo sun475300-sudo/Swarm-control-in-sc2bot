@@ -194,8 +194,23 @@
 - 테스트 인프라: 6건
 - 회귀 가드: 5건
 
-### Sweep #14+ 후보
-- [ ] mypy 전체 codebase 적용 (현재 unit_factory.py, blackboard.py, opponent_modeling.py 만 확인)
-- [ ] `utils/kd_tree.py:121` mypy 에러 (return type mismatch)
-- [ ] F841 / E402
-- [ ] 다른 파일에서 같은 `def 중복 정의` 패턴 검색 (mypy 광역)
+### Sweep #14 (이번 커밋) — duplicate method definitions 광역 스캔
+- [x] #35 AST 기반 스캐너로 같은 클래스 내 중복 메서드 정의 4건 발견. 모두 shadowing 패턴 (두 번째가 첫 번째를 가려서 첫 번째는 dead code).
+  - `combat_manager.CombatManager._find_harass_target` (line 2815 ↔ 5011) — 단순 fallback 버전 삭제, sophisticated worker-priority 버전이 활성.
+  - `economy_manager.EconomyManager._prevent_resource_banking` (line 1708 ↔ 3286) — queens+static defense 버전을 `_prevent_resource_banking_via_defense` 로 rename, macro-hatchery+expansion 버전이 활성.
+  - `economy_manager.EconomyManager._reduce_gas_workers` (line 3427 ↔ 4110) — 단순 버전을 `_reduce_gas_workers_simple` 로 rename, severity-aware 버전이 활성.
+  - `production_resilience.ProductionResilience.build_terran_counters` (line 1466 ↔ 1984) — 직접 b.build() 버전 삭제, TechCoordinator 버전이 활성.
+
+### 결과 누적 (sweep #1~#14)
+- 테스트: **1166 통과**, 0 실패, 0 silent-skip
+- 경고: 0 표시
+- 실제 production 버그: **22개** (4개 추가 — silently shadowed legacy code)
+- 테스트 인프라: 6건
+- 회귀 가드: 5건
+- 재검증: AST 스캐너로 0건 (shadowing 완전 정리)
+
+### Sweep #15+ 후보
+- [ ] 모듈 레벨 함수 중복 검색 (지금은 클래스 안만 봄)
+- [ ] mypy 광역 적용
+- [ ] `utils/kd_tree.py:121` mypy 에러
+- [ ] F841 / E402 정리

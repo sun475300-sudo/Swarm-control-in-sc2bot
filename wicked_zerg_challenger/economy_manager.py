@@ -189,7 +189,9 @@ class EconomyManager:
         self._target_drone_count = THREAT_DRONE_TARGETS[ThreatLevel.LOW]
         self._last_float_log_time = -999.0
 
-    def _distance_between(self, unit_or_pos_a, unit_or_pos_b, frame: int = None) -> float:
+    def _distance_between(
+        self, unit_or_pos_a, unit_or_pos_b, frame: int = None
+    ) -> float:
         current_frame = (
             frame if frame is not None else int(getattr(self.bot, "iteration", 0) or 0)
         )
@@ -941,7 +943,10 @@ class EconomyManager:
             not force_army
             and getattr(self.bot, "supply_left", 0) < 3
             and getattr(self.bot, "supply_cap", 0) < 200
-            and getattr(self.bot, "already_pending", lambda unit_type: 0)(UnitTypeId.OVERLORD) == 0
+            and getattr(self.bot, "already_pending", lambda unit_type: 0)(
+                UnitTypeId.OVERLORD
+            )
+            == 0
             and self.bot.can_afford(UnitTypeId.OVERLORD)
         ):
             return await self._train_larva_unit(larva_unit, UnitTypeId.OVERLORD)
@@ -1021,7 +1026,10 @@ class EconomyManager:
             return False
         if effective_bases < 2:
             return False
-        if self._has_serious_base_threat() or self._blackboard_has_serious_base_threat():
+        if (
+            self._has_serious_base_threat()
+            or self._blackboard_has_serious_base_threat()
+        ):
             return False
         if base_count == 3:
             return (
@@ -1086,7 +1094,9 @@ class EconomyManager:
     async def _train_larva_unit(self, larva_unit, unit_type) -> bool:
         try:
             production = getattr(self.bot, "production", None)
-            safe_train = getattr(production, "_safe_train", None) if production else None
+            safe_train = (
+                getattr(production, "_safe_train", None) if production else None
+            )
             if callable(safe_train):
                 result = safe_train(larva_unit, unit_type)
                 if hasattr(result, "__await__"):
@@ -1115,7 +1125,10 @@ class EconomyManager:
     def _get_gas_timing_by_matchup(self) -> int:
         """Return worker count threshold for first extractor by matchup."""
         enemy_race = getattr(self.bot, "enemy_race", None)
-        race_name = getattr(enemy_race, "name", None) or str(enemy_race or "Unknown").split(".")[-1]
+        race_name = (
+            getattr(enemy_race, "name", None)
+            or str(enemy_race or "Unknown").split(".")[-1]
+        )
         if race_name == "Zerg":
             return 13
         if race_name == "Terran":
@@ -1705,9 +1718,17 @@ class EconomyManager:
 
         return minerals > 800
 
-    async def _prevent_resource_banking(self) -> None:
+    async def _prevent_resource_banking_via_defense(self) -> None:
         """
-        * Prevent resource banking by spending excess minerals *
+        * Prevent resource banking by spending excess minerals — DEFENSE PATH *
+
+        NOTE (sweep #14): originally named `_prevent_resource_banking` but
+        was being silently shadowed by the macro-hatchery/expansion version
+        defined later in this class (line ~3286). Renamed so both paths are
+        callable; nothing currently calls this one, but the queens + static
+        defense logic is intentionally preserved here in case a future
+        strategy wants it. Decide on consolidation when you have a clear
+        signal.
 
         Logic:
         1. If Minerals > Config.Threshold and Larva < Config.Threshold:
@@ -2147,9 +2168,7 @@ class EconomyManager:
 
         expansion_success = await self._perform_smart_expansion(reason)
         if expansion_success:
-            self.logger.info(
-                f"[FORCE EXPAND] [{int(game_time)}s] {reason} - SUCCESS"
-            )
+            self.logger.info(f"[FORCE EXPAND] [{int(game_time)}s] {reason} - SUCCESS")
         else:
             self.logger.info("[FORCE EXPAND] ALL METHODS FAILED")
         return
@@ -2540,7 +2559,9 @@ class EconomyManager:
         owned_positions = self._owned_base_positions()
         active_requests = []
         for position, requested_at in getattr(self, "_recent_expansion_requests", []):
-            if any(self._distance_safe(position, owned) < 12.0 for owned in owned_positions):
+            if any(
+                self._distance_safe(position, owned) < 12.0 for owned in owned_positions
+            ):
                 continue
             if game_time - requested_at <= self._expansion_request_ttl:
                 active_requests.append((position, requested_at))
@@ -2566,7 +2587,9 @@ class EconomyManager:
         self._prune_recent_expansion_requests()
         if self._has_recent_expansion_request(location):
             return
-        self._recent_expansion_requests.append((location, getattr(self.bot, "time", 0.0)))
+        self._recent_expansion_requests.append(
+            (location, getattr(self.bot, "time", 0.0))
+        )
 
     def _is_expansion_location_taken(
         self, location, radius: float = 12.0, include_recent: bool = True
@@ -2695,7 +2718,9 @@ class EconomyManager:
             return
         self.first_expansion_time = getattr(self.bot, "time", 0.0)
         self.first_expansion_reported = True
-        self.logger.info(f"[EXPANSION] First expansion at {self.first_expansion_time:.1f}s")
+        self.logger.info(
+            f"[EXPANSION] First expansion at {self.first_expansion_time:.1f}s"
+        )
 
     async def _issue_hatchery_build(self, target_pos, worker) -> bool:
         """Issue a Hatchery build through BotAI.build when available."""
@@ -2747,7 +2772,9 @@ class EconomyManager:
                 return False
             if ready_base_count < 3 and pending_hatcheries > 0:
                 return False
-            if ready_base_count < 3 and self._has_recent_expansion_request(max_age=45.0):
+            if ready_base_count < 3 and self._has_recent_expansion_request(
+                max_age=45.0
+            ):
                 return False
 
             # 1. Hidden Base
@@ -2791,7 +2818,8 @@ class EconomyManager:
 
             if target_pos:
                 resolved_pos = await self._resolve_expansion_target(
-                    target_pos, allow_gold=not prefer_standard_third or method == "Hidden"
+                    target_pos,
+                    allow_gold=not prefer_standard_third or method == "Hidden",
                 )
                 if not resolved_pos:
                     return False
@@ -3109,7 +3137,9 @@ class EconomyManager:
         try:
             # Check enemy bases
             enemy_expansions = set()
-            for struct in self._as_unit_list(getattr(self.bot, "enemy_structures", None)):
+            for struct in self._as_unit_list(
+                getattr(self.bot, "enemy_structures", None)
+            ):
                 if hasattr(struct, "is_structure") and struct.is_structure:
                     enemy_expansions.add(struct.position)
 
@@ -3180,9 +3210,7 @@ class EconomyManager:
             game_time = getattr(self.bot, "time", 0)
 
             # * Phase 1: 황금 기지 최우선 확인 *
-            gold_expansions = (
-                self._get_gold_expansion_locations() if allow_gold else []
-            )
+            gold_expansions = self._get_gold_expansion_locations() if allow_gold else []
 
             if gold_expansions:
                 best_gold = None
@@ -3416,8 +3444,14 @@ class EconomyManager:
                 self._reserved_minerals = 150
                 self._reserved_gas = 100
 
-    async def _reduce_gas_workers(self) -> None:
-        """가스 일꾼 감소 (과잉 가스 방지)"""
+    async def _reduce_gas_workers_simple(self) -> None:
+        """가스 일꾼 감소 (과잉 가스 방지)
+
+        NOTE (sweep #14): originally named `_reduce_gas_workers` but was
+        being silently shadowed by the severity-aware version at line
+        ~4118. Renamed so the simpler "drop one worker per saturated
+        extractor" behaviour is still available if a caller wants it.
+        """
         try:
             if (
                 not hasattr(self.bot, "gas_buildings")

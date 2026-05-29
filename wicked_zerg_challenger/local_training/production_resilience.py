@@ -1463,29 +1463,12 @@ class ProductionResilience:
 
     # Defense methods moved to DefenseCoordinator
 
-    async def build_terran_counters(self) -> None:
-        b = self.bot
-        if not b.production:
-            return
-        if self._should_reserve_third_base_minerals():
-            return
-        baneling_nests = [
-            s for s in b.units(UnitTypeId.BANELINGNEST).structure if s.is_ready
-        ]
-        if (
-            not baneling_nests
-            and b.already_pending(UnitTypeId.BANELINGNEST) == 0
-            and b.can_afford(UnitTypeId.BANELINGNEST)
-        ):
-            # CRITICAL: Check for duplicate construction before building
-            if not b.structures(UnitTypeId.BANELINGNEST).exists:
-                spawning_pools = [
-                    s for s in b.units(UnitTypeId.SPAWNINGPOOL).structure if s.is_ready
-                ]
-                if spawning_pools:
-                    await b.build(UnitTypeId.BANELINGNEST, near=spawning_pools[0])
-        # NOTE: Roach Warren building is now handled by _auto_build_tech_structures()
-        # Removed duplicate code to prevent building spam
+    # NOTE (sweep #14): the legacy `build_terran_counters` (direct
+    # `b.build(...)` against Baneling Nest near the Spawning Pool) used
+    # to live here and was being silently shadowed by the
+    # TechCoordinator-routed version at line ~1984. Removed; the
+    # TechCoordinator path is the only one that runs and it already
+    # handles Baneling Nest placement / duplicate-construction guards.
 
     async def _auto_build_tech_structures(self) -> None:
         """
