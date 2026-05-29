@@ -100,10 +100,17 @@
 
 결과: ruff syntax-level (E9/F63/F7/F82) 0 errors. 테스트 1161/1161 유지.
 
-### Sweep #4+ 후보 (미수정, 다음 라운드)
+### Sweep #4 (이번 커밋) — encoding-corruption cleanup + safe ruff fixes
+- [x] #14 `unit_factory.py` 3건 추가 한글 주석/코드 동일줄 패턴 (line 167, 185, 216) 정리. 이중 할당이라 런타임 버그는 아니지만 가독성 / 향후 디버깅 위험.
+- [x] #15 `ruff --select=F401 --fix` 4건 unused-import 제거.
+
+결과: 인코딩 깨짐으로 인한 "주석 안에 코드" 패턴 0건 (`grep` 광역 스캔으로 확인). 테스트 1161/1161 유지.
+
+### Sweep #5+ 후보 (미수정, 다음 라운드)
 - [ ] #7 should_expand API 의미 분리 (보류, 동작 변경 위험)
-- [ ] 137개 pytest warning 분류/정리
-- [ ] `try/except ImportError` 폴백 클래스 패턴 단순화 (광범위)
-- [ ] ruff full (F541 250개, F841 132개, E402 66개 등) 정리
-- [ ] mypy 타입 검사 결과 반영
-- [ ] `wicked_zerg_challenger` 와 root `tests/` 간 sys.path 충돌 구조적 해결
+- [ ] 137개 pytest warning 분류/정리 (`PytestUnraisableExceptionWarning`, deprecated `asyncio_default_fixture_loop_scope` 등)
+- [ ] F541 (f-string-missing-placeholders) 250건 — 거의 무해하지만 정리
+- [ ] F841 (unused-variable) 132건 — 일부는 실수일 수 있음, 케이스별 검토
+- [ ] E402 (module-import-not-at-top-of-file) 66건 — 일부는 의도된 lazy import
+- [ ] 깨진 한글 docstring 도 광역 인코딩 복구 (사람 가독성)
+- [ ] CI 로그에서 실패 패턴 식별 후 반영
