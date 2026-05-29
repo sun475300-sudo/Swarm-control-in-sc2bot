@@ -8,7 +8,11 @@ from types import SimpleNamespace
 from unittest.mock import MagicMock, patch
 
 import pytest
-from sc2.ids.unit_typeid import UnitTypeId
+
+try:
+    from sc2.ids.unit_typeid import UnitTypeId
+except ImportError:
+    pytest.skip("burnysc2 (sc2) not installed", allow_module_level=True)
 
 # ---------------------------------------------------------------------------
 # Minimal stubs so we can import without a running SC2 environment
