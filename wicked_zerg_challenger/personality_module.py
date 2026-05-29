@@ -217,12 +217,12 @@ class PersonalityModule:
 
     def _get_memory_greeting(self) -> Optional[str]:
         """기억 기반 인사말 생성"""
-        if not self.opponent_modeling or not self.opponent_modeling.current_opponent_id:
+        if not self.opponent_modeling or not self.opponent_modeling.current_opponent:
             return None
 
         # Get stats
         stats = self.opponent_modeling.get_opponent_stats(
-            self.opponent_modeling.current_opponent_id
+            self.opponent_modeling.current_opponent
         )
         if not stats or stats["games_played"] == 0:
             return "처음 뵙겠습니다. 잘 부탁드립니다. (gl hf)"

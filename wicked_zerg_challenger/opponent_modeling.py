@@ -272,6 +272,10 @@ class OpponentModeling:
         # Opponent models
         self.opponent_models: Dict[str, OpponentModel] = {}
         self.current_opponent_id: Optional[str] = None
+        # `current_opponent` is the key used by the live on_game_start/on_step/
+        # on_game_end lifecycle; initialize it so on_game_end is safe to call
+        # even if on_game_start never ran.
+        self.current_opponent: Optional[str] = None
         self.current_game_history: Optional[GameHistory] = None
 
         # Current game tracking
@@ -778,9 +782,13 @@ class OpponentModeling:
         if not self.current_opponent or not self.current_game_history:
             return
 
-        # Update game history
+        # Update game history. `game_result` is what update_from_game reads to
+        # tally wins/losses; it is from OUR perspective ("win" = we won).
         self.current_game_history.game_won = won
         self.current_game_history.game_lost = lost
+        self.current_game_history.game_result = (
+            "win" if won else "loss" if lost else "unknown"
+        )
         self.current_game_history.early_signals = [
             s.value for s in self.observed_signals
         ]
