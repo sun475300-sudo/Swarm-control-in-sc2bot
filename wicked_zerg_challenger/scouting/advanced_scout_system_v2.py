@@ -1036,7 +1036,9 @@ class AdvancedScoutingSystemV2:
         return None
 
     def _assign_patrol(
-        self, route_name: str, unit_type: UnitTypeId = UnitTypeId.OVERLORD
+        self,
+        route_name: str,
+        unit_type: UnitTypeId = getattr(UnitTypeId, "OVERLORD", None),
     ) -> bool:
         """
         특정 순찰 경로에 유닛 배정.
