@@ -145,10 +145,21 @@
 - 실제 production 버그: 9개 (#1~#3, #11~#13, #20, #24, #25)
 - 테스트 인프라: 6건 (#4, #5, #9, #10, #19, #23)
 
-### Sweep #10+ 후보
+### Sweep #10 (이번 커밋) — lifecycle smoke test 추가
+- [x] #27 `wicked_zerg_challenger/tests/test_bot_lifecycle_smoke.py` 신규: WickedZergBotProImpl 의 constructor 와 lazy-init 속성 검증 (4개) + sweep #7 회귀 가드 (OpponentModeling on_start → on_step 경로) (1개). 총 5개 테스트 추가.
+- [x] sweep #7 회귀 가드는 일부러 verbose 한 코멘트를 달아서 향후 다시 `current_opponent` ↔ `current_opponent_id` 같은 drift 가 생기면 즉시 잡히게 함.
+
+### 결과 누적 (sweep #1~#10)
+- 테스트: **1166 통과**, 0 실패, 0 silent-skip (1161 → 1166)
+- 경고: 0 표시
+- 실제 production 버그: 9개
+- 테스트 인프라: 6건
+- 회귀 가드 테스트: 5건
+
+### Sweep #11+ 후보
 - [ ] F841 (unused-variable) 132건 케이스별 검토
-- [ ] E402 (module-import-not-at-top-of-file) 66건
-- [ ] 462개 `except Exception:` 광역 검토 (Silent failure 후보)
-- [ ] mypy 실행해서 타입 일치 검사
-- [ ] CI 의 black --check 점진적 적용 계획
-- [ ] integration 테스트 — 봇 lifecycle smoke test (on_start → on_step → on_end)
+- [ ] E402 66건
+- [ ] mypy 타입 검사
+- [ ] CI 의 black --check 점진적 적용
+- [ ] bot_step_integration 의 on_step 메소드 smoke test 추가
+- [ ] 더 많은 manager 의 attribute drift 가드 추가
