@@ -209,8 +209,24 @@
 - 회귀 가드: 5건
 - 재검증: AST 스캐너로 0건 (shadowing 완전 정리)
 
-### Sweep #15+ 후보
-- [ ] 모듈 레벨 함수 중복 검색 (지금은 클래스 안만 봄)
-- [ ] mypy 광역 적용
-- [ ] `utils/kd_tree.py:121` mypy 에러
+### Sweep #15 (이번 커밋) — kd_tree.py mypy + module-level 중복 검사
+- [x] #36 모듈 레벨 함수 중복 AST 스캔 — 0건 (클래스 내부만 문제였음).
+- [x] #37 `utils/kd_tree.py` mypy 3건 타입 어노테이션 누락:
+  - `nearest_neighbor`: `best: List[Any]` 어노테이션 추가, 결과 unpack 도 명시적 타입
+  - `range_query`: `results: List[Tuple[Tuple[float, float], Any, float]]` 어노테이션
+  - `knn_search`: `heap: List[Tuple[float, Tuple[float, float], Any]]` 어노테이션
+  결과: kd_tree.py mypy clean.
+
+### 결과 누적 (sweep #1~#15)
+- 테스트: **1166 통과**, 0 실패, 0 silent-skip
+- 경고: 0 표시
+- 실제 production 버그: **22개**
+- 타입 정리: 1개 파일 (`utils/kd_tree.py`)
+- 테스트 인프라: 6건
+- 회귀 가드: 5건
+
+### Sweep #16+ 후보
+- [ ] mypy 광역 확대 (다른 핵심 파일들)
 - [ ] F841 / E402 정리
+- [ ] 다른 silent-failure 패턴 탐색 (e.g., 모든 `hasattr` 가드가 typo 잡는지 광역 검증)
+- [ ] black 점진적 적용 — root 부터
