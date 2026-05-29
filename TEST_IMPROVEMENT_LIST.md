@@ -124,10 +124,23 @@
 - 경고: 137 → **118** (sweep #1 이전 수치는 unknown, 약 150+ 추정)
 - 실제 잠재 버그 8개 해결 + 테스트 인프라 3개 수정
 
-### Sweep #8+ 후보
-- [ ] 다른 `unittest.TestCase` 안의 async test 메서드 같은 패턴 검색
+### Sweep #8 (이번 커밋) — 두 번째 silent-skip 클러스터
+- [x] #23 AST 스캐너로 `unittest.TestCase` 안의 `async def test_…` 패턴 광역 검색. 추가 발견: `TestProductionResilience` 의 async 테스트 9개도 동일 silent skip 중.
+- [x] #24 `TestProductionResilience` 를 `IsolatedAsyncioTestCase` 로 변경 → 3개 stale 테스트 (`test_get_counter_unit_terran_marine/protoss/zerg`) 가 드러남. `_get_counter_unit` 의 시그니처가 바뀌었는데 (sync, `enemy_units + 3 tech flags`) 테스트는 이전 async 시그니처 `_get_counter_unit(race_name)` 를 호출 중이었음. 시그니처에 맞춰 재작성.
+- [x] AST 스캐너로 재검사 → 0건.
+
+### 결과 누적 (sweep #1~#8)
+- 테스트: **1161 통과**, 0 실패, 0 silent-skip
+- 경고: 137 → **100**
+- 진짜 production 버그: 8개 (#1~#3, #11~#13, #20, #24의 시그니처 mismatch)
+- 테스트 인프라: 5건 (#4, #5, #9, #10, #19, #23)
+
+### Sweep #9+ 후보
 - [ ] F841 (unused-variable) 132건 케이스별 검토
 - [ ] E402 (module-import-not-at-top-of-file) 66건
-- [ ] adaptive_trainer.calculate_win_rate dead code (race_name 무시) — 호출자 없음, 삭제 후보
-- [ ] `s2clientprotocol` deprecated descriptor 호출 (외부) — filterwarnings 로 조용히 처리
+- [ ] adaptive_trainer.calculate_win_rate dead code (race_name 무시) — 호출자 없음
+- [ ] `s2clientprotocol` deprecated descriptor 호출 (외부) → `filterwarnings` 로 처리
 - [ ] 462개 `except Exception:` 광역 검토
+- [ ] mypy 실행해서 타입 일치 검사
+- [ ] CI 의 black --check 가 전체 repo 에서 fail → 점진적 black 적용 계획 수립
+- [ ] integration 테스트 추가 — 실제 게임 시뮬 없이 봇 lifecycle (on_start → on_step → on_end) smoke test
