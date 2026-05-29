@@ -239,8 +239,22 @@
 - 테스트 인프라: 6건
 - 회귀 가드: 5건
 
-### Sweep #17+ 후보
-- [ ] BotStepIntegrator 의 다른 `bot.X_coord` 등록 vs 소비자 일치 검사 (단축어/축약 패턴)
+### Sweep #17 (이번 커밋) — 더 많은 mypy 이슈
+- [x] #39 `local_training/rl_agent.py:640` — 매개변수 `path: str` 이 `path = Path(path)` 로 reassigned 되어 mypy 타입 충돌. `path_obj` 로 분리하여 명확화.
+- [x] #40 `combat/lurker_positioning.py:434, 452` — `role_counts = {}` 타입 annotation 추가 (Dict[str, int]).
+- [x] #41 BotStepIntegrator 50개 attached attr 의 shorthand drift 광역 검사 → 0건 (이미 sweep #11/#12/#16 에서 정리됨).
+
+### 결과 누적 (sweep #1~#17)
+- 테스트: **1166 통과**, 0 실패
+- 경고: 0 표시
+- 실제 production 버그: 23개
+- 타입 정리: 4건 (kd_tree 3, rl_agent 1)
+- 타입 어노테이션 정리: 2건 (lurker_positioning)
+- 테스트 인프라: 6건
+- 회귀 가드: 5건
+
+### Sweep #18+ 후보
+- [ ] `combat/__init__.py` 의 `Cannot assign to a type` 패턴 (try/except 폴백 클래스의 잘못된 패턴)
+- [ ] more mypy 광역 확대
 - [ ] F841 / E402 정리
 - [ ] black 점진적 적용
-- [ ] integration 테스트 확대
