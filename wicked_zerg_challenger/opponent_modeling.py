@@ -272,6 +272,10 @@ class OpponentModeling:
         # Opponent models
         self.opponent_models: Dict[str, OpponentModel] = {}
         self.current_opponent_id: Optional[str] = None
+        # `current_opponent` is the key used by the live on_game_start/on_step/
+        # on_game_end lifecycle; initialize it so on_game_end is safe to call
+        # even if on_game_start never ran.
+        self.current_opponent: Optional[str] = None
         self.current_game_history: Optional[GameHistory] = None
 
         # Current game tracking

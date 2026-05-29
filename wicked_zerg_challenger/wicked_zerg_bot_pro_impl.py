@@ -554,7 +554,7 @@ class WickedZergBotProImpl(BotAI):
 
                 # Print learning summary every 5 games
                 if self.opponent_modeling.current_opponent:
-                    model = self.opponent_modeling.models.get(
+                    model = self.opponent_modeling.opponent_models.get(
                         self.opponent_modeling.current_opponent
                     )
                     if model and model.games_played > 0 and model.games_played % 5 == 0:
