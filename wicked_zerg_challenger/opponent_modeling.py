@@ -782,9 +782,13 @@ class OpponentModeling:
         if not self.current_opponent or not self.current_game_history:
             return
 
-        # Update game history
+        # Update game history. `game_result` is what update_from_game reads to
+        # tally wins/losses; it is from OUR perspective ("win" = we won).
         self.current_game_history.game_won = won
         self.current_game_history.game_lost = lost
+        self.current_game_history.game_result = (
+            "win" if won else "loss" if lost else "unknown"
+        )
         self.current_game_history.early_signals = [
             s.value for s in self.observed_signals
         ]

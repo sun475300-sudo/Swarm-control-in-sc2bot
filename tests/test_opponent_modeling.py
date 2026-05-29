@@ -53,6 +53,22 @@ class TestLiveLifecycle:
         om.on_game_end(won=True, lost=False)
         assert om.opponent_models["Rival"].games_played == before + 1
 
+    def test_win_is_recorded_as_opponent_loss(self, om):
+        # We won -> from the opponent model's perspective the opponent lost.
+        om.on_game_start("Rival", None)
+        om.on_game_end(won=True, lost=False)
+        model = om.opponent_models["Rival"]
+        assert model.games_lost == 1
+        assert model.games_won == 0
+
+    def test_loss_is_recorded_as_opponent_win(self, om):
+        # We lost -> the opponent won.
+        om.on_game_start("Rival", None)
+        om.on_game_end(won=False, lost=True)
+        model = om.opponent_models["Rival"]
+        assert model.games_won == 1
+        assert model.games_lost == 0
+
     def test_game_end_without_start_is_noop(self, om):
         # No current opponent yet -> must not raise.
         om.on_game_end(won=False, lost=True)
