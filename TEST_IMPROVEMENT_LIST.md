@@ -113,11 +113,21 @@
 - [x] #17 pytest.ini 에 `asyncio_default_fixture_loop_scope = function` 추가 — `PytestDeprecationWarning` 제거 (sweep마다 30개 정도씩 누적되던 노이즈)
 - [x] #18 CI failure 분석: Lint & Type Check (3.11) 가 `black --check .` (전체 repo) 에서 실패. 이는 sweep #5 이전부터 기존 문제 — 내가 만든 회귀 아님. 향후 PR 분리 권장.
 
-### Sweep #7+ 후보
-- [ ] #7 should_expand API 의미 분리 (보류, 동작 변경 위험)
-- [ ] F541 (f-string-missing-placeholders) 250건 — 거의 무해하지만 정리 가능
-- [ ] F841 (unused-variable) 132건 — 일부는 실수일 수 있음, 케이스별 검토
-- [ ] E402 (module-import-not-at-top-of-file) 66건 — 일부는 의도된 lazy import
-- [ ] adaptive_trainer.calculate_win_rate 의 race_name 인자가 무시되는 잠재 spec 버그 (확인 필요)
-- [ ] `s2clientprotocol` 의 deprecated `FileDescriptor()` 호출은 외부 라이브러리 — 우리 코드에서 warning suppress 만 가능
-- [ ] 462개 `except Exception:` 의 광역 검토 (defensive 인지 silent failure 인지)
+### Sweep #7 (이번 커밋) — hidden test 가 드러낸 진짜 버그
+- [x] #19 `tests/test_opponent_modeling.py` 의 `TestOpponentModeling` 이 `unittest.TestCase` 였는데 async test 메서드 9개를 가지고 있어서 silent skip 되고 있었음. `unittest.IsolatedAsyncioTestCase` 로 변경.
+- [x] #20 (#19에서 드러남) `opponent_modeling.py` 가 `current_opponent` 와 `current_opponent_id` 두 속성을 일관성 없이 사용. `__init__` / `on_start` 는 `_id` 를, `on_game_start` / `on_step` / `on_game_end` 는 비-`_id` 를 사용. 실제 게임에서 `on_step` 이 attribute error 일 가능성이 있었음. 모두 `current_opponent_id` 로 통일 (8곳).
+- [x] #21 `bot_step_integration.py` 의 `EnhancedScoutSystem` import 에 `warnings.catch_warnings()` 추가. 의도된 legacy fallback인데 매번 DeprecationWarning 출력하는 노이즈 제거.
+- [x] #22 ruff `--select=F541 --fix` — 250건 의미 없는 `f"..."` (placeholder 없는 f-string) → 평범한 string 으로 정리.
+
+### 결과 누적 (sweep #1~#7)
+- 테스트: **1161/1161 통과** (sweep #1 이전: 652/659)
+- 경고: 137 → **118** (sweep #1 이전 수치는 unknown, 약 150+ 추정)
+- 실제 잠재 버그 8개 해결 + 테스트 인프라 3개 수정
+
+### Sweep #8+ 후보
+- [ ] 다른 `unittest.TestCase` 안의 async test 메서드 같은 패턴 검색
+- [ ] F841 (unused-variable) 132건 케이스별 검토
+- [ ] E402 (module-import-not-at-top-of-file) 66건
+- [ ] adaptive_trainer.calculate_win_rate dead code (race_name 무시) — 호출자 없음, 삭제 후보
+- [ ] `s2clientprotocol` deprecated descriptor 호출 (외부) — filterwarnings 로 조용히 처리
+- [ ] 462개 `except Exception:` 광역 검토
