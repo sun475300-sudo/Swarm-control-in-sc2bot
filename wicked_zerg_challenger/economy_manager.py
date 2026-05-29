@@ -5,7 +5,7 @@ Economy Manager - deterministic worker production with macro hatcheries.
 
 from enum import Enum
 import inspect
-from typing import Optional
+from typing import Any, Dict, Optional
 
 try:
     from sc2.ids.unit_typeid import UnitTypeId
@@ -190,7 +190,7 @@ class EconomyManager:
         self._last_float_log_time = -999.0
 
     def _distance_between(
-        self, unit_or_pos_a, unit_or_pos_b, frame: int = None
+        self, unit_or_pos_a, unit_or_pos_b, frame: Optional[int] = None
     ) -> float:
         current_frame = (
             frame if frame is not None else int(getattr(self.bot, "iteration", 0) or 0)
@@ -207,7 +207,11 @@ class EconomyManager:
 
     def get_saturation_info(self) -> dict:
         """기지별 미네랄/가스 포화도 계산 및 Blackboard 게시"""
-        result = {
+        # `Dict[str, Any]` because values are a heterogeneous mix of
+        # list (`bases`), int counters, and a bool (`oversaturated`).
+        # Without the annotation mypy infers Dict[str, object] and the
+        # list append / int arithmetic below blow up under type checking.
+        result: Dict[str, Any] = {
             "bases": [],
             "total_workers": 0,
             "ideal_workers": 0,

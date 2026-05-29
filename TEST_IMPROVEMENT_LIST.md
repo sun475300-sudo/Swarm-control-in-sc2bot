@@ -265,8 +265,18 @@
 - 테스트 인프라: 6건
 - 회귀 가드: 5건
 
-### Sweep #19+ 후보 (장기 작업)
-- [ ] `combat/__init__.py` 의 try/except 폴백 클래스 mypy 패턴 (광범위, 보류)
-- [ ] F841 (132건) / E402 (66건) 일괄 정리
-- [ ] black 점진적 적용 — root → wicked_zerg_challenger 순
-- [ ] integration 테스트 확대 (각 manager 의 on_step smoke test)
+### Sweep #19 (이번 커밋) — economy_manager 타입 정리
+- [x] #44 `economy_manager._distance_between` — `frame: int = None` → `frame: Optional[int] = None`
+- [x] #45 `economy_manager.get_saturation_info.result` — 다중 타입 dict 가 mypy 에서 object 로 추론되어 `result["bases"].append()` 와 `result["total_workers"] += int` 가 6건의 attr-defined / operator 에러. `Dict[str, Any]` 어노테이션 추가.
+
+### 결과 누적 (sweep #1~#19)
+- 테스트: **1166 통과** (57 economy_manager 테스트 모두 통과)
+- 경고: 0
+- 실제 production 버그: 23개
+- 타입 정리: 7건
+
+### Sweep #20+ 후보
+- [ ] strategy_manager 의 나머지 mypy 에러 (Collection[str] indexable)
+- [ ] economy_combat_balancer.py 의 dict 타입 에러
+- [ ] core/manager_factory.py 의 list/dict None default
+- [ ] F841 / E402 광역 정리
