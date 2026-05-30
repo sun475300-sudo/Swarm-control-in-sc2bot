@@ -2162,9 +2162,13 @@ class BotStepIntegrator:
                                 await self.bot.aggressive_tech_builder.recommend_tech_builds()
                             )
                             for tech_type, base_supply, priority in recommendations:
+                                # Capture tech_type by default-arg to avoid late
+                                # binding: the callback could be retried/awaited
+                                # after the loop advances and we'd otherwise
+                                # build the last recommendation's tech every time.
                                 await self.bot.aggressive_tech_builder.build_tech_aggressively(
                                     tech_type,
-                                    lambda: self._build_tech(tech_type),
+                                    lambda t=tech_type: self._build_tech(t),
                                     base_supply,
                                     priority,
                                 )
