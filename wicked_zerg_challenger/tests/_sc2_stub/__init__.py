@@ -81,6 +81,24 @@ class _AutoEnumMeta(type):
             return item._cls == cls.__name__
         return False
 
+    def __getitem__(cls, name: str) -> _AutoEnumValue:
+        """Mimic enum.Enum subscript: ``Race["Terran"]`` -> member."""
+        if not isinstance(name, str):
+            raise KeyError(name)
+        members = _AutoEnumMeta._registry.setdefault(cls.__name__, {})
+        if name not in members:
+            _AutoEnumMeta._counter[cls.__name__] = (
+                _AutoEnumMeta._counter.get(cls.__name__, 0) + 1
+            )
+            members[name] = _AutoEnumValue(
+                cls.__name__, name, _AutoEnumMeta._counter[cls.__name__]
+            )
+        return members[name]
+
+    def __instancecheck__(cls, instance: Any) -> bool:
+        """Make ``isinstance(value, Race)`` true for any auto-enum member of that class."""
+        return isinstance(instance, _AutoEnumValue) and instance._cls == cls.__name__
+
 
 class UnitTypeId(metaclass=_AutoEnumMeta):
     pass

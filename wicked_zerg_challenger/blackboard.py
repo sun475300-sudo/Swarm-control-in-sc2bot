@@ -537,12 +537,16 @@ class GameStateBlackboard:
             and self.game_phase != GamePhase.OPENING
         )
 
-    def should_expand(self) -> bool:
-        """확장 가능한 상황인가?"""
+    def should_expand(self, mineral_threshold: int = 300) -> bool:
+        """확장 가능한 상황인가?
+
+        Hatchery는 미네랄 300이므로 그 이하면 확장 신호 차단.
+        """
         return (
             self.threat.level == ThreatLevel.NONE
             and not self.resources.is_supply_blocked
             and not self.is_under_attack
+            and self.resources.minerals >= mineral_threshold
         )
 
 
