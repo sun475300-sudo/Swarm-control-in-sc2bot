@@ -279,11 +279,15 @@ class CreepManager:
         origin = tumor.position
         spread_range = self.TUMOR_SPREAD_RANGE
 
-        # Generate circle positions (CreepyBot: trigonometric sampling)
+        # Generate circle positions (CreepyBot: trigonometric sampling).
+        # Use two rings: 70% and 90% of the max spread range so we cover both
+        # near and far candidates and scale with TUMOR_SPREAD_RANGE.
+        ring_inner = spread_range * 0.7
+        ring_outer = spread_range * 0.9
         candidates = []
         for angle_deg in range(0, 360, 20):  # 18 candidate positions
             rad = math.radians(angle_deg)
-            for dist in [7.0, 9.0]:  # Two distance rings
+            for dist in (ring_inner, ring_outer):
                 x = origin.x + dist * math.cos(rad)
                 y = origin.y + dist * math.sin(rad)
                 candidates.append(Point2((x, y)))
