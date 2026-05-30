@@ -109,7 +109,6 @@ class CreepExpansionSystem:
             main_base = self.bot.townhalls.first.position
             for exp_loc in list(self.bot.expansion_locations_list)[:5]:
                 # 경로상 점막 위치 계산
-                direction = (main_base - exp_loc).normalized
                 for i in range(1, 10):
                     pos = main_base.towards(exp_loc, i * 8)
                     if self.bot.in_map_bounds(pos):
