@@ -15,7 +15,7 @@ import os
 import sys
 import tempfile
 import unittest
-from unittest.mock import Mock
+from unittest.mock import AsyncMock, Mock
 
 # Add parent directory to path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
@@ -617,6 +617,56 @@ class TestOpponentModeling(unittest.TestCase):
         self.assertEqual(stats["win_rate"], 0.6)
         self.assertEqual(stats["dominant_style"], "aggressive")
         self.assertEqual(stats["most_common_strategy"], "zerg_rush")
+
+    # ============= Regression: duplicate on_step removed =============
+
+    def test_current_opponent_alias_initialised(self):
+        """current_opponent and current_opponent_id share state from __init__."""
+        # Both attributes exist and start as None — the legacy aliases used by
+        # on_game_start/on_game_end/get_predicted_strategy must not raise
+        # AttributeError on a fresh instance.
+        self.assertIsNone(self.modeling.current_opponent)
+        self.assertIsNone(self.modeling.current_opponent_id)
+
+    async def test_on_start_syncs_current_opponent_alias(self):
+        """on_start must populate both naming variants."""
+        await self.modeling.on_start()
+        self.assertEqual(
+            self.modeling.current_opponent, self.modeling.current_opponent_id
+        )
+        self.assertIsNotNone(self.modeling.current_opponent)
+
+    def test_on_game_start_syncs_current_opponent_id_alias(self):
+        """on_game_start sets both id forms — get_predicted_strategy uses
+        ``current_opponent`` while initialisation only touches
+        ``current_opponent_id``. Without the sync, get_predicted_strategy
+        wouldn't see the new opponent and lookups would fall through.
+        """
+        self.modeling.on_game_start("opponent_X", opponent_race=None)
+        self.assertEqual(self.modeling.current_opponent, "opponent_X")
+        self.assertEqual(self.modeling.current_opponent_id, "opponent_X")
+
+    async def test_on_step_runs_full_pipeline(self):
+        """The duplicate on_step that only ran _detect_early_signals was
+        removed. The remaining on_step must drive build-order tracking and
+        timing detection (not just signal detection).
+        """
+        await self.modeling.on_start()
+        self.bot.time = 100.0  # early game phase
+        self.modeling.early_game_phase = True
+
+        # Hook the helpers — comprehensive on_step should call them.
+        self.modeling._track_build_order = AsyncMock()
+        self.modeling._detect_timing_attacks = AsyncMock()
+        self.modeling._track_tech_progression = AsyncMock()
+
+        # Force iteration delta past update_interval threshold
+        self.modeling.last_update = 0
+        await self.modeling.on_step(100)
+
+        self.modeling._track_build_order.assert_awaited()
+        self.modeling._detect_timing_attacks.assert_awaited()
+        self.modeling._track_tech_progression.assert_awaited()
 
 
 # Run tests

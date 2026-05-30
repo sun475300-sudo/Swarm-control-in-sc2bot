@@ -354,6 +354,25 @@ class TestStateQueries(unittest.TestCase):
         self.bb.update_resources(500, 100, 50, 100)
         self.assertFalse(self.bb.should_expand())
 
+    def test_should_not_expand_exactly_at_threshold_minus_one(self):
+        """Mineral floor at 300 (Hatchery cost) — 299 must block."""
+        self.bb.update_threat(ThreatLevel.NONE)
+        self.bb.update_resources(299, 100, 50, 100)
+        self.assertFalse(self.bb.should_expand())
+
+    def test_should_expand_exactly_at_threshold(self):
+        """Mineral floor inclusive — 300 must allow."""
+        self.bb.update_threat(ThreatLevel.NONE)
+        self.bb.update_resources(300, 100, 50, 100)
+        self.assertTrue(self.bb.should_expand())
+
+    def test_should_expand_accepts_custom_threshold(self):
+        """Callers can lower the floor for early macro Hatchery moves."""
+        self.bb.update_threat(ThreatLevel.NONE)
+        self.bb.update_resources(200, 100, 50, 100)
+        self.assertFalse(self.bb.should_expand())
+        self.assertTrue(self.bb.should_expand(mineral_threshold=150))
+
 
 class TestBackwardCompatibility(unittest.TestCase):
     def setUp(self):

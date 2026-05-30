@@ -361,6 +361,44 @@ class TestProductionResilience(unittest.TestCase):
 
         self.assertTrue(self.resilience._should_reserve_third_base_minerals())
 
+    def test_produce_army_unit_falls_through_when_reserve_inactive(self):
+        """Counter-unit lookup must run once defense is met and the third
+        Hatchery has already started (reserve no longer active).
+        """
+        self.bot.time = 190.0
+        self.bot.minerals = 250
+        # Three bases => reserve is *not* active for the third
+        self.bot.townhalls.amount = 3
+        self.bot.townhalls.ready.amount = 3
+        self.bot.already_pending = Mock(return_value=0)
+
+        def units(unit_type):
+            amounts = {
+                UnitTypeId.ZERGLING: 6,
+                UnitTypeId.ROACH: 0,
+                UnitTypeId.HYDRALISK: 0,
+                UnitTypeId.MUTALISK: 0,
+            }
+            return SimpleNamespace(amount=amounts.get(unit_type, 0))
+
+        self.bot.units = Mock(side_effect=units)
+        self.bot.structures = Mock(return_value=Mock(amount=0, exists=False))
+        self.bot.structures.return_value.ready.exists = False
+        self.bot.enemy_units = []  # empty list — no counter target
+        self.bot.can_afford = Mock(return_value=True)
+        self.bot.supply_left = 4
+        self.resilience._safe_train = AsyncMock(return_value=True)
+
+        import asyncio
+
+        # Should not be blocked by the reserve guard (three bases → reserve off)
+        asyncio.run(self.resilience._produce_army_unit(Mock()))
+
+        # _check_min_defense_met returns True (6 zerglings) so we fall through
+        # to counter selection / late game logic. ``can_afford`` getting called
+        # at least once proves the reserve didn't short-circuit production.
+        self.bot.can_afford.assert_called()
+
 
 # Run async tests
 if __name__ == "__main__":
