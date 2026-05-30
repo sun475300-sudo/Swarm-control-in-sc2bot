@@ -1439,6 +1439,7 @@ class ProductionResilience:
 
     async def force_resource_dump(self) -> None:
         b = self.bot
+        game_time = float(getattr(b, "time", 0.0) or 0.0)
         if (
             b.can_afford(UnitTypeId.HATCHERY)
             and b.already_pending(UnitTypeId.HATCHERY) < 2
@@ -1462,30 +1463,8 @@ class ProductionResilience:
                         await self._safe_train(larva, UnitTypeId.ZERGLING)
 
     # Defense methods moved to DefenseCoordinator
-
-    async def build_terran_counters(self) -> None:
-        b = self.bot
-        if not b.production:
-            return
-        if self._should_reserve_third_base_minerals():
-            return
-        baneling_nests = [
-            s for s in b.units(UnitTypeId.BANELINGNEST).structure if s.is_ready
-        ]
-        if (
-            not baneling_nests
-            and b.already_pending(UnitTypeId.BANELINGNEST) == 0
-            and b.can_afford(UnitTypeId.BANELINGNEST)
-        ):
-            # CRITICAL: Check for duplicate construction before building
-            if not b.structures(UnitTypeId.BANELINGNEST).exists:
-                spawning_pools = [
-                    s for s in b.units(UnitTypeId.SPAWNINGPOOL).structure if s.is_ready
-                ]
-                if spawning_pools:
-                    await b.build(UnitTypeId.BANELINGNEST, near=spawning_pools[0])
-        # NOTE: Roach Warren building is now handled by _auto_build_tech_structures()
-        # Removed duplicate code to prevent building spam
+    # (Dead duplicate definition of build_terran_counters was removed —
+    # the canonical implementation lives further down and was shadowing this one.)
 
     async def _auto_build_tech_structures(self) -> None:
         """
