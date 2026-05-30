@@ -1305,6 +1305,17 @@ class WickedZergBotProImpl(BotAI):
         # * 게임별 로그/통계 리스트 초기화 (#12)
         self._units_lost = []
         self._build_order_log = []
+        # * Bug fix: also clear tag caches and counters that previously
+        #   accumulated across training episodes
+        self._tracked_structure_tags = set()
+        if hasattr(self, "_known_unit_tags"):
+            self._known_unit_tags = {}
+        self._workers_created = 0
+        self._expansions_built = 0
+        if hasattr(self, "_game_ended"):
+            del self._game_ended
+        if hasattr(self, "_gg_replied"):
+            del self._gg_replied
 
         # DataCacheManager 초기화
         if hasattr(self, "data_cache") and self.data_cache:

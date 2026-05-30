@@ -3576,10 +3576,7 @@ class BotStepIntegrator:
 
         except Exception as e:
             if iteration % 100 == 0:
-                self.logger.error(f"[ERROR] on_step execution error: {e}")
-                import traceback
-
-                traceback.print_exc()
+                self.logger.exception(f"[ERROR] on_step execution error: {e}")
         finally:
             # * PERFORMANCE PROFILING: End frame timing
             if profiler:
