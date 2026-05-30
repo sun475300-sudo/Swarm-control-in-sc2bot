@@ -800,6 +800,12 @@ class ProductionResilience:
                     return await self._safe_train(larva, UnitTypeId.ZERGLING)
                 return False  # Wait for resources
 
+            # Once defense is met, hold larvae for the third (or fourth) Hatchery
+            # if mineral reserve is active. Skips counter-unit ladder entirely so
+            # we don't burn the saved minerals on army that can be queued shortly.
+            if self._should_reserve_third_base_minerals():
+                return False
+
         # === COUNTER ENEMY COMPOSITION ===
         enemy_units = getattr(b, "enemy_units", [])
         counter_unit = self._get_counter_unit(
@@ -2141,6 +2147,11 @@ class ProductionResilience:
             UnitTypeId of the recommended counter unit, or None
         """
         if not enemy_units:
+            return None
+
+        try:
+            iter(enemy_units)
+        except TypeError:
             return None
 
         b = self.bot
