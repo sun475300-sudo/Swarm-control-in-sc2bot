@@ -3,8 +3,8 @@
 Economy Manager - deterministic worker production with macro hatcheries.
 """
 
-from enum import Enum
 import inspect
+from enum import Enum
 from typing import Optional
 
 try:
@@ -3446,7 +3446,6 @@ class EconomyManager:
         game_time = getattr(self.bot, "time", 0)
         workers = self.bot.workers
         bases = self.bot.townhalls.ready
-        minerals = getattr(self.bot, "minerals", 0)
 
         # * 현재 경제 상태 분석 *
         worker_count = workers.amount

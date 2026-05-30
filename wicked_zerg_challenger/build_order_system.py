@@ -16,8 +16,8 @@ from typing import Any, Dict, List
 try:
     from config.constants import (
         BUILD_ORDER_END_TIME,
-        MAX_STEP_RETRIES,
         EXPANSION_TIMING_TARGET,
+        MAX_STEP_RETRIES,
         THREAT_CACHE_TTL,
     )
 except ImportError:

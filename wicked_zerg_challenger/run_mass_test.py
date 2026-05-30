@@ -7,12 +7,12 @@ All difficulties x All races = comprehensive test matrix
 GPU acceleration enabled for all computations.
 """
 
+import argparse
 import json
 import logging
 import os
 import sys
 import time
-import argparse
 from datetime import datetime
 from pathlib import Path
 

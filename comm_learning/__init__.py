@@ -2,10 +2,10 @@
 try:
     from .sc2_comm_agent import (
         CommConfig,
-        SC2CommAgent,
         NumpyCommNet,
         NumpyTarMAC,
         ProtocolAnalyzer,
+        SC2CommAgent,
     )
 except ImportError:
     CommConfig = None

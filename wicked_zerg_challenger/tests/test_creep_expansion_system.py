@@ -9,8 +9,8 @@ from unittest.mock import AsyncMock, Mock
 os.environ["PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION"] = "python"
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from sc2.ids.unit_typeid import UnitTypeId
 from creep_expansion_system import CreepExpansionSystem
+from sc2.ids.unit_typeid import UnitTypeId
 
 
 class FakePoint:
