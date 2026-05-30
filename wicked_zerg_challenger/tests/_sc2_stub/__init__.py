@@ -69,8 +69,12 @@ class _AutoEnumMeta(type):
             raise AttributeError(item)
         members = _AutoEnumMeta._registry.setdefault(cls.__name__, {})
         if item not in members:
-            _AutoEnumMeta._counter[cls.__name__] = _AutoEnumMeta._counter.get(cls.__name__, 0) + 1
-            members[item] = _AutoEnumValue(cls.__name__, item, _AutoEnumMeta._counter[cls.__name__])
+            _AutoEnumMeta._counter[cls.__name__] = (
+                _AutoEnumMeta._counter.get(cls.__name__, 0) + 1
+            )
+            members[item] = _AutoEnumValue(
+                cls.__name__, item, _AutoEnumMeta._counter[cls.__name__]
+            )
         return members[item]
 
     def __iter__(cls):
@@ -175,7 +179,9 @@ class Point2(tuple):
         ox, oy = other[0], other[1]
         dx, dy = ox - self.x, oy - self.y
         length = (dx * dx + dy * dy) ** 0.5 or 1.0
-        return Point2((self.x + dx / length * distance, self.y + dy / length * distance))
+        return Point2(
+            (self.x + dx / length * distance, self.y + dy / length * distance)
+        )
 
     def offset(self, p) -> "Point2":
         return Point2((self.x + p[0], self.y + p[1]))
@@ -259,7 +265,8 @@ class Units(list):
                 u
                 for u in self
                 if hasattr(u, "position")
-                and ((u.position[0] - px) ** 2 + (u.position[1] - py) ** 2) ** 0.5 < distance
+                and ((u.position[0] - px) ** 2 + (u.position[1] - py) ** 2) ** 0.5
+                < distance
             ],
             self.bot,
         )
@@ -270,9 +277,11 @@ class Units(list):
         px, py = position[0], position[1]
         return min(
             self,
-            key=lambda u: ((u.position[0] - px) ** 2 + (u.position[1] - py) ** 2)
-            if hasattr(u, "position")
-            else float("inf"),
+            key=lambda u: (
+                ((u.position[0] - px) ** 2 + (u.position[1] - py) ** 2)
+                if hasattr(u, "position")
+                else float("inf")
+            ),
         )
 
 

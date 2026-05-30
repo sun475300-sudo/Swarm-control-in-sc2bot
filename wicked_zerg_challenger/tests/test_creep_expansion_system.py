@@ -54,9 +54,9 @@ class TestCreepExpansionSystemGuards(unittest.TestCase):
         bot.has_creep = Mock(return_value=False)
         bot.get_available_abilities = AsyncMock(side_effect=AssertionError())
         bot.units = Mock(
-            side_effect=lambda unit_type: FakeUnits([unit])
-            if unit_type == UnitTypeId.QUEEN
-            else FakeUnits()
+            side_effect=lambda unit_type: (
+                FakeUnits([unit]) if unit_type == UnitTypeId.QUEEN else FakeUnits()
+            )
         )
         bot.structures = Mock(
             return_value=SimpleNamespace(amount=0, ready=FakeUnits([unit]))
