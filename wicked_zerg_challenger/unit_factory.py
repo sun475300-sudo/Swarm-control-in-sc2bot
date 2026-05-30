@@ -165,10 +165,7 @@ class UnitFactory:
         self._last_combat_check = iteration
         in_combat = False
 
-        # (auto-fixed: separated merged comment and code)
-        in_combat = False
-
-        # 1. Strategy Manager??emergency_active 癲ル슪???띿물?
+        # 1. Strategy Manager - check emergency_active flag
         strategy = getattr(self.bot, "strategy_manager", None)
         if strategy and getattr(strategy, "emergency_active", False):
             in_combat = True
@@ -214,9 +211,7 @@ class UnitFactory:
         game_time = self.bot.time
         pending_hatch = self.bot.already_pending(UnitTypeId.HATCHERY)
 
-        # 1. ???????癲ル슪???띿물?(1??癲ル슣???????1?類?ｄ펺????醫딅뱠 ??????嶺뚮ㅎ?닻??
-        # (auto-fixed: separated merged comment and code)
-        pending_hatch = self.bot.already_pending(UnitTypeId.HATCHERY)
+        # 1. Decide whether to pause production for an in-flight expansion
 
         # * FIX: ??ш낄援??濚욌꼬?댄꺍????嶺뚮Ĳ???????れ삀????壤? ???怨룹쓱 (??獄쎼뀙?????Β?띾쭡) *
         strategy = getattr(self.bot, "strategy_manager", None)

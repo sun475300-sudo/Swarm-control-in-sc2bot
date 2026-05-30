@@ -385,8 +385,13 @@ if __name__ == "__main__":
                 # Wrap it
                 def make_sync_wrapper(async_func):
                     def sync_wrapper(self):
-                        loop = asyncio.get_event_loop()
-                        return loop.run_until_complete(async_func(self))
+                        # new_event_loop() to avoid 'no current event loop'
+                        # under Python 3.10+ when running as a __main__ script.
+                        loop = asyncio.new_event_loop()
+                        try:
+                            return loop.run_until_complete(async_func(self))
+                        finally:
+                            loop.close()
 
                     return sync_wrapper
 
