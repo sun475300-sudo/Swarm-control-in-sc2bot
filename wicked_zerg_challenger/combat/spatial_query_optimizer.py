@@ -283,7 +283,7 @@ class SpatialQueryOptimizer:
         if iteration % 2200 == 0 and self.total_queries > 0:  # Every 100 seconds
             stats = self.get_statistics()
             self.logger.info(
-                f"[SPATIAL QUERY] "
+                "[SPATIAL QUERY] "
                 f"Queries: {stats['total_queries']}, "
                 f"Hit rate: {stats['cache_hit_rate']:.1%}, "
                 f"Cache size: {stats['active_cache_entries']}"

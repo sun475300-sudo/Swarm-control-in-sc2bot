@@ -72,7 +72,7 @@ def migrate_prints(content: str) -> tuple:
             count += content.count(old)
             content = new_content
 
-    # Generic: logger.info(f"[TAG] -> logger.info(f"[TAG]
+    # Generic: logger.info("[TAG] -> logger.info(f"[TAG]
     def replace_tagged(m):
         nonlocal count
         count += 1
@@ -87,7 +87,7 @@ def migrate_prints(content: str) -> tuple:
         content,
     )
 
-    # Generic remaining: logger.info(f"... -> logger.info(f"...
+    # Generic remaining: logger.info("... -> logger.info(f"...
     def replace_generic(m):
         nonlocal count
         count += 1

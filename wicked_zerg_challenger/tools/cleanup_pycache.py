@@ -141,7 +141,7 @@ def cleanup_all(root_dir: str, dry_run: bool = True) -> Tuple[int, int, int]:
 
     if dry_run:
         logger.info(f"\n[DRY RUN] No files were actually deleted.")
-        logger.info(f"Run with --execute to perform actual cleanup.")
+        logger.info("Run with --execute to perform actual cleanup.")
     else:
         logger.info(f"\n[COMPLETED] Cleanup finished!")
         logger.info(f"  Directories deleted: {dirs_deleted}")
