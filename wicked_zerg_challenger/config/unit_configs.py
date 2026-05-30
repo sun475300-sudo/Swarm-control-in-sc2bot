@@ -417,10 +417,13 @@ class StrategyConfig:
     WINNING_ARMY_PRIORITY_ECONOMY = 0.2
     WINNING_ARMY_PRIORITY_TECH = 0.2
 
-    LOSING_EMERGENCY_PRIORITY_ARMY = 0.7
-    LOSING_EMERGENCY_PRIORITY_DEFENSE = 0.3
-    LOSING_EMERGENCY_PRIORITY_ECONOMY = 0.0
-    LOSING_EMERGENCY_PRIORITY_TECH = 0.0
+    # FIX P0-3: even in EMERGENCY keep a sliver of economy/tech so drones
+    # get replaced and tech doesn't completely stall — pure 0 economy was
+    # the dominant cause of late-game supply 0~9 losses.
+    LOSING_EMERGENCY_PRIORITY_ARMY = 0.6
+    LOSING_EMERGENCY_PRIORITY_DEFENSE = 0.2
+    LOSING_EMERGENCY_PRIORITY_ECONOMY = 0.15
+    LOSING_EMERGENCY_PRIORITY_TECH = 0.05
 
     # === 기타 설정 ===
     CONCURRENT_STRATEGY_LIMIT = 3  # 동시 실행 전략 제한

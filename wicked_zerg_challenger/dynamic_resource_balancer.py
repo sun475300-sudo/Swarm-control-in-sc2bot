@@ -166,13 +166,15 @@ class DynamicResourceBalancer:
             ?좊떅蹂?鍮꾩쑉 議곗젙 ?뺤뀛?덈━
             ?? {"hydralisk": 0.30, "mutalisk": 0.15, "zergling": 0.40, "roach": 0.15}
         """
-        gas_ratio = max(self.min_gas_ratio, min(self.max_gas_ratio, self.current_gas_ratio))
+        gas_ratio = max(
+            self.min_gas_ratio, min(self.max_gas_ratio, self.current_gas_ratio)
+        )
         mineral_ratio = 1.0 - gas_ratio
 
         # ?먯썝 ?곹깭???곕Ⅸ ?좊떅 援ъ꽦
         if self.resource_state == "CRITICAL":
             return {
-            # 誘몃꽕??怨쇰떎 -> 媛???좊떅 理쒕???            return {
+                # 誘몃꽕??怨쇰떎 -> 媛???좊떅 理쒕???
                 "hydralisk": gas_ratio * 0.50,
                 "mutalisk": gas_ratio * 0.30,
                 "corruptor": gas_ratio * 0.20,

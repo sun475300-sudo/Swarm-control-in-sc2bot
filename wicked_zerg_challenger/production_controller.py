@@ -152,8 +152,9 @@ class ProductionController:
             unit_type, count, requester = request
 
             # 생산 시도
-            if self._should_reserve_third_base_minerals() and not self._can_spend_during_third_base_reserve(
-                unit_type, requester
+            if (
+                self._should_reserve_third_base_minerals()
+                and not self._can_spend_during_third_base_reserve(unit_type, requester)
             ):
                 priority = self.blackboard.get_authority_priority(requester)
                 self.blackboard.request_production(
@@ -249,7 +250,7 @@ class ProductionController:
                 if self.bot.time < 300:
                     self.logger.info(f"{unit_type.name} requested by {requester}")
 
-            except Exception as e:
+            except Exception:
                 self.production_failures += 1
                 break
 
@@ -281,7 +282,9 @@ class ProductionController:
 
         return not self._has_active_base_threat()
 
-    def _can_spend_during_third_base_reserve(self, unit_type: Any, requester: str) -> bool:
+    def _can_spend_during_third_base_reserve(
+        self, unit_type: Any, requester: str
+    ) -> bool:
         """Allow supply safety and a small defensive floor during third reserve."""
         if unit_type == UnitTypeId.OVERLORD:
             return True
@@ -443,7 +446,7 @@ class ProductionController:
             self.bot.do(larvae.first.train(UnitTypeId.OVERLORD))
             self.logger.info(f"Auto Overlord (supply: {supply_left}/{supply_cap})")
 
-        except Exception as e:
+        except Exception:
             self.production_failures += 1
 
     # ========== * Phase 13: 비율 기반 군대 자동 생산 * ==========

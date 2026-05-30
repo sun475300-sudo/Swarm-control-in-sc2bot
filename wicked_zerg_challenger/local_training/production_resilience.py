@@ -800,6 +800,10 @@ class ProductionResilience:
                     return await self._safe_train(larva, UnitTypeId.ZERGLING)
                 return False  # Wait for resources
 
+            # Hold larva for the next Hatchery once minimum defense is established.
+            if self._should_reserve_third_base_minerals():
+                return False
+
         # === COUNTER ENEMY COMPOSITION ===
         enemy_units = getattr(b, "enemy_units", [])
         counter_unit = self._get_counter_unit(
@@ -1434,6 +1438,7 @@ class ProductionResilience:
 
     async def force_resource_dump(self) -> None:
         b = self.bot
+        game_time = getattr(b, "time", 0.0) or 0.0
         if (
             b.can_afford(UnitTypeId.HATCHERY)
             and b.already_pending(UnitTypeId.HATCHERY) < 2
@@ -2143,6 +2148,11 @@ class ProductionResilience:
         if not enemy_units:
             return None
 
+        try:
+            iter(enemy_units)
+        except TypeError:
+            return None
+
         b = self.bot
 
         # Count enemy unit types
@@ -2501,10 +2511,16 @@ class ProductionResilience:
 
                 # 가스 있으면 히드라/바퀴, 없으면 저글링
                 trained = False
-                if b.vespene >= 50 and b.structures(UnitTypeId.HYDRALISKDEN).ready.exists:
+                if (
+                    b.vespene >= 50
+                    and b.structures(UnitTypeId.HYDRALISKDEN).ready.exists
+                ):
                     if b.can_afford(UnitTypeId.HYDRALISK):
                         trained = await self._safe_train(larva, UnitTypeId.HYDRALISK)
-                elif b.vespene >= 25 and b.structures(UnitTypeId.ROACHWARREN).ready.exists:
+                elif (
+                    b.vespene >= 25
+                    and b.structures(UnitTypeId.ROACHWARREN).ready.exists
+                ):
                     if b.can_afford(UnitTypeId.ROACH):
                         trained = await self._safe_train(larva, UnitTypeId.ROACH)
 
