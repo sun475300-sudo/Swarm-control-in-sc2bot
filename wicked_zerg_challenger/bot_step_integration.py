@@ -941,14 +941,14 @@ class BotStepIntegrator:
             if hasattr(self.bot, "spatial_optimizer") and self.bot.spatial_optimizer:
                 try:
                     await self.bot.spatial_optimizer.on_step(iteration)
-                except Exception as e:
+                except Exception:
                     if error_handler.debug_mode:
                         raise
 
             if hasattr(self.bot, "data_cache") and self.bot.data_cache:
                 try:
                     await self.bot.data_cache.on_step(iteration)
-                except Exception as e:
+                except Exception:
                     if error_handler.debug_mode:
                         raise
 
@@ -956,7 +956,7 @@ class BotStepIntegrator:
             if hasattr(self.bot, "base_destruction") and self.bot.base_destruction:
                 try:
                     await self.bot.base_destruction.on_step(iteration)
-                except Exception as e:
+                except Exception:
                     if error_handler.debug_mode:
                         raise
 
@@ -964,7 +964,7 @@ class BotStepIntegrator:
             if hasattr(self.bot, "building_destroyer") and self.bot.building_destroyer:
                 try:
                     await self.bot.building_destroyer.on_step(iteration)
-                except Exception as e:
+                except Exception:
                     if error_handler.debug_mode:
                         raise
 
@@ -972,7 +972,7 @@ class BotStepIntegrator:
             if hasattr(self.bot, "self_healing") and self.bot.self_healing:
                 try:
                     await self.bot.self_healing.on_step(iteration)
-                except Exception as e:
+                except Exception:
                     if error_handler.debug_mode:
                         raise
 
@@ -980,7 +980,7 @@ class BotStepIntegrator:
             if hasattr(self.bot, "personality") and self.bot.personality:
                 try:
                     await self.bot.personality.on_step(iteration)
-                except Exception as e:
+                except Exception:
                     if error_handler.debug_mode:
                         raise
 
@@ -988,7 +988,7 @@ class BotStepIntegrator:
             if hasattr(self.bot, "battle_prep") and self.bot.battle_prep:
                 try:
                     await self.bot.battle_prep.on_step(iteration)
-                except Exception as e:
+                except Exception:
                     if error_handler.debug_mode:
                         raise
 
@@ -1000,7 +1000,7 @@ class BotStepIntegrator:
                         await self.bot.destructible_aware.on_start()
 
                     await self.bot.destructible_aware.on_step(iteration)
-                except Exception as e:
+                except Exception:
                     if error_handler.debug_mode:
                         raise
 
@@ -1008,7 +1008,7 @@ class BotStepIntegrator:
             if hasattr(self.bot, "nydus_trainer") and self.bot.nydus_trainer:
                 try:
                     await self.bot.nydus_trainer.on_step(iteration)
-                except Exception as e:
+                except Exception:
                     if error_handler.debug_mode:
                         raise
 
@@ -1016,7 +1016,7 @@ class BotStepIntegrator:
             if hasattr(self.bot, "overlord_safety") and self.bot.overlord_safety:
                 try:
                     await self.bot.overlord_safety.on_step(iteration)
-                except Exception as e:
+                except Exception:
                     if error_handler.debug_mode:
                         raise
 
@@ -1241,11 +1241,10 @@ class BotStepIntegrator:
                     self._logic_tracker.end_logic("RLTechAdapter", start_time)
 
             # 0.057 *** Micro Focus Mode (전투 우선순위 동적 할당) ***
-            micro_interval = 8  # 기본 간격
             if hasattr(self.bot, "micro_focus") and self.bot.micro_focus:
                 start_time = self._logic_tracker.start_logic("MicroFocusMode")
                 try:
-                    micro_interval = self.bot.micro_focus.update(iteration)
+                    self.bot.micro_focus.update(iteration)
                 except Exception as e:
                     if error_handler.debug_mode:
                         raise
@@ -1394,7 +1393,7 @@ class BotStepIntegrator:
                             )
                     elif iteration % 110 == 0:
                         astar_hw.update_progress()
-                except Exception as e:
+                except Exception:
                     if error_handler.debug_mode:
                         raise
 
@@ -2925,7 +2924,6 @@ class BotStepIntegrator:
             # 전략 모드 적용 (StrategyManager에게 전달)
             if result and "strategy_mode" in result:
                 new_mode = result["strategy_mode"]
-                current_mode_str = "Unknown"
 
                 # StrategyManager에 모드 적용
                 if hasattr(self.bot, "strategy_manager") and self.bot.strategy_manager:
