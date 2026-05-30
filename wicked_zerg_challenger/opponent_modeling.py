@@ -729,6 +729,15 @@ class OpponentModeling:
     # Integration Methods (for main bot lifecycle)
     # ============================================================
 
+    @property
+    def current_opponent(self) -> Optional[str]:
+        """Alias for current_opponent_id (legacy on_game_start API)."""
+        return self.current_opponent_id
+
+    @current_opponent.setter
+    def current_opponent(self, value: Optional[str]) -> None:
+        self.current_opponent_id = value
+
     def on_game_start(self, opponent_id: str, opponent_race=None):
         """게임 시작 시 호출 - 적 추적 시작"""
         self.current_opponent = opponent_id
