@@ -45,7 +45,7 @@ class UnitFactory:
         self.max_larva_spend_per_step = 5
 
         # * COMBAT REINFORCEMENT SYSTEM *
-        # ??ш낄援??濚??怨뚮옖筌???野껊챶爾?????ш낄援η뵳???筌?痢??        self._combat_mode = False
+        # Combat reinforcement state
         self._combat_mode = False
         self._last_combat_check = 0
         self._combat_check_interval = 22  # ~1?縕?袁?맪??癲ル슪???띿물?

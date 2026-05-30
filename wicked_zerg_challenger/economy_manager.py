@@ -2049,45 +2049,6 @@ class EconomyManager:
             self.logger.info(f"[FORCE EXPAND] ALL METHODS FAILED")
         return
 
-        expansion_success = False
-        try:
-            if hasattr(self.bot, "expand_now"):
-                result = await self.bot.expand_now()
-                if result is not False:
-                    self.logger.info(
-                        f"[FORCE EXPAND] [{int(game_time)}s] {reason} - SUCCESS"
-                    )
-                    expansion_success = True
-                else:
-                    self.logger.info(f"[FORCE EXPAND] expand_now returned False")
-            else:
-                # expand_now가 없으면 직접 위치 찾아서 건설
-                # *** USE GOLD PRIORITY ***
-                expansion_locations = (
-                    await self._get_best_expansion_with_gold_priority()
-                )
-                if (
-                    expansion_locations
-                    and hasattr(self.bot, "workers")
-                    and self.bot.workers
-                ):
-                    worker = self.bot.workers.closest_to(expansion_locations)
-                    if worker:
-                        is_gold = self._is_gold_expansion(expansion_locations)
-                        gold_marker = "[GOLD] GOLD" if is_gold else ""
-                        self.bot.do(
-                            worker.build(UnitTypeId.HATCHERY, expansion_locations)
-                        )
-                        self.logger.info(
-                            f"[FORCE EXPAND] [{int(game_time)}s] Manual expansion {gold_marker} - SUCCESS"
-                        )
-                        expansion_success = True
-        except Exception as e:
-            self.logger.info(f"[FORCE EXPAND] Failed: {e}")
-
-        if not expansion_success:
-            self.logger.info(f"[FORCE EXPAND] ALL METHODS FAILED")
-
     async def _check_proactive_expansion(self) -> None:
         """
         Proactive expansion based on timing - 10분 안에 3베이스 확보.
@@ -2284,46 +2245,6 @@ class EconomyManager:
 
         self.logger.info(f"[EXPAND] ALL METHODS FAILED - Check bot state")
         return
-
-        # * 확장 실행 - bot.expand_now() 우선 사용 (안정적) *
-        expansion_success = False
-
-        try:
-            # 방법 1: expand_now 우선 사용 (가장 안정적)
-            if hasattr(self.bot, "expand_now"):
-                result = await self.bot.expand_now()
-                # expand_now()가 성공하면 None 또는 True 반환
-                if result is not False:  # False가 아니면 성공으로 간주
-                    self.logger.info(
-                        f"[PROACTIVE EXPAND] [{int(game_time)}s] {expand_reason} - SUCCESS"
-                    )
-                    expansion_success = True
-                else:
-                    self.logger.info(
-                        f"[EXPAND] expand_now returned False (no valid location?)"
-                    )
-        except Exception as e:
-            self.logger.info(f"[EXPAND] expand_now failed: {e}")
-
-        if not expansion_success:
-            try:
-                # 방법 2: 황금 기지 우선 확장 시도
-                gold_pos = await self._get_best_expansion_with_gold_priority()
-                if gold_pos and hasattr(self.bot, "workers") and self.bot.workers:
-                    worker = self.bot.workers.closest_to(gold_pos)
-                    if worker and not worker.is_constructing_scv:
-                        self.bot.do(worker.build(UnitTypeId.HATCHERY, gold_pos))
-                        is_gold = self._is_gold_expansion(gold_pos)
-                        gold_tag = " [GOLD!]" if is_gold else ""
-                        self.logger.info(
-                            f"[PROACTIVE EXPAND] [{int(game_time)}s] {expand_reason}{gold_tag} - SUCCESS"
-                        )
-                        expansion_success = True
-            except Exception as e:
-                self.logger.info(f"[EXPAND] Gold expansion failed: {e}")
-
-        if not expansion_success:
-            self.logger.info(f"[EXPAND] ALL METHODS FAILED - Check bot state")
 
     async def _get_hidden_expansion_location(self) -> Optional[Point2]:
         """
