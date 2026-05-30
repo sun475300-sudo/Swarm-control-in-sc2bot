@@ -4,6 +4,7 @@ pytest 공통 fixtures (#171)
 모든 테스트 파일에서 공유할 수 있는 fixture와 설정을 정의한다.
 """
 
+import importlib.util
 import os
 import shutil
 import sys
@@ -17,6 +18,29 @@ import pytest
 PROJECT_ROOT = Path(__file__).parent.parent
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
+
+# Make the in-tree sc2 stub available to root-level tests that import bot
+# modules (eg. test_core_modules imports micro_controller which lives under
+# wicked_zerg_challenger/ and itself imports from sc2). burnysc2 cannot be
+# installed in CI / web sandboxes because mpyq fails to build, so we fall
+# back to the stub maintained at wicked_zerg_challenger/tests/_sc2_stub.
+_WICKED = PROJECT_ROOT / "wicked_zerg_challenger"
+if str(_WICKED) not in sys.path:
+    sys.path.insert(0, str(_WICKED))
+_sc2_already_loaded = "sc2" in sys.modules
+if not _sc2_already_loaded:
+    try:
+        _have_sc2 = importlib.util.find_spec("sc2") is not None
+    except (ValueError, ModuleNotFoundError):
+        _have_sc2 = False
+    if not _have_sc2:
+        _stub_path = _WICKED / "tests" / "_sc2_stub" / "__init__.py"
+        if _stub_path.exists():
+            _spec = importlib.util.spec_from_file_location(
+                "wicked_sc2_stub", _stub_path
+            )
+            _mod = importlib.util.module_from_spec(_spec)
+            _spec.loader.exec_module(_mod)  # type: ignore[union-attr]
 
 
 # ═══════════════════════════════════════════════════════
