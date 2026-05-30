@@ -431,7 +431,7 @@ class HiveTechMaximizer:
         )
 
         # 현재 유닛 카운트
-        for unit_type in self.priority_units.keys():
+        for unit_type in self.priority_units:
             current = self.bot.units(unit_type).amount
             target = self.priority_units[unit_type]
             self.logger.info(f"  {unit_type.name}: {current}/{target}")

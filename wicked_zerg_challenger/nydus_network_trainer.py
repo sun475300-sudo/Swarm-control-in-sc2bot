@@ -317,7 +317,7 @@ class NydusNetworkTrainer:
 
         # 파괴된 Worm 제거
         destroyed_worms = []
-        for worm_tag in self.active_worms.keys():
+        for worm_tag in self.active_worms:
             exists = any(w.tag == worm_tag for w in worms)
             if not exists:
                 destroyed_worms.append(worm_tag)

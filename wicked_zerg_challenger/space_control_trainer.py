@@ -297,7 +297,7 @@ class SpaceControlTrainer:
 
         # 파괴된 구조물 찾기
         destroyed = []
-        for tag in self.destructible_targets.keys():
+        for tag in self.destructible_targets:
             if tag not in current_tags:
                 destroyed.append(tag)
 
