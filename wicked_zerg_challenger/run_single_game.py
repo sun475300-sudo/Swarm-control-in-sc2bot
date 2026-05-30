@@ -1,4 +1,4 @@
-﻿# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
 """
 Run a single game for testing.
 ?⑥씪 寃뚯엫 ?뚯뒪?몄슜 ?ㅽ겕由쏀듃.
@@ -186,4 +186,3 @@ def main():
 
 if __name__ == "__main__":
     raise SystemExit(main())
-

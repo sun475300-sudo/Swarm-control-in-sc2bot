@@ -306,7 +306,9 @@ class PersonalityModule:
             error_text = str(e)
             # Game can end between scheduling and chat send.
             if "already ended" in error_text.lower():
-                self.logger.info(f"[PERSONALITY] Chat skipped after game end: {message}")
+                self.logger.info(
+                    f"[PERSONALITY] Chat skipped after game end: {message}"
+                )
             else:
                 self.logger.warning(f"[PERSONALITY] Failed to send message: {e}")
 

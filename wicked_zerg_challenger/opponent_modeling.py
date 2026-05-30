@@ -272,6 +272,10 @@ class OpponentModeling:
         # Opponent models
         self.opponent_models: Dict[str, OpponentModel] = {}
         self.current_opponent_id: Optional[str] = None
+        # ``current_opponent`` is the legacy alias used by ``on_game_start`` /
+        # ``on_game_end`` / ``get_predicted_strategy``. Kept in sync with
+        # ``current_opponent_id`` so both naming paths work.
+        self.current_opponent: Optional[str] = None
         self.current_game_history: Optional[GameHistory] = None
 
         # Current game tracking
@@ -304,6 +308,7 @@ class OpponentModeling:
             # In real games, opponent_id would be player name/ID
             # For now, use race as identifier
             self.current_opponent_id = f"opponent_{race_name}"
+            self.current_opponent = self.current_opponent_id
 
             # Load or create model
             if self.current_opponent_id not in self.opponent_models:
@@ -732,6 +737,7 @@ class OpponentModeling:
     def on_game_start(self, opponent_id: str, opponent_race=None):
         """게임 시작 시 호출 - 적 추적 시작"""
         self.current_opponent = opponent_id
+        self.current_opponent_id = opponent_id
         # * FIX: GameHistory dataclass에 맞는 필드로 초기화
         race_name = (
             opponent_race.name
@@ -762,16 +768,11 @@ class OpponentModeling:
                 f"[OPPONENT_MODELING] Known opponent: {opponent_id} ({self.opponent_models[opponent_id].games_played} games)"
             )
 
-    async def on_step(self, iteration: int):
-        """매 프레임 호출 - 신호 감지"""
-        if not self.current_opponent or not self.bot:
-            return
-
-        game_time = self.bot.time
-
-        # Only detect signals in early game (0-180s)
-        if game_time <= 180.0:
-            await self._detect_early_signals(game_time)
+    # NOTE: a duplicate ``on_step`` previously lived here and silently
+    # overrode the comprehensive ``on_step`` defined at the top of the class
+    # (line ~341). It also referenced ``self.current_opponent`` which never
+    # exists (the attribute is ``current_opponent_id``), so any call would
+    # have raised at runtime. Removed.
 
     def on_game_end(self, won: bool, lost: bool):
         """게임 종료 시 호출 - 데이터 저장"""
