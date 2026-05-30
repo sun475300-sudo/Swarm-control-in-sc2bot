@@ -249,7 +249,7 @@ class ProductionController:
                 if self.bot.time < 300:
                     self.logger.info(f"{unit_type.name} requested by {requester}")
 
-            except Exception as e:
+            except Exception:
                 self.production_failures += 1
                 break
 
@@ -405,7 +405,6 @@ class ProductionController:
             return
 
         # * Phase 23: 서플라이 블록 완전 제거 - 선행 생산 *
-        game_time = getattr(self.bot, "time", 0)
         supply_used = supply_cap - supply_left
 
         # 동적 버퍼: 서플라이 사용량에 비례
@@ -443,7 +442,7 @@ class ProductionController:
             self.bot.do(larvae.first.train(UnitTypeId.OVERLORD))
             self.logger.info(f"Auto Overlord (supply: {supply_left}/{supply_cap})")
 
-        except Exception as e:
+        except Exception:
             self.production_failures += 1
 
     # ========== * Phase 13: 비율 기반 군대 자동 생산 * ==========
