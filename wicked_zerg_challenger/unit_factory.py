@@ -40,13 +40,16 @@ class UnitFactory:
             self.larva_pressure_threshold = 6
 
         self.min_mineral_reserve_for_gas = 150
-        self.gas_unit_ratio_target = 0.50  # * BALANCED: 0.60 -> 0.50 (??筌먦끉?????Β?띾쭡) *
-        self.larva_gas_ratio = 0.45  # * BALANCED: 0.6 -> 0.45 (雅?퍔瑗띰㎖?덈빝?????ル늅筌?55%) *
+        self.gas_unit_ratio_target = (
+            0.50  # * BALANCED: 0.60 -> 0.50 (??筌먦끉?????Β?띾쭡) *
+        )
+        self.larva_gas_ratio = (
+            0.45  # * BALANCED: 0.6 -> 0.45 (雅?퍔瑗띰㎖?덈빝?????ル늅筌?55%) *
+        )
         self.max_larva_spend_per_step = 5
 
         # * COMBAT REINFORCEMENT SYSTEM *
-        # ??ш낄援??濚??怨뚮옖筌???野껊챶爾?????ш낄援η뵳???筌?痢??
-        self._combat_mode = False
+        # 전투 진입 시 유닛 생산 우선순위를 상승시키는 플래그
         self._combat_mode = False
         self._last_combat_check = 0
         self._combat_check_interval = 22  # ~1?縕?袁?맪??癲ル슪???띿물?
@@ -165,9 +168,6 @@ class UnitFactory:
         self._last_combat_check = iteration
         in_combat = False
 
-        # ??ш낄援????좊즴?? ?釉뚰???쨨??
-        in_combat = False
-
         # 1. Strategy Manager??emergency_active 癲ル슪???띿물?
         strategy = getattr(self.bot, "strategy_manager", None)
         if strategy and getattr(strategy, "emergency_active", False):
@@ -184,7 +184,9 @@ class UnitFactory:
                 nearby_enemies = [
                     e for e in enemy_units if e.distance_to(th.position) < 35
                 ]
-                if len(nearby_enemies) >= 3:  # 3?????⑤?彛?????ㅼ굣???????뗫쐩??                    in_combat = True
+                if (
+                    len(nearby_enemies) >= 3
+                ):  # 3?????⑤?彛?????ㅼ굣???????뗫쐩??                    in_combat = True
                     in_combat = True
                     break
 
@@ -216,8 +218,6 @@ class UnitFactory:
 
         # 1. ???????癲ル슪???띿물?(1??癲ル슣???????1?類?ｄ펺????醫딅뱠 ??????嶺뚮ㅎ?닻??
         # ?? ???? ???⑤챸諭??癲꾧퀗????빝?濚욌꼬?댄꺍??ル쵐異?pending) ?嶺뚮ㅎ?닻???????????
-        pending_hatch = self.bot.already_pending(UnitTypeId.HATCHERY)
-
         # * FIX: ??ш낄援??濚욌꼬?댄꺍????嶺뚮Ĳ???????れ삀????壤? ???怨룹쓱 (??獄쎼뀙?????Β?띾쭡) *
         strategy = getattr(self.bot, "strategy_manager", None)
         under_attack = self._has_serious_base_threat()
@@ -376,7 +376,9 @@ class UnitFactory:
                             self.gas_unit_ratio_target = min(gas_ratio, 0.60)
                         if iteration % 100 == 0:
                             race = getattr(strategy, "detected_enemy_race", None)
-                            race_name = race.value if hasattr(race, "value") else str(race)
+                            race_name = (
+                                race.value if hasattr(race, "value") else str(race)
+                            )
                             logger.info(
                                 f"vs {race_name}: gas_ratio_target = {self.gas_unit_ratio_target:.2f}"
                             )
