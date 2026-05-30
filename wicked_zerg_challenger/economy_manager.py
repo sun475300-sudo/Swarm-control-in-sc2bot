@@ -1705,7 +1705,6 @@ class EconomyManager:
 
         return minerals > 800
 
-
     def _get_first_larva(self):
         larva = getattr(self.bot, "larva", None)
         if not larva:
@@ -3308,7 +3307,6 @@ class EconomyManager:
             if not lairs.exists:
                 self._reserved_minerals = 150
                 self._reserved_gas = 100
-
 
     async def _build_extractors(self) -> None:
         """가스 익스트랙터 건설 (가스 부족 시)"""

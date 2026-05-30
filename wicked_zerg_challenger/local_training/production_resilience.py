@@ -1459,7 +1459,6 @@ class ProductionResilience:
 
     # Defense methods moved to DefenseCoordinator
 
-
     async def _auto_build_tech_structures(self) -> None:
         """
         Automatically build tech structures based on game time.
