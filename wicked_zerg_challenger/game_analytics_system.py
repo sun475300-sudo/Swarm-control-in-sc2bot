@@ -293,7 +293,7 @@ class GameAnalytics:
             lines.extend(
                 [
                     f"  [WARNING] Win rate is low ({win_rate:.1f}%).",
-                    f"  - Improve counter composition and timing attacks.",
+                    "  - Improve counter composition and timing attacks.",
                 ]
             )
         elif win_rate < 60:

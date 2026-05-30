@@ -339,7 +339,16 @@ class OpponentModeling:
         )
 
     async def on_step(self, iteration: int):
-        """매 프레임 실행"""
+        """매 프레임 실행 - opponent 등록 필요, 갱신 간격 준수.
+
+        Note: An identical method was previously defined later in this class with
+        only the early-signal block, silently shadowing this comprehensive
+        version.  The duplicate was removed and the early-opponent guards from
+        it were merged here so we keep timing-attack and tech-progression
+        tracking that the shadowed version had been disabling.
+        """
+        if not self.current_opponent or not self.bot:
+            return
         if iteration - self.last_update < self.update_interval:
             return
 
@@ -761,17 +770,6 @@ class OpponentModeling:
             self.logger.info(
                 f"[OPPONENT_MODELING] Known opponent: {opponent_id} ({self.opponent_models[opponent_id].games_played} games)"
             )
-
-    async def on_step(self, iteration: int):
-        """매 프레임 호출 - 신호 감지"""
-        if not self.current_opponent or not self.bot:
-            return
-
-        game_time = self.bot.time
-
-        # Only detect signals in early game (0-180s)
-        if game_time <= 180.0:
-            await self._detect_early_signals(game_time)
 
     def on_game_end(self, won: bool, lost: bool):
         """게임 종료 시 호출 - 데이터 저장"""

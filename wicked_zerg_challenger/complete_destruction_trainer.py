@@ -157,7 +157,7 @@ class CompleteDestructionTrainer:
         current_enemy_tags = {s.tag for s in self.bot.enemy_structures}
 
         destroyed_tags = []
-        for tag in self.target_buildings.keys():
+        for tag in self.target_buildings:
             if tag not in current_enemy_tags:
                 destroyed_tags.append(tag)
 

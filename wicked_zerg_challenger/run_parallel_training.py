@@ -222,7 +222,7 @@ def main():
     logger.info(f"  Difficulty Ladder: {[d.name for d in DIFFICULTY_LADDER]}")
     logger.info(f"  Game Time Limit: {GAME_TIME_LIMIT}s")
     logger.info(f"  GPU: {GPU_NAME}")
-    logger.info(f"  Mode: Sequential Fast (realtime=False)")
+    logger.info("  Mode: Sequential Fast (realtime=False)")
     logger.info(f"{'='*70}\n")
 
     results = []
@@ -279,7 +279,7 @@ def main():
     )
 
     # Per-race stats
-    logger.info(f"\n  --- By Race ---")
+    logger.info("\n  --- By Race ---")
     for race in RACE_POOL:
         rr = [r for r in results if r.get("race") == race.name]
         rw = sum(1 for r in rr if r.get("won"))

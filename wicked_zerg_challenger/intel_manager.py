@@ -1011,7 +1011,7 @@ class IntelManager:
 
         # Factor 1: Tech building count (0 ~ 0.4)
         tech_building_count = sum(
-            1 for name in structure_counts.keys() if name in self.enemy_tech_buildings
+            1 for name in structure_counts if name in self.enemy_tech_buildings
         )
         confidence += min(tech_building_count * 0.15, 0.4)
 

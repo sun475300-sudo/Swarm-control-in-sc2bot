@@ -101,7 +101,7 @@ class StrictUpgradePriority:
                 self._release_gas_reservation()
 
         # 다른 업그레이드들도 확인
-        for upgrade_id in self.HIGH_PRIORITY_UPGRADES.keys():
+        for upgrade_id in self.HIGH_PRIORITY_UPGRADES:
             if upgrade_id in self.bot.state.upgrades:
                 if upgrade_id not in self.completed_upgrades:
                     self.completed_upgrades.add(upgrade_id)

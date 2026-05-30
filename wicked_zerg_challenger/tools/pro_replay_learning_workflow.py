@@ -228,7 +228,7 @@ def main():
         logger.info(f"{'='*70}")
         
         if iteration < max_iterations:
-            logger.info(f"\n[INFO] Waiting 10 seconds before next iteration...")
+            logger.info("\n[INFO] Waiting 10 seconds before next iteration...")
             time.sleep(10)
     
     # ???? ???

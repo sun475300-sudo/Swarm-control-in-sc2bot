@@ -138,7 +138,7 @@ class DataCacheManager:
             pattern: 키 패턴 (예: "enemy_*")
         """
         keys_to_delete = [
-            key for key in self.cache.keys() if pattern.replace("*", "") in key
+            key for key in self.cache if pattern.replace("*", "") in key
         ]
 
         for key in keys_to_delete:
