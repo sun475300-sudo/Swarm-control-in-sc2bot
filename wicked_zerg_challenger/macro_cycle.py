@@ -302,9 +302,13 @@ class MacroCycleManager:
 
             # 기지당 최적 라바 수: 3 (인젝트 1회당 3라바)
             optimal_larva = base_count * 3
-            max_larva = base_count * 19  # 기지당 최대 19라바
+            max_larva = base_count * 19  # 기지당 최대 19라바 (Hatchery 캡)
 
-            if current_larva > optimal_larva * 2:
+            # 캡 근접 시는 명백한 라바 낭비 — 인젝트가 막힌 신호로 본다
+            if current_larva >= max_larva:
+                self.larva_wasted += current_larva
+                self.larva_efficiency = 0.0
+            elif current_larva > optimal_larva * 2:
                 # 라바가 너무 많이 쌓이면 효율 감소
                 self.larva_wasted += current_larva - optimal_larva
                 self.larva_efficiency = optimal_larva / max(current_larva, 1)

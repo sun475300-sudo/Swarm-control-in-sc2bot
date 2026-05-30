@@ -2939,6 +2939,12 @@ class StrategyManager:
             self.game_phase = GamePhase.MID
             return f"3기지 + 서플라이 {supply_used} -> 중반 전환"
 
+        # 시간 안전망: 상황 기반 전환이 안 일어나도 12분이면 무조건 후반
+        if self.game_phase != GamePhase.LATE and game_time >= 720:
+            previous = self.game_phase
+            self.game_phase = GamePhase.LATE
+            return f"{int(game_time)}s 도달 (이전: {previous.name}) -> 후반 강제 전환"
+
         return None
 
     def get_phase_strategy_recommendation(self) -> Dict[str, Any]:
