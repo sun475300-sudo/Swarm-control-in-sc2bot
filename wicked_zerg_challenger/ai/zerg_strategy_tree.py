@@ -74,7 +74,8 @@ def has_air_threat(bot) -> bool:
 
 def should_expand(bot) -> bool:
     """확장 필요 여부"""
-    if not hasattr(bot, "townhalls"):
+    if not hasattr(bot, "townhalls") or not bot.townhalls:
+        # No bases at all — there's nothing to expand from anyway.
         return False
 
     base_count = bot.townhalls.amount

@@ -45,3 +45,21 @@ Continuous test-and-fix loop. Issues found via test suite and code inspection.
 - Full test suite: **659 passing, 0 failing**.
 - `pyflakes` over the entire bot tree: no real-bug warnings remaining (only cosmetic `f-string is missing placeholders` and star-import noise).
 - Smoke import of all submodules under `scouting/`, `managers/`, `micro/`, `local_training/`, `pipelines/`: clean.
+
+## Iteration 3 - unguarded `townhalls.first` access on wiped bases
+
+When all bases get destroyed, `bot.townhalls` is empty so `.first` is `None` and dereferencing it (`.position`, `.type_id`) raises `AttributeError`. Audited the ~115 callsites; most are already gated, but two were not:
+
+9. **ai/zerg_strategy_tree.should_expand** — fell through to `bot.already_pending(bot.townhalls.first.type_id)` even when no bases existed. Added an empty-townhalls early-return.
+
+10. **creep_expansion_system._calculate_creep_targets** (line 109) — `main_base = self.bot.townhalls.first.position` was only gated by `hasattr(..., "expansion_locations_list")`, not by whether we actually had a base. Added the missing townhalls check.
+
+### New tests
+- `tests/test_zerg_strategy_tree.py` — 6 regression tests for `should_expand`, including the no-bases case that would previously have crashed.
+
+### Results
+- Full test suite: **665 passing, 0 failing**.
+
+## CI observations (PR #203)
+- "Lint & Type Check (3.12)" fails on `black --check .` against ~72 pre-existing non-conformant files across the monorepo. Verified the files I modified were already `would be reformatted` on `origin/main` — not a regression from this PR. The 3.10/3.11 matrix entries were cancelled by fail-fast, not actual failures.
+- "SC2 봇 검증 & 테스트", "Python 린트 & 테스트", "no-empty-logger-calls", CodeQL (python/js/rust/actions) all green.

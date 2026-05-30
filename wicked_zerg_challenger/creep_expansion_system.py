@@ -105,7 +105,7 @@ class CreepExpansionSystem:
                         self.target_creep_positions.append(pos)
 
         # 2. 확장 위치로 가는 경로
-        if hasattr(self.bot, "expansion_locations_list"):
+        if hasattr(self.bot, "expansion_locations_list") and self.bot.townhalls:
             main_base = self.bot.townhalls.first.position
             for exp_loc in list(self.bot.expansion_locations_list)[:5]:
                 # 경로상 점막 위치 계산
