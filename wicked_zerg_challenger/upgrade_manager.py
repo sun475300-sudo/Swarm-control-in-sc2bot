@@ -405,6 +405,14 @@ class EvolutionUpgradeManager:
             priorities.append("air_attack")
             priorities.append("air_armor")
 
+        # *** Phase 18: 종족별 가중치를 적용해 lane 순서를 미세 조정.
+        # modifier 가 큰 lane 일수록 앞쪽으로 추가 가중치를 부여한다.
+        # 같은 lane 의 중복은 후속 중복 제거 로직이 정리해주므로 안전하다.
+        if race_modifiers:
+            for lane, weight in race_modifiers.items():
+                if weight >= 1.2 and lane in priorities:
+                    priorities.insert(0, lane)
+
         # === 업그레이드 순서 생성 (중복 제거) ===
         upgrade_order: List[object] = []
         seen_upgrades = set()

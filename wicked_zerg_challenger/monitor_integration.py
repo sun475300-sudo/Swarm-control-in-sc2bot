@@ -105,7 +105,7 @@ class IntegrationMonitor:
 
         # Summary
         overall_win_rate = (total_wins / total_games * 100) if total_games > 0 else 0
-        logger.info(f"[GRAPH] OVERALL STATISTICS:")
+        logger.info("[GRAPH] OVERALL STATISTICS:")
         logger.info(f"   Total Games: {total_games}")
         logger.info(f"   Total Wins: {total_wins}")
         logger.info(f"   Overall Win Rate: {overall_win_rate:.1f}%")
@@ -148,7 +148,7 @@ class IntegrationMonitor:
             # Parse latest status
             latest_log = micro_v3_logs[-1] if micro_v3_logs else None
             if latest_log:
-                logger.info(f"  [GAME] Latest Status:")
+                logger.info("  [GAME] Latest Status:")
                 logger.info(f"     {latest_log.strip()}")
 
             # Count ability usage

@@ -183,7 +183,10 @@ class CombatManager:
                 self._last_victory_check = iteration
 
             # *** 6분 Roach Rush 타이밍 공격 체크 ***
-            if iteration % GameFrequencies.EVERY_SECOND == 0 and not self._roach_rush_sent:
+            if (
+                iteration % GameFrequencies.EVERY_SECOND == 0
+                and not self._roach_rush_sent
+            ):
                 await self._check_roach_rush_timing(iteration)
 
             # * 필수 기지 방어 체크 - 항상 최우선 *
@@ -298,7 +301,9 @@ class CombatManager:
             return iteration % 2 != 0
         return iteration % 5 != 0
 
-    def _distance_between(self, unit_or_pos_a, unit_or_pos_b, frame: int = None) -> float:
+    def _distance_between(
+        self, unit_or_pos_a, unit_or_pos_b, frame: int = None
+    ) -> float:
         current_frame = (
             frame if frame is not None else int(getattr(self.bot, "iteration", 0) or 0)
         )
@@ -655,9 +660,7 @@ class CombatManager:
         # === TASK 2.8: * EXPANSION DENIAL (확장 견제) * ===
         # 적의 새로운 확장을 감지하면 저글링 특공대 파견
         if (
-            not macro_lock
-            and hasattr(self.bot, "enemy_structures")
-            and 180 < game_time
+            not macro_lock and hasattr(self.bot, "enemy_structures") and 180 < game_time
         ):  # 3분 이후
             townhall_types = {
                 "NEXUS",
@@ -795,7 +798,7 @@ class CombatManager:
             if locked_units and iteration % 220 == 0:  # Log every 10 seconds
                 self.logger.info(
                     f"[CombatManager] {len(locked_units)} units locked in harassment missions "
-                    f"(excluded from combat reassignment)"
+                    "(excluded from combat reassignment)"
                 )
 
         # Assign units to tasks (exclude locked units)
@@ -1674,7 +1677,9 @@ class CombatManager:
             if hasattr(self.bot, "townhalls") and self.bot.townhalls.exists:
                 our_base = self.bot.townhalls.first.position
                 if hasattr(enemy_units, "center"):
-                    chokepoint = formation_manager.find_chokepoint(enemy_units, our_base)
+                    chokepoint = formation_manager.find_chokepoint(
+                        enemy_units, our_base
+                    )
                 else:
                     chokepoint = our_base.towards(enemy_center, 15.0)
 
@@ -2029,9 +2034,7 @@ class CombatManager:
             else:
                 # 단일 타겟 집중 공격 (기본)
                 attack_target = attack_targets[0]
-                handled = self._execute_roach_hydra_formation(
-                    army_units, attack_target
-                )
+                handled = self._execute_roach_hydra_formation(army_units, attack_target)
                 for unit in list(army_units):
                     if getattr(unit, "tag", None) in handled:
                         continue
@@ -2076,7 +2079,9 @@ class CombatManager:
                 if retreat and retreat_anchor is not None:
                     hydra_target = retreat_anchor
                 else:
-                    hydra_target = self._position_behind_target(target, hydra.position, 6.0)
+                    hydra_target = self._position_behind_target(
+                        target, hydra.position, 6.0
+                    )
                 self.bot.do(hydra.attack(hydra_target))
                 handled.add(hydra.tag)
             except (AttributeError, TypeError):
@@ -2084,7 +2089,9 @@ class CombatManager:
 
         return handled
 
-    def _execute_multi_prong_attack(self, army_units, attack_targets, iteration: int) -> bool:
+    def _execute_multi_prong_attack(
+        self, army_units, attack_targets, iteration: int
+    ) -> bool:
         """Split 60+ supply armies into 60/25/15 multiprong attack groups."""
         units = list(army_units or [])
         if not units or not attack_targets:
@@ -2812,36 +2819,6 @@ class CombatManager:
             if self._has_units(enemy_units):
                 await self._mutalisk_attack(mutalisks, enemy_units)
 
-    def _find_harass_target(self):
-        """Find best harassment target (enemy base with workers)."""
-        # Try enemy main base
-        if (
-            hasattr(self.bot, "enemy_start_locations")
-            and self.bot.enemy_start_locations
-        ):
-            return self.bot.enemy_start_locations[0]
-
-        # Try known enemy structures
-        enemy_structures = getattr(self.bot, "enemy_structures", [])
-        if enemy_structures:
-            # Find townhalls
-            townhall_names = [
-                "NEXUS",
-                "COMMANDCENTER",
-                "ORBITALCOMMAND",
-                "PLANETARYFORTRESS",
-                "HATCHERY",
-                "LAIR",
-                "HIVE",
-            ]
-            for struct in enemy_structures:
-                if getattr(struct.type_id, "name", "") in townhall_names:
-                    return struct.position
-            # Any structure as fallback
-            return enemy_structures[0].position
-
-        return None
-
     async def _execute_harass(self, mutalisks, enemy_units):
         """
         Execute harassment - attack workers, retreat from anti-air.
@@ -3546,8 +3523,17 @@ class CombatManager:
             if len(nearby_combat) >= 1:
                 return True
 
-            # 비전투 유닛만 있는 경우 (정찰 등) - 3기 이상이어야 위협
-            if len(nearby_enemies) >= 3:
+            # 정찰성 비전투 유닛만 있는 경우 - 3기 이상이어야 위협으로 본다
+            nearby_non_combat = [
+                e
+                for e in nearby_enemies
+                if getattr(e.type_id, "name", "").upper() in non_combat_names
+            ]
+            if len(nearby_non_combat) >= 3:
+                return True
+
+            # 분류 외 유닛 (러커/뮤탈 변종 등)이 섞여있으면 보수적으로 위협 판단
+            if len(nearby_enemies) - len(nearby_non_combat) >= 1:
                 return True
 
         return False
@@ -3644,7 +3630,8 @@ class CombatManager:
             except (AttributeError, TypeError, ValueError):
                 pass
         return sorted(
-            self._iter_units(units), key=lambda unit: self._safe_distance(unit, position)
+            self._iter_units(units),
+            key=lambda unit: self._safe_distance(unit, position),
         )[:count]
 
     def _get_queens_near(self, position, distance):
@@ -4189,9 +4176,7 @@ class CombatManager:
                     continue
 
                 local_workers = self._closer_than(self.bot.workers, 15, base_position)
-                worker_count = min(
-                    threat_count * 3, self._units_amount(local_workers)
-                )
+                worker_count = min(threat_count * 3, self._units_amount(local_workers))
                 defenders = self._closest_n_units(
                     local_workers, getattr(target, "position", target), worker_count
                 )
@@ -4268,7 +4253,9 @@ class CombatManager:
             return
 
         alive_harassers = [
-            unit for unit in self._iter_units(self.bot.units) if unit.tag in self.harass_units
+            unit
+            for unit in self._iter_units(self.bot.units)
+            if unit.tag in self.harass_units
         ]
         alive_tags = {unit.tag for unit in alive_harassers}
         self.harass_units.intersection_update(alive_tags)
@@ -4286,7 +4273,10 @@ class CombatManager:
 
         current_worker_count = self._units_amount(enemy_workers)
         previous_worker_count = getattr(self, "_harass_last_enemy_workers", None)
-        if previous_worker_count is not None and current_worker_count < previous_worker_count:
+        if (
+            previous_worker_count is not None
+            and current_worker_count < previous_worker_count
+        ):
             kills = previous_worker_count - current_worker_count
             self.harass_kill_count += kills
             self._harass_worker_kills = getattr(self, "_harass_worker_kills", 0) + kills
@@ -4510,7 +4500,7 @@ class CombatManager:
             current_structure_count > 10 or our_army_supply < 20
         ):
             self._victory_push_active = False
-            self.logger.info(f"[VICTORY PUSH] Deactivated - regroup needed")
+            self.logger.info("[VICTORY PUSH] Deactivated - regroup needed")
 
         # 승리 푸시 모드일 때 공격 강도 증가
         if self._victory_push_active:
@@ -5065,4 +5055,6 @@ class CombatManager:
             pass
 
         return None
+
+
 # Improved micro management for VeryHard difficulty

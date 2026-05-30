@@ -168,13 +168,15 @@ class OpponentModel:
                 total_signal_count = sum(
                     self.early_signal_correlations[signal].values()
                 )
+                if total_signal_count <= 0:
+                    continue
                 for strategy, count in self.early_signal_correlations[signal].items():
                     # Normalized score
                     strategy_scores[strategy] += count / total_signal_count
 
         if not strategy_scores:
             # Fallback to most frequent strategy
-            if self.strategy_frequency:
+            if self.strategy_frequency and self.games_played > 0:
                 most_common = max(self.strategy_frequency.items(), key=lambda x: x[1])
                 confidence = most_common[1] / self.games_played
                 return (most_common[0], confidence)
@@ -761,17 +763,6 @@ class OpponentModeling:
             self.logger.info(
                 f"[OPPONENT_MODELING] Known opponent: {opponent_id} ({self.opponent_models[opponent_id].games_played} games)"
             )
-
-    async def on_step(self, iteration: int):
-        """매 프레임 호출 - 신호 감지"""
-        if not self.current_opponent or not self.bot:
-            return
-
-        game_time = self.bot.time
-
-        # Only detect signals in early game (0-180s)
-        if game_time <= 180.0:
-            await self._detect_early_signals(game_time)
 
     def on_game_end(self, won: bool, lost: bool):
         """게임 종료 시 호출 - 데이터 저장"""

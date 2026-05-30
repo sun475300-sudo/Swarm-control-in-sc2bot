@@ -186,7 +186,7 @@ class MapAwarenessManager:
             self._initialized = True
 
             logger.info(
-                f"맵 분석 완료: "
+                "맵 분석 완료: "
                 f"chokepoints={len(self.chokepoints)}, "
                 f"bases={len(self.base_locations)}, "
                 f"ramps={len(self.ramps)}"

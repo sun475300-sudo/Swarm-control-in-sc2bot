@@ -180,7 +180,7 @@ def main():
     )
 
     logger.info(f"\n{'='*60}")
-    logger.info(f"  SC2 Bot Training Pipeline")
+    logger.info("  SC2 Bot Training Pipeline")
     logger.info(f"  Cycles: {args.cycles}")
     logger.info(f"  Learning Rate: {args.learning_rate}")
     logger.info(f"  Buffer: {pipeline.buffer_dir}")
@@ -199,7 +199,7 @@ def main():
 
     # 최종 요약
     logger.info(f"\n{'='*60}")
-    logger.info(f"  TRAINING COMPLETE")
+    logger.info("  TRAINING COMPLETE")
     logger.info(f"{'='*60}")
     logger.info(f"  Cycles completed: {len(results)}/{args.cycles}")
 

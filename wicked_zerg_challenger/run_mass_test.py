@@ -250,7 +250,7 @@ def main(argv=None):
     # Final summary
     total_time = time.time() - start_time
     logger.info(f"\n{'='*70}")
-    logger.info(f"  MASS TEST COMPLETE")
+    logger.info("  MASS TEST COMPLETE")
     logger.info(f"{'='*70}")
     logger.info(f"  Total Games: {total}")
     logger.error(f"  Results: {wins}W / {losses}L / {errors}E")

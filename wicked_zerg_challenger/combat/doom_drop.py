@@ -532,7 +532,7 @@ class DoomDropManager:
                         self.bot.do(overlord(AbilityId.UNLOADALLAT, overlord.position))
                         self.logger.warning(
                             f"[{int(self.bot.time)}s] [DOOM_DROP] "
-                            f"오버로드 위험! 긴급 투하"
+                            "오버로드 위험! 긴급 투하"
                         )
                     except Exception:
                         pass

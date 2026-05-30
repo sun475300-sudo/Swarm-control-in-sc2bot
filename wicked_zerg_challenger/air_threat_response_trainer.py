@@ -165,7 +165,7 @@ class AirThreatResponseTrainer:
             if self.current_strategy != "IGNORE_AIR":
                 self.current_strategy = "IGNORE_AIR"
                 self.logger.info(
-                    f"[STRATEGY] IGNORE_AIR - "
+                    "[STRATEGY] IGNORE_AIR - "
                     f"Ground: {ground_count}, Enemy Air: Low threat"
                 )
 
@@ -174,7 +174,7 @@ class AirThreatResponseTrainer:
             if self.current_strategy != "COUNTER_AIR":
                 self.current_strategy = "COUNTER_AIR"
                 self.logger.info(
-                    f"[STRATEGY] COUNTER_AIR - "
+                    "[STRATEGY] COUNTER_AIR - "
                     f"Enemy Air: {threat_level}, Anti-air: {anti_air_count}"
                 )
 

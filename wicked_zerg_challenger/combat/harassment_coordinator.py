@@ -702,6 +702,11 @@ class HarassmentCoordinator:
                 self.bot.do(unit.move(self.bot.start_location))
                 continue
 
+            # 너무 멀면 우선 접근만 (전투 사거리 밖에서는 공격 명령이 낭비)
+            if distance > 18:
+                self.bot.do(unit.move(target))
+                continue
+
             buildings = self._find_buildings_near(target)
             if buildings:
                 self.bot.do(unit.attack(buildings[0]))
@@ -1594,10 +1599,7 @@ class HarassmentCoordinator:
         elif current_enemy_workers > self.last_worker_kill_count:
             # Enemy rebuilt workers. Log raid summary if a raid just ended
             # and reset the per-raid counter so we don't double-count.
-            if (
-                not harassment_active
-                and self._current_raid_workers_killed > 0
-            ):
+            if not harassment_active and self._current_raid_workers_killed > 0:
                 self.logger.info(
                     f"[{int(self.bot.time)}s] Raid #{self.raids_executed} summary:"
                     f" {self._current_raid_workers_killed} workers killed."

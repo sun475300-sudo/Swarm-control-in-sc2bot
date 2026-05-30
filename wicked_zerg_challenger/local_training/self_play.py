@@ -353,7 +353,7 @@ class SelfPlayTrainer:
                         self.opponent_pool.append(snapshot)
 
                 logger.info(
-                    f"메타데이터 로드 완료: "
+                    "메타데이터 로드 완료: "
                     f"pool_size={len(self.opponent_pool)}, elo={self.current_elo:.0f}"
                 )
         except Exception as e:

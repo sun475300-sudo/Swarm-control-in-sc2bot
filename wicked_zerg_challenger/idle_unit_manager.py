@@ -242,9 +242,12 @@ class IdleUnitManager:
                 nearby_enemies = self.bot.enemy_units.closer_than(10, unit)
 
                 if nearby_enemies.exists:
-                    # 가장 가까운 아군 기지로 후퇴
+                    # 가까운 기지가 있으면 거기로, 모든 기지가 멀면(>30) 본진으로
                     closest_base = self.bot.townhalls.closest_to(unit)
-                    self.bot.do(unit.move(closest_base.position))
+                    retreat_pos = closest_base.position
+                    if unit.distance_to(closest_base.position) > 30:
+                        retreat_pos = main_base
+                    self.bot.do(unit.move(retreat_pos))
 
                     # 퀸 트랜스퓨전 요청
                     if hasattr(self.bot, "queen_manager"):

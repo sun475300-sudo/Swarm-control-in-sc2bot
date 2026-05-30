@@ -182,9 +182,11 @@ class RewardShaper:
         else:
             rewards[RewardComponent.COMBAT.value] = 0.5 if army > 20 else 0.0
 
-        # ECONOMY: 일꾼 포화도 (66 최적) + 자원 밸런스
+        # ECONOMY: 일꾼 포화도 (66 최적) + 자원 밸런스 (가스 뱅킹도 감점)
         worker_score = 1.0 - abs(workers - 66) / 66.0
         bank_penalty = -0.1 if minerals > 1000 else 0.0
+        if gas > 600:
+            bank_penalty -= 0.05
         rewards[RewardComponent.ECONOMY.value] = max(worker_score + bank_penalty, -1.0)
 
         # TECH: 기술 레벨 진행도

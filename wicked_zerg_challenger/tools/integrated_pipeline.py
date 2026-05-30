@@ -205,7 +205,7 @@ def main():
     logger.info(f"   [TARGET] Total validated replays ready for training: {len(current_replays)}")
 
     if len(current_replays) == 0:
-        logger.error(f"   [ERROR] No valid replays found!")
+        logger.error("   [ERROR] No valid replays found!")
         if not args.validate_only:
             sys.exit(1)
 

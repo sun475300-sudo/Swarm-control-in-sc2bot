@@ -523,7 +523,7 @@ class DefeatDetection:
             game_time = getattr(self.bot, "time", 0)
             if self.critical_moments > surrender_ticks:
                 should_surrender = True
-                self.defeat_reason = "장기간 패배 직전 상태 (항복)"
+                self.defeat_reason = f"장기간 패배 직전 상태 (항복, {int(game_time)}s)"
 
         return {
             "defeat_level": self.defeat_level,

@@ -231,13 +231,23 @@ class PersonalityModule:
         win_rate = stats["win_rate"] * 100
         style = stats["dominant_style"]
 
-        # Format message based on win rate
+        # Format message based on win rate; include dominant style hint
+        style_hint = f" [{style}]" if style and style != "unknown" else ""
         if win_rate > 70:
-            return f"또 오셨나요? 이번엔 좀 버티시길. (승률: {win_rate:.1f}%) gl hf."
+            return (
+                f"또 오셨나요? 이번엔 좀 버티시길. "
+                f"(승률: {win_rate:.1f}%{style_hint}) gl hf."
+            )
         elif win_rate < 30:
-            return f"지난번의 패배를 분석했습니다. 이번엔 다를 겁니다. (승률: {win_rate:.1f}%) gl hf."
+            return (
+                f"지난번의 패배를 분석했습니다. 이번엔 다를 겁니다. "
+                f"(승률: {win_rate:.1f}%{style_hint}) gl hf."
+            )
         else:
-            return f"{games+1}번째 판이네요. 누가 더 발전했는지 봅시다. (승률: {win_rate:.1f}%) gl hf."
+            return (
+                f"{games+1}번째 판이네요. 누가 더 발전했는지 봅시다. "
+                f"(승률: {win_rate:.1f}%{style_hint}) gl hf."
+            )
 
     async def _check_game_situation(self, game_time: float):
         """게임 상황 체크 및 적절한 메시지"""
@@ -306,7 +316,9 @@ class PersonalityModule:
             error_text = str(e)
             # Game can end between scheduling and chat send.
             if "already ended" in error_text.lower():
-                self.logger.info(f"[PERSONALITY] Chat skipped after game end: {message}")
+                self.logger.info(
+                    f"[PERSONALITY] Chat skipped after game end: {message}"
+                )
             else:
                 self.logger.warning(f"[PERSONALITY] Failed to send message: {e}")
 
