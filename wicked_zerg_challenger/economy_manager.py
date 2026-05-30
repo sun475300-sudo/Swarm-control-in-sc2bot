@@ -2484,10 +2484,13 @@ class EconomyManager:
         if not available_bases:
             return None
 
-        # Score: Distance from enemy start + Distance from our start (to be "hidden" usually means far from action)
-        # But for Rogue style, maybe just far from enemy?
-        # Let's prioritize: Furthest from Enemy Start
-        best_loc = max(available_bases, key=lambda p: p.distance_to(enemy_start))
+        # Hidden Base 점수: 적 본진에서 멀고, 우리 본진에서도 어느 정도 떨어진 위치.
+        # 너무 멀면 일꾼 이동 시간이 길어지니 distance_to(start_loc) 의 영향을 절반만
+        # 반영한다.
+        def _hidden_score(p):
+            return p.distance_to(enemy_start) + 0.5 * p.distance_to(start_loc)
+
+        best_loc = max(available_bases, key=_hidden_score)
 
         return best_loc
 
@@ -3651,9 +3654,16 @@ class EconomyManager:
             self._target_drone_count = min(ideal_workers, 75)
 
             if int(game_time) % 20 == 0 and self.bot.iteration % 22 == 0:
-                self.logger.info(
-                    f"[ECONOMY RECOVERY] [{int(game_time)}s] [*] Worker deficit: {worker_deficit} [*]"
-                )
+                # 미네랄이 충분히 쌓여 있는데 일꾼이 부족하면 별도 경고
+                if minerals > 400:
+                    self.logger.warning(
+                        f"[ECONOMY RECOVERY] [{int(game_time)}s] "
+                        f"드론 부족 {worker_deficit} + 미네랄 {minerals} 잉여 -> 드론 즉시 생산"
+                    )
+                else:
+                    self.logger.info(
+                        f"[ECONOMY RECOVERY] [{int(game_time)}s] [*] Worker deficit: {worker_deficit} [*]"
+                    )
                 self.logger.info(
                     f"[ECONOMY RECOVERY]   Current: {worker_count}, Ideal: {ideal_workers}"
                 )
