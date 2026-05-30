@@ -3,7 +3,7 @@
 > 생성: 2026-05-30 · 브랜치: `claude/cool-edison-vkR4d`
 > 출처: 반복 테스트 + 코드 점검 결과
 > 진행 방식: Round 단위로 항목 처리 → commit → push → 다음 라운드
-> 진행 현황: R1~R7 완료 (커밋 63ae827, 3a64102, 8271dbf, 90ef660, a4c3938, e74eb59)
+> 진행 현황: R1~R10 완료 (커밋 63ae827, 3a64102, 8271dbf, 90ef660, a4c3938, e74eb59, 817677e, 2ceabc7, 7f375f8)
 
 ## Round 1 — 테스트 인프라 복구 (BLOCKER)
 
@@ -86,23 +86,44 @@
 
 ---
 
-## 다음 라운드 후보 (R8+)
-
-### R8 — IMPROVEMENT_RECOMMENDATIONS.md 정렬 + TODO/FIXME 티켓화
-- `wicked_zerg_challenger/local_training/advanced_building_manager.py:778` TODO
-- `wicked_zerg_challenger/tools/check_missing_logic.py` 6 TODO
-
-### R9 — 47건 unused-exception-binding 정리
+### R9 — 47건 unused-exception-binding 정리 (✅ 완료, 2ceabc7)
 - `except X as e:` 인데 e가 본문에서 안 쓰이는 47곳 → `except X:` 로 단순화
-- 가장 많은 파일: bot_step_integration.py (11+)
+- 9개 파일 (bot_step_integration 11곳, combat_manager 27곳 등)
 
-### R10 — F841 죽은 변수 24건 점검
-- 일부는 미완성 로직의 흔적 (e.g. upgrade_manager.py:361 `race_modifiers`)
-- 각 항목마다 "구현 누락" vs "단순 dead code" 분류 후 처리
+### R10 — F841 죽은 변수 12건 (보수적 삭제) (✅ 완료, 7f375f8)
+- `game_time = getattr(self.bot, "time", 0)` 등 단순 dead local assignment 12건 제거
+- **의도된 미완성 로직 표시**는 의도적으로 유지: `PRIORITY_EXPANSION` (build_order_system.py:1089 — TechCoordinator.request_structure() 와 연결되지 않은 dead constant), `non_combat_names` (combat_manager.py:3483 — base 위협 분류기에서 사용되지 않는 set), `strategy_mode` (unit_factory.py:337/348 — Blackboard/strategy_manager fallback에서 사용 안 됨)
 
-### R11 — Mojibake 주석 일괄 복원/단순화
-- 한국어 주석이 cp949/utf-8 사이에서 깨진 흔적 다수
-- 이 자체로 봇이 작동하지만 가독성/유지보수 저해
+---
 
-### R12 — 봇 핵심 모듈 README 보강 (combat / economy / opponent_modeling)
+## 다음 라운드 후보 (R11+, 미진행)
+
+### R11 — 의도된 미완성 로직 결합 (별 PR로 분리 권장)
+- **build_order_system.py:1089 `PRIORITY_EXPANSION`** — `tech_coordinator.request_structure(UnitTypeId.HATCHERY, location, PRIORITY_EXPANSION, "BuildOrderSystem")` 로 호출 경로 통합. 현재는 `tech_coordinator.is_planned()` 만 게이트로 쓰고 실제 빌드는 `self.bot.do(worker.build(...))` 직접 호출이라 priority가 무의미.
+- **combat_manager.py:3483 `non_combat_names`** — `nearby_enemies >= 3` 체크를 `nearby_non_combat >= 3` 로 좁혀서 false-positive 위협 감지 줄이기.
+- **upgrade_manager.py:361 `race_modifiers`** — `race_priority_modifiers` 의 값을 priorities 정렬에 적용. 종족별 가중치(예: ZvT armor 1.3) 가 현재 무시됨.
+- **error_handler.py:126/149 `last_exception`** — retry exhaustion 시 마지막 예외를 raise 하거나 retval 에 첨부하여 silent failure 방지.
+
+### R12 — Mojibake 주석 일괄 복원/단순화
+- 한국어 주석이 cp949/utf-8 변환 사이에서 깨진 흔적 다수
+- 이미 R3 에서 코드 한 줄을 삼킨 2곳 (unit_factory.py:91, 439) 은 복원
+- 나머지 가독성 회복은 별 PR
+
+### R13 — `wicked_zerg_challenger/tests/` 산하 23 테스트 sc2 가용 시 실행 점검
+- R4 의 conftest 훅 덕분에 sc2 미가용 시 자동 skip
+- CI (burnysc2 설치됨) 환경에서 어떤 테스트가 실제로 실패하는지 분리 분석 필요
+
+### R14 — `combat/`, `economy/`, `scouting/`, `local_training/` 하위 모듈 README 보강
+
+---
+
+## 기존 main 의 알려진 회귀 (별 PR 필요, 본 PR 스코프 외)
+
+이 PR 의 lint/test CI fail 들은 거의 모두 **main 에서 이미 fail 인 항목들**임 (MASTER_TODO_SC2.md 참조). 본 PR 은 lint scope 를 좁혀 의미 있는 버그를 잡은 것이며, 통째 black/isort fix 는 다른 14 개의 열린 PR 과 충돌 폭발이 예상되어 의도적으로 미진행:
+
+- `black --check .` whole-repo — 48+ 파일 미포맷
+- `isort --check-only --diff .` whole-repo — import 순서 미정렬
+- `mypy --strict .` — 거대 type 작업 필요
+- `bandit -ll` — pre-existing security warning
+- `pytest wicked_zerg_challenger/tests/` — 23 collection error 의 일부 (sc2 가용 환경에서도 실패 가능)
 
