@@ -1720,14 +1720,15 @@ class EconomyManager:
 
         return minerals > 800
 
-    async def _prevent_resource_banking(self) -> None:
+    async def _legacy_resource_banking_defense(self) -> None:
         """
-        * Prevent resource banking by spending excess minerals *
+        * 자원 과잉 시 추가 Queen + Spore/Spine 건설 (Legacy 경로) *
 
-        Logic:
-        1. If Minerals > Config.Threshold and Larva < Config.Threshold:
-           - Build Extra Queens (Injects/Defense)
-           - Build Static Defense (Spines/Spores) - ONLY AFTER 3+ BASES
+        NOTE: 본 메서드는 같은 이름의 _prevent_resource_banking 이 아래쪽에서
+        다시 정의되어 호출 경로가 끊겨 있었기에 이름을 명시적 legacy 로
+        바꾼다. 정적 방어 건설은 DefenseCoordinator 가 담당하고 있어
+        현재는 호출자가 없다. 추후 재활용 시 _prevent_resource_banking 의
+        호출부에서 명시적으로 호출할 것.
         """
         if not hasattr(self.bot, "minerals"):
             return
@@ -3441,33 +3442,6 @@ class EconomyManager:
             if not lairs.exists:
                 self._reserved_minerals = 150
                 self._reserved_gas = 100
-
-    async def _reduce_gas_workers(self) -> None:
-        """가스 일꾼 감소 (과잉 가스 방지)"""
-        try:
-            if (
-                not hasattr(self.bot, "gas_buildings")
-                or not self.bot.gas_buildings.ready
-            ):
-                return
-
-            for extractor in self.bot.gas_buildings.ready:
-                if extractor.assigned_harvesters >= 3:
-                    # 가스에서 일꾼 1명 이동
-                    workers_on_gas = self.bot.workers.filter(
-                        lambda w: w.is_gathering and w.order_target == extractor.tag
-                    )
-                    if workers_on_gas:
-                        worker = workers_on_gas.first
-                        # 가까운 미네랄로 이동
-                        closest_mineral = self.bot.mineral_field.closest_to(worker)
-                        if closest_mineral:
-                            self.bot.do(worker.gather(closest_mineral))
-                            return  # 한 번에 하나만
-
-        except (AttributeError, TypeError) as e:
-            if self.bot.iteration % 50 == 0:
-                self.logger.warning(f"[ECONOMY_WARN] Gas worker reduction failed: {e}")
 
     async def _build_extractors(self) -> None:
         """가스 익스트랙터 건설 (가스 부족 시)"""
