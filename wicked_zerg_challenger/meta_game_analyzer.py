@@ -6,7 +6,7 @@ HIGH PRIORITY FEATURE
 from collections import defaultdict
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 
 @dataclass
@@ -95,9 +95,9 @@ class MetaGameAnalyzer:
         return (perf["wins"] / total) * 100
 
     def recommend_strategy(self, enemy_race: str, map_name: str) -> Dict[str, Any]:
-        """Recommend best strategy based on current meta"""
-        race_perf = self.race_performance.get(enemy_race, {"wins": 0})
-        map_perf = self.map_performance.get(map_name, {"wins": 0})
+        """Recommend best strategy based on current meta and learned data."""
+        race_perf = self.race_performance.get(enemy_race, {"wins": 0, "losses": 0})
+        map_perf = self.map_performance.get(map_name, {"wins": 0, "losses": 0})
 
         best_strategies = {
             ("terran", "small"): "RUSH",
@@ -111,10 +111,26 @@ class MetaGameAnalyzer:
         map_size = "small" if map_name in ["GroundZero", "Corridor"] else "large"
         recommended = best_strategies.get((enemy_race.lower(), map_size), "MACRO")
 
+        # Blend in observed win rates: shrink confidence when our matchup record
+        # on this race or map is unfavorable so callers can fall back if needed.
+        def _winrate(perf: Dict[str, int]) -> Optional[float]:
+            total = perf.get("wins", 0) + perf.get("losses", 0)
+            return perf["wins"] / total if total > 0 else None
+
+        race_wr = _winrate(race_perf)
+        map_wr = _winrate(map_perf)
+        sampled = [wr for wr in (race_wr, map_wr) if wr is not None]
+        confidence = 0.75
+        if sampled:
+            confidence = max(0.4, min(0.95, 0.5 + sum(sampled) / len(sampled) / 2))
+
         return {
             "recommended_strategy": recommended,
-            "confidence": 0.75,
-            "reasoning": f"Based on vs {enemy_race} on {map_name}",
+            "confidence": confidence,
+            "reasoning": (
+                f"Based on vs {enemy_race} on {map_name} "
+                f"(race_wr={race_wr}, map_wr={map_wr})"
+            ),
             "alternatives": ["RUSH", "MACRO", "TIMING"],
             "meta_analysis": self.get_current_meta_strategies()[:3],
         }
