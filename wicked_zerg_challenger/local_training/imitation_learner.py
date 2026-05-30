@@ -26,10 +26,20 @@ try:
     import torch.optim as optim
 
     TORCH_AVAILABLE = True
+    _NNModuleBase = nn.Module
 except ImportError:
     TORCH_AVAILABLE = False
     torch = None
     nn = None
+    optim = None
+
+    class _NNModuleBase:
+        """Stub base used when torch isn't installed so module import still succeeds."""
+
+        def __init__(self, *args, **kwargs):
+            raise ImportError(
+                "torch is required for ImitationNetwork; install torch to use it."
+            )
 
 
 class ReplayActionExtractor:
@@ -240,7 +250,7 @@ class ReplayActionExtractor:
             return False
 
 
-class ImitationNetwork(nn.Module):
+class ImitationNetwork(_NNModuleBase):
     """
     모방학습용 신경망
 

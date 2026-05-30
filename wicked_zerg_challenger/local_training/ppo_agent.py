@@ -28,10 +28,21 @@ try:
     from torch.distributions import Categorical
 
     TORCH_AVAILABLE = True
+    _NNModuleBase = nn.Module
 except ImportError:
     TORCH_AVAILABLE = False
     torch = None
     nn = None
+    optim = None
+    Categorical = None
+
+    class _NNModuleBase:
+        """Stub base used when torch isn't installed so module import still succeeds."""
+
+        def __init__(self, *args, **kwargs):
+            raise ImportError(
+                "torch is required for ActorCriticNetwork; install torch to use it."
+            )
 
 
 # ============================================================
@@ -58,7 +69,7 @@ ACTION_LABELS = [
 ]
 
 
-class ActorCriticNetwork(nn.Module):
+class ActorCriticNetwork(_NNModuleBase):
     """
     Actor-Critic 신경망 (PPO용)
 
