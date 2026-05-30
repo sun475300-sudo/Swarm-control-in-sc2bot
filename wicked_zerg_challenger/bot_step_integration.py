@@ -153,11 +153,26 @@ except ImportError:
 
 # *** PHASE 8/9 SYSTEMS ***
 
-# Enhanced Scouting System
-try:
-    from scouting.enhanced_scout_system import EnhancedScoutSystem
-except ImportError:
-    EnhancedScoutSystem = None
+# Enhanced Scouting System — deprecated, only loaded on demand if
+# AdvancedScoutingSystemV2 is not available. Importing it eagerly triggers
+# a DeprecationWarning even when we never use it.
+EnhancedScoutSystem = None
+
+
+def _load_enhanced_scout_system():
+    global EnhancedScoutSystem
+    if EnhancedScoutSystem is not None:
+        return EnhancedScoutSystem
+    try:
+        from scouting.enhanced_scout_system import (
+            EnhancedScoutSystem as _ESS,
+        )
+
+        EnhancedScoutSystem = _ESS
+    except ImportError:
+        EnhancedScoutSystem = None
+    return EnhancedScoutSystem
+
 
 # Harassment Coordinator
 try:
@@ -271,7 +286,9 @@ except ImportError:
 # Advanced Scout System V2
 try:
     # NOTE: class is AdvancedScoutingSystemV2 (with "ing"); alias kept for compat
-    from scouting.advanced_scout_system_v2 import AdvancedScoutingSystemV2 as AdvancedScoutSystemV2
+    from scouting.advanced_scout_system_v2 import (
+        AdvancedScoutingSystemV2 as AdvancedScoutSystemV2,
+    )
 except ImportError:
     AdvancedScoutSystemV2 = None
 
@@ -417,8 +434,10 @@ class BotStepIntegrator:
         # *** PHASE 8/9 SYSTEMS INITIALIZATION ***
 
         # Enhanced Scouting System
-        # * Skip if AdvancedScoutSystemV2 is available (it supersedes EnhancedScout)
-        if EnhancedScoutSystem and not AdvancedScoutSystemV2:
+        # * Skip (and don't even import) if AdvancedScoutSystemV2 is available
+        # — V2 supersedes EnhancedScout and the legacy module emits a
+        # DeprecationWarning on import.
+        if not AdvancedScoutSystemV2 and _load_enhanced_scout_system():
             self.bot.enhanced_scout = EnhancedScoutSystem(bot)
             self.logger.info("[INIT] EnhancedScoutSystem initialized (Phase 9)")
         else:
@@ -2108,7 +2127,9 @@ class BotStepIntegrator:
                     if iteration % 50 == 0:
                         self.logger.warning(f"[WARNING] Building Manager error: {e}")
                 finally:
-                    self._logic_tracker.end_logic("BuildingManager", start_time, success)
+                    self._logic_tracker.end_logic(
+                        "BuildingManager", start_time, success
+                    )
 
             if hasattr(self.bot, "advanced_building_manager"):
                 start_time = self._logic_tracker.start_logic("AdvancedBuilding")
