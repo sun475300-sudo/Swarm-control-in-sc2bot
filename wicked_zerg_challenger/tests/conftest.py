@@ -22,6 +22,8 @@ if not _have_sc2:
         _have_sc2 = importlib.util.find_spec("sc2") is not None
     except (ValueError, ModuleNotFoundError):
         _have_sc2 = False
+
+
 def _load_local_stub():
     # Load by absolute path so this works whether pytest is invoked from
     # the repo root (where ``tests`` is the root-level package) or from
