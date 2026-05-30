@@ -2038,6 +2038,10 @@ class EconomyManager:
             self.bot.townhalls.amount if hasattr(self.bot.townhalls, "amount") else 1
         )
 
+        # * 8베이스 초과 시 확장 시도 자체를 스킵 (대부분 맵 최대 그 정도) *
+        if base_count >= 8:
+            return
+
         # * 공통 쿨다운 체크 (모든 확장 시스템 공유) *
         time_since_last = game_time - self._last_expansion_attempt_time
         if time_since_last < self._expansion_cooldown:
