@@ -178,6 +178,7 @@ class GameDataLogger:
                     {
                         "time": round(game_time, 1),
                         "expansion_number": expansion_number,
+                        "current_bases": current_bases,
                         "supply": self.bot.supply_used,
                         "minerals": self.bot.minerals,
                         "vespene": self.bot.vespene,
