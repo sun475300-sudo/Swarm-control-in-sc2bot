@@ -69,14 +69,21 @@ async def _run_ladder_game(
         )
         logger.info(f"Game result: {result}")
 
+        # client.leave/quit may legitimately fail when SC2 has already torn
+        # down the connection (ConnectionAlreadyClosed). Anything else is a
+        # bug we want to see in the log, not silently swallow.
         try:
             await client.leave()
-        except (ConnectionAlreadyClosed, Exception):
+        except ConnectionAlreadyClosed:
             pass
+        except Exception:
+            logger.exception("client.leave() failed unexpectedly")
         try:
             await client.quit()
-        except (ConnectionAlreadyClosed, Exception):
+        except ConnectionAlreadyClosed:
             pass
+        except Exception:
+            logger.exception("client.quit() failed unexpectedly")
 
         return result
 
@@ -88,6 +95,15 @@ async def _run_ladder_game(
 
 
 def main():
+    # Configure logging up-front so anything constructed below (Bot, impl)
+    # respects the level. Previously basicConfig was inside the ladder branch
+    # only, meaning module-level loggers used the WARNING default during
+    # bot import / construction.
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
+    )
+
     parser = argparse.ArgumentParser(description="WickedZergBotPro - AI Arena Entry")
     parser.add_argument(
         "--LadderServer", action="store_true", help="Run in AI Arena ladder mode"
@@ -127,7 +143,6 @@ def main():
                 host = sys.argv[i + 1]
                 break
 
-        logging.basicConfig(level=logging.INFO)
         logger.info(
             f"Starting ladder game: host={host}, GamePort={args.GamePort}, StartPort={args.StartPort}"
         )

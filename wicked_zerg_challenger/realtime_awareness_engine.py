@@ -133,7 +133,9 @@ class RealtimeAwarenessEngine:
                 self._log_problems()
 
         except Exception:
-            pass
+            # 매 프레임 실행되는 hot path이므로 INFO 스팸을 피하려고
+            # debug 수준으로 stacktrace를 남긴다. 침묵하지 않는다.
+            logger.debug("RealtimeAwarenessEngine.tick failed", exc_info=True)
 
         return self.active_overrides
 
@@ -218,7 +220,7 @@ class RealtimeAwarenessEngine:
                     if s.enemy_near_base:
                         break
             except Exception:
-                pass
+                logger.debug("enemy-near-base distance check failed", exc_info=True)
 
         # Intel
         if hasattr(self.bot, "intel_manager"):
@@ -236,7 +238,7 @@ class RealtimeAwarenessEngine:
                 elif structures(UnitTypeId.LAIR).exists:
                     s.tech_level = "lair"
             except Exception:
-                pass
+                logger.debug("tech-level structure probe failed", exc_info=True)
 
     # =========================================================================
     # Step 2: 문제 감지 (14가지 패턴)
@@ -464,7 +466,7 @@ class RealtimeAwarenessEngine:
                     if roach_count + hydra_count + ravager_count >= 5:
                         has_counter = True
                 except Exception:
-                    pass
+                    logger.debug("counter-unit head-count failed", exc_info=True)
 
                 if not has_counter:
                     problems.append(
@@ -611,7 +613,7 @@ class RealtimeAwarenessEngine:
                         asyncio.ensure_future(result)
                     return
         except Exception:
-            pass
+            logger.debug("_force_produce_gas_units failed", exc_info=True)
 
     def _force_army_production(self) -> None:
         """군대 강제 대량 생산"""
@@ -647,7 +649,7 @@ class RealtimeAwarenessEngine:
 
                         asyncio.ensure_future(result)
         except Exception:
-            pass
+            logger.debug("_force_army_production failed", exc_info=True)
 
     def _force_overlord_production(self) -> None:
         """오버로드 강제 생산"""
@@ -661,7 +663,7 @@ class RealtimeAwarenessEngine:
 
                     asyncio.ensure_future(result)
         except Exception:
-            pass
+            logger.debug("_force_overlord_production failed", exc_info=True)
 
     def _flush_minerals(self) -> None:
         """미네랄 긴급 소비"""
@@ -682,7 +684,7 @@ class RealtimeAwarenessEngine:
 
                         asyncio.ensure_future(result)
         except Exception:
-            pass
+            logger.debug("_flush_minerals failed", exc_info=True)
 
     # =========================================================================
     # 유틸리티
