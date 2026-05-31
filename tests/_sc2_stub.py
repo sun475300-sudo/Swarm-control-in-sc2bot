@@ -17,17 +17,77 @@ import sys
 import types
 
 
+class _EnumMember:
+    """Behaves like a real ``Enum`` member: ``.name``, ``.value``, hashable.
+
+    Compares equal to other ``_EnumMember`` instances with the same name and
+    to plain strings carrying the same name — that mirrors how real sc2 enums
+    behave in most call sites without making ``isinstance(x, str)`` True
+    (which would break code branches that test for string upgrade ids).
+    """
+
+    __slots__ = ("_name",)
+
+    def __init__(self, name):
+        self._name = name
+
+    @property
+    def name(self):
+        return self._name
+
+    @property
+    def value(self):
+        return self._name
+
+    def __repr__(self):
+        return f"<{type(self).__name__}.{self._name}>"
+
+    def __str__(self):
+        return self._name
+
+    def __hash__(self):
+        return hash(("_EnumMember", self._name))
+
+    def __eq__(self, other):
+        if isinstance(other, _EnumMember):
+            return self._name == other._name
+        if isinstance(other, str):
+            return self._name == other
+        return NotImplemented
+
+    def __ne__(self, other):
+        eq = self.__eq__(other)
+        return eq if eq is NotImplemented else not eq
+
+
 class _AutoEnumMeta(type):
-    """Class-level attribute access returns the name itself.
+    """Class-level attribute access returns an ``_EnumMember`` cached per name.
 
     Lets test code reference `UnitTypeId.ANY_NAME` without enumerating every
-    unit. Equality is name-based so tests can compare against string fixtures.
+    unit. Equality is name-based so tests can compare against string fixtures,
+    and ``Cls[name]`` / ``Cls("name")`` lookups also work like real enums.
     """
 
     def __getattr__(cls, name):  # pragma: no cover - dynamic
         if name.startswith("_"):
             raise AttributeError(name)
-        return name
+        cache = cls.__dict__.get("_members_")
+        if cache is None:
+            cache = {}
+            type.__setattr__(cls, "_members_", cache)
+        if name not in cache:
+            cache[name] = _EnumMember(name)
+        return cache[name]
+
+    def __getitem__(cls, name):
+        return getattr(cls, name)
+
+    def __call__(cls, name):
+        return getattr(cls, name)
+
+    def __iter__(cls):
+        cache = cls.__dict__.get("_members_") or {}
+        return iter(cache.values())
 
 
 class _AutoEnum(metaclass=_AutoEnumMeta):
@@ -47,19 +107,60 @@ class AbilityId(_AutoEnum):
 
 
 class Race(_AutoEnum):
-    Zerg = "Zerg"
-    Terran = "Terran"
-    Protoss = "Protoss"
-    Random = "Random"
+    pass
 
 
 class Difficulty(_AutoEnum):
-    VeryEasy = "VeryEasy"
-    Easy = "Easy"
-    Medium = "Medium"
-    Hard = "Hard"
-    Harder = "Harder"
-    VeryHard = "VeryHard"
+    pass
+
+
+# Pre-populate well-known race/difficulty members so identity comparisons work.
+for _name in ("Zerg", "Terran", "Protoss", "Random", "NoRace"):
+    getattr(Race, _name)
+for _name in ("VeryEasy", "Easy", "Medium", "MediumHard", "Hard", "Harder",
+              "VeryHard", "CheatVision", "CheatMoney", "CheatInsane"):
+    getattr(Difficulty, _name)
+
+
+class Units(list):
+    """sc2 ``Units`` is constructed as ``Units(iterable, bot_object)``.
+
+    Real implementation stores ``bot_object`` for unit-method dispatch; tests
+    don't need that, but we must accept the 2-arg signature.
+    """
+
+    def __init__(self, iterable=(), bot_object=None):
+        super().__init__(iterable)
+        self._bot_object = bot_object
+
+    def __or__(self, other):
+        return Units(list(self) + list(other), self._bot_object)
+
+    def filter(self, predicate):
+        return Units([u for u in self if predicate(u)], self._bot_object)
+
+    def closer_than(self, distance, target):
+        try:
+            tx, ty = target.position.x, target.position.y
+        except AttributeError:
+            tx, ty = target[0], target[1]
+        out = []
+        for u in self:
+            try:
+                ux, uy = u.position.x, u.position.y
+            except AttributeError:
+                ux, uy = u[0], u[1]
+            if ((ux - tx) ** 2 + (uy - ty) ** 2) ** 0.5 < distance:
+                out.append(u)
+        return Units(out, self._bot_object)
+
+    @property
+    def amount(self):
+        return len(self)
+
+    @property
+    def exists(self):
+        return len(self) > 0
 
 
 class Point2(tuple):
@@ -118,7 +219,7 @@ def install() -> None:
     _mk("sc2.position", Point2=Point2, Point3=Point2)
     _mk("sc2.bot_ai", BotAI=BotAI)
     _mk("sc2.unit", Unit=Unit)
-    _mk("sc2.units", Units=list)
+    _mk("sc2.units", Units=Units)
     _mk("sc2.constants", IS_STRUCTURE=set(), TARGET_AIR=set(), TARGET_GROUND=set())
 
     class _Maps:

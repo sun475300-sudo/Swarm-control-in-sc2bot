@@ -88,7 +88,8 @@ class UnitFactory:
         """
         ??? ???ろ꼥??????ㅻ깹????좊읈??????ル늅筌??????????깆뱾 ?釉뚰???
         """
-        # Strategy Manager????????ろ꼥???嶺뚮㉡?€쾮???좊읈??嶺뚮ㅎ?닸쾮濡㏓섀?        strategy = getattr(self.bot, "strategy_manager", None)
+        # Use Strategy Manager-detected enemy race when available.
+        strategy = getattr(self.bot, "strategy_manager", None)
         if strategy:
             race = getattr(strategy, "detected_enemy_race", None)
             if race:
@@ -162,8 +163,8 @@ class UnitFactory:
 
         self._last_combat_check = iteration
         in_combat = False
-
-        # ??ш낄援????좊즴?? ?釉뚰???쨨??        in_combat = False
+        # Detect active-combat conditions to suspend macro choices.
+        in_combat = False
 
         # 1. Strategy Manager??emergency_active 癲ル슪???띿물?
         strategy = getattr(self.bot, "strategy_manager", None)

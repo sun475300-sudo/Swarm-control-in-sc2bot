@@ -30,22 +30,29 @@ from unittest.mock import AsyncMock, MagicMock, Mock, patch
 
 import pytest
 
-# Production Resilience 임포트
+# Production Resilience 임포트.
+# Use ``importlib`` instead of ``sys.path.insert`` to avoid polluting the path
+# with ``wicked_zerg_challenger/local_training/``, which would prime
+# ``sys.modules['scripts']`` with the wrong (local_training) ``scripts``
+# package and break ``from scripts.ladder_tracker import ...`` in other tests.
 try:
+    import importlib.util
     import os
-    import sys
 
-    sys.path.insert(
-        0, os.path.join(os.path.dirname(__file__), "..", "wicked_zerg_challenger")
+    _PR_PATH = os.path.join(
+        os.path.dirname(__file__),
+        "..",
+        "wicked_zerg_challenger",
+        "local_training",
+        "production_resilience.py",
     )
-    sys.path.insert(
-        0,
-        os.path.join(
-            os.path.dirname(__file__), "..", "wicked_zerg_challenger", "local_training"
-        ),
+    _spec = importlib.util.spec_from_file_location(
+        "wicked_zerg_challenger.local_training.production_resilience", _PR_PATH
     )
-    from local_training.production_resilience import ProductionResilience
-except ImportError:
+    _mod = importlib.util.module_from_spec(_spec)
+    _spec.loader.exec_module(_mod)
+    ProductionResilience = _mod.ProductionResilience
+except (ImportError, FileNotFoundError, AttributeError):
     pytest.skip("ProductionResilience not available", allow_module_level=True)
 
 
