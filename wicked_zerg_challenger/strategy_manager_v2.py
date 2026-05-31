@@ -1779,7 +1779,7 @@ class StrategyManagerV2(StrategyManager):
         tech_pref = "unknown"
         confidence = 0.0
 
-        enemy_army_supply = self._estimate_enemy_army()
+        enemy_army_supply = self._estimate_enemy_army_supply()
         game_time = getattr(self.bot, "time", 0.0)
 
         if game_time > 0:
