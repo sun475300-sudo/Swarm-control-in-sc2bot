@@ -125,10 +125,12 @@ class IntegrationTester:
         logger.info("\n[VALIDATION] Testing OpponentModeling initialization...")
 
         try:
+            from unittest.mock import Mock
+
             from opponent_modeling import OpponentModeling
 
-            # Initialize system
-            om = OpponentModeling()
+            # OpponentModeling.__init__ requires a bot reference.
+            om = OpponentModeling(bot=Mock())
             logger.info("  [OK] OpponentModeling initialized successfully")
 
             # Test opponent tracking
@@ -175,17 +177,18 @@ class IntegrationTester:
             micro_v3 = AdvancedMicroControllerV3(mock_bot)
             logger.info("  [OK] AdvancedMicroControllerV3 initialized successfully")
 
-            # Test status retrieval
+            # Test status retrieval. get_status() already returns counts (ints),
+            # so don't wrap them in len().
             status = micro_v3.get_status()
             logger.info(f"  [OK] Status retrieved: {len(status)} fields")
             logger.info(
-                f"     - Ravager cooldowns: {len(status.get('ravager_cooldowns', {}))}"
+                f"     - Ravager cooldowns: {status.get('ravager_cooldowns', 0)}"
             )
             logger.info(
-                f"     - Lurker burrowed: {len(status.get('lurker_burrowed', {}))}"
+                f"     - Lurker burrowed: {status.get('lurker_burrowed', 0)}"
             )
             logger.info(
-                f"     - Focus fire assignments: {len(status.get('focus_fire_assignments', {}))}"
+                f"     - Focus fire assignments: {status.get('focus_fire_assignments', 0)}"
             )
 
             self.results["micro_v3"]["initialization"] = "success"
@@ -260,15 +263,26 @@ class IntegrationTester:
         with open(impl_file, "r", encoding="utf-8") as f:
             impl_content = f.read()
 
+        # OpponentModeling and AdvancedMicroV3 are wired up via the manager
+        # registry / step integrator, not by direct inline init in the impl
+        # file. Look for the integration in whichever file owns it now.
+        registry_file = self.base_dir / "core" / "manager_registry.py"
+        with open(registry_file, "r", encoding="utf-8") as f:
+            registry_content = f.read()
+
+        step_file = self.base_dir / "bot_step_integration.py"
+        with open(step_file, "r", encoding="utf-8") as f:
+            step_init_content = f.read()
+
         integration_checks = {
-            "OpponentModeling import": "from opponent_modeling import OpponentModeling"
-            in impl_content,
-            "AdvancedMicroV3 import": "from advanced_micro_controller_v3 import AdvancedMicroControllerV3"
-            in impl_content,
-            "OpponentModeling init": "self.opponent_modeling = OpponentModeling()"
-            in impl_content,
-            "AdvancedMicroV3 init": "self.micro_v3 = AdvancedMicroControllerV3(self)"
-            in impl_content,
+            "OpponentModeling registration": (
+                'module_path="opponent_modeling"' in registry_content
+                and 'class_name="OpponentModeling"' in registry_content
+            ),
+            "AdvancedMicroV3 init": (
+                "AdvancedMicroControllerV3(bot)" in step_init_content
+                or "AdvancedMicroControllerV3(self)" in step_init_content
+            ),
             "OpponentModeling on_game_start": "self.opponent_modeling.on_game_start"
             in impl_content,
             "OpponentModeling on_game_end": "self.opponent_modeling.on_game_end"
