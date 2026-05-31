@@ -269,9 +269,15 @@ class OpponentModeling:
         self.logger = get_logger("OpponentModeling")
         self.data_file = data_file
 
-        # Opponent models
+        # Opponent models. `current_opponent_id` is set by `on_start` (the
+        # async lifecycle entry) and `current_opponent` is set by
+        # `on_game_start` (the sync entry called from the main bot
+        # lifecycle). Both must be initialized here so on_step / on_game_end
+        # / get_predicted_strategy don't AttributeError if step() runs
+        # before whichever lifecycle hook is wired up.
         self.opponent_models: Dict[str, OpponentModel] = {}
         self.current_opponent_id: Optional[str] = None
+        self.current_opponent: Optional[str] = None
         self.current_game_history: Optional[GameHistory] = None
 
         # Current game tracking
@@ -304,6 +310,7 @@ class OpponentModeling:
             # In real games, opponent_id would be player name/ID
             # For now, use race as identifier
             self.current_opponent_id = f"opponent_{race_name}"
+            self.current_opponent = self.current_opponent_id
 
             # Load or create model
             if self.current_opponent_id not in self.opponent_models:
@@ -732,6 +739,7 @@ class OpponentModeling:
     def on_game_start(self, opponent_id: str, opponent_race=None):
         """게임 시작 시 호출 - 적 추적 시작"""
         self.current_opponent = opponent_id
+        self.current_opponent_id = opponent_id
         # * FIX: GameHistory dataclass에 맞는 필드로 초기화
         race_name = (
             opponent_race.name
