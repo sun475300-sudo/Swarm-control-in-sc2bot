@@ -1,31 +1,32 @@
 """
-Swarm Behavior Module #24 - Auto-generated placeholder.
-This module can be extended with actual behavior logic.
+Swarm behavior #24 — strategy: ``split_groups``.
+
+This module wraps the :func:`src.bot.swarm._strategies.split_groups` primitive
+and exposes the legacy ``BehaviorNN`` API used elsewhere in the bot.
 """
 
+from __future__ import annotations
+
+from . import _strategies as strategies
 from .formation_controller import FormationController
 
 
 class Behavior24:
-    """Auto-generated swarm behavior module #24."""
+    """Swarm behavior #24 (split_groups)."""
 
     def __init__(self) -> None:
-        """Initialize behavior."""
         self.controller = FormationController()
         self.name = "behavior_24"
+        self.strategy = "split_groups"
+        self.target_a = (10.0, 0.0)
+        self.target_b = (-10.0, 0.0)
+        self.step = 1.0
 
     def tick(self, positions: list) -> list:
-        """
-        Execute behavior tick.
-
-        Args:
-            positions: Current unit positions
-
-        Returns:
-            Target positions for units
-        """
-        # Placeholder for behavior logic
-        return self.controller.maintain_formation(positions)
+        """Apply the split_groups strategy to ``positions``."""
+        return strategies.split_groups(
+            positions, target_a=self.target_a, target_b=self.target_b, step=self.step
+        )
 
     def __repr__(self) -> str:
-        return f"{self.__class__.__name__}()"
+        return f"{self.__class__.__name__}(strategy={self.strategy!r})"
