@@ -538,11 +538,12 @@ class GameStateBlackboard:
         )
 
     def should_expand(self) -> bool:
-        """확장 가능한 상황인가?"""
+        """확장 가능한 상황인가? (저글링→해처리 코스트 300 미네랄 기준)"""
         return (
             self.threat.level == ThreatLevel.NONE
             and not self.resources.is_supply_blocked
             and not self.is_under_attack
+            and self.resources.minerals >= 300
         )
 
 

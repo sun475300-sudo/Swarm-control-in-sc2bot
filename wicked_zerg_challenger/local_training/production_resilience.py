@@ -778,6 +778,18 @@ class ProductionResilience:
         if b.minerals > 1500:
             ignore_caps = True
 
+        # === THIRD-BASE RESERVE GATE ===
+        # Mirrors the auto-tech reserve in ``_auto_build_tech_structures``: once
+        # the minimum defense floor is met, hold larvae for the upcoming hatch
+        # instead of bleeding minerals into more army. ``ignore_caps`` (rich
+        # bank) still bypasses, matching the unit-cap behaviour below.
+        if (
+            not ignore_caps
+            and self._should_reserve_third_base_minerals()
+            and self._check_min_defense_met(game_time)
+        ):
+            return False
+
         # Get current unit counts
         zergling_count = (
             b.units(UnitTypeId.ZERGLING).amount if hasattr(b, "units") else 0
@@ -816,6 +828,11 @@ class ProductionResilience:
         # Late game (10min+)
         if game_time > 600 and has_spire:
             # Priority: Muta > Hydra > Roach > Zergling
+            # FIX: Muta was previously skipped here — the only Mutalisk path was
+            # the resource-flush block in _produce_mutalisks, never the main
+            # army pipeline. Spire investment was wasted unless ignore_caps fired.
+            if b.can_afford(UnitTypeId.MUTALISK) and b.supply_left >= 2:
+                return await self._safe_train(larva, UnitTypeId.MUTALISK)
             if (
                 has_hydra_den
                 and b.can_afford(UnitTypeId.HYDRALISK)
@@ -1434,6 +1451,7 @@ class ProductionResilience:
 
     async def force_resource_dump(self) -> None:
         b = self.bot
+        game_time = getattr(b, "time", 0.0)
         if (
             b.can_afford(UnitTypeId.HATCHERY)
             and b.already_pending(UnitTypeId.HATCHERY) < 2
@@ -2140,6 +2158,12 @@ class ProductionResilience:
         Returns:
             UnitTypeId of the recommended counter unit, or None
         """
+        # Defensive: ``enemy_units`` may be missing, a non-iterable test fake,
+        # or an empty sc2 ``Units`` collection — treat all as "no intel".
+        try:
+            iter(enemy_units)
+        except TypeError:
+            return None
         if not enemy_units:
             return None
 

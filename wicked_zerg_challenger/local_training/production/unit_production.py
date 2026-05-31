@@ -143,9 +143,12 @@ async def produce_army_unit(resilience, larva, ignore_caps=False) -> bool:
     if ignore_caps:
         max_zerglings = 9999
 
-    # Late game priority
+    # Late game priority — Muta > Hydra > Roach > Zergling once Spire is up.
+    # (Same fix as production_resilience.py: Spire investment was wasted
+    # because Mutalisks were never trained via the main pipeline here either.)
     if game_time > 600 and has_spire:
-        # Logic ...
+        if b.can_afford(UnitTypeId.MUTALISK) and b.supply_left >= 2:
+            return await safe_train(resilience, larva, UnitTypeId.MUTALISK)
         if has_hydra_den and b.can_afford(UnitTypeId.HYDRALISK) and b.supply_left >= 2:
             return await safe_train(resilience, larva, UnitTypeId.HYDRALISK)
 

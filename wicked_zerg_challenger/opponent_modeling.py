@@ -366,6 +366,9 @@ class OpponentModeling:
             self.bot.blackboard.set("prediction_confidence", self.prediction_confidence)
             self.bot.blackboard.set("observed_signals", list(self.observed_signals))
 
+        # Drive the opponent-lifecycle step too (no-op until on_game_start fires).
+        await self._step_opponent_lifecycle(iteration)
+
     async def _detect_early_signals(self, game_time: float):
         """초반 시그널 감지 (0-180s)"""
         if not self.intel:
@@ -762,9 +765,15 @@ class OpponentModeling:
                 f"[OPPONENT_MODELING] Known opponent: {opponent_id} ({self.opponent_models[opponent_id].games_played} games)"
             )
 
-    async def on_step(self, iteration: int):
-        """매 프레임 호출 - 신호 감지"""
-        if not self.current_opponent or not self.bot:
+    async def _step_opponent_lifecycle(self, iteration: int):
+        """Lifecycle-tracked variant of on_step.
+
+        Triggered from the main ``on_step`` (above) once an opponent has been
+        registered via ``on_game_start``. Was previously declared as a second
+        ``on_step`` method which silently shadowed the original — losing all
+        strategy prediction / build-order / tech tracking calls.
+        """
+        if not getattr(self, "current_opponent", None) or not self.bot:
             return
 
         game_time = self.bot.time

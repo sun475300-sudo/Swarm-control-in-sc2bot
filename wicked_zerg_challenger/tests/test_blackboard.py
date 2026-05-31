@@ -354,6 +354,17 @@ class TestStateQueries(unittest.TestCase):
         self.bb.update_resources(500, 100, 50, 100)
         self.assertFalse(self.bb.should_expand())
 
+    def test_should_expand_threshold_is_hatchery_cost(self):
+        """Boundary: must have at least the 300-mineral hatch cost."""
+        self.bb.update_threat(ThreatLevel.NONE)
+        # Pass a healthy supply margin so is_supply_blocked stays False;
+        # the test is about the mineral threshold, not supply.
+        self.bb.update_resources(300, 0, 50, 100)
+        self.assertTrue(self.bb.should_expand())
+        # One short of the threshold: hold off.
+        self.bb.update_resources(299, 0, 50, 100)
+        self.assertFalse(self.bb.should_expand())
+
 
 class TestBackwardCompatibility(unittest.TestCase):
     def setUp(self):
