@@ -2483,10 +2483,16 @@ class ProductionResilience:
 
                 # 가스 있으면 히드라/바퀴, 없으면 저글링
                 trained = False
-                if b.vespene >= 50 and b.structures(UnitTypeId.HYDRALISKDEN).ready.exists:
+                if (
+                    b.vespene >= 50
+                    and b.structures(UnitTypeId.HYDRALISKDEN).ready.exists
+                ):
                     if b.can_afford(UnitTypeId.HYDRALISK):
                         trained = await self._safe_train(larva, UnitTypeId.HYDRALISK)
-                elif b.vespene >= 25 and b.structures(UnitTypeId.ROACHWARREN).ready.exists:
+                elif (
+                    b.vespene >= 25
+                    and b.structures(UnitTypeId.ROACHWARREN).ready.exists
+                ):
                     if b.can_afford(UnitTypeId.ROACH):
                         trained = await self._safe_train(larva, UnitTypeId.ROACH)
 
