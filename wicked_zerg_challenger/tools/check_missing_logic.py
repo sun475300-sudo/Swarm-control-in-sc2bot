@@ -128,14 +128,13 @@ class MissingLogicChecker:
                 })
     
     def scan_all(self) -> Dict:
-        """??ü ??ĵ"""
-        for root, dirs, files in Path(PROJECT_ROOT).rglob('*.py'):
-            # ?????? ???丮
-            if any(excluded in str(root) for excluded in ['__pycache__', '.git', 'node_modules', '.venv', 'venv', 'models', '.pytest_cache']):
+        """전체 스캔 - Path.rglob yields Path objects, not (root, dirs, files) tuples."""
+        excluded = ('__pycache__', '.git', 'node_modules', '.venv', 'venv', 'models', '.pytest_cache')
+        for path in Path(PROJECT_ROOT).rglob('*.py'):
+            if any(part in excluded for part in path.parts):
                 continue
-            
-            if root.is_file():
-                self.scan_file(root)
+            if path.is_file():
+                self.scan_file(path)
         
         # ??ü ??????Ʈ???? ȣ??Ǿ????? ???ǵ??? ???? ?޼??? ã??
         all_defined = set()

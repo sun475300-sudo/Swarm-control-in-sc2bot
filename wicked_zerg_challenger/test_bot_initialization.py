@@ -20,61 +20,32 @@ def test_imports():
     logger.info("Testing Module Imports")
     logger.info("=" * 60)
 
-    try:
-        pass
+    targets = [
+        ("WickedZergBotProImpl", "wicked_zerg_bot_pro_impl", "WickedZergBotProImpl"),
+        ("BotStepIntegrator", "bot_step_integration", "BotStepIntegrator"),
+        (
+            "ProductionResilience",
+            "local_training.production_resilience",
+            "ProductionResilience",
+        ),
+        ("StrategyManager", "strategy_manager", "StrategyManager"),
+        ("RogueTacticsManager", "rogue_tactics_manager", "RogueTacticsManager"),
+        ("UnitFactory", "unit_factory", "UnitFactory"),
+        ("BoidsSwarmController", "combat.boids_swarm_control", "BoidsSwarmController"),
+    ]
 
-        logger.info("WickedZergBotProImpl imported successfully")
-    except Exception as e:
-        logger.error(f"Failed to import WickedZergBotProImpl: {e}")
-        return False
+    import importlib
 
-    try:
-        pass
-
-        logger.info("BotStepIntegrator imported successfully")
-    except Exception as e:
-        logger.error(f"Failed to import BotStepIntegrator: {e}")
-        return False
-
-    try:
-        pass
-
-        logger.info("ProductionResilience imported successfully")
-    except Exception as e:
-        logger.error(f"Failed to import ProductionResilience: {e}")
-        return False
-
-    try:
-        pass
-
-        logger.info("StrategyManager imported successfully")
-    except Exception as e:
-        logger.error(f"Failed to import StrategyManager: {e}")
-        return False
-
-    try:
-        pass
-
-        logger.info("RogueTacticsManager imported successfully")
-    except Exception as e:
-        logger.error(f"Failed to import RogueTacticsManager: {e}")
-        return False
-
-    try:
-        pass
-
-        logger.info("UnitFactory imported successfully")
-    except Exception as e:
-        logger.error(f"Failed to import UnitFactory: {e}")
-        return False
-
-    try:
-        pass
-
-        logger.info("BoidsSwarmController imported successfully")
-    except Exception as e:
-        logger.error(f"Failed to import BoidsSwarmController: {e}")
-        return False
+    for friendly, module_path, attr in targets:
+        try:
+            module = importlib.import_module(module_path)
+            if not hasattr(module, attr):
+                logger.error("%s missing in %s", attr, module_path)
+                return False
+            logger.info("%s imported successfully", friendly)
+        except Exception as e:
+            logger.error("Failed to import %s: %s", friendly, e)
+            return False
 
     return True
 

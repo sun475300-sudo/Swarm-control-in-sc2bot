@@ -66,7 +66,7 @@ class IntegrationTester:
         logger.info("\n[VALIDATION] Checking imports...")
 
         try:
-            pass
+            from opponent_modeling import OpponentModeling  # noqa: F401
 
             logger.info("  [OK] OpponentModeling imported successfully")
             self.results["opponent_modeling"]["import"] = "success"
@@ -77,7 +77,9 @@ class IntegrationTester:
             return False
 
         try:
-            pass
+            from advanced_micro_controller_v3 import (  # noqa: F401
+                AdvancedMicroControllerV3,
+            )
 
             logger.info("  [OK] AdvancedMicroControllerV3 imported successfully")
             self.results["micro_v3"]["import"] = "success"
