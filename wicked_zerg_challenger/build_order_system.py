@@ -1084,9 +1084,9 @@ class BuildOrderSystem:
         if not location:
             location = await self.bot.get_next_expansion()
         if location:
-            # Use TechCoordinator if available
+            # The TechCoordinator only gates re-issue (via is_planned); the
+            # actual Hatchery placement is still a direct worker.build below.
             tech_coordinator = getattr(self.bot, "tech_coordinator", None)
-            PRIORITY_EXPANSION = 55  # * Phase 22: 확장 우선순위 상향 (50 -> 55)
 
             if tech_coordinator:
                 if not tech_coordinator.is_planned(UnitTypeId.HATCHERY):
