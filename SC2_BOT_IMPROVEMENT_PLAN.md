@@ -117,13 +117,22 @@ Python은 마지막 정의만 유지하므로 첫 번째 구현은 사용되지 
 
 ## 진행 체크리스트
 
-- [ ] P0-1 unit_factory.py 깨진 주석/할당 복구
-- [ ] P0-2 should_expand 미네랄 조건 추가
-- [ ] P0-3 production_resilience Mock iter 가드
-- [ ] P1-1 CombatManager._find_harass_target 통합
-- [ ] P1-2 EconomyManager._prevent_resource_banking 통합
-- [ ] P1-3 EconomyManager._reduce_gas_workers 통합
-- [ ] P1-4 OpponentModeling.on_step 통합
-- [ ] P2-1 test_bot_initialization.py 가짜 통과 수정
-- [ ] P2-2 verify_code_patterns 식별자 동기화
+- [x] P0-1 unit_factory.py 깨진 주석/할당 복구
+- [x] P0-2 should_expand 미네랄 조건 추가
+- [x] P0-3 production_resilience Mock iter 가드
+- [x] P1-1 CombatManager._find_harass_target 통합
+- [x] P1-2 EconomyManager._prevent_resource_banking 통합
+- [x] P1-3 EconomyManager._reduce_gas_workers 통합
+- [x] P1-4 OpponentModeling.on_step 통합
+- [x] P2-1 test_bot_initialization.py 가짜 통과 수정 (pytest 모듈로 재작성)
+- [x] P2-2 verify_code_patterns 식별자 동기화 (실제 호출 위치 검증)
 - [ ] P3-1~4 코드 품질 점진 개선 (라운드마다 1~2건)
+
+## 라운드 2 후속 작업 (큐)
+
+- [ ] R2-1 `bot_step_integration.execute_game_logic` 1726줄 분해
+- [ ] R2-2 `combat_manager._execute_multitasking` 764줄 분해
+- [ ] R2-3 `pass`만 있는 except 핸들러 163건 가운데 핫패스 정리
+- [ ] R2-4 `wicked_zerg_bot_pro_impl.py` 잔존 mojibake 한글 주석 정리
+- [ ] R2-5 신규 점검: `ast` 분석으로 미사용 import / 사용되지 않는 메서드 추가 발견
+
