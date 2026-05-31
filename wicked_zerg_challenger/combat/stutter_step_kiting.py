@@ -9,12 +9,38 @@ Stutter-Step Kiting - 진정한 스터터 스텝 구현
 히드라, 바퀴 등 원거리 유닛에 적용
 """
 
-from typing import Dict, Optional, Set
+from typing import Any, Dict, Optional, Set
 
-from sc2.ids.unit_typeid import UnitTypeId
-from sc2.position import Point2
-from sc2.unit import Unit
-from sc2.units import Units
+try:
+    from sc2.ids.unit_typeid import UnitTypeId
+    from sc2.position import Point2
+    from sc2.unit import Unit
+    from sc2.units import Units
+except ImportError:  # pragma: no cover - sc2 미설치 환경 (CI / 단위테스트)
+    Unit = Any  # type: ignore[misc,assignment]
+    Units = Any  # type: ignore[misc,assignment]
+
+    class _Point2Stub(tuple):
+        """Minimal Point2 stub that supports `Point2((x, y))` construction."""
+
+        def __new__(cls, xy=(0.0, 0.0)):
+            return super().__new__(cls, (float(xy[0]), float(xy[1])))
+
+        @property
+        def x(self) -> float:
+            return self[0]
+
+        @property
+        def y(self) -> float:
+            return self[1]
+
+    Point2 = _Point2Stub  # type: ignore[misc,assignment]
+
+    class UnitTypeId:  # type: ignore[no-redef]
+        HYDRALISK = "HYDRALISK"
+        ROACH = "ROACH"
+        QUEEN = "QUEEN"
+        RAVAGER = "RAVAGER"
 
 
 class StutterStepKiting:

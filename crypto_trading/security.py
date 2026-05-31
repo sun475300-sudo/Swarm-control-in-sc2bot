@@ -1117,11 +1117,14 @@ class SecretManager:
             fernet_key = base64.urlsafe_b64encode(key_hash)
             self._fernet = Fernet(fernet_key)
             self._use_fernet = True
-        except ImportError:
+        except BaseException as exc:
+            # ImportError: cryptography 미설치
+            # PanicException(pyo3): rust 바인딩에서 의존성(_cffi_backend 등) 손상
             logger.warning(
-                "SecretManager: cryptography 라이브러리 미설치 — "
+                "SecretManager: cryptography Fernet 초기화 실패(%s) — "
                 "시크릿이 암호화되지 않고 base64 인코딩만 적용됩니다. "
-                "보안을 위해 'pip install cryptography'를 실행하세요."
+                "환경을 점검하고 'pip install cryptography cffi'를 실행하세요.",
+                type(exc).__name__,
             )
             self._fernet = None
             self._use_fernet = False

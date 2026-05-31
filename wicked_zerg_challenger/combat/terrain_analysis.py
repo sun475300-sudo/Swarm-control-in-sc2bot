@@ -40,7 +40,11 @@ class ChokePointDetector:
         """
         self.bot = bot
         self.chokepoints: List = []
-        self.chokepoint_cache_frame = -1
+        # cache_update_interval 만큼 음수로 초기화 → 첫 update_chokepoints 호출이
+        # iter=0 이라도 cache 미스로 처리되어 정상적으로 ramp 정보를 채운다.
+        # (이전: -1 로 초기화되어 cache_update_interval=100 인 경우, iter < 99
+        # 까지의 모든 호출이 silent skip 되던 잠복 버그.)
+        self.chokepoint_cache_frame = -int(cache_update_interval)
         self.chokepoint_radius = chokepoint_radius
         self.narrow_passage_threshold = narrow_passage_threshold
         self.cache_update_interval = cache_update_interval

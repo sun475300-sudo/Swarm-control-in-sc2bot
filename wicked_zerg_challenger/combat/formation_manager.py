@@ -8,13 +8,33 @@ Formation Manager - 지형 활용 및 대형 제어
 3. 고저차 활용: 언덕, 경사로 등을 활용한 전술
 """
 
-from typing import List, Optional, Tuple
+from typing import Any, List, Optional, Tuple
 
-from sc2.game_info import GameInfo
-from sc2.ids.unit_typeid import UnitTypeId
-from sc2.position import Point2
-from sc2.unit import Unit
-from sc2.units import Units
+try:
+    from sc2.game_info import GameInfo
+    from sc2.ids.unit_typeid import UnitTypeId
+    from sc2.position import Point2
+    from sc2.unit import Unit
+    from sc2.units import Units
+except ImportError:  # pragma: no cover - sc2 미설치 환경 (CI / 단위테스트)
+    GameInfo = Any  # type: ignore[misc,assignment]
+    Unit = Any  # type: ignore[misc,assignment]
+    Units = Any  # type: ignore[misc,assignment]
+    Point2 = Any  # type: ignore[misc,assignment]
+
+    class UnitTypeId:  # type: ignore[no-redef]
+        # 모듈 내에서 set 멤버로 비교에 쓰이는 식별자만 stub
+        HYDRALISK = "HYDRALISK"
+        ROACH = "ROACH"
+        RAVAGER = "RAVAGER"
+        CORRUPTOR = "CORRUPTOR"
+        MUTALISK = "MUTALISK"
+        BROODLORD = "BROODLORD"
+        QUEEN = "QUEEN"
+        ZERGLING = "ZERGLING"
+        ULTRALISK = "ULTRALISK"
+        BANELING = "BANELING"
+        LURKERMP = "LURKERMP"
 
 
 class FormationManager:
