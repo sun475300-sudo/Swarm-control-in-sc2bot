@@ -28,7 +28,8 @@ class DynamicResourceBalancer:
 
         # * ?먯썝 遺덇퇏???꾧퀎媛?*
         self.mineral_excess_threshold = 1000  # 誘몃꽕??1000+ 怨쇰떎
-        self.gas_shortage_threshold = 100  # 媛??100- 遺議?        self.high_mineral_threshold = 1500  # 誘몃꽕??1500+ ?ш컖??怨쇰떎
+        self.gas_shortage_threshold = 100  # 가스 부족 임계값
+        self.high_mineral_threshold = 1500  # 미네랄 고잉여 임계값
 
         # * ?숈쟻 鍮꾩쑉 議곗젙 *
         self.base_gas_ratio = 0.40
@@ -166,13 +167,15 @@ class DynamicResourceBalancer:
             ?좊떅蹂?鍮꾩쑉 議곗젙 ?뺤뀛?덈━
             ?? {"hydralisk": 0.30, "mutalisk": 0.15, "zergling": 0.40, "roach": 0.15}
         """
-        gas_ratio = max(self.min_gas_ratio, min(self.max_gas_ratio, self.current_gas_ratio))
+        gas_ratio = max(
+            self.min_gas_ratio, min(self.max_gas_ratio, self.current_gas_ratio)
+        )
         mineral_ratio = 1.0 - gas_ratio
 
         # ?먯썝 ?곹깭???곕Ⅸ ?좊떅 援ъ꽦
         if self.resource_state == "CRITICAL":
+            # CRITICAL: 가스 의존 비중을 최대로 끌어올림
             return {
-            # 誘몃꽕??怨쇰떎 -> 媛???좊떅 理쒕???            return {
                 "hydralisk": gas_ratio * 0.50,
                 "mutalisk": gas_ratio * 0.30,
                 "corruptor": gas_ratio * 0.20,

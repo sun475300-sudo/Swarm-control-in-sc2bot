@@ -28,10 +28,12 @@ try:
     from torch.distributions import Categorical
 
     TORCH_AVAILABLE = True
+    _NN_MODULE_BASE = nn.Module
 except ImportError:
     TORCH_AVAILABLE = False
     torch = None
     nn = None
+    _NN_MODULE_BASE = object
 
 
 # ============================================================
@@ -58,7 +60,7 @@ ACTION_LABELS = [
 ]
 
 
-class ActorCriticNetwork(nn.Module):
+class ActorCriticNetwork(_NN_MODULE_BASE):
     """
     Actor-Critic 신경망 (PPO용)
 

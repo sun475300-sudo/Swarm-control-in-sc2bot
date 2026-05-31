@@ -271,7 +271,9 @@ except ImportError:
 # Advanced Scout System V2
 try:
     # NOTE: class is AdvancedScoutingSystemV2 (with "ing"); alias kept for compat
-    from scouting.advanced_scout_system_v2 import AdvancedScoutingSystemV2 as AdvancedScoutSystemV2
+    from scouting.advanced_scout_system_v2 import (
+        AdvancedScoutingSystemV2 as AdvancedScoutSystemV2,
+    )
 except ImportError:
     AdvancedScoutSystemV2 = None
 
@@ -1435,22 +1437,6 @@ class BotStepIntegrator:
                 finally:
                     self._logic_tracker.end_logic("SpellCaster", start_time)
 
-            # DEPRECATED: ActiveScoutingSystem replaced by AdvancedScoutingSystemV2
-            # 0.063 *** Active Scouting System (능동형 정찰) ***
-            # if hasattr(self.bot, "active_scout") and self.bot.active_scout:
-            #     start_time = self._logic_tracker.start_logic("ActiveScout")
-            #     try:
-            #         await self.bot.active_scout.on_step(iteration)
-            #     except Exception as e:
-            #         if error_handler.debug_mode:
-            #             raise
-            #         else:
-            #             error_handler.error_counts["ActiveScout"] += 1
-            #             if error_handler.error_counts["ActiveScout"] <= error_handler.max_error_logs:
-            #                 print(f"[ERROR] ActiveScout error: {e}")
-            #     finally:
-            #         self._logic_tracker.end_logic("ActiveScout", start_time)
-
             # 0.064 *** Upgrade Coordination System (업그레이드 타이밍) ***
             if hasattr(self.bot, "upgrade_coord") and self.bot.upgrade_coord:
                 start_time = self._logic_tracker.start_logic("UpgradeCoord")
@@ -2108,7 +2094,9 @@ class BotStepIntegrator:
                     if iteration % 50 == 0:
                         self.logger.warning(f"[WARNING] Building Manager error: {e}")
                 finally:
-                    self._logic_tracker.end_logic("BuildingManager", start_time, success)
+                    self._logic_tracker.end_logic(
+                        "BuildingManager", start_time, success
+                    )
 
             if hasattr(self.bot, "advanced_building_manager"):
                 start_time = self._logic_tracker.start_logic("AdvancedBuilding")
