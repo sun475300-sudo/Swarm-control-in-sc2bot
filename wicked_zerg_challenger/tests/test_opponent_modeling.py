@@ -295,8 +295,8 @@ class TestOpponentModel(unittest.TestCase):
         self.assertEqual(model.dominant_style, OpponentStyle.AGGRESSIVE)
 
 
-class TestOpponentModeling(unittest.TestCase):
-    """Test suite for OpponentModeling system"""
+class TestOpponentModeling(unittest.IsolatedAsyncioTestCase):
+    """Test suite for OpponentModeling system."""
 
     def setUp(self):
         """Set up test fixtures"""
