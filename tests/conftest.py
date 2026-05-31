@@ -18,6 +18,13 @@ PROJECT_ROOT = Path(__file__).parent.parent
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
+# Install lightweight sc2 stubs so tests can import sc2.ids.* without the
+# native burnysc2 dependency. Real sc2 (if installed) is left untouched.
+sys.path.insert(0, str(Path(__file__).parent))
+from _sc2_stub import install as _install_sc2_stubs  # noqa: E402
+
+_install_sc2_stubs()
+
 
 # ═══════════════════════════════════════════════════════
 # 경로 관련 Fixtures
