@@ -18,32 +18,9 @@ from typing import Dict, List, Optional, Set
 
 from utils.logger import get_logger
 
-try:
-    from sc2.bot_ai import BotAI
-    from sc2.ids.ability_id import AbilityId
-    from sc2.ids.unit_typeid import UnitTypeId
-    from sc2.ids.upgrade_id import UpgradeId
-    from sc2.position import Point2
-    from sc2.unit import Unit
-except ImportError:
+from utils.sc2_stubs import get_sc2_imports
 
-    class BotAI:
-        pass
-
-    class UnitTypeId:
-        pass
-
-    class AbilityId:
-        pass
-
-    class UpgradeId:
-        pass
-
-    class Point2:
-        pass
-
-    class Unit:
-        pass
+BotAI, UnitTypeId, AbilityId, UpgradeId, Point2, Unit = get_sc2_imports()
 
 
 from unit_authority_manager import AuthorityLevel

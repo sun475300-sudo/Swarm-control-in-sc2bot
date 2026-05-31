@@ -272,6 +272,8 @@ class OpponentModeling:
         # Opponent models
         self.opponent_models: Dict[str, OpponentModel] = {}
         self.current_opponent_id: Optional[str] = None
+        # Alias used by integration-layer methods (on_game_start/on_step/on_game_end)
+        self.current_opponent: Optional[str] = None
         self.current_game_history: Optional[GameHistory] = None
 
         # Current game tracking
@@ -304,6 +306,8 @@ class OpponentModeling:
             # In real games, opponent_id would be player name/ID
             # For now, use race as identifier
             self.current_opponent_id = f"opponent_{race_name}"
+            # Keep integration-layer alias in sync
+            self.current_opponent = self.current_opponent_id
 
             # Load or create model
             if self.current_opponent_id not in self.opponent_models:
@@ -762,8 +766,14 @@ class OpponentModeling:
                 f"[OPPONENT_MODELING] Known opponent: {opponent_id} ({self.opponent_models[opponent_id].games_played} games)"
             )
 
-    async def on_step(self, iteration: int):
-        """매 프레임 호출 - 신호 감지"""
+    # NOTE: This second on_step overrides the richer on_step defined earlier
+    # in the class (line ~345). Python's late-binding semantics mean only this
+    # simpler version is actually called by bot_step_integration. The richer
+    # variant performs build-order tracking, timing-attack detection, tech
+    # progression, and blackboard updates, but is currently dead code.
+    # See test_on_step_override_is_intentional() for the regression contract.
+    async def on_step(self, iteration: int):  # noqa: F811 - intentional override
+        """매 프레임 호출 - 신호 감지 (간소 버전)."""
         if not self.current_opponent or not self.bot:
             return
 

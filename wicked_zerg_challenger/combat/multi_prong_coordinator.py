@@ -18,22 +18,13 @@ from typing import Dict, Optional, Set
 
 from utils.logger import get_logger
 
+from utils.sc2_stubs import get_sc2_imports
+
+BotAI, UnitTypeId, _AbilityId, _UpgradeId, Point2, _Unit = get_sc2_imports()
+
 try:
-    from sc2.bot_ai import BotAI
-    from sc2.ids.unit_typeid import UnitTypeId
-    from sc2.position import Point2
     from sc2.units import Units
 except ImportError:
-
-    class BotAI:
-        pass
-
-    class UnitTypeId:
-        ZERGLING = "ZERGLING"
-        ROACH = "ROACH"
-        MUTALISK = "MUTALISK"
-
-    Point2 = tuple
     Units = list
 
 

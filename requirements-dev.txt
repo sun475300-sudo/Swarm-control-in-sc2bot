@@ -7,6 +7,19 @@ pytest-asyncio>=0.23.0
 pytest-timeout>=2.1.0
 pytest-mock>=3.10.0
 
+# Runtime deps required to import the SC2 bot modules during tests
+# (the wicked_zerg_challenger test suite exercises real production modules
+# and therefore needs python-sc2 + its supporting libraries).
+# Note: install s2clientprotocol BEFORE burnysc2 with --no-deps to skip the
+# unbuildable mpyq dependency:
+#   pip install s2clientprotocol --no-deps
+#   pip install burnysc2 --no-deps
+burnysc2>=7.0.0
+s2clientprotocol>=5.0.0
+numpy
+protobuf
+loguru
+
 # Code quality (matches sc2bot-ci.yml versions)
 black==26.3.1
 isort>=5.12.0

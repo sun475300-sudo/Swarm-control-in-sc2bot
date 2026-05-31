@@ -1976,7 +1976,11 @@ class ProductionResilience:
             if mutalisk_count < 15:  # Target: 15 Mutalisks
                 await self._produce_mutalisks(count=5)
 
-    async def build_terran_counters(self) -> None:
+    # NOTE: This is the active build_terran_counters; an older simpler
+    # version at line ~1450 is silently overridden by Python's late binding
+    # and is therefore dead code. See test_build_terran_counters_override_is_intentional
+    # for the contract.
+    async def build_terran_counters(self) -> None:  # noqa: F811
         b = self.bot
         if not b.production:
             return
