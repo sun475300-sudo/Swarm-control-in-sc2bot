@@ -30,6 +30,7 @@ for path in (_BOT_DIR, _ROOT_TESTS, _REPO_ROOT):
         sys.path.remove(p)
     sys.path.insert(0, p)
 
+
 def _scrub_wrong_scripts_cache():
     """Drop a wrongly-cached ``scripts`` package before wicked tests run.
 
@@ -57,6 +58,7 @@ def pytest_collectstart(collector):
     primed the cache between conftest load and collection."""
     if str(_BOT_DIR) in str(getattr(collector, "fspath", "")):
         _scrub_wrong_scripts_cache()
+
 
 # Install sc2 stub modules (no-op if real sc2 already imported).
 try:

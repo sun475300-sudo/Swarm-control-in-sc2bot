@@ -11,6 +11,7 @@ Call `install()` from a conftest before test collection. It registers fake
 modules in `sys.modules` so that `from sc2.ids.unit_typeid import UnitTypeId`
 succeeds without the real library.
 """
+
 from __future__ import annotations
 
 import sys
@@ -117,8 +118,18 @@ class Difficulty(_AutoEnum):
 # Pre-populate well-known race/difficulty members so identity comparisons work.
 for _name in ("Zerg", "Terran", "Protoss", "Random", "NoRace"):
     getattr(Race, _name)
-for _name in ("VeryEasy", "Easy", "Medium", "MediumHard", "Hard", "Harder",
-              "VeryHard", "CheatVision", "CheatMoney", "CheatInsane"):
+for _name in (
+    "VeryEasy",
+    "Easy",
+    "Medium",
+    "MediumHard",
+    "Hard",
+    "Harder",
+    "VeryHard",
+    "CheatVision",
+    "CheatMoney",
+    "CheatInsane",
+):
     getattr(Difficulty, _name)
 
 
@@ -213,9 +224,19 @@ def install() -> None:
     _mk("sc2.ids.ability_id", AbilityId=AbilityId)
     _mk("sc2.ids.buff_id", BuffId=_AutoEnum)
     _mk("sc2.ids.effect_id", EffectId=_AutoEnum)
-    _mk("sc2.data", Race=Race, Difficulty=Difficulty, Result=_AutoEnum,
-        Alliance=_AutoEnum, CloakState=_AutoEnum, DisplayType=_AutoEnum,
-        Attribute=_AutoEnum, race_townhalls={}, race_worker={}, race_gas={})
+    _mk(
+        "sc2.data",
+        Race=Race,
+        Difficulty=Difficulty,
+        Result=_AutoEnum,
+        Alliance=_AutoEnum,
+        CloakState=_AutoEnum,
+        DisplayType=_AutoEnum,
+        Attribute=_AutoEnum,
+        race_townhalls={},
+        race_worker={},
+        race_gas={},
+    )
     _mk("sc2.position", Point2=Point2, Point3=Point2)
     _mk("sc2.bot_ai", BotAI=BotAI)
     _mk("sc2.unit", Unit=Unit)
@@ -229,13 +250,18 @@ def install() -> None:
 
     _mk("sc2.maps", get=_Maps.get)
     sc2.maps = sys.modules["sc2.maps"]
-    _mk("sc2.player", Bot=type("Bot", (), {}), Computer=type("Computer", (), {}),
-        Human=type("Human", (), {}))
-    _mk("sc2.main", run_game=lambda *a, **kw: None,
-        _play_game=lambda *a, **kw: None)
+    _mk(
+        "sc2.player",
+        Bot=type("Bot", (), {}),
+        Computer=type("Computer", (), {}),
+        Human=type("Human", (), {}),
+    )
+    _mk("sc2.main", run_game=lambda *a, **kw: None, _play_game=lambda *a, **kw: None)
     _mk("sc2.client", Client=type("Client", (), {}))
     _mk("sc2.portconfig", Portconfig=type("Portconfig", (), {}))
-    _mk("sc2.protocol", ConnectionAlreadyClosed=type("ConnectionAlreadyClosed",
-                                                     (Exception,), {}))
+    _mk(
+        "sc2.protocol",
+        ConnectionAlreadyClosed=type("ConnectionAlreadyClosed", (Exception,), {}),
+    )
 
     _INSTALLED = True
