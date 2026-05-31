@@ -28,7 +28,9 @@ class MetaAdapter:
             if stats.get("total", 0) > 0 and stats.get("winrate", 100.0) < 50.0:
                 adjustments[f"Zv{race[0]}"] = {
                     "winrate": stats.get("winrate", 0.0),
-                    "action": self._suggest_adjustment(race, data.get("weaknesses", {})),
+                    "action": self._suggest_adjustment(
+                        race, data.get("weaknesses", {})
+                    ),
                 }
 
         overall = data.get("overall", {})
@@ -40,7 +42,9 @@ class MetaAdapter:
             }
 
         output_path = self.data_dir / "strategy_adjustments.json"
-        output_path.write_text(json.dumps(adjustments, indent=2, ensure_ascii=False), encoding="utf-8")
+        output_path.write_text(
+            json.dumps(adjustments, indent=2, ensure_ascii=False), encoding="utf-8"
+        )
         return adjustments
 
     def _suggest_adjustment(self, race: str, weaknesses: Dict) -> str:
@@ -49,4 +53,6 @@ class MetaAdapter:
             "Protoss": "Increase corruptor/viper readiness and strengthen DT/storm responses.",
             "Zerg": "Tighten early ling-bane control and pull roach transition earlier.",
         }
-        return suggestions.get(race, "Review recent losses and generate a focused test set.")
+        return suggestions.get(
+            race, "Review recent losses and generate a focused test set."
+        )
