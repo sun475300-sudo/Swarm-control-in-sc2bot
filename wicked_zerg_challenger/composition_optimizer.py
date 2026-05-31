@@ -151,6 +151,7 @@ COUNTER_MATRIX: Dict[str, Dict[str, float]] = {
     "HELLION": {"roach": 0.8, "queen": 0.6},
     "CYCLONE": {"zergling": 0.7, "roach": 0.6, "mutalisk": 0.65},
     "WIDOWMINE": {"zergling": 0.5, "roach": 0.7, "mutalisk": 0.3},
+    "WIDOWMINEBURROWED": {"zergling": 0.5, "roach": 0.7, "mutalisk": 0.3},
     # 프로토스
     "ZEALOT": {"roach": 0.75, "lurker": 0.8, "baneling": 0.7},
     "STALKER": {"zergling": 0.8, "roach": 0.65, "hydralisk": 0.6},
@@ -173,6 +174,7 @@ COUNTER_MATRIX: Dict[str, Dict[str, float]] = {
     "BROODLORD": {"corruptor": 0.9, "hydralisk": 0.5},
     "LURKER": {"ravager": 0.8, "mutalisk": 0.7},
     "LURKERMP": {"ravager": 0.8, "mutalisk": 0.7},
+    "LURKERMPBURROWED": {"ravager": 0.8, "mutalisk": 0.7},
 }
 
 

@@ -297,13 +297,17 @@ class DataCacheManager:
         if not hasattr(self.bot, "units"):
             return composition
 
+        # NOTE: SC2 reports lurkers as "LURKERMP" / "LURKERMPBURROWED"; the
+        # bare "LURKER" key never matched and lurkers were missing from
+        # army composition snapshots.
         army_types = {
             "ZERGLING",
             "BANELING",
             "ROACH",
             "RAVAGER",
             "HYDRALISK",
-            "LURKER",
+            "LURKERMP",
+            "LURKERMPBURROWED",
             "MUTALISK",
             "CORRUPTOR",
             "ULTRALISK",

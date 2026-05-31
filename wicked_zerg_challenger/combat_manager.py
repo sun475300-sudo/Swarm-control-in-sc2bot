@@ -1184,6 +1184,10 @@ class CombatManager:
         game_time = getattr(self.bot, "time", 0)
 
         # 고위협 유닛 (중후반 푸쉬의 핵심)
+        # NOTE: SC2 UnitTypeId.LURKERMP.name is "LURKERMP" (not "LURKER"); a
+        # burrowed lurker reports as "LURKERMPBURROWED". The old "LURKER"
+        # string never matched, so lurker pushes silently bypassed the
+        # CRITICAL threat tier.
         high_threat_units = {
             "SIEGETANK",
             "SIEGETANKSIEGED",
@@ -1196,7 +1200,8 @@ class CombatManager:
             "ULTRALISK",
             "BROODLORD",
             "RAVAGER",
-            "LURKER",
+            "LURKERMP",
+            "LURKERMPBURROWED",
         }
 
         # 위협 수준: light (1-2), medium (3-5), heavy (6+), critical (고위협 유닛 포함)
@@ -1313,6 +1318,8 @@ class CombatManager:
             return
 
         # 고위협 유닛 목록 (우선 집중 공격)
+        # NOTE: WIDOWMINEBURROWED is the form that's about to fire — drop it
+        # and the priority target set misses the most dangerous state.
         high_priority_targets = {
             "SIEGETANK",
             "SIEGETANKSIEGED",
@@ -1320,6 +1327,7 @@ class CombatManager:
             "DISRUPTOR",
             "HIGHTEMPLAR",
             "WIDOWMINE",
+            "WIDOWMINEBURROWED",
             "LIBERATOR",
             "LIBERATORAG",
             "IMMORTAL",
@@ -3381,7 +3389,9 @@ class CombatManager:
                 "SIEGETANKSIEGED",
                 "COLOSSUS",
                 "LIBERATOR",
+                "LIBERATORAG",
                 "WIDOWMINE",
+                "WIDOWMINEBURROWED",
             ]:
                 siege.append(enemy)
             elif enemy.health_percentage < 0.3:
@@ -3483,12 +3493,16 @@ class CombatManager:
             "SIEGETANK",
             "SIEGETANKSIEGED",
             "WIDOWMINE",
+            "WIDOWMINEBURROWED",
             "HYDRALISK",
             "MUTALISK",
             "CORRUPTOR",
             "BROODLORD",
             "RAVAGER",
-            "LURKER",
+            # SC2 reports lurkers as "LURKERMP" / "LURKERMPBURROWED"; the bare
+            # "LURKER" string never matched a real unit.
+            "LURKERMP",
+            "LURKERMPBURROWED",
             "ULTRALISK",
             "INFESTOR",
             "COLOSSUS",

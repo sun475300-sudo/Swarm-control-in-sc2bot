@@ -11,9 +11,36 @@ Tests for:
 7. OverlordVisionNetwork faster update cycle
 """
 
+import os
+import sys
 from unittest.mock import MagicMock, Mock, PropertyMock, patch
 
 import pytest
+
+_WZC_PATH = os.path.join(os.path.dirname(__file__), "..", "wicked_zerg_challenger")
+
+
+def _ensure_wzc_on_syspath():
+    """Manager modules in wicked_zerg_challenger/ use bare `from config...`
+    and `from utils...` imports, but the project root also has a top-level
+    ``utils/`` package with different contents. We need wzc/ first on sys.path
+    so those bare imports resolve to wzc/{config,utils}/. Pytest sometimes
+    re-prepends the rootdir after module-level inserts, so we re-assert this
+    in each setup_method and also evict a stale ``utils`` module if it was
+    loaded from the wrong path.
+    """
+    if sys.path[0] != _WZC_PATH:
+        sys.path.insert(0, _WZC_PATH)
+    utils_mod = sys.modules.get("utils")
+    if (
+        utils_mod is not None
+        and getattr(utils_mod, "__file__", None)
+        and "wicked_zerg_challenger" not in utils_mod.__file__
+    ):
+        del sys.modules["utils"]
+
+
+_ensure_wzc_on_syspath()
 
 # ===== Shared Mock Helpers =====
 
@@ -135,16 +162,17 @@ class TestIntelManagerTechAlerts:
     """Test IntelManager hidden tech alert system"""
 
     def setup_method(self):
+        _ensure_wzc_on_syspath()
         try:
             from wicked_zerg_challenger.intel_manager import IntelManager
+        except ImportError as exc:
+            pytest.skip(f"IntelManager not available: {exc}")
 
-            self.bot = MockBot()
-            self.bot.blackboard = Mock()
-            self.bot.blackboard.set = Mock()
-            self.bot.blackboard.get = Mock(return_value=None)
-            self.intel = IntelManager(self.bot)
-        except ImportError:
-            pytest.skip("IntelManager not available")
+        self.bot = MockBot()
+        self.bot.blackboard = Mock()
+        self.bot.blackboard.set = Mock()
+        self.bot.blackboard.get = Mock(return_value=None)
+        self.intel = IntelManager(self.bot)
 
     def test_hidden_tech_alerts_initialized(self):
         """hidden tech alert dict should be initialized"""
@@ -229,35 +257,36 @@ class TestStrategyManagerZvZCounter:
     """Test ZvZ counter unit logic"""
 
     def setup_method(self):
+        _ensure_wzc_on_syspath()
         try:
             from wicked_zerg_challenger.strategy_manager import (
                 EnemyRace,
                 GamePhase,
                 StrategyManager,
             )
+        except ImportError as exc:
+            pytest.skip(f"StrategyManager not available: {exc}")
 
-            self.EnemyRace = EnemyRace
-            self.GamePhase = GamePhase
-            self.bot = MockBot()
-            self.bot.enemy_race = Mock()
-            self.bot.enemy_race.name = "Zerg"
-            self.bot.enemy_units = []
-            self.bot.units = []
-            self.strategy = StrategyManager(self.bot)
-            self.strategy.detected_enemy_race = EnemyRace.ZERG
-            self.strategy.game_phase = GamePhase.MID
-            # Initialize race_unit_ratios for ZERG
-            if EnemyRace.ZERG not in self.strategy.race_unit_ratios:
-                self.strategy.race_unit_ratios[EnemyRace.ZERG] = {}
-            if GamePhase.MID not in self.strategy.race_unit_ratios[EnemyRace.ZERG]:
-                self.strategy.race_unit_ratios[EnemyRace.ZERG][GamePhase.MID] = {
-                    "zergling": 0.3,
-                    "roach": 0.3,
-                    "baneling": 0.2,
-                    "hydra": 0.2,
-                }
-        except ImportError:
-            pytest.skip("StrategyManager not available")
+        self.EnemyRace = EnemyRace
+        self.GamePhase = GamePhase
+        self.bot = MockBot()
+        self.bot.enemy_race = Mock()
+        self.bot.enemy_race.name = "Zerg"
+        self.bot.enemy_units = []
+        self.bot.units = []
+        self.strategy = StrategyManager(self.bot)
+        self.strategy.detected_enemy_race = EnemyRace.ZERG
+        self.strategy.game_phase = GamePhase.MID
+        # Initialize race_unit_ratios for ZERG
+        if EnemyRace.ZERG not in self.strategy.race_unit_ratios:
+            self.strategy.race_unit_ratios[EnemyRace.ZERG] = {}
+        if GamePhase.MID not in self.strategy.race_unit_ratios[EnemyRace.ZERG]:
+            self.strategy.race_unit_ratios[EnemyRace.ZERG][GamePhase.MID] = {
+                "zergling": 0.3,
+                "roach": 0.3,
+                "baneling": 0.2,
+                "hydra": 0.2,
+            }
 
     def test_counter_zerg_units_exists(self):
         """_counter_zerg_units method should exist"""
@@ -301,18 +330,22 @@ class TestEconomyGasBanking:
     """Test gas banking prevention improvements"""
 
     def setup_method(self):
+        _ensure_wzc_on_syspath()
         try:
             from wicked_zerg_challenger.economy_manager import EconomyManager
+        except (ImportError, TypeError) as exc:
+            pytest.skip(f"EconomyManager not available: {exc}")
 
-            self.bot = MockBot()
-            self.bot.larva = []
-            self.bot.workers = Mock()
-            self.bot.workers.amount = 30
-            self.bot.gas_buildings = Mock()
-            self.bot.gas_buildings.ready = []
+        self.bot = MockBot()
+        self.bot.larva = []
+        self.bot.workers = Mock()
+        self.bot.workers.amount = 30
+        self.bot.gas_buildings = Mock()
+        self.bot.gas_buildings.ready = []
+        try:
             self.economy = EconomyManager(self.bot)
-        except (ImportError, TypeError):
-            pytest.skip("EconomyManager not available (sc2 dependency)")
+        except (TypeError, AttributeError) as exc:
+            pytest.skip(f"EconomyManager construction failed: {exc}")
 
     def test_gas_overflow_threshold_lowered(self):
         """Gas overflow threshold should be 800 (improved: 3000->1000->800 to prevent gas banking)"""
@@ -326,13 +359,14 @@ class TestIntelManagerTechBuildings:
     """Test that NYDUSCANAL is tracked"""
 
     def setup_method(self):
+        _ensure_wzc_on_syspath()
         try:
             from wicked_zerg_challenger.intel_manager import IntelManager
+        except ImportError as exc:
+            pytest.skip(f"IntelManager not available: {exc}")
 
-            self.bot = MockBot()
-            self.intel = IntelManager(self.bot)
-        except ImportError:
-            pytest.skip("IntelManager not available")
+        self.bot = MockBot()
+        self.intel = IntelManager(self.bot)
 
     def test_nydus_canal_tracked(self):
         """NYDUSCANAL should be in the tech_buildings set for detection"""
@@ -350,20 +384,21 @@ class TestOverlordVisionNetwork:
     """Test overlord vision update frequency"""
 
     def setup_method(self):
+        _ensure_wzc_on_syspath()
         try:
             from wicked_zerg_challenger.overlord_vision_network import (
                 OverlordVisionNetwork,
             )
+        except ImportError as exc:
+            pytest.skip(f"OverlordVisionNetwork not available: {exc}")
 
-            self.bot = MockBot()
-            self.bot.units = Mock(return_value=Mock(idle=Mock(exists=False)))
-            self.bot.expansion_locations_list = [MockPoint2((50, 50))]
-            self.bot.game_info = Mock()
-            self.bot.game_info.map_center = MockPoint2((64, 64))
-            self.bot.watchtowers = []
-            self.vision = OverlordVisionNetwork(self.bot)
-        except ImportError:
-            pytest.skip("OverlordVisionNetwork not available")
+        self.bot = MockBot()
+        self.bot.units = Mock(return_value=Mock(idle=Mock(exists=False)))
+        self.bot.expansion_locations_list = [MockPoint2((50, 50))]
+        self.bot.game_info = Mock()
+        self.bot.game_info.map_center = MockPoint2((64, 64))
+        self.bot.watchtowers = []
+        self.vision = OverlordVisionNetwork(self.bot)
 
     @pytest.mark.asyncio
     async def test_update_frequency_5_seconds(self):
@@ -387,6 +422,7 @@ class TestEarlyScoutSystemMidGame:
     """Test mid-game rescouting feature"""
 
     def setup_method(self):
+        _ensure_wzc_on_syspath()
         try:
             from wicked_zerg_challenger.early_scout_system import EarlyScoutSystem
 
@@ -450,6 +486,7 @@ class TestStrategyManagerDTResponse:
     """Test DarkShrine/Oracle tech alert response in strategy"""
 
     def setup_method(self):
+        _ensure_wzc_on_syspath()
         try:
             from wicked_zerg_challenger.strategy_manager import (
                 EnemyRace,
@@ -503,6 +540,7 @@ class TestUpgradeManagerHydraRange:
     """Test that hydra range upgrade is researched early"""
 
     def setup_method(self):
+        _ensure_wzc_on_syspath()
         try:
             from wicked_zerg_challenger.upgrade_manager import EvolutionUpgradeManager
 
