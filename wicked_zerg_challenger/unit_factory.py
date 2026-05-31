@@ -86,9 +86,10 @@ class UnitFactory:
 
     def _update_gas_ratio_target(self) -> None:
         """
-        ??? ???ろ꼥??????ㅻ깹????좊읈??????ル늅筌??????????깆뱾 ?釉뚰???
+        Update gas ratio target based on detected enemy race.
         """
-        # Strategy Manager????????ろ꼥???嶺뚮㉡?€쾮???좊읈??嶺뚮ㅎ?닸쾮濡㏓섀?        strategy = getattr(self.bot, "strategy_manager", None)
+        # Prefer strategy manager detected race (scouted)
+        strategy = getattr(self.bot, "strategy_manager", None)
         if strategy:
             race = getattr(strategy, "detected_enemy_race", None)
             if race:
@@ -98,7 +99,7 @@ class UnitFactory:
                 )
                 return
 
-        # 癲ル슣???????ろ꼥???嶺뚮Ĳ?됮?
+        # Fallback to bot.enemy_race set at game start
         enemy_race = getattr(self.bot, "enemy_race", None)
         if enemy_race:
             race_str = str(enemy_race)
