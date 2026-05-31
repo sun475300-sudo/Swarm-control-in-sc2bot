@@ -571,10 +571,6 @@ class WickedZergBotProImpl(BotAI):
                 self.logger.warning(f"OpponentModeling on_end error: {e}")
                 traceback.print_exc()
 
-        # Performance Optimizer cleanup
-        # if self.performance_optimizer:
-        #     self.performance_optimizer.on_end(game_result)  # Method doesn't exist
-
         await super().on_end(game_result)
 
         # Training mode: Calculate final reward and save model
