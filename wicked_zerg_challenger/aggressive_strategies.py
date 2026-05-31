@@ -1044,7 +1044,7 @@ class AggressiveStrategyExecutor:
                             self._ventral_sacs_started = True
                             logger.info(f"Ventral Sacs upgrade started!")
                     except Exception as e:
-                        pass
+                        logger.debug(f"Ventral Sacs research request failed: {e}")
 
         # 2. 드랍용 대군주 지정
         if game_time >= config["drop_timing"] and not self._overlord_drop_active:
@@ -1103,7 +1103,7 @@ class AggressiveStrategyExecutor:
                             self.bot.do(overlord(AbilityId.LOAD, ling))
                         except (AttributeError, TypeError) as e:
                             # Overlord transport may fail if unit is busy or ability unavailable
-                            pass
+                            logger.debug(f"Overlord LOAD failed for ling {ling.tag}: {e}")
                 else:
                     # 근처에 저글링이 없으면 저글링들에게 대군주로 모이라고 명령
                     available_lings = zerglings.idle

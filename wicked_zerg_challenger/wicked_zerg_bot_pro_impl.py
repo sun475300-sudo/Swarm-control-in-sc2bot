@@ -290,8 +290,8 @@ class WickedZergBotProImpl(BotAI):
                 self.logger.info(
                     "[HOT_RELOAD] [*] ModelHotReloader initialized (30s interval)"
                 )
-            except ImportError:
-                pass
+            except ImportError as e:
+                self.logger.debug(f"[HOT_RELOAD] Module not available: {e}")
             except Exception as e:
                 self.logger.info(f"[HOT_RELOAD] Initialization failed: {e}")
 
@@ -479,15 +479,17 @@ class WickedZergBotProImpl(BotAI):
         if self.scoring_system:
             try:
                 self.scoring_system.on_step(iteration)
-            except Exception:
-                pass
+            except Exception as e:
+                self.logger.debug(f"[SCORING] on_step error (iter={iteration}): {e}")
 
         # * Awareness Engine: 실시간 상황 인식 + 자동 대응 *
         if self.awareness_engine:
             try:
                 self.awareness_engine.on_step(iteration)
-            except Exception:
-                pass
+            except Exception as e:
+                self.logger.debug(
+                    f"[AWARENESS] on_step error (iter={iteration}): {e}"
+                )
 
         # Personality module is called in bot_step_integration.py; do not call here.
 
@@ -524,8 +526,8 @@ class WickedZergBotProImpl(BotAI):
                 self.logger.info(
                     f"[AWARENESS] Final: {self.awareness_engine.get_situation_summary()}"
                 )
-            except Exception:
-                pass
+            except Exception as e:
+                self.logger.debug(f"[AWARENESS] Final summary failed: {e}")
 
         # * NEW: Personality Module - Send GG message
         if hasattr(self, "personality") and self.personality:

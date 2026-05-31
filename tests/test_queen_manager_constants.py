@@ -71,3 +71,148 @@ def test_queen_energy_thresholds_in_valid_range():
         GameConfig.QUEEN_TRANSFUSE_ENERGY_THRESHOLD,
     ):
         assert 0 <= value <= 200, f"queen energy threshold out of range: {value}"
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Behavioral edge-case tests (no sc2 dependency required)
+# ─────────────────────────────────────────────────────────────────────────────
+
+
+class _Pos:
+    """Tiny stand-in for sc2.position.Point2 with `.distance_to`."""
+
+    def __init__(self, x, y):
+        self.x = float(x)
+        self.y = float(y)
+
+    def distance_to(self, other):
+        ox = getattr(other, "x", other[0] if isinstance(other, tuple) else None)
+        oy = getattr(other, "y", other[1] if isinstance(other, tuple) else None)
+        if ox is None or oy is None:
+            return float("inf")
+        return ((self.x - ox) ** 2 + (self.y - oy) ** 2) ** 0.5
+
+
+class _FakeUnit:
+    def __init__(self, position, type_id=None):
+        self.position = position
+        self.type_id = type_id
+
+    def distance_to(self, other):
+        target = getattr(other, "position", other)
+        return self.position.distance_to(target)
+
+
+class _FakeBot:
+    """Minimal bot stub exposing only the attributes _is_base_under_attack uses."""
+
+    def __init__(self, *, time=60.0, townhalls=None, enemy_units=None):
+        self.time = time
+        self.townhalls = townhalls if townhalls is not None else []
+        self.enemy_units = enemy_units if enemy_units is not None else []
+
+
+def _make_manager_for(bot):
+    return QueenManager(bot)
+
+
+def test_is_base_under_attack_no_townhalls_returns_false():
+    bot = _FakeBot(townhalls=[], enemy_units=[_FakeUnit(_Pos(0, 0))])
+    mgr = _make_manager_for(bot)
+    assert mgr._is_base_under_attack() is False
+
+
+def test_is_base_under_attack_no_enemies_returns_false():
+    base = _FakeUnit(_Pos(50, 50))
+    bot = _FakeBot(townhalls=[base], enemy_units=[])
+    mgr = _make_manager_for(bot)
+    assert mgr._is_base_under_attack() is False
+
+
+def test_is_base_under_attack_far_enemy_returns_false():
+    base = _FakeUnit(_Pos(0, 0))
+    far_enemy = _FakeUnit(_Pos(100, 100))
+    bot = _FakeBot(time=60.0, townhalls=[base], enemy_units=[far_enemy])
+    mgr = _make_manager_for(bot)
+    assert mgr._is_base_under_attack() is False
+
+
+def test_is_base_under_attack_close_enemy_returns_true():
+    base = _FakeUnit(_Pos(0, 0))
+    close_enemy = _FakeUnit(_Pos(5, 5))  # ~7 tiles, < 20
+    bot = _FakeBot(time=60.0, townhalls=[base], enemy_units=[close_enemy])
+    mgr = _make_manager_for(bot)
+    assert mgr._is_base_under_attack() is True
+
+
+def test_is_base_under_attack_late_game_uses_tighter_range():
+    """Phase 36: after 180s the detection radius shrinks 20->18."""
+    base = _FakeUnit(_Pos(0, 0))
+    edge_enemy = _FakeUnit(_Pos(0, 19))  # 19 tiles: inside 20 but outside 18
+    bot_early = _FakeBot(time=60.0, townhalls=[base], enemy_units=[edge_enemy])
+    bot_late = _FakeBot(time=400.0, townhalls=[base], enemy_units=[edge_enemy])
+    assert _make_manager_for(bot_early)._is_base_under_attack() is True
+    assert _make_manager_for(bot_late)._is_base_under_attack() is False
+
+
+def test_is_base_under_attack_missing_attrs_returns_false():
+    """Missing townhalls / enemy_units must not crash, only return False."""
+
+    class Bare:
+        time = 0.0
+
+    mgr = _make_manager_for(Bare())
+    assert mgr._is_base_under_attack() is False
+
+
+def test_count_creep_tumors_handles_missing_structures():
+    bot = _FakeBot()
+    mgr = _make_manager_for(bot)
+    # _FakeBot has no `structures` attribute
+    assert mgr._count_creep_tumors() == 0
+
+
+def test_count_creep_tumors_handles_iteration_failure():
+    """If iterating self.bot.structures raises, we suppress and return 0."""
+
+    class Boom:
+        def __iter__(self):
+            raise RuntimeError("structures not ready")
+
+    class StructBot(_FakeBot):
+        structures = Boom()
+
+    mgr = _make_manager_for(StructBot())
+    assert mgr._count_creep_tumors() == 0
+
+
+def test_is_valid_creep_position_none_target():
+    bot = _FakeBot()
+    mgr = _make_manager_for(bot)
+    assert mgr._is_valid_creep_position(None) is False
+
+
+def test_is_valid_creep_position_no_has_creep_method():
+    """Without `bot.has_creep`, the helper returns False (safer default)."""
+    bot = _FakeBot()
+    mgr = _make_manager_for(bot)
+    assert mgr._is_valid_creep_position(_Pos(1, 1)) is False
+
+
+def test_is_valid_creep_position_returns_bool_from_has_creep():
+    class CreepBot(_FakeBot):
+        def has_creep(self, _target):
+            return True
+
+    mgr = _make_manager_for(CreepBot())
+    assert mgr._is_valid_creep_position(_Pos(1, 1)) is True
+
+
+def test_is_valid_creep_position_swallows_errors():
+    class BoomBot(_FakeBot):
+        def has_creep(self, _target):
+            raise RuntimeError("game state not ready")
+
+    mgr = _make_manager_for(BoomBot())
+    # Must NOT propagate; safe default is False
+    assert mgr._is_valid_creep_position(_Pos(1, 1)) is False
