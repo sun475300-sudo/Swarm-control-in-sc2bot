@@ -15,9 +15,7 @@ from unittest.mock import MagicMock
 
 import pytest
 
-sys.path.insert(
-    0, str(Path(__file__).parent.parent / "wicked_zerg_challenger")
-)
+sys.path.insert(0, str(Path(__file__).parent.parent / "wicked_zerg_challenger"))
 
 try:
     from realtime_awareness_engine import RealtimeAwarenessEngine

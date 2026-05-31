@@ -18,9 +18,7 @@ from unittest.mock import patch
 
 import pytest
 
-sys.path.insert(
-    0, str(Path(__file__).parent.parent / "wicked_zerg_challenger")
-)
+sys.path.insert(0, str(Path(__file__).parent.parent / "wicked_zerg_challenger"))
 
 try:
     from scoring_system import ScoringSystem
@@ -63,7 +61,8 @@ def test_on_step_failure_logs_at_debug_not_silent(scoring, caplog):
     with caplog.at_level(logging.DEBUG, logger="ScoringSystem"):
         scoring.on_step(iteration=1)
     debug_records = [
-        r for r in caplog.records
+        r
+        for r in caplog.records
         if r.name == "ScoringSystem" and r.levelno == logging.DEBUG
     ]
     assert debug_records, (
