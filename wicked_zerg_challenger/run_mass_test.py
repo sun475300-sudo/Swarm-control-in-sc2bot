@@ -43,7 +43,6 @@ _ensure_sc2_path()
 
 from sc2 import maps
 from sc2.data import Difficulty, Race
-from sc2.main import run_game
 from sc2.player import Bot, Computer
 from wicked_zerg_bot_pro_impl import WickedZergBotProImpl
 
@@ -166,6 +165,8 @@ def run_single_test(map_name, race, difficulty, diff_name, game_num, total):
         if map_instance is None:
             logger.error(f"  [ERROR] Map '{map_name}' not found!")
             return {"result": "error", "error": "map_not_found"}
+
+        from sc2.main import run_game
 
         start = time.time()
         result = run_game(
