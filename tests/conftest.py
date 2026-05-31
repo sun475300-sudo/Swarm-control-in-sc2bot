@@ -18,6 +18,27 @@ PROJECT_ROOT = Path(__file__).parent.parent
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
+# wicked_zerg_challenger/ 패키지 디렉터리도 sys.path 의 맨 앞에 둔다.
+# 봇 내부 모듈에는 `from utils.logger import get_logger` 와 같이
+# wicked_zerg_challenger 디렉터리를 루트처럼 쓰는 절대 임포트가 많기 때문에,
+# 프로젝트 루트의 `utils/` 더미 패키지에 가려져 ImportError 가 나는 것을 막는다.
+# pytest 가 importmode=prepend 로 rootdir 를 sys.path[0] 으로 재삽입하기 때문에
+# 항상 force-move 한다.
+WZC_ROOT = PROJECT_ROOT / "wicked_zerg_challenger"
+if WZC_ROOT.is_dir():
+    wzc_str = str(WZC_ROOT)
+    if wzc_str in sys.path:
+        sys.path.remove(wzc_str)
+    sys.path.insert(0, wzc_str)
+
+    # 잘못 잡힌 utils 캐시 제거 → 다음 import 시 WZC_ROOT/utils 가 잡힌다.
+    _existing_utils = sys.modules.get("utils")
+    if _existing_utils is not None:
+        _file = getattr(_existing_utils, "__file__", "") or ""
+        if "wicked_zerg_challenger" not in _file:
+            for _modname in [m for m in list(sys.modules) if m == "utils" or m.startswith("utils.")]:
+                sys.modules.pop(_modname, None)
+
 
 # ═══════════════════════════════════════════════════════
 # 경로 관련 Fixtures

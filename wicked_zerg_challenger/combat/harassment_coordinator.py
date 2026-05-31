@@ -72,6 +72,18 @@ class HarassmentCoordinator:
     견제 시스템 통합 관리
     """
 
+    # --- Tuning constants ----------------------------------------------------
+    # 4분 (240초) 이후를 "중반" 으로 간주: 전투 중이 아니어도 견제 발동.
+    MID_GAME_TIME_SEC = 240
+    # 저글링 run-by 발동에 필요한 최소 저글링 수 (본대 유지를 위한 하한).
+    MIN_ZERGLINGS_FOR_RUNBY = 8
+    # run-by 분대당 최소 인원.
+    MIN_ZERGLING_RUNBY_SQUAD = 6
+    # run-by 분대 최대 인원 (1분대 = 12 마리 이상이면 본대 약화).
+    MAX_ZERGLING_RUNBY_SQUAD = 12
+    # 1회 견제에 할당할 총 인원 계산 시 harassment_allocation_percent 에 곱하는 배수.
+    ZERGLING_RUNBY_ALLOCATION_MULTIPLIER = 2
+
     def __init__(self, bot: BotAI):
         self.bot = bot
         self.logger = get_logger("Harassment")
@@ -338,9 +350,9 @@ class HarassmentCoordinator:
         if game_time < self.zergling_runby_cooldown:
             return
 
-        # * Phase 17: 전투 중이 아니어도 주기적으로 견제 (4분 이후) *
+        # * Phase 17: 전투 중이 아니어도 주기적으로 견제 (중반 이후) *
         is_combat = self._is_main_army_fighting()
-        is_mid_game = game_time > 240  # 4분 이후
+        is_mid_game = game_time > self.MID_GAME_TIME_SEC
 
         # 전투 중이거나, 중반 이후에는 전투 없이도 견제
         if not is_combat and not is_mid_game:
@@ -350,8 +362,7 @@ class HarassmentCoordinator:
         zerglings = self.bot.units(UnitTypeId.ZERGLING).filter(
             lambda u: u.tag not in self.zergling_runby_tags
         )
-        # * Phase 32: 최소 8마리로 하향 (이전: 12 - 중반 전에 절대 미발동)
-        if len(zerglings) < 8:  # 최소 8마리 (본대 유지 위해)
+        if len(zerglings) < self.MIN_ZERGLINGS_FOR_RUNBY:
             return
 
         # * Phase 22: 멀티 베이스 동시 타격 *
@@ -365,10 +376,14 @@ class HarassmentCoordinator:
 
         # 분대 크기 결정 (공격모드에 따라)
         total_runby = min(
-            int(len(zerglings) * self.harassment_allocation_percent * 2),
-            12,  # 최대 12마리
+            int(
+                len(zerglings)
+                * self.harassment_allocation_percent
+                * self.ZERGLING_RUNBY_ALLOCATION_MULTIPLIER
+            ),
+            self.MAX_ZERGLING_RUNBY_SQUAD,
         )
-        total_runby = max(total_runby, 6)  # 최소 6마리
+        total_runby = max(total_runby, self.MIN_ZERGLING_RUNBY_SQUAD)
         per_squad = total_runby // len(targets) if len(targets) > 0 else total_runby
 
         candidates = zerglings.sorted(lambda u: u.distance_to(self.bot.start_location))
