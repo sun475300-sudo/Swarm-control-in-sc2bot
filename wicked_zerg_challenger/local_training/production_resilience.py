@@ -800,6 +800,11 @@ class ProductionResilience:
                     return await self._safe_train(larva, UnitTypeId.ZERGLING)
                 return False  # Wait for resources
 
+            # Once minimum defense is in place, hold larvae so the next
+            # Hatchery can land before we keep dumping resources into army.
+            if self._should_reserve_third_base_minerals():
+                return False
+
         # === COUNTER ENEMY COMPOSITION ===
         enemy_units = getattr(b, "enemy_units", [])
         counter_unit = self._get_counter_unit(
@@ -2174,8 +2179,13 @@ class ProductionResilience:
         siege_ids = ["SIEGETANK", "SIEGETANKSIEGED", "COLOSSUS", "DISRUPTOR"]
         anti_armor_ids = ["IMMORTAL"]
 
-        for enemy in enemy_units:
-            enemy_name = getattr(enemy.type_id, "name", "")
+        try:
+            enemy_iter = iter(enemy_units)
+        except TypeError:
+            return None
+
+        for enemy in enemy_iter:
+            enemy_name = getattr(getattr(enemy, "type_id", None), "name", "")
 
             if any(light_id in enemy_name for light_id in light_infantry_ids):
                 enemy_counts["light_infantry"] += 1
