@@ -800,6 +800,10 @@ class ProductionResilience:
                     return await self._safe_train(larva, UnitTypeId.ZERGLING)
                 return False  # Wait for resources
 
+            # === THIRD BASE RESERVE - Hold larvae for the next Hatchery ===
+            if self._should_reserve_third_base_minerals():
+                return False
+
         # === COUNTER ENEMY COMPOSITION ===
         enemy_units = getattr(b, "enemy_units", [])
         counter_unit = self._get_counter_unit(
