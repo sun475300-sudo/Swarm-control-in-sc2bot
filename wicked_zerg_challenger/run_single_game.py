@@ -13,7 +13,6 @@ import time
 
 from sc2 import maps
 from sc2.data import Difficulty, Race
-from sc2.main import run_game
 from sc2.player import Bot, Computer
 from wicked_zerg_bot_pro_impl import WickedZergBotProImpl as WickedZergBotPro
 
@@ -148,6 +147,8 @@ def main():
     if map_instance is None:
         logger.error(f"Map '{map_name}' not found!")
         return 1
+
+    from sc2.main import run_game
 
     # Retry once for transient websocket startup failures.
     last_error = None
