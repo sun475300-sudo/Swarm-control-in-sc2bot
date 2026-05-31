@@ -32,7 +32,18 @@ except ImportError:
     pytest.skip("ProductionResilience not importable", allow_module_level=True)
 
 
-def _make_bot(time, minerals, base_count, zerglings=0, roaches=0, hydras=0, mutas=0):
+def _make_bot(
+    time,
+    minerals,
+    base_count,
+    zerglings=0,
+    roaches=0,
+    hydras=0,
+    mutas=0,
+    has_spire=False,
+    has_hydra_den=False,
+    has_roach_warren=False,
+):
     bot = Mock()
     bot.time = time
     bot.minerals = minerals
@@ -56,12 +67,22 @@ def _make_bot(time, minerals, base_count, zerglings=0, roaches=0, hydras=0, muta
     def units(unit_type):
         return SimpleNamespace(amount=counts.get(unit_type, 0))
 
-    bot.units = Mock(side_effect=units)
-    bot.structures = Mock(
-        side_effect=lambda _u: SimpleNamespace(
-            ready=SimpleNamespace(exists=False, first=None), exists=False, amount=0
+    tech = {
+        UnitTypeId.SPIRE: has_spire,
+        UnitTypeId.HYDRALISKDEN: has_hydra_den,
+        UnitTypeId.ROACHWARREN: has_roach_warren,
+    }
+
+    def structures(unit_type):
+        ready_exists = tech.get(unit_type, False)
+        return SimpleNamespace(
+            ready=SimpleNamespace(exists=ready_exists, first=None),
+            exists=ready_exists,
+            amount=1 if ready_exists else 0,
         )
-    )
+
+    bot.units = Mock(side_effect=units)
+    bot.structures = Mock(side_effect=structures)
     return bot
 
 
@@ -137,3 +158,51 @@ def test_no_reserve_before_150s(resilience):
     asyncio.run(pr._produce_army_unit(Mock()))
 
     assert bot.can_afford.called
+
+
+def test_late_game_with_spire_prefers_mutalisk_over_hydra(resilience):
+    """Late game (>600s) + Spire ready → Mutalisk wins over Hydra/Roach/Zergling.
+
+    Regression guard: before the fix, this branch only checked Hydralisk and
+    never trained Mutalisks via the main pipeline (Spire investment wasted).
+    """
+    # Defense floor at >=360s is ``total_army_supply >= 10``. Zerglings count
+    # 0.5 each; pre-seed 20 so min-defense passes and we reach the priority
+    # branch we actually want to exercise.
+    bot = _make_bot(
+        time=700.0,
+        minerals=500,
+        base_count=4,
+        zerglings=20,
+        has_spire=True,
+        has_hydra_den=True,
+        has_roach_warren=True,
+    )
+    pr = resilience(bot)
+
+    asyncio.run(pr._produce_army_unit(Mock()))
+
+    # The first _safe_train call (positional arg [1]) must be a Mutalisk.
+    pr._safe_train.assert_called_once()
+    trained_unit = pr._safe_train.call_args[0][1]
+    assert (
+        trained_unit == UnitTypeId.MUTALISK
+    ), f"Expected MUTALISK first, got {trained_unit}"
+
+
+def test_late_game_without_spire_falls_through_to_hydra(resilience):
+    """No Spire → late-game branch is skipped, mid-game Hydra path runs."""
+    bot = _make_bot(
+        time=700.0,
+        minerals=500,
+        base_count=4,
+        zerglings=20,
+        has_spire=False,
+        has_hydra_den=True,
+    )
+    pr = resilience(bot)
+
+    asyncio.run(pr._produce_army_unit(Mock()))
+
+    trained_unit = pr._safe_train.call_args[0][1]
+    assert trained_unit == UnitTypeId.HYDRALISK

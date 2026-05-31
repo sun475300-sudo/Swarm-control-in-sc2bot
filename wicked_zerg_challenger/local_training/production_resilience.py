@@ -828,6 +828,11 @@ class ProductionResilience:
         # Late game (10min+)
         if game_time > 600 and has_spire:
             # Priority: Muta > Hydra > Roach > Zergling
+            # FIX: Muta was previously skipped here — the only Mutalisk path was
+            # the resource-flush block in _produce_mutalisks, never the main
+            # army pipeline. Spire investment was wasted unless ignore_caps fired.
+            if b.can_afford(UnitTypeId.MUTALISK) and b.supply_left >= 2:
+                return await self._safe_train(larva, UnitTypeId.MUTALISK)
             if (
                 has_hydra_den
                 and b.can_afford(UnitTypeId.HYDRALISK)
