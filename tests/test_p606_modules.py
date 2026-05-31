@@ -17,11 +17,19 @@ _HAS_NUMPY = importlib.util.find_spec("numpy") is not None
 
 
 def _safe_import(module_path, class_name):
+    """Import (module_path).class_name. Returns the class, or None if the
+    module isn't importable. Distinguishes ModuleNotFoundError (expected when
+    the module isn't shipped in this checkout) from a real syntax/import-time
+    error (which we re-raise so it isn't silently masked)."""
     try:
         mod = importlib.import_module(module_path)
-        return getattr(mod, class_name, None)
-    except Exception:
+    except ModuleNotFoundError:
         return None
+    except ImportError:
+        # An ImportError that isn't a missing module = bad transitive dep.
+        # Treat as not-importable but don't mask other bugs.
+        return None
+    return getattr(mod, class_name, None)
 
 
 # ── MAPPO ──────────────────────────────────────
