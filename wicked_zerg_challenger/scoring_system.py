@@ -153,7 +153,9 @@ class ScoringSystem:
             self._evaluate_adaptation(game_time)
             self._evaluate_survival(game_time)
         except Exception:
-            pass
+            # Hot path (called every scoring tick); keep at debug to avoid
+            # spam but never silently drop the stacktrace.
+            logger.debug("ScoringSystem.evaluate_all failed", exc_info=True)
 
     # =========================================================================
     # 1. Combat (전투) 평가
@@ -386,7 +388,7 @@ class ScoringSystem:
                         if hasattr(enemy, "distance_to") and enemy.distance_to(th) < 20:
                             near_base_enemies += 1
             except Exception:
-                pass
+                logger.debug("near-base enemy scan failed", exc_info=True)
             if near_base_enemies > 3:
                 self.domains["defense"].add(
                     +3, f"기지 근접 적 {near_base_enemies}기 방어 중"
@@ -410,7 +412,7 @@ class ScoringSystem:
                             -1, f"유휴 퀸 {idle_queens.amount}마리 - 인젝트 필요"
                         )
             except Exception:
-                pass
+                logger.debug("queen-inject defense probe failed", exc_info=True)
 
     # =========================================================================
     # 6. Strategy (전략) 평가
@@ -445,7 +447,7 @@ class ScoringSystem:
                     if has_lair:
                         self.domains["strategy"].add(+2, "레어/하이브 테크업 완료")
                 except Exception:
-                    pass
+                    logger.debug("mid-game tech probe failed", exc_info=True)
         else:
             # 후반: 200 서플 + 공격
             if supply_used >= 180:
@@ -480,7 +482,7 @@ class ScoringSystem:
                     -2, f"유휴 군대 {len(idle_army)}기 - 명령 필요"
                 )
         except Exception:
-            pass
+            logger.debug("idle-army micro probe failed", exc_info=True)
 
     # =========================================================================
     # 8. Macro (매크로) 평가
@@ -509,7 +511,7 @@ class ScoringSystem:
                     self.domains["macro"].add(+1, "크립 종양 확산")
                     self._creep_tumor_count = tumors.amount
         except Exception:
-            pass
+            logger.debug("creep-tumor macro probe failed", exc_info=True)
 
     # =========================================================================
     # 9. Adaptation (적응) 평가
@@ -755,7 +757,9 @@ class ScoringSystem:
             with open(filepath, "w", encoding="utf-8") as f:
                 json.dump(existing, f, indent=2, ensure_ascii=False)
         except Exception:
-            pass
+            # Persisting reports must never crash the game loop, but a
+            # silent loss makes report inconsistencies impossible to debug.
+            logger.warning("failed to persist score report", exc_info=True)
 
     def _load_cumulative_score(self) -> Dict:
         """누적 점수 로드"""
@@ -765,7 +769,11 @@ class ScoringSystem:
                 with open(filepath, "r", encoding="utf-8") as f:
                     return json.load(f)
         except Exception:
-            pass
+            # Corrupt JSON / IO error falls back to a fresh score block.
+            logger.warning(
+                "failed to load cumulative_score.json; starting fresh",
+                exc_info=True,
+            )
         return {"total": 0, "blocks": []}
 
     def _save_cumulative_score(self) -> None:
@@ -775,4 +783,4 @@ class ScoringSystem:
             with open(filepath, "w", encoding="utf-8") as f:
                 json.dump(self._cumulative_score, f, indent=2, ensure_ascii=False)
         except Exception:
-            pass
+            logger.warning("failed to persist cumulative_score.json", exc_info=True)
