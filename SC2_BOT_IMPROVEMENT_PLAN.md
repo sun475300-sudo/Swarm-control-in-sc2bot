@@ -136,3 +136,52 @@ Python은 마지막 정의만 유지하므로 첫 번째 구현은 사용되지 
 - [ ] R2-4 `wicked_zerg_bot_pro_impl.py` 잔존 mojibake 한글 주석 정리
 - [ ] R2-5 신규 점검: `ast` 분석으로 미사용 import / 사용되지 않는 메서드 추가 발견
 
+## 라운드 2-6 작업 완료 요약
+
+라운드별로 발견·수정한 잠재 결함:
+
+### Round 2 (mojibake → 코드 삼킴)
+- `unit_factory.py:439` — `unit_requests = {}` 주석에 갇혀 NameError 위험
+- `unit_factory.py:48/167/216` — 부수적 mojibake 정리
+- `dynamic_resource_balancer.py:175` — 주석 내부 가짜 `return {`
+
+### Round 3 (없는 메서드 호출)
+- `strategy_manager_v2.evaluate_strategy_effectiveness`
+  → `_estimate_enemy_army` (없음) → `_estimate_enemy_army_supply`
+  → `_get_worker_count` (없음) → `_count_workers`
+- `nydus_network_trainer._manage_nydus_operations`
+  → `_command_deployed_units` (구현 없음) — 호출 제거
+
+### Round 4 (typo 추가 발견)
+- `strategy_manager_v2.evaluate_opponent_profile:1782` 동일한 `_estimate_enemy_army` typo
+
+### Round 5 (조건부 import의 module-level class 정의)
+- `local_training/imitation_learner.py` `class ImitationNetwork(nn.Module)`
+  → torch 미설치 시 `nn=None` 으로 `AttributeError` 발생
+- `local_training/ppo_agent.py` 동일 패턴 `ActorCriticNetwork`
+- `_NetworkBase` placeholder 도입으로 import 안전 확보
+
+### Round 6 (pyflakes 정적 분석)
+- `production_resilience.force_resource_dump:1452` `game_time` 미정의
+- `production_resilience.build_terran_counters` 중복 정의 (L1467, L1985)
+
+### Round 7~9 (추가 점검)
+- pyflakes 전체 디렉토리 스캔 — undefined / redefinition 없음
+- `is_engaging`, `is_destroyed`, `is_active` 등 `is_*` 속성은
+  내부 데이터 클래스 정의로 false positive 확인
+- mock 환경에서 `on_start` 50+ 서브시스템 정상 초기화 검증
+
+## 점검 결과 통계
+
+| 라운드 | 신규 결함 | 누적 통과 테스트 |
+|--------|----------|-----------------|
+| 0 (baseline) | 7 실패 | 661 |
+| 1 (P0+P1+P2) | 7 fix | 678 |
+| 2 (mojibake) | 5 fix | 678 |
+| 3 (없는 메서드) | 3 fix | 678 |
+| 4 (typo) | 1 fix | 678 |
+| 5 (조건부 import) | 2 fix | 678 |
+| 6 (pyflakes) | 2 fix | 678 |
+| **합계** | **20개 결함 수정** | **678 통과** |
+
+
