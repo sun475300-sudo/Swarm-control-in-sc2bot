@@ -26,10 +26,12 @@ try:
     import torch.optim as optim
 
     TORCH_AVAILABLE = True
+    _NN_MODULE_BASE = nn.Module
 except ImportError:
     TORCH_AVAILABLE = False
     torch = None
     nn = None
+    _NN_MODULE_BASE = object
 
 
 class ReplayActionExtractor:
@@ -240,7 +242,7 @@ class ReplayActionExtractor:
             return False
 
 
-class ImitationNetwork(nn.Module):
+class ImitationNetwork(_NN_MODULE_BASE):
     """
     모방학습용 신경망
 
