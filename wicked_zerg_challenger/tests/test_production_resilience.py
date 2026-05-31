@@ -361,6 +361,39 @@ class TestProductionResilience(unittest.TestCase):
 
         self.assertTrue(self.resilience._should_reserve_third_base_minerals())
 
+    async def test_force_resource_dump_runs_without_namerror_on_early_game(self):
+        """Regression: force_resource_dump used to crash with
+        NameError: name 'game_time' is not defined when the
+        third-base reserve guard was reached before 5 minutes."""
+        self.bot.time = 120.0  # < 300s so the guard window is active
+        self.bot.minerals = 500
+        self.bot.vespene = 50
+        self.bot.supply_left = 4
+        self.bot.townhalls.amount = 2
+        self.bot.townhalls.ready.amount = 2
+        self.bot.already_pending = Mock(return_value=0)
+
+        def structures(unit_type):
+            return SimpleNamespace(
+                exists=(unit_type == UnitTypeId.ROACHWARREN),
+                ready=SimpleNamespace(exists=False),
+            )
+
+        self.bot.structures = Mock(side_effect=structures)
+
+        def units(unit_type):
+            return SimpleNamespace(
+                amount=0,
+                exists=False,
+                ready=SimpleNamespace(amount=0, exists=False),
+            )
+
+        self.bot.units = Mock(side_effect=units)
+
+        # Should complete without raising. Coverage is enough — the bug we
+        # are guarding against was a NameError, not a state change.
+        await self.resilience.force_resource_dump()
+
 
 # Run async tests
 if __name__ == "__main__":
