@@ -60,6 +60,7 @@ from combat.rally_point_calculator import (
     update_rally_point,
 )
 
+from game_config import GameConfig
 from utils.frame_cache import FrameCache
 from utils.distance_cache import DistanceCache
 from utils.game_constants import GameFrequencies
@@ -950,7 +951,7 @@ class CombatManager:
                                     retreat_units.append(u)
                                 continue
                             # Low HP -> retreat
-                            if u.health_percentage < 0.30:
+                            if u.health_percentage < GameConfig.UNIT_CRITICAL_HP_THRESHOLD:
                                 self._harass_retreating_tags.add(u.tag)
                                 retreat_units.append(u)
                                 continue
@@ -2812,36 +2813,6 @@ class CombatManager:
             if self._has_units(enemy_units):
                 await self._mutalisk_attack(mutalisks, enemy_units)
 
-    def _find_harass_target(self):
-        """Find best harassment target (enemy base with workers)."""
-        # Try enemy main base
-        if (
-            hasattr(self.bot, "enemy_start_locations")
-            and self.bot.enemy_start_locations
-        ):
-            return self.bot.enemy_start_locations[0]
-
-        # Try known enemy structures
-        enemy_structures = getattr(self.bot, "enemy_structures", [])
-        if enemy_structures:
-            # Find townhalls
-            townhall_names = [
-                "NEXUS",
-                "COMMANDCENTER",
-                "ORBITALCOMMAND",
-                "PLANETARYFORTRESS",
-                "HATCHERY",
-                "LAIR",
-                "HIVE",
-            ]
-            for struct in enemy_structures:
-                if getattr(struct.type_id, "name", "") in townhall_names:
-                    return struct.position
-            # Any structure as fallback
-            return enemy_structures[0].position
-
-        return None
-
     async def _execute_harass(self, mutalisks, enemy_units):
         """
         Execute harassment - attack workers, retreat from anti-air.
@@ -2855,14 +2826,15 @@ class CombatManager:
             return
 
         # * REGEN DANCE: Separate damaged units during harassment *
+        # execute_regen_dance issues regen-position move commands internally;
+        # the caller only needs combat_ready for engagement decisions.
         if self.mutalisk_micro:
             current_time = getattr(self.bot, "time", 0)
-            combat_ready, regenerating = await self.mutalisk_micro.execute_regen_dance(
+            combat_ready, _ = await self.mutalisk_micro.execute_regen_dance(
                 mutalisks, current_time, self.bot
             )
         else:
             combat_ready = list(mutalisks)
-            regenerating = []
 
         if not combat_ready:
             return  # All units regenerating
@@ -2967,7 +2939,7 @@ class CombatManager:
                     retreat_units.append(ling)
                 continue
             # Low HP -> retreat
-            if ling.health_percentage < 0.30:
+            if ling.health_percentage < GameConfig.UNIT_CRITICAL_HP_THRESHOLD:
                 self._harass_retreating_tags.add(ling.tag)
                 retreat_units.append(ling)
                 continue
@@ -3384,7 +3356,7 @@ class CombatManager:
                 "WIDOWMINE",
             ]:
                 siege.append(enemy)
-            elif enemy.health_percentage < 0.3:
+            elif enemy.health_percentage < GameConfig.ENEMY_LOW_HP_PRIORITY_THRESHOLD:
                 low_hp.append(enemy)
             else:
                 other.append(enemy)
@@ -3509,19 +3481,8 @@ class CombatManager:
             "PHOENIX",
         }
 
-        # 비전투 유닛 (정찰용, 위협이 낮음)
-        non_combat_names = {
-            "SCV",
-            "PROBE",
-            "DRONE",
-            "MULE",
-            "OBSERVER",
-            "OVERLORD",
-            "OVERSEER",
-            "WARPPRISM",
-            "RAVEN",
-            "CHANGELING",
-        }
+        # 비전투 유닛(SCV/PROBE/DRONE/MULE/OBSERVER/OVERLORD/OVERSEER/...)는
+        # 굳이 분류하지 않아도, combat_unit_names에 안 들어가니 자연스레 제외된다.
 
         for th in self.bot.townhalls:
             # 일반 감지 거리

@@ -166,30 +166,6 @@ class SmartResourceBalancer:
 
         return mineral_workers / gas_workers
 
-        mineral_workers = 0
-        gas_workers = 0
-
-        for worker in self.bot.workers:
-            if worker.is_gathering and hasattr(worker, "order_target"):
-                target = worker.order_target
-                if target:
-                    # 가스 채취 중
-                    if hasattr(target, "type_id"):
-                        type_name = getattr(target.type_id, "name", "").upper()
-                        if (
-                            "EXTRACTOR" in type_name
-                            or "ASSIMILATOR" in type_name
-                            or "REFINERY" in type_name
-                        ):
-                            gas_workers += 1
-                            continue
-                    # 미네랄 채취 중
-                    mineral_workers += 1
-
-        if gas_workers == 0:
-            return 10.0  # 가스 일꾼 없음
-
-        return mineral_workers / gas_workers
 
     def _needs_rebalancing(
         self,
@@ -302,30 +278,6 @@ class SmartResourceBalancer:
             if closest_mineral:
                 self.bot.do(worker.gather(closest_mineral))
                 moved += 1
-
-        return moved
-        target_moves = 3  # 한번에 3명씩 이동
-
-        # 가스 채취 중인 일꾼 찾기
-        gas_workers = []
-        for worker in self.bot.workers:
-            if worker.is_gathering and hasattr(worker, "order_target"):
-                target = worker.order_target
-                if target and hasattr(target, "type_id"):
-                    type_name = getattr(target.type_id, "name", "").upper()
-                    if "EXTRACTOR" in type_name:
-                        gas_workers.append(worker)
-
-        # 가장 가까운 기지의 미네랄로 이동
-        for worker in gas_workers[:target_moves]:
-            closest_base = self.bot.townhalls.closest_to(worker)
-            if closest_base:
-                # 미네랄 필드 찾기
-                mineral_fields = self.bot.mineral_field.closer_than(10, closest_base)
-                if mineral_fields:
-                    closest_mineral = mineral_fields.closest_to(worker)
-                    self.bot.do(worker.gather(closest_mineral))
-                    moved += 1
 
         return moved
 

@@ -7,9 +7,17 @@ import unittest
 from pathlib import Path
 
 os.environ["PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION"] = "python"
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..")))
+import importlib.util as _importlib_util
 
-from scripts.meta_adapter import MetaAdapter
+_PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+sys.path.insert(0, _PROJECT_ROOT)
+
+_META_PATH = os.path.join(_PROJECT_ROOT, "scripts", "meta_adapter.py")
+_spec = _importlib_util.spec_from_file_location("scripts_meta_adapter", _META_PATH)
+_mod = _importlib_util.module_from_spec(_spec)
+sys.modules["scripts_meta_adapter"] = _mod
+_spec.loader.exec_module(_mod)
+MetaAdapter = _mod.MetaAdapter
 
 
 class TestMetaAdapter(unittest.TestCase):

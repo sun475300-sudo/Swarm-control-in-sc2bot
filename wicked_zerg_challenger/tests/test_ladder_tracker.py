@@ -6,9 +6,17 @@ import unittest
 from pathlib import Path
 
 os.environ["PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION"] = "python"
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..")))
+import importlib.util as _importlib_util
 
-from scripts.ladder_tracker import LadderTracker
+_PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+sys.path.insert(0, _PROJECT_ROOT)
+
+_LADDER_PATH = os.path.join(_PROJECT_ROOT, "scripts", "ladder_tracker.py")
+_spec = _importlib_util.spec_from_file_location("scripts_ladder_tracker", _LADDER_PATH)
+_mod = _importlib_util.module_from_spec(_spec)
+sys.modules["scripts_ladder_tracker"] = _mod
+_spec.loader.exec_module(_mod)
+LadderTracker = _mod.LadderTracker
 
 
 class TestLadderTracker(unittest.TestCase):

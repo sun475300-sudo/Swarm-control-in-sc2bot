@@ -39,6 +39,7 @@ try:
 except ImportError:
     DefenseConfig = None
 
+from game_config import GameConfig
 from utils.logger import get_logger
 
 
@@ -734,7 +735,7 @@ class DefenseCoordinator:
             fight_count = 0
             for worker in workers_in_danger:
                 # * HP 50% 이하면 즉시 대피 *
-                if worker.health_percentage < 0.5:
+                if worker.health_percentage < GameConfig.UNIT_LOW_HP_RETREAT_THRESHOLD:
                     near_minerals = self.bot.mineral_field.closest_to(worker)
                     if near_minerals:
                         self.bot.do(worker.gather(near_minerals))

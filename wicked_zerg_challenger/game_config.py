@@ -120,6 +120,11 @@ class GameConfig:
     ENGAGE_ARMY_RATIO = 0.7  # 적 병력 70% 이상 시 교전
     RETREAT_ARMY_RATIO = 0.4  # 아군 병력 40% 이하 시 후퇴
 
+    # 개별 유닛 HP 임계값 (REMAINING_ISSUES #6 — magic-number 정리)
+    UNIT_LOW_HP_RETREAT_THRESHOLD = 0.5     # 일반 유닛 후퇴 (heavy / worker)
+    UNIT_CRITICAL_HP_THRESHOLD = 0.30       # 즉시 후퇴 / harass 중단 (zergling 등)
+    ENEMY_LOW_HP_PRIORITY_THRESHOLD = 0.3   # 적 타겟 우선순위: 빈사 적 처리
+
     # 병력 비율
     TARGET_ARMY_RATIO = 0.5  # 목표 군대 비율 (50%)
     DRONE_ARMY_BALANCE_RATIO = 1.5  # 드론:군대 = 1.5:1
