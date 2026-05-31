@@ -682,6 +682,12 @@ class OpponentModeling:
             )
             return False
 
+        # Treat empty file as "no data yet" — not an error. Brand-new
+        # temp files (created by tests) and freshly-touched data files
+        # both land here.
+        if os.path.getsize(self.data_file) == 0:
+            return False
+
         try:
             with open(self.data_file, "r", encoding="utf-8") as f:
                 data = json.load(f)
@@ -697,6 +703,11 @@ class OpponentModeling:
             )
             return True
 
+        except json.JSONDecodeError as e:
+            self.logger.warning(
+                f"[OPPONENT_MODELING] Models file corrupt, starting fresh: {e}"
+            )
+            return False
         except Exception as e:
             self.logger.error(f"[OPPONENT_MODELING] Failed to load models: {e}")
             return False
@@ -731,7 +742,7 @@ class OpponentModeling:
 
     def on_game_start(self, opponent_id: str, opponent_race=None):
         """게임 시작 시 호출 - 적 추적 시작"""
-        self.current_opponent = opponent_id
+        self.current_opponent_id = opponent_id
         # * FIX: GameHistory dataclass에 맞는 필드로 초기화
         race_name = (
             opponent_race.name
@@ -762,28 +773,23 @@ class OpponentModeling:
                 f"[OPPONENT_MODELING] Known opponent: {opponent_id} ({self.opponent_models[opponent_id].games_played} games)"
             )
 
-    async def on_step(self, iteration: int):
-        """매 프레임 호출 - 신호 감지"""
-        if not self.current_opponent or not self.bot:
-            return
-
-        game_time = self.bot.time
-
-        # Only detect signals in early game (0-180s)
-        if game_time <= 180.0:
-            await self._detect_early_signals(game_time)
+    # NOTE: on_step is intentionally NOT redefined here. The earlier
+    # async on_step (build-order tracking, timing-attack detection, tech
+    # progression, blackboard updates) is the canonical entry point.
+    # A simpler duplicate used to live here, silently shadowing the rich
+    # version under Python's late-binding rules.
 
     def on_game_end(self, won: bool, lost: bool):
         """게임 종료 시 호출 - 데이터 저장"""
-        if not self.current_opponent or not self.current_game_history:
+        if not self.current_opponent_id or not self.current_game_history:
             return
 
         # Update game history
         self.current_game_history.game_won = won
         self.current_game_history.game_lost = lost
-        self.current_game_history.early_signals = [
-            s.value for s in self.observed_signals
-        ]
+        # observed_signals is Set[str] of signal-name strings — already
+        # populated via signal.value, so just snapshot it as a list.
+        self.current_game_history.early_signals = list(self.observed_signals)
 
         # Detect strategy (placeholder - would need more logic)
         if self.intel:
@@ -791,30 +797,30 @@ class OpponentModeling:
             pass
 
         # Update opponent model
-        model = self.opponent_models[self.current_opponent]
+        model = self.opponent_models[self.current_opponent_id]
         model.update_from_game(self.current_game_history)
 
         # Save to disk
         self.save_models()
 
         self.logger.info(
-            f"[OPPONENT_MODELING] Game data saved for {self.current_opponent}"
+            f"[OPPONENT_MODELING] Game data saved for {self.current_opponent_id}"
         )
 
     def get_predicted_strategy(self) -> Tuple[Optional[str], float]:
         """현재 적의 전략 예측"""
         if (
-            not self.current_opponent
-            or self.current_opponent not in self.opponent_models
+            not self.current_opponent_id
+            or self.current_opponent_id not in self.opponent_models
         ):
             return (None, 0.0)
 
-        model = self.opponent_models[self.current_opponent]
+        model = self.opponent_models[self.current_opponent_id]
 
-        # If we have observed signals, use them for prediction
+        # If we have observed signals, use them for prediction.
+        # observed_signals is already Set[str] of signal-name strings.
         if self.observed_signals:
-            signal_strings = [s.value for s in self.observed_signals]
-            return model.predict_strategy(signal_strings)
+            return model.predict_strategy(list(self.observed_signals))
 
         # Otherwise, return most common strategy
         if model.strategy_frequency:
