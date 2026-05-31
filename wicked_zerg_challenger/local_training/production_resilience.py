@@ -800,8 +800,18 @@ class ProductionResilience:
                     return await self._safe_train(larva, UnitTypeId.ZERGLING)
                 return False  # Wait for resources
 
+            # Hold larva when minimum defense is met but we still owe the
+            # next Hatchery — prevents the bot from spending into the
+            # expansion reserve and stalling the third base.
+            if self._should_reserve_third_base_minerals():
+                return False
+
         # === COUNTER ENEMY COMPOSITION ===
-        enemy_units = getattr(b, "enemy_units", [])
+        enemy_units = getattr(b, "enemy_units", []) or []
+        try:
+            iter(enemy_units)
+        except TypeError:
+            enemy_units = []
         counter_unit = self._get_counter_unit(
             enemy_units, has_roach_warren, has_hydra_den, has_spire
         )
