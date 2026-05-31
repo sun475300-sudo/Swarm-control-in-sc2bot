@@ -11,12 +11,12 @@ import sys
 import time
 from pathlib import Path
 
-import sc2
 from game_statistics import GameStatistics
-from sc2 import maps
 from sc2.data import Difficulty, Race
-from sc2.main import run_game
-from sc2.player import Bot, Computer
+
+# Heavy imports (sc2.main pulls in mpyq, sc2.maps depends on SC2 client)
+# are deferred to run_single_game() so this module is importable without
+# the SC2 client installed (e.g. in CI / pytest collection).
 
 logger = logging.getLogger("AdaptiveTrainer")
 
@@ -93,6 +93,11 @@ def run_single_game(
     total: int,
 ):
     """단일 게임 실행"""
+    import sc2
+    from sc2 import maps
+    from sc2.main import run_game
+    from sc2.player import Bot, Computer
+
     try:
         create_lock()
         kill_all_sc2()

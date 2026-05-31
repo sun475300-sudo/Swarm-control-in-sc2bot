@@ -11,11 +11,9 @@ import sys
 import time
 from datetime import datetime
 
-from sc2 import maps
 from sc2.data import Difficulty, Race, Result
-from sc2.main import run_game
-from sc2.player import Bot, Computer
-from wicked_zerg_bot_pro_impl import WickedZergBotProImpl as WickedZergBotPro
+
+# Heavy imports deferred to run_single_game() so this module is importable in CI/tests.
 
 logger = logging.getLogger(__name__)
 
@@ -61,6 +59,11 @@ def _ensure_sc2_path():
 
 def run_single_game(difficulty, game_num, total_games):
     """Run a single game and return result."""
+    from sc2 import maps
+    from sc2.main import run_game
+    from sc2.player import Bot, Computer
+    from wicked_zerg_bot_pro_impl import WickedZergBotProImpl as WickedZergBotPro
+
     logger.info("\n" + "=" * 70)
     logger.info(f"  GAME #{game_num}/{total_games} - {difficulty.name}")
     logger.info("=" * 70)
