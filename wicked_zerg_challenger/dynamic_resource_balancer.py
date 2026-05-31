@@ -172,8 +172,8 @@ class DynamicResourceBalancer:
 
         # ?먯썝 ?곹깭???곕Ⅸ ?좊떅 援ъ꽦
         if self.resource_state == "CRITICAL":
+            # CRITICAL: 가스 의존 비중을 최대로 끌어올림
             return {
-            # 誘몃꽕??怨쇰떎 -> 媛???좊떅 理쒕???            return {
                 "hydralisk": gas_ratio * 0.50,
                 "mutalisk": gas_ratio * 0.30,
                 "corruptor": gas_ratio * 0.20,
