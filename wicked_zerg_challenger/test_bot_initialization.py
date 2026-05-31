@@ -1,227 +1,136 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""
-Test script to verify bot initialization and manager connections.
+"""Bot initialization smoke tests.
+
+Verifies that critical modules import, that the bot exposes the
+manager attributes the integration layer relies on, and that the
+delegation hooks expected by bot_step_integration still exist in the
+codebase.
+
+Previously this file claimed "ALL TESTS PASSED" while doing nothing
+real: import blocks were `try: pass`, pattern checks ignored their
+own results, and no logging handler was configured so the output was
+silent. Rewritten to be honest with pytest.
 """
 
+import importlib
 import logging
 import os
 import sys
 
+import pytest
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(levelname)s %(name)s: %(message)s",
+)
 logger = logging.getLogger("TestBotInitialization")
 
-# Add current directory to path
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-
-def test_imports():
-    """Test that all critical modules can be imported."""
-    logger.info("=" * 60)
-    logger.info("Testing Module Imports")
-    logger.info("=" * 60)
-
-    try:
-        pass
-
-        logger.info("WickedZergBotProImpl imported successfully")
-    except Exception as e:
-        logger.error(f"Failed to import WickedZergBotProImpl: {e}")
-        return False
-
-    try:
-        pass
-
-        logger.info("BotStepIntegrator imported successfully")
-    except Exception as e:
-        logger.error(f"Failed to import BotStepIntegrator: {e}")
-        return False
-
-    try:
-        pass
-
-        logger.info("ProductionResilience imported successfully")
-    except Exception as e:
-        logger.error(f"Failed to import ProductionResilience: {e}")
-        return False
-
-    try:
-        pass
-
-        logger.info("StrategyManager imported successfully")
-    except Exception as e:
-        logger.error(f"Failed to import StrategyManager: {e}")
-        return False
-
-    try:
-        pass
-
-        logger.info("RogueTacticsManager imported successfully")
-    except Exception as e:
-        logger.error(f"Failed to import RogueTacticsManager: {e}")
-        return False
-
-    try:
-        pass
-
-        logger.info("UnitFactory imported successfully")
-    except Exception as e:
-        logger.error(f"Failed to import UnitFactory: {e}")
-        return False
-
-    try:
-        pass
-
-        logger.info("BoidsSwarmController imported successfully")
-    except Exception as e:
-        logger.error(f"Failed to import BoidsSwarmController: {e}")
-        return False
-
-    return True
+# Modules every bot startup depends on. If any of these fail to import,
+# the bot cannot run at all, so we want a hard failure (not a logged
+# warning).
+_REQUIRED_MODULES = [
+    ("wicked_zerg_bot_pro_impl", "WickedZergBotProImpl"),
+    ("bot_step_integration", "BotStepIntegrator"),
+    ("local_training.production_resilience", "ProductionResilience"),
+    ("strategy_manager", "StrategyManager"),
+    ("rogue_tactics_manager", "RogueTacticsManager"),
+    ("unit_factory", "UnitFactory"),
+    ("combat.boids_swarm_control", "BoidsSwarmController"),
+]
 
 
-def test_bot_structure():
-    """Test bot initialization structure."""
-    logger.info("\n" + "=" * 60)
-    logger.info("Testing Bot Structure")
-    logger.info("=" * 60)
-
-    try:
-        from wicked_zerg_bot_pro_impl import WickedZergBotProImpl
-
-        # Create a mock bot instance (won't actually initialize game)
-        bot = WickedZergBotProImpl(train_mode=False, instance_id=0)
-
-        # Check that manager attributes exist
-        managers = [
-            "intel",
-            "economy",
-            "production",
-            "combat",
-            "scout",
-            "micro",
-            "queen_manager",
-            "strategy_manager",
-            "performance_optimizer",
-            "formation_controller",
-            "rogue_tactics",
-            "transformer_model",
-            "hierarchical_rl",
-        ]
-
-        for manager in managers:
-            if hasattr(bot, manager):
-                logger.info(f"Bot has attribute: {manager}")
-            else:
-                logger.info(f"Bot missing attribute: {manager}")
-
-        # Check that on_step method exists
-        if hasattr(bot, "on_step"):
-            logger.info("Bot has on_step method")
-        else:
-            logger.info("Bot missing on_step method")
-
-        # Check that on_start method exists
-        if hasattr(bot, "on_start"):
-            logger.info("Bot has on_start method")
-        else:
-            logger.info("Bot missing on_start method")
-
-        return True
-
-    except Exception as e:
-        logger.error(f"Failed to test bot structure: {e}")
-        import traceback
-
-        traceback.print_exc()
-        return False
+@pytest.mark.parametrize("module_name,symbol", _REQUIRED_MODULES)
+def test_required_module_imports(module_name, symbol):
+    module = importlib.import_module(module_name)
+    assert hasattr(module, symbol), (
+        f"Module {module_name} loaded but is missing expected symbol {symbol!r}"
+    )
 
 
-def verify_code_patterns():
-    """Verify critical code patterns exist in files."""
-    logger.info("\n" + "=" * 60)
-    logger.info("Verifying Critical Code Patterns")
-    logger.info("=" * 60)
-
-    # Check wicked_zerg_bot_pro_impl.py
-    impl_path = os.path.join(os.path.dirname(__file__), "wicked_zerg_bot_pro_impl.py")
-    with open(impl_path, "r", encoding="utf-8") as f:
-        impl_content = f.read()
-
-    checks = [
-        ("ProductionResilience initialization", "ProductionResilience(self)"),
-        ("strategy_manager.update() call", "self.strategy_manager.update()"),
-        ("rogue_tactics.update() call", "self.rogue_tactics.update(iteration)"),
-        ("_step_integrator initialization", "BotStepIntegrator(self)"),
-    ]
-
-    for name, pattern in checks:
-        if pattern in impl_content:
-            logger.info(f"Found: {name}")
-        else:
-            logger.info(f"Missing: {name}")
-
-    # Check unit_factory.py
-    factory_path = os.path.join(os.path.dirname(__file__), "unit_factory.py")
-    with open(factory_path, "r", encoding="utf-8") as f:
-        factory_content = f.read()
-
-    if "_safe_train" in factory_content:
-        logger.info("unit_factory.py uses _safe_train")
-    else:
-        logger.info("unit_factory.py doesn't use _safe_train")
-
-    # Check bot_step_integration.py
-    integrator_path = os.path.join(os.path.dirname(__file__), "bot_step_integration.py")
-    with open(integrator_path, "r", encoding="utf-8") as f:
-        integrator_content = f.read()
-
-    if "end_frame()" in integrator_content:
-        logger.info("bot_step_integration.py calls end_frame()")
-    else:
-        logger.info("bot_step_integration.py doesn't call end_frame()")
-
-    return True
+# Manager attributes the bot must expose; bot_step_integration.execute_game_logic
+# reaches for these directly via getattr/hasattr and silently no-ops when
+# missing, so a typo here regresses behavior without raising.
+_EXPECTED_MANAGER_ATTRS = [
+    "intel",
+    "economy",
+    "production",
+    "combat",
+    "scout",
+    "micro",
+    "queen_manager",
+    "strategy_manager",
+    "performance_optimizer",
+    "formation_controller",
+    "rogue_tactics",
+    "transformer_model",
+    "hierarchical_rl",
+]
 
 
-def main():
-    """Run all tests."""
-    logger.info("\n" + "=" * 60)
-    logger.info("WICKED ZERG BOT - INITIALIZATION VERIFICATION")
-    logger.info("=" * 60 + "\n")
+def test_bot_exposes_manager_attributes():
+    from wicked_zerg_bot_pro_impl import WickedZergBotProImpl
 
-    success = True
+    bot = WickedZergBotProImpl(train_mode=False, instance_id=0)
 
-    # Test 1: Imports
-    if not test_imports():
-        success = False
+    missing = [name for name in _EXPECTED_MANAGER_ATTRS if not hasattr(bot, name)]
+    assert not missing, f"WickedZergBotProImpl missing attrs: {missing}"
 
-    # Test 2: Bot structure
-    if not test_bot_structure():
-        success = False
-
-    # Test 3: Code patterns
-    if not verify_code_patterns():
-        success = False
-
-    # Summary
-    logger.info("\n" + "=" * 60)
-    if success:
-        logger.info("ALL TESTS PASSED")
-        logger.info("=" * 60)
-        logger.info("\nBot is properly configured:")
-        logger.info("  - All managers can be imported")
-        logger.info("  - ProductionResilience is initialized")
-        logger.info("  - strategy_manager.update() is called in on_step")
-        logger.info("  - rogue_tactics.update() is called in on_step")
-        logger.info("  - unit_factory uses _safe_train")
-        logger.info("  - performance_optimizer.end_frame() is called")
-        logger.info("\nThe bot should now execute strategies and tactics correctly!")
-    else:
-        logger.error("SOME TESTS FAILED")
-        logger.info("=" * 60)
-        logger.error("\nPlease review the errors above.")
-    return 0 if success else 1
+    assert hasattr(bot, "on_step"), "Bot missing on_step lifecycle method"
+    assert hasattr(bot, "on_start"), "Bot missing on_start lifecycle method"
 
 
-if __name__ == "__main__":
-    sys.exit(main())
+def _read(path):
+    with open(path, "r", encoding="utf-8") as f:
+        return f.read()
+
+
+def test_step_integrator_initialized_in_bot_impl():
+    """Bot impl must construct the step integrator so on_step delegates."""
+    here = os.path.dirname(os.path.abspath(__file__))
+    impl_content = _read(os.path.join(here, "wicked_zerg_bot_pro_impl.py"))
+    assert "BotStepIntegrator(self)" in impl_content, (
+        "wicked_zerg_bot_pro_impl.py no longer constructs BotStepIntegrator(self); "
+        "on_step delegation will not happen."
+    )
+
+
+def test_strategy_and_rogue_called_from_integrator():
+    """Per-frame strategy + rogue updates were moved into the integrator.
+
+    The integration layer is what actually calls the per-frame update;
+    the bot impl just instantiates the integrator. Verify the calls
+    land in bot_step_integration.py (not in the bot impl, which was
+    the older convention this test used to look for).
+    """
+    here = os.path.dirname(os.path.abspath(__file__))
+    integrator = _read(os.path.join(here, "bot_step_integration.py"))
+
+    assert "self.bot.strategy_manager.update()" in integrator, (
+        "bot_step_integration.py no longer calls strategy_manager.update(); "
+        "race-specific strategies and emergency mode will not run."
+    )
+    assert 'getattr(self.bot, "rogue_tactics", None)' in integrator, (
+        "bot_step_integration.py no longer reads rogue_tactics; "
+        "baneling-drop / larva-saving directives will not propagate."
+    )
+
+
+def test_unit_factory_uses_safe_train():
+    here = os.path.dirname(os.path.abspath(__file__))
+    factory_content = _read(os.path.join(here, "unit_factory.py"))
+    assert "_safe_train" in factory_content, (
+        "unit_factory.py no longer routes through _safe_train; "
+        "production errors will surface as raw exceptions."
+    )
+
+
+def test_performance_optimizer_end_frame_called():
+    here = os.path.dirname(os.path.abspath(__file__))
+    integrator_content = _read(os.path.join(here, "bot_step_integration.py"))
+    assert "end_frame()" in integrator_content, (
+        "bot_step_integration.py no longer calls performance_optimizer.end_frame(); "
+        "per-frame metrics will not be flushed."
+    )

@@ -2812,36 +2812,6 @@ class CombatManager:
             if self._has_units(enemy_units):
                 await self._mutalisk_attack(mutalisks, enemy_units)
 
-    def _find_harass_target(self):
-        """Find best harassment target (enemy base with workers)."""
-        # Try enemy main base
-        if (
-            hasattr(self.bot, "enemy_start_locations")
-            and self.bot.enemy_start_locations
-        ):
-            return self.bot.enemy_start_locations[0]
-
-        # Try known enemy structures
-        enemy_structures = getattr(self.bot, "enemy_structures", [])
-        if enemy_structures:
-            # Find townhalls
-            townhall_names = [
-                "NEXUS",
-                "COMMANDCENTER",
-                "ORBITALCOMMAND",
-                "PLANETARYFORTRESS",
-                "HATCHERY",
-                "LAIR",
-                "HIVE",
-            ]
-            for struct in enemy_structures:
-                if getattr(struct.type_id, "name", "") in townhall_names:
-                    return struct.position
-            # Any structure as fallback
-            return enemy_structures[0].position
-
-        return None
-
     async def _execute_harass(self, mutalisks, enemy_units):
         """
         Execute harassment - attack workers, retreat from anti-air.
@@ -5009,57 +4979,74 @@ class CombatManager:
                 self.harassment_state["healing_units"].add(unit.tag)
 
     def _find_harass_target(self):
-        """
-        Find best harassment target (enemy workers or isolated buildings).
+        """Find the best harassment target.
 
-        Returns:
-            Position of harassment target or None
+        Priority:
+          1. Enemy workers (preferred — economic damage)
+          2. Isolated tech buildings (expensive structures)
+          3. Enemy townhalls we've scouted
+          4. Enemy start location (last known main)
+          5. Any known enemy structure
         """
         try:
             from sc2.ids.unit_typeid import UnitTypeId
 
-            # Priority 1: Enemy workers
-            enemy_workers = self.bot.enemy_units.filter(
-                lambda u: u.type_id
-                in {UnitTypeId.SCV, UnitTypeId.PROBE, UnitTypeId.DRONE}
-            )
+            enemy_units = getattr(self.bot, "enemy_units", None)
+            if enemy_units:
+                enemy_workers = enemy_units.filter(
+                    lambda u: u.type_id
+                    in {UnitTypeId.SCV, UnitTypeId.PROBE, UnitTypeId.DRONE}
+                )
+                if enemy_workers:
+                    if (
+                        hasattr(self.bot, "enemy_start_locations")
+                        and self.bot.enemy_start_locations
+                    ):
+                        enemy_base = self.bot.enemy_start_locations[0]
+                        workers_near_base = enemy_workers.closer_than(20, enemy_base)
+                        if workers_near_base:
+                            return workers_near_base.center
+                    return enemy_workers.center
 
-            if enemy_workers:
-                # Target workers near enemy bases
-                if (
-                    hasattr(self.bot, "enemy_start_locations")
-                    and self.bot.enemy_start_locations
-                ):
-                    enemy_base = self.bot.enemy_start_locations[0]
-                    workers_near_base = enemy_workers.closer_than(20, enemy_base)
-                    if workers_near_base:
-                        return workers_near_base.center
-                return enemy_workers.center
+            enemy_structures = getattr(self.bot, "enemy_structures", None)
+            if enemy_structures:
+                tech_buildings = enemy_structures.filter(
+                    lambda s: s.type_id
+                    in {
+                        UnitTypeId.TWILIGHTCOUNCIL,
+                        UnitTypeId.TEMPLARARCHIVE,
+                        UnitTypeId.DARKSHRINE,
+                        UnitTypeId.FUSIONCORE,
+                        UnitTypeId.GHOSTACADEMY,
+                        UnitTypeId.INFESTATIONPIT,
+                        UnitTypeId.ULTRALISKCAVERN,
+                        UnitTypeId.SPIRE,
+                    }
+                )
+                if tech_buildings:
+                    return tech_buildings.first.position
 
-            # Priority 2: Isolated tech buildings
-            tech_buildings = self.bot.enemy_structures.filter(
-                lambda s: s.type_id
-                in {
-                    UnitTypeId.TWILIGHTCOUNCIL,
-                    UnitTypeId.TEMPLARARCHIVE,
-                    UnitTypeId.DARKSHRINE,
-                    UnitTypeId.FUSIONCORE,
-                    UnitTypeId.GHOSTACADEMY,
-                    UnitTypeId.INFESTATIONPIT,
-                    UnitTypeId.ULTRALISKCAVERN,
-                    UnitTypeId.SPIRE,
+                townhall_ids = {
+                    UnitTypeId.NEXUS,
+                    UnitTypeId.COMMANDCENTER,
+                    UnitTypeId.ORBITALCOMMAND,
+                    UnitTypeId.PLANETARYFORTRESS,
+                    UnitTypeId.HATCHERY,
+                    UnitTypeId.LAIR,
+                    UnitTypeId.HIVE,
                 }
-            )
+                townhalls = enemy_structures.filter(lambda s: s.type_id in townhall_ids)
+                if townhalls:
+                    return townhalls.first.position
 
-            if tech_buildings:
-                return tech_buildings.first.position
-
-            # Fallback: Enemy base
             if (
                 hasattr(self.bot, "enemy_start_locations")
                 and self.bot.enemy_start_locations
             ):
                 return self.bot.enemy_start_locations[0]
+
+            if enemy_structures:
+                return enemy_structures.first.position
 
         except ImportError:
             pass

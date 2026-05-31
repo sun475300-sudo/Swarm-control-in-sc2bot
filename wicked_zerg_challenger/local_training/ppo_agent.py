@@ -28,10 +28,14 @@ try:
     from torch.distributions import Categorical
 
     TORCH_AVAILABLE = True
+    _NetworkBase = nn.Module
 except ImportError:
     TORCH_AVAILABLE = False
     torch = None
     nn = None
+    # Placeholder so `class ActorCriticNetwork(_NetworkBase)` at module
+    # level does not raise AttributeError when torch is not installed.
+    _NetworkBase = object
 
 
 # ============================================================
@@ -58,7 +62,7 @@ ACTION_LABELS = [
 ]
 
 
-class ActorCriticNetwork(nn.Module):
+class ActorCriticNetwork(_NetworkBase):
     """
     Actor-Critic 신경망 (PPO용)
 

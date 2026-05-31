@@ -554,7 +554,7 @@
       "early": {
         "ZERGLING": 0.55,
         "ROACH": 0.35,
-        "QUEEN": 0.10
+        "QUEEN": 0.1
       },
       "mid": {
         "ZERGLING": 0.2,
@@ -564,40 +564,40 @@
       },
       "late": {
         "ULTRALISK": 0.25,
-        "HYDRALISK": 0.20,
+        "HYDRALISK": 0.2,
         "ZERGLING": 0.15,
-        "BANELING": 0.10,
-        "CORRUPTOR": 0.10,
-        "BROODLORD": 0.10,
-        "VIPER": 0.10
+        "BANELING": 0.1,
+        "CORRUPTOR": 0.1,
+        "BROODLORD": 0.1,
+        "VIPER": 0.1
       }
     },
     "Protoss": {
       "early": {
         "ZERGLING": 0.15,
-        "ROACH": 0.70,
+        "ROACH": 0.7,
         "QUEEN": 0.15
       },
       "mid": {
-        "ROACH": 0.30,
+        "ROACH": 0.3,
         "RAVAGER": 0.15,
         "HYDRALISK": 0.35,
-        "CORRUPTOR": 0.20
+        "CORRUPTOR": 0.2
       },
       "late": {
-        "ULTRALISK": 0.20,
-        "HYDRALISK": 0.20,
-        "CORRUPTOR": 0.20,
+        "ULTRALISK": 0.2,
+        "HYDRALISK": 0.2,
+        "CORRUPTOR": 0.2,
         "BROODLORD": 0.15,
-        "VIPER": 0.10,
+        "VIPER": 0.1,
         "RAVAGER": 0.15
       }
     },
     "Zerg": {
       "early": {
-        "ZERGLING": 0.70,
-        "ROACH": 0.20,
-        "QUEEN": 0.10
+        "ZERGLING": 0.7,
+        "ROACH": 0.2,
+        "QUEEN": 0.1
       },
       "mid": {
         "ZERGLING": 0.3,
@@ -606,11 +606,11 @@
         "MUTALISK": 0.2
       },
       "late": {
-        "ULTRALISK": 0.20,
+        "ULTRALISK": 0.2,
         "ZERGLING": 0.15,
         "BANELING": 0.15,
         "ROACH": 0.15,
-        "HYDRALISK": 0.20,
+        "HYDRALISK": 0.2,
         "LURKER": 0.15
       }
     }
@@ -706,20 +706,62 @@
     }
   },
   "map_statistics": {
+    "Abyssal Reef LE": {
+      "wins": 0,
+      "losses": 0,
+      "games": 38,
+      "winrate": 0.0
+    },
+    "Ascension to Aiur LE": {
+      "wins": 0,
+      "losses": 0,
+      "games": 10,
+      "winrate": 0.0
+    },
+    "어비설 리프 - 래더": {
+      "wins": 0,
+      "losses": 0,
+      "games": 4,
+      "winrate": 0.0
+    },
     "Test_Map": {
       "wins": 3,
       "losses": 2,
       "games": 5,
       "winrate": 60.0
+    },
+    "Odyssey LE": {
+      "wins": 0,
+      "losses": 0,
+      "games": 6,
+      "winrate": 0.0
+    },
+    "어센션 투 아이어 - 래더": {
+      "wins": 0,
+      "losses": 0,
+      "games": 1,
+      "winrate": 0.0
+    },
+    "이페머론 - 래더": {
+      "wins": 0,
+      "losses": 0,
+      "games": 1,
+      "winrate": 0.0
     }
   },
   "learned_timings": {
     "expansion_avg": {
+      "base_1": {
+        "avg": 538.0,
+        "min": 340.2,
+        "max": 931.1,
+        "samples": 14
+      },
       "base_2": {
-        "avg": 60.0,
+        "avg": 136.5,
         "min": 60.0,
-        "max": 60.0,
-        "samples": 5
+        "max": 518.9,
+        "samples": 6
       },
       "base_3": {
         "avg": 90.0,
@@ -729,6 +771,48 @@
       }
     },
     "tech_avg": {
+      "UnitTypeId.EVOLUTIONCHAMBER": {
+        "avg": 232.7,
+        "min": 151.1,
+        "max": 597.5,
+        "samples": 57
+      },
+      "UnitTypeId.ROACHWARREN": {
+        "avg": 326.0,
+        "min": 131.6,
+        "max": 915.5,
+        "samples": 47
+      },
+      "UnitTypeId.LAIR": {
+        "avg": 506.3,
+        "min": 319.1,
+        "max": 948.9,
+        "samples": 45
+      },
+      "UnitTypeId.HYDRALISKDEN": {
+        "avg": 559.7,
+        "min": 320.4,
+        "max": 981.3,
+        "samples": 42
+      },
+      "UnitTypeId.INFESTATIONPIT": {
+        "avg": 622.5,
+        "min": 383.4,
+        "max": 955.7,
+        "samples": 33
+      },
+      "UnitTypeId.SPIRE": {
+        "avg": 642.8,
+        "min": 368.8,
+        "max": 1140.0,
+        "samples": 23
+      },
+      "UnitTypeId.LURKERDENMP": {
+        "avg": 732.0,
+        "min": 532.3,
+        "max": 1027.5,
+        "samples": 11
+      },
       "EVOLUTIONCHAMBER": {
         "avg": 150.0,
         "min": 150.0,
@@ -757,6 +841,6 @@
   "engagement_statistics": {
     "total_engagements": 5,
     "avg_supply_lost_per_engagement": 15.0,
-    "total_games_analyzed": 5
+    "total_games_analyzed": 65
   }
 }

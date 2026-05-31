@@ -97,8 +97,10 @@ class NydusNetworkTrainer:
         # 2. 병력 투입
         await self._load_units_into_network(network)
 
-        # 3. 배치된 유닛 관리
-        await self._command_deployed_units()
+        # NOTE: previously called self._command_deployed_units() here but
+        # the method was never implemented. The surrounding try/except
+        # in on_step silently swallowed the AttributeError each frame.
+        # Drop until deployed-unit management is actually written.
 
     async def _plan_new_worm(self, network, game_time: float):
         """새 Worm 계획"""

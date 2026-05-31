@@ -45,7 +45,8 @@ class UnitFactory:
         self.max_larva_spend_per_step = 5
 
         # * COMBAT REINFORCEMENT SYSTEM *
-        # ??ш낄援??濚??怨뚮옖筌???野껊챶爾?????ш낄援η뵳???筌?痢??        self._combat_mode = False
+        # Combat reinforcement state
+        self._combat_mode = False
         self._combat_mode = False
         self._last_combat_check = 0
         self._combat_check_interval = 22  # ~1?縕?袁?맪??癲ル슪???띿물?
@@ -86,9 +87,10 @@ class UnitFactory:
 
     def _update_gas_ratio_target(self) -> None:
         """
-        ??? ???ろ꼥??????ㅻ깹????좊읈??????ル늅筌??????????깆뱾 ?釉뚰???
+        Update gas ratio target based on detected enemy race.
         """
-        # Strategy Manager????????ろ꼥???嶺뚮㉡?€쾮???좊읈??嶺뚮ㅎ?닸쾮濡㏓섀?        strategy = getattr(self.bot, "strategy_manager", None)
+        # Prefer strategy manager detected race (scouted)
+        strategy = getattr(self.bot, "strategy_manager", None)
         if strategy:
             race = getattr(strategy, "detected_enemy_race", None)
             if race:
@@ -98,7 +100,7 @@ class UnitFactory:
                 )
                 return
 
-        # 癲ル슣???????ろ꼥???嶺뚮Ĳ?됮?
+        # Fallback to bot.enemy_race set at game start
         enemy_race = getattr(self.bot, "enemy_race", None)
         if enemy_race:
             race_str = str(enemy_race)
@@ -163,7 +165,7 @@ class UnitFactory:
         self._last_combat_check = iteration
         in_combat = False
 
-        # ??ш낄援????좊즴?? ?釉뚰???쨨??        in_combat = False
+        # Default: not in combat unless flagged below
 
         # 1. Strategy Manager??emergency_active 癲ル슪???띿물?
         strategy = getattr(self.bot, "strategy_manager", None)
@@ -212,7 +214,7 @@ class UnitFactory:
         pending_hatch = self.bot.already_pending(UnitTypeId.HATCHERY)
 
         # 1. ???????癲ル슪???띿물?(1??癲ル슣???????1?類?ｄ펺????醫딅뱠 ??????嶺뚮ㅎ?닻??
-        # ?? ???? ???⑤챸諭??癲꾧퀗????빝?濚욌꼬?댄꺍??ル쵐異?pending) ?嶺뚮ㅎ?닻???????????        pending_hatch = self.bot.already_pending(UnitTypeId.HATCHERY)
+        # Hatchery already pending? Skip the expansion-reserve gate
 
         # * FIX: ??ш낄援??濚욌꼬?댄꺍????嶺뚮Ĳ???????れ삀????壤? ???怨룹쓱 (??獄쎼뀙?????Β?띾쭡) *
         strategy = getattr(self.bot, "strategy_manager", None)
@@ -435,7 +437,8 @@ class UnitFactory:
         if self.blackboard:
             to_request = min(self.max_larva_spend_per_step, len(larva))
 
-            # ???Β?띾쭡??筌믨퀡彛??????????ル늅筌???????ヂ嚥?肉???숆강筌?쓣爾??            unit_requests = {}
+            # Aggregate per-unit production requests for the blackboard
+            unit_requests = {}
             for _ in range(to_request):
                 unit_type = self._pick_unit(queue)
                 if not unit_type:
