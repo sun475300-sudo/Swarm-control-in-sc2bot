@@ -15,7 +15,7 @@ import os
 import sys
 import tempfile
 import unittest
-from unittest.mock import Mock
+from unittest.mock import AsyncMock, Mock, patch
 
 # Add parent directory to path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
@@ -347,6 +347,35 @@ class TestOpponentModeling(unittest.TestCase):
         self.assertIsNotNone(self.modeling.current_opponent_id)
         self.assertEqual(self.modeling.current_opponent_id, "opponent_Zerg")
         self.assertIn("opponent_Zerg", self.modeling.opponent_models)
+
+    async def test_on_step_drives_strategy_tracking_pipeline(self):
+        """on_step must call build/timing/tech tracking methods.
+
+        Regression guard for the duplicate-on_step shadowing bug that silently
+        replaced the rich tracking pipeline with a tiny stub. Asserts each
+        downstream method gets called when the update interval elapses.
+        """
+        # Force the update-interval gate to fire on the very first step.
+        self.modeling.last_update = -1000
+        self.modeling.update_interval = 1
+        self.bot.time = 50.0  # early-game branch
+
+        # Patch every downstream method so we can prove each was called.
+        with patch.object(
+            self.modeling, "_detect_early_signals", new_callable=AsyncMock
+        ) as mock_early, patch.object(
+            self.modeling, "_track_build_order", new_callable=AsyncMock
+        ) as mock_build, patch.object(
+            self.modeling, "_detect_timing_attacks", new_callable=AsyncMock
+        ) as mock_timing, patch.object(
+            self.modeling, "_track_tech_progression", new_callable=AsyncMock
+        ) as mock_tech:
+            await self.modeling.on_step(iteration=10)
+
+            mock_early.assert_awaited_once()
+            mock_build.assert_awaited_once()
+            mock_timing.assert_awaited_once()
+            mock_tech.assert_awaited_once()
 
     async def test_on_start_known_opponent(self):
         """Test game start with known opponent"""
