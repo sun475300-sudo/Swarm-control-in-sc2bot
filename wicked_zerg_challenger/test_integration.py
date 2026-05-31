@@ -184,9 +184,7 @@ class IntegrationTester:
             logger.info(
                 f"     - Ravager cooldowns: {status.get('ravager_cooldowns', 0)}"
             )
-            logger.info(
-                f"     - Lurker burrowed: {status.get('lurker_burrowed', 0)}"
-            )
+            logger.info(f"     - Lurker burrowed: {status.get('lurker_burrowed', 0)}")
             logger.info(
                 f"     - Focus fire assignments: {status.get('focus_fire_assignments', 0)}"
             )
