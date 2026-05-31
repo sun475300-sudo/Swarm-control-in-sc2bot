@@ -26,10 +26,14 @@ try:
     import torch.optim as optim
 
     TORCH_AVAILABLE = True
+    _NetworkBase = nn.Module
 except ImportError:
     TORCH_AVAILABLE = False
     torch = None
     nn = None
+    # Placeholder so `class ImitationNetwork(_NetworkBase)` at module level
+    # does not raise AttributeError when torch is not installed.
+    _NetworkBase = object
 
 
 class ReplayActionExtractor:
@@ -240,7 +244,7 @@ class ReplayActionExtractor:
             return False
 
 
-class ImitationNetwork(nn.Module):
+class ImitationNetwork(_NetworkBase):
     """
     모방학습용 신경망
 
