@@ -1696,14 +1696,14 @@ class StrategyManagerV2(StrategyManager):
 
         # 1) 군대 교환비 - 아군 vs 적군 서플라이
         our_army = getattr(self.bot, "supply_army", 0)
-        enemy_army = self._estimate_enemy_army()
+        enemy_army = self._estimate_enemy_army_supply()
         if our_army + enemy_army > 0:
             army_ratio = our_army / max(our_army + enemy_army, 1)
             score += army_ratio
             factors += 1
 
         # 2) 경제 성장률 - 일꾼 수 / 66 최적
-        workers = self._get_worker_count()
+        workers = self._count_workers()
         worker_score = min(workers / 66.0, 1.0)
         score += worker_score
         factors += 1
