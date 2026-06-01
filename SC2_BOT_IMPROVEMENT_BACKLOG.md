@@ -53,9 +53,16 @@ collected 423 items / 1 error / 5 skipped
 
 ## 사이클 진행 로그
 
-### 사이클 1 (진행 중)
+### 사이클 1 (완료, 커밋 a6f91f3)
 - [x] pytest-asyncio 설치 누락 식별 (환경 측)
-- [ ] test_queen_transfusion.py — sc2 import 가드 추가
-- [ ] test_combat_phase_fsm.py — event loop modernize
-- [ ] wicked_zerg_challenger/tests/test_production_resilience.py — 동일
+- [x] test_queen_transfusion.py — sc2 import 가드 추가
+- [x] test_combat_phase_fsm.py — event loop modernize (×5)
+- [x] wicked_zerg_challenger/tests/test_production_resilience.py — 동일
+- 결과: `12 failed → 0 failed (395 passed)`, 1 collect error → 0
+
+### 사이클 2 (진행 중) — 임포트 안정성 & 잠재 버그
+- [x] EnhancedScoutSystem 경고가 **모듈 임포트 시점**에 매번 발생 (fallback로 import만 해도 노이즈) → 인스턴스화 시점으로 이동
+- [x] AdvancedScoutingSystemV2 stub: sc2 미설치 시 `UnitTypeId.OVERLORD` 기본인자가 class body에서 AttributeError → `_IdStub.__getattr__` sentinel로 해결
+- [x] check_proxy.py: 임포트만 해도 sys.exit(1) 호출 (Windows 절대경로 하드코딩). `if __name__=='__main__'` 가드 + env-var 경로 + `logger.info` positional-args 버그 수정
+- [ ] cycle 2 더 진행: 다른 영역 점검
 
