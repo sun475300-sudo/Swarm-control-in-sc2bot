@@ -15,11 +15,32 @@ Assertions:
 """
 from __future__ import annotations
 
+import os
+import sys
+from pathlib import Path
 from types import SimpleNamespace
 from typing import Optional
 from unittest.mock import MagicMock, patch
 
 import pytest
+
+# ---------------------------------------------------------------------------
+# Path setup. economy_manager.py does plain `from config.unit_configs ...`
+# and `from utils.distance_cache ...`, which only resolves when
+# wicked_zerg_challenger/ is on sys.path. conftest.py inserts the repo
+# root (which has its own `utils` package, shadowing the bot's), so we
+# put the bot dir AHEAD and evict any cached siblings.
+# ---------------------------------------------------------------------------
+
+_WICKED = Path(__file__).resolve().parent.parent / "wicked_zerg_challenger"
+if str(_WICKED) not in sys.path:
+    sys.path.insert(0, str(_WICKED))
+for _modname in [
+    m for m in list(sys.modules)
+    if m == "utils" or m.startswith("utils.")
+    or m == "config" or m.startswith("config.")
+]:
+    sys.modules.pop(_modname, None)
 
 # ---------------------------------------------------------------------------
 # Minimal stubs so the module imports without an SC2 environment
