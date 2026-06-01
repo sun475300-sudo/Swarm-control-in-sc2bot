@@ -4,6 +4,8 @@ Unit Tests for Harassment Coordinator
 Tests aggressive modes, baneling drops, squad locking, and multi-angle attacks.
 """
 
+import sys
+from pathlib import Path
 from unittest.mock import MagicMock, Mock
 
 import pytest
@@ -13,6 +15,19 @@ try:
     from sc2.position import Point2
 except ImportError:
     pytest.skip("sc2 library not available", allow_module_level=True)
+
+# HarassmentCoordinator → combat/harassment_coordinator → utils.logger,
+# which is the wicked_zerg_challenger/utils package. conftest.py inserts
+# the repo root (whose own utils/ shadows the bot's), so put the bot dir
+# first AND drop any cached `utils.*` so setup_method's import resolves
+# against the bot's utils, not the repo-root one.
+#
+# We DON'T pre-import HarassmentCoordinator at module load time — that
+# would pull the bot's utils into sys.modules permanently and break
+# *other* test files that haven't done the same path dance yet.
+_WICKED = Path(__file__).resolve().parent.parent / "wicked_zerg_challenger"
+if str(_WICKED) not in sys.path:
+    sys.path.insert(0, str(_WICKED))
 
 
 class MockState:
@@ -50,6 +65,16 @@ class TestHarassmentCoordinator:
 
     def setup_method(self):
         """Setup before each test"""
+        # Evict any wrong-utils that might have been cached by an earlier
+        # test that didn't set the bot dir first, then import.
+        for _mod in [
+            m for m in list(sys.modules)
+            if m == "utils" or m.startswith("utils.")
+        ]:
+            if "wicked_zerg_challenger" not in getattr(
+                sys.modules[_mod], "__file__", "" or ""
+            ):
+                sys.modules.pop(_mod, None)
         try:
             from wicked_zerg_challenger.combat.harassment_coordinator import (
                 AggressiveMode,
@@ -213,6 +238,52 @@ class TestHarassmentCoordinator:
         # Initially false due to missing units or cooldown
         assert isinstance(can_execute, bool)
         assert can_execute is False
+
+    def test_baneling_drop_requires_ventral_sacs_not_speed(self):
+        """
+        Regression: _can_execute_baneling_drop and _get_transport_overlord
+        used to check OVERLORDSPEED (Pneumatized Carapace, the *speed*
+        upgrade) instead of OVERLORDTRANSPORT (Ventral Sacs, the actual
+        load/unload prerequisite). With only speed researched, the bot
+        would try to drop and the LOAD command would silently fail.
+        Lock the correct upgrade ID into both code paths.
+        """
+        from sc2.ids.upgrade_id import UpgradeId
+
+        # Provide enough banelings + overlords + reset cooldown so the
+        # upgrade check is the ONLY remaining gate.
+        class FakeBanelings:
+            def __len__(self):
+                return 8  # >= 4 required
+
+        class FakeOverlords:
+            def __len__(self):
+                return 2  # >= 1 required
+
+        def fake_units(type_id):
+            if type_id == UnitTypeId.BANELING:
+                return FakeBanelings()
+            if type_id == UnitTypeId.OVERLORD:
+                return FakeOverlords()
+            return FakeBanelings()  # not used
+
+        self.bot.units = fake_units
+        self.bot.time = 9999  # past cooldown
+        self.coordinator.baneling_drop_cooldown = 0
+        self.coordinator.baneling_drop_active = False
+
+        # Only speed researched → drop must NOT be possible.
+        self.bot.state.upgrades = {UpgradeId.OVERLORDSPEED}
+        assert self.coordinator._can_execute_baneling_drop() is False, (
+            "OVERLORDSPEED alone must not enable baneling drops "
+            "(that's Pneumatized Carapace, not Ventral Sacs)"
+        )
+
+        # Now research Ventral Sacs (transport) → drop becomes possible.
+        self.bot.state.upgrades = {UpgradeId.OVERLORDTRANSPORT}
+        assert self.coordinator._can_execute_baneling_drop() is True, (
+            "OVERLORDTRANSPORT (Ventral Sacs) must enable baneling drops"
+        )
 
     # ===== Multi-Angle Attack Tests =====
 
