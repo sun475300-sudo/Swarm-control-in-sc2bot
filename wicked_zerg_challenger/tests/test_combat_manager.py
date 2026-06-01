@@ -20,8 +20,12 @@ from unittest.mock import Mock
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 from combat_manager import CombatManager
-from sc2.ids.unit_typeid import UnitTypeId
-from sc2.position import Point2
+try:
+    from sc2.ids.unit_typeid import UnitTypeId
+    from sc2.position import Point2
+except ImportError:
+    import pytest
+    pytest.skip("sc2 library not available", allow_module_level=True)
 
 
 class TestCombatManager(unittest.TestCase):
