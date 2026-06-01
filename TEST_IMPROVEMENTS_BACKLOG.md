@@ -37,8 +37,23 @@ Initial test run yielded:
 - [ ] **#9** Audit other mojibake-broken comment+code joined lines (3 known visual cases that don't break behavior: `dynamic_resource_balancer.py:175`, `unit_factory.py:167`, `unit_factory.py:216`).
 - [ ] **#10** Verify `tests/conftest.py` doesn't shadow `wicked_zerg_challenger/tests` fixtures.
 
+## Cycle 2 Findings (Silent-no-op Async Tests)
+
+Running with warnings exposed: pytest reported **38 warnings** including `coroutine '...' was never awaited` for **18 test methods** that appeared to pass but were actually skipped silently (unittest.TestCase doesn't await async test methods). Two classes were affected.
+
+### P0.6 — Silent-no-op Tests & Real Bug Surfaced
+
+- [x] **#D** `wicked_zerg_challenger/tests/test_production_resilience.py` — `TestProductionResilience` inherited from `unittest.TestCase`; 9 `async def test_*` methods were never awaited. Converted to `unittest.IsolatedAsyncioTestCase`. 3 broken `test_get_counter_unit_*` tests called a sync method with `await` and the wrong signature (`"Terran"` as positional arg for `enemy_units` instead of a list + 3 tech bool flags); rewrote them to construct realistic enemy unit mocks and call the real signature.
+- [x] **#E** `wicked_zerg_challenger/tests/test_opponent_modeling.py` — `TestOpponentModeling` same problem; 9 `async def test_*` methods silently no-op'd. Converted to `IsolatedAsyncioTestCase`. Surfaced **#F**.
+- [x] **#F** `wicked_zerg_challenger/opponent_modeling.py` — duplicate `async def on_step` defined twice in the same class. The second (lines 765–774) silently overrode the first and referenced `self.current_opponent`, an attribute that was never initialized in `__init__` (only `self.current_opponent_id` was). Any call to `on_step()` before `on_game_start()` (i.e. when `on_start()` was used instead) crashed with `AttributeError: 'OpponentModeling' object has no attribute 'current_opponent'`. Deleted the duplicate `on_step` so the proper async implementation wins. Unified `on_game_start`/`on_game_end`/`get_predicted_strategy` to use `current_opponent_id` for consistency.
+
+### P0.7 — Environment Polish
+
+- [x] **#G** Installed `pytest-timeout` (the pytest.ini `timeout = 60` was warning `Unknown config option`).
+
 ## Status
 
-| Cycle | Date       | Improvements applied                | Tests passed |
-|-------|------------|-------------------------------------|--------------|
-| 1     | 2026-06-01 | #1, #2, #3, #4, #A, #B, #C          | **1155** (was 376) |
+| Cycle | Date       | Improvements applied                            | Tests passed | Warnings |
+|-------|------------|-------------------------------------------------|--------------|----------|
+| 1     | 2026-06-01 | #1, #2, #3, #4, #A, #B, #C                      | **1155** (was 376) | 38 |
+| 2     | 2026-06-01 | #D, #E, #F, #G — 18 silent no-op tests recovered | **1155** (same count, but 18 are now real) | 1 |
