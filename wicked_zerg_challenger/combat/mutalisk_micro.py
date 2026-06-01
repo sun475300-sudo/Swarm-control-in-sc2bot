@@ -16,34 +16,7 @@ try:
     from sc2.position import Point2
     from sc2.unit import Unit
 except ImportError:
-
-    class _IdStub:
-        """sc2 enum stub used when the sc2 library is unavailable."""
-
-        def __getattr__(self, name):  # pragma: no cover - test/dev only
-            return f"<stub:{name}>"
-
-        def __bool__(self):
-            return True
-
-    UnitTypeId = _IdStub()
-
-    class Point2(tuple):
-        """Minimal Point2 stub: ``Point2((x, y))`` returns an (x, y) tuple
-        with ``.x`` and ``.y`` accessors, sufficient for action targets in
-        tests where the sc2 package isn't installed.
-        """
-
-        def __new__(cls, xy):
-            return super().__new__(cls, xy)
-
-        @property
-        def x(self):
-            return self[0]
-
-        @property
-        def y(self):
-            return self[1]
+    from utils.sc2_stub import Point2, UnitTypeId  # noqa: F401
 
     Unit = None
 

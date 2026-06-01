@@ -15,25 +15,7 @@ try:
     from sc2.ids.upgrade_id import UpgradeId
     from sc2.position import Point2
 except ImportError:  # Fallbacks for tooling/test environments
-
-    class _IdStub:
-        """sc2 enum stub: any attribute returns a unique sentinel string.
-
-        Lets ``getattr(UnitTypeId, "FOO", None)`` and equality checks behave
-        sensibly when the sc2 library isn't installed.
-        """
-
-        def __getattr__(self, name):  # pragma: no cover - test/dev only
-            return f"<stub:{name}>"
-
-        def __bool__(self):  # treat as 'available' so guards like
-            # ``if UnitTypeId:`` proceed under stub mode
-            return True
-
-    UnitTypeId = _IdStub()
-    AbilityId = _IdStub()
-    UpgradeId = _IdStub()
-    Point2 = None
+    from utils.sc2_stub import AbilityId, Point2, UnitTypeId, UpgradeId  # noqa: F401
 
 try:
     from combat.terrain_analysis import ChokePointDetector

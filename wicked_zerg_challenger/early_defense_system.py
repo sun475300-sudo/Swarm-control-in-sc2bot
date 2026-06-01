@@ -37,23 +37,7 @@ except ImportError:
     class BotAI:
         pass
 
-    class _IdStub:
-        """sc2 enum stub used when the sc2 library is unavailable.
-
-        Returning a string sentinel for any attribute access lets module-level
-        ``UnitTypeId.SPINECRAWLER``-style references resolve at import and
-        equality-test time. Real game-time use still requires sc2.
-        """
-
-        def __getattr__(self, name):  # pragma: no cover - dev/test fallback
-            return f"<stub:{name}>"
-
-    UnitTypeId = _IdStub()
-    AbilityId = _IdStub()
-    UpgradeId = _IdStub()
-
-    class Point2:
-        pass
+    from utils.sc2_stub import AbilityId, Point2, UnitTypeId, UpgradeId  # noqa: F401
 
 
 class EarlyDefenseSystem:

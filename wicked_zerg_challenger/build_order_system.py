@@ -41,58 +41,7 @@ except ImportError:
     class BotAI:
         pass
 
-    class _IdSentinel:
-        """Hashable, equality-by-name sentinel used by ``_IdStub`` attribute
-        access. Behaves like a constant enum member without being ``str`` —
-        so ``isinstance(value, str)`` checks (e.g. for "is this an upgrade
-        token?") still correctly distinguish stub UnitTypeIds from real
-        upgrade-name strings.
-        """
-
-        __slots__ = ("_name",)
-
-        def __init__(self, name: str):
-            self._name = name
-
-        def __repr__(self):  # pragma: no cover - debug aid
-            return f"<IdStub:{self._name}>"
-
-        def __eq__(self, other):
-            return isinstance(other, _IdSentinel) and self._name == other._name
-
-        def __hash__(self):
-            return hash(("_IdSentinel", self._name))
-
-        @property
-        def name(self):
-            return self._name
-
-    class _IdStub:
-        """Stand-in for sc2 enum types when the sc2 library is unavailable.
-
-        Attribute access returns an ``_IdSentinel`` (cached so equality and
-        identity both work), letting tests reference e.g. ``UnitTypeId.MARINE``
-        without sc2 installed.
-        """
-
-        def __init__(self):
-            self._cache: Dict[str, _IdSentinel] = {}
-
-        def __getattr__(self, name):  # pragma: no cover - test/dev fallback
-            if name.startswith("_"):
-                raise AttributeError(name)
-            sentinel = self._cache.get(name)
-            if sentinel is None:
-                sentinel = _IdSentinel(name)
-                self._cache[name] = sentinel
-            return sentinel
-
-    UnitTypeId = _IdStub()
-    AbilityId = _IdStub()
-    UpgradeId = _IdStub()
-
-    class Point2:
-        pass
+    from utils.sc2_stub import AbilityId, Point2, UnitTypeId, UpgradeId  # noqa: F401
 
 
 ZVT_BUILDS = {

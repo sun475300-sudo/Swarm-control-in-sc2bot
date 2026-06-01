@@ -30,23 +30,7 @@ except ImportError:
     class BotAI:
         pass
 
-    class _IdStub:
-        """Stand-in for sc2 enum types when the sc2 library is unavailable.
-
-        Returning a sentinel for any attribute access lets module-level
-        ``UnitTypeId.OVERLORD``-style references resolve so the class body can
-        be defined; actual game-time use still requires the real sc2 package.
-        """
-
-        def __getattr__(self, name):  # pragma: no cover - test/dev fallback only
-            return f"<stub:{name}>"
-
-    UnitTypeId = _IdStub()
-    AbilityId = _IdStub()
-    UpgradeId = _IdStub()
-
-    class Point2:
-        pass
+    from utils.sc2_stub import AbilityId, Point2, UnitTypeId, UpgradeId  # noqa: F401
 
     class Unit:
         pass
