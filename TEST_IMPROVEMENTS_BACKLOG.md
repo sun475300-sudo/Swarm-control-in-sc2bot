@@ -64,7 +64,17 @@
 - [x] **P2-1** `requirements-dev.txt` 확인 — 이미 `pytest>=7.0.0`, `pytest-asyncio>=0.23.0`, `pytest-timeout>=2.1.0` 포함 (조치 불필요)
 - 결과: numpy 설치 시 432 passed, 16 skipped
 
-### Round 3 (계획)
-- [ ] P1-1, P1-2, P1-3, P1-4 — 점검 결과 이미 try/except 가드 됨 (조치 불필요, backlog 종결)
-- [ ] P3-1 16개 skip 잔여 분류 후 가능한 케이스 재활성화 (sc2 미설치, pyupbit 미설치, config.yaml 부재 — 환경 의존)
-- [ ] 새로운 라운드: 실제 봇 모듈(`wicked_zerg_challenger/*.py`) 의 점검 및 lint warning 분석
+### Round 3 ✅ (정적 점검)
+- [x] **R3-1** `wicked_zerg_challenger/run_single_game.py` 의 UTF-8 BOM 제거 — `# -*- coding: utf-8 -*-` 디렉티브와 BOM 충돌로 `ast.parse` 실패하던 문제 해결
+- [x] **R3-2** `src/`, `wicked_zerg_challenger/` 전체 138+ 파일의 AST syntax 점검 — 0 errors
+- [x] **R3-3** bare `except:` 없음 확인 (0건)
+- [x] **R3-4** mutable default arg / `== None` 패턴 점검 — 0건
+- [x] P1-1~P1-4 — 점검 결과 이미 try/except 가드 됨 (조치 불필요)
+
+### 발견된 추가 사항 (Round 4+ 대상)
+- **165 empty `except: pass` 블록** (`realtime_awareness_engine.py` 다수) — SC2 API 호출 silent failure 가능성. 단, 봇 특성상 의도적일 수 있어 모듈별 개별 검토 필요.
+- 16 skip 잔여:
+  - 6: python-sc2 미배포 (환경 의존, 액션 불가)
+  - 6: pyupbit 미설치 + 1: pandas 의존 (crypto 모듈, 봇 핵심 아님)
+  - 3: config.yaml 부재 (실행 환경 의존)
+  - 1: micro_controller (sc2 종속)
