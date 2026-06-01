@@ -69,14 +69,17 @@ async def _run_ladder_game(
         )
         logger.info(f"Game result: {result}")
 
+        # Connection may already be closed by the SC2 server; the
+        # leave/quit calls are best-effort cleanup. (ConnectionAlreadyClosed,
+        # Exception) was redundant since the latter subsumes the former.
         try:
             await client.leave()
-        except (ConnectionAlreadyClosed, Exception):
-            pass
+        except Exception as e:
+            logger.debug(f"client.leave() ignored: {e}")
         try:
             await client.quit()
-        except (ConnectionAlreadyClosed, Exception):
-            pass
+        except Exception as e:
+            logger.debug(f"client.quit() ignored: {e}")
 
         return result
 
