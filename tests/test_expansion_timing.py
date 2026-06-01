@@ -13,6 +13,7 @@ Assertions:
   T6. 4th base triggers at game_time >= 300 OR minerals >= 600 (base_count == 3)
   T7. 5th base triggers at game_time >= 420 OR minerals >= 700 (base_count == 4)
 """
+
 from __future__ import annotations
 
 import os
@@ -36,9 +37,12 @@ _WICKED = Path(__file__).resolve().parent.parent / "wicked_zerg_challenger"
 if str(_WICKED) not in sys.path:
     sys.path.insert(0, str(_WICKED))
 for _modname in [
-    m for m in list(sys.modules)
-    if m == "utils" or m.startswith("utils.")
-    or m == "config" or m.startswith("config.")
+    m
+    for m in list(sys.modules)
+    if m == "utils"
+    or m.startswith("utils.")
+    or m == "config"
+    or m.startswith("config.")
 ]:
     sys.modules.pop(_modname, None)
 
@@ -48,6 +52,7 @@ for _modname in [
 
 try:
     from wicked_zerg_challenger.economy_manager import EconomyManager
+
     _IMPORT_OK = True
 except ImportError:
     _IMPORT_OK = False
@@ -61,6 +66,7 @@ pytestmark = pytest.mark.skipif(
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def _make_bot(
     *,
@@ -121,21 +127,22 @@ def _should_expand_first_base(
 # T1-T3: First-expansion decision (base_count == 1)
 # ---------------------------------------------------------------------------
 
+
 class TestFirstExpansionDecision:
     @pytest.mark.parametrize(
         "minerals,game_time,expected,label",
         [
             # T1: hard threshold
-            (300, 30.0, True,  "300 minerals at 30 s → expand"),
-            (350, 20.0, True,  "350 minerals early → expand"),
-            (1000, 5.0, True,  "excess minerals → expand"),
+            (300, 30.0, True, "300 minerals at 30 s → expand"),
+            (350, 20.0, True, "350 minerals early → expand"),
+            (1000, 5.0, True, "excess minerals → expand"),
             # T2: soft threshold
-            (250, 45.0, True,  "250 minerals at exactly 45 s → expand"),
-            (270, 60.0, True,  "270 minerals at 60 s → expand"),
+            (250, 45.0, True, "250 minerals at exactly 45 s → expand"),
+            (270, 60.0, True, "270 minerals at 60 s → expand"),
             # T3: no expand yet
             (200, 30.0, False, "200 minerals, 30 s → wait"),
             (249, 44.9, False, "249 minerals, 44.9 s → wait"),
-            (0,   0.0,  False, "empty wallet → wait"),
+            (0, 0.0, False, "empty wallet → wait"),
         ],
     )
     def test_first_expansion_threshold(
@@ -152,6 +159,7 @@ class TestFirstExpansionDecision:
 # ---------------------------------------------------------------------------
 # T4: CRITICAL fallback (base_count == 1 after 90 s)
 # ---------------------------------------------------------------------------
+
 
 class TestCriticalExpansionFallback:
     def test_critical_triggers_at_90s_with_350_minerals(self) -> None:
@@ -183,21 +191,22 @@ class TestCriticalExpansionFallback:
 # T5-T7: Later expansion thresholds (base_count >= 2)
 # ---------------------------------------------------------------------------
 
+
 class TestLaterExpansionTimings:
     @pytest.mark.parametrize(
         "base_count,game_time,minerals,expected,label",
         [
             # 3rd base (base_count == 2)
-            (2, 150.0, 100, True,  "3rd: time >= 150 s"),
-            (2, 100.0, 350, True,  "3rd: minerals >= 350"),
+            (2, 150.0, 100, True, "3rd: time >= 150 s"),
+            (2, 100.0, 350, True, "3rd: minerals >= 350"),
             (2, 149.9, 349, False, "3rd: just under both thresholds"),
             # 4th base (base_count == 3)
-            (3, 300.0, 100, True,  "4th: time >= 300 s"),
-            (3, 200.0, 600, True,  "4th: minerals >= 600"),
+            (3, 300.0, 100, True, "4th: time >= 300 s"),
+            (3, 200.0, 600, True, "4th: minerals >= 600"),
             (3, 299.9, 599, False, "4th: just under both"),
             # 5th base (base_count == 4)
-            (4, 420.0, 100, True,  "5th: time >= 420 s"),
-            (4, 300.0, 700, True,  "5th: minerals >= 700"),
+            (4, 420.0, 100, True, "5th: time >= 420 s"),
+            (4, 300.0, 700, True, "5th: minerals >= 700"),
             (4, 419.9, 699, False, "5th: just under both"),
         ],
     )
@@ -229,6 +238,7 @@ class TestLaterExpansionTimings:
 # ---------------------------------------------------------------------------
 # Integration: expansion triggers before the 7-minute deadline
 # ---------------------------------------------------------------------------
+
 
 class TestExpansionBeforeDeadline:
     DEADLINE_SECONDS = 7 * 60  # 7 minutes

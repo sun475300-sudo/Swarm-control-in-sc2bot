@@ -68,8 +68,7 @@ class TestHarassmentCoordinator:
         # Evict any wrong-utils that might have been cached by an earlier
         # test that didn't set the bot dir first, then import.
         for _mod in [
-            m for m in list(sys.modules)
-            if m == "utils" or m.startswith("utils.")
+            m for m in list(sys.modules) if m == "utils" or m.startswith("utils.")
         ]:
             if "wicked_zerg_challenger" not in getattr(
                 sys.modules[_mod], "__file__", "" or ""
@@ -281,9 +280,9 @@ class TestHarassmentCoordinator:
 
         # Now research Ventral Sacs (transport) → drop becomes possible.
         self.bot.state.upgrades = {UpgradeId.OVERLORDTRANSPORT}
-        assert self.coordinator._can_execute_baneling_drop() is True, (
-            "OVERLORDTRANSPORT (Ventral Sacs) must enable baneling drops"
-        )
+        assert (
+            self.coordinator._can_execute_baneling_drop() is True
+        ), "OVERLORDTRANSPORT (Ventral Sacs) must enable baneling drops"
 
     # ===== Multi-Angle Attack Tests =====
 

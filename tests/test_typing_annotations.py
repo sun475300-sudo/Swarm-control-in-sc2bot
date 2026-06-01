@@ -83,8 +83,7 @@ def test_no_dict_str_any_typo_in_bot_sources():
 
     assert not offenders, (
         "Found annotations using builtin `any` instead of `typing.Any` "
-        "— replace with `Any` (and import it from typing):\n  "
-        + "\n  ".join(offenders)
+        "— replace with `Any` (and import it from typing):\n  " + "\n  ".join(offenders)
     )
 
 
@@ -107,9 +106,7 @@ def test_previously_broken_files_now_use_typing_Any(rel_path):
     text = (WICKED / rel_path).read_text(encoding="utf-8")
     tree = ast.parse(text, rel_path)
     bad = _find_bare_any_annotations(text, WICKED / rel_path)
-    assert not bad, (
-        f"{rel_path} still uses builtin `any` in an annotation: {bad}"
-    )
+    assert not bad, f"{rel_path} still uses builtin `any` in an annotation: {bad}"
 
     # And the file should import Any from typing (so the replacement actually works).
     has_any_import = False

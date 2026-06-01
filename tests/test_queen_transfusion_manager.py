@@ -208,7 +208,9 @@ class TestQueenTransfusionManager:
         Transfusion restores 125 HP; we shouldn't waste it on a target
         that's only missing a tiny amount (<50% effectiveness threshold).
         """
-        queen = create_mock_unit(UnitTypeId.QUEEN, health_pct=1.0, health_max=200, tag=1)
+        queen = create_mock_unit(
+            UnitTypeId.QUEEN, health_pct=1.0, health_max=200, tag=1
+        )
         # Roach: 145 max HP. At 58% (~84 HP), it would qualify on the
         # health_percentage check but it's only missing ~61 HP, which is
         # under TRANSFUSION_HP_RESTORE * 0.5 = 62.5 → reject.
@@ -226,7 +228,9 @@ class TestQueenTransfusionManager:
         transfusion. This is intentional — but we want regression
         coverage so it's not silently flipped by future tuning.
         """
-        queen = create_mock_unit(UnitTypeId.QUEEN, health_pct=1.0, health_max=200, tag=1)
+        queen = create_mock_unit(
+            UnitTypeId.QUEEN, health_pct=1.0, health_max=200, tag=1
+        )
         nearly_dead = create_mock_unit(
             UnitTypeId.ZERGLING, health_pct=0.05, health_max=35, tag=2
         )

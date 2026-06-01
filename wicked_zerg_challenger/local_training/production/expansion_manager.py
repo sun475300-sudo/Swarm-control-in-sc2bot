@@ -55,9 +55,7 @@ def can_expand_safely(resilience) -> tuple:
     # townhalls.first on every iteration of the comprehension.
     if enemy_near_base and not under_attack and b.townhalls.exists:
         base_pos = b.townhalls.first.position
-        enemy_count = sum(
-            1 for e in b.enemy_units if e.distance_to(base_pos) < 30
-        )
+        enemy_count = sum(1 for e in b.enemy_units if e.distance_to(base_pos) < 30)
         if enemy_count <= 2:
             enemy_near_base = False  # Ignore scouts
 

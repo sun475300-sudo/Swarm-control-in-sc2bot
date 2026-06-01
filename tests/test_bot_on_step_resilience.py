@@ -76,9 +76,9 @@ def _try_block_wrapping(method: ast.AsyncFunctionDef, attr_chain: tuple[str, ...
 def test_scoring_system_on_step_is_wrapped_in_try(on_step_ast):
     """Scoring system must be called inside a try/except."""
     try_node = _try_block_wrapping(on_step_ast, ("scoring_system", "on_step"))
-    assert try_node is not None, (
-        "self.scoring_system.on_step(...) must be inside a try/except"
-    )
+    assert (
+        try_node is not None
+    ), "self.scoring_system.on_step(...) must be inside a try/except"
 
 
 def test_scoring_system_except_logs_instead_of_pass(on_step_ast):
@@ -90,20 +90,18 @@ def test_scoring_system_except_logs_instead_of_pass(on_step_ast):
 
     handler = handlers[0]
     body_dump = "\n".join(ast.unparse(s) for s in handler.body)
-    assert "self.logger" in body_dump, (
-        f"expected self.logger.* call in scoring except, got:\n{body_dump}"
-    )
-    assert body_dump.strip() != "pass", (
-        "scoring except must not be a silent `pass`"
-    )
+    assert (
+        "self.logger" in body_dump
+    ), f"expected self.logger.* call in scoring except, got:\n{body_dump}"
+    assert body_dump.strip() != "pass", "scoring except must not be a silent `pass`"
 
 
 def test_awareness_engine_on_step_is_wrapped_in_try(on_step_ast):
     """Awareness engine must be called inside a try/except."""
     try_node = _try_block_wrapping(on_step_ast, ("awareness_engine", "on_step"))
-    assert try_node is not None, (
-        "self.awareness_engine.on_step(...) must be inside a try/except"
-    )
+    assert (
+        try_node is not None
+    ), "self.awareness_engine.on_step(...) must be inside a try/except"
 
 
 def test_awareness_engine_except_logs_instead_of_pass(on_step_ast):
@@ -115,9 +113,7 @@ def test_awareness_engine_except_logs_instead_of_pass(on_step_ast):
 
     handler = handlers[0]
     body_dump = "\n".join(ast.unparse(s) for s in handler.body)
-    assert "self.logger" in body_dump, (
-        f"expected self.logger.* call in awareness except, got:\n{body_dump}"
-    )
-    assert body_dump.strip() != "pass", (
-        "awareness except must not be a silent `pass`"
-    )
+    assert (
+        "self.logger" in body_dump
+    ), f"expected self.logger.* call in awareness except, got:\n{body_dump}"
+    assert body_dump.strip() != "pass", "awareness except must not be a silent `pass`"
