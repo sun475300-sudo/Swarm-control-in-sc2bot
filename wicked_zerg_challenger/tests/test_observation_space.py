@@ -4,10 +4,18 @@ import sys
 import unittest
 from unittest.mock import MagicMock
 
+import pytest
+
 os.environ["PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION"] = "python"
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from local_training.sc2_env import SC2ActionSpace, SC2Observation, UnitTypeId
+try:
+    from local_training.sc2_env import SC2ActionSpace, SC2Observation, UnitTypeId
+except ImportError:
+    pytest.skip(
+        "local_training.sc2_env dependencies not available (numpy/sc2)",
+        allow_module_level=True,
+    )
 
 
 class TestObservationSpace(unittest.TestCase):

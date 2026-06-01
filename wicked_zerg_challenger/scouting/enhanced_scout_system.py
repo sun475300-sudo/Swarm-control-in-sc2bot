@@ -26,13 +26,6 @@ Features:
 
 import warnings
 
-warnings.warn(
-    "EnhancedScoutSystem is deprecated. Use AdvancedScoutingSystemV2 from "
-    "scouting.advanced_scout_system_v2 instead.",
-    DeprecationWarning,
-    stacklevel=2,
-)
-
 from typing import Dict, List, Optional, Set, Tuple
 
 from utils.logger import get_logger
@@ -62,6 +55,12 @@ class EnhancedScoutSystem:
     """
 
     def __init__(self, bot: BotAI):
+        warnings.warn(
+            "EnhancedScoutSystem is deprecated. Use AdvancedScoutingSystemV2 from "
+            "scouting.advanced_scout_system_v2 instead.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
         self.bot = bot
         self.logger = get_logger("EnhancedScout")
 

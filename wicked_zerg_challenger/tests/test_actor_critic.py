@@ -3,12 +3,20 @@ import os
 import sys
 import unittest
 
-import numpy as np
+import pytest
+
+try:
+    import numpy as np
+except ImportError:
+    pytest.skip("numpy not available", allow_module_level=True)
 
 os.environ["PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION"] = "python"
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from local_training.hierarchical_rl.improved_hierarchical_rl import ActorCriticNetwork
+try:
+    from local_training.hierarchical_rl.improved_hierarchical_rl import ActorCriticNetwork
+except ImportError:
+    pytest.skip("hierarchical_rl dependencies not available", allow_module_level=True)
 
 
 class TestActorCriticNetwork(unittest.TestCase):

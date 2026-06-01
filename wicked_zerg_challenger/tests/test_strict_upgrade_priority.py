@@ -8,8 +8,12 @@ from unittest.mock import MagicMock
 os.environ["PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION"] = "python"
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from sc2.ids.unit_typeid import UnitTypeId
-from sc2.ids.upgrade_id import UpgradeId
+try:
+    from sc2.ids.unit_typeid import UnitTypeId
+    from sc2.ids.upgrade_id import UpgradeId
+except ImportError:
+    import pytest
+    pytest.skip("sc2 library not available", allow_module_level=True)
 from strict_upgrade_priority import StrictUpgradePriority
 
 

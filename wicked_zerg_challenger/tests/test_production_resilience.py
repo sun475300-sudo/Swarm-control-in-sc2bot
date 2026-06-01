@@ -24,8 +24,12 @@ sys.path.insert(
 )
 
 from local_training.production_resilience import ProductionResilience
-from sc2.ids.unit_typeid import UnitTypeId
-from sc2.position import Point2
+try:
+    from sc2.ids.unit_typeid import UnitTypeId
+    from sc2.position import Point2
+except ImportError:
+    import pytest
+    pytest.skip("sc2 library not available", allow_module_level=True)
 
 
 class TestProductionResilience(unittest.TestCase):
@@ -385,8 +389,7 @@ if __name__ == "__main__":
                 # Wrap it
                 def make_sync_wrapper(async_func):
                     def sync_wrapper(self):
-                        loop = asyncio.get_event_loop()
-                        return loop.run_until_complete(async_func(self))
+                        return asyncio.run(async_func(self))
 
                     return sync_wrapper
 

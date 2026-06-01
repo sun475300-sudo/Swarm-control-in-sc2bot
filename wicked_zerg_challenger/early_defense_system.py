@@ -37,17 +37,7 @@ except ImportError:
     class BotAI:
         pass
 
-    class UnitTypeId:
-        pass
-
-    class AbilityId:
-        pass
-
-    class UpgradeId:
-        pass
-
-    class Point2:
-        pass
+    from utils.sc2_stub import AbilityId, Point2, UnitTypeId, UpgradeId  # noqa: F401
 
 
 class EarlyDefenseSystem:

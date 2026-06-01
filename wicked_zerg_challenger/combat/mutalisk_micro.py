@@ -16,8 +16,8 @@ try:
     from sc2.position import Point2
     from sc2.unit import Unit
 except ImportError:
-    UnitTypeId = None
-    Point2 = None
+    from utils.sc2_stub import Point2, UnitTypeId  # noqa: F401
+
     Unit = None
 
 
