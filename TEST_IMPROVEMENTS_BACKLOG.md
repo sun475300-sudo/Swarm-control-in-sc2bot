@@ -52,4 +52,19 @@
 ---
 
 ## 진행 로그
-- Round 1: P0-1, P0-2 수정 예정
+
+### Round 1 ✅
+- [x] **P0-1** `test_combat_phase_fsm.py` — `asyncio.get_event_loop()` 5곳 → `asyncio.run()`
+- [x] **P0-2** `test_queen_transfusion.py` — sc2 import 가드 추가
+- 결과: 12 failed → 0 failed, 383 → 395 passed
+
+### Round 2 ✅
+- [x] **P1-5** `wicked_zerg_challenger/tests/test_production_resilience.py:388` — `asyncio.get_event_loop()` → `asyncio.run()`
+- [x] **P1-6** `tests/test_p606_infra.py` — 존재하지 않는 클래스명(`FuzzTarget`, `ContractViolation`, `PackageType`, `ProfileMetric`)을 실제 export 된 클래스명(`SC2Fuzzer`, `ContractStatus`, `SBOMGenerator`, `SC2Profiler`)으로 교체
+- [x] **P2-1** `requirements-dev.txt` 확인 — 이미 `pytest>=7.0.0`, `pytest-asyncio>=0.23.0`, `pytest-timeout>=2.1.0` 포함 (조치 불필요)
+- 결과: numpy 설치 시 432 passed, 16 skipped
+
+### Round 3 (계획)
+- [ ] P1-1, P1-2, P1-3, P1-4 — 점검 결과 이미 try/except 가드 됨 (조치 불필요, backlog 종결)
+- [ ] P3-1 16개 skip 잔여 분류 후 가능한 케이스 재활성화 (sc2 미설치, pyupbit 미설치, config.yaml 부재 — 환경 의존)
+- [ ] 새로운 라운드: 실제 봇 모듈(`wicked_zerg_challenger/*.py`) 의 점검 및 lint warning 분석
