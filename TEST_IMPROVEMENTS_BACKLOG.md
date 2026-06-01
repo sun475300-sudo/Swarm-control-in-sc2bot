@@ -84,3 +84,4 @@ AST scan found 4 functions with code after `return` that could never execute —
 | 2     | 2026-06-01 | #D, #E, #F, #G — 18 silent no-op tests now actually execute       | **1155** | 1 |
 | 3     | 2026-06-01 | #H, #I, #J, #K — 4 dead duplicate methods removed                 | **1155** | 1 |
 | 4     | 2026-06-01 | #L–#R — 4 unreachable blocks (123 lines) + 1 lazy import + 3 mojibake fixes | **1155** | 0 |
+| 5     | 2026-06-01 | #S — 2 more mojibake-fused comment+code lines in `unit_factory.py` (`_combat_mode = False` and `unit_requests = {}` had been swallowed by stray Korean text on the same physical line; duplicate assignments meant behavior was unaffected, but anyone reading the source saw `_combat_mode = False` *twice* with no obvious cause) | **1155** | 0 |

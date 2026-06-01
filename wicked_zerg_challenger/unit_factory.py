@@ -45,7 +45,7 @@ class UnitFactory:
         self.max_larva_spend_per_step = 5
 
         # * COMBAT REINFORCEMENT SYSTEM *
-        # ??ш낄援??濚??怨뚮옖筌???野껊챶爾?????ш낄援η뵳???筌?痢??        self._combat_mode = False
+        # Combat reinforcement mode: track if bot is currently engaged
         self._combat_mode = False
         self._last_combat_check = 0
         self._combat_check_interval = 22  # ~1?縕?袁?맪??癲ル슪???띿물?
@@ -436,7 +436,8 @@ class UnitFactory:
         if self.blackboard:
             to_request = min(self.max_larva_spend_per_step, len(larva))
 
-            # ???Β?띾쭡??筌믨퀡彛??????????ル늅筌???????ヂ嚥?肉???숆강筌?쓣爾??            unit_requests = {}
+            # Accumulate desired units; aggregate by type before requesting
+            unit_requests = {}
             for _ in range(to_request):
                 unit_type = self._pick_unit(queue)
                 if not unit_type:
