@@ -18,6 +18,16 @@ PROJECT_ROOT = Path(__file__).parent.parent
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
+# Activate the offline sc2 stub if the real library is unavailable. This lets
+# the wicked_zerg_challenger tests collect in CI environments where python-sc2
+# cannot be installed (its mpyq dependency builds C from Cython 0.x).
+try:
+    import sc2  # noqa: F401
+except ImportError:
+    _STUB_ROOT = Path(__file__).parent / "_sc2_stub"
+    if _STUB_ROOT.exists() and str(_STUB_ROOT) not in sys.path:
+        sys.path.insert(0, str(_STUB_ROOT))
+
 
 # ═══════════════════════════════════════════════════════
 # 경로 관련 Fixtures
