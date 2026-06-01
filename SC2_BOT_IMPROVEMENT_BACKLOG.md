@@ -72,3 +72,21 @@
 - `try: except: pass` 270건 검토 — 진짜 swallow 필요한 곳 vs 로그 필요한 곳 분류
 - 코드 mojibake 정리 (가독성 - 비즈니스 임팩트 없음)
 - 봇 의도 시나리오 단위 통합 테스트 (현재는 unit 위주)
+
+### 사이클 8 (완료, e7a72b9) — 회귀 잠금
+- [x] `should_expand` 미네랄 경계 테스트 (250 == OK, 249 == 차단)
+- [x] supply-blocked 분기 회귀 잠금
+
+### 사이클 9 (완료, 13d7531) — sc2 stub 통합
+- [x] `utils/sc2_stub.py` 공유 모듈 신설
+- [x] 5개 파일에서 중복 stub 제거 (-128줄)
+- [x] 향후 추가 모듈은 한 곳만 보면 됨
+
+## 최종 상태
+
+- 9사이클 진행, 9개 커밋
+- 테스트: baseline 312 passed / 83 failed → **712 passed / 0 failed**
+- 컬렉션 에러: 1 → 0 (5건 중간 발견 후 모두 해결)
+- 실제 운영 버그 10건 발견·수정 (NameError 2개는 매 step hot path)
+- 죽은 코드 162줄 제거
+- 공유 sc2 stub 모듈 신설
