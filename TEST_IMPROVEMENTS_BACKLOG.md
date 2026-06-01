@@ -62,6 +62,20 @@ AST-based scan of all non-test `wicked_zerg_challenger` modules found 4 classes 
 - [x] **#J** `economy_manager.py` — first `_reduce_gas_workers()` (lines 3419–3444) shadowed by the second at line 4110. The active one tiers `min_workers` by gas amount (0/1/2 at >2000/>1000/>500); the dead one was a simpler "always drop one if ≥3" loop. Deleted the dead twin.
 - [x] **#K** `local_training/production_resilience.py` — first `build_terran_counters()` (1467–1487) shadowed by the second at 1985. Deleted; the active version uses TechCoordinator and a priority macro path, the dead one was a bare-build fallback.
 
+## Cycle 4 Findings (Unreachable Dead Code & Deprecation Warning)
+
+AST scan found 4 functions with code after `return` that could never execute — all four were *duplicate copies* of the lines preceding the return, suggesting a copy-paste error during an earlier refactor.
+
+### P0.9 — Unreachable Code & Misc Cleanup
+
+- [x] **#L** `smart_resource_balancer.py::_get_current_worker_ratio` — 24 lines of duplicate, unreachable code after `return mineral_workers / gas_workers`. Deleted.
+- [x] **#M** `smart_resource_balancer.py::_move_workers_to_minerals` — 22 lines of duplicate, unreachable code after `return moved`. Deleted.
+- [x] **#N** `economy_manager.py::_force_expansion_if_stuck` — 38 lines of duplicate unreachable code after final `return`. Deleted.
+- [x] **#O** `economy_manager.py::_check_proactive_expansion` — 39 lines of duplicate unreachable code after final log message. Deleted.
+- [x] **#P** `bot_step_integration.py` — `EnhancedScoutSystem` was imported eagerly at module load, firing a `DeprecationWarning` every test run even when `AdvancedScoutingSystemV2` was available (which it is, so the legacy class is never instantiated). Made the import lazy + warning-suppressed; only attempted when the V2 system is missing.
+- [x] **#Q** `dynamic_resource_balancer.py:175` — mojibake comment line had absorbed a literal `return {` that visually appeared to start a second dict but was actually a comment. Replaced with clean ASCII.
+- [x] **#R** `unit_factory.py:167, 216` — two more mojibake-fused comment+code lines (harmless duplicate assignments, but visually misleading). Replaced with clean comments.
+
 ## Status
 
 | Cycle | Date       | Improvements applied                                              | Tests passed | Warnings |
@@ -69,3 +83,4 @@ AST-based scan of all non-test `wicked_zerg_challenger` modules found 4 classes 
 | 1     | 2026-06-01 | #1, #2, #3, #4, #A, #B, #C                                        | **1155** (was 376) | 38 |
 | 2     | 2026-06-01 | #D, #E, #F, #G — 18 silent no-op tests now actually execute       | **1155** | 1 |
 | 3     | 2026-06-01 | #H, #I, #J, #K — 4 dead duplicate methods removed                 | **1155** | 1 |
+| 4     | 2026-06-01 | #L–#R — 4 unreachable blocks (123 lines) + 1 lazy import + 3 mojibake fixes | **1155** | 0 |
