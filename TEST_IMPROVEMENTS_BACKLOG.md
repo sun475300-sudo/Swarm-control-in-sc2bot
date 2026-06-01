@@ -51,9 +51,21 @@ Running with warnings exposed: pytest reported **38 warnings** including `corout
 
 - [x] **#G** Installed `pytest-timeout` (the pytest.ini `timeout = 60` was warning `Unknown config option`).
 
+## Cycle 3 Findings (Duplicate-Method Override Bugs)
+
+AST-based scan of all non-test `wicked_zerg_challenger` modules found 4 classes where the same method name was defined twice in the same class body. In every case the second definition silently overrode the first; the first definition was dead code that may have been left behind by an incomplete refactor.
+
+### P0.8 — Dead Duplicate Methods
+
+- [x] **#H** `combat_manager.py` — first `_find_harass_target()` (lines 2815–2843) was always shadowed by the second at line 5011. Deleted the dead first version.
+- [x] **#I** `economy_manager.py` — first `_prevent_resource_banking()` (lines 1708–1814) shadowed by the second at line 3286. Deleted; the active implementation handles a wider matrix (gas banking + opening safety) so deleting the dead twin removes a maintenance hazard.
+- [x] **#J** `economy_manager.py` — first `_reduce_gas_workers()` (lines 3419–3444) shadowed by the second at line 4110. The active one tiers `min_workers` by gas amount (0/1/2 at >2000/>1000/>500); the dead one was a simpler "always drop one if ≥3" loop. Deleted the dead twin.
+- [x] **#K** `local_training/production_resilience.py` — first `build_terran_counters()` (1467–1487) shadowed by the second at 1985. Deleted; the active version uses TechCoordinator and a priority macro path, the dead one was a bare-build fallback.
+
 ## Status
 
-| Cycle | Date       | Improvements applied                            | Tests passed | Warnings |
-|-------|------------|-------------------------------------------------|--------------|----------|
-| 1     | 2026-06-01 | #1, #2, #3, #4, #A, #B, #C                      | **1155** (was 376) | 38 |
-| 2     | 2026-06-01 | #D, #E, #F, #G — 18 silent no-op tests recovered | **1155** (same count, but 18 are now real) | 1 |
+| Cycle | Date       | Improvements applied                                              | Tests passed | Warnings |
+|-------|------------|-------------------------------------------------------------------|--------------|----------|
+| 1     | 2026-06-01 | #1, #2, #3, #4, #A, #B, #C                                        | **1155** (was 376) | 38 |
+| 2     | 2026-06-01 | #D, #E, #F, #G — 18 silent no-op tests now actually execute       | **1155** | 1 |
+| 3     | 2026-06-01 | #H, #I, #J, #K — 4 dead duplicate methods removed                 | **1155** | 1 |
