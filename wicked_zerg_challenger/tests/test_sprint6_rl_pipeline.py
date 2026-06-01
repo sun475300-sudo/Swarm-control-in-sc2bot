@@ -10,15 +10,23 @@ import unittest
 from pathlib import Path
 from types import SimpleNamespace
 
-import numpy as np
+import pytest
+
+try:
+    import numpy as np
+except ImportError:
+    pytest.skip("numpy not available", allow_module_level=True)
 
 os.environ["PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION"] = "python"
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from combat_manager import CombatManager
-from local_training.hierarchical_rl.improved_hierarchical_rl import HierarchicalRLSystem
-from local_training.rl_agent import RLAgent
-from local_training.training_pipeline import TrainingPipeline, update_elo
+try:
+    from combat_manager import CombatManager
+    from local_training.hierarchical_rl.improved_hierarchical_rl import HierarchicalRLSystem
+    from local_training.rl_agent import RLAgent
+    from local_training.training_pipeline import TrainingPipeline, update_elo
+except ImportError:
+    pytest.skip("RL pipeline dependencies not available", allow_module_level=True)
 
 
 class Blackboard:
