@@ -8,7 +8,7 @@ Multitasking System - 멀티태스킹 관리
 3. 동시 작업 실행
 """
 
-from typing import TYPE_CHECKING, Dict, List, Optional, Set, Tuple
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Set, Tuple
 
 if TYPE_CHECKING:
     from sc2.position import Point2
@@ -92,7 +92,7 @@ class MultitaskingSystem:
 
     def create_task_list(
         self, army_units, air_units, enemy_units, iteration: int
-    ) -> List[Tuple[str, any, int]]:
+    ) -> List[Tuple[str, Any, int]]:
         """
         우선순위 기반 작업 리스트 생성
 
