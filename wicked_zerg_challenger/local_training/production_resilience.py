@@ -1439,6 +1439,7 @@ class ProductionResilience:
 
     async def force_resource_dump(self) -> None:
         b = self.bot
+        game_time = float(getattr(b, "time", 0.0) or 0.0)
         if (
             b.can_afford(UnitTypeId.HATCHERY)
             and b.already_pending(UnitTypeId.HATCHERY) < 2
