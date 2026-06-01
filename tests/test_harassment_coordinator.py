@@ -203,15 +203,16 @@ class TestHarassmentCoordinator:
             def __len__(self):
                 return 0
 
-        # Patch units to return empty collections for unit type queries
-        self.bot.units = Mock(side_effect=lambda *args: EmptyUnits())
+        # Make bot.units behave like a callable that returns an empty group
+        # for any unit-type query (e.g. self.bot.units(UnitTypeId.BANELING)).
+        self.bot.units = lambda *args, **kwargs: EmptyUnits()
 
         # Should not be able to execute initially (no overlord, no banelings)
         can_execute = self.coordinator._can_execute_baneling_drop()
 
         # Initially false due to missing units or cooldown
         assert isinstance(can_execute, bool)
-        assert can_execute == False
+        assert can_execute is False
 
     # ===== Multi-Angle Attack Tests =====
 
