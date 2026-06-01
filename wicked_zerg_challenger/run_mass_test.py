@@ -41,11 +41,37 @@ def _ensure_sc2_path():
 
 _ensure_sc2_path()
 
-from sc2 import maps
-from sc2.data import Difficulty, Race
-from sc2.main import run_game
-from sc2.player import Bot, Computer
-from wicked_zerg_bot_pro_impl import WickedZergBotProImpl
+try:
+    from sc2 import maps
+    from sc2.data import Difficulty, Race
+    from sc2.main import run_game
+    from sc2.player import Bot, Computer
+    from wicked_zerg_bot_pro_impl import WickedZergBotProImpl
+except ImportError as exc:  # SC2 runtime deps optional for CLI/test helpers
+    logger.warning("SC2 runtime not available: %s", exc)
+    maps = None
+    run_game = None
+    Bot = Computer = WickedZergBotProImpl = None
+
+    from enum import Enum
+
+    class Race(Enum):
+        Random = "Random"
+        Terran = "Terran"
+        Zerg = "Zerg"
+        Protoss = "Protoss"
+
+    class Difficulty(Enum):
+        VeryEasy = "VeryEasy"
+        Easy = "Easy"
+        Medium = "Medium"
+        MediumHard = "MediumHard"
+        Hard = "Hard"
+        Harder = "Harder"
+        VeryHard = "VeryHard"
+        CheatVision = "CheatVision"
+        CheatMoney = "CheatMoney"
+        CheatInsane = "CheatInsane"
 
 # GPU setup
 try:
