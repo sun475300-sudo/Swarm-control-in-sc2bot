@@ -354,6 +354,28 @@ class TestStateQueries(unittest.TestCase):
         self.bb.update_resources(500, 100, 50, 100)
         self.assertFalse(self.bb.should_expand())
 
+    def test_should_expand_at_mineral_threshold_boundary(self):
+        """Minimum mineral floor must be permissive (>=, not >)."""
+        from blackboard import GameStateBlackboard
+
+        self.bb.update_threat(ThreatLevel.NONE)
+        # Exactly at the documented threshold should permit expansion.
+        self.bb.update_resources(GameStateBlackboard.MIN_MINERALS_FOR_EXPANSION, 0, 50, 100)
+        self.assertTrue(self.bb.should_expand())
+
+        # One mineral below the threshold should block expansion.
+        self.bb.update_resources(
+            GameStateBlackboard.MIN_MINERALS_FOR_EXPANSION - 1, 0, 50, 100
+        )
+        self.assertFalse(self.bb.should_expand())
+
+    def test_should_not_expand_when_supply_blocked(self):
+        """Even with enough minerals, supply-blocked state must defer expansion."""
+        self.bb.update_threat(ThreatLevel.NONE)
+        # supply_used == supply_cap → supply_blocked
+        self.bb.update_resources(800, 200, 100, 100)
+        self.assertFalse(self.bb.should_expand())
+
 
 class TestBackwardCompatibility(unittest.TestCase):
     def setUp(self):
