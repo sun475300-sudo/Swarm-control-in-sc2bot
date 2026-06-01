@@ -128,14 +128,13 @@ class MissingLogicChecker:
                 })
     
     def scan_all(self) -> Dict:
-        """??ü ??ĵ"""
-        for root, dirs, files in Path(PROJECT_ROOT).rglob('*.py'):
-            # ?????? ???丮
-            if any(excluded in str(root) for excluded in ['__pycache__', '.git', 'node_modules', '.venv', 'venv', 'models', '.pytest_cache']):
+        """전체 스캔"""
+        excluded_parts = {'__pycache__', '.git', 'node_modules', '.venv', 'venv', 'models', '.pytest_cache'}
+        for py_file in Path(PROJECT_ROOT).rglob('*.py'):
+            if excluded_parts.intersection(py_file.parts):
                 continue
-            
-            if root.is_file():
-                self.scan_file(root)
+            if py_file.is_file():
+                self.scan_file(py_file)
         
         # ??ü ??????Ʈ???? ȣ??Ǿ????? ???ǵ??? ???? ?޼??? ã??
         all_defined = set()
