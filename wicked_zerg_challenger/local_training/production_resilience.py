@@ -800,6 +800,12 @@ class ProductionResilience:
                     return await self._safe_train(larva, UnitTypeId.ZERGLING)
                 return False  # Wait for resources
 
+            # === THIRD-BASE RESERVE ===
+            # Once minimum defense is up, hold larvae so the 3rd Hatchery
+            # can be paid for. Bypassed when ignore_caps (resource flush).
+            if self._should_reserve_third_base_minerals():
+                return False
+
         # === COUNTER ENEMY COMPOSITION ===
         enemy_units = getattr(b, "enemy_units", [])
         counter_unit = self._get_counter_unit(
@@ -2141,6 +2147,11 @@ class ProductionResilience:
             UnitTypeId of the recommended counter unit, or None
         """
         if not enemy_units:
+            return None
+
+        try:
+            iter(enemy_units)
+        except TypeError:
             return None
 
         b = self.bot
