@@ -201,6 +201,98 @@ class TestQueenTransfusionManager:
         assert "transfusions_by_unit" in stats
         assert "avg_hp_per_transfusion" in stats
 
+    # ===== Edge cases added during PR #215 cleanup =====
+
+    def test_overheal_guard_rejects_nearly_full_target(self):
+        """
+        Transfusion restores 125 HP; we shouldn't waste it on a target
+        that's only missing a tiny amount (<50% effectiveness threshold).
+        """
+        queen = create_mock_unit(UnitTypeId.QUEEN, health_pct=1.0, health_max=200, tag=1)
+        # Roach: 145 max HP. At 58% (~84 HP), it would qualify on the
+        # health_percentage check but it's only missing ~61 HP, which is
+        # under TRANSFUSION_HP_RESTORE * 0.5 = 62.5 → reject.
+        almost_full = create_mock_unit(
+            UnitTypeId.ROACH, health_pct=0.58, health_max=145, tag=2
+        )
+        assert (
+            self.manager._is_valid_transfusion_target(almost_full, queen) is False
+        ), "Should reject target where transfusion would be <50% effective"
+
+    def test_zergling_never_eligible_due_to_low_max_hp(self):
+        """
+        Implicit consequence of the overheal guard: zerglings have only
+        35 max HP, so even a 1-HP zergling can't accept 62.5+ HP of
+        transfusion. This is intentional — but we want regression
+        coverage so it's not silently flipped by future tuning.
+        """
+        queen = create_mock_unit(UnitTypeId.QUEEN, health_pct=1.0, health_max=200, tag=1)
+        nearly_dead = create_mock_unit(
+            UnitTypeId.ZERGLING, health_pct=0.05, health_max=35, tag=2
+        )
+        assert (
+            self.manager._is_valid_transfusion_target(nearly_dead, queen) is False
+        ), "Zergling cannot accept enough HP for transfusion to be efficient"
+
+    def test_critical_hp_beats_priority_in_tiebreak(self):
+        """
+        Sort key: (-priority, -critical_flag, health_pct). When two units
+        share priority, the one under TRANSFUSION_CRITICAL_HP must be
+        chosen first. We use two roaches (same priority, same max HP).
+        """
+        queen = create_mock_unit(
+            UnitTypeId.QUEEN, health_pct=1.0, health_max=200, position=(0, 0), tag=1
+        )
+        # 25% HP → under TRANSFUSION_CRITICAL_HP (0.3)
+        critical = create_mock_unit(
+            UnitTypeId.ROACH,
+            health_pct=0.25,
+            health_max=145,
+            position=(1, 0),
+            tag=2,
+        )
+        # 45% HP → above critical but still valid (below 0.6 threshold)
+        damaged = create_mock_unit(
+            UnitTypeId.ROACH,
+            health_pct=0.45,
+            health_max=145,
+            position=(1, 0),
+            tag=3,
+        )
+
+        class MockUnits:
+            def __iter__(self):
+                return iter([damaged, critical])  # critical second on purpose
+
+        best = self.manager._find_best_transfusion_target(queen, MockUnits())
+        assert best is critical, "Critical-HP target should beat higher-HP peer"
+
+    def test_targeted_set_blocks_double_heal(self):
+        """
+        Once a queen targets a unit this iteration, the next queen's
+        target selection must skip it. Guarantees we don't burn two
+        queens' energy on the same low-HP target.
+        """
+        queen = create_mock_unit(
+            UnitTypeId.QUEEN, health_pct=1.0, health_max=200, position=(0, 0), tag=1
+        )
+        target = create_mock_unit(
+            UnitTypeId.ROACH, health_pct=0.3, health_max=145, position=(1, 0), tag=99
+        )
+
+        class MockUnits:
+            def __iter__(self):
+                return iter([target])
+
+        # First lookup: target available
+        first = self.manager._find_best_transfusion_target(queen, MockUnits())
+        assert first is target
+
+        # Mark it as targeted, then re-query
+        self.manager._targeted_this_iter.add(target.tag)
+        second = self.manager._find_best_transfusion_target(queen, MockUnits())
+        assert second is None, "Already-targeted unit must not be re-selected"
+
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
