@@ -7,12 +7,12 @@ All difficulties x All races = comprehensive test matrix
 GPU acceleration enabled for all computations.
 """
 
+import argparse
 import json
 import logging
 import os
 import sys
 import time
-import argparse
 from datetime import datetime
 from pathlib import Path
 
@@ -41,11 +41,38 @@ def _ensure_sc2_path():
 
 _ensure_sc2_path()
 
-from sc2 import maps
-from sc2.data import Difficulty, Race
-from sc2.main import run_game
-from sc2.player import Bot, Computer
-from wicked_zerg_bot_pro_impl import WickedZergBotProImpl
+try:
+    from sc2 import maps
+    from sc2.data import Difficulty, Race
+    from sc2.main import run_game
+    from sc2.player import Bot, Computer
+    from wicked_zerg_bot_pro_impl import WickedZergBotProImpl
+except ImportError as exc:  # SC2 runtime deps optional for CLI/test helpers
+    logger.warning("SC2 runtime not available: %s", exc)
+    maps = None
+    run_game = None
+    Bot = Computer = WickedZergBotProImpl = None
+
+    from enum import Enum
+
+    class Race(Enum):
+        Random = "Random"
+        Terran = "Terran"
+        Zerg = "Zerg"
+        Protoss = "Protoss"
+
+    class Difficulty(Enum):
+        VeryEasy = "VeryEasy"
+        Easy = "Easy"
+        Medium = "Medium"
+        MediumHard = "MediumHard"
+        Hard = "Hard"
+        Harder = "Harder"
+        VeryHard = "VeryHard"
+        CheatVision = "CheatVision"
+        CheatMoney = "CheatMoney"
+        CheatInsane = "CheatInsane"
+
 
 # GPU setup
 try:
@@ -123,9 +150,7 @@ def build_test_cases(args):
     if not selected_maps:
         selected_maps = list(MAPS)
 
-    selected_races = (
-        [RACE_BY_NAME[args.opponent]] if args.opponent else list(RACES)
-    )
+    selected_races = [RACE_BY_NAME[args.opponent]] if args.opponent else list(RACES)
     selected_difficulties = (
         [(DIFFICULTY_BY_NAME[args.difficulty], args.difficulty)]
         if args.difficulty
@@ -218,7 +243,9 @@ def main(argv=None):
 
     if args.dry_run:
         for i, (map_name, race, _difficulty, diff_name) in enumerate(test_cases, 1):
-            logger.info("  DRY %02d/%02d: %s vs %s %s", i, total, map_name, race.name, diff_name)
+            logger.info(
+                "  DRY %02d/%02d: %s vs %s %s", i, total, map_name, race.name, diff_name
+            )
         logger.info("  Dry run complete; no SC2 games launched.")
         return
 

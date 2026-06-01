@@ -800,6 +800,11 @@ class ProductionResilience:
                     return await self._safe_train(larva, UnitTypeId.ZERGLING)
                 return False  # Wait for resources
 
+            # Once defense is met, hold larvae while reserving minerals
+            # for the next Hatchery expansion.
+            if self._should_reserve_third_base_minerals():
+                return False
+
         # === COUNTER ENEMY COMPOSITION ===
         enemy_units = getattr(b, "enemy_units", [])
         counter_unit = self._get_counter_unit(
@@ -1434,6 +1439,7 @@ class ProductionResilience:
 
     async def force_resource_dump(self) -> None:
         b = self.bot
+        game_time = float(getattr(b, "time", 0.0) or 0.0)
         if (
             b.can_afford(UnitTypeId.HATCHERY)
             and b.already_pending(UnitTypeId.HATCHERY) < 2
@@ -1457,30 +1463,6 @@ class ProductionResilience:
                         await self._safe_train(larva, UnitTypeId.ZERGLING)
 
     # Defense methods moved to DefenseCoordinator
-
-    async def build_terran_counters(self) -> None:
-        b = self.bot
-        if not b.production:
-            return
-        if self._should_reserve_third_base_minerals():
-            return
-        baneling_nests = [
-            s for s in b.units(UnitTypeId.BANELINGNEST).structure if s.is_ready
-        ]
-        if (
-            not baneling_nests
-            and b.already_pending(UnitTypeId.BANELINGNEST) == 0
-            and b.can_afford(UnitTypeId.BANELINGNEST)
-        ):
-            # CRITICAL: Check for duplicate construction before building
-            if not b.structures(UnitTypeId.BANELINGNEST).exists:
-                spawning_pools = [
-                    s for s in b.units(UnitTypeId.SPAWNINGPOOL).structure if s.is_ready
-                ]
-                if spawning_pools:
-                    await b.build(UnitTypeId.BANELINGNEST, near=spawning_pools[0])
-        # NOTE: Roach Warren building is now handled by _auto_build_tech_structures()
-        # Removed duplicate code to prevent building spam
 
     async def _auto_build_tech_structures(self) -> None:
         """
@@ -2501,10 +2483,16 @@ class ProductionResilience:
 
                 # 가스 있으면 히드라/바퀴, 없으면 저글링
                 trained = False
-                if b.vespene >= 50 and b.structures(UnitTypeId.HYDRALISKDEN).ready.exists:
+                if (
+                    b.vespene >= 50
+                    and b.structures(UnitTypeId.HYDRALISKDEN).ready.exists
+                ):
                     if b.can_afford(UnitTypeId.HYDRALISK):
                         trained = await self._safe_train(larva, UnitTypeId.HYDRALISK)
-                elif b.vespene >= 25 and b.structures(UnitTypeId.ROACHWARREN).ready.exists:
+                elif (
+                    b.vespene >= 25
+                    and b.structures(UnitTypeId.ROACHWARREN).ready.exists
+                ):
                     if b.can_afford(UnitTypeId.ROACH):
                         trained = await self._safe_train(larva, UnitTypeId.ROACH)
 
@@ -2656,6 +2644,110 @@ class ProductionResilience:
 
         # Priority 4: Build gas-heavy tech buildings if no units produced
         await self._build_gas_heavy_tech()
+
+    async def _build_gas_heavy_tech(self) -> None:
+        """Sink excess gas into tech (Lair, Hydra Den, Spire, Hive).
+
+        Called when gas overflows and no army units can absorb it.
+        """
+        b = self.bot
+        if not b.townhalls.exists:
+            return
+
+        # Lair upgrade: 100M / 100G
+        if (
+            b.structures(UnitTypeId.HATCHERY).ready.exists
+            and not b.structures(UnitTypeId.LAIR).exists
+            and not b.structures(UnitTypeId.HIVE).exists
+            and b.already_pending(UnitTypeId.LAIR) == 0
+            and b.can_afford(UnitTypeId.LAIR)
+        ):
+            try:
+                hatchery = b.structures(UnitTypeId.HATCHERY).ready.first
+                self.bot.do(hatchery.train(UnitTypeId.LAIR))
+                return
+            except Exception:
+                pass
+
+        # Hydralisk Den: 100M / 100G (requires Lair)
+        if (
+            b.structures(UnitTypeId.LAIR).ready.exists
+            or b.structures(UnitTypeId.HIVE).ready.exists
+        ):
+            if (
+                not b.structures(UnitTypeId.HYDRALISKDEN).exists
+                and b.already_pending(UnitTypeId.HYDRALISKDEN) == 0
+                and b.can_afford(UnitTypeId.HYDRALISKDEN)
+            ):
+                try:
+                    await b.build(
+                        UnitTypeId.HYDRALISKDEN, near=b.townhalls.first.position
+                    )
+                    return
+                except Exception:
+                    pass
+
+            # Spire: 200M / 200G (requires Lair)
+            if (
+                not b.structures(UnitTypeId.SPIRE).exists
+                and b.already_pending(UnitTypeId.SPIRE) == 0
+                and b.can_afford(UnitTypeId.SPIRE)
+            ):
+                try:
+                    await b.build(UnitTypeId.SPIRE, near=b.townhalls.first.position)
+                    return
+                except Exception:
+                    pass
+
+        # Hive upgrade: 200M / 150G (requires Infestation Pit)
+        if (
+            b.structures(UnitTypeId.LAIR).ready.exists
+            and b.structures(UnitTypeId.INFESTATIONPIT).ready.exists
+            and not b.structures(UnitTypeId.HIVE).exists
+            and b.already_pending(UnitTypeId.HIVE) == 0
+            and b.can_afford(UnitTypeId.HIVE)
+        ):
+            try:
+                lair = b.structures(UnitTypeId.LAIR).ready.first
+                self.bot.do(lair.train(UnitTypeId.HIVE))
+            except Exception:
+                pass
+
+    async def _spend_minerals_without_larvae(self) -> None:
+        """Drain mineral bank when no larvae are available.
+
+        Build a macro Hatchery or Queens to convert excess minerals
+        into future larva capacity.
+        """
+        b = self.bot
+        if not b.townhalls.exists:
+            return
+
+        # Macro hatchery if we can afford one and aren't already building two
+        if (
+            b.can_afford(UnitTypeId.HATCHERY)
+            and b.already_pending(UnitTypeId.HATCHERY) < 2
+        ):
+            try:
+                await b.expand_now()
+                return
+            except Exception:
+                pass
+
+        # Otherwise train Queens at any idle Hatchery/Lair/Hive without one nearby
+        if (
+            b.structures(UnitTypeId.SPAWNINGPOOL).ready.exists
+            and b.can_afford(UnitTypeId.QUEEN)
+            and b.supply_left >= 2
+        ):
+            for th in b.townhalls.ready.idle:
+                if not b.units(UnitTypeId.QUEEN).closer_than(8, th).exists:
+                    try:
+                        self.bot.do(th.train(UnitTypeId.QUEEN))
+                        if not b.can_afford(UnitTypeId.QUEEN):
+                            break
+                    except Exception:
+                        continue
 
     async def _spend_excess_minerals(self) -> None:
         """

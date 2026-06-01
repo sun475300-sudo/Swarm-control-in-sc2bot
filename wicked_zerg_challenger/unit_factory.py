@@ -40,8 +40,12 @@ class UnitFactory:
             self.larva_pressure_threshold = 6
 
         self.min_mineral_reserve_for_gas = 150
-        self.gas_unit_ratio_target = 0.50  # * BALANCED: 0.60 -> 0.50 (??筌먦끉?????Β?띾쭡) *
-        self.larva_gas_ratio = 0.45  # * BALANCED: 0.6 -> 0.45 (雅?퍔瑗띰㎖?덈빝?????ル늅筌?55%) *
+        self.gas_unit_ratio_target = (
+            0.50  # * BALANCED: 0.60 -> 0.50 (??筌먦끉?????Β?띾쭡) *
+        )
+        self.larva_gas_ratio = (
+            0.45  # * BALANCED: 0.6 -> 0.45 (雅?퍔瑗띰㎖?덈빝?????ル늅筌?55%) *
+        )
         self.max_larva_spend_per_step = 5
 
         # * COMBAT REINFORCEMENT SYSTEM *
@@ -88,7 +92,8 @@ class UnitFactory:
         """
         ??? ???ろ꼥??????ㅻ깹????좊읈??????ル늅筌??????????깆뱾 ?釉뚰???
         """
-        # Strategy Manager????????ろ꼥???嶺뚮㉡?€쾮???좊읈??嶺뚮ㅎ?닸쾮濡㏓섀?        strategy = getattr(self.bot, "strategy_manager", None)
+        # Strategy Manager에서 적 종족 정보 사용
+        strategy = getattr(self.bot, "strategy_manager", None)
         if strategy:
             race = getattr(strategy, "detected_enemy_race", None)
             if race:
@@ -181,7 +186,9 @@ class UnitFactory:
                 nearby_enemies = [
                     e for e in enemy_units if e.distance_to(th.position) < 35
                 ]
-                if len(nearby_enemies) >= 3:  # 3?????⑤?彛?????ㅼ굣???????뗫쐩??                    in_combat = True
+                if (
+                    len(nearby_enemies) >= 3
+                ):  # 3?????⑤?彛?????ㅼ굣???????뗫쐩??                    in_combat = True
                     in_combat = True
                     break
 
@@ -372,7 +379,9 @@ class UnitFactory:
                             self.gas_unit_ratio_target = min(gas_ratio, 0.60)
                         if iteration % 100 == 0:
                             race = getattr(strategy, "detected_enemy_race", None)
-                            race_name = race.value if hasattr(race, "value") else str(race)
+                            race_name = (
+                                race.value if hasattr(race, "value") else str(race)
+                            )
                             logger.info(
                                 f"vs {race_name}: gas_ratio_target = {self.gas_unit_ratio_target:.2f}"
                             )
@@ -435,7 +444,8 @@ class UnitFactory:
         if self.blackboard:
             to_request = min(self.max_larva_spend_per_step, len(larva))
 
-            # ???Β?띾쭡??筌믨퀡彛??????????ル늅筌???????ヂ嚥?肉???숆강筌?쓣爾??            unit_requests = {}
+            # 마이너리즈된 유닛 요청 집계
+            unit_requests = {}
             for _ in range(to_request):
                 unit_type = self._pick_unit(queue)
                 if not unit_type:
