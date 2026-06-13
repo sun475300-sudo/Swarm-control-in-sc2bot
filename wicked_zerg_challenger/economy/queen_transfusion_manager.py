@@ -7,15 +7,41 @@ and optimizing healing efficiency in combat situations.
 
 from typing import TYPE_CHECKING, Dict, Optional
 
-from sc2.ids.ability_id import AbilityId
-from sc2.ids.unit_typeid import UnitTypeId
-from sc2.unit import Unit
-from sc2.units import Units
+try:
+    from sc2.ids.ability_id import AbilityId
+    from sc2.ids.unit_typeid import UnitTypeId
+    from sc2.unit import Unit
+    from sc2.units import Units
+except ImportError:  # Test/tooling environments without python-sc2
+    class _EnumStubMeta(type):
+        """Class-level __getattr__ so UnitTypeId.X works and the class
+        remains usable as a type annotation (e.g. Dict[UnitTypeId, int])."""
+
+        def __getattr__(cls, name):
+            value = name
+            setattr(cls, name, value)
+            return value
+
+    class AbilityId(metaclass=_EnumStubMeta):
+        pass
+
+    class UnitTypeId(metaclass=_EnumStubMeta):
+        pass
+
+    Unit = object
+    Units = object
 
 if TYPE_CHECKING:
     from sc2.bot_ai import BotAI
 
-from wicked_zerg_challenger.utils.logger import get_logger
+try:
+    from wicked_zerg_challenger.utils.logger import get_logger
+except ImportError:
+    try:
+        from utils.logger import get_logger
+    except ImportError:
+        import logging
+        get_logger = logging.getLogger
 
 
 class QueenTransfusionManager:
