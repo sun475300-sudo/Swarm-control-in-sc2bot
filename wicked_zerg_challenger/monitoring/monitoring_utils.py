@@ -37,7 +37,7 @@ def load_json(path: Path) -> Optional[Dict[str, Any]]:
         if path.exists():
             with path.open("r", encoding="utf-8") as f:
                 return json.load(f)
-    except Exception:
+    except (AttributeError, TypeError, ValueError, KeyError, RuntimeError):
         pass
     return None
 
@@ -57,7 +57,7 @@ def find_latest_instance_status(base_dir: Path) -> Optional[Dict[str, Any]]:
         if files:
             latest = max(files, key=lambda p: Path(p).stat().st_mtime)
             return load_json(Path(latest))
-    except Exception:
+    except (AttributeError, TypeError, ValueError, KeyError, RuntimeError):
         pass
     return None
 

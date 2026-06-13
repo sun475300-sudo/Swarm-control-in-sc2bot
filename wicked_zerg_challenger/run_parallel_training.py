@@ -98,7 +98,7 @@ def _cleanup_sc2_processes():
                 capture_output=True,
                 timeout=3,
             )
-        except Exception:
+        except (AttributeError, TypeError, ValueError, KeyError, RuntimeError):
             pass
 
 

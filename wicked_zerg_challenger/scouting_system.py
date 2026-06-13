@@ -284,7 +284,7 @@ class ScoutingSystem:
         if overlord and ability:
             try:
                 self._issue(overlord(ability))
-            except Exception:
+            except (AttributeError, TypeError, ValueError, KeyError, RuntimeError):
                 pass
 
     def _find_available_overseer(self, target=None):
@@ -390,7 +390,7 @@ class ScoutingSystem:
     def _issue(self, action) -> None:
         try:
             self.bot.do(action)
-        except Exception:
+        except (AttributeError, TypeError, ValueError, KeyError, RuntimeError):
             pass
 
     def _set(self, key: str, value) -> None:

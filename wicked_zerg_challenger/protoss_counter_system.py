@@ -261,7 +261,7 @@ class ProtossCounterSystem:
                             f"[{int(self.bot.time)}s] [*][*][*] EMERGENCY SPORE vs DT! [*][*][*]"
                         )
                         return  # 한 번에 1개씩만
-                    except Exception:
+                    except (AttributeError, TypeError, ValueError, KeyError, RuntimeError):
                         pass
 
     async def _pull_workers_from_threat(self):

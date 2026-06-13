@@ -152,7 +152,7 @@ class ScoringSystem:
             self._evaluate_macro(game_time)
             self._evaluate_adaptation(game_time)
             self._evaluate_survival(game_time)
-        except Exception:
+        except (AttributeError, TypeError, ValueError, KeyError, RuntimeError):
             pass
 
     # =========================================================================
@@ -385,7 +385,7 @@ class ScoringSystem:
                     for enemy in enemy_units:
                         if hasattr(enemy, "distance_to") and enemy.distance_to(th) < 20:
                             near_base_enemies += 1
-            except Exception:
+            except (AttributeError, TypeError, ValueError, KeyError, RuntimeError):
                 pass
             if near_base_enemies > 3:
                 self.domains["defense"].add(
@@ -409,7 +409,7 @@ class ScoringSystem:
                         self.domains["defense"].add(
                             -1, f"유휴 퀸 {idle_queens.amount}마리 - 인젝트 필요"
                         )
-            except Exception:
+            except (AttributeError, TypeError, ValueError, KeyError, RuntimeError):
                 pass
 
     # =========================================================================
@@ -444,7 +444,7 @@ class ScoringSystem:
                     )
                     if has_lair:
                         self.domains["strategy"].add(+2, "레어/하이브 테크업 완료")
-                except Exception:
+                except (AttributeError, TypeError, ValueError, KeyError, RuntimeError):
                     pass
         else:
             # 후반: 200 서플 + 공격
@@ -479,7 +479,7 @@ class ScoringSystem:
                 self.domains["micro"].add(
                     -2, f"유휴 군대 {len(idle_army)}기 - 명령 필요"
                 )
-        except Exception:
+        except (AttributeError, TypeError, ValueError, KeyError, RuntimeError):
             pass
 
     # =========================================================================
@@ -508,7 +508,7 @@ class ScoringSystem:
                 if tumors.amount > self._creep_tumor_count:
                     self.domains["macro"].add(+1, "크립 종양 확산")
                     self._creep_tumor_count = tumors.amount
-        except Exception:
+        except (AttributeError, TypeError, ValueError, KeyError, RuntimeError):
             pass
 
     # =========================================================================
@@ -754,7 +754,7 @@ class ScoringSystem:
                 existing = existing[-200:]
             with open(filepath, "w", encoding="utf-8") as f:
                 json.dump(existing, f, indent=2, ensure_ascii=False)
-        except Exception:
+        except (AttributeError, TypeError, ValueError, KeyError, RuntimeError):
             pass
 
     def _load_cumulative_score(self) -> Dict:
@@ -764,7 +764,7 @@ class ScoringSystem:
             if os.path.exists(filepath):
                 with open(filepath, "r", encoding="utf-8") as f:
                     return json.load(f)
-        except Exception:
+        except (AttributeError, TypeError, ValueError, KeyError, RuntimeError):
             pass
         return {"total": 0, "blocks": []}
 
@@ -774,5 +774,5 @@ class ScoringSystem:
         try:
             with open(filepath, "w", encoding="utf-8") as f:
                 json.dump(self._cumulative_score, f, indent=2, ensure_ascii=False)
-        except Exception:
+        except (AttributeError, TypeError, ValueError, KeyError, RuntimeError):
             pass

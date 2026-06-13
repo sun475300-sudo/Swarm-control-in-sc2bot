@@ -274,7 +274,7 @@ class MacroCycleManager:
                 try:
                     if UnitTypeId:
                         already_pending = self.bot.already_pending(UnitTypeId.OVERLORD)
-                except Exception:
+                except (AttributeError, TypeError, ValueError, KeyError, RuntimeError):
                     pass
 
                 # 필요한 오버로드 수 계산
@@ -313,7 +313,7 @@ class MacroCycleManager:
 
             self.last_larva_count = current_larva
 
-        except Exception:
+        except (AttributeError, TypeError, ValueError, KeyError, RuntimeError):
             pass
 
     def _execute_creep_spread(self, game_time: float) -> None:
@@ -373,7 +373,7 @@ class MacroCycleManager:
                     self.total_creep_tumors += 1
                     return True
 
-        except Exception:
+        except (AttributeError, TypeError, ValueError, KeyError, RuntimeError):
             pass
         return False
 
@@ -415,7 +415,7 @@ class MacroCycleManager:
         try:
             if UnitTypeId and hasattr(self.bot, "units"):
                 drone_count = self.bot.units(UnitTypeId.DRONE).amount
-        except Exception:
+        except (AttributeError, TypeError, ValueError, KeyError, RuntimeError):
             pass
 
         target_drones = self.get_optimal_drone_target()

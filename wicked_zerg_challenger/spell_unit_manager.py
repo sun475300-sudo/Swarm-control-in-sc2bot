@@ -213,7 +213,7 @@ class SpellUnitManager:
                                 )
                                 self.infestor_last_spell[infestor_tag] = current_time
                                 continue
-                            except Exception:
+                            except (AttributeError, TypeError, ValueError, KeyError, RuntimeError):
                                 pass
 
             # Fungal Growth (area damage)
@@ -241,7 +241,7 @@ class SpellUnitManager:
                                 )
                             )
                             self.infestor_last_spell[infestor_tag] = current_time
-                        except Exception:
+                        except (AttributeError, TypeError, ValueError, KeyError, RuntimeError):
                             pass
 
     async def _update_vipers(self):
@@ -281,7 +281,7 @@ class SpellUnitManager:
                             b.do(viper(consume_ability, consume_target))
                             self.viper_last_consume[viper_tag] = current_time
                             continue
-                        except Exception:
+                        except (AttributeError, TypeError, ValueError, KeyError, RuntimeError):
                             pass
 
             # Abduct (pull high-value targets)
@@ -317,7 +317,7 @@ class SpellUnitManager:
                                 b.do(viper(AbilityId.ABDUCT_ABDUCT, target))
                                 self.viper_last_spell[viper_tag] = current_time
                                 continue
-                            except Exception:
+                            except (AttributeError, TypeError, ValueError, KeyError, RuntimeError):
                                 pass
 
             # Parasitic Bomb (air units)
@@ -354,7 +354,7 @@ class SpellUnitManager:
                                 )
                                 self.viper_last_spell[viper_tag] = current_time
                                 continue
-                            except Exception:
+                            except (AttributeError, TypeError, ValueError, KeyError, RuntimeError):
                                 pass
 
             # Blinding Cloud (ground units)
@@ -397,7 +397,7 @@ class SpellUnitManager:
                                     )
                                 )
                                 self.viper_last_spell[viper_tag] = current_time
-                            except Exception:
+                            except (AttributeError, TypeError, ValueError, KeyError, RuntimeError):
                                 pass
 
     def _find_best_fungal_target(
@@ -545,7 +545,7 @@ class SpellUnitManager:
                                     f"[{int(current_time)}s] Bile targeting enemy base!"
                                 )
                             continue
-                        except Exception:
+                        except (AttributeError, TypeError, ValueError, KeyError, RuntimeError):
                             pass
 
                 # 사거리 내 모든 건물
@@ -561,7 +561,7 @@ class SpellUnitManager:
                         b.do(ravager(AbilityId.EFFECT_CORROSIVEBILE, target.position))
                         self.ravager_last_bile[ravager_tag] = current_time
                         continue
-                    except Exception:
+                    except (AttributeError, TypeError, ValueError, KeyError, RuntimeError):
                         pass
 
             # * 우선순위 2: 중갑 고가치 유닛
@@ -592,7 +592,7 @@ class SpellUnitManager:
                             )
                             self.ravager_last_bile[ravager_tag] = current_time
                             continue
-                        except Exception:
+                        except (AttributeError, TypeError, ValueError, KeyError, RuntimeError):
                             pass
 
                 # * 우선순위 3: 밀집된 적 병력 (3기 이상)
@@ -608,7 +608,7 @@ class SpellUnitManager:
                         try:
                             b.do(ravager(AbilityId.EFFECT_CORROSIVEBILE, best_position))
                             self.ravager_last_bile[ravager_tag] = current_time
-                        except Exception:
+                        except (AttributeError, TypeError, ValueError, KeyError, RuntimeError):
                             pass
 
     def _find_best_bile_position(
@@ -669,7 +669,7 @@ class SpellUnitManager:
                     b.do(baneling(AbilityId.EFFECT_EXPLODE))
                     self.baneling_exploded.add(baneling.tag)
                     continue
-                except Exception:
+                except (AttributeError, TypeError, ValueError, KeyError, RuntimeError):
                     pass
 
             # 조건 2: 체력 50% 이하 + 적 2기 이상
@@ -682,7 +682,7 @@ class SpellUnitManager:
                 try:
                     b.do(baneling(AbilityId.EFFECT_EXPLODE))
                     self.baneling_exploded.add(baneling.tag)
-                except Exception:
+                except (AttributeError, TypeError, ValueError, KeyError, RuntimeError):
                     pass
 
     async def _update_overseers(self):
@@ -753,7 +753,7 @@ class SpellUnitManager:
                 try:
                     b.do(overseer(AbilityId.CONTAMINATE_CONTAMINATE, target))
                     self.overseer_last_contaminate[overseer_tag] = current_time
-                except Exception:
+                except (AttributeError, TypeError, ValueError, KeyError, RuntimeError):
                     pass
 
     @staticmethod

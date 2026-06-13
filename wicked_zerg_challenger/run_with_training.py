@@ -598,7 +598,7 @@ def main():
                                     stdout=subprocess.DEVNULL,
                                     stderr=subprocess.DEVNULL,
                                 )
-                        except Exception:
+                        except (AttributeError, TypeError, ValueError, KeyError, RuntimeError):
                             pass
                 except (ImportError, Exception):
                     # Fallback: try to kill SC2, then sleep
@@ -617,7 +617,7 @@ def main():
                                 stdout=subprocess.DEVNULL,
                                 stderr=subprocess.DEVNULL,
                             )
-                    except Exception:
+                    except (AttributeError, TypeError, ValueError, KeyError, RuntimeError):
                         pass
                     time.sleep(wait_between_games)
 
@@ -811,7 +811,7 @@ def main():
                         logger.info(
                             f"[MANUAL] Recorded result: {game_result_str} ({reason})"
                         )
-            except Exception:
+            except (AttributeError, TypeError, ValueError, KeyError, RuntimeError):
                 pass
 
             # Stop local monitoring server on interrupt

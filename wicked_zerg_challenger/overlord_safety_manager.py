@@ -445,7 +445,7 @@ class OverlordSafetyManager:
                     if len(expansions) >= 3:
                         enemy_third = expansions[2]
                         positions.append(enemy_third)
-                except Exception:
+                except (AttributeError, TypeError, ValueError, KeyError, RuntimeError):
                     pass
 
         # 3. Xel'Naga watchtowers
@@ -453,7 +453,7 @@ class OverlordSafetyManager:
             if hasattr(self.bot, "watchtowers") and self.bot.watchtowers:
                 for tower in self.bot.watchtowers:
                     positions.append(tower.position)
-        except Exception:
+        except (AttributeError, TypeError, ValueError, KeyError, RuntimeError):
             pass
 
         # 4. If no watchtowers found, add midpoints between bases
@@ -473,7 +473,7 @@ class OverlordSafetyManager:
                         )
                     )
                     positions.append(mid)
-            except Exception:
+            except (AttributeError, TypeError, ValueError, KeyError, RuntimeError):
                 pass
 
         self.logger.info(

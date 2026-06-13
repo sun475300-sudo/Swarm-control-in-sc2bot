@@ -68,7 +68,7 @@ class AutoReplayLearner:
                 with open(id_file, 'r') as f:
                     data = json.load(f)
                     return set(data.get("replay_ids", []))
-            except Exception:
+            except (AttributeError, TypeError, ValueError, KeyError, RuntimeError):
                 pass
         return set()
 

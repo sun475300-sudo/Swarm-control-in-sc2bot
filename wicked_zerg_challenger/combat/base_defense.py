@@ -679,7 +679,7 @@ class BaseDefenseSystem:
         try:
             if hasattr(townhalls, "exists") and not townhalls.exists:
                 return []
-        except Exception:
+        except (AttributeError, TypeError, ValueError, KeyError, RuntimeError):
             pass
         return list(townhalls)
 

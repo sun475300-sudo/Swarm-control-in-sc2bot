@@ -1293,7 +1293,7 @@ class StrategyManager:
                     requester="StrategyManager",
                 )
                 return
-            except Exception:
+            except (AttributeError, TypeError, ValueError, KeyError, RuntimeError):
                 pass
 
         # BuildingCoordination이 있으면 요청 등록
@@ -1310,7 +1310,7 @@ class StrategyManager:
                     building_coord.request_building(
                         UnitTypeId.SPORECRAWLER, "StrategyManager"
                     )
-            except Exception:
+            except (AttributeError, TypeError, ValueError, KeyError, RuntimeError):
                 pass  # Fallback to flag-based system
 
     def _request_spire_via_coordinator(self, game_time: float) -> None:
@@ -1336,7 +1336,7 @@ class StrategyManager:
                         f"[{int(game_time)}s] Spire build requested via BuildingManager"
                     )
                 return
-            except Exception:
+            except (AttributeError, TypeError, ValueError, KeyError, RuntimeError):
                 pass
 
         if building_coord:
@@ -1350,7 +1350,7 @@ class StrategyManager:
                     self.logger.info(
                         f"[{int(game_time)}s] Spire build requested via BuildingCoordination"
                     )
-            except Exception:
+            except (AttributeError, TypeError, ValueError, KeyError, RuntimeError):
                 pass
         else:
             # Fallback: 로그만 남기고, BotStepIntegrator/AggressiveTechBuilder가 처리
@@ -1373,21 +1373,21 @@ class StrategyManager:
         if economy and hasattr(economy, "bot") and hasattr(economy.bot, "workers"):
             try:
                 return economy.bot.workers.amount
-            except Exception:
+            except (AttributeError, TypeError, ValueError, KeyError, RuntimeError):
                 pass
 
         # Fallback: 직접 조회
         if hasattr(self.bot, "workers"):
             try:
                 return self.bot.workers.amount
-            except Exception:
+            except (AttributeError, TypeError, ValueError, KeyError, RuntimeError):
                 pass
 
         if hasattr(self.bot, "units"):
             try:
                 drones = self.bot.units.filter(lambda u: u.type_id.name == "DRONE")
                 return drones.amount if hasattr(drones, "amount") else len(drones)
-            except Exception:
+            except (AttributeError, TypeError, ValueError, KeyError, RuntimeError):
                 pass
 
         return 0

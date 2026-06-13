@@ -198,7 +198,7 @@ class ProductionResilience:
                         # Check reservation (5 second cooldown for unique buildings)
                         if ts is not None and now - ts < 5.0:
                             return None
-                    except Exception:
+                    except (AttributeError, TypeError, ValueError, KeyError, RuntimeError):
                         pass
 
                 # Skip if recently reserved (another manager already issued the build)
@@ -369,7 +369,7 @@ class ProductionResilience:
             stale = [sid for sid, ts in reservations.items() if now - ts > 45.0]
             for sid in stale:
                 reservations.pop(sid, None)
-        except Exception:
+        except (AttributeError, TypeError, ValueError, KeyError, RuntimeError):
             pass
 
     async def fix_production_bottleneck(self) -> None:
@@ -414,7 +414,7 @@ class ProductionResilience:
                         logger.info(
                             f"[{int(time)}s] FORCED 3rd base expansion (bases: {bases})"
                         )
-                except Exception:
+                except (AttributeError, TypeError, ValueError, KeyError, RuntimeError):
                     pass
         # 일반 확장 로직
         elif time >= 60 and b.minerals >= 300:
@@ -426,7 +426,7 @@ class ProductionResilience:
                             logger.info(
                                 f"[{int(time)}s] Expanding at 1min+ with {int(b.minerals)} minerals (bases: {bases})"
                             )
-                    except Exception:
+                    except (AttributeError, TypeError, ValueError, KeyError, RuntimeError):
                         pass
 
         # === MINERAL OVERFLOW PREVENTION: Spend minerals when > 600 ===
@@ -987,7 +987,7 @@ class ProductionResilience:
                     try:
                         if await self._try_expand():
                             logger.info(f"Building expansion to dump minerals")
-                    except Exception:
+                    except (AttributeError, TypeError, ValueError, KeyError, RuntimeError):
                         pass
 
     async def _boost_early_game(self) -> None:
@@ -1230,7 +1230,7 @@ class ProductionResilience:
                         pool = spawning_pool_query.first
                         if pool.build_progress >= 0.99:
                             spawning_pool_ready = True
-                    except Exception:
+                    except (AttributeError, TypeError, ValueError, KeyError, RuntimeError):
                         pass
 
                 roach_warren_query = b.structures(UnitTypeId.ROACHWARREN)
@@ -1242,7 +1242,7 @@ class ProductionResilience:
                         warren = roach_warren_query.first
                         if warren.build_progress >= 0.99:
                             roach_warren_ready = True
-                    except Exception:
+                    except (AttributeError, TypeError, ValueError, KeyError, RuntimeError):
                         pass
 
                 hydralisk_den_query = b.structures(UnitTypeId.HYDRALISKDEN)
@@ -1254,7 +1254,7 @@ class ProductionResilience:
                         den = hydralisk_den_query.first
                         if den.build_progress >= 0.99:
                             hydralisk_den_ready = True
-                    except Exception:
+                    except (AttributeError, TypeError, ValueError, KeyError, RuntimeError):
                         pass
                 can_afford_zergling = b.can_afford(UnitTypeId.ZERGLING)
                 can_afford_roach = b.can_afford(UnitTypeId.ROACH)
@@ -1400,7 +1400,7 @@ class ProductionResilience:
                         try:
                             roaches_ready.random(AbilityId.MORPHTORAVAGER_RAVAGER)
                             return
-                        except Exception:
+                        except (AttributeError, TypeError, ValueError, KeyError, RuntimeError):
                             pass
                 elif max_deficit_unit == UnitTypeId.BANELING:
                     zerglings_ready = b.units(UnitTypeId.ZERGLING).ready
@@ -1414,7 +1414,7 @@ class ProductionResilience:
                                     AbilityId.MORPHZERGLINGTOBANELING_BANELING
                                 )
                                 return
-                            except Exception:
+                            except (AttributeError, TypeError, ValueError, KeyError, RuntimeError):
                                 pass
                 elif max_deficit_unit == UnitTypeId.ZERGLING:
                     if b.units(UnitTypeId.SPAWNINGPOOL).ready.exists and b.can_afford(
@@ -1434,7 +1434,7 @@ class ProductionResilience:
                         if larva.is_ready:
                             if await self._safe_train(larva, unit_to_produce):
                                 break
-            except Exception:
+            except (AttributeError, TypeError, ValueError, KeyError, RuntimeError):
                 pass
 
     async def force_resource_dump(self) -> None:
@@ -1446,7 +1446,7 @@ class ProductionResilience:
         ):
             try:
                 await self._try_expand()
-            except Exception:
+            except (AttributeError, TypeError, ValueError, KeyError, RuntimeError):
                 pass
         if (
             self._should_reserve_third_base_minerals()
@@ -1544,7 +1544,7 @@ class ProductionResilience:
                                     f"[{int(game_time)}s] Building Roach Warren"
                                 )
                                 return
-                        except Exception:
+                        except (AttributeError, TypeError, ValueError, KeyError, RuntimeError):
                             pass
 
         # 4:00+ : Lair
@@ -1600,7 +1600,7 @@ class ProductionResilience:
                                     f"[{int(game_time)}s] Building Evolution Chamber"
                                 )
                                 return
-                        except Exception:
+                        except (AttributeError, TypeError, ValueError, KeyError, RuntimeError):
                             pass
 
         # 5:00+ : Hydralisk Den (requires Lair)
@@ -1650,7 +1650,7 @@ class ProductionResilience:
                                         f"[{int(game_time)}s] Building Hydralisk Den"
                                     )
                                     return
-                            except Exception:
+                            except (AttributeError, TypeError, ValueError, KeyError, RuntimeError):
                                 pass
 
         # 6:00+ : Spire (requires Lair)
@@ -1681,7 +1681,7 @@ class ProductionResilience:
                                 self._last_tech_build_time = game_time
                                 logger.info(f"[{int(game_time)}s] Building Spire")
                                 return
-                            except Exception:
+                            except (AttributeError, TypeError, ValueError, KeyError, RuntimeError):
                                 pass
 
     async def _auto_build_extractors(self, game_time: float) -> None:
@@ -2001,7 +2001,7 @@ class ProductionResilience:
                             await b.build(
                                 UnitTypeId.BANELINGNEST, near=b.townhalls.first.position
                             )
-                        except Exception:
+                        except (AttributeError, TypeError, ValueError, KeyError, RuntimeError):
                             pass
         # NOTE: Roach Warren building is now handled by _auto_build_tech_structures()
         # Removed duplicate code to prevent building spam
@@ -2093,7 +2093,7 @@ class ProductionResilience:
                         await b.build(
                             UnitTypeId.BANELINGNEST, near=b.townhalls.first.position
                         )
-                    except Exception:
+                    except (AttributeError, TypeError, ValueError, KeyError, RuntimeError):
                         pass
 
     async def _determine_ideal_composition(self) -> Dict[UnitTypeId, float]:
@@ -2376,7 +2376,7 @@ class ProductionResilience:
                 if targets:
                     try:
                         self.bot.do(ling.move(targets[0]))
-                    except Exception:
+                    except (AttributeError, TypeError, ValueError, KeyError, RuntimeError):
                         pass
 
         # Update detected enemies
@@ -2550,7 +2550,7 @@ class ProductionResilience:
                 try:
                     await b.expand_now()
                     logger.info(f"Building Macro Hatchery (no larvae, gas: {int(gas)})")
-                except Exception:
+                except (AttributeError, TypeError, ValueError, KeyError, RuntimeError):
                     pass
             return
 
@@ -2666,7 +2666,7 @@ class ProductionResilience:
                 hatchery = b.structures(UnitTypeId.HATCHERY).ready.first
                 self.bot.do(hatchery.train(UnitTypeId.LAIR))
                 return
-            except Exception:
+            except (AttributeError, TypeError, ValueError, KeyError, RuntimeError):
                 pass
 
         # Hydralisk Den: 100M / 100G (requires Lair)
@@ -2684,7 +2684,7 @@ class ProductionResilience:
                         UnitTypeId.HYDRALISKDEN, near=b.townhalls.first.position
                     )
                     return
-                except Exception:
+                except (AttributeError, TypeError, ValueError, KeyError, RuntimeError):
                     pass
 
             # Spire: 200M / 200G (requires Lair)
@@ -2696,7 +2696,7 @@ class ProductionResilience:
                 try:
                     await b.build(UnitTypeId.SPIRE, near=b.townhalls.first.position)
                     return
-                except Exception:
+                except (AttributeError, TypeError, ValueError, KeyError, RuntimeError):
                     pass
 
         # Hive upgrade: 200M / 150G (requires Infestation Pit)
@@ -2710,7 +2710,7 @@ class ProductionResilience:
             try:
                 lair = b.structures(UnitTypeId.LAIR).ready.first
                 self.bot.do(lair.train(UnitTypeId.HIVE))
-            except Exception:
+            except (AttributeError, TypeError, ValueError, KeyError, RuntimeError):
                 pass
 
     async def _spend_minerals_without_larvae(self) -> None:
@@ -2731,7 +2731,7 @@ class ProductionResilience:
             try:
                 await b.expand_now()
                 return
-            except Exception:
+            except (AttributeError, TypeError, ValueError, KeyError, RuntimeError):
                 pass
 
         # Otherwise train Queens at any idle Hatchery/Lair/Hive without one nearby

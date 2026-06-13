@@ -64,7 +64,7 @@ def remove_lock():
     try:
         if LOCK_FILE.exists():
             LOCK_FILE.unlink()
-    except Exception:
+    except (AttributeError, TypeError, ValueError, KeyError, RuntimeError):
         pass
 
 
@@ -78,7 +78,7 @@ def kill_all_sc2():
             ["taskkill", "/F", "/IM", "SC2.exe"], capture_output=True, timeout=5
         )
         time.sleep(3)  # 충분한 대기 시간
-    except Exception:
+    except (AttributeError, TypeError, ValueError, KeyError, RuntimeError):
         pass
 
 

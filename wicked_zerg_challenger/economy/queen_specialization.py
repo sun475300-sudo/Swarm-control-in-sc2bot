@@ -107,7 +107,7 @@ class QueenSpecializationManager:
                     if queen.distance_to(hatch) > 12:
                         del self.pump_assignments[qt]
                         continue
-                except Exception:
+                except (AttributeError, TypeError, ValueError, KeyError, RuntimeError):
                     pass
                 self.specializations[qt] = QueenSpecialization.PUMP
                 assigned.add(qt)
@@ -192,7 +192,7 @@ class QueenSpecializationManager:
         try:
             self.bot.do(queen(AbilityId.EFFECT_INJECTLARVA, hatch))
             self.last_inject_time[hatch_tag] = current_time
-        except Exception:
+        except (AttributeError, TypeError, ValueError, KeyError, RuntimeError):
             pass
 
     async def execute_creep_queen(self, queen, highway_waypoints: List) -> None:
@@ -247,7 +247,7 @@ class QueenSpecializationManager:
                     closest_hatch = self.bot.townhalls.closest_to(queen)
                     move_target = queen.position.towards(closest_hatch.position, 3)
                     self.bot.do(queen.move(move_target))
-        except Exception:
+        except (AttributeError, TypeError, ValueError, KeyError, RuntimeError):
             pass
 
     async def execute_combat_queen(self, queen, army_center) -> None:
@@ -267,7 +267,7 @@ class QueenSpecializationManager:
                         self.bot.do(queen(AbilityId.TRANSFUSION_TRANSFUSION, injured))
                         self.last_transfuse_time[queen.tag] = current_time
                         return
-                    except Exception:
+                    except (AttributeError, TypeError, ValueError, KeyError, RuntimeError):
                         pass
 
         # 본대 따라가기
@@ -275,7 +275,7 @@ class QueenSpecializationManager:
             try:
                 if queen.distance_to(army_center) > 8:
                     self.bot.do(queen.move(army_center))
-            except Exception:
+            except (AttributeError, TypeError, ValueError, KeyError, RuntimeError):
                 pass
 
     def _find_injured_nearby(self, queen, range_dist: float = 7.0):

@@ -376,7 +376,7 @@ class LogicOptimizer:
             try:
                 if not config.condition():
                     return False
-            except Exception:
+            except (AttributeError, TypeError, ValueError, KeyError, RuntimeError):
                 pass  # 조건 체크 실패 시 실행
 
         # 실행 기록

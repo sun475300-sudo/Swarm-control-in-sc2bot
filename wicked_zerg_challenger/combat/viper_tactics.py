@@ -392,7 +392,7 @@ class ViperTacticsManager:
                         AbilityId.VIPERCONSUMESTRUCTURE_YOURBUILDINGS, target_building
                     )
                 )
-            except Exception:
+            except (AttributeError, TypeError, ValueError, KeyError, RuntimeError):
                 pass
 
     async def _maintain_safe_distance(self, viper: Unit, enemy_units):

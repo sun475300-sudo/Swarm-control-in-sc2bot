@@ -47,7 +47,7 @@ class MissingLogicChecker:
                         methods.add(node.name)
             except SyntaxError:
                 pass
-        except Exception:
+        except (AttributeError, TypeError, ValueError, KeyError, RuntimeError):
             pass
         return methods
 
@@ -72,7 +72,7 @@ class MissingLogicChecker:
                     r"(?:await\s+)?self\.([a-zA-Z_][a-zA-Z0-9_]*)\s*\(", line
                 )
                 calls.update(matches2)
-        except Exception:
+        except (AttributeError, TypeError, ValueError, KeyError, RuntimeError):
             pass
         return calls
 
@@ -93,7 +93,7 @@ class MissingLogicChecker:
                     context = "\n".join(lines[max(0, i - 10) : i])
                     if "def " in context or "async def " in context:
                         pass_lines.append(i)
-        except Exception:
+        except (AttributeError, TypeError, ValueError, KeyError, RuntimeError):
             pass
         return pass_lines
 
@@ -111,7 +111,7 @@ class MissingLogicChecker:
                     or "XXX" in line.upper()
                 ):
                     todos.append((i, line.strip()))
-        except Exception:
+        except (AttributeError, TypeError, ValueError, KeyError, RuntimeError):
             pass
         return todos
 

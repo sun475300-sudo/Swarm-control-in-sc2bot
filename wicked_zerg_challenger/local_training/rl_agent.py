@@ -794,7 +794,7 @@ class RLAgent:
             if tmp_path.exists():
                 try:
                     tmp_path.unlink()
-                except Exception:
+                except (AttributeError, TypeError, ValueError, KeyError, RuntimeError):
                     pass
             return False
 

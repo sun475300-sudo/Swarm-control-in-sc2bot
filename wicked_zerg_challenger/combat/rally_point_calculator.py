@@ -31,7 +31,7 @@ def calculate_rally_point(manager):
             target_base = manager.bot.townhalls.closest_to(
                 manager.bot.game_info.map_center
             )
-        except Exception:
+        except (AttributeError, TypeError, ValueError, KeyError, RuntimeError):
             pass
 
     # 기지와 맵 중앙 사이 (전진 배치)

@@ -576,7 +576,7 @@ class ProductionController:
                 try:
                     larva = larvae.first
                     self.bot.do(larva.train(best_uid))
-                except Exception:
+                except (AttributeError, TypeError, ValueError, KeyError, RuntimeError):
                     pass
 
     async def _consume_mineral_bank(self):
@@ -631,7 +631,7 @@ class ProductionController:
                 try:
                     larva = larvae.first
                     self.bot.do(larva.train(UnitTypeId.ULTRALISK))
-                except Exception:
+                except (AttributeError, TypeError, ValueError, KeyError, RuntimeError):
                     pass
 
     # ========== 상태 조회 ==========

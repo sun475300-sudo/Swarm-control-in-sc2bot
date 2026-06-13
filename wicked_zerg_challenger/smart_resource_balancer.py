@@ -421,7 +421,7 @@ class SmartResourceBalancer:
                 extractors.extend(
                     self._as_unit_list(getattr(structure_units, "ready", structure_units))
                 )
-            except Exception:
+            except (AttributeError, TypeError, ValueError, KeyError, RuntimeError):
                 pass
 
         unique = {}

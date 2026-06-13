@@ -312,7 +312,7 @@ class SelfPlayTrainer:
                 removed_path = Path(removed.model_path)
                 if removed_path.exists():
                     removed_path.unlink()
-            except Exception:
+            except (AttributeError, TypeError, ValueError, KeyError, RuntimeError):
                 pass
 
     def _save_pool_metadata(self) -> None:

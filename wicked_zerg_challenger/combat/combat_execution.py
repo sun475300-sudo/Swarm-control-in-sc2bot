@@ -156,7 +156,7 @@ class CombatExecution:
                 for unit, target_pos in formation_positions[:30]:
                     try:
                         self.bot.do(unit.move(target_pos))
-                    except Exception:
+                    except (AttributeError, TypeError, ValueError, KeyError, RuntimeError):
                         pass
 
             # 길목 회피 확인
@@ -175,7 +175,7 @@ class CombatExecution:
                         for unit in units[:30]:  # * Phase 22: 10 -> 30 *
                             try:
                                 self.bot.do(unit.move(retreat_pos))
-                            except Exception:
+                            except (AttributeError, TypeError, ValueError, KeyError, RuntimeError):
                                 pass
 
         except Exception as e:

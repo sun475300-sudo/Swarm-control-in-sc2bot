@@ -121,7 +121,7 @@ class ZerglingHarassmentTrainer:
             self.has_adrenal_glands = (
                 UpgradeId.ZERGLINGATTACKSPEED in self.bot.state.upgrades
             )
-        except Exception:
+        except (AttributeError, TypeError, ValueError, KeyError, RuntimeError):
             pass
 
     def _update_squads(self, zerglings, game_time: float):

@@ -327,7 +327,7 @@ class MutaliskMicroController:
                     if muta.distance_to(stack_point) > 1.5 and len(combat_ready) >= 3:
                         actions.append(muta.move(stack_point))
                         continue
-                except Exception:
+                except (AttributeError, TypeError, ValueError, KeyError, RuntimeError):
                     pass
             if target:
                 actions.append(muta.attack(target))
@@ -444,5 +444,5 @@ class MutaliskMicroController:
                 result = bot.do(action)
                 if hasattr(result, "__await__"):
                     await result
-            except Exception:
+            except (AttributeError, TypeError, ValueError, KeyError, RuntimeError):
                 pass

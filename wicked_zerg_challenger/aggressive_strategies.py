@@ -1043,7 +1043,7 @@ class AggressiveStrategyExecutor:
                             )
                             self._ventral_sacs_started = True
                             logger.info(f"Ventral Sacs upgrade started!")
-                    except Exception as e:
+                    except (AttributeError, TypeError, ValueError, KeyError, RuntimeError):
                         pass
 
         # 2. 드랍용 대군주 지정

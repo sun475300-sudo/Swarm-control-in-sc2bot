@@ -141,7 +141,7 @@ class ReplayActionExtractor:
                         "action": action,
                         "ability_name": ability,
                     }
-        except Exception:
+        except (AttributeError, TypeError, ValueError, KeyError, RuntimeError):
             pass
         return None
 

@@ -241,7 +241,7 @@ class InfestorTacticsController:
                             self.escaping.add(unit_tag)
                             acted_tags.add(unit_tag)
                             continue
-                        except Exception:
+                        except (AttributeError, TypeError, ValueError, KeyError, RuntimeError):
                             pass
 
             elif unit_tag in self.escaping and health_ratio >= 0.8:
@@ -266,7 +266,7 @@ class InfestorTacticsController:
                             try:
                                 actions.append(infestor(burrow_ability))
                                 acted_tags.add(unit_tag)
-                            except Exception:
+                            except (AttributeError, TypeError, ValueError, KeyError, RuntimeError):
                                 pass
 
             # Execute infiltration
@@ -284,7 +284,7 @@ class InfestorTacticsController:
                                 self.infiltrating.pop(unit_tag)
                                 acted_tags.add(unit_tag)
                                 continue
-                            except Exception:
+                            except (AttributeError, TypeError, ValueError, KeyError, RuntimeError):
                                 pass
                 else:
                     # Move towards target while burrowed
@@ -292,7 +292,7 @@ class InfestorTacticsController:
                         try:
                             actions.append(infestor.move(target_pos))
                             acted_tags.add(unit_tag)
-                        except Exception:
+                        except (AttributeError, TypeError, ValueError, KeyError, RuntimeError):
                             pass
 
             # * FLANKING MODE: Enemy army detected *
@@ -310,7 +310,7 @@ class InfestorTacticsController:
                             try:
                                 actions.append(infestor(burrow_ability))
                                 acted_tags.add(unit_tag)
-                            except Exception:
+                            except (AttributeError, TypeError, ValueError, KeyError, RuntimeError):
                                 pass
 
                     # Move to flank position
@@ -318,7 +318,7 @@ class InfestorTacticsController:
                         try:
                             actions.append(infestor.move(flank_pos))
                             acted_tags.add(unit_tag)
-                        except Exception:
+                        except (AttributeError, TypeError, ValueError, KeyError, RuntimeError):
                             pass
 
         if actions:
@@ -327,7 +327,7 @@ class InfestorTacticsController:
                     result = bot.do(action)
                     if hasattr(result, "__await__"):
                         await result
-                except Exception:
+                except (AttributeError, TypeError, ValueError, KeyError, RuntimeError):
                     pass
 
         return acted_tags

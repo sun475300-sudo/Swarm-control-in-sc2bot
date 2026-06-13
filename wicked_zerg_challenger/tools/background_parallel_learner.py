@@ -202,7 +202,7 @@ class BackgroundParallelLearner:
                             archive_path = self.archive_dir / f"old_{file_path.name}"
                             import shutil
                             shutil.copy2(str(file_path), str(archive_path))
-                        except Exception:
+                        except (AttributeError, TypeError, ValueError, KeyError, RuntimeError):
                             pass
                         continue
 
@@ -234,7 +234,7 @@ class BackgroundParallelLearner:
                     # 손상된 파일은 별도 이동 또는 삭제
                     try:
                         file_path.rename(file_path.with_suffix(".corrupt"))
-                    except Exception:
+                    except (AttributeError, TypeError, ValueError, KeyError, RuntimeError):
                         pass
 
             # 건너뛴 파일 통계 업데이트
@@ -314,7 +314,7 @@ class BackgroundParallelLearner:
             archive_files = list(self.archive_dir.glob("*.npz"))
             self.stats["buffer_file_count"] = len(buffer_files)
             self.stats["archive_file_count"] = len(archive_files)
-        except Exception:
+        except (AttributeError, TypeError, ValueError, KeyError, RuntimeError):
             pass
 
     def _print_status_report(self) -> None:

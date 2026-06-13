@@ -132,7 +132,7 @@ class RealtimeAwarenessEngine:
             if self.active_problems and iteration % 100 == 0:
                 self._log_problems()
 
-        except Exception:
+        except (AttributeError, TypeError, ValueError, KeyError, RuntimeError):
             pass
 
         return self.active_overrides
@@ -217,7 +217,7 @@ class RealtimeAwarenessEngine:
                             break
                     if s.enemy_near_base:
                         break
-            except Exception:
+            except (AttributeError, TypeError, ValueError, KeyError, RuntimeError):
                 pass
 
         # Intel
@@ -235,7 +235,7 @@ class RealtimeAwarenessEngine:
                     s.tech_level = "hive"
                 elif structures(UnitTypeId.LAIR).exists:
                     s.tech_level = "lair"
-            except Exception:
+            except (AttributeError, TypeError, ValueError, KeyError, RuntimeError):
                 pass
 
     # =========================================================================
@@ -463,7 +463,7 @@ class RealtimeAwarenessEngine:
                     )
                     if roach_count + hydra_count + ravager_count >= 5:
                         has_counter = True
-                except Exception:
+                except (AttributeError, TypeError, ValueError, KeyError, RuntimeError):
                     pass
 
                 if not has_counter:
@@ -610,7 +610,7 @@ class RealtimeAwarenessEngine:
 
                         asyncio.ensure_future(result)
                     return
-        except Exception:
+        except (AttributeError, TypeError, ValueError, KeyError, RuntimeError):
             pass
 
     def _force_army_production(self) -> None:
@@ -646,7 +646,7 @@ class RealtimeAwarenessEngine:
                         import asyncio
 
                         asyncio.ensure_future(result)
-        except Exception:
+        except (AttributeError, TypeError, ValueError, KeyError, RuntimeError):
             pass
 
     def _force_overlord_production(self) -> None:
@@ -660,7 +660,7 @@ class RealtimeAwarenessEngine:
                     import asyncio
 
                     asyncio.ensure_future(result)
-        except Exception:
+        except (AttributeError, TypeError, ValueError, KeyError, RuntimeError):
             pass
 
     def _flush_minerals(self) -> None:
@@ -681,7 +681,7 @@ class RealtimeAwarenessEngine:
                         import asyncio
 
                         asyncio.ensure_future(result)
-        except Exception:
+        except (AttributeError, TypeError, ValueError, KeyError, RuntimeError):
             pass
 
     # =========================================================================

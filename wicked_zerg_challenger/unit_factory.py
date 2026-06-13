@@ -322,7 +322,7 @@ class UnitFactory:
                                 logger.info(
                                     f"[*] Preemptive Overlord (supply_left={self.bot.supply_left}) [*]"
                                 )
-                    except Exception:
+                    except (AttributeError, TypeError, ValueError, KeyError, RuntimeError):
                         pass
 
         # * COMBAT REINFORCEMENT: ??ш낄援??癲ル슢?꾤땟???癲ル슪???띿물?*
@@ -409,7 +409,7 @@ class UnitFactory:
                             )
                         else:
                             self.bot.do(larva.first.train(UnitTypeId.OVERLORD))
-                    except Exception:
+                    except (AttributeError, TypeError, ValueError, KeyError, RuntimeError):
                         pass
             return
 

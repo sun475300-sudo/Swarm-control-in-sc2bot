@@ -125,7 +125,7 @@ class DefenseCoordinator:
                             f"[EARLY_DEFENSE] [{int(game_time)}s] Emergency Spawning Pool build"
                         )
                         return
-                    except Exception:
+                    except (AttributeError, TypeError, ValueError, KeyError, RuntimeError):
                         pass
 
             # 스포닝 풀이 완료되지 않았으면 대기
@@ -149,7 +149,7 @@ class DefenseCoordinator:
                                 f"[EARLY_DEFENSE] [{int(game_time)}s] Emergency Queen production"
                             )
                             break
-                    except Exception:
+                    except (AttributeError, TypeError, ValueError, KeyError, RuntimeError):
                         pass
 
             # === 저글링 생산 (최소 방어 병력) ===
@@ -276,7 +276,7 @@ class DefenseCoordinator:
                         f"[EMERGENCY DEFENSE] [{int(game_time)}s] SPINE REQUESTED (Strat: {requested_spine}, Local: {local_rush})"
                     )
                     return
-                except Exception:
+                except (AttributeError, TypeError, ValueError, KeyError, RuntimeError):
                     pass
 
         # *** IMPROVED: Spore Crawler (Air Defense) - 공중 위협 시 최대 3개까지 건설 ***
@@ -299,7 +299,7 @@ class DefenseCoordinator:
                         f"[EMERGENCY DEFENSE] [{int(game_time)}s] SPORE #{spore_count + 1} REQUESTED (Air threat)"
                     )
                     return
-                except Exception:
+                except (AttributeError, TypeError, ValueError, KeyError, RuntimeError):
                     pass
 
         # === 4. Proactive Timeline (Standard Play) ===
@@ -320,7 +320,7 @@ class DefenseCoordinator:
                         f"[DEFENSE] [{int(game_time)}s] Building Spine Crawler #1"
                     )
                     return
-                except Exception:
+                except (AttributeError, TypeError, ValueError, KeyError, RuntimeError):
                     pass
 
         # 3:00+ : Second Spine Crawler
@@ -335,7 +335,7 @@ class DefenseCoordinator:
                         f"[DEFENSE] [{int(game_time)}s] Building Spine Crawler #2"
                     )
                     return
-                except Exception:
+                except (AttributeError, TypeError, ValueError, KeyError, RuntimeError):
                     pass
 
         # *** OPTIMIZED: 3:00 Spore Crawler (자원 예약 강화) ***
@@ -381,7 +381,7 @@ class DefenseCoordinator:
                         f"[DEFENSE] [{int(game_time)}s] Building Spine Crawler #3"
                     )
                     return
-                except Exception:
+                except (AttributeError, TypeError, ValueError, KeyError, RuntimeError):
                     pass
 
         # === 확장 기지 방어 (5분 이후) ===
@@ -439,7 +439,7 @@ class DefenseCoordinator:
                         f"[DEFENSE] [{int(game_time)}s] Building Spine at expansion"
                     )
                     return
-                except Exception:
+                except (AttributeError, TypeError, ValueError, KeyError, RuntimeError):
                     pass
 
             # *** IMPROVED: 확장 기지 스포어 크롤러 증가 (1개 -> 2개) ***
@@ -457,7 +457,7 @@ class DefenseCoordinator:
                         f"[DEFENSE] [{int(game_time)}s] Building Spore #{spore_count + 1} at expansion"
                     )
                     return
-                except Exception:
+                except (AttributeError, TypeError, ValueError, KeyError, RuntimeError):
                     pass
 
     async def _handle_drop_defense(self) -> None:

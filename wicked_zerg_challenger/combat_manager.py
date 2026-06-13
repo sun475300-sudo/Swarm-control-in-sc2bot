@@ -2154,12 +2154,12 @@ class CombatManager:
         if hasattr(point, "offset"):
             try:
                 return point.offset((dx, dy))
-            except Exception:
+            except (AttributeError, TypeError, ValueError, KeyError, RuntimeError):
                 pass
         if Point2 and hasattr(point, "x") and hasattr(point, "y"):
             try:
                 return Point2((point.x + dx, point.y + dy))
-            except Exception:
+            except (AttributeError, TypeError, ValueError, KeyError, RuntimeError):
                 pass
         return point
 

@@ -1,4 +1,4 @@
-﻿# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
 """
 Run a single game for testing.
 ?⑥씪 寃뚯엫 ?뚯뒪?몄슜 ?ㅽ겕由쏀듃.
@@ -55,7 +55,7 @@ def _ensure_sc2_path():
             os.environ["SC2PATH"] = install_path
             logger.info(f"Found via Registry: {install_path}")
             return
-    except Exception:
+    except (OSError, FileNotFoundError, AttributeError):
         pass
 
     common_paths = [
@@ -119,7 +119,7 @@ def _cleanup_sc2_processes():
                 capture_output=True,
                 timeout=3,
             )
-        except Exception:
+        except (OSError, subprocess.SubprocessError):
             pass
 
 

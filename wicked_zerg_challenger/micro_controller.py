@@ -495,14 +495,14 @@ class BoidsController:
                 )
                 # results: List of ((x, y), unit, distance)
                 return [r[1] for r in results if r[1].tag != unit.tag]
-            except Exception:
+            except (AttributeError, TypeError, ValueError, KeyError, RuntimeError):
                 pass  # Fall through to standard methods
 
         # Try SC2 built-in method (faster than manual iteration)
         if hasattr(units, "closer_than"):
             try:
                 return units.closer_than(radius, unit.position)
-            except Exception:
+            except (AttributeError, TypeError, ValueError, KeyError, RuntimeError):
                 pass
 
         # Fallback: brute force O(N)

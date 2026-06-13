@@ -714,7 +714,7 @@ class ZvZMicroAdjustments(ZvTMicroAdjustments):
                     actions.append(ling.move(ling.position.towards(closest_bane.position, -4)))
                     handled.add(tag)
                     continue
-            except Exception:
+            except (AttributeError, TypeError, ValueError, KeyError, RuntimeError):
                 pass
             target = self._closest_to(enemy_lings, ling)
             if target:

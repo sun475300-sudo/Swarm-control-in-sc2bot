@@ -397,7 +397,7 @@ class LurkerPositionManager:
             if AbilityId.BURROWDOWN_LURKER in abilities:
                 self.bot.do(lurker(AbilityId.BURROWDOWN_LURKER))
                 self.lurker_burrowed[lurker.tag] = True
-        except Exception:
+        except (AttributeError, TypeError, ValueError, KeyError, RuntimeError):
             pass
 
     async def _unburrow_lurker(self, lurker: Unit):
@@ -410,7 +410,7 @@ class LurkerPositionManager:
             if AbilityId.BURROWUP_LURKER in abilities:
                 self.bot.do(lurker(AbilityId.BURROWUP_LURKER))
                 self.lurker_burrowed[lurker.tag] = False
-        except Exception:
+        except (AttributeError, TypeError, ValueError, KeyError, RuntimeError):
             pass
 
     def _check_enemies_nearby(self, lurker: Unit, distance: float) -> bool:

@@ -959,7 +959,7 @@ class IntelManager:
         try:
             if townhalls:
                 return getattr(townhalls[0], "position", townhalls[0])
-        except Exception:
+        except (AttributeError, TypeError, ValueError, KeyError, RuntimeError):
             pass
         return getattr(self.bot, "start_location", None)
 

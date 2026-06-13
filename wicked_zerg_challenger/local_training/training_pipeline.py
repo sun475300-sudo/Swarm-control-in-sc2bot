@@ -234,7 +234,7 @@ class TrainingPipeline:
             dest = self.archive_dir / f.name
             try:
                 shutil.move(str(f), str(dest))
-            except Exception:
+            except (AttributeError, TypeError, ValueError, KeyError, RuntimeError):
                 pass
 
     def _cleanup_old_versions(self) -> None:
@@ -252,7 +252,7 @@ class TrainingPipeline:
             try:
                 if os.path.exists(v.model_path):
                     os.remove(v.model_path)
-            except Exception:
+            except (AttributeError, TypeError, ValueError, KeyError, RuntimeError):
                 pass
             self.versions.remove(v)
 

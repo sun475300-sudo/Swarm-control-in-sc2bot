@@ -534,7 +534,7 @@ class DoomDropManager:
                             f"[{int(self.bot.time)}s] [DOOM_DROP] "
                             f"오버로드 위험! 긴급 투하"
                         )
-                    except Exception:
+                    except (AttributeError, TypeError, ValueError, KeyError, RuntimeError):
                         pass
 
     def _find_unit(self, tag: int) -> Optional[Unit]:

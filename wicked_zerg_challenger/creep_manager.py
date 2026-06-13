@@ -361,7 +361,7 @@ class CreepManager:
                 )
                 if placement_results and len(placement_results) == len(valid):
                     valid = [pos for pos, ok in zip(valid, placement_results) if ok]
-        except Exception:
+        except (AttributeError, TypeError, ValueError, KeyError, RuntimeError):
             pass  # Fall through to distance-based selection if batch query fails
 
         if not valid:

@@ -44,7 +44,7 @@ def _ensure_sc2_path():
             os.environ["SC2PATH"] = install_path
             logger.info(f"[SC2] Found via Registry: {install_path}")
             return
-    except Exception:
+    except (AttributeError, TypeError, ValueError, KeyError, RuntimeError):
         pass
 
     common_paths = [

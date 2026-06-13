@@ -170,7 +170,7 @@ class BuildingManager:
         if building_coord and hasattr(building_coord, "get_building_count"):
             try:
                 return building_coord.get_building_count(structure_type)
-            except Exception:
+            except (AttributeError, TypeError, ValueError, KeyError, RuntimeError):
                 pass
         structures = getattr(self.bot, "structures", None)
         try:

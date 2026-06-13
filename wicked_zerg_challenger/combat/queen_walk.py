@@ -341,7 +341,7 @@ class QueenWalkManager:
                             queen(AbilityId.TRANSFUSION_TRANSFUSION, lowest_hp_queen)
                         )
                         self.last_transfusion_time = game_time
-                    except Exception:
+                    except (AttributeError, TypeError, ValueError, KeyError, RuntimeError):
                         pass
                     break  # 한 프레임에 하나만
 
@@ -397,7 +397,7 @@ class QueenWalkManager:
                         self.bot.do(
                             queen(AbilityId.TRANSFUSION_TRANSFUSION, low_hp_queen)
                         )
-                    except Exception:
+                    except (AttributeError, TypeError, ValueError, KeyError, RuntimeError):
                         pass
                     break
 
@@ -422,7 +422,7 @@ class QueenWalkManager:
                     tumor_pos = queen.position.towards(self.target_point, 3)
                     self.bot.do(queen(AbilityId.BUILD_CREEPTUMOR_QUEEN, tumor_pos))
                     self.last_creep_tumor_time = game_time
-        except Exception:
+        except (AttributeError, TypeError, ValueError, KeyError, RuntimeError):
             pass
 
     def _detect_nearby_enemies(self) -> bool:

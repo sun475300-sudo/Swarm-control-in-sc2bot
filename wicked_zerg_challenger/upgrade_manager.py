@@ -1568,7 +1568,7 @@ class EvolutionUpgradeManager:
             if hasattr(self.bot, "calculate_cost"):
                 cost = self.bot.calculate_cost(upgrade_id)
                 return (cost.minerals, cost.vespene)
-        except Exception:
+        except (AttributeError, TypeError, ValueError, KeyError, RuntimeError):
             pass
         # Fallback: most Zerg upgrades cost 100/100 or 150/150 or 200/200
         return (100, 100)

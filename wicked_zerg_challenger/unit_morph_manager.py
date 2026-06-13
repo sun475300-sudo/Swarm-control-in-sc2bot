@@ -442,7 +442,7 @@ class UnitMorphManager:
             self.logger.info(
                 f"[{int(self.bot.time)}s] Morphed Overseer (Active: {overseers.amount}/{target_count})"
             )
-        except Exception:
+        except (AttributeError, TypeError, ValueError, KeyError, RuntimeError):
             pass
 
     def _get_enemy_race(self) -> str:
