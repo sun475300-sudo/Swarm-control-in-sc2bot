@@ -16,7 +16,11 @@ from dataclasses import dataclass
 from enum import Enum, IntEnum
 from typing import Any, Dict, List, Optional, Set
 
-from utils.logger import get_logger
+try:
+    from utils.logger import get_logger
+except ImportError:
+    import logging
+    get_logger = logging.getLogger
 
 try:
     from sc2.ids.unit_typeid import UnitTypeId

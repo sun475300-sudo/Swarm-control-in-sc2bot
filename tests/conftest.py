@@ -15,8 +15,12 @@ import pytest
 
 # 프로젝트 루트를 sys.path에 추가
 PROJECT_ROOT = Path(__file__).parent.parent
+BOT_ROOT = PROJECT_ROOT / "wicked_zerg_challenger"
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
+# 봇 패키지 루트도 추가 (utils.logger 등 봇 내부 모듈 import 가능하게)
+if str(BOT_ROOT) not in sys.path:
+    sys.path.insert(0, str(BOT_ROOT))
 
 
 # ═══════════════════════════════════════════════════════

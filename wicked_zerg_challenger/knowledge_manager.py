@@ -2,7 +2,11 @@ import json
 from pathlib import Path
 from typing import Any, Dict, Optional
 
-from utils.logger import get_logger
+try:
+    from utils.logger import get_logger
+except ImportError:
+    import logging
+    get_logger = logging.getLogger
 
 
 class KnowledgeManager:
@@ -36,7 +40,7 @@ class KnowledgeManager:
                 f"Loaded {len(self.knowledge.get('build_orders', {}))} build orders"
             )
 
-        except Exception as e:
+        except (OSError, json.JSONDecodeError, ValueError) as e:
             self.logger.error(f"Failed to load knowledge: {e}")
 
     def get_build_order(self, build_name: str) -> Optional[Dict]:
