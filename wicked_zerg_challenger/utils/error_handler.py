@@ -12,7 +12,11 @@ import functools
 import traceback
 from typing import Callable
 
-from utils.logger import get_logger
+try:
+    from utils.logger import get_logger
+except ImportError:
+    import logging
+    get_logger = logging.getLogger
 
 logger = get_logger("ErrorHandler")
 

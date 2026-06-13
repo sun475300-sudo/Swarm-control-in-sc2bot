@@ -11,7 +11,11 @@ Unit Helpers - 유닛 관련 공통 유틸리티 함수
 
 from typing import Callable
 
-from utils.logger import get_logger
+try:
+    from utils.logger import get_logger
+except ImportError:
+    import logging
+    get_logger = logging.getLogger
 
 try:
     from sc2.position import Point2
