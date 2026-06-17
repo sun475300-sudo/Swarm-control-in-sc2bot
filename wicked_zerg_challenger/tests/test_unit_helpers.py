@@ -246,6 +246,26 @@ class TestExecuteUnitAction(unittest.TestCase):
         self.assertFalse(result)
         action.assert_not_called()
 
+    def test_runtime_error_swallowed(self):
+        """RuntimeError from sc2 calls should be absorbed, returning False."""
+        unit = MockUnit()
+        action = Mock(side_effect=RuntimeError("game state error"))
+        self.assertFalse(execute_unit_action(unit, action))
+
+    def test_keyboard_interrupt_propagates(self):
+        """KeyboardInterrupt must NOT be swallowed."""
+        unit = MockUnit()
+        action = Mock(side_effect=KeyboardInterrupt())
+        with self.assertRaises(KeyboardInterrupt):
+            execute_unit_action(unit, action)
+
+    def test_unit_without_type_id_does_not_crash_logger(self):
+        """A partial mock without type_id must still return False, not raise."""
+        unit = Mock(spec=[])  # no attrs at all
+        action = Mock(side_effect=ValueError("oops"))
+        # We rely on truthiness of the mock; spec=[] still evaluates truthy.
+        self.assertFalse(execute_unit_action(unit, action))
+
 
 class TestCalculateUnitSupply(unittest.TestCase):
     """Test calculate_unit_supply function"""
@@ -354,6 +374,30 @@ class TestGetUnitRange(unittest.TestCase):
     def test_none_unit(self):
         """Test with None unit"""
         self.assertEqual(get_unit_range(None), 0.0)
+
+    def test_dual_range_returns_max_when_no_target(self):
+        """Hydralisk-style unit with both ranges returns the larger value."""
+        unit = MockUnit(ground_range=5.0, air_range=6.0)
+        self.assertEqual(get_unit_range(unit), 6.0)
+
+    def test_picks_air_range_for_flying_target(self):
+        """Flying target should use air_range, not ground_range."""
+        unit = MockUnit(ground_range=5.0, air_range=7.0)
+        target = MockUnit(is_flying=True)
+        self.assertEqual(get_unit_range(unit, target), 7.0)
+
+    def test_picks_ground_range_for_grounded_target(self):
+        """Ground target should use ground_range, not air_range."""
+        unit = MockUnit(ground_range=5.0, air_range=7.0)
+        target = MockUnit(is_flying=False)
+        self.assertEqual(get_unit_range(unit, target), 5.0)
+
+    def test_none_attribute_value_is_safe(self):
+        """A unit whose ground_range attribute is None must not raise."""
+        unit = Mock(spec=["ground_range", "air_range"])
+        unit.ground_range = None
+        unit.air_range = None
+        self.assertEqual(get_unit_range(unit), 0.0)
 
 
 class TestCanUnitAttack(unittest.TestCase):
