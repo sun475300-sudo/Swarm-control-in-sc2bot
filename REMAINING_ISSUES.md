@@ -21,8 +21,9 @@
 | N4 | `production_resilience.build_terran_counters` 재정의 | 🟡 MED | ✅ Resolved — 단일 정의(1961라인)만 존재 |
 | N5 | bare `except Exception:` 다수 | 🟢 LOW | open — 참고: flake8 E722(진짜 bare except) 0건. 잔여는 `except Exception as e:` 후 `e` 미사용(F841) 패턴, N6과 중복 집계 |
 | N6 | F841 unused local variables | 🟢 LOW | open — 현재 130건 (`wicked_zerg_challenger/` 전체). 대부분 `except ... as e` 로깅 누락 또는 죽은 계산값. 점진적 개선 대상 |
+| N8 | `requirements.txt`가 pip-compile로 resolve 불가능 (진짜 의존성 충돌) | 🟠 HIGH | open — PR #223의 GitHub "submit-pypi" (dependency-submission) 체크에서 발견. `burnysc2`가 끌어오는 `s2clientprotocol` 최신 빌드는 protobuf ≥5를 요구하는데, `google-generativeai==0.5.0` → `google-ai-generativelanguage==0.6.1`는 `protobuf<5.0.0dev`로 고정 — 동시 설치 불가능한 조합. SC2 봇 코드와 무관한 별개 서브프로젝트(Google GenAI/Discord/crypto)를 하나의 `requirements.txt`에 몰아넣은 구조적 문제. 이 PR의 변경사항과 무관하게 이미 main에도 존재. 수정하려면 서브프로젝트별 requirements 파일 분리(`requirements-crypto.txt`처럼) 또는 버전 상한 조정이 필요 — 아키텍처 판단이 필요해 사용자 확인 후 별도 작업으로 진행 권장 |
 
-검증 방법: `flake8 wicked_zerg_challenger --select=F811,F821,F841,E722 --max-line-length=200`
+검증 방법: `flake8 wicked_zerg_challenger --select=F811,F821,F841,E722 --max-line-length=200` / `pip-compile --dry-run -o requirements.out requirements.txt` (N8 재현)
 
 ---
 
