@@ -8,7 +8,14 @@ from types import SimpleNamespace
 from unittest.mock import MagicMock, patch
 
 import pytest
-from sc2.ids.unit_typeid import UnitTypeId
+
+# python-sc2 패키지는 실제 SC2 환경에서만 설치된다. CI/컨테이너에서는
+# 모듈 단위로 skip하여 collection error로 전체 suite가 멈추지 않게 한다.
+sc2_typeid = pytest.importorskip(
+    "sc2.ids.unit_typeid",
+    reason="python-sc2 not installed; SC2 game environment required",
+)
+UnitTypeId = sc2_typeid.UnitTypeId
 
 # ---------------------------------------------------------------------------
 # Minimal stubs so we can import without a running SC2 environment
