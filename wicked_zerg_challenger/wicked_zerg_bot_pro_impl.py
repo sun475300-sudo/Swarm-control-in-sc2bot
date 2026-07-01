@@ -222,8 +222,7 @@ class WickedZergBotProImpl(BotAI):
                 self.logger.info("MapMemorySystem started - Enemy tracking active")
             except Exception as e:
                 self.logger.warning(f"MapMemorySystem on_start failed: {e}")
-                traceback.print_exc()
-
+                self.logger.debug("Traceback:", exc_info=True)
         # === Personality Module (Jarvis) ===
         try:
             mode = PersonalityMode.NEUTRAL
@@ -249,8 +248,7 @@ class WickedZergBotProImpl(BotAI):
             )
         except Exception as e:
             self.logger.warning(f"Failed to initialize PersonalityModule: {e}")
-            traceback.print_exc()
-
+            self.logger.debug("Traceback:", exc_info=True)
         # === RL Agent initialization (train_mode only) ===
         self.rl_agent = None
         if self.train_mode:
@@ -278,8 +276,7 @@ class WickedZergBotProImpl(BotAI):
                 self.logger.info(f"[RL_AGENT] Not available: {e}")
             except Exception as e:
                 self.logger.info(f"[RL_AGENT] Initialization failed: {e}")
-                traceback.print_exc()
-
+                self.logger.debug("Traceback:", exc_info=True)
         # === Model Hot Reloader (게임 중 모델 자동 갱신) ===
         self.hot_reloader = None
         if self.rl_agent is not None:
@@ -308,8 +305,7 @@ class WickedZergBotProImpl(BotAI):
             self.logger.info(f"[HIERARCHICAL_RL] Not available: {e}")
         except Exception as e:
             self.logger.info(f"[HIERARCHICAL_RL] Initialization failed: {e}")
-            traceback.print_exc()
-
+            self.logger.debug("Traceback:", exc_info=True)
         # === Situational Awareness Module Integration (Stage 5) ===
         self.situational_awareness = None
         try:
@@ -323,8 +319,7 @@ class WickedZergBotProImpl(BotAI):
             self.logger.info(f"[SITUATIONAL_AWARENESS] Not available: {e}")
         except Exception as e:
             self.logger.info(f"[SITUATIONAL_AWARENESS] Initialization failed: {e}")
-            traceback.print_exc()
-
+            self.logger.debug("Traceback:", exc_info=True)
         # === Step integrator initialization ===
         self._step_integrator = BotStepIntegrator(self)
 
@@ -345,8 +340,7 @@ class WickedZergBotProImpl(BotAI):
                 )
         except Exception as e:
             self.logger.info(f"[WARNING] Failed to apply learned economy weights: {e}")
-            traceback.print_exc()
-
+            self.logger.debug("Traceback:", exc_info=True)
         # *** Opponent Modeling - Load previous data and start tracking ***
         if hasattr(self, "opponent_modeling") and self.opponent_modeling:
             try:
@@ -383,8 +377,7 @@ class WickedZergBotProImpl(BotAI):
                     )
             except Exception as e:
                 self.logger.warning(f"OpponentModeling on_start error: {e}")
-                traceback.print_exc()
-
+                self.logger.debug("Traceback:", exc_info=True)
         # === Scoring System + Real-time Awareness Engine ===
         try:
             from scoring_system import ScoringSystem
@@ -479,15 +472,17 @@ class WickedZergBotProImpl(BotAI):
         if self.scoring_system:
             try:
                 self.scoring_system.on_step(iteration)
-            except Exception:
-                pass
+            except Exception as e:
+                if iteration % 220 == 0:
+                    self.logger.debug(f"[SCORING] on_step suppressed: {e}")
 
         # * Awareness Engine: 실시간 상황 인식 + 자동 대응 *
         if self.awareness_engine:
             try:
                 self.awareness_engine.on_step(iteration)
-            except Exception:
-                pass
+            except Exception as e:
+                if iteration % 220 == 0:
+                    self.logger.debug(f"[AWARENESS] on_step suppressed: {e}")
 
         # Personality module is called in bot_step_integration.py; do not call here.
 
@@ -524,8 +519,8 @@ class WickedZergBotProImpl(BotAI):
                 self.logger.info(
                     f"[AWARENESS] Final: {self.awareness_engine.get_situation_summary()}"
                 )
-            except Exception:
-                pass
+            except Exception as e:
+                self.logger.debug(f"[AWARENESS] final summary suppressed: {e}")
 
         # * NEW: Personality Module - Send GG message
         if hasattr(self, "personality") and self.personality:
@@ -569,8 +564,7 @@ class WickedZergBotProImpl(BotAI):
                         )
             except Exception as e:
                 self.logger.warning(f"OpponentModeling on_end error: {e}")
-                traceback.print_exc()
-
+                self.logger.debug("Traceback:", exc_info=True)
         # Performance Optimizer cleanup
         # if self.performance_optimizer:
         #     self.performance_optimizer.on_end(game_result)  # Method doesn't exist
@@ -686,9 +680,7 @@ class WickedZergBotProImpl(BotAI):
 
             except Exception as e:
                 self.logger.info(f"[WARNING] Training end logic error: {e}")
-                import traceback
-
-                traceback.print_exc()
+                self.logger.debug("Traceback:", exc_info=True)
 
         # *** 게임 간 매니저 상태 초기화 (훈련 에피소드 안정성) ***
         self._reset_all_managers()
@@ -1313,6 +1305,17 @@ class WickedZergBotProImpl(BotAI):
         # * 게임별 로그/통계 리스트 초기화 (#12)
         self._units_lost = []
         self._build_order_log = []
+        # * Bug fix: also clear tag caches and counters that previously
+        #   accumulated across training episodes
+        self._tracked_structure_tags = set()
+        if hasattr(self, "_known_unit_tags"):
+            self._known_unit_tags = {}
+        self._workers_created = 0
+        self._expansions_built = 0
+        if hasattr(self, "_game_ended"):
+            del self._game_ended
+        if hasattr(self, "_gg_replied"):
+            del self._gg_replied
 
         # DataCacheManager 초기화
         if hasattr(self, "data_cache") and self.data_cache:
