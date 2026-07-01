@@ -4,24 +4,34 @@
 
 통합 문제 해결 후 발견된 추가 개선 사항들입니다.
 
-**Last refreshed:** 2026-04-27 (Issue #1, #2 → Resolved; Issue #6 partially resolved via Batch 3)
+**Last refreshed:** 2026-07-01 (자동 점검 사이클 — N1~N4 재확인 결과 이미 해결됨으로 종료; CI 회귀 2건 신규 수정)
 
 ---
 
-## 🆕 신규 발견 (PR #44, 2026-04-27)
+## ✅ 2026-07-01 자동 점검 사이클 결과
 
-자동/수동 점검 사이클(테스트 → 코드 검사 → 개선 → 커밋/푸시 반복)에서 새로 식별된 항목.
+이번 사이클은 "테스트 → CI 상태 확인 → 코드 검사 → 수정 → 커밋/푸시"를 반복하는 상시 점검의 일부입니다.
 
-| ID | 설명 | 우선순위 | 상태 |
-|----|------|---------|------|
-| N1 | `OpponentModeling.on_step` 중복 정의 (line 341 vs 765 — F811) | 🟠 HIGH | open — 동작 영향(상위 on_step이 미실행) 가능 |
-| N2 | `EconomyManager._prevent_resource_banking` / `_reduce_gas_workers` 재정의 (F811) | 🟡 MED | open |
-| N3 | `combat_manager._find_harass_target` 재정의 (line 2377 vs 4278) | 🟡 MED | open |
-| N4 | `production_resilience.build_terran_counters` 재정의 (1369 vs 1866) | 🟡 MED | open |
-| N5 | bare `except Exception:` 다수 (≈360+) — 이번 PR에서 12건 처리, 잔여 다수 | 🟢 LOW | partial |
-| N6 | F841 unused local variables (visuals/make_pptx 등) | 🟢 LOW | open (presentation 코드라 영향 작음) |
+### 신규로 발견하고 수정한 CI 회귀 2건 (실제 main CI가 빨간불이었음)
 
-검증 권장: PR 분리 (N1 단독 PR 권장 — 동작 변화 가능성).
+| ID | 설명 | 상태 |
+|----|------|------|
+| C1 | `requirements.txt`/`wicked_zerg_challenger/requirements.txt`의 `s2clientprotocol>=4.19.0.0` 명시적 고정이 `burnysc2`가 요구하는 `pys2clientprotocol`(신형, protobuf 호환 재생성 스텁)을 설치 후 덮어써서 `TypeError: Descriptors cannot be created directly` 발생 → 14개 테스트 파일 collection 자체가 실패 (`ci.yml` "Python 린트 & 테스트" 잡, 2026-06-25 run 이후 지속). 원인 재현 후 `s2clientprotocol` 명시적 의존성 제거로 해결. | ✅ Fixed |
+| C2 | `tests/test_combat_phase_fsm.py`의 5개 `_run` 헬퍼가 `asyncio.get_event_loop().run_until_complete(...)` 패턴을 사용 — pytest-asyncio가 다른 테스트에서 루프를 닫아버리면 `RuntimeError: There is no current event loop in thread 'MainThread'.` 발생, 12개 테스트 실패. `asyncio.run(...)`으로 교체하여 해결. | ✅ Fixed |
+| C3 | 루트 및 `wicked_zerg_challenger/` 전역에서 black 26.3.1 기준 54개 파일, isort 기준 11개 파일이 포맷 규칙 위반 — `sc2bot-ci.yml`의 "Run black (format check)" 스텝이 blocking이라 Lint 잡 전체가 실패하고 이후 Test Suite/Docker 빌드/배포 잡이 전부 skip 처리됨 (최소 2026-05-28부터 매 스케줄 run 지속 실패 확인). `black .` + `isort .` 적용으로 해결. | ✅ Fixed |
+
+### N1~N4 재확인 결과: 이미 해결됨 (문서만 stale)
+
+`flake8 --select=F811 wicked_zerg_challenger`로 재검사한 결과 중복 정의가 전혀 없음을 확인. 아래 항목은 이전 세션(`e648ae4 refactor: delete shadowed duplicate methods...`)에서 이미 수정되었으나 본 문서가 업데이트되지 않았던 것으로 확인 — 별도 조치 없이 닫습니다.
+
+| ID | 설명 | 확인 결과 |
+|----|------|---------|
+| N1 | `OpponentModeling.on_step` 중복 정의 | ✅ Resolved — `opponent_modeling.py`에 `on_step` 정의 1개만 존재 |
+| N2 | `EconomyManager._prevent_resource_banking` / `_reduce_gas_workers` 재정의 | ✅ Resolved — 각 1개 정의만 존재 |
+| N3 | `combat_manager._find_harass_target` 재정의 | ✅ Resolved — 1개 정의만 존재 |
+| N4 | `production_resilience.build_terran_counters` 재정의 | ✅ Resolved — 1개 정의만 존재 |
+| N5 | bare `except Exception:` 다수 (≈455건 재확인) | 🟢 LOW — still open, 점진적 개선 대상 |
+| N6 | F841 unused local variables (~80건 재확인, 대부분 `except ... as e` 미사용) | 🟢 LOW — still open |
 
 ---
 
