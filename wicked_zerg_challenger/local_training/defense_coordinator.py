@@ -80,9 +80,14 @@ class DefenseCoordinator:
                 if hasattr(self.bot, "start_location")
                 else []
             )
-            if len(list(nearby_enemies)) > 5:
+            nearby_count = (
+                nearby_enemies.amount
+                if hasattr(nearby_enemies, "amount")
+                else len(nearby_enemies)
+            )
+            if nearby_count > 5:
                 self.threat_level = "HIGH"
-            elif len(list(nearby_enemies)) > 0 and self.threat_level == "SAFE":
+            elif nearby_count > 0 and self.threat_level == "SAFE":
                 self.threat_level = "MODERATE"
 
     async def _ensure_early_defense(self) -> None:

@@ -8,6 +8,7 @@ Features:
 3. Bounce targeting optimization
 """
 
+import logging
 import math
 from typing import Dict, List, Optional, Set, Tuple
 
@@ -19,6 +20,8 @@ except ImportError:
     UnitTypeId = None
     Point2 = None
     Unit = None
+
+_logger = logging.getLogger(__name__)
 
 
 ANTI_AIR_THREAT_NAMES = {"THOR", "ARCHON", "QUEEN", "MARINE", "HYDRALISK"}
@@ -247,7 +250,8 @@ class MutaliskMicroController:
                 )
                 if around.distance_to(enemy) <= threat_range + 2.0:
                     threats.append(enemy)
-            except Exception:
+            except (AttributeError, TypeError, ValueError):
+                # Couldn't compute threat range or distance — assume hostile.
                 threats.append(enemy)
         return threats
 
@@ -265,7 +269,7 @@ class MutaliskMicroController:
         for enemy in enemies:
             try:
                 nearby = sum(1 for other in enemies if enemy.distance_to(other) <= 3.0)
-            except Exception:
+            except (AttributeError, TypeError):
                 nearby = 1
             worker_bonus = (
                 2
@@ -327,7 +331,7 @@ class MutaliskMicroController:
                     if muta.distance_to(stack_point) > 1.5 and len(combat_ready) >= 3:
                         actions.append(muta.move(stack_point))
                         continue
-                except Exception:
+                except (AttributeError, TypeError):
                     pass
             if target:
                 actions.append(muta.attack(target))
@@ -377,7 +381,8 @@ class MutaliskMicroController:
                     try:
                         actions.append(muta.move(regen_pos))
                         regenerating.append(muta)
-                    except Exception:
+                    except (AttributeError, TypeError) as e:
+                        _logger.debug("Mutalisk regen move failed: %s", e)
                         combat_ready.append(muta)
                 else:
                     combat_ready.append(muta)
@@ -394,7 +399,8 @@ class MutaliskMicroController:
                     try:
                         actions.append(muta.move(regen_pos))
                         regenerating.append(muta)
-                    except Exception:
+                    except (AttributeError, TypeError) as e:
+                        _logger.debug("Mutalisk continue-regen move failed: %s", e)
                         combat_ready.append(muta)
                 else:
                     combat_ready.append(muta)
@@ -431,7 +437,8 @@ class MutaliskMicroController:
                 try:
                     # Move to magic box position, then attack
                     actions.append(muta.move(magic_pos))
-                except Exception:
+                except (AttributeError, TypeError) as e:
+                    _logger.debug("Mutalisk magic box move failed: %s", e)
                     continue
 
         if actions:
@@ -444,5 +451,5 @@ class MutaliskMicroController:
                 result = bot.do(action)
                 if hasattr(result, "__await__"):
                     await result
-            except Exception:
-                pass
+            except (AttributeError, TypeError) as e:
+                _logger.debug("Mutalisk action dispatch failed: %s", e)
