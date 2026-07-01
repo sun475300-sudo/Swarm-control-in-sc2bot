@@ -13,6 +13,15 @@ from unittest.mock import MagicMock
 
 import pytest
 
+# protobuf's C++-accelerated implementation raises
+# "TypeError: Descriptors cannot be created directly" when the installed
+# protobuf runtime is newer than the one s2clientprotocol's generated
+# _pb2.py files were built against (version resolution is env-dependent
+# since neither package pins the other). The pure-Python implementation
+# doesn't enforce that check. Same workaround already used in
+# wicked_zerg_challenger/tests/conftest.py.
+os.environ.setdefault("PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION", "python")
+
 # 프로젝트 루트를 sys.path에 추가
 PROJECT_ROOT = Path(__file__).parent.parent
 if str(PROJECT_ROOT) not in sys.path:
