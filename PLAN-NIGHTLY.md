@@ -2,17 +2,17 @@
 
 > Owner: 선우 (sun475300@gmail.com)
 > Maintainer: nightly automation
-> Last refreshed: 2026-05-04
+> Last refreshed: 2026-07-01
 
 ---
 
 ## Snapshot (current state)
 
-- Branch: `main`, last commit: queen transfusion + requirements-dev.txt session
+- Branch: `main` (working branch: `claude/optimistic-edison-oc9rf7`)
 - Bot core: `wicked_zerg_challenger/` — 179+ Python files across 10+ subdirs.
 - `.gitattributes` enforces `* text=auto` ✅
-- CI: `sc2bot-ci.yml` runs black + isort + flake8 ✅ (all clean)
-- **Test suite: 468 pass / 15 skip / 0 fail** ✅ (was 398/20/0 two nights ago)
+- CI: `ci.yml` had been failing since 2026-06-25 (pytest collection — protobuf/s2clientprotocol conflict), `sc2bot-ci.yml` had been failing since ≥2026-05-28 (black format-check gate blocking the whole pipeline). **Both root-caused and fixed this run** — see 2026-07-01 entry below.
+- **Test suite (root `tests/`): 502 pass / 14 skip / 0 fail.** **Test suite (`wicked_zerg_challenger/tests/`): 668 pass / 0 fail.**
 - Queen transfusion logic: 3 bugs fixed (`is_idle` guard removed, target dedup, per-queen cooldown) ✅
 
 ## Resolved this run (2026-05-03)
@@ -87,6 +87,7 @@ Run `E:\GitHub\Swarm-control-in-sc2bot\scripts\commit_nightly_2026-05-03.bat`:
 
 ## Run history
 
+- **2026-07-01** — Live CI on `main` was red on both workflows for days (`ci.yml` since 2026-06-25, `sc2bot-ci.yml` since ≥2026-05-28). Root-caused and fixed both: (1) `requirements.txt` pinned a legacy `s2clientprotocol` package that overwrites the protobuf-compatible `pys2clientprotocol` stubs `burnysc2` already installs, breaking `sc2` imports for 14 test files — removed the redundant pin from both `requirements.txt` files. (2) `tests/test_combat_phase_fsm.py` used `asyncio.get_event_loop().run_until_complete(...)`, which throws once pytest-asyncio closes the loop from an earlier test — replaced with `asyncio.run(...)` (12 tests fixed). (3) 54 files were black-noncompliant and 11 isort-noncompliant, which was blocking `sc2bot-ci.yml`'s lint gate (and therefore Test Suite/Docker build/deploy, all skipped) — ran `black .` + `isort .`. Verified REMAINING_ISSUES.md's N1–N4 (duplicate-definition F811 items) are already fixed in code; updated the doc. Full suite: 502 pass/14 skip (root) + 668 pass (bot) after fixes, 0 regressions.
 - **2026-04-25** — Initial nightly plan.
 - **2026-04-26** — P0.2 (empty-logger CI guard) landed.
 - **2026-04-27** — black + isort + flake8 all clean.
