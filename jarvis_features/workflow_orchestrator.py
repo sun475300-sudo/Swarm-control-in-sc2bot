@@ -294,7 +294,7 @@ class WorkflowOrchestrator:
             return await asyncio.wait_for(fn(), timeout=timeout)
         else:
             # sync 함수를 executor에서 실행
-            loop = asyncio.get_event_loop()
+            loop = asyncio.get_running_loop()
             return await asyncio.wait_for(
                 loop.run_in_executor(None, fn),
                 timeout=timeout,

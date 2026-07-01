@@ -49,11 +49,13 @@ def can_expand_safely(resilience) -> tuple:
     bases = b.townhalls.amount if hasattr(b, "townhalls") else 1
     aggressive_expand = b.minerals >= 300 or (bases < 2 and b.minerals >= 200)
 
-    # Critical: Bypass enemy check if it's just 1-2 units (likely scouts)
-    if enemy_near_base and not under_attack:
-        enemy_count = sum(
-            1 for e in b.enemy_units if e.distance_to(b.townhalls.first.position) < 30
-        )
+    # Critical: Bypass enemy check if it's just 1-2 units (likely scouts).
+    # b.townhalls.exists was already verified above where `enemy_near_base`
+    # got set, so reuse `base` (with a guard) instead of re-resolving
+    # townhalls.first on every iteration of the comprehension.
+    if enemy_near_base and not under_attack and b.townhalls.exists:
+        base_pos = b.townhalls.first.position
+        enemy_count = sum(1 for e in b.enemy_units if e.distance_to(base_pos) < 30)
         if enemy_count <= 2:
             enemy_near_base = False  # Ignore scouts
 

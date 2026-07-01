@@ -1157,8 +1157,10 @@ class HarassmentCoordinator:
         Returns:
             Available transport overlord, or None
         """
-        # Ventral Sacs 업그레이드 체크
-        if UpgradeId.OVERLORDSPEED not in self.bot.state.upgrades:
+        # Ventral Sacs 업그레이드 체크. OVERLORDTRANSPORT is Ventral Sacs
+        # (the load/unload upgrade); OVERLORDSPEED is Pneumatized Carapace
+        # (movement speed), which has nothing to do with transport.
+        if UpgradeId.OVERLORDTRANSPORT not in self.bot.state.upgrades:
             return None
 
         # 사용 가능한 대군주 찾기
@@ -1282,7 +1284,12 @@ class HarassmentCoordinator:
         """Check if baneling drop can be executed"""
         banelings = self.bot.units(UnitTypeId.BANELING)
         overlords = self.bot.units(UnitTypeId.OVERLORD)
-        has_upgrade = UpgradeId.OVERLORDSPEED in self.bot.state.upgrades
+        # Drop requires Ventral Sacs (OVERLORDTRANSPORT) to load units.
+        # Previously this checked OVERLORDSPEED (Pneumatized Carapace),
+        # which only affects overlord movement speed — bot would attempt
+        # drops without the transport upgrade and the LOAD command would
+        # silently fail.
+        has_upgrade = UpgradeId.OVERLORDTRANSPORT in self.bot.state.upgrades
 
         return (
             len(banelings) >= 4
@@ -1594,10 +1601,7 @@ class HarassmentCoordinator:
         elif current_enemy_workers > self.last_worker_kill_count:
             # Enemy rebuilt workers. Log raid summary if a raid just ended
             # and reset the per-raid counter so we don't double-count.
-            if (
-                not harassment_active
-                and self._current_raid_workers_killed > 0
-            ):
+            if not harassment_active and self._current_raid_workers_killed > 0:
                 self.logger.info(
                     f"[{int(self.bot.time)}s] Raid #{self.raids_executed} summary:"
                     f" {self._current_raid_workers_killed} workers killed."

@@ -9,6 +9,7 @@ Combat Phase Controller - 전투 단계별 컨트롤 시스템
 4. Retreat Phase (후퇴 단계): 손실 최소화 후퇴
 """
 
+import math
 from dataclasses import dataclass
 from enum import Enum
 from typing import Dict, List, Optional, Set
@@ -508,9 +509,12 @@ class CombatPhaseController:
         positions = []
 
         if formation_type == "concave":
-            # 오목 진형 (적을 감싸는 형태)
+            # 오목 진형 (적을 감싸는 형태). i goes 0..n-1, so the angle
+            # sweep is [-π/2, π/2 * (n-1)/n) — i.e. a concave arc that
+            # leans forward toward the target. math.pi keeps the arc
+            # symmetric (3.14 / 1.57 lost a tiny amount of precision).
             for i, unit in enumerate(units):
-                angle = (i / len(units)) * 3.14 - 1.57  # -90도 ~ +90도
+                angle = (i / len(units)) * math.pi - math.pi / 2
                 offset = Point2((direction.x * 3, direction.y * 3))
                 offset = offset.rotated(angle)
                 positions.append(center + offset)
