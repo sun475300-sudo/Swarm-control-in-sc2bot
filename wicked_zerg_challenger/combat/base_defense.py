@@ -56,6 +56,9 @@ class BaseDefenseSystem:
         self._critical_defense_threshold = 8  # 적 8기 이상 심각
 
         # High threat unit types
+        # NOTE: SC2 reports lurkers as "LURKERMP" / "LURKERMPBURROWED"; the
+        # bare "LURKER" string never matched and lurker pushes silently
+        # bypassed base defense.
         self.high_threat_units = {
             "SIEGETANK",
             "SIEGETANKSIEGED",
@@ -68,7 +71,8 @@ class BaseDefenseSystem:
             "ULTRALISK",
             "BROODLORD",
             "RAVAGER",
-            "LURKER",
+            "LURKERMP",
+            "LURKERMPBURROWED",
         }
 
         # High priority target types (for focus fire)

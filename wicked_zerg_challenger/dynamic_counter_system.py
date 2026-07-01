@@ -170,7 +170,27 @@ class DynamicCounterSystem:
                 "urgency": "HIGH",
                 "production_boost": 0.4,
             },
+            # SC2 reports lurkers as LURKERMP / LURKERMPBURROWED; the bare
+            # "LURKER" key never matched a real unit so this counter rule
+            # never fired. Keep "LURKER" for compatibility, but also register
+            # the two real names so threat scanning actually triggers.
             "LURKER": {
+                "threat_value": 55,
+                "counter_units": ["roach", "hydralisk", "overseer"],
+                "counter_ratios": [0.50, 0.40, 0.10],
+                "min_count": 8,
+                "urgency": "HIGH",
+                "production_boost": 0.3,
+            },
+            "LURKERMP": {
+                "threat_value": 55,
+                "counter_units": ["roach", "hydralisk", "overseer"],
+                "counter_ratios": [0.50, 0.40, 0.10],
+                "min_count": 8,
+                "urgency": "HIGH",
+                "production_boost": 0.3,
+            },
+            "LURKERMPBURROWED": {
                 "threat_value": 55,
                 "counter_units": ["roach", "hydralisk", "overseer"],
                 "counter_ratios": [0.50, 0.40, 0.10],

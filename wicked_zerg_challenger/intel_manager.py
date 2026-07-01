@@ -151,11 +151,16 @@ class IntelManager:
             "ULTRALISK",
             "BROODLORD",
             "RAVAGER",
+            # SC2 reports lurkers as LURKERMP / LURKERMPBURROWED; the bare
+            # "LURKER" is dead but harmless. WIDOWMINEBURROWED is the
+            # actually-firing form and was missing.
             "LURKER",
             "LURKERMP",
+            "LURKERMPBURROWED",
             "LIBERATOR",
             "LIBERATORAG",
             "WIDOWMINE",
+            "WIDOWMINEBURROWED",
             "HIGHTEMPLAR",
         }
 
@@ -429,7 +434,9 @@ class IntelManager:
             "SIEGETANK",
             "SIEGETANKSIEGED",
             "LIBERATOR",
+            "LIBERATORAG",
             "WIDOWMINE",
+            "WIDOWMINEBURROWED",
         }
 
         # * O(n) 최적화: 적 유닛 1회 순회, 타운홀 위치 캐시 *

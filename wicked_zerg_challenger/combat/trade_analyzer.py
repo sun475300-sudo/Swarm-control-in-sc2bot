@@ -42,13 +42,17 @@ class TradeAnalyzer:
         self.logger = get_logger("TradeAnalyzer")
 
         # Unit costs (minerals + gas * 1.5)
+        # NOTE: SC2 reports lurkers as "LURKERMP" / "LURKERMPBURROWED"; the
+        # bare "LURKER" key never matched a real loss, so lurker deaths
+        # defaulted to the fallback (100) and skewed trade efficiency math.
         self.UNIT_COSTS = {
             "ZERGLING": 25,
             "BANELING": 75,
             "ROACH": 100,
             "RAVAGER": 175,
             "HYDRALISK": 125,
-            "LURKER": 275,
+            "LURKERMP": 275,
+            "LURKERMPBURROWED": 275,
             "MUTALISK": 175,
             "CORRUPTOR": 225,
             "ULTRALISK": 450,

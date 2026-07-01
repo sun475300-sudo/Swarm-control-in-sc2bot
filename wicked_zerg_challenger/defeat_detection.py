@@ -448,9 +448,14 @@ class DefeatDetection:
             "CORRUPTOR": 150,
             "INFESTOR": 150,
             "QUEEN": 150,
-            "SWARMHOST": 200,
+            # SC2 reports swarm hosts as "SWARMHOSTMP"; the bare key never
+            # matched (same root cause as the LURKER → LURKERMP miss).
+            "SWARMHOSTMP": 200,
             "VIPER": 200,
-            "LURKER": 200,
+            # SC2 reports lurkers as "LURKERMP" / "LURKERMPBURROWED"; the
+            # bare "LURKER" key never matched any real unit loss.
+            "LURKERMP": 200,
+            "LURKERMPBURROWED": 200,
             # 테란
             "MARINE": 50,
             "MARAUDER": 100,

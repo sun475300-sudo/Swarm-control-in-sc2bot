@@ -218,6 +218,8 @@ class VictoryTracker:
 
     def _filter_army_units(self, units):
         """전투 유닛 필터링"""
+        # NOTE: SC2 reports lurkers as "LURKERMP" / "LURKERMPBURROWED"; the
+        # bare "LURKER" key never matched any real unit.
         army_types = [
             "ZERGLING",
             "ROACH",
@@ -228,7 +230,8 @@ class VictoryTracker:
             "BANELING",
             "RAVAGER",
             "ULTRALISK",
-            "LURKER",
+            "LURKERMP",
+            "LURKERMPBURROWED",
             "INFESTOR",
             "VIPER",
         ]
