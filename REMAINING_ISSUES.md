@@ -4,24 +4,22 @@
 
 통합 문제 해결 후 발견된 추가 개선 사항들입니다.
 
-**Last refreshed:** 2026-04-27 (Issue #1, #2 → Resolved; Issue #6 partially resolved via Batch 3)
+**Last refreshed:** 2026-07-01 (N1–N4 재검증 → 이미 해결 확인; CI 관련 신규 항목 추가)
 
 ---
 
-## 🆕 신규 발견 (PR #44, 2026-04-27)
-
-자동/수동 점검 사이클(테스트 → 코드 검사 → 개선 → 커밋/푸시 반복)에서 새로 식별된 항목.
+## 🆕 신규 발견 (2026-07-01 점검 사이클)
 
 | ID | 설명 | 우선순위 | 상태 |
 |----|------|---------|------|
-| N1 | `OpponentModeling.on_step` 중복 정의 (line 341 vs 765 — F811) | 🟠 HIGH | open — 동작 영향(상위 on_step이 미실행) 가능 |
-| N2 | `EconomyManager._prevent_resource_banking` / `_reduce_gas_workers` 재정의 (F811) | 🟡 MED | open |
-| N3 | `combat_manager._find_harass_target` 재정의 (line 2377 vs 4278) | 🟡 MED | open |
-| N4 | `production_resilience.build_terran_counters` 재정의 (1369 vs 1866) | 🟡 MED | open |
-| N5 | bare `except Exception:` 다수 (≈360+) — 이번 PR에서 12건 처리, 잔여 다수 | 🟢 LOW | partial |
-| N6 | F841 unused local variables (visuals/make_pptx 등) | 🟢 LOW | open (presentation 코드라 영향 작음) |
+| N7 | `main` CI(`ci.yml`) — `requirements.txt`의 중복 `s2clientprotocol` 핀이 `burnysc2`가 실제로 쓰는 `pys2clientprotocol`의 동일 네임스페이스(`s2clientprotocol/`) 파일을 설치 순서상 덮어써서 `TypeError: Descriptors cannot be created directly` 발생 | 🔴 HIGH | ✅ Fixed — 중복 핀 제거 (`requirements.txt`, `wicked_zerg_challenger/requirements.txt`) |
+| N8 | `sc2bot-ci.yml` — blocking `black --check` 스텝이 66개 파일에서 실패, isort가 19개 파일에서 실패 → Test Suite/Docker build/deploy 전체가 스킵됨 | 🔴 HIGH | ✅ Fixed — `black .` + `isort .` 적용 |
+| N9 | `sc2bot-ci.yml` lint 스텝이 `black`/`isort`를 버전 고정 없이 설치 → 향후 새 black 릴리스마다 포맷 규칙이 미세하게 바뀌며 N8이 계속 재발하는 구조적 원인 | 🟠 HIGH | ✅ Fixed — `requirements-dev.txt`(고정 버전)로 설치하도록 변경 |
+| N10 | `sc2bot-ci.yml` Test Suite 잡이 존재하지 않는 `tests/unit` 디렉터리를 대상으로 실행 (실제 테스트는 `tests/` 평면 구조 + `tests/integration/`) → N8이 고쳐지는 순간 바로 다음 스텝에서 새로 실패할 뻔함 | 🔴 HIGH | ✅ Fixed — `pytest tests/ --ignore=tests/integration` 로 경로 수정 |
+| N11 | `tests/test_combat_phase_fsm.py` — 5개 테스트 헬퍼가 `asyncio.get_event_loop().run_until_complete(...)` 사용 → pytest-asyncio가 이전 테스트에서 루프를 닫으면 `RuntimeError: no current event loop` 로 12개 테스트가 실행 순서에 따라 실패 | 🟠 HIGH | ✅ Fixed — `asyncio.run(...)`으로 교체 |
+| N12 | **PR 적체** — `main`向 open draft PR이 150개 이상 (#15~#223), 대부분 이번 항목들과 동일한 "테스트/점검/개선 반복" 사이클의 중복 산출물이며 전혀 머지되지 않음. `main`의 CI가 수 주째 red인 이유이자, 매번 새 브랜치에서 같은 버그를 재발견/재수정하는 근본 원인. | 🔴 HIGH | open — 사용자 확인 필요 (머지/정리 대상 선정) |
 
-검증 권장: PR 분리 (N1 단독 PR 권장 — 동작 변화 가능성).
+검증: 위 N7–N11은 로컬에서 재현 후 수정 확인 (`pytest tests/`: 502 passed / 14 skipped / 0 failed, `black --check .` / `isort --check-only .` / `flake8 --select=E9,F63,F7,F82` 전부 clean). N1–N4(구 항목, F811 중복 정의)는 재검증 결과 이미 해결된 상태로 확인되어 아래 "신규 발견 (PR #44)" 섹션에서 제거.
 
 ---
 

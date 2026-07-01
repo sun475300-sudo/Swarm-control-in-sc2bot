@@ -2,20 +2,32 @@
 
 > Owner: 선우 (sun475300@gmail.com)
 > Maintainer: nightly automation
-> Last refreshed: 2026-05-04
+> Last refreshed: 2026-07-01
 
 ---
 
 ## Snapshot (current state)
 
-- Branch: `main`, last commit: queen transfusion + requirements-dev.txt session
+- Branch: `main` @ `8a80b73`. **CI has been red since 2026-05-28 (sc2bot-ci.yml) / 2026-06-25 (ci.yml)** — root-caused and fixed this run (see below).
 - Bot core: `wicked_zerg_challenger/` — 179+ Python files across 10+ subdirs.
 - `.gitattributes` enforces `* text=auto` ✅
-- CI: `sc2bot-ci.yml` runs black + isort + flake8 ✅ (all clean)
-- **Test suite: 468 pass / 15 skip / 0 fail** ✅ (was 398/20/0 two nights ago)
-- Queen transfusion logic: 3 bugs fixed (`is_idle` guard removed, target dedup, per-queen cooldown) ✅
+- **Test suite (repo root `tests/`): 502 pass / 14 skip / 0 fail** ✅
+- **⚠️ PR backlog: 150+ open draft PRs (#15–#223 range) against `main`, almost all near-duplicate "test/inspect/improve" cycles that were never merged.** This is the primary reason CI on `main` looked stale/broken and the same bugs (asyncio event-loop, black/isort drift, `tests/unit` path) were rediscovered and refixed repeatedly across many of those PRs instead of landing once. Needs owner decision: merge the most complete candidate (PR #221, `mergeable_state: clean`, already covers the fixes below) and close the redundant ones. See REMAINING_ISSUES.md N12.
 
-## Resolved this run (2026-05-03)
+## Resolved this run (2026-07-01)
+
+| Item | File(s) | Notes |
+|------|---------|-------|
+| `ci.yml` red since 2026-06-25 | `requirements.txt`, `wicked_zerg_challenger/requirements.txt` | Removed redundant `s2clientprotocol` pin — it collides with `pys2clientprotocol` (same `s2clientprotocol/` import namespace) which `burnysc2` actually depends on; install order was silently shadowing the working protobuf files with stale ones (`TypeError: Descriptors cannot be created directly`). |
+| `sc2bot-ci.yml` red since 2026-05-28 | repo-wide | 66 files black-noncompliant, 19 isort-noncompliant → blocking lint step failed → Test Suite/Docker/deploy jobs skipped entirely. Ran `black .` + `isort .` (format-only). |
+| Recurring black/isort drift (root cause of the above happening repeatedly) | `.github/workflows/sc2bot-ci.yml` | Lint step installed `black`/`isort` unpinned (`pip install ... black isort ...`), so every new black release reformats the repo differently and re-breaks the check. Changed to `pip install -r requirements-dev.txt mypy bandit` so CI always matches the pinned dev versions. |
+| `sc2bot-ci.yml` Test Suite pointed at nonexistent `tests/unit` | `.github/workflows/sc2bot-ci.yml` | Real layout is flat `tests/` + `tests/integration/`. Changed to `pytest tests/ --ignore=tests/integration ...`. Would have failed immediately once the lint gate above was fixed. |
+| `tests/test_combat_phase_fsm.py` — 12 order-dependent failures | same file | 5 helpers used `asyncio.get_event_loop().run_until_complete(...)`; pytest-asyncio closes/resets the loop after earlier async tests in the same session, so later calls raised `RuntimeError: no current event loop`. Switched to `asyncio.run(...)`. |
+| `REMAINING_ISSUES.md` N1–N4 (F811 duplicate defs) | doc only | Re-verified in code — already fixed by an earlier session (`e648ae4`). Doc was stale; removed from the open list. |
+
+**Net result: main-branch CI unblocked (was failing on both workflows); 12 flaky test failures fixed; two structural fixes (version pinning, path) that should prevent the black/isort and tests/unit failures from recurring.**
+
+## Resolved 2026-05-03 (prior run)
 
 | Item | File(s) | Notes |
 |------|---------|-------|
