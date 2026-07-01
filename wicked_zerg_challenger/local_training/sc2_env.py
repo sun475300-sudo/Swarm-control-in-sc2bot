@@ -8,6 +8,7 @@ import numpy as np
 try:
     from sc2.ids.unit_typeid import UnitTypeId
 except Exception:
+
     class UnitTypeId:
         LAIR = "LAIR"
         QUEEN = "QUEEN"
