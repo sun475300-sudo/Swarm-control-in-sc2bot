@@ -8,9 +8,15 @@ from __future__ import annotations
 from types import SimpleNamespace
 from unittest.mock import MagicMock, patch
 
-from sc2.ids.unit_typeid import UnitTypeId
-
 import pytest
+
+try:
+    from sc2.ids.unit_typeid import UnitTypeId
+except ImportError:
+    pytest.skip(
+        "sc2 module not available (python-sc2 not installed)",
+        allow_module_level=True,
+    )
 
 # ---------------------------------------------------------------------------
 # Minimal stubs so we can import without a running SC2 environment
