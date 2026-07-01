@@ -651,5 +651,51 @@ class TestGasTimingOptimization:
         assert True
 
 
+class TestForceExpansionAffordability:
+    """Regression: force-expansion affordability must use the trigger that fired.
+
+    The cost check previously re-scanned all FORCE_EXPAND_TRIGGERS and kept the
+    *last* matching trigger's min_req instead of the first (most urgent) one that
+    fired, wrongly blocking affordable expansions.
+    """
+
+    @pytest.mark.asyncio
+    async def test_expands_when_fired_trigger_is_affordable(self):
+        # At 200s with 2 bases the (120, 250, 3) trigger fires; 300 minerals
+        # clears its 250 floor. The buggy code raised the floor to the later
+        # (180, 350, 4) trigger's 350 and blocked the expansion.
+        bot = MockBot()
+        bot.time = 200.0
+        bot.minerals = 300
+        bot.townhalls = MockUnits(
+            [MockUnit(1, "HATCHERY", (0, 0)), MockUnit(2, "HATCHERY", (60, 60))]
+        )
+        bot.already_pending = Mock(return_value=0)
+
+        manager = EconomyManager(bot)
+        manager._perform_smart_expansion = AsyncMock(return_value=True)
+
+        await manager._force_expansion_if_stuck()
+
+        manager._perform_smart_expansion.assert_awaited_once()
+
+    @pytest.mark.asyncio
+    async def test_no_expand_when_no_trigger_matches(self):
+        # 1 base at 10s: no trigger has fired yet (earliest is 45s).
+        bot = MockBot()
+        bot.time = 10.0
+        bot.minerals = 1000
+        bot.townhalls = MockUnits([MockUnit(1, "HATCHERY", (0, 0))])
+        bot.already_pending = Mock(return_value=0)
+
+        manager = EconomyManager(bot)
+        manager._has_recent_expansion_request = Mock(return_value=False)
+        manager._perform_smart_expansion = AsyncMock(return_value=True)
+
+        await manager._force_expansion_if_stuck()
+
+        manager._perform_smart_expansion.assert_not_awaited()
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])

@@ -642,7 +642,9 @@ class CombatManager:
             try:
                 from sc2.ids.unit_typeid import UnitTypeId
 
-                army_supply = sum(getattr(u, "supply_cost", 1) for u in ground_army)
+                army_supply = sum(
+                    self._SUPPLY_TABLE.get(u.type_id, 1) for u in ground_army
+                )
 
                 # * 서플라이 40 이상이면 강력한 타이밍 공격
                 if army_supply >= 40:
@@ -1711,7 +1713,7 @@ class CombatManager:
             return None
         try:
             best = None
-            best_score = 999
+            best_score = None
             worker_types = {"SCV", "PROBE", "DRONE", "MULE", "LARVA", "EGG"}
             for e in enemy_units:
                 if not hasattr(e, "health_percentage"):
@@ -1721,9 +1723,11 @@ class CombatManager:
                     continue
                 if e.is_structure:
                     continue
-                # 점수 = 체력 비율 (낮을수록 우선) + 체력/1000 (같으면 약한 유닛 우선)
-                score = e.health_percentage + (e.health / 1000.0)
-                if score < best_score:
+                # 체력 비율(낮을수록 우선) 우선, 동률이면 절대 체력이 낮은 유닛 우선.
+                # 튜플 비교로 비율과 절대값을 분리해야 큰 체력 유닛이 비율 정렬을
+                # 뒤집지 못한다 (이전 health/1000 가중치는 풀피 울트라 등에서 오작동).
+                score = (e.health_percentage, e.health)
+                if best_score is None or score < best_score:
                     best_score = score
                     best = e
             return best
@@ -1878,7 +1882,9 @@ class CombatManager:
                 army_units = [u for u in army_units if u.tag not in defense_tags]
 
             # 최소 군대 서플라이 확인
-            army_supply = sum(getattr(u, "supply_cost", 1) for u in army_units)
+            army_supply = sum(
+                self._SUPPLY_TABLE.get(u.type_id, 1) for u in army_units
+            )
 
             # * Phase 20: 서플라이 기반 점진적 공격 임계값 *
             # * Anti-Protoss: Protoss shields regenerate, so small attacks are wasted.
@@ -1933,7 +1939,7 @@ class CombatManager:
 
             # * Phase 30: 사전 전투력 비교 - 적보다 압도적으로 약하면 공격 자제
             visible_enemy_supply = sum(
-                getattr(e, "supply_cost", 1)
+                self._SUPPLY_TABLE.get(e.type_id, 1)
                 for e in self.bot.enemy_units
                 if hasattr(e, "can_attack") and e.can_attack
             )
@@ -2096,7 +2102,7 @@ class CombatManager:
         units = list(army_units or [])
         if not units or not attack_targets:
             return False
-        army_supply = sum(getattr(unit, "supply_cost", 1) for unit in units)
+        army_supply = sum(self._SUPPLY_TABLE.get(unit.type_id, 1) for unit in units)
         if army_supply < 60:
             return False
 
@@ -3705,9 +3711,11 @@ class CombatManager:
             return False
 
         # Calculate army supplies
-        our_supply = sum(getattr(u, "supply_cost", 1) for u in army_units)
+        our_supply = sum(self._SUPPLY_TABLE.get(u.type_id, 1) for u in army_units)
         enemy_supply = (
-            sum(getattr(u, "supply_cost", 1) for u in enemy_units) if enemy_units else 0
+            sum(self._SUPPLY_TABLE.get(u.type_id, 1) for u in enemy_units)
+            if enemy_units
+            else 0
         )
 
         # Check cooldown (prevent spamming counter attacks)
@@ -4559,7 +4567,7 @@ class CombatManager:
 
         for unit in army_units:
             try:
-                supply = getattr(unit, "supply_cost", 1)
+                supply = self._SUPPLY_TABLE.get(unit.type_id, 1)
                 if isinstance(supply, (int, float)):
                     total_supply += supply
             except (AttributeError, TypeError) as e:

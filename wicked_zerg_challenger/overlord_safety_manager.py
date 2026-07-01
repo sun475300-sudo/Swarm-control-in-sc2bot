@@ -394,7 +394,18 @@ class OverlordSafetyManager:
                 flee_dir = ov.position - closest_threat.position
                 target_pos = ov.position + flee_dir.normalized * self.RETREAT_DISTANCE
 
-                # 맵 밖으로 안 나가게 클램핑 (필요 시)
+                # 맵 밖으로 안 나가게 클램핑 (move 명령이 빗나가지 않도록)
+                try:
+                    map_size = self.bot.game_info.map_size
+                    target_pos = Point2(
+                        (
+                            max(1.0, min(target_pos.x, map_size[0] - 1.0)),
+                            max(1.0, min(target_pos.y, map_size[1] - 1.0)),
+                        )
+                    )
+                except (AttributeError, TypeError, IndexError):
+                    pass
+
                 self.bot.do(ov.move(target_pos))
             else:
                 if ov.tag in self.fleeing_overlords:
