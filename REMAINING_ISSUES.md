@@ -4,24 +4,26 @@
 
 통합 문제 해결 후 발견된 추가 개선 사항들입니다.
 
-**Last refreshed:** 2026-04-27 (Issue #1, #2 → Resolved; Issue #6 partially resolved via Batch 3)
+**Last refreshed:** 2026-07-01 (자동 점검 사이클 — N1~N4 재검증 완료, FSM 테스트 버그 신규 수정)
 
 ---
 
-## 🆕 신규 발견 (PR #44, 2026-04-27)
+## 🆕 2026-07-01 자동 점검 사이클 결과
 
-자동/수동 점검 사이클(테스트 → 코드 검사 → 개선 → 커밋/푸시 반복)에서 새로 식별된 항목.
+`tests/` (502 pass / 14 skip / 0 fail) + `wicked_zerg_challenger/tests/` (661 pass / 0 fail) 전체 실행, `flake8 --select=F811,F821,F841,E722` 정적 분석 재실행.
 
 | ID | 설명 | 우선순위 | 상태 |
 |----|------|---------|------|
-| N1 | `OpponentModeling.on_step` 중복 정의 (line 341 vs 765 — F811) | 🟠 HIGH | open — 동작 영향(상위 on_step이 미실행) 가능 |
-| N2 | `EconomyManager._prevent_resource_banking` / `_reduce_gas_workers` 재정의 (F811) | 🟡 MED | open |
-| N3 | `combat_manager._find_harass_target` 재정의 (line 2377 vs 4278) | 🟡 MED | open |
-| N4 | `production_resilience.build_terran_counters` 재정의 (1369 vs 1866) | 🟡 MED | open |
-| N5 | bare `except Exception:` 다수 (≈360+) — 이번 PR에서 12건 처리, 잔여 다수 | 🟢 LOW | partial |
-| N6 | F841 unused local variables (visuals/make_pptx 등) | 🟢 LOW | open (presentation 코드라 영향 작음) |
+| N7 | `tests/test_combat_phase_fsm.py` — `asyncio.get_event_loop().run_until_complete()`가 Python 3.11 + pytest-asyncio 조합에서 "no current event loop" 에러로 12개 테스트 실패 | 🟠 HIGH | ✅ Resolved — `asyncio.run()`으로 교체, 23/23 통과 확인 |
+| N1 | `OpponentModeling.on_step` 중복 정의 (F811) | 🟠 HIGH | ✅ Resolved — 재검증 결과 341라인 단일 정의만 존재 (이전 PR에서 이미 해결됨, 문서 stale) |
+| N2 | `EconomyManager._prevent_resource_banking` / `_reduce_gas_workers` 재정의 (F811) | 🟡 MED | ✅ Resolved — 단일 정의만 존재 |
+| N3 | `combat_manager._find_harass_target` 재정의 | 🟡 MED | ✅ Resolved — 단일 정의(4992라인)만 존재 |
+| N4 | `production_resilience.build_terran_counters` 재정의 | 🟡 MED | ✅ Resolved — 단일 정의(1961라인)만 존재 |
+| N5 | bare `except Exception:` 다수 | 🟢 LOW | open — 참고: flake8 E722(진짜 bare except) 0건. 잔여는 `except Exception as e:` 후 `e` 미사용(F841) 패턴, N6과 중복 집계 |
+| N6 | F841 unused local variables | 🟢 LOW | open — 현재 130건 (`wicked_zerg_challenger/` 전체). 대부분 `except ... as e` 로깅 누락 또는 죽은 계산값. 점진적 개선 대상 |
+| N8 | `requirements.txt`가 pip-compile로 resolve 불가능 (진짜 의존성 충돌) | 🟠 HIGH | open — PR #223의 GitHub "submit-pypi" (dependency-submission) 체크에서 발견. `burnysc2`가 끌어오는 `s2clientprotocol` 최신 빌드는 protobuf ≥5를 요구하는데, `google-generativeai==0.5.0` → `google-ai-generativelanguage==0.6.1`는 `protobuf<5.0.0dev`로 고정 — 동시 설치 불가능한 조합. SC2 봇 코드와 무관한 별개 서브프로젝트(Google GenAI/Discord/crypto)를 하나의 `requirements.txt`에 몰아넣은 구조적 문제. 이 PR의 변경사항과 무관하게 이미 main에도 존재. 수정하려면 서브프로젝트별 requirements 파일 분리(`requirements-crypto.txt`처럼) 또는 버전 상한 조정이 필요 — 아키텍처 판단이 필요해 사용자 확인 후 별도 작업으로 진행 권장 |
 
-검증 권장: PR 분리 (N1 단독 PR 권장 — 동작 변화 가능성).
+검증 방법: `flake8 wicked_zerg_challenger --select=F811,F821,F841,E722 --max-line-length=200` / `pip-compile --dry-run -o requirements.out requirements.txt` (N8 재현)
 
 ---
 

@@ -2,18 +2,30 @@
 
 > Owner: 선우 (sun475300@gmail.com)
 > Maintainer: nightly automation
-> Last refreshed: 2026-05-04
+> Last refreshed: 2026-07-01
 
 ---
 
 ## Snapshot (current state)
 
-- Branch: `main`, last commit: queen transfusion + requirements-dev.txt session
+- Branch: `main` (this session on `claude/optimistic-edison-fmx0a4`)
 - Bot core: `wicked_zerg_challenger/` — 179+ Python files across 10+ subdirs.
 - `.gitattributes` enforces `* text=auto` ✅
-- CI: `sc2bot-ci.yml` runs black + isort + flake8 ✅ (all clean)
-- **Test suite: 468 pass / 15 skip / 0 fail** ✅ (was 398/20/0 two nights ago)
+- CI: `sc2bot-ci.yml` runs black + isort + flake8 ✅
+- **`tests/` suite: 502 pass / 14 skip / 0 fail** ✅ (verified 2026-07-01, was showing 12 failures before this session's FSM fix)
+- **`wicked_zerg_challenger/tests/` suite: 661 pass / 0 fail** ✅ (verified 2026-07-01; run as a separate `pytest` invocation per CI config — do not combine with root `tests/` in one invocation, see note below)
 - Queen transfusion logic: 3 bugs fixed (`is_idle` guard removed, target dedup, per-queen cooldown) ✅
+- No real SC2 game client available in this sandboxed session — game-level testing (`run_single_game.py`, `run_mass_test.py`) could not be executed here; only static analysis + pytest were run.
+
+### Note: don't run `tests/` and `wicked_zerg_challenger/tests/` in one pytest invocation
+Both directories contain an unrelated `scripts/` subpackage (root `scripts/` vs `wicked_zerg_challenger/scripts/`, the latter has no Python modules). Combining both test roots in a single `pytest` command can trigger a Python namespace-package resolution collision (`ModuleNotFoundError: No module named 'scripts.ladder_tracker'`) depending on sys.path insertion order. Each suite passes cleanly when run standalone (matches how CI actually invokes them, in separate steps). Not a functional bug — just a footgun for local ad-hoc runs.
+
+## Resolved this run (2026-07-01)
+
+| Item | File(s) | Notes |
+|------|---------|-------|
+| FSM combat-phase tests failing on Py3.11 | `tests/test_combat_phase_fsm.py` | 12 tests used `asyncio.get_event_loop().run_until_complete(...)`, which raises `RuntimeError: There is no current event loop in thread 'MainThread'` once pytest-asyncio's per-test loop teardown runs first. Replaced all 5 occurrences with `asyncio.run(...)`. 23/23 tests in the file now pass. |
+| `REMAINING_ISSUES.md` N1–N4 stale | docs | Re-verified via `grep -n "def <name>"`: all four previously-flagged duplicate-definition issues (`OpponentModeling.on_step`, `EconomyManager._prevent_resource_banking`/`_reduce_gas_workers`, `combat_manager._find_harass_target`, `production_resilience.build_terran_counters`) have exactly one definition each. Confirmed via `flake8 --select=F811` returning zero hits across `wicked_zerg_challenger/`. Marked Resolved with verification method. |
 
 ## Resolved this run (2026-05-03)
 
@@ -49,11 +61,12 @@
 
 | #    | Item                                            | Status | Notes |
 |------|-------------------------------------------------|--------|-------|
-| P2.1 | Force-accumulation FSM tests                    | ✅ Done | `tests/test_combat_phase_fsm.py` — 23 tests all passing. |
-| P2.2 | Benchmark runner                                | ❌ Open | Single command, N replays, APM/supply/win-rate report vs Hard. |
+| P2.1 | Force-accumulation FSM tests                    | ✅ Done | `tests/test_combat_phase_fsm.py` — 23 tests all passing. Regressed to 12/23 failing at some point after this was marked done (Py3.11 `get_event_loop()` incompatibility) — re-fixed 2026-07-01, see Resolved section above. |
+| P2.2 | Benchmark runner                                | ❌ Open | Single command, N replays, APM/supply/win-rate report vs Hard. Blocked in cloud sessions: no local SC2 client — needs a machine with the game installed. |
 | P2.3 | Build-order config externalisation              | ❌ Open | Move top-20 hardcoded values to `config/build_orders.yaml`. |
 | P2.4 | RL agent save-experience guard                  | ❌ Open | Unit test for save under disk-full / interrupted-rename. |
 | P2.5 | Type hints + docstring pass on core modules     | ❌ Open | `core/resource_manager.py`, `core/manager_factory.py`. |
+| P2.6 | Clean up 130 F841 unused-variable warnings       | ❌ Open | `flake8 wicked_zerg_challenger --select=F841`. Mostly `except ... as e` with unused `e` (should at least be logged) and a few dead pre-computed values. Low risk, high volume — good next-session task. |
 
 ## Long-term direction
 
@@ -94,3 +107,4 @@ Run `E:\GitHub\Swarm-control-in-sc2bot\scripts\commit_nightly_2026-05-03.bat`:
 - **2026-05-01** — P1.1 scout cadence, P1.2 harassment, P1.3 expansion timing, P1.5 doc history. Commit blocked by index.lock.
 - **2026-05-02** — P0 scout import mismatch fixed. P1.4 deprecation shim. P2.1 FSM tests 23/23 pass.
 - **2026-05-03** — **Test suite cleared:** 90 failures → 0. Fixed pytest-asyncio, torch stubs (qmix/mappo), stale __init__ exports (mappo/comm_learning), gas threshold test, crypto skipif guards. Final: 398 pass / 20 skip / 0 fail.
+- **2026-07-01** — Full clean-room environment rebuild (venv + deps) and both test suites re-run from scratch. Found and fixed a real regression: 12/23 `test_combat_phase_fsm.py` tests were failing (`asyncio.get_event_loop()` incompatible with current pytest-asyncio + Py3.11 loop teardown) — fixed with `asyncio.run()`. Re-verified `REMAINING_ISSUES.md` N1–N4 (duplicate-definition F811 issues) are already resolved in the codebase; updated that doc so it stops flagging closed issues. Final: `tests/` 502 pass/14 skip/0 fail, `wicked_zerg_challenger/tests/` 661 pass/0 fail. No SC2 game client available in this sandbox, so game-level/benchmark testing (P2.2) remains blocked here. Next priorities queued: P2.6 (F841 cleanup), P2.3, P2.4, P2.5.
