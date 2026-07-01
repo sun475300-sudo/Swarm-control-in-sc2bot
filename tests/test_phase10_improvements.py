@@ -372,8 +372,11 @@ class TestOverlordVisionNetwork:
         # We test that iteration 110 does not skip (no exception)
         try:
             await self.vision.on_step(110)
+        except AttributeError:
+            # AttributeError indicates a real method-signature regression — re-raise
+            raise
         except Exception:
-            pass  # May fail due to mock limitations, but shouldn't raise AttributeError from skipping
+            pass  # Mock-call side effects are tolerated; structural bugs are not
 
         # Iteration 220 was the old frequency - now 110 is the new one
         # Just verify the method exists and runs at 110

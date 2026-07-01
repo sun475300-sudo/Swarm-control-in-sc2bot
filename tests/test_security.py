@@ -62,10 +62,10 @@ class TestSensitiveDataProtection:
     """민감한 정보가 코드에 하드코딩되어 있지 않은지 검사한다."""
 
     def _read_file(self, filepath: Path) -> str:
-        """파일 내용을 읽어 반환한다."""
+        """파일 내용을 읽어 반환한다. 파일이 없거나 OS 오류일 때만 빈 문자열."""
         try:
             return filepath.read_text(encoding="utf-8")
-        except Exception:
+        except (FileNotFoundError, IsADirectoryError, PermissionError, OSError):
             return ""
 
     def test_no_hardcoded_api_keys_in_config(self):

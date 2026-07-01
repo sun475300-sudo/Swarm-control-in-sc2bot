@@ -2055,46 +2055,6 @@ class EconomyManager:
             self.logger.info(f"[FORCE EXPAND] [{int(game_time)}s] {reason} - SUCCESS")
         else:
             self.logger.info(f"[FORCE EXPAND] ALL METHODS FAILED")
-        return
-
-        expansion_success = False
-        try:
-            if hasattr(self.bot, "expand_now"):
-                result = await self.bot.expand_now()
-                if result is not False:
-                    self.logger.info(
-                        f"[FORCE EXPAND] [{int(game_time)}s] {reason} - SUCCESS"
-                    )
-                    expansion_success = True
-                else:
-                    self.logger.info(f"[FORCE EXPAND] expand_now returned False")
-            else:
-                # expand_now가 없으면 직접 위치 찾아서 건설
-                # *** USE GOLD PRIORITY ***
-                expansion_locations = (
-                    await self._get_best_expansion_with_gold_priority()
-                )
-                if (
-                    expansion_locations
-                    and hasattr(self.bot, "workers")
-                    and self.bot.workers
-                ):
-                    worker = self.bot.workers.closest_to(expansion_locations)
-                    if worker:
-                        is_gold = self._is_gold_expansion(expansion_locations)
-                        gold_marker = "[GOLD] GOLD" if is_gold else ""
-                        self.bot.do(
-                            worker.build(UnitTypeId.HATCHERY, expansion_locations)
-                        )
-                        self.logger.info(
-                            f"[FORCE EXPAND] [{int(game_time)}s] Manual expansion {gold_marker} - SUCCESS"
-                        )
-                        expansion_success = True
-        except Exception as e:
-            self.logger.info(f"[FORCE EXPAND] Failed: {e}")
-
-        if not expansion_success:
-            self.logger.info(f"[FORCE EXPAND] ALL METHODS FAILED")
 
     async def _check_proactive_expansion(self) -> None:
         """

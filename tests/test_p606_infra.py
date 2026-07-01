@@ -15,11 +15,15 @@ _HAS_NUMPY = importlib.util.find_spec("numpy") is not None
 
 
 def _safe_import(module_path, class_name):
+    """Same contract as in test_p606_modules._safe_import: only swallow
+    missing-module errors so syntax/AttributeError style bugs surface."""
     try:
         mod = importlib.import_module(module_path)
-        return getattr(mod, class_name, None)
-    except Exception:
+    except ModuleNotFoundError:
         return None
+    except ImportError:
+        return None
+    return getattr(mod, class_name, None)
 
 
 class TestLoadTesting:

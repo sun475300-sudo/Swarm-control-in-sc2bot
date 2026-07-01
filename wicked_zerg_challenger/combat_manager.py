@@ -2067,7 +2067,8 @@ class CombatManager:
         for roach in roaches:
             try:
                 if retreat and retreat_anchor is not None:
-                    self.bot.do(roach.attack(target))
+                    # Retreat: pull roaches back to closest own base, mirroring hydra logic.
+                    self.bot.do(roach.attack(retreat_anchor))
                 else:
                     self.bot.do(roach.attack(target))
                 handled.add(roach.tag)
