@@ -17,8 +17,22 @@
 | A1 | `tests/test_combat_phase_fsm.py`: `asyncio.get_event_loop().run_until_complete()` 사용으로 전체 스위트 실행 시 12개 테스트가 "no current event loop" 오류로 실패 (단독 실행 시엔 통과 — 테스트 격리 버그). `asyncio.run()`으로 교체하여 해결. | 🟠 HIGH | ✅ resolved |
 | A2 | `wicked_zerg_challenger/tests/test_production_resilience.py`, `test_opponent_modeling.py`: `unittest.TestCase`에 `async def test_*` 메서드를 정의 — 표준 `unittest.TestCase`는 async 테스트 본문을 실행(await)하지 않으므로 코루틴 객체가 생성만 되고 어서션이 **한 번도 실행되지 않은 채 항상 PASS** 처리되던 심각한 버그(총 12개 테스트 무효화, `test_production_resilience.py` 27개 + `test_opponent_modeling.py`(TestOpponentModeling 클래스) 다수). `unittest.IsolatedAsyncioTestCase`로 교체하여 실제 실행되도록 수정. | 🔴 CRITICAL | ✅ resolved |
 | A3 | A2를 고치자 실제로 숨어있던 버그 노출: `test_production_resilience.py`의 3개 counter-unit 테스트가 `_get_counter_unit(race_str)` 형태의 stale 시그니처로 호출 중이었음. 실제 구현은 `_get_counter_unit(enemy_units, has_roach_warren, has_hydra_den, has_spire)` (동기 함수, race 문자열 인자 없음). 테스트를 현재 시그니처에 맞게 재작성. | 🟠 HIGH | ✅ resolved |
+| A4 | `tests/test_economy_manager.py::test_no_overlord_when_supply_sufficient` / `test_no_drone_when_workers_sufficient`: `call_count_before = bot.do.call_count`를 캡처만 하고 실제로 비교하지 않은 채 `assert True`로 끝남 — 오버로드/드론이 실제로 몇 번 생산되든 항상 PASS. `bot.do.call_count == call_count_before`로 실제 비교하도록 수정. | 🟠 HIGH | ✅ resolved |
+| A5 | `wicked_zerg_challenger/tests/test_production_resilience.py` 파일 끝의 `if __name__ == "__main__":` 블록이 A2 수정 전 시절 유물로 `asyncio.get_event_loop().run_until_complete()`를 수동 재구현 — pytest 실행 경로에서는 도달 불가능하지만 방금 고친 버그 패턴을 그대로 복제하고 있어 혼란/재발 소지. `unittest.main()`으로 교체(단순화). | 🟢 LOW | ✅ resolved |
 
 리포지토리 전체에서 동일 버그 클래스(`unittest.TestCase` + `async def test_*`) 재스캔 완료 — 추가 발견 없음.
+
+### 🔜 다음 사이클 백로그 (자동 스캔으로 발견, 이번 사이클 미착수)
+
+우선순위 순. 실제 프로덕션 동작에 영향을 줄 수 있는 항목(B1, B2)은 별도 PR + 리뷰 권장.
+
+| ID | 설명 | 우선순위 | 비고 |
+|----|------|---------|------|
+| B1 | `wicked_zerg_challenger/combat_manager.py:283-287`의 `on_step` 전체가 하나의 `except Exception as e:`로 감싸여 있고, `iteration % 50 == 0`일 때만 로그 — 리팩터링 등으로 생긴 지속적 버그(예: AttributeError)가 있어도 프레임의 ~98%에서 조용히 무시되고 재발생/카운트되지 않음. 전투 판단 로직이 부분적으로 죽어도 알아채기 어려움. | 🟠 HIGH | 동작 변경 위험 — 별도 PR 권장, 에러율 메트릭 추가 고려 |
+| B2 | `wicked_zerg_challenger/queen_manager.py:125-197`도 동일 패턴 — 퀸 `on_step`(inject/transfusion/creep/defense) 전체가 bare except + 50프레임마다 로그. | 🟠 HIGH | B1과 동일 처방 권장 |
+| B3 | 다수 테스트 파일에 `assert True` / "no exception raised"만 확인하는 타우톨로지 어서션 존재: `tests/test_economy_manager.py`(7곳 잔여), `wicked_zerg_challenger/tests/test_production_resilience.py`(12곳), `tests/test_combat_manager.py`(3곳), `tests/test_expansion_manager.py`(1곳), `tests/test_phase10_improvements.py`(1곳). 크래시만 잡고 로직 회귀(잘못된 유닛 생산, 잘못된 타겟 선정 등)는 절대 못 잡음. A4와 동일 클래스의 버그 — 실제 상태 비교로 하나씩 교체 필요. | 🟡 MED | 건별로 실제 동작을 확인하며 재작성 필요 (일괄 자동화 불가) |
+| B4 | `tests/test_combat_manager.py::test_rally_point_calculation`이 `hasattr(combat, "_update_rally_point")` 가드 뒤에 있어 메서드가 리네임/삭제되면 실패 대신 `pytest.skip()`으로 조용히 통과 — 회귀 감지 불가. | 🟡 MED | 가드 제거하고 직접 호출하도록 변경 |
+| B5 | `wicked_zerg_challenger/tests/test_active_scouting_system.py:58-60,167`의 `patch(..., create=True)` — 패치 대상 이름 오타/드리프트 시 `AttributeError` 대신 가짜 속성을 조용히 생성. | 🟢 LOW | `create=True` 제거 가능한지 확인 |
 
 ---
 
