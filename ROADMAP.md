@@ -1,7 +1,10 @@
 # WickedZergBotPro Grand Roadmap
 
 > 목표: Medium AI 승률 90%+ 달성 & AI Arena 출전
-> 현재 상태: Phase 56 완료, 342/342 테스트 통과, 추정 승률 45~50%
+> 현재 상태 (2026-07-02 갱신): 유닛 테스트 1163/1163 통과 (mock 기반, 실전 검증 아님).
+>   `mass_test_results.json`에 기록된 실제 게임은 1경기뿐이며 ZvT 4분만에 패배 —
+>   Sprint 8.1(Medium AI 30연전)이 실행된 적이 없어 승률은 미검증 상태.
+>   과거 "342/342 테스트 통과, 추정 승률 45~50%" 문구는 근거 자료가 없어 제거함.
 > 봇 프레임워크: python-sc2 (burnysc2>=5.0.0)
 
 ---
@@ -24,7 +27,7 @@
 
 **파일 목록:**
 - `wicked_zerg_challenger/early_defense_system.py`
-- `wicked_zerg_challenger/build_order_executor.py`
+- `wicked_zerg_challenger/build_order_system.py`
 - 기타 비ASCII 특수문자가 포함된 모든 .py 파일
 
 **구현 지시:**
@@ -591,7 +594,7 @@ wicked_zerg_challenger/
 ├── intel_manager.py            # Sprint 2.3, 2.4, 5.3
 ├── scouting_system.py          # Sprint 2.1, 2.2, 2.5
 ├── early_defense_system.py     # Sprint 1.1, 5.1
-├── build_order_executor.py     # Sprint 1.1
+├── build_order_system.py       # Sprint 1.1
 ├── creep_manager.py            # Sprint 5.4
 ├── building_manager.py         # Sprint 7.1 (신규 생성)
 ├── combat/

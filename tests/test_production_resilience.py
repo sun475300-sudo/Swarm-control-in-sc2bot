@@ -38,12 +38,6 @@ try:
     sys.path.insert(
         0, os.path.join(os.path.dirname(__file__), "..", "wicked_zerg_challenger")
     )
-    sys.path.insert(
-        0,
-        os.path.join(
-            os.path.dirname(__file__), "..", "wicked_zerg_challenger", "local_training"
-        ),
-    )
     from local_training.production_resilience import ProductionResilience
 except ImportError:
     pytest.skip("ProductionResilience not available", allow_module_level=True)

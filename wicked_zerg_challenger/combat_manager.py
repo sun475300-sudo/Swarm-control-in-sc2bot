@@ -2067,7 +2067,9 @@ class CombatManager:
         for roach in roaches:
             try:
                 if retreat and retreat_anchor is not None:
-                    self.bot.do(roach.attack(target))
+                    # Rear guard: fighting retreat toward home, covering the
+                    # Hydralisks' withdrawal instead of chasing the target.
+                    self.bot.do(roach.attack(retreat_anchor))
                 else:
                     self.bot.do(roach.attack(target))
                 handled.add(roach.tag)
