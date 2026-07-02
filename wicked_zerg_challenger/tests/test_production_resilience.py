@@ -376,36 +376,5 @@ class TestProductionResilience(unittest.IsolatedAsyncioTestCase):
         self.assertTrue(self.resilience._should_reserve_third_base_minerals())
 
 
-# Run async tests
 if __name__ == "__main__":
-    # Patch asyncio for unittest
-    import asyncio
-
-    # Get all test methods
-    loader = unittest.TestLoader()
-    suite = loader.loadTestsFromTestCase(TestProductionResilience)
-
-    # Run tests
-    runner = unittest.TextTestRunner(verbosity=2)
-
-    # Wrap async tests
-    for test_group in suite:
-        for test in test_group:
-            test_method_name = test._testMethodName
-            test_method = getattr(test, test_method_name)
-
-            # Check if it's async
-            if asyncio.iscoroutinefunction(test_method):
-                # Wrap it
-                def make_sync_wrapper(async_func):
-                    def sync_wrapper(self):
-                        loop = asyncio.get_event_loop()
-                        return loop.run_until_complete(async_func(self))
-
-                    return sync_wrapper
-
-                setattr(
-                    test.__class__, test_method_name, make_sync_wrapper(test_method)
-                )
-
-    runner.run(suite)
+    unittest.main()

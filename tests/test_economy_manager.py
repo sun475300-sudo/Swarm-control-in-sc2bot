@@ -246,9 +246,9 @@ class TestOverlordProduction:
         call_count_before = bot.do.call_count
         await manager._train_overlord_if_needed()
 
-        # Should not produce overlord when supply is sufficient
-        # (implementation may vary, this tests the logic exists)
-        assert True  # Verification that function completes
+        # Supply is sufficient (no blackboard fallback path in MockBot), so
+        # the overlord-production call should never be reached.
+        assert bot.do.call_count == call_count_before
 
 
 class TestDroneProduction:
@@ -283,8 +283,8 @@ class TestDroneProduction:
         call_count_before = bot.do.call_count
         await manager._train_drone_if_needed()
 
-        # Should not produce more drones when saturated
-        assert True
+        # 80 workers hits the hard drone cap, so drone training must be skipped.
+        assert bot.do.call_count == call_count_before
 
 
 class TestGoldExpansion:
