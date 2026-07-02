@@ -4,7 +4,7 @@
 from __future__ import annotations
 
 import random
-from dataclasses import dataclass, asdict
+from dataclasses import asdict, dataclass
 from typing import Dict, List, Optional
 
 
@@ -30,8 +30,12 @@ class SelfPlayLeague:
         self.elo_window = float(elo_window)
         self.players: Dict[str, LeaguePlayer] = {}
 
-    def add_player(self, player_id: str, elo: float = 1000.0, model_path: str = "") -> LeaguePlayer:
-        player = LeaguePlayer(player_id=player_id, elo=float(elo), model_path=model_path)
+    def add_player(
+        self, player_id: str, elo: float = 1000.0, model_path: str = ""
+    ) -> LeaguePlayer:
+        player = LeaguePlayer(
+            player_id=player_id, elo=float(elo), model_path=model_path
+        )
         self.players[player_id] = player
         self._trim()
         return player
@@ -44,10 +48,13 @@ class SelfPlayLeague:
         candidates = [
             other
             for other in self.players.values()
-            if other.player_id != player_id and abs(other.elo - player.elo) <= self.elo_window
+            if other.player_id != player_id
+            and abs(other.elo - player.elo) <= self.elo_window
         ]
         if not candidates:
-            candidates = [other for other in self.players.values() if other.player_id != player_id]
+            candidates = [
+                other for other in self.players.values() if other.player_id != player_id
+            ]
         if not candidates:
             return None
         return rng.choice(candidates).player_id
