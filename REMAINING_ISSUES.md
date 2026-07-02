@@ -4,24 +4,39 @@
 
 통합 문제 해결 후 발견된 추가 개선 사항들입니다.
 
-**Last refreshed:** 2026-04-27 (Issue #1, #2 → Resolved; Issue #6 partially resolved via Batch 3)
+**Last refreshed:** 2026-07-02 (자동 점검 사이클 — N1~N4, Issue #3, Issue #4 모두 코드에 이미 반영된 상태로 재확인 후 종결. 새 항목 3건 발견/수정.)
 
 ---
 
-## 🆕 신규 발견 (PR #44, 2026-04-27)
+## ✅ N1~N4 재검증 결과 (2026-07-02): 이미 해결됨
 
-자동/수동 점검 사이클(테스트 → 코드 검사 → 개선 → 커밋/푸시 반복)에서 새로 식별된 항목.
+이전에 open으로 표시됐던 N1~N4는 `grep -n`으로 재확인한 결과 모두 단일 정의만 남아있어
+**이미 해결된 상태**입니다 (PR #218 "stabilize SC2 bot test suite" 계열 커밋에서 정리된 것으로 보임).
+문서가 stale했던 것으로, 별도 작업 없이 닫습니다.
 
-| ID | 설명 | 우선순위 | 상태 |
-|----|------|---------|------|
-| N1 | `OpponentModeling.on_step` 중복 정의 (line 341 vs 765 — F811) | 🟠 HIGH | open — 동작 영향(상위 on_step이 미실행) 가능 |
-| N2 | `EconomyManager._prevent_resource_banking` / `_reduce_gas_workers` 재정의 (F811) | 🟡 MED | open |
-| N3 | `combat_manager._find_harass_target` 재정의 (line 2377 vs 4278) | 🟡 MED | open |
-| N4 | `production_resilience.build_terran_counters` 재정의 (1369 vs 1866) | 🟡 MED | open |
-| N5 | bare `except Exception:` 다수 (≈360+) — 이번 PR에서 12건 처리, 잔여 다수 | 🟢 LOW | partial |
-| N6 | F841 unused local variables (visuals/make_pptx 등) | 🟢 LOW | open (presentation 코드라 영향 작음) |
+| ID | 설명 | 재검증 결과 |
+|----|------|------|
+| N1 | `OpponentModeling.on_step` 중복 정의 | `opponent_modeling.py`에 `on_step` 정의 1건만 존재 — 해결됨 |
+| N2 | `EconomyManager._prevent_resource_banking` / `_reduce_gas_workers` 재정의 | 각 1건만 존재 — 해결됨 |
+| N3 | `combat_manager._find_harass_target` 재정의 | 1건만 존재 — 해결됨 |
+| N4 | `production_resilience.build_terran_counters` 재정의 | 1건만 존재 — 해결됨 |
+| N5 | bare `except Exception:` 다수 | 🟢 LOW, 잔여 다수 — 여전히 open (아래 참고 항목 참조) |
+| N6 | F841 unused local variables (visuals/make_pptx 등) | 🟢 LOW — 여전히 open, presentation 코드라 영향 작음 |
 
-검증 권장: PR 분리 (N1 단독 PR 권장 — 동작 변화 가능성).
+`flake8 wicked_zerg_challenger --select=F811,F821` 결과: 0건 (2026-07-02 기준).
+
+---
+
+## 🆕 이번 세션 발견 및 수정 (2026-07-02)
+
+| ID | 설명 | 상태 |
+|----|------|------|
+| S1 | CI: `ci.yml`의 "Python 린트 & 테스트" job이 `PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python` 없이 pytest 실행 → sc2 import 시 protobuf 에러로 14개 테스트 파일 collection 실패, main CI 전체(Docker 빌드 등) 차단 | ✅ Fixed |
+| S2 | `tests/test_combat_phase_fsm.py`가 동기 테스트 안에서 `asyncio.get_event_loop().run_until_complete()` 사용 → pytest-asyncio auto 모드가 이전 비동기 테스트 뒤에 루프를 정리해버려서 실행 순서에 따라 12개 테스트가 실패 | ✅ Fixed (asyncio.run()으로 교체) |
+| S3 | `test_production_resilience.py`, `test_opponent_modeling.py`의 테스트 클래스가 일반 `unittest.TestCase`인데 `async def test_*` 메서드를 갖고 있어서, 코루틴이 await되지 않고 버려짐 → 18개 테스트가 실제로는 전혀 실행되지 않은 채 항상 "통과"로 표시됨 | ✅ Fixed (`unittest.IsolatedAsyncioTestCase`로 전환, 실제 실행되자 `_get_counter_unit()` 시그니처가 바뀐 걸 반영 못한 stale 테스트 3건이 드러나 같이 수정) |
+| S4 | `sc2bot-ci.yml`의 "Lint & Type Check" job(black/isort 강제)이 main에서 장기간 실패 중 — 65개 파일이 black 미준수 (`wicked_zerg_challenger/strategy_manager.py`, `visuals/*` 등). 이번 PR과 무관한 기존 문제 | 🟡 open — 전체 리포 대상 대규모 리포맷이라 사용자 확인 후 별도 PR로 진행 예정 |
+
+검증: `pytest tests/` 502 passed/14 skipped/0 failed, `pytest wicked_zerg_challenger/tests/` 661 passed/0 failed (수정 전: root suite 20 failed).
 
 ---
 
@@ -67,9 +82,18 @@
 
 ---
 
-## 🟡 MEDIUM Priority Issues (still open)
+## ✅ Issue #3, #4 재검증 결과 (2026-07-02): 이미 해결됨
 
-### Issue #3: Transfusion 우선순위 개선 필요
+아래 두 항목도 코드에 이미 구현되어 있는 것을 확인했습니다 (문서가 stale했음).
+
+- **Issue #3 (Transfusion 우선순위)**: `wicked_zerg_challenger/economy/queen_transfusion_manager.py`에
+  `HEAL_PRIORITY` 딕셔너리와 우선순위 기반 타겟 선택 로직이 이미 구현되어 있음 (라인 26, 134, 166-169).
+- **Issue #4 (Resource Reservation Race Condition)**: `wicked_zerg_challenger/core/resource_manager.py`에
+  `asyncio.Lock()` 기반 `try_reserve()` / `release()`가 이미 구현되어 있음 (라인 36, 50, 62).
+
+원안(구현 제안 코드)은 과거 참고용으로 아래에 남겨둔다.
+
+### Issue #3 (원안, 참고용): Transfusion 우선순위 개선 필요
 
 **위치**: `queen_manager.py` 또는 `spell_unit_manager.py`
 
@@ -142,7 +166,7 @@ async def smart_transfusion(self, queen, damaged_units):
 
 ---
 
-### Issue #4: Resource Reservation Race Condition
+### Issue #4 (원안, 참고용): Resource Reservation Race Condition
 
 **위치**: `resource_manager.py` (추정)
 
@@ -359,32 +383,35 @@ if iteration % SECOND == 0:
 
 ---
 
-## 📊 이슈 우선순위 요약 (open만)
+## 📊 이슈 우선순위 요약 (open만, 2026-07-02 재검증)
 
 | 우선순위 | 이슈 | 영향도 | 난이도 |
 |---------|------|--------|--------|
-| 🟡 MEDIUM | #3 Transfusion 우선순위 | 중간 | 중간 |
-| 🟡 MEDIUM | #4 Resource Race Condition | 낮음 | 중간 |
-| 🟢 LOW | #5 코드 중복 제거 | 낮음 | 쉬움 |
-| 🟢 LOW | #6 매직 넘버 | 낮음 | 쉬움 |
+| 🟡 MED | N5 bare except 잔여 다수 | 낮음 | 중간 (범위 큼) |
+| 🟢 LOW | #5 코드 중복 제거 (position_utils) | 낮음 | 쉬움 |
+| 🟢 LOW | #6 매직 넘버 정리 | 낮음 | 쉬움 |
+| 🟢 LOW | N6 F841 unused vars (visuals) | 낮음 | 쉬움 |
+| 🟡 개방 | S4 전체 리포 black 리포맷 (65 파일) | CI 신호 차단 | 큼 (범위 확인 필요) |
 
-(Issue #1, #2 → ✅ Resolved 섹션 참조)
+(Issue #1~#4, N1~N4 → ✅ 모두 코드에 이미 반영 확인, 위 섹션 참조)
 
 ---
 
 ## 🎯 권장 수정 순서
 
 ### 1단계: 완료 (✅)
-~~1. Queen Inject 쿨다운 수정 (25 → 29)~~ — 코드 반영 완료, 본 문서 ✅ Resolved 섹션 참조
-~~2. 누락된 업그레이드 추가~~ — 코드 반영 완료, 본 문서 ✅ Resolved 섹션 참조
+~~1. Queen Inject 쿨다운 수정 (25 → 29)~~ — 완료
+~~2. 누락된 업그레이드 추가~~ — 완료
+~~3. Transfusion 우선순위 시스템~~ — 완료 (`queen_transfusion_manager.py`)
+~~4. Resource Reservation 동기화~~ — 완료 (`core/resource_manager.py`)
+~~5. N1~N4 중복 정의 제거~~ — 완료
+~~6. CI protobuf env, 테스트 이벤트루프 순서의존성, silently-skipped async 테스트 18건~~ — 완료 (2026-07-02, PR #234)
 
-### 2단계: 로직 개선 (30분, 미진행)
-3. Transfusion 우선순위 시스템 구현
-
-### 3단계: 구조 개선 (1시간, 미진행)
-4. Resource Reservation 동기화
-5. Position Utils 유틸리티 함수 분리
-6. Constants 정리
+### 2단계: 남은 작업 (미진행)
+7. bare except 잔여 정리 (N5)
+8. Position Utils 유틸리티 함수 분리 (#5)
+9. Constants 정리 (#6)
+10. 전체 리포 black/isort 리포맷 — 사용자 확인 후 진행 (S4, 범위가 SC2 봇 외 다른 서브시스템까지 포함)
 
 ---
 
@@ -409,10 +436,16 @@ if iteration % SECOND == 0:
 
 ## 📝 참고 사항
 
-### 현재 상태
+### 현재 상태 (2026-07-02 재검증)
 - ✅ **치명적 통합 문제**: 완전히 해결됨
-- ✅ **모든 단위 테스트**: 통과 (16/16)
+- ✅ **`tests/` (repo 루트)**: 502 passed / 14 skipped / 0 failed
+- ✅ **`wicked_zerg_challenger/tests/`**: 661 passed / 0 failed
 - ✅ **기본 기능**: 정상 작동
+- 🟡 **`sc2bot-ci.yml`의 Lint & Type Check job**: black 미준수 65개 파일로 인해 실패 중 (S4 참조, 이 PR과 무관한 기존 문제)
+
+주의: 이 문서(REMAINING_ISSUES.md)와 ROADMAP.md/PLAN-NIGHTLY.md의 "현재 상태" 수치가 실제 코드와 어긋나 있던
+사례가 여러 건 있었음 (N1~N4, Issue #3/#4가 실제로는 이미 해결된 상태인데 open으로 표시됨). 다음 점검 시
+반드시 `grep`/`pytest` 등으로 실측 후 문서를 갱신할 것 — 문서 상 "open"이라고 실제로 열려있다고 가정하지 말 것.
 
 ### 위의 이슈들은
 - 모두 **선택적 개선 사항**
@@ -421,5 +454,5 @@ if iteration % SECOND == 0:
 
 ---
 
-**검토 완료일**: 2026-01-29
-**상태**: 추가 개선 사항 문서화 완료
+**검토 완료일**: 2026-07-02
+**상태**: 자동 점검 사이클 — 실측 재검증 및 CI/테스트 버그 3건 수정 완료 (PR #234)
