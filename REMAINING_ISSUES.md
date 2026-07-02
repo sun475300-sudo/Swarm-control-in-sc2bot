@@ -4,24 +4,38 @@
 
 통합 문제 해결 후 발견된 추가 개선 사항들입니다.
 
-**Last refreshed:** 2026-04-27 (Issue #1, #2 → Resolved; Issue #6 partially resolved via Batch 3)
+**Last refreshed:** 2026-07-02 (자동 점검 사이클 — N1~N4 재검증 결과 이미 해결됨 확인; 신규 버그 3건 발견/수정)
 
 ---
 
-## 🆕 신규 발견 (PR #44, 2026-04-27)
+## ✅ 신규 발견 & 해결 (2026-07-02 자동 점검 사이클)
 
-자동/수동 점검 사이클(테스트 → 코드 검사 → 개선 → 커밋/푸시 반복)에서 새로 식별된 항목.
+`tests/` + `wicked_zerg_challenger/tests/` 전체 실행(1163 tests) 후 발견.
 
 | ID | 설명 | 우선순위 | 상태 |
 |----|------|---------|------|
-| N1 | `OpponentModeling.on_step` 중복 정의 (line 341 vs 765 — F811) | 🟠 HIGH | open — 동작 영향(상위 on_step이 미실행) 가능 |
-| N2 | `EconomyManager._prevent_resource_banking` / `_reduce_gas_workers` 재정의 (F811) | 🟡 MED | open |
-| N3 | `combat_manager._find_harass_target` 재정의 (line 2377 vs 4278) | 🟡 MED | open |
-| N4 | `production_resilience.build_terran_counters` 재정의 (1369 vs 1866) | 🟡 MED | open |
-| N5 | bare `except Exception:` 다수 (≈360+) — 이번 PR에서 12건 처리, 잔여 다수 | 🟢 LOW | partial |
-| N6 | F841 unused local variables (visuals/make_pptx 등) | 🟢 LOW | open (presentation 코드라 영향 작음) |
+| A1 | `tests/test_combat_phase_fsm.py`: `asyncio.get_event_loop().run_until_complete()` 사용으로 전체 스위트 실행 시 12개 테스트가 "no current event loop" 오류로 실패 (단독 실행 시엔 통과 — 테스트 격리 버그). `asyncio.run()`으로 교체하여 해결. | 🟠 HIGH | ✅ resolved |
+| A2 | `wicked_zerg_challenger/tests/test_production_resilience.py`, `test_opponent_modeling.py`: `unittest.TestCase`에 `async def test_*` 메서드를 정의 — 표준 `unittest.TestCase`는 async 테스트 본문을 실행(await)하지 않으므로 코루틴 객체가 생성만 되고 어서션이 **한 번도 실행되지 않은 채 항상 PASS** 처리되던 심각한 버그(총 12개 테스트 무효화, `test_production_resilience.py` 27개 + `test_opponent_modeling.py`(TestOpponentModeling 클래스) 다수). `unittest.IsolatedAsyncioTestCase`로 교체하여 실제 실행되도록 수정. | 🔴 CRITICAL | ✅ resolved |
+| A3 | A2를 고치자 실제로 숨어있던 버그 노출: `test_production_resilience.py`의 3개 counter-unit 테스트가 `_get_counter_unit(race_str)` 형태의 stale 시그니처로 호출 중이었음. 실제 구현은 `_get_counter_unit(enemy_units, has_roach_warren, has_hydra_den, has_spire)` (동기 함수, race 문자열 인자 없음). 테스트를 현재 시그니처에 맞게 재작성. | 🟠 HIGH | ✅ resolved |
 
-검증 권장: PR 분리 (N1 단독 PR 권장 — 동작 변화 가능성).
+리포지토리 전체에서 동일 버그 클래스(`unittest.TestCase` + `async def test_*`) 재스캔 완료 — 추가 발견 없음.
+
+---
+
+## ✅ N1~N4 재검증 결과 (2026-07-02)
+
+2026-04-27에 open으로 기록되었던 N1~N4는 이후 PR #218(`refactor: delete shadowed duplicate methods that silently disabled features` 등)에서 이미 해결된 것으로 코드 확인됨. 문서가 stale했음 — 별도 작업 없이 닫음.
+
+| ID | 설명 | 검증 결과 |
+|----|------|---------|
+| N1 | `OpponentModeling.on_step` 중복 정의 (F811) | `opponent_modeling.py`에 `on_step` 단일 정의만 존재 (line 341) — resolved |
+| N2 | `EconomyManager._prevent_resource_banking` / `_reduce_gas_workers` 재정의 | 각 메서드 단일 정의만 존재 — resolved |
+| N3 | `combat_manager._find_harass_target` 재정의 | 단일 정의만 존재 (line 4992) — resolved |
+| N4 | `production_resilience.build_terran_counters` 재정의 | 단일 정의만 존재 (line 1961) — resolved |
+| N5 | bare `except Exception:` 다수 | 잔여 다수, 점진적 개선 대상으로 유지 | 
+| N6 | F841 unused local variables (`wicked_zerg_challenger/visuals/*`) | flake8 재확인: 130건, 전량 presentation 코드 — 영향 작아 유지 |
+
+검증 명령: `flake8 wicked_zerg_challenger --select=F811,F821,F823,F822` → 0 hits.
 
 ---
 
