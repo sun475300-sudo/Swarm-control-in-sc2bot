@@ -117,6 +117,12 @@ jobs:
         env:
           DRY_RUN: "true"
           LOG_LEVEL: "DEBUG"
+          # official s2clientprotocol ships pb2 files generated with an old
+          # protoc; the fast C++ implementation rejects them under the
+          # modern protobuf runtime this requirements.txt resolves
+          # ("Descriptors cannot be created directly"). Pure-Python parsing
+          # sidesteps that version check.
+          PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION: "python"
 
   # ─────────────────────────────────────────────
   # SC2 봇 구문 검증 + 테스트
@@ -165,6 +171,8 @@ jobs:
       - name: pytest SC2 봇 테스트
         run: |
           pytest wicked_zerg_challenger/tests/ -v --tb=short
+        env:
+          PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION: "python"
         env:
           PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION: python
 
