@@ -5,12 +5,7 @@
 from typing import List, Optional
 
 import weaviate
-from weaviate.classes.config import (
-    Configure,
-    DataType,
-    Property,
-    VectorDistances,
-)
+from weaviate.classes.config import Configure, DataType, Property, VectorDistances
 from weaviate.classes.init import Auth
 from weaviate.classes.query import (
     Filter,

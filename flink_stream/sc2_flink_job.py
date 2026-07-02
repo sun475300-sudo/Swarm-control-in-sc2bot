@@ -9,10 +9,7 @@ from pyflink.cep import pattern as cep_pattern
 from pyflink.common import Row, Time, Types, WatermarkStrategy
 from pyflink.common.serialization import SimpleStringSchema
 from pyflink.datastream import StreamExecutionEnvironment, TimeCharacteristic
-from pyflink.datastream.connectors.kafka import (
-    FlinkKafkaConsumer,
-    FlinkKafkaProducer,
-)
+from pyflink.datastream.connectors.kafka import FlinkKafkaConsumer, FlinkKafkaProducer
 from pyflink.datastream.functions import (
     FlatMapFunction,
     KeyedProcessFunction,
@@ -20,10 +17,7 @@ from pyflink.datastream.functions import (
     ProcessWindowFunction,
     ReduceFunction,
 )
-from pyflink.datastream.window import (
-    SlidingEventTimeWindows,
-    TumblingEventTimeWindows,
-)
+from pyflink.datastream.window import SlidingEventTimeWindows, TumblingEventTimeWindows
 
 # ============================================================
 # Environment Setup
