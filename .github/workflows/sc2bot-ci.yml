@@ -73,13 +73,22 @@ jobs:
           cache: pip
 
       - name: Install dependencies
-        run: pip install -r requirements.txt pytest pytest-cov pytest-asyncio
+        run: pip install -r requirements.txt pytest pytest-cov pytest-asyncio pytest-timeout
 
       - name: Run unit tests
         run: pytest tests/ --ignore=tests/integration -v --timeout=120 --cov=. --cov-report=xml --cov-report=term
+        env:
+          # official s2clientprotocol ships pb2 files generated with an old
+          # protoc; the fast C++ implementation rejects them under the
+          # modern protobuf runtime this requirements.txt resolves
+          # ("Descriptors cannot be created directly"). Pure-Python parsing
+          # sidesteps that version check.
+          PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION: "python"
 
       - name: Run integration tests
         run: pytest tests/integration -v --timeout=120
+        env:
+          PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION: "python"
 
       - name: Upload coverage
         uses: codecov/codecov-action@v4
