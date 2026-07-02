@@ -16,6 +16,7 @@ except ImportError:
         SPORECRAWLER = "SPORECRAWLER"
         SPIRE = "SPIRE"
 
+
 from utils.game_constants import GameFrequencies
 
 logger = logging.getLogger("BuildingManager")
@@ -110,9 +111,9 @@ class BuildingManager:
         tech_coordinator = getattr(self.bot, "tech_coordinator", None)
         if tech_coordinator and hasattr(tech_coordinator, "request_structure"):
             try:
-                if hasattr(tech_coordinator, "is_planned") and tech_coordinator.is_planned(
-                    structure_type
-                ):
+                if hasattr(
+                    tech_coordinator, "is_planned"
+                ) and tech_coordinator.is_planned(structure_type):
                     return False
                 return bool(
                     tech_coordinator.request_structure(
@@ -147,7 +148,9 @@ class BuildingManager:
                 return True
         return True
 
-    def pick_build_location(self, structure_type: Any, near: Optional[Any] = None) -> Any:
+    def pick_build_location(
+        self, structure_type: Any, near: Optional[Any] = None
+    ) -> Any:
         """Choose a coarse anchor for construction requests."""
         if near is not None:
             return getattr(near, "position", near)

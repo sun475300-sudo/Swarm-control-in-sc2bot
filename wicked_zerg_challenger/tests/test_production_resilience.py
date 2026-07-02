@@ -28,7 +28,7 @@ from sc2.ids.unit_typeid import UnitTypeId
 from sc2.position import Point2
 
 
-class TestProductionResilience(unittest.TestCase):
+class TestProductionResilience(unittest.IsolatedAsyncioTestCase):
     """Test suite for ProductionResilience"""
 
     def setUp(self):
@@ -115,15 +115,17 @@ class TestProductionResilience(unittest.TestCase):
 
     # ==================== Counter Unit Selection Tests ====================
 
-    async def test_get_counter_unit_terran_marine(self):
+    def test_get_counter_unit_terran_marine(self):
         """Test counter selection against Terran marines"""
         # Mock enemy composition with marines
         mock_marine = Mock()
         mock_marine.type_id = UnitTypeId.MARINE
-        self.bot.enemy_units = [mock_marine]
+        enemy_units = [mock_marine]
 
-        # Should recommend banelings against marines
-        result = await self.resilience._get_counter_unit("Terran")
+        # Should recommend roaches against light infantry (has_roach_warren=True)
+        result = self.resilience._get_counter_unit(
+            enemy_units, has_roach_warren=True, has_hydra_den=True, has_spire=True
+        )
 
         # Result could be BANELING, ROACH, or MUTALISK (all valid counters)
         valid_counters = [
@@ -134,9 +136,15 @@ class TestProductionResilience(unittest.TestCase):
         ]
         self.assertIn(result, valid_counters)
 
-    async def test_get_counter_unit_protoss(self):
+    def test_get_counter_unit_protoss(self):
         """Test counter selection against Protoss"""
-        result = await self.resilience._get_counter_unit("Protoss")
+        mock_stalker = Mock()
+        mock_stalker.type_id = UnitTypeId.STALKER
+        enemy_units = [mock_stalker]
+
+        result = self.resilience._get_counter_unit(
+            enemy_units, has_roach_warren=True, has_hydra_den=True, has_spire=True
+        )
 
         # Common Protoss counters
         valid_counters = [
@@ -147,9 +155,15 @@ class TestProductionResilience(unittest.TestCase):
         ]
         self.assertIn(result, valid_counters)
 
-    async def test_get_counter_unit_zerg(self):
+    def test_get_counter_unit_zerg(self):
         """Test counter selection against Zerg"""
-        result = await self.resilience._get_counter_unit("Zerg")
+        mock_roach = Mock()
+        mock_roach.type_id = UnitTypeId.ROACH
+        enemy_units = [mock_roach]
+
+        result = self.resilience._get_counter_unit(
+            enemy_units, has_roach_warren=True, has_hydra_den=True, has_spire=True
+        )
 
         # Common Zerg counters
         valid_counters = [
@@ -362,36 +376,5 @@ class TestProductionResilience(unittest.TestCase):
         self.assertTrue(self.resilience._should_reserve_third_base_minerals())
 
 
-# Run async tests
 if __name__ == "__main__":
-    # Patch asyncio for unittest
-    import asyncio
-
-    # Get all test methods
-    loader = unittest.TestLoader()
-    suite = loader.loadTestsFromTestCase(TestProductionResilience)
-
-    # Run tests
-    runner = unittest.TextTestRunner(verbosity=2)
-
-    # Wrap async tests
-    for test_group in suite:
-        for test in test_group:
-            test_method_name = test._testMethodName
-            test_method = getattr(test, test_method_name)
-
-            # Check if it's async
-            if asyncio.iscoroutinefunction(test_method):
-                # Wrap it
-                def make_sync_wrapper(async_func):
-                    def sync_wrapper(self):
-                        loop = asyncio.get_event_loop()
-                        return loop.run_until_complete(async_func(self))
-
-                    return sync_wrapper
-
-                setattr(
-                    test.__class__, test_method_name, make_sync_wrapper(test_method)
-                )
-
-    runner.run(suite)
+    unittest.main()
