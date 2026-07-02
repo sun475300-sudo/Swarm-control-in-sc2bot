@@ -13,6 +13,11 @@ from unittest.mock import MagicMock
 
 import pytest
 
+# sc2 라이브러리(s2clientprotocol)의 protobuf 생성 코드가 최신 protobuf 런타임과
+# 충돌해 "Descriptors cannot be created directly" 에러를 내는 것을 방지한다.
+# (wicked_zerg_challenger/tests/conftest.py와 동일한 우회 설정)
+os.environ.setdefault("PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION", "python")
+
 # 프로젝트 루트를 sys.path에 추가
 PROJECT_ROOT = Path(__file__).parent.parent
 if str(PROJECT_ROOT) not in sys.path:
