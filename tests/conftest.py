@@ -13,6 +13,13 @@ from unittest.mock import MagicMock
 
 import pytest
 
+# s2clientprotocol (a burnysc2/python-sc2 dependency) ships _pb2.py files
+# generated with an older protoc. The upb-backed protobuf>=4 runtime pulled
+# in by other deps (google-generativeai, mcp) raises "TypeError: Descriptors
+# cannot be created directly" when those files are imported. Force the
+# pure-Python protobuf implementation before any test module can import sc2.
+os.environ.setdefault("PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION", "python")
+
 # 프로젝트 루트를 sys.path에 추가
 PROJECT_ROOT = Path(__file__).parent.parent
 if str(PROJECT_ROOT) not in sys.path:
