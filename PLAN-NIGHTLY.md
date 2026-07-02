@@ -2,18 +2,35 @@
 
 > Owner: 선우 (sun475300@gmail.com)
 > Maintainer: nightly automation
-> Last refreshed: 2026-05-04
+> Last refreshed: 2026-07-02
 
 ---
 
-## Snapshot (current state)
+## Snapshot (current state, verified 2026-07-02)
 
-- Branch: `main`, last commit: queen transfusion + requirements-dev.txt session
+- Branch: `main`, working branch: `claude/optimistic-edison-mtv6ug` (PR #234)
 - Bot core: `wicked_zerg_challenger/` — 179+ Python files across 10+ subdirs.
 - `.gitattributes` enforces `* text=auto` ✅
-- CI: `sc2bot-ci.yml` runs black + isort + flake8 ✅ (all clean)
-- **Test suite: 468 pass / 15 skip / 0 fail** ✅ (was 398/20/0 two nights ago)
+- CI: `ci.yml` "SC2 봇 검증 & 테스트" job ✅ passing. `ci.yml` "Python 린트 & 테스트" job was
+  failing on every push to `main` due to a missing `PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python`
+  env var (fixed in PR #234). `sc2bot-ci.yml` "Lint & Type Check" job is still failing — 65 files
+  are not black-formatted repo-wide; this is a pre-existing issue, not caused by this session, and
+  is large enough in scope (spans non-bot subsystems too) that it needs a user decision before a
+  mass reformat PR.
+- **Test suite (verified by actually running pytest, not by reading old docs):**
+  `tests/` (repo root) 502 passed / 14 skipped / 0 failed. `wicked_zerg_challenger/tests/` 661
+  passed / 0 failed. Prior numbers in this doc (468/15/0) could not be reproduced as-is on a clean
+  checkout without first fixing 3 real bugs (see below) — treat historical counts here as
+  approximate, not authoritative.
+- Found and fixed this session: (1) CI protobuf env gap, (2) `asyncio.get_event_loop()` test-order
+  dependency in `test_combat_phase_fsm.py`, (3) 18 `async def test_*` methods on plain
+  `unittest.TestCase` in `test_production_resilience.py`/`test_opponent_modeling.py` that were
+  never actually awaited/executed (always reported "passed" without running). Fixing (3) surfaced
+  3 genuinely stale tests calling an old `_get_counter_unit()` signature, now updated to match.
 - Queen transfusion logic: 3 bugs fixed (`is_idle` guard removed, target dedup, per-queen cooldown) ✅
+- **Note for future nightly runs:** REMAINING_ISSUES.md previously listed several issues (N1-N4,
+  Issue #3, Issue #4) as "open" that were, on inspection, already fixed in code. Always verify
+  against the actual source/tests before trusting a doc's "open" status.
 
 ## Resolved this run (2026-05-03)
 
@@ -94,3 +111,13 @@ Run `E:\GitHub\Swarm-control-in-sc2bot\scripts\commit_nightly_2026-05-03.bat`:
 - **2026-05-01** — P1.1 scout cadence, P1.2 harassment, P1.3 expansion timing, P1.5 doc history. Commit blocked by index.lock.
 - **2026-05-02** — P0 scout import mismatch fixed. P1.4 deprecation shim. P2.1 FSM tests 23/23 pass.
 - **2026-05-03** — **Test suite cleared:** 90 failures → 0. Fixed pytest-asyncio, torch stubs (qmix/mappo), stale __init__ exports (mappo/comm_learning), gas threshold test, crypto skipif guards. Final: 398 pass / 20 skip / 0 fail.
+- **2026-07-02** — Re-verified everything against a clean checkout instead of trusting prior doc
+  claims. Confirmed N1-N4, Issue #3, Issue #4 in REMAINING_ISSUES.md were already fixed in code
+  (docs were stale). Found and fixed 3 real bugs: CI protobuf env gap blocking main CI, an
+  event-loop-order test failure in `test_combat_phase_fsm.py`, and 18 async test methods across two
+  files that were never actually being awaited/executed by plain `unittest.TestCase` (always
+  reported "passed" with zero real assertions run) — fixing that surfaced 3 stale
+  `_get_counter_unit()` calls using a removed signature, now updated. Also found `sc2bot-ci.yml`'s
+  Lint & Type Check job has been failing on `main` for a long time (65 files not black-formatted,
+  repo-wide, unrelated to this session) — flagged for user decision rather than doing a large
+  mechanical reformat unprompted. PR: #234.
