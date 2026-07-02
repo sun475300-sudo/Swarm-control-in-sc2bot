@@ -13,6 +13,11 @@
 - 전체 테스트 스위트 재실행: `tests/` 502 passed / 14 skipped, `wicked_zerg_challenger/tests/` 661 passed — **실패 0건**.
 - 발견된 실제 회귀 1건 수정: `tests/test_combat_phase_fsm.py`가 `asyncio.get_event_loop().run_until_complete(...)`를 사용해 최신 Python/pytest-asyncio 조합에서 `RuntimeError: There is no current event loop`로 12건 실패 — `asyncio.run(...)`으로 교체하여 해결.
 - 환경 문제 2건 수정(코드 변경 아님, 이 컨테이너의 pip 환경 이슈): `mpyq`/`burnysc2` 설치 실패(setuptools distutils 호환성) → setuptools/wheel 갱신 후 해결. `cryptography`의 `_cffi_backend` 누락 → `cffi` 설치로 해결.
+- PR #227 CI에서 `Lint & Type Check` 잡이 `black --check` 실패로 적발됨 — **레포 전체 66개 파일**이 현재 pinned black 26.3.1 포맷과 불일치(사전 존재하는 드리프트, 이번 PR과 무관). 이번 PR이 건드린 `tests/test_combat_phase_fsm.py`만 `black`/`isort` 적용해서 해당 파일은 클린하게 만들었고, 나머지 65개 파일은 범위 밖 — N7로 별도 추적.
+
+| ID | 설명 | 우선순위 | 상태 |
+|----|------|---------|------|
+| N7 | 레포 전체 black/isort 포맷 드리프트 (66개 파일, CI `Lint & Type Check` 잡 상시 실패 원인) | 🟡 MED | open — 대량 일괄 `black .` 실행 필요, 별도 PR 권장 (diff가 커서 리뷰 분리) |
 
 ## 🆕 신규 발견 (PR #44, 2026-04-27) — 재검증 결과
 
