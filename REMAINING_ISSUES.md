@@ -67,9 +67,17 @@
 
 ---
 
-## 🟡 MEDIUM Priority Issues (still open)
+## ✅ Issue #3: Transfusion 우선순위 — 이미 구현됨 (2026-07-03 재검증)
 
-### Issue #3: Transfusion 우선순위 개선 필요
+`queen_manager.py::_transfuse_injured_units` (line ~711)에 CreepyBot 스타일 우선순위 테이블
+(`TRANSFUSE_PRIORITY`: QUEEN > BROODLORD/VIPER > CORRUPTOR > SPINECRAWLER > OVERSEER > ULTRALISK
+> RAVAGER > ROACH > ... )과 치료 불가 유닛 제외(`UNHEALABLE_UNITS` = BANELING/BROODLING/LOCUSTMP)가
+이미 구현되어 있음. 아래 원래 이슈 설명은 문서가 stale했던 것으로, 코드 변경 불필요.
+
+<details>
+<summary>원래 이슈 설명 (참고용, 해결됨)</summary>
+
+### Issue #3: Transfusion 우선순위 개선 필요 (해결됨)
 
 **위치**: `queen_manager.py` 또는 `spell_unit_manager.py`
 
@@ -140,9 +148,20 @@ async def smart_transfusion(self, queen, damaged_units):
 
 **우선순위**: 🟡 MEDIUM (자원 효율성 개선)
 
+</details>
+
 ---
 
-### Issue #4: Resource Reservation Race Condition
+## ✅ Issue #4: Resource Reservation Race Condition — 이미 구현됨 (2026-07-03 재검증)
+
+`wicked_zerg_challenger/core/resource_manager.py::ResourceManager`에 `asyncio.Lock` +
+`try_reserve()` / `release()` / `release_partial()`이 이미 구현되어 있음 (원안보다 더 정교하게
+매니저별 예약 추적 포함). 아래는 원래 이슈 설명(참고용, 해결됨).
+
+<details>
+<summary>원래 이슈 설명 (참고용, 해결됨)</summary>
+
+### Issue #4: Resource Reservation Race Condition (해결됨)
 
 **위치**: `resource_manager.py` (추정)
 
@@ -215,13 +234,21 @@ else:
 
 **우선순위**: 🟡 MEDIUM (안정성 개선, 드물게 발생)
 
+</details>
+
 ---
 
 ## 🟢 LOW Priority Issues
 
-### Issue #5: 코드 중복 - Position 계산
+### 🟡 Issue #5: 코드 중복 - Position 계산 — 부분 해결 (2026-07-03 재검증)
 
-**위치**: 여러 파일에서 중복
+`wicked_zerg_challenger/utils/position_utils.py`가 이미 존재하고 `get_center_position` /
+`get_weighted_center`를 제공함. 남은 작업: `battle_preparation_system.py`가 여전히 인라인으로
+`center_x = sum(u.position.x for u in units) / len(units)` 패턴을 중복 구현 중 — 이 한 파일만
+`position_utils` 사용으로 교체하면 완전 해결. (grep: `center_x = sum(u.position.x` — 2026-07-03
+기준 이 파일 1건만 남음)
+
+**위치**: 여러 파일에서 중복 (원 설명, 참고용)
 
 **문제**:
 ```python

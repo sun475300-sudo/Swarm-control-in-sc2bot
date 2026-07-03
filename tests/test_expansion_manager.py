@@ -34,8 +34,11 @@ try:
     import os
     import sys
 
-    sys.path.insert(
-        0,
+    # append (not insert(0,...)): inserting a wicked_zerg_challenger subdir at
+    # the front of sys.path lets its sibling packages shadow top-level ones
+    # (e.g. local_training/scripts/ shadowing the repo-root scripts/ package)
+    # for the rest of the pytest session once imported.
+    sys.path.append(
         os.path.join(
             os.path.dirname(__file__),
             "..",
