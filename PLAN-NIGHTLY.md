@@ -2,20 +2,28 @@
 
 > Owner: 선우 (sun475300@gmail.com)
 > Maintainer: nightly automation
-> Last refreshed: 2026-05-04
+> Last refreshed: 2026-07-03
 
 ---
 
 ## Snapshot (current state)
 
-- Branch: `main`, last commit: queen transfusion + requirements-dev.txt session
+- Branch: `main` (working from `claude/optimistic-edison-h7igj2`), after PR #218 stabilization work.
 - Bot core: `wicked_zerg_challenger/` — 179+ Python files across 10+ subdirs.
 - `.gitattributes` enforces `* text=auto` ✅
 - CI: `sc2bot-ci.yml` runs black + isort + flake8 ✅ (all clean)
-- **Test suite: 468 pass / 15 skip / 0 fail** ✅ (was 398/20/0 two nights ago)
-- Queen transfusion logic: 3 bugs fixed (`is_idle` guard removed, target dedup, per-queen cooldown) ✅
+- **Test suite: 1166 pass / 14 skip / 0 fail** ✅ (`wicked_zerg_challenger/tests` 664 pass + root `tests/` 502 pass)
+- **`MASSIVE_FIX_PLAN.md` P0-1 through P0-8 verified in code** (see 2026-07-03 entry) — that doc is stale and its "not yet fixed" framing no longer applies; do not re-do this work, only re-verify if a regression is suspected.
 
-## Resolved this run (2026-05-03)
+## Resolved this run (2026-07-03)
+
+| Item | File(s) | Notes |
+|------|---------|-------|
+| 12 failing tests: `RuntimeError: There is no current event loop` | `tests/test_combat_phase_fsm.py` | Sync test helpers called `asyncio.get_event_loop().run_until_complete(...)`; under pytest-asyncio's auto mode there is no set loop left for the main thread between async tests, so this crashed on Python 3.11. Replaced all 5 call sites with `asyncio.run(...)`. Regression vs. the 2026-05-02 entry below, which had these at 23/23 passing — re-verify FSM tests after any pytest-asyncio upgrade. |
+| P2.4 RL agent save-experience guard | `tests/test_rl_agent_experience_save.py` (new) | Verified `RLAgent.save_experience_data()` already does atomic temp-file+rename saves; added 3 tests confirming (a) successful save leaves no `.tmp.npz`, (b) overwrite is atomic, (c) a simulated `np.savez_compressed` failure (disk full) leaves the original file untouched and no stray temp file. Marking P2.4 done below. |
+| Verified `MASSIVE_FIX_PLAN.md` P0-1..P0-8 | `blackboard.py`, `production_resilience.py`, `strategy_manager_v2.py`, `economy_manager.py`, `resource_manager.py` | Grepped for `FIX P0-N` markers and read the surrounding code for all 8 items (gas overflow, EMERGENCY timeout, min-drone floor during EMERGENCY, REMAX rebuild, 3rd-base forcing, supply-block threshold, gas-worker rebalancing, 1-base mineral overflow). All 8 are implemented — most already carry `# FIX P0-N` comments from a prior session. `MASSIVE_FIX_PLAN.md` predates that work and should be treated as historical, not a live backlog. |
+
+## Resolved 2026-05-03 (previous run, kept for history)
 
 | Item | File(s) | Notes |
 |------|---------|-------|
@@ -50,9 +58,9 @@
 | #    | Item                                            | Status | Notes |
 |------|-------------------------------------------------|--------|-------|
 | P2.1 | Force-accumulation FSM tests                    | ✅ Done | `tests/test_combat_phase_fsm.py` — 23 tests all passing. |
-| P2.2 | Benchmark runner                                | ❌ Open | Single command, N replays, APM/supply/win-rate report vs Hard. |
-| P2.3 | Build-order config externalisation              | ❌ Open | Move top-20 hardcoded values to `config/build_orders.yaml`. |
-| P2.4 | RL agent save-experience guard                  | ❌ Open | Unit test for save under disk-full / interrupted-rename. |
+| P2.2 | Benchmark runner                                | ❌ Open | Single command, N replays, APM/supply/win-rate report vs Hard. `scripts/performance_benchmark.py` and `benchmarks/bot_benchmark.py` exist but don't match this spec — needs consolidation. |
+| P2.3 | Build-order config externalisation              | ❌ Open | Move top-20 hardcoded values to `config/build_orders.yaml` (file does not exist yet). |
+| P2.4 | RL agent save-experience guard                  | ✅ Done | `tests/test_rl_agent_experience_save.py` — 3 tests confirming atomic save/overwrite/failure-safety. |
 | P2.5 | Type hints + docstring pass on core modules     | ❌ Open | `core/resource_manager.py`, `core/manager_factory.py`. |
 
 ## Long-term direction
@@ -94,3 +102,4 @@ Run `E:\GitHub\Swarm-control-in-sc2bot\scripts\commit_nightly_2026-05-03.bat`:
 - **2026-05-01** — P1.1 scout cadence, P1.2 harassment, P1.3 expansion timing, P1.5 doc history. Commit blocked by index.lock.
 - **2026-05-02** — P0 scout import mismatch fixed. P1.4 deprecation shim. P2.1 FSM tests 23/23 pass.
 - **2026-05-03** — **Test suite cleared:** 90 failures → 0. Fixed pytest-asyncio, torch stubs (qmix/mappo), stale __init__ exports (mappo/comm_learning), gas threshold test, crypto skipif guards. Final: 398 pass / 20 skip / 0 fail.
+- **2026-07-03** — Fresh full-suite run (`wicked_zerg_challenger/tests` + root `tests/`) found a real regression: 12 `test_combat_phase_fsm.py` tests crashing with `RuntimeError: no current event loop` (deprecated `asyncio.get_event_loop()` pattern). Fixed. Verified `MASSIVE_FIX_PLAN.md` P0-1..P0-8 are all already implemented in code (that doc is stale). Closed P2.4 with new atomic-save tests. Final: 1166 pass / 14 skip / 0 fail. Next open items: P2.2 (benchmark runner), P2.3 (`config/build_orders.yaml`), P2.5 (type hints on core/).

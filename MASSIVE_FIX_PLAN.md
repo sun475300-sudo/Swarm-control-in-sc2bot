@@ -1,5 +1,10 @@
 # WickedZergBot 대규모 수정 계획서
 
+> **STALE — 2026-07-03 검증 완료**: 아래 P0-1 ~ P0-8 항목은 모두 코드에 이미 구현되어 있음을
+> 확인함 (`blackboard.py`, `production_resilience.py`, `strategy_manager_v2.py`,
+> `economy_manager.py`, `resource_manager.py`에 `FIX P0-N` 주석 존재). 최신 상태는
+> `PLAN-NIGHTLY.md`를 참고할 것 — 이 문서는 히스토리 참고용으로만 유지.
+
 **기준 데이터**: 88게임 로그 분석 (17W/71L, 승률 19.3%)  
 **분석일**: 2026-05-10  
 **목표**: 승률 50%+ 달성 (Easy AI 기준 80%+)
