@@ -13,6 +13,10 @@ from unittest.mock import MagicMock
 
 import pytest
 
+# Fix protobuf compatibility with sc2 library (s2clientprotocol) — must be
+# set before anything imports google.protobuf / the sc2 package.
+os.environ.setdefault("PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION", "python")
+
 # 프로젝트 루트를 sys.path에 추가
 PROJECT_ROOT = Path(__file__).parent.parent
 if str(PROJECT_ROOT) not in sys.path:
