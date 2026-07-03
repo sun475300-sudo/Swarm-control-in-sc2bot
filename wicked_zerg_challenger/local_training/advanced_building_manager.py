@@ -80,6 +80,12 @@ class AdvancedBuildingManager:
         self.min_distance_from_townhall = 5.0  # 해처리에서 최소 거리
         self.worker_path_width = 2.0  # 일꾼 이동 경로 폭
 
+        # * 끼인 일꾼 감지: 마지막 위치 기록 (움직이지만 제자리인 경우 탐지용) *
+        self._worker_last_position: Dict[int, "Point2"] = {}
+        self._worker_stall_ticks: Dict[int, int] = {}
+        self.stuck_position_epsilon = 0.15  # 이 거리 이하 이동은 "제자리"로 간주
+        self.stuck_stall_threshold = 3  # 연속으로 이만큼 제자리면 끼인 것으로 간주
+
         # * 점막 체크 헬퍼 *
         if BuildingPlacementHelper:
             self.placement_helper = BuildingPlacementHelper(bot)
@@ -768,14 +774,33 @@ class AdvancedBuildingManager:
             return 0
 
         rescued = 0
+        live_tags = set()
         for worker in self.bot.workers:
+            live_tags.add(worker.tag)
             try:
                 # 1. Idle 상태인 경우
                 is_stuck = False
                 if hasattr(worker, "is_idle") and worker.is_idle:
                     is_stuck = True
 
-                # 2. 움직이지만 제자리인 경우 (TODO: 위치 기록 필요, 여기선 생략)
+                # 2. 움직이지만 제자리인 경우 (위치 기록으로 판정)
+                last_position = self._worker_last_position.get(worker.tag)
+                if last_position is not None:
+                    if (
+                        worker.position.distance_to(last_position)
+                        <= self.stuck_position_epsilon
+                    ):
+                        stall_ticks = self._worker_stall_ticks.get(worker.tag, 0) + 1
+                        self._worker_stall_ticks[worker.tag] = stall_ticks
+                        if (
+                            not is_stuck
+                            and not worker.is_idle
+                            and stall_ticks >= self.stuck_stall_threshold
+                        ):
+                            is_stuck = True
+                    else:
+                        self._worker_stall_ticks[worker.tag] = 0
+                self._worker_last_position[worker.tag] = worker.position
 
                 if is_stuck:
                     if hasattr(self.bot, "structures"):
@@ -800,7 +825,13 @@ class AdvancedBuildingManager:
                                 if self.bot.iteration % 100 == 0:
                                     logger.info(f"Saved stuck worker {worker.tag}")
                                 rescued += 1
+                                self._worker_stall_ticks[worker.tag] = 0
             except Exception:
                 continue
+
+        stale_tags = set(self._worker_last_position) - live_tags
+        for tag in stale_tags:
+            self._worker_last_position.pop(tag, None)
+            self._worker_stall_ticks.pop(tag, None)
 
         return rescued
