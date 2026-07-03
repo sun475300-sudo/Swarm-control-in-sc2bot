@@ -117,6 +117,10 @@ jobs:
         env:
           DRY_RUN: "true"
           LOG_LEVEL: "DEBUG"
+          # sc2-bot-test 잡과 동일: protobuf >=4.x + s2clientprotocol의 사전 생성된
+          # _pb2.py가 충돌해 "Descriptors cannot be created directly"로 collection이
+          # 실패하는 것을 방지 (순수 파이썬 파서 사용, 느리지만 CI 규모에서는 무해).
+          PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION: python
 
   # ─────────────────────────────────────────────
   # SC2 봇 구문 검증 + 테스트
