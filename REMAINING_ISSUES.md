@@ -4,24 +4,52 @@
 
 통합 문제 해결 후 발견된 추가 개선 사항들입니다.
 
-**Last refreshed:** 2026-04-27 (Issue #1, #2 → Resolved; Issue #6 partially resolved via Batch 3)
+**Last refreshed:** 2026-07-03 (CI 완전 복구 + 백로그 전수 재검증 — 아래 "🔁 2026-07-03 자동 점검 사이클" 참고)
 
 ---
 
-## 🆕 신규 발견 (PR #44, 2026-04-27)
+## 🔁 2026-07-03 자동 점검 사이클 (테스트 → 점검 → 개선 → 커밋/푸시 반복)
 
-자동/수동 점검 사이클(테스트 → 코드 검사 → 개선 → 커밋/푸시 반복)에서 새로 식별된 항목.
+### 이번 사이클에서 고친 것 (P0, CI 완전 복구)
 
-| ID | 설명 | 우선순위 | 상태 |
-|----|------|---------|------|
-| N1 | `OpponentModeling.on_step` 중복 정의 (line 341 vs 765 — F811) | 🟠 HIGH | open — 동작 영향(상위 on_step이 미실행) 가능 |
-| N2 | `EconomyManager._prevent_resource_banking` / `_reduce_gas_workers` 재정의 (F811) | 🟡 MED | open |
-| N3 | `combat_manager._find_harass_target` 재정의 (line 2377 vs 4278) | 🟡 MED | open |
-| N4 | `production_resilience.build_terran_counters` 재정의 (1369 vs 1866) | 🟡 MED | open |
-| N5 | bare `except Exception:` 다수 (≈360+) — 이번 PR에서 12건 처리, 잔여 다수 | 🟢 LOW | partial |
-| N6 | F841 unused local variables (visuals/make_pptx 등) | 🟢 LOW | open (presentation 코드라 영향 작음) |
+CI가 **2026-05-28부터 5주 이상 계속 빨간불**이었는데 아무도 알아채지 못하고 있었습니다. 원인은 4가지가 겹쳐 있었습니다:
 
-검증 권장: PR 분리 (N1 단독 PR 권장 — 동작 변화 가능성).
+1. `black --check .`가 66개 파일에서 실패 → Lint job 실패 → `needs: lint`인 Test Suite job이 매번 전체 스킵됨.
+2. `isort` import 순서 오류 19개 파일 (black 다음 블로킹 스텝).
+3. `sc2bot-ci.yml`의 Test Suite job이 `pytest tests/unit`을 실행하는데 `tests/unit` 디렉터리 자체가 없음 (테스트는 `tests/*.py` + `tests/integration/`에 있음) → lint를 통과해도 바로 에러.
+4. 루트 `tests/conftest.py`에 `PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python` 설정이 빠져 있어 `sc2` 패키지 임포트 시 `TypeError: Descriptors cannot be created directly` 로 테스트 수집 자체가 실패 (`wicked_zerg_challenger/tests/conftest.py`에는 이미 있었는데 루트에는 없었음).
+5. `tests/test_combat_phase_fsm.py`가 구식 `asyncio.get_event_loop().run_until_complete()` 패턴을 사용 — 스위트 안의 다른 비동기 테스트가 먼저 이벤트 루프를 닫아버리면 이후 이 파일의 12개 테스트가 실행 순서에 따라 flaky하게 실패 (단독 실행 시엔 통과해서 그동안 발견이 어려웠음). `asyncio.run()`으로 교체.
+6. CI의 `pytest tests/integration -v --timeout=120`에서 `pytest-timeout` 플러그인이 설치 안 돼 있어 `--timeout=120` 옵션 자체를 인식 못 함.
+
+**결과:** `sc2bot-ci.yml`, `ci.yml`(JARVIS CI/CD) 둘 다 그린. 유닛 테스트 **476 passed, 12 skipped, 0 failed**.
+
+### 문서(ROADMAP.md / PLAN-NIGHTLY.md / REMAINING_ISSUES.md) 신뢰도 점검 결과
+
+CI가 그렇게 오래 죽어 있었는데도 몰랐다는 것 자체가 "점검 없이는 상태를 모른다"는 신호라, 이번엔 계획 문서에 적힌 "미완료" 항목들을 실제 코드와 `grep`으로 하나씩 대조했습니다. **결과: 대부분 이미 구현되어 있었습니다.** 문서가 코드보다 훨씬 뒤처져 있었습니다.
+
+**이미 구현 확인됨 (문서에는 미완료/open으로 표시되어 있었음) → 백로그에서 제거:**
+
+- `REMAINING_ISSUES.md` Issue #3 (Transfusion 우선순위) — `economy/queen_transfusion_manager.py`에 `HEAL_PRIORITY` 딕셔너리 기반 스마트 수혈 완전 구현됨.
+- `REMAINING_ISSUES.md` Issue #4 (Resource Reservation Race Condition) — `core/resource_manager.py`에 `asyncio.Lock` + `try_reserve()` 구현됨.
+- N1-N4 (F811 중복 함수 정의) — `wicked_zerg_challenger/` 전체에 F811 0건 (flake8로 재확인). 이미 정리됨.
+- ROADMAP.md Sprint 1 (일꾼 괴롭힘 방어, 견제 유닛 복귀+킬카운트), Sprint 2 (오버시어 은폐 탐지 등 정찰 시스템), Sprint 3 (ThreatLevel 동적 드론/병력 밸런스, 매치업별 가스 타이밍, 라바 우선순위), Sprint 4 (러커 포지셔닝, 뮤탈 마이크로, 다방면 협공, 전투 프레임 스킵), Sprint 5 (올인 감지) — 전부 코드에 존재 확인.
+- ROADMAP.md Sprint 6 (RL 토글 `use_rl_micro`, 셀프플레이 파이프라인, 커리큘럼 Stage 3) — 전부 존재.
+- ROADMAP.md Sprint 7.1 (`BuildingManager` 분리) — 존재.
+- `PLAN-NIGHTLY.md` P2.2 (벤치마크 러너) — `run_mass_test.py`에 `--opponent/--difficulty/--games` + win_rate 계산까지 구현됨.
+- `PLAN-NIGHTLY.md` P2.5 (핵심 모듈 타입힌트) — `core/resource_manager.py`, `core/manager_factory.py` 둘 다 11개 메서드 중 10개에 반환 타입힌트 존재. 사실상 완료.
+
+### 진짜로 아직 열려 있는 항목 (검증 완료, 우선순위별 새 백로그)
+
+| 우선순위 | 항목 | 확인된 현재 상태 | 근거 |
+|---------|------|-----------------|------|
+| 🟠 P1 | 매직 넘버 → `GameConstants` 치환 (Issue #6 / Sprint 7.3) | 미완료 — `game_constants.py`는 있지만 `iteration % 22` 류 하드코딩이 combat 계열 파일에 **100건 이상** 잔존 | `grep -rn "iteration % 22\|iteration % 11" wicked_zerg_challenger` |
+| 🟠 P1 | `PLAN-NIGHTLY.md` P2.3 — 빌드오더 상수 `config/build_orders.yaml` 외부화 | 미착수 — 해당 yaml 파일 없음 | `find . -path "*/config/build_orders.yaml"` → 결과 없음 |
+| 🟡 P2 | Issue #5 — Position 계산 중복 제거 | 절반만 완료 — `utils/position_utils.py`(`get_center_position`)는 만들어졌지만 **어디서도 import되어 쓰이지 않음**. `battle_preparation_system.py` 등에는 여전히 인라인 중복 계산 존재 | `grep -rl "from .*position_utils import" wicked_zerg_challenger` → 0건 |
+| 🟡 P2 | `PLAN-NIGHTLY.md` P2.4 — RL 저장 가드 테스트 | 절반만 완료 — `rl_agent.py`의 `save_experience_data()`는 이미 임시파일+rename 방식의 atomic save를 구현했지만, 디스크 풀/중단된 rename 시나리오를 검증하는 전용 유닛 테스트가 없음 | `grep -rl "save_experience" wicked_zerg_challenger/tests tests` → 0건 |
+| 🟡 P2 | 핵심 전투 모듈 테스트 커버리지 낮음 | `combat_manager.py` 12%, `queen_manager.py` 8%, `upgrade_manager.py` 9%, `economy_manager.py` 29% — 실제 게임 로직에서 가장 중요한 파일들의 커버리지가 낮음 | CI coverage 리포트 (2026-07-03 Test Suite 런) |
+| 🟢 P2 | 문서 자체의 최신화 | `ROADMAP.md`/`PLAN-NIGHTLY.md`가 실제 코드 상태보다 몇 달 뒤처짐 (이번 조사에서 "미완료"로 적힌 대부분이 이미 구현되어 있었음). 다음 사이클이 이미 끝난 일을 또 조사하지 않도록 두 문서를 코드 상태에 맞춰 정리 필요 | 이번 grep 전수 검증 결과 |
+
+이 표가 이제 "다음에 뭘 할지"의 기준입니다. 다음 자동 점검 사이클은 P1 두 항목(매직넘버 정리, build_orders.yaml)부터 착수합니다.
 
 ---
 
