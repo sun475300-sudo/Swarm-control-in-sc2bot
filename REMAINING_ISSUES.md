@@ -4,7 +4,7 @@
 
 통합 문제 해결 후 발견된 추가 개선 사항들입니다.
 
-**Last refreshed:** 2026-04-27 (Issue #1, #2 → Resolved; Issue #6 partially resolved via Batch 3)
+**Last refreshed:** 2026-07-03 (N1-N4 재검증 완료 → Resolved; Issue #5 재검증 — 부분 미완료 확인)
 
 ---
 
@@ -14,14 +14,14 @@
 
 | ID | 설명 | 우선순위 | 상태 |
 |----|------|---------|------|
-| N1 | `OpponentModeling.on_step` 중복 정의 (line 341 vs 765 — F811) | 🟠 HIGH | open — 동작 영향(상위 on_step이 미실행) 가능 |
-| N2 | `EconomyManager._prevent_resource_banking` / `_reduce_gas_workers` 재정의 (F811) | 🟡 MED | open |
-| N3 | `combat_manager._find_harass_target` 재정의 (line 2377 vs 4278) | 🟡 MED | open |
-| N4 | `production_resilience.build_terran_counters` 재정의 (1369 vs 1866) | 🟡 MED | open |
-| N5 | bare `except Exception:` 다수 (≈360+) — 이번 PR에서 12건 처리, 잔여 다수 | 🟢 LOW | partial |
+| N1 | `OpponentModeling.on_step` 중복 정의 (line 341 vs 765 — F811) | 🟠 HIGH | ✅ resolved — 2026-07-03 재검증: `def on_step`이 파일당 1회만 존재 (커밋 `e648ae4`가 처리) |
+| N2 | `EconomyManager._prevent_resource_banking` / `_reduce_gas_workers` 재정의 (F811) | 🟡 MED | ✅ resolved — 2026-07-03 재검증: 각 메서드 1회만 존재 |
+| N3 | `combat_manager._find_harass_target` 재정의 (line 2377 vs 4278) | 🟡 MED | ✅ resolved — 2026-07-03 재검증: 1회만 존재 |
+| N4 | `production_resilience.build_terran_counters` 재정의 (1369 vs 1866) | 🟡 MED | ✅ resolved — 2026-07-03 재검증: 1회만 존재 |
+| N5 | bare `except Exception:` 다수 (≈360+) — 이번 PR에서 12건 처리, 잔여 다수 | 🟢 LOW | partial — 잔여 건수 재조사 필요 |
 | N6 | F841 unused local variables (visuals/make_pptx 등) | 🟢 LOW | open (presentation 코드라 영향 작음) |
 
-검증 권장: PR 분리 (N1 단독 PR 권장 — 동작 변화 가능성).
+2026-07-03 검증 방법: `flake8 --select=F811,F821 wicked_zerg_challenger/` (0건) + 각 메서드명 `grep -n "def <name>"`으로 정의 개수 확인.
 
 ---
 
@@ -293,6 +293,10 @@ center = get_center_position(army_units)
 ```
 
 **우선순위**: 🟢 LOW (코드 품질 개선)
+
+**2026-07-03 재검증**: `wicked_zerg_challenger/utils/position_utils.py`에 `get_center_position`/`get_weighted_center`가 이미 구현되어 있으나, **어느 파일에서도 import되지 않음** (`grep -rl "position_utils" wicked_zerg_challenger` → 0건). 동일 패턴(`sum(u.position.x for u in ...) / len(...)`)이 여전히 18개 파일 20+ 위치에 중복 존재:
+`combat_manager.py`(x3), `combat/rally_point.py` 미확인, `combat/expansion_defense.py`, `combat/base_defense.py`, `combat/combat_execution.py`, `combat/mutalisk_micro.py`, `combat/infestor_tactics.py`, `combat/micro_combat.py`(x2), `combat_phase_controller.py`, `advanced_micro_controller_v3.py`, `micro_controller.py`, `spell_unit_manager.py`, `optimum_defense_squad.py`, `queen_manager.py`, `battle_preparation_system.py`, `idle_unit_manager.py`.
+**주의**: 일부 호출부는 평균(centroid)이 아니라 합계(`x_sum`)만 구해 다른 공식에 쓰거나, 빈 리스트 가드 방식이 제각각이라 — 일괄 치환이 아니라 **콜사이트별 개별 검토 + 회귀 테스트 필요**. 리스크가 있어 이번 사이클에서는 스킵, 백로그 최우선 항목으로 기록.
 
 ---
 
