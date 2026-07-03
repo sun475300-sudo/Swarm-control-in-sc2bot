@@ -2,18 +2,27 @@
 
 > Owner: 선우 (sun475300@gmail.com)
 > Maintainer: nightly automation
-> Last refreshed: 2026-05-04
+> Last refreshed: 2026-07-03
 
 ---
 
 ## Snapshot (current state)
 
-- Branch: `main`, last commit: queen transfusion + requirements-dev.txt session
-- Bot core: `wicked_zerg_challenger/` — 179+ Python files across 10+ subdirs.
+- Branch: `claude/optimistic-edison-g2sgdp`, continuing the nightly test/fix/commit loop.
+- Bot core: `wicked_zerg_challenger/` — 184+ Python files across 10+ subdirs.
 - `.gitattributes` enforces `* text=auto` ✅
-- CI: `sc2bot-ci.yml` runs black + isort + flake8 ✅ (all clean)
-- **Test suite: 468 pass / 15 skip / 0 fail** ✅ (was 398/20/0 two nights ago)
+- CI: lint (flake8 E9/F63/F7/F82) clean ✅
+- **Test suite: 505 pass / 14 skip / 0 fail** ✅ (was 490 pass / 12 fail / 14 skip at session start)
 - Queen transfusion logic: 3 bugs fixed (`is_idle` guard removed, target dedup, per-queen cooldown) ✅
+
+## Resolved this run (2026-07-03)
+
+| Item | File(s) | Notes |
+|------|---------|-------|
+| `test_combat_phase_fsm.py` 12 failures | `tests/test_combat_phase_fsm.py` | Python 3.11 raises `RuntimeError: no current event loop` from `asyncio.get_event_loop()` when called outside a running loop/main thread context. Swapped all 5 call sites to `asyncio.run(...)`, which creates+closes its own loop per call. |
+| RL experience-save data-loss window (P2.4) | `wicked_zerg_challenger/local_training/rl_agent.py::save_experience_data` | Old code did `os.remove(existing)` then `os.rename(tmp, existing)` — if the rename step failed (disk full / interrupted), the previous experience file was already gone with nothing to replace it. Switched to `os.replace()` (atomic overwrite on POSIX + Windows) and added cleanup of the orphaned `.tmp.npz` on failure. Added `tests/test_rl_agent_save_experience.py` (3 tests: success path, rename-failure preserves prior file, temp-file cleanup on failure). Closes P2.4. |
+| `REMAINING_ISSUES.md` stale-open audit | `REMAINING_ISSUES.md` | Re-verified all "open" items (N1–N4, Issue #3–#6) against current code: all were already fixed in prior sessions but never marked resolved in the doc (F811 duplicates gone, `queen_transfusion_manager.py` has full priority system, `core/resource_manager.py` has the `asyncio.Lock`-based reservation, `utils/position_utils.py` exists). Doc updated to close them out — see that file for detail. |
+| CI: "Python 린트 & 테스트" pytest-collection failure | `.github/workflows/ci.yml` | Confirmed broken on `main` itself since ≥2026-06-25 (run 28167558300), not caused by this PR. `pip install -r requirements.txt` pulls `google-generativeai` → newer `protobuf` than `s2clientprotocol`'s pre-compiled `_pb2.py` files support → `TypeError: Descriptors cannot be created directly` aborts test collection entirely (0 tests run). Fixed by setting `PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python` on the pytest step (verified locally against the exact same requirements.txt install: 500 tests collect, 31/38 pass on the two explicitly-run suites). |
 
 ## Resolved this run (2026-05-03)
 
@@ -52,8 +61,9 @@
 | P2.1 | Force-accumulation FSM tests                    | ✅ Done | `tests/test_combat_phase_fsm.py` — 23 tests all passing. |
 | P2.2 | Benchmark runner                                | ❌ Open | Single command, N replays, APM/supply/win-rate report vs Hard. |
 | P2.3 | Build-order config externalisation              | ❌ Open | Move top-20 hardcoded values to `config/build_orders.yaml`. |
-| P2.4 | RL agent save-experience guard                  | ❌ Open | Unit test for save under disk-full / interrupted-rename. |
+| P2.4 | RL agent save-experience guard                  | ✅ Done | Fixed `os.remove()+os.rename()` data-loss window with atomic `os.replace()`; 3 regression tests in `tests/test_rl_agent_save_experience.py`. |
 | P2.5 | Type hints + docstring pass on core modules     | ❌ Open | `core/resource_manager.py`, `core/manager_factory.py`. |
+| P2.6 | Repo-wide `black --check` gate is red on `main` | ❌ Open | `sc2bot-ci.yml`'s "Lint & Type Check" job runs `black --check --diff .` from repo root; confirmed via local `black --check` against `origin/main` that **this already fails on `main` itself** (64+ files need reformatting, mostly unrelated to any single PR — accumulated drift). Not caused by PR #256; PR #256's own touched files are black-clean. Fixing this needs a dedicated, isolated "run black repo-wide" PR (large diff, no logic changes) — flagged here rather than bundled into unrelated feature/fix PRs so it doesn't block or bloat them. |
 
 ## Long-term direction
 
@@ -94,3 +104,4 @@ Run `E:\GitHub\Swarm-control-in-sc2bot\scripts\commit_nightly_2026-05-03.bat`:
 - **2026-05-01** — P1.1 scout cadence, P1.2 harassment, P1.3 expansion timing, P1.5 doc history. Commit blocked by index.lock.
 - **2026-05-02** — P0 scout import mismatch fixed. P1.4 deprecation shim. P2.1 FSM tests 23/23 pass.
 - **2026-05-03** — **Test suite cleared:** 90 failures → 0. Fixed pytest-asyncio, torch stubs (qmix/mappo), stale __init__ exports (mappo/comm_learning), gas threshold test, crypto skipif guards. Final: 398 pass / 20 skip / 0 fail.
+- **2026-07-03** — Resumed nightly loop after a gap. Fixed 12 `asyncio.get_event_loop()` failures in `test_combat_phase_fsm.py` (→ 505 pass / 14 skip / 0 fail). Closed P2.4 (RL experience-save atomic-rename data-loss bug + 3 regression tests). Audited `REMAINING_ISSUES.md`: N1–N4 and Issues #3–#6 were all already fixed in code but not marked resolved — doc corrected. Daily automation re-armed via cron (see below).

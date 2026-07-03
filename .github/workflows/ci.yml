@@ -117,6 +117,10 @@ jobs:
         env:
           DRY_RUN: "true"
           LOG_LEVEL: "DEBUG"
+          # requirements.txt의 google-generativeai가 s2clientprotocol의 사전 컴파일된
+          # _pb2.py보다 새 protobuf를 끌어와 "Descriptors cannot be created directly"로
+          # 테스트 수집이 통째로 실패하는 문제 회피 (순수 파이썬 protobuf 구현 강제).
+          PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION: "python"
 
   # ─────────────────────────────────────────────
   # SC2 봇 구문 검증 + 테스트
