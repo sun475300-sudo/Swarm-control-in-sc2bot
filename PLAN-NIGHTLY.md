@@ -62,6 +62,7 @@
 | P2.3 | Build-order config externalisation              | ❌ Open | Move top-20 hardcoded values to `config/build_orders.yaml`. |
 | P2.4 | RL agent save-experience guard                  | ✅ Done | Fixed `os.remove()+os.rename()` data-loss window with atomic `os.replace()`; 3 regression tests in `tests/test_rl_agent_save_experience.py`. |
 | P2.5 | Type hints + docstring pass on core modules     | ❌ Open | `core/resource_manager.py`, `core/manager_factory.py`. |
+| P2.6 | Repo-wide `black --check` gate is red on `main` | ❌ Open | `sc2bot-ci.yml`'s "Lint & Type Check" job runs `black --check --diff .` from repo root; confirmed via local `black --check` against `origin/main` that **this already fails on `main` itself** (64+ files need reformatting, mostly unrelated to any single PR — accumulated drift). Not caused by PR #256; PR #256's own touched files are black-clean. Fixing this needs a dedicated, isolated "run black repo-wide" PR (large diff, no logic changes) — flagged here rather than bundled into unrelated feature/fix PRs so it doesn't block or bloat them. |
 
 ## Long-term direction
 
