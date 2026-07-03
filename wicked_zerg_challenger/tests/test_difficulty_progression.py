@@ -13,15 +13,15 @@ Tests DifficultyProgression system:
 import os
 import sys
 import tempfile
+import types
 import unittest
 from io import StringIO
 
 # Add parent directory to path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from difficulty_progression import DifficultyProgression
-
-# Mock sc2.data imports
+# Mock sc2.data imports so difficulty_progression can be imported without
+# the real sc2 package installed.
 try:
     from sc2.data import Difficulty, Race
 except ImportError:
@@ -44,6 +44,16 @@ except ImportError:
         Terran = 1
         Protoss = 2
         Zerg = 3
+
+    sc2_module = types.ModuleType("sc2")
+    sc2_data_module = types.ModuleType("sc2.data")
+    sc2_data_module.Difficulty = Difficulty
+    sc2_data_module.Race = Race
+    sc2_module.data = sc2_data_module
+    sys.modules.setdefault("sc2", sc2_module)
+    sys.modules.setdefault("sc2.data", sc2_data_module)
+
+from difficulty_progression import DifficultyProgression
 
 
 class TestDifficultyProgressionBasics(unittest.TestCase):

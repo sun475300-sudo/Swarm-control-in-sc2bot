@@ -41,26 +41,24 @@ except ImportError:
     class BotAI:
         pass
 
-    class UnitTypeId:
-        DRONE = "DRONE"
-        OVERLORD = "OVERLORD"
-        SPAWNINGPOOL = "SPAWNINGPOOL"
-        HATCHERY = "HATCHERY"
-        EXTRACTOR = "EXTRACTOR"
-        ZERGLING = "ZERGLING"
-        QUEEN = "QUEEN"
-        BANELINGNEST = "BANELINGNEST"
-        ROACHWARREN = "ROACHWARREN"
-        LAIR = "LAIR"
-        HYDRALISKDEN = "HYDRALISKDEN"
-        ROACH = "ROACH"
-        HYDRALISK = "HYDRALISK"
+    class _EnumStubMeta(type):
+        """Any attribute access returns its own name (e.g. UnitTypeId.MARINE == "MARINE").
 
-    class AbilityId:
-        RESEARCH_ZERGLINGMETABOLICBOOST = "RESEARCH_ZERGLINGMETABOLICBOOST"
+        Mirrors the real sc2 IDs enough for tests/fallback code that only
+        compare/pass these values around without needing the real sc2 package.
+        """
 
-    class UpgradeId:
-        ZERGLINGMOVEMENTSPEED = "ZERGLINGMOVEMENTSPEED"
+        def __getattr__(cls, name):
+            return name
+
+    class UnitTypeId(metaclass=_EnumStubMeta):
+        pass
+
+    class AbilityId(metaclass=_EnumStubMeta):
+        pass
+
+    class UpgradeId(metaclass=_EnumStubMeta):
+        pass
 
     class Point2:
         pass
@@ -543,8 +541,10 @@ class BuildOrderSystem:
         return steps
 
     def _infer_zvt_action(self, unit_type: Any) -> str:
-        if isinstance(unit_type, str):
-            return "upgrade"
+        # Check known UnitTypeId values before the generic string fallback:
+        # the sc2-less stub represents every UnitTypeId as a plain string
+        # (e.g. UnitTypeId.LAIR == "LAIR"), which would otherwise be
+        # misclassified as "upgrade" by an early isinstance(str) check.
         if unit_type == getattr(UnitTypeId, "HATCHERY", None):
             return "expand"
         if unit_type == getattr(UnitTypeId, "LAIR", None):
@@ -559,6 +559,8 @@ class BuildOrderSystem:
         }
         if unit_type in train_types:
             return "train"
+        if isinstance(unit_type, str):
+            return "upgrade"
         return "build"
 
     def _parse_build_steps(self, steps_data: List[Dict]) -> List[BuildOrderStep]:
