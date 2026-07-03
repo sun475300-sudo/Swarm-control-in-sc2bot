@@ -101,6 +101,9 @@ class WickedZergBotProImpl(BotAI):
         self.scoring_system = None
         self.awareness_engine = None
 
+        # * Memory leak monitor (long-running / iterative training sessions) *
+        self.memory_monitor = None
+
         # * Feature 85: Build Order Timing Log *
         self._build_order_log: List[Dict[str, Any]] = []
         self._tracked_structure_tags: set = set()
@@ -404,6 +407,14 @@ class WickedZergBotProImpl(BotAI):
         except Exception as e:
             self.logger.warning(f"RealtimeAwarenessEngine not available: {e}")
 
+        try:
+            from utils.memory_monitor import MemoryMonitor
+
+            self.memory_monitor = MemoryMonitor()
+            self.logger.info("[*] MemoryMonitor initialized (leak detection)")
+        except Exception as e:
+            self.logger.warning(f"MemoryMonitor not available: {e}")
+
         self.logger.info(f"on_start complete. Enemy race: {self.opponent_race}")
 
     async def on_step(self, iteration: int):
@@ -489,6 +500,13 @@ class WickedZergBotProImpl(BotAI):
             except Exception:
                 pass
 
+        # * Memory leak monitor: 주기적 메모리 사용량/누수 체크 *
+        if self.memory_monitor:
+            try:
+                self.memory_monitor.check(iteration)
+            except Exception:
+                pass
+
         # Personality module is called in bot_step_integration.py; do not call here.
 
     async def on_end(self, game_result):
@@ -524,6 +542,13 @@ class WickedZergBotProImpl(BotAI):
                 self.logger.info(
                     f"[AWARENESS] Final: {self.awareness_engine.get_situation_summary()}"
                 )
+            except Exception:
+                pass
+
+        # * Memory leak monitor: tracemalloc 정리 *
+        if self.memory_monitor:
+            try:
+                self.memory_monitor.stop()
             except Exception:
                 pass
 
