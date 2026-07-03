@@ -117,6 +117,12 @@ jobs:
         env:
           DRY_RUN: "true"
           LOG_LEVEL: "DEBUG"
+          # requirements.txt pins the s2clientprotocol package, whose bundled
+          # _pb2.py files predate protobuf's upb backend and crash on import
+          # ("Descriptors cannot be created directly") unless the pure-Python
+          # implementation is forced — same workaround the sc2-bot-test job
+          # already uses below.
+          PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION: python
 
   # ─────────────────────────────────────────────
   # SC2 봇 구문 검증 + 테스트
