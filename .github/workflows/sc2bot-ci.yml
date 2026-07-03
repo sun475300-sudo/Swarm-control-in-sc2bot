@@ -59,10 +59,12 @@ jobs:
         run: bandit -r . -ll --exclude ./tests
 
   # ── Test ──────────────────────────────────────────────────────────────────
+  # Intentionally does NOT `need: lint` — this is a monorepo with ~900 Python
+  # files across many unrelated scaffold directories, and black/isort style
+  # drift anywhere in that sprawl must not block the bot's own test signal.
   test:
     name: Test Suite
     runs-on: ubuntu-latest
-    needs: lint
     steps:
       - uses: actions/checkout@v4
 
@@ -73,13 +75,12 @@ jobs:
           cache: pip
 
       - name: Install dependencies
-        run: pip install -r requirements.txt pytest pytest-cov pytest-asyncio
+        run: pip install -r requirements.txt pytest pytest-cov pytest-asyncio pytest-timeout
 
-      - name: Run unit tests
-        run: pytest tests/unit -v --cov=. --cov-report=xml --cov-report=term
-
-      - name: Run integration tests
-        run: pytest tests/integration -v --timeout=120
+      - name: Run tests
+        env:
+          PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION: python
+        run: pytest tests/ -v --timeout=120 --cov=. --cov-report=xml --cov-report=term
 
       - name: Upload coverage
         uses: codecov/codecov-action@v4
