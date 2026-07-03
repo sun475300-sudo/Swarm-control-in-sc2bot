@@ -13,6 +13,12 @@ from unittest.mock import MagicMock
 
 import pytest
 
+# burnysc2's bundled s2clientprotocol *_pb2.py files were generated with an
+# older protoc than the `protobuf` package installed in CI, which otherwise
+# raises `TypeError: Descriptors cannot be created directly` on import.
+# Must be set before sc2/s2clientprotocol is imported anywhere in this process.
+os.environ.setdefault("PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION", "python")
+
 # 프로젝트 루트를 sys.path에 추가
 PROJECT_ROOT = Path(__file__).parent.parent
 if str(PROJECT_ROOT) not in sys.path:
