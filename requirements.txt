@@ -1,13 +1,24 @@
 # ═══════════════════════════════════════════════
 # SC2 Bot Core
 # ═══════════════════════════════════════════════
+# burnysc2 pulls in its own protobuf stubs via the `pys2clientprotocol`
+# dependency (installed under the `s2clientprotocol` import name). Do NOT
+# also pin the standalone `s2clientprotocol` PyPI package here -- both
+# packages install files into the same `s2clientprotocol/` directory and
+# whichever installs last silently wins, which is exactly the kind of
+# nondeterministic breakage that produced "resolution-too-deep" CI failures.
 burnysc2>=5.0.0
 numpy>=1.20.0
 matplotlib>=3.3.0
 psutil>=5.8.0
-s2clientprotocol>=4.19.0.0
-sc2reader>=0.8.0
 pyyaml>=6.0
+
+# sc2reader (replay parsing, used only by the offline replay-analysis /
+# imitation-learning tooling, not by the bot or its test suite) depends on
+# `mpyq`, whose setup.py fails to build on modern setuptools
+# (AttributeError: install_layout). It is intentionally kept out of the
+# core requirements so a broken mpyq build can't block bot/test installs.
+# See requirements-replay.txt to opt in for replay tooling.
 
 # ═══════════════════════════════════════════════
 # Crypto Trading Service

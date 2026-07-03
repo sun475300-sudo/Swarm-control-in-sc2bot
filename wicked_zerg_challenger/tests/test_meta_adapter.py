@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import importlib.util
 import json
 import os
 import sys
@@ -9,7 +10,18 @@ from pathlib import Path
 os.environ["PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION"] = "python"
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..")))
 
-from scripts.meta_adapter import MetaAdapter
+# Load by explicit file path (not `from scripts.meta_adapter import ...`):
+# `wicked_zerg_challenger/local_training/scripts/` is also a real package named
+# `scripts`, so whichever one gets imported first wins the `scripts` name for
+# the whole test session depending on collection order.
+_repo_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+_spec = importlib.util.spec_from_file_location(
+    "meta_adapter_module", os.path.join(_repo_root, "scripts", "meta_adapter.py")
+)
+_meta_adapter_module = importlib.util.module_from_spec(_spec)
+sys.modules[_spec.name] = _meta_adapter_module  # dataclasses needs this registered
+_spec.loader.exec_module(_meta_adapter_module)
+MetaAdapter = _meta_adapter_module.MetaAdapter
 
 
 class TestMetaAdapter(unittest.TestCase):
@@ -22,7 +34,9 @@ class TestMetaAdapter(unittest.TestCase):
                 "vs_zerg": {"total": 3, "winrate": 66.0},
                 "weaknesses": {},
             }
-            Path(tmp, "analytics.json").write_text(json.dumps(analytics), encoding="utf-8")
+            Path(tmp, "analytics.json").write_text(
+                json.dumps(analytics), encoding="utf-8"
+            )
 
             adjustments = MetaAdapter(tmp).generate_strategy_adjustments()
 

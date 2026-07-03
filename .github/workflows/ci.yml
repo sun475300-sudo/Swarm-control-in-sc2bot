@@ -117,6 +117,11 @@ jobs:
         env:
           DRY_RUN: "true"
           LOG_LEVEL: "DEBUG"
+          # burnysc2's bundled protobuf stubs are compiled against a newer
+          # protobuf runtime than the upb-backed default parser accepts
+          # ("Descriptors cannot be created directly"); pure-Python parsing
+          # stays compatible across protobuf releases.
+          PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION: python
 
   # ─────────────────────────────────────────────
   # SC2 봇 구문 검증 + 테스트
@@ -319,7 +324,7 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
-          pip install sc2reader || true
+          pip install -r requirements-replay.txt || true
 
       - name: Replay 피드백 생성
         run: |

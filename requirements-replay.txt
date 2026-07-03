@@ -1,0 +1,9 @@
+# Optional: replay parsing / imitation-learning tooling.
+# Install with: pip install -r requirements.txt -r requirements-replay.txt
+#
+# sc2reader depends on `mpyq`, whose setup.py predates modern setuptools
+# and fails to build in current environments (AttributeError: install_layout,
+# did you mean 'install_platlib'). If that happens, try building it with an
+# older setuptools, e.g.:
+#   pip install "setuptools<70" && pip install --no-build-isolation mpyq
+sc2reader>=0.8.0

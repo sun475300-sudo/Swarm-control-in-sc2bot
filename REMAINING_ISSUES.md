@@ -4,24 +4,45 @@
 
 통합 문제 해결 후 발견된 추가 개선 사항들입니다.
 
-**Last refreshed:** 2026-04-27 (Issue #1, #2 → Resolved; Issue #6 partially resolved via Batch 3)
+**Last refreshed:** 2026-07-03 (N1-N4 중복 정의 확인 결과 이미 해소됨; CI 근본 원인 발견/수정)
 
 ---
 
-## 🆕 신규 발견 (PR #44, 2026-04-27)
+## ✅ N1-N4 재확인 결과 (2026-07-03) — 이미 해소됨
 
-자동/수동 점검 사이클(테스트 → 코드 검사 → 개선 → 커밋/푸시 반복)에서 새로 식별된 항목.
+이 문서의 2026-04-27자 N1-N4 항목(중복 `on_step`/`_find_harass_target`/`build_terran_counters` 정의 등,
+F811)은 `e648ae4 refactor: delete shadowed duplicate methods that silently disabled features` 커밋에서
+이미 제거된 것을 코드로 직접 확인했습니다 (각 메서드가 정확히 1곳에만 정의됨). N5(bare except), N6(F841)은
+잔여 개선 후보로 남겨둡니다.
 
-| ID | 설명 | 우선순위 | 상태 |
-|----|------|---------|------|
-| N1 | `OpponentModeling.on_step` 중복 정의 (line 341 vs 765 — F811) | 🟠 HIGH | open — 동작 영향(상위 on_step이 미실행) 가능 |
-| N2 | `EconomyManager._prevent_resource_banking` / `_reduce_gas_workers` 재정의 (F811) | 🟡 MED | open |
-| N3 | `combat_manager._find_harass_target` 재정의 (line 2377 vs 4278) | 🟡 MED | open |
-| N4 | `production_resilience.build_terran_counters` 재정의 (1369 vs 1866) | 🟡 MED | open |
-| N5 | bare `except Exception:` 다수 (≈360+) — 이번 PR에서 12건 처리, 잔여 다수 | 🟢 LOW | partial |
-| N6 | F841 unused local variables (visuals/make_pptx 등) | 🟢 LOW | open (presentation 코드라 영향 작음) |
+---
 
-검증 권장: PR 분리 (N1 단독 PR 권장 — 동작 변화 가능성).
+## 🆕 2026-07-03 점검: CI를 몇 주째 막고 있던 근본 원인 3가지 발견/수정
+
+`tests/`(423개) + `wicked_zerg_challenger/tests/`(58개 파일) 전체를 실제로 CI와 동일한 방식(두 디렉터리를
+한 번에, `pip install -r requirements.txt`로 새로 설치)으로 돌려본 결과, 코드 로직 문제가 아니라
+**의존성 설치 충돌**이 대부분의 실패 원인이었습니다.
+
+| ID | 설명 | 심각도 | 상태 |
+|----|------|--------|------|
+| D1 | `requirements.txt`가 `s2clientprotocol`을 직접 pin하는데, `burnysc2`가 의존하는 `pys2clientprotocol`도 **동일한 `s2clientprotocol/` import 경로**에 파일을 설치함 → 설치 순서에 따라 무작위로 깨짐 (`UnitTypeId`가 속성 없는 빈 스텁으로 대체되는 등 조용한 오동작 유발) | 🔴 HIGH | ✅ FIXED — `requirements.txt`에서 직접 pin 제거, `burnysc2`가 끌어오는 `pys2clientprotocol` 하나만 사용 |
+| D2 | `sc2reader`(→ `mpyq`)가 requirements.txt에 있어서 `pip install -r requirements.txt`가 항상 `mpyq` 빌드를 시도 → 최신 setuptools에서 `AttributeError: install_layout` 로 빌드 실패, 전체 설치가 막힘. replay 분석/모방학습에만 쓰이고 봇 코어/테스트에는 불필요 | 🔴 HIGH | ✅ FIXED — `requirements-replay.txt`로 분리, 코어 설치에서 제외 |
+| D3 | `tests/test_combat_phase_fsm.py`가 `asyncio.get_event_loop().run_until_complete(...)` 사용 → Python 3.11+ 에서 이전 테스트가 루프를 닫고 나면 `RuntimeError: no current event loop` — 12개 테스트가 실행 순서에 따라 실패 | 🟠 MED (실제 버그, 코드 아님·테스트만) | ✅ FIXED — `asyncio.run(...)`으로 교체 |
+| D4 | `wicked_zerg_challenger/tests/test_ladder_tracker.py`/`test_meta_adapter.py`가 `from scripts.xxx import ...`로 리포 루트의 `scripts/` 패키지를 참조하는데, `wicked_zerg_challenger/local_training/scripts/`도 동일한 이름의 실제 패키지라서 다른 테스트가 먼저 그쪽을 import하면 이름이 충돌 (`ModuleNotFoundError`) | 🟡 MED | ✅ FIXED — `importlib.util.spec_from_file_location`으로 파일 경로 직접 로드 |
+| D5 | `sc2bot-ci.yml`의 lint job이 `pip install flake8 mypy black isort bandit`로 버전 고정 없이 설치 → `requirements-dev.txt`의 `black==26.3.1` pin이 무시되고, black이 새 버전을 낼 때마다 무관한 코드까지 재포맷 요구로 lint가 깨짐 | 🟠 MED | ✅ FIXED — `requirements-dev.txt` 사용하도록 변경 |
+| D6 | `sc2bot-ci.yml`의 test job이 존재하지 않는 `tests/unit`을 대상으로 pytest 실행 (실제 테스트는 `tests/`, `wicked_zerg_challenger/tests/`에 위치) → 테스트가 항상 0개 수집·에러 | 🔴 HIGH | ✅ FIXED — 실제 경로로 수정 |
+| D7 | `sc2bot-ci.yml` integration job이 `pytest-timeout` 미설치 상태로 `--timeout=120` 전달 → `unrecognized arguments` 에러 | 🟡 MED | ✅ FIXED — `requirements-dev.txt` 설치로 `pytest-timeout` 포함 |
+
+**검증**: 위 수정 반영 후 `tests/` + `wicked_zerg_challenger/tests/` 전체 **1163 passed, 14 skipped, 0 failed, 0 error**
+(신선한 venv에서 `pip install -r requirements.txt`부터 재현 확인). `black --check .` / `isort --check-only .` /
+`flake8 --select=E9,F63,F7,F82` 모두 clean.
+
+**⚠️ 중요 — 다음 세션 참고**: 이 저장소에는 위와 완전히 동일한 문제(asyncio.get_event_loop, protobuf 충돌,
+잘못된 CI 테스트 경로)를 각각 독립적으로 "발견"하고 고친 **draft PR이 100개 이상** 열려 있음(`#150`~`#250`,
+전부 `claude/optimistic-edison-*` / `claude/cool-edison-*` 브랜치). 원인은 매번 새 세션이 병합되지 않은
+`main`에서 새로 시작해 같은 버그를 다시 발견하기 때문. 새 점검 세션은 **먼저 열린 PR 목록을 확인**해서
+이미 진단된 문제를 또 처음부터 재발견하지 말고, 가장 완성도 높은 PR을 머지하고 중복 PR을 정리하는 것을
+사용자에게 제안할 것.
 
 ---
 
