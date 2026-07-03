@@ -37,13 +37,19 @@ except ImportError:
     class BotAI:
         pass
 
-    class UnitTypeId:
+    class _EnumStubMeta(type):
+        """Any attribute access returns its own name, e.g. UnitTypeId.MARINE == "MARINE"."""
+
+        def __getattr__(cls, name):
+            return name
+
+    class UnitTypeId(metaclass=_EnumStubMeta):
         pass
 
-    class AbilityId:
+    class AbilityId(metaclass=_EnumStubMeta):
         pass
 
-    class UpgradeId:
+    class UpgradeId(metaclass=_EnumStubMeta):
         pass
 
     class Point2:
