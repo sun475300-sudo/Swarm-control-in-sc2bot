@@ -115,6 +115,7 @@ jobs:
           pytest tests/ -v --tb=short
         env:
           DRY_RUN: "true"
+          PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION: "python"
           LOG_LEVEL: "DEBUG"
 
   # ─────────────────────────────────────────────
