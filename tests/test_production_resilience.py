@@ -38,12 +38,14 @@ try:
     sys.path.insert(
         0, os.path.join(os.path.dirname(__file__), "..", "wicked_zerg_challenger")
     )
-    sys.path.insert(
-        0,
-        os.path.join(
-            os.path.dirname(__file__), "..", "wicked_zerg_challenger", "local_training"
-        ),
-    )
+    # NOTE: do not also add .../wicked_zerg_challenger/local_training to
+    # sys.path here. It is unnecessary (production_resilience.py's own
+    # "from local_training.production import ..." already resolves via the
+    # wicked_zerg_challenger entry above), and adding it directly exposes
+    # local_training/scripts/ as a top-level "scripts" package, which
+    # permanently shadows the repo-root scripts/ package for the rest of the
+    # pytest session (regular packages beat namespace packages regardless of
+    # sys.path order) and breaks any later test importing "scripts.*".
     from local_training.production_resilience import ProductionResilience
 except ImportError:
     pytest.skip("ProductionResilience not available", allow_module_level=True)
