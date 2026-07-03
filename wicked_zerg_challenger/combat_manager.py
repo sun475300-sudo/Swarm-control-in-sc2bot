@@ -86,6 +86,14 @@ except ImportError:
     _FormationManager = None
     _FORMATION_MANAGER_AVAILABLE = False
 
+try:
+    from wicked_zerg_challenger.rust_accel import (
+        nearest_point_index,
+        points_to_xy_tuples,
+    )
+except ImportError:
+    from rust_accel import nearest_point_index, points_to_xy_tuples
+
 
 class CombatManager:
     """
@@ -3176,17 +3184,24 @@ class CombatManager:
                     continue
 
     async def _retreat_to_closest_base(self, units):
-        """* Phase 15: 가장 가까운 기지로 후퇴 *"""
+        """* Phase 15: 가장 가까운 기지로 후퇴 (Phase P1.4: Rust 가속 최근접 탐색) *"""
         if not units:
             return
         if not hasattr(self.bot, "townhalls") or not self.bot.townhalls.exists:
             await self._retreat_to_base(units)
             return
 
+        townhalls = list(self.bot.townhalls)
+        base_points = points_to_xy_tuples(th.position for th in townhalls)
+
         for unit in units:
             try:
-                closest_th = self.bot.townhalls.closest_to(unit.position)
-                self.bot.do(unit.move(closest_th.position))
+                idx = nearest_point_index(
+                    (unit.position.x, unit.position.y), base_points
+                )
+                if idx is None:
+                    continue
+                self.bot.do(unit.move(townhalls[idx].position))
             except (AttributeError, TypeError):
                 continue
 
