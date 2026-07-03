@@ -117,6 +117,11 @@ jobs:
         env:
           DRY_RUN: "true"
           LOG_LEVEL: "DEBUG"
+          # burnysc2's bundled protobuf stubs are compiled against a newer
+          # protobuf runtime than the upb-backed default parser accepts
+          # ("Descriptors cannot be created directly"); pure-Python parsing
+          # stays compatible across protobuf releases.
+          PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION: python
 
   # ─────────────────────────────────────────────
   # SC2 봇 구문 검증 + 테스트
