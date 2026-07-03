@@ -14,14 +14,15 @@
 
 | ID | 설명 | 우선순위 | 상태 |
 |----|------|---------|------|
-| N1 | `OpponentModeling.on_step` 중복 정의 (line 341 vs 765 — F811) | 🟠 HIGH | open — 동작 영향(상위 on_step이 미실행) 가능 |
-| N2 | `EconomyManager._prevent_resource_banking` / `_reduce_gas_workers` 재정의 (F811) | 🟡 MED | open |
-| N3 | `combat_manager._find_harass_target` 재정의 (line 2377 vs 4278) | 🟡 MED | open |
-| N4 | `production_resilience.build_terran_counters` 재정의 (1369 vs 1866) | 🟡 MED | open |
+| N1 | `OpponentModeling.on_step` 중복 정의 (line 341 vs 765 — F811) | 🟠 HIGH | ✅ resolved — 중복 제거 확인 (2026-07-03 재점검, `on_step` 단일 정의만 존재) |
+| N2 | `EconomyManager._prevent_resource_banking` / `_reduce_gas_workers` 재정의 (F811) | 🟡 MED | ✅ resolved — 재점검 결과 각각 단일 정의만 존재 |
+| N3 | `combat_manager._find_harass_target` 재정의 (line 2377 vs 4278) | 🟡 MED | ✅ resolved — 단일 정의만 존재 |
+| N4 | `production_resilience.build_terran_counters` 재정의 (1369 vs 1866) | 🟡 MED | ✅ resolved — 단일 정의만 존재 |
 | N5 | bare `except Exception:` 다수 (≈360+) — 이번 PR에서 12건 처리, 잔여 다수 | 🟢 LOW | partial |
 | N6 | F841 unused local variables (visuals/make_pptx 등) | 🟢 LOW | open (presentation 코드라 영향 작음) |
 
-검증 권장: PR 분리 (N1 단독 PR 권장 — 동작 변화 가능성).
+`flake8 --select=F811,F821,F822` 전체 재실행 (2026-07-03): `wicked_zerg_challenger/` 0건.
+N1~N4는 이후 커밋에서 이미 정리된 것으로 확인되어 재검증 완료 처리.
 
 ---
 
@@ -67,13 +68,15 @@
 
 ---
 
-## 🟡 MEDIUM Priority Issues (still open)
+## 🟡 MEDIUM Priority Issues
 
-### Issue #3: Transfusion 우선순위 개선 필요
+### ✅ Issue #3: Transfusion 우선순위 — 구현 완료 (재점검 2026-07-03)
 
-**위치**: `queen_manager.py` 또는 `spell_unit_manager.py`
+`wicked_zerg_challenger/economy/queen_transfusion_manager.py`에 `HEAL_PRIORITY`
+테이블과 우선순위 정렬 로직이 이미 구현되어 있음 (`test_queen_transfusion_manager.py`로
+회귀 테스트 커버). 아래는 최초 제안 당시의 참고 스니펫으로 보존.
 
-**현재 문제**:
+**당시 문제(해결됨)**:
 - Transfusion 로직이 단순함
 - 고가 유닛(울트라, 브루드로드) 우선순위 없음
 - 군단 숙주, 맹독충 등 치료 불가 유닛에 낭비 가능성
@@ -142,11 +145,17 @@ async def smart_transfusion(self, queen, damaged_units):
 
 ---
 
-### Issue #4: Resource Reservation Race Condition
+### 🟡 Issue #4: Resource Reservation Race Condition — 부분 구현 (재점검 2026-07-03)
 
-**위치**: `resource_manager.py` (추정)
+**위치**: `wicked_zerg_challenger/core/resource_manager.py` (구현 완료)
 
-**문제**:
+`ResourceManager.try_reserve` / `release`는 `asyncio.Lock` 기반으로 이미 구현되어
+`test_resource_manager.py` (동시성 테스트 포함, 10건 통과)로 커버됨.
+현재 실사용 연동처: `defense_coordinator.py`, `economy_manager.py`.
+**미연동**: `upgrade_manager.py`, `building_manager` 계열 — 이 경로들은 여전히
+`self.bot.minerals >= N` 직접 비교 방식이라 경쟁 조건 위험이 남아있음.
+
+**원래 문제(부분 해결)**:
 - 여러 매니저가 동시에 자원 예약 시도
 - 경쟁 조건(race condition) 발생 가능
 - 자원 이중 예약 위험
@@ -359,32 +368,31 @@ if iteration % SECOND == 0:
 
 ---
 
-## 📊 이슈 우선순위 요약 (open만)
+## 📊 이슈 우선순위 요약 (재점검 2026-07-03)
 
-| 우선순위 | 이슈 | 영향도 | 난이도 |
-|---------|------|--------|--------|
-| 🟡 MEDIUM | #3 Transfusion 우선순위 | 중간 | 중간 |
-| 🟡 MEDIUM | #4 Resource Race Condition | 낮음 | 중간 |
-| 🟢 LOW | #5 코드 중복 제거 | 낮음 | 쉬움 |
-| 🟢 LOW | #6 매직 넘버 | 낮음 | 쉬움 |
+| 우선순위 | 이슈 | 상태 | 비고 |
+|---------|------|------|------|
+| 🟡 MEDIUM | #3 Transfusion 우선순위 | ✅ resolved | `queen_transfusion_manager.py` |
+| 🟡 MEDIUM | #4 Resource Race Condition | 🟡 partial | `defense_coordinator`/`economy_manager`만 연동, `upgrade_manager` 등 미연동 |
+| 🟢 LOW | #5 코드 중복 제거 (Position Utils) | ✅ resolved | `utils/position_utils.py` 존재 |
+| 🟢 LOW | #6 매직 넘버 | 🟡 partial | `utils/game_constants.py` 존재하나 전체 매니저 전환은 미완 (ROADMAP Sprint 7.3) |
 
 (Issue #1, #2 → ✅ Resolved 섹션 참조)
 
 ---
 
-## 🎯 권장 수정 순서
+## 🎯 권장 수정 순서 (2026-07-03 갱신)
 
-### 1단계: 완료 (✅)
-~~1. Queen Inject 쿨다운 수정 (25 → 29)~~ — 코드 반영 완료, 본 문서 ✅ Resolved 섹션 참조
-~~2. 누락된 업그레이드 추가~~ — 코드 반영 완료, 본 문서 ✅ Resolved 섹션 참조
+### 완료 (✅)
+- Queen Inject 쿨다운 수정 (25 → 29)
+- 누락된 업그레이드 추가 (Adrenal Glands, Grooved Spines)
+- Transfusion 우선순위 시스템 (Issue #3)
+- Position Utils 유틸리티 (Issue #5)
+- N1~N4 중복 정의 (F811) 전량 해소
 
-### 2단계: 로직 개선 (30분, 미진행)
-3. Transfusion 우선순위 시스템 구현
-
-### 3단계: 구조 개선 (1시간, 미진행)
-4. Resource Reservation 동기화
-5. Position Utils 유틸리티 함수 분리
-6. Constants 정리
+### 남은 작업
+1. Issue #4: `upgrade_manager.py` / building 계열에 `resource_manager.try_reserve` 연동
+2. Issue #6: `GameFrequencies`/`GameConstants`로 하드코딩 매직넘버 전환 (ROADMAP Sprint 7.3, 대규모 — 파일 단위로 쪼개서 진행 권장)
 
 ---
 
