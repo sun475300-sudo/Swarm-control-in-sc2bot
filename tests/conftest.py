@@ -13,6 +13,12 @@ from unittest.mock import MagicMock
 
 import pytest
 
+# sc2 (s2clientprotocol) 라이브러리와 protobuf 호환성 문제 해결.
+# 일부 환경에서 protobuf의 upb(C++) 백엔드가 s2clientprotocol의 사전 생성된
+# _pb2.py와 충돌해 "Descriptors cannot be created directly" TypeError가 발생한다.
+# 반드시 sc2/s2clientprotocol이 임포트되기 전(conftest 로드 시점)에 설정해야 한다.
+os.environ.setdefault("PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION", "python")
+
 # 프로젝트 루트를 sys.path에 추가
 PROJECT_ROOT = Path(__file__).parent.parent
 if str(PROJECT_ROOT) not in sys.path:

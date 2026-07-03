@@ -1,15 +1,15 @@
 # Phase 606: MAPPO - Multi-Agent PPO for SC2 Unit Coordination
 try:
     from .sc2_mappo_agent import (
-        MAPPOConfig,
-        SC2MAPPOAgent,
         CentralizedCriticNumpy,
         CentralizedCriticTorch,
         DecentralizedActorNumpy,
         DecentralizedActorTorch,
-        MultiAgentRolloutBuffer,
         ELOLeague,
+        MAPPOConfig,
+        MultiAgentRolloutBuffer,
         PBTManager,
+        SC2MAPPOAgent,
     )
 except ImportError:
     MAPPOConfig = None
