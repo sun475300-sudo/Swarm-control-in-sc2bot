@@ -301,7 +301,9 @@ class RLAgent:
                 obs = np.concatenate(
                     [
                         obs,
-                        np.zeros(self.micro_observation_dim - len(obs), dtype=np.float32),
+                        np.zeros(
+                            self.micro_observation_dim - len(obs), dtype=np.float32
+                        ),
                     ]
                 )
             obs = obs[: self.micro_observation_dim]
@@ -333,7 +335,9 @@ class RLAgent:
     def _average_unit_value(units, attr: str) -> float:
         if not units:
             return 0.0
-        return float(np.mean([float(getattr(unit, attr, 0.0) or 0.0) for unit in units]))
+        return float(
+            np.mean([float(getattr(unit, attr, 0.0) or 0.0) for unit in units])
+        )
 
     @staticmethod
     def _fraction(units, attr: str) -> float:
@@ -655,10 +659,11 @@ class RLAgent:
             temp_actual = temp_base + ".npz"
 
             # 원자적으로 이름 변경 (Atomic Rename)
-            # Windows에서는 기존 파일이 있으면 rename이 실패할 수 있으므로 삭제 후 변경
-            if os.path.exists(path_str):
-                os.remove(path_str)
-            os.rename(temp_actual, path_str)
+            # os.replace()는 POSIX/Windows 모두에서 대상이 이미 존재해도 원자적으로
+            # 교체한다 (os.rename()과 달리 별도의 remove()가 필요 없음). 기존 remove
+            # + rename 방식은 그 사이에 프로세스가 죽으면 기존 데이터가 사라지고
+            # 새 데이터도 저장되지 않는 손실 구간이 있었다.
+            os.replace(temp_actual, path_str)
 
             logger.info(
                 f"[OK] Experience saved atomically: {len(self.states)} states, {len(self.rewards)} rewards"
