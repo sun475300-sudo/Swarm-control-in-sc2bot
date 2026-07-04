@@ -14,7 +14,7 @@ def test_api():
     }
     print(f"Testing connectivity to {url}...")
     try:
-        response = requests.get(url, headers=headers, params=params, verify=False, timeout=30)
+        response = requests.get(url, headers=headers, params=params, timeout=30)
         print(f"Status Code: {response.status_code}")
         print(f"Headers: {response.headers}")
         print(f"Content Sample: {response.text[:200]}")

@@ -10,7 +10,7 @@ def scrape_ids():
     }
     
     try:
-        response = requests.get(url, headers=headers, verify=False, timeout=30)
+        response = requests.get(url, headers=headers, timeout=30)
         if response.status_code == 200:
             # Regex to find replay links: <a href="/replays/123456/">
             pattern = r'href="/replays/(\d+)/"'

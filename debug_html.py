@@ -8,7 +8,7 @@ def test_html():
     }
     print(f"Fetching HTML from {url}...")
     try:
-        response = requests.get(url, headers=headers, verify=False, timeout=30)
+        response = requests.get(url, headers=headers, timeout=30)
         print(f"Status Code: {response.status_code}")
         if response.status_code == 200:
              print("Success! HTML Content Sample:")

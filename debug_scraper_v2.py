@@ -9,7 +9,7 @@ def fetch_and_save(url, filename):
     }
     print(f"Fetching {url}...")
     try:
-        response = requests.get(url, headers=headers, verify=False, timeout=30)
+        response = requests.get(url, headers=headers, timeout=30)
         print(f"Status: {response.status_code}")
         
         # Save with explicit encoding

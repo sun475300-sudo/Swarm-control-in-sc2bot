@@ -10,7 +10,7 @@ def test_direct_dl():
     }
     print(f"Testing direct download: {url}")
     try:
-        response = requests.get(url, headers=headers, verify=False, allow_redirects=False, timeout=30)
+        response = requests.get(url, headers=headers, allow_redirects=False, timeout=30)
         print(f"Status: {response.status_code}")
         print(f"Headers: {response.headers}")
         

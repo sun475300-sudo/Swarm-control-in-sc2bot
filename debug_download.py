@@ -11,7 +11,7 @@ def test_download(rid):
     
     try:
         s = requests.Session()
-        resp = s.get(detail_url, headers=headers, verify=False)
+        resp = s.get(detail_url, headers=headers)
         
         with open("dump_detail.html", "w", encoding="utf-8") as f:
             f.write(resp.text)
@@ -41,7 +41,7 @@ def test_download(rid):
             target_url = "https://lotv.spawningtool.com" + all_downloads[0]
             print(f"Attempting download from: {target_url}")
             
-            resp_dl = s.get(target_url, headers=headers, verify=False, stream=True)
+            resp_dl = s.get(target_url, headers=headers, stream=True)
             print(f"DL Status: {resp_dl.status_code}")
             print(f"DL Headers: {resp_dl.headers}")
             
