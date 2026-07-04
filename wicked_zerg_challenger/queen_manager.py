@@ -889,7 +889,8 @@ class QueenManager:
                             await result
                         self.last_transfuse_time[queen.tag] = current_time
                         break  # One transfuse per queen per cycle
-                    except Exception:
+                    except Exception as e:
+                        logger.warning(f"[QueenManager] Building transfuse failed: {e}")
                         continue
 
     async def _spread_creep(self, creep_queens, iteration: int) -> None:

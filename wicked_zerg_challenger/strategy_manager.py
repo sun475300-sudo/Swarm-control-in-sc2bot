@@ -1293,8 +1293,11 @@ class StrategyManager:
                     requester="StrategyManager",
                 )
                 return
-            except Exception:
-                pass
+            except Exception as e:
+                self.logger.warning(
+                    f"[StrategyManager] building_manager.request_defensive_building failed "
+                    f"(spine={spine}, spore={spore}): {e}"
+                )
 
         # BuildingCoordination이 있으면 요청 등록
         building_coord = getattr(self.bot, "building_coord", None)
@@ -1310,8 +1313,12 @@ class StrategyManager:
                     building_coord.request_building(
                         UnitTypeId.SPORECRAWLER, "StrategyManager"
                     )
-            except Exception:
-                pass  # Fallback to flag-based system
+            except Exception as e:
+                self.logger.warning(
+                    f"[StrategyManager] building_coord.request_building failed "
+                    f"(spine={spine}, spore={spore}): {e}"
+                )
+                # Fallback to flag-based system (self.emergency_spine_requested / emergency_spore_requested)
 
     def _request_spire_via_coordinator(self, game_time: float) -> None:
         """
