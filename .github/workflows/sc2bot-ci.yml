@@ -27,6 +27,8 @@ jobs:
         python-version: ["3.10", "3.11", "3.12"]
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v5
@@ -37,11 +39,24 @@ jobs:
       - name: Install lint dependencies
         run: pip install flake8 mypy black isort bandit
 
-      - name: Run black (format check)
-        run: black --check --diff .
+      - name: Determine changed Python files
+        id: changed
+        run: |
+          git fetch origin ${{ github.event.repository.default_branch }} --depth=1 2>/dev/null || true
+          base="origin/${{ github.event.repository.default_branch }}"
+          files=$(git diff --name-only --diff-filter=ACMR "$base...HEAD" -- '*.py' | tr '\n' ' ')
+          echo "files=$files" >> "$GITHUB_OUTPUT"
 
-      - name: Run isort (import order)
-        run: isort --check-only --diff .
+      # main carries a pre-existing black/isort backlog (see MASTER_TODO_SC2.md S3.2)
+      # that predates this scoping change; whole-repo formatting is tracked as a
+      # separate follow-up so it doesn't block every unrelated PR in the meantime.
+      - name: Run black (format check, changed files only)
+        if: steps.changed.outputs.files != ''
+        run: black --check --diff ${{ steps.changed.outputs.files }}
+
+      - name: Run isort (import order, changed files only)
+        if: steps.changed.outputs.files != ''
+        run: isort --check-only --diff ${{ steps.changed.outputs.files }}
 
       - name: Run flake8 (full — non-blocking, informational)
         continue-on-error: true
