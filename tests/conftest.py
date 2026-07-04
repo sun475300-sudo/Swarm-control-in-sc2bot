@@ -5,6 +5,13 @@ pytest 공통 fixtures (#171)
 """
 
 import os
+
+# s2clientprotocol이 번들한 _pb2.py는 구형 protoc으로 생성되어 있어,
+# google-generativeai가 끌어오는 최신 protobuf(C++/upb) 런타임과 충돌하며
+# "Descriptors cannot be created directly" 에러를 낸다. sc2가 import되기 전에
+# 순수 파이썬 구현으로 강제 전환해 두 의존성을 동시에 만족시킨다.
+os.environ.setdefault("PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION", "python")
+
 import shutil
 import sys
 import tempfile
