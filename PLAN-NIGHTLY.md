@@ -2,18 +2,31 @@
 
 > Owner: 선우 (sun475300@gmail.com)
 > Maintainer: nightly automation
-> Last refreshed: 2026-05-04
+> Last refreshed: 2026-07-04
 
 ---
 
 ## Snapshot (current state)
 
-- Branch: `main`, last commit: queen transfusion + requirements-dev.txt session
+- Branch: `claude/optimistic-edison-j9ca9w` (off `main`)
 - Bot core: `wicked_zerg_challenger/` — 179+ Python files across 10+ subdirs.
 - `.gitattributes` enforces `* text=auto` ✅
-- CI: `sc2bot-ci.yml` runs black + isort + flake8 ✅ (all clean)
-- **Test suite: 468 pass / 15 skip / 0 fail** ✅ (was 398/20/0 two nights ago)
+- CI: `sc2bot-ci.yml` lint gate (`black --check` + `isort --check-only`) was
+  **failing repo-wide** (66 files / 19 files respectively), which meant the
+  `test` job (`needs: lint`) never ran in CI. Fixed this run — see below.
+- **Test suite (this run): `tests/` 502 pass / 14 skip / 0 fail,
+  `wicked_zerg_challenger/tests/` 661 pass / 0 fail** — 1163 passing total,
+  0 failures after fixes (was 12 failing in `tests/test_combat_phase_fsm.py`
+  before this run).
 - Queen transfusion logic: 3 bugs fixed (`is_idle` guard removed, target dedup, per-queen cooldown) ✅
+
+## Resolved this run (2026-07-04)
+
+| Item | File(s) | Notes |
+|------|---------|-------|
+| 12 FSM tests failing: `RuntimeError: no current event loop` | `tests/test_combat_phase_fsm.py` | Tests used the deprecated `asyncio.get_event_loop().run_until_complete(...)` pattern, which raises under Python 3.11 when no loop has been set on the thread. Replaced all 5 call sites with `asyncio.run(...)`. |
+| `sc2bot-ci.yml` "Test Suite" job unrunnable | `.github/workflows/sc2bot-ci.yml` | `pytest tests/unit` pointed at a directory that has never existed (real tests live directly under `tests/` + `tests/integration/`) — every run of this step failed. Also missing `pytest-timeout` broke `--timeout=120` on the integration step, and the missing `PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python` env (already set in the sibling `ci.yml`) caused a protobuf-descriptor `TypeError` during collection once real deps (`google-generativeai`/`mcp`) are on the path together with `s2clientprotocol`. Fixed all three; verified locally in a clean venv reproducing the CI install step (476 passed / 12 skipped / 0 errors). |
+| Lint gate blocking `test` job | repo-wide (66 files black, 19 files isort) | `black --check .` / `isort --check-only .` are non-`continue-on-error` in `sc2bot-ci.yml`, and `test: needs: lint` — so the real test suite has not been exercised by this workflow while formatting drifted. Ran `black .` + `isort .` repo-wide (formatting only, no logic changes — reverified full suite passes after: 502+661 passed). |
 
 ## Resolved this run (2026-05-03)
 
@@ -94,3 +107,4 @@ Run `E:\GitHub\Swarm-control-in-sc2bot\scripts\commit_nightly_2026-05-03.bat`:
 - **2026-05-01** — P1.1 scout cadence, P1.2 harassment, P1.3 expansion timing, P1.5 doc history. Commit blocked by index.lock.
 - **2026-05-02** — P0 scout import mismatch fixed. P1.4 deprecation shim. P2.1 FSM tests 23/23 pass.
 - **2026-05-03** — **Test suite cleared:** 90 failures → 0. Fixed pytest-asyncio, torch stubs (qmix/mappo), stale __init__ exports (mappo/comm_learning), gas threshold test, crypto skipif guards. Final: 398 pass / 20 skip / 0 fail.
+- **2026-07-04** — Fixed 12 `test_combat_phase_fsm.py` failures (`asyncio.get_event_loop` deprecation). Found and fixed `sc2bot-ci.yml` "Test Suite" job being unrunnable for likely a long time (`tests/unit` never existed, missing `pytest-timeout`, missing `PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION` env). Found and fixed the lint gate (`black`/`isort`) failing repo-wide, which was blocking that same test job via `needs: lint` — ran a repo-wide formatting pass (no logic changes). Full suite reverified green after all fixes: 1163 passed / 14 skipped / 0 failed.
