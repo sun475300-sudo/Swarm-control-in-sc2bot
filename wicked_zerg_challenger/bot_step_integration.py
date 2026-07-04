@@ -2135,6 +2135,14 @@ class BotStepIntegrator:
                         )
                         if game_time >= 180 and base_count >= 3:
                             await self.bot.advanced_building_manager.build_defense_buildings_optimally()
+
+                    # 끼인 일꾼 구출 - 매 2초마다
+                    if iteration % 44 == 0:
+                        rescued = (
+                            await self.bot.advanced_building_manager.rescue_stuck_workers()
+                        )
+                        if rescued and iteration % 100 == 0:
+                            self.logger.info(f"[WORKER RESCUE] Rescued: {rescued}")
                 except Exception as e:
                     success = False
                     if iteration % 50 == 0:
