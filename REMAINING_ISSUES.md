@@ -4,24 +4,22 @@
 
 통합 문제 해결 후 발견된 추가 개선 사항들입니다.
 
-**Last refreshed:** 2026-04-27 (Issue #1, #2 → Resolved; Issue #6 partially resolved via Batch 3)
+**Last refreshed:** 2026-07-04 (자동 점검 세션 — N1~N4 해결 확인, Issue #3/#5 해결 확인)
 
 ---
 
-## 🆕 신규 발견 (PR #44, 2026-04-27)
+## 🆕 신규 발견 (PR #44, 2026-04-27) — 2026-07-04 재검증
 
 자동/수동 점검 사이클(테스트 → 코드 검사 → 개선 → 커밋/푸시 반복)에서 새로 식별된 항목.
 
 | ID | 설명 | 우선순위 | 상태 |
 |----|------|---------|------|
-| N1 | `OpponentModeling.on_step` 중복 정의 (line 341 vs 765 — F811) | 🟠 HIGH | open — 동작 영향(상위 on_step이 미실행) 가능 |
-| N2 | `EconomyManager._prevent_resource_banking` / `_reduce_gas_workers` 재정의 (F811) | 🟡 MED | open |
-| N3 | `combat_manager._find_harass_target` 재정의 (line 2377 vs 4278) | 🟡 MED | open |
-| N4 | `production_resilience.build_terran_counters` 재정의 (1369 vs 1866) | 🟡 MED | open |
-| N5 | bare `except Exception:` 다수 (≈360+) — 이번 PR에서 12건 처리, 잔여 다수 | 🟢 LOW | partial |
-| N6 | F841 unused local variables (visuals/make_pptx 등) | 🟢 LOW | open (presentation 코드라 영향 작음) |
-
-검증 권장: PR 분리 (N1 단독 PR 권장 — 동작 변화 가능성).
+| N1 | `OpponentModeling.on_step` 중복 정의 (line 341 vs 765 — F811) | 🟠 HIGH | ✅ Resolved — commit `e648ae4` (2026-06-01)에서 제거. `pyflakes` 재검증: F811 0건 |
+| N2 | `EconomyManager._prevent_resource_banking` / `_reduce_gas_workers` 재정의 (F811) | 🟡 MED | ✅ Resolved — 위와 동일 커밋에서 정리 |
+| N3 | `combat_manager._find_harass_target` 재정의 (line 2377 vs 4278) | 🟡 MED | ✅ Resolved — 위와 동일 커밋에서 정리 |
+| N4 | `production_resilience.build_terran_counters` 재정의 (1369 vs 1866) | 🟡 MED | ✅ Resolved — 위와 동일 커밋에서 정리 |
+| N5 | bare `except Exception:` 다수 (≈360+) | 🟢 LOW | open — 2026-07-04 기준 `wicked_zerg_challenger/`에 468건 잔존, 점진적 개선 필요 |
+| N6 | F841 unused local variables (visuals/make_pptx 등) | 🟢 LOW | open — 125건 잔존 (presentation 코드라 영향 작음) |
 
 ---
 
@@ -67,16 +65,20 @@
 
 ---
 
-## 🟡 MEDIUM Priority Issues (still open)
+## ✅ Issue #3: Transfusion 우선순위 — Resolved (확인일: 2026-07-04)
 
-### Issue #3: Transfusion 우선순위 개선 필요
+**위치**: `wicked_zerg_challenger/queen_manager.py:711` `_transfuse_injured_units()`
 
-**위치**: `queen_manager.py` 또는 `spell_unit_manager.py`
+이 문서에 있던 개선 제안(`HEAL_PRIORITY`/`CANNOT_HEAL`)과 동일한 목적의 로직이 이미
+`TRANSFUSE_PRIORITY`/`UNHEALABLE_UNITS`라는 이름으로 구현되어 있음을 확인. 제안보다
+더 정교함 (CreepyBot 기준 `health_deficit >= 125 OR health_ratio < 0.25` 조건,
+쿨다운·거리·에너지 체크, 스파인 크롤러 포함 옵션). 회귀 테스트:
+`tests/test_queen_transfusion.py`, `tests/test_queen_transfusion_manager.py`
+(`test_priority_ordering`, `test_cannot_heal_blacklist` 등). 문서만 stale했던 것으로
+별도 작업 없이 닫음.
 
-**현재 문제**:
-- Transfusion 로직이 단순함
-- 고가 유닛(울트라, 브루드로드) 우선순위 없음
-- 군단 숙주, 맹독충 등 치료 불가 유닛에 낭비 가능성
+<details>
+<summary>원래 제안 (참고용, 구현은 위 실제 코드 기준)</summary>
 
 **개선 방법**:
 ```python
@@ -140,11 +142,16 @@ async def smart_transfusion(self, queen, damaged_units):
 
 **우선순위**: 🟡 MEDIUM (자원 효율성 개선)
 
+</details>
+
 ---
+
+## 🟡 MEDIUM Priority Issues (still open)
 
 ### Issue #4: Resource Reservation Race Condition
 
-**위치**: `resource_manager.py` (추정)
+**위치**: `resource_manager.py` — **파일 자체가 존재하지 않음 (확인일: 2026-07-04)**. 스코프를 정하거나
+백로그에서 명시적으로 제외할지 결정 필요.
 
 **문제**:
 - 여러 매니저가 동시에 자원 예약 시도
@@ -219,7 +226,14 @@ else:
 
 ## 🟢 LOW Priority Issues
 
-### Issue #5: 코드 중복 - Position 계산
+### Issue #5: 코드 중복 - Position 계산 — 🟡 PARTIAL (확인일: 2026-07-04)
+
+`utils/position_utils.py`에 `get_center_position`/`get_weighted_center`가 구현되어
+있으나, 실제 중복 계산부(`combat/expansion_defense.py:296`, `combat/combat_execution.py:262`,
+`combat/infestor_tactics.py:189`, `combat/micro_combat.py:1345`, `combat_phase_controller.py:591`,
+`micro_controller.py:525`, `combat_manager.py:3657`, `battle_preparation_system.py:166`,
+`idle_unit_manager.py:179`)는 아직 하나도 유틸리티로 교체되지 않음. "DONE"이 아니라
+유틸리티만 만들어지고 적용이 안 된 상태 — 다음 세션 후보 작업.
 
 **위치**: 여러 파일에서 중복
 
@@ -359,32 +373,31 @@ if iteration % SECOND == 0:
 
 ---
 
-## 📊 이슈 우선순위 요약 (open만)
+## 📊 이슈 우선순위 요약 (open만, 2026-07-04 갱신)
 
 | 우선순위 | 이슈 | 영향도 | 난이도 |
 |---------|------|--------|--------|
-| 🟡 MEDIUM | #3 Transfusion 우선순위 | 중간 | 중간 |
-| 🟡 MEDIUM | #4 Resource Race Condition | 낮음 | 중간 |
-| 🟢 LOW | #5 코드 중복 제거 | 낮음 | 쉬움 |
-| 🟢 LOW | #6 매직 넘버 | 낮음 | 쉬움 |
+| 🟡 MEDIUM | #4 Resource Race Condition (`resource_manager.py` 부재) | 낮음 | 중간 |
+| 🟡 MEDIUM | N5 bare except (468건 잔존) | 낮음 | 진행중 |
+| 🟢 LOW | #5 Position Utils 적용 (유틸은 존재, 9개 호출부 미적용) | 낮음 | 쉬움 |
+| 🟢 LOW | N6 unused locals (125건) | 낮음 | 쉬움 |
 
-(Issue #1, #2 → ✅ Resolved 섹션 참조)
+(Issue #1, #2, #3 → ✅ Resolved 섹션 참조 / N1-N4 → ✅ Resolved 섹션 참조)
 
 ---
 
 ## 🎯 권장 수정 순서
 
 ### 1단계: 완료 (✅)
-~~1. Queen Inject 쿨다운 수정 (25 → 29)~~ — 코드 반영 완료, 본 문서 ✅ Resolved 섹션 참조
-~~2. 누락된 업그레이드 추가~~ — 코드 반영 완료, 본 문서 ✅ Resolved 섹션 참조
+~~1. Queen Inject 쿨다운 수정 (25 → 29)~~ — 코드 반영 완료
+~~2. 누락된 업그레이드 추가~~ — 코드 반영 완료
+~~3. Transfusion 우선순위 시스템~~ — 코드 반영 완료 (2026-07-04 확인)
+~~N1-N4. F811 중복 정의 4건~~ — commit `e648ae4`에서 해결 (2026-07-04 확인)
 
-### 2단계: 로직 개선 (30분, 미진행)
-3. Transfusion 우선순위 시스템 구현
-
-### 3단계: 구조 개선 (1시간, 미진행)
-4. Resource Reservation 동기화
-5. Position Utils 유틸리티 함수 분리
-6. Constants 정리
+### 2단계: 구조 개선 (미진행)
+4. Resource Reservation 동기화 (`resource_manager.py` 신규 생성 필요)
+5. Position Utils 실제 적용 (9개 파일의 중복 계산부를 `get_center_position`으로 교체)
+6. Constants 정리 (계속 진행 중)
 
 ---
 
@@ -418,6 +431,28 @@ if iteration % SECOND == 0:
 - 모두 **선택적 개선 사항**
 - 즉시 수정 불필요
 - 점진적 개선 권장
+
+---
+
+## 🔁 2026-07-04 자동 점검 세션
+
+전체 리포지토리 점검(테스트 실행 → ROADMAP.md 항목별 코드 대조 → 이슈 재검증 →
+수정/문서화 → 커밋/푸시) 결과:
+
+- **테스트**: `tests/` 494 pass / 8 fail(무관한 crypto_trading 샌드박스 의존성 문제,
+  SC2 봇과 무관) / 14 skip. `wicked_zerg_challenger/tests/` 661 pass / 0 fail.
+- **수정**: `tests/test_combat_phase_fsm.py`의 `asyncio.get_event_loop()` deprecated 패턴
+  → `asyncio.run()`으로 교체 (12건 실패 → 0건). `tests/conftest.py`에
+  `PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python` 환경변수 설정 추가 (로컬 실행 시
+  `tests/`만 단독 실행하면 protobuf 충돌로 collection error 발생하던 문제 해결).
+- **재검증 결과**: N1-N4(F811 중복 정의), Issue #3(수혈 우선순위)은 이미 코드에
+  구현되어 있었음 — 문서만 stale. Issue #5(Position Utils)는 유틸리티만 존재하고
+  실제 적용은 안 된 반쪽짜리 상태로 재분류.
+- **정체 확인**: `wicked_zerg_challenger/` 로직 커밋은 2026-06-01(`6947f1a`)이 마지막이고,
+  이후 2026-06-25 CI yml 수정 1건 외에는 약 한 달간 활동 없음.
+- **다음 우선순위**: Issue #4(`resource_manager.py` 신규 생성 여부 결정),
+  Position Utils 9개 호출부 교체, `intel_manager.py` 빌드 패턴 12→25 확장,
+  `NEXT_LARGE_PLAN.md`/`NEXT_PHASE_PLAN.md`의 P7xx/P8xx 항목 정리(코드/커밋 근거 없음).
 
 ---
 

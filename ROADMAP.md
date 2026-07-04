@@ -1,7 +1,11 @@
 # WickedZergBotPro Grand Roadmap
 
 > 목표: Medium AI 승률 90%+ 달성 & AI Arena 출전
-> 현재 상태: Phase 56 완료, 342/342 테스트 통과, 추정 승률 45~50%
+> 현재 상태 (2026-07-04 검증): Sprint 1-7 항목 대부분 코드 구현 확인됨(아래 표 참고),
+> `wicked_zerg_challenger/tests/` 661/661 통과 + `tests/` 494/502 통과(잔여 8건은
+> SC2 봇과 무관한 crypto_trading 샌드박스 의존성 문제). 추정 승률 45~50%는 Task 8.1
+> 실전 30연전을 실행해 기록한 값이 아니라 미검증 수치 — Sprint 8 QA 실행 전까지는
+> 참고용으로만 취급할 것.
 > 봇 프레임워크: python-sc2 (burnysc2>=5.0.0)
 
 ---
@@ -15,6 +19,25 @@
 - HP 가중 전투력 계산: `sum(unit.health + unit.shield)` (단순 카운트 금지)
 - AI Arena 제한: 프레임당 320ms 이내
 - 매니저 파일 위치: `wicked_zerg_challenger/` 하위
+
+---
+
+## Sprint 진행 현황 요약 (2026-07-04 코드 대조 검증)
+
+| Sprint | 상태 | 비고 |
+|--------|------|------|
+| 1. 긴급 수정 | ✅ DONE (Task 1.1 예외) | Task 1.1은 실제 크래시 유발 이모지(⚪✓✅❌🔴)는 이미 제거됨; 남은 비ASCII는 일부 파일 docstring 내 깨진 인코딩(mojibake)으로 실행에 영향 없음 — 우선순위 낮음 |
+| 2. 정찰 & 인텔 | ✅ DONE (2.3 예외) | Task 2.3 빌드 패턴 인식은 12개까지만 구현, 로드맵 목표 25개 미달 — 13개 패턴 추가 필요 |
+| 3. 경제 & 매크로 | ✅ DONE | `ThreatLevel`, `spend_larva`, `_get_gas_timing_by_matchup`, `[FLOAT]` 경고 모두 확인 |
+| 4. 전투 & 마이크로 | ✅ DONE | 러커/뮤탈/바퀴-히드라 포메이션/다방면 협공/프레임 스킵 모두 확인 |
+| 5. 방어 체계 | ✅ DONE | 프록시 대응, 멀티 드롭 대응, 올인 감지 모두 확인 |
+| 6. RL 실전 투입 | ✅ DONE | `use_rl_micro` 토글, Stage3, `update_elo` 모두 확인 (실전 성능은 미검증) |
+| 7. 아키텍처 리팩토링 | ✅ DONE | `building_manager.py`, `utils/distance_cache.py`, `utils/game_constants.py` 모두 존재 |
+| 8. QA & AI Arena 배포 | ❌ NOT RUN | Task 8.1(30연전 실측), 8.2(아레나 패키지 체크리스트)는 스크립트만 존재 — 실제 실행 기록 없음. 헤드리스 샌드박스에는 SC2 게임 클라이언트가 없어 이 세션에서도 실행 불가 — SC2 클라이언트가 있는 환경에서 별도 실행 필요 |
+
+Sprint 1-7이 문서상 "미착수"처럼 보이는 것은 로드맵 자체가 갱신되지 않았기 때문이며,
+실제로는 대부분 이후 세션(PR #218 등)에서 구현됨. 아래 Sprint별 세부 내용은 원래
+작성 당시의 작업 지시문으로 유지하되, 실제 구현 여부는 위 요약을 우선 참고할 것.
 
 ---
 
