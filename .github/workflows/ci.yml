@@ -136,10 +136,12 @@ jobs:
           cache: "pip"
 
       - name: SC2 봇 의존성 설치
+        env:
+          SETUPTOOLS_USE_DISTUTILS: stdlib
         run: |
           python -m pip install --upgrade pip
-          pip install burnysc2 pytest pytest-asyncio pyyaml aiohttp
-          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+          pip install pytest pytest-asyncio cffi
+          if [ -f requirements-sc2bot.txt ]; then pip install -r requirements-sc2bot.txt; fi
 
       - name: py_compile 전체 구문 검증 (349 파일)
         run: |
