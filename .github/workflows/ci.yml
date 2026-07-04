@@ -117,6 +117,11 @@ jobs:
         env:
           DRY_RUN: "true"
           LOG_LEVEL: "DEBUG"
+          # requirements.txt installs burnysc2, whose s2clientprotocol dependency
+          # ships pb2 files built with an old protoc; the modern protobuf runtime
+          # refuses to load them directly (see sc2-bot-test job below, which
+          # already carries this same workaround).
+          PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION: python
 
   # ─────────────────────────────────────────────
   # SC2 봇 구문 검증 + 테스트
