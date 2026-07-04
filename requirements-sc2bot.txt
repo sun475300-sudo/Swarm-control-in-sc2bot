@@ -1,0 +1,37 @@
+# SC2 Bot Core Dependencies (lightweight, no unrelated JARVIS extras)
+#
+# The monolithic requirements.txt bundles the SC2 bot together with
+# unrelated services (crypto trading, Discord bot, Google GenAI, MCP,
+# AWS, TTS, ...). Those extras pull in google-api-core>=5.29.6 which
+# requires protobuf>=5, while google-ai-generativelanguage (a
+# google-generativeai dependency) requires protobuf<5 — an
+# unresolvable conflict that has nothing to do with the bot itself and
+# makes `pip install -r requirements.txt` fail outright
+# (ResolutionImpossible). CI and local bot development should install
+# this file instead.
+#
+# Install with:
+#   SETUPTOOLS_USE_DISTUTILS=stdlib pip install -r requirements-sc2bot.txt -r requirements-dev.txt
+#
+# SETUPTOOLS_USE_DISTUTILS=stdlib works around burnysc2's `mpyq`
+# dependency failing to build a wheel under a vendored setuptools
+# distutils (`AttributeError: install_layout`) — forces the stdlib
+# distutils (Debian-patched) implementation instead.
+#
+# sc2reader is intentionally excluded: it is only used by the offline
+# `replay_to_rl_trainer.py` script, not by the bot runtime or the test
+# suite — install it separately if you need that script.
+#
+# torch is intentionally excluded here too: only
+# `local_training/scripts/batch_trainer.py` (an offline RL training
+# script, not exercised by the test suite) imports it, and pulling it
+# in drags a multi-GB CUDA toolkit for no test-suite benefit. Install
+# it separately for RL training work.
+
+burnysc2>=5.0.0
+numpy>=1.20.0
+matplotlib>=3.3.0
+psutil>=5.8.0
+s2clientprotocol>=4.19.0.0
+pyyaml>=6.0
+requests>=2.28.0
