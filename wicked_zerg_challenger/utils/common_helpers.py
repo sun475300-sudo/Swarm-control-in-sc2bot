@@ -127,6 +127,102 @@ def safe_amount(units: Any) -> int:
     return 0
 
 
+def units_amount(units: Any) -> int:
+    """
+    유닛 수를 안전하게 가져옴 (safe_amount의 별칭)
+
+    Args:
+        units: SC2 Units collection 또는 리스트
+
+    Returns:
+        유닛 수 (없으면 0)
+
+    Example:
+        >>> ling_count = units_amount(self.bot.units(UnitTypeId.ZERGLING))
+    """
+    return safe_amount(units)
+
+
+def filter_by_type(units: Any, names) -> Any:
+    """
+    type_id.name이 names에 속하는 유닛만 필터링
+
+    Args:
+        units: SC2 Units collection 또는 리스트
+        names: 허용할 type_id.name 값들의 컬렉션
+
+    Returns:
+        필터링된 유닛 컬렉션 (SC2 Units.filter 지원 시 이를 사용, 아니면 list)
+
+    Example:
+        >>> army = filter_by_type(self.bot.units, {"ZERGLING", "ROACH"})
+    """
+    if hasattr(units, "filter"):
+        return units.filter(lambda u: u.type_id.name in names)
+    return [u for u in units if getattr(u.type_id, "name", "") in names]
+
+
+def closest_enemy(unit: Any, enemy_units: Any) -> Optional[Any]:
+    """
+    unit 기준으로 enemy_units 중 가장 가까운 유닛을 안전하게 가져옴
+
+    Args:
+        unit: 기준 유닛 (position 또는 distance_to를 가짐)
+        enemy_units: 거리 비교 대상 유닛 컬렉션
+
+    Returns:
+        가장 가까운 유닛, 없거나 실패 시 None
+
+    Example:
+        >>> nearest = closest_enemy(my_unit, enemy_units)
+    """
+    if hasattr(enemy_units, "closest_to"):
+        try:
+            return enemy_units.closest_to(unit.position)
+        except (AttributeError, TypeError, ValueError):
+            return None
+
+    items = list(enemy_units) if enemy_units is not None else []
+    if not items:
+        return None
+
+    closest, closest_dist = None, None
+    for enemy in items:
+        try:
+            dist = unit.distance_to(enemy)
+        except (AttributeError, TypeError):
+            continue
+        if closest_dist is None or dist < closest_dist:
+            closest, closest_dist = enemy, dist
+    return closest
+
+
+def centroid(units: Any) -> Optional[Any]:
+    """
+    유닛들의 기하학적 중심 위치 계산 (Point2)
+
+    Args:
+        units: SC2 Units collection 또는 리스트
+
+    Returns:
+        중심 Point2, 유닛이 없으면 None
+
+    Example:
+        >>> center = centroid(enemy_units)
+        >>> if center:
+        >>>     rally_point = center.towards(self.bot.start_location, 5)
+    """
+    items = list(units) if units is not None else []
+    if not items:
+        return None
+
+    from sc2.position import Point2
+
+    x_sum = sum(u.position.x for u in items)
+    y_sum = sum(u.position.y for u in items)
+    return Point2((x_sum / len(items), y_sum / len(items)))
+
+
 def clamp(value: float, min_value: float, max_value: float) -> float:
     """
     값을 최소/최대 범위 내로 제한

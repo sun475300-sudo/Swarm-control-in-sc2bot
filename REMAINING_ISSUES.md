@@ -4,24 +4,21 @@
 
 통합 문제 해결 후 발견된 추가 개선 사항들입니다.
 
-**Last refreshed:** 2026-04-27 (Issue #1, #2 → Resolved; Issue #6 partially resolved via Batch 3)
+**Last refreshed:** 2026-07-04 (자동 점검 사이클 — N1~N4, Issue #3/#4 전부 이미 해결 확인; 신규 O1~O3 발견 및 O1 해결)
 
 ---
 
-## 🆕 신규 발견 (PR #44, 2026-04-27)
+## 🆕 신규 발견 (자동 점검 사이클, 2026-07-04)
 
-자동/수동 점검 사이클(테스트 → 코드 검사 → 개선 → 커밋/푸시 반복)에서 새로 식별된 항목.
+테스트 인프라 복구 → `flake8 --select=F811` 전수 스캔 → 코드 대조 사이클에서 식별된 항목.
 
 | ID | 설명 | 우선순위 | 상태 |
 |----|------|---------|------|
-| N1 | `OpponentModeling.on_step` 중복 정의 (line 341 vs 765 — F811) | 🟠 HIGH | open — 동작 영향(상위 on_step이 미실행) 가능 |
-| N2 | `EconomyManager._prevent_resource_banking` / `_reduce_gas_workers` 재정의 (F811) | 🟡 MED | open |
-| N3 | `combat_manager._find_harass_target` 재정의 (line 2377 vs 4278) | 🟡 MED | open |
-| N4 | `production_resilience.build_terran_counters` 재정의 (1369 vs 1866) | 🟡 MED | open |
-| N5 | bare `except Exception:` 다수 (≈360+) — 이번 PR에서 12건 처리, 잔여 다수 | 🟢 LOW | partial |
-| N6 | F841 unused local variables (visuals/make_pptx 등) | 🟢 LOW | open (presentation 코드라 영향 작음) |
+| O1 | `combat_manager.py`가 `utils.common_helpers`에서 `centroid/closest_enemy/filter_by_type/units_amount`를 import하지만 해당 함수가 애초에 정의된 적이 없어 `ImportError` → `HELPERS_AVAILABLE`이 항상 `False`로 고정, 관련 5개 분기가 전부 죽은 코드였음 | 🟠 HIGH | ✅ **Resolved** — 4개 함수를 `common_helpers.py`에 구현 + 회귀 테스트 `tests/test_common_helpers.py` 13건 추가 |
+| O2 | `utils/position_utils.py`(get_center_position 등)가 존재하지만 실제로는 자기 자신 외에 어디서도 import되지 않음 — combat_manager.py, combat/expansion_defense.py, combat/combat_execution.py, combat/infestor_tactics.py, combat/micro_combat.py, combat_phase_controller.py, micro_controller.py, battle_preparation_system.py, idle_unit_manager.py 9곳이 여전히 centroid 계산을 인라인 중복 | 🟡 MED | open — 실제 게임 동작 검증(sc2 설치 환경) 필요해 별도 PR 권장 |
+| O3 | `intel_manager.py` `BUILD_PATTERNS`가 ROADMAP.md Task 2.3 목표(25개) 대비 13개만 존재 | 🟢 LOW | open — ROADMAP.md Sprint 2 참고 |
 
-검증 권장: PR 분리 (N1 단독 PR 권장 — 동작 변화 가능성).
+**중요 발견**: N1~N4(이전 사이클에서 open으로 기록됨)와 Issue #3/#4(아래)는 전부 이미 코드에 반영되어 있었음 — `flake8 --select=F811 wicked_zerg_challenger/` 결과 0건. 이 문서가 실제 코드보다 뒤처져 있었던 것으로, 별도 수정 없이 아래에서 닫음.
 
 ---
 
@@ -67,7 +64,19 @@
 
 ---
 
-## 🟡 MEDIUM Priority Issues (still open)
+## ✅ Resolved (확인일: 2026-07-04)
+
+### ✅ Issue #3: Transfusion 우선순위 — 구현 완료
+
+`wicked_zerg_challenger/economy/queen_transfusion_manager.py`에 `HEAL_PRIORITY`(27-41행)와 `CANNOT_HEAL`(43행) 딕셔너리가 이 문서가 제안한 것과 동일한 구조로 이미 구현되어 있고, `tests/test_queen_transfusion.py` + `tests/test_queen_transfusion_manager.py`로 회귀 테스트도 갖춰져 있음.
+
+### ✅ Issue #4: Resource Reservation Race Condition — 구현 완료
+
+`wicked_zerg_challenger/core/resource_manager.py`의 `ResourceManager` 클래스가 `asyncio.Lock`(36행) + `try_reserve`(50행, `async with self._lock:` 62/105/127/248행)로 이 문서가 제안한 것과 동일한 패턴을 이미 구현. `tests/test_resource_manager.py` 10건 통과.
+
+---
+
+## 🟡 MEDIUM Priority Issues (historical proposal text — kept for reference, see Resolved section above)
 
 ### Issue #3: Transfusion 우선순위 개선 필요
 
@@ -359,32 +368,31 @@ if iteration % SECOND == 0:
 
 ---
 
-## 📊 이슈 우선순위 요약 (open만)
+## 📊 이슈 우선순위 요약 (open만, 2026-07-04 갱신)
 
 | 우선순위 | 이슈 | 영향도 | 난이도 |
 |---------|------|--------|--------|
-| 🟡 MEDIUM | #3 Transfusion 우선순위 | 중간 | 중간 |
-| 🟡 MEDIUM | #4 Resource Race Condition | 낮음 | 중간 |
-| 🟢 LOW | #5 코드 중복 제거 | 낮음 | 쉬움 |
+| 🟡 MED | O2 Position Utils 미적용 (9곳 인라인 중복) | 낮음 | 쉬움 (검증에 sc2 환경 필요) |
+| 🟢 LOW | O3 BUILD_PATTERNS 13/25 | 중간 (조기 대응력) | 중간 |
 | 🟢 LOW | #6 매직 넘버 | 낮음 | 쉬움 |
 
-(Issue #1, #2 → ✅ Resolved 섹션 참조)
+(Issue #1~#4, N1~N4 → ✅ Resolved 섹션 참조. O1 → ✅ Resolved, 본 사이클에서 처리.)
 
 ---
 
 ## 🎯 권장 수정 순서
 
 ### 1단계: 완료 (✅)
-~~1. Queen Inject 쿨다운 수정 (25 → 29)~~ — 코드 반영 완료, 본 문서 ✅ Resolved 섹션 참조
-~~2. 누락된 업그레이드 추가~~ — 코드 반영 완료, 본 문서 ✅ Resolved 섹션 참조
+~~1. Queen Inject 쿨다운 수정 (25 → 29)~~ — 완료
+~~2. 누락된 업그레이드 추가~~ — 완료
+~~3. Transfusion 우선순위 시스템~~ — 완료
+~~4. Resource Reservation 동기화~~ — 완료
+~~O1. common_helpers 누락 함수로 인한 HELPERS_AVAILABLE 데드코드~~ — 완료 (2026-07-04)
 
-### 2단계: 로직 개선 (30분, 미진행)
-3. Transfusion 우선순위 시스템 구현
-
-### 3단계: 구조 개선 (1시간, 미진행)
-4. Resource Reservation 동기화
-5. Position Utils 유틸리티 함수 분리
-6. Constants 정리
+### 2단계: 다음 사이클 후보 (미진행)
+- O2. Position Utils 유틸리티를 9개 호출부에 실제 적용 (sc2 설치 환경에서 회귀 검증 필요)
+- O3. BUILD_PATTERNS 13 → 25 확장 (ROADMAP.md Sprint 2 Task 2.3)
+- 6. Constants 정리 (매직 넘버)
 
 ---
 
