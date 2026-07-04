@@ -79,6 +79,12 @@ jobs:
     name: Test Suite
     runs-on: ubuntu-latest
     needs: lint
+    env:
+      # requirements.txt installs burnysc2, whose s2clientprotocol dependency
+      # ships pb2 files built with an old protoc; the modern protobuf runtime
+      # refuses to load them directly ("Descriptors cannot be created
+      # directly"). This is the workaround protobuf itself recommends.
+      PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION: python
     steps:
       - uses: actions/checkout@v4
 
