@@ -14,7 +14,10 @@ from local_training.replay_to_training import ReplayToTrainingPipeline
 
 class TestReplayToTrainingPipeline(unittest.TestCase):
     def test_process_replay_summaries_writes_training_data(self):
-        with tempfile.TemporaryDirectory() as replay_dir, tempfile.TemporaryDirectory() as output_dir:
+        with (
+            tempfile.TemporaryDirectory() as replay_dir,
+            tempfile.TemporaryDirectory() as output_dir,
+        ):
             summary = {
                 "enemy_race": "Terran",
                 "result": "Victory",
@@ -23,7 +26,9 @@ class TestReplayToTrainingPipeline(unittest.TestCase):
                 "resources_collected": 5000,
                 "supply_blocks": 1,
             }
-            Path(replay_dir, "game1.json").write_text(json.dumps(summary), encoding="utf-8")
+            Path(replay_dir, "game1.json").write_text(
+                json.dumps(summary), encoding="utf-8"
+            )
 
             pipeline = ReplayToTrainingPipeline(replay_dir, output_dir)
             data = pipeline.process_replay_summaries()
@@ -35,7 +40,9 @@ class TestReplayToTrainingPipeline(unittest.TestCase):
     def test_loss_tags_reduce_reward(self):
         pipeline = ReplayToTrainingPipeline(".", ".")
         clean = pipeline._compute_reward({"result": "loss"})
-        tagged = pipeline._compute_reward({"result": "loss", "loss_tags": ["float", "late_expand"]})
+        tagged = pipeline._compute_reward(
+            {"result": "loss", "loss_tags": ["float", "late_expand"]}
+        )
 
         self.assertLess(tagged, clean)
 
