@@ -9,6 +9,12 @@ s2clientprotocol>=4.19.0.0
 sc2reader>=0.8.0
 pyyaml>=6.0
 
+# s2clientprotocol ships pre-generated *_pb2.py files built with an older
+# protoc; protobuf>=3.21 rejects them at import time with
+# "TypeError: Descriptors cannot be created directly" (ENV-001 in
+# BUG_ERROR_LOG.md). Pin to the last compatible major version.
+protobuf>=3.19.0,<4.0.0
+
 # ═══════════════════════════════════════════════
 # Crypto Trading Service
 # ═══════════════════════════════════════════════
