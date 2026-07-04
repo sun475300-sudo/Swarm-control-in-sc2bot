@@ -271,7 +271,9 @@ except ImportError:
 # Advanced Scout System V2
 try:
     # NOTE: class is AdvancedScoutingSystemV2 (with "ing"); alias kept for compat
-    from scouting.advanced_scout_system_v2 import AdvancedScoutingSystemV2 as AdvancedScoutSystemV2
+    from scouting.advanced_scout_system_v2 import (
+        AdvancedScoutingSystemV2 as AdvancedScoutSystemV2,
+    )
 except ImportError:
     AdvancedScoutSystemV2 = None
 
@@ -925,6 +927,14 @@ class BotStepIntegrator:
                 except Exception as e:
                     if error_handler.debug_mode:
                         raise
+                    error_handler.error_counts["SpatialOptimizer"] += 1
+                    if (
+                        error_handler.error_counts["SpatialOptimizer"]
+                        <= error_handler.max_error_logs
+                    ):
+                        self.logger.error(
+                            f"[ERROR] SpatialOptimizer on_step error: {e}"
+                        )
 
             if hasattr(self.bot, "data_cache") and self.bot.data_cache:
                 try:
@@ -932,6 +942,12 @@ class BotStepIntegrator:
                 except Exception as e:
                     if error_handler.debug_mode:
                         raise
+                    error_handler.error_counts["DataCache"] += 1
+                    if (
+                        error_handler.error_counts["DataCache"]
+                        <= error_handler.max_error_logs
+                    ):
+                        self.logger.error(f"[ERROR] DataCache on_step error: {e}")
 
             # *** Base Destruction Coordinator (모든 적 기지 파괴) ***
             if hasattr(self.bot, "base_destruction") and self.bot.base_destruction:
@@ -940,6 +956,12 @@ class BotStepIntegrator:
                 except Exception as e:
                     if error_handler.debug_mode:
                         raise
+                    error_handler.error_counts["BaseDestruction"] += 1
+                    if (
+                        error_handler.error_counts["BaseDestruction"]
+                        <= error_handler.max_error_logs
+                    ):
+                        self.logger.error(f"[ERROR] BaseDestruction on_step error: {e}")
 
             # *** Building Destroyer (건물 파괴 전문) ***
             if hasattr(self.bot, "building_destroyer") and self.bot.building_destroyer:
@@ -948,6 +970,14 @@ class BotStepIntegrator:
                 except Exception as e:
                     if error_handler.debug_mode:
                         raise
+                    error_handler.error_counts["BuildingDestroyer"] += 1
+                    if (
+                        error_handler.error_counts["BuildingDestroyer"]
+                        <= error_handler.max_error_logs
+                    ):
+                        self.logger.error(
+                            f"[ERROR] BuildingDestroyer on_step error: {e}"
+                        )
 
             # *** Runtime Self-Healing (실행 중 자동 복구) ***
             if hasattr(self.bot, "self_healing") and self.bot.self_healing:
@@ -956,6 +986,12 @@ class BotStepIntegrator:
                 except Exception as e:
                     if error_handler.debug_mode:
                         raise
+                    error_handler.error_counts["SelfHealing"] += 1
+                    if (
+                        error_handler.error_counts["SelfHealing"]
+                        <= error_handler.max_error_logs
+                    ):
+                        self.logger.error(f"[ERROR] SelfHealing on_step error: {e}")
 
             # *** Personality Module (채팅/성격) ***
             if hasattr(self.bot, "personality") and self.bot.personality:
@@ -964,6 +1000,12 @@ class BotStepIntegrator:
                 except Exception as e:
                     if error_handler.debug_mode:
                         raise
+                    error_handler.error_counts["Personality"] += 1
+                    if (
+                        error_handler.error_counts["Personality"]
+                        <= error_handler.max_error_logs
+                    ):
+                        self.logger.error(f"[ERROR] Personality on_step error: {e}")
 
             # *** Battle Preparation System (교전 대비) ***
             if hasattr(self.bot, "battle_prep") and self.bot.battle_prep:
@@ -972,6 +1014,12 @@ class BotStepIntegrator:
                 except Exception as e:
                     if error_handler.debug_mode:
                         raise
+                    error_handler.error_counts["BattlePrep"] += 1
+                    if (
+                        error_handler.error_counts["BattlePrep"]
+                        <= error_handler.max_error_logs
+                    ):
+                        self.logger.error(f"[ERROR] BattlePrep on_step error: {e}")
 
             # *** Destructible Awareness System (파괴 가능 구조물) ***
             if hasattr(self.bot, "destructible_aware") and self.bot.destructible_aware:
@@ -984,6 +1032,14 @@ class BotStepIntegrator:
                 except Exception as e:
                     if error_handler.debug_mode:
                         raise
+                    error_handler.error_counts["DestructibleAware"] += 1
+                    if (
+                        error_handler.error_counts["DestructibleAware"]
+                        <= error_handler.max_error_logs
+                    ):
+                        self.logger.error(
+                            f"[ERROR] DestructibleAware on_step error: {e}"
+                        )
 
             # *** Nydus Network Trainer (땅굴망 학습) ***
             if hasattr(self.bot, "nydus_trainer") and self.bot.nydus_trainer:
@@ -992,6 +1048,12 @@ class BotStepIntegrator:
                 except Exception as e:
                     if error_handler.debug_mode:
                         raise
+                    error_handler.error_counts["NydusTrainer"] += 1
+                    if (
+                        error_handler.error_counts["NydusTrainer"]
+                        <= error_handler.max_error_logs
+                    ):
+                        self.logger.error(f"[ERROR] NydusTrainer on_step error: {e}")
 
             # *** Overlord Safety Manager (대군주 안전) ***
             if hasattr(self.bot, "overlord_safety") and self.bot.overlord_safety:
@@ -1000,6 +1062,12 @@ class BotStepIntegrator:
                 except Exception as e:
                     if error_handler.debug_mode:
                         raise
+                    error_handler.error_counts["OverlordSafety"] += 1
+                    if (
+                        error_handler.error_counts["OverlordSafety"]
+                        <= error_handler.max_error_logs
+                    ):
+                        self.logger.error(f"[ERROR] OverlordSafety on_step error: {e}")
 
             # 0.03 *** Build Order System (빌드 오더 - 최최우선) ***
             if self.bot.time < 300.0:  # 5분 이내 (Roach Rush 지원)
@@ -1378,6 +1446,14 @@ class BotStepIntegrator:
                 except Exception as e:
                     if error_handler.debug_mode:
                         raise
+                    error_handler.error_counts["CreepHighwayAStar"] += 1
+                    if (
+                        error_handler.error_counts["CreepHighwayAStar"]
+                        <= error_handler.max_error_logs
+                    ):
+                        self.logger.error(
+                            f"[ERROR] CreepHighwayAStar on_step error: {e}"
+                        )
 
             # 0.061 *** Creep Highway Manager (기지 간 연결) ***
             if hasattr(self.bot, "creep_highway") and self.bot.creep_highway:
@@ -2108,7 +2184,9 @@ class BotStepIntegrator:
                     if iteration % 50 == 0:
                         self.logger.warning(f"[WARNING] Building Manager error: {e}")
                 finally:
-                    self._logic_tracker.end_logic("BuildingManager", start_time, success)
+                    self._logic_tracker.end_logic(
+                        "BuildingManager", start_time, success
+                    )
 
             if hasattr(self.bot, "advanced_building_manager"):
                 start_time = self._logic_tracker.start_logic("AdvancedBuilding")

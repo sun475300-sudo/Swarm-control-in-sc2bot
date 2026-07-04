@@ -4,24 +4,26 @@
 
 통합 문제 해결 후 발견된 추가 개선 사항들입니다.
 
-**Last refreshed:** 2026-04-27 (Issue #1, #2 → Resolved; Issue #6 partially resolved via Batch 3)
+**Last refreshed:** 2026-07-04 (재검증 사이클 — N1~N4, Issue #3~#5 코드 확인 결과 모두 해결됨으로 정정; 새 이슈 N7 발견 및 수정)
 
 ---
 
-## 🆕 신규 발견 (PR #44, 2026-04-27)
+## 🆕 2026-07-04 재검증 결과
 
-자동/수동 점검 사이클(테스트 → 코드 검사 → 개선 → 커밋/푸시 반복)에서 새로 식별된 항목.
+`test → 코드 검사 → 개선 → 커밋/푸시` 반복 사이클의 일환으로 아래 표의 모든 항목을 실제 코드에서 재확인했습니다.
+문서가 stale했던 항목이 대부분이라 실제 상태로 정정합니다 (별도 작업 불필요했던 항목은 "이미 해결됨"으로 표시).
 
-| ID | 설명 | 우선순위 | 상태 |
-|----|------|---------|------|
-| N1 | `OpponentModeling.on_step` 중복 정의 (line 341 vs 765 — F811) | 🟠 HIGH | open — 동작 영향(상위 on_step이 미실행) 가능 |
-| N2 | `EconomyManager._prevent_resource_banking` / `_reduce_gas_workers` 재정의 (F811) | 🟡 MED | open |
-| N3 | `combat_manager._find_harass_target` 재정의 (line 2377 vs 4278) | 🟡 MED | open |
-| N4 | `production_resilience.build_terran_counters` 재정의 (1369 vs 1866) | 🟡 MED | open |
-| N5 | bare `except Exception:` 다수 (≈360+) — 이번 PR에서 12건 처리, 잔여 다수 | 🟢 LOW | partial |
-| N6 | F841 unused local variables (visuals/make_pptx 등) | 🟢 LOW | open (presentation 코드라 영향 작음) |
+| ID | 설명 | 상태 |
+|----|------|------|
+| N1 | `OpponentModeling.on_step` 중복 정의 | ✅ 이미 해결됨 — `opponent_modeling.py`에 `on_step` 정의 1개만 존재 확인 |
+| N2 | `EconomyManager._prevent_resource_banking`/`_reduce_gas_workers` 재정의 | ✅ 이미 해결됨 — 각 메서드 정의 1개만 존재 확인 |
+| N3 | `combat_manager._find_harass_target` 재정의 | ✅ 이미 해결됨 — 정의 1개만 존재 확인 |
+| N4 | `production_resilience.build_terran_counters` 재정의 | ✅ 이미 해결됨 — 정의 1개만 존재 확인 |
+| N5 | bare `except Exception:` 다수 | 🟢 LOW, 잔존 (457건, `tests/` 제외) — 품질 개선 과제로 유지 |
+| N6 | F841 unused local variables | 🟢 LOW, 잔존 (127건, `tests/` 제외) — 대부분 `except ... as e:` 미사용, 저위험 |
+| N7 | **(신규)** `BotStepIntegrator.execute_game_logic()` 내 11개 서브시스템(`spatial_optimizer`, `data_cache`, `base_destruction`, `building_destroyer`, `self_healing`, `personality`, `battle_prep`, `destructible_aware`, `nydus_trainer`, `overlord_safety`, `creep_highway_astar`)의 `on_step()` 예외가 production 모드에서 완전히 무음(無音) 처리됨 — `if error_handler.debug_mode: raise` 뿐이고 else 분기가 없어 로그/카운트가 전혀 남지 않음. 라이브 게임 중 해당 서브시스템이 예외로 죽으면 그 게임 내내 아무 흔적 없이 기능이 사라짐 | ✅ **fixed** — `bot_step_integration.py`에 파일 내 기존 관례(`CreepHighway`, `RLAgent` 등)와 동일하게 `error_handler.error_counts[...]` 증가 + capped `self.logger.error(...)` 추가. 회귀 방지용 정적 분석 테스트 `tests/test_execute_game_logic_error_visibility.py` 추가 (execute_game_logic의 모든 except 블록이 debug_mode 분기와 함께 error_counts를 참조하는지 AST로 검증) |
 
-검증 권장: PR 분리 (N1 단독 PR 권장 — 동작 변화 가능성).
+플레이그라운드 검증: 전체 스위트 662 passed (기존 661 + 신규 1), `flake8 --select=F811,F821,F823` 클린.
 
 ---
 
@@ -67,9 +69,13 @@
 
 ---
 
-## 🟡 MEDIUM Priority Issues (still open)
+## 🟡 MEDIUM Priority Issues (2026-07-04 재검증: 모두 해결됨 확인)
 
-### Issue #3: Transfusion 우선순위 개선 필요
+### ✅ Issue #3: Transfusion 우선순위 개선 — 이미 구현됨
+
+**확인**: `queen_manager.py:711` `_transfuse_injured_units()`에 `TRANSFUSE_PRIORITY` 테이블 기반
+우선순위 정렬(고가 유닛 우선) + 쿨다운 + 거리 체크가 이미 구현되어 있음 ("CreepyBot-inspired priority system"
+주석 확인). 아래 제안 코드는 참고용으로 남겨둠.
 
 **위치**: `queen_manager.py` 또는 `spell_unit_manager.py`
 
@@ -142,7 +148,10 @@ async def smart_transfusion(self, queen, damaged_units):
 
 ---
 
-### Issue #4: Resource Reservation Race Condition
+### ✅ Issue #4: Resource Reservation Race Condition — 이미 구현됨
+
+**확인**: `core/resource_manager.py:36`에 `asyncio.Lock` 기반 `try_reserve()`/`release()`가
+제안된 설계와 거의 동일하게 이미 구현되어 있음.
 
 **위치**: `resource_manager.py` (추정)
 
@@ -219,7 +228,10 @@ else:
 
 ## 🟢 LOW Priority Issues
 
-### Issue #5: 코드 중복 - Position 계산
+### ✅ Issue #5: 코드 중복 - Position 계산 — 이미 구현됨
+
+**확인**: `utils/position_utils.py`에 `get_center_position()`/`get_weighted_center()`가
+제안된 형태로 이미 구현되어 여러 파일에서 사용 중.
 
 **위치**: 여러 파일에서 중복
 
@@ -359,36 +371,32 @@ if iteration % SECOND == 0:
 
 ---
 
-## 📊 이슈 우선순위 요약 (open만)
+## 📊 이슈 우선순위 요약 (2026-07-04 재검증)
 
-| 우선순위 | 이슈 | 영향도 | 난이도 |
-|---------|------|--------|--------|
-| 🟡 MEDIUM | #3 Transfusion 우선순위 | 중간 | 중간 |
-| 🟡 MEDIUM | #4 Resource Race Condition | 낮음 | 중간 |
-| 🟢 LOW | #5 코드 중복 제거 | 낮음 | 쉬움 |
-| 🟢 LOW | #6 매직 넘버 | 낮음 | 쉬움 |
+| 우선순위 | 이슈 | 상태 |
+|---------|------|------|
+| 🟠 HIGH | N7 서브시스템 예외 무음 처리 (`execute_game_logic`) | ✅ 이번 사이클에서 수정 |
+| 🟡 MEDIUM | #3 Transfusion 우선순위 | ✅ 이미 구현됨 (재검증) |
+| 🟡 MEDIUM | #4 Resource Race Condition | ✅ 이미 구현됨 (재검증) |
+| 🟢 LOW | #5 코드 중복 제거 (Position) | ✅ 이미 구현됨 (재검증) |
+| 🟢 LOW | #6 매직 넘버 | 🟡 대부분 해결 (`game_config.py` 153개 상수) — 잔여 산발적 매직넘버는 발견 시 개별 처리 |
+| 🟢 LOW | N5 bare except (457건) | 열려있음 — 저위험, 점진 개선 대상 |
+| 🟢 LOW | N6 F841 unused locals (127건) | 열려있음 — 저위험, 점진 개선 대상 |
+| 🟢 LOW | P3-3 `combat_manager.py` 리팩토링 (`MASSIVE_FIX_PLAN.md`) | 열려있음 — 5,051줄, 고난이도/고위험이라 전용 세션 필요 |
 
 (Issue #1, #2 → ✅ Resolved 섹션 참조)
 
 ---
 
-## 🎯 권장 수정 순서
+## 🎯 다음 사이클 권장 작업 순서
 
-### 1단계: 완료 (✅)
-~~1. Queen Inject 쿨다운 수정 (25 → 29)~~ — 코드 반영 완료, 본 문서 ✅ Resolved 섹션 참조
-~~2. 누락된 업그레이드 추가~~ — 코드 반영 완료, 본 문서 ✅ Resolved 섹션 참조
-
-### 2단계: 로직 개선 (30분, 미진행)
-3. Transfusion 우선순위 시스템 구현
-
-### 3단계: 구조 개선 (1시간, 미진행)
-4. Resource Reservation 동기화
-5. Position Utils 유틸리티 함수 분리
-6. Constants 정리
+1. **combat_manager.py 리팩토링 착수 준비** — 먼저 현재 동작을 고정하는 characterization test 추가 후 `MicroController`/`MacroDecisions`/`ThreatEvaluator` 분리 (`MASSIVE_FIX_PLAN.md` P3-3). 리스크가 크므로 작은 PR 여러 개로 분할 권장.
+2. **N5/N6 점진적 정리** — bare except에 최소 로깅 추가, 미사용 지역변수 제거. 파일 단위로 작게 나눠 진행.
+3. **잔여 매직넘버 스윕** — `game_config.py`에 없는 하드코딩 임계값 발견 시 상수화.
 
 ---
 
-## 🔍 추가 검토 필요 항목
+## 🔍 추가 검토 필요 항목 (미확인 — 다음 사이클에서 검증 필요)
 
 ### Performance Optimization
 - [ ] Pathfinding 캐싱 확인
@@ -403,23 +411,24 @@ if iteration % SECOND == 0:
 ### Code Quality
 - [ ] Type hints 추가 (Python 3.10+)
 - [ ] Docstring 완성도 검토
-- [ ] 에러 핸들링 일관성 확인
+- [ ] 에러 핸들링 일관성 확인 (N7 수정으로 `execute_game_logic`은 개선됨, 다른 파일도 동일 패턴 있는지 스윕 필요)
 
 ---
 
 ## 📝 참고 사항
 
-### 현재 상태
+### 현재 상태 (2026-07-04 재검증)
 - ✅ **치명적 통합 문제**: 완전히 해결됨
-- ✅ **모든 단위 테스트**: 통과 (16/16)
+- ✅ **SC2 봇 테스트 스위트**: 662/662 통과 (`wicked_zerg_challenger/tests/`)
 - ✅ **기본 기능**: 정상 작동
+- ⚠️ 이 문서의 과거 항목들은 실제로는 이미 해결된 채 "open"으로 방치되어 있었음 — 앞으로는 재검증 없이 "open" 항목을 그대로 신뢰하지 말 것. 매 사이클마다 grep/코드 확인으로 실제 상태를 재확인 후 갱신.
 
 ### 위의 이슈들은
-- 모두 **선택적 개선 사항**
-- 즉시 수정 불필요
-- 점진적 개선 권장
+- 대부분 이미 해결되었거나 저위험 품질 개선 사항
+- 즉시 수정 불필요한 항목 위주
+- 실질적으로 남은 큰 작업은 `combat_manager.py` 리팩토링 (P3-3) 하나
 
 ---
 
-**검토 완료일**: 2026-01-29
-**상태**: 추가 개선 사항 문서화 완료
+**검토 완료일**: 2026-01-29 (최초), 2026-07-04 (재검증 + N7 수정)
+**상태**: 재검증 완료 — N1~N6, Issue #3~#5 실제로 이미 해결됨 확인; N7 신규 발견 후 수정; combat_manager.py 리팩토링이 유일한 대형 잔여 과제
