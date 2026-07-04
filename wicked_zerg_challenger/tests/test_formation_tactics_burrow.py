@@ -21,7 +21,9 @@ from sc2.ids.unit_typeid import UnitTypeId
 from sc2.position import Point2
 
 
-def _make_unit(unit_type, position, is_burrowed=False, is_idle=False, health=100, health_max=100):
+def _make_unit(
+    unit_type, position, is_burrowed=False, is_idle=False, health=100, health_max=100
+):
     unit = Mock()
     unit.type_id = unit_type
     unit.position = Point2(position)
