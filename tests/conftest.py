@@ -13,6 +13,14 @@ from unittest.mock import MagicMock
 
 import pytest
 
+# s2clientprotocol의 _pb2.py는 구버전 protoc으로 생성되어, protobuf>=4의 기본
+# C++/upb 구현 위에서 로드하면 "Descriptors cannot be created directly" TypeError로
+# 죽는다. requirements.txt는 protobuf 버전을 고정하지 않으므로(다른 의존성들의
+# 요구 범위가 서로 겹치는 지점을 pip가 그때그때 고르기 때문에) 순정 파이썬 구현으로
+# 강제해 어떤 protobuf 버전이 설치되든 sc2 import가 항상 성공하게 만든다.
+# `sc2`/`google.protobuf`가 임포트되기 전에 설정돼야 하므로 conftest.py 최상단에 둔다.
+os.environ.setdefault("PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION", "python")
+
 # 프로젝트 루트를 sys.path에 추가
 PROJECT_ROOT = Path(__file__).parent.parent
 if str(PROJECT_ROOT) not in sys.path:
