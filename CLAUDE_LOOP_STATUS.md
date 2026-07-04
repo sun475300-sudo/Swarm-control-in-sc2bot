@@ -34,6 +34,15 @@
    설치되지 않은 환경에서는 `pytest tests/`가 collection 단계에서 전체가 죽었음.
    sibling 파일(`test_queen_transfusion_manager.py`)과 동일한 skip 패턴 적용, 검증 완료
    (sc2 미설치 venv에서 정상적으로 skip 되는 것 확인).
+5. **`ci.yml`의 `python-lint-test` job**: `requirements.txt`로 burnysc2를 설치하면서도
+   `PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python`을 설정하지 않아 매번
+   `TypeError: Descriptors cannot be created directly`로 collection이 죽던 것 수정.
+6. **`sc2bot-ci.yml`의 `test` job**: 동일한 원인(env var 누락)으로 unit/integration
+   테스트 스텝이 모두 실패하던 것 수정. 실제 CI 실패 이벤트로 발견 → 로컬 재현 → 수정 → 검증.
+7. **`sc2bot-ci.yml`의 `test` job (2차)**: `pytest tests/integration --timeout=120`이
+   `pytest-timeout` 플러그인 없이 실행되어 `unrecognized arguments: --timeout=120`으로
+   매번 죽던 것 발견·수정 (`pip install` 목록에 `pytest-timeout` 추가). 이것도 실제 CI 실패
+   이벤트로 발견됨 — CI가 이전 버그를 가려서 이 버그는 그동안 드러나지 않고 있었음.
 
 ## 점검했지만 "이미 해결됨"으로 확인된 로드맵 항목 (문서만 낡은 것)
 
