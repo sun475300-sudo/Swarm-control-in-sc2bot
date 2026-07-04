@@ -117,6 +117,12 @@ jobs:
         env:
           DRY_RUN: "true"
           LOG_LEVEL: "DEBUG"
+          # s2clientprotocol ships pre-generated *_pb2.py files built with an
+          # older protoc; a modern protobuf (pulled in transitively) rejects
+          # them at import time with "TypeError: Descriptors cannot be
+          # created directly" the moment any test imports sc2 during
+          # collection (--co above still imports every module).
+          PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION: python
 
   # ─────────────────────────────────────────────
   # SC2 봇 구문 검증 + 테스트
