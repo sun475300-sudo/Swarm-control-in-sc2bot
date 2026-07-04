@@ -11,6 +11,11 @@ import tempfile
 from pathlib import Path
 from unittest.mock import MagicMock
 
+# sc2 -> s2clientprotocol pulls in protobuf-generated _pb2 modules that crash
+# under newer protobuf runtimes ("Descriptors cannot be created directly")
+# unless the pure-Python implementation is forced before those modules import.
+os.environ.setdefault("PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION", "python")
+
 import pytest
 
 # 프로젝트 루트를 sys.path에 추가

@@ -1,5 +1,14 @@
 # 내일 작업 목록 (2026-01-26)
 
+> **⚠️ Stale doc notice (2026-07-04):** 아래 항목 1~3(정찰 강화, 견제 시스템, 1분
+> 멀티 타이밍)은 이후 세션들에서 모두 구현 완료된 것으로 코드 검증됨
+> (`scouting_system.py`의 `OVERLORD_SCOUT_INTERVAL_*`/`CLOAK_UNITS`,
+> `combat_manager.py`의 `respond_to_worker_harassment`/`manage_harass_units`,
+> `economy_manager.py`의 조기 확장 로직). 항목 4(전투 프레임 스킵), 5(StrategyManager
+> 역할 분담)도 `combat_manager.py`/`building_manager.py`에 구현되어 있음. 최신
+> 상태는 `ROADMAP.md`(Sprint 1-8)와 `REMAINING_ISSUES.md`를 참고할 것 — 이 문서는
+> 역사적 기록으로 남겨두고 더 이상 활성 작업 목록이 아님.
+
 ## 우선순위 높음 🔴
 
 ### 1. 정찰 시스템 강화
