@@ -9,6 +9,13 @@ s2clientprotocol>=4.19.0.0
 sc2reader>=0.8.0
 pyyaml>=6.0
 
+# s2clientprotocol ships _pb2.py files generated with an older protoc.
+# Newer protobuf (4.x/5.x, pulled in transitively by google-generativeai/mcp
+# below) refuses to load them at runtime ("Descriptors cannot be created
+# directly"). Pin protobuf to the last release generation those generated
+# files are compatible with.
+protobuf>=3.20.3,<4
+
 # ═══════════════════════════════════════════════
 # Crypto Trading Service
 # ═══════════════════════════════════════════════
