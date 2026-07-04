@@ -11,9 +11,8 @@ from unittest.mock import Mock
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from sc2.position import Point2
-
 from local_training.advanced_building_manager import AdvancedBuildingManager
+from sc2.position import Point2
 
 
 def make_worker(tag, position, is_idle=False):

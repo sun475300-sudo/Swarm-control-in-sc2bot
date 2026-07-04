@@ -788,7 +788,11 @@ class QueenManager:
                 # CreepyBot condition: health_max - health >= 125 OR health < 25%
                 # Priority-requested units skip this gate - the requester already
                 # decided the unit needs healing (e.g. a retreating unit under fire).
-                if not is_priority_request and health_deficit < 125 and health_ratio >= 0.25:
+                if (
+                    not is_priority_request
+                    and health_deficit < 125
+                    and health_ratio >= 0.25
+                ):
                     continue
 
                 if not getattr(unit, "is_biological", True):
@@ -798,7 +802,9 @@ class QueenManager:
 
                 # Priority-requested units jump ahead of every type-based priority.
                 type_priority = (
-                    -1 if is_priority_request else TRANSFUSE_PRIORITY.get(unit.type_id, 15)
+                    -1
+                    if is_priority_request
+                    else TRANSFUSE_PRIORITY.get(unit.type_id, 15)
                 )
                 # Combine type priority with health urgency
                 priority = type_priority + health_ratio * 0.5

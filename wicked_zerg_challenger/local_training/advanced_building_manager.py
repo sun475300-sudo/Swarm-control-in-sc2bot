@@ -790,9 +790,11 @@ class AdvancedBuildingManager:
                 last_position, stuck_streak = self._worker_position_history.get(
                     worker.tag, (None, 0)
                 )
-                if last_position is not None and worker.position.distance_to(
-                    last_position
-                ) < self.STUCK_MOVE_THRESHOLD:
+                if (
+                    last_position is not None
+                    and worker.position.distance_to(last_position)
+                    < self.STUCK_MOVE_THRESHOLD
+                ):
                     stuck_streak += 1
                 else:
                     stuck_streak = 0

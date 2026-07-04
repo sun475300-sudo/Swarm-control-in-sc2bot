@@ -15,11 +15,10 @@ from unittest.mock import Mock
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from sc2.ids.unit_typeid import UnitTypeId
-from sc2.position import Point2
-
 from idle_unit_manager import IdleUnitManager
 from queen_manager import QueenManager
+from sc2.ids.unit_typeid import UnitTypeId
+from sc2.position import Point2
 
 
 def make_unit(tag, unit_type, health, health_max, position=None, is_biological=True):

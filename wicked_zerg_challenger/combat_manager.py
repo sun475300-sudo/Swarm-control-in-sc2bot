@@ -3194,7 +3194,8 @@ class CombatManager:
         if hasattr(self.bot, "structures"):
             try:
                 creep_positions = points_to_xy_tuples(
-                    p.position for p in self.bot.structures(UnitTypeId.CREEPTUMORBURROWED)
+                    p.position
+                    for p in self.bot.structures(UnitTypeId.CREEPTUMORBURROWED)
                 )
                 spine_positions = points_to_xy_tuples(
                     p.position for p in self.bot.structures(UnitTypeId.SPINECRAWLER)
