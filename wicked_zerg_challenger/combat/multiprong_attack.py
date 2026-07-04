@@ -91,9 +91,9 @@ class MultiprongAttackManager:
 
         # 전술 파라미터
         self.min_army_supply: int = 40  # 최소 군대 서플라이
-        self.main_army_ratio: float = 0.55  # 메인 아미 비율
-        self.harass_ratio: float = 0.25  # 견제조 비율
-        self.flank_ratio: float = 0.20  # 기습조 비율
+        self.main_army_ratio: float = 0.60  # 메인 아미 비율 (ROADMAP Task 4.4: 60%)
+        self.harass_ratio: float = 0.25  # 견제조 비율 (ROADMAP Task 4.4: 25%)
+        self.flank_ratio: float = 0.15  # 기습조 비율 (ROADMAP Task 4.4: 15%)
         self.sync_timeout: float = 15.0  # 동기화 대기 시간 (초)
         self.attack_cooldown: float = 90.0  # 공격 쿨다운 (초)
         self.retreat_loss_threshold: float = 0.6  # 60% 이상 손실 시 후퇴
