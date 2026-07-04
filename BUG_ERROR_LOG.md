@@ -116,7 +116,7 @@ protobuf>=3.19.0,<4.0.0
 
 **임시 해결 후 결과:** 환경변수 적용 시 8개 오류 모두 해소, 341 PASS 확인
 
-**상태:** 🔧 영구 수정 필요 (requirements.txt 버전 고정 권장)
+**상태:** ✅ 해결 (PR #276) — `requirements.txt`에 방법 3 (`protobuf>=3.19.0,<4.0.0`) 적용 완료
 
 ---
 
@@ -177,7 +177,7 @@ alphastar_arch/             █░░░░░░░░░░░░░░░░�
 | ID | 날짜 | 심각도 | 상태 | 설명 |
 |:---|:---|:---:|:---:|:---|
 | BUG-001 | 2026-03-31 | 🟡 LOW | 🔧 오픈 | economy_manager 테스트 기댓값 불일치 |
-| ENV-001 | 2026-03-31 | 🟠 MED | 🔧 오픈 | protobuf 버전 호환성 (s2clientprotocol) |
+| ENV-001 | 2026-03-31 | 🟠 MED | ✅ 수정 | protobuf 버전 호환성 (s2clientprotocol) |
 | BUG-002 | 이전 세션 | 🟢 DONE | ✅ 수정 | HP 가중치 전투 계산 오류 |
 | BUG-003 | 이전 세션 | 🟢 DONE | ✅ 수정 | 가스 가드 로직 오류 |
 | BUG-004 | 이전 세션 | 🟢 DONE | ✅ 수정 | 크립 확산 BFS 무한루프 |
