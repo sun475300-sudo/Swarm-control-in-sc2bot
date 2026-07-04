@@ -105,7 +105,7 @@ class EconomyManager:
         self.macro_hatch_check_interval = EconomyConstants.MACRO_HATCH_CHECK_INTERVAL
         # Gold base tracking
         self._gold_bases_cache = []
-        self._gold_cache_time = 0
+        self._gold_cache_time = None
         self._emergency_mode = False
         self._early_split_done = False
         # 2026-01-25 FIX: Track Maynarding transfers
@@ -165,7 +165,7 @@ class EconomyManager:
     def reset(self):
         """게임 간 상태 초기화 (훈련 에피소드 간 호출 필수)"""
         self._gold_bases_cache = []
-        self._gold_cache_time = 0
+        self._gold_cache_time = None
         self._emergency_mode = False
         self._early_split_done = False
         self.transferred_hatcheries = set()
@@ -3013,7 +3013,14 @@ class EconomyManager:
         current_time = getattr(self.bot, "time", 0)
 
         # 캐시 사용 (30초마다 갱신)
-        if current_time - self._gold_cache_time < 30 and self._gold_bases_cache:
+        # NOTE: cache validity must not depend on truthiness of
+        # _gold_bases_cache — an empty list (no gold expansions found,
+        # the common case) is falsy in Python and would otherwise bypass
+        # the cache entirely, forcing a full mineral_field rescan every call.
+        if (
+            self._gold_cache_time is not None
+            and current_time - self._gold_cache_time < 30
+        ):
             return self._gold_bases_cache
 
         gold_expansions = []

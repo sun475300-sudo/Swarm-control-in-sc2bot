@@ -176,13 +176,20 @@ class TestEconomyManager(unittest.TestCase):
 
     def test_get_gold_expansion_locations_caching(self):
         """Test gold expansion location caching"""
-        # First call
+        # First call computes and caches the result
         self.bot.time = 0
         result1 = self.manager._get_gold_expansion_locations()
+        calls_after_first = self.bot.mineral_field.closer_than.call_count
+        self.assertGreater(calls_after_first, 0)
 
-        # Second call within 30 seconds (should use cache)
+        # Second call within 30 seconds should hit the cache: same object,
+        # no additional mineral_field scans
         self.bot.time = 10
         result2 = self.manager._get_gold_expansion_locations()
+        self.assertIs(result2, result1)
+        self.assertEqual(
+            self.bot.mineral_field.closer_than.call_count, calls_after_first
+        )
 
         # Cache time should be set
         self.assertGreaterEqual(self.manager._gold_cache_time, 0)
