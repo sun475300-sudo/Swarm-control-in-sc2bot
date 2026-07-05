@@ -2,20 +2,36 @@
 
 > Owner: 선우 (sun475300@gmail.com)
 > Maintainer: nightly automation
-> Last refreshed: 2026-05-04
+> Last refreshed: 2026-07-05
 
 ---
 
 ## Snapshot (current state)
 
-- Branch: `main`, last commit: queen transfusion + requirements-dev.txt session
+- Branch: `claude/optimistic-edison-7hu7gb`, last commit: black/isort repo-wide formatting fix
 - Bot core: `wicked_zerg_challenger/` — 179+ Python files across 10+ subdirs.
 - `.gitattributes` enforces `* text=auto` ✅
-- CI: `sc2bot-ci.yml` runs black + isort + flake8 ✅ (all clean)
-- **Test suite: 468 pass / 15 skip / 0 fail** ✅ (was 398/20/0 two nights ago)
+- CI: `sc2bot-ci.yml` runs black + isort + flake8 — **was failing lint on `main` itself** (66 files drifted); now clean as of this run ✅
+- **Test suite (`tests/`): 486 pass / 12 skip / 0 fail** ✅ (was 468/15/0 previous run)
 - Queen transfusion logic: 3 bugs fixed (`is_idle` guard removed, target dedup, per-queen cooldown) ✅
 
-## Resolved this run (2026-05-03)
+## Resolved this run (2026-07-05)
+
+| Item | File(s) | Notes |
+|------|---------|-------|
+| Flaky FSM tests (12 failures) | `tests/test_combat_phase_fsm.py` | All 5 `_run` helpers called `asyncio.get_event_loop().run_until_complete(...)`, which raises `RuntimeError: There is no current event loop in thread 'MainThread'` once an earlier pytest-asyncio test in the same session closes the default loop — order-dependent flake. Replaced with `asyncio.run(...)`, which creates and tears down its own loop per call. 12/12 tests now pass regardless of run order. |
+| CI lint gate failing (66 files) | 70 files across `wicked_zerg_challenger/`, `tests/`, `scripts/`, `qmix_marl/`, `mappo_marl/`, `comm_learning/` | **Doc drift found:** this file's own snapshot claimed "black + isort + flake8 ✅ all clean," but `black --check --diff .` was failing on 66 files on `main` itself (verified before touching anything) — the claim was stale. Ran `black .` + `isort .` (mechanical, no manual edits); reran full suite (486/0/12, unchanged) and flake8's blocking critical check (E9,F63,F7,F82 — clean) before committing. |
+| Environment: pytest collection blocked | (env only, no code change) | Local top-level dir literally named `pytest/` shadows the installed `pytest` package when run from repo root; `sc2` import required `PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python` env var (generated `_pb2.py` files predate current `protobuf` runtime). Both are environment quirks, not repo bugs — noted here so the next run doesn't re-diagnose them from scratch. |
+
+## Backlog (next up, priority order)
+
+1. **P2.2** Benchmark runner — single command, N replays, APM/supply/win-rate report vs Hard. ❌ Open
+2. **P2.3** Build-order config externalisation — move top-20 hardcoded values to `config/build_orders.yaml`. ❌ Open
+3. **P2.4** RL agent save-experience guard — unit test for save under disk-full / interrupted-rename. ❌ Open
+4. **P2.5** Type hints + docstring pass on core modules — `core/resource_manager.py`, `core/manager_factory.py`. ❌ Open
+5. `ROADMAP.md` Sprints 1–8 — this doc reads as an older/aspirational plan; several tasks it lists as unimplemented (e.g. scouting cadence, harassment retreat, expansion timing) were already resolved per the P1 table above. Next run should audit `ROADMAP.md` against actual code and either update or retire the stale parts, then work whatever's genuinely left undone.
+
+## Resolved previous run (2026-05-03)
 
 | Item | File(s) | Notes |
 |------|---------|-------|
