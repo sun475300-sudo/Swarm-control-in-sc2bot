@@ -116,6 +116,7 @@ jobs:
           pytest tests/test_crypto_trading.py tests/test_security.py -v --tb=short
         env:
           DRY_RUN: "true"
+          PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION: python
           LOG_LEVEL: "DEBUG"
 
   # ─────────────────────────────────────────────

@@ -325,6 +325,19 @@ class WickedZergBotProImpl(BotAI):
             self.logger.info(f"[SITUATIONAL_AWARENESS] Initialization failed: {e}")
             traceback.print_exc()
 
+        # === Nydus Network Trainer (땅굴망 학습) ===
+        self.nydus_trainer = None
+        try:
+            from nydus_network_trainer import NydusNetworkTrainer
+
+            self.nydus_trainer = NydusNetworkTrainer(self)
+            self.logger.info("[*] NydusNetworkTrainer initialized")
+        except ImportError as e:
+            self.logger.info(f"[NYDUS_TRAINER] Not available: {e}")
+        except Exception as e:
+            self.logger.info(f"[NYDUS_TRAINER] Initialization failed: {e}")
+            traceback.print_exc()
+
         # === Step integrator initialization ===
         self._step_integrator = BotStepIntegrator(self)
 

@@ -4,7 +4,7 @@
 
 통합 문제 해결 후 발견된 추가 개선 사항들입니다.
 
-**Last refreshed:** 2026-04-27 (Issue #1, #2 → Resolved; Issue #6 partially resolved via Batch 3)
+**Last refreshed:** 2026-07-05 (N1-N4, Issue #3, Issue #4 → confirmed Resolved in current code; see below)
 
 ---
 
@@ -14,14 +14,12 @@
 
 | ID | 설명 | 우선순위 | 상태 |
 |----|------|---------|------|
-| N1 | `OpponentModeling.on_step` 중복 정의 (line 341 vs 765 — F811) | 🟠 HIGH | open — 동작 영향(상위 on_step이 미실행) 가능 |
-| N2 | `EconomyManager._prevent_resource_banking` / `_reduce_gas_workers` 재정의 (F811) | 🟡 MED | open |
-| N3 | `combat_manager._find_harass_target` 재정의 (line 2377 vs 4278) | 🟡 MED | open |
-| N4 | `production_resilience.build_terran_counters` 재정의 (1369 vs 1866) | 🟡 MED | open |
+| N1 | `OpponentModeling.on_step` 중복 정의 (line 341 vs 765 — F811) | 🟠 HIGH | ✅ resolved — commit `e648ae4`, 중복 정의 1개만 남음 (확인: 2026-07-05) |
+| N2 | `EconomyManager._prevent_resource_banking` / `_reduce_gas_workers` 재정의 (F811) | 🟡 MED | ✅ resolved — commit `e648ae4` (확인: 2026-07-05) |
+| N3 | `combat_manager._find_harass_target` 재정의 (line 2377 vs 4278) | 🟡 MED | ✅ resolved — commit `e648ae4` (확인: 2026-07-05) |
+| N4 | `production_resilience.build_terran_counters` 재정의 (1369 vs 1866) | 🟡 MED | ✅ resolved — commit `e648ae4` (확인: 2026-07-05) |
 | N5 | bare `except Exception:` 다수 (≈360+) — 이번 PR에서 12건 처리, 잔여 다수 | 🟢 LOW | partial |
 | N6 | F841 unused local variables (visuals/make_pptx 등) | 🟢 LOW | open (presentation 코드라 영향 작음) |
-
-검증 권장: PR 분리 (N1 단독 PR 권장 — 동작 변화 가능성).
 
 ---
 
@@ -65,155 +63,40 @@
 
 검증 출처: `ACTION_LOG_20260419.md` Task #6.
 
+### ✅ Issue #3: Transfusion 우선순위 개선 (확인일: 2026-07-05)
+
+`economy/queen_transfusion_manager.py`에 아래 제안과 거의 동일한 `HEAL_PRIORITY` dict가
+이미 구현되어 `bot_step_integration.py`에 연결되어 있습니다. 문서가 stale했던 것으로,
+별도 작업 없이 닫습니다.
+
+⚠️ 다만 Transfusion을 실행하는 코드가 `queen_manager.py`,
+`spellcaster_automation.py`, `combat/queen_walk.py`,
+`economy/queen_specialization.py`, `economy/queen_transfusion_manager.py`,
+`advanced_micro_controller_v3.py` 총 6곳에 흩어져 동시에 활성화되어 있어
+중복/경쟁 캐스팅 여부는 별도 감사가 필요합니다 (신규 항목 N7로 하단에 등록).
+
+### ✅ Issue #4: Resource Reservation Race Condition (확인일: 2026-07-05)
+
+`core/resource_manager.py`가 제안된 `asyncio.Lock` + `try_reserve()`/`release()`
+패턴을 그대로 구현하고 있고, `ManagerFactory`를 통해 `self.resource_manager`로
+연결되어 있습니다. 문서가 stale했던 것으로, 별도 작업 없이 닫습니다.
+
 ---
 
 ## 🟡 MEDIUM Priority Issues (still open)
 
-### Issue #3: Transfusion 우선순위 개선 필요
+### N7: Transfusion 캐스팅 로직 6곳 중복 (신규, 2026-07-05)
 
-**위치**: `queen_manager.py` 또는 `spell_unit_manager.py`
+**위치**: `queen_manager.py`, `spellcaster_automation.py`, `combat/queen_walk.py`,
+`economy/queen_specialization.py`, `economy/queen_transfusion_manager.py`,
+`advanced_micro_controller_v3.py`
 
-**현재 문제**:
-- Transfusion 로직이 단순함
-- 고가 유닛(울트라, 브루드로드) 우선순위 없음
-- 군단 숙주, 맹독충 등 치료 불가 유닛에 낭비 가능성
+**문제**: Transfusion을 실행하는 코드가 6개 파일에 흩어져 있고 전부 동시에
+활성화되어 있습니다. 서로 다른 우선순위/쿨다운 규칙으로 같은 Queen에게
+경쟁적으로 명령을 내릴 가능성이 있어, 어느 구현이 canonical인지 감사하고
+나머지를 정리(또는 위임)할 필요가 있습니다.
 
-**개선 방법**:
-```python
-async def smart_transfusion(self, queen, damaged_units):
-    """
-    스마트 수혈 - 우선순위 기반
-
-    우선순위:
-    1. 울트라리스크 (300/200 고가 유닛)
-    2. 브루드로드 (150/150/2)
-    3. 바퀴 (75/25)
-    4. 히드라 (100/50)
-    5. 저글링 (25/0)
-    """
-    if queen.energy < 50:
-        return
-
-    # 치료 우선순위 정의
-    HEAL_PRIORITY = {
-        UnitTypeId.ULTRALISK: 100,
-        UnitTypeId.BROODLORD: 90,
-        UnitTypeId.ROACH: 70,
-        UnitTypeId.RAVAGER: 75,
-        UnitTypeId.HYDRALISK: 60,
-        UnitTypeId.MUTALISK: 50,
-        UnitTypeId.CORRUPTOR: 50,
-        UnitTypeId.ZERGLING: 30,
-    }
-
-    # 치료 불가 유닛 제외
-    CANNOT_HEAL = {
-        UnitTypeId.BANELING,  # 맹독충 (자폭 유닛)
-        UnitTypeId.BROODLING,  # 무리 (일회용)
-        UnitTypeId.LOCUSTMP,  # 군단 숙주 (일회용)
-    }
-
-    # 우선순위대로 정렬
-    valid_targets = [
-        u for u in damaged_units
-        if u.type_id not in CANNOT_HEAL and u.health_percentage < 0.6
-    ]
-
-    if not valid_targets:
-        return
-
-    # 우선순위 정렬 (priority desc, health% asc)
-    valid_targets.sort(
-        key=lambda u: (
-            -HEAL_PRIORITY.get(u.type_id, 0),  # 우선순위 높을수록
-            u.health_percentage  # 체력 낮을수록
-        )
-    )
-
-    best_target = valid_targets[0]
-
-    # 수혈 실행 (50 에너지, +125 HP)
-    if queen.distance_to(best_target) <= 7:
-        from sc2.ids.ability_id import AbilityId
-        self.bot.do(queen(AbilityId.TRANSFUSION_TRANSFUSION, best_target))
-```
-
-**우선순위**: 🟡 MEDIUM (자원 효율성 개선)
-
----
-
-### Issue #4: Resource Reservation Race Condition
-
-**위치**: `resource_manager.py` (추정)
-
-**문제**:
-- 여러 매니저가 동시에 자원 예약 시도
-- 경쟁 조건(race condition) 발생 가능
-- 자원 이중 예약 위험
-
-**예시**:
-```python
-# upgrade_manager가 저장된 자원 확인
-if self.bot.minerals >= 200:
-    # ★ 이 순간 다른 매니저도 200 미네랄 확인 가능 ★
-    reserve_resources(200, 0)
-
-# building_manager도 동시에
-if self.bot.minerals >= 150:
-    # ★ 같은 자원을 중복 예약! ★
-    reserve_resources(150, 0)
-```
-
-**해결 방법**:
-```python
-class ResourceManager:
-    def __init__(self):
-        self._lock = asyncio.Lock()  # 동기화 잠금
-        self._reserved_minerals = 0
-        self._reserved_gas = 0
-
-    async def try_reserve(self, minerals: int, gas: int, manager_name: str) -> bool:
-        """
-        자원 예약 시도 (thread-safe)
-
-        Returns:
-            성공 시 True, 실패 시 False
-        """
-        async with self._lock:  # 원자적 작업 보장
-            available_minerals = self.bot.minerals - self._reserved_minerals
-            available_gas = self.bot.vespene - self._reserved_gas
-
-            if available_minerals >= minerals and available_gas >= gas:
-                self._reserved_minerals += minerals
-                self._reserved_gas += gas
-
-                self.logger.debug(
-                    f"{manager_name} reserved {minerals}M/{gas}G "
-                    f"(Total reserved: {self._reserved_minerals}M/{self._reserved_gas}G)"
-                )
-                return True
-
-            return False
-
-    async def release(self, minerals: int, gas: int):
-        """자원 예약 해제"""
-        async with self._lock:
-            self._reserved_minerals -= minerals
-            self._reserved_gas -= gas
-```
-
-**사용 예시**:
-```python
-# upgrade_manager.py
-if await self.bot.resource_manager.try_reserve(200, 100, "UpgradeManager"):
-    # 예약 성공 - 업그레이드 시작
-    await self.start_upgrade(UpgradeId.METABOLICBOOST)
-else:
-    # 예약 실패 - 다음 프레임 재시도
-    return
-```
-
-**우선순위**: 🟡 MEDIUM (안정성 개선, 드물게 발생)
+**우선순위**: 🟡 MEDIUM (중복 캐스팅으로 인한 낭비/충돌 가능성)
 
 ---
 
@@ -363,10 +246,11 @@ if iteration % SECOND == 0:
 
 | 우선순위 | 이슈 | 영향도 | 난이도 |
 |---------|------|--------|--------|
-| 🟡 MEDIUM | #3 Transfusion 우선순위 | 중간 | 중간 |
-| 🟡 MEDIUM | #4 Resource Race Condition | 낮음 | 중간 |
+| 🟡 MEDIUM | N7 Transfusion 6곳 중복 감사 | 중간 | 중간 |
 | 🟢 LOW | #5 코드 중복 제거 | 낮음 | 쉬움 |
 | 🟢 LOW | #6 매직 넘버 | 낮음 | 쉬움 |
+
+(Issue #1, #2, #3, #4, N1-N4 → ✅ Resolved 섹션 참조)
 
 (Issue #1, #2 → ✅ Resolved 섹션 참조)
 
@@ -378,11 +262,13 @@ if iteration % SECOND == 0:
 ~~1. Queen Inject 쿨다운 수정 (25 → 29)~~ — 코드 반영 완료, 본 문서 ✅ Resolved 섹션 참조
 ~~2. 누락된 업그레이드 추가~~ — 코드 반영 완료, 본 문서 ✅ Resolved 섹션 참조
 
-### 2단계: 로직 개선 (30분, 미진행)
-3. Transfusion 우선순위 시스템 구현
+~~3. Transfusion 우선순위 시스템 구현~~ — 코드 반영 완료 (`economy/queen_transfusion_manager.py`), 본 문서 ✅ Resolved 섹션 참조
+~~4. Resource Reservation 동기화~~ — 코드 반영 완료 (`core/resource_manager.py`), 본 문서 ✅ Resolved 섹션 참조
+
+### 2단계: 신규 감사 (미진행)
+7. N7: Transfusion 캐스팅 6곳 중복 감사 및 정리
 
 ### 3단계: 구조 개선 (1시간, 미진행)
-4. Resource Reservation 동기화
 5. Position Utils 유틸리티 함수 분리
 6. Constants 정리
 
@@ -421,5 +307,5 @@ if iteration % SECOND == 0:
 
 ---
 
-**검토 완료일**: 2026-01-29
-**상태**: 추가 개선 사항 문서화 완료
+**검토 완료일**: 2026-01-29 (최신 갱신: 2026-07-05)
+**상태**: N1-N4, Issue #3, #4 → 코드에 이미 반영되어 Resolved로 정리. 남은 항목: N7(신규), #5, #6.
