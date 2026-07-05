@@ -25,6 +25,12 @@ on:
 env:
   PYTHON_VERSION: "3.10"
   NODE_VERSION: "18"
+  # requirements.txt doesn't pin protobuf, so pip can resolve a build whose
+  # C++ implementation rejects s2clientprotocol's pre-generated _pb2.py
+  # files ("Descriptors cannot be created directly") wherever burnysc2 gets
+  # installed and imported. sc2-bot-test already set this per-job; hoisted
+  # to workflow level so every job that installs requirements.txt is covered.
+  PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION: python
 
 jobs:
   # ─────────────────────────────────────────────
