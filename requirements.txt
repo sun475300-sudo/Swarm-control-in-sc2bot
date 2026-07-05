@@ -27,7 +27,13 @@ discord.py>=2.3.0
 # ═══════════════════════════════════════════════
 # AI / GenAI
 # ═══════════════════════════════════════════════
-google-generativeai>=0.5.0
+# google-generativeai moved to requirements-genai.txt: its transitive
+# dependency google-ai-generativelanguage pins protobuf<6.0.0dev, which is
+# incompatible with the protobuf>=6 runtime that burnysc2/s2clientprotocol's
+# generated code requires. Installing both in one environment breaks every
+# "import sc2" (google.protobuf.runtime_version.VersionError). It's already
+# an optional, try/except-guarded import in genai_self_healing.py and no
+# test exercises it, so it doesn't belong in the default install.
 
 # ═══════════════════════════════════════════════
 # MCP Servers & Claude Agent SDK
