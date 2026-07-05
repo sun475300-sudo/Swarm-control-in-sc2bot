@@ -2,20 +2,27 @@
 
 > Owner: 선우 (sun475300@gmail.com)
 > Maintainer: nightly automation
-> Last refreshed: 2026-05-04
+> Last refreshed: 2026-07-05
 
 ---
 
 ## Snapshot (current state)
 
-- Branch: `main`, last commit: queen transfusion + requirements-dev.txt session
+- Branch: `claude/optimistic-edison-7hu7gb`, last commit: FSM test event-loop flakiness fix
 - Bot core: `wicked_zerg_challenger/` — 179+ Python files across 10+ subdirs.
 - `.gitattributes` enforces `* text=auto` ✅
 - CI: `sc2bot-ci.yml` runs black + isort + flake8 ✅ (all clean)
-- **Test suite: 468 pass / 15 skip / 0 fail** ✅ (was 398/20/0 two nights ago)
+- **Test suite (`tests/`): 486 pass / 12 skip / 0 fail** ✅ (was 468/15/0 previous run)
 - Queen transfusion logic: 3 bugs fixed (`is_idle` guard removed, target dedup, per-queen cooldown) ✅
 
-## Resolved this run (2026-05-03)
+## Resolved this run (2026-07-05)
+
+| Item | File(s) | Notes |
+|------|---------|-------|
+| Flaky FSM tests (12 failures) | `tests/test_combat_phase_fsm.py` | All 5 `_run` helpers called `asyncio.get_event_loop().run_until_complete(...)`, which raises `RuntimeError: There is no current event loop in thread 'MainThread'` once an earlier pytest-asyncio test in the same session closes the default loop — order-dependent flake. Replaced with `asyncio.run(...)`, which creates and tears down its own loop per call. 12/12 tests now pass regardless of run order. |
+| Environment: pytest collection blocked | (env only, no code change) | Local top-level dir literally named `pytest/` shadows the installed `pytest` package when run from repo root; `sc2` import required `PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python` env var (generated `_pb2.py` files predate current `protobuf` runtime). Both are environment quirks, not repo bugs — noted here so the next run doesn't re-diagnose them from scratch. |
+
+## Resolved previous run (2026-05-03)
 
 | Item | File(s) | Notes |
 |------|---------|-------|
