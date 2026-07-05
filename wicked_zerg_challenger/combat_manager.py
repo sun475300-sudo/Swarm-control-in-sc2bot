@@ -40,9 +40,7 @@ else:
             QUEEN = "QUEEN"
 
 
-from combat.assignment_manager import (
-    cleanup_assignments,
-)
+from combat.assignment_manager import cleanup_assignments
 from combat.enemy_tracking import (
     find_densest_enemy_position,
     get_anti_air_threats,
