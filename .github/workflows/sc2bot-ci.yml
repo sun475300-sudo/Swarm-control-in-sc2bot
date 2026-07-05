@@ -16,6 +16,12 @@ env:
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository }}/sc2bot
   PYTHON_DEFAULT: "3.11"
+  # s2clientprotocol ships _pb2.py files generated against the old protobuf
+  # runtime; protobuf>=4's upb backend refuses to load them ("Descriptors
+  # cannot be created directly"). Force the pure-Python parser instead of
+  # pinning protobuf's version, since google-generativeai's own dependency
+  # chain requires protobuf>=4 and conflicts with any protobuf<4 pin.
+  PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION: "python"
 
 jobs:
   # ── Lint ──────────────────────────────────────────────────────────────────
@@ -73,10 +79,13 @@ jobs:
           cache: pip
 
       - name: Install dependencies
-        run: pip install -r requirements.txt pytest pytest-cov pytest-asyncio
+        run: pip install -r requirements.txt pytest pytest-cov pytest-asyncio pytest-timeout pytest-mock
 
       - name: Run unit tests
-        run: pytest tests/unit -v --cov=. --cov-report=xml --cov-report=term
+        run: pytest tests/ --ignore=tests/integration -v --cov=. --cov-report=xml --cov-report=term
+
+      - name: Run wicked_zerg_challenger unit tests
+        run: pytest wicked_zerg_challenger/tests/ -v
 
       - name: Run integration tests
         run: pytest tests/integration -v --timeout=120

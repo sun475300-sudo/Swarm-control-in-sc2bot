@@ -25,6 +25,12 @@ on:
 env:
   PYTHON_VERSION: "3.10"
   NODE_VERSION: "18"
+  # s2clientprotocol ships _pb2.py files generated against the old protobuf
+  # runtime; protobuf>=4's upb backend refuses to load them ("Descriptors
+  # cannot be created directly"). Force the pure-Python parser instead of
+  # pinning protobuf's version, since google-generativeai's own dependency
+  # chain requires protobuf>=4 and conflicts with any protobuf<4 pin.
+  PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION: "python"
 
 jobs:
   # ─────────────────────────────────────────────

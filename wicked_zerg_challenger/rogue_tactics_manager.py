@@ -156,7 +156,8 @@ class RogueTacticsManager:
                             if distance_to_base < 40:  # 기지 40 거리 내
                                 self._enemy_advancing = True
                         return
-            except Exception:
+            except Exception as e:
+                logger.debug(f"Enemy-on-creep check failed for a unit: {e}")
                 continue
 
         self._enemy_on_creep = False
@@ -313,7 +314,10 @@ class RogueTacticsManager:
 
             return path
 
-        except Exception:
+        except Exception as e:
+            logger.debug(
+                f"Stealth path calculation failed, falling back to direct path: {e}"
+            )
             return [end]
 
     async def _execute_baneling_drop(self) -> None:
@@ -368,7 +372,10 @@ class RogueTacticsManager:
                     else:
                         # 수송기로 이동
                         self.bot.do(baneling.move(transport.position))
-                except Exception:
+                except Exception as e:
+                    logger.debug(
+                        f"Baneling boarding command failed for tag {baneling.tag}: {e}"
+                    )
                     continue
 
             # 탑승 완료 확인 후 드랍 위치로 이동
