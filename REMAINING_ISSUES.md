@@ -4,24 +4,44 @@
 
 통합 문제 해결 후 발견된 추가 개선 사항들입니다.
 
-**Last refreshed:** 2026-04-27 (Issue #1, #2 → Resolved; Issue #6 partially resolved via Batch 3)
+**Last refreshed:** 2026-07-05 (N1-N4 재검증 → 이미 해결 확인; CI 테스트 경로 버그 + FSM asyncio 버그 신규 수정 — PR #293)
 
 ---
 
-## 🆕 신규 발견 (PR #44, 2026-04-27)
+## 🚨 최우선 — 중복 PR 자동화 루프 (2026-07-05 발견)
+
+**이 저장소는 현재 open PR이 254개이며, PR #218 이후 단 하나도 머지되지 않았습니다.**
+대부분 동일한 두 버그(`tests/test_combat_phase_fsm.py`의 `asyncio.get_event_loop()` 패턴,
+`sc2bot-ci.yml`의 `pytest tests/unit` 존재하지 않는 경로)를 독립적으로 재발견해서
+매번 새 draft PR만 열고 있습니다 (`claude/optimistic-edison-*` 브랜치, 최근 며칠간 시간당 여러 개).
+
+**근본 원인:** `sc2bot-ci.yml`의 Test Suite job이 `tests/unit`(존재하지 않음)을 참조해
+모든 push/PR에서 무조건 실패 → 자동화 세션이 매번 "CI 실패"를 새 버그로 오인하고
+동일한 수정을 반복 생성. PR #293에서 두 버그 모두 수정함.
+
+**권장 조치 (저장소 소유자 확인 필요):**
+1. PR #293 (또는 동등한 최신 PR) 하나만 머지
+2. 나머지 ~253개 중복 draft PR을 일괄 close
+3. 병렬 세션을 스폰하는 자동화 주기를 "일일 1회"로 조정 (현재 시간당 여러 세션 실행 중으로 추정)
+
+---
+
+## 🆕 신규 발견 (PR #44, 2026-04-27 / 재검증 2026-07-05)
 
 자동/수동 점검 사이클(테스트 → 코드 검사 → 개선 → 커밋/푸시 반복)에서 새로 식별된 항목.
 
 | ID | 설명 | 우선순위 | 상태 |
 |----|------|---------|------|
-| N1 | `OpponentModeling.on_step` 중복 정의 (line 341 vs 765 — F811) | 🟠 HIGH | open — 동작 영향(상위 on_step이 미실행) 가능 |
-| N2 | `EconomyManager._prevent_resource_banking` / `_reduce_gas_workers` 재정의 (F811) | 🟡 MED | open |
-| N3 | `combat_manager._find_harass_target` 재정의 (line 2377 vs 4278) | 🟡 MED | open |
-| N4 | `production_resilience.build_terran_counters` 재정의 (1369 vs 1866) | 🟡 MED | open |
+| N1 | `OpponentModeling.on_step` 중복 정의 (line 341 vs 765 — F811) | 🟠 HIGH | ✅ resolved — 재검증 결과 단일 정의만 존재 (2026-07-05) |
+| N2 | `EconomyManager._prevent_resource_banking` / `_reduce_gas_workers` 재정의 (F811) | 🟡 MED | ✅ resolved — 재검증 결과 단일 정의만 존재 (2026-07-05) |
+| N3 | `combat_manager._find_harass_target` 재정의 (line 2377 vs 4278) | 🟡 MED | ✅ resolved — 재검증 결과 단일 정의만 존재 (2026-07-05) |
+| N4 | `production_resilience.build_terran_counters` 재정의 (1369 vs 1866) | 🟡 MED | ✅ resolved — 재검증 결과 단일 정의만 존재 (2026-07-05) |
 | N5 | bare `except Exception:` 다수 (≈360+) — 이번 PR에서 12건 처리, 잔여 다수 | 🟢 LOW | partial |
-| N6 | F841 unused local variables (visuals/make_pptx 등) | 🟢 LOW | open (presentation 코드라 영향 작음) |
+| N6 | F841 unused local variables (visuals/make_pptx 등) — flake8 재확인 결과 130건 잔존 | 🟢 LOW | open (presentation 코드라 영향 작음) |
+| N7 | `sc2bot-ci.yml` Test Suite job이 `pytest tests/unit`(미존재 경로) 실행 → 모든 push/PR에서 무조건 실패 | 🔴 CRITICAL | ✅ fixed in PR #293 — `tests/ --ignore=tests/integration`로 수정 |
+| N8 | `tests/test_combat_phase_fsm.py` 5곳에서 `asyncio.get_event_loop().run_until_complete()` 사용 → Python 3.11에서 RuntimeError, 12개 테스트 실패 | 🔴 CRITICAL | ✅ fixed in PR #293 — `asyncio.run()`으로 교체 |
 
-검증 권장: PR 분리 (N1 단독 PR 권장 — 동작 변화 가능성).
+검증 권장: PR 분리 불필요 — N7/N8은 서로 인접한 CI 안정화 작업으로 PR #293에서 함께 처리.
 
 ---
 
