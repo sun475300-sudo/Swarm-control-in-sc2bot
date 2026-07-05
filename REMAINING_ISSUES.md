@@ -22,6 +22,8 @@
 | N6 | F841 unused local variables (visuals/make_pptx 등) | 🟢 LOW | open (presentation 코드라 영향 작음) |
 | N7 | `tests/test_queen_transfusion.py`가 sibling 테스트들과 달리 `sc2` import를 `try/except`로 감싸지 않아, `sc2` 미설치 환경에서 pytest 컬렉션 자체가 중단됨 (해당 파일뿐 아니라 전체 스위트 실행 불가) | 🟠 HIGH | ✅ resolved (2026-07-05) — sibling 파일들과 동일한 `pytest.skip(..., allow_module_level=True)` 가드 추가 |
 | N8 | `tests/test_combat_phase_fsm.py`가 `asyncio.get_event_loop().run_until_complete(...)`를 5곳에서 사용 — Python 3.11+에서 실행 중인 루프가 없으면 `RuntimeError`, FSM 단계 전이 테스트 12건 실패 | 🟠 HIGH | ✅ resolved (2026-07-05) — `asyncio.run(...)`으로 교체 |
+| N9 | `.github/workflows/ci.yml`의 `python-lint-test` 잡("pytest 실행 (전체)" 스텝)이 `PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION: python`을 누락 — CI에서 실제 `sc2`(burnysc2)를 설치하면 `s2clientprotocol`의 구형 `_pb2.py`가 최신 protobuf 런타임과 충돌해 `TypeError: Descriptors cannot be created directly`로 14개 테스트 파일 컬렉션이 통째로 실패. `sc2-bot-test` 잡은 이미 이 env var로 우회하고 있었음 — `main`에서 몇 달째 간헐적으로 `JARVIS CI/CD`/`SC2 Bot CI/CD Pipeline`이 실패해온 원인 중 하나로 추정 | 🟠 HIGH | ✅ resolved (2026-07-05) — `python-lint-test`에도 동일 env var 추가 |
+| N10 | `.github/workflows/sc2bot-ci.yml`의 `test` 잡이 `pytest tests/unit`을 실행하는데 저장소에 `tests/unit/` 디렉터리가 존재하지 않음(현재는 `tests/*.py` 평면 구조 + `tests/integration/`). 게다가 `test` 잡이 `needs: lint`라서 lint(N9와 별개로 black 66파일 미포맷 때문에 항상 실패)가 통과해야만 `test`가 실행되어, 사실상 이 워크플로의 테스트 스위트가 오랫동안 한 번도 안 돌았을 가능성 | 🟡 MED | open — 워크플로 구조 변경(lint 게이트 완화 + 경로 수정)이 필요해 사용자 확인 후 처리 예정 |
 
 검증 권장: N5(bare except 잔여 475건)는 규모가 크므로 모듈별로 나눠 별도 PR 권장.
 
