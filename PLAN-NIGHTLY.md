@@ -2,7 +2,7 @@
 
 > Owner: 선우 (sun475300@gmail.com)
 > Maintainer: nightly automation
-> Last refreshed: 2026-05-04
+> Last refreshed: 2026-07-05
 
 ---
 
@@ -12,8 +12,17 @@
 - Bot core: `wicked_zerg_challenger/` — 179+ Python files across 10+ subdirs.
 - `.gitattributes` enforces `* text=auto` ✅
 - CI: `sc2bot-ci.yml` runs black + isort + flake8 ✅ (all clean)
-- **Test suite: 468 pass / 15 skip / 0 fail** ✅ (was 398/20/0 two nights ago)
+- **Test suite: 502 pass / 14 skip / 0 fail** ✅ (verified 2026-07-05 on a fresh checkout — this figure had not actually been reproduced on `main` since the FSM asyncio bug was silently regressing P2.1)
 - Queen transfusion logic: 3 bugs fixed (`is_idle` guard removed, target dedup, per-queen cooldown) ✅
+- **⚠️ Repo hygiene:** ~20 open PRs (#269-288) and ~300 stale `claude/*` branches accumulated from repeated unmerged automation cycles, most re-fixing this same FSM/asyncio bug independently. Recommend consolidating to one PR and closing the rest — see session report.
+
+## Resolved this run (2026-07-05)
+
+| Item | File(s) | Notes |
+|------|---------|-------|
+| P2.1 regression: FSM tests actually failing on `main` | `tests/test_combat_phase_fsm.py` | Despite the 2026-05-02 entry below claiming "23/23 pass," `main` still called `asyncio.get_event_loop().run_until_complete(...)`, which raises `RuntimeError: There is no current event loop in thread 'MainThread'` on Python 3.11 (no implicit loop creation). All 12 FSM-transition tests were failing. Note: ~20 open PRs on other `claude/optimistic-edison-*` branches independently "fixed" this same bug without merging — none had landed on `main`. Fixed here with `asyncio.run(...)` (5 call sites). Verified: 502 pass / 14 skip / 0 fail. |
+| Stale `REMAINING_ISSUES.md` | `REMAINING_ISSUES.md` | N1-N4 (duplicate method definitions), Issue #3 (transfusion priority), Issue #4 (resource-reservation locking), Issue #5/#6 (utils extraction) were all listed "open" but are already implemented in current code. Re-verified with file:line evidence and marked resolved. |
+| Sprint 7.2 DistanceCache adoption (partial → less partial) | `economy_manager.py` | 20 more `.distance_to(` call sites migrated to the existing `self._distance_between()` cache wrapper (was 1/25, now 21/25 in this file). `combat_manager.py` still has ~60 raw calls vs 7 cached — not touched this run, flagged below. |
 
 ## Resolved this run (2026-05-03)
 
@@ -49,11 +58,14 @@
 
 | #    | Item                                            | Status | Notes |
 |------|-------------------------------------------------|--------|-------|
-| P2.1 | Force-accumulation FSM tests                    | ✅ Done | `tests/test_combat_phase_fsm.py` — 23 tests all passing. |
+| P2.1 | Force-accumulation FSM tests                    | ✅ Done (2026-07-05, verified for real this time) | `tests/test_combat_phase_fsm.py` — 12 tests, all passing after asyncio.run() fix. Prior "23/23" claim was inaccurate — bug was still live on `main`. |
 | P2.2 | Benchmark runner                                | ❌ Open | Single command, N replays, APM/supply/win-rate report vs Hard. |
 | P2.3 | Build-order config externalisation              | ❌ Open | Move top-20 hardcoded values to `config/build_orders.yaml`. |
 | P2.4 | RL agent save-experience guard                  | ❌ Open | Unit test for save under disk-full / interrupted-rename. |
 | P2.5 | Type hints + docstring pass on core modules     | ❌ Open | `core/resource_manager.py`, `core/manager_factory.py`. |
+| P2.6 | ROADMAP.md Sprint 7.2 — finish DistanceCache migration | 🟡 Partial | `economy_manager.py` now 21/25 call sites cached (was 1/25). `combat_manager.py` still ~60 raw `.distance_to(` vs 7 cached (`_safe_distance` at combat_manager.py:3567 bypasses cache entirely) — next session should migrate combat_manager.py's hot loops. |
+| P2.7 | ROADMAP.md Sprint 7.3 — finish GameConstants migration | 🟡 Partial | `utils/game_constants.py` (`GameFrequencies`, `EconomyConstants`) is adopted in `economy_manager.py` (20 hits) but `strategy_manager.py` and `intel_manager.py` have 0 hits, and `combat_manager.py` still has raw `iteration % 22/33/50/66/110/220` (37 occurrences) that should route through `GameFrequencies`. |
+| P2.8 | ROADMAP.md Sprint 8 — Medium AI 30-game benchmark | ❌ Open / unverifiable statically | `run_mass_test.py` exists but no in-repo artifact shows a completed 90%+ win-rate run against Medium AI; requires an actual SC2 client + maps, out of scope for a sandboxed code session. |
 
 ## Long-term direction
 
@@ -94,3 +106,4 @@ Run `E:\GitHub\Swarm-control-in-sc2bot\scripts\commit_nightly_2026-05-03.bat`:
 - **2026-05-01** — P1.1 scout cadence, P1.2 harassment, P1.3 expansion timing, P1.5 doc history. Commit blocked by index.lock.
 - **2026-05-02** — P0 scout import mismatch fixed. P1.4 deprecation shim. P2.1 FSM tests 23/23 pass.
 - **2026-05-03** — **Test suite cleared:** 90 failures → 0. Fixed pytest-asyncio, torch stubs (qmix/mappo), stale __init__ exports (mappo/comm_learning), gas threshold test, crypto skipif guards. Final: 398 pass / 20 skip / 0 fail.
+- **2026-07-05** — Re-verified full suite from a fresh checkout: found the P2.1 FSM asyncio bug was still live on `main` (12 failing), fixed for real (502 pass/14 skip/0 fail). Corrected stale `REMAINING_ISSUES.md`. Migrated 20 more `economy_manager.py` distance calls onto `DistanceCache` (Sprint 7.2). Audited ROADMAP.md Sprints 1-8 against actual code — Sprints 1-6 confirmed fully implemented, Sprint 7 confirmed partial (scaffolding built, migration incomplete), Sprint 8 unverifiable without running real games. Flagged severe PR/branch sprawl (20 open duplicate PRs, ~300 stale branches).
