@@ -861,10 +861,6 @@ class BotStepIntegrator:
             if hasattr(self.bot, "zergling_harass") and self.bot.zergling_harass:
                 await self.bot.zergling_harass.on_step(iteration)
 
-            # 0.011 *** Overseer Scout Trainer (감시군주 정찰) ***
-            if hasattr(self.bot, "overseer_scout") and self.bot.overseer_scout:
-                await self.bot.overseer_scout.on_step(iteration)
-
             # 0.012 *** Air Threat Response Trainer (공중 위협 대응) ***
             if (
                 hasattr(self.bot, "air_threat_response")
