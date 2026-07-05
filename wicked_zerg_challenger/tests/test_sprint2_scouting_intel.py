@@ -8,7 +8,7 @@ from unittest.mock import MagicMock, Mock
 os.environ["PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION"] = "python"
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from intel_manager import IntelManager
+from intel_manager import BUILD_PATTERNS, IntelManager
 from scouting_system import ScoutingSystem, UnitTypeId
 from strategy_manager import EnemyRace, GamePhase, StrategyManager
 
@@ -258,6 +258,135 @@ class TestSprint2IntelAndAirResponse(unittest.TestCase):
         self.assertEqual(self.intel.get_enemy_build_pattern(), "battlecruiser_rush")
         self.assertTrue(self.bot.blackboard.get("AIR_THREAT_INCOMING"))
         self.assertTrue(self.bot.blackboard.get("urgent_spore_all_bases"))
+
+    def _assert_pattern_detected(self, pattern):
+        self.intel.update(0)
+        self.assertEqual(self.intel.get_enemy_build_pattern(), pattern)
+        self.assertEqual(
+            self.intel.get_recommended_response(),
+            list(BUILD_PATTERNS[pattern]["response"]),
+        )
+
+    def test_2_1_1_medivac_drop_pattern_detected(self):
+        self.bot.time = 200.0
+        self.bot.enemy_structures = [
+            make_structure("BARRACKS", FakePoint(60, 60)),
+            make_structure("BARRACKS", FakePoint(61, 60)),
+            make_structure("FACTORY", FakePoint(62, 60)),
+            make_structure("STARPORT", FakePoint(63, 60)),
+        ]
+
+        self._assert_pattern_detected("2_1_1_medivac_drop")
+
+    def test_widow_mine_drop_pattern_detected(self):
+        self.bot.time = 200.0
+        self.bot.enemy_structures = [
+            make_structure("FACTORY", FakePoint(60, 60)),
+            make_structure("STARPORT", FakePoint(61, 60)),
+        ]
+
+        self._assert_pattern_detected("widow_mine_drop")
+        self.assertEqual(
+            self.bot.blackboard.get("expanded_build_pattern"), "widow_mine_drop"
+        )
+
+    def test_mech_transition_pattern_detected(self):
+        self.bot.time = 200.0
+        self.bot.enemy_structures = [
+            make_structure("FACTORY", FakePoint(60, 60)),
+            make_structure("FACTORY", FakePoint(61, 60)),
+            make_structure("ARMORY", FakePoint(62, 60)),
+        ]
+
+        self._assert_pattern_detected("mech_transition")
+
+    def test_cannon_rush_pattern_sets_aggression_flags(self):
+        self.bot.time = 100.0
+        self.bot.enemy_structures = [
+            make_structure("PHOTONCANNON", FakePoint(15, 15)),
+        ]
+
+        self._assert_pattern_detected("cannon_rush")
+        self.assertTrue(self.bot.blackboard.get("enemy_aggression"))
+        self.assertTrue(self.bot.blackboard.get("urgent_spine_all_bases"))
+
+    def test_dt_rush_pattern_sets_cloak_flags(self):
+        self.bot.time = 200.0
+        self.bot.enemy_structures = [
+            make_structure("DARKSHRINE", FakePoint(90, 90)),
+        ]
+
+        self._assert_pattern_detected("dt_rush")
+        self.assertTrue(self.bot.blackboard.get("cloak_tech_detected"))
+        self.assertTrue(self.bot.blackboard.get("urgent_overseer"))
+        self.assertTrue(self.bot.blackboard.get("urgent_spore_all_bases"))
+
+    def test_void_ray_rush_pattern_sets_air_warning_flags(self):
+        self.bot.time = 200.0
+        self.bot.enemy_structures = [
+            make_structure("STARGATE", FakePoint(90, 90)),
+        ]
+        self.bot.enemy_units = [
+            FakeUnit("VOIDRAY", tag=201, position=FakePoint(90, 90)),
+            FakeUnit("VOIDRAY", tag=202, position=FakePoint(91, 90)),
+        ]
+
+        self._assert_pattern_detected("void_ray_rush")
+        self.assertTrue(self.bot.blackboard.get("AIR_THREAT_INCOMING"))
+        self.assertTrue(self.bot.blackboard.get("urgent_spore_all_bases"))
+
+    def test_immortal_allin_pattern_detected(self):
+        self.bot.time = 200.0
+        self.bot.enemy_structures = [
+            make_structure("ROBOTICSFACILITY", FakePoint(90, 90)),
+        ]
+
+        self._assert_pattern_detected("immortal_allin")
+        self.assertTrue(self.bot.blackboard.get("enemy_aggression"))
+        self.assertTrue(self.bot.blackboard.get("urgent_spine_all_bases"))
+
+    def test_archon_transition_pattern_detected(self):
+        self.bot.time = 200.0
+        self.bot.enemy_structures = [
+            make_structure("TEMPLARARCHIVE", FakePoint(90, 90)),
+        ]
+        self.bot.enemy_units = [
+            FakeUnit("HIGHTEMPLAR", tag=301, position=FakePoint(90, 90)),
+            FakeUnit("HIGHTEMPLAR", tag=302, position=FakePoint(91, 90)),
+            FakeUnit("HIGHTEMPLAR", tag=303, position=FakePoint(92, 90)),
+        ]
+
+        self._assert_pattern_detected("archon_transition")
+
+    def test_ling_rush_pattern_sets_aggression_flags(self):
+        self.bot.time = 50.0
+        self.bot.enemy_structures = [
+            make_structure("SPAWNINGPOOL", FakePoint(90, 90)),
+        ]
+
+        self._assert_pattern_detected("ling_rush")
+        self.assertTrue(self.bot.blackboard.get("enemy_aggression"))
+        self.assertTrue(self.bot.blackboard.get("urgent_spine_all_bases"))
+
+    def test_muta_rush_pattern_sets_air_warning_flags(self):
+        self.bot.time = 200.0
+        self.bot.enemy_structures = [
+            make_structure("SPIRE", FakePoint(90, 90)),
+        ]
+
+        self._assert_pattern_detected("muta_rush")
+        self.assertTrue(self.bot.blackboard.get("AIR_THREAT_INCOMING"))
+        self.assertTrue(self.bot.blackboard.get("urgent_spore_all_bases"))
+
+    def test_nydus_rush_pattern_sets_aggression_flags(self):
+        self.bot.time = 200.0
+        self.bot.enemy_structures = [
+            make_structure("NYDUSNETWORK", FakePoint(90, 90)),
+        ]
+
+        self._assert_pattern_detected("nydus_rush")
+        self.assertTrue(self.bot.blackboard.get("enemy_aggression"))
+        self.assertTrue(self.bot.blackboard.get("urgent_spine_all_bases"))
 
     def test_strategy_reacts_to_air_threat_before_air_units_visible(self):
         self.bot.blackboard.set("AIR_THREAT_INCOMING", True)
