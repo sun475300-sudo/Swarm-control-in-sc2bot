@@ -2,7 +2,7 @@
 
 > Owner: 선우 (sun475300@gmail.com)
 > Maintainer: nightly automation
-> Last refreshed: 2026-05-04
+> Last refreshed: 2026-07-05
 
 ---
 
@@ -12,7 +12,9 @@
 - Bot core: `wicked_zerg_challenger/` — 179+ Python files across 10+ subdirs.
 - `.gitattributes` enforces `* text=auto` ✅
 - CI: `sc2bot-ci.yml` runs black + isort + flake8 ✅ (all clean)
-- **Test suite: 468 pass / 15 skip / 0 fail** ✅ (was 398/20/0 two nights ago)
+- **Test suite (clean sandbox, no sc2/torch installed): 428 pass / 20 skip / 0 fail** ✅
+  — remaining skips are all optional-dependency guards (`sc2`, `torch`, `pyupbit` not
+  installable in this sandbox); no logic-level skips remain.
 - Queen transfusion logic: 3 bugs fixed (`is_idle` guard removed, target dedup, per-queen cooldown) ✅
 
 ## Resolved this run (2026-05-03)
@@ -94,3 +96,4 @@ Run `E:\GitHub\Swarm-control-in-sc2bot\scripts\commit_nightly_2026-05-03.bat`:
 - **2026-05-01** — P1.1 scout cadence, P1.2 harassment, P1.3 expansion timing, P1.5 doc history. Commit blocked by index.lock.
 - **2026-05-02** — P0 scout import mismatch fixed. P1.4 deprecation shim. P2.1 FSM tests 23/23 pass.
 - **2026-05-03** — **Test suite cleared:** 90 failures → 0. Fixed pytest-asyncio, torch stubs (qmix/mappo), stale __init__ exports (mappo/comm_learning), gas threshold test, crypto skipif guards. Final: 398 pass / 20 skip / 0 fail.
+- **2026-07-05** — Fresh sandbox test pass surfaced 2 real bugs: (1) `tests/test_queen_transfusion.py` imported `sc2.ids.unit_typeid` unguarded, unlike every sibling test file — a missing/partial `sc2` install crashed pytest *collection* for the whole suite, not just that file. Added the same `try/except ImportError: pytest.skip(...)` guard used elsewhere. (2) `tests/test_combat_phase_fsm.py` called `asyncio.get_event_loop().run_until_complete(...)` in 5 places — removed/deprecated on Python 3.11+ when no loop is running, so all 12 FSM phase-transition tests failed with `RuntimeError: There is no current event loop`. Replaced with `asyncio.run(...)`. Re-verified `REMAINING_ISSUES.md` items N1–N4 (duplicate `F811` definitions in `opponent_modeling.py`, `economy_manager.py`, `combat_manager.py`, `production_resilience.py`) — all already single-definition in current `main`; doc was stale, marked resolved. `flake8 --select=F811` across `wicked_zerg_challenger/` returns clean. Final: 428 pass / 20 skip / 0 fail (sandbox has no `sc2`/`torch`/`pyupbit` — remaining skips are all optional-dependency guards, none logic-level).
