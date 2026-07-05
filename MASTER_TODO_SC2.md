@@ -161,3 +161,44 @@
 3. **S3.1 CI fail-fast: false** (단순 패치, 별 PR, 자동 가능)
 4. **S3.2 pip-tools 도입** (별 PR, 검토 후 자동)
 5. 그 외 S2/S3/S4 항목은 사용자 우선순위 협의 후 진행
+
+---
+
+## 5. 사이클 7 — 실제 테스트 실행 기반 점검 (2026-07-05)
+
+> 이전까지의 백로그는 PR 본문/문서 조사 기반이었음. 이번 사이클은 **로컬에서 실제로 `pytest`를 실행**해서
+> 나온 진짜 실패/버그를 우선순위로 삼음. (venv에 `burnysc2` 등 실제 설치, `PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python`
+> 워크어라운드 적용 후 실행)
+
+### 5.1 실행 결과 요약
+- 루트 `tests/` (516 tests, sc2 실제 설치 후): **12 failed** (수정 전) → **0 failed** (수정 후, 아래 참고)
+- `wicked_zerg_challenger/tests/` (661 tests, ci.yml의 `sc2-bot-test` 잡이 실제로 도는 스위트): **661 passed, 0 failed** — 봇 핵심 로직은 현재 건강함
+
+### 5.2 이번 사이클에서 수정 완료 (커밋됨)
+- [x] **`tests/test_combat_phase_fsm.py` 12건 실패** — `asyncio.get_event_loop().run_until_complete(...)` 패턴이
+  스위트 전체 실행 시 (다른 파일의 async 테스트가 먼저 이벤트 루프를 닫아버려서) `RuntimeError: There is no current
+  event loop in thread 'MainThread'` 로 깨짐. `asyncio.run(...)`으로 교체 (5곳) → 505 passed, 0 failed로 복구.
+- [x] **`sc2bot-ci.yml` Test 잡이 실제로는 한 번도 통과한 적이 없었을 가능성 높음**:
+  - `pytest tests/unit` — 저장소에 `tests/unit` 디렉터리 자체가 없음 (`ERROR: file or directory not found`, exit 4)
+  - `pytest tests/integration -v --timeout=120` — `pytest-timeout` 미설치라 `--timeout` 인자 자체를 pytest가 거부
+  - → `tests --ignore=tests/integration` / `tests/integration`으로 경로 수정, `pytest-timeout`, `async-timeout` 설치 추가,
+    `PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python` env 추가(ci.yml의 정상 동작하는 `sc2-bot-test` 잡과 동일 처리)
+- [x] **`sc2bot-ci.yml` Lint 잡이 Test/Build/Deploy 전체를 항상 막고 있었을 가능성**: `needs: lint` 구조상 lint가
+  실패하면 test 잡 자체가 실행되지 않음. `black --check --diff .` / `isort --check-only --diff .`가 (봉 코드
+  `wicked_zerg_challenger/`만 봐도 54개 포맷 오류 + 12개 isort 오류) 항상 실패하는 상태였음. 저장소 전체 black/isort
+  일괄 적용은 리스크가 크고(문서 3항 참고, 열린 PR 14건과 충돌) 봇 로직과 무관하므로, MASTER_TODO 1.6절의 권장안대로
+  **non-blocking(`continue-on-error: true`)으로 전환**해서 최소한 test/build 잡이 실제로 실행되게 함.
+
+### 5.3 확인했지만 이번 사이클에 손대지 않은 항목 (다음 사이클 후보, 우선순위순)
+1. **P0** `sc2bot-ci.yml`의 black/isort를 non-blocking으로 돌린 것은 임시방편 — 근본 해결은 `wicked_zerg_challenger/`
+   포맷팅 전용 PR(54 files) + isort 12 files 정리. 봇 로직 변경 없이 스타일만 바뀌므로 리스크 낮음.
+2. **P1** pytest skip/xfail 15건 (`tests/test_core_modules.py` 2, `tests/test_crypto_trading.py` 5,
+   `tests/test_new_modules.py` 2, `tests/test_p606_modules.py` 6) — 각각 스킵 사유 라벨링 필요 (환경 의존 vs 임시 회피).
+3. **P1** TODO/FIXME 27건 (7개 파일, 1.3절 참고) — 봇 핵심 로직 TODO는 적으나 `check_missing_logic.py`(6건) 등
+   실제 로직 누락 가능성 있는 항목부터 확인.
+4. **P2** `wicked_zerg_challenger/tests/`는 661개 테스트가 전부 통과 중이나 **커버리지 측정 자체가 없음** —
+   `--cov=wicked_zerg_challenger --cov-fail-under=NN` 추가해서 핵심 모듈(combat/economy/opponent_modeling) 커버리지
+   시각화 필요.
+5. **P2** `ADDITIONAL_IMPROVEMENTS_REPORT.md`에 남아있는 미적용 개선점 20개(HIGH 7 / MEDIUM 8 / LOW 5) — 테스트로
+   먼저 재현/검증 후 착수 여부 결정 (문서 작성 시점과 현재 코드가 얼마나 벌어졌는지 diff 확인 필요).
+6. **P3** 열린 PR 16건 redundancy 정리 — 사용자 승인 필요, 자동 close 금지.
