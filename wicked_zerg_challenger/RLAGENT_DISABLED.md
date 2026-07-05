@@ -1,4 +1,11 @@
-# RLAgent 비활성화 완료
+# RLAgent 비활성화 완료 (⚠️ STALE — 2026-07-05 갱신 참고)
+
+> **이 문서는 더 이상 현재 코드 상태와 일치하지 않습니다.**
+> `wicked_zerg_bot_pro_impl.py`의 `on_start()`는 현재
+> `self.rl_agent = None`으로 시작한 뒤 **`self.train_mode`가 True일 때만**
+> `RLAgent`를 조건부로 생성합니다 (즉, 완전 비활성화가 아니라
+> train_mode 게이트로 전환됨). 아래 "재활성화 방법" 섹션은 이미
+> 적용되어 있으니 참고용 기록으로만 남깁니다.
 
 실행 일시: 2026-01-25
 
