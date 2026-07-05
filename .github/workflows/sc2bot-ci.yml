@@ -92,7 +92,7 @@ jobs:
           cache: pip
 
       - name: Install dependencies
-        run: pip install -r requirements.txt pytest pytest-cov pytest-asyncio
+        run: pip install -r requirements.txt pytest pytest-cov pytest-asyncio pytest-timeout
 
       # tests/unit does not exist — the suite lives directly under tests/,
       # with tests/integration/ as the only subdirectory.
