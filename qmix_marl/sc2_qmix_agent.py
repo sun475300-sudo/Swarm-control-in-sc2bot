@@ -46,15 +46,25 @@ try:
 except ImportError:
     HAS_TORCH = False
     import types as _types
+
     # Lightweight stubs so Torch-dependent class bodies can be *defined* at
     # module level without torch installed.  They are never *instantiated*
     # because construction is guarded by `self.use_torch` / HAS_TORCH checks.
     _mod = _types.SimpleNamespace
     nn = _mod(
         Module=object,
-        Sequential=None, Linear=None, ReLU=None, ELU=None,
-        Tanh=None, Sigmoid=None, LayerNorm=None, BatchNorm1d=None,
-        ModuleList=None, Dropout=None, GRU=None, LSTM=None,
+        Sequential=None,
+        Linear=None,
+        ReLU=None,
+        ELU=None,
+        Tanh=None,
+        Sigmoid=None,
+        LayerNorm=None,
+        BatchNorm1d=None,
+        ModuleList=None,
+        Dropout=None,
+        GRU=None,
+        LSTM=None,
         Parameter=None,
     )
     torch = _mod(Tensor=object, FloatTensor=None, zeros=None, no_grad=lambda f: f)

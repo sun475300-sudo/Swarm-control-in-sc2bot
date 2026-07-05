@@ -1,0 +1,13 @@
+# Optional: Google Generative AI (self-healing assistant feature)
+#
+# NOT included in requirements.txt: google-ai-generativelanguage (a
+# transitive dependency) pins protobuf<6.0.0dev, which conflicts with the
+# protobuf>=6 runtime required by burnysc2/s2clientprotocol's generated
+# code. Installing this alongside the SC2 bot core deps breaks every
+# "import sc2" with google.protobuf.runtime_version.VersionError.
+#
+# wicked_zerg_challenger/genai_self_healing.py already guards this import
+# with try/except and degrades gracefully when it's absent. Install this
+# file separately only if you need that specific feature, in an
+# environment that does not also run the SC2 bot.
+google-generativeai>=0.5.0
