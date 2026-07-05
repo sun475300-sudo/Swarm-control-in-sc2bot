@@ -8,20 +8,19 @@
 
 ---
 
-## 🆕 신규 발견 (PR #44, 2026-04-27)
+## 🆕 신규 발견 (PR #44, 2026-04-27) — 재확인 2026-07-05
 
 자동/수동 점검 사이클(테스트 → 코드 검사 → 개선 → 커밋/푸시 반복)에서 새로 식별된 항목.
+**2026-07-05 재확인:** N1~N4는 모두 이미 코드에서 단일 정의로 정리된 상태(중복 제거 완료 확인). 문서만 stale했음.
 
 | ID | 설명 | 우선순위 | 상태 |
 |----|------|---------|------|
-| N1 | `OpponentModeling.on_step` 중복 정의 (line 341 vs 765 — F811) | 🟠 HIGH | open — 동작 영향(상위 on_step이 미실행) 가능 |
-| N2 | `EconomyManager._prevent_resource_banking` / `_reduce_gas_workers` 재정의 (F811) | 🟡 MED | open |
-| N3 | `combat_manager._find_harass_target` 재정의 (line 2377 vs 4278) | 🟡 MED | open |
-| N4 | `production_resilience.build_terran_counters` 재정의 (1369 vs 1866) | 🟡 MED | open |
-| N5 | bare `except Exception:` 다수 (≈360+) — 이번 PR에서 12건 처리, 잔여 다수 | 🟢 LOW | partial |
+| N1 | `OpponentModeling.on_step` 중복 정의 (line 341 vs 765 — F811) | 🟠 HIGH | ✅ resolved — `opponent_modeling.py`에 `def on_step`이 341행 1곳만 존재 |
+| N2 | `EconomyManager._prevent_resource_banking` / `_reduce_gas_workers` 재정의 (F811) | 🟡 MED | ✅ resolved — `economy_manager.py`에 각각 정의가 1곳(3198행/3995행)만 존재 |
+| N3 | `combat_manager._find_harass_target` 재정의 (line 2377 vs 4278) | 🟡 MED | ✅ resolved — `combat_manager.py`에 정의가 4992행 1곳만 존재 |
+| N4 | `production_resilience.build_terran_counters` 재정의 (1369 vs 1866) | 🟡 MED | ✅ resolved — `local_training/production_resilience.py`에 1961행 1곳만 존재 |
+| N5 | bare `except Exception:` 다수 (≈360+) — 이번 PR에서 12건 처리, 잔여 다수 | 🟢 LOW | 재확인: 진짜 bare `except:` (모든 예외 포함, KeyboardInterrupt까지)는 0건. `except Exception:` 468건은 대부분 로깅 포함, 규모상 일괄 정리는 저가치 — 낮은 우선순위 유지 |
 | N6 | F841 unused local variables (visuals/make_pptx 등) | 🟢 LOW | open (presentation 코드라 영향 작음) |
-
-검증 권장: PR 분리 (N1 단독 PR 권장 — 동작 변화 가능성).
 
 ---
 
@@ -67,7 +66,25 @@
 
 ---
 
-## 🟡 MEDIUM Priority Issues (still open)
+## ✅ Resolved (재확인 2026-07-05)
+
+### ✅ Issue #3: Transfusion 우선순위 — 구현 완료 확인
+
+`queen_manager.py:729-776`에 `TRANSFUSE_PRIORITY` 딕셔너리 기반 우선순위 시스템이 이미 구현되어 있음
+(체력 낮은 고가치 유닛 우선, 치료 불가 유닛 제외 로직 포함). 아래 원안 그대로 반영된 상태 — 별도 작업 불필요.
+
+### ✅ Issue #4: Resource Reservation Race Condition — 구현 완료 확인
+
+`wicked_zerg_challenger/core/resource_manager.py:28-136`에 `asyncio.Lock` 기반 `try_reserve`/`release` API가
+이미 구현되어 있음 (원안과 동일한 패턴). 별도 작업 불필요.
+
+### ✅ Issue #5 / #6 — 구현 완료 확인
+
+`utils/position_utils.py`, `utils/game_constants.py` 모두 이미 존재. 원안의 유틸/상수 분리가 반영된 상태.
+
+---
+
+## 📜 원본 이슈 기록 (구현 확인용, 참고 목적으로 보존)
 
 ### Issue #3: Transfusion 우선순위 개선 필요
 
