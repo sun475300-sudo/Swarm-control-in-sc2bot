@@ -11,6 +11,15 @@ import tempfile
 from pathlib import Path
 from unittest.mock import MagicMock
 
+# s2clientprotocol ships _pb2.py files generated with an old protoc; the
+# upb-backed protobuf runtime (>=4) rejects them at import time with
+# "Descriptors cannot be created directly." Force the pure-Python
+# implementation instead of pinning protobuf, since pinning conflicts with
+# the google-generativeai dependency chain elsewhere in requirements.txt.
+# Must be set before sc2/s2clientprotocol is imported anywhere in the
+# process, so it goes at the top of the first conftest pytest loads.
+os.environ.setdefault("PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION", "python")
+
 import pytest
 
 # 프로젝트 루트를 sys.path에 추가
