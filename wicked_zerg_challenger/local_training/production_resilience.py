@@ -96,10 +96,7 @@ except ImportError:
     BuildingPlacementHelper = None
 
 # Import production modules
-from local_training.production import (
-    can_expand_safely,
-    safe_train,
-)
+from local_training.production import can_expand_safely, safe_train
 
 
 class ProductionResilience:
