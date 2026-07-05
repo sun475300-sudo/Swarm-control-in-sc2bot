@@ -112,11 +112,14 @@ jobs:
 
       - name: pytest 실행 (전체)
         run: |
-          # test_queen_transfusion.py needs burnysc2, installed separately in the sc2-bot-test job
-          pytest tests/ --ignore=tests/test_queen_transfusion.py -v --tb=short
+          pytest tests/ -v --tb=short
         env:
           DRY_RUN: "true"
           LOG_LEVEL: "DEBUG"
+          # burnysc2's s2clientprotocol dep ships pre-generated _pb2.py files that
+          # crash under the C++ protobuf implementation ("Descriptors cannot be
+          # created directly"); force the pure-Python implementation instead.
+          PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION: python
 
   # ─────────────────────────────────────────────
   # SC2 봇 구문 검증 + 테스트
