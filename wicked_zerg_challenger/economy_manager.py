@@ -1189,7 +1189,8 @@ class EconomyManager:
                     if not available_workers:
                         # Try idle workers
                         available_workers = self.bot.workers.filter(
-                            lambda w: w.is_idle and self._distance_between(w, extractor) < 20
+                            lambda w: w.is_idle
+                            and self._distance_between(w, extractor) < 20
                         )
 
                     if available_workers:
@@ -1478,7 +1479,8 @@ class EconomyManager:
             # 가장 가깝고 여유 있는 기지 선택
             target_base = min(
                 healthy_bases,
-                key=lambda x: self._distance_between(x[0], depleted_townhall) - x[1] * 0.01,
+                key=lambda x: self._distance_between(x[0], depleted_townhall)
+                - x[1] * 0.01,
             )[0]
 
             # 고갈 기지의 미네랄 일꾼 이주 (가스 일꾼 제외)
@@ -1585,11 +1587,13 @@ class EconomyManager:
                 # 개선: is_idle 또는 is_gathering하고 있고 가까이 있는 일꾼만
                 nearby_workers = workers.filter(
                     lambda w: (
-                        self._distance_between(w, depleted_th) < 8  # 거리 줄임 (15 -> 8)
+                        self._distance_between(w, depleted_th)
+                        < 8  # 거리 줄임 (15 -> 8)
                         and (w.is_idle or (w.is_gathering and not w.is_moving))
                         and not w.is_carrying_vespene
                         and not any(
-                            self._distance_between(e, w) < 3 for e in self.bot.gas_buildings
+                            self._distance_between(e, w) < 3
+                            for e in self.bot.gas_buildings
                         )
                     )
                 )
@@ -1611,7 +1615,8 @@ class EconomyManager:
                 if not best_target:
                     # All bases full - use closest
                     best_target = min(
-                        active_bases, key=lambda th: self._distance_between(th, depleted_th)
+                        active_bases,
+                        key=lambda th: self._distance_between(th, depleted_th),
                     )
 
                 # Move workers to target base (최대 3명으로 줄임)
@@ -2372,7 +2377,9 @@ class EconomyManager:
         # Score: Distance from enemy start + Distance from our start (to be "hidden" usually means far from action)
         # But for Rogue style, maybe just far from enemy?
         # Let's prioritize: Furthest from Enemy Start
-        best_loc = max(available_bases, key=lambda p: self._distance_between(p, enemy_start))
+        best_loc = max(
+            available_bases, key=lambda p: self._distance_between(p, enemy_start)
+        )
 
         return best_loc
 
@@ -2578,7 +2585,9 @@ class EconomyManager:
         if not candidates:
             return None
 
-        candidates.sort(key=lambda pos: self._distance_between(pos, self.bot.start_location))
+        candidates.sort(
+            key=lambda pos: self._distance_between(pos, self.bot.start_location)
+        )
         for candidate in candidates:
             if hasattr(self.bot, "can_place"):
                 try:
@@ -3033,7 +3042,10 @@ class EconomyManager:
                     continue
 
                 # Skip enemy positions
-                if any(self._distance_between(exp_pos, enemy) < 10 for enemy in enemy_expansions):
+                if any(
+                    self._distance_between(exp_pos, enemy) < 10
+                    for enemy in enemy_expansions
+                ):
                     continue
 
                 # Check for gold minerals
@@ -3103,7 +3115,9 @@ class EconomyManager:
                 for exp_pos, gold_count, total_minerals, _ in gold_expansions:
                     dist_to_us = self._distance_between(exp_pos, our_base)
                     dist_to_enemy = (
-                        self._distance_between(exp_pos, enemy_base) if enemy_base else 100
+                        self._distance_between(exp_pos, enemy_base)
+                        if enemy_base
+                        else 100
                     )
 
                     # * 골드 패치 보너스 대폭 강화 (+80 per gold) *
@@ -3148,7 +3162,9 @@ class EconomyManager:
 
                     dist_to_us = self._distance_between(exp_pos, our_base)
                     dist_to_enemy = (
-                        self._distance_between(exp_pos, enemy_base) if enemy_base else 100
+                        self._distance_between(exp_pos, enemy_base)
+                        if enemy_base
+                        else 100
                     )
 
                     # 자원량 계산
@@ -3913,7 +3929,8 @@ class EconomyManager:
                     ]
                     if expansions:
                         target_loc = min(
-                            expansions, key=lambda p: self._distance_between(p, enemy_main)
+                            expansions,
+                            key=lambda p: self._distance_between(p, enemy_main),
                         )
 
             if target_loc:
