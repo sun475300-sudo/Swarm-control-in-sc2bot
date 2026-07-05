@@ -259,7 +259,7 @@ class BurrowController:
                 skip_units.add(unit.tag)
             else:
                 action = self._handle_unburrowed_unit(
-                    unit, health_ratio, enemy_nearby, down_ability
+                    unit, enemy_units, health_ratio, enemy_nearby, down_ability
                 )
                 if action:
                     actions.append(action)
@@ -297,7 +297,7 @@ class BurrowController:
         return None
 
     def _handle_unburrowed_unit(
-        self, unit, health_ratio: float, enemy_nearby: bool, down_ability
+        self, unit, enemy_units, health_ratio: float, enemy_nearby: bool, down_ability
     ):
         """Handle logic for unburrowed units."""
         # Banelings burrow when enemies nearby and idle (ambush)
@@ -311,12 +311,10 @@ class BurrowController:
             if down_ability:
                 return unit(down_ability)
 
-        # * FIX: Lurkers must burrow to attack! *
+        # Lurkers burrow to attack once an enemy is within attack range (9)
         if UnitTypeId and unit.type_id == UnitTypeId.LURKERMP:
-            # 적이 공격 사거리(9) 내에 있으면 잠복
-            # NOTE: enemy_units not in scope here (existing bug). Conservative: skip burrow logic.
-            if down_ability and getattr(unit, "is_idle", False):  # noqa: F821
-                pass  # placeholder - original logic referenced undefined enemy_units
+            if down_ability and self._enemy_within(enemy_units, unit, 9.0):
+                return unit(down_ability)
 
         return None
 
