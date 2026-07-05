@@ -13,6 +13,11 @@ from unittest.mock import MagicMock
 
 import pytest
 
+# sc2 -> s2clientprotocol의 pb2 스텁이 최신 protobuf 런타임과 충돌해
+# "TypeError: Descriptors cannot be created directly"로 collection이 깨지는 문제 회피
+# (wicked_zerg_challenger/tests/conftest.py와 동일한 워크어라운드)
+os.environ.setdefault("PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION", "python")
+
 # 프로젝트 루트를 sys.path에 추가
 PROJECT_ROOT = Path(__file__).parent.parent
 if str(PROJECT_ROOT) not in sys.path:
