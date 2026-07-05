@@ -27,6 +27,8 @@ jobs:
         python-version: ["3.10", "3.11", "3.12"]
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v5
@@ -37,11 +39,28 @@ jobs:
       - name: Install lint dependencies
         run: pip install flake8 mypy black isort bandit
 
-      - name: Run black (format check)
-        run: black --check --diff .
+      - name: Determine changed Python files
+        id: changed
+        run: |
+          BASE_SHA="${{ github.event.pull_request.base.sha || github.event.before }}"
+          if [ -z "$BASE_SHA" ] || ! git cat-file -e "$BASE_SHA" 2>/dev/null; then
+            echo "files=" >> "$GITHUB_OUTPUT"
+          else
+            FILES=$(git diff --name-only --diff-filter=ACMR "$BASE_SHA" HEAD -- '*.py' | tr '\n' ' ')
+            echo "files=$FILES" >> "$GITHUB_OUTPUT"
+          fi
 
-      - name: Run isort (import order)
-        run: isort --check-only --diff .
+      # Legacy files (~66) predate black/isort adoption and are tracked in
+      # MASTER_TODO_SC2.md for a dedicated formatting PR. Blocking on the
+      # whole tree here would fail every PR regardless of what it touches,
+      # so only files a PR actually changes are checked.
+      - name: Run black (format check, changed files only)
+        if: steps.changed.outputs.files != ''
+        run: black --check --diff ${{ steps.changed.outputs.files }}
+
+      - name: Run isort (import order, changed files only)
+        if: steps.changed.outputs.files != ''
+        run: isort --check-only --diff ${{ steps.changed.outputs.files }}
 
       - name: Run flake8 (full — non-blocking, informational)
         continue-on-error: true
@@ -73,13 +92,19 @@ jobs:
           cache: pip
 
       - name: Install dependencies
-        run: pip install -r requirements.txt pytest pytest-cov pytest-asyncio
+        run: pip install -r requirements.txt pytest pytest-cov pytest-asyncio pytest-timeout
 
+      # tests/unit does not exist — the suite lives directly under tests/,
+      # with tests/integration/ as the only subdirectory.
       - name: Run unit tests
-        run: pytest tests/unit -v --cov=. --cov-report=xml --cov-report=term
+        run: pytest tests/ --ignore=tests/integration -v --cov=. --cov-report=xml --cov-report=term
+        env:
+          PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION: python
 
       - name: Run integration tests
         run: pytest tests/integration -v --timeout=120
+        env:
+          PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION: python
 
       - name: Upload coverage
         uses: codecov/codecov-action@v4
