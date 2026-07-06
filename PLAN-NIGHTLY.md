@@ -2,20 +2,35 @@
 
 > Owner: 선우 (sun475300@gmail.com)
 > Maintainer: nightly automation
-> Last refreshed: 2026-05-04
+> Last refreshed: 2026-07-06
 
 ---
 
 ## Snapshot (current state)
 
-- Branch: `main`, last commit: queen transfusion + requirements-dev.txt session
+- Branch: `main`, worked from `claude/optimistic-edison-nrzf4c`.
 - Bot core: `wicked_zerg_challenger/` — 179+ Python files across 10+ subdirs.
 - `.gitattributes` enforces `* text=auto` ✅
-- CI: `sc2bot-ci.yml` runs black + isort + flake8 ✅ (all clean)
-- **Test suite: 468 pass / 15 skip / 0 fail** ✅ (was 398/20/0 two nights ago)
-- Queen transfusion logic: 3 bugs fixed (`is_idle` guard removed, target dedup, per-queen cooldown) ✅
+- CI: `sc2bot-ci.yml` lint (black/isort/mypy/bandit) still fails on main (66 files need black, several isort errors) — now **non-blocking** (`continue-on-error: true` on the `lint` job) so it no longer blocks `test`/`build`/`deploy`. Formatting cleanup is still tracked as open work (see P3 below), not resolved.
+- **`pip install -r requirements.txt` is broken (`ResolutionImpossible`)** in a clean environment — reproduced live, not just theoretical. Root cause: pip's classic resolver can't settle the `s2clientprotocol`/`google-generativeai`/`boto3`/`mcp` graph (many unbounded `>=` pins) and backtracks for 10+ minutes before failing outright. `uv pip install` resolves the same file in ~27s. All 4 CI steps that ran `pip install -r requirements.txt` (`ci.yml` x4, `sc2bot-ci.yml` x1) now use `uv pip install --system -r requirements.txt` instead.
+- **Test suite: 505 pass / 11 skip / 0 fail** ✅ ( full `sc2` install + fixes below — previously would not even collect without an `sc2` stub/install).
+- `sc2bot-ci.yml` "Test Suite" job's unit-test step pointed at `pytest tests/unit` — **that directory doesn't exist**, so the step always failed. Fixed to `pytest tests/ --ignore=tests/integration`.
 
-## Resolved this run (2026-05-03)
+## Resolved this run (2026-07-06)
+
+| Item | File(s) | Notes |
+|------|---------|-------|
+| `sc2` install fails in clean env | environment | `burnysc2`/`mpyq` sdist fails to build under vendored setuptools distutils (`AttributeError: install_layout`). Fix: `SETUPTOOLS_USE_DISTUTILS=stdlib pip install burnysc2 sc2reader`. Not a repo change, but needed to get real (non-stub) test coverage in a fresh sandbox. |
+| `pip install -r requirements.txt` fails outright | `.github/workflows/ci.yml`, `.github/workflows/sc2bot-ci.yml` | Reproduced `ResolutionImpossible` from a clean env — this is CI-breaking, not just slow. Switched all 5 `pip install -r requirements.txt` CI steps to `uv pip install --system -r requirements.txt` (resolves in ~27s vs 10+ min pip backtrack-then-fail). Matches `MASTER_TODO_SC2.md` S3.2 recommendation. |
+| `sc2bot-ci.yml` lint job blocks test/build/deploy | `.github/workflows/sc2bot-ci.yml` | `test` job has `needs: lint`; lint (black/isort/mypy --strict/bandit) fails on main today (66 files need `black`, multiple `isort` errors) so the whole pipeline (test → build → push → deploy) never runs. Added `continue-on-error: true` to the `lint` job (matches `MASTER_TODO_SC2.md` 1.6 option 1) plus `fail-fast: false` on its matrix (matches S3.1) so one Python version failing doesn't cancel the others. Formatting itself is **not** fixed — tracked separately, see P3. |
+| `sc2bot-ci.yml` "Run unit tests" step targets nonexistent path | `.github/workflows/sc2bot-ci.yml` | `pytest tests/unit` — no such directory exists (canonical suite is `tests/`, per `pytest.ini`). Step always failed. Fixed to `pytest tests/ --ignore=tests/integration`. |
+| `tests/test_combat_phase_fsm.py` — 12 failures | `tests/test_combat_phase_fsm.py` | `asyncio.get_event_loop().run_until_complete(...)` — Python 3.10+ no longer auto-creates a loop on the main thread when none is running, so `get_event_loop()` raises `RuntimeError: There is no current event loop`. Replaced all 5 call sites with `asyncio.run(...)`. All 23 tests in the file now pass; full suite: 493→505 passed, 12→0 failed. |
+| `sc2bot-ci.yml` "Run integration tests" step missing `pytest-timeout` | `.github/workflows/sc2bot-ci.yml` | Surfaced by PR #303's own CI run: once the `lint`-gate fix let the `test` job actually execute for the first time, `pytest tests/integration -v --timeout=120` failed with `unrecognized arguments: --timeout=120` — the job's "Install dependencies" step never installed `pytest-timeout` (it's only in `requirements-dev.txt`, which this step doesn't use). Pre-existing latent bug, invisible until the job could run at all. Added `pytest-timeout` to the install line. |
+| `ci.yml` "Python 린트 & 테스트" job's pytest step lacked the protobuf workaround | `.github/workflows/ci.yml` | Also surfaced by PR #303's CI run: once the `pip install -r requirements.txt` (`ResolutionImpossible`) fix let this job's dependency install actually succeed for the first time, test collection hit `TypeError: Descriptors cannot be created directly` — `s2clientprotocol`'s pre-generated `_pb2.py` files break under the newer protobuf runtime's C++ backend. The `sc2-bot-test` job already works around this with `PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION: python`; added the same env var to this job's pytest step. Another pre-existing bug invisible until the job could run at all. |
+
+**Net result: requirements.txt install now works from a clean environment (previously failed outright); CI pipeline is no longer wedged behind lint; 12 real test failures fixed; the newly-unblocked integration-test step's missing `pytest-timeout` dependency fixed. Suite: 505 pass / 11 skip / 0 fail.**
+
+## Previously resolved (2026-05-03)
 
 | Item | File(s) | Notes |
 |------|---------|-------|
@@ -31,7 +46,11 @@
 
 ## P0 — Critical / blocking
 
-*No P0 items this run.*
+| #    | Item                                                     | Status | Notes |
+|------|-----------------------------------------------------------|--------|-------|
+| P0.1 | `pip install -r requirements.txt` fails outright in CI    | ✅ Done | Switched to `uv pip install --system` in all 5 CI steps (2026-07-06). |
+| P0.2 | `sc2bot-ci.yml` lint failure wedges test/build/deploy     | ✅ Done | `continue-on-error: true` + `fail-fast: false` on `lint` job (2026-07-06). |
+| P0.3 | `sc2bot-ci.yml` unit-test step targets nonexistent `tests/unit` | ✅ Done | Fixed to `tests/ --ignore=tests/integration` (2026-07-06). |
 
 ## P1 — Important
 
@@ -54,6 +73,15 @@
 | P2.3 | Build-order config externalisation              | ❌ Open | Move top-20 hardcoded values to `config/build_orders.yaml`. |
 | P2.4 | RL agent save-experience guard                  | ❌ Open | Unit test for save under disk-full / interrupted-rename. |
 | P2.5 | Type hints + docstring pass on core modules     | ❌ Open | `core/resource_manager.py`, `core/manager_factory.py`. |
+
+## P3 — Formatting / lint debt (now non-blocking, still needs real cleanup)
+
+| #    | Item                                            | Status | Notes |
+|------|--------------------------------------------------|--------|-------|
+| P3.1 | `black` formatting pass                          | ❌ Open | 66 files need reformatting. Do as a dedicated formatting-only PR (per `MASTER_TODO_SC2.md` §3 risk note — a broad black pass on main will conflict with any in-flight branches). |
+| P3.2 | `isort` import-order pass                        | ❌ Open | Multiple files fail `isort --check-only`, incl. `mappo_marl/__init__.py`, `mappo_marl/sc2_mappo_agent.py`, `wicked_zerg_challenger/tests/test_zvz_phase3.py`, `test_zvt_phase1.py`. |
+| P3.3 | `mypy --strict` baseline                         | ❌ Open | Currently non-blocking/informational only; needs a per-module baseline before it can gate CI. |
+| P3.4 | Re-enable lint as blocking once P3.1–P3.3 land   | ❌ Open | Remove `continue-on-error` from `sc2bot-ci.yml` lint job once black/isort are clean on main. |
 
 ## Long-term direction
 
@@ -94,3 +122,4 @@ Run `E:\GitHub\Swarm-control-in-sc2bot\scripts\commit_nightly_2026-05-03.bat`:
 - **2026-05-01** — P1.1 scout cadence, P1.2 harassment, P1.3 expansion timing, P1.5 doc history. Commit blocked by index.lock.
 - **2026-05-02** — P0 scout import mismatch fixed. P1.4 deprecation shim. P2.1 FSM tests 23/23 pass.
 - **2026-05-03** — **Test suite cleared:** 90 failures → 0. Fixed pytest-asyncio, torch stubs (qmix/mappo), stale __init__ exports (mappo/comm_learning), gas threshold test, crypto skipif guards. Final: 398 pass / 20 skip / 0 fail.
+- **2026-07-06** — CI infra pass: `requirements.txt` install (was outright broken, `ResolutionImpossible`) fixed via `uv`; `sc2bot-ci.yml` lint job unblocked (`continue-on-error`, `fail-fast: false`) so test/build/deploy run even while black/isort are dirty; `tests/unit` (nonexistent path) fixed to real path; 12 `asyncio.get_event_loop()` failures in `test_combat_phase_fsm.py` fixed via `asyncio.run()`. Suite: 505 pass / 11 skip / 0 fail. Formatting debt tracked as new P3 (open, not fixed — needs its own PR per repo risk notes).

@@ -46,9 +46,10 @@ jobs:
 
       - name: Python 의존성 설치
         run: |
-          python -m pip install --upgrade pip
+          python -m pip install --upgrade pip uv
           pip install flake8 pytest pytest-cov
-          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+          # requirements.txt는 uv로 설치 (pip 리졸버는 resolution-too-deep으로 실패함)
+          if [ -f requirements.txt ]; then uv pip install --system -r requirements.txt; fi
           # 추가 테스트 의존성
           pip install pyyaml aiohttp
 
@@ -117,6 +118,9 @@ jobs:
         env:
           DRY_RUN: "true"
           LOG_LEVEL: "DEBUG"
+          # s2clientprotocol의 사전생성 _pb2.py가 최신 protobuf 런타임(cpp 구현)에서
+          # "Descriptors cannot be created directly"로 깨짐. sc2-bot-test job과 동일한 우회.
+          PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION: python
 
   # ─────────────────────────────────────────────
   # SC2 봇 구문 검증 + 테스트
@@ -137,9 +141,10 @@ jobs:
 
       - name: SC2 봇 의존성 설치
         run: |
-          python -m pip install --upgrade pip
+          python -m pip install --upgrade pip uv
           pip install burnysc2 pytest pytest-asyncio pyyaml aiohttp
-          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+          # requirements.txt는 uv로 설치 (pip 리졸버는 resolution-too-deep으로 실패함)
+          if [ -f requirements.txt ]; then uv pip install --system -r requirements.txt; fi
 
       - name: py_compile 전체 구문 검증 (349 파일)
         run: |
@@ -269,8 +274,8 @@ jobs:
 
       - name: 패키징 의존성 설치
         run: |
-          python -m pip install --upgrade pip
-          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+          python -m pip install --upgrade pip uv
+          if [ -f requirements.txt ]; then uv pip install --system -r requirements.txt; fi
           pip install burnysc2 pyyaml aiohttp
 
       - name: 통합 검증(빠른 모드)
@@ -317,8 +322,8 @@ jobs:
 
       - name: 피드백 루프 의존성 설치
         run: |
-          python -m pip install --upgrade pip
-          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+          python -m pip install --upgrade pip uv
+          if [ -f requirements.txt ]; then uv pip install --system -r requirements.txt; fi
           pip install sc2reader || true
 
       - name: Replay 피드백 생성
