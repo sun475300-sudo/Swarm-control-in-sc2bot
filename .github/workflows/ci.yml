@@ -117,6 +117,11 @@ jobs:
         env:
           DRY_RUN: "true"
           LOG_LEVEL: "DEBUG"
+          # s2clientprotocol의 사전 생성된 _pb2.py가 구버전 raw descriptor API를
+          # 쓰고 있어, 새 protobuf 런타임(upb 백엔드)에서 "Descriptors cannot be
+          # created directly" 오류로 전체 수집이 실패한다. sc2-bot-test 잡과
+          # 동일하게 순수 파이썬 구현으로 강제 전환해 우회한다.
+          PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION: python
 
   # ─────────────────────────────────────────────
   # SC2 봇 구문 검증 + 테스트
