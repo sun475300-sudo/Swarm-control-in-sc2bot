@@ -4,24 +4,33 @@
 
 통합 문제 해결 후 발견된 추가 개선 사항들입니다.
 
-**Last refreshed:** 2026-04-27 (Issue #1, #2 → Resolved; Issue #6 partially resolved via Batch 3)
+**Last refreshed:** 2026-07-06 (반복 점검 사이클 — N1-N4, Issue #3/#4/#5/#6 재확인 결과 코드에 이미 반영됨을 확인; 신규 CI 결함(N7) 및 테스트 버그(N8) 발견/수정)
 
 ---
 
-## 🆕 신규 발견 (PR #44, 2026-04-27)
-
-자동/수동 점검 사이클(테스트 → 코드 검사 → 개선 → 커밋/푸시 반복)에서 새로 식별된 항목.
+## 🆕 신규 발견 (2026-07-06 점검 사이클)
 
 | ID | 설명 | 우선순위 | 상태 |
 |----|------|---------|------|
-| N1 | `OpponentModeling.on_step` 중복 정의 (line 341 vs 765 — F811) | 🟠 HIGH | open — 동작 영향(상위 on_step이 미실행) 가능 |
-| N2 | `EconomyManager._prevent_resource_banking` / `_reduce_gas_workers` 재정의 (F811) | 🟡 MED | open |
-| N3 | `combat_manager._find_harass_target` 재정의 (line 2377 vs 4278) | 🟡 MED | open |
-| N4 | `production_resilience.build_terran_counters` 재정의 (1369 vs 1866) | 🟡 MED | open |
-| N5 | bare `except Exception:` 다수 (≈360+) — 이번 PR에서 12건 처리, 잔여 다수 | 🟢 LOW | partial |
-| N6 | F841 unused local variables (visuals/make_pptx 등) | 🟢 LOW | open (presentation 코드라 영향 작음) |
+| N7 | CI `python-lint-test` 잡이 `tests/`를 `--co`(collect-only)로만 실행 — 502개 테스트가 실제로 한 번도 CI에서 실행되지 않음. `pytest-asyncio` 미설치로 async 테스트가 전부 실패해서 우회용으로 `--co`가 들어간 것으로 추정 | 🔴 HIGH | ✅ fixed — `.github/workflows/ci.yml`에 `pytest-asyncio` 설치 추가 + `--co` 제거하여 실제 실행으로 전환 |
+| N8 | `tests/test_combat_phase_fsm.py`가 `asyncio.get_event_loop().run_until_complete(...)` 사용 — Python 3.11 + pytest-asyncio 조합에서 "no current event loop" 발생, 12개 테스트 실패 | 🔴 HIGH | ✅ fixed — `asyncio.run(...)`로 교체 (5개 지점) |
 
-검증 권장: PR 분리 (N1 단독 PR 권장 — 동작 변화 가능성).
+## ✅ 재검증 결과 (2026-07-06) — 이미 해결된 것으로 확인, 문서만 stale했음
+
+| ID | 설명 | 확인 내용 |
+|----|------|----------|
+| N1 | `OpponentModeling.on_step` 중복 정의 (F811) | 현재 `opponent_modeling.py`에 `on_step` 정의 1개뿐 — 이미 정리됨 |
+| N2 | `EconomyManager._prevent_resource_banking` / `_reduce_gas_workers` 재정의 | 각각 1개 정의만 존재 (line 3198, 3995) |
+| N3 | `combat_manager._find_harass_target` 재정의 | 정의 1개만 존재 (line 4992) |
+| N4 | `production_resilience.build_terran_counters` 재정의 | `local_training/production_resilience.py`에 중복 없음 |
+| Issue #3 | Transfusion 우선순위 시스템 | `economy/queen_transfusion_manager.py`의 `HEAL_PRIORITY` + 정렬 로직으로 구현 완료 |
+| Issue #4 | Resource Reservation Race Condition | `core/resource_manager.py::ResourceManager.try_reserve` (asyncio.Lock 기반)로 구현 완료, `defense_coordinator.py`/`economy_manager.py`에서 사용 중 |
+| Issue #5 | Position 계산 중복 | `utils/position_utils.py` 존재 |
+| Issue #6 | 매직 넘버 | `utils/game_constants.py` 존재 (Queen 관련 상수는 `GameConfig`로 별도 이관 완료) |
+
+전체 리포지토리 F811(중복 정의) 스캔 결과, `wicked_zerg_challenger/` 내부에는 잔여 항목 없음 (다른 실험 모듈인 `cirq_quantum/`, `discord_advanced_features.py`, `jax_flax_rl/`, `pennylane_qml/`, `spark_jobs/`, `tianshou_rl/`에 11건 존재하나 SC2 봇 핵심 로직과 무관, 로컬 함수 스코프 재-import로 낮은 우선순위).
+
+**남은 항목**: N5(bare `except Exception:` 다수, 코드 품질 개선, 낮은 우선순위)만 미해결 상태로 유지.
 
 ---
 
@@ -67,9 +76,9 @@
 
 ---
 
-## 🟡 MEDIUM Priority Issues (still open)
+## 🟡 MEDIUM Priority Issues (✅ RESOLVED — 2026-07-06 재검증, 아래는 원래 제안 내용 보존용)
 
-### Issue #3: Transfusion 우선순위 개선 필요
+### Issue #3: Transfusion 우선순위 개선 필요 — ✅ RESOLVED (`economy/queen_transfusion_manager.py`)
 
 **위치**: `queen_manager.py` 또는 `spell_unit_manager.py`
 
@@ -213,13 +222,13 @@ else:
     return
 ```
 
-**우선순위**: 🟡 MEDIUM (안정성 개선, 드물게 발생)
+**우선순위**: 🟡 MEDIUM (안정성 개선, 드물게 발생) — ✅ RESOLVED (`core/resource_manager.py::ResourceManager.try_reserve`, `defense_coordinator.py`/`economy_manager.py`에서 사용 중)
 
 ---
 
-## 🟢 LOW Priority Issues
+## 🟢 LOW Priority Issues (✅ RESOLVED — 2026-07-06 재검증)
 
-### Issue #5: 코드 중복 - Position 계산
+### Issue #5: 코드 중복 - Position 계산 — ✅ RESOLVED (`utils/position_utils.py`)
 
 **위치**: 여러 파일에서 중복
 
@@ -296,7 +305,7 @@ center = get_center_position(army_units)
 
 ---
 
-### Issue #6: 매직 넘버 (Magic Numbers)
+### Issue #6: 매직 넘버 (Magic Numbers) — ✅ RESOLVED (`utils/game_constants.py`, Queen 상수는 `GameConfig`로 이관)
 
 **위치**: 여러 파일
 
@@ -361,30 +370,28 @@ if iteration % SECOND == 0:
 
 ## 📊 이슈 우선순위 요약 (open만)
 
-| 우선순위 | 이슈 | 영향도 | 난이도 |
-|---------|------|--------|--------|
-| 🟡 MEDIUM | #3 Transfusion 우선순위 | 중간 | 중간 |
-| 🟡 MEDIUM | #4 Resource Race Condition | 낮음 | 중간 |
-| 🟢 LOW | #5 코드 중복 제거 | 낮음 | 쉬움 |
-| 🟢 LOW | #6 매직 넘버 | 낮음 | 쉬움 |
+| 우선순위 | 이슈 | 상태 |
+|---------|------|------|
+| 🟢 LOW | N5 bare `except Exception:` 정리 (≈468건) | open — 점진적 개선 |
 
-(Issue #1, #2 → ✅ Resolved 섹션 참조)
+(Issue #1-#6, N1-N4 → 모두 ✅ Resolved. N7/N8 → 2026-07-06 발견 즉시 수정 완료.)
 
 ---
 
 ## 🎯 권장 수정 순서
 
-### 1단계: 완료 (✅)
-~~1. Queen Inject 쿨다운 수정 (25 → 29)~~ — 코드 반영 완료, 본 문서 ✅ Resolved 섹션 참조
-~~2. 누락된 업그레이드 추가~~ — 코드 반영 완료, 본 문서 ✅ Resolved 섹션 참조
+### 완료 (✅)
+1. Queen Inject 쿨다운 수정 (25 → 29)
+2. 누락된 업그레이드 추가
+3. Transfusion 우선순위 시스템 구현 (`queen_transfusion_manager.py`)
+4. Resource Reservation 동기화 (`core/resource_manager.py`)
+5. Position Utils 유틸리티 함수 분리 (`utils/position_utils.py`)
+6. Constants 정리 (`utils/game_constants.py`)
+7. CI가 `tests/` 502개를 실제로 실행하지 않던 결함 수정 (`.github/workflows/ci.yml`)
+8. `test_combat_phase_fsm.py`의 `asyncio.get_event_loop()` 버그 수정
 
-### 2단계: 로직 개선 (30분, 미진행)
-3. Transfusion 우선순위 시스템 구현
-
-### 3단계: 구조 개선 (1시간, 미진행)
-4. Resource Reservation 동기화
-5. Position Utils 유틸리티 함수 분리
-6. Constants 정리
+### 남은 항목 (낮은 우선순위, 점진적 개선)
+- N5: bare `except Exception:` 정리
 
 ---
 
