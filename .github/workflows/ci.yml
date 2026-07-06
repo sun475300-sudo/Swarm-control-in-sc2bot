@@ -118,6 +118,9 @@ jobs:
         env:
           DRY_RUN: "true"
           LOG_LEVEL: "DEBUG"
+          # s2clientprotocol의 사전생성 _pb2.py가 최신 protobuf 런타임(cpp 구현)에서
+          # "Descriptors cannot be created directly"로 깨짐. sc2-bot-test job과 동일한 우회.
+          PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION: python
 
   # ─────────────────────────────────────────────
   # SC2 봇 구문 검증 + 테스트
