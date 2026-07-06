@@ -161,3 +161,32 @@
 3. **S3.1 CI fail-fast: false** (단순 패치, 별 PR, 자동 가능)
 4. **S3.2 pip-tools 도입** (별 PR, 검토 후 자동)
 5. 그 외 S2/S3/S4 항목은 사용자 우선순위 협의 후 진행
+
+---
+
+## 5. 2026-07-06 사이클 — 실측 기반 백로그 (PR #299)
+
+> main(`8a80b73`) 기준 `pytest tests/`(502) + `pytest wicked_zerg_challenger/`(668) = 1170개 테스트를 실제로 격리 venv에서 실행하고, flake8/bandit을 core 코드에 돌려서 얻은 실측 결과. 위 1~4장의 PR 번호(#15~#30)는 이미 해소/병합되어 stale — 이 장이 현재 유효한 백로그.
+
+### 5.1 이번 사이클에서 완료 (PR #299)
+- [x] `tests/test_combat_phase_fsm.py`: `asyncio.get_event_loop()`가 Python 3.10+ 메인 스레드에서 루프 미설정 시 RuntimeError → 12개 테스트 실패. `asyncio.run()`으로 교체, 502→502 pass 0 fail 확정 (was 12 fail).
+- [x] bandit 실측 findings 수정: `torch.load()` 3곳에 `weights_only=True` (CWE-502), `requests.get()` 2곳에 `timeout=30` (스크래퍼가 무기한 행 걸릴 수 있었음).
+- [x] `idle_unit_manager.py`: `퀸 힐 우선순위 추가 (구현 필요)` TODO 블록이 실제로는 `pass`만 있는 죽은 코드였음 — `queen_manager._transfuse_injured_units`가 이미 매 스텝 전군을 스캔해 동일 조건(HP<25% 또는 결손≥125)을 전역 처리하고 있어 중복/오해 소지였음. 죽은 블록 제거.
+
+### 5.2 실측으로 확인된 CI 이슈 (우선순위 순)
+1. **[P0] `ci.yml` Python 3.10 잡 — `s2clientprotocol` protobuf 비호환**: `pytest tests/test_*.py` 수집 단계에서 `TypeError: Descriptors cannot be created directly` 14건 발생 (sc2 import 체인 전체가 깨짐). `requirements.txt`에 `protobuf` 핀이 전혀 없어 리졸버가 py3.10에서 구버전으로 백트래킹하는 것으로 추정 — 격리 venv(py3.11, protobuf 7.35.1 자동 설치)에서는 재현 안 됨. **다음 단계**: py3.10 컨테이너로 `pip install -r requirements.txt` 재현 → 정확한 protobuf 버전 확인 → `requirements.txt`에 `protobuf>=6` 또는 CI에 `PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python` 추가.
+2. **[P1] `sc2bot-ci.yml` / `ci.yml` lint 잡 — `black --check` 66개 파일 미포맷**: main 기준 pre-existing (§1.6에 48개로 기록된 이후 66개로 증가). 광범위 일괄 포맷은 열린 브랜치들과 충돌 위험 — 전용 포맷팅 PR로 분리 권장 (§1.6 옵션 2/3 참고).
+3. **[P2] GitHub Dependabot 알림 100건** (critical 2, high 38, moderate 46, low 14) — push 시 자동 경고 표시됨. 트리아지 필요 (npm/pip 어느 쪽이 대부분인지부터 확인).
+4. **[P2] flake8 F401/F841 (미사용 import/변수) 201건** — `wicked_zerg_challenger` + `tests` 대상. 런타임 버그는 아니지만 (F821/F822/F823은 0건 확인 — 이전 사이클에서 이미 정리됨) 별도 정리 PR 후보.
+5. **[P3] `wicked_zerg_challenger/utils/extracted_utilities.py`**: 파일 전체가 `"""...stub"""`만 있는 placeholder 클래스/함수 모음이며, 저장소 어디에서도 import되지 않는 죽은 코드로 확인됨. 삭제 후보 (또는 실제 목적이 있다면 연결 필요).
+6. **[P3] 테스트가 커밋된 fixture를 in-place로 변경함**: `pytest`를 돌릴 때마다 `wicked_zerg_challenger/commander_knowledge.json`, `data/games/test_game_*.json`, `local_training/models/test_rl_agent.tmp.npz`가 diff에 나타남 — 테스트가 `tmp_path`/사본이 아니라 실제 커밋 파일에 쓰고 있음. `git diff`가 매번 지저분해지고, 병렬 CI 실행 시 레이스 가능성도 있음.
+
+### 5.3 확인했지만 조치 불필요
+- `local_training/reward_shaping.py`의 "스텁" 표기는 docstring이 stale한 것일 뿐 — `PotentialFunction`/`RewardShaper`는 실제로 동작하는 구현이 이미 있음.
+- `tests/test_security.py`, `tests/test_crypto_trading.py`의 `_cffi_backend` 관련 실패는 이번 세션의 venv 구성(`--system-site-packages`) 아티팩트였고 `cffi` 재설치로 해소됨 — repo 자체의 버그 아님.
+
+### 5.4 다음 사이클 추천 순서
+1. P0 protobuf 재현 및 수정 (별 PR, py3.10 환경 필요)
+2. P3 dead-code(`extracted_utilities.py`) 삭제 + fixture-mutation 테스트 격리 (낮은 리스크, 빠른 정리)
+3. P1 black 전용 포맷팅 PR (사용자 승인 후, 다른 브랜치와 조율 필요)
+4. P2 F401/F841 정리 + Dependabot 알림 트리아지
