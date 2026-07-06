@@ -1293,12 +1293,12 @@ class HarassmentCoordinator:
         )
 
     async def _trigger_zergling_runby(self) -> None:
-        """Trigger zergling run-by (placeholder for existing logic)"""
-        # This would call existing zergling run-by logic
+        """Trigger zergling run-by"""
+        await self._manage_zergling_runby()
 
     async def _trigger_mutalisk_harassment(self) -> None:
-        """Trigger mutalisk harassment (placeholder for existing logic)"""
-        # This would call existing mutalisk harassment logic
+        """Trigger mutalisk harassment"""
+        await self._manage_mutalisk_harassment()
 
     # ============================================================================
     # Phase 21.3: Unit Persistence System (Squad Lock)

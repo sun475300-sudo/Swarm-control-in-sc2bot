@@ -308,6 +308,40 @@ class TestProductionResilience(unittest.TestCase):
         self.assertFalse(result)
         self.bot.can_afford.assert_not_called()
 
+    async def test_produce_army_unit_trains_mutalisk_late_game_with_spire(self):
+        """Late game (10min+) with a Spire should train Mutalisks, not just Hydralisks."""
+        self.bot.time = 650.0
+        self.bot.townhalls.amount = 3
+        self.bot.enemy_units = []
+
+        def units(unit_type):
+            amounts = {
+                UnitTypeId.ZERGLING: 10,
+                UnitTypeId.ROACH: 6,
+                UnitTypeId.HYDRALISK: 6,
+                UnitTypeId.MUTALISK: 0,
+            }
+            return SimpleNamespace(amount=amounts.get(unit_type, 0))
+
+        self.bot.units = Mock(side_effect=units)
+
+        def structures(unit_type):
+            group = Mock(amount=1, exists=True)
+            group.ready = Mock(exists=True)
+            return group
+
+        self.bot.structures = Mock(side_effect=structures)
+
+        larva = Mock()
+        import asyncio
+
+        result = asyncio.run(self.resilience._produce_army_unit(larva))
+
+        self.assertTrue(result)
+        self.bot.do.assert_called_once()
+        trained_unit = self.bot.do.call_args[0][0]
+        self.assertEqual(trained_unit.train.call_args[0][0], UnitTypeId.MUTALISK)
+
     def test_pending_third_releases_production_reserve(self):
         """A pending third Hatchery releases ProductionResilience spending."""
         self.bot.time = 190.0
