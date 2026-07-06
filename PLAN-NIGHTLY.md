@@ -50,10 +50,15 @@
 | #    | Item                                            | Status | Notes |
 |------|-------------------------------------------------|--------|-------|
 | P2.1 | Force-accumulation FSM tests                    | ✅ Done | `tests/test_combat_phase_fsm.py` — 23 tests all passing. |
-| P2.2 | Benchmark runner                                | ❌ Open | Single command, N replays, APM/supply/win-rate report vs Hard. |
-| P2.3 | Build-order config externalisation              | ❌ Open | Move top-20 hardcoded values to `config/build_orders.yaml`. |
-| P2.4 | RL agent save-experience guard                  | ❌ Open | Unit test for save under disk-full / interrupted-rename. |
-| P2.5 | Type hints + docstring pass on core modules     | ❌ Open | `core/resource_manager.py`, `core/manager_factory.py`. |
+| P2.2 | Benchmark runner                                | ❌ Open | Single command, N replays, APM/supply/win-rate report vs Hard. Re-verified 2026-07-06: still absent. |
+| P2.3 | Build-order config externalisation              | ❌ Open | Move top-20 hardcoded values to `config/build_orders.yaml`. Re-verified 2026-07-06: still absent. |
+| P2.4 | RL agent save-experience guard                  | ✅ Done | `local_training/rl_agent.py:save_experience_data()` already uses temp-file + atomic rename; covered by `tests/test_sprint6_rl_pipeline.py`. Confirmed 2026-07-06, no change needed. |
+| P2.5 | Type hints + docstring pass on core modules     | ✅ Done | 2026-07-06: fixed `Dict[str, any]` typo → `Dict[str, Any]` in `resource_manager.py`, added `bot: "BotAI"` hint to `ManagerFactory.__init__`. Rest of both files were already typed/documented. |
+
+**2026-07-06 note:** a much bigger problem than P2.x surfaced this run — see `MASTER_TODO_SC2.md` §0
+(100+ duplicate open draft PRs, all re-fixing the same `asyncio.get_event_loop()` regression in
+`tests/test_combat_phase_fsm.py` because no prior cycle's PR ever gets merged). Fixed for real this
+session; recommend consolidating/closing the duplicate PRs before further nightly cycles run.
 
 ## Long-term direction
 

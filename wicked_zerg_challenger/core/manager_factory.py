@@ -14,7 +14,10 @@ import importlib
 import logging
 from dataclasses import dataclass
 from enum import IntEnum
-from typing import Any, Callable, Dict, List, Optional, Set
+from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional, Set
+
+if TYPE_CHECKING:
+    from sc2.bot_ai import BotAI
 
 logger = logging.getLogger(__name__)
 
@@ -60,7 +63,7 @@ class ManagerFactory:
         factory.initialize_all()
     """
 
-    def __init__(self, bot):
+    def __init__(self, bot: "BotAI"):
         self.bot = bot
         self.managers: Dict[str, ManagerConfig] = {}
         self.initialized: Set[str] = set()

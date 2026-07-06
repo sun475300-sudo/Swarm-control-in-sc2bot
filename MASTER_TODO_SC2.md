@@ -5,6 +5,34 @@
 
 ---
 
+## 0. 2026-07-06 재확인 — PR 적체 100건+, 신규 PR 생성 최소화 권장
+
+> "테스트 → 개선점검 → 커밋/푸시 반복" 사이클 재개 세션에서 확인. 여러 선행 세션(#310 등)이 이미
+> 동일 문제를 지적했으나 해소되지 않아 계속 누적 중 — 최우선 조치 필요.
+
+- **열린 draft PR 100건 이상** (`#211`~`#310`, 거의 전부 `claude/optimistic-edison-*`/`claude/cool-edison-*`
+  브랜치, 2026-05-31 ~ 2026-07-06 사이 하루 수 건 페이스로 생성). 표본 40여 건 확인 결과 대다수가
+  `tests/test_combat_phase_fsm.py`의 `asyncio.get_event_loop()` (Python 3.11에서
+  `RuntimeError: no current event loop`) 를 반복해서 고치는 내용 — 근본 원인은 **세션마다 새 브랜치에서
+  시작 → 아무 PR도 머지되지 않음 → main이 그대로 → 다음 세션이 같은 버그를 "새로 발견"** 하는 패턴.
+- **실측 (본 세션)**: `main`(commit `8a80b73`) 기준 `pytest tests/` = 12 failed / 490 passed / 14 skipped.
+  전부 위와 동일한 `asyncio.get_event_loop()` 원인. `wicked_zerg_challenger/tests/`는 661 passed(0 fail) —
+  이 디렉토리는 이미 안전한 패턴 사용 중.
+- **본 세션 조치**: `tests/test_combat_phase_fsm.py`의 5개 호출부를 `asyncio.get_event_loop().run_until_complete(...)`
+  → `asyncio.run(...)`로 교체. 재실행 결과 `tests/`: 502 passed / 14 skipped / 0 failed,
+  `wicked_zerg_challenger/tests/`: 661 passed / 0 failed. (거의 동일한 수정이 담긴 PR이 이미 30개 이상
+  떠 있음 — 예: #310, #309, #308, #307 등. 신규 PR도 결국 그 대열에 하나 추가되는 셈이므로, 아래
+  권장 조치 1번이 실질적으로 더 중요함.)
+- **권장 조치 (사용자 승인 필요 — 자동 실행 안 함)**:
+  1. 열린 PR 중 **가장 완성도 높은 1건을 골라 머지**하고 **나머지는 일괄 close**. 어느 PR을 고르든
+     핵심 diff(asyncio.run 교체)는 동일하므로 커밋 히스토리/테스트 카운트가 가장 최신인 것 기준 선택 권장.
+  2. **자동화 방식 자체를 변경**: 매 사이클 새 브랜치를 파지 말고, **직전 사이클의 PR/브랜치를 이어서
+     갱신**(rebase + push)하도록 바꿔야 동일 문제 재발을 막을 수 있음. (트리거/스케줄 설정은 리포 밖
+     설정이라 이 세션에서 직접 변경 불가 — 사용자가 자동화 프롬프트/설정을 조정해야 함.)
+  3. 정리 전까지는 "asyncio 이벤트루프 버그" 관련 신규 PR 생성을 지양하고, §5의 실제 미구현 항목에 집중.
+
+---
+
 ## 1. 백로그 인벤토리
 
 ### 1.1 열린 PR (16건)
@@ -161,3 +189,20 @@
 3. **S3.1 CI fail-fast: false** (단순 패치, 별 PR, 자동 가능)
 4. **S3.2 pip-tools 도입** (별 PR, 검토 후 자동)
 5. 그 외 S2/S3/S4 항목은 사용자 우선순위 협의 후 진행
+
+---
+
+## 5. 2026-07-06 백로그 재수집 (실제 미구현/중단 항목만 — §0 PR 중복 제외)
+
+> 테스트 실행 + 코드 audit으로 재확인. `PLAN-NIGHTLY.md` P2 항목 기준.
+
+| 우선순위 | 항목 | 근거 | 상태 |
+|---|---|---|---|
+| 🟠 HIGH | PR 적체 정리 (§0) | 100건 이상 open, 신규 작업 전 필수 | 사용자 승인 대기 |
+| 🟡 MED | 벤치마크 러너 (`PLAN-NIGHTLY.md` P2.2) — 단일 커맨드로 N판 실행, APM/승률/서플라이 리포트 | 저장소 전체에 `*benchmark*` 관련 실행 스크립트 부재 확인 (`find . -iname "*benchmark*"` = 0건) | ❌ 미구현 |
+| 🟡 MED | 빌드오더 설정 외부화 (P2.3) — `config/build_orders.yaml`로 상위 20개 하드코딩 값 이전 | `config/build_orders.yaml` 파일 부재 확인 | ❌ 미구현 |
+| 🟢 LOW | flake8 F401 (미사용 import) 정리 | 미실측(도구 미설치) — 다음 사이클에서 `flake8 --select=F401` 실행 후 정리 필요 | ❌ 미정리 |
+| 🟢 LOW | codecov 임계값(`--cov-fail-under`) 미설정 | `sc2bot-ci.yml`에 업로드는 있으나 강제 없음 | ❌ 미구현 |
+| ✅ DONE | `tests/test_combat_phase_fsm.py` asyncio 이벤트루프 버그 (5개소) | 본 세션에서 `asyncio.run()`으로 교체, `tests/`: 502 passed/14 skipped/0 failed 확인 | 커밋 완료 (본 세션) |
+| ✅ DONE | P2.5 — `core/resource_manager.py`, `core/manager_factory.py` 타입힌트 보강 | `Dict[str, any]` → `Dict[str, Any]` 오탈자 수정, `ManagerFactory.__init__(bot)` 타입힌트 추가. 나머지는 이미 충분히 타입힌트/docstring 되어 있었음 | 커밋 완료 (본 세션) |
+| ✅ DONE (재확인) | P2.4 — RL agent save-experience atomic guard | `local_training/rl_agent.py:save_experience_data()`에 임시파일+rename 기반 atomic save 이미 구현되어 있음 확인 (`tests/test_sprint6_rl_pipeline.py`에서 커버) | 기존 구현 확인, 변경 없음 |
