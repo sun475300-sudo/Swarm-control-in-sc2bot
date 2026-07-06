@@ -160,18 +160,14 @@ def create_dummy_game_data(game_id: int, result: str) -> dict:
     }
 
 
-def test_learning_system():
+def test_learning_system(tmp_path):
     """학습 시스템 테스트"""
     logger.info("Creating dummy game data...")
 
-    # 더미 데이터 생성 (3번 승리, 2번 패배)
-    games_dir = "data/games"
+    # 더미 데이터 생성 (3번 승리, 2번 패배) - 리포지토리 추적 파일이 아닌
+    # pytest tmp_path 에 기록하여 테스트 실행이 저장소를 변경하지 않게 한다.
+    games_dir = str(tmp_path / "games")
     os.makedirs(games_dir, exist_ok=True)
-
-    # 기존 테스트 파일 삭제
-    for filename in os.listdir(games_dir):
-        if filename.startswith("test_"):
-            os.remove(os.path.join(games_dir, filename))
 
     # 3번 승리 게임
     for i in range(3):
@@ -194,14 +190,15 @@ def test_learning_system():
     logger.info("\n[TEST] Running knowledge updater...")
     from knowledge_updater import KnowledgeUpdater
 
-    updater = KnowledgeUpdater()
+    knowledge_file = str(tmp_path / "commander_knowledge.json")
+    updater = KnowledgeUpdater(games_dir=games_dir, knowledge_file=knowledge_file)
     updater.load_all_games()
     updater.analyze_and_update()
 
     logger.info("\n[TEST] Running reinforcement learner...")
     from reinforcement_learner import ReinforcementLearner
 
-    learner = ReinforcementLearner()
+    learner = ReinforcementLearner(games_dir=games_dir)
     learner.load_games()
     learned = learner.learn_with_reinforcement()
 
