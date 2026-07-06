@@ -4,7 +4,24 @@
 
 통합 문제 해결 후 발견된 추가 개선 사항들입니다.
 
-**Last refreshed:** 2026-04-27 (Issue #1, #2 → Resolved; Issue #6 partially resolved via Batch 3)
+**Last refreshed:** 2026-07-06 (M1-M3 test/CI fixes; ROADMAP.md Sprint 1-8 audit added)
+
+---
+
+## 🗺️ ROADMAP.md Sprint 1-8 audit (2026-07-06)
+
+Full read-only audit of every task in `ROADMAP.md` against the actual `wicked_zerg_challenger/` code. Most of Sprint 1-8 is already implemented (the roadmap doc is stale — it undersells how far this bot has progressed). Genuinely open items, in priority order for the next work cycles:
+
+| # | Task | File | Gap |
+|---|------|------|-----|
+| 1 | 2.3 Build-order pattern coverage | `intel_manager.py` | Only 13/25 patterns implemented (the roadmap's original 12 legacy patterns were never merged with the 13 new ones) |
+| 2 | 4.3 Roach/Hydra retreat rear-guard | `combat_manager.py` | ✅ fixed 2026-07-06 — retreat branch was dead code (no caller ever passed `retreat=True`) and even when true, did nothing different. Fixed the branch + added tests (`tests/test_combat_manager.py::TestRoachHydraRetreatFormation`). **Still open:** nothing wires `retreat=True` into the real retreat path (`_evaluate_army_retreat` → `_retreat_to_base`/`_retreat_to_closest_base` just does uniform `unit.move()` for every unit type) — needs live-game verification before wiring in, left for a follow-up cycle |
+| 3 | 4.4 Multi-prong "simultaneous arrival" | `combat_manager.py:2092-2140` | Groups are sorted by distance (farthest dispatched notionally first) but all orders fire in the same `on_step` call — there's no actual delay, so distance-based stagger has no effect on arrival timing |
+| 4 | 7.2 DistanceCache adoption | `combat_manager.py`, `economy_manager.py` | `utils/distance_cache.py` exists and is wired in, but only ~7/67 raw `distance_to` call sites in combat_manager and 0/24 in economy_manager actually use it — most of the intended perf win (AI Arena's 320ms/frame budget) is unrealized |
+| 5 | 7.3 GameConstants adoption | multiple | `utils/game_constants.py` has the right constants, but only 4 files reference `GameFrequencies` at all; combat/economy/strategy managers still have 20+ raw magic-number iteration checks |
+| 6 | 8.2 Arena package checklist | `create_arena_package.py` | Builds the ZIP fine, but the checklist items (10MB size cap, 320ms/frame profiling, multi-map validation) aren't enforced in code — only manual/print-based |
+| 7 | 7.1 StrategyManager split verification | `strategy_manager.py` | `BuildingManager` split landed and is registered, but `strategy_manager.py` is still 3329 lines/92 methods — full "strategy-decision only" scoping not verified line-by-line |
+| 8 | 8.1 Medium AI 30-game win rate | `run_mass_test.py` | Tooling supports the exact CLI from the roadmap; actual 90%+ win-rate claim is unverified (needs real games run, out of scope for a code-only cycle) |
 
 ---
 
@@ -14,14 +31,33 @@
 
 | ID | 설명 | 우선순위 | 상태 |
 |----|------|---------|------|
-| N1 | `OpponentModeling.on_step` 중복 정의 (line 341 vs 765 — F811) | 🟠 HIGH | open — 동작 영향(상위 on_step이 미실행) 가능 |
-| N2 | `EconomyManager._prevent_resource_banking` / `_reduce_gas_workers` 재정의 (F811) | 🟡 MED | open |
-| N3 | `combat_manager._find_harass_target` 재정의 (line 2377 vs 4278) | 🟡 MED | open |
-| N4 | `production_resilience.build_terran_counters` 재정의 (1369 vs 1866) | 🟡 MED | open |
-| N5 | bare `except Exception:` 다수 (≈360+) — 이번 PR에서 12건 처리, 잔여 다수 | 🟢 LOW | partial |
-| N6 | F841 unused local variables (visuals/make_pptx 등) | 🟢 LOW | open (presentation 코드라 영향 작음) |
+| N1 | `OpponentModeling.on_step` 중복 정의 (line 341 vs 765 — F811) | 🟠 HIGH | ✅ resolved (2026-07-06 재검증: `pyflakes` 재실행 결과 중복 정의 없음, on_step 단일 정의만 존재) |
+| N2 | `EconomyManager._prevent_resource_banking` / `_reduce_gas_workers` 재정의 (F811) | 🟡 MED | ✅ resolved (2026-07-06 재검증: 단일 정의만 존재) |
+| N3 | `combat_manager._find_harass_target` 재정의 (line 2377 vs 4278) | 🟡 MED | ✅ resolved (2026-07-06 재검증: 단일 정의만 존재) |
+| N4 | `production_resilience.build_terran_counters` 재정의 (1369 vs 1866) | 🟡 MED | ✅ resolved (2026-07-06 재검증: 단일 정의만 존재) |
+| N5 | bare `except Exception:` 다수 (≈360+) — 이번 PR에서 12건 처리, 잔여 다수 | 🟢 LOW | partial (2026-07-06: `wicked_zerg_challenger/` 기준 468건 잔여 확인) |
+| N6 | F841 unused local variables (visuals/make_pptx 등) | 🟢 LOW | open (2026-07-06: `wicked_zerg_challenger/` 기준 130건 잔여 확인, presentation 코드라 영향 작음) |
 
-검증 권장: PR 분리 (N1 단독 PR 권장 — 동작 변화 가능성).
+N1~N4는 이후 어느 PR에서 이미 수정되었으나 이 문서가 stale 상태였음 (별도 커밋 없이 문서만 갱신).
+
+---
+
+## 🆕 신규 발견 (2026-07-06 점검 사이클)
+
+전체 테스트 스위트(`pytest`, 516개 수집)를 처음부터 로컬 실행하여 발견한 항목.
+
+| ID | 설명 | 우선순위 | 상태 |
+|----|------|---------|------|
+| M1 | `tests/test_combat_phase_fsm.py` 5개 헬퍼가 `asyncio.get_event_loop().run_until_complete(...)` 사용 → Python 3.11 + pytest-asyncio(auto mode) 조합에서 "no current event loop" `RuntimeError` 발생, 12개 테스트 FAIL | 🟠 HIGH | ✅ fixed — `asyncio.run(...)`으로 교체 |
+| M2 | 저장소 루트에 `pytest/test_battle.py` 디렉터리가 실제 `pytest` 패키지와 이름이 겹쳐 `python -m pytest` / `python -c "import pytest"`를 저장소 루트에서 실행하면 로컬 폴더가 site-packages의 pytest를 shadow함 (namespace package라 `-m` 실행 시 즉시 깨짐) | 🟡 MED | ✅ fixed — `tests/test_swarm_damage.py`로 병합, 빈 `pytest/` 디렉터리 제거 |
+| M3 | 로컬(비 CI) 환경에 `sc2`(burnysc2) 관련 런타임 의존성(numpy, scipy, s2clientprotocol, typing_extensions, protobuf)이 requirements.txt만으로 매끄럽게 설치되지 않음: (a) `mpyq`(burnysc2 종속) 휠 빌드가 최신 setuptools/distutils 조합에서 실패, (b) 최신 `protobuf`(7.x)로 설치 시 `s2clientprotocol`의 사전 컴파일된 `_pb2.py` 파일이 `TypeError: Descriptors cannot be created directly` 로 깨짐(protobuf 3.20.x 필요) | 🟠 HIGH | ✅ fixed (2026-07-06) — 이 (b) 문제가 실제로 GitHub Actions CI(`ci.yml`의 "Python 린트 & 테스트" job)에서 `pytest 실행 (전체)` 단계를 14개 파일 collection error로 깨뜨리고 있는 것으로 PR #314 CI 실패를 통해 확인됨. `requirements.txt`에 `protobuf<4` 핀 추가로 해결. `uv pip install --dry-run`으로 전체 의존성 그래프(crypto/discord/GenAI/MCP/AWS/torch 포함)에 대해 충돌 없이 `protobuf==3.20.3`으로 해석됨을 사전 검증 후 적용 — (a)의 mpyq 빌드 실패는 uv로 설치 시 재현되지 않아(로컬 pip 툴체인 한정 이슈로 추정) 별도 조치 불필요 |
+
+검증: 로컬 재현 커맨드 (fresh venv, requirements.txt 수정 후)
+```bash
+uv venv /tmp/depcheck_venv2 --python 3.11
+uv pip install --python /tmp/depcheck_venv2/bin/python -r requirements.txt -r requirements-dev.txt
+/tmp/depcheck_venv2/bin/python -m pytest -q   # → 509 passed, 11 skipped, 0 failed
+```
 
 ---
 

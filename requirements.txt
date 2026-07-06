@@ -8,6 +8,11 @@ psutil>=5.8.0
 s2clientprotocol>=4.19.0.0
 sc2reader>=0.8.0
 pyyaml>=6.0
+scipy>=1.9.0
+# s2clientprotocol ships _pb2.py files that predate protobuf's upb/C++
+# backend requirements; protobuf>=4 raises "Descriptors cannot be created
+# directly" on import. Pin below 4 until s2clientprotocol regenerates them.
+protobuf<4
 
 # ═══════════════════════════════════════════════
 # Crypto Trading Service
