@@ -4,7 +4,7 @@
 
 통합 문제 해결 후 발견된 추가 개선 사항들입니다.
 
-**Last refreshed:** 2026-04-27 (Issue #1, #2 → Resolved; Issue #6 partially resolved via Batch 3)
+**Last refreshed:** 2026-07-06 (N1-N4 → confirmed Resolved via PR #218; Issue #1, #2 → Resolved; Issue #3 → confirmed Resolved; Issue #6 partially resolved via Batch 3)
 
 ---
 
@@ -14,14 +14,27 @@
 
 | ID | 설명 | 우선순위 | 상태 |
 |----|------|---------|------|
-| N1 | `OpponentModeling.on_step` 중복 정의 (line 341 vs 765 — F811) | 🟠 HIGH | open — 동작 영향(상위 on_step이 미실행) 가능 |
-| N2 | `EconomyManager._prevent_resource_banking` / `_reduce_gas_workers` 재정의 (F811) | 🟡 MED | open |
-| N3 | `combat_manager._find_harass_target` 재정의 (line 2377 vs 4278) | 🟡 MED | open |
-| N4 | `production_resilience.build_terran_counters` 재정의 (1369 vs 1866) | 🟡 MED | open |
-| N5 | bare `except Exception:` 다수 (≈360+) — 이번 PR에서 12건 처리, 잔여 다수 | 🟢 LOW | partial |
-| N6 | F841 unused local variables (visuals/make_pptx 등) | 🟢 LOW | open (presentation 코드라 영향 작음) |
+| N1 | `OpponentModeling.on_step` 중복 정의 (line 341 vs 765 — F811) | 🟠 HIGH | ✅ Resolved — PR #218에서 중복 제거 확인 (`opponent_modeling.py`에 `on_step` 정의 1개만 존재) |
+| N2 | `EconomyManager._prevent_resource_banking` / `_reduce_gas_workers` 재정의 (F811) | 🟡 MED | ✅ Resolved — PR #218에서 shadowed 중복 제거 확인 (각 1개 정의만 존재) |
+| N3 | `combat_manager._find_harass_target` 재정의 (line 2377 vs 4278) | 🟡 MED | ✅ Resolved — PR #218에서 중복 제거 확인 (정의 1개만 존재, line 4992) |
+| N4 | `production_resilience.build_terran_counters` 재정의 (1369 vs 1866) | 🟡 MED | ✅ Resolved — PR #218에서 중복 제거 확인 (`local_training/production_resilience.py`에 정의 1개만 존재) |
+| N5 | bare `except Exception:` 다수 (≈360+) | 🟢 LOW | partial — 2026-07-06 기준 468건 잔존 (cosmetic, 낮은 우선순위) |
+| N6 | F841 unused local variables (visuals/make_pptx 등) | 🟢 LOW | open (presentation 코드라 영향 작음, 2026-07-06 기준 53건) |
 
-검증 권장: PR 분리 (N1 단독 PR 권장 — 동작 변화 가능성).
+`flake8 --select=F811,F821,F823`로 재검증 (2026-07-06): `wicked_zerg_challenger/` 전체에서 0건 — N1-N4 계열의 재정의/미정의 이름 버그는 현재 남아있지 않음.
+
+---
+
+## 🆕 신규 발견 (2026-07-06 점검 사이클)
+
+| ID | 설명 | 우선순위 | 상태 |
+|----|------|---------|------|
+| N7 | `FlankingCoordinator`(`combat/flanking_coordinator.py`)가 `bot.flanking_coord`로 생성되고 `on_step()`도 `bot_step_integration.py:1400-1418`에서 정상 호출됨 | — | false positive — 자동 감사에서 잘못 보고됨. 재검증 결과 이미 정상 배선되어 있음. 조치 불필요 |
+| N8 | `upgrade_manager.py` / `building_manager.py`가 `self.bot.resource_manager.try_reserve()`를 쓰지 않고 `self.bot.minerals`/`vespene`을 직접 확인 — 다른 매니저(`economy_manager.py`, `defense_coordinator.py`)와의 자원 예약 경쟁(double-spend) 가능 | 🟠 HIGH | open — 별도 PR 권장 (여러 매니저에 걸친 자원 경합 로직 변경이라 회귀 위험 높음, 실전 게임 검증 필요) |
+| N9 | `combat/multiprong_attack.py`(523줄, Feature #98)는 `combat/__init__.py`에서만 import되고 실제로는 어디서도 인스턴스화되지 않음 — 실사용 중인 구현은 별도의 `combat/multi_prong_coordinator.py`(191줄) + `combat_manager.py:_execute_multi_prong_attack` | 🟡 MED | open — 단순 "중복 파일"이 아니라 N12와 동일한 미배선 전술 모듈군의 일부로 재분류. 삭제하지 않음(더 정교한 미완성 구현일 수 있음) — N12에서 함께 처리 |
+| N10 | `RLAGENT_DISABLED.md`가 stale — RL 에이전트는 더 이상 "비활성화"가 아니라 `train_mode` 플래그로 게이팅됨 (`run_single_game.py`=off, `run_with_training.py`/`run_parallel_training.py`=on). `is_trained()`/`is_ready_for_deployment()`/`train_from_batch`가 `tools/background_parallel_learner.py`에 연결되어 있음 | 🟢 LOW | doc updated (이번 커밋) |
+| N11 | `ROADMAP.md`/`TODO.md`/`NEXT_LARGE_PLAN.md`/`NEXT_PHASE_PLAN.md`/`TASK_WISHLIST.md`가 오래된 프로젝트 상태(Phase 56, 342 tests)를 참조 — Sprint 1-5의 거의 모든 항목이 이미 코드에 구현/테스트됨 (`test_worker_harassment_defense.py`, `test_blackboard.py` 등 존재) | 🟢 LOW | open — STATUS.md의 P1.5(`docs/history/`로 이동) 진행 필요, 별도 문서 정리 PR 권장 |
+| N12 | **`combat/` 내 Feature #91-#98 전술 매니저 7종이 완전히 구현되어 있으나 (`on_step` 포함, 총 ~3500줄) 어디에서도 인스턴스화/호출되지 않음**: `NydusTacticsManager`(나이더스 웜), `QueenWalkManager`(퀸 워크 러시), `BanelingTacticsManager`(바네 폭탄), `DoomDropManager`(둠 드랍), `LurkerPositionManager`(럴커 포지셔닝), `ViperTacticsManager`(바이퍼 전술), `MultiprongAttackManager`(멀티프롱 공격, N9와 동일 모듈). 기존 테스트 커버리지 0건 | 🟠 HIGH | partial — 이번 커밋에서 `tests/test_stalled_combat_tactics_smoke.py` 추가(생성자 + trivially-gated `on_step` 크래시 방지 스모크 테스트, 7개 매니저 전부 통과). **배선(wiring)은 별도 작업**: 실제 게임 검증 없이 `bot_step_integration.py`의 on_step 루프에 넣는 것은 위험 — 모듈별로 분리된 PR + 실전 게임 테스트 필요 |
 
 ---
 
