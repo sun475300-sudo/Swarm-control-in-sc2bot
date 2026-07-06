@@ -7,6 +7,7 @@ import os
 import sys
 import tempfile
 import unittest
+import unittest.mock
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -115,7 +116,9 @@ class TestRLMicroDeployment(unittest.TestCase):
     def test_micro_observation_is_16d_and_inference_has_7_actions(self):
         bot = FakeBot()
         units = [FakeUnit(i, "ROACH", Point(i, 0), health=100) for i in range(3)]
-        enemies = [FakeUnit(100 + i, "MARINE", Point(5 + i, 0), health=45) for i in range(5)]
+        enemies = [
+            FakeUnit(100 + i, "MARINE", Point(5 + i, 0), health=45) for i in range(5)
+        ]
         agent = RLAgent()
 
         observation = agent.build_micro_observation(bot, units, enemies)
@@ -129,7 +132,9 @@ class TestRLMicroDeployment(unittest.TestCase):
     def test_combat_manager_uses_rl_micro_when_enabled_and_confident(self):
         bot = FakeBot()
         units = [FakeUnit(i, "ROACH", Point(i, 0), health=100) for i in range(3)]
-        enemies = [FakeUnit(100 + i, "MARINE", Point(5 + i, 0), health=45) for i in range(5)]
+        enemies = [
+            FakeUnit(100 + i, "MARINE", Point(5 + i, 0), health=45) for i in range(5)
+        ]
         manager = make_manager(bot)
 
         handled = asyncio.run(manager._try_rl_micro(units, enemies))
@@ -177,7 +182,9 @@ class TestSelfPlayPipeline(unittest.TestCase):
             pipeline = TrainingPipeline(tmp)
 
             self.assertIsNone(
-                pipeline.maybe_checkpoint_episode(49, FakeSavingAgent(), {"win_rate": 0.5})
+                pipeline.maybe_checkpoint_episode(
+                    49, FakeSavingAgent(), {"win_rate": 0.5}
+                )
             )
             version = pipeline.maybe_checkpoint_episode(
                 50, FakeSavingAgent(), {"win_rate": 0.55, "games": 50}
@@ -190,6 +197,62 @@ class TestSelfPlayPipeline(unittest.TestCase):
             self.assertIn("rule_based", {opponent["id"] for opponent in pool})
             self.assertIn("v1", {opponent["id"] for opponent in pool})
             self.assertLessEqual(abs(selected["elo"] - 1500.0), 200.0)
+
+
+class TestSaveExperienceDataGuard(unittest.TestCase):
+    """PLAN-NIGHTLY P2.4: save must not corrupt/lose existing data on failure."""
+
+    def _agent_with_data(self):
+        agent = RLAgent()
+        agent.states = [np.zeros(15, dtype=np.float32)]
+        agent.actions = [0]
+        agent.rewards = [1.0]
+        return agent
+
+    def test_save_succeeds_and_round_trips(self):
+        agent = self._agent_with_data()
+        with tempfile.TemporaryDirectory() as tmp:
+            path = os.path.join(tmp, "exp.npz")
+            self.assertTrue(agent.save_experience_data(path))
+            self.assertTrue(os.path.exists(path))
+            self.assertFalse(os.path.exists(path[:-4] + ".tmp.npz"))
+
+    def test_disk_full_during_write_leaves_existing_file_untouched(self):
+        agent = self._agent_with_data()
+        with tempfile.TemporaryDirectory() as tmp:
+            path = os.path.join(tmp, "exp.npz")
+            # Seed a prior "good" save.
+            self.assertTrue(agent.save_experience_data(path))
+            original_bytes = Path(path).read_bytes()
+
+            with unittest.mock.patch(
+                "local_training.rl_agent.np.savez_compressed",
+                side_effect=OSError("[Errno 28] No space left on device"),
+            ):
+                self.assertFalse(agent.save_experience_data(path))
+
+            # Original file must survive a failed write attempt.
+            self.assertEqual(Path(path).read_bytes(), original_bytes)
+            self.assertFalse(os.path.exists(path[:-4] + ".tmp.npz"))
+
+    def test_interrupted_rename_leaves_existing_file_untouched(self):
+        agent = self._agent_with_data()
+        with tempfile.TemporaryDirectory() as tmp:
+            path = os.path.join(tmp, "exp.npz")
+            self.assertTrue(agent.save_experience_data(path))
+            original_bytes = Path(path).read_bytes()
+
+            with unittest.mock.patch(
+                "local_training.rl_agent.os.replace",
+                side_effect=OSError("interrupted rename"),
+            ):
+                self.assertFalse(agent.save_experience_data(path))
+
+            # The old atomic-rename bug removed the destination before
+            # renaming the temp file in, so an interrupted rename wiped out
+            # good data. os.replace() must never destroy the prior file.
+            self.assertTrue(os.path.exists(path))
+            self.assertEqual(Path(path).read_bytes(), original_bytes)
 
 
 if __name__ == "__main__":

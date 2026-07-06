@@ -4,24 +4,29 @@
 
 통합 문제 해결 후 발견된 추가 개선 사항들입니다.
 
-**Last refreshed:** 2026-04-27 (Issue #1, #2 → Resolved; Issue #6 partially resolved via Batch 3)
+**Last refreshed:** 2026-07-06 (자동 점검 사이클 — 테스트 실행 → 실코드 검증 → 수정 → 커밋/푸시)
 
 ---
 
-## 🆕 신규 발견 (PR #44, 2026-04-27)
+## 🆕 신규 발견 (2026-07-06 자동 점검 사이클)
 
-자동/수동 점검 사이클(테스트 → 코드 검사 → 개선 → 커밋/푸시 반복)에서 새로 식별된 항목.
+`tests/`(502) + `wicked_zerg_challenger/tests/`(661) 전체 실행, ROADMAP.md/PLAN-NIGHTLY.md 전 항목을 실제 코드와 대조 검증한 결과.
 
 | ID | 설명 | 우선순위 | 상태 |
 |----|------|---------|------|
-| N1 | `OpponentModeling.on_step` 중복 정의 (line 341 vs 765 — F811) | 🟠 HIGH | open — 동작 영향(상위 on_step이 미실행) 가능 |
-| N2 | `EconomyManager._prevent_resource_banking` / `_reduce_gas_workers` 재정의 (F811) | 🟡 MED | open |
-| N3 | `combat_manager._find_harass_target` 재정의 (line 2377 vs 4278) | 🟡 MED | open |
-| N4 | `production_resilience.build_terran_counters` 재정의 (1369 vs 1866) | 🟡 MED | open |
-| N5 | bare `except Exception:` 다수 (≈360+) — 이번 PR에서 12건 처리, 잔여 다수 | 🟢 LOW | partial |
-| N6 | F841 unused local variables (visuals/make_pptx 등) | 🟢 LOW | open (presentation 코드라 영향 작음) |
+| N7 | `tests/test_combat_phase_fsm.py`가 `asyncio.get_event_loop().run_until_complete()`(deprecated) 사용 — 최신 Python에서 "no current event loop" RuntimeError로 12/23 테스트 실패 | 🔴 HIGH | ✅ **resolved** — `asyncio.run()`으로 교체 |
+| N8 | **CI 맹점**: `.github/workflows/ci.yml`의 "pytest 실행 (전체)" 단계가 `pytest tests/ --co`(수집만, 미실행)였음 — 루트 `tests/` 502개 테스트가 CI에서 실제로 한 번도 실행되지 않아 N7 같은 회귀를 못 잡음 | 🔴 HIGH | ✅ **resolved** — `--co` 제거, `requirements-dev.txt` 설치 단계 추가 |
+| N9 | `RLAgent.save_experience_data`(atomic save)가 `os.remove(path)` 후 `os.rename()` 방식 — rename이 중간에 실패(디스크 풀/인터럽트)하면 기존에 저장된 정상 데이터까지 삭제된 채로 남는 데이터 유실 버그 (PLAN-NIGHTLY P2.4) | 🟠 HIGH | ✅ **resolved** — `os.replace()`(원자적 덮어쓰기)로 교체, 회귀 테스트 3건 추가 (`wicked_zerg_challenger/tests/test_sprint6_rl_pipeline.py::TestSaveExperienceDataGuard`) |
+| N10 | `utils/distance_cache.py` 캐시가 `combat_manager.py`/`economy_manager.py`에 부분 도입되었으나, 두 파일에 남은 `.distance_to(` 원시 호출이 각각 60건/24건 — 캐시 적용률 10% 미만 | 🟡 MED | open |
+| N11 | `utils/game_constants.py`(`GameFrequencies`/`EconomyConstants`)가 4개 파일에만 채택, 나머지 67개 파일은 여전히 `% 22`, `% 110` 등 매직넘버 사용 | 🟢 LOW | open |
+| N12 | PLAN-NIGHTLY P2.2 (N-replay 벤치마크 러너: win-rate/APM/supply 리포트)가 실제로 존재하지 않음 — 관련 스크립트 전무 확인 | 🟡 MED | open |
+| N13 | PLAN-NIGHTLY P2.3 (`config/build_orders.yaml`로 하드코딩 상수 이전)가 실제로 존재하지 않음 — `config/`에 해당 파일 없음 확인 | 🟢 LOW | open |
 
-검증 권장: PR 분리 (N1 단독 PR 권장 — 동작 변화 가능성).
+### ✅ N1-N4 재검증 (2026-04-27 발견 → 2026-07-06 확인)
+
+`flake8 wicked_zerg_challenger --select=F811` 결과 0건 — N1(`OpponentModeling.on_step` 중복), N2(`EconomyManager` 재정의), N3(`combat_manager._find_harass_target` 재정의), N4(`production_resilience.build_terran_counters` 재정의) 모두 이후 커밋(`refactor: delete shadowed duplicate methods`, `fix: 6 F821 NameError bugs`)에서 이미 해결됨. 문서만 stale했음 — 별도 작업 없이 닫음.
+
+N5(bare except)는 `wicked_zerg_challenger/` 전역에 여전히 다수 잔존(우선순위 낮음, 점진 처리). N6(F841)은 130건으로 집계됨(대부분 presentation/visuals 코드, 영향 작음) — 계속 open 유지.
 
 ---
 
@@ -67,9 +72,20 @@
 
 ---
 
-## 🟡 MEDIUM Priority Issues (still open)
+## 🟡 MEDIUM Priority Issues
 
-### Issue #3: Transfusion 우선순위 개선 필요
+> **2026-07-06 검증 결과: Issue #3, #4 모두 이미 구현 완료 확인됨.** 아래 제안 코드는
+> 히스토리 참고용으로 남겨두며, 실제 구현 위치는 각 항목 상단에 명시.
+
+### ✅ Issue #3: Transfusion 우선순위 개선 — 구현 완료 확인 (2026-07-06)
+
+**구현 위치**: `wicked_zerg_challenger/economy/queen_transfusion_manager.py:26-39` (`HEAL_PRIORITY`),
+`:43-56` (`CANNOT_HEAL`), `:169` (우선순위 정렬) — 아래 제안안의 상위 호환(더 많은 유닛 포함).
+회귀 테스트: `tests/test_queen_transfusion.py`, `tests/test_queen_transfusion_manager.py`.
+
+<details><summary>원본 제안 (참고용, 이미 반영됨)</summary>
+
+### Issue #3: Transfusion 우선순위 개선 필요 (원본 제안)
 
 **위치**: `queen_manager.py` 또는 `spell_unit_manager.py`
 
@@ -140,9 +156,19 @@ async def smart_transfusion(self, queen, damaged_units):
 
 **우선순위**: 🟡 MEDIUM (자원 효율성 개선)
 
+</details>
+
 ---
 
-### Issue #4: Resource Reservation Race Condition
+### ✅ Issue #4: Resource Reservation Race Condition — 구현 완료 확인 (2026-07-06)
+
+**구현 위치**: `wicked_zerg_challenger/core/resource_manager.py:36` (`asyncio.Lock()`),
+`:50-96` (`try_reserve`, 원자적), `:98-116` (`release`) — 아래 제안안과 거의 동일하게 구현됨.
+`defense_coordinator.py`, `economy_manager.py`에서 `self.bot.resource_manager`로 실사용 중.
+
+<details><summary>원본 제안 (참고용, 이미 반영됨)</summary>
+
+### Issue #4: Resource Reservation Race Condition (원본 제안)
 
 **위치**: `resource_manager.py` (추정)
 
@@ -214,6 +240,8 @@ else:
 ```
 
 **우선순위**: 🟡 MEDIUM (안정성 개선, 드물게 발생)
+
+</details>
 
 ---
 
@@ -359,67 +387,52 @@ if iteration % SECOND == 0:
 
 ---
 
-## 📊 이슈 우선순위 요약 (open만)
+## 📊 이슈 우선순위 요약 (open만, 2026-07-06 기준)
 
 | 우선순위 | 이슈 | 영향도 | 난이도 |
 |---------|------|--------|--------|
-| 🟡 MEDIUM | #3 Transfusion 우선순위 | 중간 | 중간 |
-| 🟡 MEDIUM | #4 Resource Race Condition | 낮음 | 중간 |
-| 🟢 LOW | #5 코드 중복 제거 | 낮음 | 쉬움 |
-| 🟢 LOW | #6 매직 넘버 | 낮음 | 쉬움 |
+| 🟡 MED | N10 DistanceCache 적용률 &lt;10% (combat/economy manager 84건 미전환) | 중간 (성능) | 중간 |
+| 🟡 MED | N12 PLAN-NIGHTLY P2.2 벤치마크 러너 부재 (N-replay win-rate/APM 리포트) | 중간 (검증 인프라) | 중간 |
+| 🟢 LOW | N11 GameConstants 채택률 낮음 (67개 파일 매직넘버 잔존) | 낮음 (가독성) | 쉬움~중간 |
+| 🟢 LOW | N13 PLAN-NIGHTLY P2.3 `config/build_orders.yaml` 미존재 | 낮음 (설정 유연성) | 중간 |
+| 🟢 LOW | #5 코드 중복 제거 (position 계산 유틸) | 낮음 | 쉬움 |
+| 🟢 LOW | #6 매직 넘버 (N11과 중복) | 낮음 | 쉬움 |
+| 🟢 LOW | N5 bare `except Exception:` 잔존 (다수) | 낮음 | 점진적 |
+| 🟢 LOW | N6 F841 미사용 지역변수 (130건, 대부분 presentation 코드) | 낮음 | 쉬움 |
 
-(Issue #1, #2 → ✅ Resolved 섹션 참조)
-
----
-
-## 🎯 권장 수정 순서
-
-### 1단계: 완료 (✅)
-~~1. Queen Inject 쿨다운 수정 (25 → 29)~~ — 코드 반영 완료, 본 문서 ✅ Resolved 섹션 참조
-~~2. 누락된 업그레이드 추가~~ — 코드 반영 완료, 본 문서 ✅ Resolved 섹션 참조
-
-### 2단계: 로직 개선 (30분, 미진행)
-3. Transfusion 우선순위 시스템 구현
-
-### 3단계: 구조 개선 (1시간, 미진행)
-4. Resource Reservation 동기화
-5. Position Utils 유틸리티 함수 분리
-6. Constants 정리
+(Issue #1~#4, N1~N4, N7~N9 → 모두 ✅ 해결 확인됨 — 위 각 섹션 참조)
 
 ---
 
-## 🔍 추가 검토 필요 항목
+## 🎯 다음 사이클 권장 작업 순서
 
-### Performance Optimization
-- [ ] Pathfinding 캐싱 확인
-- [ ] Unit filtering 최적화 검토
-- [ ] Blackboard 업데이트 빈도 분석
-
-### Strategic Improvements
-- [ ] Counter-build 시스템 확인 (적 유닛 조합 대응)
-- [ ] Scouting 타이밍 최적화
-- [ ] Expansion timing 검증
-
-### Code Quality
-- [ ] Type hints 추가 (Python 3.10+)
-- [ ] Docstring 완성도 검토
-- [ ] 에러 핸들링 일관성 확인
+1. **N12** — 벤치마크 러너 (`run_mass_test.py` 결과를 취합해 win-rate/APM/supply 리포트 생성) — 반복 회귀 감지에 직접 기여, 우선순위 상향 권장
+2. **N10** — DistanceCache를 `combat_manager.py`/`economy_manager.py` 나머지 호출부에 확대 적용
+3. **N13** — `config/build_orders.yaml` 도입 + 상위 20개 하드코딩 값 이전
+4. **N11** — `GameConstants`/`GameFrequencies` 미채택 67개 파일 순차 정리
+5. **N5/N6** — bare except / 미사용 변수 점진적 정리 (기능 영향 없음, 후순위)
 
 ---
 
-## 📝 참고 사항
+## 📝 참고 사항 (2026-07-06 자동 점검 사이클 기준)
 
 ### 현재 상태
-- ✅ **치명적 통합 문제**: 완전히 해결됨
-- ✅ **모든 단위 테스트**: 통과 (16/16)
-- ✅ **기본 기능**: 정상 작동
+- ✅ 루트 `tests/`: 502 passed, 14 skipped, 0 failed
+- ✅ `wicked_zerg_challenger/tests/`: 661 passed, 0 failed
+- ✅ `flake8 --select=F811,F821`: 0건 (실제 실행 오류 유발 결함 없음)
+- ✅ CI가 이제 루트 `tests/`를 실제로 실행함 (이전엔 `--co`로 수집만 하고 있었음 — N8)
+- ✅ ROADMAP.md Sprint 1~8의 거의 모든 태스크가 실코드에 구현되어 있음을 file:line 단위로 재검증함 (문서가 실제보다 훨씬 stale했음)
 
-### 위의 이슈들은
-- 모두 **선택적 개선 사항**
-- 즉시 수정 불필요
-- 점진적 개선 권장
+### 이번 사이클에서 고친 것
+- N7: 오래된 `asyncio.get_event_loop()` 패턴이 최신 Python에서 테스트 12건을 깨뜨리던 회귀
+- N8: CI가 핵심 테스트를 collect만 하고 실행하지 않던 맹점
+- N9: RL 에이전트 저장 로직의 rename 중단 시 데이터 유실 가능성
+
+### 남은 이슈들은
+- 모두 **성능/유지보수성 개선 사항** (게임 승률에 즉각 영향 없음)
+- 다음 자동 점검 사이클에서 우선순위 순서대로 처리 예정
 
 ---
 
-**검토 완료일**: 2026-01-29
-**상태**: 추가 개선 사항 문서화 완료
+**검토 완료일**: 2026-07-06
+**상태**: 자동 점검 사이클 반영 완료 — 다음 사이클에서 N10~N13 처리 예정
