@@ -417,10 +417,13 @@ class StrategyConfig:
     WINNING_ARMY_PRIORITY_ECONOMY = 0.2
     WINNING_ARMY_PRIORITY_TECH = 0.2
 
-    LOSING_EMERGENCY_PRIORITY_ARMY = 0.7
-    LOSING_EMERGENCY_PRIORITY_DEFENSE = 0.3
-    LOSING_EMERGENCY_PRIORITY_ECONOMY = 0.0
-    LOSING_EMERGENCY_PRIORITY_TECH = 0.0
+    # FIX P0-3: EMERGENCY에서도 최소 드론 교체 보장 (economy 0.0 -> 0.1).
+    # 이 값들은 strategy_manager_v2.py의 `if self.config:` 분기에서 쓰이며,
+    # StrategyConfig가 정상 import되는 한 그 분기가 항상 실행되는 live path다.
+    LOSING_EMERGENCY_PRIORITY_ARMY = 0.6
+    LOSING_EMERGENCY_PRIORITY_DEFENSE = 0.25
+    LOSING_EMERGENCY_PRIORITY_ECONOMY = 0.1
+    LOSING_EMERGENCY_PRIORITY_TECH = 0.05
 
     # === 기타 설정 ===
     CONCURRENT_STRATEGY_LIMIT = 3  # 동시 실행 전략 제한
