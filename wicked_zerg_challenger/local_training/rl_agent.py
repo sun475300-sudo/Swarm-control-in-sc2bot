@@ -14,7 +14,6 @@ REINFORCE 알고리즘 기반의 정책 학습 에이전트입니다.
 
 import logging
 import os
-import shutil
 import time
 from datetime import datetime
 from pathlib import Path
@@ -301,7 +300,9 @@ class RLAgent:
                 obs = np.concatenate(
                     [
                         obs,
-                        np.zeros(self.micro_observation_dim - len(obs), dtype=np.float32),
+                        np.zeros(
+                            self.micro_observation_dim - len(obs), dtype=np.float32
+                        ),
                     ]
                 )
             obs = obs[: self.micro_observation_dim]
@@ -333,7 +334,9 @@ class RLAgent:
     def _average_unit_value(units, attr: str) -> float:
         if not units:
             return 0.0
-        return float(np.mean([float(getattr(unit, attr, 0.0) or 0.0) for unit in units]))
+        return float(
+            np.mean([float(getattr(unit, attr, 0.0) or 0.0) for unit in units])
+        )
 
     @staticmethod
     def _fraction(units, attr: str) -> float:
@@ -655,10 +658,10 @@ class RLAgent:
             temp_actual = temp_base + ".npz"
 
             # 원자적으로 이름 변경 (Atomic Rename)
-            # Windows에서는 기존 파일이 있으면 rename이 실패할 수 있으므로 삭제 후 변경
-            if os.path.exists(path_str):
-                os.remove(path_str)
-            os.rename(temp_actual, path_str)
+            # os.replace()는 POSIX/Windows 모두에서 원자적으로 기존 파일을 덮어쓴다.
+            # (기존 파일을 먼저 remove() 하면 그 사이 크래시/디스크풀 시
+            #  원본과 신규 파일이 모두 사라지는 데이터 유실 창이 생김)
+            os.replace(temp_actual, path_str)
 
             logger.info(
                 f"[OK] Experience saved atomically: {len(self.states)} states, {len(self.rewards)} rewards"
@@ -756,7 +759,12 @@ class RLAgent:
     def save_model(self, path: Optional[str] = None) -> bool:
         """모델 저장 (Atomic Write)"""
         save_path = Path(path) if path else self.model_path
-        tmp_path = save_path.with_suffix(".tmp")
+        # np.savez() appends ".npz" to any filename that doesn't already end
+        # with it. A tmp name of "model.tmp" therefore silently becomes
+        # "model.tmp.npz" on disk, the tmp_path.exists() check below never
+        # fires, and save_path is never actually replaced. Keeping ".npz" on
+        # the tmp name avoids the double-extension mismatch.
+        tmp_path = save_path.with_name(save_path.stem + ".tmp.npz")
 
         try:
             save_path.parent.mkdir(parents=True, exist_ok=True)
@@ -774,18 +782,13 @@ class RLAgent:
             )
 
             # *** FIX: Atomic rename with Windows compatibility ***
+            # os.replace() atomically overwrites save_path on both POSIX and
+            # Windows in one syscall. Unlinking save_path first (the previous
+            # approach) opens a window where a crash/disk-full between the
+            # unlink and the move destroys the old model with no new one in
+            # its place.
             if tmp_path.exists():
-                try:
-                    # Remove old file first on Windows (replace() can fail silently)
-                    if save_path.exists():
-                        save_path.unlink()
-                    # Use shutil.move() for cross-platform compatibility
-                    shutil.move(str(tmp_path), str(save_path))
-                except Exception as move_error:
-                    # Fallback: copy + delete
-                    logger.error(f"Move failed, trying copy: {move_error}")
-                    shutil.copy(str(tmp_path), str(save_path))
-                    tmp_path.unlink()
+                os.replace(str(tmp_path), str(save_path))
 
             logger.info(f"Model saved to {save_path}")
             return True
