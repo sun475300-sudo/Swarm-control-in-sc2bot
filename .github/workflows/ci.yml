@@ -117,6 +117,12 @@ jobs:
         env:
           DRY_RUN: "true"
           LOG_LEVEL: "DEBUG"
+          # requirements.txt pulls in several google/protobuf-adjacent
+          # packages that can resolve to a protobuf runtime newer than the
+          # pre-generated _pb2.py files s2clientprotocol ships expect,
+          # which raises "Descriptors cannot be created directly" on import.
+          # Forcing the pure-Python implementation avoids that mismatch.
+          PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION: python
 
   # ─────────────────────────────────────────────
   # SC2 봇 구문 검증 + 테스트

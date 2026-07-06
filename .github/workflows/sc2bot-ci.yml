@@ -63,6 +63,15 @@ jobs:
     name: Test Suite
     runs-on: ubuntu-latest
     needs: lint
+    env:
+      # requirements.txt pulls in several google/protobuf-adjacent packages
+      # (s2clientprotocol, google-generativeai, mcp, boto3, ...) that can
+      # resolve to a protobuf runtime newer than the pre-generated _pb2.py
+      # files in s2clientprotocol expect, which raises "Descriptors cannot
+      # be created directly" under the default C++ implementation. Forcing
+      # the pure-Python implementation avoids that mismatch (same fix
+      # already used in ci.yml's sc2-bot-test job).
+      PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION: python
     steps:
       - uses: actions/checkout@v4
 
