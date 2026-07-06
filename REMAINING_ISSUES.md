@@ -14,14 +14,35 @@
 
 | ID | 설명 | 우선순위 | 상태 |
 |----|------|---------|------|
-| N1 | `OpponentModeling.on_step` 중복 정의 (line 341 vs 765 — F811) | 🟠 HIGH | open — 동작 영향(상위 on_step이 미실행) 가능 |
-| N2 | `EconomyManager._prevent_resource_banking` / `_reduce_gas_workers` 재정의 (F811) | 🟡 MED | open |
-| N3 | `combat_manager._find_harass_target` 재정의 (line 2377 vs 4278) | 🟡 MED | open |
-| N4 | `production_resilience.build_terran_counters` 재정의 (1369 vs 1866) | 🟡 MED | open |
-| N5 | bare `except Exception:` 다수 (≈360+) — 이번 PR에서 12건 처리, 잔여 다수 | 🟢 LOW | partial |
-| N6 | F841 unused local variables (visuals/make_pptx 등) | 🟢 LOW | open (presentation 코드라 영향 작음) |
+| N1 | `OpponentModeling.on_step` 중복 정의 (line 341 vs 765 — F811) | 🟠 HIGH | ✅ resolved (2026-07-06 재검증: `pyflakes` 재실행 결과 중복 정의 없음, on_step 단일 정의만 존재) |
+| N2 | `EconomyManager._prevent_resource_banking` / `_reduce_gas_workers` 재정의 (F811) | 🟡 MED | ✅ resolved (2026-07-06 재검증: 단일 정의만 존재) |
+| N3 | `combat_manager._find_harass_target` 재정의 (line 2377 vs 4278) | 🟡 MED | ✅ resolved (2026-07-06 재검증: 단일 정의만 존재) |
+| N4 | `production_resilience.build_terran_counters` 재정의 (1369 vs 1866) | 🟡 MED | ✅ resolved (2026-07-06 재검증: 단일 정의만 존재) |
+| N5 | bare `except Exception:` 다수 (≈360+) — 이번 PR에서 12건 처리, 잔여 다수 | 🟢 LOW | partial (2026-07-06: `wicked_zerg_challenger/` 기준 468건 잔여 확인) |
+| N6 | F841 unused local variables (visuals/make_pptx 등) | 🟢 LOW | open (2026-07-06: `wicked_zerg_challenger/` 기준 130건 잔여 확인, presentation 코드라 영향 작음) |
 
-검증 권장: PR 분리 (N1 단독 PR 권장 — 동작 변화 가능성).
+N1~N4는 이후 어느 PR에서 이미 수정되었으나 이 문서가 stale 상태였음 (별도 커밋 없이 문서만 갱신).
+
+---
+
+## 🆕 신규 발견 (2026-07-06 점검 사이클)
+
+전체 테스트 스위트(`pytest`, 516개 수집)를 처음부터 로컬 실행하여 발견한 항목.
+
+| ID | 설명 | 우선순위 | 상태 |
+|----|------|---------|------|
+| M1 | `tests/test_combat_phase_fsm.py` 5개 헬퍼가 `asyncio.get_event_loop().run_until_complete(...)` 사용 → Python 3.11 + pytest-asyncio(auto mode) 조합에서 "no current event loop" `RuntimeError` 발생, 12개 테스트 FAIL | 🟠 HIGH | ✅ fixed — `asyncio.run(...)`으로 교체 |
+| M2 | 저장소 루트에 `pytest/test_battle.py` 디렉터리가 실제 `pytest` 패키지와 이름이 겹쳐 `python -m pytest` / `python -c "import pytest"`를 저장소 루트에서 실행하면 로컬 폴더가 site-packages의 pytest를 shadow함 (namespace package라 `-m` 실행 시 즉시 깨짐) | 🟡 MED | ✅ fixed — `tests/test_swarm_damage.py`로 병합, 빈 `pytest/` 디렉터리 제거 |
+| M3 | 로컬(비 CI) 환경에 `sc2`(burnysc2) 관련 런타임 의존성(numpy, scipy, s2clientprotocol, typing_extensions, protobuf)이 requirements.txt만으로 매끄럽게 설치되지 않음: (a) `mpyq`(burnysc2 종속) 휠 빌드가 최신 setuptools/distutils 조합에서 실패, (b) 최신 `protobuf`(7.x)로 설치 시 `s2clientprotocol`의 사전 컴파일된 `_pb2.py` 파일이 `TypeError: Descriptors cannot be created directly` 로 깨짐(protobuf 3.20.x 필요) | 🟡 MED | open — requirements.txt 전체가 crypto/discord/GenAI/MCP/AWS 등 무관한 의존성과 뒤섞여 있어 (MASTER_TODO_SC2.md의 "resolution-too-deep" 이슈와 동일 원인) 섣부른 전역 protobuf 핀 고정은 위험. 별도 PR에서 `wicked_zerg_challenger` 전용 requirements 파일 분리 + pip-tools 도입 권장 |
+
+검증: 로컬 재현 커맨드
+```bash
+uv pip install --python <pytest-venv-python> --no-deps burnysc2
+uv pip install --python <pytest-venv-python> numpy scipy s2clientprotocol \
+    aiohttp portpicker Pillow pytest-asyncio pytest-timeout pytest-mock \
+    loguru typing_extensions "protobuf<4"
+pytest -q   # → 504 passed, 14 skipped, 0 failed (수정 후)
+```
 
 ---
 
