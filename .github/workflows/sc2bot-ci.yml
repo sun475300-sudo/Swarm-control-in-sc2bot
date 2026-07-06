@@ -63,6 +63,12 @@ jobs:
     name: Test Suite
     runs-on: ubuntu-latest
     needs: lint
+    env:
+      # s2clientprotocol's bundled _pb2.py files are generated against an
+      # older protoc than the protobuf version requirements.txt resolves
+      # to; the C++/upb backend rejects them with "Descriptors cannot be
+      # created directly." Pure-Python implementation avoids the mismatch.
+      PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION: python
     steps:
       - uses: actions/checkout@v4
 
