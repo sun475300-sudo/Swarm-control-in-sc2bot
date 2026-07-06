@@ -1,8 +1,20 @@
 # WickedZergBotPro Grand Roadmap
 
 > 목표: Medium AI 승률 90%+ 달성 & AI Arena 출전
-> 현재 상태: Phase 56 완료, 342/342 테스트 통과, 추정 승률 45~50%
+> 현재 상태: Phase 56 완료, 342/342 테스트 통과, 추정 승률 45~50% (문서 작성 시점 기준 — 아래 검증 현황 참고)
 > 봇 프레임워크: python-sc2 (burnysc2>=5.0.0)
+
+---
+
+## 검증 현황 (2026-07-06 코드 감사)
+
+테스트/코드 재점검(반복 점검 사이클) 결과, 위 요약과 실제 코드 상태 사이에 큰 차이가 확인됨:
+
+- 실제 테스트 스위트: `wicked_zerg_challenger/tests/` 661개 + `tests/` 474개 + `tests/integration/` 10개 = **1,145개 통과** (342개보다 훨씬 많음 — 헤더 문구는 과거 스냅샷으로 stale).
+- Sprint 1~7의 대다수 Task(1.2 워커 하라스 응답, 1.3 견제 태그/복귀, 3.2 매치업별 가스 타이밍, 3.3 라바 우선순위, 5.3 올인 감지, 6.1 RL 토글, 7.1 BuildingManager, 7.2 DistanceCache, 7.3 GameConstants)는 **코드에 이미 구현되어 on_step 경로에 연결되어 있음**을 grep으로 확인함. 이 문서의 Sprint 1~7 섹션은 대부분 "이미 완료된 작업의 구현 지시서"로 남아있는 상태 — 신규 작업 착수 전 먼저 코드를 확인할 것.
+- 확인된 실제 gap: **Task 2.3** — `intel_manager.py`의 `BUILD_PATTERNS`에 13개 패턴만 존재(목표 25개). 목표 미달 항목으로 유일하게 확인된 미완성 기능.
+- 이번 점검에서 `tests/test_combat_phase_fsm.py`의 deprecated `asyncio.get_event_loop()` 패턴으로 인한 테스트 12건 실패를 발견/수정함 (Python 3.11+ 환경에서 "no current event loop" 오류). `REMAINING_ISSUES.md` 참고.
+- 정적 분석(flake8 F811/F821/F823) 전체 재스캔 결과 `wicked_zerg_challenger/` 내 중복 정의·미정의 이름 없음 — `REMAINING_ISSUES.md`의 N1~N4는 모두 이전 PR에서 해결된 상태로 재확인됨.
 
 ---
 
