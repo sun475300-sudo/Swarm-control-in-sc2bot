@@ -470,5 +470,73 @@ class TestCombatPerformance:
         assert elapsed < 1.0, f"Performance issue: {elapsed:.2f}s for 10 frames"
 
 
+# ===== Roach/Hydra Retreat Formation Tests (Roadmap Task 4.3) =====
+
+
+class _FormationPos:
+    """Minimal Point2-like stand-in supporting towards() only."""
+
+    def __init__(self, x, y):
+        self.x = x
+        self.y = y
+
+    def towards(self, other, distance):
+        dx, dy = other.x - self.x, other.y - self.y
+        length = (dx**2 + dy**2) ** 0.5 or 1.0
+        return _FormationPos(self.x + dx / length * distance, self.y + dy / length * distance)
+
+
+class _FormationUnit:
+    """Minimal unit stand-in that records what it was told to attack."""
+
+    def __init__(self, tag, type_id, position):
+        self.tag = tag
+        self.type_id = type_id
+        self.position = position
+        self.attacked = None
+
+    def attack(self, target):
+        self.attacked = target
+        return ("attack", self.tag, target)
+
+
+class TestRoachHydraRetreatFormation:
+    """_execute_roach_hydra_formation must behave differently for retreat vs advance."""
+
+    def _make_combat(self, base_position):
+        bot = MockBot()
+        bot.townhalls = MockUnits([_FormationUnit(999, "HATCHERY", base_position)])
+        return CombatManager(bot)
+
+    def test_retreat_uses_roach_as_rear_guard_not_stale_target(self):
+        target = _FormationPos(50, 50)
+        base = _FormationPos(0, 0)
+        combat = self._make_combat(base)
+        roach = _FormationUnit(1, "ROACH", _FormationPos(45, 45))
+        hydra = _FormationUnit(2, "HYDRALISK", _FormationPos(40, 40))
+
+        handled = combat._execute_roach_hydra_formation([roach, hydra], target, retreat=True)
+
+        assert handled == {1, 2}
+        # Hydra flees straight to the base.
+        assert hydra.attacked is base
+        # Roach screens between the enemy and the retreat path instead of
+        # continuing to chase the original (now stale) attack target.
+        assert roach.attacked is not None
+        assert roach.attacked is not target
+
+    def test_advance_keeps_roach_on_target_hydra_behind_it(self):
+        target = _FormationPos(50, 50)
+        base = _FormationPos(0, 0)
+        combat = self._make_combat(base)
+        roach = _FormationUnit(1, "ROACH", _FormationPos(45, 45))
+        hydra = _FormationUnit(2, "HYDRALISK", _FormationPos(40, 40))
+
+        combat._execute_roach_hydra_formation([roach, hydra], target, retreat=False)
+
+        assert roach.attacked is target
+        assert hydra.attacked is not target
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])

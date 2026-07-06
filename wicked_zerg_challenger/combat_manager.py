@@ -2067,9 +2067,15 @@ class CombatManager:
         for roach in roaches:
             try:
                 if retreat and retreat_anchor is not None:
-                    self.bot.do(roach.attack(target))
+                    # Rear guard: hold a screen between the enemy and the
+                    # retreat path instead of chasing the (stale) attack
+                    # target, so hydras can clear out first.
+                    roach_target = self._position_behind_target(
+                        target, retreat_anchor, 6.0
+                    )
                 else:
-                    self.bot.do(roach.attack(target))
+                    roach_target = target
+                self.bot.do(roach.attack(roach_target))
                 handled.add(roach.tag)
             except (AttributeError, TypeError):
                 continue
