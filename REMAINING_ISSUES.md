@@ -4,24 +4,36 @@
 
 통합 문제 해결 후 발견된 추가 개선 사항들입니다.
 
-**Last refreshed:** 2026-04-27 (Issue #1, #2 → Resolved; Issue #6 partially resolved via Batch 3)
+**Last refreshed:** 2026-07-06 (자동 점검 사이클 — N1~N4 재검증 결과 모두 해결 확인됨)
 
 ---
 
-## 🆕 신규 발견 (PR #44, 2026-04-27)
+## 🆕 신규 발견 (PR #44, 2026-04-27) — 2026-07-06 재검증
 
 자동/수동 점검 사이클(테스트 → 코드 검사 → 개선 → 커밋/푸시 반복)에서 새로 식별된 항목.
+`flake8 --select=F811,F821`로 `wicked_zerg_challenger/` 전체 재스캔한 결과, N1~N4는
+현재 코드베이스에 더 이상 존재하지 않음 (이전 PR들에서 이미 정리됨). 문서가 stale했던 것으로 확인.
 
 | ID | 설명 | 우선순위 | 상태 |
 |----|------|---------|------|
-| N1 | `OpponentModeling.on_step` 중복 정의 (line 341 vs 765 — F811) | 🟠 HIGH | open — 동작 영향(상위 on_step이 미실행) 가능 |
-| N2 | `EconomyManager._prevent_resource_banking` / `_reduce_gas_workers` 재정의 (F811) | 🟡 MED | open |
-| N3 | `combat_manager._find_harass_target` 재정의 (line 2377 vs 4278) | 🟡 MED | open |
-| N4 | `production_resilience.build_terran_counters` 재정의 (1369 vs 1866) | 🟡 MED | open |
-| N5 | bare `except Exception:` 다수 (≈360+) — 이번 PR에서 12건 처리, 잔여 다수 | 🟢 LOW | partial |
-| N6 | F841 unused local variables (visuals/make_pptx 등) | 🟢 LOW | open (presentation 코드라 영향 작음) |
+| N1 | `OpponentModeling.on_step` 중복 정의 (line 341 vs 765 — F811) | 🟠 HIGH | ✅ resolved — `opponent_modeling.py`에 `on_step` 1개만 존재 (line 341) |
+| N2 | `EconomyManager._prevent_resource_banking` / `_reduce_gas_workers` 재정의 (F811) | 🟡 MED | ✅ resolved — flake8 F811 스캔 결과 0건 |
+| N3 | `combat_manager._find_harass_target` 재정의 (line 2377 vs 4278) | 🟡 MED | ✅ resolved — flake8 F811 스캔 결과 0건 |
+| N4 | `production_resilience.build_terran_counters` 재정의 (1369 vs 1866) | 🟡 MED | ✅ resolved — flake8 F811 스캔 결과 0건 |
+| N5 | bare `except Exception:` 다수 (≈360+) — 이번 PR에서 12건 처리, 잔여 다수 | 🟢 LOW | open — 2026-07-06 재측정: 468건 잔여 |
+| N6 | F841 unused local variables (visuals/make_pptx 등) | 🟢 LOW | open — 2026-07-06 재측정: 130건 잔여 |
 
-검증 권장: PR 분리 (N1 단독 PR 권장 — 동작 변화 가능성).
+### ✅ 신규 해결 (2026-07-06)
+
+| ID | 설명 | 위치 |
+|----|------|------|
+| N7 | `tests/test_combat_phase_fsm.py` 12개 테스트가 전체 스위트(`pytest tests/`) 실행 시 실패 (개별 실행 시엔 통과) | `tests/test_combat_phase_fsm.py` |
+
+**원인**: 테스트가 `asyncio.get_event_loop().run_until_complete(...)` 패턴을 직접 사용. pytest-asyncio(auto 모드)가 각 async 테스트 종료 후 `asyncio.set_event_loop(None)`으로 전역 루프를 리셋하는데, 이후 동기 테스트에서 `get_event_loop()`를 호출하면 `RuntimeError: There is no current event loop`가 발생. 테스트 실행 순서에 의존적인 버그로, CI가 파일 단위로만 테스트를 돌리는 한 드러나지 않았음.
+
+**해결**: `asyncio.get_event_loop().run_until_complete(coro)` → `asyncio.run(coro)`로 교체 (5개 위치). `asyncio.run`은 매번 새 루프를 생성/정리하므로 전역 루프 상태에 의존하지 않음.
+
+**검증**: `pytest tests/` 전체 실행 시 502 passed, 14 skipped (이전: 12 failed).
 
 ---
 
