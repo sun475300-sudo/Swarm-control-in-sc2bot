@@ -49,6 +49,7 @@ jobs:
           python -m pip install --upgrade pip
           pip install flake8 pytest pytest-cov
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+          if [ -f requirements-dev.txt ]; then pip install -r requirements-dev.txt; fi
           # 추가 테스트 의존성
           pip install pyyaml aiohttp
 
@@ -112,11 +113,16 @@ jobs:
 
       - name: pytest 실행 (전체)
         run: |
-          pytest tests/ -v --tb=short --co -q
-          pytest tests/test_crypto_trading.py tests/test_security.py -v --tb=short
+          pytest tests/ -v --tb=short
         env:
           DRY_RUN: "true"
           LOG_LEVEL: "DEBUG"
+          # requirements.txt pulls in several google/protobuf-adjacent
+          # packages that can resolve to a protobuf runtime newer than the
+          # pre-generated _pb2.py files s2clientprotocol ships expect,
+          # which raises "Descriptors cannot be created directly" on import.
+          # Forcing the pure-Python implementation avoids that mismatch.
+          PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION: python
 
   # ─────────────────────────────────────────────
   # SC2 봇 구문 검증 + 테스트
@@ -140,6 +146,7 @@ jobs:
           python -m pip install --upgrade pip
           pip install burnysc2 pytest pytest-asyncio pyyaml aiohttp
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+          if [ -f requirements-dev.txt ]; then pip install -r requirements-dev.txt; fi
 
       - name: py_compile 전체 구문 검증 (349 파일)
         run: |
