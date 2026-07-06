@@ -5,6 +5,31 @@
 
 ---
 
+## 0. 2026-07-06 재점검 — ⚠️ PR 적체 심각 (최우선 조치 필요)
+
+> 본 사이클(테스트→개선점검→커밋/푸시 반복) 재개 중 발견. 아래 항목이 다른 모든 작업보다 우선.
+
+- **열린 draft PR 271건** (`#15` ~ `#309`, 전부 `claude/optimistic-edison-*` 브랜치). 표본 확인 결과
+  대다수가 **동일한 결함**(`tests/test_combat_phase_fsm.py`의 `asyncio.get_event_loop()` →
+  Python 3.11에서 `RuntimeError: no current event loop` 유발)을 반복해서 고치는 내용이었음.
+  원인: 세션마다 새 브랜치에서 시작 → 아무 PR도 머지되지 않음 → `main`이 그대로 → 다음 세션이
+  같은 버그를 "새로 발견"해서 또 고침 → PR만 계속 누적. `MASTER_TODO_SC2.md` §1.1(2026-04-26, 당시
+  14건)에서 이미 경고했던 패턴이 방치되어 20배 가까이 악화됨.
+- **실측**: 이번 세션 기준 `main`에는 여전히 버그가 살아있었음 — `pytest tests/`가 12 failed로 시작.
+  `tests/test_combat_phase_fsm.py`(`asyncio.run()`로 교체) + `tests/conftest.py`
+  (`PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python` 추가, 신규 환경에서 sc2/protobuf 임포트가
+  깨지는 문제)를 고쳐서 **`tests/`: 505 passed / 11 skipped, `wicked_zerg_challenger/tests/`:
+  661 passed — 0 failed**로 확인. 동일 수정이 담긴 PR이 이미 30개 이상 떠 있음(예: #309, #308, #307...).
+- **권장 조치 (사용자 승인 필요 — 자동 실행 안 함)**:
+  1. 위 PR 중 가장 완성도 높은 것(예: #309 — asyncio 수정 + conftest protobuf 수정 + 이슈 문서 정리 포함)을
+     골라 **머지**하고 나머지 269건은 **일괄 close**. (본 리포의 원칙상 머지/대량 close는 사용자 승인 필요.)
+  2. 향후 "매일 테스트/점검" 자동화는 **같은 브랜치·같은 PR을 이어서 갱신**하는 방식으로 바꿔야
+     동일 문제 재발 방지 가능 (세션마다 새 브랜치를 파는 현재 방식이 근본 원인).
+  3. 정리 전까지는 신규 PR 생성을 최소화하고, 실제로 아직 처리되지 않은 항목(§4 갱신판 참조)에
+     집중 권장.
+
+---
+
 ## 1. 백로그 인벤토리
 
 ### 1.1 열린 PR (16건)
@@ -161,3 +186,23 @@
 3. **S3.1 CI fail-fast: false** (단순 패치, 별 PR, 자동 가능)
 4. **S3.2 pip-tools 도입** (별 PR, 검토 후 자동)
 5. 그 외 S2/S3/S4 항목은 사용자 우선순위 협의 후 진행
+
+---
+
+## 5. 2026-07-06 백로그 재수집 (실제 미구현/중단 항목만 — §0 PR 중복 제외)
+
+> 테스트 실행 + 코드 audit으로 재확인. §1.5/§1.9와 `PLAN-NIGHTLY.md` P2 항목 중 아직도 코드에
+> 반영 안 된 것만 남김 (P2.1 FSM, 큐 트랜스퓨전 등은 이미 코드에 구현되어 있어 제외).
+
+| 우선순위 | 항목 | 근거 | 상태 |
+|---|---|---|---|
+| 🟠 HIGH | PR 적체 정리 (§0) | 271건 open, 신규 작업 전 필수 | 사용자 승인 대기 |
+| 🟡 MED | 벤치마크 러너 (`PLAN-NIGHTLY.md` P2.2) — 단일 커맨드로 N판 실행, APM/승률/서플라이 리포트 | 코드베이스에 `*benchmark*` 관련 실행 스크립트 부재 확인 | ❌ 미구현 |
+| 🟡 MED | 빌드오더 설정 외부화 (P2.3) — `config/build_orders.yaml`로 상위 20개 하드코딩 값 이전 | `config/build_orders.yaml` 파일 부재 확인 | ❌ 미구현 |
+| 🟢 LOW | 핵심 모듈 타입힌트/문서화 (P2.5) — `core/resource_manager.py`, `core/manager_factory.py` | 미착수 | ❌ 미구현 |
+| 🟢 LOW | flake8 F401 (미사용 import) 49건 (`wicked_zerg_challenger/`, `tests/`) | 실측 (`flake8 --select=F401`) | ❌ 미정리 |
+| 🟢 LOW | black 미포맷 61 파일 / isort 오류 다수 | 실측. §3 위험 항목대로 PR 적체 해소 전에는 대규모 적용 보류 권장 | ❌ 보류 |
+| 🟢 LOW | REMAINING_ISSUES.md N9 — `tests/`+`wicked_zerg_challenger/tests/` 동시 collect 시 namespace 패키지 충돌 | 재현 조건 좁음, 분리 실행 시 미발현 | ❌ 미수정, 낮은 우선순위 |
+| 🟢 LOW | codecov 임계값(`--cov-fail-under`) 미설정 | `sc2bot-ci.yml`에 업로드는 있으나 강제 없음 | ❌ 미구현 |
+| ✅ DONE | `tests/test_combat_phase_fsm.py` asyncio 이벤트루프 버그 | 이번 세션 수정, 505+661 passed 확인 | 커밋 완료 (본 세션) |
+| ✅ DONE | 신규 샌드박스에서 sc2/protobuf 임포트 깨짐 (`conftest.py`) | 이번 세션 수정 | 커밋 완료 (본 세션) |
