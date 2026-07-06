@@ -4,24 +4,33 @@
 
 통합 문제 해결 후 발견된 추가 개선 사항들입니다.
 
-**Last refreshed:** 2026-04-27 (Issue #1, #2 → Resolved; Issue #6 partially resolved via Batch 3)
+**Last refreshed:** 2026-07-06 (자동 점검 사이클 재개 — N1~N4 재검증 결과 이미 해결 확인, 신규 이슈 2건 발견/수정)
 
 ---
 
-## 🆕 신규 발견 (PR #44, 2026-04-27)
-
-자동/수동 점검 사이클(테스트 → 코드 검사 → 개선 → 커밋/푸시 반복)에서 새로 식별된 항목.
+## 🆕 신규 발견 및 수정 (2026-07-06 자동 점검 사이클)
 
 | ID | 설명 | 우선순위 | 상태 |
 |----|------|---------|------|
-| N1 | `OpponentModeling.on_step` 중복 정의 (line 341 vs 765 — F811) | 🟠 HIGH | open — 동작 영향(상위 on_step이 미실행) 가능 |
-| N2 | `EconomyManager._prevent_resource_banking` / `_reduce_gas_workers` 재정의 (F811) | 🟡 MED | open |
-| N3 | `combat_manager._find_harass_target` 재정의 (line 2377 vs 4278) | 🟡 MED | open |
-| N4 | `production_resilience.build_terran_counters` 재정의 (1369 vs 1866) | 🟡 MED | open |
-| N5 | bare `except Exception:` 다수 (≈360+) — 이번 PR에서 12건 처리, 잔여 다수 | 🟢 LOW | partial |
-| N6 | F841 unused local variables (visuals/make_pptx 등) | 🟢 LOW | open (presentation 코드라 영향 작음) |
+| N7 | `tests/test_combat_phase_fsm.py`의 `asyncio.get_event_loop().run_until_complete(...)` 패턴이 전체 스위트 실행 시 다른 테스트가 이벤트 루프를 닫은 뒤 호출되면 `RuntimeError: There is no current event loop`로 깨짐 (단독 실행 시엔 통과 — order-dependent flaky, 전체 스위트에서 12건 실패 확인) | 🟠 HIGH | **fixed** — 5곳 모두 `asyncio.run(...)`으로 교체. `pytest tests/` 502 passed / 14 skipped로 회귀 확인 |
+| N8 | `.github/workflows/sc2bot-ci.yml`의 `test` job이 존재하지 않는 `tests/unit` 디렉터리를 참조하고 `pytest-timeout` 미설치 상태에서 `--timeout=120`을 사용 — **lint job의 `black --check`가 항상 실패**해 `needs: lint`로 인해 test job이 매 실행마다 skip되어 왔음(최근 10회 이상 run 전부 실패, 즉 실제 pytest가 CI에서 한 번도 성공 실행된 적 없음) | 🔴 HIGH | **fixed** — black/isort를 비차단(`continue-on-error: true`)으로 전환(플레이크8-critical은 계속 차단 유지), test job을 `tests/`·`wicked_zerg_challenger/tests/` 실제 경로로 분리 실행하도록 수정, `pytest-timeout` 의존성 추가. 로컬에서 동일 커맨드로 502 + 661 = 1163 passed 확인 |
 
-검증 권장: PR 분리 (N1 단독 PR 권장 — 동작 변화 가능성).
+**참고**: N7/N8 모두 이번 점검에서 재발견된 항목이며 이전 사이클과 무관하게 신규 확인됨. 검증 방법: `pytest tests/ -q`, `pytest wicked_zerg_challenger/tests/ -q` 풀스위트 실행.
+
+---
+
+## ✅ 재검증 결과 — 이전 신규 발견 항목 (PR #44, 2026-04-27) 전건 해결 확인
+
+아래 N1~N4는 코드 재검토(`grep`/`flake8 --select=F811`) 결과 **중복 정의가 이미 제거되어 있음**을 확인. 이후 커밋(`e648ae4` "delete shadowed duplicate methods" 등)에서 해소된 것으로 보이며, 문서만 stale 상태였음.
+
+| ID | 설명 | 확인 결과 |
+|----|------|---------|
+| N1 | `OpponentModeling.on_step` 중복 정의 (line 341 vs 765 — F811) | ✅ resolved — `on_step` 정의 1건만 존재(341번 줄), `flake8 --select=F811 wicked_zerg_challenger` 전체 0건 |
+| N2 | `EconomyManager._prevent_resource_banking` / `_reduce_gas_workers` 재정의 (F811) | ✅ resolved — 각 1건만 존재 |
+| N3 | `combat_manager._find_harass_target` 재정의 (line 2377 vs 4278) | ✅ resolved — 1건만 존재(4992번 줄, 라인 이동) |
+| N4 | `production_resilience.build_terran_counters` 재정의 (1369 vs 1866) | ✅ resolved — 1건만 존재(`wicked_zerg_challenger/local_training/production_resilience.py:1961`) |
+| N5 | bare `except Exception:` 다수 | 🟢 LOW — 여전히 open, 468건 잔존 (범위가 넓어 전용 PR 필요) |
+| N6 | F841 unused local variables | 🟢 LOW — 여전히 open, 130건 잔존 (대부분 `visuals/` 프레젠테이션 코드) |
 
 ---
 
