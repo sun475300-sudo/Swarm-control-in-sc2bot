@@ -2,6 +2,14 @@
 
 All notable changes to WickedZergBotPro are documented here.
 
+## [Unreleased] - 2026-07-06
+### 반복 점검 사이클: 테스트 안정화 + 문서 현황 재검증
+- **Fix** `tests/test_combat_phase_fsm.py`: deprecated `asyncio.get_event_loop().run_until_complete(...)` 호출 5곳을 `asyncio.run(...)`으로 교체. Python 3.11+ 환경에서 "no current event loop" 오류로 실패하던 12개 테스트 복구 (23/23 통과).
+- **Cleanup** `wicked_zerg_challenger/scouting/phase_scout_cadence.py`, `wicked_zerg_challenger/scouting_system.py`: 미사용 `typing` import 제거 (F401).
+- **Docs** `REMAINING_ISSUES.md`: N1~N4(중복 정의 F811) 재검증 결과 이미 해결됨을 확인, N5/N6 잔여 규모 갱신, 신규 항목 N7~N9 추가.
+- **Docs** `ROADMAP.md`: "Phase 56, 342/342 테스트" 헤더가 실제 상태(1,145개 테스트 통과, Sprint 1~7 대다수 항목 기구현)와 크게 어긋나 있어 검증 현황 섹션 추가.
+- **Verify** 전체 테스트 스위트(`wicked_zerg_challenger/tests` 661 + `tests/` 474 + `tests/integration` 10 = 1,145개) 및 flake8 critical(E9,F63,F7,F82) + F811/F821/F823 전체 재스캔 — 모두 통과/0건.
+
 ## [Phase 56] - 2026-03-29
 ### README 가독성/시각화 대규모 강화 + 다국어 라우팅 확장 시작
 - **README** 대규모 개편:
