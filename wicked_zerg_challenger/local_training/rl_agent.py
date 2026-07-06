@@ -14,7 +14,6 @@ REINFORCE 알고리즘 기반의 정책 학습 에이전트입니다.
 
 import logging
 import os
-import shutil
 import time
 from datetime import datetime
 from pathlib import Path
@@ -654,11 +653,10 @@ class RLAgent:
             )
             temp_actual = temp_base + ".npz"
 
-            # 원자적으로 이름 변경 (Atomic Rename)
-            # Windows에서는 기존 파일이 있으면 rename이 실패할 수 있으므로 삭제 후 변경
-            if os.path.exists(path_str):
-                os.remove(path_str)
-            os.rename(temp_actual, path_str)
+            # os.replace()는 대상 파일이 있어도 원자적으로 교체한다 (POSIX/Windows 모두).
+            # 사전에 기존 파일을 삭제하면 삭제~교체 사이에 크래시/디스크풀이 발생할 경우
+            # 기존 데이터와 새 데이터를 모두 잃을 수 있으므로 절대 미리 삭제하지 않는다.
+            os.replace(temp_actual, path_str)
 
             logger.info(
                 f"[OK] Experience saved atomically: {len(self.states)} states, {len(self.rewards)} rewards"
@@ -756,13 +754,22 @@ class RLAgent:
     def save_model(self, path: Optional[str] = None) -> bool:
         """모델 저장 (Atomic Write)"""
         save_path = Path(path) if path else self.model_path
-        tmp_path = save_path.with_suffix(".tmp")
+        # np.savez()는 파일명이 .npz로 끝나지 않으면 자동으로 확장자를 덧붙인다.
+        # save_path.with_suffix(".tmp")를 그대로 넘기면 실제로는 "<name>.tmp.npz"가
+        # 생성되어 이후 존재 확인이 항상 실패해서 저장이 조용히 스킵됐다 (P2.4).
+        save_path_str = str(save_path)
+        tmp_base = (
+            save_path_str[: -len(".npz")]
+            if save_path_str.endswith(".npz")
+            else save_path_str
+        ) + ".tmp"
+        tmp_actual = tmp_base + ".npz"
 
         try:
             save_path.parent.mkdir(parents=True, exist_ok=True)
             weights = self.policy.get_weights()
             np.savez(
-                str(tmp_path),
+                tmp_base,
                 W1=weights["W1"],
                 b1=weights["b1"],
                 W2=weights["W2"],
@@ -773,27 +780,18 @@ class RLAgent:
                 episode_count=np.array([self.episode_count]),
             )
 
-            # *** FIX: Atomic rename with Windows compatibility ***
-            if tmp_path.exists():
-                try:
-                    # Remove old file first on Windows (replace() can fail silently)
-                    if save_path.exists():
-                        save_path.unlink()
-                    # Use shutil.move() for cross-platform compatibility
-                    shutil.move(str(tmp_path), str(save_path))
-                except Exception as move_error:
-                    # Fallback: copy + delete
-                    logger.error(f"Move failed, trying copy: {move_error}")
-                    shutil.copy(str(tmp_path), str(save_path))
-                    tmp_path.unlink()
+            # os.replace()는 대상이 존재해도 원자적으로 교체한다 (POSIX/Windows 모두).
+            # 기존 파일을 먼저 지우면 교체 도중 크래시/디스크풀 시 새 파일도, 기존
+            # 파일도 남지 않는 창(window)이 생기므로 사전 삭제하지 않는다.
+            os.replace(tmp_actual, save_path_str)
 
             logger.info(f"Model saved to {save_path}")
             return True
         except Exception as e:
             logger.error(f"Failed to save model: {e}")
-            if tmp_path.exists():
+            if os.path.exists(tmp_actual):
                 try:
-                    tmp_path.unlink()
+                    os.remove(tmp_actual)
                 except Exception:
                     pass
             return False
