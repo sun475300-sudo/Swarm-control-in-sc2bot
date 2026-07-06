@@ -39,7 +39,7 @@ class BackgroundTrainingMonitor:
 
     def clear_screen(self):
         """화면 지우기 (OS별 처리)"""
-        os.system('cls' if os.name == 'nt' else 'clear')
+        os.system('cls' if os.name == 'nt' else 'clear')  # nosec B605 - fixed literal, no user input
 
     def get_directory_info(self, directory: Path) -> Dict:
         """디렉토리 정보 수집"""
