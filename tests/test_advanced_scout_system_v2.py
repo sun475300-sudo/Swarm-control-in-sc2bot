@@ -4,15 +4,26 @@ Unit Tests for Advanced Scout System V2
 Tests dynamic scouting intervals, scout assignment, and intel reporting.
 """
 
+import os
+import sys
 from unittest.mock import MagicMock, Mock, patch
 
 import pytest
+
+sys.path.insert(
+    0, os.path.join(os.path.dirname(__file__), "..", "wicked_zerg_challenger")
+)
 
 try:
     from sc2.ids.unit_typeid import UnitTypeId
     from sc2.position import Point2
 except ImportError:
     pytest.skip("sc2 library not available", allow_module_level=True)
+
+try:
+    from scouting.advanced_scout_system_v2 import AdvancedScoutingSystemV2
+except ImportError as e:
+    pytest.skip(f"AdvancedScoutingSystemV2 not available: {e}", allow_module_level=True)
 
 
 class MockBot:
@@ -67,15 +78,8 @@ class TestAdvancedScoutSystemV2:
 
     def setup_method(self):
         """Setup before each test"""
-        try:
-            from wicked_zerg_challenger.scouting.advanced_scout_system_v2 import (
-                AdvancedScoutingSystemV2,
-            )
-
-            self.bot = MockBot()
-            self.scout_system = AdvancedScoutingSystemV2(self.bot)
-        except ImportError:
-            pytest.skip("AdvancedScoutingSystemV2 not available")
+        self.bot = MockBot()
+        self.scout_system = AdvancedScoutingSystemV2(self.bot)
 
     # ===== Interval Calculation Tests =====
 

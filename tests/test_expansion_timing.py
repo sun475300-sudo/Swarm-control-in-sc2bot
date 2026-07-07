@@ -15,6 +15,8 @@ Assertions:
 """
 from __future__ import annotations
 
+import os
+import sys
 from types import SimpleNamespace
 from typing import Optional
 from unittest.mock import MagicMock, patch
@@ -25,8 +27,12 @@ import pytest
 # Minimal stubs so the module imports without an SC2 environment
 # ---------------------------------------------------------------------------
 
+sys.path.insert(
+    0, os.path.join(os.path.dirname(__file__), "..", "wicked_zerg_challenger")
+)
+
 try:
-    from wicked_zerg_challenger.economy_manager import EconomyManager
+    from economy_manager import EconomyManager
     _IMPORT_OK = True
 except ImportError:
     _IMPORT_OK = False

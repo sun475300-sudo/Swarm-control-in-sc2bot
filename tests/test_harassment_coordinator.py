@@ -4,15 +4,26 @@ Unit Tests for Harassment Coordinator
 Tests aggressive modes, baneling drops, squad locking, and multi-angle attacks.
 """
 
+import os
+import sys
 from unittest.mock import MagicMock, Mock
 
 import pytest
+
+sys.path.insert(
+    0, os.path.join(os.path.dirname(__file__), "..", "wicked_zerg_challenger")
+)
 
 try:
     from sc2.ids.unit_typeid import UnitTypeId
     from sc2.position import Point2
 except ImportError:
     pytest.skip("sc2 library not available", allow_module_level=True)
+
+try:
+    from combat.harassment_coordinator import AggressiveMode, HarassmentCoordinator
+except ImportError as e:
+    pytest.skip(f"HarassmentCoordinator not available: {e}", allow_module_level=True)
 
 
 class MockState:
@@ -50,17 +61,9 @@ class TestHarassmentCoordinator:
 
     def setup_method(self):
         """Setup before each test"""
-        try:
-            from wicked_zerg_challenger.combat.harassment_coordinator import (
-                AggressiveMode,
-                HarassmentCoordinator,
-            )
-
-            self.bot = MockBot()
-            self.coordinator = HarassmentCoordinator(self.bot)
-            self.AggressiveMode = AggressiveMode
-        except ImportError:
-            pytest.skip("HarassmentCoordinator not available")
+        self.bot = MockBot()
+        self.coordinator = HarassmentCoordinator(self.bot)
+        self.AggressiveMode = AggressiveMode
 
     # ===== Aggressive Mode Tests =====
 
