@@ -3,6 +3,7 @@
 """Roadmap Sprint 2.5: changelings must auto-deploy once an overseer has
 >=50 energy, instead of relying on a manual caller that never existed in
 production (see REMAINING_ISSUES.md / roadmap audit 2026-07-07)."""
+
 import os
 import sys
 import unittest
@@ -11,7 +12,12 @@ from unittest.mock import MagicMock, Mock
 os.environ["PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION"] = "python"
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from scouting_system import CHANGELING_ENERGY_COST, CHANGELING_REDEPLOY_INTERVAL, ScoutingSystem, UnitTypeId
+from scouting_system import (
+    CHANGELING_ENERGY_COST,
+    CHANGELING_REDEPLOY_INTERVAL,
+    ScoutingSystem,
+    UnitTypeId,
+)
 
 
 class FakePoint:
@@ -53,7 +59,9 @@ class TestChangelingAutoDeploy(unittest.TestCase):
 
     def _with_overseer(self, energy):
         overseer = FakeOverseer(tag=1, energy=energy)
-        self.bot.units = lambda unit_type: FakeUnits([overseer]) if unit_type == UnitTypeId.OVERSEER else FakeUnits([])
+        self.bot.units = lambda unit_type: (
+            FakeUnits([overseer]) if unit_type == UnitTypeId.OVERSEER else FakeUnits([])
+        )
         return overseer
 
     def test_deploy_changeling_requires_enough_energy(self):
@@ -79,11 +87,17 @@ class TestChangelingAutoDeploy(unittest.TestCase):
         self.assertEqual(self.bot.do.call_count, 1)
 
         # Still within the redeploy cooldown -> no second cast.
-        self.assertFalse(self.scouting.maybe_deploy_changeling(100.0 + CHANGELING_REDEPLOY_INTERVAL - 1))
+        self.assertFalse(
+            self.scouting.maybe_deploy_changeling(
+                100.0 + CHANGELING_REDEPLOY_INTERVAL - 1
+            )
+        )
         self.assertEqual(self.bot.do.call_count, 1)
 
         # Cooldown elapsed -> casts again.
-        self.assertTrue(self.scouting.maybe_deploy_changeling(100.0 + CHANGELING_REDEPLOY_INTERVAL))
+        self.assertTrue(
+            self.scouting.maybe_deploy_changeling(100.0 + CHANGELING_REDEPLOY_INTERVAL)
+        )
         self.assertEqual(self.bot.do.call_count, 2)
 
     def test_maybe_deploy_changeling_does_not_advance_cooldown_on_failure(self):

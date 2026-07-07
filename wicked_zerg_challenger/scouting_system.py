@@ -218,7 +218,9 @@ class ScoutingSystem:
         structures = list(getattr(self.bot, "enemy_structures", []) or [])
         for structure in structures:
             if self._is_enemy_expansion(structure):
-                self._set("enemy_expansion_spotted", getattr(structure, "position", None))
+                self._set(
+                    "enemy_expansion_spotted", getattr(structure, "position", None)
+                )
                 self._set("enemy_expand_confirmed", True)
         if enemies:
             self._set("last_enemy_seen_time", getattr(self.bot, "time", 0.0))
@@ -284,7 +286,9 @@ class ScoutingSystem:
             if self._type_name(structure) in CLOAK_TECH_STRUCTURES:
                 self._set("cloak_tech_detected", True)
                 return getattr(structure, "position", None) or self._enemy_start()
-        if self._get("cloak_threat_detected", False) or self._get("cloak_tech_detected", False):
+        if self._get("cloak_threat_detected", False) or self._get(
+            "cloak_tech_detected", False
+        ):
             return self._get("cloak_threat_position", None) or self._enemy_start()
         return None
 
@@ -504,8 +508,12 @@ class ZvTScoutingSystem:
             self._set("terran_structure_counts", counts)
             self._set("factory_count", counts.get("FACTORY", 0))
             self._set("enemy_gas_count", counts.get("REFINERY", 0))
-            self._set("tech_lab_count", sum(counts.get(name, 0) for name in self.TECH_LABS))
-            self._set("reactor_count", sum(counts.get(name, 0) for name in self.REACTORS))
+            self._set(
+                "tech_lab_count", sum(counts.get(name, 0) for name in self.TECH_LABS)
+            )
+            self._set(
+                "reactor_count", sum(counts.get(name, 0) for name in self.REACTORS)
+            )
 
     def record_scouted_structure(self, structure) -> None:
         name = self._type_name(structure)
@@ -517,7 +525,9 @@ class ZvTScoutingSystem:
                 self._set("planetary_fortress", True)
             if self._is_enemy_expansion(structure):
                 self._set("enemy_expand_confirmed", True)
-                self._set("enemy_expansion_spotted", getattr(structure, "position", None))
+                self._set(
+                    "enemy_expansion_spotted", getattr(structure, "position", None)
+                )
         elif name == "REFINERY":
             self._increment("enemy_gas_count")
         elif name == "FACTORY":
@@ -745,7 +755,9 @@ class ZvPScoutingSystem:
         if name in self.PROTOSS_BASES:
             if self._is_enemy_expansion(structure):
                 self._set("enemy_expand_confirmed", True)
-                self._set("enemy_expansion_spotted", getattr(structure, "position", None))
+                self._set(
+                    "enemy_expansion_spotted", getattr(structure, "position", None)
+                )
         elif name == "FORGE":
             self._set("forge_timing", True)
             if self._near_our_base(structure):
