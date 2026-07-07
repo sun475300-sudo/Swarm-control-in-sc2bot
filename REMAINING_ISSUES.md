@@ -4,7 +4,36 @@
 
 통합 문제 해결 후 발견된 추가 개선 사항들입니다.
 
-**Last refreshed:** 2026-04-27 (Issue #1, #2 → Resolved; Issue #6 partially resolved via Batch 3)
+**Last refreshed:** 2026-07-07 (테스트/CI 감사 사이클 — 아래 참고)
+
+---
+
+## ⚠️ 2026-07-07 감사: PR 적체 문제 (중요)
+
+이번 점검에서 **열린 draft PR이 약 300건**(#15~#333, 2026-04-20~07-07) 쌓여 있는
+것을 확인했습니다. 그 중 다수(#284~#333 구간 확인분 포함)가 **동일한 버그
+(`tests/test_combat_phase_fsm.py`의 `asyncio.get_event_loop()` deprecated 패턴)를
+반복해서 "새로 발견"하고 고치는 내용**이었습니다 — 각 세션이 main 기준으로 새
+브랜치를 파지만, 이전 세션의 수정이 merge되지 않아 다음 세션이 같은 버그를
+다시 마주치는 패턴이 반복된 것으로 보입니다.
+
+- main에서 실제로 여전히 깨져 있던 것 확인 후 **이번 커밋에서 실제로 수정**함
+  (아래 "이번 라운드 수정" 참고).
+- **권장 사항**: 새 PR을 계속 쌓기 전에, 기존 열린 PR을 정리(중복/흡수분 close,
+  가치있는 것 merge)하는 작업을 먼저 진행하는 것이 좋습니다. PR close/merge는
+  본 저장소 정책상 사용자 승인이 필요합니다.
+
+## ✅ 이번 라운드 수정 (2026-07-07)
+
+| 항목 | 파일 | 내용 |
+|---|---|---|
+| FSM 테스트 12건 실패 | `tests/test_combat_phase_fsm.py` | `asyncio.get_event_loop().run_until_complete()` → `asyncio.run()` (deprecated 패턴이 스위트 전체 실행 시 RuntimeError 유발) |
+| `ci.yml` pytest가 실제로 안 돌던 문제 | `.github/workflows/ci.yml` | "pytest 실행 (전체)" 단계가 `--co -q`(collect-only) + 파일 2개만 실행하던 것을 실제 전체 실행으로 수정, pytest-asyncio/pytest-timeout 의존성 추가 |
+| `sc2bot-ci.yml` test job이 존재하지 않는 `tests/unit` 참조 | `.github/workflows/sc2bot-ci.yml` | `tests/unit` → `tests/ --ignore=tests/integration` (해당 디렉터리 자체가 없어 job이 깨져 있었음) |
+| `sc2bot-ci.yml` lint job이 black/isort 미포맷(66개 파일)으로 항상 실패 → test job 자체가 실행 안 됨 | `.github/workflows/sc2bot-ci.yml` | black/isort를 `continue-on-error: true`로 non-blocking 전환 (포맷팅은 별도 전용 PR로 처리 권장) |
+| `requirements.txt` 존재하지 않는 버전 핀 | `requirements.txt`, `wicked_zerg_challenger/requirements.txt` | `s2clientprotocol>=4.19.0.0` 제거 — 해당 버전은 PyPI에 존재하지 않아 `pip install -r requirements.txt`가 항상 resolution 실패했음 (burnysc2가 `pys2clientprotocol`을 이미 의존성으로 가져옴) |
+
+검증: `pytest tests/` 502 passed / 14 skipped / 0 failed, `pytest wicked_zerg_challenger/tests/` 661 passed / 0 failed (venv에 `burnysc2`, `pytest-asyncio` 등 실제 설치 후 확인).
 
 ---
 
