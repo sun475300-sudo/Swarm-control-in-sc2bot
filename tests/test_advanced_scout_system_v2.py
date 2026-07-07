@@ -4,15 +4,26 @@ Unit Tests for Advanced Scout System V2
 Tests dynamic scouting intervals, scout assignment, and intel reporting.
 """
 
+import os
+import sys
 from unittest.mock import MagicMock, Mock, patch
 
 import pytest
+
+sys.path.insert(
+    0, os.path.join(os.path.dirname(__file__), "..", "wicked_zerg_challenger")
+)
 
 try:
     from sc2.ids.unit_typeid import UnitTypeId
     from sc2.position import Point2
 except ImportError:
     pytest.skip("sc2 library not available", allow_module_level=True)
+
+try:
+    from scouting.advanced_scout_system_v2 import AdvancedScoutingSystemV2
+except ImportError as e:
+    pytest.skip(f"AdvancedScoutingSystemV2 not available: {e}", allow_module_level=True)
 
 
 class MockBot:
@@ -67,15 +78,8 @@ class TestAdvancedScoutSystemV2:
 
     def setup_method(self):
         """Setup before each test"""
-        try:
-            from wicked_zerg_challenger.scouting.advanced_scout_system_v2 import (
-                AdvancedScoutingSystemV2,
-            )
-
-            self.bot = MockBot()
-            self.scout_system = AdvancedScoutingSystemV2(self.bot)
-        except ImportError:
-            pytest.skip("AdvancedScoutingSystemV2 not available")
+        self.bot = MockBot()
+        self.scout_system = AdvancedScoutingSystemV2(self.bot)
 
     # ===== Interval Calculation Tests =====
 
@@ -241,7 +245,9 @@ class TestAdvancedScoutSystemV2:
         target = Point2((40, 40))
         empty_units = TruthyEmptyUnits()
         self.scout_system.roadmap_scouting = Mock()
-        self.scout_system.roadmap_scouting.select_overlord_scout_target.return_value = target
+        self.scout_system.roadmap_scouting.select_overlord_scout_target.return_value = (
+            target
+        )
         self.bot.blackboard = Mock()
         self.bot.units = Mock(return_value=empty_units)
 
@@ -251,9 +257,7 @@ class TestAdvancedScoutSystemV2:
         self.scout_system._patrol_routes["enemy_bases"] = [Point2((40, 40))]
         self.bot.units = Mock(return_value=TruthyEmptyUnits())
 
-        assert not self.scout_system._assign_patrol(
-            "enemy_bases", UnitTypeId.OVERLORD
-        )
+        assert not self.scout_system._assign_patrol("enemy_bases", UnitTypeId.OVERLORD)
 
     # ===== Memory Management Tests =====
 

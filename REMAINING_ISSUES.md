@@ -4,24 +4,35 @@
 
 통합 문제 해결 후 발견된 추가 개선 사항들입니다.
 
-**Last refreshed:** 2026-04-27 (Issue #1, #2 → Resolved; Issue #6 partially resolved via Batch 3)
+**Last refreshed:** 2026-07-07 (N1-N4 재검증 → 이미 해결 확인; 신규 CI/테스트 은폐 버그 발견·수정)
 
 ---
 
-## 🆕 신규 발견 (PR #44, 2026-04-27)
+## ✅ 2026-07-07 재검증 결과
 
-자동/수동 점검 사이클(테스트 → 코드 검사 → 개선 → 커밋/푸시 반복)에서 새로 식별된 항목.
+`flake8 --select=F811 wicked_zerg_challenger/`로 전체 재스캔한 결과 중복 정의가 하나도 남아있지 않음을 확인했습니다. N1~N4는 이후 PR(#218 등)에서 이미 실질적으로 고쳐졌고, 이 문서만 갱신되지 않았던 것입니다.
+
+| ID | 설명 | 상태 |
+|----|------|------|
+| N1 | `OpponentModeling.on_step` 중복 정의 | ✅ Resolved — 현재 코드에 정의 1개만 존재 (827줄 파일, 341줄 위치) |
+| N2 | `EconomyManager._prevent_resource_banking` / `_reduce_gas_workers` 재정의 | ✅ Resolved — 각각 단일 정의만 존재 |
+| N3 | `combat_manager._find_harass_target` 재정의 | ✅ Resolved — 단일 정의(4992줄)만 존재 |
+| N4 | `production_resilience.build_terran_counters` 재정의 | ✅ Resolved — 단일 정의(1961줄)만 존재 |
+| N5 | bare `except Exception:` 다수 (≈468건) | 🟢 LOW open — 여전히 다수 존재, 낮은 우선순위 유지 |
+| N6 | F841 unused local variables | 🟢 LOW open |
+
+## 🆕 신규 발견 (2026-07-07, 실제 pytest 실행 + CI 재검토)
 
 | ID | 설명 | 우선순위 | 상태 |
 |----|------|---------|------|
-| N1 | `OpponentModeling.on_step` 중복 정의 (line 341 vs 765 — F811) | 🟠 HIGH | open — 동작 영향(상위 on_step이 미실행) 가능 |
-| N2 | `EconomyManager._prevent_resource_banking` / `_reduce_gas_workers` 재정의 (F811) | 🟡 MED | open |
-| N3 | `combat_manager._find_harass_target` 재정의 (line 2377 vs 4278) | 🟡 MED | open |
-| N4 | `production_resilience.build_terran_counters` 재정의 (1369 vs 1866) | 🟡 MED | open |
-| N5 | bare `except Exception:` 다수 (≈360+) — 이번 PR에서 12건 처리, 잔여 다수 | 🟢 LOW | partial |
-| N6 | F841 unused local variables (visuals/make_pptx 등) | 🟢 LOW | open (presentation 코드라 영향 작음) |
+| N7 | CI(`ci.yml`)의 "pytest 실행 (전체)" 스텝이 `--co`(collect-only) 플래그로 실행되어 `tests/` 하위 ~500개 테스트가 실제로는 한 번도 실행되지 않고 있었음 | 🔴 HIGH | ✅ Fixed — `--co` 제거 |
+| N8 | `tests/test_combat_phase_fsm.py`가 `asyncio.get_event_loop().run_until_complete()`를 사용해 전체 스위트를 함께 돌리면 순서 의존적으로 12개 테스트가 `RuntimeError`로 실패 (단독 실행 시엔 통과해 은폐됨) | 🔴 HIGH | ✅ Fixed — `asyncio.run()`으로 교체 |
+| N9 | `sc2bot-ci.yml`이 존재하지 않는 `tests/unit` 경로를 참조 (실제로는 `tests/*.py` 평면 구조 + `tests/integration/`) | 🔴 HIGH | ✅ Fixed — `tests/ --ignore=tests/integration`로 수정 |
+| N10 | `tests/test_expansion_timing.py` (P1.3, 22개 테스트)가 `from wicked_zerg_challenger.economy_manager import ...` 패키지 한정 임포트를 사용해 `config` 모듈을 못 찾아 22개 테스트가 항상 스킵됨 (실제로 한 번도 실행된 적 없음) | 🔴 HIGH | ✅ Fixed — 다른 테스트와 동일한 `sys.path` + bare import 패턴으로 교체 |
+| N11 | `tests/test_advanced_scout_system_v2.py`(19개), `tests/test_harassment_coordinator.py`(22개)가 `setup_method` 내부의 지연 임포트 때문에, 리포 루트의 무관한 `./utils/` 패키지와 `wicked_zerg_challenger/utils/`가 이름이 충돌하면서 단독 실행 시 전부 스킵됨 (전체 스위트에서는 실행 순서 우연으로 통과해 은폐됨) | 🟠 MED | ✅ Fixed — 모듈 최상단 임포트로 이동해 충돌 해소 |
+| N12 | `tests/test_phase10_improvements.py`의 `TestStrategyManagerZvZCounter`/`TestStrategyManagerDTResponse` (11개 테스트)도 N11과 동일한 원인(`strategy_manager.py`의 `from utils.logger import ...`)으로 단독 실행 시 스킵됨 | 🟡 MED | open — 이 파일은 여러 클래스가 얽혀 있어 이번 세션에서는 보류. N11과 동일한 패턴(모듈 최상단 임포트)으로 후속 PR에서 수정 필요 |
 
-검증 권장: PR 분리 (N1 단독 PR 권장 — 동작 변화 가능성).
+검증 명령: `python -m pytest tests/ -q` (502 passed, 14 skipped, 0 failed — 수정 전 대비 order-dependent 실패 12건 해소, 실질 실행 테스트 63건 추가 확보).
 
 ---
 
