@@ -4,24 +4,45 @@
 
 통합 문제 해결 후 발견된 추가 개선 사항들입니다.
 
-**Last refreshed:** 2026-04-27 (Issue #1, #2 → Resolved; Issue #6 partially resolved via Batch 3)
+**Last refreshed:** 2026-07-07 (자동 점검 사이클 — 전체 재검증)
+
+### 🔁 2026-07-07 자동 점검 결과 요약
+
+- 테스트 스위트 재실행: `pytest tests/` (sc2/cffi 등 누락 의존성 설치 후) →
+  **508 passed / 14 skipped / 0 failed** (직전 세션 대비 실패 0건 유지).
+- 실제 버그 1건 발견 및 수정: `tests/test_combat_phase_fsm.py`가
+  `asyncio.get_event_loop().run_until_complete(...)`를 사용해 다른 테스트가
+  이벤트 루프를 정리(`set_event_loop(None)`)한 뒤 실행되면
+  `RuntimeError: There is no current event loop`로 12개 테스트가 실패하던
+  문제 → `asyncio.run(...)`으로 교체해 해결.
+- `wicked_zerg_challenger/local_training/rl_agent.py`의
+  `save_experience_data`가 `os.remove()` 후 `os.rename()`을 사용해, rename이
+  실패(디스크 오류 등)하면 기존 파일이 이미 삭제되어 데이터가 유실될 수 있는
+  잠재 버그 발견 → `os.replace()`(양쪽 OS에서 원자적 덮어쓰기)로 교체.
+  회귀 테스트 6건 추가 (`tests/test_rl_agent_save_experience.py`,
+  PLAN-NIGHTLY P2.4 항목 충족).
+- `flake8 --select=F811,F821` 로 `wicked_zerg_challenger/` 전체 재검사 →
+  **0건**. 아래 N1~N4(2026-04-27 발견)는 이미 해결된 상태로 재확인됨.
+- Issue #3(Transfusion 우선순위)과 #4(Resource Reservation 동기화),
+  #5(Position Utils 중복 제거)는 코드에 이미 반영되어 있음을 확인
+  (`queen_manager._transfuse_injured_units`의 `TRANSFUSE_PRIORITY` 테이블,
+  `core/resource_manager.py`의 `asyncio.Lock` 기반 `try_reserve`,
+  `utils/position_utils.py`). 문서만 stale했던 것으로 아래에서 Resolved로 이동.
 
 ---
 
-## 🆕 신규 발견 (PR #44, 2026-04-27)
+## ✅ Resolved (확인일: 2026-07-07)
 
-자동/수동 점검 사이클(테스트 → 코드 검사 → 개선 → 커밋/푸시 반복)에서 새로 식별된 항목.
+### ✅ N1~N4 (PR #44, 2026-04-27 발견) — 재검사 결과 모두 해결됨
 
-| ID | 설명 | 우선순위 | 상태 |
-|----|------|---------|------|
-| N1 | `OpponentModeling.on_step` 중복 정의 (line 341 vs 765 — F811) | 🟠 HIGH | open — 동작 영향(상위 on_step이 미실행) 가능 |
-| N2 | `EconomyManager._prevent_resource_banking` / `_reduce_gas_workers` 재정의 (F811) | 🟡 MED | open |
-| N3 | `combat_manager._find_harass_target` 재정의 (line 2377 vs 4278) | 🟡 MED | open |
-| N4 | `production_resilience.build_terran_counters` 재정의 (1369 vs 1866) | 🟡 MED | open |
-| N5 | bare `except Exception:` 다수 (≈360+) — 이번 PR에서 12건 처리, 잔여 다수 | 🟢 LOW | partial |
-| N6 | F841 unused local variables (visuals/make_pptx 등) | 🟢 LOW | open (presentation 코드라 영향 작음) |
+| ID | 설명 | 확인 결과 |
+|----|------|---------|
+| N1 | `OpponentModeling.on_step` 중복 정의 (F811) | `flake8 --select=F811` 재검사 시 미검출 — 이미 해결됨 |
+| N2 | `EconomyManager._prevent_resource_banking` / `_reduce_gas_workers` 재정의 | 미검출 — 이미 해결됨 |
+| N3 | `combat_manager._find_harass_target` 재정의 | 미검출 — 이미 해결됨 |
+| N4 | `production_resilience.build_terran_counters` 재정의 | 미검출 — 이미 해결됨 |
 
-검증 권장: PR 분리 (N1 단독 PR 권장 — 동작 변화 가능성).
+- N5(bare `except Exception:`)와 N6(F841 unused locals)은 여전히 낮은 우선순위 잔여 항목 — 아래 "추가 검토 필요 항목" 참고.
 
 ---
 
@@ -67,9 +88,20 @@
 
 ---
 
-## 🟡 MEDIUM Priority Issues (still open)
+## 🟡 MEDIUM Priority Issues — 재검사 결과 (2026-07-07)
 
-### Issue #3: Transfusion 우선순위 개선 필요
+> Issue #3, #4는 코드에 이미 구현되어 있음을 확인. 아래 원문(제안 예시 코드)은
+> 히스토리 보존 목적으로 남기고, 실제 구현 위치만 갱신함.
+
+### ✅ Issue #3: Transfusion 우선순위 — 구현 확인됨
+
+`queen_manager.py:711` `_transfuse_injured_units()`에 CreepyBot 스타일
+우선순위 테이블(`TRANSFUSE_PRIORITY`: QUEEN > BROODLORD > CORRUPTOR >
+SPINECRAWLER > OVERSEER > ULTRALISK > ...)과 치료 불가 유닛 제외
+(`UNHEALABLE_UNITS = {BANELING, BROODLING, LOCUSTMP}`)가 이미 구현되어
+있음. 아래는 최초 제안 시점의 예시 코드(참고용, 미적용):
+
+### Issue #3 원안 (참고용)
 
 **위치**: `queen_manager.py` 또는 `spell_unit_manager.py`
 
@@ -138,11 +170,17 @@ async def smart_transfusion(self, queen, damaged_units):
         self.bot.do(queen(AbilityId.TRANSFUSION_TRANSFUSION, best_target))
 ```
 
-**우선순위**: 🟡 MEDIUM (자원 효율성 개선)
+**우선순위**: 🟡 MEDIUM (자원 효율성 개선) — ✅ 위 로직으로 구현 완료
 
 ---
 
-### Issue #4: Resource Reservation Race Condition
+### ✅ Issue #4: Resource Reservation Race Condition — 구현 확인됨
+
+`wicked_zerg_challenger/core/resource_manager.py:28` `ResourceManager`
+클래스에 `asyncio.Lock()` 기반 `try_reserve()`/`release()`가 이미 구현되어
+있음. 아래는 최초 제안 시점의 예시(참고용, 실제 구현과 거의 동일):
+
+### Issue #4 원안 (참고용)
 
 **위치**: `resource_manager.py` (추정)
 
@@ -219,7 +257,16 @@ else:
 
 ## 🟢 LOW Priority Issues
 
-### Issue #5: 코드 중복 - Position 계산
+### ✅ Issue #5: 코드 중복 - Position 계산 — 2026-07-07 완전 해결
+
+`wicked_zerg_challenger/utils/position_utils.py`(`get_center_position()` /
+`get_weighted_center()` 등)는 이미 존재했으나 실제로 어디서도 import되어
+쓰이고 있지 않았음 (유틸리티만 만들고 기존 중복 코드는 안 바꾼 상태).
+`battle_preparation_system.py:_find_enemy_clusters()`에 남아있던 마지막
+중복 인스턴스(수동 `center_x/center_y` 계산)를 `get_center_position()`
+호출로 교체해 실제로 정리 완료. 아래는 최초 제안 시점의 예시(참고용):
+
+### Issue #5 원안 (참고용)
 
 **위치**: 여러 파일에서 중복
 
@@ -359,32 +406,30 @@ if iteration % SECOND == 0:
 
 ---
 
-## 📊 이슈 우선순위 요약 (open만)
+## 📊 이슈 우선순위 요약 (open만, 2026-07-07 갱신)
 
 | 우선순위 | 이슈 | 영향도 | 난이도 |
 |---------|------|--------|--------|
-| 🟡 MEDIUM | #3 Transfusion 우선순위 | 중간 | 중간 |
-| 🟡 MEDIUM | #4 Resource Race Condition | 낮음 | 중간 |
-| 🟢 LOW | #5 코드 중복 제거 | 낮음 | 쉬움 |
 | 🟢 LOW | #6 매직 넘버 | 낮음 | 쉬움 |
+| 🟢 LOW | N5 bare `except Exception:` 잔여분 | 낮음 | 쉬움 |
+| 🟢 LOW | N6 F841 unused locals (visuals/) | 낮음 | 쉬움 |
 
-(Issue #1, #2 → ✅ Resolved 섹션 참조)
+(Issue #1~#5, N1~N4 → ✅ Resolved 섹션 참조. 실질적으로 남은 항목은 #6뿐.)
 
 ---
 
 ## 🎯 권장 수정 순서
 
-### 1단계: 완료 (✅)
-~~1. Queen Inject 쿨다운 수정 (25 → 29)~~ — 코드 반영 완료, 본 문서 ✅ Resolved 섹션 참조
-~~2. 누락된 업그레이드 추가~~ — 코드 반영 완료, 본 문서 ✅ Resolved 섹션 참조
+### 완료 (✅)
+~~1. Queen Inject 쿨다운 수정 (25 → 29)~~
+~~2. 누락된 업그레이드 추가~~
+~~3. Transfusion 우선순위 시스템~~ — `queen_manager._transfuse_injured_units` 확인
+~~4. Resource Reservation 동기화~~ — `core/resource_manager.py` 확인
+~~5. Position Utils 유틸리티 함수 분리~~ — 2026-07-07, `battle_preparation_system.py` 마지막 중복 제거로 완료
+~~N1~N4 중복 정의(F811)~~ — 재검사 결과 미검출
 
-### 2단계: 로직 개선 (30분, 미진행)
-3. Transfusion 우선순위 시스템 구현
-
-### 3단계: 구조 개선 (1시간, 미진행)
-4. Resource Reservation 동기화
-5. Position Utils 유틸리티 함수 분리
-6. Constants 정리
+### 다음 단계 (미진행)
+6. Constants 정리 (매직 넘버 → 네임드 상수, 가독성 개선 목적, 동작 변화 없음)
 
 ---
 
@@ -409,10 +454,11 @@ if iteration % SECOND == 0:
 
 ## 📝 참고 사항
 
-### 현재 상태
+### 현재 상태 (2026-07-07 재검증)
 - ✅ **치명적 통합 문제**: 완전히 해결됨
-- ✅ **모든 단위 테스트**: 통과 (16/16)
+- ✅ **전체 테스트 스위트**: 508 passed / 14 skipped / 0 failed
 - ✅ **기본 기능**: 정상 작동
+- ✅ **F811/F821 (핵심 로직 버그)**: `wicked_zerg_challenger/` 전체 0건
 
 ### 위의 이슈들은
 - 모두 **선택적 개선 사항**
@@ -421,5 +467,5 @@ if iteration % SECOND == 0:
 
 ---
 
-**검토 완료일**: 2026-01-29
-**상태**: 추가 개선 사항 문서화 완료
+**검토 완료일**: 2026-07-07 (자동 점검 사이클)
+**상태**: N1~N4, Issue #1~#5 모두 재확인/해결. 남은 항목은 Issue #6(매직 넘버) 뿐.
