@@ -2,17 +2,27 @@
 
 > Owner: 선우 (sun475300@gmail.com)
 > Maintainer: nightly automation
-> Last refreshed: 2026-05-04
+> Last refreshed: 2026-07-07
 
 ---
 
 ## Snapshot (current state)
 
-- Branch: `main`, last commit: queen transfusion + requirements-dev.txt session
+- Branch: `claude/optimistic-edison-p0z6n7` (from `main` @ `8a80b73`)
 - Bot core: `wicked_zerg_challenger/` — 179+ Python files across 10+ subdirs.
 - `.gitattributes` enforces `* text=auto` ✅
-- CI: `sc2bot-ci.yml` runs black + isort + flake8 ✅ (all clean)
-- **Test suite: 468 pass / 15 skip / 0 fail** ✅ (was 398/20/0 two nights ago)
+- CI: `sc2bot-ci.yml` runs black + isort + flake8 — ⚠️ `black --check --diff .` (full repo, blocking)
+  currently fails on multiple pre-existing files (see `REMAINING_ISSUES.md` N9). Confirmed
+  pre-existing (reproduced on `origin/main` before this session's edits) — not introduced here.
+  Full-repo reformat deferred to a dedicated PR (diff would be very large).
+- **Test suite: 1163 pass / 14 skip / 0 fail** ✅ — `tests/` 502 pass/14 skip + `wicked_zerg_challenger/tests/`
+  661 pass. (Prior refresh's "468/15/0" only covered `tests/`; this is the first refresh to also run
+  the larger `wicked_zerg_challenger/tests/` suite in this doc.)
+- Fixed this run: 12 tests in `tests/test_combat_phase_fsm.py` failing with
+  `RuntimeError: There is no current event loop in thread 'MainThread'` (deprecated
+  `asyncio.get_event_loop().run_until_complete(...)`) — replaced with `asyncio.run(...)`.
+- Re-verified `REMAINING_ISSUES.md` N1–N4 (F811 duplicate defs) and Issue #3/#4 (transfusion
+  priority, resource reservation lock) — all already implemented in code; doc was stale, updated.
 - Queen transfusion logic: 3 bugs fixed (`is_idle` guard removed, target dedup, per-queen cooldown) ✅
 
 ## Resolved this run (2026-05-03)
@@ -94,3 +104,11 @@ Run `E:\GitHub\Swarm-control-in-sc2bot\scripts\commit_nightly_2026-05-03.bat`:
 - **2026-05-01** — P1.1 scout cadence, P1.2 harassment, P1.3 expansion timing, P1.5 doc history. Commit blocked by index.lock.
 - **2026-05-02** — P0 scout import mismatch fixed. P1.4 deprecation shim. P2.1 FSM tests 23/23 pass.
 - **2026-05-03** — **Test suite cleared:** 90 failures → 0. Fixed pytest-asyncio, torch stubs (qmix/mappo), stale __init__ exports (mappo/comm_learning), gas threshold test, crypto skipif guards. Final: 398 pass / 20 skip / 0 fail.
+- **2026-07-07** — Fixed 12 `test_combat_phase_fsm.py` failures (`asyncio.get_event_loop()` → `asyncio.run()`).
+  Deduplicated inline center-position calc in `battle_preparation_system.py` to use `utils/position_utils`.
+  Re-verified and closed out `REMAINING_ISSUES.md` N1–N4, Issue #3, Issue #4 as already-implemented
+  (doc drift, not code gaps). Confirmed `ROADMAP.md` Sprints 1–7 tasks are almost entirely already
+  implemented in code (doc reads as a stale snapshot, not a live task list — added a notice at the top).
+  Full suite: 1163 pass / 14 skip / 0 fail (`tests/` + `wicked_zerg_challenger/tests/` combined).
+  Genuinely open work carried forward: P2.2 (benchmark runner), P2.3 (build-order YAML externalisation),
+  N9 (full-repo black formatting drift), N5/N6 (bare-except and unused-variable cleanup, low priority).

@@ -4,24 +4,32 @@
 
 통합 문제 해결 후 발견된 추가 개선 사항들입니다.
 
-**Last refreshed:** 2026-04-27 (Issue #1, #2 → Resolved; Issue #6 partially resolved via Batch 3)
+**Last refreshed:** 2026-07-07 (테스트/코드 재점검 — N1~N4, Issue #3/#4 재검증 결과 모두 코드에 반영 완료 확인)
 
 ---
 
-## 🆕 신규 발견 (PR #44, 2026-04-27)
+## 🆕 2026-07-07 재점검 결과
 
-자동/수동 점검 사이클(테스트 → 코드 검사 → 개선 → 커밋/푸시 반복)에서 새로 식별된 항목.
+자동/수동 점검 사이클(테스트 → 코드 검사 → 개선 → 커밋/푸시 반복)에서 이번 회차에 새로 발견/수정한 항목.
 
 | ID | 설명 | 우선순위 | 상태 |
 |----|------|---------|------|
-| N1 | `OpponentModeling.on_step` 중복 정의 (line 341 vs 765 — F811) | 🟠 HIGH | open — 동작 영향(상위 on_step이 미실행) 가능 |
-| N2 | `EconomyManager._prevent_resource_banking` / `_reduce_gas_workers` 재정의 (F811) | 🟡 MED | open |
-| N3 | `combat_manager._find_harass_target` 재정의 (line 2377 vs 4278) | 🟡 MED | open |
-| N4 | `production_resilience.build_terran_counters` 재정의 (1369 vs 1866) | 🟡 MED | open |
-| N5 | bare `except Exception:` 다수 (≈360+) — 이번 PR에서 12건 처리, 잔여 다수 | 🟢 LOW | partial |
-| N6 | F841 unused local variables (visuals/make_pptx 등) | 🟢 LOW | open (presentation 코드라 영향 작음) |
+| N7 | `tests/test_combat_phase_fsm.py` 12개 테스트가 `asyncio.get_event_loop()` deprecated 동작으로 실패 (스레드에 이벤트 루프가 없으면 RuntimeError) | 🔴 HIGH | ✅ Fixed — `asyncio.run(...)`으로 교체, 12/12 통과 확인 |
+| N8 | `battle_preparation_system.py`가 `position_utils.get_center_position` 대신 중심좌표 계산을 인라인 중복 | 🟢 LOW | ✅ Fixed — 공용 유틸로 교체 |
+| N9 | `black --check --diff .` (전체 리포 기준)이 다수 파일에서 실패 — `sc2bot-ci.yml` lint 잡은 이 스텝이 blocking이라 CI가 이미 red일 가능성 | 🟠 MED | open — 전체 리포 재포맷은 diff 폭발 위험이 커 이번 회차에서는 보류. 별도 PR로 파일 단위 점진 정리 권장 |
 
-검증 권장: PR 분리 (N1 단독 PR 권장 — 동작 변화 가능성).
+## 🆕 신규 발견 (PR #44, 2026-04-27) — 2026-07-07 재검증 완료
+
+| ID | 설명 | 우선순위 | 상태 |
+|----|------|---------|------|
+| N1 | `OpponentModeling.on_step` 중복 정의 (line 341 vs 765 — F811) | 🟠 HIGH | ✅ Resolved — `flake8 --select=F811 wicked_zerg_challenger/` 결과 0건, 코드에 중복 없음 확인 (이전 세션에서 처리됨) |
+| N2 | `EconomyManager._prevent_resource_banking` / `_reduce_gas_workers` 재정의 (F811) | 🟡 MED | ✅ Resolved — 동일 검증 (F811 0건) |
+| N3 | `combat_manager._find_harass_target` 재정의 (line 2377 vs 4278) | 🟡 MED | ✅ Resolved — 동일 검증 (F811 0건) |
+| N4 | `production_resilience.build_terran_counters` 재정의 (1369 vs 1866) | 🟡 MED | ✅ Resolved — 동일 검증 (F811 0건) |
+| N5 | bare `except Exception:` 다수 (≈360+) — 이번 PR에서 12건 처리, 잔여 다수 | 🟢 LOW | partial — `wicked_zerg_challenger/`에 465건 잔존 확인. 게임 루프 안정성을 위한 의도적 방어 코드가 다수라 일괄 수정은 위험, 점진 개선 권장 |
+| N6 | F841 unused local variables (visuals/make_pptx 등) | 🟢 LOW | open — `wicked_zerg_challenger/`에 130건 잔존 확인 (presentation 코드라 영향 작음) |
+
+검증 권장: N9(black 전체 리포 정리)은 단독 PR 권장 (diff 규모가 매우 큼).
 
 ---
 
@@ -67,13 +75,28 @@
 
 ---
 
-## 🟡 MEDIUM Priority Issues (still open)
+## ✅ Resolved (2026-07-07 재검증)
 
-### Issue #3: Transfusion 우선순위 개선 필요
+### Issue #3: Transfusion 우선순위 — ✅ 이미 구현됨
+
+`wicked_zerg_challenger/queen_manager.py:711` `_transfuse_injured_units()`에 CreepyBot 스타일
+우선순위 테이블(`TRANSFUSE_PRIORITY`, QUEEN>BROODLORD>CORRUPTOR>...)과 치료 불가 유닛 제외
+(`UNHEALABLE_UNITS` = BANELING/BROODLING/LOCUSTMP)가 이미 구현되어 있음. 문서 하단 예시 코드보다
+더 정교한 버전(체력 비율 가중치 결합)이 적용되어 있어 별도 작업 불필요.
+
+### Issue #4: Resource Reservation Race Condition — ✅ 이미 구현됨
+
+`wicked_zerg_challenger/core/resource_manager.py`의 `ResourceManager` 클래스가 `asyncio.Lock` +
+`try_reserve(minerals, gas, manager_name)` 패턴으로 이미 원자적 예약을 구현 중. `tests/test_resource_manager.py`로
+회귀 검증됨.
+
+## 🟡 MEDIUM Priority Issues (아래는 원래 이슈 설명 — 참고용, 위 Resolved 섹션 참조)
+
+### ~~Issue #3: Transfusion 우선순위 개선 필요~~ (해결됨, 위 참조)
 
 **위치**: `queen_manager.py` 또는 `spell_unit_manager.py`
 
-**현재 문제**:
+**현재 문제** (당시 기준, 현재는 해결됨):
 - Transfusion 로직이 단순함
 - 고가 유닛(울트라, 브루드로드) 우선순위 없음
 - 군단 숙주, 맹독충 등 치료 불가 유닛에 낭비 가능성
@@ -142,7 +165,7 @@ async def smart_transfusion(self, queen, damaged_units):
 
 ---
 
-### Issue #4: Resource Reservation Race Condition
+### ~~Issue #4: Resource Reservation Race Condition~~ (해결됨, 위 참조)
 
 **위치**: `resource_manager.py` (추정)
 
@@ -359,32 +382,38 @@ if iteration % SECOND == 0:
 
 ---
 
-## 📊 이슈 우선순위 요약 (open만)
+## 📊 이슈 우선순위 요약 (open만, 2026-07-07 갱신)
 
 | 우선순위 | 이슈 | 영향도 | 난이도 |
 |---------|------|--------|--------|
-| 🟡 MEDIUM | #3 Transfusion 우선순위 | 중간 | 중간 |
-| 🟡 MEDIUM | #4 Resource Race Condition | 낮음 | 중간 |
-| 🟢 LOW | #5 코드 중복 제거 | 낮음 | 쉬움 |
-| 🟢 LOW | #6 매직 넘버 | 낮음 | 쉬움 |
+| 🟠 MED | N9 전체 리포 black 포맷 불일치 (CI lint gate 영향 가능) | 중간 | 큼 (파일 다수) |
+| 🟢 LOW | N5 bare `except Exception:` 잔여 465건 | 낮음 | 중간 (점진) |
+| 🟢 LOW | N6 F841 미사용 변수 130건 | 낮음 | 쉬움 |
+| 🟢 LOW | #6 매직 넘버 (일부 파일) | 낮음 | 쉬움 |
 
-(Issue #1, #2 → ✅ Resolved 섹션 참조)
+(Issue #1~#5 → ✅ Resolved 섹션 참조. #3 Transfusion, #4 Resource Race Condition, N1~N4 F811 중복 정의는
+모두 코드에 이미 반영되어 있음을 2026-07-07 재검증으로 확인.)
 
 ---
 
-## 🎯 권장 수정 순서
+## 🎯 권장 수정 순서 (2026-07-07 갱신)
 
-### 1단계: 완료 (✅)
-~~1. Queen Inject 쿨다운 수정 (25 → 29)~~ — 코드 반영 완료, 본 문서 ✅ Resolved 섹션 참조
-~~2. 누락된 업그레이드 추가~~ — 코드 반영 완료, 본 문서 ✅ Resolved 섹션 참조
+### 완료 (✅)
+~~1. Queen Inject 쿨다운 수정 (25 → 29)~~ — 완료
+~~2. 누락된 업그레이드 추가~~ — 완료
+~~3. Transfusion 우선순위 시스템~~ — 완료 (queen_manager.py `_transfuse_injured_units`)
+~~4. Resource Reservation 동기화~~ — 완료 (core/resource_manager.py `try_reserve`)
+~~5. Position Utils 유틸리티 함수 분리~~ — 완료 (utils/position_utils.py), 마지막 잔존 인라인
+   중복(battle_preparation_system.py)도 2026-07-07 정리
+~~N1~N4. F811 중복 함수 정의~~ — 완료, `flake8 --select=F811 wicked_zerg_challenger/` 0건 확인
+~~N7. asyncio.get_event_loop() deprecated 사용~~ — 완료, `tests/test_combat_phase_fsm.py` 12건 수정
 
-### 2단계: 로직 개선 (30분, 미진행)
-3. Transfusion 우선순위 시스템 구현
-
-### 3단계: 구조 개선 (1시간, 미진행)
-4. Resource Reservation 동기화
-5. Position Utils 유틸리티 함수 분리
-6. Constants 정리
+### 남은 작업 (우선순위순)
+1. **N9** — 전체 리포 black 포맷 정리 (CI `black --check --diff .`가 blocking이라 다수 파일이 걸릴
+   가능성 높음). 파일 수가 많아 별도 PR로 점진 진행 권장.
+2. **N5** — bare except 465건 중 진짜 로직 버그를 숨기는 케이스 우선 식별 (게임 루프 안정성을 위한
+   의도적 방어 코드와 구분 필요).
+3. **N6 / #6** — 미사용 변수, 매직 넘버 정리 (가독성, 저위험).
 
 ---
 
