@@ -11,6 +11,69 @@ Common Helpers - 공통 유틸리티 함수
 from typing import Any, Optional
 
 
+def centroid(units: Any) -> Optional[Any]:
+    """
+    유닛들의 기하학적 중심 좌표 계산
+
+    Args:
+        units: SC2 Units collection 또는 리스트
+
+    Returns:
+        중심 Point2, 유닛이 없으면 None
+
+    Example:
+        >>> center = centroid(enemy_units)
+    """
+    if not has_units(units):
+        return None
+
+    from utils.position_utils import get_center_position
+
+    return get_center_position(list(units))
+
+
+def closest_enemy(unit: Any, enemy_units: Any) -> Optional[Any]:
+    """
+    기준 유닛에서 가장 가까운 적 유닛을 반환
+
+    Args:
+        unit: 기준 유닛
+        enemy_units: 적 유닛 컬렉션
+
+    Returns:
+        가장 가까운 적 유닛, 없으면 None
+    """
+    if unit is None or not has_units(enemy_units):
+        return None
+
+    from utils.position_utils import get_closest_unit
+
+    return get_closest_unit(enemy_units, unit.position)
+
+
+def filter_by_type(units: Any, names) -> Any:
+    """
+    유닛 타입 이름으로 필터링
+
+    Args:
+        units: SC2 Units collection 또는 리스트
+        names: 허용할 type_id.name 집합/리스트
+
+    Returns:
+        필터링된 유닛 컬렉션
+    """
+    if hasattr(units, "filter"):
+        return units.filter(lambda u: u.type_id.name in names)
+    return [u for u in (units or []) if getattr(u.type_id, "name", "") in names]
+
+
+def units_amount(units: Any) -> int:
+    """
+    유닛 수를 안전하게 가져옴 (safe_amount의 별칭)
+    """
+    return safe_amount(units)
+
+
 def has_units(units: Any) -> bool:
     """
     유닛 컬렉션이 비어있지 않은지 확인

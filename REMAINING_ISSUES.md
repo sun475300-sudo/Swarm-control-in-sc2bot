@@ -4,7 +4,19 @@
 
 통합 문제 해결 후 발견된 추가 개선 사항들입니다.
 
-**Last refreshed:** 2026-04-27 (Issue #1, #2 → Resolved; Issue #6 partially resolved via Batch 3)
+**Last refreshed:** 2026-07-07 (자동 점검 사이클 — 테스트 661→686 통과, Issue #3/#4/N1-N4 코드 확인 결과 이미 해결됨으로 재분류, Issue #5 실제 적용 완료)
+
+### 🔎 2026-07-07 점검 요약
+
+코드를 직접 확인한 결과 아래 항목들은 이 문서에 "open"으로 남아있었지만 **실제로는 이미 구현되어 있었음**:
+
+- **Issue #3 (Transfusion 우선순위)**: `queen_manager.py:711-864` `_transfuse_injured_units`에 CreepyBot 기반 우선순위 테이블(Queen>Broodlord>Corruptor>...) 이미 구현됨. → ✅ Resolved로 재분류.
+- **Issue #4 (Resource Reservation Race Condition)**: `core/resource_manager.py`에 `asyncio.Lock` 기반 `try_reserve`/`release` 이미 구현되어 `defense_coordinator.py`, `wicked_zerg_bot_pro_impl.py`, `local_training/production_resilience.py`에서 사용 중 ("Phase 21 - Race condition fix"). → ✅ Resolved로 재분류.
+- **N1-N4 (F811 중복 메서드 정의)**: 커밋 `e648ae4`에서 이미 삭제됨 — `economy_manager.py`, `combat_manager.py`, `local_training/production_resilience.py`에 각 메서드 단일 정의만 존재함을 grep으로 확인. → ✅ Resolved로 재분류.
+
+반대로 **Issue #5 (Position 계산 중복)는 절반만 되어 있었음**: `utils/position_utils.py` 유틸은 이미 존재했지만 실제 호출부 11곳(`combat/expansion_defense.py`, `combat/combat_execution.py`, `combat/infestor_tactics.py`, `combat/micro_combat.py`×2, `combat_phase_controller.py`, `micro_controller.py`, `battle_preparation_system.py`, `idle_unit_manager.py`, `combat_manager.py`×2)이 여전히 인라인 중복 코드를 쓰고 있었음 — 이번 사이클에서 전부 `get_center_position()` 호출로 교체함.
+
+부수적으로, `combat_manager.py`가 `utils.common_helpers`에서 `centroid`/`closest_enemy`/`filter_by_type`/`units_amount`를 import하는데 그 함수들이 **`common_helpers.py`에 정의된 적이 없어** `ImportError` → `HELPERS_AVAILABLE = False`가 항상 발생, 관련 최적화 경로 5곳이 전부 죽어있던 버그를 발견하여 함수를 추가 구현하고 활성화함. 회귀 테스트 25건 추가(`tests/test_position_utils.py`), 전체 스위트 686 passed.
 
 ---
 
@@ -14,12 +26,13 @@
 
 | ID | 설명 | 우선순위 | 상태 |
 |----|------|---------|------|
-| N1 | `OpponentModeling.on_step` 중복 정의 (line 341 vs 765 — F811) | 🟠 HIGH | open — 동작 영향(상위 on_step이 미실행) 가능 |
-| N2 | `EconomyManager._prevent_resource_banking` / `_reduce_gas_workers` 재정의 (F811) | 🟡 MED | open |
-| N3 | `combat_manager._find_harass_target` 재정의 (line 2377 vs 4278) | 🟡 MED | open |
-| N4 | `production_resilience.build_terran_counters` 재정의 (1369 vs 1866) | 🟡 MED | open |
-| N5 | bare `except Exception:` 다수 (≈360+) — 이번 PR에서 12건 처리, 잔여 다수 | 🟢 LOW | partial |
+| N1 | `OpponentModeling.on_step` 중복 정의 (line 341 vs 765 — F811) | 🟠 HIGH | ✅ resolved (commit e648ae4) |
+| N2 | `EconomyManager._prevent_resource_banking` / `_reduce_gas_workers` 재정의 (F811) | 🟡 MED | ✅ resolved (commit e648ae4) |
+| N3 | `combat_manager._find_harass_target` 재정의 (line 2377 vs 4278) | 🟡 MED | ✅ resolved (commit e648ae4) |
+| N4 | `production_resilience.build_terran_counters` 재정의 (1369 vs 1866) | 🟡 MED | ✅ resolved (commit e648ae4) |
+| N5 | bare `except Exception:` 다수 (≈360+) — 이번 PR에서 12건 처리, 잔여 다수 | 🟢 LOW | partial — 잔여 다수, 아래 백로그 참고 |
 | N6 | F841 unused local variables (visuals/make_pptx 등) | 🟢 LOW | open (presentation 코드라 영향 작음) |
+| N7 | `combat_manager.py`가 `utils.common_helpers`에서 존재하지 않는 `centroid`/`closest_enemy`/`filter_by_type`/`units_amount`를 import하여 `HELPERS_AVAILABLE`이 항상 False였던 버그 | 🟠 HIGH | ✅ resolved (2026-07-07, 함수 구현 및 활성화) |
 
 검증 권장: PR 분리 (N1 단독 PR 권장 — 동작 변화 가능성).
 
@@ -363,12 +376,39 @@ if iteration % SECOND == 0:
 
 | 우선순위 | 이슈 | 영향도 | 난이도 |
 |---------|------|--------|--------|
-| 🟡 MEDIUM | #3 Transfusion 우선순위 | 중간 | 중간 |
-| 🟡 MEDIUM | #4 Resource Race Condition | 낮음 | 중간 |
-| 🟢 LOW | #5 코드 중복 제거 | 낮음 | 쉬움 |
-| 🟢 LOW | #6 매직 넘버 | 낮음 | 쉬움 |
+| 🟢 LOW | #6 매직 넘버 (queen_manager 외 잔여) | 낮음 | 쉬움 |
+| 🟢 LOW | N5 bare except 잔여 (~350건) | 낮음 | 중간 (건별 검토 필요) |
+| 🟢 LOW | N6 F841 unused locals | 낮음 | 쉬움 |
 
-(Issue #1, #2 → ✅ Resolved 섹션 참조)
+(Issue #1, #2, #3, #4, N1-N4, N7 → ✅ Resolved 섹션 참조. #5는 이번 사이클에서 해결.)
+
+---
+
+## 🗂️ 대규모 우선순위 백로그 (2026-07-07 점검 기준, 다음 사이클용)
+
+자동 점검 루프(테스트 → 코드 검사 → 개선 → 커밋/푸시)가 매 회차 이 리스트에서 상위 항목부터 집어 작업하고,
+작업 후 상태를 갱신한다. 테스트는 686/686 통과 상태라 신규 항목은 대부분 코드 품질/견고성 개선.
+
+| # | 우선순위 | 항목 | 위치 | 난이도 |
+|---|---------|------|------|--------|
+| 1 | 🟡 MED | bare `except Exception:` 정리 — 최소 로깅/구체적 예외 타입 추가 (배치 단위로) | 전역 ~350건, `MASTER_TODO_SC2.md:40-46` 등 | 중간 |
+| 2 | 🟡 MED | 27개 TODO/FIXME 마커 티켓화 및 처리 | `agent_inspector.py`, `jarvis_features/productivity_features.py`, `modification_finder.py`, `tools/check_missing_logic.py` 등 | 중간 |
+| 3 | 🟢 LOW | 잔여 매직 넘버 상수화 (Issue #6, queen_manager 외) | `combat/`, `strategy/` 등 threshold 상수 | 쉬움 |
+| 4 | 🟢 LOW | F841 unused locals 정리 | `visuals/make_pptx.py` 등 | 쉬움 |
+| 5 | 🟡 MED | Pathfinding 캐싱 적용 여부 확인 및 누락 시 추가 | `REMAINING_ISSUES.md:394` 성능 항목 | 중간 |
+| 6 | 🟡 MED | Unit filtering 성능 최적화 검토 | 전투/경제 매니저 유닛 순회 로직 | 중간 |
+| 7 | 🟢 LOW | Blackboard 업데이트 빈도 분석 | `blackboard.py` | 쉬움 |
+| 8 | 🟡 MED | Counter-build 시스템 커버리지 확인 (적 조합 대응 누락 여부) | `opponent_modeling.py`, `production_resilience.py` | 중간 |
+| 9 | 🟡 MED | Scouting 타이밍 최적화 검증 | `intel_manager.py`, scouting 관련 모듈 | 중간 |
+| 10 | 🟡 MED | Expansion timing 검증 (실전 데이터 기반) | `expansion_manager.py`, `expansion_timing` 테스트 | 중간 |
+| 11 | 🟢 LOW | Type hints 커버리지 확대 (Python 3.10+) | 전역 | 중간 (범위 큼) |
+| 12 | 🟢 LOW | Docstring 완성도 검토 | 전역 | 쉬움 |
+| 13 | 🟢 LOW | 에러 핸들링 일관성 감사 (N5와 연계) | 전역 | 중간 |
+| 14 | 🟢 LOW | CI 하드닝: `fail-fast: false`, pip→uv 마이그레이션, lint non-blocking 전환, codecov threshold | `.github/workflows/sc2bot-ci.yml`, `MASTER_TODO_SC2.md:133-137` | 중간 |
+| 15 | 🟢 LOW | 스택된 Claude PR #15-28 redundancy matrix 정리 (사용자 결정 필요 항목 다수) | `MASTER_TODO_SC2.md:120-123` | 사용자 확인 필요 |
+| 16 | 🟢 LOW | `BUG_ERROR_LOG.md` 최신화 (2026-03-31 기준 stale, 현재 테스트 전부 통과) | `BUG_ERROR_LOG.md` | 쉬움 |
+
+우선순위 기준: 실제 게임 로직/버그(🟠) > 안정성/성능(🟡) > 가독성/문서(🟢). 이번 사이클엔 🟠 항목이 모두 소진되어(N1-N4, N7, Issue #3/#4) 다음 사이클은 위 리스트의 1~4번(코드 견고성)부터 시작 권장.
 
 ---
 

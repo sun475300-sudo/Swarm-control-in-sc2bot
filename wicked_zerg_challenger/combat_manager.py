@@ -3898,15 +3898,9 @@ class CombatManager:
                 max_threat_score = threat_score
                 threat_enemies = nearby_enemies
                 # 적 중심 계산
-                x_sum = sum(e.position.x for e in nearby_enemies)
-                y_sum = sum(e.position.y for e in nearby_enemies)
-                count = len(nearby_enemies)
-                try:
-                    from sc2.position import Point2
+                from utils.position_utils import get_center_position
 
-                    threat_position = Point2((x_sum / count, y_sum / count))
-                except ImportError:
-                    threat_position = nearby_enemies[0].position
+                threat_position = get_center_position(nearby_enemies)
 
         # 위협이 없으면 방어 모드 해제
         if max_threat_score == 0:
