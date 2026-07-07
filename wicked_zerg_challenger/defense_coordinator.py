@@ -1038,13 +1038,22 @@ class DefenseCoordinator:
             UnitTypeId.QUEEN,
         }
 
+        total_army = 0
         for unit_type in combat_types:
             units = self.bot.units(unit_type)
             if units:
+                total_army += len(units)
                 nearby = units.closer_than(recruit_range, target_base.position)
                 if unit_type == UnitTypeId.QUEEN:
                     nearby = nearby.idle  # 퀸은 유휴 상태만
                 defense_units.extend(nearby)
+
+        # FIX P1-5: 전체 군대의 최대 50%만 방어에 투입, 나머지는 다음 공격을
+        # 위해 현재 위치(주로 전방 집결지)에 그대로 남겨둔다.
+        defense_cap = max(1, round(total_army * 0.5)) if total_army else 0
+        if len(defense_units) > defense_cap:
+            defense_units.sort(key=lambda unit: unit.distance_to(target_base.position))
+            defense_units = defense_units[:defense_cap]
 
         # 방어 위치: 기지 앞쪽
         defense_pos = target_base.position.towards(self.bot.game_info.map_center, 5)
