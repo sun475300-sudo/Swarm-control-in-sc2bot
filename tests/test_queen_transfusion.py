@@ -8,6 +8,8 @@ from types import SimpleNamespace
 from unittest.mock import MagicMock, patch
 
 import pytest
+
+pytest.importorskip("sc2", reason="python-sc2 (burnysc2) not installed in this environment")
 from sc2.ids.unit_typeid import UnitTypeId
 
 # ---------------------------------------------------------------------------
