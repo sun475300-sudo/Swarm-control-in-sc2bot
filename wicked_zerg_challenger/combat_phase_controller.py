@@ -161,7 +161,7 @@ class CombatPhaseController:
             return
 
         nearby_enemies = self._get_nearby_enemies(group_units)
-        group_center = self._get_group_center(group_units)
+        self._get_group_center(group_units)
         group_health_ratio = self._get_group_health_ratio(group_units)
 
         # === 단계별 행동 ===

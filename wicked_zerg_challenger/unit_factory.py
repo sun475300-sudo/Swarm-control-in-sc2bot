@@ -340,18 +340,17 @@ class UnitFactory:
             self.max_larva_spend_per_step = 3  # ??れ삀???筌?
         # === StrategyManager ???怨뺣빰??????????ㅻ쿋筌?(via Blackboard or Direct) ===
         # 癲?????읐?壤???덊렡 ??ш끽維??癲ル슢?????????좊읈???????????좊읈??嶺??????ㅼ굣??
-        strategy_mode = "NORMAL"
         emergency_active = False
 
         # 1. Try Blackboard first
         if self.blackboard:
-            strategy_mode = self.blackboard.get("strategy_mode", "NORMAL")
+            self.blackboard.get("strategy_mode", "NORMAL")
             emergency_active = self.blackboard.get("is_rush_detected", False)
 
         # 2. Fallback to direct access if Blackboard missing (Backward Compat)
         elif hasattr(self.bot, "strategy_manager") and self.bot.strategy_manager:
             strategy = self.bot.strategy_manager
-            strategy_mode = getattr(strategy, "current_mode", "NORMAL")
+            getattr(strategy, "current_mode", "NORMAL")
             # emergency_active handled below
 
         strategy = getattr(

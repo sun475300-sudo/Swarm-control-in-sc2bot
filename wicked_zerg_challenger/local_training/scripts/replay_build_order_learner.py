@@ -176,7 +176,6 @@ class ReplayBuildOrderLearner:
 
         try:
             logger.debug(f"Total events: {len(replay.events)}")  # DEBUG
-            debug_count = 0
 
             # 이벤트에서 유닛/건물 생산 추출
             for event in replay.events:
