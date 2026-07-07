@@ -2762,6 +2762,25 @@ class StrategyManager:
                     merged[k] /= total
             return merged
 
+        # * Consume OpponentModeling counter-strategy recommendation
+        #   (published to the blackboard, but previously never read by anyone) *
+        if self.blackboard and hasattr(self.blackboard, "get"):
+            counter_units = self.blackboard.get("recommended_strategy", None)
+            if counter_units:
+                merged = dict(base_ratios)
+                changed = False
+                for unit in counter_units:
+                    key = str(unit).lower()
+                    if key in merged:
+                        merged[key] *= 1.25
+                        changed = True
+                if changed:
+                    total = sum(merged.values())
+                    if total > 0:
+                        for k in merged:
+                            merged[k] /= total
+                    return merged
+
         return base_ratios
 
     def should_produce_drone(self) -> bool:

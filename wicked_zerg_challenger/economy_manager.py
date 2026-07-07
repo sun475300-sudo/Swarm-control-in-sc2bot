@@ -1397,6 +1397,7 @@ class EconomyManager:
                 # 현재 각 패치에 배정된 일꾼 수 집계
                 workers = self.bot.workers.closer_than(10, townhall)
                 patch_assigned = {m.tag: 0 for m in healthy}
+                patch_workers = {m.tag: [] for m in healthy}
 
                 idle_workers = []
                 misassigned_workers = []
@@ -1420,6 +1421,7 @@ class EconomyManager:
                     # 건강한 패치로 가는 드론 -> 집계
                     if target_tag and target_tag in patch_assigned:
                         patch_assigned[target_tag] += 1
+                        patch_workers[target_tag].append(worker)
                     elif worker.is_idle:
                         idle_workers.append(worker)
 
@@ -1431,12 +1433,12 @@ class EconomyManager:
                     target = patch_targets.get(mineral.tag, 1)
                     current = patch_assigned.get(mineral.tag, 0)
                     if current > target:
-                        surplus_workers.extend([mineral] * (current - target))
+                        surplus_workers.extend(patch_workers[mineral.tag][target:])
                     elif current < target:
                         deficit_patches.extend([mineral] * (target - current))
 
                 # 고갈 패치 드론 + 대기 드론 + 과잉 드론 -> 부족 패치로 이동
-                available = misassigned_workers + idle_workers
+                available = misassigned_workers + idle_workers + surplus_workers
                 for mineral in deficit_patches:
                     if not available:
                         break
@@ -1659,14 +1661,22 @@ class EconomyManager:
                     lambda w: w.distance_to(over_th) < 15 and w.is_gathering
                 )
 
-                for under_th, deficit in under_saturated[:]:
-                    if excess <= 0 or deficit <= 0:
+                # Iterate by index (descending) so entries can be updated/removed
+                # in place without the list-identity issues of removing a
+                # mutated tuple that no longer matches its original value.
+                for idx in range(len(under_saturated) - 1, -1, -1):
+                    if excess <= 0:
+                        break
+
+                    under_th, deficit = under_saturated[idx]
+                    if deficit <= 0:
                         continue
 
                     # Move workers - * OPTIMIZED: 더 공격적인 재분배 *
                     workers_to_move = min(
                         excess, deficit, 8
                     )  # * 5 -> 8 (더 빠른 재분배) *
+                    moved = 0
                     for _ in range(workers_to_move):
                         if not nearby_workers:
                             break
@@ -1682,12 +1692,16 @@ class EconomyManager:
                                 nearby_workers = nearby_workers.filter(
                                     lambda w: w.tag != worker.tag
                                 )
-                                excess -= 1
-                                deficit -= 1
+                                moved += 1
 
-                    # Update under-saturated list
+                    excess -= moved
+                    deficit -= moved
+
+                    # Update under-saturated list in place
                     if deficit <= 0:
-                        under_saturated.remove((under_th, deficit))
+                        under_saturated.pop(idx)
+                    else:
+                        under_saturated[idx] = (under_th, deficit)
 
         except (AttributeError, TypeError, ValueError) as e:
             if self.bot.iteration % 50 == 0:
