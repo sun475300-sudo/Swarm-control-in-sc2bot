@@ -1594,10 +1594,7 @@ class HarassmentCoordinator:
         elif current_enemy_workers > self.last_worker_kill_count:
             # Enemy rebuilt workers. Log raid summary if a raid just ended
             # and reset the per-raid counter so we don't double-count.
-            if (
-                not harassment_active
-                and self._current_raid_workers_killed > 0
-            ):
+            if not harassment_active and self._current_raid_workers_killed > 0:
                 self.logger.info(
                     f"[{int(self.bot.time)}s] Raid #{self.raids_executed} summary:"
                     f" {self._current_raid_workers_killed} workers killed."
