@@ -117,6 +117,11 @@ jobs:
         env:
           DRY_RUN: "true"
           LOG_LEVEL: "DEBUG"
+          # sc2-bot-test 잡과 동일한 이유로 필요: requirements.txt의
+          # google-generativeai가 protobuf 5.x를 끌어오는데, s2clientprotocol의
+          # 사전 생성된 _pb2.py는 그 C++ 구현과 호환되지 않음
+          # ("Descriptors cannot be created directly").
+          PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION: "python"
 
   # ─────────────────────────────────────────────
   # SC2 봇 구문 검증 + 테스트
