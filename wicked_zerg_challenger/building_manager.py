@@ -15,6 +15,8 @@ except ImportError:
         SPINECRAWLER = "SPINECRAWLER"
         SPORECRAWLER = "SPORECRAWLER"
         SPIRE = "SPIRE"
+        SPAWNINGPOOL = "SPAWNINGPOOL"
+        EVOLUTIONCHAMBER = "EVOLUTIONCHAMBER"
 
 
 from utils.game_constants import GameFrequencies
@@ -34,16 +36,33 @@ class BuildingManager:
         getattr(UnitTypeId, "SPORECRAWLER", "SPORECRAWLER"),
     }
 
+    # FIX P2-9: structures whose total loss (all copies destroyed) should be
+    # recovered instead of left as a permanent loss for the rest of the game.
+    CRITICAL_REBUILD_TYPES = (
+        getattr(UnitTypeId, "SPAWNINGPOOL", "SPAWNINGPOOL"),
+        getattr(UnitTypeId, "HATCHERY", "HATCHERY"),
+        getattr(UnitTypeId, "EVOLUTIONCHAMBER", "EVOLUTIONCHAMBER"),
+    )
+    REBUILD_RETRY_INTERVAL = 20.0  # seconds between repeat rebuild requests
+
     def __init__(self, bot):
         self.bot = bot
         self.blackboard = getattr(bot, "blackboard", None)
         self.logger = logger
+        self._structure_max_seen: dict = {}
+        self._last_rebuild_request: dict = {}
         self._ensure_building_coordination()
 
     async def on_step(self, iteration: int) -> None:
         """Consume urgent blackboard building flags on a low-frequency cadence."""
         if iteration % GameFrequencies.EVERY_SECOND != 0:
             return
+        if iteration % GameFrequencies.EVERY_5_SECONDS == 0:
+            try:
+                self._check_critical_structure_rebuild()
+            except Exception as exc:
+                self.logger.debug("critical structure rebuild check failed: %s", exc)
+
         if not self.blackboard or not hasattr(self.blackboard, "get"):
             return
 
@@ -58,6 +77,39 @@ class BuildingManager:
                     self.request_defensive_building(spine=True, requester="Blackboard")
         except Exception as exc:
             self.logger.debug("blackboard building request handling failed: %s", exc)
+
+    def _check_critical_structure_rebuild(self) -> None:
+        """Re-queue Spawning Pool / Hatchery / Evolution Chamber if every
+        copy that previously existed has since been destroyed. Structures
+        that were never built yet (max seen count == 0) are left alone --
+        this only reacts to an actual loss, not a build order that hasn't
+        gotten there yet."""
+        game_time = getattr(self.bot, "time", 0.0)
+        for structure_type in self.CRITICAL_REBUILD_TYPES:
+            total = self.get_building_count(structure_type).get("total", 0)
+            previous_max = self._structure_max_seen.get(structure_type, 0)
+
+            if total > previous_max:
+                self._structure_max_seen[structure_type] = total
+                continue
+            if total > 0 or previous_max == 0:
+                continue
+
+            last_request = self._last_rebuild_request.get(structure_type)
+            if (
+                last_request is not None
+                and game_time - last_request < self.REBUILD_RETRY_INTERVAL
+            ):
+                continue
+
+            near = getattr(self.bot, "start_location", None)
+            self.request_structure(
+                structure_type,
+                requester="BuildingManager:Rebuild",
+                priority=self.PRIORITY_CRITICAL,
+                near=near,
+            )
+            self._last_rebuild_request[structure_type] = game_time
 
     def request_defensive_building(
         self,
