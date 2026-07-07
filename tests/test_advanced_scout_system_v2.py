@@ -245,7 +245,9 @@ class TestAdvancedScoutSystemV2:
         target = Point2((40, 40))
         empty_units = TruthyEmptyUnits()
         self.scout_system.roadmap_scouting = Mock()
-        self.scout_system.roadmap_scouting.select_overlord_scout_target.return_value = target
+        self.scout_system.roadmap_scouting.select_overlord_scout_target.return_value = (
+            target
+        )
         self.bot.blackboard = Mock()
         self.bot.units = Mock(return_value=empty_units)
 
@@ -255,9 +257,7 @@ class TestAdvancedScoutSystemV2:
         self.scout_system._patrol_routes["enemy_bases"] = [Point2((40, 40))]
         self.bot.units = Mock(return_value=TruthyEmptyUnits())
 
-        assert not self.scout_system._assign_patrol(
-            "enemy_bases", UnitTypeId.OVERLORD
-        )
+        assert not self.scout_system._assign_patrol("enemy_bases", UnitTypeId.OVERLORD)
 
     # ===== Memory Management Tests =====
 
