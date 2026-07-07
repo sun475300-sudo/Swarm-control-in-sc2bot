@@ -1,8 +1,27 @@
 # WickedZergBotPro Grand Roadmap
 
 > 목표: Medium AI 승률 90%+ 달성 & AI Arena 출전
-> 현재 상태: Phase 56 완료, 342/342 테스트 통과, 추정 승률 45~50%
+> 현재 상태: 502/502 테스트 통과 (`tests/`) + 663/663 테스트 통과 (`wicked_zerg_challenger/tests/`)
 > 봇 프레임워크: python-sc2 (burnysc2>=5.0.0)
+
+---
+
+## 감사 결과 (2026-07-07, 코드 vs 문서 대조)
+
+이 문서의 Sprint 1~6과 Task 7.1은 **이미 코드에 구현되어 있음이 확인됨** (문서가
+stale했던 것). 아래는 실제 남은 작업만 정리한 것 — 각 Task 절의 상세 지시문은
+과거 계획 기록으로 보존하되, 실제 우선순위는 이 표를 기준으로 판단할 것.
+
+| Sprint/Task | 상태 | 근거 |
+|---|---|---|
+| 1.1~1.4, 2.1~2.5, 3.1~3.4, 4.1~4.5, 5.1~5.3 | ✅ 완료 | 각 파일에 명시된 상수/함수/테스트가 스펙과 정확히 일치 (예: 가스 타이밍 13/17/19/16, 드론 목표 66/55/44, 견제 주기 15초, 다방면 협공 60/25/15 비율 등) |
+| 6.1 PPO 실전 연동 | 🟡 부분 완료 | `combat_manager.py`에 `use_rl_micro`, `_try_rl_micro`, 50ms 타임아웃, 규칙 기반 폴백까지 전부 구현됨. 하지만 `use_rl_micro=False`를 `True`로 켜는 코드가 어디에도 없음 — 즉 빌드는 됐지만 실전에서 한 번도 켜본 적이 없음. **다음 작업: 실제 게임에서 토글 on 후 검증** |
+| 6.2, 6.3 | ✅ 완료 | ELO/커리큘럼 Stage3 보상함수 스펙과 정확히 일치 |
+| 7.1 StrategyManager 분리 | ✅ 완료 | `building_manager.py` 존재 + ManagerRegistry 등록 완료 |
+| 7.2 거리 계산 캐싱 | 🟡 부분 완료 | `utils/distance_cache.py` 존재하지만 `combat_manager.py`/`economy_manager.py`에 각 3곳만 적용, 나머지 658곳은 여전히 raw `distance_to` 호출 중. **다음 작업: 핫패스 파일부터 점진적 교체** |
+| 7.3 매직넘버→GameConstants | 🟡 부분 완료 | `utils/game_constants.py` 존재하지만 `% 22`/`% 11`/`% 33` 등 하드코딩 주기가 146곳 잔존. **다음 작업: 파일 단위로 점진적 교체 + 회귀 테스트** |
+| 8.1 Medium AI 30연전 | 🟡 툴 완료/실행 미검증 | `run_mass_test.py` CLI는 완성됐으나 `mass_test_results.json`에 1게임(패배)만 기록됨. **실제 SC2 클라이언트가 필요 — 이 저장소를 관리하는 클라우드 샌드박스에는 SC2 게임 바이너리가 없어 여기서는 실행 불가. 로컬/GPU 머신에서 실행 필요** |
+| 8.2 AI Arena 패키지 검증 | 🟡 대부분 완료 | `create_arena_package.py` 실행 확인 (1.2MB, 10MB 제한 통과), `PreflightValidator` 통과. `_count_invalid_lurker_refs`가 `LURKERMP`를 오탐하던 버그 수정함. 남은 것: 실제 SC2 클라이언트로 320ms/step 프로파일링 + 3개 맵 검증 (마찬가지로 로컬 SC2 필요) |
 
 ---
 

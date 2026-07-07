@@ -4,24 +4,36 @@
 
 통합 문제 해결 후 발견된 추가 개선 사항들입니다.
 
-**Last refreshed:** 2026-04-27 (Issue #1, #2 → Resolved; Issue #6 partially resolved via Batch 3)
+**Last refreshed:** 2026-07-07 (N1-N4 → Resolved; Issue #3 → Resolved; continuous test/audit loop)
 
 ---
 
-## 🆕 신규 발견 (PR #44, 2026-04-27)
-
-자동/수동 점검 사이클(테스트 → 코드 검사 → 개선 → 커밋/푸시 반복)에서 새로 식별된 항목.
+## 🆕 신규 발견 (2026-07-07, 테스트/감사 반복 사이클)
 
 | ID | 설명 | 우선순위 | 상태 |
 |----|------|---------|------|
-| N1 | `OpponentModeling.on_step` 중복 정의 (line 341 vs 765 — F811) | 🟠 HIGH | open — 동작 영향(상위 on_step이 미실행) 가능 |
-| N2 | `EconomyManager._prevent_resource_banking` / `_reduce_gas_workers` 재정의 (F811) | 🟡 MED | open |
-| N3 | `combat_manager._find_harass_target` 재정의 (line 2377 vs 4278) | 🟡 MED | open |
-| N4 | `production_resilience.build_terran_counters` 재정의 (1369 vs 1866) | 🟡 MED | open |
-| N5 | bare `except Exception:` 다수 (≈360+) — 이번 PR에서 12건 처리, 잔여 다수 | 🟢 LOW | partial |
-| N6 | F841 unused local variables (visuals/make_pptx 등) | 🟢 LOW | open (presentation 코드라 영향 작음) |
+| N7 | `tests/test_combat_phase_fsm.py` 12개 테스트가 전체 스위트 실행 시에만 실패 (`asyncio.get_event_loop()`가 이전 테스트가 닫은 이벤트 루프를 재사용하려다 RuntimeError) | 🟠 HIGH | ✅ Resolved — `asyncio.run()`으로 교체, 502/502 통과 |
+| N8 | `arena/preflight_validator.py::_count_invalid_lurker_refs`가 `"UnitTypeId.LURKER"` 부분 문자열을 카운트해 `UnitTypeId.LURKERMP`(정상 참조)까지 오탐 → 매 패키징마다 가짜 경고 발생, 진짜 버그 시그널을 묻어버림 | 🟡 MED | ✅ Resolved — 단어 경계 정규식(`UnitTypeId\.LURKER\b`)으로 교체 + 회귀 테스트 2건 추가 |
 
-검증 권장: PR 분리 (N1 단독 PR 권장 — 동작 변화 가능성).
+CI 참고: `sc2bot-ci.yml`의 `Lint & Type Check` 잡이 `black --check .`에서 66개 파일에
+대해 항상 실패 중 (본 저장소 `main` 기준으로도 동일 — 이번 작업으로 생긴 문제 아님).
+전부 포맷팅 전용 diff라 별도 PR로 분리해 처리 권장 (한 번에 66개 파일을 건드리면
+리뷰가 불가능해짐).
+
+---
+
+## ✅ 코드 vs 문서 감사로 종결 (2026-07-07)
+
+아래 항목들은 이전 버전 문서에 "open"으로 남아 있었으나, 실제 코드를 확인한 결과
+이미 해결되어 있었음 (문서가 stale했던 것). 별도 작업 없이 닫음.
+
+| ID | 설명 | 확인 결과 |
+|----|------|---------|
+| N1 | `OpponentModeling.on_step` 중복 정의 (F811) | `opponent_modeling.py`에 `on_step` 단일 정의만 존재 (line 341) |
+| N2 | `EconomyManager._prevent_resource_banking` / `_reduce_gas_workers` 재정의 | 각각 단일 정의만 존재 (`economy_manager.py:3198`, `:3995`) |
+| N3 | `combat_manager._find_harass_target` 재정의 | 단일 정의만 존재 (`combat_manager.py:4992`) |
+| N4 | `production_resilience.build_terran_counters` 재정의 | grep 결과 해당 파일 자체가 현재 구조에 없음/재정의 없음 |
+| Issue #3 | Transfusion 우선순위 개선 필요 | `queen_manager.py:711` `_transfuse_injured_units`에 CreepyBot 스타일 우선순위 테이블(Queen>Broodlord>Corruptor>...) + 치료 불가 유닛 제외 로직이 이미 문서 제안보다 더 정교하게 구현되어 있음 |
 
 ---
 
