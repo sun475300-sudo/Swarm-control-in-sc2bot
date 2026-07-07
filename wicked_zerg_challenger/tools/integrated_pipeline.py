@@ -51,7 +51,6 @@ def validate_replays(replays: list) -> list:
     """Validate replay files using sc2reader if available."""
     try:
         import sc2reader
-        sc2reader_available = True
     except ImportError:
         logger.warning("   [WARNING] sc2reader not installed. Skipping metadata validation.")
         return replays

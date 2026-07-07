@@ -229,7 +229,7 @@ class PersonalityModule:
 
         games = stats["games_played"]
         win_rate = stats["win_rate"] * 100
-        style = stats["dominant_style"]
+        stats["dominant_style"]
 
         # Format message based on win rate
         if win_rate > 70:
@@ -306,7 +306,9 @@ class PersonalityModule:
             error_text = str(e)
             # Game can end between scheduling and chat send.
             if "already ended" in error_text.lower():
-                self.logger.info(f"[PERSONALITY] Chat skipped after game end: {message}")
+                self.logger.info(
+                    f"[PERSONALITY] Chat skipped after game end: {message}"
+                )
             else:
                 self.logger.warning(f"[PERSONALITY] Failed to send message: {e}")
 

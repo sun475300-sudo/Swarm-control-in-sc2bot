@@ -22,7 +22,7 @@ def run_tests():
     """Run all scouting and intel tests"""
     # Discover and run tests
     loader = unittest.TestLoader()
-    start_dir = os.path.dirname(__file__)
+    os.path.dirname(__file__)
 
     suite = unittest.TestSuite()
 

@@ -117,6 +117,11 @@ jobs:
         env:
           DRY_RUN: "true"
           LOG_LEVEL: "DEBUG"
+          # s2clientprotocol의 protobuf 생성 코드가 google-generativeai/mcp 등이
+          # 끌어오는 최신 protobuf 런타임(C++ 구현)과 ABI 불일치를 일으켜
+          # "Descriptors cannot be created directly" 수집 에러가 발생함.
+          # 순수 파이썬 구현으로 강제해 우회.
+          PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION: "python"
 
   # ─────────────────────────────────────────────
   # SC2 봇 구문 검증 + 테스트

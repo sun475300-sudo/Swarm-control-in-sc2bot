@@ -753,7 +753,6 @@ def capstone_self_healing():
             dash_style = "solid" if i != 4 else "dash"
         else:
             col = "#4CAF50"
-            dash_style = "dash"
 
         fig.add_trace(
             go.Scatter3d(
@@ -1686,7 +1685,6 @@ def section2_drone_growth():
 
     fig = make_subplots(specs=[[{"secondary_y": True}]])
 
-    years = [2019, 2020, 2021, 2022, 2023, 2024, 2025, 2026, 2027, 2028, 2030]
     labels = [
         "2019",
         "2020",
@@ -3098,7 +3096,9 @@ def section5_market_tam():
             line=dict(color="#1976D2", width=3, dash="dash"),
             mode="lines+markers+text",
             marker=dict(size=8, color="#1976D2"),
-            text=[f"KRW{v}조" if i % 2 == 0 else "" for i, v in enumerate(korea_market)],
+            text=[
+                f"KRW{v}조" if i % 2 == 0 else "" for i, v in enumerate(korea_market)
+            ],
             textposition="top center",
             textfont=dict(size=10, color="#1976D2"),
         ),
