@@ -86,6 +86,12 @@ class AdvancedBuildingManager:
         else:
             self.placement_helper = None
 
+        # * 제자리걸음 일꾼 감지: 태그별 마지막 위치/정체 횟수 *
+        self._worker_last_positions: dict = {}
+        self._worker_stuck_ticks: dict = {}
+        self.stuck_in_place_distance = 0.15  # 이 거리 이하 이동은 "정지"로 간주
+        self.stuck_in_place_threshold = 3  # 연속 몇 번 정지해야 낀 것으로 간주
+
     # ==================== 1. 중복 코드 제거: 공통 변태 로직 ====================
 
     async def morph_unit_safely(
@@ -768,14 +774,32 @@ class AdvancedBuildingManager:
             return 0
 
         rescued = 0
+        live_tags = set()
         for worker in self.bot.workers:
             try:
+                live_tags.add(worker.tag)
+
                 # 1. Idle 상태인 경우
                 is_stuck = False
                 if hasattr(worker, "is_idle") and worker.is_idle:
                     is_stuck = True
 
-                # 2. 움직이지만 제자리인 경우 (TODO: 위치 기록 필요, 여기선 생략)
+                # 2. 움직이지만 제자리인 경우 (연속 프레임 동안 위치가 거의 변하지 않음)
+                position = getattr(worker, "position", None)
+                if position is not None:
+                    last_position = self._worker_last_positions.get(worker.tag)
+                    if (
+                        last_position is not None
+                        and last_position.distance_to(position)
+                        < self.stuck_in_place_distance
+                    ):
+                        stuck_ticks = self._worker_stuck_ticks.get(worker.tag, 0) + 1
+                        self._worker_stuck_ticks[worker.tag] = stuck_ticks
+                        if stuck_ticks >= self.stuck_in_place_threshold:
+                            is_stuck = True
+                    else:
+                        self._worker_stuck_ticks[worker.tag] = 0
+                    self._worker_last_positions[worker.tag] = position
 
                 if is_stuck:
                     if hasattr(self.bot, "structures"):
@@ -800,7 +824,14 @@ class AdvancedBuildingManager:
                                 if self.bot.iteration % 100 == 0:
                                     logger.info(f"Saved stuck worker {worker.tag}")
                                 rescued += 1
+                                self._worker_stuck_ticks[worker.tag] = 0
             except Exception:
                 continue
+
+        # 죽은 일꾼의 추적 데이터 정리 (메모리 누수 방지)
+        dead_tags = set(self._worker_last_positions) - live_tags
+        for tag in dead_tags:
+            self._worker_last_positions.pop(tag, None)
+            self._worker_stuck_ticks.pop(tag, None)
 
         return rescued
