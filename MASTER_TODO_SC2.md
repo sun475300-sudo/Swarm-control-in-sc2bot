@@ -161,3 +161,29 @@
 3. **S3.1 CI fail-fast: false** (단순 패치, 별 PR, 자동 가능)
 4. **S3.2 pip-tools 도입** (별 PR, 검토 후 자동)
 5. 그 외 S2/S3/S4 항목은 사용자 우선순위 협의 후 진행
+
+---
+
+## 5. 사이클 로그 — 2026-07-07 (claude/optimistic-edison-8vsr6p)
+
+**핵심 발견 (긴급, 사용자 조치 필요)**: 저장소에 **154개 이상의 열린 draft PR**이 쌓여 있고, 그중 **~62건이 동일한 asyncio 버그를 각자 독립적으로 재발견/재수정**한 거의 중복 PR (`claude/optimistic-edison-*`). 근본 원인은 CI 자체가 고장나 있었던 것: `ci.yml`은 `pytest tests/ --co -q`(수집만 하고 실행 안 함) + 2개 파일만 실제 실행, `sc2bot-ci.yml`은 존재하지 않는 `tests/unit` 경로를 참조해 test job이 항상 실패 → **`tests/`가 한 번도 CI에서 실제로 실행된 적이 없어서** 매 세션이 같은 버그를 새로 발견하고 머지 안 된 채 쌓이기만 했음 (PR #333이 동일 진단, 동일 수정안을 이미 제시함 — 본 커밋은 그 검증된 수정을 독립적으로 재적용).
+
+**이번 사이클에서 완료:**
+- `ci.yml` / `sc2bot-ci.yml`: CI가 `tests/`를 실제로 실행하도록 수정 (collect-only 플래그 제거, 존재하지 않는 `tests/unit` → 실제 경로)
+- `tests/test_combat_phase_fsm.py`: `asyncio.get_event_loop().run_until_complete()` → `asyncio.run()` (Python 3.11 호환)
+- `requirements.txt` / `wicked_zerg_challenger/requirements.txt`: 중복된 `s2clientprotocol` 핀 제거 (burnysc2가 `pys2clientprotocol`로 이미 제공, resolution-too-deep 원인 중 하나)
+- `combat/formation_tactics.py`: Lurker가 적 접근 시 실제로 잠복(burrow)하도록 수정 — 기존엔 `enemy_nearby` 파라미터가 이미 있는데도 "enemy_units not in scope" 주석과 함께 `pass`로 방치되어 있던 실제 게임플레이 버그
+- `combat/harassment_coordinator.py`: `_trigger_zergling_runby` / `_trigger_mutalisk_harassment`가 이미 존재하는 `_manage_zergling_runby` / `_manage_mutalisk_harassment`를 호출하도록 수정 — 이전엔 조건은 체크하면서 실행은 안 하는 무동작 placeholder였음
+- `opponent_modeling.py`: `on_game_end`의 전략 감지 placeholder(`pass`)를 `model.predict_strategy`로 구현 + 발견된 별개의 실버그 수정 (`observed_signals`는 문자열 집합인데 `.value`를 호출해 매 게임 종료 시 `AttributeError` 발생 가능했던 부분, 2곳)
+- `ROADMAP.md`: 상단 상태 표시가 "Phase 56 · 342 테스트"로 정체되어 있던 것을 현재(661→664 테스트, Sprint 1-7 완료, Sprint 8 미실행)로 갱신
+- 회귀 테스트 5건 신규 추가 (`test_formation_tactics.py` 2건, harassment trigger 2건, opponent_modeling 전략감지 1건)
+- 검증: `wicked_zerg_challenger/tests/` 664 passed / 0 failed, 루트 `tests/` 504 passed / 14 skipped / 0 failed
+
+**다음 우선순위 (감사 결과, 착수 안 함 — 후속 사이클용)**:
+1. Task 8.1 — Medium AI 30연전 실행 (현재 1게임만 실행됨, 패배)
+2. Task 8.2 — `create_arena_package.py` 실행 + 체크리스트 검증 (실행 흔적 없음)
+3. Task 7.2/7.3 — `DistanceCache`/`GameFrequencies` 롤아웃 확대 (존재하나 채택률 낮음)
+4. `combat/multiprong_attack.py` vs `combat/multi_prong_coordinator.py` 중복 통합
+5. 루트 `tests/`의 skip/xfail 79건(4월 15건 대비 급증) 원인 라벨링
+
+**사용자 결정 필요**: 154개 열린 PR 중 대다수가 위 근본원인 때문에 쌓인 중복. `MASTER_TODO_SC2.md`의 "머지 금지" 원칙에 따라 본 세션은 머지/close를 하지 않음 — PR #333(또는 동등한 본 브랜치 PR) 머지 후 중복 PR 일괄 close 여부를 사용자가 결정해야 반복 재발이 멈춤.

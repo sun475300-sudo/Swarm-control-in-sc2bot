@@ -772,17 +772,18 @@ class OpponentModeling:
         # Update game history
         self.current_game_history.game_won = won
         self.current_game_history.game_lost = lost
-        self.current_game_history.early_signals = [
-            s.value for s in self.observed_signals
-        ]
-
-        # Detect strategy (placeholder - would need more logic)
-        if self.intel:
-            # Try to detect strategy from intel data
-            pass
+        self.current_game_history.early_signals = list(self.observed_signals)
 
         # Update opponent model
         model = self.opponent_models[self.current_opponent]
+
+        # Detect strategy from this game's observed signals (same lookup
+        # `_make_strategy_prediction` uses mid-game, run here as a final pass)
+        detected_strategy, _confidence = model.predict_strategy(
+            list(self.observed_signals)
+        )
+        self.current_game_history.detected_strategy = detected_strategy
+
         model.update_from_game(self.current_game_history)
 
         # Save to disk
@@ -804,8 +805,7 @@ class OpponentModeling:
 
         # If we have observed signals, use them for prediction
         if self.observed_signals:
-            signal_strings = [s.value for s in self.observed_signals]
-            return model.predict_strategy(signal_strings)
+            return model.predict_strategy(list(self.observed_signals))
 
         # Otherwise, return most common strategy
         if model.strategy_frequency:

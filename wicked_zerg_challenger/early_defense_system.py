@@ -86,7 +86,7 @@ class EarlyDefenseSystem:
         self._spine_crawler_ordered = False
 
     async def on_step(self, iteration: int) -> None:
-        """Alias for execute() — called by bot_step_integration."""
+        """Alias for execute() - called by bot_step_integration."""
         await self.execute(iteration)
 
     def reset(self) -> None:
@@ -160,7 +160,7 @@ class EarlyDefenseSystem:
                 self.early_rush_detected = False
                 self.emergency_mode = False
                 self.early_threats = set()
-                logger.info("[*] Early rush threat cleared (no visible enemies) — returning to normal mode [*]")
+                logger.info("[*] Early rush threat cleared (no visible enemies) - returning to normal mode [*]")
             return
 
         main_base = self.bot.townhalls.first if self.bot.townhalls else None
@@ -184,7 +184,7 @@ class EarlyDefenseSystem:
                 self.early_rush_detected = False
                 self.emergency_mode = False
                 self.early_threats = set()
-                logger.info("[*] Early rush threat cleared — returning to normal mode [*]")
+                logger.info("[*] Early rush threat cleared - returning to normal mode [*]")
 
     async def _detect_proxy_structure_rush(self) -> None:
         """Detect proxy Barracks or cannon rush structures near our base."""

@@ -33,6 +33,11 @@ class MockBot:
         pass
 
 
+async def _async_noop():
+    """Awaitable used as a MagicMock return_value for mocked coroutine methods."""
+    return None
+
+
 def create_mock_unit(type_id, position=(10, 10), tag=1, health_pct=1.0):
     """Create a mock unit for testing"""
     unit = Mock()
@@ -232,6 +237,26 @@ class TestHarassmentCoordinator:
         except Exception:
             # May fail in test environment
             pass
+
+    @pytest.mark.asyncio
+    async def test_trigger_zergling_runby_calls_manager(self):
+        """_trigger_zergling_runby must actually run the zergling-runby manager,
+        not silently no-op (regression test for a bug where this was a dead stub)."""
+        self.coordinator._manage_zergling_runby = MagicMock(
+            return_value=_async_noop()
+        )
+        await self.coordinator._trigger_zergling_runby()
+        self.coordinator._manage_zergling_runby.assert_called_once()
+
+    @pytest.mark.asyncio
+    async def test_trigger_mutalisk_harassment_calls_manager(self):
+        """_trigger_mutalisk_harassment must actually run the mutalisk-harassment
+        manager, not silently no-op (regression test for a dead stub)."""
+        self.coordinator._manage_mutalisk_harassment = MagicMock(
+            return_value=_async_noop()
+        )
+        await self.coordinator._trigger_mutalisk_harassment()
+        self.coordinator._manage_mutalisk_harassment.assert_called_once()
 
     # ===== Harassment Target Selection Tests =====
 

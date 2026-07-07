@@ -596,6 +596,25 @@ class TestOpponentModeling(unittest.TestCase):
         model = self.modeling.opponent_models["opponent_Zerg"]
         self.assertEqual(model.games_played, 1)
 
+    def test_on_game_end_detects_strategy_from_signals(self):
+        """on_game_end must run strategy detection against observed_signals
+        instead of the old `pass`-placeholder that always left detected_strategy
+        as the "unknown" default from on_game_start."""
+        self.modeling.on_game_start("opponent_1", opponent_race=self.bot.enemy_race)
+
+        # Seed the opponent model so predict_strategy has something to match on.
+        model = self.modeling.opponent_models["opponent_1"]
+        model.early_signal_correlations["fast_expand"]["terran_bio"] = 5
+
+        self.modeling.observed_signals = {"fast_expand"}
+
+        self.modeling.on_game_end(won=True, lost=False)
+
+        self.assertEqual(
+            self.modeling.current_game_history.detected_strategy, "terran_bio"
+        )
+        self.assertEqual(model.games_played, 1)
+
     def test_get_opponent_stats(self):
         """Test retrieving opponent statistics"""
         # Create model with history
