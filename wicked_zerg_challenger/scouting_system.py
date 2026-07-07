@@ -27,6 +27,8 @@ except ImportError:
 OVERLORD_SCOUT_INTERVAL_EARLY = 15.0
 OVERLORD_SCOUT_INTERVAL_MID = 30.0
 ZERGLING_PATROL_INTERVAL = 45.0
+CHANGELING_ENERGY_COST = 50
+CHANGELING_REDEPLOY_INTERVAL = 60.0
 
 CLOAK_UNITS = {
     getattr(UnitTypeId, "DARKTEMPLAR", None),
@@ -57,6 +59,7 @@ class ScoutingSystem:
         self.zergling_patrol_tags: Set[int] = set()
         self.zergling_route_index: Dict[int, int] = {}
         self.last_zergling_patrol_time = 0.0
+        self.last_changeling_time = 0.0
 
     @staticmethod
     def _units_amount(units) -> int:
@@ -238,11 +241,27 @@ class ScoutingSystem:
         overseer = self._find_available_overseer(target or self._enemy_start())
         if not overseer:
             return False
+        if getattr(overseer, "energy", 0) < CHANGELING_ENERGY_COST:
+            return False
         ability = getattr(AbilityId, "SPAWNCHANGELING_SPAWNCHANGELING", None)
         if not ability:
             return False
         self._issue(overseer(ability))
         return True
+
+    def maybe_deploy_changeling(self, current_time: float) -> bool:
+        """Auto-dispatch a changeling toward the enemy base on a cooldown.
+
+        Roadmap Sprint 2.5: changelings should be spawned automatically
+        whenever an overseer has >=50 energy, instead of relying on manual
+        callers (there were none in production before this).
+        """
+        if current_time - self.last_changeling_time < CHANGELING_REDEPLOY_INTERVAL:
+            return False
+        if self.deploy_changeling():
+            self.last_changeling_time = current_time
+            return True
+        return False
 
     def _cloak_alert_position(self):
         cloak_units = []

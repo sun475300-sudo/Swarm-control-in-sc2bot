@@ -145,6 +145,7 @@ class AdvancedScoutingSystemV2:
         if self.roadmap_scouting:
             self.roadmap_scouting.record_visible_enemy_presence()
             self.roadmap_scouting.handle_cloak_detection()
+            self.roadmap_scouting.maybe_deploy_changeling(self.bot.time)
         if self.zvt_scouting:
             self.zvt_scouting.update_blackboard_from_visible_structures()
         if self.zvp_scouting:

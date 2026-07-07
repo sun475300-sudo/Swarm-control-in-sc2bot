@@ -1,8 +1,48 @@
 # WickedZergBotPro Grand Roadmap
 
 > 목표: Medium AI 승률 90%+ 달성 & AI Arena 출전
-> 현재 상태: Phase 56 완료, 342/342 테스트 통과, 추정 승률 45~50%
+> 현재 상태: 661/661 단위 테스트 통과 (2026-07-07 기준, tests/ 전체). "Phase 56, 342/342" 문구는 CHANGELOG.md 대비 stale — 실제 git 이력은 그 이후 커밋 다수(테스트 안정화 PR #218 등) 존재.
 > 봇 프레임워크: python-sc2 (burnysc2>=5.0.0)
+
+---
+
+## 2026-07-07 구현 현황 감사 (자동 점검 사이클)
+
+아래 Sprint 1~8 태스크를 코드 기준으로 재검증한 결과. 이 로드맵이 작성된 이후 상당 부분이 이미 구현되었으나 문서가 갱신되지 않았던 상태. ✅=완료, 🟡=부분, ❌=미구현/차단.
+
+| Task | 상태 | 근거 |
+|------|------|------|
+| 1.1 인코딩 에러 제거 | ✅ | 비ASCII 특수문자(⚪✓✅🔴❌) 전체 검색 결과 0건 |
+| 1.2 일꾼 괴롭힘 방어 | ✅ | `combat_manager.py` `respond_to_worker_harassment`, 3:1 풀링 + 퀸 투입 |
+| 1.3 견제 도달 보장 + 복귀 | ✅ | `harass_units`/`harass_kill_count` 태그 시스템, 15초 주기(`strategy_manager.py`) |
+| 1.4 1분 멀티 타이밍 | ✅ | `[EXPANSION]` 로그, 50~70초 목표 (`economy_manager.py`) |
+| 2.1 오버로드 정찰 주기 단축 | ✅ | 15s/30s 상수 + 웨이포인트 우선순위 (`scouting_system.py`) |
+| 2.2 저글링 순찰 루트 | ✅ | 45초 주기, 3rd→4th→center→watchtower |
+| 2.3 빌드패턴 인식 12→25종 | 🟡 | `BUILD_PATTERNS` dict엔 13종뿐이지만 `_detect_enemy_build_pattern`의 일반 분기(terran_bio/mech/rush, protoss_stargate/robo/twilight/gateway/proxy, zerg_muta/roach/ling_bane/12pool 등)까지 합치면 실질 인식 패턴은 25종 안팎 — 문서만 안 맞음. 추가 작업 낮은 우선순위 |
+| 2.4 공중 위협 조기 경보 | ✅ | `AIR_THREAT_INCOMING`/`AIR_THREAT_ACTIVE` 플래그 연동 |
+| 2.5 오버시어 은폐 탐지 + 체인질링 자동배치 | ✅ (이번 사이클에 수정) | 은폐 탐지는 기존에 됐었음. 체인질링은 정의만 있고 실제로 호출되지 않음 + 에너지 체크 없음 → 이번 커밋에서 에너지 50 게이트 + 60초 주기 자동 호출 연결, 테스트 4건 추가 |
+| 3.1 위협도별 드론 목표 조절 | ✅ | `ThreatLevel` enum, `on_step`에 매초 연동 |
+| 3.2 매치업별 가스 타이밍 | ✅ | `_get_gas_timing_by_matchup`: 13(Z)/17(T)/19(P) |
+| 3.3 라바 우선순위 | ✅ | `spend_larva()`: 서플라이 방지 > 드론 > 병력 |
+| 3.4 미네랄 플로팅 방지 | ✅ | `_handle_mineral_float`: 800/1000 임계값, `[FLOAT]` 로그 |
+| 4.1 러커 포지셔닝 | ✅ | `LURKERMP` 사용 확인, `combat/lurker_positioning.py` |
+| 4.2 뮤탈 히트앤런 | ✅ | 매직박싱/바운스타겟/대공회피/50% 후퇴 전부 구현 |
+| 4.3 바퀴-히드라 포메이션 | ✅ | `_execute_roach_hydra_formation` |
+| 4.4 다방면 협공 | 🟡 | 60/25/15 분할은 구현됐지만 "동시 도착을 위한 시간차 출발"은 미구현 — 같은 프레임에 전부 명령 발행됨. 개선 여지 있으나 실게임 검증 불가 환경이라 보류 |
+| 4.5 전투 프레임 스킵 | ✅ (중복코드 有) | `combat_manager.py`에 5/2/emergency 스킵 로직 구현·테스트됨. 단, `utils/frame_skip.py`의 `FrameSkipManager`는 어디서도 안 쓰이는 죽은 클래스로 남아있음 (REMAINING_ISSUES.md N8) |
+| 5.1 프록시 대응 | ✅ | `early_defense_system.py` 150s/반경40 감지, EMERGENCY 모드 |
+| 5.2 멀티 드롭 대응 | ✅ | `combat/base_defense.py` 1퀸+4저글링 상시배치, 8~12기 파견 |
+| 5.3 올인 감지 | ✅ | `_detect_all_in_pressure`: 5분/1.5배 조건, 드론생산 중단·스파인4개·인젝중단 |
+| 6.1 PPO 실전 연동 | ✅ (RL은 기본 비활성) | `use_rl_micro`/`train_mode` 기본값 False — RL 코드 자체는 완성돼 있으나 실전에서 항상 규칙기반으로 동작 중. "성능 나쁘면 자동 복귀" 로직은 폴백만 있고 지속 비교/자동 OFF는 미구현 |
+| 6.2 커리큘럼 Stage 3 | ✅ | `configure_stage3`/보상함수 스펙 일치 |
+| 6.3 셀프플레이 파이프라인 | ✅ | ELO, 체크포인트 50 episode, 상대풀 10+규칙기반 |
+| 7.1 StrategyManager 역할분담 | 🟡 | `building_manager.py`(243줄)/`economy_manager.py`가 각자 역할을 갖지만 `strategy_manager.py`는 여전히 3300줄+ God Object (REMAINING_ISSUES.md N10) |
+| 7.2 거리 계산 캐싱 | ✅ | `utils/distance_cache.py` 존재 + `combat_manager.py`/`economy_manager.py`에서 실사용 확인 |
+| 7.3 매직넘버 교체 | 🟡 | `utils/game_constants.py` 있으나 `% 22`/`% 44`/`% 66`/`% 110`/`% 220` 형태 하드코딩이 여전히 150여 곳 잔존 (주로 `bot_step_integration.py`) |
+| 8.1 Medium 30연전 테스트 | ❌ blocked | `mass_test_results.json`엔 1게임(패배)만 기록. **실제 SC2 클라이언트+GPU가 필요해 이 클라우드 코딩 환경에서는 실행 불가** — 로컬 머신에서 `run_mass_test.py` 실행 필요 |
+| 8.2 Arena 패키지 검증 | 🟡 | `create_arena_package.py` 존재, CI에 arena-package job 있음. 로컬 zip 크기/의존성 실측 기록은 없음 |
+
+**환경 제약 (중요):** 이 클라우드 코딩 세션에는 StarCraft II 클라이언트/GPU가 설치되어 있지 않습니다. `pytest` 기반 단위 테스트·정적 분석(flake8)·코드 리뷰는 계속 자동으로 수행할 수 있지만, 실제 인게임 승률 테스트(Task 8.1 등)는 로컬 SC2 환경에서 직접 실행해야 합니다.
 
 ---
 
