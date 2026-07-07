@@ -23,6 +23,7 @@ jobs:
     name: Lint & Type Check
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
         python-version: ["3.10", "3.11", "3.12"]
     steps:
@@ -37,26 +38,29 @@ jobs:
       - name: Install lint dependencies
         run: pip install flake8 mypy black isort bandit
 
+      # Scoped to wicked_zerg_challenger/ (the actual SC2 bot). The repo root
+      # also hosts an unrelated multi-language portfolio tree that these
+      # tools were never meant to cover.
       - name: Run black (format check)
-        run: black --check --diff .
+        run: black --check --diff wicked_zerg_challenger/
 
       - name: Run isort (import order)
-        run: isort --check-only --diff .
+        run: isort --check-only --diff wicked_zerg_challenger/
 
       - name: Run flake8 (full — non-blocking, informational)
         continue-on-error: true
-        run: flake8 . --max-line-length=100 --exclude=.git,__pycache__,venv
+        run: flake8 wicked_zerg_challenger/ --max-line-length=100 --exclude=__pycache__
 
       - name: Run flake8 (critical — blocking)
-        run: flake8 . --select=E9,F63,F7,F82 --exclude=.git,__pycache__,venv,5.9.0
+        run: flake8 wicked_zerg_challenger/ --select=E9,F63,F7,F82 --exclude=__pycache__
 
       - name: Run mypy (non-blocking, informational)
         continue-on-error: true
-        run: mypy . --ignore-missing-imports --strict
+        run: mypy wicked_zerg_challenger/ --ignore-missing-imports --strict
 
       - name: Run bandit (security — non-blocking, informational)
         continue-on-error: true
-        run: bandit -r . -ll --exclude ./tests
+        run: bandit -r wicked_zerg_challenger/ -ll --exclude ./wicked_zerg_challenger/tests
 
   # ── Test ──────────────────────────────────────────────────────────────────
   test:
@@ -73,13 +77,14 @@ jobs:
           cache: pip
 
       - name: Install dependencies
-        run: pip install -r requirements.txt pytest pytest-cov pytest-asyncio
+        run: |
+          pip install -r wicked_zerg_challenger/requirements.txt
+          pip install pytest pytest-cov pytest-asyncio pytest-timeout pytest-mock
 
-      - name: Run unit tests
-        run: pytest tests/unit -v --cov=. --cov-report=xml --cov-report=term
-
-      - name: Run integration tests
-        run: pytest tests/integration -v --timeout=120
+      - name: Run SC2 bot test suite
+        run: |
+          pytest wicked_zerg_challenger/tests/ -v \
+            --cov=wicked_zerg_challenger --cov-report=xml --cov-report=term
 
       - name: Upload coverage
         uses: codecov/codecov-action@v4
