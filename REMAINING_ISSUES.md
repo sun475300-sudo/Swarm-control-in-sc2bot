@@ -4,24 +4,24 @@
 
 통합 문제 해결 후 발견된 추가 개선 사항들입니다.
 
-**Last refreshed:** 2026-04-27 (Issue #1, #2 → Resolved; Issue #6 partially resolved via Batch 3)
+**Last refreshed:** 2026-07-07 (자동 점검 사이클 재검증 — N1~N4, Issue #3/#4 코드에 이미 반영 확인)
 
 ---
 
-## 🆕 신규 발견 (PR #44, 2026-04-27)
+## 🆕 신규 발견 (PR #44, 2026-04-27) — 2026-07-07 재검증 완료
 
 자동/수동 점검 사이클(테스트 → 코드 검사 → 개선 → 커밋/푸시 반복)에서 새로 식별된 항목.
 
 | ID | 설명 | 우선순위 | 상태 |
 |----|------|---------|------|
-| N1 | `OpponentModeling.on_step` 중복 정의 (line 341 vs 765 — F811) | 🟠 HIGH | open — 동작 영향(상위 on_step이 미실행) 가능 |
-| N2 | `EconomyManager._prevent_resource_banking` / `_reduce_gas_workers` 재정의 (F811) | 🟡 MED | open |
-| N3 | `combat_manager._find_harass_target` 재정의 (line 2377 vs 4278) | 🟡 MED | open |
-| N4 | `production_resilience.build_terran_counters` 재정의 (1369 vs 1866) | 🟡 MED | open |
-| N5 | bare `except Exception:` 다수 (≈360+) — 이번 PR에서 12건 처리, 잔여 다수 | 🟢 LOW | partial |
-| N6 | F841 unused local variables (visuals/make_pptx 등) | 🟢 LOW | open (presentation 코드라 영향 작음) |
+| N1 | `OpponentModeling.on_step` 중복 정의 (line 341 vs 765 — F811) | 🟠 HIGH | ✅ Resolved — `opponent_modeling.py`에 `on_step` 정의 1건만 남음 (shadowed 사본 제거됨, `e648ae4`) |
+| N2 | `EconomyManager._prevent_resource_banking` / `_reduce_gas_workers` 재정의 (F811) | 🟡 MED | ✅ Resolved — 각 메서드 정의 1건만 존재 확인 (`economy_manager.py:3198`, `:3995`) |
+| N3 | `combat_manager._find_harass_target` 재정의 (line 2377 vs 4278) | 🟡 MED | ✅ Resolved — 정의 1건만 남음 (`combat_manager.py:4992`) |
+| N4 | `production_resilience.build_terran_counters` 재정의 (1369 vs 1866) | 🟡 MED | ✅ Resolved — 정의 1건만 남음 (`local_training/production_resilience.py:1961`) |
+| N5 | bare `except Exception:` 다수 (≈360+) — 이번 PR에서 12건 처리, 잔여 다수 | 🟢 LOW | open — 잔여 다수, 사이클 6+ 후보 |
+| N6 | F841 unused local variables (visuals/make_pptx 등) | 🟢 LOW | open — `flake8 --select=F841` 기준 여전히 130건 (`wicked_zerg_challenger/`), 대부분 미사용 예외 변수(`except ... as e`) |
 
-검증 권장: PR 분리 (N1 단독 PR 권장 — 동작 변화 가능성).
+N1~N4는 이후 커밋(`e648ae4` "delete shadowed duplicate methods")에서 이미 정리됨 — 문서만 stale 상태였음.
 
 ---
 
@@ -67,13 +67,18 @@
 
 ---
 
-## 🟡 MEDIUM Priority Issues (still open)
+## 🟡 MEDIUM Priority Issues
 
-### Issue #3: Transfusion 우선순위 개선 필요
+### ✅ Issue #3: Transfusion 우선순위 개선 — 구현 완료 (재검증 2026-07-07)
 
-**위치**: `queen_manager.py` 또는 `spell_unit_manager.py`
+**구현 위치**: `wicked_zerg_challenger/economy/queen_transfusion_manager.py`
 
-**현재 문제**:
+아래 제안 코드와 동일한 `HEAL_PRIORITY` dict (line 26) + `CANNOT_HEAL` set (line 43)이
+이미 구현되어 있고, `tests/test_queen_transfusion.py` /
+`tests/test_queen_transfusion_manager.py`로 회귀 테스트도 갖춰짐. 문서만 stale했던 항목 —
+아래는 원래 제안이었던 참고용 스니펫.
+
+**당시 문제 (해결됨)**:
 - Transfusion 로직이 단순함
 - 고가 유닛(울트라, 브루드로드) 우선순위 없음
 - 군단 숙주, 맹독충 등 치료 불가 유닛에 낭비 가능성
@@ -138,15 +143,20 @@ async def smart_transfusion(self, queen, damaged_units):
         self.bot.do(queen(AbilityId.TRANSFUSION_TRANSFUSION, best_target))
 ```
 
-**우선순위**: 🟡 MEDIUM (자원 효율성 개선)
+**우선순위**: ~~🟡 MEDIUM~~ ✅ Resolved
 
 ---
 
-### Issue #4: Resource Reservation Race Condition
+### ✅ Issue #4: Resource Reservation Race Condition — 구현 완료 (재검증 2026-07-07)
 
-**위치**: `resource_manager.py` (추정)
+**구현 위치**: `wicked_zerg_challenger/core/resource_manager.py`
 
-**문제**:
+`asyncio.Lock` 기반 `ResourceManager` 클래스가 이미 존재하고 (`try_reserve` /
+`release` / `release_partial`), `defense_coordinator.py`와 `economy_manager.py`에서
+실제로 호출되고 있음 — 제안이 아니라 이미 배선까지 완료된 상태. 회귀 테스트:
+`tests/test_resource_manager.py`. 아래는 원래 제안이었던 참고용 스니펫.
+
+**당시 문제 (해결됨)**:
 - 여러 매니저가 동시에 자원 예약 시도
 - 경쟁 조건(race condition) 발생 가능
 - 자원 이중 예약 위험
@@ -213,13 +223,31 @@ else:
     return
 ```
 
-**우선순위**: 🟡 MEDIUM (안정성 개선, 드물게 발생)
+**우선순위**: ~~🟡 MEDIUM~~ ✅ Resolved
 
 ---
 
 ## 🟢 LOW Priority Issues
 
-### Issue #5: 코드 중복 - Position 계산
+### 🟡 Issue #5: 코드 중복 - Position 계산 — 절반만 완료 (재검증 2026-07-07)
+
+**현재 상태**: `wicked_zerg_challenger/utils/position_utils.py`에 `get_center_position()` /
+`get_weighted_center()` 헬퍼가 이미 구현돼 있지만 **실제 호출부가 0건** — 만들기만 하고
+배선(wiring)이 끝나지 않은 상태. 아래 11곳에 동일한 인라인 중심좌표 계산이 여전히 중복돼 있음:
+
+- `combat/expansion_defense.py:296`
+- `combat/combat_execution.py:262`
+- `combat/infestor_tactics.py:189`
+- `combat/micro_combat.py:442`, `:1345`
+- `combat_phase_controller.py:591`
+- `micro_controller.py:525`
+- `combat_manager.py:1622`, `:3657`
+- `battle_preparation_system.py:166`
+- `idle_unit_manager.py:179`
+
+**남은 작업**: 위 11개 호출부를 `position_utils.get_center_position()` 호출로 교체
+(순수 리팩터 — 수학은 동일, 동작 변화 없음). 프로덕션 전투 코드를 다수 건드리므로
+회귀 테스트 확인 후 별도 PR로 진행 권장.
 
 **위치**: 여러 파일에서 중복
 
@@ -296,7 +324,12 @@ center = get_center_position(army_units)
 
 ---
 
-### Issue #6: 매직 넘버 (Magic Numbers)
+### 🟡 Issue #6b: 매직 넘버 (Magic Numbers) — 부분 진행 (재검증 2026-07-07)
+
+**현재 상태**: `wicked_zerg_challenger/config/constants.py`, `utils/game_constants.py`
+등 상수 모듈이 이미 존재하고 Queen 관련 11종 상수는 이관 완료(위 "PR #44 Issue #6"
+참조). 다만 전체 코드베이스 기준 잔여 매직넘버 규모는 별도로 측정된 적이 없음 —
+전수 조사 후 사이클 6+에서 순차 정리 권장 (파일 하나씩, 동작 불변 리팩터).
 
 **위치**: 여러 파일
 
@@ -359,32 +392,32 @@ if iteration % SECOND == 0:
 
 ---
 
-## 📊 이슈 우선순위 요약 (open만)
+## 📊 이슈 우선순위 요약 (2026-07-07 재검증 — 실제 open 항목만)
 
 | 우선순위 | 이슈 | 영향도 | 난이도 |
 |---------|------|--------|--------|
-| 🟡 MEDIUM | #3 Transfusion 우선순위 | 중간 | 중간 |
-| 🟡 MEDIUM | #4 Resource Race Condition | 낮음 | 중간 |
-| 🟢 LOW | #5 코드 중복 제거 | 낮음 | 쉬움 |
-| 🟢 LOW | #6 매직 넘버 | 낮음 | 쉬움 |
+| 🟡 MED | N5 bare `except Exception:` 잔여분 | 낮음 (디버깅 어려움) | 중간 (다건) |
+| 🟢 LOW | N6 / Issue #6b F841 unused vars (130건) | 낮음 | 쉬움~중간 |
+| 🟢 LOW | #5 Position Utils 배선 (helper 존재, 호출부 0건 — 11곳 교체 필요) | 낮음 | 쉬움 |
 
-(Issue #1, #2 → ✅ Resolved 섹션 참조)
+(Issue #1~#4, N1~N4 → 모두 ✅ Resolved 섹션 참조로 이동. 이전 버전 문서가 stale했던 것으로 확인됨.)
 
 ---
 
-## 🎯 권장 수정 순서
+## 🎯 권장 수정 순서 (2026-07-07 갱신)
 
-### 1단계: 완료 (✅)
-~~1. Queen Inject 쿨다운 수정 (25 → 29)~~ — 코드 반영 완료, 본 문서 ✅ Resolved 섹션 참조
-~~2. 누락된 업그레이드 추가~~ — 코드 반영 완료, 본 문서 ✅ Resolved 섹션 참조
+### 완료 (✅) — 이전엔 "미진행"으로 잘못 표기돼 있었음
+~~1. Queen Inject 쿨다운 수정 (25 → 29)~~
+~~2. 누락된 업그레이드 추가~~
+~~3. Transfusion 우선순위 시스템~~ — `queen_transfusion_manager.py`에 구현 완료
+~~4. Resource Reservation 동기화~~ — `core/resource_manager.py`에 구현 완료
+~~N1~N4. 중복 메서드 정의 4건~~ — `e648ae4`에서 제거 완료
 
-### 2단계: 로직 개선 (30분, 미진행)
-3. Transfusion 우선순위 시스템 구현
-
-### 3단계: 구조 개선 (1시간, 미진행)
-4. Resource Reservation 동기화
-5. Position Utils 유틸리티 함수 분리
-6. Constants 정리
+### 남은 실작업
+5. Position Utils 배선 — 헬퍼는 있으나 11개 호출부 미교체 (순수 리팩터, 별도 PR 권장)
+6. Constants 정리 — Queen 11종은 완료, 전체 매직넘버 규모는 미측정
+7. N5 bare except 잔여분 라벨링/정리
+8. N6 F841 unused-variable 130건 정리 (대부분 `except ... as e`에서 `e` 미사용)
 
 ---
 
@@ -421,5 +454,7 @@ if iteration % SECOND == 0:
 
 ---
 
-**검토 완료일**: 2026-01-29
-**상태**: 추가 개선 사항 문서화 완료
+**검토 완료일**: 2026-01-29 (최초), 2026-07-07 (재검증 — 자동 테스트/점검 사이클)
+**상태**: Issue #1~#4 및 N1~N4 모두 코드에 반영 완료 확인. 남은 실작업은 #5(Position
+Utils 배선), #6b(매직넘버 잔여), N5/N6(예외처리·미사용 변수 정리) — 위 "권장 수정 순서"
+참조.
