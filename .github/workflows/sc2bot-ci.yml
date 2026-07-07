@@ -63,6 +63,15 @@ jobs:
     name: Test Suite
     runs-on: ubuntu-latest
     needs: lint
+    env:
+      # s2clientprotocol's pre-generated *_pb2.py files were built against the
+      # old protobuf C++ implementation; requirements.txt also pulls in
+      # google-generativeai, which drags in protobuf>=5.x, and the C++
+      # implementation refuses to load descriptors built for an older
+      # runtime ("Descriptors cannot be created directly"). Same fix already
+      # used by the sc2-bot-test job in ci.yml — force the pure-Python
+      # implementation instead of pinning protobuf down for the whole repo.
+      PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION: python
     steps:
       - uses: actions/checkout@v4
 
@@ -73,10 +82,10 @@ jobs:
           cache: pip
 
       - name: Install dependencies
-        run: pip install -r requirements.txt pytest pytest-cov pytest-asyncio
+        run: pip install -r requirements.txt -r requirements-dev.txt pytest pytest-cov pytest-asyncio
 
       - name: Run unit tests
-        run: pytest tests/unit -v --cov=. --cov-report=xml --cov-report=term
+        run: pytest tests/ --ignore=tests/integration -v --cov=. --cov-report=xml --cov-report=term
 
       - name: Run integration tests
         run: pytest tests/integration -v --timeout=120
