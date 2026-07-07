@@ -31,6 +31,7 @@
 | N8 | `utils/frame_skip.py`의 `FrameSkipManager` 클래스가 어디서도 사용되지 않는 죽은 코드 — 실제 프레임 스킵은 `combat_manager.py`에 별도로 직접 구현되어 있음 | 🟢 LOW | open — 자체 테스트(`test_frame_skip_manager.py`)만 존재, 실사용 없음. 제거하거나 실제로 연결할지 결정 필요 |
 | N9 | Sprint 8.1 (30전 승률 테스트)이 실제로 실행된 증거 없음 — `mass_test_results.json`은 1게임(패배, 승률 0%)만 기록 | 🟡 MED | blocked — 실제 SC2 게임 실행에는 StarCraft II 클라이언트 + GPU가 필요하며 현재 클라우드 코딩 환경에는 없음. 유닛 테스트/정적 분석만 이 환경에서 가능 |
 | N10 | `strategy_manager.py`가 여전히 3300줄 이상의 God Object — Task 7.1 로드맵이 요구한 "NORMAL/EMERGENCY/... 상태 선택만 담당"까지는 부분적으로만 진행됨 | 🟡 MED | open — 큰 리팩토링, 실게임 검증 없이 진행 시 회귀 위험 높음. 점진적 분리 권장 |
+| N11 | PR #329 CI에서 `.github/workflows/sc2bot-ci.yml`의 "Lint & Type Check" job이 `black --check --diff .` / `isort --check-only --diff .`을 레포 루트 전체(500+ 디렉터리, 다국어 스캐폴딩 포함)에 대해 실행하다 실패 — **이 PR이 유발한 게 아니라 main에 이미 존재하던 상태**(67개 파일이 black 미준수, 이 PR이 건드린 파일 제외). 대량 재포맷은 범위가 크고 무관한 디렉터리까지 건드리므로 별도 PR로 분리 권장 | 🟡 MED | open — 이번 사이클에서 손댄 3개 파일만 black/isort 적용 완료. 나머지 ~64개 파일 전체 포맷은 후속 작업 |
 
 검증 권장: 위 항목들은 각각 별도 커밋/PR로 처리.
 
