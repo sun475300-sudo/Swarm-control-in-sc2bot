@@ -4,24 +4,30 @@
 
 통합 문제 해결 후 발견된 추가 개선 사항들입니다.
 
-**Last refreshed:** 2026-04-27 (Issue #1, #2 → Resolved; Issue #6 partially resolved via Batch 3)
+**Last refreshed:** 2026-07-07 (자동 점검 사이클 재개 — N1~N5 전부 코드에 이미 반영된 상태로 재확인; N6 대부분 해결)
 
 ---
 
-## 🆕 신규 발견 (PR #44, 2026-04-27)
+## 🆕 신규 발견 (PR #44, 2026-04-27) — 2026-07-07 재확인 결과
 
 자동/수동 점검 사이클(테스트 → 코드 검사 → 개선 → 커밋/푸시 반복)에서 새로 식별된 항목.
+`flake8 --select=F821,F811,E722` 전체 재실행 결과 0건 — 아래 N1~N5는 이미 해결된 상태입니다.
 
 | ID | 설명 | 우선순위 | 상태 |
 |----|------|---------|------|
-| N1 | `OpponentModeling.on_step` 중복 정의 (line 341 vs 765 — F811) | 🟠 HIGH | open — 동작 영향(상위 on_step이 미실행) 가능 |
-| N2 | `EconomyManager._prevent_resource_banking` / `_reduce_gas_workers` 재정의 (F811) | 🟡 MED | open |
-| N3 | `combat_manager._find_harass_target` 재정의 (line 2377 vs 4278) | 🟡 MED | open |
-| N4 | `production_resilience.build_terran_counters` 재정의 (1369 vs 1866) | 🟡 MED | open |
-| N5 | bare `except Exception:` 다수 (≈360+) — 이번 PR에서 12건 처리, 잔여 다수 | 🟢 LOW | partial |
-| N6 | F841 unused local variables (visuals/make_pptx 등) | 🟢 LOW | open (presentation 코드라 영향 작음) |
+| N1 | `OpponentModeling.on_step` 중복 정의 (line 341 vs 765 — F811) | 🟠 HIGH | ✅ resolved — 현재 단일 정의만 존재 (opponent_modeling.py:341) |
+| N2 | `EconomyManager._prevent_resource_banking` / `_reduce_gas_workers` 재정의 (F811) | 🟡 MED | ✅ resolved — 중복 없음 |
+| N3 | `combat_manager._find_harass_target` 재정의 (line 2377 vs 4278) | 🟡 MED | ✅ resolved — 단일 정의만 존재 |
+| N4 | `production_resilience.build_terran_counters` 재정의 (1369 vs 1866) | 🟡 MED | ✅ resolved — 중복 없음 |
+| N5 | bare `except Exception:` 다수 | 🟢 LOW | ✅ resolved — `flake8 --select=E722` 0건 |
+| N6 | F841 unused local variables | 🟢 LOW | 🟡 대부분 resolved — 2026-07-07 정리로 130건 → 9건 (잔여는 visuals/tools 프레젠테이션 코드) |
 
-검증 권장: PR 분리 (N1 단독 PR 권장 — 동작 변화 가능성).
+이번 사이클(2026-07-07)에서 추가로 발견/수정:
+- `tests/test_combat_phase_fsm.py`: Python 3.11에서 `asyncio.get_event_loop()`가 실행 중인 루프 없이 호출되어 12개 테스트가 실패하던 문제 → `asyncio.run()`으로 교체, 502/502 통과로 복구.
+- `economy_manager.py::_get_early_scout_pressure_state`: `early_window`(게임 시간 <= 240s) 값이 계산만 되고 `pressure_active`에 반영되지 않아, 오래된 정찰 보고가 갱신될 때마다 드론 생산 억제가 4분 이후에도 무기한 지속될 수 있던 버그 → `pressure_active`에 `early_window` 반영.
+- `bot_step_integration.py`: `MicroFocusMode`(Sprint 4.5 "전투 프레임 스킵"의 이전 구현으로 추정)가 매 스텝 `update()`만 호출되고 반환값(권장 실행 간격)을 어디에서도 소비하지 않는 고아(orphaned) 시스템으로 확인됨. 현재 프레임 스킵은 `combat_manager.py`의 `_is_in_active_combat`/`_is_emergency` 기반 로직이 실제로 담당 중이라 동작에는 영향 없음 — `MicroFocusMode`는 제거 또는 재통합 후보로 남겨둠 (다음 사이클 검토 항목).
+
+검증 권장: 위 발견사항은 전체 테스트(502 passed) + `flake8 --select=F821,F811,E722,F841` 재실행으로 확인 완료.
 
 ---
 
@@ -67,7 +73,18 @@
 
 ---
 
-## 🟡 MEDIUM Priority Issues (still open)
+## ✅ Issue #3, #4 재확인 결과 (2026-07-07 — 이미 해결됨)
+
+두 이슈 모두 문서 작성 이후 별도 작업으로 이미 코드에 반영되어 있음을 확인했습니다.
+아래 원본 문제/제안 코드는 히스토리 참고용으로 남겨둡니다.
+
+- **Issue #3 (Transfusion 우선순위)**: `queen_manager.py::_transfuse_injured_units` (line 711)에
+  CreepyBot 스타일 우선순위 테이블(Queen > Broodlord > Corruptor/Viper > SpineCrawler > ...),
+  치료 불가 유닛 제외(`BANELING`/`BROODLING`/`LOCUSTMP`), 쿨다운, 사거리 체크가 모두 구현되어 있음.
+- **Issue #4 (Resource Reservation Race Condition)**: `core/resource_manager.py::ResourceManager`에
+  `asyncio.Lock` 기반 `try_reserve`/`release`가 이미 구현되어 있음 (line 28-248).
+
+## 🟡 MEDIUM Priority Issues (원본 — 히스토리 참고용, 위 재확인 결과 이미 해결됨)
 
 ### Issue #3: Transfusion 우선순위 개선 필요
 
@@ -409,17 +426,19 @@ if iteration % SECOND == 0:
 
 ## 📝 참고 사항
 
-### 현재 상태
+### 현재 상태 (2026-07-07 기준)
 - ✅ **치명적 통합 문제**: 완전히 해결됨
-- ✅ **모든 단위 테스트**: 통과 (16/16)
+- ✅ **전체 테스트**: 통과 (502 passed, 14 skipped)
 - ✅ **기본 기능**: 정상 작동
+- ✅ **정적 분석**: `flake8 --select=F821,F811,E722` 0건
 
 ### 위의 이슈들은
-- 모두 **선택적 개선 사항**
-- 즉시 수정 불필요
-- 점진적 개선 권장
+- 대부분 **이미 해결됨** (위 재확인 섹션 참고)
+- 남은 항목(Issue #5, #6, N6 잔여)은 **선택적 개선 사항**
+- 다음 자동 점검 사이클에서 계속 진행
 
 ---
 
 **검토 완료일**: 2026-01-29
+**재확인일**: 2026-07-07 (자동/수동 점검 사이클 재개)
 **상태**: 추가 개선 사항 문서화 완료
