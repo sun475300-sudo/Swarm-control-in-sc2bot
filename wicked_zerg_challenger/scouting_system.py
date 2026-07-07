@@ -236,16 +236,6 @@ class ScoutingSystem:
         self._reserve_overseer_morph()
         return False
 
-    def deploy_changeling(self, target=None) -> bool:
-        overseer = self._find_available_overseer(target or self._enemy_start())
-        if not overseer:
-            return False
-        ability = getattr(AbilityId, "SPAWNCHANGELING_SPAWNCHANGELING", None)
-        if not ability:
-            return False
-        self._issue(overseer(ability))
-        return True
-
     def _cloak_alert_position(self):
         cloak_units = []
         for enemy in getattr(self.bot, "enemy_units", []) or []:
