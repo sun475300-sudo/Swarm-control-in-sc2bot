@@ -2,18 +2,30 @@
 
 > Owner: 선우 (sun475300@gmail.com)
 > Maintainer: nightly automation
-> Last refreshed: 2026-05-04
+> Last refreshed: 2026-07-07
 
 ---
 
 ## Snapshot (current state)
 
-- Branch: `main`, last commit: queen transfusion + requirements-dev.txt session
+- Branch: `claude/optimistic-edison-nit2vx`.
 - Bot core: `wicked_zerg_challenger/` — 179+ Python files across 10+ subdirs.
 - `.gitattributes` enforces `* text=auto` ✅
 - CI: `sc2bot-ci.yml` runs black + isort + flake8 ✅ (all clean)
-- **Test suite: 468 pass / 15 skip / 0 fail** ✅ (was 398/20/0 two nights ago)
+- flake8 `E9,F63,F7,F82` (CI hard gate): 0 findings ✅. pyflakes full sweep of `wicked_zerg_challenger/`: 0 `F811` (redefinition), 0 `F821` (undefined name) ✅.
+- **Test suite: 490 pass / 12 skip / 0 fail** ✅ (was 468/15/0 in the prior refresh; 12 previously-hidden failures in `test_combat_phase_fsm.py` surfaced and were fixed this run — see below)
 - Queen transfusion logic: 3 bugs fixed (`is_idle` guard removed, target dedup, per-queen cooldown) ✅
+
+## Resolved this run (2026-07-07)
+
+| Item | File(s) | Notes |
+|------|---------|-------|
+| `test_combat_phase_fsm.py` collection-time pass, 12 hidden failures | `tests/test_combat_phase_fsm.py` | Tests called `asyncio.get_event_loop().run_until_complete(...)`, deprecated/removed pattern that raises `RuntimeError: There is no current event loop` under pytest-asyncio's loop-per-test teardown on Python 3.11. Replaced all 5 call sites with `asyncio.run(...)`. All 23 tests in the file now pass; this had been silently masking real FSM coverage. |
+| `RLAgent.save_experience_data` data-loss window | `wicked_zerg_challenger/local_training/rl_agent.py` | Old code did `os.remove(path)` then `os.rename(tmp, path)` — if the rename step failed (disk full, interrupted write) the original experience file was already deleted with nothing to replace it, silent data loss. Replaced with `os.replace(tmp, path)`, which is atomic and never leaves that gap. This directly resolves P2.4 below. |
+| P2.4 test coverage | `tests/test_rl_agent_save_experience.py` (new) | 4 tests: successful round trip, save failure during compression preserves the existing file, interrupted replace preserves the existing file (this test would have failed against the pre-fix code), parent-dir auto-creation. |
+| Stale doc audit | `REMAINING_ISSUES.md`, `ROADMAP.md` | Verified against actual code: Issue #3 (transfusion priority) and Issue #4 (resource reservation locking) were already implemented in a prior session but never marked resolved in the docs; `ROADMAP.md` Sprints 1–7 tasks (worker harassment response, harass-unit tag/return logic, scout cadence constants, 25-pattern build-order detection, `LURKERMP` positioning, mutalisk micro, distance cache, `GameConstants`) are all already present in code. Docs updated so future runs don't re-investigate closed items. |
+
+**Net result: 468 pass → 490 pass (22 new/fixed), 0 fail maintained, 1 real data-loss bug fixed.**
 
 ## Resolved this run (2026-05-03)
 
@@ -50,10 +62,10 @@
 | #    | Item                                            | Status | Notes |
 |------|-------------------------------------------------|--------|-------|
 | P2.1 | Force-accumulation FSM tests                    | ✅ Done | `tests/test_combat_phase_fsm.py` — 23 tests all passing. |
-| P2.2 | Benchmark runner                                | ❌ Open | Single command, N replays, APM/supply/win-rate report vs Hard. |
-| P2.3 | Build-order config externalisation              | ❌ Open | Move top-20 hardcoded values to `config/build_orders.yaml`. |
-| P2.4 | RL agent save-experience guard                  | ❌ Open | Unit test for save under disk-full / interrupted-rename. |
-| P2.5 | Type hints + docstring pass on core modules     | ❌ Open | `core/resource_manager.py`, `core/manager_factory.py`. |
+| P2.2 | Benchmark runner                                | 🟡 Partial | `benchmarks/bot_benchmark.py` + `scripts/performance_benchmark_suite.py` exist but only cover inference-latency/throughput/memory micro-benchmarks. The originally-scoped "N replays, APM/supply/win-rate vs Hard" match benchmark still needs an actual SC2 game client, which this sandbox doesn't have — cannot close from here. |
+| P2.3 | Build-order config externalisation              | ❌ Open | No `config/build_orders.yaml` exists yet. Top hardcoded build values still live in `build_order_executor.py` / `economy_manager.py`. |
+| P2.4 | RL agent save-experience guard                  | ✅ Done | Fixed real data-loss bug (remove-then-rename → atomic `os.replace`) in `rl_agent.py::save_experience_data` + 4 new tests in `tests/test_rl_agent_save_experience.py`. |
+| P2.5 | Type hints + docstring pass on core modules     | 🟡 Partial | `core/resource_manager.py` already has good coverage; `core/manager_factory.py::__init__(self, bot)` still untyped. Full pass not done this run. |
 
 ## Long-term direction
 
@@ -94,3 +106,4 @@ Run `E:\GitHub\Swarm-control-in-sc2bot\scripts\commit_nightly_2026-05-03.bat`:
 - **2026-05-01** — P1.1 scout cadence, P1.2 harassment, P1.3 expansion timing, P1.5 doc history. Commit blocked by index.lock.
 - **2026-05-02** — P0 scout import mismatch fixed. P1.4 deprecation shim. P2.1 FSM tests 23/23 pass.
 - **2026-05-03** — **Test suite cleared:** 90 failures → 0. Fixed pytest-asyncio, torch stubs (qmix/mappo), stale __init__ exports (mappo/comm_learning), gas threshold test, crypto skipif guards. Final: 398 pass / 20 skip / 0 fail.
+- **2026-07-07** — Sandbox environment set up from scratch (venv + `burnysc2`/`protobuf<4` pin — `s2clientprotocol`'s generated `_pb2.py` files need protobuf 3.x). Found and fixed 12 hidden test failures in `test_combat_phase_fsm.py` (deprecated `asyncio.get_event_loop()` pattern). Closed P2.4 with a real bug fix (atomic `os.replace`) + 4 new tests. Audited `ROADMAP.md`/`REMAINING_ISSUES.md` against actual code — most of Sprints 1–7 and Issues #3/#4 were already implemented but undocumented; docs updated to stop future runs from re-investigating closed items. flake8 CI gate (`E9,F63,F7,F82`) and full pyflakes sweep both clean. Final: 490 pass / 12 skip / 0 fail.
