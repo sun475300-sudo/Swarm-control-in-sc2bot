@@ -192,6 +192,10 @@ class CombatManager:
             # * 필수 기지 방어 체크 - 항상 최우선 *
             base_threat = await self._check_mandatory_base_defense(iteration)
 
+            # *** Sprint 5.2: 멀티 드롭(수송선) 대응 ***
+            if getattr(self, "base_defense", None):
+                await self.base_defense.handle_multi_base_drop_defense(iteration)
+
             # *** 확장 기지 방어 및 파괴 대응 ***
             if (
                 iteration - self._last_expansion_defense_check
