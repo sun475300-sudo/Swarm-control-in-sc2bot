@@ -117,6 +117,10 @@ jobs:
         env:
           DRY_RUN: "true"
           LOG_LEVEL: "DEBUG"
+          # sc2/s2clientprotocol의 _pb2.py가 구버전 protoc로 생성되어 있어
+          # C++ 구현체(upb)로 로드하면 "Descriptors cannot be created
+          # directly" 에러가 남 (sc2-bot-test job과 동일한 우회 설정).
+          PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION: python
 
   # ─────────────────────────────────────────────
   # SC2 봇 구문 검증 + 테스트
