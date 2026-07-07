@@ -4,7 +4,7 @@
 
 통합 문제 해결 후 발견된 추가 개선 사항들입니다.
 
-**Last refreshed:** 2026-04-27 (Issue #1, #2 → Resolved; Issue #6 partially resolved via Batch 3)
+**Last refreshed:** 2026-07-07 (자동 테스트→점검 루프 재확인: N1-N4, Issue #3, #4 → Resolved; Issue #5 부분 해결)
 
 ---
 
@@ -14,14 +14,14 @@
 
 | ID | 설명 | 우선순위 | 상태 |
 |----|------|---------|------|
-| N1 | `OpponentModeling.on_step` 중복 정의 (line 341 vs 765 — F811) | 🟠 HIGH | open — 동작 영향(상위 on_step이 미실행) 가능 |
-| N2 | `EconomyManager._prevent_resource_banking` / `_reduce_gas_workers` 재정의 (F811) | 🟡 MED | open |
-| N3 | `combat_manager._find_harass_target` 재정의 (line 2377 vs 4278) | 🟡 MED | open |
-| N4 | `production_resilience.build_terran_counters` 재정의 (1369 vs 1866) | 🟡 MED | open |
-| N5 | bare `except Exception:` 다수 (≈360+) — 이번 PR에서 12건 처리, 잔여 다수 | 🟢 LOW | partial |
-| N6 | F841 unused local variables (visuals/make_pptx 등) | 🟢 LOW | open (presentation 코드라 영향 작음) |
+| N1 | `OpponentModeling.on_step` 중복 정의 (line 341 vs 765 — F811) | 🟠 HIGH | ✅ **resolved** — 2026-07-07 재확인: 단일 정의(line 341)만 존재, `flake8 --select=F811`도 0건 |
+| N2 | `EconomyManager._prevent_resource_banking` / `_reduce_gas_workers` 재정의 (F811) | 🟡 MED | ✅ **resolved** — 단일 정의만 존재 |
+| N3 | `combat_manager._find_harass_target` 재정의 (line 2377 vs 4278) | 🟡 MED | ✅ **resolved** — 단일 정의(line 4992)만 존재 |
+| N4 | `production_resilience.build_terran_counters` 재정의 (1369 vs 1866) | 🟡 MED | ✅ **resolved** — 단일 정의(line 1961)만 존재 |
+| N5 | bare `except Exception:` 다수 (≈360+) — 이번 PR에서 12건 처리, 잔여 다수 | 🟢 LOW | partial (미변경) |
+| N6 | F841 unused local variables (visuals/make_pptx 등) | 🟢 LOW | open (미변경, presentation 코드라 영향 작음) |
 
-검증 권장: PR 분리 (N1 단독 PR 권장 — 동작 변화 가능성).
+N1-N4는 PR #218 (`e648ae4` "delete shadowed duplicate methods that silently disabled features")에서 이미 수정된 것으로 확인. 문서가 stale했음 — 별도 작업 불필요.
 
 ---
 
@@ -67,9 +67,30 @@
 
 ---
 
-## 🟡 MEDIUM Priority Issues (still open)
+## ✅ Issue #3, #4: 재확인 결과 이미 구현됨 (2026-07-07)
 
-### Issue #3: Transfusion 우선순위 개선 필요
+### ✅ Issue #3: Transfusion 우선순위 — 이미 구현됨
+
+`queen_manager.py:_transfuse_injured_units()` (line 711-893)에 CreepyBot 기반
+우선순위 시스템이 이미 구현되어 있음: `TRANSFUSE_PRIORITY` 맵 (Queen > Broodlord >
+Corruptor/Viper > Spine Crawler > Overseer > Ultralisk > Ravager > Roach > ...),
+`UNHEALABLE_UNITS` 제외 목록 (Baneling/Broodling/Locust), health_ratio 가중치 정렬.
+아래 원래 제안보다 더 정교한 버전이 이미 프로덕션에 있음 — 별도 작업 불필요.
+
+### ✅ Issue #4: Resource Reservation Race Condition — 이미 구현됨
+
+`wicked_zerg_challenger/core/resource_manager.py`의 `ResourceManager` 클래스에
+`asyncio.Lock` 기반 `try_reserve()`/`release()`가 정확히 아래 제안대로 구현되어 있고,
+`bot_step_integration.py`, `wicked_zerg_bot_pro_impl.py`, `production_resilience.py`,
+`defense_coordinator.py`, `economy_manager.py`에서 실제로 호출되어 사용 중임 —
+설계 단계가 아니라 이미 배선(wired)까지 완료된 상태. 별도 작업 불필요.
+
+---
+
+<details>
+<summary>원래 제안 내용 (참고용, 구현 완료로 더 이상 유효하지 않음)</summary>
+
+### Issue #3 원안: Transfusion 우선순위 개선 필요 (이미 해결됨, 아래는 역사적 기록)
 
 **위치**: `queen_manager.py` 또는 `spell_unit_manager.py`
 
@@ -215,13 +236,33 @@ else:
 
 **우선순위**: 🟡 MEDIUM (안정성 개선, 드물게 발생)
 
+</details>
+
 ---
 
 ## 🟢 LOW Priority Issues
 
-### Issue #5: 코드 중복 - Position 계산
+### Issue #5: 코드 중복 - Position 계산 — 🟡 부분 해결 (2026-07-07)
 
-**위치**: 여러 파일에서 중복
+**재확인 결과**: `wicked_zerg_challenger/utils/position_utils.py`에 `get_center_position()`
+등 유틸리티가 이미 존재하지만, 실제로는 **어디에서도 import되어 사용되지 않고 있었음**
+(dead code). 2026-07-07 점검에서 `battle_preparation_system.py:_find_enemy_clusters()`의
+중복 로직을 `get_center_position()` 사용으로 교체 완료.
+
+**아직 남은 중복 사이트** (동일 patttern이지만 `if not units: return None` 조기 반환처럼
+`get_center_position`과 반환 계약이 다른 경우가 많아 개별 검토 필요 — 다음 작업 사이클로 이월):
+- `combat/expansion_defense.py:296` (`_get_enemy_center`)
+- `combat/combat_execution.py:262`
+- `combat/infestor_tactics.py:189`
+- `combat/micro_combat.py:442`, `combat/micro_combat.py:1345`
+- `combat_phase_controller.py:591`
+- `micro_controller.py:525`
+- `combat_manager.py:1622` (`_get_units_center`), `combat_manager.py:3657`
+- `idle_unit_manager.py:179`
+
+이 사이트들은 empty-input 시 `None`을 반환하는 계약을 가진 경우가 많아, 단순 치환이 아니라
+`get_center_position`에 `allow_none` 옵션을 추가하거나 각 호출부의 None 체크 로직까지 함께
+검토해야 안전함 — 원래 위치:
 
 **문제**:
 ```python
