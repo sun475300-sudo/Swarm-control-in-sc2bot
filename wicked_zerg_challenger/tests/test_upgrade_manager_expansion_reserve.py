@@ -45,8 +45,8 @@ class TestUpgradeManagerExpansionReserve(unittest.TestCase):
         """A pending fourth Hatchery releases the upgrade manager reserve."""
         self.bot.time = 370
         self.bot.townhalls.amount = 3
-        self.bot.already_pending.side_effect = (
-            lambda unit_type: 1 if unit_type == UnitTypeId.HATCHERY else 0
+        self.bot.already_pending.side_effect = lambda unit_type: (
+            1 if unit_type == UnitTypeId.HATCHERY else 0
         )
 
         self.assertFalse(self.manager._should_reserve_for_third_base())
