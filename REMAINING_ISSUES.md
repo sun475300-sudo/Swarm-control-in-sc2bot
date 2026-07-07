@@ -4,24 +4,51 @@
 
 통합 문제 해결 후 발견된 추가 개선 사항들입니다.
 
-**Last refreshed:** 2026-04-27 (Issue #1, #2 → Resolved; Issue #6 partially resolved via Batch 3)
+**Last refreshed:** 2026-07-07 (테스트→코드 감사→수정→커밋 사이클 재실행; N1-N4, Issue #3/#4 stale 확인 후 종결, 신규 버그 6건 발견/수정)
 
 ---
 
-## 🆕 신규 발견 (PR #44, 2026-04-27)
+## 🆕 신규 발견 (PR #44, 2026-04-27) — 2026-07-07 재검증
 
-자동/수동 점검 사이클(테스트 → 코드 검사 → 개선 → 커밋/푸시 반복)에서 새로 식별된 항목.
+N1-N4 (F811 중복 정의)는 PR #218 (2026-06-01, "stabilize SC2 bot test suite")에서
+이미 정리되었음을 `flake8 --select=F811,F821`로 재확인. 문서만 stale했음.
 
 | ID | 설명 | 우선순위 | 상태 |
 |----|------|---------|------|
-| N1 | `OpponentModeling.on_step` 중복 정의 (line 341 vs 765 — F811) | 🟠 HIGH | open — 동작 영향(상위 on_step이 미실행) 가능 |
-| N2 | `EconomyManager._prevent_resource_banking` / `_reduce_gas_workers` 재정의 (F811) | 🟡 MED | open |
-| N3 | `combat_manager._find_harass_target` 재정의 (line 2377 vs 4278) | 🟡 MED | open |
-| N4 | `production_resilience.build_terran_counters` 재정의 (1369 vs 1866) | 🟡 MED | open |
-| N5 | bare `except Exception:` 다수 (≈360+) — 이번 PR에서 12건 처리, 잔여 다수 | 🟢 LOW | partial |
-| N6 | F841 unused local variables (visuals/make_pptx 등) | 🟢 LOW | open (presentation 코드라 영향 작음) |
+| N1 | `OpponentModeling.on_step` 중복 정의 | 🟠 HIGH | ✅ Resolved (PR #218에서 처리 확인) |
+| N2 | `EconomyManager` 메서드 재정의 | 🟡 MED | ✅ Resolved (PR #218에서 처리 확인) |
+| N3 | `combat_manager._find_harass_target` 재정의 | 🟡 MED | ✅ Resolved (PR #218에서 처리 확인) |
+| N4 | `production_resilience.build_terran_counters` 재정의 | 🟡 MED | ✅ Resolved (PR #218에서 처리 확인) |
+| N5 | bare `except Exception:` 다수 | 🟢 LOW | open — 잔여 다수, 우선순위 낮음 |
+| N6 | F841 unused local variables | 🟢 LOW | 대부분 harmless로 재확인됨 (아래 2026-07-07 감사 참조), 소수는 실버그였고 수정됨 |
 
-검증 권장: PR 분리 (N1 단독 PR 권장 — 동작 변화 가능성).
+---
+
+## 🆕 2026-07-07 코드 감사 결과 (테스트→감사→수정→커밋 반복 사이클)
+
+661개 테스트 전부 통과 상태에서, F841("assigned but never used") 플래그를 실마리로
+combat_manager.py / economy_manager.py / strategy_manager.py / production_resilience.py /
+upgrade_manager.py / opponent_modeling.py / unit_factory.py 를 4개 서브에이전트로
+병렬 감사. 확인된 실제 버그와 조치:
+
+| # | 파일:라인 | 결함 | 조치 |
+|---|-----------|------|------|
+| 1 | `combat_manager.py` (2곳) | 위협/공격 감지 유닛 집합에 `"LURKER"` 문자열 사용 — python-sc2 실제 enum명은 `LURKERMP`/`LURKERMPBURROWED`라 러커 단독 공격이 threat/attack으로 전혀 감지되지 않음 | ✅ Fixed — 두 집합 모두 `LURKERMP`, `LURKERMPBURROWED`로 교체 + 회귀 테스트 3건 (`tests/test_combat_manager_lurker_and_retreat.py`) |
+| 2 | `combat_manager.py:_evaluate_army_retreat` | `enemy_supply` 계산 시 `can_attack` 필터 없이 모든 근처 `enemy_units` 포함 — 일꾼/오버로드 등 비전투 유닛이 아군 대비 열세 비율을 왜곡해 불필요한 후퇴 유발 | ✅ Fixed — `can_attack` 필터 추가 + 회귀 테스트 |
+| 3 | `economy_manager.py:_redistribute_mineral_workers` | `under_saturated.remove((under_th, deficit))`가 로컬에서 변형된 `deficit` 값으로 튜플을 찾으려 해 거의 항상 `ValueError` 발생 → 상위 `except`에 잡혀 그 호출의 나머지 기지 재분배가 전부 취소됨 | ✅ Fixed — 인덱스 기반 in-place 갱신으로 교체 + 회귀 테스트 2건 |
+| 4 | `economy_manager.py:_optimize_mineral_assignments` | `surplus_workers`에 실제 일꾼이 아니라 **미네랄 필드 객체**를 채워 넣어, 과잉 배정된 드론이 부족 패치로 절대 재배정되지 않음 (docstring이 약속한 기능이 통째로 죽어있었음) | ✅ Fixed — 패치별 실제 일꾼 리스트를 추적해 초과분만 `surplus_workers`에 담도록 수정 + 회귀 테스트 |
+| 5 | `upgrade_manager.py:_get_upgrade_priority` | `race_priority_modifiers`가 대문자 키("Terran" 등)인데 조회는 소문자(`_normalize_enemy_race()` 결과)로 시도 — 항상 빈 dict 반환, 종족별 업그레이드 가중치가 전혀 반영되지 않음 | ✅ Fixed — `.capitalize()`로 키 매칭 수정 + 실제로 `priorities` 정렬에 반영 + 회귀 테스트 2건 |
+| 6 | `opponent_modeling.py` → `strategy_manager.py` | 적 전략 예측/카운터 조합을 blackboard(`recommended_strategy`, `opponent_prediction`)에 기록만 하고 아무도 읽지 않음 — 정찰/모델링 결과가 실제 유닛 생산에 전혀 반영되지 않는 완전한 데드엔드 | ✅ Fixed — `StrategyManager.get_unit_ratios()`가 `recommended_strategy`를 읽어 해당 유닛 비율을 가중(1.25x) 후 재정규화 + 회귀 테스트 3건 |
+
+각 수정은 "고치기 전 코드로 되돌리면 새 테스트가 실패한다"를 직접 확인한 뒤 커밋했음
+(재현 가능한 회귀임을 검증).
+
+### 이번 감사에서 확인했지만 이번 라운드에 수정하지 않은 항목 (다음 라운드 후보)
+
+| # | 파일:라인 | 내용 | 우선순위 |
+|---|-----------|------|---------|
+| 7 | `strategy_manager.py:2536 _counter_zerg_units` | `ravager_count`를 가져오지만 카운터 로직에 전혀 사용 안 함 — ZvZ에서 적 라바짜기(bile) 물량에 대한 대응 부재 | 🟡 MED (기능 추가 필요, 단순 버그 수정 아님) |
+| 8 | `local_training/production_resilience.py:787-829` | docstring은 "Muta > Hydra > Roach > Zergling" 우선순위를 명시하지만 실제로는 뮤탈리스크를 생산하지 않고 히드라 체크로 바로 넘어감 (다른 생산 경로에서 뮤탈 생산이 이뤄지므로 영향은 제한적) | 🟢 LOW-MED |
 
 ---
 
@@ -67,9 +94,28 @@
 
 ---
 
+## ✅ Resolved (재확인: 2026-07-07)
+
+### ✅ Issue #3: Transfusion 우선순위 — 이미 구현되어 있음
+
+`queen_manager.py:_transfuse_injured_units()`에 CreepyBot 스타일의 우선순위 테이블
+(`TRANSFUSE_PRIORITY`: Queen > Broodlord > Corruptor/Viper > Spine Crawler > Overseer
+> Ultralisk > Ravager > Roach > Hydralisk > ...)과 치료 불가 유닛 제외 목록
+(`UNHEALABLE_UNITS` = Baneling/Broodling/Locust)이 이미 구현되어 있음. 이 문서가
+제안한 것보다 더 정교한 버전이 이미 코드에 있었음 — 문서만 stale했던 것으로 확인,
+별도 작업 없이 종결.
+
+### ✅ Issue #4: Resource Reservation Race Condition — 이미 구현되어 있음
+
+`core/resource_manager.py`에 `asyncio.Lock` 기반 `try_reserve()`/`release()`가 이미
+구현되어 있음 (`_reserved_minerals`/`_reserved_gas` 추적, lock으로 원자적 예약).
+문서만 stale했던 것으로 확인, 별도 작업 없이 종결.
+
+---
+
 ## 🟡 MEDIUM Priority Issues (still open)
 
-### Issue #3: Transfusion 우선순위 개선 필요
+### Issue #3 (구버전, 위 Resolved 섹션 참조 — 원문 보존용)
 
 **위치**: `queen_manager.py` 또는 `spell_unit_manager.py`
 
@@ -359,32 +405,37 @@ if iteration % SECOND == 0:
 
 ---
 
-## 📊 이슈 우선순위 요약 (open만)
+## 📊 이슈 우선순위 요약 (open만, 2026-07-07 갱신)
 
 | 우선순위 | 이슈 | 영향도 | 난이도 |
 |---------|------|--------|--------|
-| 🟡 MEDIUM | #3 Transfusion 우선순위 | 중간 | 중간 |
-| 🟡 MEDIUM | #4 Resource Race Condition | 낮음 | 중간 |
-| 🟢 LOW | #5 코드 중복 제거 | 낮음 | 쉬움 |
+| 🟡 MED | #7 Ravager 카운터 전략 부재 (`strategy_manager.py:2536`) | 중간 (ZvZ) | 쉬움 |
+| 🟢 LOW-MED | #8 late-game 뮤탈 생산 분기 미실행 (`production_resilience.py`) | 낮음 (중복 경로로 완화됨) | 쉬움 |
+| 🟢 LOW | #5 코드 중복 제거 (Position 계산) | 낮음 | 쉬움 |
 | 🟢 LOW | #6 매직 넘버 | 낮음 | 쉬움 |
+| 🟢 LOW | N5 bare except 잔여 | 낮음 | 중간 |
 
-(Issue #1, #2 → ✅ Resolved 섹션 참조)
+(Issue #1-#4 → ✅ Resolved 섹션 참조. #3/#4는 이미 코드에 구현되어 있었음이 2026-07-07 재확인됨.)
 
 ---
 
 ## 🎯 권장 수정 순서
 
-### 1단계: 완료 (✅)
-~~1. Queen Inject 쿨다운 수정 (25 → 29)~~ — 코드 반영 완료, 본 문서 ✅ Resolved 섹션 참조
-~~2. 누락된 업그레이드 추가~~ — 코드 반영 완료, 본 문서 ✅ Resolved 섹션 참조
+### 완료 (✅)
+- ~~Queen Inject 쿨다운 수정 (25 → 29)~~
+- ~~누락된 업그레이드 추가~~
+- ~~Transfusion 우선순위 시스템~~ (이미 구현되어 있었음, 2026-07-07 확인)
+- ~~Resource Reservation 동기화~~ (이미 구현되어 있었음, 2026-07-07 확인)
+- ~~N1-N4 F811 중복 정의~~ (PR #218)
+- ~~LURKER enum 이름 오타 (2건), 후퇴 판단 시 비전투 유닛 혼입, 미네랄 재분배 두 가지
+  실버그, 종족별 업그레이드 가중치 미적용, OpponentModeling→StrategyManager 데드엔드~~
+  (2026-07-07, 회귀 테스트 12건과 함께)
 
-### 2단계: 로직 개선 (30분, 미진행)
-3. Transfusion 우선순위 시스템 구현
-
-### 3단계: 구조 개선 (1시간, 미진행)
-4. Resource Reservation 동기화
-5. Position Utils 유틸리티 함수 분리
-6. Constants 정리
+### 다음 라운드 후보 (미진행)
+1. Ravager 카운터 전략 추가 (#7)
+2. late-game 뮤탈 생산 분기 점검 (#8)
+3. Position Utils 유틸리티 함수 분리 (#5)
+4. Constants 정리 (#6)
 
 ---
 
@@ -409,10 +460,13 @@ if iteration % SECOND == 0:
 
 ## 📝 참고 사항
 
-### 현재 상태
+### 현재 상태 (2026-07-07)
 - ✅ **치명적 통합 문제**: 완전히 해결됨
-- ✅ **모든 단위 테스트**: 통과 (16/16)
+- ✅ **모든 단위 테스트**: 통과 (673/673 — 661 기존 + 신규 회귀 테스트 12건)
 - ✅ **기본 기능**: 정상 작동
+- ⚠️ 이 문서는 지속적으로 stale해지는 경향이 있음 — 다음 라운드에서도
+  "open"으로 표시된 항목은 실제 코드를 먼저 확인한 뒤 작업할 것 (많은 경우
+  이미 해결되어 있었음).
 
 ### 위의 이슈들은
 - 모두 **선택적 개선 사항**
@@ -421,5 +475,5 @@ if iteration % SECOND == 0:
 
 ---
 
-**검토 완료일**: 2026-01-29
-**상태**: 추가 개선 사항 문서화 완료
+**검토 완료일**: 2026-07-07
+**상태**: 테스트→코드 감사→수정→커밋 사이클 재실행, 신규 버그 6건 수정, stale 항목 정리 완료

@@ -117,6 +117,12 @@ jobs:
         env:
           DRY_RUN: "true"
           LOG_LEVEL: "DEBUG"
+          # sc2 -> s2clientprotocol pulls in _pb2.py files generated for an
+          # older protoc; the upb-backed C++ implementation the newer
+          # protobuf package defaults to rejects them with "Descriptors
+          # cannot be created directly." The sibling sc2-bot-test job below
+          # already works around this the same way.
+          PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION: python
 
   # ─────────────────────────────────────────────
   # SC2 봇 구문 검증 + 테스트

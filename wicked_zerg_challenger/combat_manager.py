@@ -1199,7 +1199,8 @@ class CombatManager:
             "ULTRALISK",
             "BROODLORD",
             "RAVAGER",
-            "LURKER",
+            "LURKERMP",
+            "LURKERMPBURROWED",
         }
 
         # 위협 수준: light (1-2), medium (3-5), heavy (6+), critical (고위협 유닛 포함)
@@ -3121,7 +3122,9 @@ class CombatManager:
 
             # * Phase 41: HP 가중 전투력
             our_supply = self._combat_power(engaged_units)
-            nearby_enemies = enemy_units.closer_than(20, engaged_units.center)
+            nearby_enemies = enemy_units.closer_than(20, engaged_units.center).filter(
+                lambda e: getattr(e, "can_attack", False)
+            )
             enemy_supply = self._combat_power(nearby_enemies)
 
             if our_supply < 5:
@@ -3465,7 +3468,8 @@ class CombatManager:
             "CORRUPTOR",
             "BROODLORD",
             "RAVAGER",
-            "LURKER",
+            "LURKERMP",
+            "LURKERMPBURROWED",
             "ULTRALISK",
             "INFESTOR",
             "COLOSSUS",

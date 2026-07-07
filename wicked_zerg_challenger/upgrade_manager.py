@@ -358,7 +358,10 @@ class EvolutionUpgradeManager:
         priorities = []
 
         # *** Phase 18: 종족별 우선순위 조정 ***
-        race_modifiers = self.race_priority_modifiers.get(enemy_race, {})
+        # race_priority_modifiers is keyed by capitalized race name
+        # ("Terran"/"Protoss"/"Zerg"), while _normalize_enemy_race() returns
+        # lowercase - capitalize() to actually hit the table.
+        race_modifiers = self.race_priority_modifiers.get(enemy_race.capitalize(), {})
 
         if is_ranged_main:
             # * 바퀴/히드라 체제: 원거리 공격 올인 (사용자 요청)
@@ -404,6 +407,11 @@ class EvolutionUpgradeManager:
         elif total_air >= 3:  # 공중 유닛 3마리 이상이면
             priorities.append("air_attack")
             priorities.append("air_armor")
+
+        # *** Phase 18: 종족별 가중치를 실제로 반영 (안정 정렬) ***
+        # 예: 테란전은 armor(1.3) > missile(1.1) > melee(1.0) 순으로 재정렬
+        if race_modifiers:
+            priorities.sort(key=lambda lane: -race_modifiers.get(lane, 1.0))
 
         # === 업그레이드 순서 생성 (중복 제거) ===
         upgrade_order: List[object] = []

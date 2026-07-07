@@ -2,18 +2,49 @@
 
 > Owner: 선우 (sun475300@gmail.com)
 > Maintainer: nightly automation
-> Last refreshed: 2026-05-04
+> Last refreshed: 2026-07-07
 
 ---
 
 ## Snapshot (current state)
 
-- Branch: `main`, last commit: queen transfusion + requirements-dev.txt session
+- Branch: `claude/optimistic-edison-dc0hc6` (off `main`, last merged PR #218 "stabilize SC2 bot test suite")
 - Bot core: `wicked_zerg_challenger/` — 179+ Python files across 10+ subdirs.
 - `.gitattributes` enforces `* text=auto` ✅
-- CI: `sc2bot-ci.yml` runs black + isort + flake8 ✅ (all clean)
-- **Test suite: 468 pass / 15 skip / 0 fail** ✅ (was 398/20/0 two nights ago)
-- Queen transfusion logic: 3 bugs fixed (`is_idle` guard removed, target dedup, per-queen cooldown) ✅
+- CI: `sc2bot-ci.yml` runs black + isort + flake8 ✅ (all clean on touched files)
+- **Test suite: 673 pass / 0 skip / 0 fail** ✅ (661 pre-existing + 12 new regression tests added this run)
+- Queen transfusion logic: 3 bugs fixed (`is_idle` guard removed, target dedup, per-queen cooldown) ✅ (prior session)
+
+## 2026-07-07 run — audit → fix → test cycle
+
+Ran a 4-way parallel subagent audit over combat_manager.py, economy_manager.py,
+strategy_manager.py + production_resilience.py, and the smaller managers
+(queen_manager, upgrade_manager, opponent_modeling, unit_factory, creep
+systems), using flake8 F841 hits as a lead to chase down genuine dead-code
+bugs rather than cosmetic unused-variable noise. Confirmed and fixed 6 real
+bugs, each verified by reverting the fix and confirming the matching new
+test fails (12 new tests total):
+
+| Bug | File | Fix |
+|-----|------|-----|
+| "LURKER" string doesn't match any real UnitTypeId (ladder Lurkers are `LURKERMP`/`LURKERMPBURROWED`) | `combat_manager.py` (2 sets) | Corrected enum names in both threat/attack-detection sets |
+| `_evaluate_army_retreat` inflated enemy supply with non-attacking units (workers/overlords) | `combat_manager.py` | Filter `nearby_enemies` by `can_attack` before computing enemy supply |
+| `_redistribute_mineral_workers` removed a list tuple by a locally-mutated value that never matches → `ValueError` swallowed, truncating redistribution to one base pair per call | `economy_manager.py` | Index-based in-place update/pop instead of `list.remove()` by value |
+| `_optimize_mineral_assignments` pushed Mineral objects (not Worker units) into `surplus_workers`, so over-assigned drones were never reassigned | `economy_manager.py` | Track actual per-patch worker lists; feed the excess workers into `available` |
+| `race_priority_modifiers` keyed by capitalized race name, looked up with lowercase — always missed, so per-race upgrade weighting never applied | `upgrade_manager.py` | Case-correct the lookup + actually apply modifiers via stable sort |
+| `OpponentModeling` published counter-strategy predictions to the blackboard, but nothing ever consumed them | `opponent_modeling.py` + `strategy_manager.py` | `StrategyManager.get_unit_ratios()` now reads `recommended_strategy` and biases ratios (1.25x, renormalized) |
+
+Also found but deferred (documented in `REMAINING_ISSUES.md` as #7/#8 for the
+next round, since they're missing-feature gaps rather than one-line bug
+fixes): no Ravager-specific counter-reaction in `strategy_manager.py`
+`_counter_zerg_units`, and a late-game Mutalisk production branch in
+`production_resilience.py` that's gated on `has_spire` but never actually
+queues a Mutalisk (mitigated by redundant production paths elsewhere).
+
+`REMAINING_ISSUES.md` N1-N4 (F811 duplicate defs) and Issue #3/#4 (smart
+transfusion priority, resource-reservation locking) turned out to already be
+implemented in code — the doc was simply stale. Updated it to reflect
+reality and avoid re-investigating already-solved problems next time.
 
 ## Resolved this run (2026-05-03)
 
@@ -94,3 +125,5 @@ Run `E:\GitHub\Swarm-control-in-sc2bot\scripts\commit_nightly_2026-05-03.bat`:
 - **2026-05-01** — P1.1 scout cadence, P1.2 harassment, P1.3 expansion timing, P1.5 doc history. Commit blocked by index.lock.
 - **2026-05-02** — P0 scout import mismatch fixed. P1.4 deprecation shim. P2.1 FSM tests 23/23 pass.
 - **2026-05-03** — **Test suite cleared:** 90 failures → 0. Fixed pytest-asyncio, torch stubs (qmix/mappo), stale __init__ exports (mappo/comm_learning), gas threshold test, crypto skipif guards. Final: 398 pass / 20 skip / 0 fail.
+- **2026-06-01/02** — PR #218: stabilized suite further, fixed F821/duplicate-method bugs. 661 pass / 0 skip / 0 fail.
+- **2026-07-07** — 4-way parallel audit found and fixed 6 real behavioral bugs (Lurker detection, retreat-ratio inflation, worker-redistribution crash + dead surplus-worker path, race-priority-modifier no-op, opponent-modeling dead-end). 12 new regression tests, each verified against the pre-fix code. `REMAINING_ISSUES.md` stale entries reconciled. Final: 673 pass / 0 skip / 0 fail.
