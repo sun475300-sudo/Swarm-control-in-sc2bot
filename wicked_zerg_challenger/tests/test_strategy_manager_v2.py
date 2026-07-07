@@ -219,9 +219,10 @@ class TestResourceAllocation(unittest.TestCase):
         self.manager.emergency_active = True
         self.manager._adjust_resource_priorities()
 
-        # Should prioritize army and defense
-        self.assertGreater(self.manager.resource_priorities["army"], 0.6)
-        self.assertEqual(self.manager.resource_priorities["economy"], 0.0)
+        # Should prioritize army, but still guarantee minimum drone
+        # replacement instead of starving the economy entirely (FIX P0-3)
+        self.assertGreaterEqual(self.manager.resource_priorities["army"], 0.5)
+        self.assertGreater(self.manager.resource_priorities["economy"], 0.0)
 
     def test_get_resource_priority(self):
         """Test getting resource priority for category"""

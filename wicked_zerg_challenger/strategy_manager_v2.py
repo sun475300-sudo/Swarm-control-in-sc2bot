@@ -1255,10 +1255,10 @@ class StrategyManagerV2(StrategyManager):
                     self.config.LOSING_EMERGENCY_PRIORITY_TECH
                 )
             else:
-                # FIX P0-3: EMERGENCY에서도 최소 드론 교체 보장 (0.0→0.1)
+                # FIX P0-3: EMERGENCY에서도 최소 드론 교체 보장 (0.0→0.15)
                 self.resource_priorities["army"] = 0.6
-                self.resource_priorities["defense"] = 0.25
-                self.resource_priorities["economy"] = 0.1
+                self.resource_priorities["defense"] = 0.2
+                self.resource_priorities["economy"] = 0.15
                 self.resource_priorities["tech"] = 0.05
 
     def get_resource_priority(self, category: str) -> float:
