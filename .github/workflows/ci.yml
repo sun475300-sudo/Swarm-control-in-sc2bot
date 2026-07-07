@@ -117,6 +117,11 @@ jobs:
         env:
           DRY_RUN: "true"
           LOG_LEVEL: "DEBUG"
+          # s2clientprotocol's generated _pb2.py predates protoc 3.19 and
+          # crashes under the C++ protobuf implementation; pure-Python
+          # parsing skips that strict check. See:
+          # https://developers.google.com/protocol-buffers/docs/news/2022-05-06#python-updates
+          PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION: "python"
 
   # ─────────────────────────────────────────────
   # SC2 봇 구문 검증 + 테스트

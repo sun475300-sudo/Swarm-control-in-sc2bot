@@ -19,6 +19,7 @@ def initialize_combat_state(manager):
     manager.targeting = None
     manager.micro_combat = None
     manager.boids = None
+    manager.base_defense = None
 
     # Air unit micro state
     manager._air_harass_target = None
@@ -284,3 +285,13 @@ def initialize_managers(manager):
         manager.overlord_hunter = None
         if hasattr(manager.bot, "iteration") and manager.bot.iteration % 500 == 0:
             manager.logger.warning("Overlord hunter not available")
+
+    # *** Sprint 5.2: Base Defense System (multi-drop response) ***
+    try:
+        from combat.base_defense import BaseDefenseSystem
+
+        manager.base_defense = BaseDefenseSystem(manager.bot)
+    except (ImportError, AttributeError):
+        manager.base_defense = None
+        if hasattr(manager.bot, "iteration") and manager.bot.iteration % 500 == 0:
+            manager.logger.warning("Base defense system not available")

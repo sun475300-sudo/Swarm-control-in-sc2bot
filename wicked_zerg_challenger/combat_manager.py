@@ -192,6 +192,10 @@ class CombatManager:
             # * 필수 기지 방어 체크 - 항상 최우선 *
             base_threat = await self._check_mandatory_base_defense(iteration)
 
+            # *** Sprint 5.2: 멀티 드롭(수송선) 대응 ***
+            if getattr(self, "base_defense", None):
+                await self.base_defense.handle_multi_base_drop_defense(iteration)
+
             # *** 확장 기지 방어 및 파괴 대응 ***
             if (
                 iteration - self._last_expansion_defense_check
@@ -285,14 +289,6 @@ class CombatManager:
                 # 유니코드 에러 방지 - ASCII로 변환
                 error_msg = str(e).encode("ascii", "ignore").decode("ascii")
                 self.logger.error(f"Combat manager error: {error_msg}")
-
-    async def manage_combat(self, iteration: int):
-        """Sprint 4 frame-skip wrapper for direct combat execution."""
-        if self._should_skip_combat_frame(iteration):
-            return
-        units = self._filter_army_units(getattr(self.bot, "units", []))
-        enemy_units = getattr(self.bot, "enemy_units", [])
-        await self._execute_combat(units, enemy_units)
 
     def _should_skip_combat_frame(self, iteration: int) -> bool:
         if self._is_emergency():
