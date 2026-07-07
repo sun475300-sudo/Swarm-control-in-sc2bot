@@ -1,8 +1,30 @@
 # WickedZergBotPro Grand Roadmap
 
 > 목표: Medium AI 승률 90%+ 달성 & AI Arena 출전
-> 현재 상태: Phase 56 완료, 342/342 테스트 통과, 추정 승률 45~50%
+> 현재 상태: Phase 56 완료, 1163개 테스트 통과 (tests/ 502 + wicked_zerg_challenger/tests/ 661), 추정 승률 45~50%
 > 봇 프레임워크: python-sc2 (burnysc2>=5.0.0)
+
+---
+
+## ⚠️ 2026-07-07 재검증 공지: Sprint 1~7 대부분 이미 구현 완료
+
+아래 Sprint 1~7의 각 Task는 "구현 지시"(마치 미착수인 것처럼) 형식으로 작성되어 있지만,
+2026-07-07 코드베이스 재검증 결과 **거의 전부 이미 구현되어 있음**을 확인했습니다:
+
+- Task 1.2 (일꾼 괴롭힘 방어): `combat_manager.py::respond_to_worker_harassment` 구현됨
+- Task 2.3 (빌드 패턴 25종): `intel_manager.py` `BUILD_PATTERNS`에 proxy_barracks/dt_rush/nydus_rush 등 구현됨
+- Task 4.5 (전투 프레임 스킵): `combat_manager.py`에 동적 프레임 스킵 구현됨
+- Task 7.1 (BuildingManager 분리): `building_manager.py` 존재
+- Task 7.2 (거리 캐싱): `utils/distance_cache.py` 존재
+- Task 7.3 (GameConstants): `utils/game_constants.py`에 `GameFrequencies`/`EconomyConstants` 존재
+- Sprint 6.1 (RL 토글): `combat_manager.py`에 `use_rl_micro` 플래그 + `local_training/rl_agent.py` 연동 존재
+- Sprint 8.1/8.2 QA 스크립트(`run_mass_test.py`, `create_arena_package.py`)도 루트에 존재
+
+**이 문서는 "새 작업 지시서"가 아니라 과거 특정 시점의 계획 스냅샷으로 취급할 것.** 실제로 아직
+열려 있는 작업은 `PLAN-NIGHTLY.md`의 P2 목록(벤치마크 러너, 빌드오더 YAML 외부화)과
+`REMAINING_ISSUES.md`의 N5/N6/N9(bare except 정리, 미사용 변수, 전체 리포 black 포맷)를 참조.
+Sprint 항목에 착수하기 전, 먼저 `grep`/`git log`로 이미 구현되어 있는지 반드시 재확인할 것 —
+그렇지 않으면 이미 동작하는 코드를 중복 재구현하게 됨.
 
 ---
 
