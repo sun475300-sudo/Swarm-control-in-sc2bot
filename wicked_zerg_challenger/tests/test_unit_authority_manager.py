@@ -58,14 +58,18 @@ class TestRequestUnit(unittest.TestCase):
 
     def test_lower_priority_requester_is_denied(self):
         self.manager.request_unit(1, "DefenseSystem", AuthorityLevel.DEFENSE)
-        granted = self.manager.request_unit(1, "ScoutingSystem", AuthorityLevel.SCOUTING)
+        granted = self.manager.request_unit(
+            1, "ScoutingSystem", AuthorityLevel.SCOUTING
+        )
         self.assertFalse(granted)
         self.assertTrue(self.manager.has_authority(1, "DefenseSystem"))
         self.assertEqual(self.manager.total_conflicts, 0)
 
     def test_equal_priority_requester_is_denied(self):
         self.manager.request_unit(1, "CombatManager", AuthorityLevel.COMBAT)
-        granted = self.manager.request_unit(1, "HarassmentCoordinator", AuthorityLevel.COMBAT)
+        granted = self.manager.request_unit(
+            1, "HarassmentCoordinator", AuthorityLevel.COMBAT
+        )
         self.assertFalse(granted)
         self.assertTrue(self.manager.has_authority(1, "CombatManager"))
 
