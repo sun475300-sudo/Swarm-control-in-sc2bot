@@ -76,10 +76,18 @@ jobs:
         run: pip install -r requirements.txt pytest pytest-cov pytest-asyncio
 
       - name: Run unit tests
-        run: pytest tests/unit -v --cov=. --cov-report=xml --cov-report=term
+        run: pytest tests/ --ignore=tests/integration -v --cov=. --cov-report=xml --cov-report=term
+        env:
+          # requirements.txt pulls in burnysc2, whose bundled s2clientprotocol
+          # _pb2.py files were generated against an older protobuf than the
+          # upb-backed C++ implementation modern protobuf wheels ship (fails
+          # with "Descriptors cannot be created directly" otherwise).
+          PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION: python
 
       - name: Run integration tests
         run: pytest tests/integration -v --timeout=120
+        env:
+          PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION: python
 
       - name: Upload coverage
         uses: codecov/codecov-action@v4
