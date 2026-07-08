@@ -1,6 +1,3 @@
-import pytest
-
-
 def calculate_swarm_damage(count):
     return count * 5
 

@@ -14,14 +14,37 @@
 
 | ID | 설명 | 우선순위 | 상태 |
 |----|------|---------|------|
-| N1 | `OpponentModeling.on_step` 중복 정의 (line 341 vs 765 — F811) | 🟠 HIGH | open — 동작 영향(상위 on_step이 미실행) 가능 |
-| N2 | `EconomyManager._prevent_resource_banking` / `_reduce_gas_workers` 재정의 (F811) | 🟡 MED | open |
-| N3 | `combat_manager._find_harass_target` 재정의 (line 2377 vs 4278) | 🟡 MED | open |
-| N4 | `production_resilience.build_terran_counters` 재정의 (1369 vs 1866) | 🟡 MED | open |
+| N1 | `OpponentModeling.on_step` 중복 정의 (line 341 vs 765 — F811) | 🟠 HIGH | ✅ Resolved (2026-07-08 검증 — 현재 정의 1개뿐, AST 스캔으로 저장소 전체 재검증) |
+| N2 | `EconomyManager._prevent_resource_banking` / `_reduce_gas_workers` 재정의 (F811) | 🟡 MED | ✅ Resolved (2026-07-08 검증) |
+| N3 | `combat_manager._find_harass_target` 재정의 (line 2377 vs 4278) | 🟡 MED | ✅ Resolved (2026-07-08 검증) |
+| N4 | `production_resilience.build_terran_counters` 재정의 (1369 vs 1866) | 🟡 MED | ✅ Resolved (2026-07-08 검증) |
 | N5 | bare `except Exception:` 다수 (≈360+) — 이번 PR에서 12건 처리, 잔여 다수 | 🟢 LOW | partial |
 | N6 | F841 unused local variables (visuals/make_pptx 등) | 🟢 LOW | open (presentation 코드라 영향 작음) |
 
-검증 권장: PR 분리 (N1 단독 PR 권장 — 동작 변화 가능성).
+검증 방법(2026-07-08): `wicked_zerg_challenger/**/*.py` 전체에 대해 AST 기반 스크립트로 모듈/클래스 스코프별 함수 재정의를 스캔 — 중복 0건. N1~N4는 이후 커밋에서 이미 정리된 것으로 보이며 문서만 stale했음.
+
+---
+
+## 🆕 신규 발견 (PR #352, 2026-07-08) — CI가 테스트를 실행하지 않던 근본 원인
+
+일일 점검 사이클 중 `main`의 테스트 파이프라인이 사실상 테스트를 거의 실행하지 않고 있었다는 것을 확인. 아래 4가지는 PR #352에서 수정 완료(검증: `pytest tests/` 504 passed/14 skipped/0 failed, `pytest wicked_zerg_challenger/tests/` 661 passed/0 failed):
+
+| ID | 설명 | 우선순위 | 상태 |
+|----|------|---------|------|
+| N7 | 저장소 루트의 `pytest/test_battle.py`가 실제 `pytest` 패키지를 `sys.path`에서 가려서 루트에서 `pytest` 실행이 전부 깨짐 | 🔴 CRITICAL | ✅ Fixed in PR #352 — `tests/test_battle_smoke.py`로 이동 |
+| N8 | `ci.yml`의 "pytest 실행 (전체)" 스텝이 `pytest tests/ --co` (collect-only)로 실행되어 34개 테스트 파일 중 실제로는 2개만 실행됨 | 🔴 CRITICAL | ✅ Fixed in PR #352 — `--co` 제거 |
+| N9 | `sc2bot-ci.yml` test job이 존재하지 않는 `tests/unit`을 참조 (실제 구조는 `tests/` 평면 + `tests/integration/`) | 🔴 CRITICAL | ✅ Fixed in PR #352 |
+| N10 | `tests/test_combat_phase_fsm.py`의 `asyncio.get_event_loop()`가 Python 3.10+에서 스레드에 현재 루프가 없으면 `RuntimeError` — 스위트 전체 실행 시 순서 의존적으로 12개 테스트 실패 (`claude/optimistic-edison-*` 브랜치 50개 이상이 반복적으로 재발견) | 🔴 CRITICAL | ✅ Fixed in PR #352 — `_run_async()` 헬퍼로 교체 |
+| N11 | `crypto_trading` 테스트에서 `cffi` 누락으로 `cryptography` import가 `pyo3_runtime.PanicException`으로 크래시 | 🟠 HIGH | ✅ Fixed in PR #352 — `cffi`를 CI 의존성 설치 스텝 + `requirements-dev.txt`에 추가 |
+
+### 추가로 확인됐지만 이번 PR 범위 밖 (사용자 우선순위 결정 필요)
+
+| ID | 설명 | 우선순위 | 권장 조치 |
+|----|------|---------|-----------|
+| N12 | **열린 draft PR 50개 이상** (`claude/optimistic-edison-*`, #301~#351). 대부분 N7~N10과 거의 동일한 문제를 각 세션이 독립적으로 재발견·재수정한 것 — 한 번도 머지되지 않아 매일 반복 발생. PR #352가 머지되면 근본 원인이 해소되므로, 나머지는 redundant close 후보 | 🔴 CRITICAL (프로세스) | PR #352 머지 후 사용자가 나머지 PR을 일괄 검토·close 결정 |
+| N13 | GitHub Dependabot이 **99건의 취약점** 감지 (critical 2, high 37, moderate 46, low 14) | 🟠 HIGH | Security 탭에서 개별 검토 필요 (자동 조치 안 함 — 의존성 다운그레이드/제거는 사용자 승인 필요) |
+| N14 | `sc2bot-ci.yml`의 lint job (`black --check` 전체 저장소)이 66개 파일 미포맷으로 항상 실패 — PR #352와 무관하게 `main`에서도 동일하게 실패함을 로컬 검증으로 확인 | 🟡 MED | MASTER_TODO_SC2.md S3.4 권고대로 **별도 포맷팅 전용 PR**로 처리 (열린 PR 50개와의 충돌 폭발 방지 위해 N12 정리 후 진행 권장) |
+| N15 | `requirements.txt`가 SC2 봇 핵심 의존성과 무관한 서비스(crypto trading/Discord/AWS/TTS/torch 등)를 한 파일에 느슨한 버전 핀(`>=`)으로 모아둬서 `pip` 의존성 해석이 매우 느림(`resolution-too-deep`, 로컬 검증 시 8분+ 후 무응답) | 🟡 MED | MASTER_TODO_SC2.md S3.2 권고대로 pip-tools/uv 도입 별도 PR |
 
 ---
 
