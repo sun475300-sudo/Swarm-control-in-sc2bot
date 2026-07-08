@@ -30,14 +30,27 @@ except ImportError:
     class BotAI:
         pass
 
-    class UnitTypeId:
-        pass
+    class UnitTypeId:  # type: ignore[no-redef]
+        BUNKER = "BUNKER"
+        CHANGELING = "CHANGELING"
+        CHANGELINGMARINE = "CHANGELINGMARINE"
+        CHANGELINGMARINESHIELD = "CHANGELINGMARINESHIELD"
+        CHANGELINGZEALOT = "CHANGELINGZEALOT"
+        CHANGELINGZERGLING = "CHANGELINGZERGLING"
+        CHANGELINGZERGLINGWINGS = "CHANGELINGZERGLINGWINGS"
+        MISSILETURRET = "MISSILETURRET"
+        OVERLORD = "OVERLORD"
+        OVERSEER = "OVERSEER"
+        PHOTONCANNON = "PHOTONCANNON"
+        PLANETARYFORTRESS = "PLANETARYFORTRESS"
+        SPORECRAWLER = "SPORECRAWLER"
+        ZERGLING = "ZERGLING"
 
-    class AbilityId:
-        pass
+    class AbilityId:  # type: ignore[no-redef]
+        SPAWNCHANGELING_SPAWNCHANGELING = "SPAWNCHANGELING_SPAWNCHANGELING"
 
-    class UpgradeId:
-        pass
+    class UpgradeId:  # type: ignore[no-redef]
+        OVERLORDSPEED = "OVERLORDSPEED"
 
     class Point2:
         pass

@@ -13,6 +13,12 @@ from unittest.mock import MagicMock
 
 import pytest
 
+# sc2 -> s2clientprotocol의 생성된 _pb2.py가 최신 protobuf 런타임과 호환되지
+# 않을 수 있어 (TypeError: Descriptors cannot be created directly), sc2가
+# import되기 전에 순수 파이썬 구현을 강제한다. (wicked_zerg_challenger/tests
+# /conftest.py와 동일한 조치)
+os.environ.setdefault("PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION", "python")
+
 # 프로젝트 루트를 sys.path에 추가
 PROJECT_ROOT = Path(__file__).parent.parent
 if str(PROJECT_ROOT) not in sys.path:
