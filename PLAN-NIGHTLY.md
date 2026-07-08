@@ -2,18 +2,38 @@
 
 > Owner: 선우 (sun475300@gmail.com)
 > Maintainer: nightly automation
-> Last refreshed: 2026-05-04
+> Last refreshed: 2026-07-08
 
 ---
 
 ## Snapshot (current state)
 
-- Branch: `main`, last commit: queen transfusion + requirements-dev.txt session
+- Branch: `main` @ `8a80b73`, working branch `claude/optimistic-edison-81iwvj`.
 - Bot core: `wicked_zerg_challenger/` — 179+ Python files across 10+ subdirs.
 - `.gitattributes` enforces `* text=auto` ✅
-- CI: `sc2bot-ci.yml` runs black + isort + flake8 ✅ (all clean)
-- **Test suite: 468 pass / 15 skip / 0 fail** ✅ (was 398/20/0 two nights ago)
-- Queen transfusion logic: 3 bugs fixed (`is_idle` guard removed, target dedup, per-queen cooldown) ✅
+- CI: `sc2bot-ci.yml` lint job (`black --check --diff .` / `isort --check-only --diff .`)
+  runs over the **entire repo**, including the 280+ language scaffold dirs — this
+  currently fails on files outside this session's diff (drifted since the
+  2026-05-04 "all clean" snapshot). See P2.6 below.
+- **Test suite (`pytest tests/`): 502 pass / 14 skip / 0 fail**
+- **Test suite (`pytest wicked_zerg_challenger/tests/`): 665 pass / 0 fail**
+  (both suites run as separate CI invocations — do not run them in one
+  `pytest` process, they collide on the `scripts` namespace package)
+- Other automated sessions were active on this repo the same day on sibling
+  `claude/optimistic-edison-*` branches — check open PRs before starting
+  duplicate work.
+
+## Resolved this run (2026-07-08)
+
+| Item | File(s) | Notes |
+|------|---------|-------|
+| 11 tests failing only when run as part of full suite | `tests/test_combat_phase_fsm.py` | Root cause: `asyncio.get_event_loop().run_until_complete(...)` instead of `asyncio.run(...)`. Once anything else in the session called `asyncio.run()` (which clears the thread's current loop on exit), the bare `get_event_loop()` calls raised `RuntimeError: no current event loop`. Fixed by switching all 5 call sites to `asyncio.run()`. |
+| P2.4 RL agent save-experience guard | `wicked_zerg_challenger/local_training/rl_agent.py`, new `wicked_zerg_challenger/tests/test_rl_agent_save_experience.py` | `save_experience_data()` did `os.remove(dest)` then `os.rename(tmp, dest)` — if the rename failed after the remove succeeded (disk full, cross-device), the caller's existing data was destroyed with nothing written in its place. Replaced with `os.replace()` (atomic swap on POSIX + Windows, no delete step) and added temp-file cleanup on failure. 4 new tests cover the success path, disk-full-during-write, interrupted-replace, and a regression guard that `os.remove` is never called on the destination. |
+| REMAINING_ISSUES.md N1-N4 stale | `REMAINING_ISSUES.md` | Re-verified with `pyflakes wicked_zerg_challenger` — 0 redefinition warnings. All four were already fixed in earlier sessions/PR #218; doc just hadn't been updated. Marked resolved. |
+| Missing `_cffi_backend` broke 8 crypto/security tests | sandbox install only | `cryptography`'s Rust bindings need `cffi`; installing `cffi` cleared 8 `pyo3_runtime.PanicException` failures. Not a repo bug — worth adding `cffi` to `requirements-dev.txt` explicitly so it isn't a silent transitive dependency. |
+| `burnysc2` failed to build (`mpyq` wheel error under new setuptools) | sandbox install only | `AttributeError: install_layout` from `mpyq`'s legacy `setup.py` under setuptools ≥81. Pinning `setuptools<81` before installing `burnysc2` fixed it. Environment note for future sessions, not a repo change. |
+
+**Net result: 20 failed → 0 failed on `tests/`. Both suites fully green: 502+14 / 665+0.**
 
 ## Resolved this run (2026-05-03)
 
@@ -49,11 +69,28 @@
 
 | #    | Item                                            | Status | Notes |
 |------|-------------------------------------------------|--------|-------|
-| P2.1 | Force-accumulation FSM tests                    | ✅ Done | `tests/test_combat_phase_fsm.py` — 23 tests all passing. |
+| P2.1 | Force-accumulation FSM tests                    | ✅ Done | `tests/test_combat_phase_fsm.py` — 23 tests all passing (11 were silently broken by suite-order event-loop bug until 2026-07-08). |
 | P2.2 | Benchmark runner                                | ❌ Open | Single command, N replays, APM/supply/win-rate report vs Hard. |
 | P2.3 | Build-order config externalisation              | ❌ Open | Move top-20 hardcoded values to `config/build_orders.yaml`. |
-| P2.4 | RL agent save-experience guard                  | ❌ Open | Unit test for save under disk-full / interrupted-rename. |
+| P2.4 | RL agent save-experience guard                  | ✅ Done | Fixed real data-loss bug (remove-then-rename window) + 4 new tests. See 2026-07-08 run. |
 | P2.5 | Type hints + docstring pass on core modules     | ❌ Open | `core/resource_manager.py`, `core/manager_factory.py`. |
+| P2.6 | CI lint job fails on repo-wide `black`/`isort`  | ✅ Done | Checked PR #347's CI failure: 64/68 drifted files were inside `wicked_zerg_challenger/`/`tests/`/RL-framework dirs (`comm_learning`, `mappo_marl`, `qmix_marl`) — real project code, not the 280+ language scaffold (which was already clean: 802/866 files passed). Ran `black`/`isort` on exactly the drifted files (formatting-only, no logic changes), verified both suites still 502+665 passing and `flake8 --select=E9,F63,F7,F82` clean repo-wide. `black --check .` / `isort --check-only .` now pass on the whole tree. |
+| P2.7 | `cffi` missing from `requirements-dev.txt`      | ❌ Open (found 2026-07-08) | `cryptography`'s Rust backend needs `_cffi_backend`; without an explicit `cffi` pin it's a silent transitive dependency that breaks `test_security.py`/`test_crypto_trading.py` in a clean env. Add `cffi>=1.16` to `requirements-dev.txt`. |
+
+## Next-round priority list (largest → smallest effort, drawn from this session's audit)
+
+1. **P2.6 CI lint scope** — decide (a) vs (b) above; (a) is safer and quick.
+2. **P2.2 Benchmark runner** — biggest missing piece for measuring whether future
+   changes actually improve win rate; blocks a real feedback loop for every other
+   "improvement."
+3. **P2.3 Build-order config externalisation** — reduces risk of the kind of
+   hardcoded-magic-number bugs already fixed for queen manager (`REMAINING_ISSUES.md`
+   Issue #6).
+4. **P2.5 Type hints on `core/resource_manager.py`, `core/manager_factory.py`.**
+5. **N5 remaining bare `except Exception:`** (~350 left after prior partial pass) —
+   grep for `except Exception:\s*$` with no re-raise/log to find silent-failure risks.
+6. **N6 F841 unused locals** — low value, `visuals/`/presentation code only.
+7. **P2.7 requirements-dev.txt cffi pin.**
 
 ## Long-term direction
 
@@ -94,3 +131,12 @@ Run `E:\GitHub\Swarm-control-in-sc2bot\scripts\commit_nightly_2026-05-03.bat`:
 - **2026-05-01** — P1.1 scout cadence, P1.2 harassment, P1.3 expansion timing, P1.5 doc history. Commit blocked by index.lock.
 - **2026-05-02** — P0 scout import mismatch fixed. P1.4 deprecation shim. P2.1 FSM tests 23/23 pass.
 - **2026-05-03** — **Test suite cleared:** 90 failures → 0. Fixed pytest-asyncio, torch stubs (qmix/mappo), stale __init__ exports (mappo/comm_learning), gas threshold test, crypto skipif guards. Final: 398 pass / 20 skip / 0 fail.
+- **2026-07-08** — Re-audited both suites from a clean environment. Fixed 11 tests
+  broken by an `asyncio.get_event_loop()` ordering bug in `test_combat_phase_fsm.py`
+  (only failed as part of the full-suite run). Fixed a real data-loss bug in
+  `RLAgent.save_experience_data()` (remove-then-rename window; P2.4) with 4 new
+  regression tests. Verified N1-N4 in `REMAINING_ISSUES.md` were already fixed by
+  an earlier session and closed them. Found (not yet fixed): CI's `black`/`isort`
+  lint job checks the whole repo and is failing outside this session's diff
+  (P2.6); `cffi` is a silent missing dev dependency (P2.7). Final: `tests/`
+  502 pass / 14 skip / 0 fail; `wicked_zerg_challenger/tests/` 665 pass / 0 fail.
