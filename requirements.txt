@@ -18,6 +18,13 @@ pandas>=1.5.0
 requests>=2.28.0
 python-dotenv>=1.0.0
 cryptography>=41.0.0
+# cffi is cryptography's runtime dependency for its cffi-backed bindings; when
+# the OS-provided cryptography package (e.g. Debian's python3-cryptography)
+# shadows the pip-installed one, cffi isn't pulled in transitively and every
+# `import cryptography` crashes with `ModuleNotFoundError: No module named
+# '_cffi_backend'` -> pyo3_runtime.PanicException. Pinning it directly makes
+# the test environment work regardless of which cryptography build is active.
+cffi>=1.15.0
 
 # ═══════════════════════════════════════════════
 # Discord Bot (JARVIS)
