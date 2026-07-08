@@ -116,6 +116,10 @@ jobs:
         env:
           DRY_RUN: "true"
           LOG_LEVEL: "DEBUG"
+          # s2clientprotocol ships _pb2.py files generated against an older
+          # protobuf runtime; the upb-backed C++ implementation in newer
+          # protobuf raises "Descriptors cannot be created directly" on them.
+          PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION: python
 
   # ─────────────────────────────────────────────
   # SC2 봇 구문 검증 + 테스트
