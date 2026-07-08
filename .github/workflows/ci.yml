@@ -112,11 +112,12 @@ jobs:
 
       - name: pytest 실행 (전체)
         run: |
-          pytest tests/ -v --tb=short --co -q
+          pytest tests/ -v --tb=short
           pytest tests/test_crypto_trading.py tests/test_security.py -v --tb=short
         env:
           DRY_RUN: "true"
           LOG_LEVEL: "DEBUG"
+          PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION: "python"
 
   # ─────────────────────────────────────────────
   # SC2 봇 구문 검증 + 테스트
