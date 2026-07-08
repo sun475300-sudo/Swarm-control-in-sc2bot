@@ -28,6 +28,11 @@ discord.py>=2.3.0
 # AI / GenAI
 # ═══════════════════════════════════════════════
 google-generativeai>=0.5.0
+# Pinned to keep google-generativeai's google-ai-generativelanguage (protobuf<5)
+# and google-api-core (protobuf>=5.29.6 in >=2.20) from producing a
+# ResolutionImpossible conflict with s2clientprotocol's protobuf dependency.
+protobuf>=3.20.3,<5.0.0
+google-api-core<2.20.0
 
 # ═══════════════════════════════════════════════
 # MCP Servers & Claude Agent SDK
