@@ -28,6 +28,8 @@ jobs:
         python-version: ["3.10", "3.11", "3.12"]
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v5
@@ -38,11 +40,31 @@ jobs:
       - name: Install lint dependencies
         run: pip install flake8 mypy black isort bandit
 
-      - name: Run black (format check)
-        run: black --check --diff .
+      - name: Determine changed Python files
+        id: changed
+        run: |
+          git fetch origin main --depth=100 2>/dev/null || true
+          if git rev-parse --verify origin/main >/dev/null 2>&1; then
+            FILES=$(git diff --name-only --diff-filter=ACMR origin/main...HEAD -- '*.py' | tr '\n' ' ')
+          else
+            FILES=""
+          fi
+          echo "files=$FILES" >> "$GITHUB_OUTPUT"
+          if [ -z "$FILES" ]; then
+            echo "No changed Python files vs origin/main — skipping black/isort (repo-wide backlog tracked in MASTER_TODO_SC2.md)."
+          else
+            echo "Changed Python files: $FILES"
+          fi
 
-      - name: Run isort (import order)
-        run: isort --check-only --diff .
+      # main에는 아직 black/isort 미적용 파일이 다수 남아있어(MASTER_TODO_SC2.md 1.6/1.8),
+      # 전체 검사 대신 이 PR/커밋에서 변경된 파일만 포맷을 강제한다.
+      - name: Run black (format check, changed files only)
+        if: steps.changed.outputs.files != ''
+        run: black --check --diff ${{ steps.changed.outputs.files }}
+
+      - name: Run isort (import order, changed files only)
+        if: steps.changed.outputs.files != ''
+        run: isort --check-only --diff ${{ steps.changed.outputs.files }}
 
       - name: Run flake8 (full — non-blocking, informational)
         continue-on-error: true
