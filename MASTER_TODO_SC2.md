@@ -116,6 +116,15 @@
 - [ ] `Lint & Type Check (3.10/3.11/3.12)` 통과 확인 (black 한정 — isort/mypy/bandit은 별 PR로 분리)
 - [ ] PR #28 ready-for-review 전환 권장 (사용자 결정)
 
+### S0.1 — PR #352 (2026-07-08): CI가 테스트를 실행하지 않던 근본 원인 수정 ✅
+`REMAINING_ISSUES.md`의 N7~N11 참조. `pytest/` 디렉터리명 충돌, `ci.yml`의 `--co`(collect-only) 버그,
+`sc2bot-ci.yml`의 존재하지 않는 `tests/unit` 경로, `test_combat_phase_fsm.py`의
+`asyncio.get_event_loop()` 순서 의존 크래시, 누락된 `cffi` 의존성을 수정.
+검증: `pytest tests/` 504 passed/14 skipped/0 failed, `pytest wicked_zerg_challenger/tests/` 661 passed/0 failed.
+이 문제들은 `claude/optimistic-edison-*` 브랜치 50개 이상(#301~#351)이 각각 독립적으로
+재발견·재수정했지만 한 번도 머지되지 않아 매일 반복 발생하던 것 — PR #352 머지가 그 반복을 끊는
+전제조건. **머지 후 나머지 열린 PR 중 동일 문제를 다루는 것들은 close 후보 (N12, 사용자 결정 필요)**.
+
 ### S1 — 다른 열린 PR 정리 (사용자 결정 필요)
 - [ ] PR #18~#27 vs #28 내용 redundancy 매트릭스 작성 (자동 가능)
 - [ ] redundant PR은 close 권장 (실제 close는 사용자 승인)
