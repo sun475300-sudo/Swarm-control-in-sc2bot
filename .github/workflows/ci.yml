@@ -117,6 +117,12 @@ jobs:
         env:
           DRY_RUN: "true"
           LOG_LEVEL: "DEBUG"
+          # requirements.txt가 설치하는 s2clientprotocol의 생성된 _pb2.py 파일들은
+          # 구버전 protobuf 런타임 방식으로 만들어져 있어, pip이 받아오는 최신
+          # protobuf(C++ 구현)와 함께 쓰면 "Descriptors cannot be created
+          # directly" TypeError로 수집(collection) 단계에서 죽는다.
+          # sc2-bot-test 잡(아래)은 이미 이 설정을 쓰고 있음 — 여기도 맞춤.
+          PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION: python
 
   # ─────────────────────────────────────────────
   # SC2 봇 구문 검증 + 테스트
