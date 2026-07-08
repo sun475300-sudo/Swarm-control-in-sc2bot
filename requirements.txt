@@ -5,7 +5,7 @@ burnysc2>=5.0.0
 numpy>=1.20.0
 matplotlib>=3.3.0
 psutil>=5.8.0
-s2clientprotocol>=4.19.0.0
+s2clientprotocol==5.0.16.97425.0
 sc2reader>=0.8.0
 pyyaml>=6.0
 
@@ -37,6 +37,7 @@ google-generativeai==0.8.6
 # Verified together with google-api-python-client + google-auth-oauthlib.
 protobuf==4.25.9
 google-api-core==2.19.2
+googleapis-common-protos==1.75.0
 
 # ═══════════════════════════════════════════════
 # MCP Servers & Claude Agent SDK
