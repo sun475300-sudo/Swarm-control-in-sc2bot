@@ -2,18 +2,29 @@
 
 > Owner: 선우 (sun475300@gmail.com)
 > Maintainer: nightly automation
-> Last refreshed: 2026-05-04
+> Last refreshed: 2026-07-08
 
 ---
 
 ## Snapshot (current state)
 
-- Branch: `main`, last commit: queen transfusion + requirements-dev.txt session
+- Branch: `claude/optimistic-edison-04u5bc`
 - Bot core: `wicked_zerg_challenger/` — 179+ Python files across 10+ subdirs.
 - `.gitattributes` enforces `* text=auto` ✅
-- CI: `sc2bot-ci.yml` runs black + isort + flake8 ✅ (all clean)
-- **Test suite: 468 pass / 15 skip / 0 fail** ✅ (was 398/20/0 two nights ago)
+- CI: `sc2bot-ci.yml` runs black + isort + flake8 (blocking: E9/F63/F7/F82 only)
+- **Test suite: 507 pass / 14 skip / 0 fail** ✅ (was 468/15/0)
 - Queen transfusion logic: 3 bugs fixed (`is_idle` guard removed, target dedup, per-queen cooldown) ✅
+- ⚠️ `black --check .` currently fails on 66 pre-existing files repo-wide (not caused by this session — CI's blocking lint step doesn't include black, so it hasn't been caught). Worth a dedicated formatting pass.
+
+## Resolved this run (2026-07-08)
+
+| Item | File(s) | Notes |
+|------|---------|-------|
+| Test-order event-loop pollution | `tests/test_combat_phase_fsm.py` | 11 tests used `asyncio.get_event_loop().run_until_complete()`; `asyncio.run()` in `test_matchup_strategies.py` (which runs earlier alphabetically) resets the global event-loop policy to "no loop", so these 11 tests failed only when run as part of the full suite, never in isolation. Replaced with `asyncio.run()`. |
+| **RL model checkpointing was silently broken** | `wicked_zerg_challenger/local_training/rl_agent.py` | `save_model()` built `tmp_path` via `.with_suffix(".tmp")`, but `np.savez()` auto-appends `.npz` to any name lacking it, so the file actually written was `*.tmp.npz` while the code checked `tmp_path` (`*.tmp`) — that check was always False, so the move-into-place step never ran. The function still returned `True` and logged success. Fixed by giving the tmp path an explicit `.npz` ending. |
+| Non-atomic "atomic" save | `rl_agent.py` (`save_model`, `save_experience_data`) | Both deleted/moved the destination file in two separate syscalls (`remove()`+`rename()`, or `unlink()`+`move()` with a `copy+delete` fallback) — a crash between the two steps loses the previous good file with nothing complete to replace it. Switched both to a single `os.replace()`, which is atomic on POSIX and Windows. |
+| No regression coverage for the above | `tests/test_rl_agent_atomic_save.py` (new, 5 tests) | Covers no-leftover-tmp-file and correct-data-after-overwrite for both save paths. This is PLAN-NIGHTLY P2.4. |
+| `REMAINING_ISSUES.md` stale for months | doc | Re-verified N1-N4 (F811 dupes) and Issue #3/#4/#5 (transfusion priority, resource-reservation lock, position utils) against current code via `flake8 --select=F811` and direct grep — all were already implemented in prior sessions but the doc still listed them "open". Trimmed and corrected. |
 
 ## Resolved this run (2026-05-03)
 
@@ -52,8 +63,10 @@
 | P2.1 | Force-accumulation FSM tests                    | ✅ Done | `tests/test_combat_phase_fsm.py` — 23 tests all passing. |
 | P2.2 | Benchmark runner                                | ❌ Open | Single command, N replays, APM/supply/win-rate report vs Hard. |
 | P2.3 | Build-order config externalisation              | ❌ Open | Move top-20 hardcoded values to `config/build_orders.yaml`. |
-| P2.4 | RL agent save-experience guard                  | ❌ Open | Unit test for save under disk-full / interrupted-rename. |
+| P2.4 | RL agent save-experience guard                  | ✅ Done | Fixed the underlying non-atomic-save + broken-tmp-path bugs (see above) and added 5 regression tests in `tests/test_rl_agent_atomic_save.py`. |
 | P2.5 | Type hints + docstring pass on core modules     | ❌ Open | `core/resource_manager.py`, `core/manager_factory.py`. |
+| P2.6 | Repo-wide `black --check .` failure (66 files)  | ❌ Open | Not blocking CI today since the blocking lint step only checks E9/F63/F7/F82, but the non-blocking `black --check --diff .` step in the other workflow will show red. Needs a dedicated formatting-only PR. |
+| P2.7 | Bare `except Exception:` cleanup (460 occurrences) | ❌ Open | `REMAINING_ISSUES.md` N5. Large, do incrementally per-file. |
 
 ## Long-term direction
 
@@ -94,3 +107,4 @@ Run `E:\GitHub\Swarm-control-in-sc2bot\scripts\commit_nightly_2026-05-03.bat`:
 - **2026-05-01** — P1.1 scout cadence, P1.2 harassment, P1.3 expansion timing, P1.5 doc history. Commit blocked by index.lock.
 - **2026-05-02** — P0 scout import mismatch fixed. P1.4 deprecation shim. P2.1 FSM tests 23/23 pass.
 - **2026-05-03** — **Test suite cleared:** 90 failures → 0. Fixed pytest-asyncio, torch stubs (qmix/mappo), stale __init__ exports (mappo/comm_learning), gas threshold test, crypto skipif guards. Final: 398 pass / 20 skip / 0 fail.
+- **2026-07-08** — Fixed test-order event-loop pollution (P2.1 FSM tests), discovered + fixed silently-broken RL model checkpointing (P2.4), switched RL save paths to true atomic `os.replace()`, added 5 regression tests, re-verified and corrected stale `REMAINING_ISSUES.md`. Final: 507 pass / 14 skip / 0 fail.
