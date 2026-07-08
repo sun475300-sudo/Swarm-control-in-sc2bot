@@ -8,20 +8,25 @@
 
 ---
 
-## 🆕 신규 발견 (PR #44, 2026-04-27)
+## 🆕 신규 발견 (2026-07-08 자동 점검 사이클)
 
-자동/수동 점검 사이클(테스트 → 코드 검사 → 개선 → 커밋/푸시 반복)에서 새로 식별된 항목.
+테스트 스위트 전체 실행 + CI 게이트 재현으로 새로 식별/재확인된 항목.
 
 | ID | 설명 | 우선순위 | 상태 |
 |----|------|---------|------|
-| N1 | `OpponentModeling.on_step` 중복 정의 (line 341 vs 765 — F811) | 🟠 HIGH | open — 동작 영향(상위 on_step이 미실행) 가능 |
-| N2 | `EconomyManager._prevent_resource_banking` / `_reduce_gas_workers` 재정의 (F811) | 🟡 MED | open |
-| N3 | `combat_manager._find_harass_target` 재정의 (line 2377 vs 4278) | 🟡 MED | open |
-| N4 | `production_resilience.build_terran_counters` 재정의 (1369 vs 1866) | 🟡 MED | open |
-| N5 | bare `except Exception:` 다수 (≈360+) — 이번 PR에서 12건 처리, 잔여 다수 | 🟢 LOW | partial |
-| N6 | F841 unused local variables (visuals/make_pptx 등) | 🟢 LOW | open (presentation 코드라 영향 작음) |
+| N7 | `scripts/` 최상위 디렉터리에 `__init__.py`가 없어 `wicked_zerg_challenger/scripts/`와 implicit namespace package로 충돌 → 수집 순서에 따라 `scripts.ladder_tracker`/`scripts.meta_adapter` import가 간헐적으로 실패 | 🟠 HIGH | ✅ Resolved — `scripts/__init__.py` 추가 (커밋 c24add7) |
+| N8 | `tests/test_combat_phase_fsm.py`가 `asyncio.get_event_loop().run_until_complete(...)`을 동기 테스트에서 호출 — 최신 asyncio/pytest-asyncio 조합에서 "no current event loop" RuntimeError로 11개 테스트 실패 | 🟠 HIGH | ✅ Resolved — `asyncio.run(...)`으로 교체 (커밋 c24add7) |
+| N9 | `black --check .` / `isort --check-only .`가 CI(`sc2bot-ci.yml`)에서 **blocking**인데 main 기준 66개 파일(black) + 18개 파일(isort)이 드리프트 상태 — PR마다 lint job이 실패 | 🟠 HIGH | ✅ Resolved — 전체 재포맷 (커밋 544fb17) |
+| N10 | `sc2bot-ci.yml`의 `test` job이 `pytest tests/unit` / `pytest tests/integration`을 실행하는데 `tests/unit/`는 아예 존재한 적이 없고(`pytest` exit code 4), `tests/integration/`엔 1173개 중 1개 파일만 존재 — 즉 이 CI job은 사실상 테스트를 실행한 적이 없음 | 🔴 CRITICAL | ✅ Resolved — `pytest tests/ wicked_zerg_challenger/tests/`로 교체 (커밋 53d533a) |
+| N11 | `utils/game_constants.py`(Sprint 7.3 대상)가 존재하지만 실제 사용처는 3개 파일뿐 — 매직넘버 교체 작업이 사실상 중단된 상태 | 🟢 LOW | open — 대규모 기계적 작업, 파일별로 나눠 진행 필요 |
+| N12 | `ci.yml`의 `python-lint-test` job이 `PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python`을 설정하지 않아 `sc2`(burnysc2) import 시 `TypeError: Descriptors cannot be created directly` 로 14개 테스트 collection 실패 — 같은 파일의 `sc2-bot-test` job은 이미 이 env var를 설정해 정상 동작 | 🟠 HIGH | ✅ Resolved — env var 추가로 통일 |
 
-검증 권장: PR 분리 (N1 단독 PR 권장 — 동작 변화 가능성).
+### ✅ 자동 재확인: N1~N4, Issue #3/#4/#5는 이미 해결됨 (문서가 stale했음)
+
+- **N1~N4 (F811 중복 정의)**: `flake8 --select=F811 wicked_zerg_challenger/` 결과 0건. `e648ae4 refactor: delete shadowed duplicate methods` 커밋(PR #218)에서 이미 정리됨.
+- **Issue #3 (Transfusion 우선순위)**: `queen_manager.py:_transfuse_injured_units`에 CreepyBot 스타일 `TRANSFUSE_PRIORITY` 테이블(Queen > Broodlord > Corruptor/Viper > SpineCrawler > ...)이 이미 구현되어 있음. 제안했던 것보다 더 정교함.
+- **Issue #4 (Resource Race Condition)**: `self.bot.resource_manager.try_reserve(...)` 패턴이 `defense_coordinator.py`, `economy_manager.py` 등에서 이미 사용 중.
+- **Issue #5 (Position Utils 중복)**: `wicked_zerg_challenger/utils/position_utils.py`에 `get_center_position` / `get_weighted_center`가 이미 존재.
 
 ---
 
