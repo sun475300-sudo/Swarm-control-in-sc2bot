@@ -4,7 +4,7 @@
 
 통합 문제 해결 후 발견된 추가 개선 사항들입니다.
 
-**Last refreshed:** 2026-04-27 (Issue #1, #2 → Resolved; Issue #6 partially resolved via Batch 3)
+**Last refreshed:** 2026-07-08 (N1–N4, Issue #3 → confirmed resolved; stale entries closed without further action)
 
 ---
 
@@ -14,14 +14,14 @@
 
 | ID | 설명 | 우선순위 | 상태 |
 |----|------|---------|------|
-| N1 | `OpponentModeling.on_step` 중복 정의 (line 341 vs 765 — F811) | 🟠 HIGH | open — 동작 영향(상위 on_step이 미실행) 가능 |
-| N2 | `EconomyManager._prevent_resource_banking` / `_reduce_gas_workers` 재정의 (F811) | 🟡 MED | open |
-| N3 | `combat_manager._find_harass_target` 재정의 (line 2377 vs 4278) | 🟡 MED | open |
-| N4 | `production_resilience.build_terran_counters` 재정의 (1369 vs 1866) | 🟡 MED | open |
-| N5 | bare `except Exception:` 다수 (≈360+) — 이번 PR에서 12건 처리, 잔여 다수 | 🟢 LOW | partial |
+| N1 | `OpponentModeling.on_step` 중복 정의 (line 341 vs 765 — F811) | 🟠 HIGH | ✅ Resolved — 현재 341행에 단일 정의만 존재 (PR #218 "delete shadowed duplicate methods"에서 제거됨) |
+| N2 | `EconomyManager._prevent_resource_banking` / `_reduce_gas_workers` 재정의 (F811) | 🟡 MED | ✅ Resolved — 각각 단일 정의만 존재 |
+| N3 | `combat_manager._find_harass_target` 재정의 (line 2377 vs 4278) | 🟡 MED | ✅ Resolved — 4992행에 단일 정의만 존재 |
+| N4 | `production_resilience.build_terran_counters` 재정의 (1369 vs 1866) | 🟡 MED | ✅ Resolved — 1961행에 단일 정의만 존재 |
+| N5 | bare `except Exception:` 다수 (≈360+) — 이번 PR에서 12건 처리, 잔여 다수 | 🟢 LOW | partial — 잔여분 미해결 |
 | N6 | F841 unused local variables (visuals/make_pptx 등) | 🟢 LOW | open (presentation 코드라 영향 작음) |
 
-검증 권장: PR 분리 (N1 단독 PR 권장 — 동작 변화 가능성).
+N1–N4는 2026-07-08 기준 코드 조사 결과 이미 단일 정의로 확인됨 (grep으로 재검증). 문서가 PR #218 반영 후 갱신되지 않아 stale했던 것으로 판단, 별도 작업 없이 닫음.
 
 ---
 
@@ -65,82 +65,26 @@
 
 검증 출처: `ACTION_LOG_20260419.md` Task #6.
 
+### ✅ Issue #3: Transfusion 우선순위 개선 — `QueenTransfusionManager`로 이미 구현됨
+
+아래 원본 이슈에서 제안한 설계(`HEAL_PRIORITY`, `CANNOT_HEAL`, 우선순위 정렬)가
+`wicked_zerg_challenger/economy/queen_transfusion_manager.py`의 `QueenTransfusionManager`
+클래스로 이미 구현되어 `bot_step_integration.py` (Phase 21)에 연결되어 있음을 확인.
+원본 이슈가 제안했던 것보다 범위가 넓다 (13종 우선순위, 쿨다운, 타겟 중복 방지 포함).
+
+| Where | Verification |
+|-------|--------------|
+| `wicked_zerg_challenger/economy/queen_transfusion_manager.py:57` | `class QueenTransfusionManager` — `HEAL_PRIORITY`/`CANNOT_HEAL` 딕셔너리, 거리·에너지·쿨다운 필터링 |
+| `wicked_zerg_challenger/bot_step_integration.py:460-462` | `self.bot.queen_transfusion = QueenTransfusionManager(bot)` — Phase 21 초기화 |
+| `tests/test_queen_transfusion.py` | 우선순위/중복방지/쿨다운 회귀 테스트 14건 |
+
+문서가 stale했던 것으로 판단, 별도 작업 없이 닫음.
+
 ---
 
 ## 🟡 MEDIUM Priority Issues (still open)
 
-### Issue #3: Transfusion 우선순위 개선 필요
-
-**위치**: `queen_manager.py` 또는 `spell_unit_manager.py`
-
-**현재 문제**:
-- Transfusion 로직이 단순함
-- 고가 유닛(울트라, 브루드로드) 우선순위 없음
-- 군단 숙주, 맹독충 등 치료 불가 유닛에 낭비 가능성
-
-**개선 방법**:
-```python
-async def smart_transfusion(self, queen, damaged_units):
-    """
-    스마트 수혈 - 우선순위 기반
-
-    우선순위:
-    1. 울트라리스크 (300/200 고가 유닛)
-    2. 브루드로드 (150/150/2)
-    3. 바퀴 (75/25)
-    4. 히드라 (100/50)
-    5. 저글링 (25/0)
-    """
-    if queen.energy < 50:
-        return
-
-    # 치료 우선순위 정의
-    HEAL_PRIORITY = {
-        UnitTypeId.ULTRALISK: 100,
-        UnitTypeId.BROODLORD: 90,
-        UnitTypeId.ROACH: 70,
-        UnitTypeId.RAVAGER: 75,
-        UnitTypeId.HYDRALISK: 60,
-        UnitTypeId.MUTALISK: 50,
-        UnitTypeId.CORRUPTOR: 50,
-        UnitTypeId.ZERGLING: 30,
-    }
-
-    # 치료 불가 유닛 제외
-    CANNOT_HEAL = {
-        UnitTypeId.BANELING,  # 맹독충 (자폭 유닛)
-        UnitTypeId.BROODLING,  # 무리 (일회용)
-        UnitTypeId.LOCUSTMP,  # 군단 숙주 (일회용)
-    }
-
-    # 우선순위대로 정렬
-    valid_targets = [
-        u for u in damaged_units
-        if u.type_id not in CANNOT_HEAL and u.health_percentage < 0.6
-    ]
-
-    if not valid_targets:
-        return
-
-    # 우선순위 정렬 (priority desc, health% asc)
-    valid_targets.sort(
-        key=lambda u: (
-            -HEAL_PRIORITY.get(u.type_id, 0),  # 우선순위 높을수록
-            u.health_percentage  # 체력 낮을수록
-        )
-    )
-
-    best_target = valid_targets[0]
-
-    # 수혈 실행 (50 에너지, +125 HP)
-    if queen.distance_to(best_target) <= 7:
-        from sc2.ids.ability_id import AbilityId
-        self.bot.do(queen(AbilityId.TRANSFUSION_TRANSFUSION, best_target))
-```
-
-**우선순위**: 🟡 MEDIUM (자원 효율성 개선)
-
----
+(Issue #3 → ✅ Resolved 섹션 참조 — `QueenTransfusionManager`로 이미 구현됨)
 
 ### Issue #4: Resource Reservation Race Condition
 
@@ -363,12 +307,11 @@ if iteration % SECOND == 0:
 
 | 우선순위 | 이슈 | 영향도 | 난이도 |
 |---------|------|--------|--------|
-| 🟡 MEDIUM | #3 Transfusion 우선순위 | 중간 | 중간 |
 | 🟡 MEDIUM | #4 Resource Race Condition | 낮음 | 중간 |
 | 🟢 LOW | #5 코드 중복 제거 | 낮음 | 쉬움 |
 | 🟢 LOW | #6 매직 넘버 | 낮음 | 쉬움 |
 
-(Issue #1, #2 → ✅ Resolved 섹션 참조)
+(Issue #1, #2, #3 → ✅ Resolved 섹션 참조)
 
 ---
 
