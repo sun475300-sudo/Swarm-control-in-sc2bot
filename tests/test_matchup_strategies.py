@@ -232,7 +232,9 @@ class TestZvPStrategies(unittest.TestCase):
     def test_storm_dodge(self):
         bot = FakeBot("Race.Protoss")
         bot.state.effects = [
-            SimpleNamespace(id=SimpleNamespace(name="PSYCHICSTORM"), positions=[Point(10, 10)])
+            SimpleNamespace(
+                id=SimpleNamespace(name="PSYCHICSTORM"), positions=[Point(10, 10)]
+            )
         ]
         ling = FakeUnit(1, "ZERGLING", Point(11, 10))
 
@@ -268,9 +270,13 @@ class TestZvZStrategies(unittest.TestCase):
         ling = FakeUnit(1, "ZERGLING", Point(10, 10))
         bane = FakeUnit(2, "BANELING", Point(8, 8))
         enemy_bane = FakeUnit(20, "BANELING", Point(12, 10))
-        enemy_lings = [FakeUnit(30 + i, "ZERGLING", Point(10 + i * 0.2, 10)) for i in range(4)]
+        enemy_lings = [
+            FakeUnit(30 + i, "ZERGLING", Point(10 + i * 0.2, 10)) for i in range(4)
+        ]
 
-        handled = ZvZMicroAdjustments(bot).apply([ling, bane], [enemy_bane] + enemy_lings)
+        handled = ZvZMicroAdjustments(bot).apply(
+            [ling, bane], [enemy_bane] + enemy_lings
+        )
 
         self.assertIn(1, handled)
         self.assertIn(2, handled)
@@ -323,7 +329,9 @@ class TestBuildTransitions(unittest.TestCase):
         blackboard = Blackboard({"army_power_ratio": 1.5})
         bot = FakeBot("Race.Zerg", blackboard)
         bot.time = 220.0
-        bot.units = UnitList([FakeUnit(i, "ZERGLING", Point(20, 20)) for i in range(12)])
+        bot.units = UnitList(
+            [FakeUnit(i, "ZERGLING", Point(20, 20)) for i in range(12)]
+        )
         bot.units += [FakeUnit(100 + i, "BANELING", Point(20, 20)) for i in range(6)]
         bot.state.upgrades = [SimpleNamespace(name="ZERGLINGMOVEMENTSPEED")]
         manager = StrategyManager(bot, blackboard)
