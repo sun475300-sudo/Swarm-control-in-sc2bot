@@ -8,7 +8,17 @@ from types import SimpleNamespace
 from unittest.mock import MagicMock, patch
 
 import pytest
-from sc2.ids.unit_typeid import UnitTypeId
+
+try:
+    from sc2.ids.unit_typeid import UnitTypeId
+except ImportError:  # 테스트 환경 fallback (sc2 미설치)
+
+    class UnitTypeId:  # type: ignore[no-redef]
+        QUEEN = "QUEEN"
+        ULTRALISK = "ULTRALISK"
+        ZERGLING = "ZERGLING"
+        ROACH = "ROACH"
+        BANELING = "BANELING"
 
 # ---------------------------------------------------------------------------
 # Minimal stubs so we can import without a running SC2 environment
