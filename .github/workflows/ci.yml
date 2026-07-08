@@ -47,7 +47,7 @@ jobs:
       - name: Python 의존성 설치
         run: |
           python -m pip install --upgrade pip
-          pip install flake8 pytest pytest-cov
+          pip install flake8 pytest pytest-cov pytest-asyncio pytest-timeout cffi
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
           # 추가 테스트 의존성
           pip install pyyaml aiohttp
@@ -112,11 +112,16 @@ jobs:
 
       - name: pytest 실행 (전체)
         run: |
-          pytest tests/ -v --tb=short --co -q
-          pytest tests/test_crypto_trading.py tests/test_security.py -v --tb=short
+          pytest tests/ -v --tb=short -q
         env:
           DRY_RUN: "true"
           LOG_LEVEL: "DEBUG"
+          # burnysc2's bundled s2clientprotocol _pb2.py files are generated
+          # against an older protoc than the protobuf package pip installs
+          # here, which makes descriptor creation raise TypeError at import
+          # time under the C++ backend. The pure-Python backend parses the
+          # same descriptors without the version check.
+          PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION: python
 
   # ─────────────────────────────────────────────
   # SC2 봇 구문 검증 + 테스트
