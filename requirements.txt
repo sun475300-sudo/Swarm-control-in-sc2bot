@@ -27,10 +27,13 @@ discord.py>=2.3.0
 # ═══════════════════════════════════════════════
 # AI / GenAI
 # ═══════════════════════════════════════════════
-google-generativeai>=0.5.0
-# Pinned to keep google-generativeai's google-ai-generativelanguage (protobuf<5)
-# and google-api-core (protobuf>=5.29.6 in >=2.20) from producing a
-# ResolutionImpossible conflict with s2clientprotocol's protobuf dependency.
+google-generativeai>=0.8.0
+# Floor raised to 0.8.0 and protobuf/google-api-core pinned below so pip's
+# resolver lands directly on a compatible set instead of backtracking through
+# every 0.5.x-0.7.x google-generativeai release (each pulls a google-ai-
+# generativelanguage build needing protobuf<5, which collides with newer
+# google-api-core's protobuf>=5.29.6 floor) before giving up with
+# ResolutionImpossible.
 protobuf>=3.20.3,<5.0.0
 google-api-core<2.20.0
 
