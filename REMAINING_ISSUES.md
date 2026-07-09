@@ -14,14 +14,15 @@
 
 | ID | 설명 | 우선순위 | 상태 |
 |----|------|---------|------|
-| N1 | `OpponentModeling.on_step` 중복 정의 (line 341 vs 765 — F811) | 🟠 HIGH | open — 동작 영향(상위 on_step이 미실행) 가능 |
-| N2 | `EconomyManager._prevent_resource_banking` / `_reduce_gas_workers` 재정의 (F811) | 🟡 MED | open |
-| N3 | `combat_manager._find_harass_target` 재정의 (line 2377 vs 4278) | 🟡 MED | open |
-| N4 | `production_resilience.build_terran_counters` 재정의 (1369 vs 1866) | 🟡 MED | open |
-| N5 | bare `except Exception:` 다수 (≈360+) — 이번 PR에서 12건 처리, 잔여 다수 | 🟢 LOW | partial |
+| N1 | `OpponentModeling.on_step` 중복 정의 (line 341 vs 765 — F811) | 🟠 HIGH | ✅ **재검증 결과 이미 해결됨** (2026-07-09) — 정의 1건만 존재, AST 전수 스캔에서 `wicked_zerg_challenger/` 전체 중복 함수 0건 확인 |
+| N2 | `EconomyManager._prevent_resource_banking` / `_reduce_gas_workers` 재정의 (F811) | 🟡 MED | ✅ 재검증 결과 이미 해결됨 (2026-07-09) |
+| N3 | `combat_manager._find_harass_target` 재정의 (line 2377 vs 4278) | 🟡 MED | ✅ 재검증 결과 이미 해결됨 (2026-07-09) |
+| N4 | `production_resilience.build_terran_counters` 재정의 (1369 vs 1866) | 🟡 MED | ✅ 재검증 결과 이미 해결됨 (2026-07-09) |
+| N5 | bare `except Exception:` 다수 (≈360+) — 이번 PR에서 12건 처리, 잔여 다수 | 🟢 LOW | open — 2026-07-09 재확인: `wicked_zerg_challenger/` 내 468건 잔존 |
 | N6 | F841 unused local variables (visuals/make_pptx 등) | 🟢 LOW | open (presentation 코드라 영향 작음) |
+| N7 | `tests/test_combat_phase_fsm.py`가 `asyncio.get_event_loop().run_until_complete()`를 사용 — 스위트 전체 실행 시 이전 테스트가 닫은 이벤트 루프에 의존해 순서 종속적으로 실패 (`RuntimeError: There is no current event loop`), 단독 실행 시엔 통과해 발견이 어려움 | 🟠 HIGH | ✅ Fixed 2026-07-09 — `asyncio.run(...)`으로 교체 (5곳), 풀스위트 502 passed로 검증 |
 
-검증 권장: PR 분리 (N1 단독 PR 권장 — 동작 변화 가능성).
+이 표의 N1~N4는 문서만 stale했던 것으로 확인(과거 어느 시점엔가 이미 코드에서 수정됨). **결론: `MASTER_TODO_SC2.md` / `ROADMAP.md`의 다수 항목도 실제 코드 대비 낡아 있을 가능성이 높음 — 작업 전 항상 코드를 먼저 확인할 것.**
 
 ---
 
