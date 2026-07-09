@@ -522,6 +522,27 @@ class TestProactiveExpansion:
         # Function should complete
         assert True
 
+    @pytest.mark.asyncio
+    async def test_expand_now_fallback_runs_when_smart_expansion_fails(self):
+        """_perform_smart_expansion 실패 시 expand_now() 폴백이 실제로 호출되어야 한다.
+
+        Regression test: an unreachable `return` used to sit right after the
+        smart-expansion call, making the expand_now()/gold-priority fallback
+        dead code whenever smart expansion failed.
+        """
+        bot = MockBot()
+        bot.townhalls = MockUnits([MockUnit(100, "HATCHERY", (50, 50))])
+        bot.minerals = 300
+        bot.time = 180.0
+        bot.expand_now = AsyncMock(return_value=True)
+
+        manager = EconomyManager(bot)
+        manager._perform_smart_expansion = AsyncMock(return_value=False)
+
+        await manager._check_proactive_expansion()
+
+        bot.expand_now.assert_awaited_once()
+
     def test_followup_reserves_fourth_hatch_without_real_threat(self):
         bot = MockBot()
         bot.time = 280.0

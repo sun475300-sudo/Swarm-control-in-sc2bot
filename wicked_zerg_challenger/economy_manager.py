@@ -2290,9 +2290,6 @@ class EconomyManager:
         if expansion_success:
             return
 
-        self.logger.info(f"[EXPAND] ALL METHODS FAILED - Check bot state")
-        return
-
         # * 확장 실행 - bot.expand_now() 우선 사용 (안정적) *
         expansion_success = False
 
