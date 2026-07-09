@@ -8,6 +8,10 @@ psutil>=5.8.0
 s2clientprotocol>=4.19.0.0
 sc2reader>=0.8.0
 pyyaml>=6.0
+# s2clientprotocol ships pb2 modules generated against protobuf 3.x; protobuf
+# >=4 rejects them at import time ("Descriptors cannot be created directly"),
+# which breaks every `import sc2` in a fresh install (CI included).
+protobuf<4
 
 # ═══════════════════════════════════════════════
 # Crypto Trading Service

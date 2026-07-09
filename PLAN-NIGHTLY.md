@@ -2,7 +2,47 @@
 
 > Owner: 선우 (sun475300@gmail.com)
 > Maintainer: nightly automation
-> Last refreshed: 2026-05-04
+> Last refreshed: 2026-07-09
+
+---
+
+## ⚠️ Governance alert (2026-07-09)
+
+The repo currently has **300+ open draft PRs**, almost all opened by this same
+automated test/fix loop since 2026-04-20, and **none have ever been merged**.
+`main` is still on the CI-path bug that dozens of these PRs have already
+independently re-fixed (most recently and most completely in **PR #372**,
+verified clean against current `main` tip: 502+661+10 tests passing, 0
+failed). Every session that opens another "fix CI" PR instead of getting one
+merged adds to the exact problem. **Recommended next step (needs repo-owner
+sign-off, out of scope for an unattended session): merge PR #372, then close
+the superseded duplicates.**
+
+This run intentionally did **not** re-fix the `sc2bot-ci.yml` path bug or
+redo the black/isort sweep — PR #372 already has that covered. Instead it
+found and fixed two things not covered by any open PR at the time:
+
+1. **`requirements.txt` had no `protobuf` pin.** A plain `pip install -r
+   requirements.txt` on a clean interpreter resolves `protobuf>=4`, which
+   rejects `s2clientprotocol`'s pre-generated `_pb2.py` files
+   ("Descriptors cannot be created directly") — breaking every `import sc2`,
+   including in the `python-lint-test` CI job that has no
+   `PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION` workaround. Pinned `protobuf<4`.
+2. **41 tests silently skipped depending on collection order.**
+   `tests/test_advanced_scout_system_v2.py` and
+   `tests/test_harassment_coordinator.py` import
+   `wicked_zerg_challenger.*` modules that do bare `from utils.xxx import
+   ...`; that only resolves correctly if `wicked_zerg_challenger/` precedes
+   the repo-root's unrelated `utils/` package (jarvis_features) on
+   `sys.path` *before* the first such import runs anywhere in the process.
+   It worked only because `tests/test_matchup_strategies.py` happened to
+   mutate `sys.path` first during collection — run either file alone (or
+   change collection order) and all 41 tests skip with no failure, no
+   warning. Fixed in `tests/conftest.py` by deterministically pre-registering
+   `wicked_zerg_challenger/utils` as `sys.modules["utils"]`.
+
+Also re-verified `REMAINING_ISSUES.md` N1-N4 (duplicate method definitions)
+against current code via `grep` — confirmed already resolved, doc was stale.
 
 ---
 
