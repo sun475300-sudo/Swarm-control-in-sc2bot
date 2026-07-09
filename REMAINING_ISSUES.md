@@ -6,8 +6,10 @@
 
 **Last refreshed:** 2026-07-09 — 자동 점검 사이클에서 재검증. 아래 N1~N6, #3~#6 항목은
 모두 코드에 이미 반영되어 있는 것으로 확인되어 Resolved로 이동했습니다 (본 문서가
-stale 상태였음). 현재 이 문서에는 **open 상태인 항목이 없습니다.** 새로 발견된 실제
-이슈는 `STATUS.md`/커밋 로그를 참고하세요.
+stale 상태였음). 같은 사이클에서 실제 CI/테스트 실행으로 재현한 새 이슈 M1~M10을
+발견했고 그중 M1/M4/M5/M6/M7(전부 테스트·CI 인프라 차단 버그)은 이번 세션에서
+수정 완료했습니다. **현재 open 상태: M2(고아 combat 모듈), M3/M8/M10(스타일 정리),
+M9(requests timeout)** — 아래 표 참고.
 
 ---
 
@@ -404,6 +406,13 @@ if iteration % SECOND == 0:
 | M1 | 저장소 루트에 `pytest/` 디렉터리가 git으로 추적되어 있어, `python -m pytest` 실행 시 실제 pytest 패키지 대신 이 디렉터리를 import하여 `No module named pytest.__main__`으로 즉시 실패함 (`run_combat_tests.bat`, `PUSH_FIX_TO_MAIN.bat`, `github_actions_advanced/sc2bot-ci.yml`이 모두 `python -m pytest` 사용) | 🔴 HIGH | ✅ Fixed — `pytest/` → `python_pytest_demo/`로 이름 변경 |
 | M2 | `wicked_zerg_challenger/combat/` 하위 13개 모듈(`queen_walk.py`, `doom_drop.py`, `multiprong_attack.py`, `air_unit_manager.py`, `attack_controller.py`, `baneling_bomb.py`, `combat_execution.py`, `expansion_defense.py`, `lurker_positioning.py`, `multitasking.py`, `nydus_tactics.py`, `victory_tracker.py`, `viper_tactics.py`, 총 ~4,700줄)가 구현되어 있으나 어디에서도 import되지 않아 런타임에 전혀 실행되지 않음. `SESSION_SUMMARY.md`에 기록된 과거 사례(overlord_transport/roach_burrow_heal 미통합)와 동일한 패턴이 13건 더 있는 상태 | 🟠 HIGH | open — 실제 SC2 클라이언트로 검증 불가한 샌드박스 환경이라, 모듈별로 안전하게(단위 테스트 포함) 하나씩 배선하는 후속 작업 필요. 일괄 배선은 검증 없이 리스크만 키우므로 지양 |
 | M3 | bare `except Exception:` 465건 (N5 연장) | 🟢 LOW | open — 광범위 리팩터, 점진적 작업으로 분리 |
+| M4 | `sc2bot-ci.yml`의 "Lint & Type Check" 잡이 `black --check --diff .`에서 66개 파일 포맷 드리프트로 실패 중 (blocking) | 🔴 HIGH | ✅ Fixed — `black .` + `isort .` 실행, 88개 파일 정리 |
+| M5 | 저장소에 `scripts/`라는 이름의 디렉터리가 5곳(루트, `wicked_zerg_challenger/`, `wicked_zerg_challenger/local_training/`, `sc2-ai-dashboard/`, `julia_ml/`) 존재하고 전부 `__init__.py`가 없어 암묵적 네임스페이스 패키지로 충돌 — 전체 스위트 실행 시 `test_ladder_tracker.py`/`test_meta_adapter.py`가 `ModuleNotFoundError: No module named 'scripts.ladder_tracker'`로 수집 실패 | 🟠 HIGH | ✅ Fixed — 루트 `scripts/__init__.py` 추가로 실 패키지화 |
+| M6 | `tests/test_combat_phase_fsm.py`의 5개 헬퍼가 `asyncio.get_event_loop().run_until_complete(...)`를 사용 — 앞서 실행된 pytest-asyncio 기반 테스트가 스레드의 앰비언트 이벤트 루프를 닫아버리면 `RuntimeError: There is no current event loop in thread 'MainThread'`로 12개 테스트 전부 실패 (`pytest tests/test_combat_manager.py tests/test_combat_phase_fsm.py`로 재현) | 🟠 HIGH | ✅ Fixed — `asyncio.run(...)`으로 교체 (자체 루프 라이프사이클 소유) |
+| M7 | `ci.yml`의 `python-lint-test` 잡이 `s2clientprotocol`을 설치하지만 `PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python`을 설정하지 않아 `pytest tests/ --co` 수집 중 `TypeError: Descriptors cannot be created directly` 로 14개 파일 수집 실패, exit code 2 | 🔴 HIGH | ✅ Fixed — 같은 워크플로의 `sc2-bot-test` 잡과 동일한 env var 추가 |
+| M8 | `flake8 --select=F811` 전체 스캔 결과 실제 코드 경로(`wicked_zerg_challenger/`)는 클린하지만, 실험적 프레임워크 디렉터리(`cirq_quantum/`, `pennylane_qml/`, `tianshou_rl/`, `jax_flax_rl/`, `discord_advanced_features.py`, `spark_jobs/`)에 지역 재-import로 인한 F811 11건 존재. 봇 핵심 로직과 무관 | 🟢 LOW | open — 우선순위 낮음, 손대지 않음 (실험 코드) |
+| M9 | `bandit -r wicked_zerg_challenger -ll`: 총 6건 (MEDIUM 5, HIGH 1). HIGH는 `tools/monitor_background_training.py:42`의 `os.system('cls'/'clear')`인데 인자가 하드코딩 상수라 실제 인젝션 위험 없음(false positive로 판단). MEDIUM 3건은 `torch.load()`(신뢰 가능한 자체 체크포인트 로드), 2건은 `requests` 타임아웃 누락(`tools/scrape_spawningtool.py`) | 🟢 LOW | open — `scrape_spawningtool.py`에 `timeout=` 추가는 안전한 다음 작업 후보 |
+| M10 | `flake8 --max-line-length=100` 전체(비차단) 스캔 통계: F401(미사용 import) 870건, E501(줄 길이) 550건, F541(placeholder 없는 f-string) 458건, F841(미사용 지역변수) 273건 — 전부 스타일/정리성 이슈로 동작에 영향 없음 | 🟢 LOW | open — 대량 기계적 정리 후보, 별도 세션에서 파일 단위로 점진 처리 권장 |
 
 ---
 
@@ -413,10 +422,16 @@ if iteration % SECOND == 0:
 1. ~~Queen Inject 쿨다운 / 누락 업그레이드~~ — 완료
 2. ~~Transfusion 우선순위 / Resource Reservation 동기화 / Position Utils / Constants 인프라~~ — 완료
 3. ~~M1: `pytest/` 디렉터리 이름 충돌~~ — 완료 (2026-07-09)
+4. ~~M4: black/isort 포맷 드리프트 (CI 차단)~~ — 완료 (2026-07-09)
+5. ~~M5: `scripts` 네임스페이스 패키지 충돌~~ — 완료 (2026-07-09)
+6. ~~M6: `test_combat_phase_fsm.py` asyncio 이벤트 루프 버그 (12건 실패)~~ — 완료 (2026-07-09)
+7. ~~M7: CI protobuf env var 누락 (수집 단계 14건 실패)~~ — 완료 (2026-07-09)
 
 ### 다음 단계
-4. M2: 고아 combat 모듈 13개 — 모듈별 단위 테스트 작성 → 1개씩 `combat_manager.py`/`combat/initialization.py`에 배선 → 회귀 테스트 통과 확인 후 커밋 (일괄 처리 금지)
-5. M3: bare except 축소 (점진적, 파일당 소규모 PR 권장)
+8. M2: 고아 combat 모듈 13개 — 모듈별 단위 테스트 작성 → 1개씩 `combat_manager.py`/`combat/initialization.py`에 배선 → 회귀 테스트 통과 확인 후 커밋 (일괄 처리 금지)
+9. M9: `scrape_spawningtool.py`에 requests timeout 추가 (작고 안전한 다음 작업)
+10. M3: bare except 축소 (점진적, 파일당 소규모 PR 권장)
+11. M10: F401/E501/F541/F841 대량 정리 (기계적, 별도 세션)
 
 ---
 
