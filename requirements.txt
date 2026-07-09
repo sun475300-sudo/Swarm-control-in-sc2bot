@@ -1,11 +1,17 @@
 # ═══════════════════════════════════════════════
 # SC2 Bot Core
 # ═══════════════════════════════════════════════
+# NOTE: do not add an explicit `s2clientprotocol` pin here. burnysc2 already
+# pulls in `pys2clientprotocol`, which installs into the same
+# `s2clientprotocol` import path but with protobuf-runtime-compatible
+# generated code. The official `s2clientprotocol` PyPI package (even at its
+# latest release) ships legacy-style codegen that crashes under modern
+# protobuf ("Descriptors cannot be created directly"); installing both is a
+# non-deterministic file-clobbering race depending on install order.
 burnysc2>=5.0.0
 numpy>=1.20.0
 matplotlib>=3.3.0
 psutil>=5.8.0
-s2clientprotocol>=4.19.0.0
 sc2reader>=0.8.0
 pyyaml>=6.0
 
