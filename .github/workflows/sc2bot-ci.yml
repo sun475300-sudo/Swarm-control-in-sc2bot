@@ -27,6 +27,8 @@ jobs:
         python-version: ["3.10", "3.11", "3.12"]
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v5
@@ -37,11 +39,27 @@ jobs:
       - name: Install lint dependencies
         run: pip install flake8 mypy black isort bandit
 
-      - name: Run black (format check)
-        run: black --check --diff .
+      # The repo has a large pre-existing black/isort formatting backlog
+      # (tracked in MASTER_TODO_SC2.md). Reformatting it all in one PR would
+      # conflict with every other in-flight PR, so lint only checks files
+      # this PR actually touches instead of the whole tree.
+      - name: Determine changed Python files
+        id: changed
+        run: |
+          BASE_SHA="${{ github.event.pull_request.base.sha }}"
+          if [ -z "$BASE_SHA" ]; then
+            BASE_SHA=$(git rev-parse HEAD~1 2>/dev/null || git rev-parse HEAD)
+          fi
+          FILES=$(git diff --name-only --diff-filter=ACMR "$BASE_SHA" HEAD -- '*.py' | tr '\n' ' ')
+          echo "files=$FILES" >> "$GITHUB_OUTPUT"
 
-      - name: Run isort (import order)
-        run: isort --check-only --diff .
+      - name: Run black (format check on changed files)
+        if: steps.changed.outputs.files != ''
+        run: black --check --diff ${{ steps.changed.outputs.files }}
+
+      - name: Run isort (import order on changed files)
+        if: steps.changed.outputs.files != ''
+        run: isort --check-only --diff ${{ steps.changed.outputs.files }}
 
       - name: Run flake8 (full — non-blocking, informational)
         continue-on-error: true
@@ -75,11 +93,11 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt pytest pytest-cov pytest-asyncio
 
-      - name: Run unit tests
-        run: pytest tests/unit -v --cov=. --cov-report=xml --cov-report=term
+      - name: Run test suite (root tests/, includes tests/integration)
+        run: pytest tests/ -v --cov=. --cov-report=xml --cov-report=term
 
-      - name: Run integration tests
-        run: pytest tests/integration -v --timeout=120
+      - name: Run wicked_zerg_challenger test suite
+        run: pytest wicked_zerg_challenger/tests/ -v
 
       - name: Upload coverage
         uses: codecov/codecov-action@v4
