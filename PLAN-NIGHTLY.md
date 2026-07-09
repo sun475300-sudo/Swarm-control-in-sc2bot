@@ -2,18 +2,32 @@
 
 > Owner: 선우 (sun475300@gmail.com)
 > Maintainer: nightly automation
-> Last refreshed: 2026-05-04
+> Last refreshed: 2026-07-09
 
 ---
 
 ## Snapshot (current state)
 
-- Branch: `main`, last commit: queen transfusion + requirements-dev.txt session
+- Branch: `claude/optimistic-edison-3jsqye` (PR to `main`), last commit: CI pipeline + formatting repair session
 - Bot core: `wicked_zerg_challenger/` — 179+ Python files across 10+ subdirs.
 - `.gitattributes` enforces `* text=auto` ✅
-- CI: `sc2bot-ci.yml` runs black + isort + flake8 ✅ (all clean)
-- **Test suite: 468 pass / 15 skip / 0 fail** ✅ (was 398/20/0 two nights ago)
-- Queen transfusion logic: 3 bugs fixed (`is_idle` guard removed, target dedup, per-queen cooldown) ✅
+- CI: `sc2bot-ci.yml` lint job (black + isort + flake8) — was RED (66 files unformatted, 16 import-order errors), now ✅ clean
+- CI: `sc2bot-ci.yml` test job was misconfigured (`pytest tests/unit` — directory never existed, exit code 4, job always failed) — fixed to run the real suites
+- **Test suite (root `tests/`): 502 pass / 14 skip / 0 fail** ✅
+- **Test suite (`wicked_zerg_challenger/tests/`): 661 pass / 0 fail** ✅ (not previously wired into `sc2bot-ci.yml` at all)
+- **Test suite (`tests/integration/`): 10 pass / 0 fail** ✅
+
+## Resolved this run (2026-07-09)
+
+| Item | File(s) | Notes |
+|------|---------|-------|
+| CI test job pointed at nonexistent `tests/unit` | `.github/workflows/sc2bot-ci.yml` | Every run of this workflow's `test` job failed at the first step (exit 4), blocking `build_docker`/`push_to_registry`/`deploy_to_k8s` downstream. Repointed at `tests` (minus `tests/integration`), kept the existing integration step, and added a new step running `wicked_zerg_challenger/tests` (661 tests) which this workflow never executed. |
+| CI missing `pytest-timeout` dependency | `.github/workflows/sc2bot-ci.yml` | Integration step already used `--timeout=120` but the install step never installed the plugin providing that flag. |
+| Combat-phase FSM tests order-dependent | `tests/test_combat_phase_fsm.py` | 12/23 tests failed only when the full suite ran (passed in isolation): `asyncio.get_event_loop()` raises `RuntimeError` once any earlier pytest-asyncio test calls `set_event_loop(None)` at teardown. Replaced the 5 `asyncio.get_event_loop().run_until_complete(...)` call sites with `asyncio.run(...)`. |
+| `cryptography`/`_cffi_backend` import panic | sandbox install only | `pip install cffi` — not a code change, just a missing transitive dep in this session's environment. |
+| black/isort formatting drift | 71 files (66 black, 16 isort, overlapping) | `black .` + `isort .` — repo had drifted out of CI compliance (likely from files added without running formatters). Purely mechanical, no logic changes; full suite re-verified green after. |
+
+## Resolved previous run (2026-05-03)
 
 ## Resolved this run (2026-05-03)
 
@@ -94,3 +108,5 @@ Run `E:\GitHub\Swarm-control-in-sc2bot\scripts\commit_nightly_2026-05-03.bat`:
 - **2026-05-01** — P1.1 scout cadence, P1.2 harassment, P1.3 expansion timing, P1.5 doc history. Commit blocked by index.lock.
 - **2026-05-02** — P0 scout import mismatch fixed. P1.4 deprecation shim. P2.1 FSM tests 23/23 pass.
 - **2026-05-03** — **Test suite cleared:** 90 failures → 0. Fixed pytest-asyncio, torch stubs (qmix/mappo), stale __init__ exports (mappo/comm_learning), gas threshold test, crypto skipif guards. Final: 398 pass / 20 skip / 0 fail.
+- **2026-06-01/02** — PR #218: 7 failing tests + 1 collection error resolved, 6 F821 NameError bugs fixed, shadowed duplicate methods deleted (`OpponentModeling.on_step`, `EconomyManager._prevent_resource_banking`/`_reduce_gas_workers`, `combat_manager._find_harass_target`, `production_resilience.build_terran_counters` — closes `REMAINING_ISSUES.md` N1–N4), unimplemented-but-called methods implemented.
+- **2026-07-09** — **CI pipeline repair:** `sc2bot-ci.yml` test job fixed (was pointed at nonexistent `tests/unit`, always failing at exit 4 — blocked `build_docker`/`push_to_registry`/`deploy_to_k8s` on every run since the job was written); now also runs `wicked_zerg_challenger/tests` (661 tests), which had never been wired into this workflow. `test_combat_phase_fsm.py` order-dependent failures fixed (`asyncio.get_event_loop()` → `asyncio.run()`, 5 call sites). black/isort drift repaired across 71 files (lint job was red, blocking the whole pipeline via `needs: lint`). Combined suite: 502 + 661 + 10 = 1173 tests, 0 fail, 14 skip (all env-gated: `pyupbit`/`config.yaml` absent in sandbox).

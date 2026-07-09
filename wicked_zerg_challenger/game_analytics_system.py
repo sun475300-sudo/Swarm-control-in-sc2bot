@@ -103,16 +103,18 @@ class GameAnalytics:
         if not won:
             logger.info(self._get_defeat_analysis(game_record))
 
-    def _update_race_stats(self, opponent_race: str, won: bool, game_time: float) -> None:
+    def _update_race_stats(
+        self, opponent_race: str, won: bool, game_time: float
+    ) -> None:
         if opponent_race not in self.race_stats:
             self.race_stats[opponent_race] = {"games": 0, "wins": 0, "avg_time": 0.0}
         race = self.race_stats[opponent_race]
         race["games"] += 1
         if won:
             race["wins"] += 1
-        race["avg_time"] = (
-            race["avg_time"] * (race["games"] - 1) + game_time
-        ) / race["games"]
+        race["avg_time"] = (race["avg_time"] * (race["games"] - 1) + game_time) / race[
+            "games"
+        ]
 
     def _update_map_stats(self, map_name: str, won: bool, game_time: float) -> None:
         if map_name not in self.map_stats:
@@ -297,7 +299,9 @@ class GameAnalytics:
                 ]
             )
         elif win_rate < 60:
-            lines.append(f"  [OK] Win rate is mixed ({win_rate:.1f}%). Continue training.")
+            lines.append(
+                f"  [OK] Win rate is mixed ({win_rate:.1f}%). Continue training."
+            )
         else:
             lines.append(f"  [GOOD] Win rate is healthy ({win_rate:.1f}%).")
         return "\n".join(lines)
