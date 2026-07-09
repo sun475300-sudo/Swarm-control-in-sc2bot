@@ -117,6 +117,11 @@ jobs:
         env:
           DRY_RUN: "true"
           LOG_LEVEL: "DEBUG"
+          # tests/ 하위의 SC2 봇 관련 테스트가 sc2.position -> s2clientprotocol을
+          # import할 때, 최신 protobuf의 C++/upb 백엔드가 구버전 생성 코드(_pb2.py)와
+          # 충돌해 "Descriptors cannot be created directly" TypeError가 발생한다.
+          # wicked_zerg_challenger/tests/conftest.py와 동일하게 순수 파이썬 구현으로 강제.
+          PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION: "python"
 
   # ─────────────────────────────────────────────
   # SC2 봇 구문 검증 + 테스트
