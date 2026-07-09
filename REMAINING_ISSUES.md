@@ -4,7 +4,7 @@
 
 통합 문제 해결 후 발견된 추가 개선 사항들입니다.
 
-**Last refreshed:** 2026-04-27 (Issue #1, #2 → Resolved; Issue #6 partially resolved via Batch 3)
+**Last refreshed:** 2026-07-09 (Issue #3, #4 → Resolved; Issue #1, #2 → Resolved; Issue #6 partially resolved via Batch 3)
 
 ---
 
@@ -65,11 +65,25 @@
 
 검증 출처: `ACTION_LOG_20260419.md` Task #6.
 
+### ✅ Issue #3: Transfusion 우선순위 — 구현 완료 (확인일: 2026-07-09)
+
+`wicked_zerg_challenger/economy/queen_transfusion_manager.py`에 `HEAL_PRIORITY` 딕셔너리와
+`_find_best_transfusion_target()` 우선순위 정렬 로직이 이미 구현되어 있음. 회귀 테스트:
+`tests/test_queen_transfusion.py`, `tests/test_queen_transfusion_manager.py`.
+문서가 stale했던 것으로, 별도 작업 없이 닫습니다.
+
+### ✅ Issue #4: Resource Reservation Race Condition — 구현 완료 (확인일: 2026-07-09)
+
+`wicked_zerg_challenger/core/resource_manager.py`의 `ResourceManager` 클래스가 정확히 이 문서가
+제안한 `asyncio.Lock` 기반 `try_reserve()`/`release()` 설계로 이미 구현되어 있으며,
+`economy_manager.py`, `defense_coordinator.py`, `local_training/production_resilience.py`,
+`bot_step_integration.py`에서 실제로 사용 중. 문서가 stale했던 것으로, 별도 작업 없이 닫습니다.
+
 ---
 
-## 🟡 MEDIUM Priority Issues (still open)
+## 🟡 MEDIUM Priority Issues (historical — kept for context, both since resolved above)
 
-### Issue #3: Transfusion 우선순위 개선 필요
+### Issue #3 (원본 제안, 참고용): Transfusion 우선순위 개선 필요
 
 **위치**: `queen_manager.py` 또는 `spell_unit_manager.py`
 
@@ -142,7 +156,7 @@ async def smart_transfusion(self, queen, damaged_units):
 
 ---
 
-### Issue #4: Resource Reservation Race Condition
+### Issue #4 (원본 제안, 참고용): Resource Reservation Race Condition
 
 **위치**: `resource_manager.py` (추정)
 
@@ -363,12 +377,10 @@ if iteration % SECOND == 0:
 
 | 우선순위 | 이슈 | 영향도 | 난이도 |
 |---------|------|--------|--------|
-| 🟡 MEDIUM | #3 Transfusion 우선순위 | 중간 | 중간 |
-| 🟡 MEDIUM | #4 Resource Race Condition | 낮음 | 중간 |
-| 🟢 LOW | #5 코드 중복 제거 | 낮음 | 쉬움 |
+| 🟢 LOW | #5 코드 중복 제거 (position_utils.py는 존재하나 combat_manager.py 등 11개 파일에서 여전히 미채택) | 낮음 | 쉬움 |
 | 🟢 LOW | #6 매직 넘버 | 낮음 | 쉬움 |
 
-(Issue #1, #2 → ✅ Resolved 섹션 참조)
+(Issue #1, #2, #3, #4 → ✅ Resolved 섹션 참조)
 
 ---
 
