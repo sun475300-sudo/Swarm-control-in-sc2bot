@@ -62,6 +62,14 @@ jobs:
   test:
     name: Test Suite
     runs-on: ubuntu-latest
+    env:
+      # burnysc2's transitive s2clientprotocol dependency can resolve to the
+      # official PyPI package instead of the pys2clientprotocol fork depending
+      # on how pip resolves the rest of requirements.txt; the official
+      # package ships legacy-style protobuf codegen that crashes under
+      # modern protobuf ("Descriptors cannot be created directly"). Pure-
+      # Python parsing sidesteps that check regardless of which one wins.
+      PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION: python
     steps:
       - uses: actions/checkout@v4
 
