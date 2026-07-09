@@ -2,18 +2,53 @@
 
 > Owner: 선우 (sun475300@gmail.com)
 > Maintainer: nightly automation
-> Last refreshed: 2026-05-04
+> Last refreshed: 2026-07-09
 
 ---
 
+## ⚠️ GOVERNANCE ALERT (2026-07-09) — read this before starting a new test/fix cycle
+
+The repo currently has **334 open pull requests**, almost all opened by this same
+nightly automation loop since **2026-04-20**, and **none of them have ever been
+merged**. `main` is still sitting near where it was months ago while dozens of
+branches independently re-fix the *same* handful of root problems:
+
+- `sc2bot-ci.yml`'s `test` job calling `pytest tests/unit` (a directory that has
+  never existed) — refixed by at least ~60 separate PRs (#313–#372 alone) in the
+  last 3 days.
+- `asyncio.get_event_loop()` order-dependent crashes in `test_combat_phase_fsm.py`.
+- black/isort formatting drift blocking the `lint` → `test` dependency chain.
+
+**PR #372** (`claude/optimistic-edison-3jsqye`, opened 2026-07-09, base = current
+`main` tip, `mergeable_state: clean`, all 23 checks green) already contains a
+verified fix for all three: 502 (root `tests/`) + 661 (`wicked_zerg_challenger/tests/`)
++ 10 (`tests/integration/`) = **1173 passed, 0 failed, 14 skipped (env-gated)**.
+
+**Recommendation:** merge #372, then close the ~333 other stale duplicates (most
+predate it and are superseded). Until that happens, every new automated session
+should **check `list_pull_requests(state=open)` for an existing fix before
+re-doing the CI-path/asyncio/formatting work** — this doc alone wasn't enough to
+prevent 300+ duplicates, so the check needs to happen in-session, not just in docs.
+This is flagged for the repo owner to confirm before any bulk merge/close, since
+that's a shared-state action outside a single session's authority.
+
 ## Snapshot (current state)
 
-- Branch: `main`, last commit: queen transfusion + requirements-dev.txt session
-- Bot core: `wicked_zerg_challenger/` — 179+ Python files across 10+ subdirs.
+- Branch: `main` @ `8a80b73` ("Update ci.yml", manual, 2026-06-25).
+- Bot core: `wicked_zerg_challenger/` — 417+ Python files across 10+ subdirs (grew from 179 in May).
 - `.gitattributes` enforces `* text=auto` ✅
-- CI: `sc2bot-ci.yml` runs black + isort + flake8 ✅ (all clean)
-- **Test suite: 468 pass / 15 skip / 0 fail** ✅ (was 398/20/0 two nights ago)
-- Queen transfusion logic: 3 bugs fixed (`is_idle` guard removed, target dedup, per-queen cooldown) ✅
+- CI: `sc2bot-ci.yml` lint job (black/isort/flake8) is clean on `main`, but the
+  **`test` job has been broken since it was written** (`pytest tests/unit` — nonexistent
+  path, exit code 4 every run) — see Governance Alert above. Fix is ready in PR #372,
+  unmerged.
+- Static sweep this run: `py_compile` clean across all of `wicked_zerg_challenger/`;
+  AST scan for duplicate method defs within a class → **0 found** (the N1–N4 items in
+  `REMAINING_ISSUES.md` — duplicate `on_step`/`_prevent_resource_banking`/
+  `_find_harass_target`/`build_terran_counters` — are already fixed in the code that
+  doc just hadn't been updated to reflect).
+- `economy/queen_transfusion_manager.py` — `REMAINING_ISSUES.md` Issue #3 (priority-based
+  smart transfusion) is fully implemented and wired into `bot_step_integration.py`
+  (`Phase 21` init), not just proposed.
 
 ## Resolved this run (2026-05-03)
 
@@ -63,28 +98,6 @@
 
 ---
 
-## Pending Windows actions (user)
-
-Run `E:\GitHub\Swarm-control-in-sc2bot\scripts\commit_nightly_2026-05-03.bat`:
-1. `qmix_marl/sc2_qmix_agent.py` (torch stubs)
-2. `mappo_marl/sc2_mappo_agent.py` (torch stubs)
-3. `mappo_marl/__init__.py` (stale export fix)
-4. `comm_learning/__init__.py` (stale export fix)
-5. `tests/test_phase10_improvements.py` (gas threshold 800)
-6. `tests/test_crypto_trading.py` (pyupbit skipif fix)
-7. `tests/test_combat_phase_fsm.py` (P2.1 FSM tests — from prev session)
-8. `wicked_zerg_challenger/bot_step_integration.py` (P0 scout import fix — prev)
-9. `wicked_zerg_challenger/scouting/advanced_scout_system_v2.py` (compat alias — prev)
-10. `wicked_zerg_challenger/scouting/enhanced_scout_system.py` (deprecation shim — prev)
-11. `wicked_zerg_challenger/combat/harassment_coordinator.py` (P1.2 — prev)
-12. `wicked_zerg_challenger/scouting/phase_scout_cadence.py` + test (P1.1 — prev)
-13. `tests/test_expansion_timing.py` (P1.3 — prev)
-14. `docs/history/` (P1.5 — prev)
-15. Updated `PLAN-NIGHTLY.md`
-16. Also add `pytest-asyncio>=0.23` to `requirements-dev.txt` (P1.6)
-
----
-
 ## Run history
 
 - **2026-04-25** — Initial nightly plan.
@@ -94,3 +107,4 @@ Run `E:\GitHub\Swarm-control-in-sc2bot\scripts\commit_nightly_2026-05-03.bat`:
 - **2026-05-01** — P1.1 scout cadence, P1.2 harassment, P1.3 expansion timing, P1.5 doc history. Commit blocked by index.lock.
 - **2026-05-02** — P0 scout import mismatch fixed. P1.4 deprecation shim. P2.1 FSM tests 23/23 pass.
 - **2026-05-03** — **Test suite cleared:** 90 failures → 0. Fixed pytest-asyncio, torch stubs (qmix/mappo), stale __init__ exports (mappo/comm_learning), gas threshold test, crypto skipif guards. Final: 398 pass / 20 skip / 0 fail.
+- **2026-07-09** — **Governance audit, not another CI-fix duplicate.** Discovered 334 open PRs (accumulated since 2026-04-20) from repeated nightly cycles, none merged; `main` still has the `tests/unit`-path CI bug live. Verified via `py_compile` + AST scan that `REMAINING_ISSUES.md` N1–N4 (duplicate method defs) and Issue #3 (transfusion priority) are already fixed/implemented in code — that doc was just stale, causing wasted re-investigation. Refreshed `PLAN-NIGHTLY.md`/`STATUS.md`/`REMAINING_ISSUES.md` to match reality and added the alert above. Recommended action: merge PR #372 (verified green, 1173 tests passing) and close the superseded duplicates. **Did not open a new PR for the CI fix itself** since #372 already covers it — opening a 335th duplicate would make the problem worse, not better.
