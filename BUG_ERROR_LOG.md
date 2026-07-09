@@ -57,13 +57,18 @@ assert manager.macro_hatchery_mineral_threshold >= 1500
 assert manager.macro_hatchery_mineral_threshold >= 300  # 600이 기본값
 ```
 
-**상태:** 🔧 수정 필요 (테스트 기댓값 업데이트)
+**상태:** ✅ 수정 완료 (확인일: 2026-07-09) — `tests/test_economy_manager.py:193`가 이미 `>= 300`으로 수정되어 있음. 문서가 stale했던 것으로, 별도 작업 없이 닫습니다.
 
 ---
 
 ## 🚫 수집 오류 (COLLECTION ERRORS) — 8개
 
-### ENV-001 | protobuf 버전 호환성 오류 (심각도: MEDIUM)
+### ENV-001 | protobuf 버전 호환성 오류 (심각도: MEDIUM) — ✅ 수정 완료 (2026-07-09)
+
+**해결 방법:** `tests/conftest.py`에 `os.environ.setdefault("PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION", "python")`를
+테스트 수집 전(가장 위)에 추가 (`wicked_zerg_challenger/tests/conftest.py`엔 이미 동일한 워크어라운드가 있었음).
+`requirements.txt`에 `protobuf<4.0.0`을 고정하는 대신 이 방식을 택한 이유: google-generativeai/mcp 등
+다른 의존성이 최신 protobuf를 요구할 수 있어 버전 고정은 전체 설치를 깨뜨릴 위험이 있음.
 
 | 항목 | 내용 |
 |:---|:---|
@@ -176,8 +181,8 @@ alphastar_arch/             █░░░░░░░░░░░░░░░░�
 
 | ID | 날짜 | 심각도 | 상태 | 설명 |
 |:---|:---|:---:|:---:|:---|
-| BUG-001 | 2026-03-31 | 🟡 LOW | 🔧 오픈 | economy_manager 테스트 기댓값 불일치 |
-| ENV-001 | 2026-03-31 | 🟠 MED | 🔧 오픈 | protobuf 버전 호환성 (s2clientprotocol) |
+| BUG-001 | 2026-03-31 | 🟡 LOW | ✅ 수정 | economy_manager 테스트 기댓값 불일치 |
+| ENV-001 | 2026-03-31 | 🟠 MED | ✅ 수정 | protobuf 버전 호환성 (s2clientprotocol) |
 | BUG-002 | 이전 세션 | 🟢 DONE | ✅ 수정 | HP 가중치 전투 계산 오류 |
 | BUG-003 | 이전 세션 | 🟢 DONE | ✅ 수정 | 가스 가드 로직 오류 |
 | BUG-004 | 이전 세션 | 🟢 DONE | ✅ 수정 | 크립 확산 BFS 무한루프 |
@@ -191,16 +196,15 @@ alphastar_arch/             █░░░░░░░░░░░░░░░░�
 
 ## 🔜 다음 조치 계획
 
-1. **즉시 (Priority 1)**
-   - `test_initialization_with_config` 기댓값 `>= 1500` → `>= 300`으로 수정
-   - `requirements.txt`에 `protobuf>=3.19.0,<4.0.0` 버전 고정
+1. **완료 (2026-07-09)** ✅
+   - ~~`test_initialization_with_config` 기댓값 `>= 1500` → `>= 300`으로 수정~~ — 이미 반영됨
+   - ~~CI/CD에 `PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python` 추가~~ — `tests/conftest.py`에 반영 (버전 고정보다 안전)
 
-2. **단기 (Priority 2)**
-   - `pytest.ini`에 `asyncio_default_fixture_loop_scope = function` 추가
+2. **단기 (Priority 2, 미착수)**
+   - `pytest.ini`에 `asyncio_default_fixture_loop_scope = function` 추가 여부 검토
    - 신규 모듈(ppo_selfplay, alphastar_arch) 유닛 테스트 작성
 
-3. **중기 (Priority 3)**
-   - CI/CD 파이프라인에 `PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python` 환경변수 추가
+3. **중기 (Priority 3, 미착수)**
    - 테스트 커버리지 90%+ 목표
 
 ---
