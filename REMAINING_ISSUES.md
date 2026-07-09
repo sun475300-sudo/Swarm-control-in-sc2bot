@@ -4,24 +4,29 @@
 
 통합 문제 해결 후 발견된 추가 개선 사항들입니다.
 
-**Last refreshed:** 2026-04-27 (Issue #1, #2 → Resolved; Issue #6 partially resolved via Batch 3)
+**Last refreshed:** 2026-07-09 — 자동 점검 사이클에서 재검증. 아래 N1~N6, #3~#6 항목은
+모두 코드에 이미 반영되어 있는 것으로 확인되어 Resolved로 이동했습니다 (본 문서가
+stale 상태였음). 같은 사이클에서 실제 CI/테스트 실행으로 재현한 새 이슈 M1~M10을
+발견했고 그중 M1/M4/M5/M6/M7(전부 테스트·CI 인프라 차단 버그)은 이번 세션에서
+수정 완료했습니다. **현재 open 상태: M2(고아 combat 모듈), M3/M8/M10(스타일 정리),
+M9(requests timeout)** — 아래 표 참고.
 
 ---
 
-## 🆕 신규 발견 (PR #44, 2026-04-27)
+## 🆕 신규 발견 (PR #44, 2026-04-27) — ✅ 전체 Resolved (2026-07-09 재검증)
 
 자동/수동 점검 사이클(테스트 → 코드 검사 → 개선 → 커밋/푸시 반복)에서 새로 식별된 항목.
+PR #218(2026-06-01~02, "stabilize SC2 bot test suite")에서 N1~N4가 이미 처리된 것을
+2026-07-09 자동 점검에서 재확인했습니다 (각 메서드 grep 결과 정의가 1곳뿐).
 
 | ID | 설명 | 우선순위 | 상태 |
 |----|------|---------|------|
-| N1 | `OpponentModeling.on_step` 중복 정의 (line 341 vs 765 — F811) | 🟠 HIGH | open — 동작 영향(상위 on_step이 미실행) 가능 |
-| N2 | `EconomyManager._prevent_resource_banking` / `_reduce_gas_workers` 재정의 (F811) | 🟡 MED | open |
-| N3 | `combat_manager._find_harass_target` 재정의 (line 2377 vs 4278) | 🟡 MED | open |
-| N4 | `production_resilience.build_terran_counters` 재정의 (1369 vs 1866) | 🟡 MED | open |
-| N5 | bare `except Exception:` 다수 (≈360+) — 이번 PR에서 12건 처리, 잔여 다수 | 🟢 LOW | partial |
+| N1 | `OpponentModeling.on_step` 중복 정의 (line 341 vs 765 — F811) | 🟠 HIGH | ✅ Resolved — 현재 단일 정의만 존재 |
+| N2 | `EconomyManager._prevent_resource_banking` / `_reduce_gas_workers` 재정의 (F811) | 🟡 MED | ✅ Resolved — 단일 정의 확인 |
+| N3 | `combat_manager._find_harass_target` 재정의 (line 2377 vs 4278) | 🟡 MED | ✅ Resolved — 단일 정의(4992) 확인 |
+| N4 | `production_resilience.build_terran_counters` 재정의 (1369 vs 1866) | 🟡 MED | ✅ Resolved — 단일 정의(1961) 확인 |
+| N5 | bare `except Exception:` 다수 (≈360+) | 🟢 LOW | open — 현재 465건, 광범위 리팩터라 별도 점진 작업으로 분리 권장 |
 | N6 | F841 unused local variables (visuals/make_pptx 등) | 🟢 LOW | open (presentation 코드라 영향 작음) |
-
-검증 권장: PR 분리 (N1 단독 PR 권장 — 동작 변화 가능성).
 
 ---
 
@@ -67,9 +72,15 @@
 
 ---
 
-## 🟡 MEDIUM Priority Issues (still open)
+## 🟡 MEDIUM Priority Issues — ✅ 전체 Resolved (2026-07-09 재검증)
 
-### Issue #3: Transfusion 우선순위 개선 필요
+### Issue #3: Transfusion 우선순위 개선 필요 — ✅ Resolved
+
+**구현 확인**: `queen_manager.py:711` `_transfuse_injured_units()` — CreepyBot 스타일
+우선순위 테이블(QUEEN=0, BROODLORD=1, ... MUTALISK=12)과 `UNHEALABLE_UNITS`
+(BANELING/BROODLING/LOCUSTMP) 제외 로직이 이미 구현되어 있음. 아래는 원안(참고용).
+
+<details><summary>원안 (구현 완료, 참고용)</summary>
 
 **위치**: `queen_manager.py` 또는 `spell_unit_manager.py`
 
@@ -140,9 +151,17 @@ async def smart_transfusion(self, queen, damaged_units):
 
 **우선순위**: 🟡 MEDIUM (자원 효율성 개선)
 
+</details>
+
 ---
 
-### Issue #4: Resource Reservation Race Condition
+### Issue #4: Resource Reservation Race Condition — ✅ Resolved
+
+**구현 확인**: `core/resource_manager.py:28` `ResourceManager` 클래스에 `try_reserve()`
+(asyncio.Lock 기반)가 이미 구현되어 있고, `defense_coordinator.py`/`economy_manager.py`
+등에서 `self.bot.resource_manager.try_reserve(...)` 호출로 사용 중. 아래는 원안(참고용).
+
+<details><summary>원안 (구현 완료, 참고용)</summary>
 
 **위치**: `resource_manager.py` (추정)
 
@@ -215,11 +234,18 @@ else:
 
 **우선순위**: 🟡 MEDIUM (안정성 개선, 드물게 발생)
 
+</details>
+
 ---
 
-## 🟢 LOW Priority Issues
+## 🟢 LOW Priority Issues — ✅ 전체 Resolved (2026-07-09 재검증)
 
-### Issue #5: 코드 중복 - Position 계산
+### Issue #5: 코드 중복 - Position 계산 — ✅ Resolved
+
+**구현 확인**: `utils/position_utils.py`에 `get_center_position()` / `get_weighted_center()`
+가 이미 구현되어 있음. 아래는 원안(참고용).
+
+<details><summary>원안 (구현 완료, 참고용)</summary>
 
 **위치**: 여러 파일에서 중복
 
@@ -294,9 +320,18 @@ center = get_center_position(army_units)
 
 **우선순위**: 🟢 LOW (코드 품질 개선)
 
+</details>
+
 ---
 
-### Issue #6: 매직 넘버 (Magic Numbers)
+### Issue #6: 매직 넘버 (Magic Numbers) — 🟡 Partially Resolved
+
+**구현 확인**: `utils/game_constants.py`에 `GameFrequencies`/`EconomyConstants`/
+`BURROW_HP_THRESHOLD` 등 상수 클래스가 이미 구현되어 여러 매니저에서 사용 중
+(`from utils.game_constants import GameFrequencies` 등). 다만 코드베이스 전체 매직넘버
+채택은 진행 중(ROADMAP Sprint 7.3)이며 완전히 끝난 상태는 아님 — 아래는 원안(참고용).
+
+<details><summary>원안 (인프라 구현 완료, 전체 채택은 진행 중)</summary>
 
 **위치**: 여러 파일
 
@@ -357,34 +392,46 @@ if iteration % SECOND == 0:
 
 **우선순위**: 🟢 LOW (가독성 개선)
 
+</details>
+
 ---
 
-## 📊 이슈 우선순위 요약 (open만)
+## 🆕 2026-07-09 자동 점검 사이클에서 새로 발견된 실제 이슈
 
-| 우선순위 | 이슈 | 영향도 | 난이도 |
-|---------|------|--------|--------|
-| 🟡 MEDIUM | #3 Transfusion 우선순위 | 중간 | 중간 |
-| 🟡 MEDIUM | #4 Resource Race Condition | 낮음 | 중간 |
-| 🟢 LOW | #5 코드 중복 제거 | 낮음 | 쉬움 |
-| 🟢 LOW | #6 매직 넘버 | 낮음 | 쉬움 |
+과거 문서(N1~N6, #1~#6)는 위와 같이 전부 stale로 확인되어 Resolved 처리했습니다.
+아래는 이번 점검에서 **실제로 재현/확인한** 새 항목입니다.
 
-(Issue #1, #2 → ✅ Resolved 섹션 참조)
+| ID | 설명 | 우선순위 | 상태 |
+|----|------|---------|------|
+| M1 | 저장소 루트에 `pytest/` 디렉터리가 git으로 추적되어 있어, `python -m pytest` 실행 시 실제 pytest 패키지 대신 이 디렉터리를 import하여 `No module named pytest.__main__`으로 즉시 실패함 (`run_combat_tests.bat`, `PUSH_FIX_TO_MAIN.bat`, `github_actions_advanced/sc2bot-ci.yml`이 모두 `python -m pytest` 사용) | 🔴 HIGH | ✅ Fixed — `pytest/` → `python_pytest_demo/`로 이름 변경 |
+| M2 | `wicked_zerg_challenger/combat/` 하위 13개 모듈(`queen_walk.py`, `doom_drop.py`, `multiprong_attack.py`, `air_unit_manager.py`, `attack_controller.py`, `baneling_bomb.py`, `combat_execution.py`, `expansion_defense.py`, `lurker_positioning.py`, `multitasking.py`, `nydus_tactics.py`, `victory_tracker.py`, `viper_tactics.py`, 총 ~4,700줄)가 구현되어 있으나 어디에서도 import되지 않아 런타임에 전혀 실행되지 않음. `SESSION_SUMMARY.md`에 기록된 과거 사례(overlord_transport/roach_burrow_heal 미통합)와 동일한 패턴이 13건 더 있는 상태 | 🟠 HIGH | open — 실제 SC2 클라이언트로 검증 불가한 샌드박스 환경이라, 모듈별로 안전하게(단위 테스트 포함) 하나씩 배선하는 후속 작업 필요. 일괄 배선은 검증 없이 리스크만 키우므로 지양 |
+| M3 | bare `except Exception:` 465건 (N5 연장) | 🟢 LOW | open — 광범위 리팩터, 점진적 작업으로 분리 |
+| M4 | `sc2bot-ci.yml`의 "Lint & Type Check" 잡이 `black --check --diff .`에서 66개 파일 포맷 드리프트로 실패 중 (blocking) | 🔴 HIGH | ✅ Fixed — `black .` + `isort .` 실행, 88개 파일 정리 |
+| M5 | 저장소에 `scripts/`라는 이름의 디렉터리가 5곳(루트, `wicked_zerg_challenger/`, `wicked_zerg_challenger/local_training/`, `sc2-ai-dashboard/`, `julia_ml/`) 존재하고 전부 `__init__.py`가 없어 암묵적 네임스페이스 패키지로 충돌 — 전체 스위트 실행 시 `test_ladder_tracker.py`/`test_meta_adapter.py`가 `ModuleNotFoundError: No module named 'scripts.ladder_tracker'`로 수집 실패 | 🟠 HIGH | ✅ Fixed — 루트 `scripts/__init__.py` 추가로 실 패키지화 |
+| M6 | `tests/test_combat_phase_fsm.py`의 5개 헬퍼가 `asyncio.get_event_loop().run_until_complete(...)`를 사용 — 앞서 실행된 pytest-asyncio 기반 테스트가 스레드의 앰비언트 이벤트 루프를 닫아버리면 `RuntimeError: There is no current event loop in thread 'MainThread'`로 12개 테스트 전부 실패 (`pytest tests/test_combat_manager.py tests/test_combat_phase_fsm.py`로 재현) | 🟠 HIGH | ✅ Fixed — `asyncio.run(...)`으로 교체 (자체 루프 라이프사이클 소유) |
+| M7 | `ci.yml`의 `python-lint-test` 잡이 `s2clientprotocol`을 설치하지만 `PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python`을 설정하지 않아 `pytest tests/ --co` 수집 중 `TypeError: Descriptors cannot be created directly` 로 14개 파일 수집 실패, exit code 2 | 🔴 HIGH | ✅ Fixed — 같은 워크플로의 `sc2-bot-test` 잡과 동일한 env var 추가 |
+| M8 | `flake8 --select=F811` 전체 스캔 결과 실제 코드 경로(`wicked_zerg_challenger/`)는 클린하지만, 실험적 프레임워크 디렉터리(`cirq_quantum/`, `pennylane_qml/`, `tianshou_rl/`, `jax_flax_rl/`, `discord_advanced_features.py`, `spark_jobs/`)에 지역 재-import로 인한 F811 11건 존재. 봇 핵심 로직과 무관 | 🟢 LOW | open — 우선순위 낮음, 손대지 않음 (실험 코드) |
+| M9 | `bandit -r wicked_zerg_challenger -ll`: 총 6건 (MEDIUM 5, HIGH 1). HIGH는 `tools/monitor_background_training.py:42`의 `os.system('cls'/'clear')`인데 인자가 하드코딩 상수라 실제 인젝션 위험 없음(false positive로 판단). MEDIUM 3건은 `torch.load()`(신뢰 가능한 자체 체크포인트 로드), 2건은 `requests` 타임아웃 누락(`tools/scrape_spawningtool.py`) | 🟢 LOW | open — `scrape_spawningtool.py`에 `timeout=` 추가는 안전한 다음 작업 후보 |
+| M10 | `flake8 --max-line-length=100` 전체(비차단) 스캔 통계: F401(미사용 import) 870건, E501(줄 길이) 550건, F541(placeholder 없는 f-string) 458건, F841(미사용 지역변수) 273건 — 전부 스타일/정리성 이슈로 동작에 영향 없음 | 🟢 LOW | open — 대량 기계적 정리 후보, 별도 세션에서 파일 단위로 점진 처리 권장 |
 
 ---
 
 ## 🎯 권장 수정 순서
 
-### 1단계: 완료 (✅)
-~~1. Queen Inject 쿨다운 수정 (25 → 29)~~ — 코드 반영 완료, 본 문서 ✅ Resolved 섹션 참조
-~~2. 누락된 업그레이드 추가~~ — 코드 반영 완료, 본 문서 ✅ Resolved 섹션 참조
+### 완료 (✅)
+1. ~~Queen Inject 쿨다운 / 누락 업그레이드~~ — 완료
+2. ~~Transfusion 우선순위 / Resource Reservation 동기화 / Position Utils / Constants 인프라~~ — 완료
+3. ~~M1: `pytest/` 디렉터리 이름 충돌~~ — 완료 (2026-07-09)
+4. ~~M4: black/isort 포맷 드리프트 (CI 차단)~~ — 완료 (2026-07-09)
+5. ~~M5: `scripts` 네임스페이스 패키지 충돌~~ — 완료 (2026-07-09)
+6. ~~M6: `test_combat_phase_fsm.py` asyncio 이벤트 루프 버그 (12건 실패)~~ — 완료 (2026-07-09)
+7. ~~M7: CI protobuf env var 누락 (수집 단계 14건 실패)~~ — 완료 (2026-07-09)
 
-### 2단계: 로직 개선 (30분, 미진행)
-3. Transfusion 우선순위 시스템 구현
-
-### 3단계: 구조 개선 (1시간, 미진행)
-4. Resource Reservation 동기화
-5. Position Utils 유틸리티 함수 분리
-6. Constants 정리
+### 다음 단계
+8. M2: 고아 combat 모듈 13개 — 모듈별 단위 테스트 작성 → 1개씩 `combat_manager.py`/`combat/initialization.py`에 배선 → 회귀 테스트 통과 확인 후 커밋 (일괄 처리 금지)
+9. M9: `scrape_spawningtool.py`에 requests timeout 추가 (작고 안전한 다음 작업)
+10. M3: bare except 축소 (점진적, 파일당 소규모 PR 권장)
+11. M10: F401/E501/F541/F841 대량 정리 (기계적, 별도 세션)
 
 ---
 
@@ -409,15 +456,16 @@ if iteration % SECOND == 0:
 
 ## 📝 참고 사항
 
+### 실행 환경 제약 (중요)
+이 문서를 갱신하는 자동 점검 세션은 실제 StarCraft II 게임 클라이언트가 없는 샌드박스에서
+실행됩니다. 즉 `run_single_game.py`/`run_mass_test.py` 같은 실전 대전 테스트는 이 환경에서
+직접 검증할 수 없고, `pytest` 유닛테스트 + 정적 분석(flake8)만 반복 검증 가능합니다.
+문서 내 승률(%) 수치는 자체 보고(self-report)이며 이번 점검에서 재검증된 것이 아닙니다.
+
 ### 현재 상태
 - ✅ **치명적 통합 문제**: 완전히 해결됨
-- ✅ **모든 단위 테스트**: 통과 (16/16)
-- ✅ **기본 기능**: 정상 작동
-
-### 위의 이슈들은
-- 모두 **선택적 개선 사항**
-- 즉시 수정 불필요
-- 점진적 개선 권장
+- ✅ **N1~N6, #1~#6 (과거 발견 이슈)**: 전부 Resolved 확인
+- 🟠 **M2 (고아 모듈 13개)**: 신규 발견, 후속 작업 필요
 
 ---
 
