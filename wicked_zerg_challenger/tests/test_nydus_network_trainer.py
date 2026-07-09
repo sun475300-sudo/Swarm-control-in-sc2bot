@@ -77,9 +77,7 @@ class TestNydusCommandDeployedUnits(unittest.TestCase):
         bot = FakeBot()
         roach = FakeUnit(1, UnitTypeId.ROACH, Point2((100, 100)), is_idle=True)
         bot.units = FakeUnits([roach])
-        bot.enemy_units = FakeUnits(
-            [FakeUnit(999, UnitTypeId.SCV, Point2((101, 101)))]
-        )
+        bot.enemy_units = FakeUnits([FakeUnit(999, UnitTypeId.SCV, Point2((101, 101)))])
         trainer = NydusNetworkTrainer(bot)
         trainer.units_deployed = {1}
 
