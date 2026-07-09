@@ -63,6 +63,14 @@ jobs:
     name: Test Suite
     runs-on: ubuntu-latest
     needs: lint
+    env:
+      # s2clientprotocol ships _pb2.py files generated against an older
+      # protoc; a freshly-resolved `protobuf` on a clean runner can pick a
+      # version whose C++/upb backend rejects that generated code with
+      # "Descriptors cannot be created directly". Force the pure-Python
+      # implementation, same workaround already used by ci.yml's
+      # sc2-bot-test job for this exact error.
+      PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION: python
     steps:
       - uses: actions/checkout@v4
 
