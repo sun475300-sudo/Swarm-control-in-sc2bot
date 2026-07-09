@@ -161,3 +161,32 @@
 3. **S3.1 CI fail-fast: false** (단순 패치, 별 PR, 자동 가능)
 4. **S3.2 pip-tools 도입** (별 PR, 검토 후 자동)
 5. 그 외 S2/S3/S4 항목은 사용자 우선순위 협의 후 진행
+
+---
+
+## 5. 2026-07-09 사이클 — 테스트 인프라 + 정적 감사 백로그
+
+PR #360 (`claude/optimistic-edison-vtj9ds`)에서 처리/발견한 내용.
+
+### 5.1 이번 사이클에서 수정 완료
+- [x] `tests/test_queen_transfusion.py` — sc2 미설치 시 전체 423개 테스트 collection이 죽는 버그 (unguarded import) → skip guard 추가
+- [x] `tests/test_combat_phase_fsm.py` — `asyncio.get_event_loop().run_until_complete()` deprecated 패턴이 12개 테스트를 fail시킴 → `asyncio.run()`으로 교체
+- [x] `.github/workflows/ci.yml` `python-lint-test` 잡의 `pytest 실행 (전체)` 스텝에 `PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION: python` 누락 — main에서도 이미 fail 중이던 사전 존재 버그 (14개 파일 collection 실패, `TypeError: Descriptors cannot be created directly`). `sc2-bot-test` 잡에는 이미 있던 설정을 동일하게 추가.
+- [x] `wicked_zerg_challenger/economy_manager.py::_check_proactive_expansion` — `_perform_smart_expansion()` 실패 시 `expand_now()`/황금기지 폴백(~40줄)이 도달 불가능한 dead code였음 (직전 unconditional `return`). 폴백이 실제로 실행되도록 수정 + 회귀 테스트 추가.
+
+### 5.2 정적 감사로 발견, 아직 미착수 (우선순위순)
+백그라운드 에이전트가 `wicked_zerg_challenger/`를 AST 파싱 + grep으로 감사 (sc2/numpy/torch 미설치 환경이라 런타임 실행은 불가, 전부 정적 분석 기반):
+
+- [ ] **`strategy/timing_attacks.py`**: `ZERGLING_TIMING = 240`(4분) 상수가 정의만 되고 어디서도 비교에 쓰이지 않음. `_check_timing_windows`가 `ROACH_TIMING`(420s)과 `MUTA_TIMING`(360s)만 분기하며, `_ready_for_zergling_timing`/`_initiate_zergling_timing` 류의 메서드가 존재하지 않음 — 저글링/바네링 올인 타이밍이 실제로는 발동 안 함. 게다가 `if ROACH_TIMING: ... elif MUTA_TIMING: ...` 구조라 420초 이후엔 뮤탈 타이밍도 영구히 막힘 (roach push 조건이 안 맞으면 7분 이후 어떤 타이밍 공격도 발동 안 할 수 있음). **확인 필요**: 의도된 설계인지 미완성 스케줄러인지 사람 판단 필요 — 코드만 보고 "고쳐야 할 버그"로 단정하기엔 게임플레이 의도를 알아야 함.
+- [ ] **`strategy_manager.py`**: `_blackboard_flag()`로 읽지만 어디서도 set되지 않는 플래그들 — `"dark_shrine_scouted"`(실제 생산자는 `"dark_shrine"`, 키 불일치), `"blink_stalker_allin"`, `"disruptor_nova"`, `"enemy_roach_all_in"`, `"dark_templar_detected"`. 각각 동일 조건을 직접 구조/구성 체크로도 백업하고 있어서 현재 동작에 영향은 없어 보이지만, 죽은 분기이므로 정리하거나 실제로 blackboard에 채워주는 producer를 추가해야 함.
+- [ ] **`intel_manager.py:76-80`**: `BUILD_PATTERNS["nydus_rush"]["units"]`에 `QUEEN/ROACH/HYDRALISK`가 들어있음 — ZvZ에서 흔한 유닛이라 나이더스와 무관하게 confidence를 인위적으로 올릴 수 있음. 복붙 실수로 추정, 나이더스 웜 등으로 교체 검토.
+- [ ] **`strategy_manager.py:2536`** `_counter_zerg_units()`: `ravager_count`를 계산만 하고 미사용 — Ravager 전용 카운터 룰이 빠진 것으로 보임 (사소, 크래시 없음).
+- [ ] **`scouting_system.py:237`** `deploy_changeling()` — 어디서도 호출 안 되는 dead method. 실제 체인질링 배치는 `scouting/advanced_scout_system_v2.py::_manage_changelings()`에 중복 구현되어 있고 그게 실제 on_step에서 호출됨. 정리 대상(둘 중 하나로 통합) — 로드맵 Task 2.5가 가리키는 파일도 최신화 필요.
+- [ ] **문서-코드 불일치**: `ROADMAP.md`가 참조하는 `wicked_zerg_challenger/build_order_executor.py`가 실제로 존재하지 않음 (`build_order_system.py`로 대체된 듯). 로드맵 파일맵 갱신 필요.
+- [ ] **인코딩 잔재**: Task 1.1이 "완료"로 표기돼 있지만 `unit_factory.py`, `dynamic_resource_balancer.py`, `local_training/reward_system.py`, `local_training/aggressive_tech_builder.py`, 일부 `tools/*.py`에 이중 인코딩된 한글 주석(모지바케)이 남아있음. UTF-8로는 유효해서 컴파일엔 문제없음 — 가독성 이슈만.
+- [ ] **`combat_manager.py:3490`** `non_combat_names` — 정의만 되고 미사용 (동일 결과가 앞선 early-return으로 이미 보장됨). 사소한 dead code.
+
+### 5.3 감사에서 "문제 없음"으로 확인된 항목 (재작업 불필요)
+- 핵심 6개 게임플레이 파일(`combat_manager.py`, `economy_manager.py`, `strategy_manager.py`, `intel_manager.py`, `scouting_system.py`, `early_defense_system.py`)에 TODO/FIXME 없음
+- `wicked_zerg_challenger/` 전체에 AST 기준 중복/shadow 메서드 정의 없음 (이전 사이클에서 이미 정리됨)
+- 로드맵 Sprint 1-8 중 1.2, 1.3, 2.1, 2.2, 2.3, 2.5(부분), 3.1, 3.2, 3.3, 4.1, 4.3, 4.5, 5.1, 6.1, 7.1, 7.2는 실제로 구현되어 on_step/매니저 등록에 연결되어 있음을 코드로 확인
