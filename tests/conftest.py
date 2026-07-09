@@ -13,6 +13,12 @@ from unittest.mock import MagicMock
 
 import pytest
 
+# requirements.txt의 `s2clientprotocol` 핀이 burnysc2가 실제로 사용하는
+# `pys2clientprotocol`(protobuf>=4 호환 _pb2.py)을 설치 순서상 구버전으로
+# 덮어써 "TypeError: Descriptors cannot be created directly"를 유발한다.
+# wicked_zerg_challenger/tests/conftest.py와 동일한 워크어라운드.
+os.environ.setdefault("PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION", "python")
+
 # 프로젝트 루트를 sys.path에 추가
 PROJECT_ROOT = Path(__file__).parent.parent
 if str(PROJECT_ROOT) not in sys.path:
