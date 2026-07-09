@@ -112,11 +112,15 @@ jobs:
 
       - name: pytest 실행 (전체)
         run: |
-          pytest tests/ -v --tb=short --co -q
-          pytest tests/test_crypto_trading.py tests/test_security.py -v --tb=short
+          pip install pytest-asyncio cffi
+          pytest tests/ -v --tb=short
         env:
           DRY_RUN: "true"
           LOG_LEVEL: "DEBUG"
+          # requirements.txt pins a standalone `s2clientprotocol` whose generated
+          # _pb2.py files predate the upb-backed protobuf runtime pip installs by
+          # default -> "TypeError: Descriptors cannot be created directly."
+          PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION: python
 
   # ─────────────────────────────────────────────
   # SC2 봇 구문 검증 + 테스트
