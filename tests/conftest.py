@@ -5,6 +5,13 @@ pytest 공통 fixtures (#171)
 """
 
 import os
+
+# s2clientprotocol의 _pb2.py는 구버전 protoc으로 생성되어, 최신 protobuf
+# 패키지의 기본 C++ 구현(upb)에서 "Descriptors cannot be created directly"
+# TypeError를 일으킨다. 어떤 테스트 파일이 sc2/s2clientprotocol을 import하기
+# 전에 (conftest.py는 항상 가장 먼저 로드됨) 순수 Python 구현으로 강제한다.
+os.environ.setdefault("PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION", "python")
+
 import shutil
 import sys
 import tempfile
