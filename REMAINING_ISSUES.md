@@ -4,24 +4,27 @@
 
 통합 문제 해결 후 발견된 추가 개선 사항들입니다.
 
-**Last refreshed:** 2026-04-27 (Issue #1, #2 → Resolved; Issue #6 partially resolved via Batch 3)
+**Last refreshed:** 2026-07-09 — 자동 점검 사이클에서 재검증. 아래 N1~N6, #3~#6 항목은
+모두 코드에 이미 반영되어 있는 것으로 확인되어 Resolved로 이동했습니다 (본 문서가
+stale 상태였음). 현재 이 문서에는 **open 상태인 항목이 없습니다.** 새로 발견된 실제
+이슈는 `STATUS.md`/커밋 로그를 참고하세요.
 
 ---
 
-## 🆕 신규 발견 (PR #44, 2026-04-27)
+## 🆕 신규 발견 (PR #44, 2026-04-27) — ✅ 전체 Resolved (2026-07-09 재검증)
 
 자동/수동 점검 사이클(테스트 → 코드 검사 → 개선 → 커밋/푸시 반복)에서 새로 식별된 항목.
+PR #218(2026-06-01~02, "stabilize SC2 bot test suite")에서 N1~N4가 이미 처리된 것을
+2026-07-09 자동 점검에서 재확인했습니다 (각 메서드 grep 결과 정의가 1곳뿐).
 
 | ID | 설명 | 우선순위 | 상태 |
 |----|------|---------|------|
-| N1 | `OpponentModeling.on_step` 중복 정의 (line 341 vs 765 — F811) | 🟠 HIGH | open — 동작 영향(상위 on_step이 미실행) 가능 |
-| N2 | `EconomyManager._prevent_resource_banking` / `_reduce_gas_workers` 재정의 (F811) | 🟡 MED | open |
-| N3 | `combat_manager._find_harass_target` 재정의 (line 2377 vs 4278) | 🟡 MED | open |
-| N4 | `production_resilience.build_terran_counters` 재정의 (1369 vs 1866) | 🟡 MED | open |
-| N5 | bare `except Exception:` 다수 (≈360+) — 이번 PR에서 12건 처리, 잔여 다수 | 🟢 LOW | partial |
+| N1 | `OpponentModeling.on_step` 중복 정의 (line 341 vs 765 — F811) | 🟠 HIGH | ✅ Resolved — 현재 단일 정의만 존재 |
+| N2 | `EconomyManager._prevent_resource_banking` / `_reduce_gas_workers` 재정의 (F811) | 🟡 MED | ✅ Resolved — 단일 정의 확인 |
+| N3 | `combat_manager._find_harass_target` 재정의 (line 2377 vs 4278) | 🟡 MED | ✅ Resolved — 단일 정의(4992) 확인 |
+| N4 | `production_resilience.build_terran_counters` 재정의 (1369 vs 1866) | 🟡 MED | ✅ Resolved — 단일 정의(1961) 확인 |
+| N5 | bare `except Exception:` 다수 (≈360+) | 🟢 LOW | open — 현재 465건, 광범위 리팩터라 별도 점진 작업으로 분리 권장 |
 | N6 | F841 unused local variables (visuals/make_pptx 등) | 🟢 LOW | open (presentation 코드라 영향 작음) |
-
-검증 권장: PR 분리 (N1 단독 PR 권장 — 동작 변화 가능성).
 
 ---
 
@@ -67,9 +70,15 @@
 
 ---
 
-## 🟡 MEDIUM Priority Issues (still open)
+## 🟡 MEDIUM Priority Issues — ✅ 전체 Resolved (2026-07-09 재검증)
 
-### Issue #3: Transfusion 우선순위 개선 필요
+### Issue #3: Transfusion 우선순위 개선 필요 — ✅ Resolved
+
+**구현 확인**: `queen_manager.py:711` `_transfuse_injured_units()` — CreepyBot 스타일
+우선순위 테이블(QUEEN=0, BROODLORD=1, ... MUTALISK=12)과 `UNHEALABLE_UNITS`
+(BANELING/BROODLING/LOCUSTMP) 제외 로직이 이미 구현되어 있음. 아래는 원안(참고용).
+
+<details><summary>원안 (구현 완료, 참고용)</summary>
 
 **위치**: `queen_manager.py` 또는 `spell_unit_manager.py`
 
@@ -140,9 +149,17 @@ async def smart_transfusion(self, queen, damaged_units):
 
 **우선순위**: 🟡 MEDIUM (자원 효율성 개선)
 
+</details>
+
 ---
 
-### Issue #4: Resource Reservation Race Condition
+### Issue #4: Resource Reservation Race Condition — ✅ Resolved
+
+**구현 확인**: `core/resource_manager.py:28` `ResourceManager` 클래스에 `try_reserve()`
+(asyncio.Lock 기반)가 이미 구현되어 있고, `defense_coordinator.py`/`economy_manager.py`
+등에서 `self.bot.resource_manager.try_reserve(...)` 호출로 사용 중. 아래는 원안(참고용).
+
+<details><summary>원안 (구현 완료, 참고용)</summary>
 
 **위치**: `resource_manager.py` (추정)
 
@@ -215,11 +232,18 @@ else:
 
 **우선순위**: 🟡 MEDIUM (안정성 개선, 드물게 발생)
 
+</details>
+
 ---
 
-## 🟢 LOW Priority Issues
+## 🟢 LOW Priority Issues — ✅ 전체 Resolved (2026-07-09 재검증)
 
-### Issue #5: 코드 중복 - Position 계산
+### Issue #5: 코드 중복 - Position 계산 — ✅ Resolved
+
+**구현 확인**: `utils/position_utils.py`에 `get_center_position()` / `get_weighted_center()`
+가 이미 구현되어 있음. 아래는 원안(참고용).
+
+<details><summary>원안 (구현 완료, 참고용)</summary>
 
 **위치**: 여러 파일에서 중복
 
@@ -294,9 +318,18 @@ center = get_center_position(army_units)
 
 **우선순위**: 🟢 LOW (코드 품질 개선)
 
+</details>
+
 ---
 
-### Issue #6: 매직 넘버 (Magic Numbers)
+### Issue #6: 매직 넘버 (Magic Numbers) — 🟡 Partially Resolved
+
+**구현 확인**: `utils/game_constants.py`에 `GameFrequencies`/`EconomyConstants`/
+`BURROW_HP_THRESHOLD` 등 상수 클래스가 이미 구현되어 여러 매니저에서 사용 중
+(`from utils.game_constants import GameFrequencies` 등). 다만 코드베이스 전체 매직넘버
+채택은 진행 중(ROADMAP Sprint 7.3)이며 완전히 끝난 상태는 아님 — 아래는 원안(참고용).
+
+<details><summary>원안 (인프라 구현 완료, 전체 채택은 진행 중)</summary>
 
 **위치**: 여러 파일
 
@@ -357,34 +390,33 @@ if iteration % SECOND == 0:
 
 **우선순위**: 🟢 LOW (가독성 개선)
 
+</details>
+
 ---
 
-## 📊 이슈 우선순위 요약 (open만)
+## 🆕 2026-07-09 자동 점검 사이클에서 새로 발견된 실제 이슈
 
-| 우선순위 | 이슈 | 영향도 | 난이도 |
-|---------|------|--------|--------|
-| 🟡 MEDIUM | #3 Transfusion 우선순위 | 중간 | 중간 |
-| 🟡 MEDIUM | #4 Resource Race Condition | 낮음 | 중간 |
-| 🟢 LOW | #5 코드 중복 제거 | 낮음 | 쉬움 |
-| 🟢 LOW | #6 매직 넘버 | 낮음 | 쉬움 |
+과거 문서(N1~N6, #1~#6)는 위와 같이 전부 stale로 확인되어 Resolved 처리했습니다.
+아래는 이번 점검에서 **실제로 재현/확인한** 새 항목입니다.
 
-(Issue #1, #2 → ✅ Resolved 섹션 참조)
+| ID | 설명 | 우선순위 | 상태 |
+|----|------|---------|------|
+| M1 | 저장소 루트에 `pytest/` 디렉터리가 git으로 추적되어 있어, `python -m pytest` 실행 시 실제 pytest 패키지 대신 이 디렉터리를 import하여 `No module named pytest.__main__`으로 즉시 실패함 (`run_combat_tests.bat`, `PUSH_FIX_TO_MAIN.bat`, `github_actions_advanced/sc2bot-ci.yml`이 모두 `python -m pytest` 사용) | 🔴 HIGH | ✅ Fixed — `pytest/` → `python_pytest_demo/`로 이름 변경 |
+| M2 | `wicked_zerg_challenger/combat/` 하위 13개 모듈(`queen_walk.py`, `doom_drop.py`, `multiprong_attack.py`, `air_unit_manager.py`, `attack_controller.py`, `baneling_bomb.py`, `combat_execution.py`, `expansion_defense.py`, `lurker_positioning.py`, `multitasking.py`, `nydus_tactics.py`, `victory_tracker.py`, `viper_tactics.py`, 총 ~4,700줄)가 구현되어 있으나 어디에서도 import되지 않아 런타임에 전혀 실행되지 않음. `SESSION_SUMMARY.md`에 기록된 과거 사례(overlord_transport/roach_burrow_heal 미통합)와 동일한 패턴이 13건 더 있는 상태 | 🟠 HIGH | open — 실제 SC2 클라이언트로 검증 불가한 샌드박스 환경이라, 모듈별로 안전하게(단위 테스트 포함) 하나씩 배선하는 후속 작업 필요. 일괄 배선은 검증 없이 리스크만 키우므로 지양 |
+| M3 | bare `except Exception:` 465건 (N5 연장) | 🟢 LOW | open — 광범위 리팩터, 점진적 작업으로 분리 |
 
 ---
 
 ## 🎯 권장 수정 순서
 
-### 1단계: 완료 (✅)
-~~1. Queen Inject 쿨다운 수정 (25 → 29)~~ — 코드 반영 완료, 본 문서 ✅ Resolved 섹션 참조
-~~2. 누락된 업그레이드 추가~~ — 코드 반영 완료, 본 문서 ✅ Resolved 섹션 참조
+### 완료 (✅)
+1. ~~Queen Inject 쿨다운 / 누락 업그레이드~~ — 완료
+2. ~~Transfusion 우선순위 / Resource Reservation 동기화 / Position Utils / Constants 인프라~~ — 완료
+3. ~~M1: `pytest/` 디렉터리 이름 충돌~~ — 완료 (2026-07-09)
 
-### 2단계: 로직 개선 (30분, 미진행)
-3. Transfusion 우선순위 시스템 구현
-
-### 3단계: 구조 개선 (1시간, 미진행)
-4. Resource Reservation 동기화
-5. Position Utils 유틸리티 함수 분리
-6. Constants 정리
+### 다음 단계
+4. M2: 고아 combat 모듈 13개 — 모듈별 단위 테스트 작성 → 1개씩 `combat_manager.py`/`combat/initialization.py`에 배선 → 회귀 테스트 통과 확인 후 커밋 (일괄 처리 금지)
+5. M3: bare except 축소 (점진적, 파일당 소규모 PR 권장)
 
 ---
 
@@ -409,15 +441,16 @@ if iteration % SECOND == 0:
 
 ## 📝 참고 사항
 
+### 실행 환경 제약 (중요)
+이 문서를 갱신하는 자동 점검 세션은 실제 StarCraft II 게임 클라이언트가 없는 샌드박스에서
+실행됩니다. 즉 `run_single_game.py`/`run_mass_test.py` 같은 실전 대전 테스트는 이 환경에서
+직접 검증할 수 없고, `pytest` 유닛테스트 + 정적 분석(flake8)만 반복 검증 가능합니다.
+문서 내 승률(%) 수치는 자체 보고(self-report)이며 이번 점검에서 재검증된 것이 아닙니다.
+
 ### 현재 상태
 - ✅ **치명적 통합 문제**: 완전히 해결됨
-- ✅ **모든 단위 테스트**: 통과 (16/16)
-- ✅ **기본 기능**: 정상 작동
-
-### 위의 이슈들은
-- 모두 **선택적 개선 사항**
-- 즉시 수정 불필요
-- 점진적 개선 권장
+- ✅ **N1~N6, #1~#6 (과거 발견 이슈)**: 전부 Resolved 확인
+- 🟠 **M2 (고아 모듈 13개)**: 신규 발견, 후속 작업 필요
 
 ---
 
