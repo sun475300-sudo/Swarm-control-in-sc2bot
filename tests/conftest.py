@@ -18,6 +18,34 @@ PROJECT_ROOT = Path(__file__).parent.parent
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
+# wicked_zerg_challenger/ 내부 모듈 다수가 `from utils.xxx import ...`처럼
+# 패키지 접두어 없이 임포트한다 (wicked_zerg_challenger/utils/ 기준). 그런데
+# 저장소 루트에도 이름이 같은 별개의 `utils/` 패키지가 있어(jarvis_features용),
+# 어느 쪽이 `sys.modules["utils"]`를 선점하느냐가 import 순서에 좌우된다.
+# pytest는 `tests` 패키지를 임포트할 때 rootdir를 sys.path 맨 앞에 다시
+# 끼워넣으므로 여기서 sys.path 순서만 바꿔서는 해결되지 않는다(저장소 루트
+# utils가 먼저 잡혀 `ModuleNotFoundError: No module named 'utils.logger'`
+# 발생 → 테스트 스킵). 그래서 wicked_zerg_challenger/utils를 sys.modules에
+# "utils"라는 이름으로 직접, 결정적으로 선등록한다. (이전에는 다른 테스트
+# 파일이 수집 단계에서 우연히 경로를 흐트러뜨려준 덕에 일부만 우연히 통과했다.)
+WZC_ROOT = PROJECT_ROOT / "wicked_zerg_challenger"
+if str(WZC_ROOT) not in sys.path:
+    sys.path.insert(0, str(WZC_ROOT))
+
+if "utils" not in sys.modules:
+    import importlib.util
+
+    _wzc_utils_init = WZC_ROOT / "utils" / "__init__.py"
+    if _wzc_utils_init.exists():
+        _spec = importlib.util.spec_from_file_location(
+            "utils",
+            _wzc_utils_init,
+            submodule_search_locations=[str(WZC_ROOT / "utils")],
+        )
+        _module = importlib.util.module_from_spec(_spec)
+        sys.modules["utils"] = _module
+        _spec.loader.exec_module(_module)
+
 
 # ═══════════════════════════════════════════════════════
 # 경로 관련 Fixtures
