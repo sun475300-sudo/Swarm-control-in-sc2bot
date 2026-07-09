@@ -6,6 +6,42 @@
 
 ---
 
+## ⚠️ 2026-07-09 현황 재확인 (중요 — 재작업 방지용)
+
+이 문서는 2026-05-10 이후 갱신되지 않았지만, **아래 항목들은 이미 코드에 구현되어 있음**을
+`grep -rn "FIX P0"` / `grep -rn "FIX P1"` 및 관련 함수 존재 여부로 직접 확인했다 (커밋 메시지가
+`1`, `12` 같은 무의미한 문자열이라 git log 검색으로는 안 잡히니 주의 — 반드시 코드에서 직접 확인할 것).
+
+**P0 (Sprint 1+2) — 8개 전부 구현 완료:**
+- P0-1 가스 부유 해결 — `local_training/production_resilience.py:389,2809`
+- P0-2 EMERGENCY 타임아웃 — `blackboard.py:359` (30초)
+- P0-3 EMERGENCY 중 최소 드론 유지 — `strategy_manager_v2.py:1258` (0.0→0.1)
+- P0-4 REMAX 시스템 — `local_training/production_resilience.py:2432` (`_check_remax_needed`)
+- P0-5 3기지 강제 확장 — `local_training/production_resilience.py:408`
+- P0-6 서플라이 블록 예방 강화 — `local_training/production_resilience.py:1331`
+- P0-7 가스 워커 자동 조절 — `resource_manager.py:223`, `economy_manager.py:1159`, `smart_resource_balancer.py:404`
+- P0-8 1기지 미네랄 오버플로 — `local_training/production_resilience.py:437`
+
+**P1 — 8개 중 6개는 이미 사실상 구현됨, 2개는 진짜 미구현:**
+- P1-1 HP가중 전투력 — `combat_manager.py:3070 _combat_power()` 구현됨 (단, shield 항 없음 — Protoss 상대 시 과소평가 가능성 있으니 개선 여지는 있음)
+- P1-2 무한루프 위험 — 현재 `strategy_manager_v2.py:1296`는 `while`이 아니라 `if`문이라 애초에 무한루프 아님 (moot)
+- **P1-3 매치업별 초기 빌드오더 분리 — 미구현 확인.** `enemy_race == Race.*` 분기가 strategy_manager_v2.py/early_defense_system.py에 없음. 진짜 남은 작업.
+- P1-4 공격 타이밍(서플80+) — `combat_manager.py:1980`에 구현됨
+- **P1-5 방어 병력 50% 분할 — 미구현 확인.** `defense_coordinator.py`의 `_emergency_defense`/`_request_emergency_units`는 신규 유닛 생산 요청만 하고, 기존 공격 부대를 방어로 회수하는 로직 자체가 없음 (그래서 "100% 회수" 버그도 없지만, 계획된 50/50 분할 기능도 없음). 진짜 남은 작업이지만 실전 검증 없이 만지면 위험도 있음.
+- P1-6 퀸 인젝트 최적화 — `economy/queen_inject_optimizer.py` (29초 쿨다운, 우선순위, role 관리) 이미 계획보다 정교하게 구현됨
+- P1-7 테크 타이밍 — 레어 타이밍 체크(`upgrade_manager.py:676`)는 있음, 하이브 9:00~10:00 타이밍은 미확인
+- P1-8 유닛 컴포지션 자동 조정 — `unit_factory.py` 가스비율/`_check_protoss_threat_boost` 등 이미 구현됨
+
+**결론**: 이 계획서가 암시하는 "19.3% 승률" 데이터 시점(2026-05-10) 이후 P0 전체 + P1 대부분이
+이미 고쳐졌다. 문서만 안 갱신된 것 — **실제 승률이 얼마인지는 현재 재검증 필요** (§ 검증 계획의
+20게임 자동 대전을 아직 아무도 실행/기록하지 않은 것으로 보임). 다음 작업자는:
+1. P0/P1 재작업 금지 (위 목록 참고)
+2. P1-3(매치업별 빌드오더), P1-5(방어 분할), P1-7(하이브 타이밍 확인) 가 진짜 남은 작업
+3. P2/P3는 이 문서 작성 이후 grep으로 재확인 안 됨 — 착수 전 반드시 먼저 확인할 것
+4. 20게임 벤치마크를 실제로 돌려서 현재 진짜 승률을 재측정하는 것이 최우선 — 감이 아니라 데이터로 판단해야 함
+
+---
+
 ## 핵심 패턴 분석
 
 ### 패배 원인 통계
