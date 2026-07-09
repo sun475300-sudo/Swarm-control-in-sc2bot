@@ -117,6 +117,10 @@ jobs:
         env:
           DRY_RUN: "true"
           LOG_LEVEL: "DEBUG"
+          # sc2-bot-test 잡과 동일한 이유로 필요: pip이 설치하는 최신 protobuf가
+          # s2clientprotocol의 사전 생성된 _pb2.py와 버전이 맞지 않아
+          # "Descriptors cannot be created directly" 로 테스트 수집 자체가 실패함.
+          PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION: python
 
   # ─────────────────────────────────────────────
   # SC2 봇 구문 검증 + 테스트
