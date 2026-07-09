@@ -72,6 +72,13 @@ jobs:
     name: Test Suite
     runs-on: ubuntu-latest
     needs: lint
+    env:
+      # pip installs the latest protobuf by default, which is newer than what
+      # s2clientprotocol's pre-generated _pb2.py files were built against --
+      # without this, any `import sc2` during collection crashes with
+      # "Descriptors cannot be created directly." Same fix as ci.yml's
+      # sc2-bot-test job.
+      PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION: python
     steps:
       - uses: actions/checkout@v4
 
