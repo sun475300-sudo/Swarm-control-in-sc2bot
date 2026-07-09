@@ -4,24 +4,25 @@
 
 통합 문제 해결 후 발견된 추가 개선 사항들입니다.
 
-**Last refreshed:** 2026-04-27 (Issue #1, #2 → Resolved; Issue #6 partially resolved via Batch 3)
+**Last refreshed:** 2026-07-09 (N1–N4, Issue #3, Issue #5 → confirmed resolved; new Issue #7 found+fixed same session)
 
 ---
 
-## 🆕 신규 발견 (PR #44, 2026-04-27)
+## 🆕 신규 발견 (PR #44, 2026-04-27) — ✅ 전체 해결 확인 (2026-07-09)
 
 자동/수동 점검 사이클(테스트 → 코드 검사 → 개선 → 커밋/푸시 반복)에서 새로 식별된 항목.
+N1–N4는 PR #218 ("delete shadowed duplicate methods that silently disabled features")에서
+이미 제거된 것으로 재확인됨 (`opponent_modeling.py`, `economy_manager.py`, `combat_manager.py`,
+`local_training/production_resilience.py` 모두 단일 정의만 존재).
 
 | ID | 설명 | 우선순위 | 상태 |
 |----|------|---------|------|
-| N1 | `OpponentModeling.on_step` 중복 정의 (line 341 vs 765 — F811) | 🟠 HIGH | open — 동작 영향(상위 on_step이 미실행) 가능 |
-| N2 | `EconomyManager._prevent_resource_banking` / `_reduce_gas_workers` 재정의 (F811) | 🟡 MED | open |
-| N3 | `combat_manager._find_harass_target` 재정의 (line 2377 vs 4278) | 🟡 MED | open |
-| N4 | `production_resilience.build_terran_counters` 재정의 (1369 vs 1866) | 🟡 MED | open |
-| N5 | bare `except Exception:` 다수 (≈360+) — 이번 PR에서 12건 처리, 잔여 다수 | 🟢 LOW | partial |
+| N1 | `OpponentModeling.on_step` 중복 정의 (line 341 vs 765 — F811) | 🟠 HIGH | ✅ resolved (PR #218) |
+| N2 | `EconomyManager._prevent_resource_banking` / `_reduce_gas_workers` 재정의 (F811) | 🟡 MED | ✅ resolved (PR #218) |
+| N3 | `combat_manager._find_harass_target` 재정의 (line 2377 vs 4278) | 🟡 MED | ✅ resolved (PR #218) |
+| N4 | `production_resilience.build_terran_counters` 재정의 (1369 vs 1866) | 🟡 MED | ✅ resolved (PR #218) |
+| N5 | bare `except Exception:` 다수 (≈360+) | 🟢 LOW | open — 잔여 다수, 점진 개선 |
 | N6 | F841 unused local variables (visuals/make_pptx 등) | 🟢 LOW | open (presentation 코드라 영향 작음) |
-
-검증 권장: PR 분리 (N1 단독 PR 권장 — 동작 변화 가능성).
 
 ---
 
@@ -67,13 +68,18 @@
 
 ---
 
-## 🟡 MEDIUM Priority Issues (still open)
+## 🟡 MEDIUM Priority Issues
 
-### Issue #3: Transfusion 우선순위 개선 필요
+### Issue #3: Transfusion 우선순위 개선 필요 — ✅ RESOLVED (재확인 2026-07-09)
 
-**위치**: `queen_manager.py` 또는 `spell_unit_manager.py`
+**위치**: `queen_manager.py:711` `_transfuse_injured_units`
 
-**현재 문제**:
+이미 CreepyBot 스타일 `TRANSFUSE_PRIORITY` 테이블(Queen > Broodlord > Corruptor/Viper >
+SpineCrawler > Overseer > ...)로 구현되어 있고 `UNHEALABLE_UNITS`(Baneling/Broodling/Locust)도
+제외됨. 아래 원안보다 더 정교함 — 별도 작업 불필요.
+
+<details><summary>원래 문제였던 내용 (참고용, 이미 해결됨)</summary>
+
 - Transfusion 로직이 단순함
 - 고가 유닛(울트라, 브루드로드) 우선순위 없음
 - 군단 숙주, 맹독충 등 치료 불가 유닛에 낭비 가능성
@@ -138,11 +144,13 @@ async def smart_transfusion(self, queen, damaged_units):
         self.bot.do(queen(AbilityId.TRANSFUSION_TRANSFUSION, best_target))
 ```
 
-**우선순위**: 🟡 MEDIUM (자원 효율성 개선)
+**우선순위**: 🟡 MEDIUM (자원 효율성 개선) — 원안 그대로, 실제로는 이미 구현됨
+
+</details>
 
 ---
 
-### Issue #4: Resource Reservation Race Condition
+### Issue #4: Resource Reservation Race Condition (open)
 
 **위치**: `resource_manager.py` (추정)
 
@@ -219,7 +227,12 @@ else:
 
 ## 🟢 LOW Priority Issues
 
-### Issue #5: 코드 중복 - Position 계산
+### Issue #5: 코드 중복 - Position 계산 — ✅ RESOLVED (재확인 2026-07-09)
+
+`utils/position_utils.py`에 `get_center_position` / `get_weighted_center`가 이미 구현되어
+여러 매니저에서 사용 중. 별도 작업 불필요.
+
+<details><summary>원래 문제였던 내용 (참고용, 이미 해결됨)</summary>
 
 **위치**: 여러 파일에서 중복
 
@@ -292,7 +305,9 @@ from utils.position_utils import get_center_position
 center = get_center_position(army_units)
 ```
 
-**우선순위**: 🟢 LOW (코드 품질 개선)
+**우선순위**: 🟢 LOW (코드 품질 개선) — 원안 그대로, 실제로는 이미 구현됨
+
+</details>
 
 ---
 
@@ -359,16 +374,35 @@ if iteration % SECOND == 0:
 
 ---
 
+### Issue #7: 비상 전군 생산 신호(`spend_larva_on_army`)가 실제 생산 경로에서 무시됨 — ✅ RESOLVED (2026-07-09)
+
+**위치**: `local_training/production_resilience.py` `_balanced_production`
+
+**문제 (발견 당시)**:
+`strategy_manager.py`(러시/올인 감지)와 `early_defense_system.py`(프록시 대응)가
+`blackboard.set("spend_larva_on_army", True)` / `blackboard.set("drone_production_policy", "HALT")`를
+비상 상황에 발행하지만, 실제 라바 소비를 담당하는 `_balanced_production`은 이 블랙보드 키를
+전혀 읽지 않았음. `_balanced_production`이 참조하던 `self.strategy_manager`는
+`OpeningStrategyManager` 인스턴스이고, 위 플래그를 발행하는 `StrategyManager`/`StrategyManagerV2`는
+`self.bot.strategy_manager`에 별도로 붙는 다른 객체라 애초에 연결될 수 없는 구조였음.
+결과적으로 러시/올인 비상 상황에서도 밸런서 판단에 따라 계속 드론을 생산할 수 있었음.
+
+**수정**: `_blackboard_halts_drone_production()` 헬퍼 추가, `_balanced_production`의
+드론/병력 분기에서 `force_army`와 동일한 우선순위로 체크하도록 배선.
+회귀 테스트 5건 추가 (`tests/test_production_resilience.py`).
+
+---
+
 ## 📊 이슈 우선순위 요약 (open만)
 
 | 우선순위 | 이슈 | 영향도 | 난이도 |
 |---------|------|--------|--------|
-| 🟡 MEDIUM | #3 Transfusion 우선순위 | 중간 | 중간 |
 | 🟡 MEDIUM | #4 Resource Race Condition | 낮음 | 중간 |
-| 🟢 LOW | #5 코드 중복 제거 | 낮음 | 쉬움 |
 | 🟢 LOW | #6 매직 넘버 | 낮음 | 쉬움 |
+| 🟢 LOW | N5 bare except 잔여 정리 | 낮음 | 쉬움 |
+| 🟢 LOW | N6 F841 unused locals | 낮음 | 쉬움 |
 
-(Issue #1, #2 → ✅ Resolved 섹션 참조)
+(Issue #1, #2, #3, #5, #7 및 N1–N4 → ✅ Resolved/위 섹션 참조)
 
 ---
 
@@ -377,14 +411,13 @@ if iteration % SECOND == 0:
 ### 1단계: 완료 (✅)
 ~~1. Queen Inject 쿨다운 수정 (25 → 29)~~ — 코드 반영 완료, 본 문서 ✅ Resolved 섹션 참조
 ~~2. 누락된 업그레이드 추가~~ — 코드 반영 완료, 본 문서 ✅ Resolved 섹션 참조
+~~3. Transfusion 우선순위 시스템~~ — 이미 구현되어 있었음 (Issue #3 참조)
+~~5. Position Utils~~ — 이미 구현되어 있었음 (Issue #5 참조)
+~~7. 비상 전군 생산 신호 배선~~ — 이번 세션에서 구현 (Issue #7 참조)
 
-### 2단계: 로직 개선 (30분, 미진행)
-3. Transfusion 우선순위 시스템 구현
-
-### 3단계: 구조 개선 (1시간, 미진행)
-4. Resource Reservation 동기화
-5. Position Utils 유틸리티 함수 분리
-6. Constants 정리
+### 2단계: 남은 작업 (미진행)
+4. Resource Reservation 동기화 (Issue #4)
+6. Constants 정리 (Issue #6)
 
 ---
 
@@ -409,10 +442,12 @@ if iteration % SECOND == 0:
 
 ## 📝 참고 사항
 
-### 현재 상태
+### 현재 상태 (2026-07-09 재확인)
 - ✅ **치명적 통합 문제**: 완전히 해결됨
-- ✅ **모든 단위 테스트**: 통과 (16/16)
+- ✅ **모든 단위 테스트**: 통과 (666/666, `wicked_zerg_challenger/tests`)
 - ✅ **기본 기능**: 정상 작동
+- ⚠️ **GitHub 원격 저장소**: open draft PR 300개 이상 누적 — 대부분 동일한
+  CI/asyncio 이슈를 독립적으로 재수정한 중복 PR. 병합/정리 필요 (별도 검토 요망).
 
 ### 위의 이슈들은
 - 모두 **선택적 개선 사항**
@@ -421,5 +456,5 @@ if iteration % SECOND == 0:
 
 ---
 
-**검토 완료일**: 2026-01-29
-**상태**: 추가 개선 사항 문서화 완료
+**검토 완료일**: 2026-01-29 (최초), 2026-07-09 (재검증)
+**상태**: N1–N6, Issue #1·#2·#3·#5·#7 해결 확인/완료. Issue #4·#6 및 PR 백로그 정리는 미진행.
