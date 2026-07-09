@@ -669,7 +669,7 @@ class ProductionResilience:
                 # With 0 produced so far, allow one drone check below
 
             # Consider strategy preference
-            if force_army:
+            if force_army or self._blackboard_halts_drone_production():
                 should_train_drone = False
             elif (
                 self.strategy_manager
@@ -712,6 +712,20 @@ class ProductionResilience:
                     f"Produced {drones_produced} drones, {army_produced} army units "
                     f"(Total drones: {drone_count}, Target: {target_drones})"
                 )
+
+    def _blackboard_halts_drone_production(self) -> bool:
+        """Honor the emergency all-army signal StrategyManager/EarlyDefenseSystem
+        publish to the blackboard (spend_larva_on_army / drone_production_policy).
+
+        These flags are set during rush/all-in/proxy responses but were never
+        read by the production path, so emergency mode silently kept droning.
+        """
+        blackboard = getattr(self.bot, "blackboard", None)
+        if not blackboard or not hasattr(blackboard, "get"):
+            return False
+        if blackboard.get("spend_larva_on_army", False):
+            return True
+        return blackboard.get("drone_production_policy", None) == "HALT"
 
     def _check_min_defense_met(self, game_time: float) -> bool:
         """Check if minimum defense requirements are met based on game time."""

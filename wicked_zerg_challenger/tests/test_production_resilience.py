@@ -361,6 +361,88 @@ class TestProductionResilience(unittest.TestCase):
 
         self.assertTrue(self.resilience._should_reserve_third_base_minerals())
 
+    # ==================== Emergency Drone-Halt Signal Tests ====================
+
+    def test_spend_larva_on_army_flag_halts_drone_production(self):
+        """StrategyManager's emergency 'spend_larva_on_army' flag must be honored."""
+        self.bot.blackboard = Mock()
+        self.bot.blackboard.get = Mock(
+            side_effect=lambda key, default=None: (
+                True if key == "spend_larva_on_army" else default
+            )
+        )
+
+        self.assertTrue(self.resilience._blackboard_halts_drone_production())
+
+    def test_drone_production_policy_halt_halts_drone_production(self):
+        """EarlyDefenseSystem's 'drone_production_policy=HALT' must be honored."""
+        self.bot.blackboard = Mock()
+        self.bot.blackboard.get = Mock(
+            side_effect=lambda key, default=None: (
+                "HALT" if key == "drone_production_policy" else default
+            )
+        )
+
+        self.assertTrue(self.resilience._blackboard_halts_drone_production())
+
+    def test_normal_blackboard_state_does_not_halt_drone_production(self):
+        """No emergency flags set -> drone production proceeds normally."""
+        self.bot.blackboard = Mock()
+        self.bot.blackboard.get = Mock(return_value=None)
+
+        self.assertFalse(self.resilience._blackboard_halts_drone_production())
+
+    def test_missing_blackboard_does_not_halt_drone_production(self):
+        """No blackboard wired up -> fail safe, don't block production."""
+        self.bot.blackboard = None
+
+        self.assertFalse(self.resilience._blackboard_halts_drone_production())
+
+    def test_balanced_production_skips_droning_during_emergency(self):
+        """_balanced_production must not train Drones while an emergency 'all
+        larva to army' signal is active on the blackboard, even if the
+        economy/combat balancer would otherwise call for a Drone."""
+        self.bot.time = 200.0
+        self.bot.minerals = 300
+        self.bot.supply_left = 10
+        self.bot.townhalls.amount = 2
+        self.bot.already_pending = Mock(return_value=0)
+        self.bot.units = Mock(side_effect=lambda unit_type: SimpleNamespace(amount=6))
+        self.bot.blackboard = Mock()
+        self.bot.blackboard.get = Mock(
+            side_effect=lambda key, default=None: (
+                True if key == "spend_larva_on_army" else default
+            )
+        )
+
+        larva = Mock()
+        larva.is_ready = True
+        larvae = Mock()
+        larvae.exists = True
+        larvae.__iter__ = Mock(return_value=iter([larva]))
+
+        self.resilience.balancer = Mock()
+        self.resilience.balancer.get_production_stats = Mock(return_value={})
+        self.resilience.balancer.get_drone_target = Mock(return_value=40)
+        self.resilience.balancer.get_balance_mode = Mock(return_value="BALANCED")
+        self.resilience.balancer.should_train_drone = Mock(return_value=True)
+        self.resilience.strategy_manager = None
+        self.resilience._should_reserve_third_base_minerals = Mock(return_value=False)
+        self.resilience._safe_train = AsyncMock(return_value=True)
+        self.resilience._produce_army_unit = AsyncMock(return_value=True)
+
+        import asyncio
+
+        asyncio.run(self.resilience._balanced_production(larvae))
+
+        drone_calls = [
+            call
+            for call in self.resilience._safe_train.call_args_list
+            if call.args[1] == UnitTypeId.DRONE
+        ]
+        self.assertEqual(drone_calls, [])
+        self.resilience._produce_army_unit.assert_awaited_once_with(larva)
+
 
 # Run async tests
 if __name__ == "__main__":

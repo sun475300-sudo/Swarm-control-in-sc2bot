@@ -62,7 +62,11 @@ jobs:
   test:
     name: Test Suite
     runs-on: ubuntu-latest
-    needs: lint
+    # NOTE: intentionally does not `need: lint`. The repo-wide black/isort
+    # gate above currently fails on ~66 files (tracked separately in
+    # MASTER_TODO_SC2.md); gating tests behind that formatting cleanup meant
+    # this job silently never ran. Test results should not be hidden behind
+    # unrelated formatting drift.
     steps:
       - uses: actions/checkout@v4
 
@@ -73,10 +77,10 @@ jobs:
           cache: pip
 
       - name: Install dependencies
-        run: pip install -r requirements.txt pytest pytest-cov pytest-asyncio
+        run: pip install -r requirements.txt pytest pytest-cov pytest-asyncio pytest-timeout
 
       - name: Run unit tests
-        run: pytest tests/unit -v --cov=. --cov-report=xml --cov-report=term
+        run: pytest tests/ --ignore=tests/integration -v --cov=. --cov-report=xml --cov-report=term
 
       - name: Run integration tests
         run: pytest tests/integration -v --timeout=120
