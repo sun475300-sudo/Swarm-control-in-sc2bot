@@ -62,6 +62,12 @@ jobs:
   test:
     name: Test Suite
     runs-on: ubuntu-latest
+    env:
+      # s2clientprotocol ships _pb2.py files generated with an old protoc;
+      # protobuf>=3.20's upb/rust backend refuses to load them
+      # ("Descriptors cannot be created directly"). Fall back to the
+      # pure-Python implementation instead of pinning protobuf.
+      PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION: python
     steps:
       - uses: actions/checkout@v4
 
