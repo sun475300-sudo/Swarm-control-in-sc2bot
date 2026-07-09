@@ -14,7 +14,6 @@ REINFORCE 알고리즘 기반의 정책 학습 에이전트입니다.
 
 import logging
 import os
-import shutil
 import time
 from datetime import datetime
 from pathlib import Path
@@ -636,14 +635,15 @@ class RLAgent:
 
     def save_experience_data(self, path: str) -> bool:
         """현재 에피소드의 경험 데이터를 파일로 저장 (Atomic Save 적용)"""
-        try:
-            path = Path(path)
-            path.parent.mkdir(parents=True, exist_ok=True)
+        path = Path(path)
+        path_str = str(path)
+        # 임시 파일 경로 생성 (.npz 제거 후 .tmp 추가 - savez_compressed가 .npz를 자동 추가)
+        base_no_ext = path_str[:-4] if path_str.endswith(".npz") else path_str
+        temp_base = base_no_ext + ".tmp"
+        temp_actual = temp_base + ".npz"
 
-            # 임시 파일 경로 생성 (.npz 제거 후 .tmp 추가 - savez_compressed가 .npz를 자동 추가)
-            path_str = str(path)
-            base_no_ext = path_str[:-4] if path_str.endswith(".npz") else path_str
-            temp_base = base_no_ext + ".tmp"
+        try:
+            path.parent.mkdir(parents=True, exist_ok=True)
 
             # NumPy 배열로 변환하여 임시 파일로 저장
             np.savez_compressed(
@@ -652,13 +652,12 @@ class RLAgent:
                 actions=np.array(self.actions, dtype=np.int64),
                 rewards=np.array(self.rewards, dtype=np.float32),
             )
-            temp_actual = temp_base + ".npz"
 
-            # 원자적으로 이름 변경 (Atomic Rename)
-            # Windows에서는 기존 파일이 있으면 rename이 실패할 수 있으므로 삭제 후 변경
-            if os.path.exists(path_str):
-                os.remove(path_str)
-            os.rename(temp_actual, path_str)
+            # os.replace()는 POSIX/Windows 모두에서 원자적으로 대상을
+            # 덮어쓴다. 기존 파일을 먼저 삭제한 뒤 rename하면 그 사이에
+            # 프로세스가 죽거나 rename이 실패할 경우 데이터가 완전히
+            # 유실되는 구간이 생기므로 사용하지 않는다.
+            os.replace(temp_actual, path_str)
 
             logger.info(
                 f"[OK] Experience saved atomically: {len(self.states)} states, {len(self.rewards)} rewards"
@@ -669,6 +668,11 @@ class RLAgent:
             import traceback
 
             traceback.print_exc()
+            if os.path.exists(temp_actual):
+                try:
+                    os.remove(temp_actual)
+                except OSError:
+                    pass
             return False
 
     def train_from_batch(
@@ -754,15 +758,26 @@ class RLAgent:
         }
 
     def save_model(self, path: Optional[str] = None) -> bool:
-        """모델 저장 (Atomic Write)"""
+        """모델 저장 (Atomic Write)
+
+        np.savez() auto-appends ".npz" to any filename that doesn't
+        already end in ".npz". A naive `save_path.with_suffix(".tmp")`
+        (e.g. "model.npz" -> "model.tmp") therefore never matches the
+        file numpy actually writes ("model.tmp.npz"), so a later
+        `tmp_path.exists()` check silently skips the rename and the
+        save becomes a no-op that still reports success. Use the same
+        base-name-without-extension convention as save_experience_data
+        so the tmp path always matches what numpy produces.
+        """
         save_path = Path(path) if path else self.model_path
-        tmp_path = save_path.with_suffix(".tmp")
+        tmp_base = save_path.with_name(save_path.stem + ".tmp")
+        tmp_actual = tmp_base.with_name(tmp_base.name + ".npz")
 
         try:
             save_path.parent.mkdir(parents=True, exist_ok=True)
             weights = self.policy.get_weights()
             np.savez(
-                str(tmp_path),
+                str(tmp_base),
                 W1=weights["W1"],
                 b1=weights["b1"],
                 W2=weights["W2"],
@@ -773,27 +788,18 @@ class RLAgent:
                 episode_count=np.array([self.episode_count]),
             )
 
-            # *** FIX: Atomic rename with Windows compatibility ***
-            if tmp_path.exists():
-                try:
-                    # Remove old file first on Windows (replace() can fail silently)
-                    if save_path.exists():
-                        save_path.unlink()
-                    # Use shutil.move() for cross-platform compatibility
-                    shutil.move(str(tmp_path), str(save_path))
-                except Exception as move_error:
-                    # Fallback: copy + delete
-                    logger.error(f"Move failed, trying copy: {move_error}")
-                    shutil.copy(str(tmp_path), str(save_path))
-                    tmp_path.unlink()
+            # os.replace() is atomic on both POSIX and Windows and
+            # overwrites an existing destination in one step, so there
+            # is never a window where neither file exists.
+            os.replace(str(tmp_actual), str(save_path))
 
             logger.info(f"Model saved to {save_path}")
             return True
         except Exception as e:
             logger.error(f"Failed to save model: {e}")
-            if tmp_path.exists():
+            if tmp_actual.exists():
                 try:
-                    tmp_path.unlink()
+                    tmp_actual.unlink()
                 except Exception:
                     pass
             return False
