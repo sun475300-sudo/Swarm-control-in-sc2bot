@@ -14,12 +14,15 @@
 
 | ID | 설명 | 우선순위 | 상태 |
 |----|------|---------|------|
-| N1 | `OpponentModeling.on_step` 중복 정의 (line 341 vs 765 — F811) | 🟠 HIGH | open — 동작 영향(상위 on_step이 미실행) 가능 |
-| N2 | `EconomyManager._prevent_resource_banking` / `_reduce_gas_workers` 재정의 (F811) | 🟡 MED | open |
-| N3 | `combat_manager._find_harass_target` 재정의 (line 2377 vs 4278) | 🟡 MED | open |
-| N4 | `production_resilience.build_terran_counters` 재정의 (1369 vs 1866) | 🟡 MED | open |
-| N5 | bare `except Exception:` 다수 (≈360+) — 이번 PR에서 12건 처리, 잔여 다수 | 🟢 LOW | partial |
+| N1 | `OpponentModeling.on_step` 중복 정의 (line 341 vs 765 — F811) | 🟠 HIGH | ✅ resolved (2026-07-09 확인: `on_step` 정의 1개만 존재, `wicked_zerg_challenger/opponent_modeling.py:341`) |
+| N2 | `EconomyManager._prevent_resource_banking` / `_reduce_gas_workers` 재정의 (F811) | 🟡 MED | ✅ resolved (2026-07-09 확인: 각 메서드 정의 1개만 존재) |
+| N3 | `combat_manager._find_harass_target` 재정의 (line 2377 vs 4278) | 🟡 MED | ✅ resolved (2026-07-09 확인: 정의 1개만 존재, `combat_manager.py:4992`) |
+| N4 | `production_resilience.build_terran_counters` 재정의 (1369 vs 1866) | 🟡 MED | ✅ resolved (2026-07-09 확인: 정의 1개만 존재, `local_training/production_resilience.py:1961`) |
+| N5 | bare `except Exception:` 다수 (≈360+) — 이번 PR에서 12건 처리, 잔여 다수 | 🟢 LOW | partial (2026-07-09 기준 `wicked_zerg_challenger/`에 `except Exception:` 468건 잔존 — 대규모 리팩터 필요, 별도 PR 권장) |
 | N6 | F841 unused local variables (visuals/make_pptx 등) | 🟢 LOW | open (presentation 코드라 영향 작음) |
+| N7 | `RLAgent.save_model()`가 매번 저장에 조용히 실패 (tmp 경로가 numpy의 자동 `.npz` 접미사와 불일치, rename 단계가 항상 스킵됨) | 🔴 CRITICAL | ✅ resolved (2026-07-09, PR #376) — `wicked_zerg_challenger/local_training/rl_agent.py`, 회귀 테스트 `tests/test_rl_agent_save.py` |
+| N8 | `save_model()`/`save_experience_data()`의 remove-then-rename 패턴에 데이터 유실 구간 존재 | 🟠 HIGH | ✅ resolved (2026-07-09, PR #376) — `os.replace()`로 원자적 교체로 전환 |
+| N9 | `tests/test_combat_phase_fsm.py` 12/23 실패 (pytest-asyncio 1.4.0에서 `asyncio.get_event_loop()` 회귀) | 🟠 HIGH | ✅ resolved (2026-07-09, PR #376) — `asyncio.run()`으로 교체 |
 
 검증 권장: PR 분리 (N1 단독 PR 권장 — 동작 변화 가능성).
 
