@@ -117,6 +117,11 @@ jobs:
         env:
           DRY_RUN: "true"
           LOG_LEVEL: "DEBUG"
+          # s2clientprotocol's generated _pb2.py files predate protoc 3.19;
+          # a freshly-resolved protobuf on this runner can reject them with
+          # "Descriptors cannot be created directly" (see sc2-bot-test job
+          # below, which already sets this for the same reason).
+          PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION: python
 
   # ─────────────────────────────────────────────
   # SC2 봇 구문 검증 + 테스트
