@@ -4,24 +4,26 @@
 
 통합 문제 해결 후 발견된 추가 개선 사항들입니다.
 
-**Last refreshed:** 2026-04-27 (Issue #1, #2 → Resolved; Issue #6 partially resolved via Batch 3)
+**Last refreshed:** 2026-07-09 — N1-N4, Issue #3 재확인 후 Resolved로 이동 (아래 참조). 상세 배경은 `PLAN-NIGHTLY.md`의 2026-07-09 항목 및 거버넌스 경고 참조.
+
+> ⚠️ 이 문서는 지난 3개월간 여러 자동화 세션이 이미 고친 항목을 "open"으로 잘못 표시해서
+> 중복 조사를 유발한 이력이 있습니다 (`main`에 미머지된 PR 334개 누적의 원인 중 하나).
+> 새 세션은 이 문서를 신뢰하기 전에 코드에서 직접 재검증할 것.
 
 ---
 
-## 🆕 신규 발견 (PR #44, 2026-04-27)
-
-자동/수동 점검 사이클(테스트 → 코드 검사 → 개선 → 커밋/푸시 반복)에서 새로 식별된 항목.
+## 🆕 2026-04-27 발견분 (PR #44) — 2026-07-09 재검증 결과
 
 | ID | 설명 | 우선순위 | 상태 |
 |----|------|---------|------|
-| N1 | `OpponentModeling.on_step` 중복 정의 (line 341 vs 765 — F811) | 🟠 HIGH | open — 동작 영향(상위 on_step이 미실행) 가능 |
-| N2 | `EconomyManager._prevent_resource_banking` / `_reduce_gas_workers` 재정의 (F811) | 🟡 MED | open |
-| N3 | `combat_manager._find_harass_target` 재정의 (line 2377 vs 4278) | 🟡 MED | open |
-| N4 | `production_resilience.build_terran_counters` 재정의 (1369 vs 1866) | 🟡 MED | open |
-| N5 | bare `except Exception:` 다수 (≈360+) — 이번 PR에서 12건 처리, 잔여 다수 | 🟢 LOW | partial |
-| N6 | F841 unused local variables (visuals/make_pptx 등) | 🟢 LOW | open (presentation 코드라 영향 작음) |
+| N1 | `OpponentModeling.on_step` 중복 정의 (line 341 vs 765 — F811) | 🟠 HIGH | ✅ **Resolved** — `opponent_modeling.py`에 `on_step` 정의 1개만 존재 (line 341) 확인 (AST 스캔, 2026-07-09) |
+| N2 | `EconomyManager._prevent_resource_banking` / `_reduce_gas_workers` 재정의 (F811) | 🟡 MED | ✅ **Resolved** — 각각 단일 정의만 존재 확인 |
+| N3 | `combat_manager._find_harass_target` 재정의 (line 2377 vs 4278) | 🟡 MED | ✅ **Resolved** — 단일 정의(line 4992)만 존재 확인 |
+| N4 | `production_resilience.build_terran_counters` 재정의 (1369 vs 1866) | 🟡 MED | ✅ **Resolved** — 단일 정의(line 1961)만 존재 확인 |
+| N5 | bare `except Exception:` 다수 (≈360+) — 이번 PR에서 12건 처리, 잔여 다수 | 🟢 LOW | open — 미재검증, 대규모라 별도 세션 필요 |
+| N6 | F841 unused local variables (visuals/make_pptx 등) | 🟢 LOW | open — 미재검증 (presentation 코드라 영향 작음) |
 
-검증 권장: PR 분리 (N1 단독 PR 권장 — 동작 변화 가능성).
+검증 방법 (2026-07-09): `wicked_zerg_challenger/` 전체에 대해 클래스별 메서드명 AST 스캔 → 중복 0건.
 
 ---
 
@@ -69,16 +71,21 @@
 
 ## 🟡 MEDIUM Priority Issues (still open)
 
-### Issue #3: Transfusion 우선순위 개선 필요
+### Issue #3: Transfusion 우선순위 개선 필요 — ✅ Resolved (2026-07-09 재확인)
 
-**위치**: `queen_manager.py` 또는 `spell_unit_manager.py`
+**구현 위치**: `wicked_zerg_challenger/economy/queen_transfusion_manager.py` (`QueenTransfusionManager`)
 
-**현재 문제**:
-- Transfusion 로직이 단순함
-- 고가 유닛(울트라, 브루드로드) 우선순위 없음
-- 군단 숙주, 맹독충 등 치료 불가 유닛에 낭비 가능성
+이 문서가 제안했던 것보다 더 완성도 높은 형태로 이미 구현되어 있고
+`bot_step_integration.py`에 연결(wire)되어 실전 경로에서 호출됨:
+- `HEAL_PRIORITY` 13개 유닛 타입 우선순위 맵 (울트라 100 ~ 저글링 30)
+- `CANNOT_HEAL` 치료 불가 유닛 13종 (맹독충, 무리, 군단 숙주 등)
+- 퀸별 캐스트 쿨다운(1.5초) + 이터레이션 내 중복 타겟팅 방지
+- 오버힐 방지 (회복량의 50% 미만이면 스킵)
+- 통계 추적 (`get_statistics`, 100초마다 로그)
 
-**개선 방법**:
+아래 원안(제안 코드)은 이미 구현된 내용의 역사적 기록으로만 남겨둠:
+
+**당시 제안했던 개선 방법 (참고용, 이미 구현됨)**:
 ```python
 async def smart_transfusion(self, queen, damaged_units):
     """
@@ -359,16 +366,19 @@ if iteration % SECOND == 0:
 
 ---
 
-## 📊 이슈 우선순위 요약 (open만)
+## 📊 이슈 우선순위 요약 (open만, 2026-07-09 갱신)
 
 | 우선순위 | 이슈 | 영향도 | 난이도 |
 |---------|------|--------|--------|
-| 🟡 MEDIUM | #3 Transfusion 우선순위 | 중간 | 중간 |
 | 🟡 MEDIUM | #4 Resource Race Condition | 낮음 | 중간 |
-| 🟢 LOW | #5 코드 중복 제거 | 낮음 | 쉬움 |
+| 🟢 LOW | #5 코드 중복 제거 (position centroid) | 낮음 | 쉬움 |
 | 🟢 LOW | #6 매직 넘버 | 낮음 | 쉬움 |
+| 🟢 LOW | N5 bare except 잔여분 | 낮음 | 중간 (재검증 필요) |
+| 🟢 LOW | N6 F841 unused locals | 낮음 | 쉬움 (재검증 필요) |
 
-(Issue #1, #2 → ✅ Resolved 섹션 참조)
+(Issue #1, #2, #3, N1-N4 → ✅ Resolved 섹션 참조. #5의 `get_center_position`
+유틸은 `utils/position_utils.py`에 이미 존재하는 것으로 보이나 이번 세션에서는
+전체 호출부 교체 여부까지는 재검증하지 못함 — 다음 세션 확인 필요.)
 
 ---
 

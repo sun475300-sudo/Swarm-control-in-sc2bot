@@ -7,6 +7,14 @@
 > move the historical reports under `docs/history/` — until that move
 > happens, this index serves as the navigation layer.
 
+> ⚠️ **2026-07-09 governance note:** the repo has **334 open pull requests**,
+> nearly all from this same automated test/fix loop since 2026-04-20, none
+> merged. `main`'s CI (`sc2bot-ci.yml`) test job is still broken
+> (`pytest tests/unit` — nonexistent path). A verified fix already exists in
+> **PR #372** (green, mergeable). See `PLAN-NIGHTLY.md`'s Governance Alert
+> before starting another test/fix cycle — check open PRs first so this
+> doesn't become PR #335.
+
 ## Active / canonical (read these first)
 
 | Document | Purpose |
