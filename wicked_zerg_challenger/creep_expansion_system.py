@@ -263,7 +263,9 @@ class CreepExpansionSystem:
                     ):
                         self.tumor_positions.add(closest_target)
                         self.tumors_created += 1
-                        self.logger.info(f"[CREEP] Queen creep tumor at {closest_target}")
+                        self.logger.info(
+                            f"[CREEP] Queen creep tumor at {closest_target}"
+                        )
                         break
 
     async def _spread_creep_tumors(self):

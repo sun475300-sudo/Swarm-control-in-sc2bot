@@ -63,6 +63,14 @@ jobs:
     name: Test Suite
     runs-on: ubuntu-latest
     needs: lint
+    env:
+      # burnysc2's s2clientprotocol ships pre-generated _pb2.py files that
+      # crash under the C++ protobuf backend newer protobuf releases default
+      # to (TypeError: Descriptors cannot be created directly), which also
+      # conflicts with google-generativeai's newer protobuf requirement in
+      # the same requirements.txt install. Same workaround ci.yml's
+      # sc2-bot-test job already uses.
+      PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION: python
     steps:
       - uses: actions/checkout@v4
 
@@ -73,13 +81,16 @@ jobs:
           cache: pip
 
       - name: Install dependencies
-        run: pip install -r requirements.txt pytest pytest-cov pytest-asyncio
+        run: pip install -r requirements.txt pytest pytest-cov pytest-asyncio pytest-timeout
 
       - name: Run unit tests
-        run: pytest tests/unit -v --cov=. --cov-report=xml --cov-report=term
+        run: pytest tests/ --ignore=tests/integration -v --cov=. --cov-report=xml --cov-report=term
 
       - name: Run integration tests
         run: pytest tests/integration -v --timeout=120
+
+      - name: Run wicked_zerg_challenger test suite
+        run: pytest wicked_zerg_challenger/tests/ -v --timeout=120
 
       - name: Upload coverage
         uses: codecov/codecov-action@v4

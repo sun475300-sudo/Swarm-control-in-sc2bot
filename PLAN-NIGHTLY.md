@@ -2,20 +2,44 @@
 
 > Owner: 선우 (sun475300@gmail.com)
 > Maintainer: nightly automation
-> Last refreshed: 2026-05-04
+> Last refreshed: 2026-07-09
 
 ---
 
 ## Snapshot (current state)
 
-- Branch: `main`, last commit: queen transfusion + requirements-dev.txt session
+- Branch: `claude/optimistic-edison-ynsiem`, off `main` @ `8a80b73`.
 - Bot core: `wicked_zerg_challenger/` — 179+ Python files across 10+ subdirs.
 - `.gitattributes` enforces `* text=auto` ✅
-- CI: `sc2bot-ci.yml` runs black + isort + flake8 ✅ (all clean)
-- **Test suite: 468 pass / 15 skip / 0 fail** ✅ (was 398/20/0 two nights ago)
-- Queen transfusion logic: 3 bugs fixed (`is_idle` guard removed, target dedup, per-queen cooldown) ✅
+- CI blocking gate: `sc2bot-ci.yml` black/isort/flake8(E9,F63,F7,F82) ✅ clean on touched files
+- **Test suite: 512 pass / 14 skip / 0 fail** ✅ (was 490 pass / 12 fail / 14 skip before this run)
+- Note: other parallel `claude/optimistic-edison-*` branches are active in this repo (separate
+  automated sessions) — several have failing `black --check` gates on their own diffs. Not this
+  branch's scope; do not touch those branches.
 
-## Resolved this run (2026-05-03)
+## Resolved this run (2026-07-09)
+
+| Item | File(s) | Notes |
+|------|---------|-------|
+| `test_combat_phase_fsm.py` 12/23 tests failing | `tests/test_combat_phase_fsm.py` | `asyncio.get_event_loop()` raises `RuntimeError: no current event loop` under pytest-asyncio 1.4.0 / Python 3.11. Replaced all 5 call sites with `asyncio.run(...)`. |
+| **`RLAgent.save_model()` was a silent no-op** | `wicked_zerg_challenger/local_training/rl_agent.py` | `np.savez()` auto-appends `.npz` to any name that doesn't already end in it; `save_path.with_suffix(".tmp")` never matched the file numpy actually wrote (`model.tmp.npz`), so the rename step was always skipped, the function still returned `True`, and a stray `.tmp.npz` leaked on every call. Every RL checkpoint save has effectively been a no-op. Fixed to compute the tmp path the same way `save_experience_data` does. |
+| Data-loss window in atomic save | same file | Both `save_model()` and `save_experience_data()` used `os.remove()` + `os.rename()`; a crash/failure between those two calls left neither file in place. Switched both to `os.replace()` (atomic on POSIX + Windows). `save_experience_data()` also now cleans up its temp file on failure. |
+| No test coverage for RL save paths | `tests/test_rl_agent_save.py` (new, 10 tests) | Covers: save actually writes target, no orphan tmp files, weight round-trip, overwrite of existing file, disk-full failure preserves prior data, interrupted-rename failure preserves prior data. This directly closes P2.4 below. |
+| Repo-wide black/isort drift (66 files) blocking every PR's lint gate | 66 files, whole repo | Confirmed pre-existing on `main` (verified via a separate worktree before touching anything). Ran `black .` + `isort .`, no manual edits, all 1173 tests still green — pure formatting commit. |
+| `sc2bot-ci.yml` Test Suite job pointed at nonexistent `tests/unit`, and `--timeout=120` used without installing `pytest-timeout` | `.github/workflows/sc2bot-ci.yml` | Fixed both; added a step for `wicked_zerg_challenger/tests/` (661 tests) which this job never ran at all. |
+| `TypeError: Descriptors cannot be created directly` killed pytest collection for every `sc2`-importing test file once the above path fix let pytest actually run | `.github/workflows/sc2bot-ci.yml`, `.github/workflows/ci.yml` | `requirements.txt` installs `burnysc2`→`s2clientprotocol` (pre-generated `_pb2.py`) alongside `google-generativeai` (newer protobuf); the C++ protobuf backend rejects the old generated descriptors. `ci.yml`'s `sc2-bot-test` job already worked around this with `PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python` — applied the same env var to `sc2bot-ci.yml`'s Test Suite job and to `ci.yml`'s `pytest 실행 (전체)` step, which had the same gap. Verified locally with the full `requirements.txt` installed. |
+
+### Environment setup notes (for future runs)
+
+- System `pip3 install burnysc2` fails building the `mpyq` wheel on this
+  container's Debian-patched setuptools (`AttributeError: install_layout`).
+  Use a clean venv instead: `python3 -m venv .venv && source .venv/bin/activate
+  && pip install --upgrade pip setuptools wheel && pip install -r
+  requirements-dev.txt && pip install burnysc2`. Builds cleanly there.
+- `requirements-dev.txt` alone is not enough to import `tests/test_queen_transfusion.py`
+  and friends — they need the real `sc2` package (`burnysc2`), not just pytest deps.
+
+## Resolved previous run (2026-05-03)
 
 | Item | File(s) | Notes |
 |------|---------|-------|
@@ -49,10 +73,10 @@
 
 | #    | Item                                            | Status | Notes |
 |------|-------------------------------------------------|--------|-------|
-| P2.1 | Force-accumulation FSM tests                    | ✅ Done | `tests/test_combat_phase_fsm.py` — 23 tests all passing. |
+| P2.1 | Force-accumulation FSM tests                    | ✅ Done | `tests/test_combat_phase_fsm.py` — 23/23 passing. Regressed to 12/23 failing (pytest-asyncio version bump broke `asyncio.get_event_loop()`), re-fixed 2026-07-09. |
 | P2.2 | Benchmark runner                                | ❌ Open | Single command, N replays, APM/supply/win-rate report vs Hard. |
 | P2.3 | Build-order config externalisation              | ❌ Open | Move top-20 hardcoded values to `config/build_orders.yaml`. |
-| P2.4 | RL agent save-experience guard                  | ❌ Open | Unit test for save under disk-full / interrupted-rename. |
+| P2.4 | RL agent save-experience guard                  | ✅ Done | Found + fixed `save_model()` silent no-op bug (tmp-path mismatch with numpy's auto `.npz` suffix) and a remove-then-rename data-loss window in both save paths. 10 new tests in `tests/test_rl_agent_save.py` covering disk-full and interrupted-rename. |
 | P2.5 | Type hints + docstring pass on core modules     | ❌ Open | `core/resource_manager.py`, `core/manager_factory.py`. |
 
 ## Long-term direction
@@ -60,28 +84,6 @@
 - **AI Arena submission cadence.** 2-week cadence: benchmark suite (P2.2), submit only if metrics improve.
 - **Self-play loop.** `NEXT_LARGE_PLAN.md` P823 — highest-leverage long-term improvement.
 - **Macro / micro directory split.** Keep `wicked_zerg_challenger/macro/` vs `wicked_zerg_challenger/micro/`.
-
----
-
-## Pending Windows actions (user)
-
-Run `E:\GitHub\Swarm-control-in-sc2bot\scripts\commit_nightly_2026-05-03.bat`:
-1. `qmix_marl/sc2_qmix_agent.py` (torch stubs)
-2. `mappo_marl/sc2_mappo_agent.py` (torch stubs)
-3. `mappo_marl/__init__.py` (stale export fix)
-4. `comm_learning/__init__.py` (stale export fix)
-5. `tests/test_phase10_improvements.py` (gas threshold 800)
-6. `tests/test_crypto_trading.py` (pyupbit skipif fix)
-7. `tests/test_combat_phase_fsm.py` (P2.1 FSM tests — from prev session)
-8. `wicked_zerg_challenger/bot_step_integration.py` (P0 scout import fix — prev)
-9. `wicked_zerg_challenger/scouting/advanced_scout_system_v2.py` (compat alias — prev)
-10. `wicked_zerg_challenger/scouting/enhanced_scout_system.py` (deprecation shim — prev)
-11. `wicked_zerg_challenger/combat/harassment_coordinator.py` (P1.2 — prev)
-12. `wicked_zerg_challenger/scouting/phase_scout_cadence.py` + test (P1.1 — prev)
-13. `tests/test_expansion_timing.py` (P1.3 — prev)
-14. `docs/history/` (P1.5 — prev)
-15. Updated `PLAN-NIGHTLY.md`
-16. Also add `pytest-asyncio>=0.23` to `requirements-dev.txt` (P1.6)
 
 ---
 
@@ -94,3 +96,6 @@ Run `E:\GitHub\Swarm-control-in-sc2bot\scripts\commit_nightly_2026-05-03.bat`:
 - **2026-05-01** — P1.1 scout cadence, P1.2 harassment, P1.3 expansion timing, P1.5 doc history. Commit blocked by index.lock.
 - **2026-05-02** — P0 scout import mismatch fixed. P1.4 deprecation shim. P2.1 FSM tests 23/23 pass.
 - **2026-05-03** — **Test suite cleared:** 90 failures → 0. Fixed pytest-asyncio, torch stubs (qmix/mappo), stale __init__ exports (mappo/comm_learning), gas threshold test, crypto skipif guards. Final: 398 pass / 20 skip / 0 fail.
+- **2026-05-04 / 05-06** — P1.6, P1.7 (queen transfusion) landed. 468 pass / 15 skip / 0 fail.
+- **2026-06-01 / 06-02** — PR #218: stabilized suite further (F821 NameErrors, shadowed duplicate methods, missing methods called from production paths). Merged to `main`.
+- **2026-07-09** — Ran full suite fresh (`pip install -r requirements-dev.txt burnysc2` in a clean venv): found `test_combat_phase_fsm.py` had regressed to 12/23 failing (`asyncio.get_event_loop()` incompatible with pytest-asyncio 1.4.0) — fixed. Found and fixed **P2.4**: `RLAgent.save_model()` was silently failing to save on every call due to a tmp-path/np.savez `.npz`-suffix mismatch, plus a data-loss window in the remove-then-rename atomic-save pattern used by both `save_model()` and `save_experience_data()`. Added 10 regression tests. Final: 512 pass / 14 skip / 0 fail.
