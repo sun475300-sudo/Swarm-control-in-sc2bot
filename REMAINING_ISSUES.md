@@ -4,24 +4,35 @@
 
 통합 문제 해결 후 발견된 추가 개선 사항들입니다.
 
-**Last refreshed:** 2026-04-27 (Issue #1, #2 → Resolved; Issue #6 partially resolved via Batch 3)
+**Last refreshed:** 2026-07-09 (자동 점검 사이클 — N1~N4, Issue #3/#4/#5/#6 재검증 후 Resolved 확인; 신규 이슈 N7 발견 및 수정)
 
 ---
 
-## 🆕 신규 발견 (PR #44, 2026-04-27)
+## 🆕 신규 발견 (2026-07-09 자동 점검 사이클)
 
-자동/수동 점검 사이클(테스트 → 코드 검사 → 개선 → 커밋/푸시 반복)에서 새로 식별된 항목.
+테스트 스위트 실행(664/664 통과) 후 코드 검사에서 새로 식별된 항목.
 
 | ID | 설명 | 우선순위 | 상태 |
 |----|------|---------|------|
-| N1 | `OpponentModeling.on_step` 중복 정의 (line 341 vs 765 — F811) | 🟠 HIGH | open — 동작 영향(상위 on_step이 미실행) 가능 |
-| N2 | `EconomyManager._prevent_resource_banking` / `_reduce_gas_workers` 재정의 (F811) | 🟡 MED | open |
-| N3 | `combat_manager._find_harass_target` 재정의 (line 2377 vs 4278) | 🟡 MED | open |
-| N4 | `production_resilience.build_terran_counters` 재정의 (1369 vs 1866) | 🟡 MED | open |
-| N5 | bare `except Exception:` 다수 (≈360+) — 이번 PR에서 12건 처리, 잔여 다수 | 🟢 LOW | partial |
-| N6 | F841 unused local variables (visuals/make_pptx 등) | 🟢 LOW | open (presentation 코드라 영향 작음) |
+| N7 | `nydus_network_trainer.py`: `_manage_nydus_operations`가 `self._command_deployed_units()`를 호출하지만 해당 메서드가 정의되어 있지 않음 (AttributeError, `on_step`의 광범위한 try/except에 의해 조용히 무시됨) | 🟠 HIGH | ✅ Resolved — 메서드 구현 + 회귀 테스트 3건 추가 (`tests/test_nydus_network_trainer.py`) |
+| N8 | `nydus_network_trainer.py` (`NydusNetworkTrainer`, 428줄)가 프로젝트 어디에서도 import/인스턴스화되지 않는 고아(orphan) 모듈 — Nydus Worm 활용 전략 기능 전체가 매니저 레지스트리에 연결되지 않아 실전에서 전혀 동작하지 않음 | 🟡 MED | open — 다음 세션에서 (a) ManagerFactory/BotStepIntegrator에 연결하고 실전 검증하거나, (b) 의도적으로 보류 중인 기능이면 문서에 명시 필요 |
+| N9 | 루트 이하 10개 파일(`local_training/reward_system.py`, `tools/comprehensive_auto_fix_workflow.py`, `unit_factory.py`, `tools/pro_replay_learning_workflow.py`, `local_training/aggressive_tech_builder.py`, `dynamic_resource_balancer.py` 등)의 한글 주석/docstring이 과거 인코딩 손상(mojibake)으로 일부 유실됨 (유효한 UTF-8이지만 원문 복구 불가능한 리터럴 `?` 다수) | 🟢 LOW | open — 코드 동작에는 영향 없음 (주석/docstring only), 가독성 개선 필요 시 수작업 재작성 필요 |
 
-검증 권장: PR 분리 (N1 단독 PR 권장 — 동작 변화 가능성).
+### ✅ 이번 사이클에서 재검증 완료 (기존 문서가 stale했음)
+
+아래 항목들은 과거 PR에서 이미 해결되었으나 본 문서에 반영되지 않았던 것으로 확인. 코드 재확인 결과 모두 정상:
+
+- N1 (`OpponentModeling.on_step` 중복) — 현재 `opponent_modeling.py`에 `on_step` 단일 정의만 존재. Resolved.
+- N2 (`EconomyManager` 메서드 재정의) — `_prevent_resource_banking`/`_reduce_gas_workers` 각각 단일 정의만 존재. Resolved.
+- N3 (`combat_manager._find_harass_target` 재정의) — 단일 정의만 존재. Resolved.
+- N4 (`production_resilience.build_terran_counters` 재정의) — 단일 정의만 존재. Resolved.
+- Issue #3 (Transfusion 우선순위) — `queen_manager.py`의 `_transfuse_injured_units`에 CreepyBot 스타일 우선순위 테이블(QUEEN > BROODLORD > CORRUPTOR > ... ) 이미 구현됨. Resolved.
+- Issue #4 (Resource Reservation Race Condition) — `core/resource_manager.py`의 `ResourceManager`에 `asyncio.Lock` 기반 `try_reserve`/`release` 이미 구현됨. Resolved.
+- Issue #5 (Position 계산 중복) — `utils/position_utils.py`에 `get_center_position`/`get_weighted_center` 이미 구현됨. Resolved.
+- Issue #6 (매직 넘버) — `utils/game_constants.py`에 `GameFrequencies`/`EconomyConstants` 이미 구현됨. Resolved.
+- 전체 리포 flake8 `F821`(undefined name)/`F811`(redefinition) 스캔 결과 0건.
+
+전체 repo flake8 F821/F811 스캔 결과 0건, pytest 664/664 통과 확인 (2026-07-09).
 
 ---
 
@@ -359,32 +370,25 @@ if iteration % SECOND == 0:
 
 ---
 
-## 📊 이슈 우선순위 요약 (open만)
+## 📊 이슈 우선순위 요약 (open만, 2026-07-09 기준)
 
 | 우선순위 | 이슈 | 영향도 | 난이도 |
 |---------|------|--------|--------|
-| 🟡 MEDIUM | #3 Transfusion 우선순위 | 중간 | 중간 |
-| 🟡 MEDIUM | #4 Resource Race Condition | 낮음 | 중간 |
-| 🟢 LOW | #5 코드 중복 제거 | 낮음 | 쉬움 |
-| 🟢 LOW | #6 매직 넘버 | 낮음 | 쉬움 |
+| 🟡 MED | N8 nydus_network_trainer.py 매니저 미연결 (고아 모듈) | 중간 (기능 전체 비활성) | 중간 |
+| 🟢 LOW | N9 10개 파일 한글 주석 mojibake 손상 | 낮음 (동작 무관) | 높음 (원문 복구 불가, 재작성 필요) |
 
-(Issue #1, #2 → ✅ Resolved 섹션 참조)
+Issue #1~#6, N1~N4, N7 → 전부 ✅ Resolved (위 섹션 참조)
 
 ---
 
 ## 🎯 권장 수정 순서
 
-### 1단계: 완료 (✅)
-~~1. Queen Inject 쿨다운 수정 (25 → 29)~~ — 코드 반영 완료, 본 문서 ✅ Resolved 섹션 참조
-~~2. 누락된 업그레이드 추가~~ — 코드 반영 완료, 본 문서 ✅ Resolved 섹션 참조
+### 완료 (✅, 2026-07-09까지 누적)
+- Queen Inject 쿨다운, 누락 업그레이드, Transfusion 우선순위, Resource Reservation 동기화, Position Utils, Constants 정리, N1~N4 중복 정의, N7 `_command_deployed_units` 누락 — 전부 코드 반영/검증 완료.
 
-### 2단계: 로직 개선 (30분, 미진행)
-3. Transfusion 우선순위 시스템 구현
-
-### 3단계: 구조 개선 (1시간, 미진행)
-4. Resource Reservation 동기화
-5. Position Utils 유틸리티 함수 분리
-6. Constants 정리
+### 다음 단계 (미진행)
+1. N8: `nydus_network_trainer.py`를 `ManagerFactory`/`BotStepIntegrator`에 연결할지, 의도적 보류 기능으로 문서화할지 결정 후 진행.
+2. N9: mojibake 손상 파일 10개 — 우선순위 낮음, 필요 시 수작업으로 한글 주석 재작성.
 
 ---
 
@@ -409,17 +413,17 @@ if iteration % SECOND == 0:
 
 ## 📝 참고 사항
 
-### 현재 상태
+### 현재 상태 (2026-07-09 자동 점검 사이클 기준)
 - ✅ **치명적 통합 문제**: 완전히 해결됨
-- ✅ **모든 단위 테스트**: 통과 (16/16)
+- ✅ **전체 단위 테스트**: 통과 (664/664, `wicked_zerg_challenger/tests`)
 - ✅ **기본 기능**: 정상 작동
+- ✅ **flake8 F821/F811 (undefined name / redefinition)**: 전체 repo 0건
 
 ### 위의 이슈들은
-- 모두 **선택적 개선 사항**
-- 즉시 수정 불필요
-- 점진적 개선 권장
+- N8 제외 모두 **선택적 개선 사항**
+- 점진적 개선 권장 (매일 점검 사이클에서 계속 추적)
 
 ---
 
-**검토 완료일**: 2026-01-29
+**검토 완료일**: 2026-07-09 (이전: 2026-01-29, 2026-04-27)
 **상태**: 추가 개선 사항 문서화 완료

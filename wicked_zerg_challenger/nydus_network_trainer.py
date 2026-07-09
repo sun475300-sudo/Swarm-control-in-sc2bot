@@ -335,6 +335,28 @@ class NydusNetworkTrainer:
                 return spot
         return None
 
+    async def _command_deployed_units(self):
+        """배치된 유닛 관리 (전사 유닛 정리 + 유휴 유닛 재명령)"""
+        live_tags = {u.tag for u in self.bot.units}
+        self.units_in_transit &= live_tags
+        self.units_deployed &= live_tags
+
+        if not self.units_deployed:
+            return
+
+        idle_deployed = self.bot.units.filter(
+            lambda u: u.tag in self.units_deployed and u.is_idle
+        )
+        if not idle_deployed:
+            return
+
+        target = await self._find_best_target(idle_deployed.center)
+        if not target:
+            return
+
+        for unit in idle_deployed:
+            self.bot.do(unit.attack(target))
+
     async def _command_worm_units(self, worm):
         """Worm 근처 유닛 명령"""
         # Worm 근처 아군 찾기 (반경 15)
