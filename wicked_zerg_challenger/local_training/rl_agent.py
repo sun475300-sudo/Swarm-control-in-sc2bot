@@ -14,7 +14,6 @@ REINFORCE 알고리즘 기반의 정책 학습 에이전트입니다.
 
 import logging
 import os
-import shutil
 import time
 from datetime import datetime
 from pathlib import Path
@@ -764,7 +763,20 @@ class RLAgent:
     def save_model(self, path: Optional[str] = None) -> bool:
         """모델 저장 (Atomic Write)"""
         save_path = Path(path) if path else self.model_path
-        tmp_path = save_path.with_suffix(".tmp")
+
+        # *** FIX: np.savez() silently appends ".npz" to any filename that
+        # doesn't already end with it. The old code wrote to `tmp_path.with_suffix(".tmp")`
+        # (e.g. "model.tmp"), so the file that actually landed on disk was
+        # "model.tmp.npz" -- the `if tmp_path.exists():` check below then always
+        # saw a non-existent "model.tmp" and silently skipped the rename, while
+        # still logging "Model saved" and returning True. Net effect: model
+        # checkpoints were never actually written to `save_path`. Build the temp
+        # path with an explicit ".npz" suffix so it matches what np.savez() writes. ***
+        save_path_str = str(save_path)
+        base_no_ext = (
+            save_path_str[:-4] if save_path_str.endswith(".npz") else save_path_str
+        )
+        tmp_path = Path(base_no_ext + ".tmp.npz")
 
         try:
             save_path.parent.mkdir(parents=True, exist_ok=True)
@@ -781,19 +793,9 @@ class RLAgent:
                 episode_count=np.array([self.episode_count]),
             )
 
-            # *** FIX: Atomic rename with Windows compatibility ***
-            if tmp_path.exists():
-                try:
-                    # Remove old file first on Windows (replace() can fail silently)
-                    if save_path.exists():
-                        save_path.unlink()
-                    # Use shutil.move() for cross-platform compatibility
-                    shutil.move(str(tmp_path), str(save_path))
-                except Exception as move_error:
-                    # Fallback: copy + delete
-                    logger.error(f"Move failed, trying copy: {move_error}")
-                    shutil.copy(str(tmp_path), str(save_path))
-                    tmp_path.unlink()
+            # 원자적으로 이름 변경 (Atomic Rename). os.replace()는 POSIX/Windows
+            # 모두에서 대상 파일이 있어도 원자적으로 덮어쓴다.
+            os.replace(str(tmp_path), str(save_path))
 
             logger.info(f"Model saved to {save_path}")
             return True

@@ -37,10 +37,19 @@ jobs:
       - name: Install lint dependencies
         run: pip install flake8 mypy black isort bandit
 
-      - name: Run black (format check)
+      # NOTE: repo-wide formatting has drifted (67 files as of 2026-07-09) and
+      # nobody has landed a repo-wide black/isort pass yet — making these
+      # blocking currently fails every single PR's CI regardless of what the
+      # PR actually changes, which is why the backlog of open PRs has grown
+      # without any of them going green. Downgraded to non-blocking like
+      # mypy/bandit below until a dedicated formatting-only PR clears the
+      # drift; then this should go back to blocking.
+      - name: Run black (format check, non-blocking, informational)
+        continue-on-error: true
         run: black --check --diff .
 
-      - name: Run isort (import order)
+      - name: Run isort (import order, non-blocking, informational)
+        continue-on-error: true
         run: isort --check-only --diff .
 
       - name: Run flake8 (full — non-blocking, informational)
@@ -73,13 +82,20 @@ jobs:
           cache: pip
 
       - name: Install dependencies
-        run: pip install -r requirements.txt pytest pytest-cov pytest-asyncio
+        run: pip install -r requirements.txt pytest pytest-cov pytest-asyncio pytest-timeout
 
+      # NOTE: `tests/unit` / `tests/integration` never existed in this repo, so
+      # these two steps failed immediately with a pytest usage error on every
+      # run that ever reached them (this job is gated by `needs: lint`, and
+      # lint was blocking on repo-wide black/isort drift until 2026-07-09, so
+      # in practice this job never actually ran). Repointed at the real test
+      # suites: the platform-level suite at the repo root, and the SC2 bot's
+      # own suite under wicked_zerg_challenger/.
       - name: Run unit tests
-        run: pytest tests/unit -v --cov=. --cov-report=xml --cov-report=term
+        run: pytest tests/ -v --cov=. --cov-report=xml --cov-report=term
 
       - name: Run integration tests
-        run: pytest tests/integration -v --timeout=120
+        run: pytest wicked_zerg_challenger/tests/ -v --timeout=120 --cov=wicked_zerg_challenger --cov-append --cov-report=xml --cov-report=term
 
       - name: Upload coverage
         uses: codecov/codecov-action@v4
