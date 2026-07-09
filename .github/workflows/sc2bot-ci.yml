@@ -62,7 +62,14 @@ jobs:
   test:
     name: Test Suite
     runs-on: ubuntu-latest
-    needs: lint
+    env:
+      # burnysc2's transitive s2clientprotocol dependency can resolve to the
+      # official PyPI package instead of the pys2clientprotocol fork depending
+      # on how pip resolves the rest of requirements.txt; the official
+      # package ships legacy-style protobuf codegen that crashes under
+      # modern protobuf ("Descriptors cannot be created directly"). Pure-
+      # Python parsing sidesteps that check regardless of which one wins.
+      PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION: python
     steps:
       - uses: actions/checkout@v4
 
@@ -73,10 +80,12 @@ jobs:
           cache: pip
 
       - name: Install dependencies
-        run: pip install -r requirements.txt pytest pytest-cov pytest-asyncio
+        run: pip install -r requirements.txt -r requirements-dev.txt
 
       - name: Run unit tests
-        run: pytest tests/unit -v --cov=. --cov-report=xml --cov-report=term
+        run: >
+          pytest tests/ wicked_zerg_challenger/tests/ --ignore=tests/integration
+          -v --cov=. --cov-report=xml --cov-report=term
 
       - name: Run integration tests
         run: pytest tests/integration -v --timeout=120
@@ -91,7 +100,7 @@ jobs:
   build_docker:
     name: Build Docker Image
     runs-on: ubuntu-latest
-    needs: test
+    needs: [lint, test]
     outputs:
       image_tag: ${{ steps.meta.outputs.tags }}
       image_digest: ${{ steps.build.outputs.digest }}
