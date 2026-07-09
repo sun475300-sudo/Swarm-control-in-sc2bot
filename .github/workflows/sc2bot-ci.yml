@@ -75,11 +75,15 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt pytest pytest-cov pytest-asyncio
 
-      - name: Run unit tests
-        run: pytest tests/unit -v --cov=. --cov-report=xml --cov-report=term
+      - name: Run SC2 bot test suite
+        run: pytest wicked_zerg_challenger/tests -v --cov=wicked_zerg_challenger --cov-report=xml --cov-report=term --timeout=120
+        env:
+          PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION: python
 
-      - name: Run integration tests
-        run: pytest tests/integration -v --timeout=120
+      - name: Run supporting-services test suite
+        run: pytest tests/ -v --timeout=120
+        env:
+          PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION: python
 
       - name: Upload coverage
         uses: codecov/codecov-action@v4
