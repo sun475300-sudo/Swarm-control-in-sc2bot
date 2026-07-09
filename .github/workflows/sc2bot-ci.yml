@@ -62,7 +62,12 @@ jobs:
   test:
     name: Test Suite
     runs-on: ubuntu-latest
-    needs: lint
+    env:
+      # s2clientprotocol ships _pb2.py files generated with an old protoc;
+      # protobuf>=3.20's upb/rust backend refuses to load them
+      # ("Descriptors cannot be created directly"). Fall back to the
+      # pure-Python implementation instead of pinning protobuf.
+      PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION: python
     steps:
       - uses: actions/checkout@v4
 
@@ -73,10 +78,10 @@ jobs:
           cache: pip
 
       - name: Install dependencies
-        run: pip install -r requirements.txt pytest pytest-cov pytest-asyncio
+        run: pip install -r requirements.txt pytest pytest-cov pytest-asyncio pytest-timeout
 
       - name: Run unit tests
-        run: pytest tests/unit -v --cov=. --cov-report=xml --cov-report=term
+        run: pytest tests/ --ignore=tests/integration -v --cov=. --cov-report=xml --cov-report=term
 
       - name: Run integration tests
         run: pytest tests/integration -v --timeout=120
