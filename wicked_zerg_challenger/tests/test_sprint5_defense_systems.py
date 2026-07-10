@@ -217,7 +217,9 @@ class TestAllInDetection(unittest.TestCase):
         blackboard = Blackboard()
         bot = FakeBot(blackboard)
         bot.time = 360.0
-        bot.units = [FakeUnit(i, "ZERGLING", Point(12, 12), health=35) for i in range(4)]
+        bot.units = [
+            FakeUnit(i, "ZERGLING", Point(12, 12), health=35) for i in range(4)
+        ]
         bot.enemy_units = [
             FakeUnit(100 + i, "MARINE", Point(35, 35), health=45) for i in range(12)
         ]
@@ -238,7 +240,9 @@ class TestAllInDetection(unittest.TestCase):
         blackboard = Blackboard()
         bot = FakeBot(blackboard)
         bot.time = 360.0
-        bot.units = [FakeUnit(i, "ZERGLING", Point(12, 12), health=35) for i in range(4)]
+        bot.units = [
+            FakeUnit(i, "ZERGLING", Point(12, 12), health=35) for i in range(4)
+        ]
         bot.enemy_units = [
             FakeUnit(100 + i, "STALKER", Point(35, 35), health=80, shield=80)
             for i in range(8)
