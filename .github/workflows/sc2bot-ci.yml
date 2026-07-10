@@ -63,6 +63,12 @@ jobs:
     name: Test Suite
     runs-on: ubuntu-latest
     needs: lint
+    env:
+      # burnysc2's bundled s2clientprotocol _pb2.py files were generated with
+      # an older protoc than the protobuf runtime pip resolves in CI, which
+      # trips protobuf's "Descriptors cannot be created directly" guard under
+      # the upb backend. Same workaround used in PR #218's local test runs.
+      PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION: python
     steps:
       - uses: actions/checkout@v4
 
