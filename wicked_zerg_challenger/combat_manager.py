@@ -795,7 +795,9 @@ class CombatManager:
             and self.bot.harassment_coordinator
         ):
             locked_units = self.bot.harassment_coordinator.locked_units.copy()
-            if locked_units and iteration % GameFrequencies.EVERY_10_SECONDS == 0:  # Log every 10 seconds
+            if (
+                locked_units and iteration % GameFrequencies.EVERY_10_SECONDS == 0
+            ):  # Log every 10 seconds
                 self.logger.info(
                     f"[CombatManager] {len(locked_units)} units locked in harassment missions "
                     f"(excluded from combat reassignment)"
@@ -1035,7 +1037,10 @@ class CombatManager:
                             # Unit command failed
                             continue
                     # 로그 (30초마다)
-                    if int(game_time) % 30 == 0 and self.bot.iteration % GameFrequencies.EVERY_SECOND == 0:
+                    if (
+                        int(game_time) % 30 == 0
+                        and self.bot.iteration % GameFrequencies.EVERY_SECOND == 0
+                    ):
                         self.logger.warning(
                             f"[{int(game_time)}s] [*] MID-GAME TIMING ATTACK! {len(attack_units)} units attacking! [*]"
                         )
@@ -1536,7 +1541,10 @@ class CombatManager:
 
             self.rl_micro_agent = RLAgent()
         except Exception as exc:
-            if getattr(self.bot, "iteration", 0) % GameFrequencies.EVERY_10_SECONDS == 0:
+            if (
+                getattr(self.bot, "iteration", 0) % GameFrequencies.EVERY_10_SECONDS
+                == 0
+            ):
                 self.logger.warning(f"RL micro unavailable: {exc}")
             self.rl_micro_agent = None
         return self.rl_micro_agent
