@@ -2,18 +2,28 @@
 
 > Owner: 선우 (sun475300@gmail.com)
 > Maintainer: nightly automation
-> Last refreshed: 2026-05-04
+> Last refreshed: 2026-07-10
 
 ---
 
 ## Snapshot (current state)
 
-- Branch: `main`, last commit: queen transfusion + requirements-dev.txt session
+- Branch: `claude/optimistic-edison-tkdx9u`, last commit: this session's test-suite stabilization
 - Bot core: `wicked_zerg_challenger/` — 179+ Python files across 10+ subdirs.
 - `.gitattributes` enforces `* text=auto` ✅
-- CI: `sc2bot-ci.yml` runs black + isort + flake8 ✅ (all clean)
-- **Test suite: 468 pass / 15 skip / 0 fail** ✅ (was 398/20/0 two nights ago)
+- CI: `sc2bot-ci.yml` runs black + isort + flake8 (black/isort have pre-existing repo-wide drift unrelated to this session — see P2.6 below)
+- **Test suite: 1163 pass / 14 skip / 0 fail** ✅ (was failing with 2 collection errors + 20 failures before this session's fixes)
 - Queen transfusion logic: 3 bugs fixed (`is_idle` guard removed, target dedup, per-queen cooldown) ✅
+
+## Resolved this run (2026-07-10)
+
+| Item | File(s) | Notes |
+|------|---------|-------|
+| Order-dependent collection error (N7) | `tests/test_production_resilience.py` | Redundant `sys.path.insert(0, .../local_training)` let `local_training/scripts/` (a real package) shadow the top-level `scripts` namespace package, breaking `test_ladder_tracker.py` / `test_meta_adapter.py` only when the full suite ran together. Removed the redundant insert. |
+| `asyncio.get_event_loop()` RuntimeError (N8) | `tests/test_combat_phase_fsm.py` | 5 sync test helpers called `asyncio.get_event_loop().run_until_complete(...)`, which raises under pytest-asyncio 1.4.0 auto mode when no loop is current. Replaced with `asyncio.run(...)`. Fixed 12 failing tests. |
+| Sandbox missing `cffi` (N9) | environment | `cryptography`'s rust binding panicked without `_cffi_backend`. Installed `cffi`; not a code bug. |
+
+**Net result: 2 collection errors + 20 failures → 0 failures. Suite: 1163 pass / 14 skip.**
 
 ## Resolved this run (2026-05-03)
 
@@ -54,6 +64,7 @@
 | P2.3 | Build-order config externalisation              | ❌ Open | Move top-20 hardcoded values to `config/build_orders.yaml`. |
 | P2.4 | RL agent save-experience guard                  | ❌ Open | Unit test for save under disk-full / interrupted-rename. |
 | P2.5 | Type hints + docstring pass on core modules     | ❌ Open | `core/resource_manager.py`, `core/manager_factory.py`. |
+| P2.6 | Repo-wide black/isort reformat                  | ❌ Open | `black --check --diff .` and `isort --check-only .` (as CI's lint job actually runs them, unpinned version) fail on files untouched by this session too — e.g. `tests/test_combat_phase_fsm.py` predates this run's edits. Needs its own dedicated formatting-only PR (large diff, zero behavior change) rather than folding into a bugfix PR. |
 
 ## Long-term direction
 
@@ -94,3 +105,5 @@ Run `E:\GitHub\Swarm-control-in-sc2bot\scripts\commit_nightly_2026-05-03.bat`:
 - **2026-05-01** — P1.1 scout cadence, P1.2 harassment, P1.3 expansion timing, P1.5 doc history. Commit blocked by index.lock.
 - **2026-05-02** — P0 scout import mismatch fixed. P1.4 deprecation shim. P2.1 FSM tests 23/23 pass.
 - **2026-05-03** — **Test suite cleared:** 90 failures → 0. Fixed pytest-asyncio, torch stubs (qmix/mappo), stale __init__ exports (mappo/comm_learning), gas threshold test, crypto skipif guards. Final: 398 pass / 20 skip / 0 fail.
+- **2026-06-01** (PR #218) — N1-N4 F811 shadowed-duplicate methods deleted (`opponent_modeling.on_step`, `economy_manager._prevent_resource_banking`/`_reduce_gas_workers`, `combat_manager._find_harass_target`, `production_resilience.build_terran_counters`); 6 F821 NameError bugs fixed; 7 failing tests + 1 collection error resolved.
+- **2026-07-10** — Fresh sandbox install + full suite run surfaced 2 new order-dependent bugs not caught before (N7 sys.path shadowing, N8 asyncio.get_event_loop() RuntimeError under pytest-asyncio 1.4.0) plus an environment gap (N9, missing `cffi`). All three resolved. Final: 1163 pass / 14 skip / 0 fail. Flagged P2.6 (repo-wide black/isort drift) as a separate follow-up — out of scope for a bugfix PR.

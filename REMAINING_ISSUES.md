@@ -4,24 +4,29 @@
 
 통합 문제 해결 후 발견된 추가 개선 사항들입니다.
 
-**Last refreshed:** 2026-04-27 (Issue #1, #2 → Resolved; Issue #6 partially resolved via Batch 3)
+**Last refreshed:** 2026-07-10 (N1-N4 → Resolved via PR #218 / commit e648ae4; two new pytest-suite bugs found & fixed this cycle)
 
 ---
 
-## 🆕 신규 발견 (PR #44, 2026-04-27)
+## 🆕 신규 발견 (2026-07-10 점검 사이클)
 
-자동/수동 점검 사이클(테스트 → 코드 검사 → 개선 → 커밋/푸시 반복)에서 새로 식별된 항목.
+의존성 설치 → 전체 pytest 스위트 실행(1173 items) → 실패 triage 순으로 진행한 자동 점검 사이클에서 식별.
 
 | ID | 설명 | 우선순위 | 상태 |
 |----|------|---------|------|
-| N1 | `OpponentModeling.on_step` 중복 정의 (line 341 vs 765 — F811) | 🟠 HIGH | open — 동작 영향(상위 on_step이 미실행) 가능 |
-| N2 | `EconomyManager._prevent_resource_banking` / `_reduce_gas_workers` 재정의 (F811) | 🟡 MED | open |
-| N3 | `combat_manager._find_harass_target` 재정의 (line 2377 vs 4278) | 🟡 MED | open |
-| N4 | `production_resilience.build_terran_counters` 재정의 (1369 vs 1866) | 🟡 MED | open |
-| N5 | bare `except Exception:` 다수 (≈360+) — 이번 PR에서 12건 처리, 잔여 다수 | 🟢 LOW | partial |
-| N6 | F841 unused local variables (visuals/make_pptx 등) | 🟢 LOW | open (presentation 코드라 영향 작음) |
+| N7 | `tests/test_production_resilience.py`가 `wicked_zerg_challenger/local_training`를 직접 `sys.path`에 추가 → 그 안의 `scripts/`(진짜 패키지, `__init__.py` 보유)가 최상위 `scripts` 네임스페이스 패키지를 shadow → 이후 수집되는 `test_ladder_tracker.py`/`test_meta_adapter.py`가 `ModuleNotFoundError: No module named 'scripts.ladder_tracker'`로 collection error 발생 (전체 스위트 실행 시에만 재현, 단독 실행 시엔 통과 — 순서 의존 버그) | 🔴 HIGH | ✅ Resolved — 불필요한 두 번째 `sys.path.insert` 제거 (첫 insert만으로 `local_training.production_resilience` import 충분) |
+| N8 | `tests/test_combat_phase_fsm.py`의 5개 헬퍼(`_run`/`_check`)가 `asyncio.get_event_loop().run_until_complete(...)` 사용 → pytest-asyncio 최신 버전(1.4.0, auto mode) 조합에서 `RuntimeError: There is no current event loop in thread 'MainThread'` 발생, 12개 테스트 실패 | 🔴 HIGH | ✅ Resolved — `asyncio.run(...)`으로 교체 (현재 루프 상태에 의존하지 않는 안전한 패턴) |
+| N9 | 샌드박스 환경에 `cffi` 미설치 → `cryptography` 패키지의 rust(pyo3) 바인딩이 `_cffi_backend` 임포트 실패로 패닉 → crypto_trading/security 테스트 8개 실패 | 🟢 LOW (환경 이슈, 봇 로직과 무관) | ✅ Resolved (환경) — `pip install cffi`로 해결. 코드 변경 없음, CI 이미지에 `cffi`가 없다면 `requirements-dev.txt`에 추가 검토 |
 
-검증 권장: PR 분리 (N1 단독 PR 권장 — 동작 변화 가능성).
+**PR #218 (commit e648ae4, 2026-06-01) 이후 확인:** 이전 사이클(2026-04-27)에서 open으로 남아 있던 N1~N4는 이미 해결된 상태로 코드에서 확인됨 (아래 Resolved 섹션 참조). 이번 사이클에서 새 코드 변경 불필요.
+
+**결과:** 전체 스위트 `1163 passed, 14 skipped, 0 failed` (기존 collection error 2건 + 실패 20건 → 0건).
+
+---
+
+## ✅ Resolved (확인일: 2026-07-10, 실제 수정: PR #218 / commit e648ae4)
+
+`opponent_modeling.on_step` 중복(N1), `economy_manager` 2건 재정의(N2), `combat_manager._find_harass_target` 재정의(N3), `production_resilience.build_terran_counters` 재정의(N4) — 모두 "죽은(shadowed) 앞쪽 정의 삭제" 방식으로 이미 해결됨. 상세: `git show e648ae4`.
 
 ---
 
