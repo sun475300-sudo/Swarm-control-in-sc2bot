@@ -10,6 +10,8 @@ import asyncio
 import logging
 from typing import Optional
 
+from utils.game_constants import GameFrequencies
+
 logger = logging.getLogger(__name__)
 
 BUILD_PATTERNS = {
@@ -821,7 +823,11 @@ class IntelManager:
         self._push_intel_to_blackboard(detected_pattern)
 
         # Log detection (every 30 seconds)
-        if game_time > 0 and int(game_time) % 30 == 0 and self.bot.iteration % 22 == 0:
+        if (
+            game_time > 0
+            and int(game_time) % 30 == 0
+            and self.bot.iteration % GameFrequencies.EVERY_SECOND == 0
+        ):
             if detected_pattern != "unknown":
                 confidence_pct = int(self._build_pattern_confidence * 100)
                 logger.info(
@@ -1282,7 +1288,10 @@ class IntelManager:
             current_time = getattr(self.bot, "time", 0.0)
 
             # 10초마다 적 구조물 수 로그
-            if int(current_time) % 30 == 0 and self.bot.iteration % 22 == 0:
+            if (
+                int(current_time) % 30 == 0
+                and self.bot.iteration % GameFrequencies.EVERY_SECOND == 0
+            ):
                 if len(self.all_enemy_structures) > 0:
                     logger.info(
                         f"[{int(current_time)}s] Enemy structures remaining: {len(self.all_enemy_structures)}"
