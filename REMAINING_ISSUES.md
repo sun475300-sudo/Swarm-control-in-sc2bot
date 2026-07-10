@@ -22,6 +22,7 @@
 | N5 | bare `except Exception:` 다수 | 🟢 LOW, 잔존 (영향 작음, 우선순위 낮음) |
 | N6 | F841 unused locals (presentation 코드) | 🟢 LOW, 잔존 (영향 작음) |
 | Issue #3 | Transfusion 우선순위 시스템 | ✅ 이미 구현됨 (`economy/queen_transfusion_manager.py` — `HEAL_PRIORITY`/`CANNOT_HEAL`) |
+| N7 | `sc2bot-ci.yml`의 `Lint & Type Check` 잡이 `black --check --diff .` 에서 66개 파일 reformat 필요로 실패 | 🟠 MED | open — `main`에서도 수 주간 지속 실패 중 (PR #385에서 확인). 저장소 전역 mechanical reformat이라 별도 PR로 분리 권장 |
 
 ### 🆕 신규 발견 및 수정: 테스트 실행 순서 의존 실패 (order-dependent test failure)
 
