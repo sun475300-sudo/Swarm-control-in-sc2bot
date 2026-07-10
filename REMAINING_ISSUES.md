@@ -4,24 +4,59 @@
 
 통합 문제 해결 후 발견된 추가 개선 사항들입니다.
 
-**Last refreshed:** 2026-04-27 (Issue #1, #2 → Resolved; Issue #6 partially resolved via Batch 3)
+**Last refreshed:** 2026-07-10 (자동 점검 사이클 — 아래 "2026-07-10 검증 결과" 참조. Issue #1, #2 → Resolved; Issue #3~#6, N1~N4 → 코드 재검증 결과 모두 이미 구현 완료된 것으로 확인, Resolved로 이동)
 
 ---
 
-## 🆕 신규 발견 (PR #44, 2026-04-27)
+## ✅ 2026-07-10 검증 결과 (전수 재검증)
 
-자동/수동 점검 사이클(테스트 → 코드 검사 → 개선 → 커밋/푸시 반복)에서 새로 식별된 항목.
+`python3 -m pytest tests/ wicked_zerg_challenger/tests/` 전체 그린 상태에서 아래 문서 항목을 코드와 대조 재검증함. **N1~N4, Issue #3~#6은 모두 이전 세션에서 이미 구현되어 있었고, 이 문서만 갱신되지 않은 상태(stale)였음** — 별도 코드 변경 불필요, 문서만 정정.
+
+| ID | 검증 결과 |
+|----|-----------|
+| N1 | `opponent_modeling.py`에 `on_step` 정의 1개뿐 (line 341). 중복 없음. |
+| N2 | `economy_manager.py`에 `_prevent_resource_banking`/`_reduce_gas_workers` 정의 각 1개뿐. 중복 없음. |
+| N3 | `combat_manager.py`에 `_find_harass_target` 정의 1개뿐 (line 4992). 중복 없음. |
+| N4 | 해당 로직은 `local_training/production_resilience.py:1961 build_terran_counters` 1곳에만 존재 (구 경로 `production_resilience.py`는 더 이상 루트에 없음). 중복 없음. |
+| N5 | 여전히 다수 잔존 (점진 개선 대상, 우선순위 낮음). |
+| N6 | 여전히 다수 잔존 (`wicked_zerg_challenger` 전역 F841 130건 — visuals 외 combat/economy 파일에도 분포). 점진 개선 대상. |
+| Issue #3 | `queen_manager.py:711 _transfuse_injured_units`에 CreepyBot 스타일 우선순위 테이블(퀸>브루드로드>커럽터>스파인>오버시어>...)로 이미 구현됨. 제안보다 더 정교함. |
+| Issue #4 | `core/resource_manager.py`에 `asyncio.Lock` 기반 `try_reserve`/`release`/`release_partial` 이미 구현됨. |
+| Issue #5 | `utils/position_utils.py`에 `get_center_position`/`get_weighted_center` 등 이미 구현됨. |
+| Issue #6 | `utils/game_constants.py` 등 상수 클래스 존재. 매직넘버는 일부 파일에 잔존(점진 개선 대상). |
+
+### 이번 사이클에서 실제로 발견/수정한 버그 (신규)
+
+| 항목 | 파일 | 내용 |
+|------|------|------|
+| ✅ 수정 | `tests/test_combat_phase_fsm.py` | `asyncio.get_event_loop().run_until_complete(...)` 5곳이 다른 테스트 뒤에 실행되면 "no current event loop" 로 실패 (테스트 순서 의존적 flaky). `asyncio.run(...)`으로 교체하여 격리. |
+| ✅ 수정 | `wicked_zerg_challenger/tests/test_production_resilience.py`, `test_opponent_modeling.py` | `class TestX(unittest.TestCase)`에 `async def test_...` 메서드가 있어 코루틴이 **실행조차 되지 않고** 항상 "통과"하던 18개 테스트 발견 (`RuntimeWarning: coroutine was never awaited`). `unittest.IsolatedAsyncioTestCase`로 교체해 실제로 실행되게 수정 — 그 결과 `_get_counter_unit` 관련 테스트 3개가 실제로는 이미 변경된 시그니처(`enemy_units, has_roach_warren, has_hydra_den, has_spire`)와 맞지 않는 stale 테스트였음이 드러나 함께 수정. |
+| ✅ 수정 | 루트 `pytest/` 디렉토리 | 실제 pytest 패키지와 이름이 충돌해 `python -m pytest`가 로컬에서 깨지는 문제(`run_combat_tests.bat`, `PUSH_FIX_TO_MAIN.bat` 등에서 사용) — `python_pytest_example/`로 이름 변경. |
+| ✅ 수정 | `requirements.txt` | `cryptography>=41.0.0`가 `cffi`를 암묵적으로 필요로 함 (미설치 시 `test_crypto_trading.py`/`test_security.py` 8건 실패). `cffi>=1.15.0` 명시 추가. |
+
+### 신규 발견, 아직 미수정 (다음 사이클 후보)
+
+| ID | 설명 | 우선순위 |
+|----|------|---------|
+| N7 | `combat_manager.py`의 `manage_combat`/`_should_skip_combat_frame` (Sprint 4.5 전투 프레임 스킵, `tests/test_sprint4_combat_micro.py`로 테스트까지 있음)이 실제 on_step 경로(`bot_step_integration.py`의 `_safe_manager_step(self.bot.combat, ...)`)에서 전혀 호출되지 않는 죽은 코드. 대신 `logic_optimizer.py`가 "Combat" 시스템을 `interval=1`(매 프레임)로 하드코딩 관리 중이라 실질적 영향은 제한적이지만, 테스트된 기능이 실전에서 비활성 상태인 점은 정리 필요. 실제 게임(SC2 클라이언트) 없이는 프레임 스킵 동작 변경의 안전성을 검증할 수 없어 이번 사이클에서는 코드 변경 보류. |
+
+---
+
+## 🆕 신규 발견 (PR #44, 2026-04-27) — 재검증 결과 모두 Resolved (위 표 참조)
+
+<details>
+<summary>원본 기록 (참고용, 접기)</summary>
 
 | ID | 설명 | 우선순위 | 상태 |
 |----|------|---------|------|
-| N1 | `OpponentModeling.on_step` 중복 정의 (line 341 vs 765 — F811) | 🟠 HIGH | open — 동작 영향(상위 on_step이 미실행) 가능 |
-| N2 | `EconomyManager._prevent_resource_banking` / `_reduce_gas_workers` 재정의 (F811) | 🟡 MED | open |
-| N3 | `combat_manager._find_harass_target` 재정의 (line 2377 vs 4278) | 🟡 MED | open |
-| N4 | `production_resilience.build_terran_counters` 재정의 (1369 vs 1866) | 🟡 MED | open |
+| N1 | `OpponentModeling.on_step` 중복 정의 (line 341 vs 765 — F811) | 🟠 HIGH | ✅ Resolved (2026-07-10 재검증) |
+| N2 | `EconomyManager._prevent_resource_banking` / `_reduce_gas_workers` 재정의 (F811) | 🟡 MED | ✅ Resolved (2026-07-10 재검증) |
+| N3 | `combat_manager._find_harass_target` 재정의 (line 2377 vs 4278) | 🟡 MED | ✅ Resolved (2026-07-10 재검증) |
+| N4 | `production_resilience.build_terran_counters` 재정의 (1369 vs 1866) | 🟡 MED | ✅ Resolved (2026-07-10 재검증) |
 | N5 | bare `except Exception:` 다수 (≈360+) — 이번 PR에서 12건 처리, 잔여 다수 | 🟢 LOW | partial |
-| N6 | F841 unused local variables (visuals/make_pptx 등) | 🟢 LOW | open (presentation 코드라 영향 작음) |
+| N6 | F841 unused local variables (visuals/make_pptx 등) | 🟢 LOW | open (전역 130건, 점진 개선) |
 
-검증 권장: PR 분리 (N1 단독 PR 권장 — 동작 변화 가능성).
+</details>
 
 ---
 
@@ -67,9 +102,9 @@
 
 ---
 
-## 🟡 MEDIUM Priority Issues (still open)
+## 🟡 MEDIUM Priority Issues (✅ Resolved — 2026-07-10 재검증, 아래는 원래 제안 기록)
 
-### Issue #3: Transfusion 우선순위 개선 필요
+### Issue #3: Transfusion 우선순위 개선 필요 — ✅ Resolved (`queen_manager.py:711 _transfuse_injured_units`)
 
 **위치**: `queen_manager.py` 또는 `spell_unit_manager.py`
 
@@ -142,7 +177,7 @@ async def smart_transfusion(self, queen, damaged_units):
 
 ---
 
-### Issue #4: Resource Reservation Race Condition
+### Issue #4: Resource Reservation Race Condition — ✅ Resolved (`core/resource_manager.py` — `asyncio.Lock` + `try_reserve`/`release`)
 
 **위치**: `resource_manager.py` (추정)
 
@@ -217,9 +252,9 @@ else:
 
 ---
 
-## 🟢 LOW Priority Issues
+## 🟢 LOW Priority Issues (#5 ✅ Resolved, #6 부분 완료 — 2026-07-10 재검증)
 
-### Issue #5: 코드 중복 - Position 계산
+### Issue #5: 코드 중복 - Position 계산 — ✅ Resolved (`utils/position_utils.py`)
 
 **위치**: 여러 파일에서 중복
 
@@ -296,7 +331,7 @@ center = get_center_position(army_units)
 
 ---
 
-### Issue #6: 매직 넘버 (Magic Numbers)
+### Issue #6: 매직 넘버 (Magic Numbers) — 부분 완료 (`utils/game_constants.py` 존재, 잔존분 점진 개선 대상)
 
 **위치**: 여러 파일
 
@@ -359,32 +394,35 @@ if iteration % SECOND == 0:
 
 ---
 
-## 📊 이슈 우선순위 요약 (open만)
+## 📊 이슈 우선순위 요약
 
-| 우선순위 | 이슈 | 영향도 | 난이도 |
-|---------|------|--------|--------|
-| 🟡 MEDIUM | #3 Transfusion 우선순위 | 중간 | 중간 |
-| 🟡 MEDIUM | #4 Resource Race Condition | 낮음 | 중간 |
-| 🟢 LOW | #5 코드 중복 제거 | 낮음 | 쉬움 |
-| 🟢 LOW | #6 매직 넘버 | 낮음 | 쉬움 |
+**2026-07-10 갱신: #3~#6 모두 코드에 이미 구현되어 있음이 확인되어 Resolved.** 아래는 과거 기록.
 
-(Issue #1, #2 → ✅ Resolved 섹션 참조)
+| 우선순위 | 이슈 | 상태 |
+|---------|------|------|
+| 🟡 MEDIUM | #3 Transfusion 우선순위 | ✅ Resolved (`queen_manager.py:711`) |
+| 🟡 MEDIUM | #4 Resource Race Condition | ✅ Resolved (`core/resource_manager.py`) |
+| 🟢 LOW | #5 코드 중복 제거 | ✅ Resolved (`utils/position_utils.py`) |
+| 🟢 LOW | #6 매직 넘버 | 부분 완료 (`utils/game_constants.py` 존재, 잔존분은 점진 개선) |
+
+(Issue #1, #2 → ✅ Resolved 섹션 참조. N1~N7은 상단 "2026-07-10 검증 결과" 참조)
 
 ---
 
 ## 🎯 권장 수정 순서
 
-### 1단계: 완료 (✅)
-~~1. Queen Inject 쿨다운 수정 (25 → 29)~~ — 코드 반영 완료, 본 문서 ✅ Resolved 섹션 참조
-~~2. 누락된 업그레이드 추가~~ — 코드 반영 완료, 본 문서 ✅ Resolved 섹션 참조
+### 완료 (✅)
+- Queen Inject 쿨다운 수정 (25 → 29)
+- 누락된 업그레이드 추가
+- Transfusion 우선순위 시스템
+- Resource Reservation 동기화
+- Position Utils 유틸리티 함수 분리
+- N1~N4 (중복 정의 의심) — 재검증 결과 중복 없음
 
-### 2단계: 로직 개선 (30분, 미진행)
-3. Transfusion 우선순위 시스템 구현
-
-### 3단계: 구조 개선 (1시간, 미진행)
-4. Resource Reservation 동기화
-5. Position Utils 유틸리티 함수 분리
-6. Constants 정리
+### 다음 후보 (미진행)
+- N5/N6: bare except / F841 잔존분 점진 정리
+- N7: Sprint 4.5 전투 프레임 스킵 죽은 코드 정리 (실전 게임 검증 필요, 상단 참조)
+- Constants 정리 (매직넘버 잔존분)
 
 ---
 
