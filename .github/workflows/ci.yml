@@ -25,6 +25,11 @@ on:
 env:
   PYTHON_VERSION: "3.10"
   NODE_VERSION: "18"
+  # google-generativeai pulls a protobuf release whose C++ implementation
+  # rejects s2clientprotocol's pre-generated _pb2.py files ("Descriptors
+  # cannot be created directly"). Force the pure-Python protobuf backend
+  # so both packages can coexist without pinning either one down.
+  PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION: "python"
 
 jobs:
   # ─────────────────────────────────────────────
