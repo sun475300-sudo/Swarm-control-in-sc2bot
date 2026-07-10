@@ -4,24 +4,49 @@
 
 통합 문제 해결 후 발견된 추가 개선 사항들입니다.
 
-**Last refreshed:** 2026-04-27 (Issue #1, #2 → Resolved; Issue #6 partially resolved via Batch 3)
+**Last refreshed:** 2026-07-10 (자동 점검 사이클 — N1~N4 재검증 결과 반영, 신규 버그 1건 수정)
 
 ---
 
-## 🆕 신규 발견 (PR #44, 2026-04-27)
+## ✅ 2026-07-10 점검 결과
+
+`flake8 --select=F811,F821,F823`를 `wicked_zerg_challenger/` 전체에 재실행한 결과
+**N1~N4는 이미 해결되어 있었음** (문서만 stale 상태였음 — 별도 코드 수정 불필요, 단일 정의만 확인됨):
+
+| ID | 설명 | 재검증 결과 |
+|----|------|-----------|
+| N1 | `OpponentModeling.on_step` 중복 정의 | ✅ 이미 단일 정의 (`opponent_modeling.py:341`만 존재) |
+| N2 | `EconomyManager._prevent_resource_banking` / `_reduce_gas_workers` 재정의 | ✅ 이미 단일 정의 |
+| N3 | `combat_manager._find_harass_target` 재정의 | ✅ 이미 단일 정의 (`combat_manager.py:4992`) |
+| N4 | `production_resilience.build_terran_counters` 재정의 | ✅ 이미 단일 정의 (`production_resilience.py:1961`) |
+| N5 | bare `except Exception:` 다수 | 🟢 LOW, 잔존 (영향 작음, 우선순위 낮음) |
+| N6 | F841 unused locals (presentation 코드) | 🟢 LOW, 잔존 (영향 작음) |
+| Issue #3 | Transfusion 우선순위 시스템 | ✅ 이미 구현됨 (`economy/queen_transfusion_manager.py` — `HEAL_PRIORITY`/`CANNOT_HEAL`) |
+
+### 🆕 신규 발견 및 수정: 테스트 실행 순서 의존 실패 (order-dependent test failure)
+
+**증상**: `tests/test_combat_phase_fsm.py`의 12개 테스트가 `tests/test_combat_manager.py` 뒤에 실행될 때만
+`RuntimeError: There is no current event loop in thread 'MainThread'.` 로 실패. 단독 실행 시에는 통과해서
+그동안 발견되지 못함 (CI의 `sc2bot-ci.yml`은 `wicked_zerg_challenger/tests/`만 실행하고, `ci.yml`의
+루트 `tests/` 실행은 `--co`(collect-only)라 실제 실행되지 않았음 — CI 사각지대).
+
+**원인**: `test_combat_phase_fsm.py`의 6개 헬퍼(`TestIdleToGathering`, `TestGatheringToPositioning`,
+`TestPositioningToEngagement`, `TestEngagementToActiveCombat`, `TestActiveCombatToRegrouping`)가
+deprecated된 `asyncio.get_event_loop().run_until_complete(...)` 패턴 사용. `test_combat_manager.py`의
+비동기 테스트를 pytest-asyncio가 실행/종료하면서 전역 이벤트 루프 정책의 `_set_called=True, _loop=None`
+상태가 되어, 이후 `get_event_loop()`가 새 루프를 자동 생성하지 않고 예외를 던짐.
+
+**수정**: `asyncio.get_event_loop().run_until_complete(coro)` → `asyncio.run(coro)`로 교체 (6곳).
+`asyncio.run()`은 매번 새 이벤트 루프를 생성/정리하므로 전역 정책 상태에 의존하지 않음.
+
+**검증**: `pytest wicked_zerg_challenger/tests/ tests/ -q` → **1166 passed, 11 skipped, 0 failed**
+(수정 전: 12 failed).
+
+---
+
+## 🆕 신규 발견 (PR #44, 2026-04-27, 참고용 — 이후 해결됨)
 
 자동/수동 점검 사이클(테스트 → 코드 검사 → 개선 → 커밋/푸시 반복)에서 새로 식별된 항목.
-
-| ID | 설명 | 우선순위 | 상태 |
-|----|------|---------|------|
-| N1 | `OpponentModeling.on_step` 중복 정의 (line 341 vs 765 — F811) | 🟠 HIGH | open — 동작 영향(상위 on_step이 미실행) 가능 |
-| N2 | `EconomyManager._prevent_resource_banking` / `_reduce_gas_workers` 재정의 (F811) | 🟡 MED | open |
-| N3 | `combat_manager._find_harass_target` 재정의 (line 2377 vs 4278) | 🟡 MED | open |
-| N4 | `production_resilience.build_terran_counters` 재정의 (1369 vs 1866) | 🟡 MED | open |
-| N5 | bare `except Exception:` 다수 (≈360+) — 이번 PR에서 12건 처리, 잔여 다수 | 🟢 LOW | partial |
-| N6 | F841 unused local variables (visuals/make_pptx 등) | 🟢 LOW | open (presentation 코드라 영향 작음) |
-
-검증 권장: PR 분리 (N1 단독 PR 권장 — 동작 변화 가능성).
 
 ---
 
