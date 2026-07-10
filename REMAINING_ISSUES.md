@@ -14,12 +14,12 @@
 
 | ID | 설명 | 우선순위 | 상태 |
 |----|------|---------|------|
-| N1 | `OpponentModeling.on_step` 중복 정의 (line 341 vs 765 — F811) | 🟠 HIGH | open — 동작 영향(상위 on_step이 미실행) 가능 |
-| N2 | `EconomyManager._prevent_resource_banking` / `_reduce_gas_workers` 재정의 (F811) | 🟡 MED | open |
-| N3 | `combat_manager._find_harass_target` 재정의 (line 2377 vs 4278) | 🟡 MED | open |
-| N4 | `production_resilience.build_terran_counters` 재정의 (1369 vs 1866) | 🟡 MED | open |
-| N5 | bare `except Exception:` 다수 (≈360+) — 이번 PR에서 12건 처리, 잔여 다수 | 🟢 LOW | partial |
-| N6 | F841 unused local variables (visuals/make_pptx 등) | 🟢 LOW | open (presentation 코드라 영향 작음) |
+| N1 | `OpponentModeling.on_step` 중복 정의 (line 341 vs 765 — F811) | 🟠 HIGH | ✅ resolved — 2026-07-10 재검증: `wicked_zerg_challenger/opponent_modeling.py`에 `on_step` 정의가 하나만 남아있음 (`flake8 --select=F811`로 전체 `wicked_zerg_challenger/` 재스캔, 0건). 별도 PR에서 이미 정리된 것으로 보이며 본 문서가 stale했음. |
+| N2 | `EconomyManager._prevent_resource_banking` / `_reduce_gas_workers` 재정의 (F811) | 🟡 MED | ✅ resolved — 2026-07-10 재검증: 두 메서드 모두 단일 정의만 존재. |
+| N3 | `combat_manager._find_harass_target` 재정의 (line 2377 vs 4278) | 🟡 MED | ✅ resolved — 2026-07-10 재검증: 단일 정의만 존재. |
+| N4 | `production_resilience.build_terran_counters` 재정의 (1369 vs 1866) | 🟡 MED | ✅ resolved — 2026-07-10 재검증: 단일 정의만 존재. |
+| N5 | bare `except Exception:` 다수 (≈360+) — 이번 PR에서 12건 처리, 잔여 다수 | 🟢 LOW | partial — 2026-07-10 기준 `wicked_zerg_challenger/`에 465건 잔존. 점진적 개선 대상으로 유지. |
+| N6 | F841 unused local variables (visuals/make_pptx 등) | 🟢 LOW | partial — 2026-07-10 기준 `wicked_zerg_challenger/`에 130건 잔존 (presentation 코드라 영향 작음). |
 
 검증 권장: PR 분리 (N1 단독 PR 권장 — 동작 변화 가능성).
 

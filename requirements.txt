@@ -5,7 +5,15 @@ burnysc2>=5.0.0
 numpy>=1.20.0
 matplotlib>=3.3.0
 psutil>=5.8.0
-s2clientprotocol>=4.19.0.0
+# NOTE: do NOT add an explicit s2clientprotocol pin here (redundant -
+# burnysc2 already pulls in whichever s2clientprotocol/pys2clientprotocol
+# it needs on its own). Depending on which burnysc2 version the full
+# resolver here lands on, the generated protobuf code it depends on can
+# predate the installed `protobuf` runtime and crash on import with
+# "TypeError: Descriptors cannot be created directly". That failure mode
+# is guarded against version-agnostically in tests/conftest.py via
+# PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python, so it isn't fixable (or
+# necessary to fix) by pinning versions here.
 sc2reader>=0.8.0
 pyyaml>=6.0
 
