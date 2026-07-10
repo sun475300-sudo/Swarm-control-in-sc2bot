@@ -2,20 +2,31 @@
 
 > Owner: 선우 (sun475300@gmail.com)
 > Maintainer: nightly automation
-> Last refreshed: 2026-05-04
+> Last refreshed: 2026-07-10
 
 ---
 
 ## Snapshot (current state)
 
-- Branch: `main`, last commit: queen transfusion + requirements-dev.txt session
-- Bot core: `wicked_zerg_challenger/` — 179+ Python files across 10+ subdirs.
+- Branch: `claude/optimistic-edison-aat6r6` (from `main`)
+- Bot core: `wicked_zerg_challenger/` — 417+ Python files across 10+ subdirs.
 - `.gitattributes` enforces `* text=auto` ✅
-- CI: `sc2bot-ci.yml` runs black + isort + flake8 ✅ (all clean)
-- **Test suite: 468 pass / 15 skip / 0 fail** ✅ (was 398/20/0 two nights ago)
-- Queen transfusion logic: 3 bugs fixed (`is_idle` guard removed, target dedup, per-queen cooldown) ✅
+- CI: `sc2bot-ci.yml` runs black + isort + flake8 ✅ (all clean); `py_compile` over all 417 files ✅
+- **Test suite (`wicked_zerg_challenger/tests/` + `tests/`): 1166 pass / 11 skip / 0 fail** ✅
+  (fixed 12 order-dependent failures in `test_combat_phase_fsm.py`, see below)
+- `flake8 --select=F811,F821,F823` on `wicked_zerg_challenger/`: **0 findings** — N1-N4 from
+  `REMAINING_ISSUES.md` were already resolved in code; docs were stale.
+- Queen transfusion priority system (`economy/queen_transfusion_manager.py`): already implemented
+  (Issue #3 in `REMAINING_ISSUES.md` — doc was stale).
 
-## Resolved this run (2026-05-03)
+## Resolved this run (2026-07-10)
+
+| Item | File(s) | Notes |
+|------|---------|-------|
+| Order-dependent test failures | `tests/test_combat_phase_fsm.py` | 12 tests failed only when run after `test_combat_manager.py` (`RuntimeError: no current event loop`). Root cause: deprecated `asyncio.get_event_loop().run_until_complete(...)` pattern breaks once pytest-asyncio closes the global loop from a prior async test. Replaced with `asyncio.run(...)` in 6 helper methods. This was invisible to CI: `sc2bot-ci.yml` only runs `wicked_zerg_challenger/tests/`, and `ci.yml`'s root `tests/` pytest step uses `--co` (collect-only). |
+| REMAINING_ISSUES.md refresh | `REMAINING_ISSUES.md` | Re-verified N1-N4 (F811 dup-defs) and Issue #3 (transfusion priority) against current code — all already resolved, docs updated to stop tracking them as open. |
+
+## Resolved previous run (2026-05-03)
 
 | Item | File(s) | Notes |
 |------|---------|-------|
@@ -63,28 +74,6 @@
 
 ---
 
-## Pending Windows actions (user)
-
-Run `E:\GitHub\Swarm-control-in-sc2bot\scripts\commit_nightly_2026-05-03.bat`:
-1. `qmix_marl/sc2_qmix_agent.py` (torch stubs)
-2. `mappo_marl/sc2_mappo_agent.py` (torch stubs)
-3. `mappo_marl/__init__.py` (stale export fix)
-4. `comm_learning/__init__.py` (stale export fix)
-5. `tests/test_phase10_improvements.py` (gas threshold 800)
-6. `tests/test_crypto_trading.py` (pyupbit skipif fix)
-7. `tests/test_combat_phase_fsm.py` (P2.1 FSM tests — from prev session)
-8. `wicked_zerg_challenger/bot_step_integration.py` (P0 scout import fix — prev)
-9. `wicked_zerg_challenger/scouting/advanced_scout_system_v2.py` (compat alias — prev)
-10. `wicked_zerg_challenger/scouting/enhanced_scout_system.py` (deprecation shim — prev)
-11. `wicked_zerg_challenger/combat/harassment_coordinator.py` (P1.2 — prev)
-12. `wicked_zerg_challenger/scouting/phase_scout_cadence.py` + test (P1.1 — prev)
-13. `tests/test_expansion_timing.py` (P1.3 — prev)
-14. `docs/history/` (P1.5 — prev)
-15. Updated `PLAN-NIGHTLY.md`
-16. Also add `pytest-asyncio>=0.23` to `requirements-dev.txt` (P1.6)
-
----
-
 ## Run history
 
 - **2026-04-25** — Initial nightly plan.
@@ -94,3 +83,4 @@ Run `E:\GitHub\Swarm-control-in-sc2bot\scripts\commit_nightly_2026-05-03.bat`:
 - **2026-05-01** — P1.1 scout cadence, P1.2 harassment, P1.3 expansion timing, P1.5 doc history. Commit blocked by index.lock.
 - **2026-05-02** — P0 scout import mismatch fixed. P1.4 deprecation shim. P2.1 FSM tests 23/23 pass.
 - **2026-05-03** — **Test suite cleared:** 90 failures → 0. Fixed pytest-asyncio, torch stubs (qmix/mappo), stale __init__ exports (mappo/comm_learning), gas threshold test, crypto skipif guards. Final: 398 pass / 20 skip / 0 fail.
+- **2026-07-10** — Re-verified N1-N4/Issue #3 from `REMAINING_ISSUES.md` (already resolved, docs were stale). Found and fixed a real CI blind spot: 12 order-dependent failures in `test_combat_phase_fsm.py` (`asyncio.get_event_loop()` → `asyncio.run()`). Full suite: 1166 pass / 11 skip / 0 fail.
