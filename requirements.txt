@@ -5,7 +5,15 @@ burnysc2>=5.0.0
 numpy>=1.20.0
 matplotlib>=3.3.0
 psutil>=5.8.0
-s2clientprotocol>=4.19.0.0
+# NOTE: do NOT add an explicit s2clientprotocol pin here. burnysc2 already
+# depends on pys2clientprotocol, which installs its (protobuf-runtime
+# compatible) generated files under the same `s2clientprotocol` import
+# path. Installing the standalone `s2clientprotocol` PyPI package on top
+# overwrites those files with old protoc-generated code that crashes any
+# current `protobuf` release with "Descriptors cannot be created
+# directly" (TypeError) the moment `sc2.position` imports it. Reproduced
+# in a clean venv: `pip install burnysc2` alone works; adding
+# `s2clientprotocol>=4.19.0.0` on top breaks the same import immediately.
 sc2reader>=0.8.0
 pyyaml>=6.0
 
