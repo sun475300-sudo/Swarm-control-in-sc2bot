@@ -4,7 +4,8 @@
 
 통합 문제 해결 후 발견된 추가 개선 사항들입니다.
 
-**Last refreshed:** 2026-04-27 (Issue #1, #2 → Resolved; Issue #6 partially resolved via Batch 3)
+**Last refreshed:** 2026-07-10 (N1-N4, Issue #3, Issue #4 re-verified against current
+`main` and confirmed resolved; Issue #5 actually wired in this pass — see below)
 
 ---
 
@@ -14,11 +15,11 @@
 
 | ID | 설명 | 우선순위 | 상태 |
 |----|------|---------|------|
-| N1 | `OpponentModeling.on_step` 중복 정의 (line 341 vs 765 — F811) | 🟠 HIGH | open — 동작 영향(상위 on_step이 미실행) 가능 |
-| N2 | `EconomyManager._prevent_resource_banking` / `_reduce_gas_workers` 재정의 (F811) | 🟡 MED | open |
-| N3 | `combat_manager._find_harass_target` 재정의 (line 2377 vs 4278) | 🟡 MED | open |
-| N4 | `production_resilience.build_terran_counters` 재정의 (1369 vs 1866) | 🟡 MED | open |
-| N5 | bare `except Exception:` 다수 (≈360+) — 이번 PR에서 12건 처리, 잔여 다수 | 🟢 LOW | partial |
+| N1 | `OpponentModeling.on_step` 중복 정의 (line 341 vs 765 — F811) | 🟠 HIGH | ✅ resolved — AST scan of `wicked_zerg_challenger/` (2026-07-10) finds 0 duplicate method definitions across all classes |
+| N2 | `EconomyManager._prevent_resource_banking` / `_reduce_gas_workers` 재정의 (F811) | 🟡 MED | ✅ resolved — see N1 verification |
+| N3 | `combat_manager._find_harass_target` 재정의 (line 2377 vs 4278) | 🟡 MED | ✅ resolved — see N1 verification |
+| N4 | `production_resilience.build_terran_counters` 재정의 (1369 vs 1866) | 🟡 MED | ✅ resolved — see N1 verification |
+| N5 | bare `except Exception:` 다수 (≈360+) — 이번 PR에서 12건 처리, 잔여 다수 | 🟢 LOW | partial (still ~468 occurrences repo-wide as of 2026-07-10) |
 | N6 | F841 unused local variables (visuals/make_pptx 등) | 🟢 LOW | open (presentation 코드라 영향 작음) |
 
 검증 권장: PR 분리 (N1 단독 PR 권장 — 동작 변화 가능성).
@@ -67,9 +68,14 @@
 
 ---
 
-## 🟡 MEDIUM Priority Issues (still open)
+## 🟡 MEDIUM Priority Issues
 
-### Issue #3: Transfusion 우선순위 개선 필요
+### Issue #3: Transfusion 우선순위 개선 필요 — ✅ Resolved (2026-07-10)
+
+`wicked_zerg_challenger/economy/queen_transfusion_manager.py`가 이 절이 제안한 것보다
+더 완전한 구현(우선순위 heal 대상 선정 + CANNOT_HEAL 제외 + 쿨다운 관리)을 이미 담고 있고,
+`bot_step_integration.py`에서 실제로 인스턴스화되어 매 스텝 호출됨을 확인. 아래는 원본
+제안 내용(참고용, 이미 대체됨).
 
 **위치**: `queen_manager.py` 또는 `spell_unit_manager.py`
 
@@ -138,11 +144,15 @@ async def smart_transfusion(self, queen, damaged_units):
         self.bot.do(queen(AbilityId.TRANSFUSION_TRANSFUSION, best_target))
 ```
 
-**우선순위**: 🟡 MEDIUM (자원 효율성 개선)
+**우선순위**: 🟡 MEDIUM (자원 효율성 개선) — 위 사유로 완료 처리
 
 ---
 
-### Issue #4: Resource Reservation Race Condition
+### Issue #4: Resource Reservation Race Condition — ✅ Resolved (2026-07-10)
+
+`resource_manager.try_reserve(minerals, gas, manager_name)`가 이미 구현되어 있고
+`economy_manager.py`, `defense_coordinator.py`의 여러 호출부에서 사용 중임을 확인.
+아래는 원본 문제/제안 내용(참고용, 이미 대체됨).
 
 **위치**: `resource_manager.py` (추정)
 
@@ -213,13 +223,30 @@ else:
     return
 ```
 
-**우선순위**: 🟡 MEDIUM (안정성 개선, 드물게 발생)
+**우선순위**: 🟡 MEDIUM (안정성 개선, 드물게 발생) — 위 사유로 완료 처리
 
 ---
 
 ## 🟢 LOW Priority Issues
 
-### Issue #5: 코드 중복 - Position 계산
+### Issue #5: 코드 중복 - Position 계산 — ✅ Resolved (2026-07-10)
+
+`utils/position_utils.py`에 `get_center_position()`이 이미 작성되어 있었지만
+**호출부가 0곳**이었다 (모듈 자체도 `sc2` 미설치 환경에서 import가 실패하는 상태라
+아무도 실제로 채택하지 못했던 것으로 보임). 이번 세션에서:
+
+1. `position_utils.py`의 `from sc2.position import Point2` 하드 임포트를
+   나머지 코드베이스 전체가 쓰는 것과 동일한 try/except-fallback 패턴으로 교체
+   (sc2 미설치 환경에서도 import 가능하도록).
+2. 중복된 인라인 centroid 계산 11곳을 실제로 `get_center_position()` 호출로 교체:
+   `combat_manager.py` (2곳), `micro_controller.py`, `combat_phase_controller.py`,
+   `combat/micro_combat.py` (2곳), `combat/infestor_tactics.py`,
+   `combat/combat_execution.py`, `combat/expansion_defense.py`,
+   `battle_preparation_system.py`, `idle_unit_manager.py`.
+3. 회귀 테스트 추가: `wicked_zerg_challenger/tests/test_position_utils.py`
+   (계산 정확성 + sc2 미설치 환경에서의 import 안전성 검증).
+
+아래는 원본 문제/제안 내용(참고용).
 
 **위치**: 여러 파일에서 중복
 
@@ -292,7 +319,7 @@ from utils.position_utils import get_center_position
 center = get_center_position(army_units)
 ```
 
-**우선순위**: 🟢 LOW (코드 품질 개선)
+**우선순위**: 🟢 LOW (코드 품질 개선) — 위 사유로 완료 처리
 
 ---
 
