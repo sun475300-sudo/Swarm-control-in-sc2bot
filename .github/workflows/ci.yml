@@ -117,6 +117,12 @@ jobs:
         env:
           DRY_RUN: "true"
           LOG_LEVEL: "DEBUG"
+          # burnysc2's bundled s2clientprotocol _pb2.py files are generated
+          # against protoc <3.19 and crash under the C++ protobuf backend
+          # ("Descriptors cannot be created directly") that requirements.txt's
+          # unpinned protobuf resolves to. The sc2-bot-test job below already
+          # works around this the same way.
+          PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION: python
 
   # ─────────────────────────────────────────────
   # SC2 봇 구문 검증 + 테스트
