@@ -13,6 +13,16 @@ from unittest.mock import MagicMock
 
 import pytest
 
+# `sc2`(burnysc2)가 pull하는 protobuf 생성 코드(s2clientprotocol 또는
+# pys2clientprotocol, 어느 쪽이 설치되는지는 requirements.txt 전체의 의존성
+# 해석 결과에 따라 달라진다)가 설치된 protobuf 런타임보다 오래된 protoc로
+# 생성된 경우 `TypeError: Descriptors cannot be created directly`로 즉시
+# 크래시한다. pure-Python 파서로 강제 전환하면 어떤 조합이 설치되든 항상
+# 동작한다 (다소 느려지지만 테스트 스위트 규모에서는 무의미한 차이).
+# 반드시 sc2/google.protobuf가 임포트되기 전에 설정되어야 하므로, 다른
+# 테스트 모듈이 임포트되기 전인 여기(conftest.py 최상단)에서 설정한다.
+os.environ.setdefault("PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION", "python")
+
 # 프로젝트 루트를 sys.path에 추가
 PROJECT_ROOT = Path(__file__).parent.parent
 if str(PROJECT_ROOT) not in sys.path:
