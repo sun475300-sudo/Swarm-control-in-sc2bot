@@ -11,6 +11,12 @@ import tempfile
 from pathlib import Path
 from unittest.mock import MagicMock
 
+# burnysc2's pinned s2clientprotocol dependency ships _pb2.py files generated
+# with old-style protoc codegen; the upb/C++ protobuf>=4 backend refuses to
+# load them ("Descriptors cannot be created directly"). Force the pure-Python
+# implementation before `sc2` (or anything importing it) gets imported.
+os.environ.setdefault("PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION", "python")
+
 import pytest
 
 # 프로젝트 루트를 sys.path에 추가
