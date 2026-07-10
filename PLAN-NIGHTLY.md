@@ -2,18 +2,26 @@
 
 > Owner: 선우 (sun475300@gmail.com)
 > Maintainer: nightly automation
-> Last refreshed: 2026-05-04
+> Last refreshed: 2026-07-10
 
 ---
 
 ## Snapshot (current state)
 
-- Branch: `main`, last commit: queen transfusion + requirements-dev.txt session
-- Bot core: `wicked_zerg_challenger/` — 179+ Python files across 10+ subdirs.
+- Branch: `main`, last commit: PR #218 (stabilize SC2 bot test suite)
+- Bot core: `wicked_zerg_challenger/` — 417+ Python files across 10+ subdirs.
 - `.gitattributes` enforces `* text=auto` ✅
-- CI: `sc2bot-ci.yml` runs black + isort + flake8 ✅ (all clean)
-- **Test suite: 468 pass / 15 skip / 0 fail** ✅ (was 398/20/0 two nights ago)
+- CI: `ci.yml` (JARVIS CI/CD) is the active pipeline; `sc2bot-ci.yml`'s `black --check .` /
+  `isort --check-only .` steps fail repo-wide (67 pre-existing files) — pre-existing, not
+  caused by this run. Only files touched this session are kept black/isort-clean.
+- **Test suite: `tests/` 506 pass / 14 skip / 0 fail; `wicked_zerg_challenger/tests/` 661 pass / 0 fail** ✅
 - Queen transfusion logic: 3 bugs fixed (`is_idle` guard removed, target dedup, per-queen cooldown) ✅
+- 2026-07-10 fixes: `tests/test_combat_phase_fsm.py` 12 failures (stale `asyncio.get_event_loop()`
+  pattern incompatible with pytest-asyncio auto mode) → `asyncio.run()`. `RLAgent.save_experience_data`
+  atomic-save bug: pre-rename `os.remove()` could destroy the previous valid experience file if the
+  following `os.rename()` was interrupted (disk full / AV lock) — replaced with `os.replace()` (truly
+  atomic on POSIX + Windows) and added temp-file cleanup on failure. New regression tests in
+  `tests/test_rl_agent_save_guard.py` (P2.4, see below).
 
 ## Resolved this run (2026-05-03)
 
@@ -52,7 +60,7 @@
 | P2.1 | Force-accumulation FSM tests                    | ✅ Done | `tests/test_combat_phase_fsm.py` — 23 tests all passing. |
 | P2.2 | Benchmark runner                                | ❌ Open | Single command, N replays, APM/supply/win-rate report vs Hard. |
 | P2.3 | Build-order config externalisation              | ❌ Open | Move top-20 hardcoded values to `config/build_orders.yaml`. |
-| P2.4 | RL agent save-experience guard                  | ❌ Open | Unit test for save under disk-full / interrupted-rename. |
+| P2.4 | RL agent save-experience guard                  | ✅ Done | Found and fixed a real data-loss bug in `save_experience_data` (pre-rename delete + non-atomic `os.rename`). Switched to `os.replace()`, added 4 regression tests in `tests/test_rl_agent_save_guard.py`. |
 | P2.5 | Type hints + docstring pass on core modules     | ❌ Open | `core/resource_manager.py`, `core/manager_factory.py`. |
 
 ## Long-term direction
@@ -94,3 +102,4 @@ Run `E:\GitHub\Swarm-control-in-sc2bot\scripts\commit_nightly_2026-05-03.bat`:
 - **2026-05-01** — P1.1 scout cadence, P1.2 harassment, P1.3 expansion timing, P1.5 doc history. Commit blocked by index.lock.
 - **2026-05-02** — P0 scout import mismatch fixed. P1.4 deprecation shim. P2.1 FSM tests 23/23 pass.
 - **2026-05-03** — **Test suite cleared:** 90 failures → 0. Fixed pytest-asyncio, torch stubs (qmix/mappo), stale __init__ exports (mappo/comm_learning), gas threshold test, crypto skipif guards. Final: 398 pass / 20 skip / 0 fail.
+- **2026-07-10** — Full regression pass across both suites. Fixed 12 `test_combat_phase_fsm.py` failures (stale event-loop pattern). Verified `REMAINING_ISSUES.md` N1-N4 (duplicate-method F811 bugs) already resolved by PR #218. Found + fixed a real atomic-save bug in `RLAgent.save_experience_data` (P2.4). `tests/` 506 pass / 14 skip; `wicked_zerg_challenger/tests/` 661 pass. 0 failures in either suite.
