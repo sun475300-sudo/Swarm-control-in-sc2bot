@@ -73,13 +73,25 @@ jobs:
           cache: pip
 
       - name: Install dependencies
-        run: pip install -r requirements.txt pytest pytest-cov pytest-asyncio
+        run: pip install -r requirements.txt pytest pytest-cov pytest-asyncio pytest-timeout burnysc2
 
       - name: Run unit tests
-        run: pytest tests/unit -v --cov=. --cov-report=xml --cov-report=term
+        # NOTE: `tests/unit` has never existed in this repo - the real suites are
+        # `tests/` (this step, minus `tests/integration/` which has its own step
+        # below) and `wicked_zerg_challenger/tests/` (separate step below).
+        run: pytest tests --ignore=tests/integration -v --cov=. --cov-report=xml --cov-report=term --continue-on-collection-errors
+        env:
+          PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION: python
 
       - name: Run integration tests
         run: pytest tests/integration -v --timeout=120
+        env:
+          PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION: python
+
+      - name: Run wicked_zerg_challenger tests
+        run: pytest wicked_zerg_challenger/tests -v --timeout=120
+        env:
+          PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION: python
 
       - name: Upload coverage
         uses: codecov/codecov-action@v4
