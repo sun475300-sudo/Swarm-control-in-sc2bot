@@ -2894,11 +2894,6 @@ class CombatManager:
         HP 30% 이하 또는 적 방어 병력이 많으면 가장 가까운 기지로 후퇴합니다.
         일꾼 처치를 추적합니다.
         """
-        try:
-            pass
-        except ImportError:
-            return
-
         game_time = getattr(self.bot, "time", 0)
 
         # 게임 시간 확인 (1-7분)
