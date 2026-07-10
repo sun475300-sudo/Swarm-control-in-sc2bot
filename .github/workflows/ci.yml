@@ -117,6 +117,11 @@ jobs:
         env:
           DRY_RUN: "true"
           LOG_LEVEL: "DEBUG"
+          # burnysc2's bundled s2clientprotocol _pb2.py files trip protobuf's
+          # "Descriptors cannot be created directly" guard under the upb
+          # backend that CI resolves; same workaround already used by the
+          # sc2-bot-test job below.
+          PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION: python
 
   # ─────────────────────────────────────────────
   # SC2 봇 구문 검증 + 테스트
