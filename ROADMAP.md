@@ -36,11 +36,13 @@
 
 ---
 
-### Task 1.2: 일꾼 괴롭힘 방어 응답 구현
+### Task 1.2: 일꾼 괴롭힘 방어 응답 구현 [완료]
 
 **파일:** `wicked_zerg_challenger/combat_manager.py`
 
-**현재 문제:** 일꾼 괴롭힘을 감지하지만 응답 로직이 없음
+**상태:** 구현 완료 — `respond_to_worker_harassment()` (4127행), `on_step`에서 매초 호출 (147행)
+
+**현재 문제 (해결됨):** 일꾼 괴롭힘을 감지하지만 응답 로직이 없음
 
 **구현 지시:**
 1. `combat_manager.py`에 `async def respond_to_worker_harassment(self)` 메서드 추가
@@ -57,13 +59,15 @@
 
 ---
 
-### Task 1.3: 견제 유닛 도달 보장 + 복귀 로직
+### Task 1.3: 견제 유닛 도달 보장 + 복귀 로직 [완료]
 
 **파일:**
 - `wicked_zerg_challenger/strategy_manager.py` (228-262 라인 부근)
 - `wicked_zerg_challenger/combat_manager.py`
 
-**현재 문제:** 견제 신호만 전송하고 유닛이 실제로 적 본진에 도달하는지 확인하지 않음
+**상태:** 구현 완료 — `manage_harass_units()` (combat_manager.py 4234행), `on_step`에서 매 프레임 호출 (148행)
+
+**현재 문제 (해결됨):** 견제 신호만 전송하고 유닛이 실제로 적 본진에 도달하는지 확인하지 않음
 
 **구현 지시:**
 1. 견제 유닛에 태그 시스템 추가 (unit.tag을 set으로 관리):
