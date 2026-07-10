@@ -5,6 +5,14 @@ pytest 공통 fixtures (#171)
 """
 
 import os
+
+# sc2 라이브러리(s2clientprotocol)와 protobuf 호환성 문제 방지: 컴파일된
+# C++/upb 디스크립터 백엔드가 s2clientprotocol의 사전 생성된 _pb2.py와
+# 충돌하면 "Descriptors cannot be created directly" 에러로 collection이
+# 통째로 실패한다. 순수 파이썬 구현으로 강제해 항상 호환되도록 한다
+# (wicked_zerg_challenger/tests/conftest.py와 동일한 처리).
+os.environ.setdefault("PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION", "python")
+
 import shutil
 import sys
 import tempfile
