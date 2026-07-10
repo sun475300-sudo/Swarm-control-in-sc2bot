@@ -164,7 +164,7 @@ jobs:
 
       - name: pytest SC2 봇 테스트
         run: |
-          pytest wicked_zerg_challenger/tests/ -v --tb=short
+          pytest tests/ wicked_zerg_challenger/tests/ -v --tb=short
         env:
           PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION: python
 
