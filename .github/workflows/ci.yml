@@ -117,6 +117,11 @@ jobs:
         env:
           DRY_RUN: "true"
           LOG_LEVEL: "DEBUG"
+          # sc2 -> s2clientprotocol generated _pb2 files predate the upb-backed
+          # protobuf runtime; without this, importing sc2 during collection
+          # raises "TypeError: Descriptors cannot be created directly."
+          # (same fix already applied to the "SC2 봇 검증 & 테스트" job below.)
+          PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION: python
 
   # ─────────────────────────────────────────────
   # SC2 봇 구문 검증 + 테스트
