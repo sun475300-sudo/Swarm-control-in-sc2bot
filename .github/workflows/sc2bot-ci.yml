@@ -16,6 +16,11 @@ env:
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository }}/sc2bot
   PYTHON_DEFAULT: "3.11"
+  # google-generativeai pulls a protobuf release whose C++ implementation
+  # rejects s2clientprotocol's pre-generated _pb2.py files ("Descriptors
+  # cannot be created directly"). Force the pure-Python protobuf backend
+  # so both packages can coexist without pinning either one down.
+  PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION: "python"
 
 jobs:
   # ── Lint ──────────────────────────────────────────────────────────────────
@@ -73,10 +78,10 @@ jobs:
           cache: pip
 
       - name: Install dependencies
-        run: pip install -r requirements.txt pytest pytest-cov pytest-asyncio
+        run: pip install -r requirements.txt pytest pytest-cov pytest-asyncio pytest-timeout
 
       - name: Run unit tests
-        run: pytest tests/unit -v --cov=. --cov-report=xml --cov-report=term
+        run: pytest tests/ --ignore=tests/integration -v --cov=. --cov-report=xml --cov-report=term
 
       - name: Run integration tests
         run: pytest tests/integration -v --timeout=120

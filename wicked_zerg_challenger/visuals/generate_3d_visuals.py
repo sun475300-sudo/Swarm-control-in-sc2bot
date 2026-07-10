@@ -1089,7 +1089,7 @@ def part4_concept_mapping_3d():
             y=[0],
             z=[8.2],
             mode="text",
-            text=["[AIR]️ Drone ATC System"],
+            text=["[AIR] Drone ATC System"],
             textfont=dict(size=16, color="#C62828", family="Arial Black"),
             showlegend=False,
         )

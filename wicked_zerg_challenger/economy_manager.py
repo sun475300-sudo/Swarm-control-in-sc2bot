@@ -1941,7 +1941,7 @@ class EconomyManager:
                 return
 
         # * PRIORITY 1: 강제 확장 (타이밍 초과 시) *
-        # 5초마다 한 번 (iteration % 110 ~ 5초)
+        # 5초마다 한 번 (iteration % GameFrequencies.EVERY_5_SECONDS ~ 5초)
         if iteration % GameFrequencies.EVERY_5_SECONDS == 0:
             await self._force_expansion_if_stuck()
             return  # 강제 확장 시도했으면 다른 확장 스킵
@@ -2132,7 +2132,7 @@ class EconomyManager:
 
         # *** MAXIMUM FAST EXPANSION: 최대한 빠르고 많은 멀티 ***
         if self._should_delay_opening_expansion(base_count):
-            if getattr(self.bot, "iteration", 0) % 44 == 0:
+            if getattr(self.bot, "iteration", 0) % GameFrequencies.EVERY_2_SECONDS == 0:
                 self.logger.info(
                     f"[EXPANSION] [{int(game_time)}s] Delaying opening expansion due to scout pressure"
                 )
@@ -3244,7 +3244,10 @@ class EconomyManager:
                 )
 
                 # 미네랄 과잉 로그 (30초마다)
-                if int(game_time) % 30 == 0 and self.bot.iteration % 22 == 0:
+                if (
+                    int(game_time) % 30 == 0
+                    and self.bot.iteration % GameFrequencies.EVERY_SECOND == 0
+                ):
                     self.logger.info(
                         f"[ECONOMY] [{int(game_time)}s] Resource banking: {minerals}M / {gas}G"
                     )
@@ -3535,7 +3538,10 @@ class EconomyManager:
             self._economy_recovery_mode = True
             self._target_drone_count = min(ideal_workers, 75)
 
-            if int(game_time) % 20 == 0 and self.bot.iteration % 22 == 0:
+            if (
+                int(game_time) % 20 == 0
+                and self.bot.iteration % GameFrequencies.EVERY_SECOND == 0
+            ):
                 self.logger.info(
                     f"[ECONOMY RECOVERY] [{int(game_time)}s] [*] Worker deficit: {worker_deficit} [*]"
                 )
@@ -3631,7 +3637,10 @@ class EconomyManager:
                     pending = self.bot.already_pending(UnitTypeId.HATCHERY)
 
                     if pending == 0 and base_count < 5:
-                        if int(game_time) % 30 == 0 and self.bot.iteration % 22 == 0:
+                        if (
+                            int(game_time) % 30 == 0
+                            and self.bot.iteration % GameFrequencies.EVERY_SECOND == 0
+                        ):
                             self.logger.info(
                                 f"[ECONOMY PREDICTION] [{int(game_time)}s] Base depleting in {depletion_time:.1f} min"
                             )

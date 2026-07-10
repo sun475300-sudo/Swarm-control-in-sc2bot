@@ -10,6 +10,8 @@ import asyncio
 import logging
 from typing import Optional
 
+from utils.game_constants import GameFrequencies
+
 logger = logging.getLogger(__name__)
 
 BUILD_PATTERNS = {
@@ -821,7 +823,11 @@ class IntelManager:
         self._push_intel_to_blackboard(detected_pattern)
 
         # Log detection (every 30 seconds)
-        if game_time > 0 and int(game_time) % 30 == 0 and self.bot.iteration % 22 == 0:
+        if (
+            game_time > 0
+            and int(game_time) % 30 == 0
+            and self.bot.iteration % GameFrequencies.EVERY_SECOND == 0
+        ):
             if detected_pattern != "unknown":
                 confidence_pct = int(self._build_pattern_confidence * 100)
                 logger.info(
@@ -833,9 +839,8 @@ class IntelManager:
         self, structure_counts: dict, enemy_structures, game_time: float
     ):
         """Detect roadmap Sprint 2 rush and tech patterns before generic fallback."""
-        if (
-            game_time < 180
-            and self._structure_near_our_base(enemy_structures, {"BARRACKS"})
+        if game_time < 180 and self._structure_near_our_base(
+            enemy_structures, {"BARRACKS"}
         ):
             return self._pattern_response("proxy_barracks")
 
@@ -858,7 +863,9 @@ class IntelManager:
         ):
             return self._pattern_response("widow_mine_drop")
 
-        if structure_counts.get("FACTORY", 0) >= 2 and structure_counts.get("ARMORY", 0):
+        if structure_counts.get("FACTORY", 0) >= 2 and structure_counts.get(
+            "ARMORY", 0
+        ):
             return self._pattern_response("mech_transition")
 
         if game_time < 180 and (
@@ -916,8 +923,7 @@ class IntelManager:
 
     def _has_starport_reactor(self, structure_counts: dict) -> bool:
         return any(
-            structure_counts.get(name, 0) > 0
-            for name in ("STARPORTREACTOR", "REACTOR")
+            structure_counts.get(name, 0) > 0 for name in ("STARPORTREACTOR", "REACTOR")
         )
 
     def _has_enemy_expansion(self, structure_counts: dict) -> bool:
@@ -1126,7 +1132,9 @@ class IntelManager:
         if not blackboard:
             return
 
-        incoming_air = any(tech in self.enemy_tech_buildings for tech in AIR_TECH_STRUCTURES)
+        incoming_air = any(
+            tech in self.enemy_tech_buildings for tech in AIR_TECH_STRUCTURES
+        )
         active_air_count = sum(
             self.enemy_unit_counts.get(unit_name, 0) for unit_name in AIR_THREAT_UNITS
         )
@@ -1280,7 +1288,10 @@ class IntelManager:
             current_time = getattr(self.bot, "time", 0.0)
 
             # 10초마다 적 구조물 수 로그
-            if int(current_time) % 30 == 0 and self.bot.iteration % 22 == 0:
+            if (
+                int(current_time) % 30 == 0
+                and self.bot.iteration % GameFrequencies.EVERY_SECOND == 0
+            ):
                 if len(self.all_enemy_structures) > 0:
                     logger.info(
                         f"[{int(current_time)}s] Enemy structures remaining: {len(self.all_enemy_structures)}"
@@ -1352,7 +1363,9 @@ class IntelManager:
             }
 
             dir_ = os.path.dirname(os.path.abspath(file_path))
-            with tempfile.NamedTemporaryFile("w", dir=dir_, delete=False, suffix=".tmp", encoding="utf-8") as tmp:
+            with tempfile.NamedTemporaryFile(
+                "w", dir=dir_, delete=False, suffix=".tmp", encoding="utf-8"
+            ) as tmp:
                 json.dump(data, tmp, indent=2)
                 tmp_path = tmp.name
             os.replace(tmp_path, file_path)
@@ -1397,7 +1410,9 @@ class IntelManager:
 
             # 맵 불일치 시 좌표 데이터 폐기 (다른 맵의 scouted_locations는 무의미)
             stored_map = data.get("map_name")
-            current_map = getattr(getattr(self.bot, "game_info", None), "map_name", None)
+            current_map = getattr(
+                getattr(self.bot, "game_info", None), "map_name", None
+            )
             if stored_map and current_map and stored_map != current_map:
                 logger.warning(
                     f"Intel map mismatch: stored={stored_map!r}, current={current_map!r}. "

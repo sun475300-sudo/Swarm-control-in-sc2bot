@@ -559,9 +559,14 @@ def gif_sim_to_real():
 
     stages = [
         (1.5, "SC2\nSimulation", "#1565C0", "[GAME] Boids + FSM\n10,000+ games"),
-        (4.5, "3D Sim\n(Gazebo)", "#6A1B9A", "[SCREEN]️ ROS2 + Gazebo\n2D->3D transfer"),
+        (
+            4.5,
+            "3D Sim\n(Gazebo)",
+            "#6A1B9A",
+            "[SCREEN] ROS2 + Gazebo\n2D->3D transfer",
+        ),
         (7.5, "Real Drone\n(PX4)", "#2E7D32", "[DRONE] Pixhawk + RPi\n3-drone flight"),
-        (10.5, "ATC\nScale-up", "#E65100", "[AIR]️ 100+ drones\nCity airspace"),
+        (10.5, "ATC\nScale-up", "#E65100", "[AIR] 100+ drones\nCity airspace"),
     ]
 
     # 화살표
@@ -795,7 +800,7 @@ def gif_authority_mode():
 
     events = {
         30: "[!] RUSH DETECTED!",
-        50: "[COMBAT]️ Rush Defended -> Combat",
+        50: "[COMBAT] Rush Defended -> Combat",
         75: "[OK] Threat Cleared",
         95: "[GOLD] Coast Clear -> Economy",
     }

@@ -22,6 +22,7 @@ from typing import Any, Dict, Optional
 from config.config_loader import ConfigLoader
 from racial_counter_manager import RacialCounterManager
 
+from utils.game_constants import GameFrequencies
 from utils.logger import get_logger
 
 try:
@@ -280,7 +281,12 @@ TIMING_ATTACKS = {
 EMERGENCY_RESPONSES = {
     "proxy_barracks": {
         "detection": "Barracks distance_to(our_base) < 40 AND game_time < 180",
-        "immediate": ["cancel_expansion", "spine_crawler_x2", "zergling_x6", "queen_defend"],
+        "immediate": [
+            "cancel_expansion",
+            "spine_crawler_x2",
+            "zergling_x6",
+            "queen_defend",
+        ],
         "drone_production": "HALT",
     },
     "hellion_runby": {
@@ -645,7 +651,7 @@ class StrategyManager:
 
     def _check_jarvis_commands(self) -> None:
         """자비스로부터 받은 외부 명령어 체크 (aggression_level, target_priority, etc.)"""
-        if self.bot.iteration % 22 != 0:  # 1초마다만 체크
+        if self.bot.iteration % GameFrequencies.EVERY_SECOND != 0:  # 1초마다만 체크
             return
 
         cmd_path = Path("jarvis_command.json")
@@ -1174,7 +1180,10 @@ class StrategyManager:
                 current_ratios[u_key] = current_ratios.get(u_key, 0) + adjusted_boost
 
                 # * 로그 출력 (10초마다만) *
-                if int(game_time) % 10 == 0 and self.bot.iteration % 22 == 0:
+                if (
+                    int(game_time) % 10 == 0
+                    and self.bot.iteration % GameFrequencies.EVERY_SECOND == 0
+                ):
                     self.logger.info(
                         f"[{int(game_time)}s] Counter boost: {u_key} +{adjusted_boost:.2f} "
                         f"({build_status}, confidence={build_confidence:.0%})"
@@ -1213,7 +1222,10 @@ class StrategyManager:
         self._request_defensive_building(spine=True)
 
         # 로그 출력 (30초마다)
-        if int(game_time) % 30 == 0 and self.bot.iteration % 22 == 0:
+        if (
+            int(game_time) % 30 == 0
+            and self.bot.iteration % GameFrequencies.EVERY_SECOND == 0
+        ):
             self.logger.info(f"[{int(game_time)}s] Counter build for {enemy_pattern}")
 
     def _handle_air_threat(self) -> None:
@@ -1354,7 +1366,10 @@ class StrategyManager:
                 pass
         else:
             # Fallback: 로그만 남기고, BotStepIntegrator/AggressiveTechBuilder가 처리
-            if int(game_time) % 30 == 0 and self.bot.iteration % 22 == 0:
+            if (
+                int(game_time) % 30 == 0
+                and self.bot.iteration % GameFrequencies.EVERY_SECOND == 0
+            ):
                 self.logger.info(
                     f"[{int(game_time)}s] Spire needed for anti-air (no BuildingCoord)"
                 )
@@ -1477,7 +1492,10 @@ class StrategyManager:
             self._request_defensive_building(spore=True)
 
             # 30초마다 로그
-            if int(game_time) % 30 == 0 and self.bot.iteration % 22 == 0:
+            if (
+                int(game_time) % 30 == 0
+                and self.bot.iteration % GameFrequencies.EVERY_SECOND == 0
+            ):
                 self.logger.warning(
                     f"[{int(game_time)}s] [*][*][*] AIR THREAT ACTIVE: {air_unit_count} air units detected! [*][*][*]"
                 )
@@ -1799,9 +1817,7 @@ class StrategyManager:
         ):
             return "skytoss_transition"
 
-        if comp.get("HIGHTEMPLAR", 0) >= 2 or self._blackboard_flag(
-            "templar_archives"
-        ):
+        if comp.get("HIGHTEMPLAR", 0) >= 2 or self._blackboard_flag("templar_archives"):
             return "storm_templar"
 
         if comp.get("WARPPRISM", 0) > 0 and self._enemy_unit_near_own_base(
@@ -1857,7 +1873,9 @@ class StrategyManager:
             self.blackboard.set("timing_attack_active", False)
             self.blackboard.set("timing_attack_retreat", True)
             self.blackboard.set("timing_attack_key", attack_key)
-            self.blackboard.set("timing_attack_retreat_reason", attack_data["retreat_if"])
+            self.blackboard.set(
+                "timing_attack_retreat_reason", attack_data["retreat_if"]
+            )
             return
 
         self.current_mode = StrategyMode.AGGRESSIVE
@@ -1885,11 +1903,17 @@ class StrategyManager:
         if matchup == "ZvT" and attack_key == "ling_speed_timing":
             return self._speed_upgrade_done() and self._own_unit_count("ZERGLING") >= 16
         if matchup == "ZvT" and attack_key == "roach_ravager_push":
-            return self._own_unit_count("ROACH") >= 8 and self._own_unit_count("RAVAGER") >= 3
+            return (
+                self._own_unit_count("ROACH") >= 8
+                and self._own_unit_count("RAVAGER") >= 3
+            )
         if matchup == "ZvP" and attack_key == "roach_timing":
             return self._own_unit_count("ROACH") >= 10 and self._roach_speed_done()
         if matchup == "ZvP" and attack_key == "ling_nydus_harass":
-            return self._own_structure_count("NYDUSNETWORK") > 0 and self._own_unit_count("ZERGLING") >= 20
+            return (
+                self._own_structure_count("NYDUSNETWORK") > 0
+                and self._own_unit_count("ZERGLING") >= 20
+            )
         if matchup == "ZvZ" and attack_key == "ling_bane_allin":
             return (
                 self._speed_upgrade_done()
@@ -1979,7 +2003,8 @@ class StrategyManager:
             return "enemy_all_in"
 
         if self._blackboard_flag("proxy_barracks") or (
-            game_time < 180.0 and self._enemy_structure_near_own_base({"BARRACKS"}, 40.0)
+            game_time < 180.0
+            and self._enemy_structure_near_own_base({"BARRACKS"}, 40.0)
         ):
             return "proxy_barracks"
 
@@ -1994,9 +2019,9 @@ class StrategyManager:
         ):
             return "12pool_rush"
 
-        if comp.get("HELLION", 0) + comp.get("HELLIONTANK", 0) >= 4 and self._enemy_unit_near_own_base(
-            {"HELLION", "HELLIONTANK"}, 18.0
-        ):
+        if comp.get("HELLION", 0) + comp.get(
+            "HELLIONTANK", 0
+        ) >= 4 and self._enemy_unit_near_own_base({"HELLION", "HELLIONTANK"}, 18.0):
             return "hellion_runby"
 
         if comp.get("BANELING", 0) >= 8 and self._enemy_unit_near_own_base(
@@ -2036,9 +2061,10 @@ class StrategyManager:
             return False
 
         enemy_power_ratio = self._enemy_army_power_ratio()
-        approaching = self._blackboard_flag(
-            "enemy_army_approaching"
-        ) or self._large_enemy_force_near_base()
+        approaching = (
+            self._blackboard_flag("enemy_army_approaching")
+            or self._large_enemy_force_near_base()
+        )
 
         if enemy_power_ratio < 1.5 or not approaching:
             return False

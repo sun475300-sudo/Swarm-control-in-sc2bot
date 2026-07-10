@@ -17,6 +17,8 @@ import logging
 import math
 from typing import Dict, Iterable, List, Optional, Set, Tuple
 
+from utils.game_constants import GameFrequencies
+
 logger = logging.getLogger(__name__)
 
 try:
@@ -661,15 +663,15 @@ class CreepSpreadManager:
                 self._update_priority_directions()
 
             # 기존 종양 위치 업데이트
-            if iteration % 44 == 0:
+            if iteration % GameFrequencies.EVERY_2_SECONDS == 0:
                 self._update_tumor_positions()
 
             # 퀸으로 크립 종양 생성
-            if iteration % 22 == 0:
+            if iteration % GameFrequencies.EVERY_SECOND == 0:
                 await self._queen_spread_creep(game_time)
 
             # 기존 종양에서 새 종양 확산
-            if iteration % 33 == 0:
+            if iteration % GameFrequencies.EVERY_1_5_SECONDS == 0:
                 await self._spread_from_tumors(game_time)
 
             # 크립 커버리지 업데이트 (30초마다)
