@@ -2,18 +2,42 @@
 
 > Owner: 선우 (sun475300@gmail.com)
 > Maintainer: nightly automation
-> Last refreshed: 2026-05-04
+> Last refreshed: 2026-07-10
 
 ---
 
+## ⚠️ Governance alert (2026-07-10) — read before starting a new session
+
+This repo has **340 open pull requests** (`gh pr list`/GitHub search, 2026-07-10),
+almost all opened by this same nightly automated loop since 2026-04-20, and
+**only PR #218 has ever been merged**. `main`'s last commit is 2026-06-25
+("Update ci.yml") — **15 days with zero merges** despite a continuous nightly
+test/fix cycle. Dozens of the open PRs (at least #369–#378) independently
+re-fix the *exact same two bugs* (the `tests/unit` CI path that doesn't exist,
+and `asyncio.get_event_loop()` flakiness in `test_combat_phase_fsm.py`) because
+each session starts fresh from a stale `main` that never absorbs prior fixes.
+
+**This is very likely the single highest-priority blocker for real progress.**
+None of these sessions (including this one) has repo-owner authority to
+bulk-merge/close PRs unilaterally — that decision needs the owner
+(sun475300-sudo) to either merge the best candidate (e.g. #372, which bundles
+the CI path fix + asyncio fix + black/isort + wires `wicked_zerg_challenger/tests`
+into CI, verified clean) and close the superseded duplicates, or explicitly
+authorize an automated session to do so. Until that happens, expect every
+future nightly session to keep rediscovering already-fixed issues.
+
 ## Snapshot (current state)
 
-- Branch: `main`, last commit: queen transfusion + requirements-dev.txt session
-- Bot core: `wicked_zerg_challenger/` — 179+ Python files across 10+ subdirs.
+- Branch: `main` @ `8a80b73` ("Update ci.yml", 2026-06-25). Working session on
+  `claude/optimistic-edison-3nyi7o`.
+- Bot core: `wicked_zerg_challenger/` — 180+ Python files across 10+ subdirs.
 - `.gitattributes` enforces `* text=auto` ✅
-- CI: `sc2bot-ci.yml` runs black + isort + flake8 ✅ (all clean)
-- **Test suite: 468 pass / 15 skip / 0 fail** ✅ (was 398/20/0 two nights ago)
-- Queen transfusion logic: 3 bugs fixed (`is_idle` guard removed, target dedup, per-queen cooldown) ✅
+- CI: `sc2bot-ci.yml` — test job path (`pytest tests/unit`) is still broken on
+  `main` as of this refresh; see governance alert above (several unmerged PRs
+  already fix it, none landed).
+- **Test suite (this session, clean env): `tests/` 502 pass / 14 skip / 0 fail;
+  `wicked_zerg_challenger/tests/` 667 pass / 0 fail** (was 490/12-fail/14-skip
+  and 661/0-fail respectively before this session's fixes below).
 
 ## Resolved this run (2026-05-03)
 
@@ -94,3 +118,30 @@ Run `E:\GitHub\Swarm-control-in-sc2bot\scripts\commit_nightly_2026-05-03.bat`:
 - **2026-05-01** — P1.1 scout cadence, P1.2 harassment, P1.3 expansion timing, P1.5 doc history. Commit blocked by index.lock.
 - **2026-05-02** — P0 scout import mismatch fixed. P1.4 deprecation shim. P2.1 FSM tests 23/23 pass.
 - **2026-05-03** — **Test suite cleared:** 90 failures → 0. Fixed pytest-asyncio, torch stubs (qmix/mappo), stale __init__ exports (mappo/comm_learning), gas threshold test, crypto skipif guards. Final: 398 pass / 20 skip / 0 fail.
+- **2026-07-10** — Nightly test/inspect cycle. Found the 340-open-PR governance
+  problem (see alert above) — recommend repo owner action before any more
+  sessions duplicate work. Fixed real issues in this PR:
+  - `tests/test_combat_phase_fsm.py`: 12 tests failed with
+    `RuntimeError: no current event loop` — `asyncio.get_event_loop()` →
+    `asyncio.run(...)` (same root cause independently found/fixed by ~10 other
+    open PRs; not a new discovery, but needed for this session's own suite to
+    be green).
+  - **Issue #5 actually wired in** (was previously only claimed done in
+    unmerged drafts): `utils/position_utils.get_center_position()` existed but
+    had 0 callers and couldn't even be imported without `sc2` installed
+    (unguarded `from sc2.position import Point2`, unlike every sibling module).
+    Fixed the import guard, then replaced 11 duplicate inline centroid
+    calculations across `combat_manager.py`, `micro_controller.py`,
+    `combat_phase_controller.py`, `combat/micro_combat.py` (x2),
+    `combat/infestor_tactics.py`, `combat/combat_execution.py`,
+    `combat/expansion_defense.py`, `battle_preparation_system.py`, and
+    `idle_unit_manager.py` with real calls to it. Added
+    `wicked_zerg_challenger/tests/test_position_utils.py` (6 tests, including
+    one that blocks `sc2` via `sys.meta_path` to lock in the import-guard fix).
+  - Re-verified N1-N4 (duplicate method defs) via a fresh AST scan — still 0
+    duplicates, confirming several previous sessions' claims. Re-verified
+    Issue #3 (transfusion priority) and Issue #4 (resource reservation lock)
+    are genuinely implemented and wired in. Updated `REMAINING_ISSUES.md`
+    accordingly.
+  - Test suite: `tests/` 502 pass/14 skip (was 490 pass/12 fail before the
+    asyncio fix), `wicked_zerg_challenger/tests/` 667 pass (was 661, +6 new).

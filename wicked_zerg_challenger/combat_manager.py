@@ -63,6 +63,7 @@ from combat.rally_point_calculator import (
 from utils.distance_cache import DistanceCache
 from utils.frame_cache import FrameCache
 from utils.game_constants import GameFrequencies
+from utils.position_utils import get_center_position
 
 # Import common helpers to reduce code duplication
 try:
@@ -1619,13 +1620,7 @@ class CombatManager:
         if not units:
             return None
         try:
-            x = sum(unit.position.x for unit in units) / len(units)
-            y = sum(unit.position.y for unit in units) / len(units)
-            position_type = units[0].position.__class__
-            try:
-                return position_type((x, y))
-            except Exception:
-                return position_type(x, y)
+            return get_center_position(units)
         except Exception:
             return getattr(units[0], "position", None)
 
@@ -3648,15 +3643,10 @@ class CombatManager:
     def _get_enemy_center(self, enemy_units):
         if HELPERS_AVAILABLE:
             return centroid(enemy_units)
-        if not Point2:
-            return None
         items = list(enemy_units)
         if not items:
             return None
-        count = len(items)
-        x_sum = sum(u.position.x for u in items)
-        y_sum = sum(u.position.y for u in items)
-        return Point2((x_sum / count, y_sum / count))
+        return get_center_position(items)
 
     def _closest_enemy(self, enemy_units, unit):
         if HELPERS_AVAILABLE:

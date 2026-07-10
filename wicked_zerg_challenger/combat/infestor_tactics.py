@@ -24,6 +24,8 @@ except ImportError:
     Point2 = None
     Unit = None
 
+from utils.position_utils import get_center_position
+
 
 class InfestorTacticsController:
     """
@@ -185,11 +187,7 @@ class InfestorTacticsController:
         if not combat_units:
             return None
 
-        # Calculate centroid
-        total_x = sum(u.position.x for u in combat_units)
-        total_y = sum(u.position.y for u in combat_units)
-
-        return Point2((total_x / len(combat_units), total_y / len(combat_units)))
+        return get_center_position(combat_units)
 
     async def execute_burrow_tactics(
         self, infestors, enemy_units, bot, current_time: float

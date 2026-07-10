@@ -36,8 +36,8 @@ class TestStrictUpgradePriorityExpansionReserve(unittest.TestCase):
         bot.minerals = 100
         bot.vespene = 100
         bot.townhalls.amount = 2
-        bot.already_pending.side_effect = (
-            lambda unit_type: 1 if unit_type == UnitTypeId.HATCHERY else 0
+        bot.already_pending.side_effect = lambda unit_type: (
+            1 if unit_type == UnitTypeId.HATCHERY else 0
         )
         bot.state.upgrades = set()
 
@@ -62,8 +62,8 @@ class TestStrictUpgradePriorityExpansionReserve(unittest.TestCase):
         bot.minerals = 100
         bot.vespene = 100
         bot.townhalls.amount = 1
-        bot.already_pending.side_effect = (
-            lambda unit_type: 1 if unit_type == UnitTypeId.HATCHERY else 0
+        bot.already_pending.side_effect = lambda unit_type: (
+            1 if unit_type == UnitTypeId.HATCHERY else 0
         )
         bot.state.upgrades = set()
 
@@ -81,8 +81,8 @@ class TestStrictUpgradePriorityExpansionReserve(unittest.TestCase):
         bot.vespene = 100
         bot.townhalls.amount = 2
         bot.townhalls.ready.amount = 1
-        bot.already_pending.side_effect = (
-            lambda unit_type: 1 if unit_type == UnitTypeId.HATCHERY else 0
+        bot.already_pending.side_effect = lambda unit_type: (
+            1 if unit_type == UnitTypeId.HATCHERY else 0
         )
         bot.state.upgrades = set()
 
@@ -116,8 +116,8 @@ class TestStrictUpgradePriorityExpansionReserve(unittest.TestCase):
         bot.vespene = 100
         bot.townhalls.amount = 3
         bot.townhalls.ready.amount = 3
-        bot.already_pending.side_effect = (
-            lambda unit_type: 1 if unit_type == UnitTypeId.HATCHERY else 0
+        bot.already_pending.side_effect = lambda unit_type: (
+            1 if unit_type == UnitTypeId.HATCHERY else 0
         )
         bot.state.upgrades = set()
 

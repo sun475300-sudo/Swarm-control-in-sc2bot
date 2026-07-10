@@ -26,6 +26,7 @@ else:
         Point2 = tuple
 
 from utils.logger import get_logger
+from utils.position_utils import get_center_position
 
 
 class ExpansionDefense:
@@ -292,13 +293,4 @@ class ExpansionDefense:
         if not items:
             return None
 
-        count = len(items)
-        x_sum = sum(u.position.x for u in items)
-        y_sum = sum(u.position.y for u in items)
-
-        try:
-            from sc2.position import Point2
-
-            return Point2((x_sum / count, y_sum / count))
-        except ImportError:
-            return items[0].position
+        return get_center_position(items)
