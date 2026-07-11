@@ -4,24 +4,68 @@
 
 통합 문제 해결 후 발견된 추가 개선 사항들입니다.
 
-**Last refreshed:** 2026-04-27 (Issue #1, #2 → Resolved; Issue #6 partially resolved via Batch 3)
+**Last refreshed:** 2026-07-11 (N1-N4 → confirmed resolved via later PRs; sc2bot-ci.yml CI gate fixed this run)
 
 ---
 
-## 🆕 신규 발견 (PR #44, 2026-04-27)
+## ✅ Resolved (확인일: 2026-07-11)
+
+### ✅ N1-N4: F811 중복 정의 이슈 전체 해결 확인
+
+2026-04-27 이후 커밋(`fb0d61f`, `e648ae4`, `fcf1004`, `30b1ce2` 등)에서 이미 처리됨.
+`flake8 --select=F811,F821 wicked_zerg_challenger`가 0건을 반환하는 것으로 재검증:
+
+| ID | 설명 | 검증 결과 |
+|----|------|---------|
+| N1 | `OpponentModeling.on_step` 중복 정의 | `opponent_modeling.py`에 `on_step` 정의 1개뿐 — 해결됨 |
+| N2 | `EconomyManager._prevent_resource_banking` / `_reduce_gas_workers` 재정의 | 각 1개 정의뿐 — 해결됨 |
+| N3 | `combat_manager._find_harass_target` 재정의 | 1개 정의뿐 (line 4992) — 해결됨 |
+| N4 | `production_resilience.build_terran_counters` 재정의 | 1개 정의뿐 (line 1961) — 해결됨 |
+
+### ✅ N7 (신규, 2026-07-11): sc2bot-ci.yml 파이프라인 전체 실패 (6월 중순부터)
+
+**문제**: `sc2bot-ci.yml`의 `lint` job "Run black (format check)" 단계가 최소 2026-06-14 이후
+매 push/주간 스케줄 실행마다 실패 → `test`/`build_docker`/`push_to_registry`/`deploy_to_k8s`
+job이 전부 `needs: lint`로 인해 건너뛰어짐. 즉 6월 중순부터 실질적으로 테스트도, 배포도
+전혀 검증되지 않고 있었음.
+
+**원인**: 66개 파일이 black 포맷을 따르지 않음 (`black==26.3.1` 기준), 19개 파일 import 순서 불일치.
+추가로 `test` job의 "Run unit tests" 단계가 존재하지 않는 `tests/unit` 디렉토리를 참조
+(실제 unit 테스트는 `tests/` 바로 아래 flat하게 존재, `tests/integration/`은 별도) — lint를
+통과했더라도 이 단계에서 다시 실패했을 것.
+
+**조치**: `black .` + `isort .` 전체 적용 (69 파일, 로직 변경 없음), `sc2bot-ci.yml`의
+`pytest tests/unit` → `pytest tests/ --ignore=tests/integration`로 수정.
+재검증: black/isort/flake8(E9,F63,F7,F82) 전부 clean, `tests/` 502 pass / 14 skip,
+`tests/integration` 10 pass.
+
+**우선순위**: 🔴 HIGH (완료) — CI/CD 파이프라인이 몇 주간 사실상 죽어있었던 것이 이번 점검의 최대 발견.
+
+### ✅ N8 (신규, 2026-07-11): `tests/test_combat_phase_fsm.py` 12개 테스트 전체 실패
+
+**문제**: `asyncio.get_event_loop().run_until_complete(...)` 패턴이 Python 3.11에서
+`RuntimeError: There is no current event loop in thread 'MainThread'`로 실패.
+FSM 전환 회귀 테스트(P2.1, IDLE→GATHERING→POSITIONING→ENGAGEMENT→ACTIVE_COMBAT)가
+전부 깨져 있었음 — 즉 전투 페이즈 컨트롤러 회귀를 잡아주는 안전망이 무력화된 상태.
+
+**조치**: `asyncio.run(...)`로 교체 (5곳). 12/12 통과 확인.
+
+**우선순위**: 🟠 HIGH (완료)
+
+---
+
+## 🆕 신규 발견 (PR #44, 2026-04-27) — 상태 갱신됨, 위 Resolved 섹션 참조
 
 자동/수동 점검 사이클(테스트 → 코드 검사 → 개선 → 커밋/푸시 반복)에서 새로 식별된 항목.
 
 | ID | 설명 | 우선순위 | 상태 |
 |----|------|---------|------|
-| N1 | `OpponentModeling.on_step` 중복 정의 (line 341 vs 765 — F811) | 🟠 HIGH | open — 동작 영향(상위 on_step이 미실행) 가능 |
-| N2 | `EconomyManager._prevent_resource_banking` / `_reduce_gas_workers` 재정의 (F811) | 🟡 MED | open |
-| N3 | `combat_manager._find_harass_target` 재정의 (line 2377 vs 4278) | 🟡 MED | open |
-| N4 | `production_resilience.build_terran_counters` 재정의 (1369 vs 1866) | 🟡 MED | open |
-| N5 | bare `except Exception:` 다수 (≈360+) — 이번 PR에서 12건 처리, 잔여 다수 | 🟢 LOW | partial |
+| N1 | `OpponentModeling.on_step` 중복 정의 (line 341 vs 765 — F811) | 🟠 HIGH | ✅ resolved (2026-07-11 재검증) |
+| N2 | `EconomyManager._prevent_resource_banking` / `_reduce_gas_workers` 재정의 (F811) | 🟡 MED | ✅ resolved (2026-07-11 재검증) |
+| N3 | `combat_manager._find_harass_target` 재정의 (line 2377 vs 4278) | 🟡 MED | ✅ resolved (2026-07-11 재검증) |
+| N4 | `production_resilience.build_terran_counters` 재정의 (1369 vs 1866) | 🟡 MED | ✅ resolved (2026-07-11 재검증) |
+| N5 | bare `except Exception:` 다수 (≈475건, 2026-07-11 재측정) | 🟢 LOW | open |
 | N6 | F841 unused local variables (visuals/make_pptx 등) | 🟢 LOW | open (presentation 코드라 영향 작음) |
-
-검증 권장: PR 분리 (N1 단독 PR 권장 — 동작 변화 가능성).
 
 ---
 
@@ -421,5 +465,5 @@ if iteration % SECOND == 0:
 
 ---
 
-**검토 완료일**: 2026-01-29
+**검토 완료일**: 2026-01-29 (N1-N8 재검토 및 CI 파이프라인 복구: 2026-07-11)
 **상태**: 추가 개선 사항 문서화 완료
