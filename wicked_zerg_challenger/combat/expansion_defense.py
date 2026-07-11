@@ -274,7 +274,7 @@ class ExpansionDefense:
             "BANELING",
             "RAVAGER",
             "ULTRALISK",
-            "LURKER",
+            "LURKERMP",
             "INFESTOR",
             "VIPER",
         ]

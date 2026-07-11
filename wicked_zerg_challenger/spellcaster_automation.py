@@ -354,7 +354,7 @@ class SpellCasterAutomation:
             "MOTHERSHIP": 10,
             "BROODLORD": 7,
             "ULTRALISK": 7,
-            "LURKER": 6,
+            "LURKERMP": 6,
             "RAVAGER": 5,
             "DISRUPTOR": 8,
         }

@@ -68,7 +68,7 @@ class BaseDefenseSystem:
             "ULTRALISK",
             "BROODLORD",
             "RAVAGER",
-            "LURKER",
+            "LURKERMP",
         }
 
         # High priority target types (for focus fire)

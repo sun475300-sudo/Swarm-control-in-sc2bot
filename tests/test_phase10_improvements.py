@@ -504,7 +504,20 @@ class TestUpgradeManagerHydraRange:
 
     def setup_method(self):
         try:
-            from wicked_zerg_challenger.upgrade_manager import EvolutionUpgradeManager
+            # upgrade_manager.py does internal absolute imports (e.g.
+            # `from utils.logger import get_logger`) that only resolve when
+            # wicked_zerg_challenger/ itself is on sys.path — importing it
+            # as a dotted subpackage (wicked_zerg_challenger.upgrade_manager)
+            # breaks those, unlike the other modules in this file.
+            import os
+            import sys
+
+            wzc_dir = os.path.join(
+                os.path.dirname(__file__), "..", "wicked_zerg_challenger"
+            )
+            if wzc_dir not in sys.path:
+                sys.path.insert(0, wzc_dir)
+            from upgrade_manager import EvolutionUpgradeManager
 
             self.bot = MockBot()
             self.bot.structures = Mock(return_value=Mock(ready=Mock(exists=False)))
@@ -524,3 +537,44 @@ class TestUpgradeManagerHydraRange:
         # We verify by checking the code structure exists
         assert hasattr(self.manager, "_research_hydra_range")
         assert hasattr(self.manager, "_research_hydra_speed")
+
+    @pytest.mark.asyncio
+    async def test_hydra_range_queues_research_and_reports_it(self):
+        """Regression: _research_hydra_range must report (via return value)
+        whether it queued a research, so the caller can skip queuing hydra
+        speed research on the same idle den in the same frame. Before this
+        fix both methods independently re-checked den.is_idle (which
+        bot.do() does not update synchronously) and could double-issue."""
+        den = Mock()
+        den.is_idle = True
+        den.research = Mock(return_value="RESEARCH_ACTION")
+
+        self.bot.structures = Mock(
+            return_value=Mock(ready=Mock(exists=True, first=den))
+        )
+        self.bot.can_afford = Mock(return_value=True)
+        self.bot.already_pending_upgrade = Mock(return_value=0)
+        self.bot.do = Mock()
+
+        queued = await self.manager._research_hydra_range(iteration=0)
+
+        assert queued is True
+        self.bot.do.assert_called_once_with("RESEARCH_ACTION")
+
+    @pytest.mark.asyncio
+    async def test_hydra_range_returns_false_when_cannot_afford(self):
+        """_research_hydra_range must return False (not queue) when gas is
+        insufficient, so the caller still tries hydra speed research."""
+        den = Mock()
+        den.is_idle = True
+        self.bot.structures = Mock(
+            return_value=Mock(ready=Mock(exists=True, first=den))
+        )
+        self.bot.can_afford = Mock(return_value=False)
+        self.bot.already_pending_upgrade = Mock(return_value=0)
+        self.bot.do = Mock()
+
+        queued = await self.manager._research_hydra_range(iteration=0)
+
+        assert queued is False
+        self.bot.do.assert_not_called()
