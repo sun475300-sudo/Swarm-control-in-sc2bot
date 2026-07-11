@@ -31,6 +31,13 @@
 
 ## P0 — Critical / blocking
 
+### 2026-07-11 — Resolved this run (CI green-up, continued)
+
+| Item | File(s) | Notes |
+|------|---------|-------|
+| `sc2bot-ci.yml` Test Suite job pointed at a directory that never existed | `.github/workflows/sc2bot-ci.yml` | `pytest tests/unit` — `tests/unit` has never existed anywhere in this repo's git history. This job `needs: lint`, and the lint job's `black --check` was failing on `main` independent of any PR, so this job had apparently never run to completion before — fixing lint exposed it. Repointed at `pytest wicked_zerg_challenger --cov=wicked_zerg_challenger` (672 tests, matches the bot's real suite). Also added `pytest-timeout` to the install step - the integration-test step passes `--timeout=120` but nothing installed the plugin that flag requires. |
+| `burnysc2`'s `sc2/main.py` imports `async_timeout`, which its own package metadata never declares | `requirements.txt`, `wicked_zerg_challenger/requirements.txt` | Any code path that does `from sc2 import maps` (or otherwise loads `sc2/main.py`) throws `ModuleNotFoundError: No module named 'async_timeout'` on a fresh install of just `requirements.txt` (`pip show burnysc2` confirms its declared `Requires:` list omits it). This broke collection of `wicked_zerg_challenger/test_10games.py`, `test_3games.py`, and `test_multitask_destruction.py` in CI once the Test Suite job actually started running. Added `async_timeout>=4.0.0` as an explicit direct dependency in both requirements files (burnysc2 itself is third-party and can't be patched here). |
+
 ### 2026-07-11 — Resolved this run
 
 | Item | File(s) | Notes |
