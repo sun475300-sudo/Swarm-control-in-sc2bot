@@ -38,6 +38,7 @@ Determinism:
   * Replay-based regression: at fixed (seed, map), next_dispatch() at
     t=120, 240, 480 returns the SAME plan structure.
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -61,8 +62,8 @@ except ImportError:
 
 # --- Phase-cadence parameters (single source of truth) ---
 
-PHASE_1_END_S = 180.0          # 3:00 - overlord-only window
-PHASE_2_END_S = 480.0          # 8:00 - zergling sweep window
+PHASE_1_END_S = 180.0  # 3:00 - overlord-only window
+PHASE_2_END_S = 480.0  # 8:00 - zergling sweep window
 PHASE_1_CADENCE_S = 30.0
 PHASE_2_CADENCE_S = 60.0
 PHASE_3_CADENCE_S = 90.0
@@ -71,9 +72,9 @@ PHASE_3_CADENCE_S = 90.0
 class ScoutPhase(Enum):
     """Game-time phase enum used by PhaseScoutCadence."""
 
-    OVERLORD_EARLY = 1     # 0 - 3 min
-    ZERGLING_SWEEP = 2     # 3 - 8 min
-    OVERSEER_DETECT = 3    # 8 min +
+    OVERLORD_EARLY = 1  # 0 - 3 min
+    ZERGLING_SWEEP = 2  # 3 - 8 min
+    OVERSEER_DETECT = 3  # 8 min +
 
 
 @dataclass(frozen=True)
@@ -81,10 +82,10 @@ class DispatchPlan:
     """The decision PhaseScoutCadence emits."""
 
     phase: ScoutPhase
-    unit_type: object              # UnitTypeId.* - string fallback if SC2 unavailable
-    target: Point2                 # where to send it
-    deadline_s: float              # by when the unit should arrive
-    quadrant_index: int = 0        # 0-3 for zergling sweep; 0 for others
+    unit_type: object  # UnitTypeId.* - string fallback if SC2 unavailable
+    target: Point2  # where to send it
+    deadline_s: float  # by when the unit should arrive
+    quadrant_index: int = 0  # 0-3 for zergling sweep; 0 for others
 
 
 def phase_for_time(game_time_s: float) -> ScoutPhase:
@@ -128,7 +129,7 @@ class PhaseScoutCadence:
     def __init__(self, bot: BotAI) -> None:
         self.bot = bot
         # Last dispatch wall time per phase, indexed by phase enum.
-        self._last_dispatch_s: dict = {p: -10**6 for p in ScoutPhase}
+        self._last_dispatch_s: dict = {p: -(10**6) for p in ScoutPhase}
         # Round-robin quadrant index for zergling sweep
         self._zergling_quadrant = 0
 
