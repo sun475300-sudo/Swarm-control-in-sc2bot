@@ -314,7 +314,7 @@ class SpellUnitManager:
                         target = nearby_targets[0]
                         if viper.energy >= 75:  # Abduct costs 75 energy
                             try:
-                                b.do(viper(AbilityId.ABDUCT_ABDUCT, target))
+                                b.do(viper(AbilityId.EFFECT_ABDUCT, target))
                                 self.viper_last_spell[viper_tag] = current_time
                                 continue
                             except Exception:
@@ -666,7 +666,7 @@ class SpellUnitManager:
             # 조건 1: 적 5기 이상 밀집
             if len(nearby_enemies) >= 5:
                 try:
-                    b.do(baneling(AbilityId.EFFECT_EXPLODE))
+                    b.do(baneling(AbilityId.EXPLODE_EXPLODE))
                     self.baneling_exploded.add(baneling.tag)
                     continue
                 except Exception:
@@ -680,7 +680,7 @@ class SpellUnitManager:
             )
             if health_ratio < 0.5 and len(nearby_enemies) >= 2:
                 try:
-                    b.do(baneling(AbilityId.EFFECT_EXPLODE))
+                    b.do(baneling(AbilityId.EXPLODE_EXPLODE))
                     self.baneling_exploded.add(baneling.tag)
                 except Exception:
                     pass

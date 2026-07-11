@@ -314,7 +314,7 @@ class ViperTacticsManager:
     async def _cast_abduct(self, viper: Unit, target: Unit, game_time: float):
         """어브덕트 시전"""
         try:
-            self.bot.do(viper(AbilityId.EFFECT_VIPERABDUCT, target))
+            self.bot.do(viper(AbilityId.EFFECT_ABDUCT, target))
             self.viper_last_ability[viper.tag] = game_time
             self.abducts_cast += 1
             self.logger.info(
@@ -329,7 +329,7 @@ class ViperTacticsManager:
     ):
         """블라인딩 클라우드 시전"""
         try:
-            self.bot.do(viper(AbilityId.EFFECT_BLINDINGCLOUD, target_pos))
+            self.bot.do(viper(AbilityId.BLINDINGCLOUD_BLINDINGCLOUD, target_pos))
             self.viper_last_ability[viper.tag] = game_time
             self.blinding_clouds_cast += 1
             self.logger.info(
@@ -341,7 +341,7 @@ class ViperTacticsManager:
     async def _cast_parasitic_bomb(self, viper: Unit, target: Unit, game_time: float):
         """패러사이틱 밤 시전"""
         try:
-            self.bot.do(viper(AbilityId.EFFECT_PARASITICBOMB, target))
+            self.bot.do(viper(AbilityId.PARASITICBOMB_PARASITICBOMB, target))
             self.viper_last_ability[viper.tag] = game_time
             self.parasitic_bombs_cast += 1
             self.logger.info(
@@ -388,9 +388,7 @@ class ViperTacticsManager:
             target_building = consumable.closest_to(viper)
             try:
                 self.bot.do(
-                    viper(
-                        AbilityId.VIPERCONSUMESTRUCTURE_YOURBUILDINGS, target_building
-                    )
+                    viper(AbilityId.VIPERCONSUMESTRUCTURE_VIPERCONSUME, target_building)
                 )
             except Exception:
                 pass

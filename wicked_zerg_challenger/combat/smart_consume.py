@@ -231,11 +231,11 @@ class SmartConsumeSystem:
 
         # Double-check viper can use ability
         abilities = await self.bot.get_available_abilities(viper)
-        if AbilityId.CONSUME_VIPER not in abilities:
+        if AbilityId.VIPERCONSUME_VIPERCONSUME not in abilities:
             return
 
         # Execute consume
-        self.bot.do(viper(AbilityId.CONSUME_VIPER, target))
+        self.bot.do(viper(AbilityId.VIPERCONSUME_VIPERCONSUME, target))
 
         # Update statistics
         self.buildings_consumed += 1

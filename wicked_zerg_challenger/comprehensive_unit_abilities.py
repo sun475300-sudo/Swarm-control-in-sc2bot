@@ -380,8 +380,8 @@ class ComprehensiveUnitAbilities:
             enemies = self.bot.enemy_units.closer_than(2.2, baneling)  # 자폭 반경
             if enemies.amount >= 3:
                 abilities = await self.bot.get_available_abilities(baneling)
-                if AbilityId.EFFECT_EXPLODE in abilities:
-                    self.bot.do(baneling(AbilityId.EFFECT_EXPLODE))
+                if AbilityId.EXPLODE_EXPLODE in abilities:
+                    self.bot.do(baneling(AbilityId.EXPLODE_EXPLODE))
                     self.ability_stats["baneling_explode"] += 1
 
     # ========================================
@@ -591,14 +591,11 @@ class ComprehensiveUnitAbilities:
             # 적 기지 근처 12 거리 이내
             if overlord.distance_to(closest_enemy_base) < 12:
                 abilities = await self.bot.get_available_abilities(overlord)
-                if AbilityId.GENERATECREEP_GENERATECREEP in abilities:
-                    # 적 기지 확장 위치에 크립 생성
-                    target_position = closest_enemy_base.position.towards(
-                        self.bot.game_info.map_center, 8
-                    )
-                    self.bot.do(
-                        overlord(AbilityId.GENERATECREEP_GENERATECREEP, target_position)
-                    )
+                if AbilityId.BEHAVIOR_GENERATECREEPON in abilities:
+                    # Generate Creep is a no-target toggle behavior, not a
+                    # point-targeted ability - it spreads creep around the
+                    # overlord's current position while active.
+                    self.bot.do(overlord(AbilityId.BEHAVIOR_GENERATECREEPON))
                     self.ability_stats["overlord_creep"] += 1
                     self.logger.info(
                         f"[OVERLORD] Creep harass at enemy base {closest_enemy_base.position}"

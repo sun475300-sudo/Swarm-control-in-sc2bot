@@ -465,8 +465,8 @@ class SpellCasterAutomation:
             return
 
         abilities = await self.bot.get_available_abilities(viper)
-        if AbilityId.EFFECT_BLINDINGCLOUD in abilities:
-            self.bot.do(viper(AbilityId.EFFECT_BLINDINGCLOUD, best_pos))
+        if AbilityId.BLINDINGCLOUD_BLINDINGCLOUD in abilities:
+            self.bot.do(viper(AbilityId.BLINDINGCLOUD_BLINDINGCLOUD, best_pos))
             self._record_skill_use(viper.tag, "blinding_cloud")
             self._release_authority(viper.tag)
             self.skills_used["blinding_cloud"] += 1
@@ -511,8 +511,10 @@ class SpellCasterAutomation:
                     return
 
                 abilities = await self.bot.get_available_abilities(viper)
-                if AbilityId.EFFECT_VIPERCONSUME in abilities:
-                    self.bot.do(viper(AbilityId.EFFECT_VIPERCONSUME, target))
+                if AbilityId.VIPERCONSUMESTRUCTURE_VIPERCONSUME in abilities:
+                    self.bot.do(
+                        viper(AbilityId.VIPERCONSUMESTRUCTURE_VIPERCONSUME, target)
+                    )
                     self._record_skill_use(viper.tag, "consume")
                     self.skills_used["consume"] = self.skills_used.get("consume", 0) + 1
 
@@ -537,8 +539,8 @@ class SpellCasterAutomation:
             return
 
         abilities = await self.bot.get_available_abilities(viper)
-        if AbilityId.EFFECT_VIPERCONSUME in abilities:
-            self.bot.do(viper(AbilityId.EFFECT_VIPERCONSUME, target_overlord))
+        if AbilityId.VIPERCONSUME_VIPERCONSUME in abilities:
+            self.bot.do(viper(AbilityId.VIPERCONSUME_VIPERCONSUME, target_overlord))
             self._record_skill_use(viper.tag, "consume")
             self.skills_used["consume"] = self.skills_used.get("consume", 0) + 1
 
