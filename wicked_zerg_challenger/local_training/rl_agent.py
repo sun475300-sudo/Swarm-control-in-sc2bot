@@ -14,7 +14,6 @@ REINFORCE 알고리즘 기반의 정책 학습 에이전트입니다.
 
 import logging
 import os
-import shutil
 import time
 from datetime import datetime
 from pathlib import Path
@@ -301,7 +300,9 @@ class RLAgent:
                 obs = np.concatenate(
                     [
                         obs,
-                        np.zeros(self.micro_observation_dim - len(obs), dtype=np.float32),
+                        np.zeros(
+                            self.micro_observation_dim - len(obs), dtype=np.float32
+                        ),
                     ]
                 )
             obs = obs[: self.micro_observation_dim]
@@ -333,7 +334,9 @@ class RLAgent:
     def _average_unit_value(units, attr: str) -> float:
         if not units:
             return 0.0
-        return float(np.mean([float(getattr(unit, attr, 0.0) or 0.0) for unit in units]))
+        return float(
+            np.mean([float(getattr(unit, attr, 0.0) or 0.0) for unit in units])
+        )
 
     @staticmethod
     def _fraction(units, attr: str) -> float:
@@ -655,10 +658,9 @@ class RLAgent:
             temp_actual = temp_base + ".npz"
 
             # 원자적으로 이름 변경 (Atomic Rename)
-            # Windows에서는 기존 파일이 있으면 rename이 실패할 수 있으므로 삭제 후 변경
-            if os.path.exists(path_str):
-                os.remove(path_str)
-            os.rename(temp_actual, path_str)
+            # os.replace()는 remove 후 rename하는 방식과 달리 rename 실패 시에도
+            # 원본 파일을 보존한다 (기존 방식은 그 사이 창구에서 데이터 손실 가능).
+            os.replace(temp_actual, path_str)
 
             logger.info(
                 f"[OK] Experience saved atomically: {len(self.states)} states, {len(self.rewards)} rewards"
@@ -756,7 +758,10 @@ class RLAgent:
     def save_model(self, path: Optional[str] = None) -> bool:
         """모델 저장 (Atomic Write)"""
         save_path = Path(path) if path else self.model_path
-        tmp_path = save_path.with_suffix(".tmp")
+        # np.savez() auto-appends ".npz" to any path not already ending in it, so a
+        # bare ".tmp" suffix here meant this code checked/replaced a path numpy never
+        # wrote to, silently no-op'ing the save while still returning True.
+        tmp_path = save_path.with_suffix(".tmp.npz")
 
         try:
             save_path.parent.mkdir(parents=True, exist_ok=True)
@@ -773,19 +778,10 @@ class RLAgent:
                 episode_count=np.array([self.episode_count]),
             )
 
-            # *** FIX: Atomic rename with Windows compatibility ***
+            # os.replace() is atomic on POSIX/Windows and never deletes the destination
+            # before the replacement lands, unlike the prior unlink()-then-move().
             if tmp_path.exists():
-                try:
-                    # Remove old file first on Windows (replace() can fail silently)
-                    if save_path.exists():
-                        save_path.unlink()
-                    # Use shutil.move() for cross-platform compatibility
-                    shutil.move(str(tmp_path), str(save_path))
-                except Exception as move_error:
-                    # Fallback: copy + delete
-                    logger.error(f"Move failed, trying copy: {move_error}")
-                    shutil.copy(str(tmp_path), str(save_path))
-                    tmp_path.unlink()
+                os.replace(str(tmp_path), str(save_path))
 
             logger.info(f"Model saved to {save_path}")
             return True
