@@ -25,6 +25,10 @@ on:
 env:
   PYTHON_VERSION: "3.10"
   NODE_VERSION: "18"
+  # requirements.txt mixes google-generativeai (needs protobuf<6) with burnysc2's
+  # s2clientprotocol (whose bundled *_pb2.py files trip the default upb backend's
+  # gencode/runtime version check). Pure-Python protobuf tolerates the mismatch.
+  PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION: python
 
 jobs:
   # ─────────────────────────────────────────────
