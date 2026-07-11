@@ -271,7 +271,9 @@ except ImportError:
 # Advanced Scout System V2
 try:
     # NOTE: class is AdvancedScoutingSystemV2 (with "ing"); alias kept for compat
-    from scouting.advanced_scout_system_v2 import AdvancedScoutingSystemV2 as AdvancedScoutSystemV2
+    from scouting.advanced_scout_system_v2 import (
+        AdvancedScoutingSystemV2 as AdvancedScoutSystemV2,
+    )
 except ImportError:
     AdvancedScoutSystemV2 = None
 
@@ -349,6 +351,11 @@ try:
     from upgrade_coordination_system import UpgradeCoordinationSystem
 except (ImportError, TypeError):
     UpgradeCoordinationSystem = None
+
+try:
+    from nydus_network_trainer import NydusNetworkTrainer
+except (ImportError, TypeError):
+    NydusNetworkTrainer = None
 
 # Game Data Logger (Phase 22 - 게임 데이터 수집)
 try:
@@ -665,6 +672,12 @@ class BotStepIntegrator:
             )
         elif not hasattr(self.bot, "upgrade_coord"):
             self.bot.upgrade_coord = None
+
+        if NydusNetworkTrainer:
+            self.bot.nydus_trainer = NydusNetworkTrainer(bot)
+            self.logger.info("[INIT] NydusNetworkTrainer (Phase 22) - 땅굴망 학습")
+        elif not hasattr(self.bot, "nydus_trainer"):
+            self.bot.nydus_trainer = None
 
         # Game Data Logger (Phase 22 - 경기 데이터 수집)
         if GameDataLogger:
@@ -2108,7 +2121,9 @@ class BotStepIntegrator:
                     if iteration % 50 == 0:
                         self.logger.warning(f"[WARNING] Building Manager error: {e}")
                 finally:
-                    self._logic_tracker.end_logic("BuildingManager", start_time, success)
+                    self._logic_tracker.end_logic(
+                        "BuildingManager", start_time, success
+                    )
 
             if hasattr(self.bot, "advanced_building_manager"):
                 start_time = self._logic_tracker.start_logic("AdvancedBuilding")

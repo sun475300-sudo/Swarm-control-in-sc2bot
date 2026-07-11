@@ -293,6 +293,30 @@ class NydusNetworkTrainer:
         if loaded_count > 0:
             self.logger.info(f"[NYDUS] Loading {loaded_count} units into Network")
 
+    async def _command_deployed_units(self):
+        """배치된 유닛 관리: 유휴 유닛 재타겟팅 + 사망 유닛 정리"""
+        live_tags = {u.tag for u in self.bot.units}
+
+        # 사망한 유닛의 태그를 추적 집합에서 제거 (메모리 누수 방지)
+        self.units_in_transit &= live_tags
+        self.units_deployed &= live_tags
+
+        if not self.units_deployed:
+            return
+
+        deployed_units = self.bot.units.filter(lambda u: u.tag in self.units_deployed)
+        idle_units = deployed_units.idle
+        if not idle_units:
+            return
+
+        # 유휴 상태(타겟을 처치했거나 놓친 경우) 유닛에 새 타겟 지정
+        target = await self._find_best_target(idle_units.center)
+        if not target:
+            return
+
+        for unit in idle_units:
+            self.bot.do(unit.attack(target))
+
     async def _manage_active_worms(self):
         """활성 Worm 관리"""
         # Worm 확인
