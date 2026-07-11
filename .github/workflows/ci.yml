@@ -117,6 +117,13 @@ jobs:
         env:
           DRY_RUN: "true"
           LOG_LEVEL: "DEBUG"
+          # requirements.txt pulls in a newer protobuf runtime via unrelated
+          # deps (google-generativeai, mcp, boto3) that rejects
+          # s2clientprotocol's pre-compiled descriptors under the default
+          # C++/upb implementation ("Descriptors cannot be created
+          # directly."). Force the pure-Python implementation, same as the
+          # sc2-bot-test job below.
+          PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION: python
 
   # ─────────────────────────────────────────────
   # SC2 봇 구문 검증 + 테스트
