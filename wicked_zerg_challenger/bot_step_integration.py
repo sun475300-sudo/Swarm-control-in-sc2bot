@@ -350,6 +350,11 @@ try:
 except (ImportError, TypeError):
     UpgradeCoordinationSystem = None
 
+try:
+    from nydus_network_trainer import NydusNetworkTrainer
+except (ImportError, TypeError):
+    NydusNetworkTrainer = None
+
 # Game Data Logger (Phase 22 - 게임 데이터 수집)
 try:
     from game_data_logger import GameDataLogger
@@ -665,6 +670,12 @@ class BotStepIntegrator:
             )
         elif not hasattr(self.bot, "upgrade_coord"):
             self.bot.upgrade_coord = None
+
+        if NydusNetworkTrainer:
+            self.bot.nydus_trainer = NydusNetworkTrainer(bot)
+            self.logger.info("[INIT] NydusNetworkTrainer (Phase 22) - 땅굴망 학습")
+        elif not hasattr(self.bot, "nydus_trainer"):
+            self.bot.nydus_trainer = None
 
         # Game Data Logger (Phase 22 - 경기 데이터 수집)
         if GameDataLogger:
