@@ -107,6 +107,15 @@ class MockUnits:
     def of_type(self, type_id):
         return MockUnits([u for u in self._units if u.type_id == type_id])
 
+    @property
+    def center(self):
+        """Average position of units in the collection (mirrors sc2.Units.center)."""
+        if not self._units:
+            return None
+        avg_x = sum(u.position[0] for u in self._units) / len(self._units)
+        avg_y = sum(u.position[1] for u in self._units) / len(self._units)
+        return (avg_x, avg_y)
+
 
 class MockBot:
     """Mock SC2 Bot"""
@@ -468,6 +477,65 @@ class TestCombatPerformance:
 
         # 10 프레임이 1초 이내에 완료되어야 함 (100ms/frame)
         assert elapsed < 1.0, f"Performance issue: {elapsed:.2f}s for 10 frames"
+
+
+class TestFindHarassTarget:
+    """
+    회귀 테스트: `_find_harass_target` 중복 정의 버그 (N3, F811) 방지.
+
+    이 메서드는 한때 클래스 안에 두 번 정의되어 있었다. 나중 정의가
+    앞선 정의를 조용히 덮어썼는데, 덮어써진(죽은) 버전은 적 워커나
+    테크 건물을 전혀 고려하지 않고 그냥 적 시작 위치만 반환했다.
+    아래 테스트들은 현재 살아있는 구현이 "워커 > 고립된 테크 건물 >
+    적 기지" 우선순위로 동작한다는 것을 고정하여, 만약 죽은 버전이
+    다시 살아나 워커 우선순위 로직이 사라지면 실패하도록 한다.
+    """
+
+    def test_prioritizes_enemy_workers_over_base(self):
+        """적 워커가 있으면 단순 기지 좌표가 아니라 워커 위치를 반환해야 함."""
+        from sc2.ids.unit_typeid import UnitTypeId
+
+        bot = MockBot()
+        bot.enemy_start_locations = [(10, 10)]
+        bot.enemy_structures = MockUnits([])
+
+        worker = MockUnit(200, UnitTypeId.DRONE, (11, 11))
+        bot.enemy_units = MockUnits([worker])
+
+        combat = CombatManager(bot)
+        target = combat._find_harass_target()
+
+        assert target is not None
+        # 죽은(base-only) 버전이었다면 이 값은 (10, 10)이 됐을 것이다.
+        assert target == (11, 11)
+
+    def test_targets_isolated_tech_building_when_no_workers(self):
+        """워커가 없으면 고립된 테크 건물을 우선 타겟으로 삼아야 함."""
+        from sc2.ids.unit_typeid import UnitTypeId
+
+        bot = MockBot()
+        bot.enemy_start_locations = [(10, 10)]
+        bot.enemy_units = MockUnits([])
+
+        spire = MockUnit(300, UnitTypeId.SPIRE, (40, 40))
+        bot.enemy_structures = MockUnits([spire])
+
+        combat = CombatManager(bot)
+        target = combat._find_harass_target()
+
+        assert target == (40, 40)
+
+    def test_falls_back_to_enemy_base_when_nothing_else(self):
+        """워커도 테크 건물도 없으면 적 시작 위치로 폴백해야 함."""
+        bot = MockBot()
+        bot.enemy_start_locations = [(15, 15)]
+        bot.enemy_units = MockUnits([])
+        bot.enemy_structures = MockUnits([])
+
+        combat = CombatManager(bot)
+        target = combat._find_harass_target()
+
+        assert target == (15, 15)
 
 
 if __name__ == "__main__":

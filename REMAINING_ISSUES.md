@@ -4,7 +4,7 @@
 
 통합 문제 해결 후 발견된 추가 개선 사항들입니다.
 
-**Last refreshed:** 2026-04-27 (Issue #1, #2 → Resolved; Issue #6 partially resolved via Batch 3)
+**Last refreshed:** 2026-07-11 (N1-N4 → confirmed resolved, regression tests added; Issue #1, #2 → Resolved; Issue #6 partially resolved via Batch 3)
 
 ---
 
@@ -14,14 +14,14 @@
 
 | ID | 설명 | 우선순위 | 상태 |
 |----|------|---------|------|
-| N1 | `OpponentModeling.on_step` 중복 정의 (line 341 vs 765 — F811) | 🟠 HIGH | open — 동작 영향(상위 on_step이 미실행) 가능 |
-| N2 | `EconomyManager._prevent_resource_banking` / `_reduce_gas_workers` 재정의 (F811) | 🟡 MED | open |
-| N3 | `combat_manager._find_harass_target` 재정의 (line 2377 vs 4278) | 🟡 MED | open |
-| N4 | `production_resilience.build_terran_counters` 재정의 (1369 vs 1866) | 🟡 MED | open |
+| N1 | `OpponentModeling.on_step` 중복 정의 (line 341 vs 765 — F811) | 🟠 HIGH | ✅ resolved (commit `e648ae4`) — 회귀 테스트 `tests/test_opponent_modeling.py` 추가 (2026-07-11) |
+| N2 | `EconomyManager._prevent_resource_banking` / `_reduce_gas_workers` 재정의 (F811) | 🟡 MED | ✅ resolved (commit `e648ae4`) — 회귀 테스트 `tests/test_economy_manager.py::TestReduceGasWorkers` 추가 (2026-07-11) |
+| N3 | `combat_manager._find_harass_target` 재정의 (line 2377 vs 4278) | 🟡 MED | ✅ resolved (commit `e648ae4`) — 회귀 테스트 `tests/test_combat_manager.py::TestFindHarassTarget` 추가 (2026-07-11) |
+| N4 | `production_resilience.build_terran_counters` 재정의 (1369 vs 1866) | 🟡 MED | ✅ resolved (commit `e648ae4`) — 회귀 테스트 `tests/test_production_resilience.py` 추가 (2026-07-11) |
 | N5 | bare `except Exception:` 다수 (≈360+) — 이번 PR에서 12건 처리, 잔여 다수 | 🟢 LOW | partial |
 | N6 | F841 unused local variables (visuals/make_pptx 등) | 🟢 LOW | open (presentation 코드라 영향 작음) |
 
-검증 권장: PR 분리 (N1 단독 PR 권장 — 동작 변화 가능성).
+N1-N4는 이 문서가 stale했을 뿐, 실제 소스는 이미 `e648ae4`("refactor: delete shadowed duplicate methods that silently disabled features")에서 수정되어 있었음을 2026-07-11 재점검에서 확인. 각 항목에 회귀 테스트(중복 정의 재발 시 실패하도록 AST 기반 검사 포함)를 추가해 향후 재발을 방지함.
 
 ---
 
