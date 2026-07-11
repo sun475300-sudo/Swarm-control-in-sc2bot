@@ -13,6 +13,11 @@ from unittest.mock import MagicMock
 
 import pytest
 
+# s2clientprotocol의 컴파일된 protobuf 디스크립터가 설치된 protobuf 런타임과
+# 맞지 않을 때 "Descriptors cannot be created directly" 로 수집 단계에서 죽는 것을 방지
+# (wicked_zerg_challenger/tests/conftest.py와 동일한 처리)
+os.environ.setdefault("PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION", "python")
+
 # 프로젝트 루트를 sys.path에 추가
 PROJECT_ROOT = Path(__file__).parent.parent
 if str(PROJECT_ROOT) not in sys.path:
