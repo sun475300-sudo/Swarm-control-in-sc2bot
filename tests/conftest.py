@@ -13,6 +13,14 @@ from unittest.mock import MagicMock
 
 import pytest
 
+# burnysc2's bundled s2clientprotocol _pb2.py files use the legacy
+# (pre-upb) codegen style, which the fast C++/upb protobuf runtime
+# rejects with "Descriptors cannot be created directly." Forcing the
+# pure-Python implementation avoids the crash without pinning protobuf
+# repo-wide (pinning conflicts with other deps requiring protobuf>=4).
+# Must be set before any `sc2` import, so it lives at the top of conftest.
+os.environ.setdefault("PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION", "python")
+
 # 프로젝트 루트를 sys.path에 추가
 PROJECT_ROOT = Path(__file__).parent.parent
 if str(PROJECT_ROOT) not in sys.path:

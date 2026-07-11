@@ -14,14 +14,19 @@
 
 | ID | 설명 | 우선순위 | 상태 |
 |----|------|---------|------|
-| N1 | `OpponentModeling.on_step` 중복 정의 (line 341 vs 765 — F811) | 🟠 HIGH | open — 동작 영향(상위 on_step이 미실행) 가능 |
-| N2 | `EconomyManager._prevent_resource_banking` / `_reduce_gas_workers` 재정의 (F811) | 🟡 MED | open |
-| N3 | `combat_manager._find_harass_target` 재정의 (line 2377 vs 4278) | 🟡 MED | open |
-| N4 | `production_resilience.build_terran_counters` 재정의 (1369 vs 1866) | 🟡 MED | open |
-| N5 | bare `except Exception:` 다수 (≈360+) — 이번 PR에서 12건 처리, 잔여 다수 | 🟢 LOW | partial |
+| N1 | `OpponentModeling.on_step` 중복 정의 (line 341 vs 765 — F811) | 🟠 HIGH | ✅ resolved — 단일 정의만 남음, 이전 사이클에서 처리된 것으로 확인 (2026-07-11 재점검) |
+| N2 | `EconomyManager._prevent_resource_banking` / `_reduce_gas_workers` 재정의 (F811) | 🟡 MED | ✅ resolved — 단일 정의만 남음 (2026-07-11 재점검) |
+| N3 | `combat_manager._find_harass_target` 재정의 (line 2377 vs 4278) | 🟡 MED | ✅ resolved — 단일 정의만 남음 (2026-07-11 재점검) |
+| N4 | `production_resilience.build_terran_counters` 재정의 (1369 vs 1866) | 🟡 MED | ✅ resolved — 단일 정의만 남음 (2026-07-11 재점검) |
+| N5 | bare `except Exception:` 다수 (≈360+) — 이번 PR에서 12건 처리, 잔여 다수 | 🟢 LOW | partial — 잔여 468건 (2026-07-11 재확인), 여전히 큰 별도 작업 필요 |
 | N6 | F841 unused local variables (visuals/make_pptx 등) | 🟢 LOW | open (presentation 코드라 영향 작음) |
 
 검증 권장: PR 분리 (N1 단독 PR 권장 — 동작 변화 가능성).
+
+**2026-07-11 재점검 노트**: N1–N4는 이전 사이클(커밋 `e648ae4` "delete shadowed duplicate methods")에서 이미 해소된 것으로 확인. 이번 회차 신규 발견 및 수정 사항:
+- `tests/test_combat_phase_fsm.py` — 5곳에서 `asyncio.get_event_loop().run_until_complete(...)` (레거시 패턴) 사용. 전체 스위트 실행 시 앞선 async 테스트가 이벤트 루프를 정리한 뒤라 `RuntimeError: no current event loop`로 12개 테스트가 순서 의존적으로 실패. `asyncio.run(...)`으로 교체해 해결.
+- `tests/test_queen_transfusion.py` — sc2 라이브러리 import에 다른 3개 테스트 파일(`test_queen_transfusion_manager.py`, `test_advanced_scout_system_v2.py`, `test_harassment_coordinator.py`)과 달리 `try/except ImportError → pytest.skip` 가드가 없어 sc2 미설치 환경에서 skip 대신 collection ERROR 발생. 동일 가드 패턴 적용.
+- 전체 스위트 결과: 395 passed / 34 skipped / 0 failed (로컬 재현 환경, sc2 패키지 없이).
 
 ---
 
