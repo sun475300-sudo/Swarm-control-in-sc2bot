@@ -228,7 +228,7 @@ class VictoryTracker:
             "BANELING",
             "RAVAGER",
             "ULTRALISK",
-            "LURKER",
+            "LURKERMP",
             "INFESTOR",
             "VIPER",
         ]

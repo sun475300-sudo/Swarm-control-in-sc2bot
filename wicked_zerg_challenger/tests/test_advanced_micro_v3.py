@@ -412,6 +412,33 @@ class TestFocusFireCoordinator(unittest.TestCase):
         self.assertEqual(target.tag, 222)
 
 
+@unittest.skipIf(not SC2_AVAILABLE, "sc2 library not compatible with current protobuf")
+class TestMicroClassesHaveLogger(unittest.TestCase):
+    """Regression test: each *Micro class must set self.logger in __init__.
+
+    Their except blocks call self.logger.debug(...) on failure; without a
+    logger set, that debug-logging call itself raises AttributeError, which
+    propagates uncaught out of execute_*_micro() and (per
+    bot_step_integration.py's error-counter) permanently disables the whole
+    AdvancedMicroControllerV3 subsystem after 5 such failures in a game.
+    """
+
+    def test_ravager_micro_has_logger(self):
+        self.assertTrue(hasattr(RavagerMicro(), "logger"))
+
+    def test_lurker_micro_has_logger(self):
+        self.assertTrue(hasattr(LurkerMicro(), "logger"))
+
+    def test_queen_micro_has_logger(self):
+        self.assertTrue(hasattr(QueenMicro(), "logger"))
+
+    def test_viper_micro_has_logger(self):
+        self.assertTrue(hasattr(ViperMicro(), "logger"))
+
+    def test_corruptor_micro_has_logger(self):
+        self.assertTrue(hasattr(CorruptorMicro(), "logger"))
+
+
 # Run tests
 if __name__ == "__main__":
     unittest.main(verbosity=2)

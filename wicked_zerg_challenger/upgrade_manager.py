@@ -691,10 +691,12 @@ class EvolutionUpgradeManager:
             # * IMPROVED: 히드라 1기부터 발업 시작 (3->1, 사거리가 핵심)
             hydras = self.bot.units(UnitTypeId.HYDRALISK)
             if hydras.amount >= 1:
-                await self._research_hydra_range(
-                    iteration
-                )  # * 사거리 먼저! (속도보다 중요)
-                await self._research_hydra_speed(iteration)
+                # * 사거리 먼저! (속도보다 중요) - 같은 프레임에 동일 건물로 두 연구를
+                # 동시에 큐잉하지 않도록, 사거리 연구를 큐잉했으면 속도 연구는 건너뜀
+                # (den.is_idle은 bot.do() 이후 동기적으로 갱신되지 않음)
+                queued_range = await self._research_hydra_range(iteration)
+                if not queued_range:
+                    await self._research_hydra_speed(iteration)
 
             # 잠복 (맹독충 4기 이상일 때)
             banelings = self.bot.units(UnitTypeId.BANELING)
@@ -927,26 +929,31 @@ class EvolutionUpgradeManager:
             except Exception as e:
                 self.logger.warning(f"Failed to research hydra speed: {e}")
 
-    async def _research_hydra_range(self, iteration: int) -> None:
-        """홈 스파인 (Grooved Spines) 연구 - 히드라 사거리 +2"""
+    async def _research_hydra_range(self, iteration: int) -> bool:
+        """홈 스파인 (Grooved Spines) 연구 - 히드라 사거리 +2
+
+        Returns:
+            연구를 새로 큐잉했으면 True (호출자가 같은 프레임에 다른 연구를
+            같은 건물에 중복으로 큐잉하지 않도록 하기 위함).
+        """
         hydra_range = getattr(UpgradeId, "EVOLVEGROOVEDSPINES", None)
         if not hydra_range:
-            return
+            return False
 
         if self._is_upgrade_done(hydra_range):
-            return
+            return False
 
         if self.bot.already_pending_upgrade(hydra_range) > 0:
-            return
+            return False
 
         # 히드라 굴 확인
         hydra_dens = self.bot.structures(UnitTypeId.HYDRALISKDEN).ready
         if not hydra_dens.exists:
-            return
+            return False
 
         # 가스 150 필요
         if not self.bot.can_afford(hydra_range):
-            return
+            return False
 
         # 연구 시작
         den = hydra_dens.first
@@ -957,8 +964,11 @@ class EvolutionUpgradeManager:
                 self.logger.info(
                     f"[{int(game_time)}s] [*][*] 홈 스파인 (히드라 사거리 +2) 연구 시작! [*][*]"
                 )
+                return True
             except Exception as e:
                 self.logger.warning(f"Failed to research hydra range: {e}")
+
+        return False
 
     async def _research_burrow(self, iteration: int) -> None:
         """잠복 (Burrow) 연구 - 맹독충 지뢰, 바퀴 회복 등"""

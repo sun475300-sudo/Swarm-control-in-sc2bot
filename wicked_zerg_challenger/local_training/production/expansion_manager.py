@@ -151,7 +151,8 @@ async def try_expand(resilience) -> bool:
             if next_pos:
                 await b.build(UnitTypeId.HATCHERY, near=next_pos)
                 return True
-    except Exception:
+    except Exception as e:
+        logger.warning(f"Expansion attempt failed: {e}")
         return False
 
     return False
@@ -186,5 +187,5 @@ def cleanup_build_reservations(resilience) -> None:
         stale = [sid for sid, ts in reservations.items() if now - ts > 45.0]
         for sid in stale:
             reservations.pop(sid, None)
-    except Exception:
-        pass
+    except Exception as e:
+        logger.warning(f"Failed to clean up build reservations: {e}")

@@ -48,7 +48,13 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install flake8 pytest pytest-cov
-          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+          # google-generativeai (JARVIS GenAI 어시스턴트용, tests/ 이하 어떤 테스트도
+          # import하지 않음)가 끌어오는 protobuf 버전이 SC2 봇이 필요로 하는
+          # pys2clientprotocol/burnysc2의 protobuf 버전과 상호 배타적이라
+          # (>=6 vs <6) pytest 수집 단계에서 "Descriptors cannot be created
+          # directly" 충돌이 발생한다. 이 스텝은 pytest 대상 파일들에는
+          # google-generativeai가 필요 없으므로 제외하고 설치한다.
+          if [ -f requirements.txt ]; then grep -v '^google-generativeai' requirements.txt | pip install -r /dev/stdin; fi
           # 추가 테스트 의존성
           pip install pyyaml aiohttp
 

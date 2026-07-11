@@ -272,6 +272,34 @@ class TestCombatManager(unittest.TestCase):
         result = self.manager._is_base_under_attack()
         self.assertTrue(result)
 
+    def test_is_base_under_attack_lurker_nearby(self):
+        """Regression: a lone burrowed-capable Lurker must count as a combat
+        threat. The combat unit set previously used the string "LURKER",
+        which does not exist in python-sc2's UnitTypeId (the real enum
+        member is LURKERMP), so real Lurkers were silently invisible to
+        this check and fell through to requiring >=3 enemies."""
+        mock_hatch = Mock()
+        mock_hatch.position = Point2((50, 50))
+
+        mock_enemy = Mock()
+        mock_enemy.position = Point2((55, 55))  # Close
+        mock_enemy.type_id = Mock()
+        mock_enemy.type_id.name = UnitTypeId.LURKERMP.name
+
+        def enemy_distance_to(pos):
+            return ((pos.x - 55) ** 2 + (pos.y - 55) ** 2) ** 0.5
+
+        mock_enemy.distance_to = enemy_distance_to
+
+        mock_townhalls = Mock()
+        mock_townhalls.exists = True
+        mock_townhalls.__iter__ = Mock(return_value=iter([mock_hatch]))
+        self.bot.townhalls = mock_townhalls
+        self.bot.enemy_units = [mock_enemy]
+
+        result = self.manager._is_base_under_attack()
+        self.assertTrue(result)
+
     def test_evaluate_base_threat_no_enemies(self):
         """Test evaluate base threat with no enemies"""
         mock_hatch = Mock()
