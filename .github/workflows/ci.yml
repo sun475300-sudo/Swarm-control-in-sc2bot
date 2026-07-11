@@ -117,6 +117,11 @@ jobs:
         env:
           DRY_RUN: "true"
           LOG_LEVEL: "DEBUG"
+          # sc2-bot-test job 과 동일: newer s2clientprotocol의 생성 코드는
+          # C++ 구현 protobuf 런타임과 충돌해 "Descriptors cannot be created
+          # directly" 로 collection 자체가 실패한다 (tests/test_*.py 다수가
+          # sc2.* 를 import 함).
+          PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION: python
 
   # ─────────────────────────────────────────────
   # SC2 봇 구문 검증 + 테스트
