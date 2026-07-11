@@ -562,7 +562,7 @@ class TestBuildTerranCounters:
         assert called_unit_type == UnitTypeId.BANELINGNEST
 
 
-def _iter_class_method_names(tree: "ast.AST", class_name: str):
+def _iter_class_method_names(tree, class_name: str):
     import ast as _ast
 
     for node in _ast.walk(tree):
