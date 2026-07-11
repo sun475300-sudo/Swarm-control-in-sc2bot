@@ -4,6 +4,7 @@ pytest 공통 fixtures (#171)
 모든 테스트 파일에서 공유할 수 있는 fixture와 설정을 정의한다.
 """
 
+import importlib.util
 import os
 import shutil
 import sys
@@ -17,6 +18,32 @@ import pytest
 PROJECT_ROOT = Path(__file__).parent.parent
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
+
+# wicked_zerg_challenger/ 내부 다수 모듈이 `from utils.xxx import ...` /
+# `from config.xxx import ...`처럼 패키지 접두어 없이 임포트한다(실제 실행 시
+# run.py가 wicked_zerg_challenger/ 자체를 sys.path[0]에 두기 때문). 그런데
+# 저장소 루트에도 이름이 같은 별개의 `utils/` 패키지가 있어(jarvis_features용),
+# 어느 쪽이 먼저 `sys.modules["utils"]`를 선점하느냐가 테스트 수집 순서에
+# 좌우된다 — repo-root utils가 먼저 잡히면 `from utils.logger import get_logger`
+# 등이 ModuleNotFoundError로 실패해 관련 테스트가 조용히 skip된다(실패가 아니라
+# skip이라 리포트에 드러나지 않는다). 그래서 wicked_zerg_challenger/ 자체를
+# sys.path에 추가하고, wicked_zerg_challenger/utils를 "utils"라는 이름으로
+# sys.modules에 결정적으로 선등록한다.
+WZC_ROOT = PROJECT_ROOT / "wicked_zerg_challenger"
+if str(WZC_ROOT) not in sys.path:
+    sys.path.insert(0, str(WZC_ROOT))
+
+if "utils" not in sys.modules:
+    _wzc_utils_init = WZC_ROOT / "utils" / "__init__.py"
+    if _wzc_utils_init.exists():
+        _spec = importlib.util.spec_from_file_location(
+            "utils",
+            _wzc_utils_init,
+            submodule_search_locations=[str(WZC_ROOT / "utils")],
+        )
+        _module = importlib.util.module_from_spec(_spec)
+        sys.modules["utils"] = _module
+        _spec.loader.exec_module(_module)
 
 
 # ═══════════════════════════════════════════════════════
