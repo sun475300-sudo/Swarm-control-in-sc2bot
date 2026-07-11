@@ -41,15 +41,17 @@ for candidate in (str(ROOT), str(PACKAGE_ROOT)):
 # a second, distinct copy of `blackboard` into sys.modules and break the
 # `is`-identity checks below even though the fix is correct at runtime.
 try:
+    import bot_step_integration as bot_step_integration_module
     import defense_coordinator as defense_coordinator_module
     import tech_coordinator as tech_coordinator_module
-    import bot_step_integration as bot_step_integration_module
     from blackboard import AuthorityMode, ThreatLevel
+    from bot_step_integration import BotStepIntegrator
     from defense_coordinator import DefenseCoordinator
     from tech_coordinator import TechCoordinator
-    from bot_step_integration import BotStepIntegrator
 except ImportError:
-    pytest.skip("bot modules not importable (SC2 env required)", allow_module_level=True)
+    pytest.skip(
+        "bot modules not importable (SC2 env required)", allow_module_level=True
+    )
 
 
 class TestModuleLevelImportsResolved:
@@ -118,7 +120,9 @@ class TestSeriousBaseThreatCriticalBranch:
     def test_tech_coordinator_critical_level_alone_triggers(self):
         coordinator = TechCoordinator(bot=Mock())
         coordinator.bot.blackboard = SimpleNamespace(
-            threat=self._threat(ThreatLevel.CRITICAL, enemy_near_base=0, enemy_army_supply=8.0)
+            threat=self._threat(
+                ThreatLevel.CRITICAL, enemy_near_base=0, enemy_army_supply=8.0
+            )
         )
 
         assert coordinator._blackboard_has_serious_base_threat(min_enemies=4) is True
@@ -126,7 +130,9 @@ class TestSeriousBaseThreatCriticalBranch:
     def test_tech_coordinator_high_level_low_supply_does_not_trigger(self):
         coordinator = TechCoordinator(bot=Mock())
         coordinator.bot.blackboard = SimpleNamespace(
-            threat=self._threat(ThreatLevel.HIGH, enemy_near_base=0, enemy_army_supply=8.0)
+            threat=self._threat(
+                ThreatLevel.HIGH, enemy_near_base=0, enemy_army_supply=8.0
+            )
         )
 
         assert coordinator._blackboard_has_serious_base_threat(min_enemies=4) is False
@@ -135,7 +141,9 @@ class TestSeriousBaseThreatCriticalBranch:
         integrator = object.__new__(BotStepIntegrator)
         integrator.bot = Mock()
         integrator.bot.blackboard = SimpleNamespace(
-            threat=self._threat(ThreatLevel.CRITICAL, enemy_near_base=0, enemy_army_supply=8.0)
+            threat=self._threat(
+                ThreatLevel.CRITICAL, enemy_near_base=0, enemy_army_supply=8.0
+            )
         )
 
         assert integrator._blackboard_has_serious_base_threat(min_enemies=4) is True
