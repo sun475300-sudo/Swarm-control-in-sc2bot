@@ -4,24 +4,27 @@
 
 통합 문제 해결 후 발견된 추가 개선 사항들입니다.
 
-**Last refreshed:** 2026-04-27 (Issue #1, #2 → Resolved; Issue #6 partially resolved via Batch 3)
+**Last refreshed:** 2026-07-11 (daily test/review cycle) — N1-N4 및 Issue #3~#6 전체 코드 확인 결과
+이미 해결된 상태로 재검증됨. 아래 "✅ Resolved" 섹션 참고. 문서가 실제 코드보다 오래되어
+(stale) 있었던 것으로 확인.
 
 ---
 
-## 🆕 신규 발견 (PR #44, 2026-04-27)
+## 🆕 신규 발견 (PR #44, 2026-04-27) — 2026-07-11 재검증 결과
 
 자동/수동 점검 사이클(테스트 → 코드 검사 → 개선 → 커밋/푸시 반복)에서 새로 식별된 항목.
+2026-07-11 기준 코드를 직접 확인한 결과 아래와 같이 재검증됨:
 
 | ID | 설명 | 우선순위 | 상태 |
 |----|------|---------|------|
-| N1 | `OpponentModeling.on_step` 중복 정의 (line 341 vs 765 — F811) | 🟠 HIGH | open — 동작 영향(상위 on_step이 미실행) 가능 |
-| N2 | `EconomyManager._prevent_resource_banking` / `_reduce_gas_workers` 재정의 (F811) | 🟡 MED | open |
-| N3 | `combat_manager._find_harass_target` 재정의 (line 2377 vs 4278) | 🟡 MED | open |
-| N4 | `production_resilience.build_terran_counters` 재정의 (1369 vs 1866) | 🟡 MED | open |
-| N5 | bare `except Exception:` 다수 (≈360+) — 이번 PR에서 12건 처리, 잔여 다수 | 🟢 LOW | partial |
-| N6 | F841 unused local variables (visuals/make_pptx 등) | 🟢 LOW | open (presentation 코드라 영향 작음) |
+| N1 | `OpponentModeling.on_step` 중복 정의 (line 341 vs 765 — F811) | 🟠 HIGH | ✅ resolved — `flake8 --select=F811`로 전체 스캔 결과 `wicked_zerg_challenger/` 내 F811 0건 (2026-05-04 PR #218 "delete shadowed duplicate methods" 커밋에서 해결됨) |
+| N2 | `EconomyManager._prevent_resource_banking` / `_reduce_gas_workers` 재정의 (F811) | 🟡 MED | ✅ resolved — 위와 동일 확인 |
+| N3 | `combat_manager._find_harass_target` 재정의 (line 2377 vs 4278) | 🟡 MED | ✅ resolved — 위와 동일 확인 |
+| N4 | `production_resilience.build_terran_counters` 재정의 (1369 vs 1866) | 🟡 MED | ✅ resolved — 위와 동일 확인 |
+| N5 | bare `except Exception:` 다수 (≈360+) — 이번 PR에서 12건 처리, 잔여 다수 | 🟢 LOW | open — 2026-07-11 재측정: 여전히 457건 (102개 파일). SC2 API 방어 코드 관례상 대량 일괄 수정은 위험(블라스트 반경 큼); 개별 리뷰 필요 |
+| N6 | F841 unused local variables (visuals/make_pptx 등) | 🟢 LOW | open (presentation 코드라 영향 작음) — 전체 F841 125건 잔존, 대부분 저영향 |
 
-검증 권장: PR 분리 (N1 단독 PR 권장 — 동작 변화 가능성).
+검증 권장: PR 분리 (N1 단독 PR 권장 — 동작 변화 가능성). → N1은 이미 해결되어 더 이상 해당 없음.
 
 ---
 
@@ -67,9 +70,44 @@
 
 ---
 
-## 🟡 MEDIUM Priority Issues (still open)
+## ✅ Resolved (재확인일: 2026-07-11)
 
-### Issue #3: Transfusion 우선순위 개선 필요
+아래 이슈들은 문서상 "open"으로 남아있었으나, 2026-07-11 코드 직접 확인 결과
+전부 이미 구현되어 있음을 확인했습니다. 문서가 실제 코드 변경을 반영하지 못한
+채로 방치(stale)되어 있었습니다.
+
+### ✅ Issue #3: Transfusion 우선순위 — 구현 완료
+
+`queen_manager.py:711-893` `_transfuse_injured_units()`에 CreepyBot 스타일
+우선순위 테이블(QUEEN=0 > BROODLORD=1 > CORRUPTOR/VIPER=2 > SPINECRAWLER=3 >
+OVERSEER=4 > ULTRALISK=5 > ...)이 이미 구현되어 있고, 치료 불가 유닛
+(BANELING/BROODLING/LOCUSTMP) 제외 로직, 큐 중복 방지(`used_queen_tags`),
+쿨다운/거리/에너지 체크까지 모두 존재. 아래 원안 예시 코드보다 더 정교함
+(건물 수혈까지 지원).
+
+### ✅ Issue #4: Resource Reservation Race Condition — 구현 완료
+
+`core/resource_manager.py:36` 에 `asyncio.Lock` 기반 `try_reserve()` /
+`release()` API가 이미 구현되어 있음 (원안 제시 코드와 동일한 패턴).
+
+### ✅ Issue #5: Position 계산 중복 — 구현 완료
+
+`utils/position_utils.py` 존재, `get_center_position()` 등 유틸 함수 제공.
+
+### 🟡 Issue #6: 매직 넘버 — 부분 해결
+
+`utils/game_constants.py` 존재하며 다수 매니저에서 사용 중이나, 전체
+`wicked_zerg_challenger/`에 하드코딩된 iteration 주기/거리 값이 여전히 다수
+잔존 (지속적 정리 대상, 낮은 우선순위).
+
+---
+
+## 🟡 MEDIUM Priority Issues (historical — superseded, kept for reference)
+
+### Issue #3 (historical): Transfusion 우선순위 개선 필요
+
+> ⚠️ 이 섹션은 이미 해결됨 — 위 "✅ Resolved" 섹션 참고. 원안 예시 코드는
+> 참고용으로만 유지.
 
 **위치**: `queen_manager.py` 또는 `spell_unit_manager.py`
 

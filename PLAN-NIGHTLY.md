@@ -50,9 +50,9 @@
 | #    | Item                                            | Status | Notes |
 |------|-------------------------------------------------|--------|-------|
 | P2.1 | Force-accumulation FSM tests                    | ✅ Done | `tests/test_combat_phase_fsm.py` — 23 tests all passing. |
-| P2.2 | Benchmark runner                                | ❌ Open | Single command, N replays, APM/supply/win-rate report vs Hard. |
-| P2.3 | Build-order config externalisation              | ❌ Open | Move top-20 hardcoded values to `config/build_orders.yaml`. |
-| P2.4 | RL agent save-experience guard                  | ❌ Open | Unit test for save under disk-full / interrupted-rename. |
+| P2.2 | Benchmark runner                                | ✅ Done (pre-existing, doc was stale) | `run_mass_test.py` already implements this: single command, matrix of maps x races x difficulties (incl. Hard), win-rate JSON report to `mass_test_results.json`. Requires a real SC2 game client to execute — cannot be run inside this headless review sandbox, only verified by reading the source. |
+| P2.3 | Build-order config externalisation              | ❌ Open | Move top-20 hardcoded values to `config/build_orders.yaml`. No such file exists yet. |
+| P2.4 | RL agent save-experience guard                  | ✅ Done (2026-07-11) | `tests/test_rl_agent_save_experience.py` — 4 new tests covering success, `np.savez_compressed` raising `OSError(ENOSPC)` (disk full), `os.rename` raising `OSError` (interrupted rename), and overwrite-of-stale-file. All confirm `save_experience_data()` returns `False` and never raises, and never leaves a partially-written target file. |
 | P2.5 | Type hints + docstring pass on core modules     | ❌ Open | `core/resource_manager.py`, `core/manager_factory.py`. |
 
 ## Long-term direction
