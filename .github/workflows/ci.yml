@@ -25,6 +25,13 @@ on:
 env:
   PYTHON_VERSION: "3.10"
   NODE_VERSION: "18"
+  # s2clientprotocol's bundled _pb2.py files predate protobuf's 2022
+  # descriptor-pool changes; pip isn't guaranteed to resolve a
+  # burnysc2 release that pulls the modern pys2clientprotocol
+  # replacement instead. Pure-Python protobuf parsing sidesteps the
+  # C++ implementation's strict "Descriptors cannot be created
+  # directly" check regardless of which one gets installed.
+  PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION: python
 
 jobs:
   # ─────────────────────────────────────────────
