@@ -85,10 +85,20 @@ OVERSEER=4 > ULTRALISK=5 > ...)이 이미 구현되어 있고, 치료 불가 유
 쿨다운/거리/에너지 체크까지 모두 존재. 아래 원안 예시 코드보다 더 정교함
 (건물 수혈까지 지원).
 
-### ✅ Issue #4: Resource Reservation Race Condition — 구현 완료
+### 🟡 Issue #4: Resource Reservation Race Condition — 부분 채택 (2026-07-11 재확인)
 
 `core/resource_manager.py:36` 에 `asyncio.Lock` 기반 `try_reserve()` /
-`release()` API가 이미 구현되어 있음 (원안 제시 코드와 동일한 패턴).
+`release()` API가 구현되어 있고, `economy_manager.py`와
+`defense_coordinator.py`는 실제로 이를 호출함. 다만 2026-07-11 advisor
+서브에이전트 검토 결과 `upgrade_manager.py`(5건), `strategy_manager.py`(2건),
+`strict_upgrade_priority.py`(2건), `early_defense_system.py`,
+`performance_optimizer.py`는 여전히 `self.bot.minerals >=` 직접 체크를
+사용하고 `try_reserve`를 거치지 않음 — 즉 락 자체는 존재하지만
+전체 매니저에 일관되게 적용되지는 않은 상태. 두 매니저 이상이 같은
+프레임에 큰 지출(예: 업그레이드 200 + 건물 150)을 동시에 결정하는
+드문 케이스에서는 여전히 이중 예약 가능성 존재. 낮은 빈도/낮은 영향으로
+추정되나 확정된 버그는 아님(재현 미확인) — 향후 세션에서 나머지
+매니저들을 `try_reserve`로 이관하는 작업을 백로그에 남김.
 
 ### ✅ Issue #5: Position 계산 중복 — 구현 완료
 
