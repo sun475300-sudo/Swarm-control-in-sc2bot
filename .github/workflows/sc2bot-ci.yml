@@ -81,7 +81,7 @@ jobs:
           # itself, so it is excluded here rather than resolved in requirements.txt
           # (which is shared with other services that do need it).
           grep -v '^google-generativeai' requirements.txt > /tmp/requirements-sc2bot.txt
-          pip install -r /tmp/requirements-sc2bot.txt pytest pytest-cov pytest-asyncio
+          pip install -r /tmp/requirements-sc2bot.txt pytest pytest-cov pytest-asyncio pytest-timeout
 
       - name: Run unit tests
         run: pytest tests/ --ignore=tests/integration -v --cov=. --cov-report=xml --cov-report=term
