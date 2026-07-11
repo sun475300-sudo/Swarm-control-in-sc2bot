@@ -21,6 +21,7 @@
 | N4 | `production_resilience.build_terran_counters` 재정의 (1369 vs 1866) | 🟡 MED | ✅ resolved — flake8 F811 0건 |
 | N5 | bare `except Exception:` 다수 (≈360+) | 🟢 LOW | open — 현재 465건(전체 repo), 점진적 개선 대상. 일괄 치환은 리스크 대비 효용 낮음 |
 | N6 | F841 unused local variables | 🟢 LOW | open — 현재 130건(`wicked_zerg_challenger/`), 대부분 `except ... as e` 미사용. 점진적 개선 대상 |
+| N7 | `.github/workflows/sc2bot-ci.yml`의 `Lint & Type Check` 잡이 `black --check .` / `isort --check-only .`을 저장소 전체(blocking)로 실행하는데, **main 브랜치에서도 이미 66개 파일이 black 미준수**로 실패 중 (PR #398에서 확인, `wicked_zerg_challenger/visuals/generate_animated_gifs.py` 등) | 🟠 HIGH | open — CI가 상시 빨간불이라 실제 회귀를 가려버림. 일괄 `black .`/`isort .` 리포맷은 diff가 매우 커서 별도 PR로 분리 권장 |
 
 ---
 
