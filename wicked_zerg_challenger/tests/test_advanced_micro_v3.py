@@ -412,6 +412,24 @@ class TestFocusFireCoordinator(unittest.TestCase):
         self.assertEqual(target.tag, 222)
 
 
+@unittest.skipIf(not SC2_AVAILABLE, "sc2 library not compatible with current protobuf")
+class TestMicroClassesHaveLogger(unittest.TestCase):
+    """Regression: each *Micro class must set self.logger in __init__.
+
+    Their except-handlers call self.logger.debug(...) on ability-call
+    failures; a missing self.logger turns that error handling itself
+    into an AttributeError.
+    """
+
+    def test_all_micro_classes_set_logger(self):
+        for cls in (RavagerMicro, LurkerMicro, QueenMicro, ViperMicro, CorruptorMicro):
+            instance = cls()
+            self.assertTrue(
+                hasattr(instance, "logger") and instance.logger is not None,
+                f"{cls.__name__} does not set self.logger in __init__",
+            )
+
+
 # Run tests
 if __name__ == "__main__":
     unittest.main(verbosity=2)
