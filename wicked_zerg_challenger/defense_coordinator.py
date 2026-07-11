@@ -28,7 +28,7 @@ except ImportError:
     Point2 = None
 
 try:
-    from game_state_blackboard import AuthorityMode, GameStateBlackboard, ThreatLevel
+    from blackboard import AuthorityMode, GameStateBlackboard, ThreatLevel
 except ImportError:
     GameStateBlackboard = None
     ThreatLevel = None

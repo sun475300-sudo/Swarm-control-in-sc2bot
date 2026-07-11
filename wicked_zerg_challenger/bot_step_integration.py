@@ -3139,7 +3139,7 @@ class BotStepIntegrator:
             enemy_supply = 0.0
         threat_level = getattr(threat, "level", None)
         try:
-            from game_state_blackboard import ThreatLevel
+            from blackboard import ThreatLevel
         except ImportError:
             ThreatLevel = None
         if ThreatLevel is not None and threat_level is not None:

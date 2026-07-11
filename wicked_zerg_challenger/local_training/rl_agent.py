@@ -654,11 +654,11 @@ class RLAgent:
             )
             temp_actual = temp_base + ".npz"
 
-            # 원자적으로 이름 변경 (Atomic Rename)
-            # Windows에서는 기존 파일이 있으면 rename이 실패할 수 있으므로 삭제 후 변경
-            if os.path.exists(path_str):
-                os.remove(path_str)
-            os.rename(temp_actual, path_str)
+            # 원자적으로 이름 변경 (Atomic Replace)
+            # os.replace()는 POSIX/Windows 모두에서 원자적이며, 대상이 이미 존재해도
+            # 먼저 지울 필요가 없다 (기존 remove-then-rename은 그 사이에 프로세스가
+            # 죽으면 원본과 새 파일이 둘 다 사라지는 데이터 손실 창구가 있었음).
+            os.replace(temp_actual, path_str)
 
             logger.info(
                 f"[OK] Experience saved atomically: {len(self.states)} states, {len(self.rewards)} rewards"
