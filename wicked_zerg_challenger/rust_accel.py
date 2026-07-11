@@ -15,8 +15,8 @@ try:
     from swarm_rust_accel import (
         compute_feedback_priority as _compute_feedback_priority_rust,
     )
-    from swarm_rust_accel import formation_positions as _formation_positions_rust
     from swarm_rust_accel import find_unit_clusters as _find_unit_clusters_rust
+    from swarm_rust_accel import formation_positions as _formation_positions_rust
     from swarm_rust_accel import nearest_point_index as _nearest_point_index_rust
     from swarm_rust_accel import path_distance as _path_distance_rust
     from swarm_rust_accel import route_distance as _route_distance_rust
@@ -256,7 +256,9 @@ def find_unit_clusters(
     """Find dense unit clusters via Rust or deterministic CPU fallback."""
     if _find_unit_clusters_rust is not None:
         try:
-            return _find_unit_clusters_rust(list(positions), float(radius), int(min_count))
+            return _find_unit_clusters_rust(
+                list(positions), float(radius), int(min_count)
+            )
         except Exception:
             pass
 
@@ -300,7 +302,12 @@ def threat_assessment(
         distance = (dx * dx + dy * dy) ** 0.5
         if distance <= max_distance:
             proximity = 1.0 - (distance / max_distance)
-            score += max(0.0, hp) * max(0.0, dps) * proximity * (max(attack_range, 1.0) / 6.0)
+            score += (
+                max(0.0, hp)
+                * max(0.0, dps)
+                * proximity
+                * (max(attack_range, 1.0) / 6.0)
+            )
     return score
 
 
