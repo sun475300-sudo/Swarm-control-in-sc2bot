@@ -63,6 +63,13 @@ jobs:
     name: Test Suite
     runs-on: ubuntu-latest
     needs: lint
+    env:
+      # burnysc2/s2clientprotocol ship pre-compiled protobuf descriptors that
+      # are incompatible with the newer protobuf runtime pulled in by other
+      # requirements.txt deps (google-generativeai, mcp, boto3, ...) under the
+      # default C++/upb implementation ("Descriptors cannot be created
+      # directly."). The pure-Python implementation tolerates the mismatch.
+      PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION: python
     steps:
       - uses: actions/checkout@v4
 
