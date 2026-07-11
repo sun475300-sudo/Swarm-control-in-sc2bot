@@ -4,24 +4,23 @@
 
 통합 문제 해결 후 발견된 추가 개선 사항들입니다.
 
-**Last refreshed:** 2026-04-27 (Issue #1, #2 → Resolved; Issue #6 partially resolved via Batch 3)
+**Last refreshed:** 2026-07-11 (자동 점검 사이클 — N1~N4 재정의 버그 전부 해결 확인, Issue #3/#4/#5 구현 확인, 테스트 스위트 버그 1건 신규 수정)
 
 ---
 
-## 🆕 신규 발견 (PR #44, 2026-04-27)
+## 🆕 신규 발견 (PR #44, 2026-04-27) — 2026-07-11 재검증 결과
 
 자동/수동 점검 사이클(테스트 → 코드 검사 → 개선 → 커밋/푸시 반복)에서 새로 식별된 항목.
+`flake8 --select=F821,F811,F841`로 전체 `wicked_zerg_challenger/`를 재검사한 결과 **F821/F811은 0건** — N1~N4는 이후 세션(6947f1a, e648ae4, fcf1004 등)에서 이미 수정되어 있었습니다.
 
 | ID | 설명 | 우선순위 | 상태 |
 |----|------|---------|------|
-| N1 | `OpponentModeling.on_step` 중복 정의 (line 341 vs 765 — F811) | 🟠 HIGH | open — 동작 영향(상위 on_step이 미실행) 가능 |
-| N2 | `EconomyManager._prevent_resource_banking` / `_reduce_gas_workers` 재정의 (F811) | 🟡 MED | open |
-| N3 | `combat_manager._find_harass_target` 재정의 (line 2377 vs 4278) | 🟡 MED | open |
-| N4 | `production_resilience.build_terran_counters` 재정의 (1369 vs 1866) | 🟡 MED | open |
-| N5 | bare `except Exception:` 다수 (≈360+) — 이번 PR에서 12건 처리, 잔여 다수 | 🟢 LOW | partial |
-| N6 | F841 unused local variables (visuals/make_pptx 등) | 🟢 LOW | open (presentation 코드라 영향 작음) |
-
-검증 권장: PR 분리 (N1 단독 PR 권장 — 동작 변화 가능성).
+| N1 | `OpponentModeling.on_step` 중복 정의 (line 341 vs 765 — F811) | 🟠 HIGH | ✅ resolved — `on_step` 단일 정의만 남음 (`opponent_modeling.py:341`) |
+| N2 | `EconomyManager._prevent_resource_banking` / `_reduce_gas_workers` 재정의 (F811) | 🟡 MED | ✅ resolved — 각각 단일 정의 확인 |
+| N3 | `combat_manager._find_harass_target` 재정의 (line 2377 vs 4278) | 🟡 MED | ✅ resolved — 단일 정의(4992), 호출부만 여러 곳 |
+| N4 | `production_resilience.build_terran_counters` 재정의 (1369 vs 1866) | 🟡 MED | ✅ resolved — flake8 F811 0건 |
+| N5 | bare `except Exception:` 다수 (≈360+) | 🟢 LOW | open — 현재 465건(전체 repo), 점진적 개선 대상. 일괄 치환은 리스크 대비 효용 낮음 |
+| N6 | F841 unused local variables | 🟢 LOW | open — 현재 130건(`wicked_zerg_challenger/`), 대부분 `except ... as e` 미사용. 점진적 개선 대상 |
 
 ---
 
@@ -67,7 +66,15 @@
 
 ---
 
-## 🟡 MEDIUM Priority Issues (still open)
+## ✅ Issue #3, #4, #5 — 2026-07-11 재검증: 이미 구현 완료
+
+- **Issue #3 (Transfusion 우선순위)**: `wicked_zerg_challenger/economy/queen_transfusion_manager.py`에 `HEAL_PRIORITY`/`CANNOT_HEAL`/`_find_best_transfusion_target` 구현됨 — 본 문서가 제안한 설계와 사실상 동일.
+- **Issue #4 (Resource Reservation Race Condition)**: `wicked_zerg_challenger/core/resource_manager.py`의 `ResourceManager`가 `asyncio.Lock` + `try_reserve`/`release`로 구현됨.
+- **Issue #5 (Position 계산 중복)**: `wicked_zerg_challenger/utils/position_utils.py`에 `get_center_position`/`get_weighted_center` 구현됨.
+
+아래 원본 섹션은 과거 스냅샷 참고용으로 남겨둡니다 (실제 구현은 위 파일 참조).
+
+## 🟡 MEDIUM Priority Issues (historical — see ✅ note above, already implemented)
 
 ### Issue #3: Transfusion 우선순위 개선 필요
 
@@ -421,5 +428,19 @@ if iteration % SECOND == 0:
 
 ---
 
-**검토 완료일**: 2026-01-29
-**상태**: 추가 개선 사항 문서화 완료
+## 🔁 2026-07-11 자동 점검 세션 요약
+
+**점검 범위:** 전체 pytest 스위트(502 tests) 실행, `flake8 --select=F821,F811,F841,E9,F63,F7,F82` 전체 스캔, ROADMAP.md Sprint 1~3 항목별 코드 대조.
+
+**발견 및 조치:**
+- 🐛 **버그 수정 (커밋됨)**: `tests/test_combat_phase_fsm.py`의 12개 테스트가 Python 3.11에서 `asyncio.get_event_loop()`가 실행 중인 루프가 없는 스레드에서 `RuntimeError`를 던지는 문제로 실패 — `asyncio.run()`으로 교체. 수정 후 502/502 테스트 통과(스킵 14건은 선택적 의존성 누락으로 정상).
+- 📋 **문서 정리**: 위 N1~N4, Issue #3/#4/#5는 코드 상 이미 해결된 상태였으나 문서가 stale — 갱신 완료.
+- 📋 **ROADMAP.md Sprint 1~3 재검증**: Task 1.2/1.3/1.4/2.1/2.3/3.3 모두 이미 구현 확인. Task 1.1(비ASCII 문자 제거)은 `wicked_zerg_challenger/` 11개 파일에 이모지/화살표/박스문자가 남아있으나, 전부 주석·docstring 내부이고 `print`/`logger` 호출부에는 전혀 없음을 확인 — 실질적 인코딩 크래시 위험은 없음(저위험, 우선순위 낮음으로 재분류).
+- ⚠️ **N5/N6 (bare except, unused vars)**: 각각 465건/130건으로 이전 문서 기록보다 많음(반복 작업 중 새 코드 추가 때문으로 추정) — 점진적 개선 대상으로 유지, 일괄 자동화 치환은 리스크 대비 효용이 낮아 보류.
+
+**결론:** 이 저장소는 이미 수차례의 자동 점검 사이클을 거쳐 매우 안정된 상태이며, 이번 세션에서 발견된 유일한 실제 회귀는 테스트 스위트 자체의 Python 3.11 비동기 API 호환성 문제였음.
+
+---
+
+**검토 완료일**: 2026-07-11 (이전: 2026-01-29)
+**상태**: 추가 개선 사항 문서화 완료, 자동 점검 사이클 지속 중
