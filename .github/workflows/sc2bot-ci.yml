@@ -63,6 +63,14 @@ jobs:
     name: Test Suite
     runs-on: ubuntu-latest
     needs: lint
+    env:
+      # requirements.txt pulls in google-generativeai (needs protobuf<6) alongside
+      # burnysc2's s2clientprotocol (whose bundled *_pb2.py files were generated
+      # with a newer protoc than the resolved protobuf runtime supports for the
+      # default upb backend). The pure-Python implementation tolerates the
+      # gencode/runtime mismatch instead of raising "Descriptors cannot be
+      # created directly" / VersionError at import time.
+      PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION: python
     steps:
       - uses: actions/checkout@v4
 
@@ -73,10 +81,10 @@ jobs:
           cache: pip
 
       - name: Install dependencies
-        run: pip install -r requirements.txt pytest pytest-cov pytest-asyncio
+        run: pip install -r requirements.txt pytest pytest-cov pytest-asyncio pytest-timeout
 
       - name: Run unit tests
-        run: pytest tests/unit -v --cov=. --cov-report=xml --cov-report=term
+        run: pytest tests/ --ignore=tests/integration -v --cov=. --cov-report=xml --cov-report=term
 
       - name: Run integration tests
         run: pytest tests/integration -v --timeout=120
