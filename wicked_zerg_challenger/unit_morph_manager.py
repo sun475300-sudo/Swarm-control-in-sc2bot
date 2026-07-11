@@ -387,7 +387,7 @@ class UnitMorphManager:
             for corruptor in corruptors[:morphs_needed]:
                 if self.bot.can_afford(UnitTypeId.BROODLORD):
                     try:
-                        self.bot.do(corruptor(AbilityId.MORPH_BROODLORD))
+                        self.bot.do(corruptor(AbilityId.MORPHTOBROODLORD_BROODLORD))
                         morphed += 1
                     except Exception:
                         continue

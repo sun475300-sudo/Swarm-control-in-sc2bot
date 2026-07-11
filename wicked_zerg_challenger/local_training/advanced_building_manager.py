@@ -211,7 +211,7 @@ class AdvancedBuildingManager:
         return await self.morph_unit_safely(
             source_units=list(roaches),
             target_unit_type=UnitTypeId.RAVAGER,
-            morph_ability=AbilityId.MORPH_RAVAGER,
+            morph_ability=AbilityId.MORPHTORAVAGER_RAVAGER,
             required_building=UnitTypeId.ROACHWARREN,
             min_units=1,
             max_units=max_count,
@@ -226,7 +226,7 @@ class AdvancedBuildingManager:
         return await self.morph_unit_safely(
             source_units=list(corruptors),
             target_unit_type=UnitTypeId.BROODLORD,
-            morph_ability=AbilityId.MORPH_BROODLORD,
+            morph_ability=AbilityId.MORPHTOBROODLORD_BROODLORD,
             required_building=UnitTypeId.GREATERSPIRE,
             min_units=1,
             max_units=max_count,
