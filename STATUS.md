@@ -1,11 +1,25 @@
 # Project Status & Documentation Index
 
-> Single-page entry point into the documentation. The repository
-> currently has 47+ historical `*.md` reports at the root. This index
-> groups them by topic so newcomers can find the canonical doc without
-> reading every file. Plan item **P1.5** (in `PLAN-NIGHTLY.md`) is to
-> move the historical reports under `docs/history/` — until that move
-> happens, this index serves as the navigation layer.
+> Single-page entry point into the documentation. Plan item **P1.5**
+> (in `PLAN-NIGHTLY.md`) moved the 15 phase/bug historical reports below
+> under `docs/history/`; the root copies have been deleted. A further
+> batch of historical/manual docs (Korean session reports, architecture
+> maps, etc.) is still awaiting the same move — see `docs/history/README.md`.
+
+## ⚠️ Known security issue (unresolved)
+
+`SENSITIVE_INFO_REPORT.md` documents Gemini API keys that were once
+hardcoded in this repo. The key *files* were later removed from the
+working tree, but the actual key values are still recoverable from git
+history (confirmed present via `git log --all -S <key-prefix>`, ~5
+commits each, for all 3 keys the report lists). **This repo is public.**
+Anyone can retrieve the full keys from history right now. This needs:
+1. Rotate/revoke all keys listed in `SENSITIVE_INFO_REPORT.md` in the
+   issuing Google account — this cannot be done from inside the repo.
+2. Separately and deliberately (not as a routine maintenance step):
+   scrub the secrets from git history (e.g. `git filter-repo`) and
+   force-push. This rewrites history for every clone/collaborator, so
+   it needs the repo owner's explicit go-ahead before anyone runs it.
 
 ## Active / canonical (read these first)
 
@@ -32,33 +46,33 @@
 | `MODIFICATION_LIST.md`      | List of recent modifications (per-file). |
 | `project_features.md`       | Feature inventory. |
 
-## Phase / milestone reports (historical — candidate for `docs/history/`)
+## Phase / milestone reports (historical, moved to `docs/history/`)
 
 | Document | Phase / scope |
 |----------|---------------|
-| `MILESTONE_400.md`                      | Milestone 400 summary. |
-| `PHASE_19_SPELLCASTER_COMPLETION.md`    | Phase 19 (spellcasters). |
-| `PHASE_20_HIVE_TECH_COMPLETION.md`      | Phase 20 (hive tech). |
-| `PHASE_19_20_FINAL_SUMMARY.md`          | Phases 19+20 combined wrap-up. |
-| `EXPANSION_OPTIMIZATION_REPORT.md`      | Expansion-timing tuning report. |
-| `FINAL_OPTIMIZATION_SUMMARY.md`         | End-of-cycle optimization summary. |
-| `FINAL_QUICK_WINS_COMPLETION.md`        | Quick-wins wrap-up. |
-| `QUICK_WINS_IMPLEMENTATION.md`          | Quick-wins implementation notes. |
-| `ADDITIONAL_IMPROVEMENTS_REPORT.md`     | Misc improvement report. |
-| `optimization_report_20260124.md`       | Dated optimization report. |
-| `PROJECT_REVIEW_REPORT.md`              | Whole-project review. |
-| `SESSION_SUMMARY.md`                    | Working-session summary. |
+| `docs/history/MILESTONE_400.md`                      | Milestone 400 summary. |
+| `docs/history/PHASE_19_SPELLCASTER_COMPLETION.md`    | Phase 19 (spellcasters). |
+| `docs/history/PHASE_20_HIVE_TECH_COMPLETION.md`      | Phase 20 (hive tech). |
+| `docs/history/PHASE_19_20_FINAL_SUMMARY.md`          | Phases 19+20 combined wrap-up. |
+| `docs/history/EXPANSION_OPTIMIZATION_REPORT.md`      | Expansion-timing tuning report. |
+| `docs/history/FINAL_OPTIMIZATION_SUMMARY.md`         | End-of-cycle optimization summary. |
+| `docs/history/FINAL_QUICK_WINS_COMPLETION.md`        | Quick-wins wrap-up. |
+| `docs/history/QUICK_WINS_IMPLEMENTATION.md`          | Quick-wins implementation notes. |
+| `docs/history/ADDITIONAL_IMPROVEMENTS_REPORT.md`     | Misc improvement report. |
+| `optimization_report_20260124.md`       | Dated optimization report. Still at root — candidate for `docs/history/`. |
+| `docs/history/PROJECT_REVIEW_REPORT.md`              | Whole-project review. |
+| `docs/history/SESSION_SUMMARY.md`                    | Working-session summary. |
 
-## Bug & incident reports (historical — candidate for `docs/history/`)
+## Bug & incident reports (historical, moved to `docs/history/`)
 
 | Document | Scope |
 |----------|-------|
-| `BUG_ERROR_LOG.md`             | Aggregated error log. |
-| `BUG_FIXES_REPORT.md`          | Aggregated bug fixes. |
-| `INTEGRATION_FIXES.md`         | Integration-level fixes. |
-| `ISSUES_FIXED.md`              | Per-issue fix log. |
-| `SENSITIVE_INFO_REPORT.md`     | Sensitive-info exposure scan results. |
-| `logic_test_results.md`        | Logic-test result snapshot. |
+| `docs/history/BUG_ERROR_LOG.md`             | Aggregated error log. |
+| `docs/history/BUG_FIXES_REPORT.md`          | Aggregated bug fixes. |
+| `docs/history/INTEGRATION_FIXES.md`         | Integration-level fixes. |
+| `docs/history/ISSUES_FIXED.md`              | Per-issue fix log. |
+| `SENSITIVE_INFO_REPORT.md`     | Sensitive-info exposure scan results. **See warning below — the keys it references are still recoverable from git history.** |
+| `logic_test_results.md`        | Logic-test result snapshot. Still at root — candidate for `docs/history/`. |
 
 ## Manuals & training material
 

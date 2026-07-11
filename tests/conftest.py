@@ -5,6 +5,14 @@ pytest 공통 fixtures (#171)
 """
 
 import os
+
+# Fix protobuf compatibility with sc2 library (s2clientprotocol): newer
+# protobuf runtimes refuse to load the pre-generated _pb2.py descriptors
+# ("Descriptors cannot be created directly") unless this is set before
+# sc2/s2clientprotocol is imported. Must run before any other import below
+# pulls in sc2 transitively.
+os.environ.setdefault("PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION", "python")
+
 import shutil
 import sys
 import tempfile

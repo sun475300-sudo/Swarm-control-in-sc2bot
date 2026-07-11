@@ -73,13 +73,19 @@ jobs:
           cache: pip
 
       - name: Install dependencies
-        run: pip install -r requirements.txt pytest pytest-cov pytest-asyncio
+        run: pip install -r requirements.txt pytest pytest-cov pytest-asyncio pytest-timeout
 
       - name: Run unit tests
-        run: pytest tests/unit -v --cov=. --cov-report=xml --cov-report=term
+        run: pytest tests/ --ignore=tests/integration -v --cov=. --cov-report=xml --cov-report=term
 
       - name: Run integration tests
         run: pytest tests/integration -v --timeout=120
+
+      # Run as a separate invocation: wicked_zerg_challenger/local_training/scripts/
+      # is a regular package that collides with the top-level scripts/ package
+      # when both land on sys.path in the same pytest session.
+      - name: Run wicked_zerg_challenger unit tests
+        run: pytest wicked_zerg_challenger/tests -v --timeout=120
 
       - name: Upload coverage
         uses: codecov/codecov-action@v4
