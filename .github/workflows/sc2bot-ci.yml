@@ -16,6 +16,11 @@ env:
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository }}/sc2bot
   PYTHON_DEFAULT: "3.11"
+  # burnysc2's s2clientprotocol pb2 files were generated with an older
+  # protoc than the protobuf runtime this repo's other deps pull in,
+  # which trips protobuf's upb backend ("Descriptors cannot be created
+  # directly"). Falls back to the pure-Python implementation.
+  PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION: "python"
 
 jobs:
   # ── Lint ──────────────────────────────────────────────────────────────────
