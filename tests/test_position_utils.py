@@ -32,7 +32,9 @@ try:
         is_position_safe,
     )
 except ImportError:
-    pytest.skip("position_utils not importable (SC2 env required)", allow_module_level=True)
+    pytest.skip(
+        "position_utils not importable (SC2 env required)", allow_module_level=True
+    )
 
 
 class FakeUnit:
