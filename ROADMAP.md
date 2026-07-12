@@ -1,8 +1,16 @@
 # WickedZergBotPro Grand Roadmap
 
 > 목표: Medium AI 승률 90%+ 달성 & AI Arena 출전
-> 현재 상태: Phase 56 완료, 342/342 테스트 통과, 추정 승률 45~50%
+> 현재 상태 (2026-07-12 기준 재검증): 실측 1,163개 테스트 통과 (tests/ 502 + wicked_zerg_challenger/tests/ 661,
+>   14 skipped) — "342/342", "추정 승률 45~50%" 수치는 2026-04 이전 스냅샷으로 stale. 실측 승률 데이터는
+>   `개선_및_훈련_현황_보고서.md` 참고 (0% / 325게임 보고 — 아래 Sprint 항목들과의 연결고리 미검증).
 > 봇 프레임워크: python-sc2 (burnysc2>=5.0.0)
+
+> ⚠️ 주의: 아래 Sprint 1~8 항목 다수는 이미 코드에 구현되어 있음이 확인됐다 (예: `combat_manager.py`의
+>   `respond_to_worker_harassment()`/RL 마이크로 토글, `building_manager.py`, `utils/distance_cache.py`,
+>   `combat/lurker_positioning.py`·`mutalisk_micro.py`·`base_defense.py`·`terrain_analysis.py`,
+>   `intel_manager.py`의 `BUILD_PATTERNS`). 새 작업 착수 전 반드시 실제 코드를 먼저 확인할 것 — 이 문서를
+>   "미구현"의 근거로 삼지 말 것.
 
 ---
 
