@@ -10,14 +10,14 @@ from types import SimpleNamespace
 os.environ["PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION"] = "python"
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from build_order_system import BuildOrderSystem, BuildOrderType, ZVZ_BUILDS
+from build_order_system import ZVZ_BUILDS, BuildOrderSystem, BuildOrderType
 from combat.micro_combat import ZvZMicroAdjustments
 from scouting_system import ZVZ_SCOUT_PRIORITIES, ZvZScoutingSystem
 from strategy_manager import (
+    ZVZ_COMPOSITION_TIMELINE,
     EnemyRace,
     GamePhase,
     StrategyManager,
-    ZVZ_COMPOSITION_TIMELINE,
 )
 
 
