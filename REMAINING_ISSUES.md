@@ -4,24 +4,22 @@
 
 통합 문제 해결 후 발견된 추가 개선 사항들입니다.
 
-**Last refreshed:** 2026-04-27 (Issue #1, #2 → Resolved; Issue #6 partially resolved via Batch 3)
+**Last refreshed:** 2026-07-12 (N1-N4 및 Issue #3/#4/#5 → 코드에 이미 반영되어 있음을 재검증 후 Resolved로 이동; N5/N6 재확인)
 
 ---
 
-## 🆕 신규 발견 (PR #44, 2026-04-27)
-
-자동/수동 점검 사이클(테스트 → 코드 검사 → 개선 → 커밋/푸시 반복)에서 새로 식별된 항목.
+## 🆕 신규 발견 (PR #44, 2026-04-27) — 재검증 결과 (2026-07-12)
 
 | ID | 설명 | 우선순위 | 상태 |
 |----|------|---------|------|
-| N1 | `OpponentModeling.on_step` 중복 정의 (line 341 vs 765 — F811) | 🟠 HIGH | open — 동작 영향(상위 on_step이 미실행) 가능 |
-| N2 | `EconomyManager._prevent_resource_banking` / `_reduce_gas_workers` 재정의 (F811) | 🟡 MED | open |
-| N3 | `combat_manager._find_harass_target` 재정의 (line 2377 vs 4278) | 🟡 MED | open |
-| N4 | `production_resilience.build_terran_counters` 재정의 (1369 vs 1866) | 🟡 MED | open |
-| N5 | bare `except Exception:` 다수 (≈360+) — 이번 PR에서 12건 처리, 잔여 다수 | 🟢 LOW | partial |
+| N1 | `OpponentModeling.on_step` 중복 정의 (line 341 vs 765 — F811) | 🟠 HIGH | ✅ Resolved — `opponent_modeling.py`에 `on_step` 정의가 1건(line 341)만 존재, 중복 제거 확인 |
+| N2 | `EconomyManager._prevent_resource_banking` / `_reduce_gas_workers` 재정의 (F811) | 🟡 MED | ✅ Resolved — `economy_manager.py`에 각각 1건만 존재 |
+| N3 | `combat_manager._find_harass_target` 재정의 (line 2377 vs 4278) | 🟡 MED | ✅ Resolved — `combat_manager.py`에 1건만 존재 |
+| N4 | `production_resilience.build_terran_counters` 재정의 (1369 vs 1866) | 🟡 MED | ✅ Resolved — `local_training/production_resilience.py`에 1건만 존재 |
+| N5 | bare `except Exception:` 다수 (≈360+) | 🟢 LOW | partial (이후 여러 PR에서 `logger.debug`로 점진 마이그레이션 진행 중 — 잔여 다수) |
 | N6 | F841 unused local variables (visuals/make_pptx 등) | 🟢 LOW | open (presentation 코드라 영향 작음) |
 
-검증 권장: PR 분리 (N1 단독 PR 권장 — 동작 변화 가능성).
+`flake8 --select=F811,F821,F822,F823 wicked_zerg_challenger` → 2026-07-12 기준 0건.
 
 ---
 
@@ -67,9 +65,14 @@
 
 ---
 
-## 🟡 MEDIUM Priority Issues (still open)
+## 🟡 MEDIUM Priority Issues
 
-### Issue #3: Transfusion 우선순위 개선 필요
+### Issue #3: Transfusion 우선순위 개선 필요 — ✅ Resolved (재검증 2026-07-12)
+
+`queen_manager.py:711` `_transfuse_injured_units()`가 CreepyBot 스타일 우선순위 맵
+(Queen > Broodlord > Corruptor/Viper > Spine Crawler > Overseer > Ultralisk > ...)과
+`UNHEALABLE_UNITS` 제외 목록(Baneling/Broodling/Locust)을 포함해 아래 제안보다
+더 정교하게 구현되어 있음. 아래는 이력 보존용 원안.
 
 **위치**: `queen_manager.py` 또는 `spell_unit_manager.py`
 
@@ -142,7 +145,10 @@ async def smart_transfusion(self, queen, damaged_units):
 
 ---
 
-### Issue #4: Resource Reservation Race Condition
+### Issue #4: Resource Reservation Race Condition — ✅ Resolved (재검증 2026-07-12)
+
+`core/resource_manager.py:28` `ResourceManager`가 `asyncio.Lock` 기반
+`try_reserve()`/`release()`를 이미 구현 (아래 제안과 동일한 설계). 이력 보존용 원안.
 
 **위치**: `resource_manager.py` (추정)
 
@@ -219,7 +225,13 @@ else:
 
 ## 🟢 LOW Priority Issues
 
-### Issue #5: 코드 중복 - Position 계산
+### Issue #5: 코드 중복 - Position 계산 — ✅ Resolved (재검증 2026-07-12)
+
+`utils/position_utils.py`가 제안된 `get_center_position`/`get_weighted_center` 등을
+이미 포함하고 있었으나 실제로는 어디서도 import되지 않은 dead code였음(N차례의 PR이
+같은 발견을 반복). 마지막 남은 인라인 중복(`battle_preparation_system.py:166`)을
+`get_center_position()` 호출로 교체해 실제로 연결. 신규 회귀 테스트
+`tests/test_position_utils.py`(25건, 이전까지 이 모듈은 테스트 커버리지 0)로 고정.
 
 **위치**: 여러 파일에서 중복
 
@@ -359,32 +371,28 @@ if iteration % SECOND == 0:
 
 ---
 
-## 📊 이슈 우선순위 요약 (open만)
+## 📊 이슈 우선순위 요약 (open만, 2026-07-12 재검증)
 
 | 우선순위 | 이슈 | 영향도 | 난이도 |
 |---------|------|--------|--------|
-| 🟡 MEDIUM | #3 Transfusion 우선순위 | 중간 | 중간 |
-| 🟡 MEDIUM | #4 Resource Race Condition | 낮음 | 중간 |
-| 🟢 LOW | #5 코드 중복 제거 | 낮음 | 쉬움 |
 | 🟢 LOW | #6 매직 넘버 | 낮음 | 쉬움 |
+| 🟢 LOW | N5 bare except 잔여분 | 낮음 | 쉬움 (점진 진행 중) |
+| 🟢 LOW | N6 F841 unused vars (presentation) | 낮음 | 쉬움 |
 
-(Issue #1, #2 → ✅ Resolved 섹션 참조)
+(Issue #1-#5, N1-N4 → ✅ Resolved 섹션 참조. 2026-04-27 이후 다수의 후속 PR에서
+이미 코드에 반영되어 있었으나 본 문서가 stale했던 항목들.)
 
 ---
 
 ## 🎯 권장 수정 순서
 
-### 1단계: 완료 (✅)
-~~1. Queen Inject 쿨다운 수정 (25 → 29)~~ — 코드 반영 완료, 본 문서 ✅ Resolved 섹션 참조
-~~2. 누락된 업그레이드 추가~~ — 코드 반영 완료, 본 문서 ✅ Resolved 섹션 참조
+### 1단계~3단계: 완료 (✅)
+Queen Inject 쿨다운, 누락 업그레이드, Transfusion 우선순위, Resource Reservation 동기화,
+Position Utils 유틸리티 — 모두 코드 반영 완료. 본 문서 ✅ Resolved 섹션 참조.
 
-### 2단계: 로직 개선 (30분, 미진행)
-3. Transfusion 우선순위 시스템 구현
-
-### 3단계: 구조 개선 (1시간, 미진행)
-4. Resource Reservation 동기화
-5. Position Utils 유틸리티 함수 분리
-6. Constants 정리
+### 남은 항목 (LOW)
+- Constants 정리 (매직 넘버, Issue #6) — 미진행
+- bare except 잔여 마이그레이션 (N5) — 부분 진행 중
 
 ---
 
@@ -421,5 +429,13 @@ if iteration % SECOND == 0:
 
 ---
 
-**검토 완료일**: 2026-01-29
-**상태**: 추가 개선 사항 문서화 완료
+**검토 완료일**: 2026-01-29 (최종 재검증: 2026-07-12)
+**상태**: 문서화된 항목 대부분 코드에 이미 반영됨을 확인, 문서 갱신 완료
+
+> ⚠️ **2026-07-12 세션 노트**: 이 저장소는 2026-06-01(PR #218) 이후 `main`에
+> 병합된 PR이 없고, 그 사이 거의 매일 새 자동화 세션이 동일한 버그
+> (`asyncio.get_event_loop()` FSM 테스트 크래시, 존재하지 않는 `tests/unit`
+> CI 경로)를 독립적으로 재발견해 384개의 열린 draft PR이 쌓여 있습니다. 이
+> 문서의 "already resolved" 표시들도 그중 여러 PR이 각자 독립적으로 재검증한
+> 내용과 겹칠 가능성이 높습니다 — 문서 신뢰도를 위해 PR 정리(하나만 병합하고
+> 나머지 close)가 선행되어야 합니다.
