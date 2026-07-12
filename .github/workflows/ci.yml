@@ -136,10 +136,13 @@ jobs:
           cache: "pip"
 
       - name: SC2 봇 의존성 설치
+        # requirements.txt는 크립토/디스코드/구글/AWS 등 SC2 봇과 무관한
+        # 의존성까지 한 파일에 섞여 있어 pip resolver가 수 분간 멈추는
+        # 문제가 있음 (resolution-too-deep). SC2 봇 테스트에는 최소
+        # 의존성 세트(requirements-sc2bot.txt)만 설치한다.
         run: |
           python -m pip install --upgrade pip
-          pip install burnysc2 pytest pytest-asyncio pyyaml aiohttp
-          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+          pip install -r requirements-sc2bot.txt pytest pytest-asyncio aiohttp
 
       - name: py_compile 전체 구문 검증 (349 파일)
         run: |

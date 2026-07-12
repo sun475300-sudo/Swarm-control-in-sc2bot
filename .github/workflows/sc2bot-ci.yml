@@ -73,13 +73,29 @@ jobs:
           cache: pip
 
       - name: Install dependencies
-        run: pip install -r requirements.txt pytest pytest-cov pytest-asyncio
+        run: pip install -r requirements-sc2bot.txt -r requirements-dev.txt
 
-      - name: Run unit tests
-        run: pytest tests/unit -v --cov=. --cov-report=xml --cov-report=term
+      - name: Run root unit tests
+        # test_crypto_trading.py / test_security.py cover the unrelated crypto-trading
+        # service (needs the heavier requirements-crypto.txt) and are exercised by the
+        # main ci.yml pipeline instead; keep this workflow scoped to the SC2 bot.
+        run: pytest tests/ --ignore=tests/integration --ignore=tests/test_crypto_trading.py --ignore=tests/test_security.py -v --cov=wicked_zerg_challenger --cov-report=xml --cov-report=term
+        env:
+          PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION: python
+
+      - name: Run wicked_zerg_challenger unit tests
+        # Run as a separate pytest process from tests/: the two trees both contain a
+        # "scripts" package (repo-root scripts/ vs wicked_zerg_challenger/scripts/),
+        # and collecting both in one process lets sys.modules caching from whichever
+        # loads first shadow the other's "scripts.*" imports.
+        run: pytest wicked_zerg_challenger/tests/ -v --cov=wicked_zerg_challenger --cov-append --cov-report=xml --cov-report=term
+        env:
+          PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION: python
 
       - name: Run integration tests
         run: pytest tests/integration -v --timeout=120
+        env:
+          PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION: python
 
       - name: Upload coverage
         uses: codecov/codecov-action@v4
