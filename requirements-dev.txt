@@ -7,6 +7,11 @@ pytest-asyncio>=0.23.0
 pytest-timeout>=2.1.0
 pytest-mock>=3.10.0
 
+# cryptography's rust hazmat bindings import this at module load time on some
+# platforms (e.g. Debian-packaged cryptography 41.x) even though pip wheels
+# normally vendor it; without it `import crypto_trading` raises a pyo3 panic.
+cffi>=1.15.0
+
 # Code quality (matches sc2bot-ci.yml versions)
 black==26.3.1
 isort>=5.12.0

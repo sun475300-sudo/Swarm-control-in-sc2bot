@@ -4,24 +4,30 @@
 
 통합 문제 해결 후 발견된 추가 개선 사항들입니다.
 
-**Last refreshed:** 2026-04-27 (Issue #1, #2 → Resolved; Issue #6 partially resolved via Batch 3)
+**Last refreshed:** 2026-07-12 (N1-N4 confirmed resolved — see below; CI outage found + fixed, see `PLAN-NIGHTLY.md` 2026-07-12 entry)
 
 ---
 
-## 🆕 신규 발견 (PR #44, 2026-04-27)
+## ✅ Confirmed resolved (확인일: 2026-07-12)
+
+`flake8 --select=F811 wicked_zerg_challenger` now returns zero hits — N1-N4
+below are gone from the codebase (landed in an earlier, undocumented commit
+between 2026-04-27 and now). No action needed; closing them out here so the
+list doesn't keep resurfacing as open work.
+
+- N1 `OpponentModeling.on_step` duplicate definition
+- N2 `EconomyManager._prevent_resource_banking` / `_reduce_gas_workers` redefinition
+- N3 `combat_manager._find_harass_target` redefinition
+- N4 `production_resilience.build_terran_counters` redefinition
+
+## 🆕 신규 발견 (PR #44, 2026-04-27) — 잔여 항목
 
 자동/수동 점검 사이클(테스트 → 코드 검사 → 개선 → 커밋/푸시 반복)에서 새로 식별된 항목.
 
 | ID | 설명 | 우선순위 | 상태 |
 |----|------|---------|------|
-| N1 | `OpponentModeling.on_step` 중복 정의 (line 341 vs 765 — F811) | 🟠 HIGH | open — 동작 영향(상위 on_step이 미실행) 가능 |
-| N2 | `EconomyManager._prevent_resource_banking` / `_reduce_gas_workers` 재정의 (F811) | 🟡 MED | open |
-| N3 | `combat_manager._find_harass_target` 재정의 (line 2377 vs 4278) | 🟡 MED | open |
-| N4 | `production_resilience.build_terran_counters` 재정의 (1369 vs 1866) | 🟡 MED | open |
 | N5 | bare `except Exception:` 다수 (≈360+) — 이번 PR에서 12건 처리, 잔여 다수 | 🟢 LOW | partial |
 | N6 | F841 unused local variables (visuals/make_pptx 등) | 🟢 LOW | open (presentation 코드라 영향 작음) |
-
-검증 권장: PR 분리 (N1 단독 PR 권장 — 동작 변화 가능성).
 
 ---
 
