@@ -63,6 +63,13 @@ jobs:
     name: Test Suite
     runs-on: ubuntu-latest
     needs: lint
+    env:
+      # s2clientprotocol's generated _pb2.py files predate the protobuf
+      # runtime's upb-backed descriptor pool; without this, importing sc2
+      # raises "TypeError: Descriptors cannot be created directly." on
+      # newer protobuf releases (see sc2-bot-test job in ci.yml, which
+      # already sets this for the same reason).
+      PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION: python
     steps:
       - uses: actions/checkout@v4
 
