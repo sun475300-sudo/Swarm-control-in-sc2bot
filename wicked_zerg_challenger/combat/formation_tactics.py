@@ -204,7 +204,9 @@ class BurrowController:
         self.baneling_unburrow_range = 4.5  # 맹독충 잠복 해제 거리 (스플래시 범위 고려)
 
         # Lurker specific settings
-        self.lurker_burrow_attack_range = 9.0  # 살모사(Lurker) 공격 사거리 (업그레이드 전)
+        self.lurker_burrow_attack_range = (
+            9.0  # 살모사(Lurker) 공격 사거리 (업그레이드 전)
+        )
 
     def _can_burrow(self, bot) -> bool:
         """잠복 업그레이드 확인"""
