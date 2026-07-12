@@ -63,6 +63,13 @@ jobs:
     name: Test Suite
     runs-on: ubuntu-latest
     needs: lint
+    env:
+      # s2clientprotocol's generated _pb2.py files predate the protobuf
+      # runtime's upb-backed descriptor pool; without this, importing sc2
+      # raises "TypeError: Descriptors cannot be created directly." on
+      # newer protobuf releases (see sc2-bot-test job in ci.yml, which
+      # already sets this for the same reason).
+      PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION: python
     steps:
       - uses: actions/checkout@v4
 
@@ -73,10 +80,13 @@ jobs:
           cache: pip
 
       - name: Install dependencies
-        run: pip install -r requirements.txt pytest pytest-cov pytest-asyncio
+        run: pip install -r requirements.txt -r requirements-dev.txt pytest-cov
 
       - name: Run unit tests
-        run: pytest tests/unit -v --cov=. --cov-report=xml --cov-report=term
+        run: pytest tests --ignore=tests/integration -v --cov=. --cov-report=xml --cov-report=term
+
+      - name: Run wicked_zerg_challenger unit tests
+        run: pytest wicked_zerg_challenger/tests -v
 
       - name: Run integration tests
         run: pytest tests/integration -v --timeout=120
