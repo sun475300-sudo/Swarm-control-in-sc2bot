@@ -30,13 +30,24 @@ except ImportError:
     class BotAI:
         pass
 
-    class UnitTypeId:
+    class _StubEnumMeta(type):
+        """Auto-vivifies attribute access (e.g. UnitTypeId.OVERLORD) so
+        modules stay importable without python-sc2 installed. Each name
+        resolves to a distinct sentinel, so equality/identity comparisons
+        between different members still behave correctly."""
+
+        def __getattr__(cls, name):
+            sentinel = object()
+            setattr(cls, name, sentinel)
+            return sentinel
+
+    class UnitTypeId(metaclass=_StubEnumMeta):
         pass
 
-    class AbilityId:
+    class AbilityId(metaclass=_StubEnumMeta):
         pass
 
-    class UpgradeId:
+    class UpgradeId(metaclass=_StubEnumMeta):
         pass
 
     class Point2:
