@@ -117,6 +117,7 @@ jobs:
         env:
           DRY_RUN: "true"
           LOG_LEVEL: "DEBUG"
+          PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION: python
 
   # ─────────────────────────────────────────────
   # SC2 봇 구문 검증 + 테스트
