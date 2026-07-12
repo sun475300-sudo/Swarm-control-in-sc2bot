@@ -2,20 +2,30 @@
 
 > Owner: 선우 (sun475300@gmail.com)
 > Maintainer: nightly automation
-> Last refreshed: 2026-05-04
+> Last refreshed: 2026-07-12
 
 ---
 
 ## Snapshot (current state)
 
-- Branch: `main`, last commit: queen transfusion + requirements-dev.txt session
+- Branch: `claude/optimistic-edison-ijhbn8` (PR #218 already merged to `main`).
 - Bot core: `wicked_zerg_challenger/` — 179+ Python files across 10+ subdirs.
 - `.gitattributes` enforces `* text=auto` ✅
-- CI: `sc2bot-ci.yml` runs black + isort + flake8 ✅ (all clean)
-- **Test suite: 468 pass / 15 skip / 0 fail** ✅ (was 398/20/0 two nights ago)
-- Queen transfusion logic: 3 bugs fixed (`is_idle` guard removed, target dedup, per-queen cooldown) ✅
+- CI: `sc2bot-ci.yml` runs black + isort + flake8 ✅ (all clean on touched files)
+- **Test suite: 505 pass / 14 skip / 0 fail** ✅ (was 468/15/0 on 2026-05-04)
+- `REMAINING_ISSUES.md` N1-N4 (duplicate/shadowed method definitions) verified already resolved in a prior PR — doc was stale, now corrected.
 
-## Resolved this run (2026-05-03)
+## Resolved this run (2026-07-12)
+
+| Item | File(s) | Notes |
+|------|---------|-------|
+| Sandbox env missing `sc2`/`cffi` | pip install | `burnysc2` failed to build (`mpyq` wheel error under Debian-patched setuptools) — fixed with `SETUPTOOLS_USE_DISTUTILS=stdlib pip install burnysc2`. Installed `cffi` to unblock `cryptography` (fixes 8 crypto/security test failures that were environment-only, not code bugs). |
+| Test-isolation bug: `test_combat_phase_fsm.py` | `tests/test_combat_phase_fsm.py` | Tests called `asyncio.get_event_loop().run_until_complete(...)` directly. When run after any `pytest-asyncio` test in the same session, the process-wide loop was already closed, so these 12 tests failed with `RuntimeError: There is no current event loop` — but only when run as part of the full suite, never in isolation. Replaced with `asyncio.run(...)`, which owns its own loop per call. |
+| RL agent save-experience data loss (PLAN-NIGHTLY P2.4) | `wicked_zerg_challenger/local_training/rl_agent.py` | `save_experience_data` did `os.remove(existing)` then `os.rename(tmp, dest)` as two separate steps — an interrupted process or a failing rename between those steps permanently loses the prior experience file with nothing to replace it. Switched to atomic `os.replace()`. Added `tests/test_rl_agent_save_experience.py` (3 tests, including a simulated interrupted-rename case). |
+
+**Net result: 20 failures (12 real test-isolation bug + 8 environment-only) → 0 failures. Suite: 505 pass / 14 skip.**
+
+## Resolved previous run (2026-05-03)
 
 | Item | File(s) | Notes |
 |------|---------|-------|
@@ -52,7 +62,7 @@
 | P2.1 | Force-accumulation FSM tests                    | ✅ Done | `tests/test_combat_phase_fsm.py` — 23 tests all passing. |
 | P2.2 | Benchmark runner                                | ❌ Open | Single command, N replays, APM/supply/win-rate report vs Hard. |
 | P2.3 | Build-order config externalisation              | ❌ Open | Move top-20 hardcoded values to `config/build_orders.yaml`. |
-| P2.4 | RL agent save-experience guard                  | ❌ Open | Unit test for save under disk-full / interrupted-rename. |
+| P2.4 | RL agent save-experience guard                  | ✅ Done | `rl_agent.save_experience_data` used remove()-then-rename(), which could permanently lose the previous experience file if interrupted (or the rename failed) between the two steps. Switched to atomic `os.replace()`; `tests/test_rl_agent_save_experience.py` (3 tests) covers the interrupted-rename case. |
 | P2.5 | Type hints + docstring pass on core modules     | ❌ Open | `core/resource_manager.py`, `core/manager_factory.py`. |
 
 ## Long-term direction
