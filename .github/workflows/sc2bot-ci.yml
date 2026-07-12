@@ -80,9 +80,13 @@ jobs:
 
       - name: Run unit tests
         run: pytest tests/ --ignore=tests/integration -v --cov=. --cov-report=xml --cov-report=term
+        env:
+          PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION: python
 
       - name: Run integration tests
         run: pytest tests/integration -v --timeout=120
+        env:
+          PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION: python
 
       - name: Upload coverage
         uses: codecov/codecov-action@v4
