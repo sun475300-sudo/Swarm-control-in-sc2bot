@@ -117,6 +117,12 @@ jobs:
         env:
           DRY_RUN: "true"
           LOG_LEVEL: "DEBUG"
+          # s2clientprotocol's pre-generated _pb2.py files predate the
+          # protobuf runtime this job installs, which raises "Descriptors
+          # cannot be created directly" on collection for every test that
+          # imports sc2 (pre-existing, unrelated to this PR's diff). The
+          # sc2-bot-test job below already works around this the same way.
+          PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION: python
 
   # ─────────────────────────────────────────────
   # SC2 봇 구문 검증 + 테스트
