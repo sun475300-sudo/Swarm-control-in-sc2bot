@@ -4,24 +4,41 @@
 
 통합 문제 해결 후 발견된 추가 개선 사항들입니다.
 
-**Last refreshed:** 2026-04-27 (Issue #1, #2 → Resolved; Issue #6 partially resolved via Batch 3)
+**Last refreshed:** 2026-07-12 (테스트 스위트 수집 실패 수정, N1~N4 해결 확인, N7~N9 신규 발견)
 
 ---
 
-## 🆕 신규 발견 (PR #44, 2026-04-27)
+## 🆕 신규 발견 (자동 점검 사이클, 2026-07-12)
 
-자동/수동 점검 사이클(테스트 → 코드 검사 → 개선 → 커밋/푸시 반복)에서 새로 식별된 항목.
+### ✅ 이번 사이클 수정 완료
 
 | ID | 설명 | 우선순위 | 상태 |
 |----|------|---------|------|
-| N1 | `OpponentModeling.on_step` 중복 정의 (line 341 vs 765 — F811) | 🟠 HIGH | open — 동작 영향(상위 on_step이 미실행) 가능 |
-| N2 | `EconomyManager._prevent_resource_banking` / `_reduce_gas_workers` 재정의 (F811) | 🟡 MED | open |
-| N3 | `combat_manager._find_harass_target` 재정의 (line 2377 vs 4278) | 🟡 MED | open |
-| N4 | `production_resilience.build_terran_counters` 재정의 (1369 vs 1866) | 🟡 MED | open |
-| N5 | bare `except Exception:` 다수 (≈360+) — 이번 PR에서 12건 처리, 잔여 다수 | 🟢 LOW | partial |
-| N6 | F841 unused local variables (visuals/make_pptx 등) | 🟢 LOW | open (presentation 코드라 영향 작음) |
+| N7 | `tests/test_queen_transfusion.py`가 다른 테스트 파일들의 관례(try/except ImportError → skip)를 따르지 않고 `from sc2.ids.unit_typeid import UnitTypeId`를 직접 import — sc2 미설치 환경에서 **collection error**로 전체 423개 테스트가 아예 수집조차 되지 않고 중단됨 (`Interrupted: 1 error during collection`) | 🔴 CRITICAL | ✅ Fixed — try/except 가드 추가 |
+| N8 | `tests/test_combat_phase_fsm.py`가 `asyncio.get_event_loop().run_until_complete(...)` 사용 — Python 3.11 + pytest-asyncio 조합에서 메인 스레드에 현재 이벤트 루프가 없어 `RuntimeError: There is no current event loop` 발생, FSM 전이 테스트 12건 실패 | 🟠 HIGH | ✅ Fixed — `asyncio.run(...)`로 교체 |
+| N9 | `requirements.txt`에 `cryptography>=41.0.0`만 명시되어 있고 `cffi`가 없어, 배포 환경에 따라 cffi 백엔드가 필요한 `cryptography` 빌드가 설치되면 `crypto_trading/security.py` import 시 `ModuleNotFoundError: No module named '_cffi_backend'` → pyo3 패닉으로 죽음 (test_security.py, test_crypto_trading.py 7건 실패) | 🟠 HIGH | ✅ Fixed — `cffi>=1.15.0` 명시적 추가 |
 
-검증 권장: PR 분리 (N1 단독 PR 권장 — 동작 변화 가능성).
+**결과**: 테스트 스위트가 아예 실행되지 않던 상태(1 error during collection) → **395 passed, 34 skipped, 0 failed**로 복구.
+
+### 🔍 확인 결과 — 기존 open 항목 재검증
+
+| ID | 설명 | 재검증 결과 |
+|----|------|---------|
+| N1 | `OpponentModeling.on_step` 중복 정의 | ✅ **이미 해결됨** — PR #218 (`e648ae4 refactor: delete shadowed duplicate methods`)에서 처리. 현재 코드에 정의 1개만 존재 (line 341). 문서가 stale했음. |
+| N2 | `EconomyManager` 메서드 재정의 | ✅ **이미 해결됨** — 동일 PR에서 처리. 클래스별 AST 스캔으로 전체 `wicked_zerg_challenger/` 트리에서 F811(메서드 중복) 0건 확인. |
+| N3 | `combat_manager._find_harass_target` 재정의 | ✅ **이미 해결됨** — 위와 동일. |
+| N4 | `production_resilience.build_terran_counters` 재정의 | ✅ **이미 해결됨** — 위와 동일. |
+| N5 | bare `except Exception:` 다수 | 🟢 open (변경 없음) — 잔여 다수, 개별 예외 타입으로 좁히려면 각 호출부의 실제 발생 가능 예외 조사 필요. 리스크가 있어 대규모 일괄 변경 대신 점진적 처리 권장. |
+| N6 | F841 unused local variables | 🟡 open — `flake8 --select=F841`로 전수 조사 완료, 약 55건 확인 (대부분 `visuals/`, `tools/` 등 비핵심 경로). 아래 N10 참조. |
+
+### 🆕 새로 발견
+
+| ID | 설명 | 우선순위 | 상태 |
+|----|------|---------|------|
+| N10 | `production_resilience.py::_produce_army_unit`(~774행)의 docstring은 "Mid: Roach 40%/Hydra 30%/Zergling 30%, Late: Muta 30%/Hydra 25%/Roach 25%/Zergling 20%" 비율 기반 구성을 명시하지만, 실제 코드는 `roach_count`/`hydra_count`/`mutalisk_count`를 계산만 하고(F841, 미사용) 실제 로직은 단순 우선순위 폴백(뮤타>히드라>바퀴>저글링, 비율 없음) — 가스가 충분하면 히드라 일변도 조합이 될 위험 | 🟡 MED | open — 실제 게임 밸런스 영향 있는 변경이라 실전 검증(리플레이/승률) 필요, 유닛 테스트만으로는 안전한 리팩터 여부 확인 불가 |
+| N11 | `production_resilience.py`의 `can_afford_roach`/`can_afford_hydralisk` (~1260행)도 동일 패턴 — 계산되지만 로그 출력에도, 분기에도 안 쓰임(F841) | 🟢 LOW | open — N10과 함께 처리 권장 |
+
+검증 권장: N10/N11은 실제 대전 검증이 필요한 밸런스 변경이므로 별도 PR + `run_single_game.py` 다수 판 실행으로 확인 후 진행.
 
 ---
 
