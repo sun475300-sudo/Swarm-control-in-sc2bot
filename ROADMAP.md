@@ -1,8 +1,27 @@
 # WickedZergBotPro Grand Roadmap
 
 > 목표: Medium AI 승률 90%+ 달성 & AI Arena 출전
-> 현재 상태: Phase 56 완료, 342/342 테스트 통과, 추정 승률 45~50%
+> 현재 상태 (2026-07-12 재검증): 661/661 테스트 통과, black/isort/flake8(F821/F811/E999) 클린.
+> Sprint 1-6, 7.1, 7.2는 실제 코드 검증 완료(DONE). 7.3은 부분 완료(PARTIAL). Sprint 8(8.1 승률 검증, 8.2 Arena 패키지)은 미완료(NOT DONE) — 아래 "구현 현황 요약" 참고.
+> 주의: 이 저장소를 다루는 자동화 세션은 StarCraft II 게임 클라이언트가 설치되지 않은 샌드박스에서 실행되므로 실제 게임 실행(run_single_game.py, run_mass_test.py)으로 승률을 검증할 수 없다. "테스트"는 단위 테스트(pytest)와 정적 분석(flake8/black/isort)으로 제한된다. 실제 대전 검증은 SC2 클라이언트가 있는 환경에서 별도로 수행해야 한다.
 > 봇 프레임워크: python-sc2 (burnysc2>=5.0.0)
+
+---
+
+## 구현 현황 요약 (2026-07-12 자동 감사)
+
+이 로드맵 문서는 오래되어(Phase 56/342 테스트 기준) 실제 코드 상태와 크게 어긋나 있었다. 아래는 전체 Sprint 1-8 태스크를 실제 소스 코드 대조로 재검증한 결과다. 각 Task 제목 옆에 `[DONE]` / `[PARTIAL]` / `[NOT DONE]` 태그를 달아뒀다.
+
+- Sprint 1 (긴급 수정): 4/4 DONE
+- Sprint 2 (정찰 & 인텔): 5/5 DONE
+- Sprint 3 (경제 & 매크로): 4/4 DONE
+- Sprint 4 (전투 & 마이크로): 5/5 DONE
+- Sprint 5 (방어 체계): 3/3 DONE
+- Sprint 6 (RL 실전 투입): 3/3 DONE (단, `use_rl_micro`는 기본 off — 스펙대로)
+- Sprint 7 (아키텍처 리팩토링): 7.1 DONE(단서 있음: `strategy_manager.py`가 3300+ 줄로 실제로는 축소되지 않았고 `StrategyManagerV2`가 이를 상속), 7.2 DONE, 7.3 PARTIAL(매직넘버 치환 스윕 미완료, `strategy_manager.py`/`economy_manager.py`에 20개+ 잔존)
+- Sprint 8 (QA & Arena 배포): 8.1 NOT DONE(현재 코드베이스 기준 30연전 승률 데이터 없음 — 마지막 실게임 기록은 6월 스태빌라이즈 커밋 이전), 8.2 PARTIAL(`create_arena_package.py`는 저장소 루트에 존재하며 정상 동작 확인됨; 320ms/step, 멀티맵, 매치업별 검증은 SC2 클라이언트 필요로 이 샌드박스에서 미검증)
+
+다음 작업 우선순위는 이 문서 하단 "장기 비전" 앞에 있는 각 Task의 상태 태그와 Sprint 8을 참고할 것.
 
 ---
 
@@ -20,7 +39,7 @@
 
 ## Sprint 1: 긴급 수정 (즉시 착수)
 
-### Task 1.1: 인코딩 에러 완전 제거
+### Task 1.1: 인코딩 에러 완전 제거 [DONE]
 
 **파일 목록:**
 - `wicked_zerg_challenger/early_defense_system.py`
@@ -36,7 +55,7 @@
 
 ---
 
-### Task 1.2: 일꾼 괴롭힘 방어 응답 구현
+### Task 1.2: 일꾼 괴롭힘 방어 응답 구현 [DONE]
 
 **파일:** `wicked_zerg_challenger/combat_manager.py`
 
@@ -57,7 +76,7 @@
 
 ---
 
-### Task 1.3: 견제 유닛 도달 보장 + 복귀 로직
+### Task 1.3: 견제 유닛 도달 보장 + 복귀 로직 [DONE]
 
 **파일:**
 - `wicked_zerg_challenger/strategy_manager.py` (228-262 라인 부근)
@@ -81,7 +100,7 @@
 
 ---
 
-### Task 1.4: 1분 멀티 타이밍 검증 및 최적화
+### Task 1.4: 1분 멀티 타이밍 검증 및 최적화 [DONE]
 
 **파일:** `wicked_zerg_challenger/economy_manager.py` (882-895 라인 부근)
 
@@ -104,7 +123,7 @@
 
 ## Sprint 2: 정찰 & 인텔 강화 (1~2주)
 
-### Task 2.1: 오버로드 정찰 주기 단축
+### Task 2.1: 오버로드 정찰 주기 단축 [DONE]
 
 **파일:** `wicked_zerg_challenger/scouting_system.py`
 
@@ -123,7 +142,7 @@
 
 ---
 
-### Task 2.2: 저글링 맵 순찰 루트
+### Task 2.2: 저글링 맵 순찰 루트 [DONE]
 
 **파일:** `wicked_zerg_challenger/scouting_system.py`
 
@@ -139,7 +158,7 @@
 
 ---
 
-### Task 2.3: 적 빌드 오더 인식 확장 (12 → 25개)
+### Task 2.3: 적 빌드 오더 인식 확장 (12 → 25개) [DONE]
 
 **파일:** `wicked_zerg_challenger/intel_manager.py`
 
@@ -175,7 +194,7 @@ BUILD_PATTERNS = {
 
 ---
 
-### Task 2.4: 공중 위협 조기 경보
+### Task 2.4: 공중 위협 조기 경보 [DONE]
 
 **파일:** `wicked_zerg_challenger/intel_manager.py`
 
@@ -193,7 +212,7 @@ BUILD_PATTERNS = {
 
 ---
 
-### Task 2.5: 오버시어 은폐 탐지 자동화
+### Task 2.5: 오버시어 은폐 탐지 자동화 [DONE]
 
 **파일:** `wicked_zerg_challenger/scouting_system.py`
 
@@ -212,7 +231,7 @@ BUILD_PATTERNS = {
 
 ## Sprint 3: 경제 & 매크로 최적화 (2주)
 
-### Task 3.1: 드론/병력 밸런스 동적 조절
+### Task 3.1: 드론/병력 밸런스 동적 조절 [DONE]
 
 **파일:** `wicked_zerg_challenger/economy_manager.py`, `wicked_zerg_challenger/local_training/economy_combat_balancer.py`
 
@@ -231,7 +250,7 @@ BUILD_PATTERNS = {
 
 ---
 
-### Task 3.2: 가스 타이밍 매치업별 최적화
+### Task 3.2: 가스 타이밍 매치업별 최적화 [DONE]
 
 **파일:** `wicked_zerg_challenger/economy_manager.py`
 
@@ -252,7 +271,7 @@ def _get_gas_timing_by_matchup(self) -> int:
 
 ---
 
-### Task 3.3: 라바 우선순위 시스템
+### Task 3.3: 라바 우선순위 시스템 [DONE]
 
 **파일:** `wicked_zerg_challenger/economy_manager.py`
 
@@ -284,7 +303,7 @@ async def spend_larva(self):
 
 ---
 
-### Task 3.4: 미네랄 플로팅 방지
+### Task 3.4: 미네랄 플로팅 방지 [DONE]
 
 **파일:** `wicked_zerg_challenger/economy_manager.py`
 
@@ -298,7 +317,7 @@ async def spend_larva(self):
 
 ## Sprint 4: 전투 & 마이크로 고도화 (3~4주)
 
-### Task 4.1: 러커 포지셔닝 마이크로
+### Task 4.1: 러커 포지셔닝 마이크로 [DONE]
 
 **파일:** `wicked_zerg_challenger/combat/micro_combat.py`
 
@@ -326,7 +345,7 @@ async def spend_larva(self):
 
 ---
 
-### Task 4.2: 뮤탈리스크 히트앤런
+### Task 4.2: 뮤탈리스크 히트앤런 [DONE]
 
 **파일:** `wicked_zerg_challenger/combat/mutalisk_micro.py`
 
@@ -342,7 +361,7 @@ async def spend_larva(self):
 
 ---
 
-### Task 4.3: 바퀴-히드라 연합 포메이션
+### Task 4.3: 바퀴-히드라 연합 포메이션 [DONE]
 
 **파일:** `wicked_zerg_challenger/combat_manager.py`
 
@@ -353,7 +372,7 @@ async def spend_larva(self):
 
 ---
 
-### Task 4.4: 다방면 협공 시스템
+### Task 4.4: 다방면 협공 시스템 [DONE]
 
 **파일:** `wicked_zerg_challenger/combat_manager.py`
 
@@ -365,7 +384,7 @@ async def spend_larva(self):
 
 ---
 
-### Task 4.5: 전투 프레임 스킵
+### Task 4.5: 전투 프레임 스킵 [DONE]
 
 **파일:** `wicked_zerg_challenger/combat_manager.py`
 
@@ -388,7 +407,7 @@ async def manage_combat(self, iteration):
 
 ## Sprint 5: 방어 체계 강화 (2주)
 
-### Task 5.1: 프록시 배럭/캐논 대응
+### Task 5.1: 프록시 배럭/캐논 대응 [DONE]
 
 **파일:** `wicked_zerg_challenger/early_defense_system.py`, `wicked_zerg_challenger/strategy_manager.py`
 
@@ -402,7 +421,7 @@ async def manage_combat(self, iteration):
 
 ---
 
-### Task 5.2: 멀티 드롭 대응
+### Task 5.2: 멀티 드롭 대응 [DONE]
 
 **파일:** `wicked_zerg_challenger/combat/base_defense.py`
 
@@ -415,7 +434,7 @@ async def manage_combat(self, iteration):
 
 ---
 
-### Task 5.3: 올인 감지 & 대응
+### Task 5.3: 올인 감지 & 대응 [DONE]
 
 **파일:** `wicked_zerg_challenger/strategy_manager.py`, `wicked_zerg_challenger/intel_manager.py`
 
@@ -433,7 +452,7 @@ async def manage_combat(self, iteration):
 
 ## Sprint 6: RL 실전 투입 (3~4주)
 
-### Task 6.1: PPO 에이전트 실전 연동
+### Task 6.1: PPO 에이전트 실전 연동 [DONE]
 
 **파일:** `wicked_zerg_challenger/local_training/rl_agent.py`, `wicked_zerg_challenger/combat_manager.py`
 
@@ -449,7 +468,7 @@ async def manage_combat(self, iteration):
 
 ---
 
-### Task 6.2: 커리큘럼 학습 Stage 3 완성
+### Task 6.2: 커리큘럼 학습 Stage 3 완성 [DONE]
 
 **파일:** `wicked_zerg_challenger/local_training/hierarchical_rl/improved_hierarchical_rl.py`
 
@@ -464,7 +483,7 @@ async def manage_combat(self, iteration):
 
 ---
 
-### Task 6.3: 셀프 플레이 파이프라인
+### Task 6.3: 셀프 플레이 파이프라인 [DONE]
 
 **파일:** `wicked_zerg_challenger/local_training/training_pipeline.py`
 
@@ -485,7 +504,7 @@ async def manage_combat(self, iteration):
 
 ## Sprint 7: 아키텍처 리팩토링 (2~3주)
 
-### Task 7.1: StrategyManager 역할 분담
+### Task 7.1: StrategyManager 역할 분담 [DONE]
 
 **파일:** `wicked_zerg_challenger/strategy_manager.py`
 
@@ -500,7 +519,7 @@ async def manage_combat(self, iteration):
 
 ---
 
-### Task 7.2: 거리 계산 캐싱
+### Task 7.2: 거리 계산 캐싱 [DONE]
 
 **파일:** `wicked_zerg_challenger/combat_manager.py`, `wicked_zerg_challenger/economy_manager.py`
 
@@ -525,7 +544,7 @@ class DistanceCache:
 
 ---
 
-### Task 7.3: 매직넘버 → GameConstants 교체
+### Task 7.3: 매직넘버 → GameConstants 교체 [PARTIAL]
 
 **파일:** 전체 매니저 파일
 
@@ -539,7 +558,7 @@ class DistanceCache:
 
 ## Sprint 8: QA & AI Arena 배포 (2~3주)
 
-### Task 8.1: Medium AI 30연전 테스트
+### Task 8.1: Medium AI 30연전 테스트 [NOT DONE]
 
 **실행:**
 ```bash
@@ -555,18 +574,20 @@ python run_mass_test.py --opponent Zerg --difficulty Medium --games 10
 
 ---
 
-### Task 8.2: AI Arena 패키지 최종 검증
+### Task 8.2: AI Arena 패키지 최종 검증 [PARTIAL]
 
-**파일:** `create_arena_package.py`
+**파일:** `create_arena_package.py` (저장소 루트에 실존 — 이전 감사에서 `wicked_zerg_challenger/` 하위만 검색해 "파일 없음"으로 오판했었음. 2026-07-12 재검증으로 수정)
 
 **체크리스트:**
-- [ ] `python create_arena_package.py` 실행 성공
-- [ ] 생성된 ZIP 파일 10MB 미만
-- [ ] 320ms/step 타임아웃 준수 (프로파일링 확인)
-- [ ] python-sc2 외 외부 의존성 없음 (또는 번들 포함)
-- [ ] ZvT, ZvP, ZvZ 전부 정상 동작
-- [ ] 에러 시 graceful degradation (크래시 대신 기본 행동)
-- [ ] 3개 이상 맵에서 정상 동작
+- [x] `python create_arena_package.py` 실행 성공 (2026-07-12 로컬 재검증: `--output-dir`/`--name`/`--no-open` 옵션 정상 동작)
+- [x] 생성된 ZIP 파일 10MB 미만 (2026-07-12 재검증: 413개 파일, 원본 4.3MB → ZIP 1.2MB)
+- [ ] 320ms/step 타임아웃 준수 (프로파일링 확인) — SC2 게임 클라이언트가 없는 샌드박스에서는 검증 불가, 실제 게임 실행 가능한 환경에서 프로파일링 필요
+- [ ] python-sc2 외 외부 의존성 없음 (또는 번들 포함) — 미검증
+- [ ] ZvT, ZvP, ZvZ 전부 정상 동작 — SC2 클라이언트 필요, 미검증
+- [ ] 에러 시 graceful degradation (크래시 대신 기본 행동) — 미검증
+- [ ] 3개 이상 맵에서 정상 동작 — SC2 클라이언트 필요, 미검증
+
+CI(`ci.yml` "Arena ZIP 생성" 단계)는 이미 이 스크립트를 매 빌드마다 실행해 아티팩트로 업로드하고 있어 첫 두 체크리스트 항목은 사실상 지속적으로 검증되는 중. 나머지 실게임 검증 항목들은 SC2 클라이언트가 있는 환경(로컬 데스크톱 또는 AI Arena 업로드 후 실제 래더)에서만 완료 가능.
 
 ---
 
