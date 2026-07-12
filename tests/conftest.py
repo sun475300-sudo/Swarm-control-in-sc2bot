@@ -11,6 +11,11 @@ import tempfile
 from pathlib import Path
 from unittest.mock import MagicMock
 
+# sc2 라이브러리(s2clientprotocol)의 사전 생성된 protobuf 파일이 최신 protobuf
+# 패키지의 C++ 백엔드와 호환되지 않아 "Descriptors cannot be created directly"
+# 오류가 발생한다 (wicked_zerg_challenger/tests/conftest.py와 동일한 조치).
+os.environ.setdefault("PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION", "python")
+
 import pytest
 
 # 프로젝트 루트를 sys.path에 추가
