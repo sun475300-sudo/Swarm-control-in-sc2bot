@@ -11,6 +11,11 @@ import tempfile
 from pathlib import Path
 from unittest.mock import MagicMock
 
+# s2clientprotocol's precompiled _pb2.py descriptors predate protobuf's
+# strict "generated code is out of date" check (protobuf>=4.21). Must be
+# set before protobuf/s2clientprotocol is first imported anywhere.
+os.environ.setdefault("PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION", "python")
+
 import pytest
 
 # 프로젝트 루트를 sys.path에 추가
