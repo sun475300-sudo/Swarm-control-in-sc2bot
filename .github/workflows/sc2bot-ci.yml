@@ -63,6 +63,13 @@ jobs:
     name: Test Suite
     runs-on: ubuntu-latest
     needs: lint
+    env:
+      # s2clientprotocol's generated _pb2.py files predate protobuf 4's
+      # C++-backed descriptor pool, which refuses to build them directly
+      # ("Descriptors cannot be created directly") once burnysc2 is
+      # installed. The sc2-bot-test job in ci.yml already works around
+      # this the same way; mirror it here.
+      PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION: python
     steps:
       - uses: actions/checkout@v4
 
@@ -73,10 +80,10 @@ jobs:
           cache: pip
 
       - name: Install dependencies
-        run: pip install -r requirements.txt pytest pytest-cov pytest-asyncio
+        run: pip install -r requirements.txt pytest pytest-cov pytest-asyncio pytest-timeout
 
       - name: Run unit tests
-        run: pytest tests/unit -v --cov=. --cov-report=xml --cov-report=term
+        run: pytest tests --ignore=tests/integration -v --cov=. --cov-report=xml --cov-report=term
 
       - name: Run integration tests
         run: pytest tests/integration -v --timeout=120

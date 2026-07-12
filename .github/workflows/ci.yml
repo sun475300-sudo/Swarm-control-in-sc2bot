@@ -33,6 +33,14 @@ jobs:
   python-lint-test:
     name: Python 린트 & 테스트
     runs-on: ubuntu-latest
+    env:
+      # s2clientprotocol's generated _pb2.py files predate protobuf 4's
+      # C++-backed descriptor pool, which raises "Descriptors cannot be
+      # created directly" the moment anything imports the sc2 package —
+      # hit here because `pytest tests/ --co` collects every test file,
+      # including the sc2-dependent ones. sc2-bot-test below already
+      # works around this the same way.
+      PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION: python
 
     steps:
       - name: 소스코드 체크아웃
