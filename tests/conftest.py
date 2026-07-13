@@ -13,6 +13,13 @@ from unittest.mock import MagicMock
 
 import pytest
 
+# burnysc2's bundled s2clientprotocol ships pre-generated _pb2.py files that
+# can predate the installed protobuf package's C++ descriptor implementation,
+# causing "Descriptors cannot be created directly" at import time. Force the
+# pure-Python implementation before any sc2.* import runs (mirrors the same
+# fix already applied in wicked_zerg_challenger/tests/conftest.py).
+os.environ.setdefault("PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION", "python")
+
 # 프로젝트 루트를 sys.path에 추가
 PROJECT_ROOT = Path(__file__).parent.parent
 if str(PROJECT_ROOT) not in sys.path:
