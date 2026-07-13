@@ -17,6 +17,7 @@ Features:
 from typing import Dict, Optional, Set
 
 from utils.logger import get_logger
+from utils.position_utils import get_center_position
 
 try:
     from sc2.bot_ai import BotAI
@@ -35,6 +36,10 @@ except ImportError:
 
     Point2 = tuple
     Units = list
+
+# Fallback ground speed (tiles/sec) used when a unit's own movement_speed is
+# unavailable (e.g. stubbed types in tests) — roughly a Zergling's base speed.
+_DEFAULT_UNIT_SPEED = 4.13
 
 
 class MultiProngCoordinator:
@@ -63,6 +68,11 @@ class MultiProngCoordinator:
         # Attack state
         self.attack_active = False
         self.attack_start_time = 0
+
+        # Departure time (in bot.time seconds) per prong, computed so that
+        # every prong's travel time lines up on a common arrival time —
+        # farther/slower prongs leave immediately, closer/faster prongs wait.
+        self.prong_departure_time: Dict[str, float] = {}
 
         # * Performance Optimization: 캐싱 변수 *
         self._cached_army_count = 0
@@ -127,8 +137,53 @@ class MultiProngCoordinator:
         # Assign targets to prongs
         self._assign_targets_to_prongs()
 
+        # Stagger departures so every prong arrives at roughly the same time
+        self.prong_departure_time = self._compute_departure_times()
+
         self.attack_active = True
         self.attack_start_time = self.bot.time
+
+    def _compute_departure_times(self) -> Dict[str, float]:
+        """
+        거리 역산으로 동시 도착 시각 계산.
+
+        각 조의 (중심 위치 -> 타겟) 이동 시간을 조의 대표 이동속도로 추정하고,
+        가장 오래 걸리는 조를 기준으로 나머지 조의 출발을 지연시켜
+        모든 조가 비슷한 시각에 도착하도록 한다.
+        """
+        now = self.bot.time
+        travel_times: Dict[str, float] = {}
+
+        for prong_name, unit_tags in self.prong_assignments.items():
+            target = self.prong_targets.get(prong_name)
+            if not target or not unit_tags:
+                continue
+
+            units = [self.bot.units.find_by_tag(tag) for tag in unit_tags]
+            units = [u for u in units if u]
+            if not units:
+                continue
+
+            center = get_center_position(units)
+            distance = center.distance_to(target)
+
+            speeds = [
+                getattr(u, "movement_speed", None)
+                for u in units
+                if getattr(u, "movement_speed", None)
+            ]
+            speed = min(speeds) if speeds else _DEFAULT_UNIT_SPEED
+
+            travel_times[prong_name] = distance / max(speed, 0.1)
+
+        if not travel_times:
+            return {}
+
+        slowest_time = max(travel_times.values())
+        return {
+            prong_name: now + max(0.0, slowest_time - travel_time)
+            for prong_name, travel_time in travel_times.items()
+        }
 
     def _assign_units_to_prongs(self):
         """유닛을 각 공격조에 할당"""
@@ -178,14 +233,25 @@ class MultiProngCoordinator:
             self.prong_targets["zergling_runby"] = enemy_bases[1].position
 
     async def _execute_multi_prong(self):
-        """다방향 공격 실행"""
-        # Execute each prong
+        """다방향 공격 실행 (동시 도착을 위한 출발 지연 반영)"""
+        now = self.bot.time
+
         for prong_name, unit_tags in self.prong_assignments.items():
             target = self.prong_targets.get(prong_name)
             if not target:
                 continue
 
+            departure_time = self.prong_departure_time.get(
+                prong_name, self.attack_start_time
+            )
+            has_departed = now >= departure_time
+
             for tag in unit_tags:
                 unit = self.bot.units.find_by_tag(tag)
-                if unit and target:  # target이 유효한지도 체크
+                if not unit:
+                    continue
+                if has_departed:
                     self.bot.do(unit.attack(target))
+                else:
+                    # 출발 시각 전: 제자리에서 대기 (조기 노출 방지)
+                    self.bot.do(unit.hold_position())

@@ -4,7 +4,7 @@
 
 통합 문제 해결 후 발견된 추가 개선 사항들입니다.
 
-**Last refreshed:** 2026-04-27 (Issue #1, #2 → Resolved; Issue #6 partially resolved via Batch 3)
+**Last refreshed:** 2026-07-13 (Issue #1, #2 → Resolved; Issue #3, #4 → Resolved (already implemented, verified against code); Issue #6 partially resolved via Batch 3)
 
 ---
 
@@ -67,9 +67,21 @@
 
 ---
 
-## 🟡 MEDIUM Priority Issues (still open)
+## ✅ Resolved (확인일: 2026-07-13)
 
-### Issue #3: Transfusion 우선순위 개선 필요
+### ✅ Issue #3: Transfusion 우선순위 — 다른 방식으로 이미 구현됨
+
+`queen_manager.py:711-805`의 `_transfuse_injured_units`가 `TRANSFUSE_PRIORITY` 딕셔너리(Queen/Broodlord/Corruptor/Spine Crawler/Overseer/Ultralisk/Ravager/Roach/Hydralisk 등, line 729-749) + `UNHEALABLE_UNITS` 제외 집합(Baneling/Broodling/Locust, line 751-753) + 체력 결손 게이팅(≥125 또는 <25%)을 이미 구현. 아래 원안과 우선순위 순서는 다르지만("CreepyBot 스타일"로 Queen/Broodlord/Corruptor 우선), "최근접/최저체력"이 아닌 우선순위 기반 타겟팅이라는 핵심 요구사항은 충족됨. 원안(아래)은 참고용으로 유지.
+
+### ✅ Issue #4: Resource Reservation Race Condition — 이미 구현됨
+
+`wicked_zerg_challenger/core/resource_manager.py`가 원안과 동일한 설계로 이미 존재: `ResourceManager` 클래스에 `asyncio.Lock()` (line 36), `async def try_reserve(minerals, gas, manager_name)`가 `async with self._lock`로 원자적 체크앤리저브 수행 (line 50-96), `async def release(manager_name)` (line 98-116). 매니저별 추적, 부분 해제, 오래된 예약 정리 등 원안에 없던 기능도 추가되어 있음.
+
+---
+
+## 🟡 MEDIUM Priority Issues (원안 보관용 — 위 Resolved 섹션 참조)
+
+### Issue #3 원안: Transfusion 우선순위 개선 필요
 
 **위치**: `queen_manager.py` 또는 `spell_unit_manager.py`
 
@@ -363,12 +375,10 @@ if iteration % SECOND == 0:
 
 | 우선순위 | 이슈 | 영향도 | 난이도 |
 |---------|------|--------|--------|
-| 🟡 MEDIUM | #3 Transfusion 우선순위 | 중간 | 중간 |
-| 🟡 MEDIUM | #4 Resource Race Condition | 낮음 | 중간 |
 | 🟢 LOW | #5 코드 중복 제거 | 낮음 | 쉬움 |
 | 🟢 LOW | #6 매직 넘버 | 낮음 | 쉬움 |
 
-(Issue #1, #2 → ✅ Resolved 섹션 참조)
+(Issue #1, #2, #3, #4 → ✅ Resolved 섹션 참조)
 
 ---
 
