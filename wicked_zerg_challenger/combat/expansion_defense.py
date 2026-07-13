@@ -275,6 +275,7 @@ class ExpansionDefense:
             "RAVAGER",
             "ULTRALISK",
             "LURKER",
+            "LURKERMP",
             "INFESTOR",
             "VIPER",
         ]

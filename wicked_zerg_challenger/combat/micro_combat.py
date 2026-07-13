@@ -1076,10 +1076,7 @@ class MicroCombat:
 
     def _micro_queen(self, queen, friendly_units: Iterable, actions: List) -> bool:
         """Queen Transfuse logic."""
-        if not hasattr(self.bot, "abilities"):
-            return False
-
-        transfuse_id = getattr(self.bot.abilities, "TRANSFUSION_TRANSFUSION", None)
+        transfuse_id = getattr(AbilityId, "TRANSFUSION_TRANSFUSION", None)
         if not transfuse_id:
             return False
 

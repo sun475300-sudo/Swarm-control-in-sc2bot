@@ -69,6 +69,7 @@ class BaseDefenseSystem:
             "BROODLORD",
             "RAVAGER",
             "LURKER",
+            "LURKERMP",
         }
 
         # High priority target types (for focus fire)

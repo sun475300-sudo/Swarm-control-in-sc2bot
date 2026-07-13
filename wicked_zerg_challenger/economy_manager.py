@@ -1637,6 +1637,10 @@ class EconomyManager:
                     )
 
             # Second: Normal redistribution for over/under-saturated bases
+            # NOTE: entries are mutable [townhall, count] pairs (not tuples) so
+            # that decrements made while moving workers are visible across
+            # iterations of the outer loop, and removal doesn't depend on an
+            # exact-value tuple match (which broke once a count was decremented).
             over_saturated = []
             under_saturated = []
 
@@ -1645,12 +1649,13 @@ class EconomyManager:
                 ideal = th.ideal_harvesters  # Usually 16 for minerals
 
                 if assigned > ideal:  # Strict optimization (was ideal + 2)
-                    over_saturated.append((th, assigned - ideal))
+                    over_saturated.append([th, assigned - ideal])
                 elif assigned < ideal:  # Fill even small holes
-                    under_saturated.append((th, ideal - assigned))
+                    under_saturated.append([th, ideal - assigned])
 
             # Move workers from over-saturated to under-saturated
-            for over_th, excess in over_saturated:
+            for over_entry in over_saturated:
+                over_th, excess = over_entry
                 if not under_saturated:
                     break
 
@@ -1659,8 +1664,11 @@ class EconomyManager:
                     lambda w: w.distance_to(over_th) < 15 and w.is_gathering
                 )
 
-                for under_th, deficit in under_saturated[:]:
-                    if excess <= 0 or deficit <= 0:
+                for under_entry in under_saturated[:]:
+                    under_th, deficit = under_entry
+                    if excess <= 0:
+                        break
+                    if deficit <= 0:
                         continue
 
                     # Move workers - * OPTIMIZED: 더 공격적인 재분배 *
@@ -1685,9 +1693,11 @@ class EconomyManager:
                                 excess -= 1
                                 deficit -= 1
 
-                    # Update under-saturated list
+                    # Persist decremented counts back to their list entries
+                    over_entry[1] = excess
+                    under_entry[1] = deficit
                     if deficit <= 0:
-                        under_saturated.remove((under_th, deficit))
+                        under_saturated.remove(under_entry)
 
         except (AttributeError, TypeError, ValueError) as e:
             if self.bot.iteration % 50 == 0:
@@ -3263,9 +3273,9 @@ class EconomyManager:
                             f"Resource banking (M:{minerals}/G:{gas})"
                         )
 
-                # 미네랄 1500+ & 라바 부족 -> 매크로 해처리
-                elif minerals > 1500 and avg_larva < 3:
-                    await self._build_macro_hatchery_if_needed()
+                    # 확장이 불가/불필요한 상황에서도 라바 부족이면 매크로 해처리
+                    elif avg_larva < 3:
+                        await self._build_macro_hatchery_if_needed()
 
             # * 가스 과잉 & 미네랄 부족 *
             if gas > 500 and minerals < 300:

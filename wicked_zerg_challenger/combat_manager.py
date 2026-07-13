@@ -1200,6 +1200,7 @@ class CombatManager:
             "BROODLORD",
             "RAVAGER",
             "LURKER",
+            "LURKERMP",
         }
 
         # 위협 수준: light (1-2), medium (3-5), heavy (6+), critical (고위협 유닛 포함)
@@ -3466,6 +3467,7 @@ class CombatManager:
             "BROODLORD",
             "RAVAGER",
             "LURKER",
+            "LURKERMP",
             "ULTRALISK",
             "INFESTOR",
             "COLOSSUS",

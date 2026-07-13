@@ -29,15 +29,6 @@ except ImportError:  # Fallbacks for tooling environments
     UnitTypeId = None
 
 
-def await_or_sync(func, *args, **kwargs):
-    """Call a function that may or may not be a coroutine, returning result synchronously."""
-    result = func(*args, **kwargs)
-    # If it's a coroutine, we can't await here - return None
-    if hasattr(result, "__await__"):
-        return None
-    return result
-
-
 class CreepManager:
     """
     Manages creep spread through queens and automatic tumor relay.
@@ -264,7 +255,7 @@ class CreepManager:
         except Exception as e:
             logger.warning(f"[CreepManager] coverage sampling suppressed: {e}")
 
-    def _find_creep_plant_location(self, tumor) -> Optional[object]:
+    async def _find_creep_plant_location(self, tumor) -> Optional[object]:
         """
         CreepyBot-inspired optimal tumor placement.
 
@@ -356,8 +347,8 @@ class CreepManager:
             if hasattr(self.bot, "can_place") and hasattr(
                 AbilityId, "ZERGBUILD_CREEPTUMOR"
             ):
-                placement_results = await_or_sync(
-                    self.bot.can_place, AbilityId.ZERGBUILD_CREEPTUMOR, valid
+                placement_results = await self.bot.can_place(
+                    AbilityId.ZERGBUILD_CREEPTUMOR, valid
                 )
                 if placement_results and len(placement_results) == len(valid):
                     valid = [pos for pos, ok in zip(valid, placement_results) if ok]
@@ -464,7 +455,7 @@ class CreepManager:
         for tumor, _ in scored_tumors[: self.max_tumors_per_cycle]:
             try:
                 # Use CreepyBot-style optimal placement
-                spread_target = self._find_creep_plant_location(tumor)
+                spread_target = await self._find_creep_plant_location(tumor)
 
                 if not spread_target:
                     # Fallback: simple towards-enemy direction

@@ -920,7 +920,7 @@ class StrategyManager:
             "BROODLORD",
             "RAVAGER",
             "LURKER",
-            "lurkermp",
+            "LURKERMP",
         }
 
         total_threat_score = 0

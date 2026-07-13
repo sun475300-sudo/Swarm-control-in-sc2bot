@@ -52,7 +52,7 @@ class TestAdvancedScoutingSystemV2(unittest.TestCase):
         self.bot.game_info = Mock()
         self.bot.game_info.map_center = Point2((100, 100))
         self.bot.blackboard = Mock()
-        self.bot.blackboard.last_enemy_seen_time = 0
+        self.bot.blackboard.get.return_value = 0
 
         # Mock unit_authority_manager
         with patch(
@@ -79,41 +79,41 @@ class TestAdvancedScoutingSystemV2(unittest.TestCase):
     def test_dynamic_interval_tech_timing(self):
         """Test scout interval is 20s during tech timing (4-7min)"""
         self.bot.time = 300.0  # 5 minutes (in tech timing window 240-420)
-        self.bot.blackboard.last_enemy_seen_time = 295.0  # fresh intel
+        self.bot.blackboard.get.return_value = 295.0  # fresh intel
         interval = self.scout._get_dynamic_interval()
         self.assertEqual(interval, 20.0)
 
     def test_dynamic_interval_mid_game(self):
         """Test scout interval is 40s in mid game (5-10min, outside tech window)"""
         self.bot.time = 450.0  # 7.5 minutes (past tech timing window)
-        self.bot.blackboard.last_enemy_seen_time = 445.0  # fresh intel
+        self.bot.blackboard.get.return_value = 445.0  # fresh intel
         interval = self.scout._get_dynamic_interval()
         self.assertEqual(interval, 40.0)
 
     def test_dynamic_interval_late_game(self):
         """Test scout interval is 35s in late game (10min+)"""
         self.bot.time = 700.0  # 11+ minutes
-        self.bot.blackboard.last_enemy_seen_time = 695.0  # fresh intel
+        self.bot.blackboard.get.return_value = 695.0  # fresh intel
         interval = self.scout._get_dynamic_interval()
         self.assertEqual(interval, 35.0)
 
     def test_dynamic_interval_emergency(self):
         """Test scout interval is 15s in emergency mode"""
         self.bot.time = 200.0
-        self.bot.blackboard.last_enemy_seen_time = 100.0  # 100s stale
+        self.bot.blackboard.get.return_value = 100.0  # 100s stale
         interval = self.scout._get_dynamic_interval()
         self.assertEqual(interval, 15.0)
 
     def test_emergency_mode_stale_intel(self):
         """Test emergency mode activates when intel is >60s old"""
         self.bot.time = 120.0
-        self.bot.blackboard.last_enemy_seen_time = 50.0  # 70s stale
+        self.bot.blackboard.get.return_value = 50.0  # 70s stale
         self.assertTrue(self.scout._is_emergency_mode())
 
     def test_emergency_mode_fresh_intel(self):
         """Test emergency mode is off when intel is fresh"""
         self.bot.time = 120.0
-        self.bot.blackboard.last_enemy_seen_time = 100.0  # 20s fresh
+        self.bot.blackboard.get.return_value = 100.0  # 20s fresh
         self.assertFalse(self.scout._is_emergency_mode())
 
     def test_emergency_mode_no_blackboard(self):
@@ -161,7 +161,7 @@ class TestScoutReportWithActiveScouts(unittest.TestCase):
         self.bot.game_info = Mock()
         self.bot.game_info.map_center = Point2((100, 100))
         self.bot.blackboard = Mock()
-        self.bot.blackboard.last_enemy_seen_time = 290.0
+        self.bot.blackboard.get.return_value = 290.0
 
         with patch(
             "scouting.advanced_scout_system_v2.UnitAuthorityManager", create=True
