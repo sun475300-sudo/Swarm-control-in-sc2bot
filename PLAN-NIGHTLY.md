@@ -2,18 +2,27 @@
 
 > Owner: 선우 (sun475300@gmail.com)
 > Maintainer: nightly automation
-> Last refreshed: 2026-05-04
+> Last refreshed: 2026-07-13
 
 ---
 
 ## Snapshot (current state)
 
-- Branch: `main`, last commit: queen transfusion + requirements-dev.txt session
-- Bot core: `wicked_zerg_challenger/` — 179+ Python files across 10+ subdirs.
+- Branch: `main` (+ `claude/optimistic-edison-l3hoqr` in progress)
+- Bot core: `wicked_zerg_challenger/` — 138+ Python files across 10+ subdirs.
 - `.gitattributes` enforces `* text=auto` ✅
-- CI: `sc2bot-ci.yml` runs black + isort + flake8 ✅ (all clean)
-- **Test suite: 468 pass / 15 skip / 0 fail** ✅ (was 398/20/0 two nights ago)
+- CI: `sc2bot-ci.yml` runs black + isort + flake8 ✅ (all clean); `flake8 --select=F811,F821` on `wicked_zerg_challenger/` is 0 hits repo-wide
+- **Test suite (2026-07-13): `tests/` 502 pass / 14 skip / 0 fail; `wicked_zerg_challenger/tests/` 668 pass / 0 fail**
 - Queen transfusion logic: 3 bugs fixed (`is_idle` guard removed, target dedup, per-queen cooldown) ✅
+
+## Resolved this run (2026-07-13)
+
+| Item | File(s) | Notes |
+|------|---------|-------|
+| `tests/test_combat_phase_fsm.py` event-loop crash (12 failures) | `tests/test_combat_phase_fsm.py` | `asyncio.get_event_loop().run_until_complete(...)` raised `RuntimeError: There is no current event loop in thread 'MainThread'` under pytest-asyncio 1.4's auto mode (a prior async test closes the thread's loop before these sync tests run). Switched all 5 call sites to `asyncio.run(...)`, which owns its own loop lifecycle. |
+| `RLAgent.save_model()` silently failing to write the model file | `wicked_zerg_challenger/local_training/rl_agent.py` | **Real bug, not just a doc gap:** `tmp_path = save_path.with_suffix(".tmp")` produces e.g. `model.tmp`, but `np.savez()` auto-appends `.npz` to any filename that doesn't already end with it, so numpy actually wrote `model.tmp.npz`. The subsequent `if tmp_path.exists():` check looked for `model.tmp` and never found it, so the move/rename step was silently skipped — `save_model()` returned `True` while leaving only an orphaned `*.tmp.npz` file and never touching the real destination path. Fixed by giving the temp path the `.npz` suffix up front and replacing the remove-then-rename dance with a single atomic `os.replace()`. Also hardened `save_experience_data()` the same way (was doing `os.remove()` then `os.rename()`, which loses the old file entirely if the rename step fails). |
+| No regression coverage for either save path's failure modes | `wicked_zerg_challenger/tests/test_rl_agent_save_guard.py` (new) | 7 tests: normal save + load-back, simulated disk-full during write, simulated interrupted rename — for both `save_model()` and `save_experience_data()`. Confirms a pre-existing save survives a failed write/rename instead of being silently destroyed. |
+| `REMAINING_ISSUES.md` stale for 2.5+ months | `REMAINING_ISSUES.md` | Re-verified every "open" item (N1-N4, Issues #3-#6) against current code: all were already fixed by earlier sessions but the doc still listed them as open/미진행. Updated in place so future cycles don't re-investigate closed work. |
 
 ## Resolved this run (2026-05-03)
 
@@ -52,7 +61,7 @@
 | P2.1 | Force-accumulation FSM tests                    | ✅ Done | `tests/test_combat_phase_fsm.py` — 23 tests all passing. |
 | P2.2 | Benchmark runner                                | ❌ Open | Single command, N replays, APM/supply/win-rate report vs Hard. |
 | P2.3 | Build-order config externalisation              | ❌ Open | Move top-20 hardcoded values to `config/build_orders.yaml`. |
-| P2.4 | RL agent save-experience guard                  | ❌ Open | Unit test for save under disk-full / interrupted-rename. |
+| P2.4 | RL agent save-experience guard                  | ✅ Done | Found + fixed a real `save_model()` bug (temp file suffix mismatch meant the model was never actually written), hardened both save paths to atomic `os.replace()`, added 7 regression tests in `test_rl_agent_save_guard.py`. |
 | P2.5 | Type hints + docstring pass on core modules     | ❌ Open | `core/resource_manager.py`, `core/manager_factory.py`. |
 
 ## Long-term direction
@@ -94,3 +103,4 @@ Run `E:\GitHub\Swarm-control-in-sc2bot\scripts\commit_nightly_2026-05-03.bat`:
 - **2026-05-01** — P1.1 scout cadence, P1.2 harassment, P1.3 expansion timing, P1.5 doc history. Commit blocked by index.lock.
 - **2026-05-02** — P0 scout import mismatch fixed. P1.4 deprecation shim. P2.1 FSM tests 23/23 pass.
 - **2026-05-03** — **Test suite cleared:** 90 failures → 0. Fixed pytest-asyncio, torch stubs (qmix/mappo), stale __init__ exports (mappo/comm_learning), gas threshold test, crypto skipif guards. Final: 398 pass / 20 skip / 0 fail.
+- **2026-07-13** — Fixed 12 `test_combat_phase_fsm.py` failures (event-loop crash under pytest-asyncio 1.4). Found and fixed a real `RLAgent.save_model()` bug that silently no-op'd (temp filename suffix mismatch with numpy's auto `.npz` append), hardened `save_experience_data()` the same way, added 7 regression tests (P2.4 done). Audited `REMAINING_ISSUES.md` against current code — all previously "open" items (N1-N4, #3-#6) confirmed already fixed by earlier sessions; doc updated. Full suite: `tests/` 502 pass/14 skip, `wicked_zerg_challenger/tests/` 668 pass, 0 fail.
