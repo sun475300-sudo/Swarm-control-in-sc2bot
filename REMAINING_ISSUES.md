@@ -4,7 +4,21 @@
 
 통합 문제 해결 후 발견된 추가 개선 사항들입니다.
 
-**Last refreshed:** 2026-04-27 (Issue #1, #2 → Resolved; Issue #6 partially resolved via Batch 3)
+**Last refreshed:** 2026-07-13 (자동/수동 점검 사이클 재개; N1~N4 재검증 결과 이미 해결 상태로 확인, N7~N8 신규 발견/해결)
+
+---
+
+## 🆕 신규 발견 (2026-07-13, 자동 점검 사이클)
+
+의존성(`burnysc2`, `cffi`) 설치 후 전체 테스트 스위트(root `tests/` 502개 + `wicked_zerg_challenger/tests/` 661개)를 처음으로 완주시켜 발견/해결한 항목.
+
+| ID | 설명 | 우선순위 | 상태 |
+|----|------|---------|------|
+| N7 | `tests/test_combat_phase_fsm.py`: `asyncio.get_event_loop().run_until_complete(...)` 패턴이 Python 3.10+에서 `RuntimeError: no current event loop`로 실패 (12개 테스트 크래시) | 🟠 HIGH | ✅ Resolved — `asyncio.run(...)`으로 교체 |
+| N8 | `wicked_zerg_challenger/nydus_network_trainer.py`: `_manage_nydus_operations`가 5초마다 `self._command_deployed_units()`를 호출하지만 해당 메서드가 정의된 적이 없음 → 땅굴망(Nydus) 운영이 활성화되는 즉시 `AttributeError`로 전체 기능 크래시 | 🔴 HIGH | ✅ Resolved — 사망 유닛 정리 + 유휴 배치 유닛 재타겟팅 로직 구현, 회귀 테스트 4건 추가 (`tests/test_nydus_network_trainer.py`) |
+| N9 | `wicked_zerg_challenger/tools/check_missing_logic.py`: 문자열 리터럴이 바이트 단위로 손상되어(mojibake) 실행 시 로그가 전부 깨짐 — ROADMAP Sprint 1 Task 1.1(인코딩 에러 제거) 대상 파일 | 🟢 LOW | ✅ Resolved — 영문으로 재작성, 툴 자체를 이번 점검에 활용(아래 스캔 결과 참고) |
+
+검증: `check_missing_logic.py`를 프로젝트 전체에 대해 실행한 결과 실제 미정의 메서드는 N8 1건뿐이었고(나머지 241건은 `unittest.TestCase` 상속 메서드·nn.Module 속성 등 heuristic 오탐), pass-only 바디 33개 파일은 대부분 추상 인터페이스/훅으로 정상.
 
 ---
 
@@ -14,14 +28,14 @@
 
 | ID | 설명 | 우선순위 | 상태 |
 |----|------|---------|------|
-| N1 | `OpponentModeling.on_step` 중복 정의 (line 341 vs 765 — F811) | 🟠 HIGH | open — 동작 영향(상위 on_step이 미실행) 가능 |
-| N2 | `EconomyManager._prevent_resource_banking` / `_reduce_gas_workers` 재정의 (F811) | 🟡 MED | open |
-| N3 | `combat_manager._find_harass_target` 재정의 (line 2377 vs 4278) | 🟡 MED | open |
-| N4 | `production_resilience.build_terran_counters` 재정의 (1369 vs 1866) | 🟡 MED | open |
-| N5 | bare `except Exception:` 다수 (≈360+) — 이번 PR에서 12건 처리, 잔여 다수 | 🟢 LOW | partial |
+| N1 | `OpponentModeling.on_step` 중복 정의 (line 341 vs 765 — F811) | 🟠 HIGH | ✅ Resolved (재검증 2026-07-13) — 현재 코드에는 정의가 1개뿐, 이미 별도 세션에서 정리됨 |
+| N2 | `EconomyManager._prevent_resource_banking` / `_reduce_gas_workers` 재정의 (F811) | 🟡 MED | ✅ Resolved (재검증 2026-07-13) — 정의 1개씩만 존재 |
+| N3 | `combat_manager._find_harass_target` 재정의 (line 2377 vs 4278) | 🟡 MED | ✅ Resolved (재검증 2026-07-13) — 정의 1개뿐 |
+| N4 | `production_resilience.build_terran_counters` 재정의 (1369 vs 1866) | 🟡 MED | ✅ Resolved (재검증 2026-07-13) — 정의 1개뿐 |
+| N5 | bare `except Exception:` 다수 (≈360+) — 이번 PR에서 12건 처리, 잔여 다수 | 🟢 LOW | partial — 여전히 잔여, 다음 사이클 후보 |
 | N6 | F841 unused local variables (visuals/make_pptx 등) | 🟢 LOW | open (presentation 코드라 영향 작음) |
 
-검증 권장: PR 분리 (N1 단독 PR 권장 — 동작 변화 가능성).
+2026-07-13 재점검: `pyflakes`로 `wicked_zerg_challenger/` 전체를 재스캔한 결과 F821(미정의 이름)·F811(재정의) 경고가 0건으로 확인되어 N1~N4는 이미 해결된 상태였음(문서만 stale). N7~N9(위 신규 발견 섹션)은 이번 사이클에서 새로 찾아 해결.
 
 ---
 
