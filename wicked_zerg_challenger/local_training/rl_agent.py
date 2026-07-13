@@ -14,7 +14,6 @@ REINFORCE 알고리즘 기반의 정책 학습 에이전트입니다.
 
 import logging
 import os
-import shutil
 import time
 from datetime import datetime
 from pathlib import Path
@@ -654,11 +653,11 @@ class RLAgent:
             )
             temp_actual = temp_base + ".npz"
 
-            # 원자적으로 이름 변경 (Atomic Rename)
-            # Windows에서는 기존 파일이 있으면 rename이 실패할 수 있으므로 삭제 후 변경
-            if os.path.exists(path_str):
-                os.remove(path_str)
-            os.rename(temp_actual, path_str)
+            # 원자적으로 이름 변경 (Atomic Replace)
+            # os.replace()는 POSIX/Windows 모두에서 대상 파일을 원자적으로 덮어씀.
+            # (기존의 remove-then-rename 방식은 rename 실패 시 기존 파일까지
+            #  유실되는 창구가 있었음 - os.replace는 그 창구를 없앤다)
+            os.replace(temp_actual, path_str)
 
             logger.info(
                 f"[OK] Experience saved atomically: {len(self.states)} states, {len(self.rewards)} rewards"
@@ -756,7 +755,11 @@ class RLAgent:
     def save_model(self, path: Optional[str] = None) -> bool:
         """모델 저장 (Atomic Write)"""
         save_path = Path(path) if path else self.model_path
-        tmp_path = save_path.with_suffix(".tmp")
+        # np.savez() auto-appends ".npz" to filenames that don't already end
+        # in it, so the temp name must already carry the extension -- with a
+        # bare ".tmp" suffix, numpy silently writes "<stem>.tmp.npz" instead
+        # and the exists()/rename step below never finds it.
+        tmp_path = save_path.parent / (save_path.stem + ".tmp.npz")
 
         try:
             save_path.parent.mkdir(parents=True, exist_ok=True)
@@ -773,19 +776,13 @@ class RLAgent:
                 episode_count=np.array([self.episode_count]),
             )
 
-            # *** FIX: Atomic rename with Windows compatibility ***
-            if tmp_path.exists():
-                try:
-                    # Remove old file first on Windows (replace() can fail silently)
-                    if save_path.exists():
-                        save_path.unlink()
-                    # Use shutil.move() for cross-platform compatibility
-                    shutil.move(str(tmp_path), str(save_path))
-                except Exception as move_error:
-                    # Fallback: copy + delete
-                    logger.error(f"Move failed, trying copy: {move_error}")
-                    shutil.copy(str(tmp_path), str(save_path))
-                    tmp_path.unlink()
+            if not tmp_path.exists():
+                logger.error(f"Model save failed: temp file {tmp_path} was not created")
+                return False
+
+            # os.replace() is atomic on both POSIX and Windows and overwrites
+            # any existing destination in a single step.
+            os.replace(str(tmp_path), str(save_path))
 
             logger.info(f"Model saved to {save_path}")
             return True
