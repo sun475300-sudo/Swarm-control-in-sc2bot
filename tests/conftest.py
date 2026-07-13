@@ -11,6 +11,11 @@ import tempfile
 from pathlib import Path
 from unittest.mock import MagicMock
 
+# s2clientprotocol의 _pb2.py는 구버전 protoc으로 생성되어 있어, protobuf>=3.20의
+# 기본(upb) 구현으로 로드하면 "Descriptors cannot be created directly"로 깨진다.
+# sc2/s2clientprotocol을 임포트하기 전에 순수 파이썬 구현으로 강제한다.
+os.environ.setdefault("PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION", "python")
+
 import pytest
 
 # 프로젝트 루트를 sys.path에 추가
