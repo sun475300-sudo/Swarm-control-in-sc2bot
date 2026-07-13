@@ -263,7 +263,7 @@ class AdvancedScoutingSystemV2:
         game_time = self.bot.time
         blackboard = getattr(self.bot, "blackboard", None)
         if blackboard:
-            last_seen = getattr(blackboard, "last_enemy_seen_time", 0)
+            last_seen = blackboard.get("last_enemy_seen_time", 0)
             info_age = game_time - last_seen
             if info_age > 60:  # 60초 이상 오래된 정보
                 return True
