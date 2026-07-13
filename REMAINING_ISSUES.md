@@ -4,7 +4,7 @@
 
 통합 문제 해결 후 발견된 추가 개선 사항들입니다.
 
-**Last refreshed:** 2026-04-27 (Issue #1, #2 → Resolved; Issue #6 partially resolved via Batch 3)
+**Last refreshed:** 2026-07-13 (N1-N4 → Resolved via PR #218; Issue #1, #2 → Resolved; Issue #6 partially resolved via Batch 3)
 
 ---
 
@@ -14,14 +14,14 @@
 
 | ID | 설명 | 우선순위 | 상태 |
 |----|------|---------|------|
-| N1 | `OpponentModeling.on_step` 중복 정의 (line 341 vs 765 — F811) | 🟠 HIGH | open — 동작 영향(상위 on_step이 미실행) 가능 |
-| N2 | `EconomyManager._prevent_resource_banking` / `_reduce_gas_workers` 재정의 (F811) | 🟡 MED | open |
-| N3 | `combat_manager._find_harass_target` 재정의 (line 2377 vs 4278) | 🟡 MED | open |
-| N4 | `production_resilience.build_terran_counters` 재정의 (1369 vs 1866) | 🟡 MED | open |
+| N1 | `OpponentModeling.on_step` 중복 정의 (line 341 vs 765 — F811) | 🟠 HIGH | ✅ resolved (PR #218, 2026-06-02) — single definition confirmed at `opponent_modeling.py:341` |
+| N2 | `EconomyManager._prevent_resource_banking` / `_reduce_gas_workers` 재정의 (F811) | 🟡 MED | ✅ resolved (PR #218) — single definitions confirmed at `economy_manager.py:3198` / `:3995` |
+| N3 | `combat_manager._find_harass_target` 재정의 (line 2377 vs 4278) | 🟡 MED | ✅ resolved (PR #218) — single definition confirmed at `combat_manager.py:4992` |
+| N4 | `production_resilience.build_terran_counters` 재정의 (1369 vs 1866) | 🟡 MED | ✅ resolved (PR #218) — single definition confirmed at `local_training/production_resilience.py:1961` |
 | N5 | bare `except Exception:` 다수 (≈360+) — 이번 PR에서 12건 처리, 잔여 다수 | 🟢 LOW | partial |
 | N6 | F841 unused local variables (visuals/make_pptx 등) | 🟢 LOW | open (presentation 코드라 영향 작음) |
 
-검증 권장: PR 분리 (N1 단독 PR 권장 — 동작 변화 가능성).
+N1-N4 검증 방법(2026-07-13): 각 파일에서 `grep -n "def <method>"` 실행 결과 정의가 1건씩만 남아있음을 확인.
 
 ---
 
@@ -70,6 +70,14 @@
 ## 🟡 MEDIUM Priority Issues (still open)
 
 ### Issue #3: Transfusion 우선순위 개선 필요
+
+**✅ resolved (검증일: 2026-07-13)** — `queen_manager.py:_transfuse_injured_units` (line 711)에
+이미 이 이슈에서 제안한 것보다 더 정교한 "CreepyBot-inspired priority system"이 구현되어
+있음을 확인. Queen 자기보호 → Broodlord → Corruptor/Viper → Spine Crawler → Overseer →
+Ultralisk/Ravager/Roach 순 우선순위 테이블, `BANELING`/`BROODLING`/`LOCUSTMP` 치료 불가 처리,
+CreepyBot 방식 트리거 조건(`health_deficit >= 125 OR health_ratio < 0.25`)까지 모두 존재.
+아래 원안은 참고용으로 남겨둠.
+
 
 **위치**: `queen_manager.py` 또는 `spell_unit_manager.py`
 
@@ -143,6 +151,11 @@ async def smart_transfusion(self, queen, damaged_units):
 ---
 
 ### Issue #4: Resource Reservation Race Condition
+
+**✅ resolved (검증일: 2026-07-13)** — `wicked_zerg_challenger/core/resource_manager.py`의
+`ResourceManager` 클래스에 이 이슈에서 제안한 것과 사실상 동일한 `asyncio.Lock` 기반
+`try_reserve()` / `release()` / `release_partial()` API가 이미 구현되어 있음을 확인
+(`economy_manager.py`, `defense_coordinator.py`에서 사용 중). 아래 원안은 참고용으로 남겨둠.
 
 **위치**: `resource_manager.py` (추정)
 

@@ -2,6 +2,20 @@
 
 All notable changes to WickedZergBotPro are documented here.
 
+## [Unreleased] - 2026-07-13
+### Test suite cleanup + doc/code drift pass
+- **Python** `tests/test_combat_phase_fsm.py`: fixed `RuntimeError: There is no current event loop`
+  in 12 tests by replacing `asyncio.get_event_loop().run_until_complete(...)` with `asyncio.run(...)`
+  (pytest-asyncio 1.4.0 auto mode no longer guarantees a current loop on Python 3.11).
+- **Python** `wicked_zerg_challenger/tools/check_missing_logic.py`: replaced mojibake docstrings/log
+  strings (corrupted `?`-encoded Korean baked in since the file's first commit, unrecoverable from
+  git history) with plain English so the tool's output is readable.
+- **Docs** `REMAINING_ISSUES.md`: verified N1-N4 (shadowed/duplicate method definitions) are already
+  fixed by PR #218 and updated their status from "open" to "resolved" to stop future sessions from
+  re-investigating them.
+- Full suite status after this pass: `wicked_zerg_challenger/tests/` 661/661 passing;
+  root `tests/` 490 passing / 0 failing (was 12 failing) / 14 skipped (legitimate, missing optional deps).
+
 ## [Phase 56] - 2026-03-29
 ### README 가독성/시각화 대규모 강화 + 다국어 라우팅 확장 시작
 - **README** 대규모 개편:
