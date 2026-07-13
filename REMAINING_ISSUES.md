@@ -20,8 +20,13 @@
 | N4 | `production_resilience.build_terran_counters` 재정의 (1369 vs 1866) | 🟡 MED | ✅ resolved (PR #218) — single definition confirmed at `local_training/production_resilience.py:1961` |
 | N5 | bare `except Exception:` 다수 (≈360+) — 이번 PR에서 12건 처리, 잔여 다수 | 🟢 LOW | partial |
 | N6 | F841 unused local variables (visuals/make_pptx 등) | 🟢 LOW | open (presentation 코드라 영향 작음) |
+| N7 | `requirements.txt`가 SC2 봇 + Discord 봇 + AI/GenAI + AWS + 크립토 + TTS를 한 파일에 몰아넣어 pip 리졸버가 `burnysc2`를 구버전(5.0.5)으로 백트래킹 → `s2clientprotocol`(구식 pb2, protobuf 신버전과 비호환) 강제 설치 → `TypeError: Descriptors cannot be created directly` (CI "Python 린트 & 테스트" job, `pytest tests/ --co` 단계에서 `import sc2` 실패, 14 collection errors) | 🟠 HIGH | open — 원인 규명 완료(2026-07-13), 수정은 보류 (아래 참고) |
 
-N1-N4 검증 방법(2026-07-13): 각 파일에서 `grep -n "def <method>"` 실행 결과 정의가 1건씩만 남아있음을 확인.
+**N7 상세 (2026-07-13 조사):**
+- 재현: 격리된 venv에서 `pip install burnysc2 ...` 후 `pip install -r requirements.txt`를 실행하면 `s2clientprotocol==5.0.16...`(Blizzard 공식, protobuf 구세대 코드 생성)가 강제 설치되며 `pys2clientprotocol`(burnysc2가 실제로 의존하는, protobuf 6-7대 호환 패키지)과 임포트 네임스페이스(`s2clientprotocol`)가 충돌.
+- 단순히 `requirements.txt`에서 `s2clientprotocol>=4.19.0.0` 줄만 제거해도 재현됨 — pip 리졸버가 다른 패키지(추정: `google-generativeai` 등 구버전 protobuf를 요구하는 패키지)와의 제약을 만족시키려고 `burnysc2`를 5.0.5로 백트래킹하는데, 그 버전 자체가 `s2clientprotocol`(구식)을 직접 의존.
+- `burnysc2>=7.0.0`으로 하한을 올려 강제해봤더니 `error: resolution-too-deep` (pip가 전체 제약을 못 풂) — 70줄짜리 단일 requirements.txt에 서로 무관한 서브시스템이 섞여 있어 발생하는 구조적 문제.
+- **결론**: 한 줄짜리 안전한 수정이 아니라 의존성 구조 자체의 문제. 후보 해법: (1) SC2 봇용 `requirements-sc2bot.txt` 분리, (2) `pip-compile`/`uv` 락파일 도입, (3) `protobuf` 전역 핀 강제. 어느 방향으로 갈지 결정 필요 — 수정은 보류.
 
 ---
 
