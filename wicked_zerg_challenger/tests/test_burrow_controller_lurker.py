@@ -59,7 +59,11 @@ class TestLurkerBurrowToAttack(unittest.TestCase):
         lurker = FakeUnit(1, LURKERMP, Point(0, 0))
         enemy = FakeUnit(2, LURKERMP, Point(8, 0))  # distance 8 < 9.0 range
         action = self.controller._handle_unburrowed_unit(
-            lurker, [enemy], health_ratio=1.0, enemy_nearby=True, down_ability="BURROWDOWN_LURKER"
+            lurker,
+            [enemy],
+            health_ratio=1.0,
+            enemy_nearby=True,
+            down_ability="BURROWDOWN_LURKER",
         )
         self.assertIsNotNone(action)
         self.assertEqual(lurker.issued_ability, "BURROWDOWN_LURKER")
@@ -68,7 +72,11 @@ class TestLurkerBurrowToAttack(unittest.TestCase):
         lurker = FakeUnit(1, LURKERMP, Point(0, 0))
         enemy = FakeUnit(2, LURKERMP, Point(50, 0))  # far away
         action = self.controller._handle_unburrowed_unit(
-            lurker, [enemy], health_ratio=1.0, enemy_nearby=False, down_ability="BURROWDOWN_LURKER"
+            lurker,
+            [enemy],
+            health_ratio=1.0,
+            enemy_nearby=False,
+            down_ability="BURROWDOWN_LURKER",
         )
         self.assertIsNone(action)
         self.assertIsNone(lurker.issued_ability)
@@ -78,7 +86,11 @@ class TestLurkerBurrowToAttack(unittest.TestCase):
         lurker = FakeUnit(1, LURKERMP, Point(0, 0), is_idle=False)
         enemy = FakeUnit(2, LURKERMP, Point(5, 0))
         action = self.controller._handle_unburrowed_unit(
-            lurker, [enemy], health_ratio=1.0, enemy_nearby=True, down_ability="BURROWDOWN_LURKER"
+            lurker,
+            [enemy],
+            health_ratio=1.0,
+            enemy_nearby=True,
+            down_ability="BURROWDOWN_LURKER",
         )
         self.assertIsNotNone(action)
 
