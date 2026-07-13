@@ -2,18 +2,26 @@
 
 > Owner: 선우 (sun475300@gmail.com)
 > Maintainer: nightly automation
-> Last refreshed: 2026-05-04
+> Last refreshed: 2026-07-13
 
 ---
 
 ## Snapshot (current state)
 
-- Branch: `main`, last commit: queen transfusion + requirements-dev.txt session
+- Branch: `claude/optimistic-edison-l6oswi` (post PR #218 merge to `main`).
 - Bot core: `wicked_zerg_challenger/` — 179+ Python files across 10+ subdirs.
 - `.gitattributes` enforces `* text=auto` ✅
 - CI: `sc2bot-ci.yml` runs black + isort + flake8 ✅ (all clean)
-- **Test suite: 468 pass / 15 skip / 0 fail** ✅ (was 398/20/0 two nights ago)
+- **Test suite (2026-07-13, fresh sandbox venv): `tests/` 502 pass / 14 skip / 0 fail; `wicked_zerg_challenger/tests/` 661 pass / 0 fail.** Both suites were previously reporting 12 + 8 failures in this sandbox until two environment/test bugs were fixed this session (see below) — no failures were present on `main`'s last CI run, so these were sandbox-reproducible regressions not yet caught by CI's dependency set.
 - Queen transfusion logic: 3 bugs fixed (`is_idle` guard removed, target dedup, per-queen cooldown) ✅
+
+## Resolved this run (2026-07-13)
+
+| Item | File(s) | Notes |
+|------|---------|-------|
+| Deprecated `asyncio.get_event_loop()` in FSM tests | `tests/test_combat_phase_fsm.py` | pytest-asyncio 1.4.0 no longer guarantees an implicit loop between tests; 12 tests failed with `RuntimeError: no current event loop`. Replaced with `asyncio.run(...)`. |
+| Stale `REMAINING_ISSUES.md` N1–N4 | doc only | Re-verified with `flake8 --select=F811 wicked_zerg_challenger/` — 0 hits. The 4 "open" duplicate-definition bugs were already fixed by earlier PRs (fb0d61f, e648ae4) but the doc wasn't updated. Marked resolved. |
+| `_cffi_backend` missing → `cryptography` import panics | sandbox env only | Installed `cffi` in the venv; not a code bug, just an incomplete dependency in this sandbox's `requirements.txt` install path. |
 
 ## Resolved this run (2026-05-03)
 
