@@ -96,7 +96,9 @@ class TestPositionUtils(unittest.TestCase):
     def test_is_position_safe(self):
         enemies = [FakeUnit(0, 0)]
         self.assertFalse(is_position_safe(FakePosition(1, 0), enemies, safe_distance=5))
-        self.assertTrue(is_position_safe(FakePosition(100, 0), enemies, safe_distance=5))
+        self.assertTrue(
+            is_position_safe(FakePosition(100, 0), enemies, safe_distance=5)
+        )
 
     def test_is_position_safe_no_enemies(self):
         self.assertTrue(is_position_safe(FakePosition(0, 0), []))
