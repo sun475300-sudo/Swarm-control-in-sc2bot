@@ -229,6 +229,7 @@ class VictoryTracker:
             "RAVAGER",
             "ULTRALISK",
             "LURKER",
+            "LURKERMP",
             "INFESTOR",
             "VIPER",
         ]
