@@ -22,6 +22,9 @@
 | N4 | `production_resilience.build_terran_counters` 재정의 (1369 vs 1866) | 🟡 MED | ✅ resolved — 단일 정의만 존재 (production_resilience.py:1961) |
 | N5 | bare `except Exception:` 다수 (≈360+) — 이번 PR에서 12건 처리, 잔여 다수 | 🟢 LOW | partial — 잔여 다수 미확인, 재조사 필요 |
 | N6 | F841 unused local variables (visuals/make_pptx 등) | 🟢 LOW | open (presentation 코드라 영향 작음) |
+| N7 | `combat_manager.py`가 `utils.common_helpers`에서 존재하지 않는 `centroid`/`closest_enemy`/`filter_by_type`/`units_amount`를 import — 항상 `ImportError` → `HELPERS_AVAILABLE`이 영구적으로 `False`, 7곳의 "최적화 경로"가 죽은 코드였음 | 🟠 HIGH | ✅ fixed (2026-07-13) — 죽은 import/분기 제거, 실제로 동작하던 폴백 로직만 유지 (동작 변화 없음) |
+| N8 | `combat/multiprong_attack.py::MultiprongAttackManager` — `combat/__init__.py`의 공개 API(`__all__`)에는 있으나 봇 어디에서도 인스턴스화되지 않는 죽은 병렬 구현체. 실제 운용 중인 구현은 `combat/multi_prong_coordinator.py::MultiProngCoordinator` (`bot_step_integration.py`에 연결됨) | 🟡 MED | ✅ fixed (2026-07-13) — 미사용 파일 삭제, `__init__.py` export 정리 |
+| N9 | `utils/position_utils.py` (get_center_position 등) 완성되어 있으나 어디서도 import되지 않음. `combat_manager.py`/`combat/*.py`/`micro_controller.py`/`queen_manager.py` 등 ~17곳에 동일한 centroid 계산이 인라인 중복 | 🟢 LOW | open — N7과 통합 검토 필요 (두 유틸 모듈이 같은 문제를 각각 풀려다 방치됨), 다음 사이클에서 진행 예정 |
 
 ---
 
