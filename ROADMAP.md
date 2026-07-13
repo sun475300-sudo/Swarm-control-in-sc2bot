@@ -355,13 +355,13 @@ async def spend_larva(self):
 
 ### Task 4.4: 다방면 협공 시스템
 
-**파일:** `wicked_zerg_challenger/combat_manager.py`
+**파일:** `wicked_zerg_challenger/combat/multi_prong_coordinator.py`
 
-**구현 지시:**
-1. 총 병력 60+ 시 2~3개 그룹으로 분할
-2. 각 그룹에 서로 다른 공격 경로 할당 (정면, 좌측, 우측 또는 너드웜 후방)
-3. 동시 도착을 위해 거리 역산 → 먼 그룹 먼저 출발
-4. 그룹 크기: 메인 60%, 서브1 25%, 서브2 15%
+**상태 (2026-07-13 점검):**
+1. ~~총 병력 60+ 시 2~3개 그룹으로 분할~~ — ✅ DONE: `main_army` / `mutalisk_harass` / `zergling_runby` / `drop_squad` 4개 조 (`_assign_units_to_prongs`), 단 유닛 구성 기반 분할이라 스펙의 "60 서플라이" 트리거는 아님 (현재 트리거: army supply ≥20 + mutalisk ≥4).
+2. ~~각 그룹에 서로 다른 공격 경로 할당~~ — ✅ DONE (`_assign_targets_to_prongs`).
+3. ~~동시 도착을 위해 거리 역산 → 먼 그룹 먼저 출발~~ — ✅ DONE: `_compute_departure_times()`가 조별 (중심→타겟) 거리를 조의 대표 이동속도로 나눠 이동 시간을 추정하고, 가장 느린 조 기준으로 나머지 조의 출발을 지연시킴. 출발 전 조는 `hold_position()`으로 대기. `wicked_zerg_challenger/tests/test_multi_prong_coordinator.py`에 회귀 테스트 7건 추가.
+4. 그룹 크기: 메인 60%/서브1 25%/서브2 15% 비율 — ❌ 여전히 MISSING (현재는 저글링 70/30 고정 분할, 로치는 전량 main_army). 다음 세션 후보.
 
 ---
 
