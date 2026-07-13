@@ -18,11 +18,14 @@ try:
     from sc2.position import Point2
     from sc2.unit import Unit
     from sc2.units import Units
+
+    from utils.position_utils import get_center_position
 except ImportError:
     Units = object
     Unit = object
     Point2 = tuple
     UnitTypeId = None
+    get_center_position = None
 
 from utils.logger import get_logger
 
@@ -586,12 +589,7 @@ class CombatPhaseController:
         """그룹 중심점 계산"""
         if not units:
             return Point2((0, 0))
-        return Point2(
-            (
-                sum(u.position.x for u in units) / len(units),
-                sum(u.position.y for u in units) / len(units),
-            )
-        )
+        return get_center_position(units)
 
     def _get_group_health_ratio(self, units: Units) -> float:
         """그룹 체력 비율"""

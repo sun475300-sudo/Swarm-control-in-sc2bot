@@ -19,9 +19,12 @@ logger = logging.getLogger("MicroController")
 try:
     from sc2.ids.unit_typeid import UnitTypeId
     from sc2.position import Point2
+
+    from utils.position_utils import get_center_position
 except ImportError:
     UnitTypeId = None
     Point2 = None
+    get_center_position = None
 
 # Import modular components
 from combat.boids_swarm_control import BoidsSwarmController
@@ -522,9 +525,7 @@ class BoidsController:
         """Calculate center of mass for a group of units."""
         if not units or not Point2:
             return Point2((0, 0))
-        total_x = sum(u.position.x for u in units)
-        total_y = sum(u.position.y for u in units)
-        return Point2((total_x / len(units), total_y / len(units)))
+        return get_center_position(units)
 
     async def _do_actions(self, actions: List) -> None:
         """Execute a batch of unit actions."""

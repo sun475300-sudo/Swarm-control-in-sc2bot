@@ -2,18 +2,19 @@
 
 > Owner: 선우 (sun475300@gmail.com)
 > Maintainer: nightly automation
-> Last refreshed: 2026-05-04
+> Last refreshed: 2026-07-13
 
 ---
 
 ## Snapshot (current state)
 
-- Branch: `main`, last commit: queen transfusion + requirements-dev.txt session
+- Branch: `claude/optimistic-edison-pkker3`, last commit: position_utils consolidation + combat FSM test fix session
 - Bot core: `wicked_zerg_challenger/` — 179+ Python files across 10+ subdirs.
 - `.gitattributes` enforces `* text=auto` ✅
-- CI: `sc2bot-ci.yml` runs black + isort + flake8 ✅ (all clean)
-- **Test suite: 468 pass / 15 skip / 0 fail** ✅ (was 398/20/0 two nights ago)
+- CI: `sc2bot-ci.yml` runs black + isort + flake8 ✅ (all clean on touched files)
+- **Test suite: `wicked_zerg_challenger/tests/` 661 pass / 0 fail; root `tests/` 502 pass / 14 skip / 0 fail (combined 1163 pass, 0 fail)** ✅
 - Queen transfusion logic: 3 bugs fixed (`is_idle` guard removed, target dedup, per-queen cooldown) ✅
+- Sandbox note: a clean env needs `numpy scipy loguru aiohttp portpicker pys2clientprotocol cffi "protobuf<=3.20.3"` on top of `requirements-dev.txt` + `burnysc2` for the full suite to collect (mpyq's setup.py fails to build under modern setuptools — install with `--no-deps` or skip; it's only needed for replay parsing, not for `pytest`).
 
 ## Resolved this run (2026-05-03)
 
@@ -49,11 +50,12 @@
 
 | #    | Item                                            | Status | Notes |
 |------|-------------------------------------------------|--------|-------|
-| P2.1 | Force-accumulation FSM tests                    | ✅ Done | `tests/test_combat_phase_fsm.py` — 23 tests all passing. |
+| P2.1 | Force-accumulation FSM tests                    | ✅ Done | `tests/test_combat_phase_fsm.py` — 23 tests all passing (asyncio.get_event_loop() deprecation fixed 2026-07-13, see below). |
 | P2.2 | Benchmark runner                                | ❌ Open | Single command, N replays, APM/supply/win-rate report vs Hard. |
 | P2.3 | Build-order config externalisation              | ❌ Open | Move top-20 hardcoded values to `config/build_orders.yaml`. |
 | P2.4 | RL agent save-experience guard                  | ❌ Open | Unit test for save under disk-full / interrupted-rename. |
 | P2.5 | Type hints + docstring pass on core modules     | ❌ Open | `core/resource_manager.py`, `core/manager_factory.py`. |
+| P2.6 | Wire up unused `utils/position_utils.py`        | ✅ Done | 8 files had hand-rolled unit-centroid math (`REMAINING_ISSUES.md` Issue #5); replaced with `get_center_position()`. Utility existed since an earlier session but was never imported anywhere. |
 
 ## Long-term direction
 
@@ -94,3 +96,4 @@ Run `E:\GitHub\Swarm-control-in-sc2bot\scripts\commit_nightly_2026-05-03.bat`:
 - **2026-05-01** — P1.1 scout cadence, P1.2 harassment, P1.3 expansion timing, P1.5 doc history. Commit blocked by index.lock.
 - **2026-05-02** — P0 scout import mismatch fixed. P1.4 deprecation shim. P2.1 FSM tests 23/23 pass.
 - **2026-05-03** — **Test suite cleared:** 90 failures → 0. Fixed pytest-asyncio, torch stubs (qmix/mappo), stale __init__ exports (mappo/comm_learning), gas threshold test, crypto skipif guards. Final: 398 pass / 20 skip / 0 fail.
+- **2026-07-13** — Full re-audit against real CI targets (`wicked_zerg_challenger/tests/` + root `tests/`). Fixed 12 `RuntimeError: no current event loop` failures in `tests/test_combat_phase_fsm.py` (deprecated `asyncio.get_event_loop().run_until_complete()` → `asyncio.run()`). Landed P2.6: wired the dead `utils/position_utils.py` helper into 8 files that duplicated centroid math (`combat/expansion_defense.py`, `combat/combat_execution.py`, `combat/infestor_tactics.py`, `combat/micro_combat.py` ×2, `combat_phase_controller.py`, `micro_controller.py`, `battle_preparation_system.py`, `idle_unit_manager.py`). Verified `REMAINING_ISSUES.md` N1–N4 and Issue #3 (transfusion priority) were already resolved in prior sessions but the doc was stale — updated it. Combined suite: 1163 pass / 14 skip / 0 fail.
