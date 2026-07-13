@@ -20,6 +20,8 @@
 
 검증: `check_missing_logic.py`를 프로젝트 전체에 대해 실행한 결과 실제 미정의 메서드는 N8 1건뿐이었고(나머지 241건은 `unittest.TestCase` 상속 메서드·nn.Module 속성 등 heuristic 오탐), pass-only 바디 33개 파일은 대부분 추상 인터페이스/훅으로 정상.
 
+| N10 | CI "Python 린트 & 테스트" 잡이 `main`에서도 이미 실패 중(`TypeError: Descriptors cannot be created directly`, 14개 테스트 모듈 수집 실패). 원인: `requirements.txt`의 `pip install -r requirements.txt`가 `burnysc2`(최신 7.3.0은 `pys2clientprotocol`에 올바르게 의존)를 낮은 하한(`>=5.0.0`)만으로 걸어두고 있어, 80줄짜리 통합 requirements.txt(SC2봇+암호화폐+Discord+AWS+GenAI가 한 파일에 혼재) 전체를 pip이 함께 풀 때 구버전 `burnysc2==5.0.5`로 백트래킹됨. 그 구버전은 오래된 protoc으로 생성되어 현재 protobuf 런타임과 호환되지 않는 진짜 PyPI `s2clientprotocol` 패키지에 의존하며, 이게 `sc2` import 네임스페이스를 덮어써서 모든 `sc2` 관련 테스트가 크래시함 | 🔴 HIGH (CI 인프라, 모든 PR을 막음) | ⚠️ Diagnosed, NOT fixed — 4가지 수정 시도(① `s2clientprotocol` 줄 삭제, ② `burnysc2>=7.0.0`, ③ `burnysc2==7.3.0` 정확히 고정, ④ ①+③ 조합) 모두 실패. `s2clientprotocol` 줄을 지우기만 해도 pip 리졸버가 `resolution-too-deep`로 아예 죽어버림(원본은 이 에러 없이 완료되지만 대신 깨진 조합으로 귀결). 안전하게 고치려면 이 requirements.txt를 하위 프로젝트별로 분리하거나 대대적인 하한/상한 재작업이 필요 — 별도 전담 PR 권장, 이번 사이클 범위 밖으로 보류 |
+
 ---
 
 ## 🆕 신규 발견 (PR #44, 2026-04-27)
