@@ -4,24 +4,24 @@
 
 통합 문제 해결 후 발견된 추가 개선 사항들입니다.
 
-**Last refreshed:** 2026-04-27 (Issue #1, #2 → Resolved; Issue #6 partially resolved via Batch 3)
+**Last refreshed:** 2026-07-13 (자동 점검 루프) — N1~N4, Issue #3, Issue #4는 이후 커밋(`e648ae4`, `fb0d61f` 등)에서
+이미 해결된 것으로 코드 검증 완료. N5는 대부분(F811/F821/E722 0건), N6는 이번 세션에서 47건 자동 정리(잔여 83건).
 
----
-
-## 🆕 신규 발견 (PR #44, 2026-04-27)
+## 🆕 신규 발견 (PR #44, 2026-04-27) — 검증 결과: 모두 해결됨
 
 자동/수동 점검 사이클(테스트 → 코드 검사 → 개선 → 커밋/푸시 반복)에서 새로 식별된 항목.
 
 | ID | 설명 | 우선순위 | 상태 |
 |----|------|---------|------|
-| N1 | `OpponentModeling.on_step` 중복 정의 (line 341 vs 765 — F811) | 🟠 HIGH | open — 동작 영향(상위 on_step이 미실행) 가능 |
-| N2 | `EconomyManager._prevent_resource_banking` / `_reduce_gas_workers` 재정의 (F811) | 🟡 MED | open |
-| N3 | `combat_manager._find_harass_target` 재정의 (line 2377 vs 4278) | 🟡 MED | open |
-| N4 | `production_resilience.build_terran_counters` 재정의 (1369 vs 1866) | 🟡 MED | open |
-| N5 | bare `except Exception:` 다수 (≈360+) — 이번 PR에서 12건 처리, 잔여 다수 | 🟢 LOW | partial |
-| N6 | F841 unused local variables (visuals/make_pptx 등) | 🟢 LOW | open (presentation 코드라 영향 작음) |
+| N1 | `OpponentModeling.on_step` 중복 정의 (line 341 vs 765 — F811) | 🟠 HIGH | ✅ resolved — `opponent_modeling.py`에 `on_step` 단일 정의만 존재 확인 (2026-07-13) |
+| N2 | `EconomyManager._prevent_resource_banking` / `_reduce_gas_workers` 재정의 (F811) | 🟡 MED | ✅ resolved — 각 메서드 단일 정의만 존재 확인 |
+| N3 | `combat_manager._find_harass_target` 재정의 (line 2377 vs 4278) | 🟡 MED | ✅ resolved — 단일 정의만 존재 확인 |
+| N4 | `production_resilience.build_terran_counters` 재정의 (1369 vs 1866) | 🟡 MED | ✅ resolved — 단일 정의만 존재 확인 |
+| N5 | bare `except Exception:` 다수 (≈360+) — 이번 PR에서 12건 처리, 잔여 다수 | 🟢 LOW | partial — `ruff --select F811,F821,E722`는 0건. 미사용 `except ... as e` 변수 47건은 이번 세션에서 자동 정리 |
+| N6 | F841 unused local variables (visuals/make_pptx 등) | 🟢 LOW | partial — 130건 중 47건 자동 수정 완료 (`ruff --fix`), 잔여 83건은 unsafe-fix 대상이라 수동 검토 필요 |
 
-검증 권장: PR 분리 (N1 단독 PR 권장 — 동작 변화 가능성).
+검증 근거: `git log`에서 N1~N4는 커밋 `e648ae4`("refactor: delete shadowed duplicate methods that silently disabled features")로,
+관련 `NameError`류는 `fcf1004`로 이미 해결됨. 이 문서가 그 이후 갱신되지 않아 stale 상태였음.
 
 ---
 
@@ -67,9 +67,9 @@
 
 ---
 
-## 🟡 MEDIUM Priority Issues (still open)
+## ✅ MEDIUM Priority Issues — 검증 결과: 해결됨 (2026-07-13)
 
-### Issue #3: Transfusion 우선순위 개선 필요
+### Issue #3: Transfusion 우선순위 개선 필요 — ✅ RESOLVED
 
 **위치**: `queen_manager.py` 또는 `spell_unit_manager.py`
 
@@ -138,11 +138,13 @@ async def smart_transfusion(self, queen, damaged_units):
         self.bot.do(queen(AbilityId.TRANSFUSION_TRANSFUSION, best_target))
 ```
 
-**우선순위**: 🟡 MEDIUM (자원 효율성 개선)
+**검증**: `queen_manager.py:711` `_transfuse_injured_units()`에 CreepyBot 스타일 우선순위 테이블
+(Queen > Broodlord/Viper > Spine > Overseer > Ultra > Ravager > Roach > ... )이 이미 구현되어 있고,
+체력 부족분(`health_max - health >= 125`) 조건과 치료 불가 유닛 제외까지 반영됨. 문서 제안보다 더 정교함.
 
 ---
 
-### Issue #4: Resource Reservation Race Condition
+### Issue #4: Resource Reservation Race Condition — ✅ RESOLVED
 
 **위치**: `resource_manager.py` (추정)
 
@@ -213,11 +215,12 @@ else:
     return
 ```
 
-**우선순위**: 🟡 MEDIUM (안정성 개선, 드물게 발생)
+**검증**: `core/resource_manager.py`에 `asyncio.Lock` 기반 `try_reserve()`/`release()`가 문서 제안 그대로 구현되어 있고,
+`defense_coordinator.py`, `economy_manager.py`에서 실제로 호출되어 사용 중임을 확인.
 
 ---
 
-## 🟢 LOW Priority Issues
+## 🟢 LOW Priority Issues (여전히 open — 이번 세션 부분 진행)
 
 ### Issue #5: 코드 중복 - Position 계산
 
@@ -292,6 +295,16 @@ from utils.position_utils import get_center_position
 center = get_center_position(army_units)
 ```
 
+**진행 상황 (2026-07-13)**: 제안된 `utils/position_utils.py`는 이미 존재하며 `get_center_position`,
+`get_weighted_center`, `get_closest_unit`, `get_bounding_box` 등 문서 제안보다 더 풍부한 API를 제공한다.
+다만 테스트가 전혀 없었고(`tests/test_position_utils.py` 부재), 여전히 11개 이상의 파일
+(`combat_manager.py`, `combat/combat_execution.py`, `combat/infestor_tactics.py`, `combat/micro_combat.py`,
+`combat_phase_controller.py`, `micro_controller.py`, `battle_preparation_system.py`, `idle_unit_manager.py` 등)에서
+동일한 계산이 인라인으로 중복되어 있어 유틸리티가 채택되지 않은 상태다.
+이번 세션에서 `tests/test_position_utils.py`(19 케이스)를 추가해 회귀 안전망을 마련했다.
+각 호출부는 반환 타입/빈 컬렉션 처리(`None` vs `Point2((0,0))`)가 미묘하게 달라 기계적 치환이 위험하므로,
+호출부별로 개별 PR에서 동작 동등성을 확인하며 이관할 것을 권장한다 (다음 이터레이션 작업 항목).
+
 **우선순위**: 🟢 LOW (코드 품질 개선)
 
 ---
@@ -359,32 +372,33 @@ if iteration % SECOND == 0:
 
 ---
 
-## 📊 이슈 우선순위 요약 (open만)
+## 📊 이슈 우선순위 요약 (2026-07-13 재검증)
 
-| 우선순위 | 이슈 | 영향도 | 난이도 |
-|---------|------|--------|--------|
-| 🟡 MEDIUM | #3 Transfusion 우선순위 | 중간 | 중간 |
-| 🟡 MEDIUM | #4 Resource Race Condition | 낮음 | 중간 |
-| 🟢 LOW | #5 코드 중복 제거 | 낮음 | 쉬움 |
-| 🟢 LOW | #6 매직 넘버 | 낮음 | 쉬움 |
+| 우선순위 | 이슈 | 상태 | 영향도 | 난이도 |
+|---------|------|------|--------|--------|
+| 🟠 HIGH | N1 on_step 중복 정의 | ✅ resolved | - | - |
+| 🟡 MED | N2-N4 메서드 중복 정의 | ✅ resolved | - | - |
+| 🟡 MED | #3 Transfusion 우선순위 | ✅ resolved | - | - |
+| 🟡 MED | #4 Resource Race Condition | ✅ resolved | - | - |
+| 🟢 LOW | #5 코드 중복 제거 (position_utils 미채택 11곳) | open | 낮음 | 쉬움 (호출부별 개별 검증 필요) |
+| 🟢 LOW | #6 매직 넘버 (Queen 외 잔여) | partial | 낮음 | 쉬움 |
+| 🟢 LOW | N5 bare except 잔여 | partial | 낮음 | 쉬움 |
+| 🟢 LOW | N6 F841 unused vars (잔여 83건, unsafe-fix 대상) | partial | 낮음 | 쉬움 |
 
 (Issue #1, #2 → ✅ Resolved 섹션 참조)
 
 ---
 
-## 🎯 권장 수정 순서
+## 🎯 권장 수정 순서 (다음 이터레이션)
 
-### 1단계: 완료 (✅)
-~~1. Queen Inject 쿨다운 수정 (25 → 29)~~ — 코드 반영 완료, 본 문서 ✅ Resolved 섹션 참조
-~~2. 누락된 업그레이드 추가~~ — 코드 반영 완료, 본 문서 ✅ Resolved 섹션 참조
+### 완료 (✅, 2026-07-13 기준)
+- Queen Inject 쿨다운, 누락 업그레이드, N1-N4 중복 정의, Issue #3/#4, F841 47건 자동 정리, position_utils 테스트 신설
 
-### 2단계: 로직 개선 (30분, 미진행)
-3. Transfusion 우선순위 시스템 구현
-
-### 3단계: 구조 개선 (1시간, 미진행)
-4. Resource Reservation 동기화
-5. Position Utils 유틸리티 함수 분리
-6. Constants 정리
+### 다음 작업 (미진행)
+1. `position_utils` 호출부 11곳을 개별 검토 후 이관 (Issue #5)
+2. 잔여 F841 83건 수동 검토 (unsafe-fix라 부작용 가능성 있는 것들)
+3. Queen 외 매직 넘버 정리 (Issue #6 나머지)
+4. `MASSIVE_FIX_PLAN.md` P1 항목 중 실제 미구현분 재확인 (P1-2, P1-4, P1-6, P1-7 등 — 상세는 해당 문서 참조)
 
 ---
 
