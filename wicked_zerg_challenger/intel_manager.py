@@ -78,6 +78,66 @@ BUILD_PATTERNS = {
         "units": ["QUEEN", "ROACH", "HYDRALISK"],
         "confidence_bonus": 0.35,
     },
+    "reaper_rush": {
+        "response": ["queen", "zergling", "spine_crawler"],
+        "units": ["REAPER"],
+        "confidence_bonus": 0.35,
+    },
+    "hellion_rush": {
+        "response": ["roach", "spine_crawler", "queen"],
+        "units": ["HELLION"],
+        "confidence_bonus": 0.30,
+    },
+    "banshee_rush": {
+        "response": ["overseer", "spore_crawler", "queen"],
+        "units": ["BANSHEE"],
+        "confidence_bonus": 0.30,
+    },
+    "bio_allin": {
+        "response": ["baneling", "zergling", "ultralisk"],
+        "units": ["MARINE", "MARAUDER"],
+        "confidence_bonus": 0.30,
+    },
+    "proxy_zealot_rush": {
+        "response": ["zergling", "queen", "spine_crawler"],
+        "units": ["ZEALOT"],
+        "confidence_bonus": 0.35,
+    },
+    "blink_stalker_allin": {
+        "response": ["roach", "hydralisk", "spine_crawler"],
+        "units": ["STALKER"],
+        "confidence_bonus": 0.30,
+    },
+    "carrier_rush": {
+        "response": ["corruptor", "hydralisk", "queen"],
+        "units": ["CARRIER"],
+        "confidence_bonus": 0.30,
+    },
+    "phoenix_harass": {
+        "response": ["spore_crawler", "queen", "overseer"],
+        "units": ["PHOENIX"],
+        "confidence_bonus": 0.30,
+    },
+    "ravager_allin": {
+        "response": ["roach", "hydralisk", "spine_crawler"],
+        "units": ["RAVAGER"],
+        "confidence_bonus": 0.30,
+    },
+    "roach_rush": {
+        "response": ["roach", "ravager", "spine_crawler"],
+        "units": ["ROACH"],
+        "confidence_bonus": 0.30,
+    },
+    "baneling_bust": {
+        "response": ["spine_crawler", "roach", "queen"],
+        "units": ["BANELING", "ZERGLING"],
+        "confidence_bonus": 0.35,
+    },
+    "lurker_contain": {
+        "response": ["overseer", "roach", "spore_crawler"],
+        "units": ["LURKERMP"],
+        "confidence_bonus": 0.30,
+    },
 }
 
 AIR_TECH_STRUCTURES = {"STARPORT", "STARGATE", "FUSIONCORE", "FLEETBEACON", "SPIRE"}
@@ -839,8 +899,35 @@ class IntelManager:
         ):
             return self._pattern_response("proxy_barracks")
 
+        if (
+            game_time < 170
+            and self._structure_near_our_base(enemy_structures, {"GATEWAY"})
+        ):
+            return self._pattern_response("proxy_zealot_rush")
+
+        if (
+            structure_counts.get("BARRACKS", 0) >= 1
+            and self.enemy_unit_counts.get("REAPER", 0) >= 2
+            and game_time < 170
+        ):
+            return self._pattern_response("reaper_rush")
+
         if structure_counts.get("FUSIONCORE", 0) >= 1 and game_time < 480:
             return self._pattern_response("battlecruiser_rush")
+
+        if (
+            structure_counts.get("FLEETBEACON", 0) >= 1
+            and structure_counts.get("STARGATE", 0) >= 2
+            and game_time < 600
+        ):
+            return self._pattern_response("carrier_rush")
+
+        if (
+            structure_counts.get("STARGATE", 0) >= 1
+            and self.enemy_unit_counts.get("PHOENIX", 0) >= 2
+            and game_time < 300
+        ):
+            return self._pattern_response("phoenix_harass")
 
         if (
             structure_counts.get("BARRACKS", 0) >= 2
@@ -851,12 +938,33 @@ class IntelManager:
             return self._pattern_response("2_1_1_medivac_drop")
 
         if (
+            structure_counts.get("BARRACKS", 0) >= 4
+            and not self._has_enemy_expansion(structure_counts)
+            and game_time < 420
+        ):
+            return self._pattern_response("bio_allin")
+
+        if (
+            structure_counts.get("STARPORT", 0) >= 1
+            and self.enemy_unit_counts.get("BANSHEE", 0) >= 1
+            and game_time < 320
+        ):
+            return self._pattern_response("banshee_rush")
+
+        if (
             structure_counts.get("FACTORY", 0) >= 1
             and structure_counts.get("STARPORT", 0) >= 1
             and not self._has_starport_reactor(structure_counts)
             and game_time < 330
         ):
             return self._pattern_response("widow_mine_drop")
+
+        if (
+            structure_counts.get("FACTORY", 0) >= 1
+            and self.enemy_unit_counts.get("HELLION", 0) >= 2
+            and game_time < 240
+        ):
+            return self._pattern_response("hellion_rush")
 
         if structure_counts.get("FACTORY", 0) >= 2 and structure_counts.get("ARMORY", 0):
             return self._pattern_response("mech_transition")
@@ -888,6 +996,14 @@ class IntelManager:
             return self._pattern_response("immortal_allin")
 
         if (
+            structure_counts.get("TWILIGHTCOUNCIL", 0) >= 1
+            and self.enemy_unit_counts.get("STALKER", 0) >= 6
+            and not self._has_enemy_expansion(structure_counts)
+            and game_time < 400
+        ):
+            return self._pattern_response("blink_stalker_allin")
+
+        if (
             structure_counts.get("TEMPLARARCHIVE", 0) >= 1
             and self.enemy_unit_counts.get("HIGHTEMPLAR", 0) >= 3
         ):
@@ -900,8 +1016,37 @@ class IntelManager:
         ):
             return self._pattern_response("ling_rush")
 
+        if (
+            structure_counts.get("BANELINGNEST", 0) >= 1
+            and self.enemy_unit_counts.get("BANELING", 0) >= 4
+            and game_time < 240
+        ):
+            return self._pattern_response("baneling_bust")
+
+        if (
+            structure_counts.get("ROACHWARREN", 0) >= 1
+            and self.enemy_unit_counts.get("RAVAGER", 0) >= 3
+            and not self._has_enemy_expansion(structure_counts)
+            and game_time < 360
+        ):
+            return self._pattern_response("ravager_allin")
+
+        if (
+            structure_counts.get("ROACHWARREN", 0) >= 1
+            and self.enemy_unit_counts.get("ROACH", 0) >= 6
+            and not self._has_enemy_expansion(structure_counts)
+            and game_time < 300
+        ):
+            return self._pattern_response("roach_rush")
+
         if structure_counts.get("SPIRE", 0) >= 1 and game_time < 390:
             return self._pattern_response("muta_rush")
+
+        if (
+            structure_counts.get("LURKERDENMP", 0) >= 1
+            and self.enemy_unit_counts.get("LURKERMP", 0) >= 2
+        ):
+            return self._pattern_response("lurker_contain")
 
         if (
             structure_counts.get("NYDUSNETWORK", 0) >= 1
@@ -976,13 +1121,28 @@ class IntelManager:
                 "ling_rush",
                 "nydus_rush",
                 "immortal_allin",
+                "proxy_zealot_rush",
+                "reaper_rush",
+                "hellion_rush",
+                "bio_allin",
+                "blink_stalker_allin",
+                "ravager_allin",
+                "roach_rush",
+                "baneling_bust",
             }:
                 blackboard.set("enemy_aggression", True)
                 blackboard.set("urgent_spine_all_bases", True)
-            if pattern in {"battlecruiser_rush", "void_ray_rush", "muta_rush"}:
+            if pattern in {
+                "battlecruiser_rush",
+                "void_ray_rush",
+                "muta_rush",
+                "banshee_rush",
+                "carrier_rush",
+                "phoenix_harass",
+            }:
                 blackboard.set("AIR_THREAT_INCOMING", True)
                 blackboard.set("urgent_spore_all_bases", True)
-            if pattern == "dt_rush":
+            if pattern in {"dt_rush", "lurker_contain"}:
                 blackboard.set("cloak_tech_detected", True)
                 blackboard.set("urgent_overseer", True)
                 blackboard.set("urgent_spore_all_bases", True)

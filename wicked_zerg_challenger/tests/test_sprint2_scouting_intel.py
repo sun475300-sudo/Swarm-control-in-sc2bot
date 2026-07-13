@@ -271,6 +271,75 @@ class TestSprint2IntelAndAirResponse(unittest.TestCase):
         self.assertTrue(self.bot.blackboard.get("air_threat_response_active"))
         self.assertIn("hydralisk", self.bot.blackboard.get("unit_ratios"))
 
+    def test_proxy_zealot_rush_sets_aggression_flags(self):
+        self.bot.enemy_structures = [
+            make_structure("GATEWAY", FakePoint(25, 25)),
+        ]
+
+        self.intel.update(0)
+
+        self.assertEqual(self.intel.get_enemy_build_pattern(), "proxy_zealot_rush")
+        self.assertIn("spine_crawler", self.intel.get_recommended_response())
+        self.assertTrue(self.bot.blackboard.get("enemy_aggression"))
+        self.assertTrue(self.bot.blackboard.get("urgent_spine_all_bases"))
+
+    def test_reaper_rush_detected_from_barracks_and_unit_count(self):
+        self.bot.enemy_structures = [
+            make_structure("BARRACKS", FakePoint(90, 90)),
+        ]
+        self.bot.enemy_units = [
+            FakeUnit("REAPER", tag=1),
+            FakeUnit("REAPER", tag=2),
+        ]
+
+        self.intel.update(0)
+
+        self.assertEqual(self.intel.get_enemy_build_pattern(), "reaper_rush")
+        self.assertTrue(self.bot.blackboard.get("enemy_aggression"))
+
+    def test_carrier_rush_sets_air_warning_flags(self):
+        self.bot.time = 480.0
+        self.bot.enemy_structures = [
+            make_structure("STARGATE", FakePoint(90, 90)),
+            make_structure("STARGATE", FakePoint(92, 92)),
+            make_structure("FLEETBEACON", FakePoint(94, 94)),
+        ]
+
+        self.intel.update(0)
+
+        self.assertEqual(self.intel.get_enemy_build_pattern(), "carrier_rush")
+        self.assertTrue(self.bot.blackboard.get("AIR_THREAT_INCOMING"))
+        self.assertTrue(self.bot.blackboard.get("urgent_spore_all_bases"))
+
+    def test_roach_rush_detected_without_expansion(self):
+        self.bot.time = 250.0
+        self.bot.enemy_structures = [
+            make_structure("ROACHWARREN", FakePoint(90, 90)),
+            make_structure("HATCHERY", FakePoint(100, 100)),
+        ]
+        self.bot.enemy_units = [FakeUnit("ROACH", tag=i) for i in range(6)]
+
+        self.intel.update(0)
+
+        self.assertEqual(self.intel.get_enemy_build_pattern(), "roach_rush")
+        self.assertTrue(self.bot.blackboard.get("enemy_aggression"))
+
+    def test_lurker_contain_sets_cloak_flags(self):
+        self.bot.time = 400.0
+        self.bot.enemy_structures = [
+            make_structure("LURKERDENMP", FakePoint(90, 90)),
+        ]
+        self.bot.enemy_units = [
+            FakeUnit("LURKERMP", tag=1),
+            FakeUnit("LURKERMP", tag=2),
+        ]
+
+        self.intel.update(0)
+
+        self.assertEqual(self.intel.get_enemy_build_pattern(), "lurker_contain")
+        self.assertTrue(self.bot.blackboard.get("cloak_tech_detected"))
+        self.assertTrue(self.bot.blackboard.get("urgent_overseer"))
+
 
 if __name__ == "__main__":
     unittest.main()
