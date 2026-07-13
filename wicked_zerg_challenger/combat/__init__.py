@@ -105,12 +105,6 @@ try:
 except ImportError:
     ViperTacticsManager = None
 
-# Feature #98: 멀티프롱 공격
-try:
-    from .multiprong_attack import MultiprongAttackManager
-except ImportError:
-    MultiprongAttackManager = None
-
 __all__ = [
     "BaseDefenseSystem",
     "RallyPointManager",
@@ -130,5 +124,4 @@ __all__ = [
     "DoomDropManager",
     "LurkerPositionManager",
     "ViperTacticsManager",
-    "MultiprongAttackManager",
 ]
