@@ -8,11 +8,11 @@
 
 ## Snapshot (current state)
 
-- Branch: `claude/optimistic-edison-l6oswi` (post PR #218 merge to `main`).
+- Branch: `claude/optimistic-edison-l6oswi` (post PR #218 merge to `main`), open as PR #432.
 - Bot core: `wicked_zerg_challenger/` — 179+ Python files across 10+ subdirs.
 - `.gitattributes` enforces `* text=auto` ✅
-- CI: `sc2bot-ci.yml` runs black + isort + flake8 ✅ (all clean)
-- **Test suite (2026-07-13, fresh sandbox venv): `tests/` 502 pass / 14 skip / 0 fail; `wicked_zerg_challenger/tests/` 661 pass / 0 fail.** Both suites were previously reporting 12 + 8 failures in this sandbox until two environment/test bugs were fixed this session (see below) — no failures were present on `main`'s last CI run, so these were sandbox-reproducible regressions not yet caught by CI's dependency set.
+- CI: `sc2bot-ci.yml`'s `Lint & Type Check` job (black --check) is currently **red on `main`** — black version drift, unrelated to any single PR (66 files don't match black even when pinned to the `requirements-dev.txt` version 26.3.1). Not fixed this run: reformatting 66 files is a large, separate mechanical change that shouldn't ride along with behavior fixes. flake8's blocking critical checks (E9,F63,F7,F82) are clean.
+- **Test suite (2026-07-13, fresh sandbox venv): `tests/` 502 pass / 14 skip / 0 fail; `wicked_zerg_challenger/tests/` 661 pass / 0 fail.** Both suites were previously reporting 12 + 8 failures in this sandbox until two environment/test bugs were fixed this session (see below).
 - Queen transfusion logic: 3 bugs fixed (`is_idle` guard removed, target dedup, per-queen cooldown) ✅
 
 ## Resolved this run (2026-07-13)
@@ -22,6 +22,16 @@
 | Deprecated `asyncio.get_event_loop()` in FSM tests | `tests/test_combat_phase_fsm.py` | pytest-asyncio 1.4.0 no longer guarantees an implicit loop between tests; 12 tests failed with `RuntimeError: no current event loop`. Replaced with `asyncio.run(...)`. |
 | Stale `REMAINING_ISSUES.md` N1–N4 | doc only | Re-verified with `flake8 --select=F811 wicked_zerg_challenger/` — 0 hits. The 4 "open" duplicate-definition bugs were already fixed by earlier PRs (fb0d61f, e648ae4) but the doc wasn't updated. Marked resolved. |
 | `_cffi_backend` missing → `cryptography` import panics | sandbox env only | Installed `cffi` in the venv; not a code bug, just an incomplete dependency in this sandbox's `requirements.txt` install path. |
+| `LURKERMP` missing from 6 threat/army-composition unit sets | `strategy_manager.py`, `combat_manager.py` (x2), `combat/base_defense.py`, `combat/expansion_defense.py`, `combat/victory_tracker.py` | Real ladder Lurkers are `UnitTypeId.LURKERMP`; these sets only listed `"LURKER"` (or, in one case, lowercase `"lurkermp"` against an `.upper()`'d lookup key), so Lurkers were invisible to high-threat detection and army-composition counts. Found via a 3-agent parallel bug hunt (combat/economy/scouting). |
+| Queen Transfuse micro permanently dead | `combat/micro_combat.py` | `_micro_queen()` gated on `hasattr(self.bot, "abilities")`, which nothing ever sets — always returned `False` before reaching the actual heal logic. Switched to the module's existing `getattr(AbilityId, ...)` pattern. |
+| Creep tumor placement validation discarded unawaited | `creep_manager.py` | `await_or_sync()` detected `self.bot.can_place()` was a coroutine and returned `None` instead of awaiting it, so batch placement validation silently never ran. Made the caller chain async and awaited directly; removed the helper. |
+| Worker redistribution crash + unreachable macro-hatchery branch | `economy_manager.py` | (1) `under_saturated.remove((under_th, deficit))` used a decremented value against a list of never-updated original tuples → `ValueError`, caught by a broad `except`, silently aborting cross-base rebalancing. Switched to mutable `[th, count]` entries. (2) `if minerals > 1500: ... elif minerals > 1500 and avg_larva < 3: ...` — the `elif` could never fire (same condition ANDed with itself under negation). Nested it as the alternative branch instead. |
+| Scout emergency-mode check always saw "0" for last-seen time | `scouting/advanced_scout_system_v2.py` + `tests/test_active_scouting_system.py` | Read via `getattr(blackboard, "last_enemy_seen_time", 0)` (plain attribute) but the only writer uses `blackboard.set(...)` (internal dict) — always fell back to `0`, forcing the 15s "emergency" scout cadence for virtually the whole game. Fixed to `blackboard.get(...)`; updated tests that had mocked the buggy attribute-access path instead of the real API. |
+| `ci.yml` `python-lint-test` job protobuf collection crash | `.github/workflows/ci.yml` | `pytest --co` failed on 14 modules with `TypeError: Descriptors cannot be created directly` (protobuf/upb vs. s2clientprotocol's generated `_pb2.py`). `sc2-bot-test` job already works around this with `PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION: python`; applied the same fix here. |
+
+## Known issue, not fixed this run
+
+- **`sc2bot-ci.yml` Lint job: black formatting drift (66 files).** The lint job installs `black` unpinned; `requirements-dev.txt` pins `black==26.3.1` but that pin isn't used by the CI job, and even reformatting-with-that-pin still flags 66 files, meaning the files were committed against a different black version at some point in the past. Needs a dedicated PR: either (a) run `black .` once repo-wide and commit the reformat, or (b) pin the lint job to the black version the files currently match. Left alone here to avoid a 66-file diff riding along with behavior fixes.
 
 ## Resolved this run (2026-05-03)
 
