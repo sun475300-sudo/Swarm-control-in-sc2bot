@@ -4,24 +4,37 @@
 
 통합 문제 해결 후 발견된 추가 개선 사항들입니다.
 
-**Last refreshed:** 2026-04-27 (Issue #1, #2 → Resolved; Issue #6 partially resolved via Batch 3)
+**Last refreshed:** 2026-07-13 (자동 점검 사이클 — 테스트 baseline 확립, N1-N4/#3/#4/#5 완료 확인 + 신규 F823 크래시 버그 수정)
 
 ---
 
-## 🆕 신규 발견 (PR #44, 2026-04-27)
+## ✅ Resolved (확인일: 2026-07-13)
 
-자동/수동 점검 사이클(테스트 → 코드 검사 → 개선 → 커밋/푸시 반복)에서 새로 식별된 항목.
+이전 PR #218 (병합됨)에서 아래 항목들이 이미 해결된 것으로 코드 조사 결과 확인됨.
+문서가 stale했던 것으로, 별도 작업 없이 닫습니다 (ruff `--select F811,F821` 전체 스캔 결과 0건).
+
+| ID | 설명 | 확인 방법 |
+|----|------|----------|
+| N1 | `OpponentModeling.on_step` 중복 정의 | `opponent_modeling.py`에 `def on_step` 1개만 존재 |
+| N2 | `EconomyManager._prevent_resource_banking` / `_reduce_gas_workers` 재정의 | 각 메서드 1개씩만 존재 (PR #218 `e648ae4`에서 dead def 삭제) |
+| N3 | `combat_manager._find_harass_target` 재정의 | 1개만 존재 (PR #218 `e648ae4`) |
+| N4 | `production_resilience.build_terran_counters` 재정의 | 1개만 존재 |
+| Issue #3 | Transfusion 우선순위 시스템 | `economy/queen_transfusion_manager.py`에 `HEAL_PRIORITY` 맵 + dedup + per-queen cooldown으로 완전 구현, `bot_step_integration.py:459`에서 wiring 확인 |
+| Issue #4 | Resource Reservation Race Condition | `core/resource_manager.py`에 `asyncio.Lock` 기반 `try_reserve`/`release` 구현, `bot_step_integration.py`/`wicked_zerg_bot_pro_impl.py`에서 wiring 확인 |
+| Issue #5 | Position 계산 코드 중복 | `utils/position_utils.py`의 `get_center_position`/`get_weighted_center`로 통합, 여러 매니저에서 사용 중 |
+
+## 🆕 신규 발견 및 수정 (2026-07-13)
 
 | ID | 설명 | 우선순위 | 상태 |
 |----|------|---------|------|
-| N1 | `OpponentModeling.on_step` 중복 정의 (line 341 vs 765 — F811) | 🟠 HIGH | open — 동작 영향(상위 on_step이 미실행) 가능 |
-| N2 | `EconomyManager._prevent_resource_banking` / `_reduce_gas_workers` 재정의 (F811) | 🟡 MED | open |
-| N3 | `combat_manager._find_harass_target` 재정의 (line 2377 vs 4278) | 🟡 MED | open |
-| N4 | `production_resilience.build_terran_counters` 재정의 (1369 vs 1866) | 🟡 MED | open |
-| N5 | bare `except Exception:` 다수 (≈360+) — 이번 PR에서 12건 처리, 잔여 다수 | 🟢 LOW | partial |
-| N6 | F841 unused local variables (visuals/make_pptx 등) | 🟢 LOW | open (presentation 코드라 영향 작음) |
+| N7 | `wicked_zerg_bot_pro_impl.py::on_end` — line 689의 지역 `import traceback`이 함수 전체 스코프에서 `traceback`을 지역변수로 만들어, 그보다 앞선 line 572의 `traceback.print_exc()`가 `UnboundLocalError`로 크래시 (ruff F823). `opponent_modeling.on_game_end()`가 예외를 던지면 원래 예외 대신 이 크래시가 발생해 실제 에러가 가려짐. | 🔴 HIGH | ✅ fixed — 중복 지역 import 제거 (모듈 최상단 `import traceback` 재사용) |
+| N8 | `tests/test_combat_phase_fsm.py` — 6곳에서 `asyncio.get_event_loop().run_until_complete(...)` 사용. 전체 테스트 스위트를 실행하면 앞선 비동기 테스트가 이벤트 루프를 닫아버려 `RuntimeError: There is no current event loop`로 11개 테스트가 간헐적으로 실패 (단독 실행 시엔 통과 — 순서 의존적 flaky 버그). | 🟠 HIGH | ✅ fixed — `asyncio.run(...)`으로 교체 (루프 상태에 의존하지 않음) |
+| N9 | `scoring_system.py` 2곳에서 `hasattr(x, "__call__")`로 callable 체크 (ruff B004, 신뢰 불가 패턴 — `__call__`을 가진 비callable 객체에서 오탐 가능) | 🟢 LOW | ✅ fixed — `callable(x)`로 교체 |
+| N10 | `.github/workflows/ci.yml`의 `python-lint-test` 잡 — 루트 `tests/`(502개 테스트, N8 FSM 버그가 있던 곳 포함)에 대한 "pytest 실행 (전체)" 스텝이 `pytest tests/ -v --tb=short --co -q`로 **`--co`(collect-only) 플래그**를 사용 중이었음. 즉 테스트를 실제로 실행/검증하지 않고 "정상적으로 수집되는지"만 확인 — 어떤 테스트가 실패하든 이 스텝은 그린으로 통과함. 같은 스텝에서 `test_crypto_trading.py`/`test_security.py` 2개 파일만 실제로 실행됨. N8(11개 FSM 테스트 실패)이 CI에서 전혀 잡히지 않았던 근본 원인. | 🔴 HIGH | ✅ fixed — `--co -q` 제거, 루트 `tests/` 전체를 실제로 실행하도록 수정 |
+| N5 | bare `except Exception:` 다수 (≈360+) | 🟢 LOW | 미착수 (스코프 큼 — 별도 세션 권장) |
+| N6 | F841 unused local variables (`combat_manager.py`의 `except ... as e` 다수, visuals/make_pptx 등) | 🟢 LOW | 미착수 (ruff `--fix`로 47건 자동 수정 가능, 검토 후 별도 PR 권장) |
 
-검증 권장: PR 분리 (N1 단독 PR 권장 — 동작 변화 가능성).
+검증: 전체 테스트 스위트 502 passed / 0 failed / 14 skipped (기존 342 대비 확대). ruff `F811,F821` 0건.
 
 ---
 
@@ -359,32 +372,34 @@ if iteration % SECOND == 0:
 
 ---
 
-## 📊 이슈 우선순위 요약 (open만)
+## 📊 이슈 우선순위 요약 (open만, 2026-07-13 기준)
 
 | 우선순위 | 이슈 | 영향도 | 난이도 |
 |---------|------|--------|--------|
-| 🟡 MEDIUM | #3 Transfusion 우선순위 | 중간 | 중간 |
-| 🟡 MEDIUM | #4 Resource Race Condition | 낮음 | 중간 |
-| 🟢 LOW | #5 코드 중복 제거 | 낮음 | 쉬움 |
-| 🟢 LOW | #6 매직 넘버 | 낮음 | 쉬움 |
+| 🟢 LOW | N5 bare `except Exception:` 정리 (~360+) | 낮음 | 큼 (별도 세션) |
+| 🟢 LOW | N6 F841 미사용 지역변수 정리 | 낮음 | 쉬움 (ruff --fix) |
+| 🟢 LOW | #6 매직 넘버 → GameConstants 교체 | 낮음 | 쉬움 |
 
-(Issue #1, #2 → ✅ Resolved 섹션 참조)
+(Issue #1-#5, N1-N4 → ✅ Resolved 섹션 참조. N7-N10 → 2026-07-13 신규 발견 및 즉시 수정 완료)
 
 ---
 
 ## 🎯 권장 수정 순서
 
-### 1단계: 완료 (✅)
-~~1. Queen Inject 쿨다운 수정 (25 → 29)~~ — 코드 반영 완료, 본 문서 ✅ Resolved 섹션 참조
-~~2. 누락된 업그레이드 추가~~ — 코드 반영 완료, 본 문서 ✅ Resolved 섹션 참조
+### 완료 (✅)
+모든 1~5단계 항목(Queen Inject 쿨다운, 누락 업그레이드, Transfusion 우선순위,
+Resource Reservation 동기화, Position Utils)이 코드에 반영됨 — 위 Resolved 섹션 참조.
 
-### 2단계: 로직 개선 (30분, 미진행)
-3. Transfusion 우선순위 시스템 구현
+### 다음 단계 (미진행)
+1. Constants 정리 (#6, 매직 넘버 → `GameConstants`)
+2. bare except 정리 (N5, 큰 스코프 — 파일별로 나눠서 진행 권장)
 
-### 3단계: 구조 개선 (1시간, 미진행)
-4. Resource Reservation 동기화
-5. Position Utils 유틸리티 함수 분리
-6. Constants 정리
+### 참고: 로컬 개발 환경 함정 (버그 아님, 작업자 메모)
+로컬 sandbox에서 두 가지 흔한 함정 발견 (레포 자체나 CI 설정 문제는 아님):
+uv-tool로 설치된 `pytest` 바이너리는 별도 venv라 `sc2` 패키지가 없고,
+`python3 -m pytest`는 repo-root의 `pytest/` 디렉터리가 site-packages의
+진짜 pytest 패키지를 shadow함. `pip install pytest`로 메인 인터프리터에
+설치 후 `python3 -m pytest`로 실행할 것.
 
 ---
 
@@ -411,8 +426,9 @@ if iteration % SECOND == 0:
 
 ### 현재 상태
 - ✅ **치명적 통합 문제**: 완전히 해결됨
-- ✅ **모든 단위 테스트**: 통과 (16/16)
+- ✅ **전체 테스트 스위트**: 502 passed / 0 failed / 14 skipped
 - ✅ **기본 기능**: 정상 작동
+- ✅ **N7 크래시 버그**: `on_end()` 예외 핸들러 자체가 크래시하던 문제 수정 완료
 
 ### 위의 이슈들은
 - 모두 **선택적 개선 사항**
@@ -421,5 +437,5 @@ if iteration % SECOND == 0:
 
 ---
 
-**검토 완료일**: 2026-01-29
-**상태**: 추가 개선 사항 문서화 완료
+**검토 완료일**: 2026-07-13
+**상태**: 자동 점검 사이클 (테스트 → 코드 검사 → 개선 → 커밋/푸시) 완료, 다음 사이클에서 N10부터 이어서 진행
