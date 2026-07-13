@@ -13,6 +13,12 @@ from unittest.mock import MagicMock
 
 import pytest
 
+# protobuf/sc2 호환성: s2clientprotocol의 생성된 _pb2.py가 설치된 protobuf
+# 런타임과 맞지 않으면 "Descriptors cannot be created directly"로 수집이
+# 통째로 깨진다. 순수 파이썬 구현으로 강제해 우회한다 (sc2 import보다 먼저
+# 설정되어야 하므로 다른 어떤 import보다 앞선 conftest 최상단에 둔다).
+os.environ.setdefault("PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION", "python")
+
 # 프로젝트 루트를 sys.path에 추가
 PROJECT_ROOT = Path(__file__).parent.parent
 if str(PROJECT_ROOT) not in sys.path:
