@@ -1,8 +1,9 @@
 # -*- coding: utf-8 -*-
 """
-?????? ???? ??? ????
+Missing logic checker.
 
-ȣ??????? ???ǵ??? ???? ?޼???, pass ???? ?ִ? ?޼???, TODO ?ּ??? ã???ϴ?.
+Scans the project for methods that are called but never defined,
+methods whose body is just `pass`, and TODO/FIXME/XXX comments.
 """
 
 import ast
@@ -18,7 +19,7 @@ PROJECT_ROOT = Path(__file__).parent.parent
 
 
 class MissingLogicChecker:
-    """?????? ???? ????"""
+    """Scans the project for missing/incomplete logic."""
 
     def __init__(self):
         self.defined_methods: Dict[str, Set[str]] = defaultdict(set)  # file -> methods
@@ -32,7 +33,7 @@ class MissingLogicChecker:
         self.missing_implementations: List[Dict] = []
 
     def extract_methods_from_file(self, file_path: Path) -> Set[str]:
-        """???Ͽ??? ???ǵ? ?޼??? ????"""
+        """Extract methods defined in a file."""
         methods = set()
         try:
             with open(file_path, "r", encoding="utf-8", errors="replace") as f:
@@ -52,22 +53,22 @@ class MissingLogicChecker:
         return methods
 
     def extract_calls_from_file(self, file_path: Path) -> Set[str]:
-        """???Ͽ??? ȣ??? ?޼??? ????"""
+        """Extract methods called in a file."""
         calls = set()
         try:
             with open(file_path, "r", encoding="utf-8", errors="replace") as f:
                 content = f.read()
                 lines = content.splitlines()
 
-            # self._method() ???? ã??
+            # Find self._method() or self.method() call sites
             for i, line in enumerate(lines, 1):
-                # await self._method() ?Ǵ? self._method() ????
+                # await self._method() or self._method() (private methods)
                 matches = re.findall(
                     r"(?:await\s+)?self\.(_[a-zA-Z_][a-zA-Z0-9_]*)\s*\(", line
                 )
                 calls.update(matches)
 
-                # await self.method() ?Ǵ? self.method() ???? (public methods)
+                # await self.method() or self.method() (public methods)
                 matches2 = re.findall(
                     r"(?:await\s+)?self\.([a-zA-Z_][a-zA-Z0-9_]*)\s*\(", line
                 )
@@ -77,7 +78,7 @@ class MissingLogicChecker:
         return calls
 
     def find_pass_statements(self, file_path: Path) -> List[int]:
-        """pass ???? ?ִ? ???? ã??"""
+        """Find lines that are a lone `pass` statement inside a function body."""
         pass_lines = []
         try:
             with open(file_path, "r", encoding="utf-8", errors="replace") as f:
@@ -85,11 +86,11 @@ class MissingLogicChecker:
 
             for i, line in enumerate(lines, 1):
                 stripped = line.strip()
-                # ?ܵ? pass ???? ã?? (?ּ??̳? ?ٸ? ?ڵ?? ?Բ? ?ִ? ???? ????)
+                # Only a standalone `pass` (not part of a comment or other code)
                 if stripped == "pass" or (
                     stripped.startswith("pass") and len(stripped) == 4
                 ):
-                    # ?Լ? ???? ?????? pass???? Ȯ??
+                    # Check whether this pass is immediately inside a function body
                     context = "\n".join(lines[max(0, i - 10) : i])
                     if "def " in context or "async def " in context:
                         pass_lines.append(i)
@@ -98,7 +99,7 @@ class MissingLogicChecker:
         return pass_lines
 
     def find_todo_comments(self, file_path: Path) -> List[Tuple[int, str]]:
-        """TODO ?ּ? ã??"""
+        """Find TODO/FIXME/XXX comments."""
         todos = []
         try:
             with open(file_path, "r", encoding="utf-8", errors="replace") as f:
@@ -116,7 +117,7 @@ class MissingLogicChecker:
         return todos
 
     def scan_file(self, file_path: Path):
-        """???? ??ĵ"""
+        """Scan a single file."""
         rel_path = str(file_path.relative_to(PROJECT_ROOT))
 
         defined = self.extract_methods_from_file(file_path)
@@ -131,7 +132,7 @@ class MissingLogicChecker:
         if todos:
             self.todo_comments[rel_path] = todos
 
-        # ???? ???? ?????? ȣ??Ǿ????? ???ǵ??? ???? ?޼??? ã??
+        # Find methods called in this file but never defined in this file
         missing = called - defined
         if missing:
             for method in missing:
@@ -140,7 +141,7 @@ class MissingLogicChecker:
                 )
 
     def scan_all(self) -> Dict:
-        """전체 스캔"""
+        """Scan the whole project."""
         excluded_parts = {
             "__pycache__",
             ".git",
@@ -156,7 +157,7 @@ class MissingLogicChecker:
             if py_file.is_file():
                 self.scan_file(py_file)
 
-        # ??ü ??????Ʈ???? ȣ??Ǿ????? ???ǵ??? ???? ?޼??? ã??
+        # Find methods called anywhere in the project but never defined anywhere
         all_defined = set()
         for methods in self.defined_methods.values():
             all_defined.update(methods)
@@ -164,7 +165,7 @@ class MissingLogicChecker:
         for file_path, called in self.called_methods.items():
             for method in called:
                 if method not in all_defined and method.startswith("_"):
-                    # private method?? ???ǵ??? ?ʾ???
+                    # Private method that is never defined anywhere in the project
                     self.missing_implementations.append(
                         {
                             "file": file_path,
@@ -184,23 +185,23 @@ class MissingLogicChecker:
 
 
 def main():
-    """???? ?Լ?"""
+    """Entry point."""
 
     logger.info("=" * 70)
-    logger.info("?????? ???? ??? ????")
+    logger.info("Missing logic checker")
     logger.info("=" * 70)
     checker = MissingLogicChecker()
-    logger.info("??ĵ ??...")
+    logger.info("Scanning...")
     results = checker.scan_all()
 
-    logger.info(f"\n??? ?Ϸ?!")
-    logger.info(f"  - ?????? ?޼???: {results['total_missing']}??")
-    logger.info(f"  - pass ???? ?ִ? ????: {results['files_with_pass']}??")
-    logger.info(f"  - TODO ?ּ??? ?ִ? ????: {results['files_with_todos']}??")
-    # ?????? ?޼??? ???
+    logger.info("\nScan complete!")
+    logger.info(f"  - Missing methods: {results['total_missing']}")
+    logger.info(f"  - Files with pass-only bodies: {results['files_with_pass']}")
+    logger.info(f"  - Files with TODO comments: {results['files_with_todos']}")
+    # Print missing methods
     if results["missing_implementations"]:
         logger.info("=" * 70)
-        logger.info("?????? ?޼???:")
+        logger.info("Missing methods:")
         logger.info("=" * 70)
 
         by_file = defaultdict(list)
@@ -212,10 +213,10 @@ def main():
             for method in sorted(set(methods)):
                 logger.info(f"  - {method}")
 
-    # pass ???? ???? ???? ???
+    # Print files with the most pass-only bodies
     if results["pass_statements"]:
         logger.info("\n" + "=" * 70)
-        logger.info("pass ???? ???? ???? (???? 10??):")
+        logger.info("Files with pass-only bodies (top 10):")
         logger.info("=" * 70)
 
         sorted_files = sorted(
@@ -223,18 +224,18 @@ def main():
         )[:10]
 
         for file_path, lines in sorted_files:
-            logger.info(f"\n{file_path}: {len(lines)}?? pass ??")
+            logger.info(f"\n{file_path}: {len(lines)} pass statement(s)")
             if len(lines) <= 20:
-                logger.info(f"  ????: {', '.join(map(str, lines[:20]))}")
+                logger.info(f"  lines: {', '.join(map(str, lines[:20]))}")
             else:
                 logger.info(
-                    f"  ????: {', '.join(map(str, lines[:20]))} ... (?? {len(lines)}??)"
+                    f"  lines: {', '.join(map(str, lines[:20]))} ... ({len(lines)} total)"
                 )
 
-    # TODO ?ּ? ???
+    # Print TODO comments
     if results["todo_comments"]:
         logger.info("\n" + "=" * 70)
-        logger.info("TODO ?ּ? (???? 20??):")
+        logger.info("TODO comments (top 20):")
         logger.info("=" * 70)
 
         count = 0
