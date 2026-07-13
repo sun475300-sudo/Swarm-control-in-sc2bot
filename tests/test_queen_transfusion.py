@@ -8,7 +8,9 @@ from types import SimpleNamespace
 from unittest.mock import MagicMock, patch
 
 import pytest
-from sc2.ids.unit_typeid import UnitTypeId
+
+sc2 = pytest.importorskip("sc2", reason="sc2 (burnysc2) not installed")
+from sc2.ids.unit_typeid import UnitTypeId  # noqa: E402
 
 # ---------------------------------------------------------------------------
 # Minimal stubs so we can import without a running SC2 environment
