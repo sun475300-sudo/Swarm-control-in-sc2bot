@@ -115,6 +115,12 @@ jobs:
           pytest tests/ -v --tb=short --co -q
           pytest tests/test_crypto_trading.py tests/test_security.py -v --tb=short
         env:
+          # s2clientprotocol's pre-generated _pb2.py files are incompatible with the
+          # upstream protobuf runtime pulled in by requirements.txt (raises
+          # "TypeError: Descriptors cannot be created directly" on import) unless the
+          # pure-Python protobuf implementation is forced. Same fix already applied in
+          # wicked_zerg_challenger/tests/conftest.py for the other test suite.
+          PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION: "python"
           DRY_RUN: "true"
           LOG_LEVEL: "DEBUG"
 
