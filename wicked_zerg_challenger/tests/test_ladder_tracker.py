@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import importlib.util
 import os
 import sys
 import tempfile
@@ -6,17 +7,31 @@ import unittest
 from pathlib import Path
 
 os.environ["PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION"] = "python"
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..")))
 
-from scripts.ladder_tracker import LadderTracker
+# Loaded by explicit file path (not `from scripts.ladder_tracker import ...`) because
+# this monorepo has multiple unrelated `scripts` directories on sys.path at test-collection
+# time (e.g. wicked_zerg_challenger/local_training/scripts, which has an __init__.py and
+# therefore wins package-name resolution over the top-level scripts/ this test needs).
+_LADDER_TRACKER_PATH = os.path.abspath(
+    os.path.join(os.path.dirname(__file__), "..", "..", "scripts", "ladder_tracker.py")
+)
+_spec = importlib.util.spec_from_file_location("ladder_tracker", _LADDER_TRACKER_PATH)
+_ladder_tracker = importlib.util.module_from_spec(_spec)
+sys.modules[_spec.name] = _ladder_tracker  # dataclasses needs the module registered
+_spec.loader.exec_module(_ladder_tracker)
+LadderTracker = _ladder_tracker.LadderTracker
 
 
 class TestLadderTracker(unittest.TestCase):
     def test_record_match_updates_winrate_and_files(self):
         with tempfile.TemporaryDirectory() as tmp:
             tracker = LadderTracker(tmp)
-            tracker.record_match("MediumAI", "Terran", "Simple64", "win", our_elo_after=1016)
-            tracker.record_match("MediumAI", "Terran", "Simple64", "loss", our_elo_after=1000)
+            tracker.record_match(
+                "MediumAI", "Terran", "Simple64", "win", our_elo_after=1016
+            )
+            tracker.record_match(
+                "MediumAI", "Terran", "Simple64", "loss", our_elo_after=1000
+            )
 
             stats = tracker.get_winrate(vs_race="Terran")
 
@@ -29,7 +44,9 @@ class TestLadderTracker(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             tracker = LadderTracker(tmp)
             tracker.record_match("BioAI", "Terran", "MapA", "loss", crash_reason="")
-            tracker.record_match("SkytossAI", "Protoss", "MapB", "crash", crash_reason="timeout")
+            tracker.record_match(
+                "SkytossAI", "Protoss", "MapB", "crash", crash_reason="timeout"
+            )
 
             report = tracker.get_weakness_report()
 

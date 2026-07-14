@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import importlib.util
 import json
 import os
 import sys
@@ -7,9 +8,19 @@ import unittest
 from pathlib import Path
 
 os.environ["PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION"] = "python"
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..")))
 
-from scripts.meta_adapter import MetaAdapter
+# Loaded by explicit file path (not `from scripts.meta_adapter import ...`) because
+# this monorepo has multiple unrelated `scripts` directories on sys.path at test-collection
+# time (e.g. wicked_zerg_challenger/local_training/scripts, which has an __init__.py and
+# therefore wins package-name resolution over the top-level scripts/ this test needs).
+_META_ADAPTER_PATH = os.path.abspath(
+    os.path.join(os.path.dirname(__file__), "..", "..", "scripts", "meta_adapter.py")
+)
+_spec = importlib.util.spec_from_file_location("meta_adapter", _META_ADAPTER_PATH)
+_meta_adapter = importlib.util.module_from_spec(_spec)
+sys.modules[_spec.name] = _meta_adapter
+_spec.loader.exec_module(_meta_adapter)
+MetaAdapter = _meta_adapter.MetaAdapter
 
 
 class TestMetaAdapter(unittest.TestCase):
@@ -22,7 +33,9 @@ class TestMetaAdapter(unittest.TestCase):
                 "vs_zerg": {"total": 3, "winrate": 66.0},
                 "weaknesses": {},
             }
-            Path(tmp, "analytics.json").write_text(json.dumps(analytics), encoding="utf-8")
+            Path(tmp, "analytics.json").write_text(
+                json.dumps(analytics), encoding="utf-8"
+            )
 
             adjustments = MetaAdapter(tmp).generate_strategy_adjustments()
 
