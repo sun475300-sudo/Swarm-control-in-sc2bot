@@ -4,7 +4,7 @@
 
 통합 문제 해결 후 발견된 추가 개선 사항들입니다.
 
-**Last refreshed:** 2026-04-27 (Issue #1, #2 → Resolved; Issue #6 partially resolved via Batch 3)
+**Last refreshed:** 2026-07-14 (자동 점검: N1-N4 → Resolved, CI 린트 게이트 복구)
 
 ---
 
@@ -14,14 +14,26 @@
 
 | ID | 설명 | 우선순위 | 상태 |
 |----|------|---------|------|
-| N1 | `OpponentModeling.on_step` 중복 정의 (line 341 vs 765 — F811) | 🟠 HIGH | open — 동작 영향(상위 on_step이 미실행) 가능 |
-| N2 | `EconomyManager._prevent_resource_banking` / `_reduce_gas_workers` 재정의 (F811) | 🟡 MED | open |
-| N3 | `combat_manager._find_harass_target` 재정의 (line 2377 vs 4278) | 🟡 MED | open |
-| N4 | `production_resilience.build_terran_counters` 재정의 (1369 vs 1866) | 🟡 MED | open |
+| N1 | `OpponentModeling.on_step` 중복 정의 (line 341 vs 765 — F811) | 🟠 HIGH | ✅ Resolved — PR #218 (`e648ae4`)에서 섀도잉된 중복 메서드 삭제됨. 2026-07-14 flake8 F811 재점검으로 확인. |
+| N2 | `EconomyManager._prevent_resource_banking` / `_reduce_gas_workers` 재정의 (F811) | 🟡 MED | ✅ Resolved — 위와 동일 커밋에서 함께 정리됨. |
+| N3 | `combat_manager._find_harass_target` 재정의 (line 2377 vs 4278) | 🟡 MED | ✅ Resolved — 위와 동일. |
+| N4 | `production_resilience.build_terran_counters` 재정의 (1369 vs 1866) | 🟡 MED | ✅ Resolved — 위와 동일. |
 | N5 | bare `except Exception:` 다수 (≈360+) — 이번 PR에서 12건 처리, 잔여 다수 | 🟢 LOW | partial |
 | N6 | F841 unused local variables (visuals/make_pptx 등) | 🟢 LOW | open (presentation 코드라 영향 작음) |
 
 검증 권장: PR 분리 (N1 단독 PR 권장 — 동작 변화 가능성).
+
+---
+
+## 🆕 신규 발견 (2026-07-14, 자동 점검 사이클)
+
+| ID | 설명 | 우선순위 | 상태 |
+|----|------|---------|------|
+| N7 | `sc2bot-ci.yml`의 black/isort 게이트가 `main`(8a80b73) 기준 실패 중 — 66개 파일 black 미포맷, 19개 파일 isort 순서 오류. Lint 잡이 실패하면서 후속 Test Suite 잡이 아예 실행되지 않고 있었음 (`cancelled`/`skipped`). | 🔴 HIGH | ✅ Resolved — 전체 리포지토리에 black+isort 일괄 적용 (포맷 전용 diff, 로직 변경 없음). |
+| N8 | `tests/test_combat_phase_fsm.py`의 12개 헬퍼가 `asyncio.get_event_loop().run_until_complete(...)`를 사용, 최신 pytest-asyncio(1.x)에서 이전 비동기 테스트가 루프를 정리한 뒤 호출되면 `RuntimeError: There is no current event loop`로 실패. | 🟡 MED | ✅ Resolved — `asyncio.run(...)`으로 교체 (23/23 통과 확인). |
+
+**전체 테스트 스위트 재검증 (2026-07-14):** `wicked_zerg_challenger/tests/` + `tests/` = **1163 passed, 14 skipped, 0 failed**.
+blocking flake8(`E9,F63,F7,F82`) = 0건. black/isort 재확인 = clean.
 
 ---
 
