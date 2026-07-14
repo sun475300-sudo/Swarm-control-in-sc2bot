@@ -4,7 +4,7 @@
 
 통합 문제 해결 후 발견된 추가 개선 사항들입니다.
 
-**Last refreshed:** 2026-04-27 (Issue #1, #2 → Resolved; Issue #6 partially resolved via Batch 3)
+**Last refreshed:** 2026-07-14 (N1-N4 confirmed resolved by prior PR #218; N7/N8 newly found and fixed this cycle)
 
 ---
 
@@ -14,14 +14,16 @@
 
 | ID | 설명 | 우선순위 | 상태 |
 |----|------|---------|------|
-| N1 | `OpponentModeling.on_step` 중복 정의 (line 341 vs 765 — F811) | 🟠 HIGH | open — 동작 영향(상위 on_step이 미실행) 가능 |
-| N2 | `EconomyManager._prevent_resource_banking` / `_reduce_gas_workers` 재정의 (F811) | 🟡 MED | open |
-| N3 | `combat_manager._find_harass_target` 재정의 (line 2377 vs 4278) | 🟡 MED | open |
-| N4 | `production_resilience.build_terran_counters` 재정의 (1369 vs 1866) | 🟡 MED | open |
-| N5 | bare `except Exception:` 다수 (≈360+) — 이번 PR에서 12건 처리, 잔여 다수 | 🟢 LOW | partial |
-| N6 | F841 unused local variables (visuals/make_pptx 등) | 🟢 LOW | open (presentation 코드라 영향 작음) |
+| N1 | `OpponentModeling.on_step` 중복 정의 (line 341 vs 765 — F811) | 🟠 HIGH | ✅ resolved (PR #218에서 중복 정의 제거 확인, `flake8 --select=F811` 재검사 0건) |
+| N2 | `EconomyManager._prevent_resource_banking` / `_reduce_gas_workers` 재정의 (F811) | 🟡 MED | ✅ resolved (동일) |
+| N3 | `combat_manager._find_harass_target` 재정의 (line 2377 vs 4278) | 🟡 MED | ✅ resolved (동일) |
+| N4 | `production_resilience.build_terran_counters` 재정의 (1369 vs 1866) | 🟡 MED | ✅ resolved (동일) |
+| N5 | bare `except Exception:` 다수 (≈360+) — 이번 PR에서 12건 처리, 잔여 다수 | 🟢 LOW | partial (변화 없음, 잔여 작업) |
+| N6 | F841 unused local variables (visuals/make_pptx 등) | 🟢 LOW | open — 2026-07-14 재검사 시 130건 잔존 (변화 없음, 잔여 작업) |
+| N7 | `tests/test_combat_phase_fsm.py`의 `asyncio.get_event_loop().run_until_complete(...)` 패턴이 Python 3.11에서 `RuntimeError: There is no current event loop`로 12개 테스트 실패시킴 | 🟠 HIGH | ✅ resolved (2026-07-14, `asyncio.run(...)`으로 교체) |
+| N8 | `wicked_zerg_challenger/check_proxy.py`가 하드코딩된 개인 Windows 경로(`C:\Users\sun47\...`)를 참조하며, 모듈 임포트 시점에 `sys.exit(1)`을 무조건 호출 — 패키지 전체를 순회/임포트하는 어떤 툴링도 이 파일에서 크래시함. 봇 로직과 무관한 개인 유틸 스크립트로 확인 | 🟠 HIGH | ✅ resolved (2026-07-14, 미사용 확인 후 파일 삭제) |
 
-검증 권장: PR 분리 (N1 단독 PR 권장 — 동작 변화 가능성).
+검증 권장: PR 분리 (N1 단독 PR 권장 — 동작 변화 가능성). N1-N4는 이후 PR에서 이미 해소된 것으로 확인.
 
 ---
 
