@@ -2,18 +2,26 @@
 
 > Owner: 선우 (sun475300@gmail.com)
 > Maintainer: nightly automation
-> Last refreshed: 2026-05-04
+> Last refreshed: 2026-07-14
 
 ---
 
 ## Snapshot (current state)
 
-- Branch: `main`, last commit: queen transfusion + requirements-dev.txt session
+- Branch: `main` @ `8a80b73`, working branch: `claude/optimistic-edison-yjdipv`.
 - Bot core: `wicked_zerg_challenger/` — 179+ Python files across 10+ subdirs.
 - `.gitattributes` enforces `* text=auto` ✅
-- CI: `sc2bot-ci.yml` runs black + isort + flake8 ✅ (all clean)
-- **Test suite: 468 pass / 15 skip / 0 fail** ✅ (was 398/20/0 two nights ago)
-- Queen transfusion logic: 3 bugs fixed (`is_idle` guard removed, target dedup, per-queen cooldown) ✅
+- CI: `sc2bot-ci.yml` black/isort gate was **failing on `main`** as of this run (66 files unformatted, 19 isort errors) — this was blocking the Test Suite job from running at all. Fixed this run (see below).
+- **Test suite (re-verified 2026-07-14): 1163 pass / 14 skip / 0 fail** ✅
+- Queen transfusion logic: 3 bugs fixed (`is_idle` guard removed, target dedup, per-queen cooldown) ✅ (prior run, still holding)
+
+## Resolved this run (2026-07-14)
+
+| Item | File(s) | Notes |
+|------|---------|-------|
+| CI red: black/isort gate failing on `main` | 69 files repo-wide | `black .` + `isort .` — formatting-only diff, no logic changes. Confirmed by re-running the full test suite before/after (no behavior change) and blocking flake8 (E9/F63/F7/F82 = 0). |
+| Flaky FSM tests (`RuntimeError: no current event loop`) | `tests/test_combat_phase_fsm.py` | 12 sync helpers called `asyncio.get_event_loop().run_until_complete(...)`, which breaks once pytest-asyncio 1.x tears down a prior test's loop. Swapped to `asyncio.run(...)`. 23/23 pass. |
+| REMAINING_ISSUES.md N1-N4 (F811 duplicate defs) | — | Re-verified with a fresh `flake8 --select=F811` sweep: already resolved by PR #218 (`e648ae4`). Docs were stale; updated. |
 
 ## Resolved this run (2026-05-03)
 
@@ -94,3 +102,4 @@ Run `E:\GitHub\Swarm-control-in-sc2bot\scripts\commit_nightly_2026-05-03.bat`:
 - **2026-05-01** — P1.1 scout cadence, P1.2 harassment, P1.3 expansion timing, P1.5 doc history. Commit blocked by index.lock.
 - **2026-05-02** — P0 scout import mismatch fixed. P1.4 deprecation shim. P2.1 FSM tests 23/23 pass.
 - **2026-05-03** — **Test suite cleared:** 90 failures → 0. Fixed pytest-asyncio, torch stubs (qmix/mappo), stale __init__ exports (mappo/comm_learning), gas threshold test, crypto skipif guards. Final: 398 pass / 20 skip / 0 fail.
+- **2026-07-14** — Found `main` CI red (black/isort gate failing, Test Suite job never ran as a result). Fixed with repo-wide black+isort pass. Also fixed 12 flaky FSM tests broken by a pytest-asyncio version bump. Re-verified REMAINING_ISSUES.md N1-N4 (F811 duplicates) — already resolved by prior PR #218, docs were stale. Full suite: 1163 pass / 14 skip / 0 fail.
