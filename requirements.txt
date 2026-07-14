@@ -2,6 +2,10 @@
 # SC2 Bot Core
 # ═══════════════════════════════════════════════
 burnysc2>=5.0.0
+# burnysc2==5.0.5's sc2/main.py imports async_timeout directly but doesn't
+# declare it as a dependency; newer aiohttp releases no longer pull it in
+# transitively, so pin it explicitly to avoid a ModuleNotFoundError.
+async_timeout>=4.0.0
 numpy>=1.20.0
 matplotlib>=3.3.0
 psutil>=5.8.0

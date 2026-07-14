@@ -4,24 +4,26 @@
 
 통합 문제 해결 후 발견된 추가 개선 사항들입니다.
 
-**Last refreshed:** 2026-04-27 (Issue #1, #2 → Resolved; Issue #6 partially resolved via Batch 3)
+**Last refreshed:** 2026-07-14 (자동 점검 사이클 — N1~N4, Issue #3, #4 재검증 후 전부 Resolved로 이관)
 
 ---
 
-## 🆕 신규 발견 (PR #44, 2026-04-27)
+## 🆕 (2026-07-14 재검증) 신규 발견 & 상태 갱신
 
-자동/수동 점검 사이클(테스트 → 코드 검사 → 개선 → 커밋/푸시 반복)에서 새로 식별된 항목.
+자동/수동 점검 사이클(테스트 → 코드 검사 → 개선 → 커밋/푸시 반복)에서 새로 식별/재검증된 항목.
 
 | ID | 설명 | 우선순위 | 상태 |
 |----|------|---------|------|
-| N1 | `OpponentModeling.on_step` 중복 정의 (line 341 vs 765 — F811) | 🟠 HIGH | open — 동작 영향(상위 on_step이 미실행) 가능 |
-| N2 | `EconomyManager._prevent_resource_banking` / `_reduce_gas_workers` 재정의 (F811) | 🟡 MED | open |
-| N3 | `combat_manager._find_harass_target` 재정의 (line 2377 vs 4278) | 🟡 MED | open |
-| N4 | `production_resilience.build_terran_counters` 재정의 (1369 vs 1866) | 🟡 MED | open |
-| N5 | bare `except Exception:` 다수 (≈360+) — 이번 PR에서 12건 처리, 잔여 다수 | 🟢 LOW | partial |
+| N1 | `OpponentModeling.on_step` 중복 정의 (F811) | 🟠 HIGH | ✅ Resolved — 코드 확인 결과 `on_step` 정의 1개뿐 (opponent_modeling.py:341). 문서가 stale했음 |
+| N2 | `EconomyManager._prevent_resource_banking` / `_reduce_gas_workers` 재정의 (F811) | 🟡 MED | ✅ Resolved — AST 스캔 결과 중복 없음 |
+| N3 | `combat_manager._find_harass_target` 재정의 | 🟡 MED | ✅ Resolved — AST 스캔 결과 중복 없음 |
+| N4 | `production_resilience.build_terran_counters` 재정의 | 🟡 MED | ✅ Resolved — AST 스캔 결과 중복 없음 (`local_training/production_resilience.py`) |
+| N5 | bare `except Exception:` 다수 (≈468건, root 전체) | 🟢 LOW | open — 여전히 다수 잔존, 점진 개선 대상 |
 | N6 | F841 unused local variables (visuals/make_pptx 등) | 🟢 LOW | open (presentation 코드라 영향 작음) |
+| N7 | `tests/test_combat_phase_fsm.py`가 `asyncio.get_event_loop().run_until_complete()` 사용 → 다른 테스트 파일이 먼저 실행되면 이벤트 루프 정책이 리셋되어 `RuntimeError: There is no current event loop` 발생 (실행 순서 의존적 flaky failure, 12개 테스트 영향) | 🟠 HIGH | ✅ Resolved (2026-07-14) — `asyncio.run()`으로 교체. 전체 스위트 482 pass/20 fail → 502 pass/14 skip/0 fail |
+| N8 | `flake8 --select=F811,F821` 전체 재스캔 | — | ✅ Clean (0 violations) |
 
-검증 권장: PR 분리 (N1 단독 PR 권장 — 동작 변화 가능성).
+검증 방법: `python -m ast` 기반 클래스별 메서드 중복 스캐너 + `flake8 --select=F811,F821` 전체 재실행. N1~N4는 이전 세션에서 이미 수정되었으나 본 문서가 갱신되지 않았던 것으로 확인.
 
 ---
 
@@ -67,7 +69,34 @@
 
 ---
 
-## 🟡 MEDIUM Priority Issues (still open)
+## ✅ Resolved (재검증: 2026-07-14)
+
+### ✅ Issue #3: Transfusion 우선순위 — 이미 구현되어 있음
+
+`queen_manager.py`의 transfuse 로직(약 line 720 부근)에 `TRANSFUSE_PRIORITY` 맵이 이미 존재:
+QUEEN(0) > BROODLORD(1) > CORRUPTOR/VIPER(2) > SPINECRAWLER(3) > OVERSEER(4) >
+ULTRALISK(5) > RAVAGER(6) > ROACH(7) > HYDRALISK(8) > LURKERMP(9) > INFESTOR(10) >
+SWARMHOSTMP(11) > MUTALISK(12), 기타(15). `UNHEALABLE_UNITS`(BANELING/BROODLING/LOCUSTMP)도
+제외 처리됨. 문서 제안보다 더 세분화된 형태로 이미 반영되어 있어 별도 작업 불필요.
+
+### ✅ Issue #4: Resource Reservation Race Condition — 이미 구현되어 있음
+
+`wicked_zerg_challenger/core/resource_manager.py`에 `asyncio.Lock` 기반
+`try_reserve()` / `release()` 가 이미 구현됨 (line 36, 50 부근). `tests/test_resource_manager.py`
+10개 테스트로 커버됨.
+
+### ✅ Issue #7 (Sprint 7 관련): position_utils.py / game_constants.py / distance_cache.py
+
+ROADMAP.md Sprint 7.2/7.3에서 "신규 생성" 대상으로 표기되어 있었으나 실제로는
+`wicked_zerg_challenger/utils/position_utils.py`, `utils/game_constants.py`,
+`utils/distance_cache.py` 모두 이미 존재. ROADMAP.md가 stale한 상태였음 — 별도 문서에서 갱신 권장.
+
+---
+
+## 🟡 옛 문서 (참고용, 이미 Resolved로 이관됨)
+
+<details>
+<summary>구 Issue #3 원문 (해결 완료, 접어둠)</summary>
 
 ### Issue #3: Transfusion 우선순위 개선 필요
 
@@ -215,9 +244,11 @@ else:
 
 **우선순위**: 🟡 MEDIUM (안정성 개선, 드물게 발생)
 
+</details>
+
 ---
 
-## 🟢 LOW Priority Issues
+## 🟢 LOW Priority Issues (아직 open — #5, #6)
 
 ### Issue #5: 코드 중복 - Position 계산
 
@@ -359,32 +390,34 @@ if iteration % SECOND == 0:
 
 ---
 
-## 📊 이슈 우선순위 요약 (open만)
+## 📊 이슈 우선순위 요약 (open만, 2026-07-14 갱신)
 
 | 우선순위 | 이슈 | 영향도 | 난이도 |
 |---------|------|--------|--------|
-| 🟡 MEDIUM | #3 Transfusion 우선순위 | 중간 | 중간 |
-| 🟡 MEDIUM | #4 Resource Race Condition | 낮음 | 중간 |
-| 🟢 LOW | #5 코드 중복 제거 | 낮음 | 쉬움 |
-| 🟢 LOW | #6 매직 넘버 | 낮음 | 쉬움 |
+| 🟢 LOW | #5 코드 중복 제거 (Position 계산) | 낮음 | 쉬움 |
+| 🟢 LOW | #6 매직 넘버 정리 | 낮음 | 쉬움 |
+| 🟢 LOW | N5 bare except 잔여 (~468건) | 낮음 | 점진적 |
+| 🟢 LOW | N6 F841 unused locals (visuals/) | 낮음 | 쉬움 |
 
-(Issue #1, #2 → ✅ Resolved 섹션 참조)
+(Issue #1~#4, N1~N4, N7 → ✅ Resolved 섹션 참조. #3/#4는 이미 코드에 구현되어 있었음을 재검증으로 확인)
 
 ---
 
 ## 🎯 권장 수정 순서
 
 ### 1단계: 완료 (✅)
-~~1. Queen Inject 쿨다운 수정 (25 → 29)~~ — 코드 반영 완료, 본 문서 ✅ Resolved 섹션 참조
-~~2. 누락된 업그레이드 추가~~ — 코드 반영 완료, 본 문서 ✅ Resolved 섹션 참조
+~~1. Queen Inject 쿨다운 수정 (25 → 29)~~ — 완료
+~~2. 누락된 업그레이드 추가~~ — 완료
+~~3. Transfusion 우선순위 시스템~~ — 완료 (queen_manager.py에 이미 구현됨, 2026-07-14 재검증)
+~~4. Resource Reservation 동기화~~ — 완료 (core/resource_manager.py에 이미 구현됨, 2026-07-14 재검증)
+~~5. Position Utils 유틸리티 함수 분리~~ — 완료 (utils/position_utils.py 존재)
+~~N7. test_combat_phase_fsm.py 이벤트 루프 flaky failure~~ — 완료 (2026-07-14, asyncio.run()로 교체)
 
-### 2단계: 로직 개선 (30분, 미진행)
-3. Transfusion 우선순위 시스템 구현
-
-### 3단계: 구조 개선 (1시간, 미진행)
-4. Resource Reservation 동기화
-5. Position Utils 유틸리티 함수 분리
-6. Constants 정리
+### 2단계: 남은 저우선순위 정리 (미진행)
+6. Constants 정리 (일부는 game_constants.py로 이관됨, 잔여 매직넘버 점검 필요)
+7. bare `except Exception:` 468건 점진적 축소 (N5)
+8. Position 계산 중복 제거 — `position_utils.py`는 존재하나 combat_manager.py 등에서 실제로
+   호출하는지 확인 및 마이그레이션 필요 (#5)
 
 ---
 
@@ -409,10 +442,15 @@ if iteration % SECOND == 0:
 
 ## 📝 참고 사항
 
-### 현재 상태
+### 현재 상태 (2026-07-14 재검증)
 - ✅ **치명적 통합 문제**: 완전히 해결됨
-- ✅ **모든 단위 테스트**: 통과 (16/16)
+- ✅ **전체 테스트 스위트**: 502 pass / 14 skip / 0 fail (`pytest tests -q`)
 - ✅ **기본 기능**: 정상 작동
+- ✅ **flake8 F811/F821**: 0 violations (전체 재스캔)
+- ⚠️ 이 문서(REMAINING_ISSUES.md)는 과거 여러 세션에 걸쳐 "open"으로 남아있던 항목 다수가
+  실제로는 이미 코드에 반영되어 있었음. 향후 점검 시 "open" 표기를 맹신하지 말고 코드를
+  직접 재검증할 것 (ROADMAP.md Sprint 7 항목도 동일한 문제 확인됨 — position_utils.py,
+  game_constants.py, distance_cache.py 모두 "신규 생성" 대상으로 문서화되어 있었으나 이미 존재).
 
 ### 위의 이슈들은
 - 모두 **선택적 개선 사항**
@@ -421,5 +459,6 @@ if iteration % SECOND == 0:
 
 ---
 
-**검토 완료일**: 2026-01-29
-**상태**: 추가 개선 사항 문서화 완료
+**검토 완료일**: 2026-07-14
+**상태**: 자동 점검 사이클(테스트→코드검사→개선→커밋/푸시)로 재검증 완료. N1~N4, Issue #3/#4/N7 → Resolved.
+남은 open: #5(Position 유틸 마이그레이션), #6(매직넘버), N5(bare except), N6(F841).
