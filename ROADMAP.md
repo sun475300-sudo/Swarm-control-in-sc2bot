@@ -1,8 +1,15 @@
 # WickedZergBotPro Grand Roadmap
 
 > 목표: Medium AI 승률 90%+ 달성 & AI Arena 출전
-> 현재 상태: Phase 56 완료, 342/342 테스트 통과, 추정 승률 45~50%
+> 현재 상태: 1163 passed / 14 skipped / 0 failed (2026-07-14 재검증), 추정 승률 45~50%(미측정, self-play 데이터 없음)
 > 봇 프레임워크: python-sc2 (burnysc2>=5.0.0)
+>
+> **2026-07-14 감사 결과**: Sprint 1~6의 태스크를 코드 기준으로 전수 재검증한 결과,
+> 거의 전부(1.1~6.x) 이미 구현·테스트 완료 상태였음(문서가 stale했을 뿐, 실제 미구현
+> 아님). 실제 남은 gap은 Sprint 7(아키텍처/성능)뿐: DistanceCache 채택률이 낮고
+> (`combat_manager.py`/`economy_manager.py`에서 캐시 경유 4~3건 vs 미캐시 `distance_to`
+> 60~24건), iteration 주기 매직넘버가 65개 파일에 174곳 여전히 산재. Sprint 8(QA
+> 30연전)은 실행 여부 미확인 — 로그/기록 없음. 상세 근거는 각 Sprint 섹션의 `[검증 2026-07-14]` 참고.
 
 ---
 
@@ -19,6 +26,8 @@
 ---
 
 ## Sprint 1: 긴급 수정 (즉시 착수)
+
+> **[검증 2026-07-14] 전부 구현 완료.** 1.2 `respond_to_worker_harassment`(combat_manager.py:4127, EVERY_SECOND=22 주기), 1.3 harass tag/kill-count/복귀(combat/initialization.py, combat_manager.py:4234, harassment_interval=15.0), 1.4 `[EXPANSION]` 로깅 + 50~70s 목표 빌드오더(economy_manager.py:2592, 1858) 모두 코드+테스트 존재.
 
 ### Task 1.1: 인코딩 에러 완전 제거
 
@@ -103,6 +112,8 @@
 ---
 
 ## Sprint 2: 정찰 & 인텔 강화 (1~2주)
+
+> **[검증 2026-07-14] 전부 구현 완료.** 오버로드 정찰 15/30s(scouting_system.py:27-28), 저글링 순찰(scouting_system.py:155), 빌드패턴 13종 전부 매칭 로직 존재(intel_manager.py:15-81, 832-913), AIR_THREAT 플래그+대응(strategy_manager.py:1400), 은폐 탐지 자동 오버시어(scouting_system.py:225). 유일한 잔여 gap: `deploy_changeling()`(scouting_system.py:239)가 어디서도 호출되지 않는 dead code — 단, changeling 자동 생산 자체는 `scouting/advanced_scout_system_v2.py:_manage_changelings`와 `spellcaster_automation.py:_overseer_changeling`가 이미 매 스텝 수행 중이라 기능 공백은 아님(중복 구현 정리 대상).
 
 ### Task 2.1: 오버로드 정찰 주기 단축
 
@@ -212,6 +223,8 @@ BUILD_PATTERNS = {
 
 ## Sprint 3: 경제 & 매크로 최적화 (2주)
 
+> **[검증 2026-07-14] 전부 구현 완료.** ThreatLevel enum + 드론 목표(economy_manager.py:41-52, 592), 매치업별 가스 타이밍(economy_manager.py:1125), spend_larva 우선순위(economy_manager.py:936), 미네랄 플로팅 방지 `[FLOAT]` 로그(economy_manager.py:1696) 전부 존재.
+
 ### Task 3.1: 드론/병력 밸런스 동적 조절
 
 **파일:** `wicked_zerg_challenger/economy_manager.py`, `wicked_zerg_challenger/local_training/economy_combat_balancer.py`
@@ -297,6 +310,8 @@ async def spend_larva(self):
 ---
 
 ## Sprint 4: 전투 & 마이크로 고도화 (3~4주)
+
+> **[검증 2026-07-14] 전부 구현 완료.** 러커 초크 포지셔닝(combat/micro_combat.py, LURKERMP 사용 확인), 뮤탈 매직박싱/바운스/대공회피/50% 후퇴(combat/mutalisk_micro.py), 바퀴-히드라 6거리 후열 포메이션(combat_manager.py:2055), 60+ 다방면 공격 60/25/15 분할(combat_manager.py:2092), 전투 프레임 스킵(combat_manager.py:289, 스펙과 정확히 일치) 전부 확인.
 
 ### Task 4.1: 러커 포지셔닝 마이크로
 
@@ -388,6 +403,8 @@ async def manage_combat(self, iteration):
 
 ## Sprint 5: 방어 체계 강화 (2주)
 
+> **[검증 2026-07-14] 전부 구현 완료.** 프록시 대응 150s/반경40(early_defense_system.py:24,195), 기지당 퀸1+저글링4 상시배치+드롭유닛 대응(combat/base_defense.py:578,531), 올인 감지(5분 이전 + 1.5x 병력비, strategy_manager.py:2035) 전부 스펙과 일치.
+
 ### Task 5.1: 프록시 배럭/캐논 대응
 
 **파일:** `wicked_zerg_challenger/early_defense_system.py`, `wicked_zerg_challenger/strategy_manager.py`
@@ -432,6 +449,8 @@ async def manage_combat(self, iteration):
 ---
 
 ## Sprint 6: RL 실전 투입 (3~4주)
+
+> **[검증 2026-07-14] 코드/테스트 존재 확인.** `combat_manager.py`에 `use_rl_micro` 토글 존재, `tests/test_sprint6_rl_pipeline.py` 통과. 단, 실제 실전(라이브 게임) 승률 데이터로 RL vs 규칙 기반 비교는 미검증 — self-play 로그/체크포인트 diff는 이번 감사 범위 밖.
 
 ### Task 6.1: PPO 에이전트 실전 연동
 
@@ -484,6 +503,8 @@ async def manage_combat(self, iteration):
 ---
 
 ## Sprint 7: 아키텍처 리팩토링 (2~3주)
+
+> **[검증 2026-07-14] 부분 구현 — 실질적 유일한 잔여 작업.** `utils/distance_cache.py`의 `DistanceCache`는 존재하고 `combat_manager.py`/`economy_manager.py`에 연결돼 있지만 실제 채택은 얕음(캐시 경유 호출 4+3건 vs 미캐시 `distance_to()` 60+24건 — 대부분 여전히 우회). `GameFrequencies`/`EconomyConstants` 등도 정의는 됐지만 4개 파일에서만 쓰이고, `iteration % 11/22/33/44/55/66/88/110/165/220` 형태 매직넘버가 65개 파일 174곳에 남아있음. **주의**: 과거 유사 작업(PR #25~#44 등)이 대규모 일괄 치환을 시도하다 반복적으로 충돌/redundant PR을 양산한 전례가 있으므로, 향후 작업은 파일 단위 소규모 배치로 쪼개서 진행 권장.
 
 ### Task 7.1: StrategyManager 역할 분담
 
@@ -538,6 +559,8 @@ class DistanceCache:
 ---
 
 ## Sprint 8: QA & AI Arena 배포 (2~3주)
+
+> **[검증 2026-07-14] 미확인.** Medium AI 30연전 실행 기록/로그를 이 저장소에서 찾지 못함. `run_mass_test.py`는 존재하나 실행 결과(승률, 크래시 횟수)가 문서화되어 있지 않음 — 실제 실행 여부와 무관하게 "추정 승률 45~50%"는 검증된 수치가 아니라 추정치.
 
 ### Task 8.1: Medium AI 30연전 테스트
 
