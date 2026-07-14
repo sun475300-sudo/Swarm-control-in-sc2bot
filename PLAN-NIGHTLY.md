@@ -2,18 +2,42 @@
 
 > Owner: 선우 (sun475300@gmail.com)
 > Maintainer: nightly automation
-> Last refreshed: 2026-05-04
+> Last refreshed: 2026-07-14
 
 ---
 
+## ⚠️ CRITICAL: PR pileup — nothing has merged since PR #218
+
+- `main` is still exactly at PR #218 (`Merge PR #218: stabilize SC2 bot test suite and iterate on improvements`).
+- There are **30 open draft PRs** (`#439`–`#468`, all on `claude/optimistic-edison-*` branches) stacked on top of that,
+  almost every one titled some variant of "fix: combat FSM event-loop bug / CI test path / sc2 import guard".
+- Each session re-discovers and re-fixes the **same two bugs** in its own branch, commits, opens a new PR, and stops —
+  none get merged, so the fix never reaches `main` and the next session finds the bug again. This nightly loop only
+  compounds the pile unless PRs actually land.
+- **Recommendation to owner**: pick one PR (latest, #468, or have an agent squash the redundant ones into a single
+  branch) and merge it, then close the rest. Until that happens, treat every new "fix" PR from this loop as
+  low-value — the code fix is real, but it's stuck exactly where the previous 30 attempts got stuck.
+- This session did **not** close or merge anything (repo policy: merge/close decisions require owner approval).
+
 ## Snapshot (current state)
 
-- Branch: `main`, last commit: queen transfusion + requirements-dev.txt session
+- Branch: `main`, last commit: `8a80b73 Update ci.yml` (still == PR #218 head; 0 commits landed since).
 - Bot core: `wicked_zerg_challenger/` — 179+ Python files across 10+ subdirs.
 - `.gitattributes` enforces `* text=auto` ✅
-- CI: `sc2bot-ci.yml` runs black + isort + flake8 ✅ (all clean)
-- **Test suite: 468 pass / 15 skip / 0 fail** ✅ (was 398/20/0 two nights ago)
-- Queen transfusion logic: 3 bugs fixed (`is_idle` guard removed, target dedup, per-queen cooldown) ✅
+- **Test suite (this session, sandboxed, no `sc2`/`burnysc2` installed): 395 pass / 34 skip / 0 fail** ✅
+  (was 1 collection error blocking the whole suite + 12 failing before today's fixes — see below)
+- Queen transfusion logic (from PR #218 era): `is_idle` guard removed, target dedup, per-queen cooldown ✅
+
+## Resolved this run (2026-07-14)
+
+| Item | File(s) | Notes |
+|------|---------|-------|
+| Collection error blocked entire suite | `tests/test_queen_transfusion.py` | Unguarded `from sc2.ids.unit_typeid import UnitTypeId` at module scope crashed collection in any env without `sc2` installed (sandbox/CI-lint jobs), aborting **all 423 tests**, not just this file. Wrapped in `try/except ImportError: pytest.skip(..., allow_module_level=True)`, matching the guard already used in the sibling file `test_queen_transfusion_manager.py`. |
+| 12 combat-FSM tests fail with `RuntimeError: There is no current event loop in thread 'MainThread'` | `tests/test_combat_phase_fsm.py` | 5 call sites used `asyncio.get_event_loop().run_until_complete(...)`, which breaks on Python 3.11 once any prior test (via `pytest-asyncio`'s per-test loop) has already closed the thread's default loop. Replaced all 5 with `asyncio.run(...)`, which owns its own loop lifecycle. This is the exact bug that ~15 of the 30 piled-up PRs (titles: "event-loop crash in combat FSM tests", "Python 3.11 asyncio bug breaking 12 combat FSM tests", etc.) independently diagnosed and fixed in their own unmerged branches. |
+| Sandbox test env missing `pytest-asyncio`/`pytest-timeout`/`pytest-mock` | n/a (env only, not committed) | `pytest` in this sandbox is a `uv tool install`, isolated from the system Python `pip install` target — installed the plugins into the tool venv via `uv tool install pytest --with pytest-asyncio --with pytest-timeout --with pytest-mock --force`. Not a repo change; noting here so the next session doesn't re-diagnose it. |
+| CI job `python-lint-test` ("Python 린트 & 테스트") failing on PR #469 with `TypeError: Descriptors cannot be created directly` across 14 test files | `.github/workflows/ci.yml` | Real `sc2`/`s2clientprotocol` is installed in this job (unlike the sandbox), and its bundled `_pb2.py` files were generated against an older protobuf runtime than what pip now installs — breaks under strict-mode protobuf ≥4. Pre-existing on `main`: commit `8a80b73` ("Update ci.yml", 2026-06-25, direct push by owner) removed the `\|\| true` swallow from this step's two pytest commands, which had been silently hiding this exact failure. The sibling job `sc2-bot-test` already sets `PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION: python` for the same reason — added the same env var to `python-lint-test`'s pytest step to match. |
+
+**Net result: 1 collection error + 12 failures → 0 failures. Suite: 395 pass / 34 skip. Plus one CI env fix (protobuf pure-Python mode) surfaced by PR #469's checks.**
 
 ## Resolved this run (2026-05-03)
 
@@ -94,3 +118,4 @@ Run `E:\GitHub\Swarm-control-in-sc2bot\scripts\commit_nightly_2026-05-03.bat`:
 - **2026-05-01** — P1.1 scout cadence, P1.2 harassment, P1.3 expansion timing, P1.5 doc history. Commit blocked by index.lock.
 - **2026-05-02** — P0 scout import mismatch fixed. P1.4 deprecation shim. P2.1 FSM tests 23/23 pass.
 - **2026-05-03** — **Test suite cleared:** 90 failures → 0. Fixed pytest-asyncio, torch stubs (qmix/mappo), stale __init__ exports (mappo/comm_learning), gas threshold test, crypto skipif guards. Final: 398 pass / 20 skip / 0 fail.
+- **2026-07-14** — Flagged 30-PR pileup (#439–#468, nothing merged since #218). Fixed sc2-import collection error (`test_queen_transfusion.py`) + 12 combat-FSM `asyncio.get_event_loop()` failures (`test_combat_phase_fsm.py` → `asyncio.run()`). Suite: 395 pass / 34 skip / 0 fail.
