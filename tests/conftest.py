@@ -13,6 +13,11 @@ from unittest.mock import MagicMock
 
 import pytest
 
+# sc2 (s2clientprotocol) 호환성 수정: 설치된 protobuf 버전에 따라
+# 사전 생성된 _pb2.py가 최신 protobuf 런타임과 충돌할 수 있음
+# (wicked_zerg_challenger/tests/conftest.py와 동일한 조치)
+os.environ.setdefault("PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION", "python")
+
 # 프로젝트 루트를 sys.path에 추가
 PROJECT_ROOT = Path(__file__).parent.parent
 if str(PROJECT_ROOT) not in sys.path:
