@@ -17,6 +17,9 @@ from pathlib import Path
 # 설정
 PROJECT_DIR = Path(__file__).parent
 
+# ROADMAP Task 8.2 체크리스트: 생성된 ZIP은 10MB 미만이어야 함
+ARENA_MAX_ZIP_SIZE_MB = 10
+
 # Arena에 필요한 파일/폴더
 INCLUDE_FILES = [
     "run.py",
@@ -79,8 +82,14 @@ def should_exclude(path_str: str) -> bool:
     return False
 
 
-def create_arena_zip(output_dir: Path, zip_name: str):
-    """Arena 업로드용 ZIP 생성"""
+def create_arena_zip(
+    output_dir: Path, zip_name: str, max_size_mb: float = ARENA_MAX_ZIP_SIZE_MB
+):
+    """Arena 업로드용 ZIP 생성
+
+    Returns:
+        (zip_path, zip_size_mb, within_budget)
+    """
     zip_path = output_dir / zip_name
     print(f"=" * 60)
     print(f"  SC2 AI Arena 패키지 생성기")
@@ -145,20 +154,32 @@ def create_arena_zip(output_dir: Path, zip_name: str):
 
     # 결과 출력
     zip_size = zip_path.stat().st_size
+    zip_size_mb = zip_size / 1024 / 1024
+    within_budget = zip_size_mb < max_size_mb
+
     print(f"\n{'=' * 60}")
     print(f"  DONE! Package created!")
     print(f"  Files: {file_count}")
     print(f"  Original: {total_size / 1024 / 1024:.1f} MB")
-    print(f"  ZIP: {zip_size / 1024 / 1024:.1f} MB")
+    print(f"  ZIP: {zip_size_mb:.1f} MB")
     print(f"  Path: {zip_path}")
     print(f"{'=' * 60}")
+
+    if within_budget:
+        print(f"  [OK] ZIP size within {max_size_mb}MB Arena budget")
+    else:
+        print(
+            f"  [FAIL] ZIP size {zip_size_mb:.1f}MB exceeds the "
+            f"{max_size_mb}MB Arena upload budget (ROADMAP Task 8.2)"
+        )
+
     print(f"\n  SC2 AI Arena Upload:")
     print(f"  1. https://aiarena.net")
     print(f"  2. My Bots > Upload Bot")
     print(f"  3. Race: Zerg, Type: Python")
     print(f"  4. Upload: {zip_name}")
 
-    return str(zip_path)
+    return str(zip_path), zip_size_mb, within_budget
 
 
 def _default_output_dir() -> Path:
@@ -189,6 +210,12 @@ def parse_args() -> argparse.Namespace:
         action="store_true",
         help="생성 후 폴더 자동 열기 비활성화",
     )
+    parser.add_argument(
+        "--max-size-mb",
+        type=float,
+        default=ARENA_MAX_ZIP_SIZE_MB,
+        help=f"ZIP 크기 상한 (MB, 기본 {ARENA_MAX_ZIP_SIZE_MB}). 초과 시 종료 코드 1",
+    )
     return parser.parse_args()
 
 
@@ -205,8 +232,13 @@ if __name__ == "__main__":
         timestamp = datetime.now().strftime("%Y%m%d_%H%M")
         zip_name = f"WickedZergBotPro_Arena_{timestamp}.zip"
 
-    result = create_arena_zip(out_dir, zip_name)
+    result, zip_size_mb, within_budget = create_arena_zip(
+        out_dir, zip_name, max_size_mb=args.max_size_mb
+    )
 
     # CI/Linux 환경에서는 자동 열기를 생략하고, Windows 로컬 실행 시에만 연다.
     if os.name == "nt" and not args.no_open:
         os.startfile(str(Path(result).parent))
+
+    if not within_budget:
+        raise SystemExit(1)

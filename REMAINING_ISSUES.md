@@ -67,9 +67,25 @@
 
 ---
 
-## 🟡 MEDIUM Priority Issues (still open)
+## ✅ Resolved (확인일: 2026-07-14)
 
-### Issue #3: Transfusion 우선순위 개선 필요
+### ✅ Issue #3: Transfusion 우선순위 — 이미 구현됨
+
+`wicked_zerg_challenger/economy/queen_transfusion_manager.py`에 `HEAL_PRIORITY` 딕셔너리
+(Ultralisk 100 > Broodlord 90 > Ravager 75 > Roach 65 > Hydralisk 60 > Mutalisk/Corruptor 50
+> Zergling 30)와 `CANNOT_HEAL` 제외 목록(Baneling/Broodling/Locust/Changeling/Egg/Larva/Overlord)이
+이미 구현되어 있음. `bot_step_integration.py`에서 매 스텝 호출됨. 아래 원안 문서는 참고용으로 남김.
+
+### ✅ Issue #4: Resource Reservation Race Condition — 이미 구현됨
+
+`core/resource_manager.py`에 `asyncio.Lock()` 기반 `try_reserve`/`release`/`release_partial`/
+`clear_stale_reservations`가 이미 구현되어 있음.
+
+---
+
+## 🟡 MEDIUM Priority Issues (원안 문서, 참고용 — 위 Resolved 항목 참조)
+
+### Issue #3 (원안): Transfusion 우선순위 개선 필요
 
 **위치**: `queen_manager.py` 또는 `spell_unit_manager.py`
 
@@ -142,7 +158,7 @@ async def smart_transfusion(self, queen, damaged_units):
 
 ---
 
-### Issue #4: Resource Reservation Race Condition
+### Issue #4 (원안): Resource Reservation Race Condition
 
 **위치**: `resource_manager.py` (추정)
 
@@ -363,12 +379,10 @@ if iteration % SECOND == 0:
 
 | 우선순위 | 이슈 | 영향도 | 난이도 |
 |---------|------|--------|--------|
-| 🟡 MEDIUM | #3 Transfusion 우선순위 | 중간 | 중간 |
-| 🟡 MEDIUM | #4 Resource Race Condition | 낮음 | 중간 |
 | 🟢 LOW | #5 코드 중복 제거 | 낮음 | 쉬움 |
 | 🟢 LOW | #6 매직 넘버 | 낮음 | 쉬움 |
 
-(Issue #1, #2 → ✅ Resolved 섹션 참조)
+(Issue #1, #2, #3, #4 → ✅ Resolved 섹션 참조. 아래 신규 감사 섹션도 참조.)
 
 ---
 
@@ -421,5 +435,28 @@ if iteration % SECOND == 0:
 
 ---
 
-**검토 완료일**: 2026-01-29
+## 🔄 자동 점검 사이클 결과 (2026-07-14)
+
+테스트 → 코드 감사 → 개선 → 커밋/푸시 반복 사이클에서 확인된 사항.
+
+### 이번 세션에서 처리 완료
+| 항목 | 내용 |
+|------|------|
+| pytest 사건 이벤트 루프 오염 | `tests/test_combat_phase_fsm.py`의 5개 헬퍼가 `asyncio.get_event_loop().run_until_complete(...)`를 사용해 전체 스위트 실행 시 다른 테스트가 이벤트 루프를 정리한 뒤 `RuntimeError: no current event loop`로 12건 실패. `asyncio.run(...)`으로 교체하여 해결 (671/671, 504/504 전체 통과). |
+| P2.4 (RL 저장 가드 테스트 누락) | `wicked_zerg_challenger/tests/test_rl_agent_save_experience_guard.py` 신규 추가 — savez 디스크풀/rename 인터럽트 시 `save_experience_data`가 False를 반환하고 기존 파일을 훼손하지 않는지 검증. |
+| Arena 패키지 크기 게이트 부재 | `create_arena_package.py`에 10MB 예산 체크 추가 (`--max-size-mb`, 초과 시 종료 코드 1). 이전에는 크기만 출력하고 조용히 통과했음. `tests/test_arena_package.py` 회귀 테스트 추가. |
+
+### 확인했지만 미처리 (다음 사이클 후보, 우선순위순)
+| 항목 | 내용 | 규모 |
+|------|------|------|
+| GameConstants 미사용 클래스 | `utils/game_constants.py`의 `CombatConstants`/`UpgradeConstants`/`StrategyConstants`/`AbilityConstants`/`DebugConstants` 5개가 정의만 되고 실제 매니저에서 0회 참조됨 (죽은 코드). 매직넘버 교체에 실제로 연결하거나 삭제 필요. | 중간 |
+| P2.2 벤치마크 러너 부재 | Hard AI 상대 N판 실행 → APM/서플라이/승률 리포트를 만드는 단일 커맨드가 없음 (`scripts/performance_benchmark*.py`는 Rust vs Python 마이크로벤치만 측정). | 중간 |
+| P2.3 빌드오더 YAML 외부화 | `ZVT_BUILDS`/`ZVP_BUILDS`/`ZVZ_BUILDS`가 `build_order_system.py`에 하드코딩됨. `config/build_orders.yaml` 없음. | 중간 (낮은 우선순위) |
+| stuck-worker 일부 케이스 미탐지 | `local_training/advanced_building_manager.py:778` `rescue_stuck_workers()`는 idle-stuck만 감지, "이동 중이지만 제자리" 케이스는 TODO로 스킵됨. | 낮음 |
+| 테스트 실행이 추적된 fixture 파일을 오염시킴 | 스위트를 로컬에서 실행하면 `wicked_zerg_challenger/commander_knowledge.json`, `data/games/test_game_*.json`, `local_training/models/test_rl_agent.tmp.npz` 등 git 추적 파일이 매번 변경됨 (테스트가 tmp 경로 대신 실제 경로에 쓰기 때문). 커밋 전 매번 `git checkout --`로 되돌려야 함 — 근본적으로는 해당 테스트들이 tmp_path/monkeypatch로 격리되어야 함. | 중간 |
+| black 포맷 드리프트 | `tests/test_combat_phase_fsm.py`의 기존(수정 전) 라인 다수가 현재 핀된 `black==26.3.1`과 포맷이 달라짐 (예: `x ** 2` → `x**2` 연산자 간격 규칙 변경). 내가 건드리지 않은 라인이라 이번 PR에서는 그대로 두었지만, CI의 `black --check --diff .`가 전체 리포에서 실제로 통과하는지 별도 확인 필요. | 낮음~중간 (CI 영향 가능) |
+
+---
+
+**검토 완료일**: 2026-07-14 (2026-01-29 원본 감사 위 이력 유지)
 **상태**: 추가 개선 사항 문서화 완료
