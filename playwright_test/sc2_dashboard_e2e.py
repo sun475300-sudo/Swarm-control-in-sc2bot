@@ -751,8 +751,12 @@ class SC2DashboardTest:
 
         except ImportError:
             # Fallback: hash-based (all-or-nothing)
-            hash_a = hashlib.md5(open(path_a, "rb").read()).hexdigest()
-            hash_b = hashlib.md5(open(path_b, "rb").read()).hexdigest()
+            hash_a = hashlib.md5(
+                open(path_a, "rb").read(), usedforsecurity=False
+            ).hexdigest()
+            hash_b = hashlib.md5(
+                open(path_b, "rb").read(), usedforsecurity=False
+            ).hexdigest()
             size = os.path.getsize(path_a)
             if hash_a == hash_b:
                 return 0, size

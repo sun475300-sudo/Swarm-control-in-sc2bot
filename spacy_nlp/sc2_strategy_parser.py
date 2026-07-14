@@ -495,7 +495,9 @@ class ParsedStrategy:
     text_hash: str = ""
 
     def __post_init__(self):
-        self.text_hash = hashlib.md5(self.raw_text.encode()).hexdigest()[:12]
+        self.text_hash = hashlib.md5(
+            self.raw_text.encode(), usedforsecurity=False
+        ).hexdigest()[:12]
 
     def to_dict(self) -> Dict[str, Any]:
         return {
@@ -941,7 +943,9 @@ class StrategyParser:
     def parse(self, text: str, use_cache: bool = True) -> ParsedStrategy:
         """Parse strategy text into structured ParsedStrategy."""
         preprocessed = self.preprocessor.preprocess(text)
-        cache_key = hashlib.md5(preprocessed.encode()).hexdigest()[:16]
+        cache_key = hashlib.md5(
+            preprocessed.encode(), usedforsecurity=False
+        ).hexdigest()[:16]
 
         if use_cache and cache_key in self._parse_cache:
             log.debug("Cache hit for text hash %s", cache_key)

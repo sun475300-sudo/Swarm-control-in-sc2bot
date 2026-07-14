@@ -205,7 +205,7 @@ class PercentageRollout:
     @staticmethod
     def compute_bucket(flag_name: str, user_id: str, num_buckets: int = 100) -> int:
         key = f"{flag_name}:{user_id}"
-        digest = hashlib.md5(key.encode("utf-8")).hexdigest()
+        digest = hashlib.md5(key.encode("utf-8"), usedforsecurity=False).hexdigest()
         return int(digest[:8], 16) % num_buckets
 
     @staticmethod
