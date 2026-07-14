@@ -4,7 +4,7 @@
 
 통합 문제 해결 후 발견된 추가 개선 사항들입니다.
 
-**Last refreshed:** 2026-04-27 (Issue #1, #2 → Resolved; Issue #6 partially resolved via Batch 3)
+**Last refreshed:** 2026-07-14 (Issue #3, #4, #5 → confirmed already resolved in code, stale doc closed; N1-N4 duplicate-definition items confirmed already resolved)
 
 ---
 
@@ -14,14 +14,14 @@
 
 | ID | 설명 | 우선순위 | 상태 |
 |----|------|---------|------|
-| N1 | `OpponentModeling.on_step` 중복 정의 (line 341 vs 765 — F811) | 🟠 HIGH | open — 동작 영향(상위 on_step이 미실행) 가능 |
-| N2 | `EconomyManager._prevent_resource_banking` / `_reduce_gas_workers` 재정의 (F811) | 🟡 MED | open |
-| N3 | `combat_manager._find_harass_target` 재정의 (line 2377 vs 4278) | 🟡 MED | open |
-| N4 | `production_resilience.build_terran_counters` 재정의 (1369 vs 1866) | 🟡 MED | open |
-| N5 | bare `except Exception:` 다수 (≈360+) — 이번 PR에서 12건 처리, 잔여 다수 | 🟢 LOW | partial |
-| N6 | F841 unused local variables (visuals/make_pptx 등) | 🟢 LOW | open (presentation 코드라 영향 작음) |
+| N1 | `OpponentModeling.on_step` 중복 정의 (line 341 vs 765 — F811) | 🟠 HIGH | ✅ resolved — 현재 `opponent_modeling.py`에 `on_step` 정의 1건만 존재 (2026-07-14 확인) |
+| N2 | `EconomyManager._prevent_resource_banking` / `_reduce_gas_workers` 재정의 (F811) | 🟡 MED | ✅ resolved — 각 1건만 존재 (2026-07-14 확인) |
+| N3 | `combat_manager._find_harass_target` 재정의 (line 2377 vs 4278) | 🟡 MED | ✅ resolved — 1건만 존재 (2026-07-14 확인) |
+| N4 | `production_resilience.build_terran_counters` 재정의 (1369 vs 1866) | 🟡 MED | ✅ resolved — 1건만 존재 (2026-07-14 확인) |
+| N5 | bare `except Exception:` 다수 (≈360+) — 이번 PR에서 12건 처리, 잔여 다수 | 🟢 LOW | partial (미검증, 대규모 재검토 필요) |
+| N6 | F841 unused local variables (visuals/make_pptx 등) | 🟢 LOW | open (presentation 코드라 영향 작음, 미검증) |
 
-검증 권장: PR 분리 (N1 단독 PR 권장 — 동작 변화 가능성).
+N1-N4는 이전 PR(e648ae4 "delete shadowed duplicate methods")에서 이미 정리된 것으로 확인됨 — 문서만 stale했음.
 
 ---
 
@@ -67,9 +67,28 @@
 
 ---
 
-## 🟡 MEDIUM Priority Issues (still open)
+## ✅ Resolved (확인일: 2026-07-14)
 
-### Issue #3: Transfusion 우선순위 개선 필요
+이전 버전에 "open"으로 남아있던 이슈 #3, #4, #5는 코드에 이미 반영되어 있음을 확인했습니다.
+문서가 stale했던 것으로, 별도 작업 없이 닫습니다.
+
+- **Issue #3 (Transfusion 우선순위)**: `queen_manager.py:711` `_transfuse_injured_units()`에
+  CreepyBot 스타일 우선순위 테이블(`TRANSFUSE_PRIORITY`) + 치료 불가 유닛 제외
+  (`UNHEALABLE_UNITS`)이 이미 구현되어 있음. 아래 예시 코드보다 더 정교함(유닛 타입별
+  우선순위 + 체력 비율 가중치 결합).
+- **Issue #4 (Resource Reservation Race Condition)**: `economy_manager.py`에서
+  `self.bot.resource_manager.try_reserve(...)`를 통해 이미 자원 예약 동기화가 구현되어
+  있음 (`economy_manager.py:2717` 등).
+- **Issue #5 (Position 계산 중복)**: `wicked_zerg_challenger/utils/position_utils.py`가
+  이미 존재.
+
+아래 예시 코드 블록들은 과거 제안 당시의 참고 스니펫으로 남겨두되, 상태는 해결됨으로 표기합니다.
+
+---
+
+## 🟡 MEDIUM Priority Issues (historical — see Resolved section above)
+
+### Issue #3: Transfusion 우선순위 개선 필요 — ✅ RESOLVED (see above)
 
 **위치**: `queen_manager.py` 또는 `spell_unit_manager.py`
 
@@ -142,7 +161,7 @@ async def smart_transfusion(self, queen, damaged_units):
 
 ---
 
-### Issue #4: Resource Reservation Race Condition
+### Issue #4: Resource Reservation Race Condition — ✅ RESOLVED (see above)
 
 **위치**: `resource_manager.py` (추정)
 
@@ -219,7 +238,7 @@ else:
 
 ## 🟢 LOW Priority Issues
 
-### Issue #5: 코드 중복 - Position 계산
+### Issue #5: 코드 중복 - Position 계산 — ✅ RESOLVED (see above)
 
 **위치**: 여러 파일에서 중복
 
@@ -363,12 +382,11 @@ if iteration % SECOND == 0:
 
 | 우선순위 | 이슈 | 영향도 | 난이도 |
 |---------|------|--------|--------|
-| 🟡 MEDIUM | #3 Transfusion 우선순위 | 중간 | 중간 |
-| 🟡 MEDIUM | #4 Resource Race Condition | 낮음 | 중간 |
-| 🟢 LOW | #5 코드 중복 제거 | 낮음 | 쉬움 |
 | 🟢 LOW | #6 매직 넘버 | 낮음 | 쉬움 |
+| 🟢 LOW | N5 bare except 잔여분 재검토 | 낮음 | 중간 (범위 큼) |
+| 🟢 LOW | N6 F841 미사용 변수 (presentation 코드) | 낮음 | 쉬움 |
 
-(Issue #1, #2 → ✅ Resolved 섹션 참조)
+(Issue #1, #2 → ✅ Resolved 섹션 참조. #3, #4, #5, N1-N4 → 2026-07-14 확인 결과 모두 이미 해결됨)
 
 ---
 
@@ -377,14 +395,14 @@ if iteration % SECOND == 0:
 ### 1단계: 완료 (✅)
 ~~1. Queen Inject 쿨다운 수정 (25 → 29)~~ — 코드 반영 완료, 본 문서 ✅ Resolved 섹션 참조
 ~~2. 누락된 업그레이드 추가~~ — 코드 반영 완료, 본 문서 ✅ Resolved 섹션 참조
+~~3. Transfusion 우선순위 시스템 구현~~ — 코드 반영 완료 (2026-07-14 확인)
+~~4. Resource Reservation 동기화~~ — 코드 반영 완료 (2026-07-14 확인)
+~~5. Position Utils 유틸리티 함수 분리~~ — 코드 반영 완료 (2026-07-14 확인)
 
-### 2단계: 로직 개선 (30분, 미진행)
-3. Transfusion 우선순위 시스템 구현
-
-### 3단계: 구조 개선 (1시간, 미진행)
-4. Resource Reservation 동기화
-5. Position Utils 유틸리티 함수 분리
-6. Constants 정리
+### 2단계: 남은 작업 (미진행)
+6. Constants 정리 (매직 넘버 → GameConstants, ROADMAP.md Sprint 7.3 참조)
+7. bare `except Exception:` 잔여분 재검토 (N5)
+8. F841 미사용 변수 정리 (N6, presentation 코드)
 
 ---
 
