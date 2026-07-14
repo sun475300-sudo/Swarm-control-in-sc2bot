@@ -13,6 +13,12 @@ from unittest.mock import MagicMock
 
 import pytest
 
+# sc2 / s2clientprotocol의 사전 생성된 _pb2.py 파일은 최신 protobuf 런타임(upb 백엔드)과
+# 호환되지 않아 "Descriptors cannot be created directly" 에러를 낸다. 순수 파이썬 구현으로
+# 강제 전환한다. sc2를 import하는 어떤 테스트 모듈보다도 먼저 실행되도록 conftest.py 최상단에
+# 둔다 (wicked_zerg_challenger/tests/conftest.py의 기존 워크어라운드와 동일).
+os.environ.setdefault("PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION", "python")
+
 # 프로젝트 루트를 sys.path에 추가
 PROJECT_ROOT = Path(__file__).parent.parent
 if str(PROJECT_ROOT) not in sys.path:
