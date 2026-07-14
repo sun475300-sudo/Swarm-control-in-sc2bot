@@ -59,6 +59,7 @@
 | P2.6 | Clean up F841 unused-variable warnings           | ❌ Open | 130 occurrences across `wicked_zerg_challenger/` (`flake8 --select=F841`), non-blocking in CI. |
 | P2.7 | Fix `scripts` package name collision             | ❌ Open | Top-level `scripts/` vs `wicked_zerg_challenger/scripts/` collide when both test suites run in one pytest session. Only matters if the two CI steps get merged. |
 | P2.8 | Whole-repo `black` formatting debt               | ❌ Open | `.github/workflows/ci.yml` "Lint & Type Check" job runs `black --check --diff .` (repo-wide, not diff-scoped) and fails: 65 files need reformatting (confirmed pre-existing on `main`, e.g. `wicked_zerg_challenger/strategy_manager.py`, `wicked_zerg_challenger/visuals/generate_presentation_visuals.py`). Mechanical fix (`black .`), but large blast radius — do as its own dedicated PR, not bundled into an unrelated bugfix. |
+| P2.9 | ✅ Done — top-level `tests/` protobuf collection failure | ✅ Done | CI's "Python 린트 & 테스트" job failed all `tests/` collection with `TypeError: Descriptors cannot be created directly` — `s2clientprotocol`'s pre-generated `_pb2.py` files conflict with newer `protobuf` package's C++/upb backend. `wicked_zerg_challenger/tests/conftest.py` already worked around this with `PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python`; applied the same fix to the top-level `tests/conftest.py` (2026-07-14). |
 
 ## Long-term direction
 
