@@ -4,7 +4,7 @@
 
 통합 문제 해결 후 발견된 추가 개선 사항들입니다.
 
-**Last refreshed:** 2026-04-27 (Issue #1, #2 → Resolved; Issue #6 partially resolved via Batch 3)
+**Last refreshed:** 2026-07-14 (N1-N4 → Resolved via commit e648ae4e / PR #218)
 
 ---
 
@@ -14,14 +14,29 @@
 
 | ID | 설명 | 우선순위 | 상태 |
 |----|------|---------|------|
-| N1 | `OpponentModeling.on_step` 중복 정의 (line 341 vs 765 — F811) | 🟠 HIGH | open — 동작 영향(상위 on_step이 미실행) 가능 |
-| N2 | `EconomyManager._prevent_resource_banking` / `_reduce_gas_workers` 재정의 (F811) | 🟡 MED | open |
-| N3 | `combat_manager._find_harass_target` 재정의 (line 2377 vs 4278) | 🟡 MED | open |
-| N4 | `production_resilience.build_terran_counters` 재정의 (1369 vs 1866) | 🟡 MED | open |
+| N1 | `OpponentModeling.on_step` 중복 정의 (line 341 vs 765 — F811) | 🟠 HIGH | ✅ resolved (commit e648ae4e) — 중복 삭제, 341행 단일 정의만 남음 |
+| N2 | `EconomyManager._prevent_resource_banking` / `_reduce_gas_workers` 재정의 (F811) | 🟡 MED | ✅ resolved (commit e648ae4e) — 각각 단일 정의 확인 |
+| N3 | `combat_manager._find_harass_target` 재정의 (line 2377 vs 4278) | 🟡 MED | ✅ resolved (commit e648ae4e) — 4992행 단일 정의만 남음 |
+| N4 | `production_resilience.build_terran_counters` 재정의 (1369 vs 1866) | 🟡 MED | ✅ resolved (commit e648ae4e) — 1961행 단일 정의만 남음 |
 | N5 | bare `except Exception:` 다수 (≈360+) — 이번 PR에서 12건 처리, 잔여 다수 | 🟢 LOW | partial |
 | N6 | F841 unused local variables (visuals/make_pptx 등) | 🟢 LOW | open (presentation 코드라 영향 작음) |
 
-검증 권장: PR 분리 (N1 단독 PR 권장 — 동작 변화 가능성).
+N1-N4는 2026-07-14 점검 사이클에서 `grep -n "def <method>"`로 실제 코드를 재확인해 각 메서드가 더 이상 중복 정의되어 있지 않음을 검증함(다른 항목들이 이미 손댄 관련 리팩터 과정에서 해소된 것으로 보임 — 이 문서가 갱신되지 않고 있었음).
+
+---
+
+## 🆕 신규 발견 (2026-07-14 점검 사이클)
+
+`tests/`, `wicked_zerg_challenger/tests/` collection error를 전부 제거(23건 → 0건)하고 나서 그동안 한 번도 실행되지 못했던 `wicked_zerg_challenger` 테스트 356→378개가 처음으로 실제 실행됐고, 그 결과 아래 4개의 진짜 로직 버그가 새로 드러남 (환경/의존성 문제 아님):
+
+| ID | 설명 | 우선순위 | 상태 |
+|----|------|---------|------|
+| N7 | `test_sprint4_combat_micro.py::test_lurker_burrows_when_at_nearest_choke` 실패 — `1 not found in set()`, lurker가 가장 가까운 choke에서 burrow해야 하는데 안 됨 (combat/micro_combat.py 관련) | 🟡 MED | open |
+| N8 | `test_sprint4_combat_micro.py::test_low_health_mutalisk_uses_regen_threshold_50_percent` 실패 — 체력 50% 이하 뮤탈리스크가 회피 이동(`move`)해야 하는데 액션이 발생하지 않음 (combat/mutalisk_micro.py) | 🟡 MED | open |
+| N9 | `test_zvt_phase1.py::test_zvt_safe_expand_selects_fast_lair_macro` / `test_zvp_phase2.py::test_zvp_stargate_selects_hydra_lair_macro` 실패 — 빌드오더가 Lair 매크로를 선택할 때 `morph` 액션 스텝이 생성되지 않고 `upgrade`만 있음 (build_order_system.py 빌드오더 스텝 분류 로직) | 🟡 MED | open |
+| N10 | (아키텍처) `UnitTypeId`/`AbilityId`/`UpgradeId`의 `except ImportError` 폴백 스텁이 파일마다 따로 손으로 만들어져 있고 필요한 멤버만 하드코딩됨 — sc2가 없는 환경에서 스텁에 없는 멤버를 쓰면 `AttributeError`. `utils/sc2_stub_types.py`(`AutoEnumStub`, metaclass 기반 open-ended fallback)를 새로 만들어 `build_order_system.py`, `early_defense_system.py`에는 적용했지만 동일 패턴이 다른 파일에도 다수 남아있음 (`advanced_scout_system_v2.py` 등) — 점진적으로 전환 필요 | 🟢 LOW | partial |
+
+검증: `pytest tests/ -q` (397 passed, 34 skipped, 0 failed), `pytest wicked_zerg_challenger/tests/ -q` (313 passed, 61 skipped, 4 failed — N7-N9).
 
 ---
 

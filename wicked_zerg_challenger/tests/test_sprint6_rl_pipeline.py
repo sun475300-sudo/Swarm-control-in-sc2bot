@@ -10,6 +10,8 @@ import unittest
 from pathlib import Path
 from types import SimpleNamespace
 
+import pytest
+pytest.importorskip("numpy")
 import numpy as np
 
 os.environ["PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION"] = "python"

@@ -33,17 +33,18 @@ try:
     from sc2.ids.upgrade_id import UpgradeId
     from sc2.position import Point2
 except ImportError:
+    from utils.sc2_stub_types import AutoEnumStub
 
     class BotAI:
         pass
 
-    class UnitTypeId:
+    class UnitTypeId(AutoEnumStub):
         pass
 
-    class AbilityId:
+    class AbilityId(AutoEnumStub):
         pass
 
-    class UpgradeId:
+    class UpgradeId(AutoEnumStub):
         pass
 
     class Point2:
