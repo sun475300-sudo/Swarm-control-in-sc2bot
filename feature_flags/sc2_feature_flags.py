@@ -205,7 +205,11 @@ class PercentageRollout:
     @staticmethod
     def compute_bucket(flag_name: str, user_id: str, num_buckets: int = 100) -> int:
         key = f"{flag_name}:{user_id}"
-        digest = hashlib.md5(key.encode("utf-8"), usedforsecurity=False).hexdigest()
+        # sha256 rather than md5: CodeQL flags any hash fed by an
+        # "*_id"-named value as a weak-hashing-of-sensitive-data alert
+        # regardless of usedforsecurity=False. Only the deterministic
+        # bucketing property matters here, so sha256 satisfies both.
+        digest = hashlib.sha256(key.encode("utf-8")).hexdigest()
         return int(digest[:8], 16) % num_buckets
 
     @staticmethod
