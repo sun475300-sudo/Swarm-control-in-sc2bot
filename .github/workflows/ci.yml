@@ -117,6 +117,11 @@ jobs:
         env:
           DRY_RUN: "true"
           LOG_LEVEL: "DEBUG"
+          # requirements.txt가 설치하는 s2clientprotocol의 생성된 _pb2.py가 최신
+          # protobuf(upb 백엔드)와 호환되지 않아 "Descriptors cannot be created
+          # directly" 에러로 collection이 전체 중단됨. sc2-bot-test 잡과 동일하게
+          # pure-Python 구현으로 강제.
+          PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION: "python"
 
   # ─────────────────────────────────────────────
   # SC2 봇 구문 검증 + 테스트

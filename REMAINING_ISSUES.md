@@ -4,24 +4,46 @@
 
 통합 문제 해결 후 발견된 추가 개선 사항들입니다.
 
-**Last refreshed:** 2026-04-27 (Issue #1, #2 → Resolved; Issue #6 partially resolved via Batch 3)
+**Last refreshed:** 2026-07-14 (테스트 사이클 점검 — N1~N4, Issue #3 재검증 후 해결 확인; 신규 테스트 버그 2건 수정)
 
 ---
 
-## 🆕 신규 발견 (PR #44, 2026-04-27)
+## 🆕 이번 사이클에서 수정 (2026-07-14)
+
+`pytest tests/` 전체 실행 시 발견된 실제 버그 2건을 수정했습니다 (기존에 열려있던 다른 draft PR 다수가 동일 증상을 각각 보고했지만 main에는 아직 반영되지 않은 상태였음):
+
+| 파일 | 문제 | 수정 |
+|------|------|------|
+| `tests/test_queen_transfusion.py` | `from sc2.ids.unit_typeid import UnitTypeId`를 가드 없이 import — `sc2` 미설치 환경에서 `tests/` 전체 collection이 중단됨 | 다른 테스트 파일과 동일한 `try/except ImportError: pytest.skip(...)` 패턴 적용 |
+| `tests/test_combat_phase_fsm.py` | 5개 테스트 헬퍼가 `asyncio.get_event_loop().run_until_complete(...)` 사용 — 다른 async 테스트가 먼저 실행되면 현재 스레드에 이벤트 루프가 없어 `RuntimeError` 발생 (order-dependent, 전체 스위트 실행 시 12건 실패) | `asyncio.run(...)`으로 교체 |
+
+수정 후 `pytest tests/`: **395 passed, 34 skipped, 0 failed** (수정 전: 83~93 failed, 환경에 따라 다름).
+
+## 🆕 신규 발견 (PR #44, 2026-04-27) — 2026-07-14 재검증 결과
 
 자동/수동 점검 사이클(테스트 → 코드 검사 → 개선 → 커밋/푸시 반복)에서 새로 식별된 항목.
 
 | ID | 설명 | 우선순위 | 상태 |
 |----|------|---------|------|
-| N1 | `OpponentModeling.on_step` 중복 정의 (line 341 vs 765 — F811) | 🟠 HIGH | open — 동작 영향(상위 on_step이 미실행) 가능 |
-| N2 | `EconomyManager._prevent_resource_banking` / `_reduce_gas_workers` 재정의 (F811) | 🟡 MED | open |
-| N3 | `combat_manager._find_harass_target` 재정의 (line 2377 vs 4278) | 🟡 MED | open |
-| N4 | `production_resilience.build_terran_counters` 재정의 (1369 vs 1866) | 🟡 MED | open |
-| N5 | bare `except Exception:` 다수 (≈360+) — 이번 PR에서 12건 처리, 잔여 다수 | 🟢 LOW | partial |
+| N1 | `OpponentModeling.on_step` 중복 정의 (line 341 vs 765 — F811) | 🟠 HIGH | ✅ 해결 확인 (`flake8 --select=F811 wicked_zerg_challenger` 결과 0건, 2026-07-14 재검증) |
+| N2 | `EconomyManager._prevent_resource_banking` / `_reduce_gas_workers` 재정의 (F811) | 🟡 MED | ✅ 해결 확인 (동일 검증) |
+| N3 | `combat_manager._find_harass_target` 재정의 (line 2377 vs 4278) | 🟡 MED | ✅ 해결 확인 (동일 검증) |
+| N4 | `production_resilience.build_terran_counters` 재정의 (1369 vs 1866) | 🟡 MED | ✅ 해결 확인 (동일 검증) |
+| N5 | bare `except Exception:` 다수 (≈360+) — 이번 PR에서 12건 처리, 잔여 다수 | 🟢 LOW | partial (미재검증) |
 | N6 | F841 unused local variables (visuals/make_pptx 등) | 🟢 LOW | open (presentation 코드라 영향 작음) |
 
-검증 권장: PR 분리 (N1 단독 PR 권장 — 동작 변화 가능성).
+N1~N4는 문서만 stale했고 코드에는 이미 반영되어 있었습니다. 별도 PR 불필요.
+
+## ⚠️ 운영상 발견된 문제: PR 적체 (2026-07-14)
+
+GitHub PR 목록 확인 결과 `claude/optimistic-edison-*` 브랜치로 **30개 이상의 draft PR (#428~#457)** 이 열려 있으며, 대부분 "CI 파이프라인 unblock", "asyncio FSM 테스트 수정", "sc2 import fallback" 등 **거의 동일한 증상을 반복해서 보고**하고 있습니다. 단 하나도 머지되지 않았고, `main`에서 마지막으로 실행된 `SC2 Bot CI/CD Pipeline` (2026-07-12)도 여전히 failure 상태입니다.
+
+**원인 추정**: 자동화 세션마다 새 브랜치가 생성되어 이전 세션의 수정 내용을 이어받지 못하고, 매번 같은 버그를 처음부터 다시 발견 → 수정 → draft PR 생성을 반복. "머지 금지, 사용자 검토 후 머지" 원칙(본 문서 및 `MASTER_TODO_SC2.md` S1 참조) 때문에 사용자가 직접 검토/정리하지 않는 한 계속 쌓이는 구조.
+
+**권장 조치 (사용자 결정 필요)**:
+1. 가장 최근/완성도 높은 PR(예: #457, 이번 사이클 기준 가장 테스트 커버리지가 넓음) 하나를 리뷰 후 머지하여 `main`의 CI를 실제로 고칠 것.
+2. 나머지 중복 PR(#428~#456)은 내용 비교 후 일괄 close 권장 — 실제 close는 사용자 승인 필요.
+3. 향후 사이클은 매번 `main`에서 새로 갈라지는 대신, 기존 열린 PR 중 하나를 이어서 작업하도록 지시하면 적체를 줄일 수 있음.
 
 ---
 
