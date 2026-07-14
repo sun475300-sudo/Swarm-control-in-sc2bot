@@ -58,7 +58,9 @@ class TestRLAgentSaveExperienceGuard(unittest.TestCase):
         leftovers = list(self.tmp_dir.glob("*.tmp*"))
         self.assertEqual(leftovers, [])
 
-    def test_interrupted_rename_returns_false_and_does_not_corrupt_existing_target(self):
+    def test_interrupted_rename_returns_false_and_does_not_corrupt_existing_target(
+        self,
+    ):
         target = self.tmp_dir / "experience.npz"
         # Seed an existing "good" file so we can prove it isn't clobbered
         # by a save that fails partway through the rename step.
