@@ -25,6 +25,12 @@ on:
 env:
   PYTHON_VERSION: "3.10"
   NODE_VERSION: "18"
+  # python-sc2's bundled s2clientprotocol still ships pre-protoc-3.19 generated
+  # _pb2.py stubs; recent `protobuf` releases refuse to load them via the C++
+  # backend ("Descriptors cannot be created directly"). Force the pure-Python
+  # implementation so `import sc2` keeps working without pinning burnysc2 to
+  # an old release. See https://developers.google.com/protocol-buffers/docs/news/2022-05-06#python-updates
+  PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION: "python"
 
 jobs:
   # ─────────────────────────────────────────────
