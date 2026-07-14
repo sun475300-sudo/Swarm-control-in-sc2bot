@@ -4,24 +4,27 @@
 
 통합 문제 해결 후 발견된 추가 개선 사항들입니다.
 
-**Last refreshed:** 2026-04-27 (Issue #1, #2 → Resolved; Issue #6 partially resolved via Batch 3)
+**Last refreshed:** 2026-07-14 (자동 점검 세션 — N1-N4, Issue #3-#6 재검증 완료: 모두 코드에 이미 반영되어 있음을 확인, 문서만 stale했던 상태)
 
 ---
 
-## 🆕 신규 발견 (PR #44, 2026-04-27)
+## ✅ 신규 발견 (PR #44, 2026-04-27) — 전체 재검증 완료 (2026-07-14)
 
 자동/수동 점검 사이클(테스트 → 코드 검사 → 개선 → 커밋/푸시 반복)에서 새로 식별된 항목.
+2026-07-14 세션에서 코드베이스를 재검사한 결과 N1-N4는 이미 단일 정의로 정리되어 있었습니다.
 
 | ID | 설명 | 우선순위 | 상태 |
 |----|------|---------|------|
-| N1 | `OpponentModeling.on_step` 중복 정의 (line 341 vs 765 — F811) | 🟠 HIGH | open — 동작 영향(상위 on_step이 미실행) 가능 |
-| N2 | `EconomyManager._prevent_resource_banking` / `_reduce_gas_workers` 재정의 (F811) | 🟡 MED | open |
-| N3 | `combat_manager._find_harass_target` 재정의 (line 2377 vs 4278) | 🟡 MED | open |
-| N4 | `production_resilience.build_terran_counters` 재정의 (1369 vs 1866) | 🟡 MED | open |
-| N5 | bare `except Exception:` 다수 (≈360+) — 이번 PR에서 12건 처리, 잔여 다수 | 🟢 LOW | partial |
-| N6 | F841 unused local variables (visuals/make_pptx 등) | 🟢 LOW | open (presentation 코드라 영향 작음) |
+| N1 | `OpponentModeling.on_step` 중복 정의 (line 341 vs 765 — F811) | 🟠 HIGH | ✅ resolved — `opponent_modeling.py`에 `on_step` 단일 정의만 존재 확인 (line 341) |
+| N2 | `EconomyManager._prevent_resource_banking` / `_reduce_gas_workers` 재정의 (F811) | 🟡 MED | ✅ resolved — 각 메서드 단일 정의만 존재 확인 |
+| N3 | `combat_manager._find_harass_target` 재정의 (line 2377 vs 4278) | 🟡 MED | ✅ resolved — 단일 정의만 존재 확인 |
+| N4 | `production_resilience.build_terran_counters` 재정의 (1369 vs 1866) | 🟡 MED | ✅ resolved — `local_training/production_resilience.py`에 단일 정의만 존재 확인 |
+| N5 | bare `except Exception:` 다수 (≈360+) — 이번 PR에서 12건 처리, 잔여 다수 | 🟢 LOW | open — 잔여 다수, 점진적 개선 대상 |
+| N6 | F841 unused local variables (visuals/make_pptx 등) | 🟢 LOW | open — `wicked_zerg_challenger/` 전체 flake8 F841 스캔 결과 130건 잔존 (2026-07-14 기준) |
 
-검증 권장: PR 분리 (N1 단독 PR 권장 — 동작 변화 가능성).
+CI(`sc2bot-ci.yml`)는 F811/F821을 `E9,F63,F7,F82`(치명적 에러)와 별개로 차단하지 않으므로,
+향후 회귀 방지를 위해 nightly 점검에 `flake8 --select=F811,F821 wicked_zerg_challenger/` 를
+정기적으로 포함시키는 것을 권장합니다 (현재는 0건).
 
 ---
 
@@ -67,9 +70,17 @@
 
 ---
 
-## 🟡 MEDIUM Priority Issues (still open)
+## ✅ Issue #3, #4, #5: 재검증 결과 (2026-07-14) — 모두 코드에 이미 구현되어 있음
 
-### Issue #3: Transfusion 우선순위 개선 필요
+| Issue | 구현 위치 | 확인 내용 |
+|-------|-----------|-----------|
+| #3 Transfusion 우선순위 | `wicked_zerg_challenger/economy/queen_transfusion_manager.py` | `HEAL_PRIORITY` dict, `CANNOT_HEAL` set, `_find_best_transfusion_target` 우선순위 정렬 — 문서의 제안 코드와 거의 동일하게 구현됨 |
+| #4 Resource Reservation Race Condition | `wicked_zerg_challenger/resource_manager.py` (`try_reserve`) | `defense_coordinator.py`, `economy_manager.py`에서 `self.bot.resource_manager.try_reserve(...)` 호출 확인 |
+| #5 Position 계산 중복 | `wicked_zerg_challenger/utils/position_utils.py` | `get_center_position`, `get_weighted_center` 존재 확인 |
+
+아래는 원래 제안 내용(참고용, 이미 반영됨)입니다.
+
+### Issue #3: Transfusion 우선순위 개선 필요 (✅ 구현 완료)
 
 **위치**: `queen_manager.py` 또는 `spell_unit_manager.py`
 
@@ -361,30 +372,35 @@ if iteration % SECOND == 0:
 
 ## 📊 이슈 우선순위 요약 (open만)
 
-| 우선순위 | 이슈 | 영향도 | 난이도 |
-|---------|------|--------|--------|
-| 🟡 MEDIUM | #3 Transfusion 우선순위 | 중간 | 중간 |
-| 🟡 MEDIUM | #4 Resource Race Condition | 낮음 | 중간 |
-| 🟢 LOW | #5 코드 중복 제거 | 낮음 | 쉬움 |
-| 🟢 LOW | #6 매직 넘버 | 낮음 | 쉬움 |
+| 우선순위 | 이슈 | 영향도 | 난이도 | 상태 |
+|---------|------|--------|--------|------|
+| 🟢 LOW | N5 bare except 잔여 | 낮음 | 쉬움 | open |
+| 🟢 LOW | N6 / #6 F841 unused var, 매직 넘버 | 낮음 | 쉬움 | open (130건, 2026-07-14 기준) |
 
-(Issue #1, #2 → ✅ Resolved 섹션 참조)
+(Issue #1, #2 → ✅ Resolved. N1-N4, #3, #4, #5 → ✅ 2026-07-14 재검증하여 이미 구현/해결 확인.)
 
 ---
 
-## 🎯 권장 수정 순서
+## 🎯 다음 작업 우선순위 (2026-07-14 기준, 대규모 점검에서 도출)
 
-### 1단계: 완료 (✅)
-~~1. Queen Inject 쿨다운 수정 (25 → 29)~~ — 코드 반영 완료, 본 문서 ✅ Resolved 섹션 참조
-~~2. 누락된 업그레이드 추가~~ — 코드 반영 완료, 본 문서 ✅ Resolved 섹션 참조
+### 1단계: 완료 (✅ 이번 세션)
+1. ~~`tests/test_combat_phase_fsm.py` 12건 실패~~ — Python 3.11에서 `asyncio.get_event_loop().run_until_complete()`가
+   `RuntimeError: no current event loop`로 깨지는 문제. `asyncio.run()`으로 교체하여 해결. (502 passed / 0 failed)
+2. ~~`wicked_zerg_challenger/combat_manager.py:_zergling_early_harass` 죽은 코드~~ — 아무 동작도 하지 않는
+   `try: pass / except ImportError: return` 블록 제거 (함수 자체는 완전히 구현되어 있었음, 혼란을 주는 잔재 코드였음).
+3. ~~`wicked_zerg_challenger/tools/check_missing_logic.py` 인코딩 손상~~ — 한글 주석/docstring이 `?` 문자로 깨져 있던 것을
+   UTF-8로 복원 (ROADMAP.md Task 1.1 "인코딩 에러 완전 제거"와 동일 범주).
+4. ~~N1-N4 (F811 중복 정의), Issue #3/#4/#5 (Transfusion 우선순위/Resource race/Position utils)~~ — 코드 재검사 결과
+   이미 모두 구현되어 있었음을 확인, 문서만 갱신.
 
-### 2단계: 로직 개선 (30분, 미진행)
-3. Transfusion 우선순위 시스템 구현
-
-### 3단계: 구조 개선 (1시간, 미진행)
-4. Resource Reservation 동기화
-5. Position Utils 유틸리티 함수 분리
-6. Constants 정리
+### 2단계: 다음 세션 후보 (우선순위순)
+5. 🟡 N5 — bare `except Exception:` 잔여 다수 정리 (silent failure 위험, 로깅 추가 권장)
+6. 🟡 N6/#6 — F841 unused local variable 130건 (`flake8 --select=F841 wicked_zerg_challenger/`) 정리
+7. 🟢 PLAN-NIGHTLY.md P2.2 — 벤치마크 러너 (N replay, APM/승률 리포트, vs Hard) — 미착수
+8. 🟢 PLAN-NIGHTLY.md P2.3 — 빌드오더 상수 `config/build_orders.yaml` externalize — 미착수
+9. 🟢 PLAN-NIGHTLY.md P2.4 — RL agent save-experience guard (disk-full/interrupted-rename 테스트) — 미착수
+10. 🟢 PLAN-NIGHTLY.md P2.5 — `core/resource_manager.py`, `core/manager_factory.py` type hints — 미착수
+11. 🟢 ROADMAP.md Sprint 6/7 — RL 실전 연동, StrategyManager 역할 분담(BuildingManager 분리) — 장기 미착수
 
 ---
 
@@ -403,16 +419,20 @@ if iteration % SECOND == 0:
 ### Code Quality
 - [ ] Type hints 추가 (Python 3.10+)
 - [ ] Docstring 완성도 검토
-- [ ] 에러 핸들링 일관성 확인
+- [ ] 에러 핸들링 일관성 확인 (N5)
 
 ---
 
 ## 📝 참고 사항
 
-### 현재 상태
+### 현재 상태 (2026-07-14 검증)
 - ✅ **치명적 통합 문제**: 완전히 해결됨
-- ✅ **모든 단위 테스트**: 통과 (16/16)
+- ✅ **`tests/` 스위트**: 502 passed / 0 failed / 14 skipped
+- ✅ **`wicked_zerg_challenger/tests/` 스위트**: 661 passed / 0 failed
 - ✅ **기본 기능**: 정상 작동
+- ⚠️ **두 테스트 스위트를 한 번의 pytest 세션에서 함께 실행하면 안 됨** — 최상위 `scripts/` 패키지와
+  `wicked_zerg_challenger/scripts/` 패키지 이름 충돌로 `test_meta_adapter.py`/`test_ladder_tracker.py` 수집 에러 발생.
+  CI(`sc2bot-ci.yml`, `ci.yml`)는 이미 두 스위트를 별도 invocation으로 실행하므로 실사용에는 영향 없음 — 백로그로만 기록.
 
 ### 위의 이슈들은
 - 모두 **선택적 개선 사항**
@@ -421,5 +441,5 @@ if iteration % SECOND == 0:
 
 ---
 
-**검토 완료일**: 2026-01-29
-**상태**: 추가 개선 사항 문서화 완료
+**검토 완료일**: 2026-07-14 (자동 점검 세션, 이전: 2026-01-29 / 2026-04-27)
+**상태**: N1-N4, #3-#5 재검증 완료 및 close. 다음 우선순위는 위 "2단계" 참조.
