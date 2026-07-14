@@ -64,6 +64,19 @@ graceful-degradation 특성이 깨짐. 단순 치환은 **비권장**. 후속 �
 
 검증 방법: PR 분리 없이 이번 커밋에 테스트 픽스 + 문서 갱신만 포함 (동작 변경 없음, 502/502 테스트 통과 확인).
 
+### 신규 발견: CI "Lint & Type Check" 잡이 `main`에서부터 이미 깨져 있음 (black 포맷 66개 파일)
+
+PR #457 CI에서 `black --check --diff .` 스텝이 실패로 나왔음. `main` 브랜치에서 동일 명령을 직접
+실행해본 결과 **이 PR과 무관하게 66개 파일이 이미 black 미준수 상태**임을 확인 (`strategy_manager.py`,
+`visuals/generate_*.py`, 다수의 `wicked_zerg_challenger/tests/*` 등). 이 PR에서 실제로 수정한
+`tests/test_combat_phase_fsm.py`는 black/isort 적용해서 통과시켰지만, 잡 자체는 저장소 전체를
+검사하므로 계속 실패로 표시될 것 — **이 PR이 유발한 문제가 아님**.
+
+**우선순위**: 🟠 HIGH (모든 PR의 CI를 빨갛게 만들어 신호 노이즈 유발) — 단, 66개 파일 일괄 재포맷은
+이번 PR과 무관한 대형 diff이므로 **별도 PR로 분리 권장** (기존 커밋 `940f521`도 "PR이 건드린 파일만"
+포맷하는 동일한 관례를 따랐음). 다음 사이클에서 `black . && isort .` 전체 실행 → 전체 테스트 통과
+확인 → 순수 포맷팅만 담은 단독 PR로 제출 권장.
+
 ---
 
 ## ✅ Resolved (확인일: 2026-04-27)
