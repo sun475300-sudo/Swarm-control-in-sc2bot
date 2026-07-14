@@ -4,7 +4,7 @@
 
 통합 문제 해결 후 발견된 추가 개선 사항들입니다.
 
-**Last refreshed:** 2026-04-27 (Issue #1, #2 → Resolved; Issue #6 partially resolved via Batch 3)
+**Last refreshed:** 2026-07-14 (Issues #3, #4, #5 confirmed resolved in code — see below; PLAN-NIGHTLY.md is now the canonical live tracker for new findings)
 
 ---
 
@@ -14,14 +14,12 @@
 
 | ID | 설명 | 우선순위 | 상태 |
 |----|------|---------|------|
-| N1 | `OpponentModeling.on_step` 중복 정의 (line 341 vs 765 — F811) | 🟠 HIGH | open — 동작 영향(상위 on_step이 미실행) 가능 |
-| N2 | `EconomyManager._prevent_resource_banking` / `_reduce_gas_workers` 재정의 (F811) | 🟡 MED | open |
-| N3 | `combat_manager._find_harass_target` 재정의 (line 2377 vs 4278) | 🟡 MED | open |
-| N4 | `production_resilience.build_terran_counters` 재정의 (1369 vs 1866) | 🟡 MED | open |
-| N5 | bare `except Exception:` 다수 (≈360+) — 이번 PR에서 12건 처리, 잔여 다수 | 🟢 LOW | partial |
-| N6 | F841 unused local variables (visuals/make_pptx 등) | 🟢 LOW | open (presentation 코드라 영향 작음) |
-
-검증 권장: PR 분리 (N1 단독 PR 권장 — 동작 변화 가능성).
+| N1 | `OpponentModeling.on_step` 중복 정의 (line 341 vs 765 — F811) | 🟠 HIGH | ✅ resolved — 2026-07-14 확인, `on_step` 정의 1개만 존재 (opponent_modeling.py:341) |
+| N2 | `EconomyManager._prevent_resource_banking` / `_reduce_gas_workers` 재정의 (F811) | 🟡 MED | ✅ resolved — 2026-07-14 확인, 각 메서드 정의 1개만 존재 |
+| N3 | `combat_manager._find_harass_target` 재정의 (line 2377 vs 4278) | 🟡 MED | ✅ resolved — 2026-07-14 확인, 정의 1개만 존재 (combat_manager.py:4992) |
+| N4 | `production_resilience.build_terran_counters` 재정의 (1369 vs 1866) | 🟡 MED | ✅ resolved — 2026-07-14 확인, 정의 1개만 존재 |
+| N5 | bare `except Exception:` 다수 (≈360+) — 이번 PR에서 12건 처리, 잔여 다수 | 🟢 LOW | partial (미검증, 재확인 필요) |
+| N6 | F841 unused local variables (visuals/make_pptx 등) | 🟢 LOW | open (presentation 코드라 영향 작음, 미검증) |
 
 ---
 
@@ -67,9 +65,21 @@
 
 ---
 
-## 🟡 MEDIUM Priority Issues (still open)
+## 🟡 MEDIUM Priority Issues
 
-### Issue #3: Transfusion 우선순위 개선 필요
+> **2026-07-14 갱신: #3, #4 모두 코드에 이미 구현되어 있음을 확인.** 아래 제안 코드는
+> 실제 구현과 세부사항은 다를 수 있으나 핵심 요구사항(우선순위 치료, 락 기반 예약)은
+> 충족됨. 참고용으로만 유지.
+
+### Issue #3: Transfusion 우선순위 개선 필요 — ✅ RESOLVED
+
+`wicked_zerg_challenger/economy/queen_transfusion_manager.py`에
+`HEAL_PRIORITY` 딕셔너리(line 26)와 `_find_best_transfusion_target`
+(line 145)로 이미 구현됨. `tests/test_queen_transfusion_manager.py`,
+`tests/test_queen_transfusion.py`에서 회귀 테스트 커버.
+
+<details>
+<summary>원본 제안 (참고용, 접기)</summary>
 
 **위치**: `queen_manager.py` 또는 `spell_unit_manager.py`
 
@@ -140,9 +150,19 @@ async def smart_transfusion(self, queen, damaged_units):
 
 **우선순위**: 🟡 MEDIUM (자원 효율성 개선)
 
+</details>
+
 ---
 
-### Issue #4: Resource Reservation Race Condition
+### Issue #4: Resource Reservation Race Condition — ✅ RESOLVED
+
+`wicked_zerg_challenger/core/resource_manager.py`에 `asyncio.Lock` 기반
+`try_reserve`/`release` 이미 구현됨 (line 36, 62, 105, 127, 248). 회귀
+테스트: `tests/test_resource_manager.py` (`test_concurrent_reservations`,
+`test_race_condition_prevention` 포함 10개 테스트, 전부 통과).
+
+<details>
+<summary>원본 제안 (참고용, 접기)</summary>
 
 **위치**: `resource_manager.py` (추정)
 
@@ -215,11 +235,23 @@ else:
 
 **우선순위**: 🟡 MEDIUM (안정성 개선, 드물게 발생)
 
+</details>
+
 ---
 
 ## 🟢 LOW Priority Issues
 
-### Issue #5: 코드 중복 - Position 계산
+### Issue #5: 코드 중복 - Position 계산 — 🟡 PARTIAL (헬퍼 존재하나 미사용)
+
+`wicked_zerg_challenger/utils/position_utils.py`에 `get_center_position`
+등 헬퍼가 이미 구현되어 있으나(2026-07-14 확인), 실제로 이를 import해서
+쓰는 파일이 하나도 없음 — 아래 6곳에 여전히 인라인 중복 계산이 남아있음:
+`battle_preparation_system.py:166`, `combat_manager.py:1622,3657`,
+`combat_phase_controller.py:591`, `idle_unit_manager.py:179`,
+`micro_controller.py:525`. PLAN-NIGHTLY.md P2.7로 이관.
+
+<details>
+<summary>원본 제안 (참고용, 접기)</summary>
 
 **위치**: 여러 파일에서 중복
 
@@ -294,6 +326,8 @@ center = get_center_position(army_units)
 
 **우선순위**: 🟢 LOW (코드 품질 개선)
 
+</details>
+
 ---
 
 ### Issue #6: 매직 넘버 (Magic Numbers)
@@ -359,16 +393,17 @@ if iteration % SECOND == 0:
 
 ---
 
-## 📊 이슈 우선순위 요약 (open만)
+## 📊 이슈 우선순위 요약 (2026-07-14 갱신 — 실제 open은 #5(partial), #6뿐)
 
-| 우선순위 | 이슈 | 영향도 | 난이도 |
-|---------|------|--------|--------|
-| 🟡 MEDIUM | #3 Transfusion 우선순위 | 중간 | 중간 |
-| 🟡 MEDIUM | #4 Resource Race Condition | 낮음 | 중간 |
-| 🟢 LOW | #5 코드 중복 제거 | 낮음 | 쉬움 |
-| 🟢 LOW | #6 매직 넘버 | 낮음 | 쉬움 |
+| 우선순위 | 이슈 | 상태 |
+|---------|------|------|
+| 🟡 PARTIAL | #5 코드 중복 제거 (position_utils 미사용) | PLAN-NIGHTLY.md P2.7 |
+| 🟢 LOW | #6 매직 넘버 (일부만 GameConstants 적용) | PLAN-NIGHTLY.md P2.6 (ROADMAP Task 7.3과 동일) |
 
-(Issue #1, #2 → ✅ Resolved 섹션 참조)
+(Issue #1, #2 → ✅ Resolved 섹션 참조; #3, #4 → 위 각 섹션에서 ✅ RESOLVED로 갱신됨)
+
+이 문서의 신규 발견 항목은 앞으로 `PLAN-NIGHTLY.md`에 기록한다 —
+이 파일은 2026-01-29/04-27 시점 스냅샷으로 유지하고 새로 추가하지 않음.
 
 ---
 
