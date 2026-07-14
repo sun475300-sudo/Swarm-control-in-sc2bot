@@ -25,6 +25,7 @@ sys.path.insert(
 
 from local_training.production_resilience import ProductionResilience
 import pytest
+
 pytest.importorskip("sc2")
 from sc2.ids.unit_typeid import UnitTypeId
 from sc2.position import Point2

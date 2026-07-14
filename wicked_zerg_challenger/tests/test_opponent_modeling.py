@@ -27,6 +27,7 @@ from opponent_modeling import (
     OpponentStyle,
 )
 import pytest
+
 pytest.importorskip("sc2")
 from sc2.position import Point2
 

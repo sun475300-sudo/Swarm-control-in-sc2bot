@@ -4,6 +4,7 @@ import sys
 import unittest
 
 import pytest
+
 pytest.importorskip("numpy")
 import numpy as np
 
