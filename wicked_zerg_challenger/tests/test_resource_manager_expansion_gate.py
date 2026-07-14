@@ -12,6 +12,9 @@ sys.path.insert(
 )
 
 from local_training.resource_manager import ResourceManager
+import pytest
+
+pytest.importorskip("sc2")
 from sc2.ids.unit_typeid import UnitTypeId
 
 

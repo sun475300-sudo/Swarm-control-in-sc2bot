@@ -8,6 +8,9 @@ from unittest.mock import Mock
 os.environ["PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION"] = "python"
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
+import pytest
+
+pytest.importorskip("sc2")
 from sc2.ids.unit_typeid import UnitTypeId
 from smart_resource_balancer import SmartResourceBalancer
 

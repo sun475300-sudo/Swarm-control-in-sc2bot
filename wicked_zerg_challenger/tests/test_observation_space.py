@@ -7,6 +7,9 @@ from unittest.mock import MagicMock
 os.environ["PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION"] = "python"
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
+import pytest
+
+pytest.importorskip("numpy")
 from local_training.sc2_env import SC2ActionSpace, SC2Observation, UnitTypeId
 
 

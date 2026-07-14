@@ -19,6 +19,9 @@ from io import StringIO
 # Add parent directory to path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
+import pytest
+
+pytest.importorskip("sc2")
 from difficulty_progression import DifficultyProgression
 
 # Mock sc2.data imports

@@ -3,6 +3,9 @@ import os
 import sys
 import unittest
 
+import pytest
+
+pytest.importorskip("numpy")
 import numpy as np
 
 os.environ["PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION"] = "python"

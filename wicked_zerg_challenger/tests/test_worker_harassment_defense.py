@@ -9,6 +9,8 @@ import unittest
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 from combat_manager import CombatManager
+import pytest
+pytest.importorskip("sc2")
 from sc2.ids.unit_typeid import UnitTypeId
 from sc2.position import Point2
 
