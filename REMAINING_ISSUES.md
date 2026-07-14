@@ -77,6 +77,23 @@ PR #457 CI에서 `black --check --diff .` 스텝이 실패로 나왔음. `main` 
 포맷하는 동일한 관례를 따랐음). 다음 사이클에서 `black . && isort .` 전체 실행 → 전체 테스트 통과
 확인 → 순수 포맷팅만 담은 단독 PR로 제출 권장.
 
+### ✅ 수정: "Python 린트 & 테스트" CI 잡의 protobuf 충돌 (pre-existing, main에서도 5월부터 실패 중)
+
+`.github/workflows/ci.yml`의 "pytest 실행 (전체)" 스텝이 `TypeError: Descriptors cannot be created
+directly` 로 14개 테스트 파일 collection 자체가 실패하고 있었음. `main`의 최근 워크플로 실행 이력을
+확인한 결과 **이 PR과 무관하게 최소 2026-05-28부터 반복적으로 실패 중**이었음 (2026-06-25 최신 완료
+실행도 failure).
+
+원인: 이 잡은 `requirements.txt` 전체(`google-generativeai` 등 포함)를 설치하는데, 이때 딸려오는
+protobuf 버전이 `s2clientprotocol`(burnysc2 의존성)이 번들한 구버전 `_pb2.py`와 호환되지 않음.
+반면 `burnysc2`만 좁게 설치하는 "SC2 봇 검증 & 테스트" 잡은 이 문제가 없어 통과함 — 즉 SC2 관련
+패키지가 아니라 `requirements.txt`의 다른 서비스(genai/discord/crypto) 의존성이 원인.
+
+**조치**: `requirements.txt`의 버전 고정 대신(다른 서비스에 영향 줄 위험), 해당 CI 스텝에만
+`PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python` env var 추가 — protobuf 공식 문서가 안내하는
+표준 워크어라운드로, 의존성 버전은 그대로 두고 순수 Python 구현으로 폴백시킴. 로컬에서 동일 env var로
+전체 502개 테스트 재검증 통과 확인.
+
 ---
 
 ## ✅ Resolved (확인일: 2026-04-27)
