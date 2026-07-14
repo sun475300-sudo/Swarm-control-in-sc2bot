@@ -5,6 +5,14 @@ pytest 공통 fixtures (#171)
 """
 
 import os
+
+# s2clientprotocol ships pb2 files generated against an older protobuf
+# runtime; newer protobuf (installed transitively by other requirements)
+# refuses to load them with "Descriptors cannot be created directly"
+# unless the pure-Python implementation is forced. Must be set before any
+# test module imports sc2 / s2clientprotocol / google.protobuf.
+os.environ.setdefault("PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION", "python")
+
 import shutil
 import sys
 import tempfile
