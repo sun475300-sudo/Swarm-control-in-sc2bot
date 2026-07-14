@@ -4,24 +4,65 @@
 
 통합 문제 해결 후 발견된 추가 개선 사항들입니다.
 
-**Last refreshed:** 2026-04-27 (Issue #1, #2 → Resolved; Issue #6 partially resolved via Batch 3)
+**Last refreshed:** 2026-07-14 (자동 점검 사이클 — 테스트 → 코드 검사 → 개선 → 커밋/푸시)
 
 ---
 
-## 🆕 신규 발견 (PR #44, 2026-04-27)
+## ✅ 2026-07-14 점검 사이클 결과
 
-자동/수동 점검 사이클(테스트 → 코드 검사 → 개선 → 커밋/푸시 반복)에서 새로 식별된 항목.
+전체 테스트(502 tests) 재실행 + `flake8 --select=F811,F821,F401,F841`로 `wicked_zerg_challenger/` 전체 재스캔.
 
-| ID | 설명 | 우선순위 | 상태 |
-|----|------|---------|------|
-| N1 | `OpponentModeling.on_step` 중복 정의 (line 341 vs 765 — F811) | 🟠 HIGH | open — 동작 영향(상위 on_step이 미실행) 가능 |
-| N2 | `EconomyManager._prevent_resource_banking` / `_reduce_gas_workers` 재정의 (F811) | 🟡 MED | open |
-| N3 | `combat_manager._find_harass_target` 재정의 (line 2377 vs 4278) | 🟡 MED | open |
-| N4 | `production_resilience.build_terran_counters` 재정의 (1369 vs 1866) | 🟡 MED | open |
-| N5 | bare `except Exception:` 다수 (≈360+) — 이번 PR에서 12건 처리, 잔여 다수 | 🟢 LOW | partial |
-| N6 | F841 unused local variables (visuals/make_pptx 등) | 🟢 LOW | open (presentation 코드라 영향 작음) |
+### 새로 발견 & 수정: 테스트 스위트 event-loop 버그
 
-검증 권장: PR 분리 (N1 단독 PR 권장 — 동작 변화 가능성).
+`tests/test_combat_phase_fsm.py`의 5개 헬퍼(`_run`)가 `asyncio.get_event_loop().run_until_complete(...)`를
+사용하고 있어, 전체 스위트를 실행할 때 다른 비동기 테스트가 먼저 이벤트 루프를 소비/종료시키면
+`RuntimeError: There is no current event loop in thread 'MainThread'`로 12개 테스트가 실패했음
+(단독 실행 시엔 통과 — 순서 의존적 flaky 실패). `asyncio.run(...)`으로 교체하여 루프 생성/정리를
+각 호출에 자기완결적으로 만듦. **502 passed, 0 failed, 14 skipped**로 회귀 확인 완료.
+
+### 이전 N1–N4 (F811 재정의) — 이미 해결됨, 문서만 stale했음
+
+재스캔 결과 `wicked_zerg_challenger/` 전체에서 **F811(재정의)/F821(미정의 이름) 0건**. 아래 항목은
+이전 사이클(PR #218 근방)에서 이미 코드에 반영된 상태였고, 이 문서만 갱신되지 않았던 것으로 확인:
+
+| ID | 설명 | 상태 |
+|----|------|------|
+| N1 | `OpponentModeling.on_step` 중복 정의 | ✅ 확인됨 — `opponent_modeling.py`에 `on_step` 정의 1개만 존재 |
+| N2 | `EconomyManager._prevent_resource_banking` / `_reduce_gas_workers` 재정의 | ✅ 확인됨 — 각 1개 정의만 존재 |
+| N3 | `combat_manager._find_harass_target` 재정의 | ✅ 확인됨 — 1개 정의만 존재 |
+| N4 | `production_resilience.build_terran_counters` 재정의 | ✅ 확인됨 — 1개 정의만 존재 |
+| N5 | bare `except Exception:` 다수 (468건) | 🟢 LOW — 대부분 의도된 방어적 코드(그레이스풀 디그레이드), 일괄 변경은 비권장 |
+| N6 | F841 unused local variables (130건, 주로 presentation/시각화 코드) | 🟢 LOW — 영향 작음, 후속 사이클로 이월 |
+
+### 이전 Issue #3 (Transfusion 우선순위) — 이미 해결됨
+
+`wicked_zerg_challenger/economy/queen_transfusion_manager.py`에 `QueenTransfusionManager`로 완전
+구현되어 있고 (`HEAL_PRIORITY` 13종 우선순위, `CANNOT_HEAL` 13종 제외 목록, 쿨다운/중복방지/오버힐
+방지 포함), `bot_step_integration.py`에서 실전 `on_step` 경로에 연동되어 활성 사용 중임을 확인.
+문서 제안보다 더 정교하게 이미 구현됨 — 별도 작업 불필요.
+
+### 신규 발견: `utils/position_utils.py`가 어디서도 import되지 않음 (dead code)
+
+Issue #5(포지션 계산 중복)를 해결하기 위해 만들어진 `get_center_position` 등 유틸리티 함수가 존재하지만
+실제로는 어떤 파일에서도 import되지 않고 있음. 한편 중심좌표 계산이 중복된 9개 파일 중 다수
+(`combat/expansion_defense.py`, `combat/combat_execution.py`, `combat/infestor_tactics.py`,
+`combat/micro_combat.py`, `combat_manager.py`)는 `from sc2.position import Point2`를 **try/except로
+가드**하여 sc2 미설치 환경에서도 임포트 가능하게 만든 의도적 설계인 반면, `position_utils.py`는
+모듈 최상단에서 무조건 `from sc2.position import Point2`를 수행함 — 이 상태로 그대로 갖다붙이면
+graceful-degradation 특성이 깨짐. 단순 치환은 **비권장**. 후속 작업 시 `position_utils.py`도
+동일한 try/except 가드를 적용한 뒤, 무조건 임포트 파일(`battle_preparation_system.py`,
+`idle_unit_manager.py`, `combat_phase_controller.py`, `micro_controller.py`)부터 우선 연동 권장.
+
+### 신규 발견: 최상위 기획 문서가 실제 코드 상태보다 크게 뒤처짐
+
+`TODO.md`(2026-01-25 작성)와 `ROADMAP.md`의 Sprint 1 항목(일꾼 괴롭힘 방어, 견제 유닛 복귀 로직,
+인코딩 에러 제거)을 검증한 결과 **전부 이미 코드에 구현되어 있음**
+(`combat_manager.py`의 `respond_to_worker_harassment` / `_return_worker_harassment_defenders` /
+`harass_kill_count`, `early_defense_system.py`의 비ASCII 문자 0건). 두 문서 모두 실제 진행 상황을
+반영하도록 갱신 필요 — 다음 사이클에서 `TODO.md`를 최신 상태로 재작성하거나 `docs/history/`로 이동
+권장 (STATUS.md의 P1.5 계획과 일치).
+
+검증 방법: PR 분리 없이 이번 커밋에 테스트 픽스 + 문서 갱신만 포함 (동작 변경 없음, 502/502 테스트 통과 확인).
 
 ---
 
