@@ -7,10 +7,50 @@ and optimizing healing efficiency in combat situations.
 
 from typing import TYPE_CHECKING, Dict, Optional
 
-from sc2.ids.ability_id import AbilityId
-from sc2.ids.unit_typeid import UnitTypeId
-from sc2.unit import Unit
-from sc2.units import Units
+try:
+    from sc2.ids.ability_id import AbilityId
+    from sc2.ids.unit_typeid import UnitTypeId
+    from sc2.unit import Unit
+    from sc2.units import Units
+except ImportError:  # 테스트 환경 fallback (sc2 미설치)
+
+    class AbilityId:  # type: ignore[no-redef]
+        TRANSFUSION_TRANSFUSION = "TRANSFUSION_TRANSFUSION"
+
+    class UnitTypeId:  # type: ignore[no-redef]
+        ULTRALISK = "ULTRALISK"
+        BROODLORD = "BROODLORD"
+        VIPER = "VIPER"
+        SWARMHOSTMP = "SWARMHOSTMP"
+        RAVAGER = "RAVAGER"
+        LURKERMP = "LURKERMP"
+        ROACH = "ROACH"
+        HYDRALISK = "HYDRALISK"
+        QUEEN = "QUEEN"
+        MUTALISK = "MUTALISK"
+        CORRUPTOR = "CORRUPTOR"
+        INFESTOR = "INFESTOR"
+        ZERGLING = "ZERGLING"
+        BANELING = "BANELING"
+        BANELINGCOCOON = "BANELINGCOCOON"
+        BROODLING = "BROODLING"
+        LOCUSTMP = "LOCUSTMP"
+        LOCUSTMPFLYING = "LOCUSTMPFLYING"
+        CHANGELING = "CHANGELING"
+        CHANGELINGMARINE = "CHANGELINGMARINE"
+        CHANGELINGZEALOT = "CHANGELINGZEALOT"
+        CHANGELINGZERGLING = "CHANGELINGZERGLING"
+        EGG = "EGG"
+        LARVA = "LARVA"
+        OVERLORD = "OVERLORD"
+        OVERSEER = "OVERSEER"
+
+    class Unit:  # type: ignore[no-redef]
+        pass
+
+    class Units:  # type: ignore[no-redef]
+        pass
+
 
 if TYPE_CHECKING:
     from sc2.bot_ai import BotAI

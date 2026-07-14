@@ -8,7 +8,11 @@ from types import SimpleNamespace
 from unittest.mock import MagicMock, patch
 
 import pytest
-from sc2.ids.unit_typeid import UnitTypeId
+
+from wicked_zerg_challenger.economy.queen_transfusion_manager import (
+    QueenTransfusionManager,
+    UnitTypeId,
+)
 
 # ---------------------------------------------------------------------------
 # Minimal stubs so we can import without a running SC2 environment
@@ -42,9 +46,6 @@ def _make_bot(time=120.0):
     bot.time = time
     bot.do = MagicMock()
     return bot
-
-
-from wicked_zerg_challenger.economy.queen_transfusion_manager import QueenTransfusionManager
 
 
 # ---------------------------------------------------------------------------

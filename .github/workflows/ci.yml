@@ -117,6 +117,10 @@ jobs:
         env:
           DRY_RUN: "true"
           LOG_LEVEL: "DEBUG"
+          # requirements.txt의 burnysc2(s2clientprotocol)가 구버전 스타일 _pb2.py를
+          # 생성하므로, 최신 protobuf 런타임과 충돌한다 ("Descriptors cannot be
+          # created directly"). sc2-bot-test 잡과 동일한 워크어라운드 적용.
+          PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION: python
 
   # ─────────────────────────────────────────────
   # SC2 봇 구문 검증 + 테스트
