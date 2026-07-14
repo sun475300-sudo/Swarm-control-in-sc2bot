@@ -616,7 +616,7 @@ class SC2ReplayLoader:
             if Path(demo.replay_path).name in path:
                 return demo
         # Return a placeholder for unknown files
-        replay_id = hashlib.md5(path.encode()).hexdigest()[:12]
+        replay_id = hashlib.md5(path.encode(), usedforsecurity=False).hexdigest()[:12]
         return ReplayDocument(
             replay_id=f"replay_{replay_id}",
             replay_path=path,
@@ -879,7 +879,9 @@ class SC2GameStateEncoder:
             "pvp",
         ]
         for kw in keywords:
-            seed = int(hashlib.md5(kw.encode()).hexdigest(), 16) % (2**31)
+            seed = int(
+                hashlib.md5(kw.encode(), usedforsecurity=False).hexdigest(), 16
+            ) % (2**31)
             vec = self._seeded_random_vector(seed)
             self.keyword_weights[kw] = vec
 
@@ -921,7 +923,8 @@ class SC2GameStateEncoder:
 
         # Add a content-hash component for text not covered by keywords
         hash_vec = self._seeded_random_vector(
-            int(hashlib.md5(text_lower.encode()).hexdigest(), 16) % (2**31)
+            int(hashlib.md5(text_lower.encode(), usedforsecurity=False).hexdigest(), 16)
+            % (2**31)
         )
         weight = 0.3 if matches > 0 else 1.0
         accumulator = VectorMath.add(accumulator, VectorMath.scale(hash_vec, weight))

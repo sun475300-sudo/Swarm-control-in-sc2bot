@@ -215,7 +215,7 @@ class SHAPCache:
         self._misses = 0
 
     def _key(self, game_state: np.ndarray) -> str:
-        return hashlib.md5(game_state.tobytes()).hexdigest()
+        return hashlib.md5(game_state.tobytes(), usedforsecurity=False).hexdigest()
 
     def get(self, game_state: np.ndarray) -> Optional[np.ndarray]:
         key = self._key(game_state)

@@ -73,10 +73,16 @@ jobs:
           cache: pip
 
       - name: Install dependencies
-        run: pip install -r requirements.txt pytest pytest-cov pytest-asyncio
+        run: pip install -r requirements.txt pytest pytest-cov pytest-asyncio pytest-timeout
 
       - name: Run unit tests
-        run: pytest tests/unit -v --cov=. --cov-report=xml --cov-report=term
+        run: pytest tests/ --ignore=tests/integration -v --cov=. --cov-report=xml --cov-report=term
+        env:
+          # burnysc2's bundled s2clientprotocol *_pb2.py stubs predate the
+          # protobuf version pip installs here; without this the upb/cpp
+          # backend raises "Descriptors cannot be created directly" at
+          # collection time for every sc2-importing test module.
+          PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION: python
 
       - name: Run integration tests
         run: pytest tests/integration -v --timeout=120

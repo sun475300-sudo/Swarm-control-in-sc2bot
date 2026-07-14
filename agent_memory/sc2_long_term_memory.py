@@ -132,7 +132,9 @@ class EpisodicMemory:
     ) -> MemoryEntry:
         """Record a game episode."""
         ts = time.time()
-        key = hashlib.md5(f"{ts}_{action}_{outcome.value}".encode()).hexdigest()[:12]
+        key = hashlib.md5(
+            f"{ts}_{action}_{outcome.value}".encode(), usedforsecurity=False
+        ).hexdigest()[:12]
         tags = [opponent_race, map_name, outcome.value]
         if extra_tags:
             tags.extend(extra_tags)

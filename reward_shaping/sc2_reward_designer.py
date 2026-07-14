@@ -166,7 +166,9 @@ class SC2GameState:
                 self.frame / 2000.0,
             ]
         )
-        return hashlib.md5(str(discretized).encode()).hexdigest()[:12]
+        return hashlib.md5(
+            str(discretized).encode(), usedforsecurity=False
+        ).hexdigest()[:12]
 
 
 # ─────────────────────────────────────────────

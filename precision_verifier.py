@@ -184,8 +184,8 @@ class UltraPrecisionVerifier:
         """Verify hash consistency across computations"""
         test_data = "WickedZergBotPro2026"
 
-        hash1 = hashlib.md5(test_data.encode()).hexdigest()
-        hash2 = hashlib.md5(test_data.encode()).hexdigest()
+        hash1 = hashlib.md5(test_data.encode(), usedforsecurity=False).hexdigest()
+        hash2 = hashlib.md5(test_data.encode(), usedforsecurity=False).hexdigest()
 
         precision = 1.0 if hash1 == hash2 else 0.0
 

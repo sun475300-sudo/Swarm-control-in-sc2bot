@@ -1112,7 +1112,9 @@ class ModelExporter:
                 {
                     "name": f"layer_{i}",
                     "weight_shape": list(layer.weight.shape),
-                    "weight_checksum": hashlib.md5(layer.weight.tobytes()).hexdigest(),
+                    "weight_checksum": hashlib.md5(
+                        layer.weight.tobytes(), usedforsecurity=False
+                    ).hexdigest(),
                     "bias_shape": list(layer.bias.shape),
                 }
             )
