@@ -655,10 +655,10 @@ class RLAgent:
             temp_actual = temp_base + ".npz"
 
             # 원자적으로 이름 변경 (Atomic Rename)
-            # Windows에서는 기존 파일이 있으면 rename이 실패할 수 있으므로 삭제 후 변경
-            if os.path.exists(path_str):
-                os.remove(path_str)
-            os.rename(temp_actual, path_str)
+            # os.replace()는 POSIX/Windows 모두에서 대상 파일을 원자적으로 덮어쓴다.
+            # (기존 파일을 먼저 삭제하는 방식은 rename 실패 시 데이터가 완전히
+            #  사라지는 구간이 생기므로 사용하지 않는다.)
+            os.replace(temp_actual, path_str)
 
             logger.info(
                 f"[OK] Experience saved atomically: {len(self.states)} states, {len(self.rewards)} rewards"
@@ -669,6 +669,13 @@ class RLAgent:
             import traceback
 
             traceback.print_exc()
+
+            # 실패한 임시 파일이 남아있으면 정리한다 (best-effort).
+            try:
+                if "temp_actual" in locals() and os.path.exists(temp_actual):
+                    os.remove(temp_actual)
+            except OSError:
+                pass
             return False
 
     def train_from_batch(

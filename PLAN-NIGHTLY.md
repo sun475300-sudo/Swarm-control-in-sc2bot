@@ -2,7 +2,7 @@
 
 > Owner: 선우 (sun475300@gmail.com)
 > Maintainer: nightly automation
-> Last refreshed: 2026-05-04
+> Last refreshed: 2026-07-14
 
 ---
 
@@ -11,9 +11,33 @@
 - Branch: `main`, last commit: queen transfusion + requirements-dev.txt session
 - Bot core: `wicked_zerg_challenger/` — 179+ Python files across 10+ subdirs.
 - `.gitattributes` enforces `* text=auto` ✅
-- CI: `sc2bot-ci.yml` runs black + isort + flake8 ✅ (all clean)
-- **Test suite: 468 pass / 15 skip / 0 fail** ✅ (was 398/20/0 two nights ago)
+- CI: `sc2bot-ci.yml` runs black + isort + flake8 ✅ (all clean per prior run; **black is
+  currently NOT clean repo-wide** — see Known Issues below, found 2026-07-14)
+- **Test suite: 1167 pass / 14 skip / 0 fail** ✅ (`tests/` + `wicked_zerg_challenger/tests/`
+  combined, 2026-07-14 — up from 468/15/0, suite has grown substantially since last refresh)
 - Queen transfusion logic: 3 bugs fixed (`is_idle` guard removed, target dedup, per-queen cooldown) ✅
+
+## Resolved this run (2026-07-14)
+
+| Item | File(s) | Notes |
+|------|---------|-------|
+| Test-order-dependent failures (12 tests) | `tests/test_combat_phase_fsm.py` | `_run()` helpers used `asyncio.get_event_loop().run_until_complete(...)`. Once any earlier test in the run made pytest-asyncio call `asyncio.set_event_loop(None)` at teardown, `get_event_loop()` stopped auto-creating a loop and raised `RuntimeError: There is no current event loop`. Replaced all 5 call sites with `asyncio.run(...)`, which owns its own loop lifecycle regardless of global state. |
+| Cross-file import poisoning | `tests/test_production_resilience.py` | Test inserted `wicked_zerg_challenger/local_training` directly onto `sys.path` (in addition to `wicked_zerg_challenger`, which was the only insert actually needed). That exposed `local_training/scripts/` — a **regular** package (has `__init__.py`) — as the top-level `scripts` module. Once Python resolved `scripts` to that path first, `wicked_zerg_challenger/tests/test_ladder_tracker.py` and `test_meta_adapter.py` (which need the real root-level `scripts/ladder_tracker.py` / `scripts/meta_adapter.py`) failed with `ModuleNotFoundError: No module named 'scripts.ladder_tracker'` for the rest of the run. Removed the unnecessary sys.path insert. |
+| Non-atomic experience save (data-loss window) | `wicked_zerg_challenger/local_training/rl_agent.py` (`RLAgent.save_experience_data`) | Old code did `os.remove(path)` then `os.rename(tmp, path)` — if the rename step failed (disk full, interrupted process, permission error) between those two calls, the previously-saved experience file was gone with nothing to replace it: a real data-loss bug, not just non-atomic in theory. Replaced with a single `os.replace(tmp, path)` (atomically overwrites on both POSIX and Windows) and added best-effort temp-file cleanup on failure. Closes PLAN-NIGHTLY P2.4 (guard test now exists). |
+| P2.4 guard test (new) | `tests/test_rl_agent_save_experience.py` | 4 new tests: successful save, no leftover temp file on success, existing file survives a forced `os.replace` failure, temp file cleaned up after a forced failure. |
+| Broken CI job (`sc2bot-ci.yml`) | `.github/workflows/sc2bot-ci.yml` | The `test` job's "Run unit tests" step ran `pytest tests/unit` — that directory has never existed in this repo (only `tests/integration` does), so this job has been failing on every push/PR. Repointed at `pytest tests/ wicked_zerg_challenger/tests/ --ignore=tests/integration` (also picks up `requirements-dev.txt` so pytest-asyncio/mock/timeout plugins are installed) — this also means the ~650 tests under `wicked_zerg_challenger/tests/` start running in CI for the first time. |
+
+## Known issues (found 2026-07-14, not yet fixed)
+
+- **`black --check --diff .` is not clean repo-wide.** The `lint` job in `sc2bot-ci.yml` runs
+  this without `continue-on-error`, so CI's lint job is likely red independent of any code
+  change. Needs a repo-wide `black .` pass (large, mechanical diff — do as its own PR, not
+  bundled with logic changes) or relaxing the CI gate. Not fixed this run to avoid an
+  unreviewable mega-diff riding along with the bug fixes above.
+- `REMAINING_ISSUES.md` was stale: Issues #3 (transfusion priority), #4 (resource-reservation
+  lock), #5 (position_utils dedup) were all already implemented in code
+  (`queen_manager._transfuse_injured_units`, `economy_manager`/`resource_manager.try_reserve`,
+  `utils/position_utils.py`) — doc updated to reflect reality instead of re-doing the work.
 
 ## Resolved this run (2026-05-03)
 
@@ -49,10 +73,10 @@
 
 | #    | Item                                            | Status | Notes |
 |------|-------------------------------------------------|--------|-------|
-| P2.1 | Force-accumulation FSM tests                    | ✅ Done | `tests/test_combat_phase_fsm.py` — 23 tests all passing. |
+| P2.1 | Force-accumulation FSM tests                    | ✅ Done | `tests/test_combat_phase_fsm.py` — 23 tests all passing (fixed a test-order-dependent failure in this file 2026-07-14). |
 | P2.2 | Benchmark runner                                | ❌ Open | Single command, N replays, APM/supply/win-rate report vs Hard. |
 | P2.3 | Build-order config externalisation              | ❌ Open | Move top-20 hardcoded values to `config/build_orders.yaml`. |
-| P2.4 | RL agent save-experience guard                  | ❌ Open | Unit test for save under disk-full / interrupted-rename. |
+| P2.4 | RL agent save-experience guard                  | ✅ Done | Fixed a real data-loss window in `save_experience_data` (remove-then-rename → `os.replace`) + 4 new tests in `tests/test_rl_agent_save_experience.py` (2026-07-14). |
 | P2.5 | Type hints + docstring pass on core modules     | ❌ Open | `core/resource_manager.py`, `core/manager_factory.py`. |
 
 ## Long-term direction
@@ -94,3 +118,4 @@ Run `E:\GitHub\Swarm-control-in-sc2bot\scripts\commit_nightly_2026-05-03.bat`:
 - **2026-05-01** — P1.1 scout cadence, P1.2 harassment, P1.3 expansion timing, P1.5 doc history. Commit blocked by index.lock.
 - **2026-05-02** — P0 scout import mismatch fixed. P1.4 deprecation shim. P2.1 FSM tests 23/23 pass.
 - **2026-05-03** — **Test suite cleared:** 90 failures → 0. Fixed pytest-asyncio, torch stubs (qmix/mappo), stale __init__ exports (mappo/comm_learning), gas threshold test, crypto skipif guards. Final: 398 pass / 20 skip / 0 fail.
+- **2026-07-14** — Full-suite run (`tests/` + `wicked_zerg_challenger/tests/`, 1173 collected): fixed a test-order-dependent event-loop failure (`test_combat_phase_fsm.py`), a `sys.path` import-poisoning bug (`test_production_resilience.py` breaking `test_ladder_tracker.py`/`test_meta_adapter.py`), a real data-loss window in `RLAgent.save_experience_data` (closes P2.4), and a broken `sc2bot-ci.yml` test job pointing at a nonexistent `tests/unit` directory. Final: 1167 pass / 14 skip / 0 fail. Flagged (not fixed): `black --check` not clean repo-wide.
