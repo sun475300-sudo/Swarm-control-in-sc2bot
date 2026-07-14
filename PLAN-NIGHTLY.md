@@ -58,6 +58,7 @@
 | P2.5 | Type hints + docstring pass on core modules     | ❌ Open | `core/resource_manager.py`, `core/manager_factory.py`. |
 | P2.6 | Clean up F841 unused-variable warnings           | ❌ Open | 130 occurrences across `wicked_zerg_challenger/` (`flake8 --select=F841`), non-blocking in CI. |
 | P2.7 | Fix `scripts` package name collision             | ❌ Open | Top-level `scripts/` vs `wicked_zerg_challenger/scripts/` collide when both test suites run in one pytest session. Only matters if the two CI steps get merged. |
+| P2.8 | Whole-repo `black` formatting debt               | ❌ Open | `.github/workflows/ci.yml` "Lint & Type Check" job runs `black --check --diff .` (repo-wide, not diff-scoped) and fails: 65 files need reformatting (confirmed pre-existing on `main`, e.g. `wicked_zerg_challenger/strategy_manager.py`, `wicked_zerg_challenger/visuals/generate_presentation_visuals.py`). Mechanical fix (`black .`), but large blast radius — do as its own dedicated PR, not bundled into an unrelated bugfix. |
 
 ## Long-term direction
 
