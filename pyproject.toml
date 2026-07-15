@@ -14,3 +14,18 @@ known_first_party = [
   "scripts",
   "tools",
 ]
+
+[tool.mypy]
+# The repo root has 500+ unrelated one-off experiment dirs (bytewax_stream,
+# haystack_pipeline, opensearch_search, ...) that reuse filenames like
+# sc2_dataflow.py / sc2_search.py across directories with no __init__.py,
+# which makes mypy abort with "Duplicate module named ...". Scope checking
+# to the actual SC2 bot package instead of the whole mega-repo.
+files = ["wicked_zerg_challenger", "tests"]
+exclude = [
+  'wicked_zerg_challenger/visuals/Swarm-Net_Visuals_Package/',
+]
+# wicked_zerg_challenger has no __init__.py anywhere, so mypy's default
+# module-name inference finds the same file under two different qualified
+# names ("Source file found twice..."); explicit_package_bases fixes that.
+explicit_package_bases = true
