@@ -52,7 +52,7 @@ jobs:
 
       - name: Run mypy (non-blocking, informational)
         continue-on-error: true
-        run: mypy . --ignore-missing-imports --strict
+        run: mypy --ignore-missing-imports --strict
 
       - name: Run bandit (security — non-blocking, informational)
         continue-on-error: true
