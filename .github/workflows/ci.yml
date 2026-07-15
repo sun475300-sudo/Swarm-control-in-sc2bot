@@ -117,6 +117,11 @@ jobs:
         env:
           DRY_RUN: "true"
           LOG_LEVEL: "DEBUG"
+          # burnysc2's s2clientprotocol ships _pb2.py files generated against an
+          # older protoc; the upb/C++ protobuf runtime rejects them at import time
+          # with "Descriptors cannot be created directly". The sc2-bot-test job
+          # below already works around this the same way.
+          PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION: python
 
   # ─────────────────────────────────────────────
   # SC2 봇 구문 검증 + 테스트
