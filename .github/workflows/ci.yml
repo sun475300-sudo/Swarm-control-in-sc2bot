@@ -117,6 +117,11 @@ jobs:
         env:
           DRY_RUN: "true"
           LOG_LEVEL: "DEBUG"
+          # s2clientprotocol's generated _pb2.py files predate protobuf 5's
+          # C++ backend; without this, collecting any sc2-importing test
+          # crashes with "Descriptors cannot be created directly" (same fix
+          # already applied to the sc2-bot-test job's pytest step below).
+          PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION: python
 
   # ─────────────────────────────────────────────
   # SC2 봇 구문 검증 + 테스트
