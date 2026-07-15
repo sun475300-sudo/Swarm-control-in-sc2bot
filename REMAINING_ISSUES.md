@@ -4,24 +4,47 @@
 
 통합 문제 해결 후 발견된 추가 개선 사항들입니다.
 
-**Last refreshed:** 2026-04-27 (Issue #1, #2 → Resolved; Issue #6 partially resolved via Batch 3)
+**Last refreshed:** 2026-07-15 (자동 점검 사이클 — pytest 전체 재실행 + flake8 F811/F821/F841 재검증)
+
+### ✅ 2026-07-15 점검 결과 요약
+- `tests/test_combat_phase_fsm.py`: `asyncio.get_event_loop().run_until_complete(...)`가 Python 3.11 환경에서
+  "no current event loop" RuntimeError로 12건 실패 → `asyncio.run(...)`으로 교체, 23/23 통과로 복구.
+- 전체 테스트 스위트: **505 passed, 11 skipped, 0 failed** (516 collected).
+- N1~N4 (F811 중복 정의: OpponentModeling.on_step, EconomyManager, combat_manager, production_resilience) →
+  코드베이스에 더 이상 존재하지 않음. **이미 해결됨** (이전 PR #218 사이클에서 처리된 것으로 확인).
+- Issue #3 (Transfusion 우선순위) → `wicked_zerg_challenger/economy/queen_transfusion_manager.py`에
+  `QueenTransfusionManager` + `HEAL_PRIORITY`/`CANNOT_HEAL`로 구현 완료, `bot_step_integration.py`에서 실제 호출됨. **해결됨**.
+- Issue #4 (Resource Reservation Race) → `wicked_zerg_challenger/core/resource_manager.py`에
+  `asyncio.Lock` 기반 `try_reserve`/`release` 구현 완료. **해결됨**.
+- Issue #5 (Position 계산 중복) → `wicked_zerg_challenger/utils/position_utils.py` 존재. **해결됨**.
+- 잔여: N5(bare except 다수), N6/Issue #6(F841 unused var·매직넘버, 대부분 저영향), 그리고 아래 신규 항목 N7.
 
 ---
 
-## 🆕 신규 발견 (PR #44, 2026-04-27)
-
-자동/수동 점검 사이클(테스트 → 코드 검사 → 개선 → 커밋/푸시 반복)에서 새로 식별된 항목.
+## 🆕 신규 발견 (2026-07-15 점검)
 
 | ID | 설명 | 우선순위 | 상태 |
 |----|------|---------|------|
-| N1 | `OpponentModeling.on_step` 중복 정의 (line 341 vs 765 — F811) | 🟠 HIGH | open — 동작 영향(상위 on_step이 미실행) 가능 |
-| N2 | `EconomyManager._prevent_resource_banking` / `_reduce_gas_workers` 재정의 (F811) | 🟡 MED | open |
-| N3 | `combat_manager._find_harass_target` 재정의 (line 2377 vs 4278) | 🟡 MED | open |
-| N4 | `production_resilience.build_terran_counters` 재정의 (1369 vs 1866) | 🟡 MED | open |
-| N5 | bare `except Exception:` 다수 (≈360+) — 이번 PR에서 12건 처리, 잔여 다수 | 🟢 LOW | partial |
+| N7 | F811 중복 import (`cirq_quantum/quantum_circuits.py`, `discord_advanced_features.py`, `jax_flax_rl/flax_policy.py`, `pennylane_qml/quantum_policy.py`, `spark_jobs/sc2_replay_analytics.py`, `tianshou_rl/tianshou_trainer.py`) | 🟢 LOW | open — SC2 봇 핵심 로직과 무관한 실험적 통합 모듈, 동작 영향 없음(지역 변수 재바인딩) |
+| N8 | `combat_manager.py`에 `except Exception as e:` 후 `e` 미사용 패턴 다수 (~25건) | 🟢 LOW | open — 로깅 누락 가능성 있어 디버깅 시 원인 파악 어려움 |
+
+---
+
+## ✅ N1~N6 이전 사이클 (참고용, 2026-04-27 기준 — 현재는 모두 해결/재분류됨)
+
+<details>
+<summary>펼치기</summary>
+
+| ID | 설명 | 우선순위 | 상태 |
+|----|------|---------|------|
+| N1 | `OpponentModeling.on_step` 중복 정의 (line 341 vs 765 — F811) | 🟠 HIGH | ✅ Resolved (2026-07-15 확인, 코드에 중복 없음) |
+| N2 | `EconomyManager._prevent_resource_banking` / `_reduce_gas_workers` 재정의 (F811) | 🟡 MED | ✅ Resolved |
+| N3 | `combat_manager._find_harass_target` 재정의 (line 2377 vs 4278) | 🟡 MED | ✅ Resolved |
+| N4 | `production_resilience.build_terran_counters` 재정의 (1369 vs 1866) | 🟡 MED | ✅ Resolved |
+| N5 | bare `except Exception:` 다수 (≈360+) | 🟢 LOW | partial (N8로 세분화) |
 | N6 | F841 unused local variables (visuals/make_pptx 등) | 🟢 LOW | open (presentation 코드라 영향 작음) |
 
-검증 권장: PR 분리 (N1 단독 PR 권장 — 동작 변화 가능성).
+</details>
 
 ---
 
@@ -67,9 +90,14 @@
 
 ---
 
-## 🟡 MEDIUM Priority Issues (still open)
+## 🟡 MEDIUM Priority Issues (2026-07-15: 모두 해결 확인, 원문은 이력 참고용으로 보존)
 
-### Issue #3: Transfusion 우선순위 개선 필요
+### Issue #3: Transfusion 우선순위 개선 필요 — ✅ Resolved
+
+**해결 확인**: `wicked_zerg_challenger/economy/queen_transfusion_manager.py`의 `QueenTransfusionManager`가
+아래 초안보다 더 정교한 버전(13개 유닛 타입 우선순위, CANNOT_HEAL 13종, 큐언별 캐스트 쿨다운,
+이터레이션 내 중복 타겟팅 방지)으로 이미 구현되어 있고 `bot_step_integration.py:1959`에서 매 스텝 호출됨.
+아래는 원안(참고용, 이미 대체됨):
 
 **위치**: `queen_manager.py` 또는 `spell_unit_manager.py`
 
@@ -142,7 +170,10 @@ async def smart_transfusion(self, queen, damaged_units):
 
 ---
 
-### Issue #4: Resource Reservation Race Condition
+### Issue #4: Resource Reservation Race Condition — ✅ Resolved
+
+**해결 확인**: `wicked_zerg_challenger/core/resource_manager.py`에 `asyncio.Lock` 기반
+`try_reserve()`/`release()`가 구현되어 있음. 아래는 원안(참고용, 이미 대체됨):
 
 **위치**: `resource_manager.py` (추정)
 
@@ -219,7 +250,10 @@ else:
 
 ## 🟢 LOW Priority Issues
 
-### Issue #5: 코드 중복 - Position 계산
+### Issue #5: 코드 중복 - Position 계산 — ✅ Resolved
+
+**해결 확인**: `wicked_zerg_challenger/utils/position_utils.py`에 `get_center_position`/`get_weighted_center`
+구현 완료. 아래는 원안(참고용, 이미 대체됨):
 
 **위치**: 여러 파일에서 중복
 
@@ -359,32 +393,34 @@ if iteration % SECOND == 0:
 
 ---
 
-## 📊 이슈 우선순위 요약 (open만)
+## 📊 이슈 우선순위 요약 (open만, 2026-07-15 갱신)
 
 | 우선순위 | 이슈 | 영향도 | 난이도 |
 |---------|------|--------|--------|
-| 🟡 MEDIUM | #3 Transfusion 우선순위 | 중간 | 중간 |
-| 🟡 MEDIUM | #4 Resource Race Condition | 낮음 | 중간 |
-| 🟢 LOW | #5 코드 중복 제거 | 낮음 | 쉬움 |
-| 🟢 LOW | #6 매직 넘버 | 낮음 | 쉬움 |
+| 🟢 LOW | N7 F811 중복 import (실험적 모듈 6개 파일) | 낮음 | 쉬움 |
+| 🟢 LOW | N8 combat_manager.py `except...as e` 미사용 (~25건) | 낮음 (디버깅 편의) | 쉬움 |
+| 🟢 LOW | #6 매직 넘버 잔여분 | 낮음 | 쉬움 |
 
-(Issue #1, #2 → ✅ Resolved 섹션 참조)
+(Issue #1~#5 → ✅ Resolved 섹션 참조. N1~N4 → ✅ Resolved. N5 → N8로 세분화)
 
 ---
 
 ## 🎯 권장 수정 순서
 
-### 1단계: 완료 (✅)
-~~1. Queen Inject 쿨다운 수정 (25 → 29)~~ — 코드 반영 완료, 본 문서 ✅ Resolved 섹션 참조
-~~2. 누락된 업그레이드 추가~~ — 코드 반영 완료, 본 문서 ✅ Resolved 섹션 참조
+### 완료 (✅, 2026-07-15 기준)
+~~1. Queen Inject 쿨다운 수정 (25 → 29)~~
+~~2. 누락된 업그레이드 추가~~
+~~3. Transfusion 우선순위 시스템~~
+~~4. Resource Reservation 동기화~~
+~~5. Position Utils 유틸리티 함수 분리~~
+~~N1~N4. F811 중복 정의 4건~~
+~~test_combat_phase_fsm.py asyncio.get_event_loop() RuntimeError 12건~~
 
-### 2단계: 로직 개선 (30분, 미진행)
-3. Transfusion 우선순위 시스템 구현
-
-### 3단계: 구조 개선 (1시간, 미진행)
-4. Resource Reservation 동기화
-5. Position Utils 유틸리티 함수 분리
-6. Constants 정리
+### 다음 사이클 후보 (미진행)
+- N7: 실험적 통합 모듈(quantum/jax/spark 등) F811 정리
+- N8: combat_manager.py 예외 로깅 보강 (`except Exception as e` → 실제 `logger.debug(e)` 사용)
+- #6: 잔여 매직 넘버 GameConfig 이관
+- MASTER_TODO_SC2.md의 CI/린트/PR 정리 항목 재점검 (문서가 2026-04-26 기준으로 stale — PR 번호가 현재 상태와 불일치할 수 있음)
 
 ---
 
@@ -409,17 +445,20 @@ if iteration % SECOND == 0:
 
 ## 📝 참고 사항
 
-### 현재 상태
+### 현재 상태 (2026-07-15 재검증)
 - ✅ **치명적 통합 문제**: 완전히 해결됨
-- ✅ **모든 단위 테스트**: 통과 (16/16)
+- ✅ **전체 테스트 스위트**: 505 passed / 11 skipped / 0 failed (516 collected)
 - ✅ **기본 기능**: 정상 작동
+- ✅ **F811 중복 정의 (핵심 모듈)**: 발견되지 않음
 
 ### 위의 이슈들은
-- 모두 **선택적 개선 사항**
+- 모두 **선택적 개선 사항** (N7/N8/#6 제외 전부 해결됨)
 - 즉시 수정 불필요
 - 점진적 개선 권장
 
 ---
+
+**최근 갱신**: 2026-07-15 — 자동 점검 사이클 (pytest 전체 재실행, flake8 F811/F821/F841 스캔, 이전 항목 재검증)
 
 **검토 완료일**: 2026-01-29
 **상태**: 추가 개선 사항 문서화 완료

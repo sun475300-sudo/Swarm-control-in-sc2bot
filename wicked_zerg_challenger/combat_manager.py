@@ -1011,6 +1011,7 @@ class CombatManager:
                             self.bot.do(unit.attack(target))
                         except (AttributeError, TypeError) as e:
                             # Unit command failed
+                            self.logger.debug(f"Unit command failed: {e}")
                             continue
                     for u in attack_units:
                         available_ground.discard(u.tag)
@@ -1033,6 +1034,7 @@ class CombatManager:
                             self.bot.do(unit.attack(target))
                         except (AttributeError, TypeError) as e:
                             # Unit command failed
+                            self.logger.debug(f"Unit command failed: {e}")
                             continue
                     # 로그 (30초마다)
                     if int(game_time) % 30 == 0 and self.bot.iteration % 22 == 0:
@@ -1052,6 +1054,7 @@ class CombatManager:
                             self.bot.do(unit.attack(target))
                         except (AttributeError, TypeError) as e:
                             # Unit command failed
+                            self.logger.debug(f"Unit command failed: {e}")
                             continue
                     # Remove from available pool
                     for u in attack_units:
@@ -1133,6 +1136,7 @@ class CombatManager:
                         available_ground.discard(unit.tag)
                     except (AttributeError, TypeError) as e:
                         # Unit command failed
+                        self.logger.debug(f"Unit command failed: {e}")
                         continue
 
             elif task_name == "major_timing_attack":
@@ -1145,6 +1149,7 @@ class CombatManager:
                             self.bot.do(unit.attack(target))
                         except (AttributeError, TypeError) as e:
                             # Unit command failed
+                            self.logger.debug(f"Unit command failed: {e}")
                             continue
                     # Remove from available pool
                     for u in attack_units:
@@ -1312,6 +1317,7 @@ class CombatManager:
                     self.bot.do(unit.attack(threat_position))
                 except (AttributeError, TypeError) as e:
                     # Unit command failed
+                    self.logger.debug(f"Unit command failed: {e}")
                     continue
             return
 
@@ -1361,6 +1367,7 @@ class CombatManager:
                     self.bot.do(queen.move(threat_position))
             except (AttributeError, TypeError) as e:
                 # Queen defense command failed
+                self.logger.debug(f"Queen defense command failed: {e}")
                 continue
 
         # 스파인 크롤러 타겟팅 (고위협 유닛 우선)
@@ -1416,6 +1423,7 @@ class CombatManager:
                     self.bot.do(unit.attack(threat_position))
             except (AttributeError, TypeError) as e:
                 # Defense unit attack failed
+                self.logger.debug(f"Defense unit attack failed: {e}")
                 continue
 
     async def _execute_combat(self, units: Units, enemy_units):
@@ -2783,6 +2791,7 @@ class CombatManager:
                     self.bot.do(muta.attack(target))
                 except (AttributeError, TypeError) as e:
                     # Unit command failed
+                    self.logger.debug(f"Unit command failed: {e}")
                     continue
 
     async def _mutalisk_harass(self, mutalisks, enemy_units, iteration: int):
@@ -2884,6 +2893,7 @@ class CombatManager:
                     self.bot.do(muta.attack(self._air_harass_target))
                 except (AttributeError, TypeError) as e:
                     # Unit command failed
+                    self.logger.debug(f"Unit command failed: {e}")
                     continue
 
     async def _zergling_early_harass(self, zerglings, enemy_units, iteration: int):
@@ -3245,6 +3255,7 @@ class CombatManager:
                 self.bot.do(muta.attack(best_target))
             except (AttributeError, TypeError) as e:
                 # Mutalisk attack failed
+                self.logger.debug(f"Mutalisk attack failed: {e}")
                 continue
 
     async def _mutalisk_retreat(self, mutalisks):
@@ -3263,6 +3274,7 @@ class CombatManager:
                     self.bot.do(muta.move(retreat_pos))
                 except (AttributeError, TypeError) as e:
                     # Unit command failed
+                    self.logger.debug(f"Unit command failed: {e}")
                     continue
 
     async def _mutalisk_attack(self, mutalisks, enemy_units):
@@ -3320,6 +3332,7 @@ class CombatManager:
                     self.bot.do(muta.attack(target))
                 except (AttributeError, TypeError) as e:
                     # Unit command failed
+                    self.logger.debug(f"Unit command failed: {e}")
                     continue
         else:
             # Standard attack
@@ -3328,6 +3341,7 @@ class CombatManager:
                     self.bot.do(muta.attack(target))
                 except (AttributeError, TypeError) as e:
                     # Unit command failed
+                    self.logger.debug(f"Unit command failed: {e}")
                     continue
 
     def _select_mutalisk_target(self, enemy_units):
@@ -3412,6 +3426,7 @@ class CombatManager:
                         self.bot.do(corr.attack(target))
                     except (AttributeError, TypeError) as e:
                         # Unit command failed
+                        self.logger.debug(f"Unit command failed: {e}")
                         continue
 
         # Brood Lords: Stay back, attack ground
@@ -3426,6 +3441,7 @@ class CombatManager:
                         self.bot.do(bl.attack(target))
                     except (AttributeError, TypeError) as e:
                         # Unit command failed
+                        self.logger.debug(f"Unit command failed: {e}")
                         continue
 
     def _is_base_under_attack(self) -> bool:
@@ -3666,6 +3682,7 @@ class CombatManager:
                 return enemy_units.closest_to(unit.position)
             except (AttributeError, TypeError, ValueError) as e:
                 # Finding closest enemy failed
+                self.logger.debug(f"Finding closest enemy failed: {e}")
                 return None
         closest_unit = None
         closest_dist = None
@@ -3674,6 +3691,7 @@ class CombatManager:
                 dist = unit.distance_to(enemy)
             except (AttributeError, TypeError) as e:
                 # Distance calculation failed
+                self.logger.debug(f"Distance calculation failed: {e}")
                 continue
             if closest_dist is None or dist < closest_dist:
                 closest_unit = enemy
@@ -4060,6 +4078,7 @@ class CombatManager:
                             self.bot.do(unit.attack(main_target))
                     except (AttributeError, TypeError) as e:
                         # Unit command failed
+                        self.logger.debug(f"Unit command failed: {e}")
                         continue
 
                 if iteration % 220 == 0:
@@ -4111,6 +4130,7 @@ class CombatManager:
                     self.bot.do(unit.attack(threat_position))
             except (AttributeError, TypeError) as e:
                 # Worker defense attack failed
+                self.logger.debug(f"Worker defense attack failed: {e}")
                 continue
 
         # 로그 (10초마다)
@@ -4427,6 +4447,7 @@ class CombatManager:
                         )
             except (AttributeError, TypeError) as e:
                 # Worker return to gather failed
+                self.logger.debug(f"Worker return to gather failed: {e}")
                 continue
 
         if iteration % 220 == 0:
@@ -4536,6 +4557,7 @@ class CombatManager:
                     self.bot.do(unit.attack(attack_target))
             except (AttributeError, TypeError) as e:
                 # Army attack command failed
+                self.logger.debug(f"Army attack command failed: {e}")
                 continue
 
         # 로그 (10초마다)
@@ -4564,6 +4586,7 @@ class CombatManager:
                     total_supply += supply
             except (AttributeError, TypeError) as e:
                 # Supply calculation failed
+                self.logger.debug(f"Supply calculation failed: {e}")
                 continue
 
         return int(total_supply)
@@ -4737,6 +4760,7 @@ class CombatManager:
                     self.bot.do(queen.move(expansion.position))
             except (AttributeError, TypeError) as e:
                 # Queen expansion defense failed
+                self.logger.debug(f"Queen expansion defense failed: {e}")
                 continue
 
         # 다른 유닛 방어
@@ -4746,6 +4770,7 @@ class CombatManager:
                 self.bot.do(unit.attack(target))
             except (AttributeError, TypeError) as e:
                 # Unit attack command failed
+                self.logger.debug(f"Unit attack command failed: {e}")
                 continue
 
         # 로그 (10초마다)
@@ -4796,6 +4821,7 @@ class CombatManager:
                     self.bot.do(unit.attack(target))
                 except (AttributeError, TypeError) as e:
                     # Unit command failed
+                    self.logger.debug(f"Unit command failed: {e}")
                     continue
 
             self.logger.info(
@@ -4813,6 +4839,7 @@ class CombatManager:
                         self.bot.do(unit.attack(target))
                     except (AttributeError, TypeError) as e:
                         # Unit command failed
+                        self.logger.debug(f"Unit command failed: {e}")
                         continue
 
     # ============================================================================

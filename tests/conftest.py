@@ -13,6 +13,14 @@ from unittest.mock import MagicMock
 
 import pytest
 
+# s2clientprotocol의 사전 컴파일된 _pb2.py 파일들은 구버전 protobuf 코드 생성기로
+# 만들어져 있어, requirements.txt의 다른 의존성(google-generativeai 등)이 최신
+# protobuf(4.x/5.x)를 끌어오면 "TypeError: Descriptors cannot be created directly"로
+# 테스트 수집 자체가 실패한다. protobuf를 낮추면 google-generativeai가 깨지므로,
+# 대신 pure-Python 파서 구현으로 강제 전환해 두 의존성을 동시에 만족시킨다.
+# (반드시 sc2/google.protobuf가 처음 import되기 전, 이 conftest.py의 최상단에서 설정)
+os.environ.setdefault("PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION", "python")
+
 # 프로젝트 루트를 sys.path에 추가
 PROJECT_ROOT = Path(__file__).parent.parent
 if str(PROJECT_ROOT) not in sys.path:
