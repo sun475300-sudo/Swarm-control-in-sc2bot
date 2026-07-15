@@ -19,7 +19,10 @@ try:
     from battle_preparation_system import BattlePreparationSystem
     from sc2.position import Point2
 except ImportError:
-    pytest.skip("battle_preparation_system not importable (SC2 env required)", allow_module_level=True)
+    pytest.skip(
+        "battle_preparation_system not importable (SC2 env required)",
+        allow_module_level=True,
+    )
 
 
 class FakeUnit:
