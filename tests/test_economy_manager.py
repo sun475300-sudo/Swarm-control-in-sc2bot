@@ -287,6 +287,59 @@ class TestDroneProduction:
         assert True
 
 
+class FakeBlackboard:
+    """StrategyManager가 설정하는 drone_production_policy를 흉내내는 최소 fake."""
+
+    def __init__(self, policy=None):
+        self._policy = policy
+        self.authority_mode = None  # AuthorityMode.EMERGENCY가 아니면 통과
+        self.request_production = Mock()
+
+    def get(self, key, default=None):
+        if key == "drone_production_policy":
+            return self._policy
+        return default
+
+
+class TestDroneProductionRespectsAllInPolicy:
+    """All-in/proxy-rush 감지 시 StrategyManager가 blackboard에 설정하는
+    drone_production_policy(HALT/REDUCE)를 EconomyManager가 실제로 지키는지 확인.
+    (StrategyManager.should_produce_drone()은 존재하지만 아무도 호출하지 않았고,
+    _train_drone_if_needed()도 이 플래그를 읽지 않아 all-in 방어가 무력화되던 버그)
+    """
+
+    @pytest.mark.asyncio
+    async def test_drone_halted_when_all_in_policy_set(self):
+        bot = MockBot()
+        bot.minerals = 500
+        bot.supply_left = 5
+        bot.workers = MockUnits([MockUnit(i, "DRONE", (50, 50)) for i in range(12)])
+        bot.townhalls = MockUnits([MockUnit(100, "HATCHERY", (50, 50))])
+        bot.larva = MockUnits([MockUnit(1, "LARVA", (50, 50))])
+        bot.blackboard = FakeBlackboard(policy="HALT")
+
+        manager = EconomyManager(bot)
+        await manager._train_drone_if_needed()
+
+        bot.blackboard.request_production.assert_not_called()
+
+    @pytest.mark.asyncio
+    async def test_drone_reduced_cap_when_reduce_policy_set(self):
+        bot = MockBot()
+        bot.minerals = 500
+        bot.supply_left = 5
+        bot.workers = MockUnits([MockUnit(i, "DRONE", (50, 50)) for i in range(25)])
+        bot.townhalls = MockUnits([MockUnit(100, "HATCHERY", (50, 50))])
+        bot.larva = MockUnits([MockUnit(1, "LARVA", (50, 50))])
+        bot.blackboard = FakeBlackboard(policy="REDUCE")
+
+        manager = EconomyManager(bot)
+        await manager._train_drone_if_needed()
+
+        # 25마리는 REDUCE 상한(22)을 넘었으므로 생산 요청이 없어야 함
+        bot.blackboard.request_production.assert_not_called()
+
+
 class TestGoldExpansion:
     """테스트 5: 골드 확장지 감지"""
 

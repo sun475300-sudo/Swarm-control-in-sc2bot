@@ -804,6 +804,15 @@ class EconomyManager:
                 workers.amount if hasattr(workers, "amount") else len(list(workers))
             )
 
+        # * All-in / proxy-rush 대응: StrategyManager가 blackboard에 HALT/REDUCE를
+        # 설정해도, 여기서 읽지 않으면 방어 태세와 무관하게 드론을 계속 생산하게 된다. *
+        if self.blackboard and hasattr(self.blackboard, "get"):
+            drone_policy = self.blackboard.get("drone_production_policy", None)
+            if drone_policy == "HALT":
+                return
+            if drone_policy == "REDUCE" and worker_count >= 22:
+                return
+
         # * 드론 절대 상한: 80마리 초과 금지 *
         if worker_count >= 80:
             return

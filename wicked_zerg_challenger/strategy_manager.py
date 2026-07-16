@@ -1293,8 +1293,8 @@ class StrategyManager:
                     requester="StrategyManager",
                 )
                 return
-            except Exception:
-                pass
+            except Exception as e:
+                self.logger.debug(f"request_defensive_building via BuildingManager failed: {e}")
 
         # BuildingCoordination이 있으면 요청 등록
         building_coord = getattr(self.bot, "building_coord", None)
@@ -1310,8 +1310,8 @@ class StrategyManager:
                     building_coord.request_building(
                         UnitTypeId.SPORECRAWLER, "StrategyManager"
                     )
-            except Exception:
-                pass  # Fallback to flag-based system
+            except Exception as e:
+                self.logger.debug(f"request_building via BuildingCoordination failed, falling back to flag-based system: {e}")
 
     def _request_spire_via_coordinator(self, game_time: float) -> None:
         """
@@ -1336,8 +1336,8 @@ class StrategyManager:
                         f"[{int(game_time)}s] Spire build requested via BuildingManager"
                     )
                 return
-            except Exception:
-                pass
+            except Exception as e:
+                self.logger.debug(f"request_tech_structure(SPIRE) via BuildingManager failed: {e}")
 
         if building_coord:
             try:
@@ -1350,8 +1350,8 @@ class StrategyManager:
                     self.logger.info(
                         f"[{int(game_time)}s] Spire build requested via BuildingCoordination"
                     )
-            except Exception:
-                pass
+            except Exception as e:
+                self.logger.debug(f"request_building(SPIRE) via BuildingCoordination failed: {e}")
         else:
             # Fallback: 로그만 남기고, BotStepIntegrator/AggressiveTechBuilder가 처리
             if int(game_time) % 30 == 0 and self.bot.iteration % 22 == 0:
@@ -1373,22 +1373,22 @@ class StrategyManager:
         if economy and hasattr(economy, "bot") and hasattr(economy.bot, "workers"):
             try:
                 return economy.bot.workers.amount
-            except Exception:
-                pass
+            except Exception as e:
+                self.logger.debug(f"_get_drone_count via economy.bot.workers failed: {e}")
 
         # Fallback: 직접 조회
         if hasattr(self.bot, "workers"):
             try:
                 return self.bot.workers.amount
-            except Exception:
-                pass
+            except Exception as e:
+                self.logger.debug(f"_get_drone_count via self.bot.workers failed: {e}")
 
         if hasattr(self.bot, "units"):
             try:
                 drones = self.bot.units.filter(lambda u: u.type_id.name == "DRONE")
                 return drones.amount if hasattr(drones, "amount") else len(drones)
-            except Exception:
-                pass
+            except Exception as e:
+                self.logger.debug(f"_get_drone_count via self.bot.units filter failed: {e}")
 
         return 0
 
