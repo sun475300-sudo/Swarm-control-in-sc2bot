@@ -804,6 +804,17 @@ class EconomyManager:
                 workers.amount if hasattr(workers, "amount") else len(list(workers))
             )
 
+        # * 올인 방어 등 전략 레이어의 drone_production_policy 강제 적용 *
+        # * (기존에는 blackboard에 HALT/REDUCE 플래그만 세팅되고 실제 생산 게이트가 *
+        # *  이를 읽지 않아 사문화되어 있었음 -- strategy_manager.should_produce_drone()와 *
+        # *  동일한 의미로 여기서 직접 적용) *
+        if self.blackboard and hasattr(self.blackboard, "get"):
+            drone_policy = self.blackboard.get("drone_production_policy", None)
+            if drone_policy == "HALT":
+                return
+            if drone_policy == "REDUCE" and worker_count >= 22:
+                return
+
         # * 드론 절대 상한: 80마리 초과 금지 *
         if worker_count >= 80:
             return

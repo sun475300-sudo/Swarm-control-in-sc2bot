@@ -117,6 +117,10 @@ jobs:
         env:
           DRY_RUN: "true"
           LOG_LEVEL: "DEBUG"
+          # requirements.txt의 burnysc2 -> s2clientprotocol이 새 protobuf(upb) 생성
+          # _pb2.py를 끌어와 "Descriptors cannot be created directly"로 수집 단계부터
+          # 실패시킴 (sc2-bot-test 잡은 이미 이 env를 갖고 있음, 여기만 누락돼 있었음)
+          PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION: python
 
   # ─────────────────────────────────────────────
   # SC2 봇 구문 검증 + 테스트
