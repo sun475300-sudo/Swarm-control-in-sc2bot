@@ -271,7 +271,9 @@ except ImportError:
 # Advanced Scout System V2
 try:
     # NOTE: class is AdvancedScoutingSystemV2 (with "ing"); alias kept for compat
-    from scouting.advanced_scout_system_v2 import AdvancedScoutingSystemV2 as AdvancedScoutSystemV2
+    from scouting.advanced_scout_system_v2 import (
+        AdvancedScoutingSystemV2 as AdvancedScoutSystemV2,
+    )
 except ImportError:
     AdvancedScoutSystemV2 = None
 
@@ -2108,7 +2110,9 @@ class BotStepIntegrator:
                     if iteration % 50 == 0:
                         self.logger.warning(f"[WARNING] Building Manager error: {e}")
                 finally:
-                    self._logic_tracker.end_logic("BuildingManager", start_time, success)
+                    self._logic_tracker.end_logic(
+                        "BuildingManager", start_time, success
+                    )
 
             if hasattr(self.bot, "advanced_building_manager"):
                 start_time = self._logic_tracker.start_logic("AdvancedBuilding")
@@ -3576,7 +3580,10 @@ class BotStepIntegrator:
 
         except Exception as e:
             error_key = f"{type(e).__name__}:{e}"
-            if error_key != getattr(self, "_last_step_error_key", None) or iteration % 100 == 0:
+            if (
+                error_key != getattr(self, "_last_step_error_key", None)
+                or iteration % 100 == 0
+            ):
                 self._last_step_error_key = error_key
                 self.logger.error(f"[ERROR] on_step execution error: {e}")
                 import traceback

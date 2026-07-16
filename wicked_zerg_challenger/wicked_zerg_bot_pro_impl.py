@@ -449,7 +449,9 @@ class WickedZergBotProImpl(BotAI):
                             unit.type_id.name == "DRONE"
                             and unit.tag not in self._known_unit_tags
                         ):
-                            self._workers_created = getattr(self, "_workers_created", 0) + 1
+                            self._workers_created = (
+                                getattr(self, "_workers_created", 0) + 1
+                            )
                         self._known_unit_tags[unit.tag] = {
                             "type": unit.type_id.name,
                             "position": {
