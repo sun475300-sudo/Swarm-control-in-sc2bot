@@ -198,8 +198,10 @@ class ProductionResilience:
                         # Check reservation (5 second cooldown for unique buildings)
                         if ts is not None and now - ts < 5.0:
                             return None
-                    except Exception:
-                        pass
+                    except Exception as e:
+                        logger.debug(
+                            f"_build_with_reservation duplicate/reservation check failed: {e}"
+                        )
 
                 # Skip if recently reserved (another manager already issued the build)
                 if ts is not None and now - ts < 30.0:
@@ -309,7 +311,8 @@ class ProductionResilience:
                 continue
             try:
                 nearby = enemy_units.closer_than(12, base)
-            except Exception:
+            except Exception as e:
+                logger.debug(f"_has_active_base_threat closer_than check failed: {e}")
                 continue
 
             amount = getattr(nearby, "amount", 0)
@@ -348,7 +351,8 @@ class ProductionResilience:
                 if next_pos:
                     await b.build(UnitTypeId.HATCHERY, near=next_pos)
                     return True
-        except Exception:
+        except Exception as e:
+            logger.debug(f"_try_expand failed: {e}")
             return False
 
         return False
@@ -369,8 +373,8 @@ class ProductionResilience:
             stale = [sid for sid, ts in reservations.items() if now - ts > 45.0]
             for sid in stale:
                 reservations.pop(sid, None)
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug(f"_cleanup_build_reservations failed: {e}")
 
     async def fix_production_bottleneck(self) -> None:
         """
@@ -414,8 +418,10 @@ class ProductionResilience:
                         logger.info(
                             f"[{int(time)}s] FORCED 3rd base expansion (bases: {bases})"
                         )
-                except Exception:
-                    pass
+                except Exception as e:
+                    logger.debug(
+                        f"fix_production_bottleneck forced 3rd base expansion failed: {e}"
+                    )
         # 일반 확장 로직
         elif time >= 60 and b.minerals >= 300:
             # 확장 중이 아니고, 기지가 부족하면 확장 시도
@@ -426,8 +432,10 @@ class ProductionResilience:
                             logger.info(
                                 f"[{int(time)}s] Expanding at 1min+ with {int(b.minerals)} minerals (bases: {bases})"
                             )
-                    except Exception:
-                        pass
+                    except Exception as e:
+                        logger.debug(
+                            f"fix_production_bottleneck 1min+ expansion failed: {e}"
+                        )
 
         # === MINERAL OVERFLOW PREVENTION: Spend minerals when > 600 ===
         # *** FIX: 임계값 상향 (200->600) + 확장 중엔 소비 금지 ***
@@ -987,8 +995,10 @@ class ProductionResilience:
                     try:
                         if await self._try_expand():
                             logger.info(f"Building expansion to dump minerals")
-                    except Exception:
-                        pass
+                    except Exception as e:
+                        logger.debug(
+                            f"_force_emergency_production expand to dump minerals failed: {e}"
+                        )
 
     async def _boost_early_game(self) -> None:
         """
@@ -1230,8 +1240,10 @@ class ProductionResilience:
                         pool = spawning_pool_query.first
                         if pool.build_progress >= 0.99:
                             spawning_pool_ready = True
-                    except Exception:
-                        pass
+                    except Exception as e:
+                        logger.debug(
+                            f"diagnose_production_status spawning pool progress check failed: {e}"
+                        )
 
                 roach_warren_query = b.structures(UnitTypeId.ROACHWARREN)
                 roach_warren_ready = False
@@ -1242,8 +1254,10 @@ class ProductionResilience:
                         warren = roach_warren_query.first
                         if warren.build_progress >= 0.99:
                             roach_warren_ready = True
-                    except Exception:
-                        pass
+                    except Exception as e:
+                        logger.debug(
+                            f"diagnose_production_status roach warren progress check failed: {e}"
+                        )
 
                 hydralisk_den_query = b.structures(UnitTypeId.HYDRALISKDEN)
                 hydralisk_den_ready = False
@@ -1254,8 +1268,10 @@ class ProductionResilience:
                         den = hydralisk_den_query.first
                         if den.build_progress >= 0.99:
                             hydralisk_den_ready = True
-                    except Exception:
-                        pass
+                    except Exception as e:
+                        logger.debug(
+                            f"diagnose_production_status hydralisk den progress check failed: {e}"
+                        )
                 can_afford_zergling = b.can_afford(UnitTypeId.ZERGLING)
                 can_afford_roach = b.can_afford(UnitTypeId.ROACH)
                 can_afford_hydralisk = b.can_afford(UnitTypeId.HYDRALISK)
@@ -1400,8 +1416,10 @@ class ProductionResilience:
                         try:
                             roaches_ready.random(AbilityId.MORPHTORAVAGER_RAVAGER)
                             return
-                        except Exception:
-                            pass
+                        except Exception as e:
+                            logger.debug(
+                                f"build_army_aggressive ravager morph failed: {e}"
+                            )
                 elif max_deficit_unit == UnitTypeId.BANELING:
                     zerglings_ready = b.units(UnitTypeId.ZERGLING).ready
                     if (
@@ -1414,8 +1432,10 @@ class ProductionResilience:
                                     AbilityId.MORPHZERGLINGTOBANELING_BANELING
                                 )
                                 return
-                            except Exception:
-                                pass
+                            except Exception as e:
+                                logger.debug(
+                                    f"build_army_aggressive baneling morph failed: {e}"
+                                )
                 elif max_deficit_unit == UnitTypeId.ZERGLING:
                     if b.units(UnitTypeId.SPAWNINGPOOL).ready.exists and b.can_afford(
                         UnitTypeId.ZERGLING
@@ -1434,8 +1454,8 @@ class ProductionResilience:
                         if larva.is_ready:
                             if await self._safe_train(larva, unit_to_produce):
                                 break
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug(f"build_army_aggressive train unit loop failed: {e}")
 
     async def force_resource_dump(self) -> None:
         b = self.bot
@@ -1446,8 +1466,8 @@ class ProductionResilience:
         ):
             try:
                 await self._try_expand()
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug(f"force_resource_dump expand failed: {e}")
         if (
             self._should_reserve_third_base_minerals()
             and game_time < 300
@@ -1544,8 +1564,10 @@ class ProductionResilience:
                                     f"[{int(game_time)}s] Building Roach Warren"
                                 )
                                 return
-                        except Exception:
-                            pass
+                        except Exception as e:
+                            logger.debug(
+                                f"_auto_build_tech_structures Roach Warren fallback build failed: {e}"
+                            )
 
         # 4:00+ : Lair
         if game_time >= 240:
@@ -1600,8 +1622,10 @@ class ProductionResilience:
                                     f"[{int(game_time)}s] Building Evolution Chamber"
                                 )
                                 return
-                        except Exception:
-                            pass
+                        except Exception as e:
+                            logger.debug(
+                                f"_auto_build_tech_structures Evolution Chamber fallback build failed: {e}"
+                            )
 
         # 5:00+ : Hydralisk Den (requires Lair)
         if game_time >= 300:
@@ -1650,8 +1674,10 @@ class ProductionResilience:
                                         f"[{int(game_time)}s] Building Hydralisk Den"
                                     )
                                     return
-                            except Exception:
-                                pass
+                            except Exception as e:
+                                logger.debug(
+                                    f"_auto_build_tech_structures Hydralisk Den fallback build failed: {e}"
+                                )
 
         # 6:00+ : Spire (requires Lair)
         if game_time >= 360:
@@ -1681,8 +1707,10 @@ class ProductionResilience:
                                 self._last_tech_build_time = game_time
                                 logger.info(f"[{int(game_time)}s] Building Spire")
                                 return
-                            except Exception:
-                                pass
+                            except Exception as e:
+                                logger.debug(
+                                    f"_auto_build_tech_structures Spire fallback build failed: {e}"
+                                )
 
     async def _auto_build_extractors(self, game_time: float) -> None:
         """
@@ -1787,7 +1815,8 @@ class ProductionResilience:
                         f"[{int(game_time)}s] Building Extractor #{total_extractors + 1}"
                     )
                     return  # Build one at a time
-                except Exception:
+                except Exception as e:
+                    logger.debug(f"_auto_build_extractors build extractor failed: {e}")
                     continue
 
     async def _morph_to_lair(self) -> bool:
@@ -2001,8 +2030,10 @@ class ProductionResilience:
                             await b.build(
                                 UnitTypeId.BANELINGNEST, near=b.townhalls.first.position
                             )
-                        except Exception:
-                            pass
+                        except Exception as e:
+                            logger.debug(
+                                f"build_terran_counters Baneling Nest fallback build failed: {e}"
+                            )
         # NOTE: Roach Warren building is now handled by _auto_build_tech_structures()
         # Removed duplicate code to prevent building spam
 
@@ -2093,8 +2124,10 @@ class ProductionResilience:
                         await b.build(
                             UnitTypeId.BANELINGNEST, near=b.townhalls.first.position
                         )
-                    except Exception:
-                        pass
+                    except Exception as e:
+                        logger.debug(
+                            f"build_zerg_counters Baneling Nest build failed: {e}"
+                        )
 
     async def _determine_ideal_composition(self) -> Dict[UnitTypeId, float]:
         """Reuses bot's composition logic via in-module call."""
@@ -2321,7 +2354,8 @@ class ProductionResilience:
                 self.bot.do(ling.move(target))
                 scout_state["scout_tags"].add(ling.tag)
                 scouts_sent += 1
-            except Exception:
+            except Exception as e:
+                logger.debug(f"_send_zergling_scouts move scout failed: {e}")
                 continue
 
         if scouts_sent > 0:
@@ -2376,8 +2410,10 @@ class ProductionResilience:
                 if targets:
                     try:
                         self.bot.do(ling.move(targets[0]))
-                    except Exception:
-                        pass
+                    except Exception as e:
+                        logger.debug(
+                            f"_manage_existing_scouts move idle scout failed: {e}"
+                        )
 
         # Update detected enemies
         await self._update_detected_enemies()
@@ -2550,8 +2586,8 @@ class ProductionResilience:
                 try:
                     await b.expand_now()
                     logger.info(f"Building Macro Hatchery (no larvae, gas: {int(gas)})")
-                except Exception:
-                    pass
+                except Exception as e:
+                    logger.debug(f"_spend_excess_gas macro hatchery expand failed: {e}")
             return
 
         larvae_list = list(larvae.ready) if hasattr(larvae, "ready") else list(larvae)
@@ -2666,8 +2702,8 @@ class ProductionResilience:
                 hatchery = b.structures(UnitTypeId.HATCHERY).ready.first
                 self.bot.do(hatchery.train(UnitTypeId.LAIR))
                 return
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug(f"_build_gas_heavy_tech Lair train failed: {e}")
 
         # Hydralisk Den: 100M / 100G (requires Lair)
         if (
@@ -2684,8 +2720,10 @@ class ProductionResilience:
                         UnitTypeId.HYDRALISKDEN, near=b.townhalls.first.position
                     )
                     return
-                except Exception:
-                    pass
+                except Exception as e:
+                    logger.debug(
+                        f"_build_gas_heavy_tech Hydralisk Den build failed: {e}"
+                    )
 
             # Spire: 200M / 200G (requires Lair)
             if (
@@ -2696,8 +2734,8 @@ class ProductionResilience:
                 try:
                     await b.build(UnitTypeId.SPIRE, near=b.townhalls.first.position)
                     return
-                except Exception:
-                    pass
+                except Exception as e:
+                    logger.debug(f"_build_gas_heavy_tech Spire build failed: {e}")
 
         # Hive upgrade: 200M / 150G (requires Infestation Pit)
         if (
@@ -2710,8 +2748,8 @@ class ProductionResilience:
             try:
                 lair = b.structures(UnitTypeId.LAIR).ready.first
                 self.bot.do(lair.train(UnitTypeId.HIVE))
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug(f"_build_gas_heavy_tech Hive train failed: {e}")
 
     async def _spend_minerals_without_larvae(self) -> None:
         """Drain mineral bank when no larvae are available.
@@ -2731,8 +2769,8 @@ class ProductionResilience:
             try:
                 await b.expand_now()
                 return
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug(f"_spend_minerals_without_larvae expand_now failed: {e}")
 
         # Otherwise train Queens at any idle Hatchery/Lair/Hive without one nearby
         if (
@@ -2746,7 +2784,10 @@ class ProductionResilience:
                         self.bot.do(th.train(UnitTypeId.QUEEN))
                         if not b.can_afford(UnitTypeId.QUEEN):
                             break
-                    except Exception:
+                    except Exception as e:
+                        logger.debug(
+                            f"_spend_minerals_without_larvae Queen train failed: {e}"
+                        )
                         continue
 
     async def _spend_excess_minerals(self) -> None:
