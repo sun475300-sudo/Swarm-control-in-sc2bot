@@ -177,8 +177,8 @@ class TestTechCoordinatorExpansion(unittest.TestCase):
         bot.townhalls.ready.amount = 1
         bot.workers.amount = 16
         bot.blackboard = None
-        bot.already_pending.side_effect = (
-            lambda unit_type: 1 if unit_type == UnitTypeId.HATCHERY else 0
+        bot.already_pending.side_effect = lambda unit_type: (
+            1 if unit_type == UnitTypeId.HATCHERY else 0
         )
         bot.can_afford.return_value = True
         bot.do = MagicMock()
@@ -293,8 +293,8 @@ class TestTechCoordinatorExpansion(unittest.TestCase):
         bot.iteration = 250
         bot.townhalls.amount = 2
         bot.townhalls.ready.amount = 1
-        bot.already_pending.side_effect = (
-            lambda unit_type: 1 if unit_type == UnitTypeId.HATCHERY else 0
+        bot.already_pending.side_effect = lambda unit_type: (
+            1 if unit_type == UnitTypeId.HATCHERY else 0
         )
         bot.can_afford.return_value = True
         bot.do = MagicMock()
@@ -324,8 +324,8 @@ class TestTechCoordinatorExpansion(unittest.TestCase):
         bot.iteration = 320
         bot.townhalls.amount = 3
         bot.townhalls.ready.amount = 2
-        bot.already_pending.side_effect = (
-            lambda unit_type: 1 if unit_type == UnitTypeId.HATCHERY else 0
+        bot.already_pending.side_effect = lambda unit_type: (
+            1 if unit_type == UnitTypeId.HATCHERY else 0
         )
         bot.can_afford.return_value = True
         bot.do = MagicMock()
