@@ -419,7 +419,9 @@ class ProductionResilience:
                             f"[{int(time)}s] FORCED 3rd base expansion (bases: {bases})"
                         )
                 except Exception as e:
-                    logger.debug(f"fix_production_bottleneck forced 3rd base expansion failed: {e}")
+                    logger.debug(
+                        f"fix_production_bottleneck forced 3rd base expansion failed: {e}"
+                    )
         # 일반 확장 로직
         elif time >= 60 and b.minerals >= 300:
             # 확장 중이 아니고, 기지가 부족하면 확장 시도
@@ -431,7 +433,9 @@ class ProductionResilience:
                                 f"[{int(time)}s] Expanding at 1min+ with {int(b.minerals)} minerals (bases: {bases})"
                             )
                     except Exception as e:
-                        logger.debug(f"fix_production_bottleneck 1min+ expansion failed: {e}")
+                        logger.debug(
+                            f"fix_production_bottleneck 1min+ expansion failed: {e}"
+                        )
 
         # === MINERAL OVERFLOW PREVENTION: Spend minerals when > 600 ===
         # *** FIX: 임계값 상향 (200->600) + 확장 중엔 소비 금지 ***
@@ -992,7 +996,9 @@ class ProductionResilience:
                         if await self._try_expand():
                             logger.info(f"Building expansion to dump minerals")
                     except Exception as e:
-                        logger.debug(f"_force_emergency_production expand to dump minerals failed: {e}")
+                        logger.debug(
+                            f"_force_emergency_production expand to dump minerals failed: {e}"
+                        )
 
     async def _boost_early_game(self) -> None:
         """
@@ -1411,7 +1417,9 @@ class ProductionResilience:
                             roaches_ready.random(AbilityId.MORPHTORAVAGER_RAVAGER)
                             return
                         except Exception as e:
-                            logger.debug(f"build_army_aggressive ravager morph failed: {e}")
+                            logger.debug(
+                                f"build_army_aggressive ravager morph failed: {e}"
+                            )
                 elif max_deficit_unit == UnitTypeId.BANELING:
                     zerglings_ready = b.units(UnitTypeId.ZERGLING).ready
                     if (
@@ -1425,7 +1433,9 @@ class ProductionResilience:
                                 )
                                 return
                             except Exception as e:
-                                logger.debug(f"build_army_aggressive baneling morph failed: {e}")
+                                logger.debug(
+                                    f"build_army_aggressive baneling morph failed: {e}"
+                                )
                 elif max_deficit_unit == UnitTypeId.ZERGLING:
                     if b.units(UnitTypeId.SPAWNINGPOOL).ready.exists and b.can_afford(
                         UnitTypeId.ZERGLING
@@ -2021,7 +2031,9 @@ class ProductionResilience:
                                 UnitTypeId.BANELINGNEST, near=b.townhalls.first.position
                             )
                         except Exception as e:
-                            logger.debug(f"build_terran_counters Baneling Nest fallback build failed: {e}")
+                            logger.debug(
+                                f"build_terran_counters Baneling Nest fallback build failed: {e}"
+                            )
         # NOTE: Roach Warren building is now handled by _auto_build_tech_structures()
         # Removed duplicate code to prevent building spam
 
@@ -2113,7 +2125,9 @@ class ProductionResilience:
                             UnitTypeId.BANELINGNEST, near=b.townhalls.first.position
                         )
                     except Exception as e:
-                        logger.debug(f"build_zerg_counters Baneling Nest build failed: {e}")
+                        logger.debug(
+                            f"build_zerg_counters Baneling Nest build failed: {e}"
+                        )
 
     async def _determine_ideal_composition(self) -> Dict[UnitTypeId, float]:
         """Reuses bot's composition logic via in-module call."""
@@ -2397,7 +2411,9 @@ class ProductionResilience:
                     try:
                         self.bot.do(ling.move(targets[0]))
                     except Exception as e:
-                        logger.debug(f"_manage_existing_scouts move idle scout failed: {e}")
+                        logger.debug(
+                            f"_manage_existing_scouts move idle scout failed: {e}"
+                        )
 
         # Update detected enemies
         await self._update_detected_enemies()
@@ -2705,7 +2721,9 @@ class ProductionResilience:
                     )
                     return
                 except Exception as e:
-                    logger.debug(f"_build_gas_heavy_tech Hydralisk Den build failed: {e}")
+                    logger.debug(
+                        f"_build_gas_heavy_tech Hydralisk Den build failed: {e}"
+                    )
 
             # Spire: 200M / 200G (requires Lair)
             if (
@@ -2767,7 +2785,9 @@ class ProductionResilience:
                         if not b.can_afford(UnitTypeId.QUEEN):
                             break
                     except Exception as e:
-                        logger.debug(f"_spend_minerals_without_larvae Queen train failed: {e}")
+                        logger.debug(
+                            f"_spend_minerals_without_larvae Queen train failed: {e}"
+                        )
                         continue
 
     async def _spend_excess_minerals(self) -> None:
