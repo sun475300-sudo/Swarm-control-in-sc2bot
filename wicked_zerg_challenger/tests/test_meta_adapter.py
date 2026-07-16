@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import importlib.util
 import json
 import os
 import sys
@@ -7,9 +8,19 @@ import unittest
 from pathlib import Path
 
 os.environ["PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION"] = "python"
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..")))
 
-from scripts.meta_adapter import MetaAdapter
+# Loaded by explicit file path (not `from scripts.meta_adapter import ...`) because
+# `wicked_zerg_challenger/local_training/scripts` is a *separate*, unrelated regular
+# package also named `scripts`; whichever one lands on sys.path first during a full
+# test run shadows the other and breaks this import depending on test order.
+_REPO_ROOT = Path(__file__).resolve().parents[2]
+_spec = importlib.util.spec_from_file_location(
+    "meta_adapter_module", _REPO_ROOT / "scripts" / "meta_adapter.py"
+)
+_meta_adapter = importlib.util.module_from_spec(_spec)
+sys.modules[_spec.name] = _meta_adapter
+_spec.loader.exec_module(_meta_adapter)
+MetaAdapter = _meta_adapter.MetaAdapter
 
 
 class TestMetaAdapter(unittest.TestCase):
@@ -22,7 +33,9 @@ class TestMetaAdapter(unittest.TestCase):
                 "vs_zerg": {"total": 3, "winrate": 66.0},
                 "weaknesses": {},
             }
-            Path(tmp, "analytics.json").write_text(json.dumps(analytics), encoding="utf-8")
+            Path(tmp, "analytics.json").write_text(
+                json.dumps(analytics), encoding="utf-8"
+            )
 
             adjustments = MetaAdapter(tmp).generate_strategy_adjustments()
 
