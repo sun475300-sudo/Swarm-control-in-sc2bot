@@ -13,6 +13,11 @@ from unittest.mock import MagicMock
 
 import pytest
 
+# newer protobuf wheels crash on burnysc2's pre-generated _pb2.py files with
+# "TypeError: Descriptors cannot be created directly" unless this is set
+# before sc2.* is first imported.
+os.environ.setdefault("PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION", "python")
+
 # 프로젝트 루트를 sys.path에 추가
 PROJECT_ROOT = Path(__file__).parent.parent
 if str(PROJECT_ROOT) not in sys.path:
