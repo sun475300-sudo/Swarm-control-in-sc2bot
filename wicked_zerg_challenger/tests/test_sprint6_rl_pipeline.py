@@ -7,6 +7,7 @@ import os
 import sys
 import tempfile
 import unittest
+import unittest.mock
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -115,7 +116,9 @@ class TestRLMicroDeployment(unittest.TestCase):
     def test_micro_observation_is_16d_and_inference_has_7_actions(self):
         bot = FakeBot()
         units = [FakeUnit(i, "ROACH", Point(i, 0), health=100) for i in range(3)]
-        enemies = [FakeUnit(100 + i, "MARINE", Point(5 + i, 0), health=45) for i in range(5)]
+        enemies = [
+            FakeUnit(100 + i, "MARINE", Point(5 + i, 0), health=45) for i in range(5)
+        ]
         agent = RLAgent()
 
         observation = agent.build_micro_observation(bot, units, enemies)
@@ -129,7 +132,9 @@ class TestRLMicroDeployment(unittest.TestCase):
     def test_combat_manager_uses_rl_micro_when_enabled_and_confident(self):
         bot = FakeBot()
         units = [FakeUnit(i, "ROACH", Point(i, 0), health=100) for i in range(3)]
-        enemies = [FakeUnit(100 + i, "MARINE", Point(5 + i, 0), health=45) for i in range(5)]
+        enemies = [
+            FakeUnit(100 + i, "MARINE", Point(5 + i, 0), health=45) for i in range(5)
+        ]
         manager = make_manager(bot)
 
         handled = asyncio.run(manager._try_rl_micro(units, enemies))
@@ -177,7 +182,9 @@ class TestSelfPlayPipeline(unittest.TestCase):
             pipeline = TrainingPipeline(tmp)
 
             self.assertIsNone(
-                pipeline.maybe_checkpoint_episode(49, FakeSavingAgent(), {"win_rate": 0.5})
+                pipeline.maybe_checkpoint_episode(
+                    49, FakeSavingAgent(), {"win_rate": 0.5}
+                )
             )
             version = pipeline.maybe_checkpoint_episode(
                 50, FakeSavingAgent(), {"win_rate": 0.55, "games": 50}
@@ -190,6 +197,88 @@ class TestSelfPlayPipeline(unittest.TestCase):
             self.assertIn("rule_based", {opponent["id"] for opponent in pool})
             self.assertIn("v1", {opponent["id"] for opponent in pool})
             self.assertLessEqual(abs(selected["elo"] - 1500.0), 200.0)
+
+
+class TestRLAgentSaveExperienceGuard(unittest.TestCase):
+    """Regression tests for RLAgent.save_experience_data's atomic-save guarantee.
+
+    The original implementation called os.remove(existing) then os.rename(tmp, existing),
+    leaving a window where a failure between those two calls destroyed the previous
+    checkpoint without writing a replacement. os.replace() closes that window.
+    """
+
+    def _agent_with_data(self):
+        agent = RLAgent()
+        agent.states = [np.zeros(15, dtype=np.float32)]
+        agent.actions = [0]
+        agent.rewards = [1.0]
+        return agent
+
+    def test_successful_round_trip(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            path = os.path.join(tmp, "checkpoint.npz")
+            agent = self._agent_with_data()
+
+            self.assertTrue(agent.save_experience_data(path))
+            self.assertTrue(os.path.exists(path))
+            loaded = np.load(path)
+            self.assertEqual(len(loaded["states"]), 1)
+
+    def test_existing_checkpoint_preserved_when_rename_fails(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            path = os.path.join(tmp, "checkpoint.npz")
+            # Write an existing checkpoint that must survive a failed save.
+            np.savez_compressed(path[:-4], states=np.ones(3))
+            os.rename(path[:-4] + ".npz", path)
+            original_bytes = Path(path).read_bytes()
+
+            agent = self._agent_with_data()
+            with unittest.mock.patch(
+                "os.replace", side_effect=OSError("simulated interrupted rename")
+            ):
+                result = agent.save_experience_data(path)
+
+            self.assertFalse(result)
+            self.assertTrue(
+                os.path.exists(path), "existing checkpoint must not be deleted"
+            )
+            self.assertEqual(
+                Path(path).read_bytes(),
+                original_bytes,
+                "existing checkpoint content must be untouched on failure",
+            )
+
+    def test_leftover_temp_file_cleaned_up_on_failure(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            path = os.path.join(tmp, "checkpoint.npz")
+            agent = self._agent_with_data()
+
+            with unittest.mock.patch(
+                "os.replace", side_effect=OSError("simulated interrupted rename")
+            ):
+                agent.save_experience_data(path)
+
+            leftover = os.path.join(tmp, "checkpoint.tmp.npz")
+            self.assertFalse(
+                os.path.exists(leftover),
+                "temp file must be cleaned up after a failed save",
+            )
+
+    def test_disk_full_during_write_preserves_existing_checkpoint(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            path = os.path.join(tmp, "checkpoint.npz")
+            np.savez_compressed(path[:-4], states=np.ones(3))
+            os.rename(path[:-4] + ".npz", path)
+            original_bytes = Path(path).read_bytes()
+
+            agent = self._agent_with_data()
+            with unittest.mock.patch(
+                "numpy.savez_compressed", side_effect=OSError("disk full")
+            ):
+                result = agent.save_experience_data(path)
+
+            self.assertFalse(result)
+            self.assertEqual(Path(path).read_bytes(), original_bytes)
 
 
 if __name__ == "__main__":
