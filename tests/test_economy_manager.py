@@ -286,6 +286,54 @@ class TestDroneProduction:
         # Should not produce more drones when saturated
         assert True
 
+    @pytest.mark.asyncio
+    async def test_drone_halted_when_all_in_policy_set(self):
+        """strategy_manager가 올인 감지 시 세팅하는 drone_production_policy=HALT를
+        economy_manager가 실제로 준수하는지 확인 (이전에는 플래그만 세팅되고
+        아무도 읽지 않아 사문화된 상태였음)"""
+        bot = MockBot()
+        bot.minerals = 500
+        bot.supply_left = 5
+        bot.workers = MockUnits([MockUnit(i, "DRONE", (50, 50)) for i in range(10)])
+        bot.townhalls = MockUnits([MockUnit(100, "HATCHERY", (50, 50))])
+        bot.larva = MockUnits([MockUnit(1, "LARVA", (50, 50))])
+        bot.blackboard = Mock()
+        bot.blackboard.get = Mock(
+            side_effect=lambda key, default=None: (
+                "HALT" if key == "drone_production_policy" else default
+            )
+        )
+        bot.blackboard.request_production = Mock()
+
+        manager = EconomyManager(bot)
+        await manager._train_drone_if_needed()
+
+        bot.blackboard.request_production.assert_not_called()
+        bot.do.assert_not_called()
+
+    @pytest.mark.asyncio
+    async def test_drone_reduced_cap_when_reduce_policy_set(self):
+        """drone_production_policy=REDUCE면 22기 이상에서 드론 생산 중단"""
+        bot = MockBot()
+        bot.minerals = 500
+        bot.supply_left = 5
+        bot.workers = MockUnits([MockUnit(i, "DRONE", (50, 50)) for i in range(25)])
+        bot.townhalls = MockUnits([MockUnit(100, "HATCHERY", (50, 50))])
+        bot.larva = MockUnits([MockUnit(1, "LARVA", (50, 50))])
+        bot.blackboard = Mock()
+        bot.blackboard.get = Mock(
+            side_effect=lambda key, default=None: (
+                "REDUCE" if key == "drone_production_policy" else default
+            )
+        )
+        bot.blackboard.request_production = Mock()
+
+        manager = EconomyManager(bot)
+        await manager._train_drone_if_needed()
+
+        bot.blackboard.request_production.assert_not_called()
+        bot.do.assert_not_called()
+
 
 class TestGoldExpansion:
     """테스트 5: 골드 확장지 감지"""
