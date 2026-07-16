@@ -2,7 +2,7 @@
 
 > Owner: 선우 (sun475300@gmail.com)
 > Maintainer: nightly automation
-> Last refreshed: 2026-05-04
+> Last refreshed: 2026-07-16
 
 ---
 
@@ -11,9 +11,10 @@
 - Branch: `main`, last commit: queen transfusion + requirements-dev.txt session
 - Bot core: `wicked_zerg_challenger/` — 179+ Python files across 10+ subdirs.
 - `.gitattributes` enforces `* text=auto` ✅
-- CI: `sc2bot-ci.yml` runs black + isort + flake8 ✅ (all clean)
-- **Test suite: 468 pass / 15 skip / 0 fail** ✅ (was 398/20/0 two nights ago)
+- CI: `sc2bot-ci.yml` runs black + isort + flake8 ✅ (all clean on files touched this run — repo-wide `black --check .` in CI still covers hundreds of unrelated sample directories outside `wicked_zerg_challenger/`, not audited here)
+- **Test suite (`wicked_zerg_challenger/tests`): 666 pass / 0 fail** ✅ (up from 661 before this run)
 - Queen transfusion logic: 3 bugs fixed (`is_idle` guard removed, target dedup, per-queen cooldown) ✅
+- 2026-07-16 audit: ROADMAP.md Sprints 1-7 and REMAINING_ISSUES.md N1-N4 / Issue #3 / Issue #4 re-verified against code — all already implemented, docs were just stale.
 
 ## Resolved this run (2026-05-03)
 
@@ -52,7 +53,7 @@
 | P2.1 | Force-accumulation FSM tests                    | ✅ Done | `tests/test_combat_phase_fsm.py` — 23 tests all passing. |
 | P2.2 | Benchmark runner                                | ❌ Open | Single command, N replays, APM/supply/win-rate report vs Hard. |
 | P2.3 | Build-order config externalisation              | ❌ Open | Move top-20 hardcoded values to `config/build_orders.yaml`. |
-| P2.4 | RL agent save-experience guard                  | ❌ Open | Unit test for save under disk-full / interrupted-rename. |
+| P2.4 | RL agent save-experience guard                  | ✅ Done | `save_experience_data()` in `rl_agent.py` used to `os.remove()` the destination file before `os.rename()`-ing the temp file into place — a failure between those two steps (disk full, interrupted rename) permanently lost the previous checkpoint. Fixed to use `os.replace()` (atomic, cross-platform, no separate delete). 5 new guard tests in `tests/test_sprint6_rl_pipeline.py::TestRLAgentSaveExperienceGuard`. |
 | P2.5 | Type hints + docstring pass on core modules     | ❌ Open | `core/resource_manager.py`, `core/manager_factory.py`. |
 
 ## Long-term direction
@@ -87,6 +88,7 @@ Run `E:\GitHub\Swarm-control-in-sc2bot\scripts\commit_nightly_2026-05-03.bat`:
 
 ## Run history
 
+- **2026-07-16** — Full audit: re-verified ROADMAP.md Sprints 1-7 and REMAINING_ISSUES.md N1-N4/#3/#4 against current code — all already implemented (docs were stale, not the code). Test suite: 666 pass / 0 fail (up from 661; was 342 per ROADMAP.md, 468 per prior nightly run). Fixed real bug: P2.4 RL agent atomic-save data-loss window (`os.remove()` + `os.rename()` → `os.replace()`), 5 new guard tests.
 - **2026-04-25** — Initial nightly plan.
 - **2026-04-26** — P0.2 (empty-logger CI guard) landed.
 - **2026-04-27** — black + isort + flake8 all clean.

@@ -4,24 +4,24 @@
 
 통합 문제 해결 후 발견된 추가 개선 사항들입니다.
 
-**Last refreshed:** 2026-04-27 (Issue #1, #2 → Resolved; Issue #6 partially resolved via Batch 3)
+**Last refreshed:** 2026-07-16 (재검증: N1-N4, Issue #3, #4 모두 코드에 이미 반영되어 있음을 확인 — 문서만 stale했던 것으로 별도 작업 없이 닫음. pyflakes로 `wicked_zerg_challenger/` 전체 재스캔 결과 F811 재정의 0건)
 
 ---
 
-## 🆕 신규 발견 (PR #44, 2026-04-27)
+## ✅ 재검증 완료 — 코드에 이미 반영됨 (2026-07-16)
 
-자동/수동 점검 사이클(테스트 → 코드 검사 → 개선 → 커밋/푸시 반복)에서 새로 식별된 항목.
+아래 항목들은 이 문서에 open으로 남아있었지만, 실제 코드를 확인한 결과 이미 해결되어 있었습니다.
 
-| ID | 설명 | 우선순위 | 상태 |
-|----|------|---------|------|
-| N1 | `OpponentModeling.on_step` 중복 정의 (line 341 vs 765 — F811) | 🟠 HIGH | open — 동작 영향(상위 on_step이 미실행) 가능 |
-| N2 | `EconomyManager._prevent_resource_banking` / `_reduce_gas_workers` 재정의 (F811) | 🟡 MED | open |
-| N3 | `combat_manager._find_harass_target` 재정의 (line 2377 vs 4278) | 🟡 MED | open |
-| N4 | `production_resilience.build_terran_counters` 재정의 (1369 vs 1866) | 🟡 MED | open |
-| N5 | bare `except Exception:` 다수 (≈360+) — 이번 PR에서 12건 처리, 잔여 다수 | 🟢 LOW | partial |
-| N6 | F841 unused local variables (visuals/make_pptx 등) | 🟢 LOW | open (presentation 코드라 영향 작음) |
+| ID | 설명 | 검증 결과 |
+|----|------|----------|
+| N1 | `OpponentModeling.on_step` 중복 정의 (F811) | `opponent_modeling.py`에 `on_step` 정의 1건만 존재 (line 341) — 중복 없음 |
+| N2 | `EconomyManager._prevent_resource_banking` / `_reduce_gas_workers` 재정의 | `economy_manager.py`에 각 메서드 정의 1건만 존재 |
+| N3 | `combat_manager._find_harass_target` 재정의 | `combat_manager.py`에 정의 1건만 존재 (line 4992), 나머지는 호출부 |
+| N4 | `production_resilience.build_terran_counters` 재정의 | `local_training/production_resilience.py`에 정의 1건만 존재 |
+| Issue #3 | Transfusion 우선순위 시스템 | `queen_manager.py:_transfuse_injured_units()`에 CreepyBot 스타일 우선순위 테이블(Queen>Broodlord>Corruptor>...) + 치료불가 유닛 제외 + 쿨다운/거리 체크까지 이미 구현됨 |
+| Issue #4 | Resource Reservation Race Condition | `core/resource_manager.py`에 `try_reserve()` 기반 예약 시스템 구현되어 `economy_manager.py`, `defense_coordinator.py`에서 사용 중 |
 
-검증 권장: PR 분리 (N1 단독 PR 권장 — 동작 변화 가능성).
+N5(bare except), N6(F841) 및 Issue #5/#6(코드 중복, 매직넘버)는 낮은 우선순위 코드 품질 항목으로 아직 open — 아래 섹션 참조.
 
 ---
 
@@ -67,9 +67,9 @@
 
 ---
 
-## 🟡 MEDIUM Priority Issues (still open)
+## 🟡 MEDIUM Priority Issues (historical — see "재검증 완료" above, kept for context)
 
-### Issue #3: Transfusion 우선순위 개선 필요
+### Issue #3: Transfusion 우선순위 개선 필요 — ✅ 위 재검증 섹션 참조, 이미 구현됨
 
 **위치**: `queen_manager.py` 또는 `spell_unit_manager.py`
 
@@ -142,7 +142,7 @@ async def smart_transfusion(self, queen, damaged_units):
 
 ---
 
-### Issue #4: Resource Reservation Race Condition
+### Issue #4: Resource Reservation Race Condition — ✅ 위 재검증 섹션 참조, 이미 구현됨
 
 **위치**: `resource_manager.py` (추정)
 
@@ -363,12 +363,12 @@ if iteration % SECOND == 0:
 
 | 우선순위 | 이슈 | 영향도 | 난이도 |
 |---------|------|--------|--------|
-| 🟡 MEDIUM | #3 Transfusion 우선순위 | 중간 | 중간 |
-| 🟡 MEDIUM | #4 Resource Race Condition | 낮음 | 중간 |
-| 🟢 LOW | #5 코드 중복 제거 | 낮음 | 쉬움 |
+| 🟢 LOW | #5 코드 중복 제거 (position 계산) | 낮음 | 쉬움 |
 | 🟢 LOW | #6 매직 넘버 | 낮음 | 쉬움 |
+| 🟢 LOW | N5 bare except 잔여 | 낮음 | 쉬움 |
+| 🟢 LOW | N6 F841 unused locals (presentation 코드) | 낮음 | 쉬움 |
 
-(Issue #1, #2 → ✅ Resolved 섹션 참조)
+(Issue #1, #2, #3, #4, N1-N4 → ✅ Resolved / 재검증 완료 섹션 참조)
 
 ---
 
