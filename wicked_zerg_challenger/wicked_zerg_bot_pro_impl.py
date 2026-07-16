@@ -431,46 +431,52 @@ class WickedZergBotProImpl(BotAI):
         # Store iteration as attribute for other modules to access
         self.iteration = iteration
 
-        # * Feature 86: Cache our unit tags for unit lost tracking *
-        if iteration % 22 == 0:
-            if not hasattr(self, "_known_unit_tags"):
-                self._known_unit_tags = {}
-            if hasattr(self, "units"):
-                # Bug fix #3: Prune tags no longer in self.units to prevent unbounded growth
-                current_tags = {unit.tag for unit in self.units}
-                stale_tags = set(self._known_unit_tags.keys()) - current_tags
-                for stale_tag in stale_tags:
-                    del self._known_unit_tags[stale_tag]
+        try:
+            # * Feature 86: Cache our unit tags for unit lost tracking *
+            if iteration % 22 == 0:
+                if not hasattr(self, "_known_unit_tags"):
+                    self._known_unit_tags = {}
+                if hasattr(self, "units"):
+                    # Bug fix #3: Prune tags no longer in self.units to prevent unbounded growth
+                    current_tags = {unit.tag for unit in self.units}
+                    stale_tags = set(self._known_unit_tags.keys()) - current_tags
+                    for stale_tag in stale_tags:
+                        del self._known_unit_tags[stale_tag]
 
-                for unit in self.units:
-                    # Bug fix #1: Check BEFORE assignment so new workers are detected
-                    if (
-                        unit.type_id.name == "DRONE"
-                        and unit.tag not in self._known_unit_tags
-                    ):
-                        self._workers_created = getattr(self, "_workers_created", 0) + 1
-                    self._known_unit_tags[unit.tag] = {
-                        "type": unit.type_id.name,
-                        "position": {
-                            "x": round(unit.position.x, 1),
-                            "y": round(unit.position.y, 1),
-                        },
-                    }
+                    for unit in self.units:
+                        # Bug fix #1: Check BEFORE assignment so new workers are detected
+                        if (
+                            unit.type_id.name == "DRONE"
+                            and unit.tag not in self._known_unit_tags
+                        ):
+                            self._workers_created = getattr(self, "_workers_created", 0) + 1
+                        self._known_unit_tags[unit.tag] = {
+                            "type": unit.type_id.name,
+                            "position": {
+                                "x": round(unit.position.x, 1),
+                                "y": round(unit.position.y, 1),
+                            },
+                        }
 
-        # 전략 선택 (한 번만 실행)
-        if (
-            self.aggressive_strategies
-            and not self.aggressive_strategies._strategy_decided
-        ):
-            enemy_race = str(getattr(self, "enemy_race", "Unknown"))
-            self.aggressive_strategies.select_strategy(enemy_race)
+            # 전략 선택 (한 번만 실행)
+            if (
+                self.aggressive_strategies
+                and not self.aggressive_strategies._strategy_decided
+            ):
+                enemy_race = str(getattr(self, "enemy_race", "Unknown"))
+                self.aggressive_strategies.select_strategy(enemy_race)
+
+            if self._step_integrator is None:
+                self._step_integrator = BotStepIntegrator(self)
+
+            # * Feature 85: Track key building/upgrade completions *
+            if iteration % 22 == 0:
+                self._track_build_order()
+        except Exception as e:
+            self.logger.error(f"[ERROR] on_step pre-delegation logic failed: {e}")
 
         if self._step_integrator is None:
             self._step_integrator = BotStepIntegrator(self)
-
-        # * Feature 85: Track key building/upgrade completions *
-        if iteration % 22 == 0:
-            self._track_build_order()
 
         # Execute integrated on_step (모든 핵심 매니저 포함)
         await self._step_integrator.on_step(iteration)
@@ -479,15 +485,15 @@ class WickedZergBotProImpl(BotAI):
         if self.scoring_system:
             try:
                 self.scoring_system.on_step(iteration)
-            except Exception:
-                pass
+            except Exception as e:
+                self.logger.error(f"[ERROR] scoring_system.on_step failed: {e}")
 
         # * Awareness Engine: 실시간 상황 인식 + 자동 대응 *
         if self.awareness_engine:
             try:
                 self.awareness_engine.on_step(iteration)
-            except Exception:
-                pass
+            except Exception as e:
+                self.logger.error(f"[ERROR] awareness_engine.on_step failed: {e}")
 
         # Personality module is called in bot_step_integration.py; do not call here.
 
