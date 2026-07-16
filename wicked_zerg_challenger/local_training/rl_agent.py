@@ -301,7 +301,9 @@ class RLAgent:
                 obs = np.concatenate(
                     [
                         obs,
-                        np.zeros(self.micro_observation_dim - len(obs), dtype=np.float32),
+                        np.zeros(
+                            self.micro_observation_dim - len(obs), dtype=np.float32
+                        ),
                     ]
                 )
             obs = obs[: self.micro_observation_dim]
@@ -333,7 +335,9 @@ class RLAgent:
     def _average_unit_value(units, attr: str) -> float:
         if not units:
             return 0.0
-        return float(np.mean([float(getattr(unit, attr, 0.0) or 0.0) for unit in units]))
+        return float(
+            np.mean([float(getattr(unit, attr, 0.0) or 0.0) for unit in units])
+        )
 
     @staticmethod
     def _fraction(units, attr: str) -> float:
@@ -636,6 +640,7 @@ class RLAgent:
 
     def save_experience_data(self, path: str) -> bool:
         """현재 에피소드의 경험 데이터를 파일로 저장 (Atomic Save 적용)"""
+        temp_actual = None
         try:
             path = Path(path)
             path.parent.mkdir(parents=True, exist_ok=True)
@@ -644,6 +649,7 @@ class RLAgent:
             path_str = str(path)
             base_no_ext = path_str[:-4] if path_str.endswith(".npz") else path_str
             temp_base = base_no_ext + ".tmp"
+            temp_actual = temp_base + ".npz"
 
             # NumPy 배열로 변환하여 임시 파일로 저장
             np.savez_compressed(
@@ -652,13 +658,13 @@ class RLAgent:
                 actions=np.array(self.actions, dtype=np.int64),
                 rewards=np.array(self.rewards, dtype=np.float32),
             )
-            temp_actual = temp_base + ".npz"
 
-            # 원자적으로 이름 변경 (Atomic Rename)
-            # Windows에서는 기존 파일이 있으면 rename이 실패할 수 있으므로 삭제 후 변경
-            if os.path.exists(path_str):
-                os.remove(path_str)
-            os.rename(temp_actual, path_str)
+            # 원자적 교체: os.replace()는 대상 파일이 이미 존재해도
+            # 별도 삭제 없이 원자적으로 덮어쓴다 (POSIX/Windows 공통).
+            # 기존의 "삭제 후 rename" 방식은 삭제와 rename 사이에
+            # 실패(디스크 풀 등)하면 원본 데이터가 영구 손실되는 문제가 있었다.
+            os.replace(temp_actual, path_str)
+            temp_actual = None
 
             logger.info(
                 f"[OK] Experience saved atomically: {len(self.states)} states, {len(self.rewards)} rewards"
@@ -670,6 +676,13 @@ class RLAgent:
 
             traceback.print_exc()
             return False
+        finally:
+            # 저장 실패 시 남은 임시 파일 정리 (디스크 풀 등으로 원본은 보존됨)
+            if temp_actual and os.path.exists(temp_actual):
+                try:
+                    os.remove(temp_actual)
+                except OSError:
+                    pass
 
     def train_from_batch(
         self, experiences: List[Dict[str, np.ndarray]]

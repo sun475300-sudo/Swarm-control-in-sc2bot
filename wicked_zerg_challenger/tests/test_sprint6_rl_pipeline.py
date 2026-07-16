@@ -9,6 +9,7 @@ import tempfile
 import unittest
 from pathlib import Path
 from types import SimpleNamespace
+from unittest.mock import patch
 
 import numpy as np
 
@@ -115,7 +116,9 @@ class TestRLMicroDeployment(unittest.TestCase):
     def test_micro_observation_is_16d_and_inference_has_7_actions(self):
         bot = FakeBot()
         units = [FakeUnit(i, "ROACH", Point(i, 0), health=100) for i in range(3)]
-        enemies = [FakeUnit(100 + i, "MARINE", Point(5 + i, 0), health=45) for i in range(5)]
+        enemies = [
+            FakeUnit(100 + i, "MARINE", Point(5 + i, 0), health=45) for i in range(5)
+        ]
         agent = RLAgent()
 
         observation = agent.build_micro_observation(bot, units, enemies)
@@ -129,7 +132,9 @@ class TestRLMicroDeployment(unittest.TestCase):
     def test_combat_manager_uses_rl_micro_when_enabled_and_confident(self):
         bot = FakeBot()
         units = [FakeUnit(i, "ROACH", Point(i, 0), health=100) for i in range(3)]
-        enemies = [FakeUnit(100 + i, "MARINE", Point(5 + i, 0), health=45) for i in range(5)]
+        enemies = [
+            FakeUnit(100 + i, "MARINE", Point(5 + i, 0), health=45) for i in range(5)
+        ]
         manager = make_manager(bot)
 
         handled = asyncio.run(manager._try_rl_micro(units, enemies))
@@ -165,6 +170,95 @@ class TestCurriculumStage3(unittest.TestCase):
         np.testing.assert_allclose(merged["combat_only"], np.array([4.0]))
 
 
+class TestRLAgentSaveExperienceGuard(unittest.TestCase):
+    """P2.4 (PLAN-NIGHTLY.md): save must not corrupt/lose data on I/O failure."""
+
+    def _agent_with_data(self):
+        agent = RLAgent()
+        agent.states = [np.zeros(15, dtype=np.float32)]
+        agent.actions = [1]
+        agent.rewards = [1.0]
+        return agent
+
+    def test_disk_full_during_write_returns_false_and_leaves_no_temp_file(self):
+        agent = self._agent_with_data()
+        with tempfile.TemporaryDirectory() as tmp:
+            target = Path(tmp) / "exp.npz"
+
+            with patch(
+                "local_training.rl_agent.np.savez_compressed",
+                side_effect=OSError(28, "No space left on device"),
+            ):
+                result = agent.save_experience_data(str(target))
+
+            self.assertFalse(result)
+            self.assertFalse(target.exists())
+            leftover_temp_files = list(Path(tmp).glob("*.tmp*"))
+            self.assertEqual(leftover_temp_files, [])
+
+    def test_disk_full_during_write_preserves_existing_file(self):
+        agent = self._agent_with_data()
+        with tempfile.TemporaryDirectory() as tmp:
+            target = Path(tmp) / "exp.npz"
+            target.write_bytes(b"previous-checkpoint-data")
+
+            with patch(
+                "local_training.rl_agent.np.savez_compressed",
+                side_effect=OSError(28, "No space left on device"),
+            ):
+                result = agent.save_experience_data(str(target))
+
+            self.assertFalse(result)
+            self.assertEqual(target.read_bytes(), b"previous-checkpoint-data")
+
+    def test_interrupted_rename_preserves_existing_file(self):
+        agent = self._agent_with_data()
+        with tempfile.TemporaryDirectory() as tmp:
+            target = Path(tmp) / "exp.npz"
+            target.write_bytes(b"previous-checkpoint-data")
+
+            with patch(
+                "local_training.rl_agent.os.replace",
+                side_effect=OSError("simulated interrupted rename"),
+            ):
+                result = agent.save_experience_data(str(target))
+
+            self.assertFalse(result)
+            # The old atomic-save implementation deleted the destination
+            # before renaming the temp file into place, so a failure here
+            # used to permanently lose the previous checkpoint.
+            self.assertEqual(target.read_bytes(), b"previous-checkpoint-data")
+
+    def test_interrupted_rename_cleans_up_temp_file(self):
+        agent = self._agent_with_data()
+        with tempfile.TemporaryDirectory() as tmp:
+            target = Path(tmp) / "exp.npz"
+
+            with patch(
+                "local_training.rl_agent.os.replace",
+                side_effect=OSError("simulated interrupted rename"),
+            ):
+                result = agent.save_experience_data(str(target))
+
+            self.assertFalse(result)
+            leftover_temp_files = list(Path(tmp).glob("*.tmp*"))
+            self.assertEqual(leftover_temp_files, [])
+
+    def test_successful_save_round_trips_data(self):
+        agent = self._agent_with_data()
+        with tempfile.TemporaryDirectory() as tmp:
+            target = Path(tmp) / "exp.npz"
+
+            result = agent.save_experience_data(str(target))
+
+            self.assertTrue(result)
+            self.assertTrue(target.exists())
+            loaded = np.load(target)
+            self.assertEqual(loaded["states"].shape, (1, 15))
+            self.assertEqual(loaded["actions"][0], 1)
+            self.assertAlmostEqual(float(loaded["rewards"][0]), 1.0)
+
+
 class TestSelfPlayPipeline(unittest.TestCase):
     def test_update_elo_moves_winner_up_and_loser_down(self):
         winner, loser = update_elo(1500, 1500)
@@ -177,7 +271,9 @@ class TestSelfPlayPipeline(unittest.TestCase):
             pipeline = TrainingPipeline(tmp)
 
             self.assertIsNone(
-                pipeline.maybe_checkpoint_episode(49, FakeSavingAgent(), {"win_rate": 0.5})
+                pipeline.maybe_checkpoint_episode(
+                    49, FakeSavingAgent(), {"win_rate": 0.5}
+                )
             )
             version = pipeline.maybe_checkpoint_episode(
                 50, FakeSavingAgent(), {"win_rate": 0.55, "games": 50}
