@@ -31,8 +31,9 @@ logger = logging.getLogger("VictoryConditions")
 def _atomic_json_save(path: str, data: object) -> None:
     """Write JSON atomically via temp-file + rename to prevent corruption on crash."""
     dir_name = os.path.dirname(os.path.abspath(path))
-    with tempfile.NamedTemporaryFile("w", dir=dir_name, delete=False,
-                                     suffix=".tmp", encoding="utf-8") as f:
+    with tempfile.NamedTemporaryFile(
+        "w", dir=dir_name, delete=False, suffix=".tmp", encoding="utf-8"
+    ) as f:
         json.dump(data, f, indent=2, ensure_ascii=False)
         tmp_name = f.name
     os.replace(tmp_name, path)
