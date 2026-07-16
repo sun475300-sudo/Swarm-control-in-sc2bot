@@ -67,9 +67,25 @@
 
 ---
 
-## 🟡 MEDIUM Priority Issues (still open)
+## ✅ Resolved (확인일: 2026-07-16)
 
-### Issue #3: Transfusion 우선순위 개선 필요
+### ✅ Issue #3: Transfusion 우선순위 — 이미 구현됨
+
+`queen_manager.py:711` `_transfuse_injured_units()`가 `TRANSFUSE_PRIORITY` 딕셔너리 기반
+우선순위 시스템("CreepyBot-inspired priority system")을 이미 구현하고 있음. 쿨다운/거리
+체크도 포함. 아래 예시 코드와 이름은 다르지만 기능적으로 동등. 문서가 stale했음 — 별도 작업 불필요.
+
+### ✅ Issue #4: Resource Reservation Race Condition — 이미 구현됨
+
+`wicked_zerg_challenger/core/resource_manager.py:28` `ResourceManager`가 `asyncio.Lock`
+기반 `try_reserve()`/`release()`/`release_partial()`을 이미 구현. 예시 코드와 동일한 접근.
+문서가 stale했음 — 별도 작업 불필요.
+
+---
+
+## 참고: 아래 원래 이슈 설명(historical, 이미 해결됨)
+
+### Issue #3 (원문): Transfusion 우선순위 개선 필요
 
 **위치**: `queen_manager.py` 또는 `spell_unit_manager.py`
 
@@ -219,7 +235,14 @@ else:
 
 ## 🟢 LOW Priority Issues
 
-### Issue #5: 코드 중복 - Position 계산
+### ✅ Issue #5: 코드 중복 - Position 계산 — 해결됨 (2026-07-16)
+
+`utils/position_utils.py`는 이미 존재했지만 (`get_center_position`, `get_weighted_center`
+등 8개 헬퍼) 실제 호출부가 하나도 없어 사실상 dead code였음. 마지막 남은 중복 인라인 계산
+(`battle_preparation_system.py:_find_enemy_clusters`)을 `get_center_position()` 호출로
+교체하고 회귀 테스트 3건(`tests/test_battle_preparation_system.py`) 추가. 아래는 원본 이슈 설명(historical).
+
+### Issue #5 (원문): 코드 중복 - Position 계산
 
 **위치**: 여러 파일에서 중복
 
@@ -363,12 +386,9 @@ if iteration % SECOND == 0:
 
 | 우선순위 | 이슈 | 영향도 | 난이도 |
 |---------|------|--------|--------|
-| 🟡 MEDIUM | #3 Transfusion 우선순위 | 중간 | 중간 |
-| 🟡 MEDIUM | #4 Resource Race Condition | 낮음 | 중간 |
-| 🟢 LOW | #5 코드 중복 제거 | 낮음 | 쉬움 |
 | 🟢 LOW | #6 매직 넘버 | 낮음 | 쉬움 |
 
-(Issue #1, #2 → ✅ Resolved 섹션 참조)
+(Issue #1~#5 → ✅ Resolved 섹션 참조. #3/#4는 문서가 stale했을 뿐 이미 구현되어 있었음, #5는 2026-07-16에 마지막 호출부 정리로 해결.)
 
 ---
 
