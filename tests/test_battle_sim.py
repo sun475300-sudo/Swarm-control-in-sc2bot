@@ -1,8 +1,4 @@
-import pytest
-
-
-def calculate_swarm_damage(count):
-    return count * 5
+from python_parallel.battle_sim import calculate_swarm_damage
 
 
 def test_swarm_damage():
