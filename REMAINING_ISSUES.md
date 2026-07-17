@@ -4,24 +4,35 @@
 
 통합 문제 해결 후 발견된 추가 개선 사항들입니다.
 
-**Last refreshed:** 2026-04-27 (Issue #1, #2 → Resolved; Issue #6 partially resolved via Batch 3)
+**Last refreshed:** 2026-07-17 (자동 점검 사이클 — 테스트 전체 실행 후 코드 재검증)
 
 ---
 
-## 🆕 신규 발견 (PR #44, 2026-04-27)
+## 🆕 2026-07-17 점검 결과
 
-자동/수동 점검 사이클(테스트 → 코드 검사 → 개선 → 커밋/푸시 반복)에서 새로 식별된 항목.
+`tests/`(504 tests) + `wicked_zerg_challenger/tests/`(661 tests) 전체 실행, py_compile
+전수 검사(417 files), flake8 E9/F63/F7/F82/F811/F821 검사를 수행했습니다.
+
+### 신규 발견 및 수정 완료
 
 | ID | 설명 | 우선순위 | 상태 |
 |----|------|---------|------|
-| N1 | `OpponentModeling.on_step` 중복 정의 (line 341 vs 765 — F811) | 🟠 HIGH | open — 동작 영향(상위 on_step이 미실행) 가능 |
-| N2 | `EconomyManager._prevent_resource_banking` / `_reduce_gas_workers` 재정의 (F811) | 🟡 MED | open |
-| N3 | `combat_manager._find_harass_target` 재정의 (line 2377 vs 4278) | 🟡 MED | open |
-| N4 | `production_resilience.build_terran_counters` 재정의 (1369 vs 1866) | 🟡 MED | open |
-| N5 | bare `except Exception:` 다수 (≈360+) — 이번 PR에서 12건 처리, 잔여 다수 | 🟢 LOW | partial |
-| N6 | F841 unused local variables (visuals/make_pptx 등) | 🟢 LOW | open (presentation 코드라 영향 작음) |
+| N7 | 저장소 루트의 `pytest/` 디렉터리가 실제 `pytest` 패키지를 섀도잉 — `python -m pytest`가 루트에서 항상 `ModuleNotFoundError` 없이도 자기 자신을 import(빈 네임스페이스 패키지)해서 깨짐. 담긴 테스트(`test_battle.py`)는 `python_parallel/battle_sim.py`의 실제 함수를 import하지 않고 값만 복사해 사실상 아무것도 검증하지 않았음 | 🟠 HIGH | ✅ FIXED — `pytest/` 삭제, 실제 함수를 import하는 `tests/test_battle_sim.py`로 대체 |
+| N8 | `tests/test_combat_phase_fsm.py`의 5개 헬퍼가 `asyncio.get_event_loop().run_until_complete(...)` (Python 3.10+ 비권장 패턴) 사용 — 같은 세션에서 `test_combat_manager.py`처럼 이벤트 루프를 닫는 테스트가 먼저 실행되면 스레드에 "현재 이벤트 루프"가 없어 `RuntimeError`로 12개 테스트가 순서 의존적으로 실패 | 🟠 HIGH | ✅ FIXED — `asyncio.run(...)`으로 교체, 전체 스위트 순서로 실행해도 통과 확인 |
 
-검증 권장: PR 분리 (N1 단독 PR 권장 — 동작 변화 가능성).
+### 재검증 결과 — 문서가 stale했던 항목 (별도 작업 불필요, 코드 확인 완료)
+
+| ID | 설명 | 확인 결과 |
+|----|------|---------|
+| N1 | `OpponentModeling.on_step` 중복 정의 (F811) | flake8 F811 재실행 결과 0건 — 이미 해결됨 |
+| N2 | `EconomyManager` 메서드 재정의 (F811) | 위와 동일, 0건 |
+| N3 | `combat_manager._find_harass_target` 재정의 | 위와 동일, 0건 |
+| N4 | `production_resilience.build_terran_counters` 재정의 | 위와 동일, 0건 |
+| Issue #3 | Transfusion 우선순위 개선 | `queen_manager.py:711 _transfuse_injured_units`에 CreepyBot 기반 우선순위 테이블(퀸>브루드로드>커럽터>스파인>오버시어>울트라...) 및 치료 불가 유닛 제외 로직이 이미 구현되어 있음 |
+| N5 | bare `except Exception:` (≈465건, `wicked_zerg_challenger/` 기준) | 잔존 확인 — 대부분 방어적 fallback 목적으로 의도된 패턴, 전수 리팩터링은 별도 대규모 PR 필요 (아래 백로그 참조) |
+| N6 | F841 unused locals (130건) | 표본 점검 결과 `combat_manager.py`의 `regenerating`/`game_time`/`non_combat_names` 등은 실제 버그 아님(로직은 정상 동작, 변수만 미사용) — 코드 품질 이슈로 낮은 우선순위 유지 |
+
+검증 권장: N7/N8은 테스트 인프라 안정성에 직접 영향이라 별도 확인 불필요(이미 diff로 검증됨).
 
 ---
 
@@ -363,12 +374,25 @@ if iteration % SECOND == 0:
 
 | 우선순위 | 이슈 | 영향도 | 난이도 |
 |---------|------|--------|--------|
-| 🟡 MEDIUM | #3 Transfusion 우선순위 | 중간 | 중간 |
-| 🟡 MEDIUM | #4 Resource Race Condition | 낮음 | 중간 |
-| 🟢 LOW | #5 코드 중복 제거 | 낮음 | 쉬움 |
+| 🟡 MEDIUM | #4 Resource Race Condition | 낮음 (단일 스레드 협조형 asyncio 루프라 실측 경쟁 사례 미확인) | 중간 |
+| 🟢 LOW | #5 코드 중복 제거 (position 계산) | 낮음 | 쉬움 |
 | 🟢 LOW | #6 매직 넘버 | 낮음 | 쉬움 |
+| 🟢 LOW | N5 bare except 전수 리팩터링 (≈465건) | 낮음 | 큼 (별도 PR 시리즈 필요) |
+| 🟢 LOW | N6 F841 unused locals 정리 (130건) | 낮음 | 쉬움 |
 
-(Issue #1, #2 → ✅ Resolved 섹션 참조)
+(Issue #1, #2, #3 → ✅ Resolved 섹션 참조. N1-N4 → 재검증 완료, 이미 해결됨. N7, N8 → 이번 사이클에서 수정 완료.)
+
+### 다음 사이클 작업 후보 (대규모 리스트)
+
+우선순위 순. 각 항목은 독립적으로 PR 분리 가능:
+
+1. **[MED]** `docs/history/` 이동 — `STATUS.md`의 P1.5 계획대로 47개 이상의 루트 `*.md` 리포트를 `docs/history/`로 이동해 리포지토리 루트 정리 (아직 미착수).
+2. **[MED]** `ResourceManager.try_reserve` 실제 락(lock) 도입 여부 결정 — 현재 매니저들이 순차 실행되는지(`bot_step_integration.py`) 확인 후, 진짜 동시 실행 지점이 있으면 Issue #4 패치 적용, 없으면 문서에서 항목 제거.
+3. **[LOW]** N5 bare `except Exception:` 465건 중 실제로 예외를 삼켜 버그를 숨길 수 있는 상위 20개 파일부터 `logger.warning(..., exc_info=True)` 등으로 로깅 추가 (전수 리팩터링은 리스크가 크므로 단계적 진행 권장).
+4. **[LOW]** N6 F841 unused locals 130건 중 `combat_manager.py`(31건), `bot_step_integration.py`(13건) 정리 — 표본 검증 결과 실동작 버그는 아니었으나 코드 가독성 저하.
+5. **[LOW]** Position 계산 중복 제거 (`utils/position_utils.py` 신설, Issue #5) — `combat_manager.py`/`rally_point.py`/`harassment_coord.py`에서 재사용.
+6. **[검증 필요]** `ROADMAP.md`가 "Phase 56, 342 테스트" 기준으로 작성되어 있으나 실제로는 500+/661개 테스트가 존재하고 Sprint 1-7 태스크 대부분이 이미 구현되어 있음 — 문서가 크게 stale함. 다음 사이클에서 로드맵 전체를 현재 코드 상태 기준으로 재작성 필요.
+7. **[테스트]** Sprint 8 QA 항목(`Task 8.1` Medium AI 30연전, `Task 8.2` AI Arena 패키지 검증)은 실제 SC2 클라이언트가 필요해 이 자동 점검 세션(샌드박스, SC2 게임 클라이언트 없음)에서는 실행 불가 — 별도 환경에서 수동/CI 실행 필요.
 
 ---
 
