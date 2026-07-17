@@ -2,17 +2,20 @@
 
 > Owner: 선우 (sun475300@gmail.com)
 > Maintainer: nightly automation
-> Last refreshed: 2026-05-04
+> Last refreshed: 2026-07-17
 
 ---
 
 ## Snapshot (current state)
 
-- Branch: `main`, last commit: queen transfusion + requirements-dev.txt session
+- Branch: `claude/optimistic-edison-spurnl` (PR #507 against `main` @ `8a80b73`).
 - Bot core: `wicked_zerg_challenger/` — 179+ Python files across 10+ subdirs.
 - `.gitattributes` enforces `* text=auto` ✅
-- CI: `sc2bot-ci.yml` runs black + isort + flake8 ✅ (all clean)
-- **Test suite: 468 pass / 15 skip / 0 fail** ✅ (was 398/20/0 two nights ago)
+- CI: `sc2bot-ci.yml` lint job (black/isort) was red on `main` (67-file drift) — fixed on this
+  branch; `sc2bot-ci.yml` test job also pointed at a non-existent `tests/unit` path — fixed.
+- **Test suite (verified locally 2026-07-17, this branch): 1167 pass / 14 skip / 0 fail**
+  (`tests/` 492 pass/14 skip, `tests/integration/` 10 pass, `wicked_zerg_challenger/tests/` 665
+  pass). Prior "468 pass" snapshot below is stale — not reproduced, left for history.
 - Queen transfusion logic: 3 bugs fixed (`is_idle` guard removed, target dedup, per-queen cooldown) ✅
 
 ## Resolved this run (2026-05-03)
