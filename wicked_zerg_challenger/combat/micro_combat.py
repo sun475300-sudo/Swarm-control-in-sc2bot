@@ -1156,10 +1156,12 @@ class MicroCombat:
                 current_angle = math.atan2(dy, dx)
 
                 # Distribute units evenly around target (360 degrees)
-                # Add offset to create spiral surround pattern
-                angle_offset = (zergling.tag % 8) * (
-                    math.pi / 4
-                )  # 8 positions around circle
+                # Add offset to create spiral surround pattern, spaced by actual
+                # squad size (ally_count + this zergling) instead of a fixed 8-way split
+                num_positions = max(ally_count + 1, 3)
+                angle_offset = (zergling.tag % num_positions) * (
+                    2 * math.pi / num_positions
+                )
                 optimal_angle = current_angle + angle_offset
 
                 # Calculate surround position (1.5 units from target center)
