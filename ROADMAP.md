@@ -1,8 +1,14 @@
 # WickedZergBotPro Grand Roadmap
 
 > 목표: Medium AI 승률 90%+ 달성 & AI Arena 출전
-> 현재 상태: Phase 56 완료, 342/342 테스트 통과, 추정 승률 45~50%
+> 현재 상태: Phase 56 완료, 504/504 테스트 통과(14 skipped), 추정 승률 45~50%
 > 봇 프레임워크: python-sc2 (burnysc2>=5.0.0)
+>
+> ⚠️ **문서 신뢰도 주의 (2026-07-17 점검)**: 아래 Sprint 1~8 태스크 목록은 작성 시점 기준이며,
+> 이후 세션들에서 상당수가 이미 구현된 것으로 확인됨 (예: Sprint 1.2 `respond_to_worker_harassment`,
+> `REMAINING_ISSUES.md`의 Transfusion 우선순위/Resource 예약 동기화/Position Utils 등).
+> 새 작업을 시작하기 전에 **반드시 grep으로 실제 구현 여부를 먼저 확인**할 것 —
+> 이 문서만 믿고 중복 구현하지 말 것. 전체 Sprint 재검증은 아직 미완료.
 
 ---
 
