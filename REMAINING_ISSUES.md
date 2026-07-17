@@ -4,7 +4,17 @@
 
 통합 문제 해결 후 발견된 추가 개선 사항들입니다.
 
-**Last refreshed:** 2026-04-27 (Issue #1, #2 → Resolved; Issue #6 partially resolved via Batch 3)
+**Last refreshed:** 2026-07-17 (recurring test→check→fix loop 세션) — N1~N4, Issue #3, Issue #4 재검증 후 already-resolved로 확인. 상세는 아래 "🆕 신규 발견" 표와 "2026-07-17 재검증" 절 참고.
+
+---
+
+## 🚨 최우선 — PR 적체 위기 (2026-07-17 기준, 미해결)
+
+`main`에 머지된 건 **PR #218 (2026-06-01)이 유일**. 그 이후 반복 세션(이 세션 포함)이 **462개**의 open draft PR을 쌓았고, 대부분 동일한 `ci.yml` collect-only / protobuf env var 누락 / `test_combat_phase_fsm.py`의 `asyncio.get_event_loop()` 버그를 독립적으로 재발견·재수정한 것 (PR #482 감사, PR #500 재확인). **`main`의 `.github/workflows/ci.yml`은 지금도 `pytest tests/ --co -q`(collect-only)라 실제로 `tests/`를 실행한 적이 없다** — 직접 확인함 (2026-07-17).
+
+- 가장 완성도 높은 후보: **PR #499** (black/isort 전면 정리 + protobuf env var + `tests/unit`→`tests/` 경로 수정 + FSM asyncio 수정, `mergeable_state: clean`) 또는 더 좁은 스코프의 **PR #500** (동일 버그, 리포맷 없이 최소 diff).
+- **권장 조치**: 사용자가 #499 또는 #500 중 하나를 머지 → 나머지 ~460개 중복 draft는 bulk-close. 이 권고는 PR #482, #486, #490, #494, #497, #498, #499, #500에서 반복적으로 나왔으나 아직 실행되지 않음.
+- 이 정책(자동 머지 금지, 사람 리뷰 필수)이 실제 병목이라는 점도 여러 세션에서 지적됨 — 정책 변경 여부도 사용자 판단 필요.
 
 ---
 
@@ -14,14 +24,14 @@
 
 | ID | 설명 | 우선순위 | 상태 |
 |----|------|---------|------|
-| N1 | `OpponentModeling.on_step` 중복 정의 (line 341 vs 765 — F811) | 🟠 HIGH | open — 동작 영향(상위 on_step이 미실행) 가능 |
-| N2 | `EconomyManager._prevent_resource_banking` / `_reduce_gas_workers` 재정의 (F811) | 🟡 MED | open |
-| N3 | `combat_manager._find_harass_target` 재정의 (line 2377 vs 4278) | 🟡 MED | open |
-| N4 | `production_resilience.build_terran_counters` 재정의 (1369 vs 1866) | 🟡 MED | open |
-| N5 | bare `except Exception:` 다수 (≈360+) — 이번 PR에서 12건 처리, 잔여 다수 | 🟢 LOW | partial |
-| N6 | F841 unused local variables (visuals/make_pptx 등) | 🟢 LOW | open (presentation 코드라 영향 작음) |
+| N1 | `OpponentModeling.on_step` 중복 정의 (line 341 vs 765 — F811) | 🟠 HIGH | ✅ 해결됨 (2026-07-17 재검증: `on_step` 정의 1건만 존재) |
+| N2 | `EconomyManager._prevent_resource_banking` / `_reduce_gas_workers` 재정의 (F811) | 🟡 MED | ✅ 해결됨 (2026-07-17 재검증: 각 1건만 존재) |
+| N3 | `combat_manager._find_harass_target` 재정의 (line 2377 vs 4278) | 🟡 MED | ✅ 해결됨 (2026-07-17 재검증: 1건만 존재) |
+| N4 | `production_resilience.build_terran_counters` 재정의 (1369 vs 1866) | 🟡 MED | ✅ 해결됨 (2026-07-17 재검증: 1건만 존재) |
+| N5 | bare `except Exception:` 다수 (≈360+) — 이번 PR에서 12건 처리, 잔여 다수 | 🟢 LOW | partial (미재검증) |
+| N6 | F841 unused local variables (visuals/make_pptx 등) | 🟢 LOW | open — flake8 재실행 결과 `wicked_zerg_challenger/`에 F841 다수 잔존 (2026-07-17) |
 
-검증 권장: PR 분리 (N1 단독 PR 권장 — 동작 변화 가능성).
+N1~N4는 PR #218(2026-06-01) 작업 중 "refactor: delete shadowed duplicate methods" 커밋으로 이미 해결된 것으로 보임. 문서만 stale했음.
 
 ---
 
@@ -69,11 +79,13 @@
 
 ## 🟡 MEDIUM Priority Issues (still open)
 
-### Issue #3: Transfusion 우선순위 개선 필요
+### Issue #3: Transfusion 우선순위 개선 필요 — ✅ 해결됨 (2026-07-17 재검증)
+
+`wicked_zerg_challenger/queen_manager.py:711` `_transfuse_injured_units()`에 CreepyBot 스타일 우선순위 테이블(퀸>브루드로드>커럽터/바이퍼>스파인>오버시어>울트라>...)과 치료 불가 유닛 제외 목록(`UNHEALABLE_UNITS`)이 이미 구현되어 있음 — 아래 제안보다 더 정교함. 문서만 stale했음.
 
 **위치**: `queen_manager.py` 또는 `spell_unit_manager.py`
 
-**현재 문제**:
+**현재 문제** (2026-04-27 작성 시점, 현재는 해결됨):
 - Transfusion 로직이 단순함
 - 고가 유닛(울트라, 브루드로드) 우선순위 없음
 - 군단 숙주, 맹독충 등 치료 불가 유닛에 낭비 가능성
@@ -142,11 +154,13 @@ async def smart_transfusion(self, queen, damaged_units):
 
 ---
 
-### Issue #4: Resource Reservation Race Condition
+### Issue #4: Resource Reservation Race Condition — ✅ 해결됨 (2026-07-17 재검증)
+
+`resource_manager.try_reserve(minerals, gas, manager_name)`가 이미 구현되어 있고 `defense_coordinator.py`, `economy_manager.py` 등 여러 호출부에서 실사용 중임을 확인. 아래는 2026-04-27 작성 당시의 제안이며 현재는 해결됨.
 
 **위치**: `resource_manager.py` (추정)
 
-**문제**:
+**문제** (해결됨):
 - 여러 매니저가 동시에 자원 예약 시도
 - 경쟁 조건(race condition) 발생 가능
 - 자원 이중 예약 위험
@@ -219,7 +233,9 @@ else:
 
 ## 🟢 LOW Priority Issues
 
-### Issue #5: 코드 중복 - Position 계산
+### Issue #5: 코드 중복 - Position 계산 — 🟡 여전히 open (2026-07-17 재검증)
+
+`wicked_zerg_challenger/utils/position_utils.py`에 `get_center_position()`이 이미 존재하지만 **아무 호출부도 없음** (grep 결과 정의 파일 자신만 매치). 대신 동일한 `sum(u.position.x for u in ...) / len(...)` 패턴이 여전히 10개 파일에 중복되어 있음: `combat/expansion_defense.py`, `combat/combat_execution.py`, `combat/infestor_tactics.py`, `combat/micro_combat.py`, `combat_phase_controller.py`, `local_training/advanced_building_manager.py`, `micro_controller.py`, `combat_manager.py`, `battle_preparation_system.py`, `idle_unit_manager.py`. MASTER_TODO_SC2.md의 PR #25("중심점 계산 통합")가 이 작업을 다루려 했으나 미머지 상태. 리팩터 범위가 10개 파일 동작 코드라 별도 PR로 신중히 진행 권장.
 
 **위치**: 여러 파일에서 중복
 
