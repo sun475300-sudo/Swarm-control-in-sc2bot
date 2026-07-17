@@ -85,7 +85,7 @@ jobs:
           # effectively hangs on it. uv resolves the same file in well under a
           # second. See ci.yml's python-lint-test job for the same fix.
           pip install uv
-          uv pip install --system -r requirements.txt pytest pytest-cov pytest-asyncio
+          uv pip install --system -r requirements.txt pytest pytest-cov pytest-asyncio pytest-timeout
 
       # NOTE: tests/ and wicked_zerg_challenger/tests/ are run as two separate
       # pytest invocations, not combined in one command. Every file under
