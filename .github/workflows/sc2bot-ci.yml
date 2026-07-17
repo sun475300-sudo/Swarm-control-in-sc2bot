@@ -81,10 +81,27 @@ jobs:
           cache: pip
 
       - name: Install dependencies
-        run: pip install -r requirements.txt pytest pytest-cov pytest-asyncio
+        run: |
+          # requirements.txt bundles unrelated services (SC2/crypto/discord/AI/etc.)
+          # in one file; pip's backtracking resolver hits "resolution-too-deep" and
+          # effectively hangs on it. uv resolves the same file in well under a
+          # second. See the lint job's install step for the same fix.
+          pip install uv
+          uv pip install --system -r requirements.txt pytest pytest-cov pytest-asyncio pytest-timeout
 
+      # NOTE: "tests/unit" has never existed in this repo -- tests live directly
+      # under tests/, with tests/integration/ as the separate integration suite.
+      # This step always failed immediately until the `lint` job it depends on
+      # (needs: lint) started passing, which is why the wrong path went unnoticed.
+      #
+      # --cov is scoped to wicked_zerg_challenger (the actual "SC2 bot"), not
+      # `.`: tracing coverage across the whole repo -- crypto trading/discord
+      # bot/JARVIS/AI subsystems included, 500+ unrelated files -- slows test
+      # execution enough to blow past pytest.ini's 60s per-test timeout on
+      # heavy imports (torch, MAPPO/MADDPG), producing 6 spurious failures
+      # that don't reproduce when the same tests run alone or with scoped cov.
       - name: Run unit tests
-        run: pytest tests/unit -v --cov=. --cov-report=xml --cov-report=term
+        run: pytest tests/ --ignore=tests/integration -v --cov=wicked_zerg_challenger --cov-report=xml --cov-report=term
 
       - name: Run integration tests
         run: pytest tests/integration -v --timeout=120
