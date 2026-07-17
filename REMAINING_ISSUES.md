@@ -8,9 +8,38 @@
 
 ---
 
-## 🆕 신규 발견 (PR #44, 2026-04-27)
+## 🆕 신규 발견 (2026-07-17)
 
 자동/수동 점검 사이클(테스트 → 코드 검사 → 개선 → 커밋/푸시 반복)에서 새로 식별된 항목.
+
+### ✅ Resolved: `tests/test_combat_phase_fsm.py` order-dependent event loop crash
+
+- **증상**: `pytest tests/` 전체 실행 시 `test_combat_phase_fsm.py`의 12개 테스트가
+  `RuntimeError: There is no current event loop in thread 'MainThread'`로 실패.
+  단독 실행(`pytest tests/test_combat_phase_fsm.py`)하면 23/23 전부 통과 — 다른 테스트
+  모듈이 asyncio 이벤트 루프를 소비/종료시킨 뒤 상태가 오염되는 전형적인 순서 의존성 버그.
+- **근본 원인**: 5개 테스트 헬퍼(`_run`)가 비동기 코드를 동기 테스트에서 실행하기 위해
+  `asyncio.get_event_loop().run_until_complete(...)` 패턴(deprecated, 전역 루프 상태 의존)을 사용.
+- **수정**: `asyncio.run(...)`으로 교체 — 매 호출마다 독립된 루프를 생성/정리하므로 실행 순서와
+  무관하게 안전.
+- **검증**: `pytest tests/` 502 passed / 14 skipped / 0 failed (기존 20 failed → 0).
+  `pytest wicked_zerg_challenger/tests/` 661 passed / 0 failed.
+- **참고**: 이 정확한 증상(asyncio event loop / combat FSM 테스트 flaky)을 고친다고 주장하는
+  draft PR이 저장소에 30건 이상 열려 있음(#473~#502 등) — 대부분 머지되지 않은 채 누적된 것으로
+  보임. 아래 "PR 백로그" 항목 참조.
+
+### 🔴 CRITICAL: PR 백로그 관리 붕괴
+
+- `list_pull_requests`(open, 최신 30건)만 조회해도 `claude/optimistic-edison-*` 브랜치의
+  거의 동일한 제목("fix: ... combat FSM test", "fix: ... asyncio event loop ...", "fix: ...
+  CI collect-only ...")의 draft PR이 30건 연속으로 나옴. PR #482 제목 자체가
+  "PR backlog audit — 443 open, only 1 ever merged"라고 명시.
+- 즉, 자동 점검 루프가 반복적으로 **같은 버그를 재발견 → 새 브랜치에 재수정 → 새 draft PR 생성**만
+  반복하고 있고, 실제로 main에는 반영(머지)되지 않고 있었던 것으로 보임 — 이번 세션에서 실측한
+  `origin/main`에 위 event loop 버그가 실제로 남아있었던 것이 이를 뒷받침.
+- **권장 조치(사용자 결정 필요)**: 442개의 열린 draft PR 중 중복 항목을 감사해 close하고, 가장
+  완성도 높은 PR 1~2개만 남겨 머지하는 정리 작업이 시급함. 정리 없이 루프를 계속 돌리면 동일 버그를
+  N번째로 "고치는" PR이 계속 쌓이기만 함.
 
 | ID | 설명 | 우선순위 | 상태 |
 |----|------|---------|------|
