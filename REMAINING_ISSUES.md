@@ -4,24 +4,39 @@
 
 통합 문제 해결 후 발견된 추가 개선 사항들입니다.
 
-**Last refreshed:** 2026-04-27 (Issue #1, #2 → Resolved; Issue #6 partially resolved via Batch 3)
+**Last refreshed:** 2026-07-17 (재점검: N1-N4, Issue #3/#4 코드 확인 결과 이미 해결됨으로 정정 — 아래 "⚠️ 프로세스 문제" 참조)
 
 ---
 
-## 🆕 신규 발견 (PR #44, 2026-04-27)
+## ⚠️ 프로세스 문제 (2026-07-17 발견, 최우선 확인 필요)
 
-자동/수동 점검 사이클(테스트 → 코드 검사 → 개선 → 커밋/푸시 반복)에서 새로 식별된 항목.
+이 저장소는 "테스트 → 개선 → 커밋/푸시" 반복 세션을 지금까지 500회 이상 실행해왔지만,
+**`main`에 병합된 것은 PR #218 (2026-06-01) 단 1건뿐**입니다. 이후 세션마다 새 draft PR을
+열지만 병합되지 않고 쌓이기만 해서, 2026-07-17 기준 **오픈 PR이 500개 이상**이고 그 중
+다수(#497-#506 포함, 최소 40개 이상)가 동일한 두 버그를 각자 독립적으로 재발견해서
+고치고 있습니다 (`tests/test_combat_phase_fsm.py`의 `asyncio.get_event_loop()` deprecation,
+`rl_agent.py`의 remove-then-rename data-loss 버그). 이번 세션에서 두 버그 모두 `main` 기준
+직접 확인 후 실제로 수정했습니다 (아래 커밋 참조).
 
-| ID | 설명 | 우선순위 | 상태 |
-|----|------|---------|------|
-| N1 | `OpponentModeling.on_step` 중복 정의 (line 341 vs 765 — F811) | 🟠 HIGH | open — 동작 영향(상위 on_step이 미실행) 가능 |
-| N2 | `EconomyManager._prevent_resource_banking` / `_reduce_gas_workers` 재정의 (F811) | 🟡 MED | open |
-| N3 | `combat_manager._find_harass_target` 재정의 (line 2377 vs 4278) | 🟡 MED | open |
-| N4 | `production_resilience.build_terran_counters` 재정의 (1369 vs 1866) | 🟡 MED | open |
-| N5 | bare `except Exception:` 다수 (≈360+) — 이번 PR에서 12건 처리, 잔여 다수 | 🟢 LOW | partial |
-| N6 | F841 unused local variables (visuals/make_pptx 등) | 🟢 LOW | open (presentation 코드라 영향 작음) |
+**권장 조치**: 사용자가 최근 draft PR 중 하나(#504 또는 이번 세션 PR)를 실제로 병합하고,
+나머지 중복 draft를 일괄 정리하지 않는 한 이 패턴은 계속 반복됩니다. 병합/일괄 종료는
+파괴적 작업이라 에이전트가 임의로 하지 않았습니다 — 사용자 확인 필요.
 
-검증 권장: PR 분리 (N1 단독 PR 권장 — 동작 변화 가능성).
+---
+
+## 🆕 N1-N6 재검증 결과 (2026-07-17, 이전엔 "open"으로 잘못 표기됨)
+
+이전 버전 문서는 아래 항목을 모두 "open"으로 표기하고 있었지만, 코드를 직접 확인한 결과
+N1-N4는 이미 해결되어 있었습니다 (문서만 stale). PR #501의 재검증 결과와 일치합니다.
+
+| ID | 설명 | 상태 |
+|----|------|------|
+| N1 | `OpponentModeling.on_step` 중복 정의 (F811) | ✅ Resolved — `opponent_modeling.py`에 `on_step` 정의 1건만 존재 확인 |
+| N2 | `EconomyManager._prevent_resource_banking` / `_reduce_gas_workers` 재정의 | ✅ Resolved (PR #218 "delete shadowed duplicate methods" 커밋으로 추정) |
+| N3 | `combat_manager._find_harass_target` 재정의 | ✅ Resolved |
+| N4 | `production_resilience.build_terran_counters` 재정의 | ✅ Resolved |
+| N5 | bare `except Exception:` 다수 | 🟢 LOW — 다수 파일에서 `logger.debug`로 마이그레이션 진행됨 (여러 세션에 걸쳐 부분 적용), 완전 소탕은 아님 |
+| N6 | F841 unused local variables | 🟢 LOW — 개별 세션에서 산발적으로 처리, 전수 스윕 없음 |
 
 ---
 
@@ -67,9 +82,23 @@
 
 ---
 
-## 🟡 MEDIUM Priority Issues (still open)
+## ✅ Issue #3, #4: 재검증 결과 이미 해결됨 (2026-07-17)
 
-### Issue #3: Transfusion 우선순위 개선 필요
+### Issue #3: Transfusion 우선순위 — ✅ Resolved
+
+`wicked_zerg_challenger/economy/queen_transfusion_manager.py:711` `_transfuse_injured_units()`에
+아래 제안된 것보다 더 정교한 `HEAL_PRIORITY` 우선순위 체계가 이미 구현되어 있음.
+회귀 테스트: `tests/test_queen_transfusion.py` (PLAN-NIGHTLY P1.7, 14 tests).
+
+### Issue #4: Resource Reservation Race Condition — ✅ Resolved
+
+`wicked_zerg_challenger/core/resource_manager.py`에 `asyncio.Lock` 기반
+`try_reserve()` / `release()`가 아래 제안과 거의 동일하게 이미 구현되어 있음
+(line 36 `self._lock = asyncio.Lock()`, line 50 `try_reserve`, 4곳에서 `async with self._lock`).
+
+원본 제안(아래, 참고용으로만 보존):
+
+### Issue #3 원본 제안 (참고용, 실제 구현과 세부 사항 다를 수 있음)
 
 **위치**: `queen_manager.py` 또는 `spell_unit_manager.py`
 
@@ -219,7 +248,16 @@ else:
 
 ## 🟢 LOW Priority Issues
 
-### Issue #5: 코드 중복 - Position 계산
+### Issue #5: 코드 중복 - Position 계산 — 부분 해결 (유틸리티만 존재, 미채택)
+
+**2026-07-17 재검증**: `utils/position_utils.py`가 이미 존재하고 아래 제안보다 더 풍부한 API
+(`get_center_position`, `get_weighted_center`, `get_closest_unit`, `get_bounding_box` 등)를
+제공하지만, **`wicked_zerg_challenger/` 전체에서 이 모듈을 import하는 곳이 0곳**
+(`grep -rl position_utils` 결과 없음). 즉 유틸리티만 만들어지고 실제 중복 코드
+(`combat_manager.py`, `rally_point.py`, `harassment_coord.py` 등)는 교체되지 않은 상태.
+전투 로직 파일을 다수 건드리는 작업이라 별도 PR로 신중하게 진행 권장 (동작 변경 리스크).
+
+원본 문제 설명 (참고용):
 
 **위치**: 여러 파일에서 중복
 

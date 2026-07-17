@@ -3098,7 +3098,9 @@ def section5_market_tam():
             line=dict(color="#1976D2", width=3, dash="dash"),
             mode="lines+markers+text",
             marker=dict(size=8, color="#1976D2"),
-            text=[f"KRW{v}조" if i % 2 == 0 else "" for i, v in enumerate(korea_market)],
+            text=[
+                f"KRW{v}조" if i % 2 == 0 else "" for i, v in enumerate(korea_market)
+            ],
             textposition="top center",
             textfont=dict(size=10, color="#1976D2"),
         ),
