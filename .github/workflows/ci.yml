@@ -122,6 +122,12 @@ jobs:
         env:
           DRY_RUN: "true"
           LOG_LEVEL: "DEBUG"
+          # s2clientprotocol's generated _pb2.py files predate protobuf's C++/upb
+          # backend and raise "Descriptors cannot be created directly" under a
+          # newer protobuf runtime. sc2-bot-test (below) and
+          # wicked_zerg_challenger/tests/conftest.py already work around this the
+          # same way; this job was missing it.
+          PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION: python
 
   # ─────────────────────────────────────────────
   # SC2 봇 구문 검증 + 테스트
