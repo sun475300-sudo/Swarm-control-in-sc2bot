@@ -13,6 +13,11 @@ from unittest.mock import MagicMock
 
 import pytest
 
+# sc2 -> s2clientprotocol의 _pb2.py는 구버전 protoc으로 생성되어 있어
+# 최신 protobuf(>=3.20)의 upb/cpp 구현과 충돌한다 ("Descriptors cannot be
+# created directly"). sc2 import보다 먼저 pure-Python 구현을 강제한다.
+os.environ.setdefault("PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION", "python")
+
 # 프로젝트 루트를 sys.path에 추가
 PROJECT_ROOT = Path(__file__).parent.parent
 if str(PROJECT_ROOT) not in sys.path:

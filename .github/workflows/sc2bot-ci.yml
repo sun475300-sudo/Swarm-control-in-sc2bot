@@ -63,6 +63,10 @@ jobs:
     name: Test Suite
     runs-on: ubuntu-latest
     needs: lint
+    env:
+      # sc2 -> s2clientprotocol의 _pb2.py가 구버전 protoc 산출물이라 최신
+      # protobuf(>=3.20)의 upb/cpp 구현과 충돌한다. pure-Python 구현 강제.
+      PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION: python
     steps:
       - uses: actions/checkout@v4
 
