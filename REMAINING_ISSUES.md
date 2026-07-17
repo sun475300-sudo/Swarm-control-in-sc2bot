@@ -4,24 +4,24 @@
 
 통합 문제 해결 후 발견된 추가 개선 사항들입니다.
 
-**Last refreshed:** 2026-04-27 (Issue #1, #2 → Resolved; Issue #6 partially resolved via Batch 3)
+**Last refreshed:** 2026-07-17 (자동 점검 사이클 — N1~N4, Issue #3/#4/#5 재검증 결과 모두 Resolved로 확인)
 
 ---
 
-## 🆕 신규 발견 (PR #44, 2026-04-27)
+## 🆕 신규 발견 (PR #44, 2026-04-27) — 2026-07-17 재검증 완료
 
 자동/수동 점검 사이클(테스트 → 코드 검사 → 개선 → 커밋/푸시 반복)에서 새로 식별된 항목.
+`python -m flake8 --select=F821,F811,F823,E999 wicked_zerg_challenger/` 결과 0건으로,
+N1~N4는 이후 세션(PR #218 등)에서 이미 정리된 것으로 확인됨.
 
 | ID | 설명 | 우선순위 | 상태 |
 |----|------|---------|------|
-| N1 | `OpponentModeling.on_step` 중복 정의 (line 341 vs 765 — F811) | 🟠 HIGH | open — 동작 영향(상위 on_step이 미실행) 가능 |
-| N2 | `EconomyManager._prevent_resource_banking` / `_reduce_gas_workers` 재정의 (F811) | 🟡 MED | open |
-| N3 | `combat_manager._find_harass_target` 재정의 (line 2377 vs 4278) | 🟡 MED | open |
-| N4 | `production_resilience.build_terran_counters` 재정의 (1369 vs 1866) | 🟡 MED | open |
-| N5 | bare `except Exception:` 다수 (≈360+) — 이번 PR에서 12건 처리, 잔여 다수 | 🟢 LOW | partial |
-| N6 | F841 unused local variables (visuals/make_pptx 등) | 🟢 LOW | open (presentation 코드라 영향 작음) |
-
-검증 권장: PR 분리 (N1 단독 PR 권장 — 동작 변화 가능성).
+| N1 | `OpponentModeling.on_step` 중복 정의 (line 341 vs 765 — F811) | 🟠 HIGH | ✅ resolved — `opponent_modeling.py`에 `on_step` 정의 1개만 존재 (line 341) |
+| N2 | `EconomyManager._prevent_resource_banking` / `_reduce_gas_workers` 재정의 (F811) | 🟡 MED | ✅ resolved — `economy_manager.py`에 각각 1개 정의만 존재 |
+| N3 | `combat_manager._find_harass_target` 재정의 (line 2377 vs 4278) | 🟡 MED | ✅ resolved — `combat_manager.py`에 정의 1개만 존재 (line 4992) |
+| N4 | `production_resilience.build_terran_counters` 재정의 (1369 vs 1866) | 🟡 MED | ✅ resolved — `local_training/production_resilience.py`에 정의 1개만 존재 |
+| N5 | bare `except Exception:` 다수 (≈360+) — 이번 PR에서 12건 처리, 잔여 다수 | 🟢 LOW | partial — 2026-07-17 기준 `wicked_zerg_challenger/`에 460건 잔존. 대부분 봇 크래시 방지용 의도적 방어 코드라 일괄 리팩터링은 리스크 대비 이득이 낮음. 개별 검토 필요 시에만 처리 권장 |
+| N6 | F841 unused local variables (visuals/make_pptx 등) | 🟢 LOW | partial — 2026-07-17 기준 `wicked_zerg_challenger/`에 130건 잔존 (presentation/훈련 스크립트 위주, 런타임 영향 없음) |
 
 ---
 
@@ -67,11 +67,17 @@
 
 ---
 
-## 🟡 MEDIUM Priority Issues (still open)
+## 🟡 MEDIUM Priority Issues (2026-07-17 재검증: #3~#5 모두 Resolved)
 
-### Issue #3: Transfusion 우선순위 개선 필요
+### ✅ Issue #3: Transfusion 우선순위 개선 — Resolved
 
-**위치**: `queen_manager.py` 또는 `spell_unit_manager.py`
+**구현 위치**: `wicked_zerg_challenger/economy/queen_transfusion_manager.py`
+
+`HEAL_PRIORITY` dict와 `CANNOT_HEAL` set이 이미 구현되어 있고,
+`_run` 흐름에서 우선순위 정렬 후 `CANNOT_HEAL` 유닛을 제외하는 로직까지 존재함
+(line 26, 43, 134, 169, 191 참조). 아래는 원래 제안이었던 참고용 코드.
+
+<details><summary>원래 이슈 설명 (참고용, 이미 구현됨)</summary>
 
 **현재 문제**:
 - Transfusion 로직이 단순함
@@ -140,11 +146,18 @@ async def smart_transfusion(self, queen, damaged_units):
 
 **우선순위**: 🟡 MEDIUM (자원 효율성 개선)
 
+</details>
+
 ---
 
-### Issue #4: Resource Reservation Race Condition
+### ✅ Issue #4: Resource Reservation Race Condition — Resolved
 
-**위치**: `resource_manager.py` (추정)
+**구현 위치**: `wicked_zerg_challenger/resource_manager.py` (`try_reserve`/`release`, asyncio.Lock 기반)
+
+`economy_manager.py`, `defense_coordinator.py`에서 `self.bot.resource_manager.try_reserve(...)`로
+실제 사용 중임을 확인함. 아래는 원래 제안이었던 참고용 코드.
+
+<details><summary>원래 이슈 설명 (참고용, 이미 구현됨)</summary>
 
 **문제**:
 - 여러 매니저가 동시에 자원 예약 시도
@@ -215,11 +228,23 @@ else:
 
 **우선순위**: 🟡 MEDIUM (안정성 개선, 드물게 발생)
 
+</details>
+
 ---
 
 ## 🟢 LOW Priority Issues
 
-### Issue #5: 코드 중복 - Position 계산
+### ✅ Issue #5: 코드 중복 - Position 계산 — Resolved (2026-07-17)
+
+**구현 위치**: `wicked_zerg_challenger/utils/position_utils.py` (`get_center_position`, `get_weighted_center`)
+
+유틸리티 함수 자체는 이전에 추가돼 있었으나 실제로 어디서도 import되지 않고 있었음
+(중복 계산이 그대로 남아있었음). 2026-07-17 점검에서 남은 인라인 중복 2곳을 확인하고 정리:
+
+- `battle_preparation_system.py:166` (`_find_enemy_clusters`) → `get_center_position()` 호출로 교체, 회귀 테스트 추가 (`tests/test_battle_preparation_clusters.py`)
+- `combat_manager.py:3657-3658` (`_get_enemy_center`) → 이미 `centroid()` 헬퍼가 1차 경로이고, 남은 인라인 계산은 `HELPERS_AVAILABLE=False`일 때만 쓰는 의도적 무의존성 폴백이라 유지 (건드리면 오히려 폴백 경로에 import 의존성이 생김)
+
+<details><summary>원래 이슈 설명 (참고용)</summary>
 
 **위치**: 여러 파일에서 중복
 
@@ -294,9 +319,19 @@ center = get_center_position(army_units)
 
 **우선순위**: 🟢 LOW (코드 품질 개선)
 
+</details>
+
 ---
 
-### Issue #6: 매직 넘버 (Magic Numbers)
+### 🟡 Issue #6: 매직 넘버 (Magic Numbers) — 인프라 존재, 전면 적용은 미완
+
+**구현 위치**: `wicked_zerg_challenger/utils/game_constants.py` (`GameFrequencies`, `BURROW_HP_THRESHOLD`, `RETREAT_HP_THRESHOLD` 등)
+
+상수 클래스 자체는 이미 존재하고 일부 파일에서 사용 중이지만, 전체 `wicked_zerg_challenger/`에
+하드코딩된 iteration 주기/임계값이 여전히 다수 남아있음 (ROADMAP.md Sprint 7 Task 7.3과 동일 항목).
+전면 치환은 범위가 넓어 별도 세션에서 파일 단위로 점진 진행 권장.
+
+<details><summary>원래 이슈 설명 (참고용)</summary>
 
 **위치**: 여러 파일
 
@@ -357,34 +392,40 @@ if iteration % SECOND == 0:
 
 **우선순위**: 🟢 LOW (가독성 개선)
 
+</details>
+
 ---
 
-## 📊 이슈 우선순위 요약 (open만)
+## 📊 이슈 우선순위 요약 (2026-07-17 기준)
 
-| 우선순위 | 이슈 | 영향도 | 난이도 |
-|---------|------|--------|--------|
-| 🟡 MEDIUM | #3 Transfusion 우선순위 | 중간 | 중간 |
-| 🟡 MEDIUM | #4 Resource Race Condition | 낮음 | 중간 |
-| 🟢 LOW | #5 코드 중복 제거 | 낮음 | 쉬움 |
-| 🟢 LOW | #6 매직 넘버 | 낮음 | 쉬움 |
+| 우선순위 | 이슈 | 상태 |
+|---------|------|------|
+| 🟠 HIGH | N1 OpponentModeling.on_step 중복 | ✅ resolved |
+| 🟡 MED | N2~N4 F811 중복 정의 | ✅ resolved |
+| 🟡 MEDIUM | #3 Transfusion 우선순위 | ✅ resolved |
+| 🟡 MEDIUM | #4 Resource Race Condition | ✅ resolved |
+| 🟢 LOW | #5 코드 중복 제거 (Position) | ✅ resolved |
+| 🟡 LOW/MED | #6 매직 넘버 | 🟡 partial — 인프라 존재, 전면 적용 미완 |
+| 🟢 LOW | N5 bare except Exception (460건) | 🟡 partial — 의도적 방어코드 다수, 개별 검토 필요 |
+| 🟢 LOW | N6 F841 unused locals (130건) | 🟡 partial — 런타임 영향 없음 |
 
 (Issue #1, #2 → ✅ Resolved 섹션 참조)
 
 ---
 
-## 🎯 권장 수정 순서
+## 🎯 다음 세션 권장 작업 (2026-07-17 갱신)
 
-### 1단계: 완료 (✅)
-~~1. Queen Inject 쿨다운 수정 (25 → 29)~~ — 코드 반영 완료, 본 문서 ✅ Resolved 섹션 참조
-~~2. 누락된 업그레이드 추가~~ — 코드 반영 완료, 본 문서 ✅ Resolved 섹션 참조
+이번 자동 점검 사이클에서 N1~N4, Issue #3/#4/#5는 모두 이미 해결된 상태로 확인했고,
+Issue #5의 남은 인라인 중복 1곳(`battle_preparation_system.py`)은 이번 커밋에서 정리함
+(회귀 테스트 `tests/test_battle_preparation_clusters.py` 추가, 전체 테스트 502→504 passed).
+또한 전체 테스트 스위트 실행 시에만 재현되던 격리 버그
+(`tests/test_combat_phase_fsm.py`가 다른 비동기 테스트 뒤에서 실행되면
+`asyncio.get_event_loop()`가 "no current event loop" 로 실패)를 `asyncio.run()`으로 교체해 수정함.
 
-### 2단계: 로직 개선 (30분, 미진행)
-3. Transfusion 우선순위 시스템 구현
-
-### 3단계: 구조 개선 (1시간, 미진행)
-4. Resource Reservation 동기화
-5. Position Utils 유틸리티 함수 분리
-6. Constants 정리
+남은 실질적 작업:
+1. Issue #6 매직 넘버 — `GameConstants`/`GameFrequencies`로 전면 치환 (파일 단위 점진 진행)
+2. N5 bare except 정리 — 전수 조사 대신 크래시 로그가 실제로 잡히는 위치부터 개별 검토
+3. ROADMAP.md 자체가 전반적으로 stale (Sprint 1~5의 상당수 태스크가 실제로는 이미 구현됨) — 다음 세션에서 Sprint별 실제 구현 여부 재검증 후 문서 갱신 필요
 
 ---
 
