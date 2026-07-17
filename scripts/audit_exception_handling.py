@@ -94,7 +94,8 @@ class ExceptionAuditor:
             f.write("Recommended Fix Pattern:\n")
             f.write("=" * 80 + "\n\n")
 
-            f.write("""
+            f.write(
+                """
 # BEFORE (BAD):
 try:
     do_something()
@@ -112,7 +113,8 @@ except Exception as e:
     logger.error(f"[{self.__class__.__name__}] Unexpected error: {e}")
     if debug_mode:
         raise
-""")
+"""
+            )
 
         print(f"Audit report generated: {output_file}")
         print(f"Total issues: {len(self.issues)}")
