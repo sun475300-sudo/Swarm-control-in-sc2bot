@@ -1289,6 +1289,26 @@ class ProductionResilience:
                         loguru_logger.warning(
                             f"[PRODUCTION] Should produce Zerglings but not producing!"
                         )
+                    elif (
+                        larvae_count >= 3
+                        and b.minerals > 500
+                        and roach_warren_ready
+                        and can_afford_roach
+                        and b.supply_left >= 2
+                    ):
+                        loguru_logger.warning(
+                            f"[PRODUCTION] Should produce Roaches but not producing!"
+                        )
+                    elif (
+                        larvae_count >= 3
+                        and b.minerals > 500
+                        and hydralisk_den_ready
+                        and can_afford_hydralisk
+                        and b.supply_left >= 2
+                    ):
+                        loguru_logger.warning(
+                            f"[PRODUCTION] Should produce Hydralisks but not producing!"
+                        )
                 else:
                     # Non-training mode or no logger: Use print (for debugging)
                     # But reduce frequency - only every 500 iterations instead of 50
@@ -1316,6 +1336,22 @@ class ProductionResilience:
                         and b.supply_left >= 2
                     ):
                         logger.warning(f"Should produce Zerglings but not producing!")
+                    elif (
+                        larvae_count >= 3
+                        and b.minerals > 500
+                        and roach_warren_ready
+                        and can_afford_roach
+                        and b.supply_left >= 2
+                    ):
+                        logger.warning(f"Should produce Roaches but not producing!")
+                    elif (
+                        larvae_count >= 3
+                        and b.minerals > 500
+                        and hydralisk_den_ready
+                        and can_afford_hydralisk
+                        and b.supply_left >= 2
+                    ):
+                        logger.warning(f"Should produce Hydralisks but not producing!")
         except Exception as e:
             if iteration % 100 == 0:
                 logger.error(f"Production diagnosis error: {e}")
