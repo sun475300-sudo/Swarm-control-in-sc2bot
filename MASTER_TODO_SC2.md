@@ -2,10 +2,29 @@
 
 > 생성: 2026-04-26 · 출처: PR #28 unblock 작업 중 백로그 전수조사
 > 범위: 열린 PR / TODO·FIXME / pytest skip / IMPROVEMENT_TRACKER 사이클 6+ / CI 워크플로 / 의존성 / 포맷터
+>
+> **2026-07-17 갱신**: 아래 "1. 백로그 인벤토리" (PR #15~30 기준)는 완전히 낡았다.
+> 최신 상태는 바로 아래 "0. 긴급 — PR 적체 위기" 섹션을 볼 것.
 
 ---
 
-## 1. 백로그 인벤토리
+## 0. 긴급 — PR 적체 위기 (2026-07-17 확인)
+
+- **열린 draft PR이 500개 안팎** (`#15` ~ `#513`, `claude/optimistic-edison-*` / `claude/stoic-shannon-*` / `claude/amazing-mccarthy-*` 브랜치 계열) 쌓여 있고, **`main`에 머지된 것은 `#218` 단 1건뿐**이다. (이 사실은 `#476`, `#479`, `#482` 등 여러 PR에서 이미 반복적으로 보고됨 — 본 세션에서 재확인.)
+- 반복 원인: 자동화 세션이 매번 새 브랜치로 시작 → `main`이 고쳐지지 않은 상태이므로 매번 같은 버그(주로 `tests/test_combat_phase_fsm.py`의 `asyncio.get_event_loop()` 크래시)를 재발견 → 새 draft PR 생성 → 아무도 머지하지 않음 → 무한 반복.
+- 본 세션에서 실측 확인 (2026-07-17, `main` HEAD `8a80b73`, `uv pip install` 후):
+  - `pytest tests/ --ignore=tests/integration -q` → **495 passed, 11 skipped, 0 failed**
+  - `pytest wicked_zerg_challenger/tests/ -q` → **661 passed, 0 failed**
+  - 즉 `asyncio.get_event_loop()` 5곳 + `test_production_resilience.py`의 동일 패턴 1곳을 `asyncio.run()`으로 교체하는 것 외에는, 두 테스트 스위트 모두 이미 완전히 그린 상태 (본 PR에서 그 수정을 적용).
+  - `ROADMAP.md` Sprint 1~7 항목도 거의 전부 실제 코드에 구현되어 있음 (문서만 낡음) — 유일한 예외는 `wicked_zerg_challenger/scouting/phase_scout_cadence.py`(`PhaseScoutCadence`)로, 완전히 구현·테스트되어 있으나 `AdvancedScoutingSystemV2`/`on_step` 어디에도 연결되어 있지 않은 죽은 코드다 (`#481`에서도 동일하게 지적됨). 실제 게임 루프에 연결하는 작업은 게임 환경에서의 검증이 필요해 별도 PR로 남겨둠.
+- **권장 조치 (사용자 결정 필요 — 자동 머지/클로즈 안 함)**:
+  1. 가장 최근·가장 포괄적인 CI-green 후보 PR 1건(예: `#513` 또는 `#481`)을 `main`에 머지.
+  2. 나머지 ~490개 중복 draft PR을 일괄 close (요청 시 이 세션에서 대신 수행 가능).
+  3. 이 루프의 향후 사이클은 브랜치를 새로 파기 전에 **열린 PR 목록을 먼저 확인**하도록 지침을 바꾸는 것을 권장 — 그렇지 않으면 위 사이클이 계속됨.
+
+---
+
+## 1. 백로그 인벤토리 (2026-04-26 기준 — 낡음, 위 "0" 섹션 참고)
 
 ### 1.1 열린 PR (16건)
 
