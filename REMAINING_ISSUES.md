@@ -4,7 +4,7 @@
 
 통합 문제 해결 후 발견된 추가 개선 사항들입니다.
 
-**Last refreshed:** 2026-04-27 (Issue #1, #2 → Resolved; Issue #6 partially resolved via Batch 3)
+**Last refreshed:** 2026-07-17 (PR #506 — see new section below; N1–N4 confirmed resolved)
 
 ---
 
@@ -14,14 +14,42 @@
 
 | ID | 설명 | 우선순위 | 상태 |
 |----|------|---------|------|
-| N1 | `OpponentModeling.on_step` 중복 정의 (line 341 vs 765 — F811) | 🟠 HIGH | open — 동작 영향(상위 on_step이 미실행) 가능 |
-| N2 | `EconomyManager._prevent_resource_banking` / `_reduce_gas_workers` 재정의 (F811) | 🟡 MED | open |
-| N3 | `combat_manager._find_harass_target` 재정의 (line 2377 vs 4278) | 🟡 MED | open |
-| N4 | `production_resilience.build_terran_counters` 재정의 (1369 vs 1866) | 🟡 MED | open |
-| N5 | bare `except Exception:` 다수 (≈360+) — 이번 PR에서 12건 처리, 잔여 다수 | 🟢 LOW | partial |
-| N6 | F841 unused local variables (visuals/make_pptx 등) | 🟢 LOW | open (presentation 코드라 영향 작음) |
+| N1 | `OpponentModeling.on_step` 중복 정의 (line 341 vs 765 — F811) | 🟠 HIGH | ✅ resolved — 2026-07-17 확인: `flake8 --select=F811 wicked_zerg_challenger`에서 0건, `on_step` 정의 1개만 존재 (341줄) |
+| N2 | `EconomyManager._prevent_resource_banking` / `_reduce_gas_workers` 재정의 (F811) | 🟡 MED | ✅ resolved — 2026-07-17 확인: 해당 메서드명 재정의 없음 |
+| N3 | `combat_manager._find_harass_target` 재정의 (line 2377 vs 4278) | 🟡 MED | ✅ resolved — 2026-07-17 확인: 정의 1개만 존재 (4992줄) |
+| N4 | `production_resilience.build_terran_counters` 재정의 (1369 vs 1866) | 🟡 MED | ✅ resolved — 2026-07-17 확인: 해당 메서드 없음 (제거되었거나 이름 변경됨) |
+| N5 | bare `except Exception:` 다수 (≈360+) — 이번 PR에서 12건 처리, 잔여 다수 | 🟢 LOW | open — `wicked_zerg_challenger`에 468건 (`except:`형 진짜 bare except는 0건, 전부 `except Exception:`). 규모상 별도 전용 PR 필요, 일괄 변경은 위험도 높음 |
+| N6 | F841 unused local variables (visuals/make_pptx 등) | 🟢 LOW | partial — PR #506에서 gameplay 코드 내 ~65건 전수 조사, 6건 real bug로 확인/수정 (아래 섹션 참고). `visuals/`, `tools/`, `tests/` 내 나머지는 영향 작아 보류 |
 
-검증 권장: PR 분리 (N1 단독 PR 권장 — 동작 변화 가능성).
+N1–N4는 문서가 stale했던 것으로 보이며(코드는 이미 수정됨), 이번 재확인으로 종결 처리.
+
+---
+
+## 🆕 신규 발견 (PR #506, 2026-07-17)
+
+지속적 테스트/점검 반복 사이클: `pytest` 전체 실행 → flake8 F821/F811/F841 전수 스캔 → 병렬 서브에이전트로 항목별 실사용 여부 검증 → 실제 버그만 수정 → 테스트 재확인 → 커밋/푸시.
+
+**수정 완료:**
+
+| 항목 | 파일 | 내용 |
+|------|------|------|
+| Python 3.11 asyncio 호환성 | `tests/test_combat_phase_fsm.py` | `asyncio.get_event_loop()`가 3.11에서 루프 자동 생성 안 함 → 12개 테스트 실패. `asyncio.run()`으로 교체 |
+| 저글링 서라운드 각도 | `wicked_zerg_challenger/combat/micro_combat.py` | 실제 스쿼드 크기(`ally_count`) 무시하고 고정 8분할 각도 사용 → 소규모 스쿼드에서 불균등 서라운드 |
+| 후반 뮤탈리스크 생산 누락 | `wicked_zerg_challenger/local_training/production_resilience.py` | "Muta > Hydra > Roach > Zergling" 우선순위 문서화되어 있었으나 뮤탈리스크 생산 분기 자체가 없었음 |
+| RL 가스 뱅킹 페널티 누락 | `wicked_zerg_challenger/local_training/reward_shaping.py` | 미네랄 뱅킹은 페널티 있었으나 가스 뱅킹은 값만 가져오고 미사용 |
+| 로치/히드라 생산 진단 경고 누락 | `wicked_zerg_challenger/local_training/production_resilience.py` | `can_afford_roach`/`can_afford_hydralisk` 계산 후 저글링 경고만 존재, 로치/히드라 경고 분기 없었음 |
+| 종족별 업그레이드 우선순위 가중치 미적용 | `wicked_zerg_challenger/upgrade_manager.py` | `race_priority_modifiers` 매 스텝 조회했으나 실제 정렬에 미반영 |
+| 상대 플레이스타일 인사말 누락 | `wicked_zerg_challenger/personality_module.py` | `style` 조회 후 메시지 포맷에 미포함 |
+| CI: sc2 import 크래시 | `.github/workflows/ci.yml` | `requirements.txt` 전체 설치 시 protobuf 버전 충돌로 `python-lint-test` job의 pytest 수집 단계 전체 실패. `PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python` 추가 (sc2-bot-test job과 동일 패턴) |
+
+**조사했으나 harmless로 확인 (조치 없음):** F841 대상 ~55건 — 대부분 죽은 지역변수(다른 곳에서 재계산되거나, 애초에 호출되지 않는 orphaned 함수/클래스 내부). 상세는 세션 기록 참고.
+
+**신규 발견 (미조치, backlog):**
+
+| ID | 설명 | 우선순위 |
+|----|------|---------|
+| N7 | `black --check .` 66개 파일 포맷 불일치 (레포 전체, 이번 PR과 무관한 기존 drift) — `Lint & Type Check` CI job 지속 실패 중 | 🟢 LOW — 별도 전용 PR로 처리 권장 (대규모 diff, 리뷰 부담) |
+| N8 | `MetaGameAnalyzer` (`meta_game_analyzer.py`), `ProxyDetector` (`proxy_detector.py`) 클래스가 코드베이스 어디에서도 인스턴스화되지 않음 (orphaned) | 🟡 MED — 완전히 죽은 코드이거나, 매니저 레지스트리 연결이 누락된 미완성 기능일 수 있음. 특히 `ProxyDetector`는 ROADMAP Sprint 5.1(프록시 대응)과 관련 있어 보이나 실제 프록시 감지는 `early_defense_system.py`/`intel_manager.py`가 담당 중 — 중복/미완성 여부 확인 필요 |
 
 ---
 

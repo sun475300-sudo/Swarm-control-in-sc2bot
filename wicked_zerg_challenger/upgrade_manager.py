@@ -405,6 +405,11 @@ class EvolutionUpgradeManager:
             priorities.append("air_attack")
             priorities.append("air_armor")
 
+        # *** Phase 18: 종족별 우선순위 가중치 적용 (레인 재정렬) ***
+        # 예: 테란전은 armor 가중치가 높으므로 armor 연구가 더 앞으로 이동
+        if race_modifiers:
+            priorities.sort(key=lambda lane: -race_modifiers.get(lane, 1.0))
+
         # === 업그레이드 순서 생성 (중복 제거) ===
         upgrade_order: List[object] = []
         seen_upgrades = set()

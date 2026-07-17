@@ -782,11 +782,6 @@ class ProductionResilience:
         zergling_count = (
             b.units(UnitTypeId.ZERGLING).amount if hasattr(b, "units") else 0
         )
-        roach_count = b.units(UnitTypeId.ROACH).amount if hasattr(b, "units") else 0
-        hydra_count = b.units(UnitTypeId.HYDRALISK).amount if hasattr(b, "units") else 0
-        mutalisk_count = (
-            b.units(UnitTypeId.MUTALISK).amount if hasattr(b, "units") else 0
-        )
 
         # Check available tech
         has_roach_warren = b.structures(UnitTypeId.ROACHWARREN).ready.exists
@@ -821,6 +816,8 @@ class ProductionResilience:
         # Late game (10min+)
         if game_time > 600 and has_spire:
             # Priority: Muta > Hydra > Roach > Zergling
+            if b.can_afford(UnitTypeId.MUTALISK) and b.supply_left >= 2:
+                return await self._safe_train(larva, UnitTypeId.MUTALISK)
             if (
                 has_hydra_den
                 and b.can_afford(UnitTypeId.HYDRALISK)
@@ -1292,6 +1289,26 @@ class ProductionResilience:
                         loguru_logger.warning(
                             f"[PRODUCTION] Should produce Zerglings but not producing!"
                         )
+                    elif (
+                        larvae_count >= 3
+                        and b.minerals > 500
+                        and roach_warren_ready
+                        and can_afford_roach
+                        and b.supply_left >= 2
+                    ):
+                        loguru_logger.warning(
+                            f"[PRODUCTION] Should produce Roaches but not producing!"
+                        )
+                    elif (
+                        larvae_count >= 3
+                        and b.minerals > 500
+                        and hydralisk_den_ready
+                        and can_afford_hydralisk
+                        and b.supply_left >= 2
+                    ):
+                        loguru_logger.warning(
+                            f"[PRODUCTION] Should produce Hydralisks but not producing!"
+                        )
                 else:
                     # Non-training mode or no logger: Use print (for debugging)
                     # But reduce frequency - only every 500 iterations instead of 50
@@ -1319,6 +1336,22 @@ class ProductionResilience:
                         and b.supply_left >= 2
                     ):
                         logger.warning(f"Should produce Zerglings but not producing!")
+                    elif (
+                        larvae_count >= 3
+                        and b.minerals > 500
+                        and roach_warren_ready
+                        and can_afford_roach
+                        and b.supply_left >= 2
+                    ):
+                        logger.warning(f"Should produce Roaches but not producing!")
+                    elif (
+                        larvae_count >= 3
+                        and b.minerals > 500
+                        and hydralisk_den_ready
+                        and can_afford_hydralisk
+                        and b.supply_left >= 2
+                    ):
+                        logger.warning(f"Should produce Hydralisks but not producing!")
         except Exception as e:
             if iteration % 100 == 0:
                 logger.error(f"Production diagnosis error: {e}")
