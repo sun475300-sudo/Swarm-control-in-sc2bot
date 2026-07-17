@@ -52,7 +52,7 @@
 | P2.1 | Force-accumulation FSM tests                    | ✅ Done | `tests/test_combat_phase_fsm.py` — 23 tests all passing. |
 | P2.2 | Benchmark runner                                | ❌ Open | Single command, N replays, APM/supply/win-rate report vs Hard. |
 | P2.3 | Build-order config externalisation              | ❌ Open | Move top-20 hardcoded values to `config/build_orders.yaml`. |
-| P2.4 | RL agent save-experience guard                  | ❌ Open | Unit test for save under disk-full / interrupted-rename. |
+| P2.4 | RL agent save-experience guard                  | ✅ Done (2026-07-17) | `rl_agent.py:save_experience_data` had a real data-loss window: `os.remove()` then `os.rename()` — if rename failed, the pre-existing save was already gone. Switched to `os.replace()` (atomic overwrite, no delete-first). Added `wicked_zerg_challenger/tests/test_rl_agent_save_guard.py` (4 tests: round-trip, overwrite, save-failure-leaves-file-untouched, interrupted-replace-leaves-file-untouched). |
 | P2.5 | Type hints + docstring pass on core modules     | ❌ Open | `core/resource_manager.py`, `core/manager_factory.py`. |
 
 ## Long-term direction
@@ -84,6 +84,20 @@ Run `E:\GitHub\Swarm-control-in-sc2bot\scripts\commit_nightly_2026-05-03.bat`:
 16. Also add `pytest-asyncio>=0.23` to `requirements-dev.txt` (P1.6)
 
 ---
+
+## ⚠️ Critical process finding (2026-07-17)
+
+`main` has received exactly **one** merge (`#218`, 2026-06-01) since this nightly-loop pattern
+started. Every session since (60+ sessions, 500+ open draft PRs as of this writing, numbered up
+to `#506`) reruns the same "test → fix → commit → push → open draft PR" loop, but the PRs are
+never merged, so fixes never compound and the same bugs (`asyncio.get_event_loop()` deprecation
+in `tests/test_combat_phase_fsm.py`, the `rl_agent.py` save-experience data-loss window) get
+independently rediscovered and re-fixed dozens of times in abandoned branches while `main` stays
+broken. This session fixed both bugs directly (verified against `main` @ `8a80b73`, not against
+a stale doc) — see commit history on this branch. **This does not fix the underlying problem**:
+without merging PRs, the next automated session will hit the exact same red CI again. Flagged for
+the repo owner to decide: merge a PR from this backlog (or this session's) and close the
+redundant duplicates.
 
 ## Run history
 
