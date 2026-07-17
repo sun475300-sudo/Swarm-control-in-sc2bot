@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import importlib.util
 import json
 import os
 import sys
@@ -7,9 +8,23 @@ import unittest
 from pathlib import Path
 
 os.environ["PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION"] = "python"
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..")))
+_REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+sys.path.insert(0, _REPO_ROOT)
 
-from scripts.meta_adapter import MetaAdapter
+# wicked_zerg_challenger/local_training/scripts is a *separate* regular
+# package also named "scripts" (has __init__.py). When both it and the
+# repo root are on sys.path, Python's import system resolves the regular
+# package over this namespace package (PEP 420) regardless of sys.path
+# order, so `from scripts.meta_adapter import ...` can silently bind to
+# the wrong package during full-suite collection. Load by explicit path
+# instead of relying on "scripts" name resolution.
+_spec = importlib.util.spec_from_file_location(
+    "wzc_meta_adapter_module", os.path.join(_REPO_ROOT, "scripts", "meta_adapter.py")
+)
+_meta_adapter_module = importlib.util.module_from_spec(_spec)
+sys.modules[_spec.name] = _meta_adapter_module
+_spec.loader.exec_module(_meta_adapter_module)
+MetaAdapter = _meta_adapter_module.MetaAdapter
 
 
 class TestMetaAdapter(unittest.TestCase):
