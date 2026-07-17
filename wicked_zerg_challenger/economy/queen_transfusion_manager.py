@@ -7,10 +7,46 @@ and optimizing healing efficiency in combat situations.
 
 from typing import TYPE_CHECKING, Dict, Optional
 
-from sc2.ids.ability_id import AbilityId
-from sc2.ids.unit_typeid import UnitTypeId
-from sc2.unit import Unit
-from sc2.units import Units
+try:
+    from sc2.ids.ability_id import AbilityId
+    from sc2.ids.unit_typeid import UnitTypeId
+    from sc2.unit import Unit
+    from sc2.units import Units
+except ImportError:
+
+    class UnitTypeId:
+        ULTRALISK = "ULTRALISK"
+        BROODLORD = "BROODLORD"
+        VIPER = "VIPER"
+        SWARMHOSTMP = "SWARMHOSTMP"
+        RAVAGER = "RAVAGER"
+        LURKERMP = "LURKERMP"
+        ROACH = "ROACH"
+        HYDRALISK = "HYDRALISK"
+        QUEEN = "QUEEN"
+        MUTALISK = "MUTALISK"
+        CORRUPTOR = "CORRUPTOR"
+        INFESTOR = "INFESTOR"
+        ZERGLING = "ZERGLING"
+        BANELING = "BANELING"
+        BANELINGCOCOON = "BANELINGCOCOON"
+        BROODLING = "BROODLING"
+        LOCUSTMP = "LOCUSTMP"
+        LOCUSTMPFLYING = "LOCUSTMPFLYING"
+        CHANGELING = "CHANGELING"
+        CHANGELINGMARINE = "CHANGELINGMARINE"
+        CHANGELINGZEALOT = "CHANGELINGZEALOT"
+        CHANGELINGZERGLING = "CHANGELINGZERGLING"
+        EGG = "EGG"
+        LARVA = "LARVA"
+        OVERLORD = "OVERLORD"
+        OVERSEER = "OVERSEER"
+
+    class AbilityId:
+        TRANSFUSION_TRANSFUSION = "TRANSFUSION_TRANSFUSION"
+
+    Unit = object
+    Units = object
 
 if TYPE_CHECKING:
     from sc2.bot_ai import BotAI
@@ -110,7 +146,10 @@ class QueenTransfusionManager:
         for queen in available_queens:
             # Skip queen if it cast too recently (avoid energy double-spend on lag)
             now = self.bot.time
-            if self._queen_last_cast.get(queen.tag, 0.0) + self.QUEEN_CAST_COOLDOWN > now:
+            if (
+                self._queen_last_cast.get(queen.tag, 0.0) + self.QUEEN_CAST_COOLDOWN
+                > now
+            ):
                 continue
 
             target = self._find_best_transfusion_target(queen, damaged_units)
