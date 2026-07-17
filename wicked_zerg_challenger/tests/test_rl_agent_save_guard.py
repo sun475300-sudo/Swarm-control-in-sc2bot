@@ -10,6 +10,7 @@ attempting the rename, so a failure on that last step lost both the old and
 new data. This suite locks in the fix (os.replace) and its equivalent
 behavior of not deleting the destination before the replace succeeds.
 """
+
 import os
 import sys
 

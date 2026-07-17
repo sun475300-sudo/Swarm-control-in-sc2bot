@@ -301,7 +301,9 @@ class RLAgent:
                 obs = np.concatenate(
                     [
                         obs,
-                        np.zeros(self.micro_observation_dim - len(obs), dtype=np.float32),
+                        np.zeros(
+                            self.micro_observation_dim - len(obs), dtype=np.float32
+                        ),
                     ]
                 )
             obs = obs[: self.micro_observation_dim]
@@ -333,7 +335,9 @@ class RLAgent:
     def _average_unit_value(units, attr: str) -> float:
         if not units:
             return 0.0
-        return float(np.mean([float(getattr(unit, attr, 0.0) or 0.0) for unit in units]))
+        return float(
+            np.mean([float(getattr(unit, attr, 0.0) or 0.0) for unit in units])
+        )
 
     @staticmethod
     def _fraction(units, attr: str) -> float:
