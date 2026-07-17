@@ -47,10 +47,15 @@ jobs:
       - name: Python 의존성 설치
         run: |
           python -m pip install --upgrade pip
-          pip install flake8 pytest pytest-cov
-          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+          # requirements.txt는 다수의 서비스(SC2/crypto/discord/AI 등)를 한 파일에
+          # 모아둔 탓에 pip의 backtracking resolver가 "resolution-too-deep" 상태에
+          # 빠져 사실상 멈춘다 (검증: pip는 90초+ 무응답, uv는 <1초에 해석 완료).
+          # uv를 사용해 동일한 lock 없는 설치를 훨씬 빠르고 안정적으로 수행한다.
+          pip install uv
+          uv pip install --system flake8 pytest pytest-cov
+          if [ -f requirements.txt ]; then uv pip install --system -r requirements.txt; fi
           # 추가 테스트 의존성
-          pip install pyyaml aiohttp
+          uv pip install --system pyyaml aiohttp
 
       - name: flake8 린트 검사
         run: |
@@ -117,6 +122,12 @@ jobs:
         env:
           DRY_RUN: "true"
           LOG_LEVEL: "DEBUG"
+          # s2clientprotocol's generated _pb2.py files predate protobuf's C++/upb
+          # backend and raise "Descriptors cannot be created directly" under a
+          # newer protobuf runtime. sc2-bot-test (below) and
+          # wicked_zerg_challenger/tests/conftest.py already work around this the
+          # same way; this job was missing it.
+          PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION: python
 
   # ─────────────────────────────────────────────
   # SC2 봇 구문 검증 + 테스트
@@ -138,8 +149,10 @@ jobs:
       - name: SC2 봇 의존성 설치
         run: |
           python -m pip install --upgrade pip
-          pip install burnysc2 pytest pytest-asyncio pyyaml aiohttp
-          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+          # uv 사용 이유: python-lint-test 잡의 동일 주석 참고 (resolution-too-deep 회피)
+          pip install uv
+          uv pip install --system burnysc2 pytest pytest-asyncio pyyaml aiohttp
+          if [ -f requirements.txt ]; then uv pip install --system -r requirements.txt; fi
 
       - name: py_compile 전체 구문 검증 (349 파일)
         run: |
@@ -270,8 +283,10 @@ jobs:
       - name: 패키징 의존성 설치
         run: |
           python -m pip install --upgrade pip
-          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
-          pip install burnysc2 pyyaml aiohttp
+          # uv 사용 이유: python-lint-test 잡의 동일 주석 참고 (resolution-too-deep 회피)
+          pip install uv
+          if [ -f requirements.txt ]; then uv pip install --system -r requirements.txt; fi
+          uv pip install --system burnysc2 pyyaml aiohttp
 
       - name: 통합 검증(빠른 모드)
         run: |
@@ -318,8 +333,10 @@ jobs:
       - name: 피드백 루프 의존성 설치
         run: |
           python -m pip install --upgrade pip
-          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
-          pip install sc2reader || true
+          # uv 사용 이유: python-lint-test 잡의 동일 주석 참고 (resolution-too-deep 회피)
+          pip install uv
+          if [ -f requirements.txt ]; then uv pip install --system -r requirements.txt; fi
+          uv pip install --system sc2reader || true
 
       - name: Replay 피드백 생성
         run: |
