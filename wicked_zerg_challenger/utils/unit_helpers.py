@@ -19,8 +19,15 @@ try:
     from sc2.units import Units
 except ImportError:
     Unit = None
-    Units = None
     Point2 = None
+
+    class Units(list):
+        """Minimal stand-in so empty-result fast paths stay constructible
+        without a real sc2 install."""
+
+        def __init__(self, units, bot_object=None):
+            super().__init__(units)
+
 
 logger = get_logger("UnitHelpers")
 
