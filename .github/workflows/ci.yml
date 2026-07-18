@@ -117,6 +117,11 @@ jobs:
         env:
           DRY_RUN: "true"
           LOG_LEVEL: "DEBUG"
+          # google-generativeai pins protobuf<6 while s2clientprotocol's
+          # generated code needs the newer runtime -> "Descriptors cannot
+          # be created directly" on collection. Falls back to the pure-Python
+          # protobuf implementation, which tolerates the mismatch.
+          PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION: "python"
 
   # ─────────────────────────────────────────────
   # SC2 봇 구문 검증 + 테스트
