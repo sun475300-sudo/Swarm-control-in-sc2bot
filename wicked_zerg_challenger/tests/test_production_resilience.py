@@ -28,7 +28,7 @@ from sc2.ids.unit_typeid import UnitTypeId
 from sc2.position import Point2
 
 
-class TestProductionResilience(unittest.TestCase):
+class TestProductionResilience(unittest.IsolatedAsyncioTestCase):
     """Test suite for ProductionResilience"""
 
     def setUp(self):
@@ -115,50 +115,62 @@ class TestProductionResilience(unittest.TestCase):
 
     # ==================== Counter Unit Selection Tests ====================
 
-    async def test_get_counter_unit_terran_marine(self):
-        """Test counter selection against Terran marines"""
-        # Mock enemy composition with marines
+    def test_get_counter_unit_terran_marine(self):
+        """Test counter selection against Terran marines (light infantry)"""
         mock_marine = Mock()
         mock_marine.type_id = UnitTypeId.MARINE
-        self.bot.enemy_units = [mock_marine]
+        enemy_units = [mock_marine]
 
-        # Should recommend banelings against marines
-        result = await self.resilience._get_counter_unit("Terran")
+        result = self.resilience._get_counter_unit(
+            enemy_units,
+            has_roach_warren=True,
+            has_hydra_den=False,
+            has_spire=False,
+        )
 
-        # Result could be BANELING, ROACH, or MUTALISK (all valid counters)
-        valid_counters = [
-            UnitTypeId.BANELING,
-            UnitTypeId.ROACH,
-            UnitTypeId.MUTALISK,
-            UnitTypeId.ZERGLING,
-        ]
-        self.assertIn(result, valid_counters)
+        self.assertEqual(result, UnitTypeId.ROACH)
 
-    async def test_get_counter_unit_protoss(self):
-        """Test counter selection against Protoss"""
-        result = await self.resilience._get_counter_unit("Protoss")
+    def test_get_counter_unit_protoss(self):
+        """Test counter selection against Protoss stalkers (armored ground)"""
+        mock_stalker = Mock()
+        mock_stalker.type_id = UnitTypeId.STALKER
+        enemy_units = [mock_stalker]
 
-        # Common Protoss counters
-        valid_counters = [
-            UnitTypeId.ROACH,
-            UnitTypeId.HYDRALISK,
-            UnitTypeId.MUTALISK,
-            UnitTypeId.ZERGLING,
-        ]
-        self.assertIn(result, valid_counters)
+        result = self.resilience._get_counter_unit(
+            enemy_units,
+            has_roach_warren=True,
+            has_hydra_den=True,
+            has_spire=False,
+        )
 
-    async def test_get_counter_unit_zerg(self):
-        """Test counter selection against Zerg"""
-        result = await self.resilience._get_counter_unit("Zerg")
+        # Hydralisks take priority over Roaches vs armored ground
+        self.assertEqual(result, UnitTypeId.HYDRALISK)
 
-        # Common Zerg counters
-        valid_counters = [
-            UnitTypeId.ROACH,
-            UnitTypeId.MUTALISK,
-            UnitTypeId.ZERGLING,
-            UnitTypeId.HYDRALISK,
-        ]
-        self.assertIn(result, valid_counters)
+    def test_get_counter_unit_zerg(self):
+        """Test counter selection against Zerg mutalisks (air)"""
+        mock_muta = Mock()
+        mock_muta.type_id = UnitTypeId.MUTALISK
+        enemy_units = [mock_muta]
+
+        result = self.resilience._get_counter_unit(
+            enemy_units,
+            has_roach_warren=False,
+            has_hydra_den=False,
+            has_spire=True,
+        )
+
+        self.assertEqual(result, UnitTypeId.MUTALISK)
+
+    def test_get_counter_unit_no_enemies_returns_none(self):
+        """No detected enemy units means no counter recommendation"""
+        result = self.resilience._get_counter_unit(
+            [],
+            has_roach_warren=True,
+            has_hydra_den=True,
+            has_spire=True,
+        )
+
+        self.assertIsNone(result)
 
     # ==================== Resource Management Tests ====================
 
@@ -307,6 +319,51 @@ class TestProductionResilience(unittest.TestCase):
 
         self.assertFalse(result)
         self.bot.can_afford.assert_not_called()
+
+    def test_late_game_prioritizes_mutalisk_over_hydralisk(self):
+        """With a Spire ready, late-game production should try Mutalisks first."""
+        self.bot.time = 650.0
+        self.bot.minerals = 300
+        self.bot.vespene = 300
+        self.bot.townhalls.amount = 4
+        self.bot.already_pending = Mock(return_value=0)
+        self.bot.enemy_units = []
+
+        def units(unit_type):
+            amounts = {
+                UnitTypeId.ZERGLING: 20,
+                UnitTypeId.ROACH: 0,
+                UnitTypeId.HYDRALISK: 0,
+                UnitTypeId.MUTALISK: 0,
+            }
+            return SimpleNamespace(amount=amounts.get(unit_type, 0))
+
+        self.bot.units = Mock(side_effect=units)
+
+        def structures(unit_type):
+            group = Mock(amount=0, exists=True)
+            ready_types = {
+                UnitTypeId.SPAWNINGPOOL,
+                UnitTypeId.ROACHWARREN,
+                UnitTypeId.HYDRALISKDEN,
+                UnitTypeId.SPIRE,
+            }
+            group.ready = Mock(exists=unit_type in ready_types)
+            return group
+
+        self.bot.structures = Mock(side_effect=structures)
+
+        larva = Mock()
+        self.resilience._safe_train = AsyncMock(return_value=True)
+
+        import asyncio
+
+        result = asyncio.run(self.resilience._produce_army_unit(larva))
+
+        self.assertTrue(result)
+        self.resilience._safe_train.assert_awaited_once_with(
+            larva, UnitTypeId.MUTALISK
+        )
 
     def test_pending_third_releases_production_reserve(self):
         """A pending third Hatchery releases ProductionResilience spending."""
