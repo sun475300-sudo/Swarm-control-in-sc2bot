@@ -1293,12 +1293,12 @@ class HarassmentCoordinator:
         )
 
     async def _trigger_zergling_runby(self) -> None:
-        """Trigger zergling run-by (placeholder for existing logic)"""
-        # This would call existing zergling run-by logic
+        """Trigger zergling run-by via the existing run-by manager."""
+        await self._manage_zergling_runby()
 
     async def _trigger_mutalisk_harassment(self) -> None:
-        """Trigger mutalisk harassment (placeholder for existing logic)"""
-        # This would call existing mutalisk harassment logic
+        """Trigger mutalisk harassment via the existing harassment manager."""
+        await self._manage_mutalisk_harassment()
 
     # ============================================================================
     # Phase 21.3: Unit Persistence System (Squad Lock)
@@ -1594,10 +1594,7 @@ class HarassmentCoordinator:
         elif current_enemy_workers > self.last_worker_kill_count:
             # Enemy rebuilt workers. Log raid summary if a raid just ended
             # and reset the per-raid counter so we don't double-count.
-            if (
-                not harassment_active
-                and self._current_raid_workers_killed > 0
-            ):
+            if not harassment_active and self._current_raid_workers_killed > 0:
                 self.logger.info(
                     f"[{int(self.bot.time)}s] Raid #{self.raids_executed} summary:"
                     f" {self._current_raid_workers_killed} workers killed."

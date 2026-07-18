@@ -1,7 +1,10 @@
 # WickedZergBotPro Grand Roadmap
 
 > 목표: Medium AI 승률 90%+ 달성 & AI Arena 출전
-> 현재 상태: Phase 56 완료, 342/342 테스트 통과, 추정 승률 45~50%
+> 현재 상태: Sprint 1~7 항목은 코드 상 대부분 구현 확인됨 (자동화 점검 세션
+> 검증, 1168개 테스트 통과). Sprint 8(Medium AI 30연전, AI Arena 패키지
+> 검증)은 실제 SC2 클라이언트가 필요해 아직 실측되지 않음.
+> 추정 승률은 미검증 — 최신 수치는 `IMPROVEMENT_BACKLOG.md` 참고.
 > 봇 프레임워크: python-sc2 (burnysc2>=5.0.0)
 
 ---
