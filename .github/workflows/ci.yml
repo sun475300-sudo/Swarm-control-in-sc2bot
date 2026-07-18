@@ -117,6 +117,10 @@ jobs:
         env:
           DRY_RUN: "true"
           LOG_LEVEL: "DEBUG"
+          # sc2-bot-test 잡과 동일: burnysc2가 끌어오는 s2clientprotocol의
+          # protobuf 생성 코드가 최신 protobuf 런타임과 맞지 않아
+          # "Descriptors cannot be created directly" 로 collection이 깨진다.
+          PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION: python
 
   # ─────────────────────────────────────────────
   # SC2 봇 구문 검증 + 테스트
