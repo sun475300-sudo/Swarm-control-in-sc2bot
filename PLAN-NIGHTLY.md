@@ -2,7 +2,7 @@
 
 > Owner: 선우 (sun475300@gmail.com)
 > Maintainer: nightly automation
-> Last refreshed: 2026-05-04
+> Last refreshed: 2026-07-18
 
 ---
 
@@ -12,10 +12,17 @@
 - Bot core: `wicked_zerg_challenger/` — 179+ Python files across 10+ subdirs.
 - `.gitattributes` enforces `* text=auto` ✅
 - CI: `sc2bot-ci.yml` runs black + isort + flake8 ✅ (all clean)
-- **Test suite: 468 pass / 15 skip / 0 fail** ✅ (was 398/20/0 two nights ago)
+- **Test suite: 502 pass / 14 skip / 0 fail** ✅ (was 398/20/0 on 2026-05-03; gap between then and now had no nightly runs recorded)
 - Queen transfusion logic: 3 bugs fixed (`is_idle` guard removed, target dedup, per-queen cooldown) ✅
 
-## Resolved this run (2026-05-03)
+## Resolved this run (2026-07-18)
+
+| Item | File(s) | Notes |
+|------|---------|-------|
+| Order-dependent test failures in combat FSM suite | `tests/test_combat_phase_fsm.py` | 12 tests (`TestIdleToGathering`, `TestGatheringToPositioning`, `TestPositioningToEngagement`, `TestEngagementToActiveCombat`, `TestActiveCombatToRegrouping`) called `asyncio.get_event_loop().run_until_complete(...)` from sync test methods. When run after other test modules that use pytest-asyncio's auto-mode fixtures (which close and unset the thread's event loop on teardown), `get_event_loop()` raised `RuntimeError: There is no current event loop in thread 'MainThread'`. Passed in isolation, failed in the full suite — a real regression risk for CI. Replaced all 5 call sites with `asyncio.run(...)`, which creates and tears down its own loop and does not depend on thread-local loop state. Full suite now green: 502 passed / 14 skipped / 0 failed. |
+| Verified `REMAINING_ISSUES.md` open items #3/#4 already fixed | `wicked_zerg_challenger/economy/queen_transfusion_manager.py`, `wicked_zerg_challenger/core/resource_manager.py` | Doc was stale (last touched 2026-04-27). Issue #3 (transfusion priority) already has a `HEAL_PRIORITY` table + sorted target selection. Issue #4 (resource reservation race) already has `asyncio.Lock`-guarded atomic reservation. `REMAINING_ISSUES.md` N1-N4 (duplicate-method F811 bugs) also independently re-verified clean via an AST scan for duplicate method names per class across `wicked_zerg_challenger/` — 0 found. |
+
+## Resolved 2026-05-03 (previous run)
 
 | Item | File(s) | Notes |
 |------|---------|-------|
@@ -54,6 +61,22 @@
 | P2.3 | Build-order config externalisation              | ❌ Open | Move top-20 hardcoded values to `config/build_orders.yaml`. |
 | P2.4 | RL agent save-experience guard                  | ❌ Open | Unit test for save under disk-full / interrupted-rename. |
 | P2.5 | Type hints + docstring pass on core modules     | ❌ Open | `core/resource_manager.py`, `core/manager_factory.py`. |
+
+## P3 — Newly identified (2026-07-18 sweep)
+
+Priority list built from a fresh `pyflakes` pass over `wicked_zerg_challenger/` plus a manual read of the
+FSM controller touched this run. Ordered by likely runtime impact; the CI/tooling items (P3.5+) are
+carried over from `MASTER_TODO_SC2.md` §1.6-1.8 since they're still unaddressed.
+
+| #    | Item | Status | Notes |
+|------|------|--------|-------|
+| P3.1 | Dead `group_center` computation in combat FSM | ❌ Open | `combat_phase_controller.py:164` — `_get_group_center(group_units)` is computed every `_manage_group_phase` tick but never passed to any phase handler or used in transition checks. Either it's leftover from a refactor (safe to delete) or gathering/positioning should be using it for rally-point math and currently isn't (a real gap). Needs a human call on intent before touching — flagged for advisor review rather than blind deletion. |
+| P3.2 | ~130 "local variable assigned but never used" (pyflakes) | ❌ Open | Mostly harmless (`except Exception as e` where `e` is unused, a few `game_time`/`style` locals). Bulk of these are cosmetic; worth a dedicated low-risk sweep but not urgent. `bot_step_integration.py` has the largest concentration (~12). |
+| P3.3 | ~250 "f-string is missing placeholders" (pyflakes) | ❌ Open | Style-only (an f-string with no `{}`), spread across ~20 files. Safe to bulk-fix with a script but zero functional impact — lowest priority. |
+| P3.4 | `ursina` star-import blocks undefined-name checking | ❌ Open | `wicked_zerg_challenger/visuals/swarm_3d_ursina.py` — `from ursina import *` hides ~95 potential undefined-name findings from static analysis in that one file. Only affects an optional 3D visualizer, not the bot core. |
+| P3.5 | CI dependency resolution hardening | ❌ Open | `ci.yml` still uses plain `pip install -r requirements.txt` (prone to "resolution-too-deep"). Candidate: `uv pip install` or a `pip-tools` lockfile. See `MASTER_TODO_SC2.md` §1.7. |
+| P3.6 | Lint tool consolidation (black+isort+flake8+mypy → ruff) | ❌ Open | `sc2bot-ci.yml`'s lint matrix runs 4 separate tools; `ruff` covers black-compatible formatting + isort-compatible import order + most flake8 rules at ~100x speed. See `MASTER_TODO_SC2.md` §1.8. |
+| P3.7 | `REMAINING_ISSUES.md` / `MASTER_TODO_SC2.md` refresh | ❌ Open | Both docs are several months stale and describe issues already fixed (verified this run — see "Resolved this run" above). Next automation pass should do a full re-audit and either update or archive them to `docs/history/` per `STATUS.md`'s own recommendation (P1.5 pattern). |
 
 ## Long-term direction
 
@@ -94,3 +117,4 @@ Run `E:\GitHub\Swarm-control-in-sc2bot\scripts\commit_nightly_2026-05-03.bat`:
 - **2026-05-01** — P1.1 scout cadence, P1.2 harassment, P1.3 expansion timing, P1.5 doc history. Commit blocked by index.lock.
 - **2026-05-02** — P0 scout import mismatch fixed. P1.4 deprecation shim. P2.1 FSM tests 23/23 pass.
 - **2026-05-03** — **Test suite cleared:** 90 failures → 0. Fixed pytest-asyncio, torch stubs (qmix/mappo), stale __init__ exports (mappo/comm_learning), gas threshold test, crypto skipif guards. Final: 398 pass / 20 skip / 0 fail.
+- **2026-07-18** — Fixed order-dependent `asyncio.get_event_loop()` failures in `test_combat_phase_fsm.py` (12 tests). Re-verified `REMAINING_ISSUES.md` #3/#4 and `MASTER_TODO_SC2.md` N1-N4 already resolved (docs were stale). Final: 502 pass / 14 skip / 0 fail. New P3 backlog logged from a fresh pyflakes sweep.

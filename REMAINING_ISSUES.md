@@ -4,7 +4,7 @@
 
 통합 문제 해결 후 발견된 추가 개선 사항들입니다.
 
-**Last refreshed:** 2026-04-27 (Issue #1, #2 → Resolved; Issue #6 partially resolved via Batch 3)
+**Last refreshed:** 2026-07-18 (N1-N4, Issue #3, #4 재검증 후 해결 확인 — 아래 참조)
 
 ---
 
@@ -14,14 +14,15 @@
 
 | ID | 설명 | 우선순위 | 상태 |
 |----|------|---------|------|
-| N1 | `OpponentModeling.on_step` 중복 정의 (line 341 vs 765 — F811) | 🟠 HIGH | open — 동작 영향(상위 on_step이 미실행) 가능 |
-| N2 | `EconomyManager._prevent_resource_banking` / `_reduce_gas_workers` 재정의 (F811) | 🟡 MED | open |
-| N3 | `combat_manager._find_harass_target` 재정의 (line 2377 vs 4278) | 🟡 MED | open |
-| N4 | `production_resilience.build_terran_counters` 재정의 (1369 vs 1866) | 🟡 MED | open |
-| N5 | bare `except Exception:` 다수 (≈360+) — 이번 PR에서 12건 처리, 잔여 다수 | 🟢 LOW | partial |
-| N6 | F841 unused local variables (visuals/make_pptx 등) | 🟢 LOW | open (presentation 코드라 영향 작음) |
+| N1 | `OpponentModeling.on_step` 중복 정의 (line 341 vs 765 — F811) | 🟠 HIGH | ✅ resolved (2026-07-18 재검증: `class OpponentModeling`에 `on_step` 정의 1건만 존재) |
+| N2 | `EconomyManager._prevent_resource_banking` / `_reduce_gas_workers` 재정의 (F811) | 🟡 MED | ✅ resolved (2026-07-18 재검증: 중복 없음) |
+| N3 | `combat_manager._find_harass_target` 재정의 (line 2377 vs 4278) | 🟡 MED | ✅ resolved (2026-07-18 재검증: 정의 1건만 존재, line 4992) |
+| N4 | `production_resilience.build_terran_counters` 재정의 (1369 vs 1866) | 🟡 MED | ✅ resolved (2026-07-18 재검증: 중복 없음) |
+| N5 | bare `except Exception:` 다수 (≈360+) — 이번 PR에서 12건 처리, 잔여 다수 | 🟢 LOW | partial (재검증 안 함, 여전히 낮은 우선순위) |
+| N6 | F841 unused local variables (visuals/make_pptx 등) | 🟢 LOW | open — `PLAN-NIGHTLY.md` P3.2로 이관 (전체 재스캔 결과 ~130건) |
 
-검증 권장: PR 분리 (N1 단독 PR 권장 — 동작 변화 가능성).
+2026-07-18 재검증 방법: `wicked_zerg_challenger/` 전체에 대해 AST로 클래스별 중복 메서드 정의를 스캔 — 0건.
+N1-N4는 이전 사이클에서 이미 개별적으로 수정되었으나 본 문서가 갱신되지 않았던 것으로 보임.
 
 ---
 
@@ -69,7 +70,12 @@
 
 ## 🟡 MEDIUM Priority Issues (still open)
 
-### Issue #3: Transfusion 우선순위 개선 필요
+> **2026-07-18 재검증:** Issue #3, #4 모두 이미 코드에 반영되어 있음을 확인.
+> `queen_transfusion_manager.py`에 `HEAL_PRIORITY` 테이블 + 우선순위 기반 타겟 정렬 구현됨.
+> `core/resource_manager.py`에 `asyncio.Lock` 기반 원자적 예약(`try_reserve`) 구현됨.
+> 아래 두 섹션은 과거 상태 기록이라 원문 그대로 남기되, 실제 상태는 ✅ done.
+
+### Issue #3: Transfusion 우선순위 개선 필요 — ✅ 해결됨 (재검증 2026-07-18)
 
 **위치**: `queen_manager.py` 또는 `spell_unit_manager.py`
 
@@ -142,7 +148,7 @@ async def smart_transfusion(self, queen, damaged_units):
 
 ---
 
-### Issue #4: Resource Reservation Race Condition
+### Issue #4: Resource Reservation Race Condition — ✅ 해결됨 (재검증 2026-07-18)
 
 **위치**: `resource_manager.py` (추정)
 
@@ -363,12 +369,10 @@ if iteration % SECOND == 0:
 
 | 우선순위 | 이슈 | 영향도 | 난이도 |
 |---------|------|--------|--------|
-| 🟡 MEDIUM | #3 Transfusion 우선순위 | 중간 | 중간 |
-| 🟡 MEDIUM | #4 Resource Race Condition | 낮음 | 중간 |
 | 🟢 LOW | #5 코드 중복 제거 | 낮음 | 쉬움 |
 | 🟢 LOW | #6 매직 넘버 | 낮음 | 쉬움 |
 
-(Issue #1, #2 → ✅ Resolved 섹션 참조)
+(Issue #1, #2, #3, #4 → ✅ Resolved 섹션 참조 — #3/#4는 2026-07-18 재검증)
 
 ---
 
