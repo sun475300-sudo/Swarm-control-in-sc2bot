@@ -1,14 +1,41 @@
-# RLAgent 비활성화 완료
+# RLAgent 비활성화 (train_mode=False 한정)
 
-실행 일시: 2026-01-25
+최초 작성일: 2026-01-25
+갱신일: 2026-07-18 — 코드가 이 문서 작성 이후 변경되어 현재 상태를 다시 반영함
 
 ---
 
-## 수정 사항
+## 현재 상태 (2026-07-18 기준)
+
+`RLAgent`는 더 이상 무조건 비활성화 상태가 아닙니다. `wicked_zerg_bot_pro_impl.py:254-281`에서
+`train_mode` 플래그에 따라 조건부로 초기화됩니다:
+
+```python
+# === RL Agent initialization (train_mode only) ===
+self.rl_agent = None
+if self.train_mode:
+    try:
+        from local_training.rl_agent import RLAgent
+        ...
+        self.rl_agent = RLAgent(learning_rate=initial_lr, model_path=model_path)
+        ...
+```
+
+- `train_mode=True`로 실행 시: RLAgent가 정상적으로 초기화되어 학습이 진행됩니다.
+- `train_mode=False`(기본값, 래더/실전 플레이 경로)로 실행 시: `self.rl_agent = None`으로 유지됩니다.
+
+즉 "재활성화"는 이미 되어 있으나, 실전(래더) 경로의 기본값은 여전히 비활성화입니다 — 학습되지
+않은 RLAgent가 실전 플레이를 방해하지 않도록 하는 원래 의도(아래 "이유" 섹션)가 유지되고 있습니다.
+
+아래 원본 기록(2026-01-25 작성 당시 상태)은 히스토리 참고용으로 남겨둡니다.
+
+---
+
+## 수정 사항 (2026-01-25 당시 기록)
 
 ### RLAgent 비활성화
 **파일:** `wicked_zerg_bot_pro_impl.py`
-**위치:** Line 294-302
+**위치:** Line 294-302 (당시 라인 번호; 현재는 254-281 부근)
 
 **변경 내용:**
 ```python
@@ -55,57 +82,39 @@ RLAgent가 학습되지 않은 상태에서 무작위 행동을 하여 기본 AI
 
 ---
 
-## 재활성화 방법
+## 재활성화 방법 (완료됨 — 위 "현재 상태" 참고)
 
-봇이 기본적으로 정상 작동하는 것을 확인한 후:
-
-1. `wicked_zerg_bot_pro_impl.py` 294-302줄 주석 해제
-2. RLAgent 코드 복원
-
-```python
-try:
-    from local_training.rl_agent import RLAgent
-    initial_lr = self.adaptive_lr.get_current_lr() if self.adaptive_lr else 0.001
-    self.rl_agent = RLAgent(learning_rate=initial_lr)
-    print(f"[BOT] RL Agent initialized with LR: {initial_lr:.6f}")
-except ImportError:
-    print("[WARNING] RL Agent not available")
-    self.rl_agent = None
-```
+`train_mode=True`로 봇을 실행하면 RLAgent가 자동으로 초기화됩니다. 별도 코드 수정은
+더 이상 필요하지 않습니다. 래더/실전 경로(`train_mode=False`, 기본값)에서 RLAgent를
+켜려면 의도적인 정책 결정이 필요합니다 (아래 "이유" 섹션의 위험 참고).
 
 ---
 
 ## 현재 시스템 구성
 
-**활성화된 컴포넌트:**
+**항상 활성화된 컴포넌트:**
 - ✅ Basic AI Strategy
 - ✅ Economy Manager
 - ✅ Production Manager
 - ✅ Combat Manager
 - ✅ Scouting System
-- ✅ Reward System (보상만 계산, 학습 안 함)
-- ✅ Background Learner (데이터 수집만, RLAgent 없어서 학습 안 함)
 
-**비활성화된 컴포넌트:**
-- ❌ RLAgent
-- ❌ Policy Network
-- ❌ REINFORCE 학습
+**`train_mode` 값에 따라 달라지는 컴포넌트:**
+- `train_mode=True`: RLAgent + Policy Network + REINFORCE 학습 활성화
+- `train_mode=False` (기본값, 래더/실전): RLAgent 비활성화, Reward System은 계산만 수행
 
 ---
 
 ## 다음 단계
 
-1. **기본 AI 검증**
-   - 게임 정상 종료 확인
-   - 확장, 생산, 전투 정상 작동 확인
+1. **학습 모드 검증**
+   - `train_mode=True`로 학습이 안정적으로 수렴하는지 확인
+   - 체크포인트/ELO 파이프라인(`local_training/training_pipeline.py`)과 연동 확인
 
-2. **문제 수정**
-   - 발견된 버그 수정
-   - 빌드 오더 개선
-
-3. **RLAgent 재활성화**
-   - 기본 AI가 안정적으로 작동하면
-   - RLAgent 다시 켜서 학습 시작
+2. **래더 배포 판단**
+   - 학습된 모델의 승률이 규칙 기반 AI를 상회하는지 검증 후
+   - `combat_manager.py`의 `use_rl_micro` 토글을 실전 경로에서 켤지 결정
+     (현재는 `False` 고정 — 코드 감사 결과 실전에서 항상 규칙 기반으로 폴백됨)
 
 ---
 

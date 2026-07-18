@@ -16,6 +16,7 @@ import time
 from datetime import datetime
 from pathlib import Path
 
+logging.basicConfig(level=logging.INFO, format="%(message)s")
 logger = logging.getLogger("RunMassTest")
 
 sys.path.insert(0, str(Path(__file__).parent))
