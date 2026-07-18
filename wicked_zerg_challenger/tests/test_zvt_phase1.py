@@ -8,14 +8,14 @@ from types import SimpleNamespace
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from build_order_system import BuildOrderSystem, BuildOrderType, UnitTypeId, ZVT_BUILDS
+from build_order_system import ZVT_BUILDS, BuildOrderSystem, BuildOrderType, UnitTypeId
 from combat.micro_combat import ZvTMicroAdjustments
 from scouting_system import ZVT_SCOUT_PRIORITIES, ZvTScoutingSystem
 from strategy_manager import (
+    ZVT_COMPOSITION_TIMELINE,
     EnemyRace,
     GamePhase,
     StrategyManager,
-    ZVT_COMPOSITION_TIMELINE,
 )
 
 
