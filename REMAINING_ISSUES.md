@@ -396,7 +396,6 @@ if iteration % SECOND == 0:
 | 🟢 LOW | N5 bare except 정리 (460건) | 낮음 (진단 어려움만 유발) | 쉬움 (점진적) |
 | 🟢 LOW | N6 F841 unused locals (presentation 코드) | 낮음 | 쉬움 |
 | 🟢 LOW | #6 매직 넘버 | 낮음 | 쉬움 |
-| 🟢 LOW | ROADMAP Task 2.3 — 빌드 패턴 인식 13/25 (목표 대비 부족) | 중간 (스카우팅 정확도) | 중간 |
 
 (Issue #1, #2 → ✅ Resolved 섹션 참조. Issue #3, #4, #5 → ✅ 재검증 결과 이미 구현됨, 위 섹션 참조.)
 
@@ -413,9 +412,15 @@ if iteration % SECOND == 0:
 - ~~`tests/test_combat_phase_fsm.py` 이벤트 루프 순서 의존 버그~~ (2026-07-18)
 
 ### 다음 우선순위 (미진행)
-1. ROADMAP `Task 2.3` — 적 빌드 오더 패턴 인식 12→25개 확장 중 13개까지만 진행됨. 나머지 패턴(테란 mech/widow mine drop 등, 프로토스 DT rush/void ray rush/immortal all-in/archon, 저그 muta/nydus 등) 추가 구현 필요.
-2. N5 bare except 정리 — 460건, 진단 로깅 없이 예외를 삼키는 구간 우선 점검.
-3. Constants 정리 (매직 넘버 → GameConstants)
+1. N5 bare except 정리 — 460건, 진단 로깅 없이 예외를 삼키는 구간 우선 점검.
+2. Constants 정리 (매직 넘버 → GameConstants)
+3. N6 F841 unused locals 정리 (presentation/visuals 코드, 영향 작음)
+
+**정정 (2026-07-18)**: ROADMAP `Task 2.3`(적 빌드 오더 패턴 12→25개 확장)은 이전 재검토에서
+"13/25로 미달"로 잘못 기록되었었음. 실제로는 `intel_manager.py:_detect_enemy_build_pattern`의
+기본 탐지 로직(terran_mech/bio/factory/rush, protoss_stargate/robo/twilight/gateway/proxy,
+zerg_muta/roach/ling_bane/12pool — 13종)에 `BUILD_PATTERNS` 딕셔너리의 확장 패턴 13종이 더해져
+총 26종의 적 빌드 시그니처를 인식함 — 목표(25) 달성/초과 확인, 별도 작업 불필요.
 
 ---
 
