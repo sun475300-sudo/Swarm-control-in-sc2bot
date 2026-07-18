@@ -361,9 +361,7 @@ class TestProductionResilience(unittest.IsolatedAsyncioTestCase):
         result = asyncio.run(self.resilience._produce_army_unit(larva))
 
         self.assertTrue(result)
-        self.resilience._safe_train.assert_awaited_once_with(
-            larva, UnitTypeId.MUTALISK
-        )
+        self.resilience._safe_train.assert_awaited_once_with(larva, UnitTypeId.MUTALISK)
 
     def test_pending_third_releases_production_reserve(self):
         """A pending third Hatchery releases ProductionResilience spending."""
