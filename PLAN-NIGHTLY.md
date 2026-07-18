@@ -2,17 +2,40 @@
 
 > Owner: 선우 (sun475300@gmail.com)
 > Maintainer: nightly automation
-> Last refreshed: 2026-05-04
+> Last refreshed: 2026-07-18
 
 ---
+
+## 🔴 P0 finding (2026-07-18): CI itself was blocking every merge
+
+As of 2026-07-18 the repo had **494 open PRs and only 8 ever merged**
+(last merge: PR #218, 2026-06-01). Root cause: `sc2bot-ci.yml`'s `test`
+job depends on `lint`, and `lint` runs `black --check --diff .` /
+`isort --check-only --diff .` against the **whole repo**. `main` had
+66 files that already failed `black --check`, so `lint` failed on
+every PR regardless of content, `test` never ran, and CI could never
+go green. Once that was fixed (PR #533), the `test` job ran for the
+first time ever and immediately surfaced three more real CI bugs:
+wrong test path (`tests/unit` doesn't exist), missing `pytest-timeout`
+for the `--timeout=120` flag, `wicked_zerg_challenger/tests/` (661
+tests, most of the actual bot-logic coverage) never wired into CI at
+all, and a missing `PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python` env
+var (needed because `s2clientprotocol`'s generated `_pb2` files predate
+the installed protobuf runtime's C++ backend) in **both** `ci.yml` and
+`sc2bot-ci.yml`. See PR #533 for the full diff/fix.
+
+**Action needed from the repo owner:** merge PR #533 first, then decide
+a policy for the other ~490 open PRs (rebase + re-review in batches,
+enable auto-merge on green CI, or close superseded duplicates) — CI
+being permanently red is very likely why none of them ever merged.
 
 ## Snapshot (current state)
 
 - Branch: `main`, last commit: queen transfusion + requirements-dev.txt session
 - Bot core: `wicked_zerg_challenger/` — 179+ Python files across 10+ subdirs.
 - `.gitattributes` enforces `* text=auto` ✅
-- CI: `sc2bot-ci.yml` runs black + isort + flake8 ✅ (all clean)
-- **Test suite: 468 pass / 15 skip / 0 fail** ✅ (was 398/20/0 two nights ago)
+- CI: `sc2bot-ci.yml` runs black + isort + flake8 — **was red on every PR since before 2026-06-01; fixed in PR #533 (2026-07-18), pending merge**
+- **Test suite (local verification, 2026-07-18): `tests/` 502 passed/14 skipped, `tests/integration` 10 passed, `wicked_zerg_challenger/tests/` 661 passed — 0 failures across all three**
 - Queen transfusion logic: 3 bugs fixed (`is_idle` guard removed, target dedup, per-queen cooldown) ✅
 
 ## Resolved this run (2026-05-03)
