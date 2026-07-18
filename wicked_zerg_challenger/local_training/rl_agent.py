@@ -673,6 +673,11 @@ class RLAgent:
             import traceback
 
             traceback.print_exc()
+            if "temp_actual" in locals() and os.path.exists(temp_actual):
+                try:
+                    os.remove(temp_actual)
+                except OSError:
+                    pass
             return False
 
     def train_from_batch(
@@ -760,7 +765,11 @@ class RLAgent:
     def save_model(self, path: Optional[str] = None) -> bool:
         """모델 저장 (Atomic Write)"""
         save_path = Path(path) if path else self.model_path
-        tmp_path = save_path.with_suffix(".tmp")
+        # np.savez() auto-appends ".npz" to any filename that doesn't already
+        # end with it, so the temp name must already carry the suffix or the
+        # later `tmp_path.exists()` check silently misses the real file and
+        # the rename below never runs (save becomes a no-op).
+        tmp_path = save_path.with_name(save_path.stem + ".tmp.npz")
 
         try:
             save_path.parent.mkdir(parents=True, exist_ok=True)

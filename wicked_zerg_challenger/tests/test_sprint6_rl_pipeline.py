@@ -198,5 +198,41 @@ class TestSelfPlayPipeline(unittest.TestCase):
             self.assertLessEqual(abs(selected["elo"] - 1500.0), 200.0)
 
 
+class TestSaveModelAtomicWrite(unittest.TestCase):
+    def test_save_model_actually_writes_the_target_file(self):
+        # Regression test: np.savez() auto-appends ".npz" to any filename
+        # that doesn't already end with it. save_model() used to derive its
+        # temp path via Path.with_suffix(".tmp"), so for "foo.npz" the temp
+        # path was "foo.tmp" but the file numpy actually wrote was
+        # "foo.tmp.npz" — the later `tmp_path.exists()` check on "foo.tmp"
+        # was always False, so the rename into place never ran and
+        # save_model() silently no-oped while still returning True and
+        # leaving an orphaned "*.tmp.npz" file behind.
+        with tempfile.TemporaryDirectory() as tmp:
+            model_path = Path(tmp) / "agent.npz"
+            agent = RLAgent(model_path=str(model_path))
+
+            result = agent.save_model()
+
+            self.assertTrue(result)
+            self.assertTrue(model_path.exists())
+            leftover_tmp_files = list(Path(tmp).glob("*.tmp*"))
+            self.assertEqual(leftover_tmp_files, [])
+
+    def test_save_model_overwrites_existing_file(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            model_path = Path(tmp) / "agent.npz"
+            agent = RLAgent(model_path=str(model_path))
+            agent.save_model()
+            first_mtime = model_path.stat().st_mtime_ns
+
+            agent.episode_count += 1
+            agent.save_model()
+
+            data = np.load(str(model_path))
+            self.assertEqual(int(data["episode_count"][0]), 1)
+            self.assertGreaterEqual(model_path.stat().st_mtime_ns, first_mtime)
+
+
 if __name__ == "__main__":
     unittest.main()

@@ -194,6 +194,24 @@ class TestDropDefense(unittest.TestCase):
             len([action for action in bot.actions if action[0] == "attack"]), 13
         )
 
+    def test_nydus_canal_near_base_triggers_garrison_response(self):
+        blackboard = Blackboard()
+        bot = FakeBot(blackboard)
+        bot.time = 180.0
+        bot.units = [FakeUnit(10, "QUEEN", Point(12, 10))]
+        bot.units += [FakeUnit(20 + i, "ZERGLING", Point(13 + i, 10)) for i in range(5)]
+        bot.units += [FakeUnit(100 + i, "ROACH", Point(40 + i, 40)) for i in range(12)]
+        bot.enemy_units = [FakeUnit(500, "NYDUSCANAL", Point(16, 16))]
+        defense = BaseDefenseSystem(bot)
+
+        asyncio.run(defense.handle_multi_base_drop_defense(110))
+
+        self.assertTrue(blackboard.get("drop_defense_active"))
+        self.assertEqual(blackboard.get("drop_defense_target"), "NYDUSCANAL")
+        self.assertGreaterEqual(
+            len([action for action in bot.actions if action[0] == "attack"]), 13
+        )
+
     def test_repeated_air_harass_requests_spores(self):
         blackboard = Blackboard()
         bot = FakeBot(blackboard)
