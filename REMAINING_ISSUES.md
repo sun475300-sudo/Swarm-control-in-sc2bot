@@ -4,24 +4,54 @@
 
 통합 문제 해결 후 발견된 추가 개선 사항들입니다.
 
-**Last refreshed:** 2026-04-27 (Issue #1, #2 → Resolved; Issue #6 partially resolved via Batch 3)
+**Last refreshed:** 2026-07-18 (자동 점검 사이클 — N1~N4, Issue #3~#5 재검증 결과 이미 코드에 반영되어 있음을 확인; 신규 버그 1건 발견/수정)
 
 ---
 
-## 🆕 신규 발견 (PR #44, 2026-04-27)
+## ✅ 신규 수정 (2026-07-18 자동 점검)
 
-자동/수동 점검 사이클(테스트 → 코드 검사 → 개선 → 커밋/푸시 반복)에서 새로 식별된 항목.
+### ✅ `tests/test_combat_phase_fsm.py` — deprecated `asyncio.get_event_loop()` 사용으로 인한 순서 의존 실패
+
+**증상**: 전체 스위트를 한 번에 실행하면 12개 테스트가
+`RuntimeError: There is no current event loop in thread 'MainThread'`로 실패.
+단독 실행 시에는 통과 — 다른 테스트 모듈이 `asyncio.run()`을 호출한 뒤
+정책의 기본 이벤트 루프가 `None`으로 리셋되면서 발생하는 순서 의존(order-dependent) 버그.
+
+**수정**: 5곳의 `asyncio.get_event_loop().run_until_complete(...)` 호출을
+`asyncio.run(...)`으로 교체 (매 호출마다 독립된 루프를 생성/정리하므로 다른 테스트의
+이벤트 루프 상태에 영향받지 않음).
+
+**검증**: `tests/` 486 passed / `wicked_zerg_challenger/tests/` 648 passed (총 1134, 실패 0).
+
+---
+
+## ✅ 재검증 결과 — 기존 문서상 "open"이었으나 코드에는 이미 반영됨 (2026-07-18)
+
+아래 항목들은 이전 개정판에서 open으로 표시되어 있었으나, 실제 코드를 재검토한 결과
+이미 별도 작업으로 해결되어 있는 것을 확인했습니다. 문서가 stale했던 것으로, 별도
+작업 없이 닫습니다.
+
+| ID | 설명 | 확인 내용 |
+|----|------|---------|
+| N1 | `OpponentModeling.on_step` 중복 정의 (F811) | `wicked_zerg_challenger/opponent_modeling.py`에 `on_step` 정의 1개만 존재 (line 341) |
+| N2 | `EconomyManager._prevent_resource_banking` / `_reduce_gas_workers` 재정의 | 각각 정의 1개씩만 존재 |
+| N3 | `combat_manager._find_harass_target` 재정의 | 정의 1개만 존재 (line 4992) |
+| N4 | `production_resilience.build_terran_counters` 재정의 | 정의 1개만 존재 |
+| Issue #3 | Transfusion 우선순위 미구현 | `queen_manager.py:_transfuse_injured_units`에 `TRANSFUSE_PRIORITY` 테이블 기반 우선순위 힐링 로직 구현 완료 (Queen > Broodlord > Corruptor/Viper > Spine > Overseer > Ultra > ...) |
+| Issue #4 | Resource Reservation Race Condition | `wicked_zerg_challenger/core/resource_manager.py`에 `asyncio.Lock` + `try_reserve()` 구현 완료 |
+| Issue #5 | Position 계산 코드 중복 | `wicked_zerg_challenger/utils/position_utils.py` 존재, 유틸 함수로 통합됨 |
+
+전체 프로젝트 `flake8 --select=F821,F811` 스캔 결과 `wicked_zerg_challenger/` 전체에서
+0건 확인 (2026-07-18) — 이름 오류/중복 정의 클래스의 버그는 현재 없음.
+
+---
+
+## 🆕 신규 발견 (PR #44, 2026-04-27 — 잔여 항목만 유지)
 
 | ID | 설명 | 우선순위 | 상태 |
 |----|------|---------|------|
-| N1 | `OpponentModeling.on_step` 중복 정의 (line 341 vs 765 — F811) | 🟠 HIGH | open — 동작 영향(상위 on_step이 미실행) 가능 |
-| N2 | `EconomyManager._prevent_resource_banking` / `_reduce_gas_workers` 재정의 (F811) | 🟡 MED | open |
-| N3 | `combat_manager._find_harass_target` 재정의 (line 2377 vs 4278) | 🟡 MED | open |
-| N4 | `production_resilience.build_terran_counters` 재정의 (1369 vs 1866) | 🟡 MED | open |
-| N5 | bare `except Exception:` 다수 (≈360+) — 이번 PR에서 12건 처리, 잔여 다수 | 🟢 LOW | partial |
-| N6 | F841 unused local variables (visuals/make_pptx 등) | 🟢 LOW | open (presentation 코드라 영향 작음) |
-
-검증 권장: PR 분리 (N1 단독 PR 권장 — 동작 변화 가능성).
+| N5 | bare `except Exception:` 다수 (재측정: `wicked_zerg_challenger/`에 460건, tests 제외) | 🟢 LOW | open |
+| N6 | F841 unused local variables (presentation/visuals 코드, 재측정: 15건+) | 🟢 LOW | open (presentation 코드라 영향 작음) |
 
 ---
 
@@ -359,32 +389,33 @@ if iteration % SECOND == 0:
 
 ---
 
-## 📊 이슈 우선순위 요약 (open만)
+## 📊 이슈 우선순위 요약 (open만, 2026-07-18 기준)
 
 | 우선순위 | 이슈 | 영향도 | 난이도 |
 |---------|------|--------|--------|
-| 🟡 MEDIUM | #3 Transfusion 우선순위 | 중간 | 중간 |
-| 🟡 MEDIUM | #4 Resource Race Condition | 낮음 | 중간 |
-| 🟢 LOW | #5 코드 중복 제거 | 낮음 | 쉬움 |
+| 🟢 LOW | N5 bare except 정리 (460건) | 낮음 (진단 어려움만 유발) | 쉬움 (점진적) |
+| 🟢 LOW | N6 F841 unused locals (presentation 코드) | 낮음 | 쉬움 |
 | 🟢 LOW | #6 매직 넘버 | 낮음 | 쉬움 |
+| 🟢 LOW | ROADMAP Task 2.3 — 빌드 패턴 인식 13/25 (목표 대비 부족) | 중간 (스카우팅 정확도) | 중간 |
 
-(Issue #1, #2 → ✅ Resolved 섹션 참조)
+(Issue #1, #2 → ✅ Resolved 섹션 참조. Issue #3, #4, #5 → ✅ 재검증 결과 이미 구현됨, 위 섹션 참조.)
 
 ---
 
 ## 🎯 권장 수정 순서
 
-### 1단계: 완료 (✅)
-~~1. Queen Inject 쿨다운 수정 (25 → 29)~~ — 코드 반영 완료, 본 문서 ✅ Resolved 섹션 참조
-~~2. 누락된 업그레이드 추가~~ — 코드 반영 완료, 본 문서 ✅ Resolved 섹션 참조
+### 완료 (✅)
+- ~~Queen Inject 쿨다운 수정 (25 → 29)~~
+- ~~누락된 업그레이드 추가~~
+- ~~Transfusion 우선순위 시스템~~ (TRANSFUSE_PRIORITY 테이블로 구현됨)
+- ~~Resource Reservation 동기화~~ (`core/resource_manager.py`의 `asyncio.Lock` + `try_reserve`)
+- ~~Position Utils 유틸리티 함수 분리~~ (`utils/position_utils.py`)
+- ~~`tests/test_combat_phase_fsm.py` 이벤트 루프 순서 의존 버그~~ (2026-07-18)
 
-### 2단계: 로직 개선 (30분, 미진행)
-3. Transfusion 우선순위 시스템 구현
-
-### 3단계: 구조 개선 (1시간, 미진행)
-4. Resource Reservation 동기화
-5. Position Utils 유틸리티 함수 분리
-6. Constants 정리
+### 다음 우선순위 (미진행)
+1. ROADMAP `Task 2.3` — 적 빌드 오더 패턴 인식 12→25개 확장 중 13개까지만 진행됨. 나머지 패턴(테란 mech/widow mine drop 등, 프로토스 DT rush/void ray rush/immortal all-in/archon, 저그 muta/nydus 등) 추가 구현 필요.
+2. N5 bare except 정리 — 460건, 진단 로깅 없이 예외를 삼키는 구간 우선 점검.
+3. Constants 정리 (매직 넘버 → GameConstants)
 
 ---
 
@@ -411,8 +442,9 @@ if iteration % SECOND == 0:
 
 ### 현재 상태
 - ✅ **치명적 통합 문제**: 완전히 해결됨
-- ✅ **모든 단위 테스트**: 통과 (16/16)
+- ✅ **모든 단위 테스트**: 통과 (`tests/` 486 + `wicked_zerg_challenger/tests/` 648 = 1134/1134, 2026-07-18 기준)
 - ✅ **기본 기능**: 정상 작동
+- ✅ **F821/F811 정적 검사**: `wicked_zerg_challenger/` 전체 0건
 
 ### 위의 이슈들은
 - 모두 **선택적 개선 사항**
@@ -421,5 +453,5 @@ if iteration % SECOND == 0:
 
 ---
 
-**검토 완료일**: 2026-01-29
-**상태**: 추가 개선 사항 문서화 완료
+**검토 완료일**: 2026-07-18 (자동 점검 사이클)
+**상태**: N1~N4, Issue #3~#5 재검증 완료(이미 해결됨) / 신규 버그 1건 수정 / 잔여 항목은 위 "다음 우선순위" 참조
