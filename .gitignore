@@ -246,3 +246,4 @@ _*.ps1
 htmlcov/
 .pytest_cache/
 pytest-cache-files-*/
+.venv_ci/
