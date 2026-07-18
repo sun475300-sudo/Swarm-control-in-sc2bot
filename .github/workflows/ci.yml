@@ -117,6 +117,11 @@ jobs:
         env:
           DRY_RUN: "true"
           LOG_LEVEL: "DEBUG"
+          # s2clientprotocol ships pb2 files generated against an older
+          # protoc; newer protobuf runtimes refuse to load them unless
+          # forced onto the pure-Python implementation (matches the
+          # sc2-bot-test job below, which needs the same workaround).
+          PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION: python
 
   # ─────────────────────────────────────────────
   # SC2 봇 구문 검증 + 테스트
