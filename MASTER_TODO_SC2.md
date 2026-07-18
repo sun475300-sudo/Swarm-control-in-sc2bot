@@ -5,6 +5,22 @@
 
 ---
 
+## 0. ⚠️ 2026-07-18 업데이트 — 자동화 세션은 먼저 이 섹션을 읽을 것
+
+**아래 §1의 PR 번호(#16~#30)는 완전히 stale하다.** 실제로는 **PR #521까지 482건이 열려있고 8건만 머지됨** (마지막 머지: PR #218, 한 달 이상 전). 새 자동화 세션이 열릴 때마다 `tests/test_combat_phase_fsm.py`의 `asyncio.get_event_loop()` 버그와 `tests/test_production_resilience.py`의 `sys.path` 충돌 버그를 **독립적으로 재발견하고 거의 동일한 PR을 또 여는 패턴이 최소 30회 이상 반복**되었다 (#471~#520).
+
+**근본 원인 확인됨**: `sc2bot-ci.yml`의 `Lint & Type Check` 잡이 `black --check .` / `isort --check-only .` / `flake8 --select=E9,F63,F7,F82`를 **레포 전체 대상**으로 블로킹 체크한다. `main`이 오랫동안 포맷팅 부채(66개 파일)를 갖고 있어서, 버그 수정이 아무리 정확해도 이 게이트를 못 넘는다. 결과: 아무 PR도 머지 안 됨 → 다음 세션이 같은 실패를 또 만남 → 또 같은 PR을 염 → 무한 반복.
+
+**PR #521**이 위 두 버그 수정 + 레포 전체 black/isort 포맷팅까지 포함한 첫 PR이며, `black --check` / `isort --check-only` / `flake8` 크리티컬 게이트를 모두 통과하는 것을 확인했다 (`pytest` 1163 passed, 0 failed, 0 collection error).
+
+**다음 자동화 세션에게**:
+1. `tests/test_combat_phase_fsm.py` 또는 `test_production_resilience.py`에서 실패가 나온다면, **PR #521이 이미 고친 버그인지 먼저 확인**하라 (머지됐으면 이 문제 없음, 머지 안 됐으면 재수정하지 말고 PR #521 상태를 확인/보고하라).
+2. **머지/PR 대량 close는 여전히 사용자 승인 필요** — 자동으로 하지 말 것. 사용자가 PR #521(또는 #520)을 머지하고 #471~#520을 close하기 전까지는 이 상태가 유지된다.
+3. `wicked_zerg_challenger/combat/base_defense.py`의 `BaseDefenseSystem`은 구현·테스트는 있으나 실제 봇 루프에 wiring되지 않은 dead code (Sprint 5.2). `multi_base_defense.py`의 `MultiBaseDefense`가 실제 런타임 방어를 담당 중 — 두 시스템을 합칠지, `BaseDefenseSystem`을 지울지는 사용자 결정 필요.
+4. 99건의 Dependabot 보안 경고(critical 2, high 37)가 `main`에 열려있음 — 별도 트래킹 필요.
+
+---
+
 ## 1. 백로그 인벤토리
 
 ### 1.1 열린 PR (16건)
