@@ -117,6 +117,11 @@ jobs:
         env:
           DRY_RUN: "true"
           LOG_LEVEL: "DEBUG"
+          # burnysc2's s2clientprotocol pb2 files are pre-generated for an older
+          # protobuf runtime; requirements.txt also needs google-generativeai's
+          # protobuf>=4.25, so we can't just pin protobuf down. The pure-Python
+          # implementation reads old-style generated code fine either way.
+          PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION: python
 
   # ─────────────────────────────────────────────
   # SC2 봇 구문 검증 + 테스트

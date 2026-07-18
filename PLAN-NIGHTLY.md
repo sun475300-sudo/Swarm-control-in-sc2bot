@@ -15,6 +15,12 @@
 - **Test suite: 502 pass / 14 skip / 0 fail** ✅ (was 398/20/0 on 2026-05-03; gap between then and now had no nightly runs recorded)
 - Queen transfusion logic: 3 bugs fixed (`is_idle` guard removed, target dedup, per-queen cooldown) ✅
 
+## P0 — Critical / blocking (found + fixed 2026-07-18)
+
+| Item | File(s) | Notes |
+|------|---------|-------|
+| `python-lint-test` CI job couldn't collect any `sc2`-importing test | `.github/workflows/ci.yml`, `requirements.txt` | Confirmed broken on `main` HEAD too (workflow run 28167558300, 2026-06-25) — not something this PR caused. Two stacked root causes, both reproduced from a clean venv running the exact `pip install -r requirements.txt` CI does: (1) `burnysc2`'s bundled `s2clientprotocol` generated `_pb2.py` files are incompatible with the modern `protobuf` that `requirements.txt`'s `google-generativeai`/`google-api-core` also require (`TypeError: Descriptors cannot be created directly`) — can't just pin `protobuf<4` without breaking the Google SDK side, so added `PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION: python` to the `python-lint-test` job's pytest step (the `sc2-bot-test` job already had this fix, just not this one); (2) `burnysc2`'s `sc2/main.py` imports `async_timeout` directly but nothing in `requirements.txt` pulls it in transitively anymore (modern `aiohttp` dropped the dependency on Python 3.11+) — added `async-timeout>=4.0.0` to `requirements.txt`. Verified both `pytest tests/ --co -q` (516 collected, 0 errors) and `pytest tests/test_crypto_trading.py tests/test_security.py` (31 passed / 7 skipped) succeed end-to-end in the clean-venv repro after both fixes. |
+
 ## Resolved this run (2026-07-18)
 
 | Item | File(s) | Notes |
@@ -36,9 +42,9 @@
 
 **Net result: 90 failures → 0 failures. Suite: 398 pass / 20 skip.**
 
-## P0 — Critical / blocking
+## P0 — Critical / blocking (2026-05-03 run)
 
-*No P0 items this run.*
+*No P0 items that run.* (See "P0 — Critical / blocking (found + fixed 2026-07-18)" above for the current P0.)
 
 ## P1 — Important
 
@@ -117,4 +123,4 @@ Run `E:\GitHub\Swarm-control-in-sc2bot\scripts\commit_nightly_2026-05-03.bat`:
 - **2026-05-01** — P1.1 scout cadence, P1.2 harassment, P1.3 expansion timing, P1.5 doc history. Commit blocked by index.lock.
 - **2026-05-02** — P0 scout import mismatch fixed. P1.4 deprecation shim. P2.1 FSM tests 23/23 pass.
 - **2026-05-03** — **Test suite cleared:** 90 failures → 0. Fixed pytest-asyncio, torch stubs (qmix/mappo), stale __init__ exports (mappo/comm_learning), gas threshold test, crypto skipif guards. Final: 398 pass / 20 skip / 0 fail.
-- **2026-07-18** — Fixed order-dependent `asyncio.get_event_loop()` failures in `test_combat_phase_fsm.py` (12 tests). Re-verified `REMAINING_ISSUES.md` #3/#4 and `MASTER_TODO_SC2.md` N1-N4 already resolved (docs were stale). Final: 502 pass / 14 skip / 0 fail. New P3 backlog logged from a fresh pyflakes sweep.
+- **2026-07-18** — Fixed order-dependent `asyncio.get_event_loop()` failures in `test_combat_phase_fsm.py` (12 tests). Re-verified `REMAINING_ISSUES.md` #3/#4 and `MASTER_TODO_SC2.md` N1-N4 already resolved (docs were stale). Final: 502 pass / 14 skip / 0 fail. New P3 backlog logged from a fresh pyflakes sweep. Later same day: PR #529's CI surfaced a P0 — `python-lint-test` job couldn't collect any `sc2`-importing test (confirmed also broken on `main` HEAD, run 28167558300). Fixed with `PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION: python` env var + `async-timeout>=4.0.0` dependency addition, verified in a clean-venv repro of CI's exact install steps.
