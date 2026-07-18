@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 """
-?????? ???? ??? ????
+미구현 로직 검사 도구
 
-ȣ??????? ???ǵ??? ???? ?޼???, pass ???? ?ִ? ?޼???, TODO ?ּ??? ã???ϴ?.
+호출되지만 정의되지 않은 메서드, pass만 있는 메서드, TODO 주석을 찾습니다.
 """
 
 import ast
@@ -18,7 +18,7 @@ PROJECT_ROOT = Path(__file__).parent.parent
 
 
 class MissingLogicChecker:
-    """?????? ???? ????"""
+    """미구현 로직 검사기"""
 
     def __init__(self):
         self.defined_methods: Dict[str, Set[str]] = defaultdict(set)  # file -> methods
@@ -32,7 +32,7 @@ class MissingLogicChecker:
         self.missing_implementations: List[Dict] = []
 
     def extract_methods_from_file(self, file_path: Path) -> Set[str]:
-        """???Ͽ??? ???ǵ? ?޼??? ????"""
+        """파일에서 정의된 메서드 추출"""
         methods = set()
         try:
             with open(file_path, "r", encoding="utf-8", errors="replace") as f:
@@ -52,22 +52,22 @@ class MissingLogicChecker:
         return methods
 
     def extract_calls_from_file(self, file_path: Path) -> Set[str]:
-        """???Ͽ??? ȣ??? ?޼??? ????"""
+        """파일에서 호출된 메서드 추출"""
         calls = set()
         try:
             with open(file_path, "r", encoding="utf-8", errors="replace") as f:
                 content = f.read()
                 lines = content.splitlines()
 
-            # self._method() ???? ã??
+            # self._method() 패턴 찾기
             for i, line in enumerate(lines, 1):
-                # await self._method() ?Ǵ? self._method() ????
+                # await self._method() 또는 self._method() 패턴
                 matches = re.findall(
                     r"(?:await\s+)?self\.(_[a-zA-Z_][a-zA-Z0-9_]*)\s*\(", line
                 )
                 calls.update(matches)
 
-                # await self.method() ?Ǵ? self.method() ???? (public methods)
+                # await self.method() 또는 self.method() 패턴 (public methods)
                 matches2 = re.findall(
                     r"(?:await\s+)?self\.([a-zA-Z_][a-zA-Z0-9_]*)\s*\(", line
                 )
@@ -77,7 +77,7 @@ class MissingLogicChecker:
         return calls
 
     def find_pass_statements(self, file_path: Path) -> List[int]:
-        """pass ???? ?ִ? ???? ã??"""
+        """pass만 있는 메서드 찾기"""
         pass_lines = []
         try:
             with open(file_path, "r", encoding="utf-8", errors="replace") as f:
@@ -85,11 +85,11 @@ class MissingLogicChecker:
 
             for i, line in enumerate(lines, 1):
                 stripped = line.strip()
-                # ?ܵ? pass ???? ã?? (?ּ??̳? ?ٸ? ?ڵ?? ?Բ? ?ִ? ???? ????)
+                # 단독 pass 문만 찾기 (주석이나 다른 코드와 함께 있는 경우 제외)
                 if stripped == "pass" or (
                     stripped.startswith("pass") and len(stripped) == 4
                 ):
-                    # ?Լ? ???? ?????? pass???? Ȯ??
+                    # 함수 정의 근처에 있는 pass인지 확인
                     context = "\n".join(lines[max(0, i - 10) : i])
                     if "def " in context or "async def " in context:
                         pass_lines.append(i)
@@ -98,7 +98,7 @@ class MissingLogicChecker:
         return pass_lines
 
     def find_todo_comments(self, file_path: Path) -> List[Tuple[int, str]]:
-        """TODO ?ּ? ã??"""
+        """TODO 주석 찾기"""
         todos = []
         try:
             with open(file_path, "r", encoding="utf-8", errors="replace") as f:
@@ -116,7 +116,7 @@ class MissingLogicChecker:
         return todos
 
     def scan_file(self, file_path: Path):
-        """???? ??ĵ"""
+        """파일 스캔"""
         rel_path = str(file_path.relative_to(PROJECT_ROOT))
 
         defined = self.extract_methods_from_file(file_path)
@@ -131,7 +131,7 @@ class MissingLogicChecker:
         if todos:
             self.todo_comments[rel_path] = todos
 
-        # ???? ???? ?????? ȣ??Ǿ????? ???ǵ??? ???? ?޼??? ã??
+        # 같은 파일 내에서 호출되었지만 정의되지 않은 메서드 찾기
         missing = called - defined
         if missing:
             for method in missing:
@@ -156,7 +156,7 @@ class MissingLogicChecker:
             if py_file.is_file():
                 self.scan_file(py_file)
 
-        # ??ü ??????Ʈ???? ȣ??Ǿ????? ???ǵ??? ???? ?޼??? ã??
+        # 전체 프로젝트에서 호출되었지만 정의되지 않은 메서드 찾기
         all_defined = set()
         for methods in self.defined_methods.values():
             all_defined.update(methods)
@@ -164,7 +164,7 @@ class MissingLogicChecker:
         for file_path, called in self.called_methods.items():
             for method in called:
                 if method not in all_defined and method.startswith("_"):
-                    # private method?? ???ǵ??? ?ʾ???
+                    # private 메서드가 정의되지 않음
                     self.missing_implementations.append(
                         {
                             "file": file_path,
@@ -184,23 +184,23 @@ class MissingLogicChecker:
 
 
 def main():
-    """???? ?Լ?"""
+    """메인 함수"""
 
     logger.info("=" * 70)
-    logger.info("?????? ???? ??? ????")
+    logger.info("미구현 로직 검사 도구")
     logger.info("=" * 70)
     checker = MissingLogicChecker()
-    logger.info("??ĵ ??...")
+    logger.info("스캔 중...")
     results = checker.scan_all()
 
-    logger.info(f"\n??? ?Ϸ?!")
-    logger.info(f"  - ?????? ?޼???: {results['total_missing']}??")
-    logger.info(f"  - pass ???? ?ִ? ????: {results['files_with_pass']}??")
-    logger.info(f"  - TODO ?ּ??? ?ִ? ????: {results['files_with_todos']}??")
-    # ?????? ?޼??? ???
+    logger.info(f"\n검사 완료!")
+    logger.info(f"  - 미구현 메서드: {results['total_missing']}개")
+    logger.info(f"  - pass만 있는 파일: {results['files_with_pass']}개")
+    logger.info(f"  - TODO 주석이 있는 파일: {results['files_with_todos']}개")
+    # 미구현 메서드 출력
     if results["missing_implementations"]:
         logger.info("=" * 70)
-        logger.info("?????? ?޼???:")
+        logger.info("미구현 메서드:")
         logger.info("=" * 70)
 
         by_file = defaultdict(list)
@@ -212,10 +212,10 @@ def main():
             for method in sorted(set(methods)):
                 logger.info(f"  - {method}")
 
-    # pass ???? ???? ???? ???
+    # pass만 있는 파일 목록 출력
     if results["pass_statements"]:
         logger.info("\n" + "=" * 70)
-        logger.info("pass ???? ???? ???? (???? 10??):")
+        logger.info("pass만 있는 파일 (상위 10개):")
         logger.info("=" * 70)
 
         sorted_files = sorted(
@@ -223,18 +223,18 @@ def main():
         )[:10]
 
         for file_path, lines in sorted_files:
-            logger.info(f"\n{file_path}: {len(lines)}?? pass ??")
+            logger.info(f"\n{file_path}: {len(lines)}개 pass 문")
             if len(lines) <= 20:
-                logger.info(f"  ????: {', '.join(map(str, lines[:20]))}")
+                logger.info(f"  라인: {', '.join(map(str, lines[:20]))}")
             else:
                 logger.info(
-                    f"  ????: {', '.join(map(str, lines[:20]))} ... (?? {len(lines)}??)"
+                    f"  라인: {', '.join(map(str, lines[:20]))} ... (총 {len(lines)}개)"
                 )
 
-    # TODO ?ּ? ???
+    # TODO 주석 출력
     if results["todo_comments"]:
         logger.info("\n" + "=" * 70)
-        logger.info("TODO ?ּ? (???? 20??):")
+        logger.info("TODO 주석 (최대 20개):")
         logger.info("=" * 70)
 
         count = 0
