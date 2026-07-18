@@ -86,6 +86,7 @@ All of Sprints 1–6 (and 7.1) are confirmed DONE with matching constants/method
 | P2.7 | Magic-number → GameConstants adoption            | ❌ Open | (new) ~84 raw `% 22`/`% 33`/etc. checks remain outside the 3 files that already import `game_constants`. |
 | P2.8 | Non-ASCII/emoji log-character cleanup            | ❌ Open | (new, was Sprint 1 Task 1.1) ~112 of ~140 files under `wicked_zerg_challenger/` still use ⚪✓✅🔴❌ etc.; large mechanical diff, do as its own PR. |
 | P2.9 | Arena package checklist automation               | ❌ Open | (new) `create_arena_package.py` has no automated 10MB size gate or 320ms/step profiling check — currently manual verification only. |
+| P2.10 | Repo-wide `black`/`isort` formatting cleanup     | ❌ Open | (new, from PR #524 CI investigation) `sc2bot-ci.yml`'s "Lint & Type Check" job runs `black --check --diff .` / `isort --check-only --diff .` over the whole repo and has failed on every scheduled `main` run since at least 2026-06-14 (confirmed on 6 consecutive runs, same head SHAs) — 67 files need reformatting. Pre-existing, unrelated to any single PR's diff; needs its own dedicated `black . && isort .` pass + review, not a reactive fix. |
 
 ## Long-term direction
 
