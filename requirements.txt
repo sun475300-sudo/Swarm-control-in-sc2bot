@@ -8,6 +8,7 @@ psutil>=5.8.0
 s2clientprotocol>=4.19.0.0
 sc2reader>=0.8.0
 pyyaml>=6.0
+async_timeout>=4.0.0  # burnysc2's sc2/main.py imports this directly but doesn't declare it
 
 # ═══════════════════════════════════════════════
 # Crypto Trading Service
