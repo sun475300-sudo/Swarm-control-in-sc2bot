@@ -32,7 +32,8 @@ class ReleaseChecklist:
                 [
                     "python",
                     "-m",
-                    "py_compile",
+                    "compileall",
+                    "-q",
                     str(self.project_root / "wicked_zerg_challenger"),
                 ],
                 capture_output=True,
@@ -42,7 +43,7 @@ class ReleaseChecklist:
             if result.returncode == 0:
                 return True, "All Python files compiled successfully"
             else:
-                return False, f"Syntax errors found: {result.stderr[:500]}"
+                return False, f"Syntax errors found: {result.stdout[:500]}"
         except Exception as e:
             return False, f"Python check failed: {str(e)}"
 
@@ -110,7 +111,7 @@ class ReleaseChecklist:
                 )
                 return True, f"Tests collected: {collected}"
             else:
-                return False, f"Test collection failed: {result.stderr[:300]}"
+                return False, f"Test collection failed: {result.stdout[-500:]}"
         except Exception as e:
             return True, f"Pytest check skipped: {str(e)}"
 
@@ -141,7 +142,7 @@ class ReleaseChecklist:
 
         checks = {
             "Phase Progress": "Phase" in content,
-            "Architecture": "System Architecture" in content or "## System" in content,
+            "Architecture": "Architecture" in content or "아키텍처" in content,
             "Usage Instructions": "Usage" in content or "Quick Start" in content,
         }
 
