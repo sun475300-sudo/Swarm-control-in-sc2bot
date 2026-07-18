@@ -636,6 +636,7 @@ class RLAgent:
 
     def save_experience_data(self, path: str) -> bool:
         """현재 에피소드의 경험 데이터를 파일로 저장 (Atomic Save 적용)"""
+        temp_actual = None
         try:
             path = Path(path)
             path.parent.mkdir(parents=True, exist_ok=True)
@@ -669,6 +670,13 @@ class RLAgent:
             import traceback
 
             traceback.print_exc()
+            # disk-full / interrupted-rename can leave the temp file behind;
+            # remove it so retries don't accumulate orphaned .tmp.npz files
+            if temp_actual and os.path.exists(temp_actual):
+                try:
+                    os.remove(temp_actual)
+                except OSError:
+                    pass
             return False
 
     def train_from_batch(
@@ -756,7 +764,11 @@ class RLAgent:
     def save_model(self, path: Optional[str] = None) -> bool:
         """모델 저장 (Atomic Write)"""
         save_path = Path(path) if path else self.model_path
-        tmp_path = save_path.with_suffix(".tmp")
+        # np.savez() appends ".npz" to any filename that doesn't already end
+        # with it, so a bare ".tmp" suffix here would make tmp_path point at
+        # a file that's never actually written -- the exists() check below
+        # would then silently no-op the rename and still report success.
+        tmp_path = save_path.with_name(save_path.stem + ".tmp.npz")
 
         try:
             save_path.parent.mkdir(parents=True, exist_ok=True)
