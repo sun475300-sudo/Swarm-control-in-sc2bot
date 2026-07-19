@@ -850,7 +850,7 @@ class RLAgent:
 
         # 2. Epsilon이 충분히 낮아짐 (탐험 종료)
         if self.epsilon > 0.2:
-            return False, f"Still exploring (ε={self.epsilon:.3f}, target<0.2)"
+            return False, f"Still exploring (epsilon={self.epsilon:.3f}, target<0.2)"
 
         # 3. 검증 점수 (있는 경우)
         if len(self.validation_scores) >= 10:
