@@ -98,15 +98,11 @@ class TestIsPositionSafe(unittest.TestCase):
 
     def test_unsafe_when_enemy_within_range(self):
         enemies = [FakeUnit(1, 0)]
-        self.assertFalse(
-            is_position_safe(Point2((0, 0)), enemies, safe_distance=10.0)
-        )
+        self.assertFalse(is_position_safe(Point2((0, 0)), enemies, safe_distance=10.0))
 
     def test_safe_when_enemy_outside_range(self):
         enemies = [FakeUnit(100, 0)]
-        self.assertTrue(
-            is_position_safe(Point2((0, 0)), enemies, safe_distance=10.0)
-        )
+        self.assertTrue(is_position_safe(Point2((0, 0)), enemies, safe_distance=10.0))
 
 
 class TestGeometryHelpers(unittest.TestCase):
