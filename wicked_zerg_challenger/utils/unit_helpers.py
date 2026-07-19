@@ -19,8 +19,14 @@ try:
     from sc2.units import Units
 except ImportError:
     Unit = None
-    Units = None
     Point2 = None
+
+    class Units(list):
+        """Minimal list-based stand-in for tooling environments without sc2."""
+
+        def __init__(self, units, bot_object=None):
+            super().__init__(units)
+
 
 logger = get_logger("UnitHelpers")
 

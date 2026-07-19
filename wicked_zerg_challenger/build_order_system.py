@@ -41,7 +41,7 @@ except ImportError:
     class BotAI:
         pass
 
-    class UnitTypeId:
+    class UnitTypeId(Enum):
         DRONE = "DRONE"
         OVERLORD = "OVERLORD"
         SPAWNINGPOOL = "SPAWNINGPOOL"
@@ -49,12 +49,14 @@ except ImportError:
         EXTRACTOR = "EXTRACTOR"
         ZERGLING = "ZERGLING"
         QUEEN = "QUEEN"
+        BANELING = "BANELING"
         BANELINGNEST = "BANELINGNEST"
         ROACHWARREN = "ROACHWARREN"
         LAIR = "LAIR"
         HYDRALISKDEN = "HYDRALISKDEN"
         ROACH = "ROACH"
         HYDRALISK = "HYDRALISK"
+        MARINE = "MARINE"
 
     class AbilityId:
         RESEARCH_ZERGLINGMETABOLICBOOST = "RESEARCH_ZERGLINGMETABOLICBOOST"

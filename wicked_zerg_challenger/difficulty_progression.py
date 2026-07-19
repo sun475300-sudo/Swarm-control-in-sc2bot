@@ -10,10 +10,32 @@ Difficulty Progression System - 난이도 자동 조정
 
 import json
 import logging
+from enum import Enum
 from pathlib import Path
 from typing import Dict, Optional
 
-from sc2.data import Difficulty, Race
+try:
+    from sc2.data import Difficulty, Race
+except ImportError:  # Fallbacks for tooling environments
+
+    class Difficulty(Enum):
+        VeryEasy = "VeryEasy"
+        Easy = "Easy"
+        Medium = "Medium"
+        MediumHard = "MediumHard"
+        Hard = "Hard"
+        Harder = "Harder"
+        VeryHard = "VeryHard"
+        CheatVision = "CheatVision"
+        CheatMoney = "CheatMoney"
+        CheatInsane = "CheatInsane"
+
+    class Race(Enum):
+        Zerg = "Zerg"
+        Terran = "Terran"
+        Protoss = "Protoss"
+        Random = "Random"
+
 
 logger = logging.getLogger("DifficultyProgression")
 

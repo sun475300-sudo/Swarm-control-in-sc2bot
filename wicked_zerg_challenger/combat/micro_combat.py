@@ -16,7 +16,13 @@ try:
     from sc2.position import Point2
 except ImportError:  # Fallbacks for tooling environments
     UnitTypeId = None
-    AbilityId = None
+
+    class AbilityId:
+        BURROWDOWN_LURKER = "BURROWDOWN_LURKER"
+        BURROWDOWN_LURKERMP = "BURROWDOWN_LURKERMP"
+        BURROWUP_LURKER = "BURROWUP_LURKER"
+        BURROWUP_LURKERMP = "BURROWUP_LURKERMP"
+
     UpgradeId = None
     Point2 = None
 
@@ -833,9 +839,6 @@ class MicroCombat:
 
     def manage_lurker_positioning(self, iteration: int = 0) -> Set[int]:
         """Position Lurkers on nearby chokes and burrow with LURKERMP ids."""
-        if not UnitTypeId:
-            return set()
-
         if self.lurker_choke_detector:
             self.lurker_choke_detector.update_chokepoints(iteration)
             chokepoints = list(getattr(self.lurker_choke_detector, "chokepoints", []))
