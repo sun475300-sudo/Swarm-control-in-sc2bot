@@ -770,11 +770,19 @@ class OpponentModeling:
             return
 
         # Update game history
-        self.current_game_history.game_won = won
-        self.current_game_history.game_lost = lost
-        self.current_game_history.early_signals = [
-            s.value for s in self.observed_signals
-        ]
+        # NOTE: GameHistory.game_result (not game_won/game_lost, which are not
+        # fields on the dataclass and were previously silently dropped) is what
+        # OpponentModel.update_from_game() reads to update win/loss counters.
+        self.current_game_history.game_result = (
+            "win" if won else ("loss" if lost else "unknown")
+        )
+        # observed_signals already stores plain strings (StrategySignal.value
+        # is what _add_signal() inserts), not StrategySignal members, so this
+        # must NOT re-access `.value` - doing so raised AttributeError on
+        # every game where at least one signal was observed, which was
+        # silently swallowed by the broad except in wicked_zerg_bot_pro_impl.py
+        # and meant model.update_from_game()/save_models() below never ran.
+        self.current_game_history.early_signals = list(self.observed_signals)
 
         # Detect strategy (placeholder - would need more logic)
         if self.intel:

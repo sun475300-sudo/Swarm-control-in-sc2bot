@@ -564,6 +564,61 @@ class TestOpponentModeling(unittest.TestCase):
         # Should not crash
         self.assertEqual(len(new_modeling.opponent_models), 0)
 
+    # ==================== on_game_start/on_game_end sync API Tests ====================
+
+    def test_on_game_end_with_observed_signals_does_not_crash(self):
+        """Regression test for on_game_end() crashing on observed signals.
+
+        observed_signals is populated by _add_signal(), which stores
+        StrategySignal.value (a plain str), not the StrategySignal member
+        itself. on_game_end() previously did `s.value for s in
+        self.observed_signals`, which raised
+        `AttributeError: 'str' object has no attribute 'value'` as soon as
+        any signal had been observed during the game. That crash happened
+        inside wicked_zerg_bot_pro_impl.py's on_end() inside a broad
+        try/except, so it was silently swallowed - but it meant
+        model.update_from_game() and save_models() (both further down in
+        on_game_end) never ran, silently disabling all opponent learning
+        for every real game where a signal fired.
+        """
+        self.modeling.on_game_start("opponent_test")
+        # Mimic what _add_signal() actually stores: plain strings.
+        self.modeling.observed_signals.add("early_pool")
+        self.modeling.observed_signals.add("fast_expand")
+
+        # Must not raise AttributeError.
+        self.modeling.on_game_end(won=True, lost=False)
+
+        # model.update_from_game() must have actually run and persisted the
+        # early_signals + win/loss outcome (game_result must be set, not left
+        # as the "unknown" default - "win" for us means the opponent lost).
+        model = self.modeling.opponent_models["opponent_test"]
+        self.assertEqual(model.games_played, 1)
+        self.assertEqual(model.games_won, 0)
+        self.assertEqual(model.games_lost, 1)
+
+        self.assertEqual(
+            self.modeling.current_game_history.game_result,
+            "win",
+        )
+        self.assertIn("early_pool", self.modeling.current_game_history.early_signals)
+        self.assertIn("fast_expand", self.modeling.current_game_history.early_signals)
+
+    def test_on_game_end_loss_updates_opponent_win_count(self):
+        """on_game_end(won=False, lost=True) must record the opponent's win."""
+        self.modeling.on_game_start("opponent_test_2")
+
+        self.modeling.on_game_end(won=False, lost=True)
+
+        model = self.modeling.opponent_models["opponent_test_2"]
+        self.assertEqual(model.games_played, 1)
+        self.assertEqual(model.games_won, 1)
+        self.assertEqual(model.games_lost, 0)
+        self.assertEqual(
+            self.modeling.current_game_history.game_result,
+            "loss",
+        )
+
     # ==================== Integration Tests ====================
 
     async def test_full_game_flow(self):
