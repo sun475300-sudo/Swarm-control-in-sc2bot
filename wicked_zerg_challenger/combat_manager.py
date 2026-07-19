@@ -4237,6 +4237,10 @@ class CombatManager:
         and return after enough damage or when badly hurt.
         """
         if not getattr(self, "harass_units", set()):
+            # No wave currently out: clear the per-wave kill counter so the
+            # next wave gets its own fresh 3-kill return threshold instead of
+            # inheriting a count that never resets across the whole game.
+            self.harass_kill_count = 0
             return
         if not hasattr(self.bot, "units"):
             self.harass_units.clear()

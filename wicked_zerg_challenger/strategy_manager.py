@@ -554,20 +554,6 @@ class StrategyManager:
         return composition
 
     def _get_early_scout_signal_state(self) -> Dict[str, Any]:
-        if self.early_scout_pressure_active:
-            self.current_mode = StrategyMode.DEFENSIVE
-            return {
-                "fresh": False,
-                "gas_time": None,
-                "natural_confirmed": False,
-                "cheese_suspected": False,
-                "cheese_active": False,
-                "fast_gas": False,
-                "greed_suppressed": False,
-                "pressure_active": True,
-                "drone_floor": 16,
-            }
-
         game_time = getattr(self.bot, "time", 0.0)
         state: Dict[str, Any] = {
             "fresh": False,
@@ -2032,6 +2018,21 @@ class StrategyManager:
 
         return None
 
+    def _clear_all_in_state(self) -> None:
+        """Undo the drone-halt / emergency lockout once an all-in threat passes."""
+        if not self._blackboard_flag("enemy_all_in"):
+            return
+        self.blackboard.set("enemy_all_in", False)
+        self.blackboard.set("enemy_all_in_detected", False)
+        self.blackboard.set("drone_production_policy", "NORMAL")
+        self.blackboard.set("urgent_spine_all_bases", False)
+        self.blackboard.set("spend_larva_on_army", False)
+        self.blackboard.set("queen_defense_mode", False)
+        if self.current_mode == StrategyMode.ALL_IN:
+            self.emergency_active = False
+            self.current_mode = StrategyMode.NORMAL
+            self.emergency_start_time = 0.0
+
     def _detect_all_in_pressure(self) -> bool:
         """Detect no-expand all-ins after 5:00 and publish defense directives."""
         if not self.blackboard:
@@ -2042,9 +2043,7 @@ class StrategyManager:
             return False
 
         if self._enemy_has_expansion():
-            if self._blackboard_flag("enemy_all_in"):
-                self.blackboard.set("enemy_all_in", False)
-                self.blackboard.set("enemy_all_in_detected", False)
+            self._clear_all_in_state()
             return False
 
         enemy_power_ratio = self._enemy_army_power_ratio()
@@ -2054,6 +2053,7 @@ class StrategyManager:
         )
 
         if enemy_power_ratio < 1.5 or not approaching:
+            self._clear_all_in_state()
             return False
 
         self.current_mode = StrategyMode.ALL_IN
@@ -2670,6 +2670,7 @@ class StrategyManager:
         """Emergency Mode 종료"""
         self.emergency_active = False
         self.current_mode = StrategyMode.NORMAL
+        self.emergency_start_time = 0.0
 
         self.logger.info("Emergency mode ended - Returning to normal operations")
 

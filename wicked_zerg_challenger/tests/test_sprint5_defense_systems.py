@@ -236,6 +236,32 @@ class TestAllInDetection(unittest.TestCase):
         self.assertTrue(blackboard.get("queen_defense_mode"))
         self.assertFalse(manager.should_produce_drone())
 
+    def test_all_in_halt_clears_once_enemy_army_is_gone(self):
+        blackboard = Blackboard()
+        bot = FakeBot(blackboard)
+        bot.time = 360.0
+        bot.units = [
+            FakeUnit(i, "ZERGLING", Point(12, 12), health=35) for i in range(4)
+        ]
+        bot.enemy_units = [
+            FakeUnit(100 + i, "MARINE", Point(35, 35), health=45) for i in range(12)
+        ]
+        manager = StrategyManager(bot, blackboard)
+        manager.detected_enemy_race = EnemyRace.TERRAN
+
+        manager._detect_all_in_pressure()
+        self.assertTrue(blackboard.get("enemy_all_in"))
+        self.assertEqual(blackboard.get("drone_production_policy"), "HALT")
+
+        # Enemy all-in army is defeated: no more approaching force, no expansion.
+        bot.enemy_units = []
+        manager._detect_all_in_pressure()
+
+        self.assertFalse(blackboard.get("enemy_all_in"))
+        self.assertFalse(blackboard.get("enemy_all_in_detected"))
+        self.assertEqual(blackboard.get("drone_production_policy"), "NORMAL")
+        self.assertNotEqual(manager.current_mode.value, "all_in")
+
     def test_intel_manager_publishes_all_in_flags(self):
         blackboard = Blackboard()
         bot = FakeBot(blackboard)
