@@ -33,11 +33,14 @@ else:
         from sc2.ids.unit_typeid import UnitTypeId
         from sc2.position import Point2
         from sc2.unit import Unit
+
+        from utils.position_utils import get_center_position
     except ImportError:
         Unit = None
         Point2 = None
         UnitTypeId = None
         AbilityId = None
+        get_center_position = None
 
 
 class SpellUnitManager:
@@ -427,15 +430,7 @@ class SpellUnitManager:
             return None
 
         # Find center of enemy cluster
-        if len(enemies) == 1:
-            return enemies[0].position
-
-        # Calculate centroid
-        total_x = sum(e.position.x for e in enemies)
-        total_y = sum(e.position.y for e in enemies)
-        centroid = Point2((total_x / len(enemies), total_y / len(enemies)))
-
-        return centroid
+        return get_center_position(enemies)
 
     def _find_consume_target(self, viper: Unit) -> Optional[Unit]:
         """Find a safe structure to consume for Viper energy."""

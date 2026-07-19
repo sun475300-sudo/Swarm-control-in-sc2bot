@@ -15,6 +15,8 @@ from utils.logger import get_logger
 try:
     from sc2.ids.unit_typeid import UnitTypeId
     from sc2.position import Point2
+
+    from utils.position_utils import get_center_position
 except ImportError:
 
     class UnitTypeId:
@@ -26,6 +28,7 @@ except ImportError:
         MUTALISK = "MUTALISK"
 
     Point2 = tuple
+    get_center_position = None
 
 
 class OptimumDefenseSquad:
@@ -142,10 +145,7 @@ class OptimumDefenseSquad:
                 continue
 
             # 위협 위치 (적 유닛들의 평균 위치)
-            count = len(combined_threats)
-            avg_x = sum(e.position.x for e in combined_threats) / count
-            avg_y = sum(e.position.y for e in combined_threats) / count
-            threat_pos = Point2((avg_x, avg_y))
+            threat_pos = get_center_position(combined_threats)
 
             # 방어 병력 계산
             defense_plan = await self.calculate_defense_force(

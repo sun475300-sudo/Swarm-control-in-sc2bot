@@ -590,13 +590,10 @@ class QueenManager:
                 threatened_base = th
                 nearby_enemies_list = nearby_enemies
                 # Get center of enemy forces
-                x_sum = sum(e.position.x for e in nearby_enemies)
-                y_sum = sum(e.position.y for e in nearby_enemies)
-                count = len(nearby_enemies)
                 try:
-                    from sc2.position import Point2
+                    from utils.position_utils import get_center_position
 
-                    threat_position = Point2((x_sum / count, y_sum / count))
+                    threat_position = get_center_position(nearby_enemies)
                 except ImportError:
                     threat_position = nearby_enemies[0].position
                 break
