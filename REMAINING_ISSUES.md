@@ -4,7 +4,7 @@
 
 통합 문제 해결 후 발견된 추가 개선 사항들입니다.
 
-**Last refreshed:** 2026-04-27 (Issue #1, #2 → Resolved; Issue #6 partially resolved via Batch 3)
+**Last refreshed:** 2026-07-19 (Issue #3, #4 → confirmed already resolved in source, doc was stale; Issue #1, #2 → Resolved; Issue #6 partially resolved via Batch 3)
 
 ---
 
@@ -67,9 +67,27 @@
 
 ---
 
-## 🟡 MEDIUM Priority Issues (still open)
+## ✅ Resolved (재확인: 2026-07-19)
 
-### Issue #3: Transfusion 우선순위 개선 필요
+### ✅ Issue #3: Transfusion 우선순위 — 구현 완료 확인
+
+`wicked_zerg_challenger/economy/queen_transfusion_manager.py`에 `HEAL_PRIORITY`
+(Ultralisk > Broodlord > Ravager > Roach > Hydralisk > Zergling)와 `CANNOT_HEAL`
+(Baneling/Broodling/Locust 등 치료 불가 유닛 제외) 우선순위 타겟팅이 이미 구현되어
+있음을 소스에서 직접 확인 (`grep HEAL_PRIORITY wicked_zerg_challenger/economy/queen_transfusion_manager.py`).
+아래 이슈 설명은 이 기능이 없던 시점의 스냅샷이며, 코드는 이미 반영됨.
+
+### ✅ Issue #4: Resource Reservation Race Condition — 구현 완료 확인
+
+`wicked_zerg_challenger/core/resource_manager.py`의 `ResourceManager`가 이미
+`asyncio.Lock`(`self._lock`) 기반 `try_reserve()`/`release()`로 원자적 예약을
+수행함을 소스에서 직접 확인. 아래 이슈 설명도 마찬가지로 stale 스냅샷.
+
+---
+
+## 🟡 MEDIUM Priority Issues (stale — kept for historical reference only, see ✅ Resolved above)
+
+### Issue #3: Transfusion 우선순위 개선 필요 (해결됨 — 위 참조)
 
 **위치**: `queen_manager.py` 또는 `spell_unit_manager.py`
 
@@ -363,12 +381,10 @@ if iteration % SECOND == 0:
 
 | 우선순위 | 이슈 | 영향도 | 난이도 |
 |---------|------|--------|--------|
-| 🟡 MEDIUM | #3 Transfusion 우선순위 | 중간 | 중간 |
-| 🟡 MEDIUM | #4 Resource Race Condition | 낮음 | 중간 |
-| 🟢 LOW | #5 코드 중복 제거 | 낮음 | 쉬움 |
-| 🟢 LOW | #6 매직 넘버 | 낮음 | 쉬움 |
+| 🟢 LOW | #5 코드 중복 제거 (utils/position_utils.py는 존재하나 0곳에서 사용 중 — 실질적으로 여전히 open) | 낮음 | 쉬움 |
+| 🟢 LOW | #6 매직 넘버 (일부는 GameConstants로 이전됨, 잔여분 있음) | 낮음 | 쉬움 |
 
-(Issue #1, #2 → ✅ Resolved 섹션 참조)
+(Issue #1, #2 → ✅ Resolved 섹션 참조; Issue #3, #4 → ✅ Resolved 섹션 참조, 2026-07-19 재확인)
 
 ---
 

@@ -110,6 +110,7 @@ Run `E:\GitHub\Swarm-control-in-sc2bot\scripts\commit_nightly_2026-05-03.bat`:
 
 ## Run history
 
+- **2026-07-19 (session 2)** — Verified `main` health directly (not from PR claims): `tests/` 502 passed/14 skipped, `wicked_zerg_challenger/tests/` 661 passed, 0 failures. Confirmed via GitHub Actions API that `sc2bot-ci.yml` on the current `main` HEAD is green except `Deploy Rolling Update`, which unconditionally fails at "Configure kubectl" because `secrets.KUBE_CONFIG` was never set (no cluster). Fixed: added a `Check for cluster credentials` step that skips the kubectl/helm/rollout steps (instead of failing the job) when the secret is absent, so CI reports true status instead of a permanently red deploy stage. Also corrected `REMAINING_ISSUES.md`: Issues #3 (transfusion priority) and #4 (resource-reservation locking) were still marked "open" but are already implemented on `main` (verified by grep, not just PR text) — re-flagged as resolved so future sessions don't re-implement them. **Repo-hygiene note carried forward again:** ~545 open PRs, only 2 ever merged (#218, #533); did not open another micro-fix PR to avoid adding to the pile — see PR body for the full backlog breakdown by root-cause theme.
 - **2026-04-25** — Initial nightly plan.
 - **2026-04-26** — P0.2 (empty-logger CI guard) landed.
 - **2026-04-27** — black + isort + flake8 all clean.
