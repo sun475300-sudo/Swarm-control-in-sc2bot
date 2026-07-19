@@ -281,7 +281,7 @@ class CombatManager:
             )
 
         except Exception as e:
-            if iteration % 50 == 0:
+            if iteration % GameFrequencies.EVERY_50_ITERATIONS == 0:
                 # 유니코드 에러 방지 - ASCII로 변환
                 error_msg = str(e).encode("ascii", "ignore").decode("ascii")
                 self.logger.error(f"Combat manager error: {error_msg}")
@@ -467,7 +467,7 @@ class CombatManager:
                     )
 
                     # 로그 (30초마다)
-                    if iteration % 660 == 0:  # 30초
+                    if iteration % GameFrequencies.EVERY_30_SECONDS == 0:  # 30초
                         remaining = len(self.bot.complete_destruction.target_buildings)
                         self.logger.info(
                             f"[{int(game_time)}s] * COMPLETE DESTRUCTION MODE: "
@@ -518,7 +518,7 @@ class CombatManager:
                         target = targets.closest_to(hunters[0])
                         # Priority 60 (Main Attack(50)보다 높음)
                         tasks_to_execute.append(("kill_squad", target, 60))
-                        if iteration % 50 == 0:
+                        if iteration % GameFrequencies.EVERY_50_ITERATIONS == 0:
                             self.logger.info(
                                 f"[{int(game_time)}s] KILL SQUAD ACTIVATED: Hunting {target.type_id.name}"
                             )
@@ -554,7 +554,10 @@ class CombatManager:
                             ("early_harass", harass_target, priority)
                         )
 
-                        if strategy_active and iteration % 100 == 0:
+                        if (
+                            strategy_active
+                            and iteration % GameFrequencies.EVERY_100_ITERATIONS == 0
+                        ):
                             self.logger.info(
                                 f"[{int(game_time)}s] EARLY HARASS: StrategyManager triggered!"
                             )
@@ -596,7 +599,7 @@ class CombatManager:
                     if enemy_base:
                         # Priority 75
                         tasks_to_execute.append(("early_pressure", enemy_base, 75))
-                        if iteration % 50 == 0:
+                        if iteration % GameFrequencies.EVERY_50_ITERATIONS == 0:
                             self.logger.info(
                                 f"[{int(game_time)}s] [*] EARLY PRESSURE: {len(zerglings)} lings! [*]"
                             )
@@ -650,7 +653,7 @@ class CombatManager:
                     if enemy_base:
                         # Priority 75 (main_attack보다 높지만 80은 아님)
                         tasks_to_execute.append(("major_timing_attack", enemy_base, 75))
-                        if iteration % 50 == 0:
+                        if iteration % GameFrequencies.EVERY_50_ITERATIONS == 0:
                             self.logger.info(
                                 f"[{int(game_time)}s] [*][*][*] MAJOR TIMING ATTACK: {army_supply} supply army! [*][*][*]"
                             )
@@ -704,7 +707,7 @@ class CombatManager:
                             ("deny_expansion", target_expansion.position, 90)
                         )
 
-                        if iteration % 50 == 0:
+                        if iteration % GameFrequencies.EVERY_50_ITERATIONS == 0:
                             self.logger.info(
                                 f"[{int(game_time)}s] [*] EXPANSION DETECTED: Sending squad! [*]"
                             )
@@ -795,7 +798,9 @@ class CombatManager:
             and self.bot.harassment_coordinator
         ):
             locked_units = self.bot.harassment_coordinator.locked_units.copy()
-            if locked_units and iteration % 220 == 0:  # Log every 10 seconds
+            if (
+                locked_units and iteration % GameFrequencies.EVERY_10_SECONDS == 0
+            ):  # Log every 10 seconds
                 self.logger.info(
                     f"[CombatManager] {len(locked_units)} units locked in harassment missions "
                     f"(excluded from combat reassignment)"
@@ -930,7 +935,7 @@ class CombatManager:
                                 self._harass_last_enemy_workers - current_enemy_workers
                             )
                             self._harass_worker_kills += kills
-                            if iteration % 50 == 0:
+                            if iteration % GameFrequencies.EVERY_50_ITERATIONS == 0:
                                 self.logger.info(
                                     f"[EARLY HARASS] Worker kills tracked: +{kills} (total: {self._harass_worker_kills})"
                                 )
@@ -976,7 +981,7 @@ class CombatManager:
                         # Retreat low-HP / threatened units to nearest base
                         if retreat_units:
                             await self._retreat_to_closest_base(retreat_units)
-                            if iteration % 50 == 0:
+                            if iteration % GameFrequencies.EVERY_50_ITERATIONS == 0:
                                 self.logger.info(
                                     f"[EARLY HARASS] {len(retreat_units)} zerglings retreating (low HP / enemy army)"
                                 )
@@ -998,7 +1003,7 @@ class CombatManager:
                         for u in harass_zerglings:
                             available_ground.discard(u.tag)
                 except Exception as e:
-                    if iteration % 50 == 0:
+                    if iteration % GameFrequencies.EVERY_50_ITERATIONS == 0:
                         self.logger.warning(f"Early harass error: {e}")
 
             elif task_name == "early_pressure":
@@ -1035,7 +1040,10 @@ class CombatManager:
                             # Unit command failed
                             continue
                     # 로그 (30초마다)
-                    if int(game_time) % 30 == 0 and self.bot.iteration % 22 == 0:
+                    if (
+                        int(game_time) % 30 == 0
+                        and self.bot.iteration % GameFrequencies.EVERY_SECOND == 0
+                    ):
                         self.logger.warning(
                             f"[{int(game_time)}s] [*] MID-GAME TIMING ATTACK! {len(attack_units)} units attacking! [*]"
                         )
@@ -1162,13 +1170,13 @@ class CombatManager:
                         await self._offensive_attack(attack_units, iteration)
 
                     # * DEBUG: 공격 실행 로그
-                    if iteration % 50 == 0:
+                    if iteration % GameFrequencies.EVERY_50_ITERATIONS == 0:
                         self.logger.info(
                             f"[{int(game_time)}s] MAIN_ATTACK executed with {len(attack_units)} units"
                         )
 
         # Log multitasking status periodically
-        if iteration % 50 == 0 and tasks_to_execute:
+        if iteration % GameFrequencies.EVERY_50_ITERATIONS == 0 and tasks_to_execute:
             active_tasks = [t[0] for t in tasks_to_execute]
             self.logger.info(f"[{int(game_time)}s] Active tasks: {active_tasks}")
 
@@ -1244,7 +1252,10 @@ class CombatManager:
                 has_high_threat = local_high_threat
 
         # 위협이 있으면 디버그 출력
-        if highest_threat and self.bot.iteration % 50 == 0:
+        if (
+            highest_threat
+            and self.bot.iteration % GameFrequencies.EVERY_50_ITERATIONS == 0
+        ):
             if has_high_threat:
                 threat_level = "CRITICAL"
             elif highest_threat_count >= 6:
@@ -1487,7 +1498,10 @@ class CombatManager:
                 await self._basic_attack(units, enemy_units)
 
         except Exception as e:
-            if hasattr(self.bot, "iteration") and self.bot.iteration % 50 == 0:
+            if (
+                hasattr(self.bot, "iteration")
+                and self.bot.iteration % GameFrequencies.EVERY_50_ITERATIONS == 0
+            ):
                 self.logger.warning(f"Combat execution error: {e}")
             # 에러 발생 시 기본 공격
             await self._basic_attack(units, enemy_units)
@@ -1698,7 +1712,10 @@ class CombatManager:
                                 self.logger.debug(f"Retreat move failed: {e}")
 
         except Exception as e:
-            if hasattr(self.bot, "iteration") and self.bot.iteration % 50 == 0:
+            if (
+                hasattr(self.bot, "iteration")
+                and self.bot.iteration % GameFrequencies.EVERY_50_ITERATIONS == 0
+            ):
                 self.logger.warning(f"Formation error: {e}")
 
     def _find_weakest_enemy(self, enemy_units):
@@ -1941,7 +1958,7 @@ class CombatManager:
                 # 적의 60% 미만이면 공격하지 않음 (재집결)
                 if self._rally_point:
                     await self._gather_at_rally_point(army_units, iteration)
-                if iteration % 220 == 0:
+                if iteration % GameFrequencies.EVERY_10_SECONDS == 0:
                     self.logger.info(
                         f"[{int(game_time)}s] HOLD: army {army_supply:.0f} < enemy {visible_enemy_supply:.0f}*0.6"
                     )
@@ -1968,10 +1985,10 @@ class CombatManager:
                     await self._gather_at_rally_point(army_units, iteration)
                     return
 
-            if iteration % 10 != 0:
+            if iteration % GameFrequencies.EVERY_10_ITERATIONS != 0:
                 return
 
-            if iteration % 100 == 0:
+            if iteration % GameFrequencies.EVERY_100_ITERATIONS == 0:
                 self.logger.info(
                     f"[{int(game_time)}s] OFFENSIVE ATTACK: {len(army_units)} units, {army_supply} supply, {len(attack_targets)} targets"
                 )
@@ -2043,13 +2060,13 @@ class CombatManager:
                     except (AttributeError, TypeError):
                         continue
 
-                if iteration % 50 == 0:
+                if iteration % GameFrequencies.EVERY_50_ITERATIONS == 0:
                     self.logger.info(
                         f"[{int(self.bot.time)}s] Attacking with {army_supply} supply -> target"
                     )
 
         except Exception as e:
-            if iteration % 50 == 0:
+            if iteration % GameFrequencies.EVERY_50_ITERATIONS == 0:
                 self.logger.warning(f"Offensive attack error: {e}")
 
     def _execute_roach_hydra_formation(
@@ -2315,7 +2332,7 @@ class CombatManager:
                     closest_rock = min(
                         close_rocks, key=lambda r: r.distance_to(our_base)
                     )
-                    if self.bot.iteration % 50 == 0:
+                    if self.bot.iteration % GameFrequencies.EVERY_50_ITERATIONS == 0:
                         self.logger.info(
                             f"[{int(game_time)}s] Targeting destructible rock for expansion"
                         )
@@ -2488,7 +2505,7 @@ class CombatManager:
             self._search_index = (self._search_index + 1) % len(search_locations)
             self._last_search_time = game_time
 
-            if self.bot.iteration % 100 == 0:
+            if self.bot.iteration % GameFrequencies.EVERY_100_ITERATIONS == 0:
                 self.logger.info(
                     f"[SEARCH] [{int(game_time)}s] Searching map location {self._search_index + 1}/{len(search_locations)}"
                 )
@@ -2810,7 +2827,7 @@ class CombatManager:
 
         if self._air_harass_target:
             await self._execute_harass(mutalisks, enemy_units)
-            if iteration % 100 == 0:
+            if iteration % GameFrequencies.EVERY_100_ITERATIONS == 0:
                 self.logger.info(
                     f"[AIR HARASS] [{int(game_time)}s] Mutalisks harassing enemy base"
                 )
@@ -2953,7 +2970,7 @@ class CombatManager:
         # Retreat damaged units to nearest base
         if retreat_units:
             await self._retreat_to_closest_base(retreat_units)
-            if iteration % 50 == 0:
+            if iteration % GameFrequencies.EVERY_50_ITERATIONS == 0:
                 self.logger.info(
                     f"[EARLY HARASS] [{int(game_time)}s] {len(retreat_units)} zerglings retreating (low HP)"
                 )
@@ -2980,7 +2997,7 @@ class CombatManager:
         ):
             kills = self._harass_last_enemy_workers - current_enemy_workers
             self._harass_worker_kills += kills
-            if iteration % 50 == 0:
+            if iteration % GameFrequencies.EVERY_50_ITERATIONS == 0:
                 self.logger.info(
                     f"[EARLY HARASS] Worker kills: +{kills} (total: {self._harass_worker_kills})"
                 )
@@ -3012,7 +3029,7 @@ class CombatManager:
             # Mark all as retreating
             for u in fight_units:
                 self._harass_retreating_tags.add(u.tag)
-            if iteration % 50 == 0:
+            if iteration % GameFrequencies.EVERY_50_ITERATIONS == 0:
                 self.logger.info(
                     f"[EARLY HARASS] [{int(game_time)}s] Zerglings retreating from {len(enemy_combat_units)} defenders"
                 )
@@ -3034,7 +3051,7 @@ class CombatManager:
                     self.bot.do(ling.attack(closest_worker))
                 except (AttributeError, TypeError):
                     continue
-            if iteration % 50 == 0:
+            if iteration % GameFrequencies.EVERY_50_ITERATIONS == 0:
                 self.logger.info(
                     f"[EARLY HARASS] [{int(game_time)}s] {len(fight_units)} Zerglings harassing workers (kills: {self._harass_worker_kills})"
                 )
@@ -3132,7 +3149,7 @@ class CombatManager:
 
             if ratio >= 2.0:
                 # * 긴급 후퇴: 본진으로 (100%+ 열세)
-                if iteration % 220 == 0:
+                if iteration % GameFrequencies.EVERY_10_SECONDS == 0:
                     self.logger.info(
                         f"[RETREAT-EMERGENCY] [{int(game_time)}s] "
                         f"Our: {our_supply:.0f}, Enemy: {enemy_supply:.0f} (ratio: {ratio:.1f}x)"
@@ -3140,7 +3157,7 @@ class CombatManager:
                 await self._retreat_to_base(engaged_units)
             elif ratio >= 1.5:
                 # * 후퇴: 가장 가까운 기지로 (50%+ 열세)
-                if iteration % 220 == 0:
+                if iteration % GameFrequencies.EVERY_10_SECONDS == 0:
                     self.logger.info(
                         f"[RETREAT] [{int(game_time)}s] "
                         f"Our: {our_supply:.0f}, Enemy: {enemy_supply:.0f} (ratio: {ratio:.1f}x)"
@@ -3148,7 +3165,7 @@ class CombatManager:
                 await self._retreat_to_closest_base(engaged_units)
             elif ratio >= 1.3:
                 # * Phase 15: 점진적 후퇴 - 랠리 포인트로 재집결 (30%+ 열세)
-                if iteration % 220 == 0:
+                if iteration % GameFrequencies.EVERY_10_SECONDS == 0:
                     self.logger.info(
                         f"[REGROUP] [{int(game_time)}s] "
                         f"Our: {our_supply:.0f}, Enemy: {enemy_supply:.0f} (ratio: {ratio:.1f}x)"
@@ -3831,7 +3848,7 @@ class CombatManager:
                     )
 
         except Exception as e:
-            if iteration % 50 == 0:
+            if iteration % GameFrequencies.EVERY_50_ITERATIONS == 0:
                 self.logger.warning(f"[WARNING] Baneling burrow error: {e}")
 
     # ============================================================
@@ -3910,7 +3927,10 @@ class CombatManager:
 
         # 위협이 없으면 방어 모드 해제
         if max_threat_score == 0:
-            if self._base_defense_active and iteration % 100 == 0:
+            if (
+                self._base_defense_active
+                and iteration % GameFrequencies.EVERY_100_ITERATIONS == 0
+            ):
                 self.logger.info(
                     f"[BASE DEFENSE] [{int(game_time)}s] Threat cleared - returning to normal"
                 )
@@ -3925,7 +3945,7 @@ class CombatManager:
         enemy_count = len(threat_enemies)
 
         # 로그 출력 (5초마다)
-        if iteration % 110 == 0:
+        if iteration % GameFrequencies.EVERY_5_SECONDS == 0:
             self.logger.info(
                 f"[BASE DEFENSE] [{int(game_time)}s] [*] MANDATORY DEFENSE [*] "
                 f"Enemies: {enemy_count}, Threat score: {max_threat_score}"
@@ -4062,7 +4082,7 @@ class CombatManager:
                         # Unit command failed
                         continue
 
-                if iteration % 220 == 0:
+                if iteration % GameFrequencies.EVERY_10_SECONDS == 0:
                     self.logger.warning(
                         f"[LAST STAND] [{int(game_time)}s] {len(army_units)} units - FOCUS FIRE on {getattr(main_target.type_id, 'name', 'enemy')}"
                     )
@@ -4114,7 +4134,7 @@ class CombatManager:
                 continue
 
         # 로그 (10초마다)
-        if iteration % 220 == 0:
+        if iteration % GameFrequencies.EVERY_10_SECONDS == 0:
             defeat_msg = f" [위기도: {defeat_level}]" if defeat_level >= 2 else ""
             self.logger.info(
                 f"[BASE DEFENSE] [{int(game_time)}s] {len(army_units)} units defending{defeat_msg}"
@@ -4359,14 +4379,14 @@ class CombatManager:
         # * 패배 직전: 모든 일꾼 방어 참여 *
         if last_stand_mode or defeat_level >= 3:  # IMMINENT
             defense_workers = nearby_workers  # 모든 일꾼
-            if iteration % 220 == 0:
+            if iteration % GameFrequencies.EVERY_10_SECONDS == 0:
                 self.logger.warning(
                     f"[WORKER DEFENSE] [*] 패배 직전! 모든 일꾼({len(defense_workers)}) 방어 참여! [*]"
                 )
         # * 위기 상황: 일꾼 12명 방어 *
         elif defeat_level >= 2:  # CRITICAL
             defense_workers = nearby_workers[:12]
-            if iteration % 220 == 0:
+            if iteration % GameFrequencies.EVERY_10_SECONDS == 0:
                 self.logger.warning(
                     f"[WORKER DEFENSE] 위기 상황 - {len(defense_workers)} 일꾼 방어"
                 )
@@ -4429,7 +4449,7 @@ class CombatManager:
                 # Worker return to gather failed
                 continue
 
-        if iteration % 220 == 0:
+        if iteration % GameFrequencies.EVERY_10_SECONDS == 0:
             self.logger.info(
                 f"[BASE DEFENSE] [{int(game_time)}s] [*] {len(defense_workers)} WORKERS DEFENDING [*]"
             )
@@ -4498,7 +4518,7 @@ class CombatManager:
             await self._execute_victory_push(iteration)
 
         # 로그 (30초마다)
-        if iteration % 660 == 0:
+        if iteration % GameFrequencies.EVERY_30_SECONDS == 0:
             expansion_count = len(self._known_enemy_expansions)
             status = "ACTIVE" if self._victory_push_active else "STANDBY"
             self.logger.info(
@@ -4539,7 +4559,7 @@ class CombatManager:
                 continue
 
         # 로그 (10초마다)
-        if iteration % 220 == 0:
+        if iteration % GameFrequencies.EVERY_10_SECONDS == 0:
             target_str = (
                 f"({attack_target.x:.1f}, {attack_target.y:.1f})"
                 if hasattr(attack_target, "x")
@@ -4749,7 +4769,7 @@ class CombatManager:
                 continue
 
         # 로그 (10초마다)
-        if iteration % 220 == 0:
+        if iteration % GameFrequencies.EVERY_10_SECONDS == 0:
             current_time = getattr(self.bot, "time", 0)
             self.logger.info(
                 f"[EXPANSION DEFENSE] [{int(current_time)}s] {len(defense_force)} units defending expansion (enemies: {len(nearby_enemies)})"
@@ -4868,7 +4888,7 @@ class CombatManager:
                     safe_pos = self.bot.townhalls.closest_to(unit).position
                     self.bot.do(unit.move(safe_pos))
 
-                    if iteration % 100 == 0:
+                    if iteration % GameFrequencies.EVERY_100_ITERATIONS == 0:
                         self.logger.info(
                             f"[{int(game_time)}s] Harassment unit retreating (HP: {unit.health}/{unit.health_max})"
                         )
@@ -4980,7 +5000,7 @@ class CombatManager:
                 # Return to harassment
                 self.bot.do(unit.attack(target_position))
 
-                if iteration % 100 == 0:
+                if iteration % GameFrequencies.EVERY_100_ITERATIONS == 0:
                     self.logger.info(
                         f"[{int(game_time)}s] Harassment unit returning to combat (HP: {unit.health}/{unit.health_max})"
                     )

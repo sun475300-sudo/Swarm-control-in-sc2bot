@@ -41,6 +41,12 @@ class GameFrequencies:
     EVERY_3_MINUTES = 3960  # ~3분마다
     EVERY_5_MINUTES = 6600  # ~5분마다
 
+    # Raw iteration-count throttles (not tied to a round real-time second mark,
+    # but reused across many manager files as a fixed check interval)
+    EVERY_10_ITERATIONS = 10
+    EVERY_50_ITERATIONS = 50
+    EVERY_100_ITERATIONS = 100
+
 
 # ============================================================================
 # ECONOMIC CONSTANTS
