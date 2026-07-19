@@ -117,3 +117,22 @@ Run `E:\GitHub\Swarm-control-in-sc2bot\scripts\commit_nightly_2026-05-03.bat`:
 - **2026-05-01** — P1.1 scout cadence, P1.2 harassment, P1.3 expansion timing, P1.5 doc history. Commit blocked by index.lock.
 - **2026-05-02** — P0 scout import mismatch fixed. P1.4 deprecation shim. P2.1 FSM tests 23/23 pass.
 - **2026-05-03** — **Test suite cleared:** 90 failures → 0. Fixed pytest-asyncio, torch stubs (qmix/mappo), stale __init__ exports (mappo/comm_learning), gas threshold test, crypto skipif guards. Final: 398 pass / 20 skip / 0 fail.
+- **2026-07-19 (this run)** — Full audit with a *real* `sc2`/`burnysc2` install (many prior sessions
+  ran without it — `pip install burnysc2` fails to build the `mpyq` wheel under modern
+  setuptools; pinning `pip install "setuptools<60"` first fixes it). With `sc2` actually
+  importable: `pytest tests/` → 395 passed/33 skipped (the 7 `cryptography`/`pyo3` failures from
+  missing `cffi` clear once `pip install cffi` is run first); `pytest wicked_zerg_challenger/tests/`
+  → **661 passed, 0 failed**. Cross-checked `REMAINING_ISSUES.md` Issues #3/#4 directly against
+  source: both already implemented on `main` (`economy/queen_transfusion_manager.py`,
+  `core/resource_manager.py`) — doc was stale, corrected in this commit. Added
+  `fail-fast: false` to `sc2bot-ci.yml`'s lint matrix (was cancelling the other two Python
+  versions' lint runs on a single failure — `MASTER_TODO_SC2.md` S3 flagged this back in April,
+  never landed). **Did not open a new fix PR for anything else**: every other angle checked
+  (Issue #5 position-utils dedup, Task 7.3 magic numbers, the `sc2` import-guard collection
+  crash, the vacuous-async-test bug in `test_production_resilience.py`/`test_opponent_modeling.py`,
+  RLAgent.save_model's `.tmp` naming bug) is already covered by an **open, unmerged** draft PR
+  from a prior automated session (see PR backlog note below) — opening another would just add
+  a 12th near-duplicate. **The dominant blocker is no longer missing fixes, it's that ~540 open
+  draft PRs (per GitHub, most from this exact same session type) sit unreviewed with only ~9-10
+  ever merged.** Flagged to the repo owner directly this run; recommend a triage/merge decision
+  before scheduling further automated fix passes.
