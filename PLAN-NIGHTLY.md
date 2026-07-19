@@ -2,9 +2,71 @@
 
 > Owner: 선우 (sun475300@gmail.com)
 > Maintainer: nightly automation
-> Last refreshed: 2026-07-18
+> Last refreshed: 2026-07-19
 
 ---
+
+## 🔴 P0 finding (2026-07-19): the CI fix didn't solve the merge pile-up — it needs a human triage decision, not another automated fix PR
+
+PR #533 (merged 2026-07-18) fixed the actual root cause of red CI
+(repo-wide black/isort check), but the PR count kept growing anyway:
+**510 open PRs as of today, only 9 ever merged in the repo's entire
+history** (#42, #44, #49, #218, #533 + 4 older). At least 9 sessions
+in a row (#543–#553, all opened 2026-07-19 alone) independently
+rediscovered this same pile-up, flagged it in their own PR description,
+and then each added yet another PR anyway instead of stopping. This
+session broke that cycle: no new bug-fix PR was opened, and a
+full read-only triage of all 510 open PRs was run instead. Full
+methodology and exhaustive PR-number lists are in the PR that carries
+this doc update; summary here:
+
+**Cluster breakdown** (root cause → how many open PRs duplicate it):
+
+| Cluster | Count | Status |
+|---|---|---|
+| `asyncio.get_event_loop()` deprecation in `test_combat_phase_fsm.py` | 198 | **Already fixed on `main`** — all stale, safe to close |
+| Repo-wide black/isort CI-lint-gate failure | 63 | **Fixed by merged #533** — all but #543 stale |
+| Generic "iterative test/improve cycle" titles (Korean + English), no specific bug | 88 | Can't verify individually; mostly Apr–Jun, likely stale |
+| `scripts/__init__.py` missing → namespace-package collision | 4 | **Still broken on `main`** (verified directly) |
+| `RLAgent.save_model()` `.tmp`/`.tmp.npz` atomic-rename no-op | 4 | **Still broken on `main`** (verified directly) |
+| Silently-skipped async tests (`TestCase` + unwaited `async def test_*`) | 18 | Real bug class; #532/#552 most complete |
+| Lurker burrow-to-attack dead code | 5 | Real; #531 and #537 touch the same function, will conflict |
+| Centroid/position-calc dedup refactor | 5 | Refactor; #536 most complete |
+| Pure "PR pile-up" meta-commentary, no code diff | 7-8 | #548 is the exception (adds real `CLAUDE.md`) |
+
+**Recommended to merge** (ranked; each fixes a still-live bug or adds
+real value, verified independently — not just by trusting the PR's own
+description): **#544, #550, #551, #532, #549, #545, #531, #536, #546,
+#543, #547, #548.**
+
+**Recommended to bulk-close as stale/duplicate**: the full
+asyncio-cluster and black/isort-cluster PR-number lists (~260 PRs),
+plus #534/#535/#553 (scripts/ dupes of #544), #304/#524/#535
+(save_model dupes of #544), #552 (async-test dupe of #532),
+#328/#430/#443 (lurker dupes of #531), #72/#326/#379/#471 (centroid
+dupes of #536), and the 12 oldest open PRs (#15/#16/#18-21/#28/#31/
+#45-48, stale since April with zero follow-up). Exhaustive numbers are
+in this session's PR description, not duplicated here to keep this
+doc lean.
+
+**Other things worth the owner's attention:**
+- PR volume was ~1-4/day through April, ~7-15/day in May, then
+  **15-23 PRs/day every day since 2026-07-02** — confirms several
+  prior sessions' suspicion that the automation trigger is firing much
+  more often than the requested "daily" cadence. Worth checking the
+  trigger/schedule config directly.
+- **~98-99 open Dependabot alerts** on `main` (2 critical, 37 high, 46
+  moderate, ~13-14 low), reported independently by #533/#541/#542.
+  No open PR in the backlog touches these — needs a separate pass.
+- CI is otherwise green on `main` post-#533 (lint/test/build/registry
+  jobs); only `Deploy Rolling Update` is red (no `KUBE_CONFIG` secret,
+  fixed by #546).
+
+**Action needed from the repo owner** — this cannot be resolved by
+another automated fix-and-push cycle: (1) decide on the merge/close
+list above, (2) check the trigger schedule config for the actual
+firing frequency, (3) decide whether to schedule a Dependabot triage
+pass separately.
 
 ## 🔴 P0 finding (2026-07-18): CI itself was blocking every merge
 
@@ -117,3 +179,4 @@ Run `E:\GitHub\Swarm-control-in-sc2bot\scripts\commit_nightly_2026-05-03.bat`:
 - **2026-05-01** — P1.1 scout cadence, P1.2 harassment, P1.3 expansion timing, P1.5 doc history. Commit blocked by index.lock.
 - **2026-05-02** — P0 scout import mismatch fixed. P1.4 deprecation shim. P2.1 FSM tests 23/23 pass.
 - **2026-05-03** — **Test suite cleared:** 90 failures → 0. Fixed pytest-asyncio, torch stubs (qmix/mappo), stale __init__ exports (mappo/comm_learning), gas threshold test, crypto skipif guards. Final: 398 pass / 20 skip / 0 fail.
+- **2026-07-19** — **Deliberately opened no new fix PR.** Full read-only triage of all 510 open PRs instead: confirmed test health matches today's other sessions (0 failures), confirmed `main` is otherwise healthy, and produced the cluster/merge/close breakdown above. Root cause of the pile-up is now a human review bottleneck + an overly-frequent trigger, not missing fixes — see P0 finding above.
