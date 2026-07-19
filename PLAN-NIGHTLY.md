@@ -2,9 +2,49 @@
 
 > Owner: 선우 (sun475300@gmail.com)
 > Maintainer: nightly automation
-> Last refreshed: 2026-07-18
+> Last refreshed: 2026-07-19
 
 ---
+
+## 🔴 P0 finding (2026-07-19, still open): the PR backlog is now the actual bottleneck
+
+`main` is healthy — `tests/` 502 passed/14 skipped, `wicked_zerg_challenger/tests/`
+664 passed (661 + 3 new this run), combined full-suite run (both dirs
+together) 1166 passed/14 skipped/0 failed. Nearly all of `ROADMAP.md`
+Sprints 1–8 are already implemented per multiple independent audits.
+
+But the repo currently has **500 open pull requests and only ~9-10 have
+ever merged** (last real merge: PR #533, 2026-07-18, the repo-wide
+black/isort fix). A large majority of the open PRs are near-duplicates:
+dozens independently re-fix the exact same `asyncio.get_event_loop()`
+FSM test crash, the `RLAgent.save_model()` atomic-rename bug, the
+`scripts/` namespace-package collision, etc., because every automated
+session branches fresh from `main`, nothing ever merges, so the next
+session "rediscovers" the same gap and opens another PR. This is not a
+new observation — PRs #105, #311, #466, #482, #511, #513, #514, #535,
+#538, #539, #542, #543 all flagged versions of the same thing going
+back to 2026-05-07.
+
+**This session's contribution:** rather than add an 11th duplicate of
+an already-open fix, audited for a genuinely *unclaimed* bug and found
+one — `RLAgent.save_model()`'s temp-file naming bug (`np.savez()`
+auto-appends `.npz` to a tmp path that doesn't already end with it, so
+`tmp_path.exists()` always reads `False` and the atomic rename silently
+never runs — the function still logs "saved" and returns `True`). Fixed
++ added 3 regression tests + added the missing `scripts/__init__.py`
+(fixes full-suite collection when `tests/` and
+`wicked_zerg_challenger/tests/` run together in one pytest invocation).
+
+**Action still needed from the repo owner (repeated ask from many prior
+sessions, not resolved yet):** the highest-leverage next step is
+triaging the 500-PR backlog — merge one canonical fix per root-cause
+bug and bulk-close the rest as superseded — rather than commissioning
+more automated fix passes. This automation will keep finding smaller
+and smaller unclaimed gaps each run, but it cannot safely bulk-close or
+merge PRs itself without explicit owner sign-off (repo policy per
+`MASTER_TODO_SC2.md`, and out of scope for what this session was asked
+to do). Flagging again here since it's the #1 blocker on real progress
+landing on `main`.
 
 ## 🔴 P0 finding (2026-07-18): CI itself was blocking every merge
 
@@ -117,3 +157,4 @@ Run `E:\GitHub\Swarm-control-in-sc2bot\scripts\commit_nightly_2026-05-03.bat`:
 - **2026-05-01** — P1.1 scout cadence, P1.2 harassment, P1.3 expansion timing, P1.5 doc history. Commit blocked by index.lock.
 - **2026-05-02** — P0 scout import mismatch fixed. P1.4 deprecation shim. P2.1 FSM tests 23/23 pass.
 - **2026-05-03** — **Test suite cleared:** 90 failures → 0. Fixed pytest-asyncio, torch stubs (qmix/mappo), stale __init__ exports (mappo/comm_learning), gas threshold test, crypto skipif guards. Final: 398 pass / 20 skip / 0 fail.
+- **2026-07-19** — Full audit: `main` healthy (tests/ 502 pass/14 skip, wicked_zerg_challenger/tests/ 664 pass, combined full-suite 1166 pass/14 skip/0 fail). Fixed `RLAgent.save_model()` atomic-rename silent no-op (unclaimed by any open PR at audit time) + 3 regression tests + `scripts/__init__.py` (full-suite collection fix). **Reconfirmed P0: 500 open PRs, ~9-10 ever merged — backlog triage is the blocking action, not more fixes.**
