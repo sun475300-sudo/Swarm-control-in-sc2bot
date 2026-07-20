@@ -131,6 +131,7 @@ class IntelManager:
         self._under_attack = False
         self._attack_position = None
         self._last_attack_time = 0.0
+        self._last_high_threat_time = 0.0
         self._threat_level = "none"  # none, light, medium, heavy, critical
         self._high_threat_units_detected = False
         self.enemy_all_in_detected = False
@@ -459,6 +460,7 @@ class IntelManager:
                 if enemy_type in self._high_threat_types:
                     self._high_threat_units_detected = True
                     self._threat_level = "critical"
+                    self._last_high_threat_time = current_time
                     found_critical = True
                 elif not found_critical and self._threat_level not in [
                     "critical",
@@ -480,6 +482,15 @@ class IntelManager:
             self._under_attack = False
             self._attack_position = None
             self._threat_level = "none"
+            self._high_threat_units_detected = False
+        elif (
+            self._threat_level == "critical"
+            and current_time - self._last_high_threat_time > 10
+        ):
+            # The high-threat unit itself is stale even though a lesser enemy
+            # unit is still lingering near base and keeps _last_attack_time
+            # fresh -- don't let that pin threat_level at "critical" forever.
+            self._threat_level = "medium"
             self._high_threat_units_detected = False
 
     def _detect_all_in_pressure(self) -> None:
