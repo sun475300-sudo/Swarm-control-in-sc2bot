@@ -221,6 +221,26 @@ class TestSprint2ScoutingSystem(unittest.TestCase):
         self.assertTrue(self.bot.blackboard.get("overseer_morph_requested"))
         self.bot.do.assert_not_called()
 
+    def test_deploy_changeling_requires_min_energy(self):
+        overseer = FakeUnit("OVERSEER", tag=9, position=FakePoint(12, 12))
+        overseer.energy = 49
+        self.bot.units = Mock(return_value=FakeUnits([overseer]))
+
+        result = self.scouting.deploy_changeling()
+
+        self.assertFalse(result)
+        self.bot.do.assert_not_called()
+
+    def test_deploy_changeling_spawns_when_energy_available(self):
+        overseer = FakeUnit("OVERSEER", tag=9, position=FakePoint(12, 12))
+        overseer.energy = 75
+        self.bot.units = Mock(return_value=FakeUnits([overseer]))
+
+        result = self.scouting.deploy_changeling()
+
+        self.assertTrue(result)
+        self.bot.do.assert_called_once()
+
 
 class TestSprint2IntelAndAirResponse(unittest.TestCase):
     def setUp(self):

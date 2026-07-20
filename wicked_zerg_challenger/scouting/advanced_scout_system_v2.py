@@ -82,6 +82,7 @@ class AdvancedScoutingSystemV2:
             "PATROL": 0.0,  # * Phase 22: 순찰 타이머
             "WATCHTOWER": 0.0,  # * Phase 22: 감시탑 타이머
             "DROP_WATCH": 0.0,  # * Phase 22: 드롭 감시 타이머
+            "CHANGELING": 0.0,  # Sprint 2.5: 체인질링 자동 배포 타이머
         }
 
         # 정찰 유닛 상태
@@ -142,9 +143,13 @@ class AdvancedScoutingSystemV2:
         # 0. 초기화 (한 번만)
         if not self._patrol_routes:
             self._initialize_routes()
+        current_time = self.bot.time
         if self.roadmap_scouting:
             self.roadmap_scouting.record_visible_enemy_presence()
             self.roadmap_scouting.handle_cloak_detection()
+            if current_time - self.last_scout_times["CHANGELING"] >= 25.0:
+                if self.roadmap_scouting.deploy_changeling():
+                    self.last_scout_times["CHANGELING"] = current_time
         if self.zvt_scouting:
             self.zvt_scouting.update_blackboard_from_visible_structures()
         if self.zvp_scouting:
@@ -156,7 +161,6 @@ class AdvancedScoutingSystemV2:
         self._manage_active_scouts()
 
         # 2. 정찰 주기 체크 (개별 타이머 통합 관리)
-        current_time = self.bot.time
 
         # A. Overlord Scouting (15s early, 30s mid/late)
         overlord_interval = (

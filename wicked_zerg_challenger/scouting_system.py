@@ -236,9 +236,11 @@ class ScoutingSystem:
         self._reserve_overseer_morph()
         return False
 
-    def deploy_changeling(self, target=None) -> bool:
+    def deploy_changeling(self, target=None, min_energy: float = 50.0) -> bool:
         overseer = self._find_available_overseer(target or self._enemy_start())
         if not overseer:
+            return False
+        if getattr(overseer, "energy", 0) < min_energy:
             return False
         ability = getattr(AbilityId, "SPAWNCHANGELING_SPAWNCHANGELING", None)
         if not ability:
