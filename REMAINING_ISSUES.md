@@ -4,22 +4,34 @@
 
 통합 문제 해결 후 발견된 추가 개선 사항들입니다.
 
-**Last refreshed:** 2026-04-27 (Issue #1, #2 → Resolved; Issue #6 partially resolved via Batch 3)
+**Last refreshed:** 2026-07-20 (지속 점검 세션 — 전체 테스트 스위트 502 passed / 14 skipped 확인, N1~N5 재검증 완료)
 
 ---
 
-## 🆕 신규 발견 (PR #44, 2026-04-27)
+## 🆕 신규 발견 (PR #44, 2026-04-27) — 2026-07-20 재검증 결과
 
 자동/수동 점검 사이클(테스트 → 코드 검사 → 개선 → 커밋/푸시 반복)에서 새로 식별된 항목.
 
 | ID | 설명 | 우선순위 | 상태 |
 |----|------|---------|------|
-| N1 | `OpponentModeling.on_step` 중복 정의 (line 341 vs 765 — F811) | 🟠 HIGH | open — 동작 영향(상위 on_step이 미실행) 가능 |
-| N2 | `EconomyManager._prevent_resource_banking` / `_reduce_gas_workers` 재정의 (F811) | 🟡 MED | open |
-| N3 | `combat_manager._find_harass_target` 재정의 (line 2377 vs 4278) | 🟡 MED | open |
-| N4 | `production_resilience.build_terran_counters` 재정의 (1369 vs 1866) | 🟡 MED | open |
-| N5 | bare `except Exception:` 다수 (≈360+) — 이번 PR에서 12건 처리, 잔여 다수 | 🟢 LOW | partial |
-| N6 | F841 unused local variables (visuals/make_pptx 등) | 🟢 LOW | open (presentation 코드라 영향 작음) |
+| N1 | `OpponentModeling.on_step` 중복 정의 (line 341 vs 765 — F811) | 🟠 HIGH | ✅ Resolved — 코드에 `on_step` 단일 정의만 존재 확인 (line 341) |
+| N2 | `EconomyManager._prevent_resource_banking` / `_reduce_gas_workers` 재정의 (F811) | 🟡 MED | ✅ Resolved — 각 메서드 단일 정의 확인 |
+| N3 | `combat_manager._find_harass_target` 재정의 (line 2377 vs 4278) | 🟡 MED | ✅ Resolved — 단일 정의 확인 (line 4992) |
+| N4 | `production_resilience.build_terran_counters` 재정의 (1369 vs 1866) | 🟡 MED | ✅ Resolved — 단일 정의 확인 (line 1961) |
+| N5 | bare `except Exception:` 다수 (≈360+) — 이번 PR에서 12건 처리, 잔여 다수 | 🟢 LOW | ✅ Resolved — 진짜 bare `except:` 0건 확인 (전부 `except Exception:` 이상) |
+| N6 | F841 unused local variables (visuals/make_pptx 등) | 🟢 LOW | open — `wicked_zerg_challenger` 전체 flake8 F841 125건 잔존 (대부분 `except ... as e` 미사용, 저위험) |
+
+flake8 critical(E9,F63,F7,F82,F811,F821) 전체 재검사 결과 `wicked_zerg_challenger/` 내 실제 버그 0건 (peripheral 실험 모듈 6곳에 F811 지역 재정의 11건만 존재, 게임 로직과 무관).
+
+---
+
+## 🆕 2026-07-20 점검 세션 결과
+
+- 전체 pytest 스위트 실행: **502 passed, 14 skipped** (기존 세션에서 누락됐던 로컬 의존성 — `loguru`, `numpy`, `s2clientprotocol`, `cffi` 등 — 설치 후 재확인. CI(`sc2bot-ci.yml`)는 `requirements.txt` 전체 설치라 이미 정상.)
+- `black --check .` / `isort --check-only .`: 변경 전 기준 이미 clean (865 files unchanged).
+- **N7 (신규, 🟡 MED, Resolved):** `unit_factory.py` — 실제 프로덕션 경로(`strategy_manager.py`, `blackboard.py`, `core/manager_registry.py`가 참조)에서 사용되는 핵심 파일의 docstring/주석이 인코딩 손상(mojibake)으로 광범위하게 훼손되어 있었음 (ROADMAP.md Task 1.1 "인코딩 에러 완전 제거"가 이 파일엔 미적용 상태였음). 손상된 주석을 영어로 재작성하여 정리, 손상 과정에서 개행이 삭제되며 생긴 중복 대입문(`_combat_mode = False`, `pending_hatch = ...`, `in_combat = True` 각 2회 대입)도 함께 제거. 동작 변경 없음 — 502개 테스트 전부 통과, black/isort clean 확인.
+- **N8 (신규, 🟢 LOW, open):** `dynamic_resource_balancer.py` — 동일한 mojibake 손상 (119곳). 다른 모듈에서 import되지 않는 미사용 파일로 확인되어 우선순위 낮음. 다음 세션에서 정리 또는 제거 검토.
+- **N9 (신규, 🟢 LOW, open):** `run_single_game.py`, `combat/harassment_coordinator.py`, `tools/*_workflow.py` 3곳에 소규모 mojibake 잔존 (각 1~2자). 낮은 영향, 다음 세션에서 일괄 정리 권장.
 
 검증 권장: PR 분리 (N1 단독 PR 권장 — 동작 변화 가능성).
 
