@@ -786,6 +786,49 @@ class TestEconomyManager(unittest.TestCase):
         self.assertEqual(self.manager.get_target_drone_count(), 0)
         self.bot.do.assert_not_called()
 
+    def test_all_in_drone_halt_policy_stops_drone_training(self):
+        """StrategyManager's no-expand all-in response sets
+        drone_production_policy="HALT" on the blackboard (ROADMAP Task 5.3),
+        but economy_manager never read it back -- drone training continued
+        unaffected through a detected all-in. Regression guard for the fix.
+        """
+        blackboard = Mock()
+        blackboard.get = Mock(
+            side_effect=lambda key, default=None: (
+                "HALT" if key == "drone_production_policy" else default
+            )
+        )
+        self.manager.blackboard = blackboard
+        self.bot.workers.amount = 6  # far below any target -- would train otherwise
+        self.bot.do = Mock()
+        self.bot.can_afford = Mock(return_value=True)
+
+        import asyncio
+
+        asyncio.run(self.manager._train_drone_if_needed())
+
+        self.bot.do.assert_not_called()
+        blackboard.request_production.assert_not_called()
+
+    def test_all_in_drone_reduce_policy_caps_at_22(self):
+        """REDUCE policy still allows recovering to a minimal worker floor."""
+        blackboard = Mock()
+        blackboard.get = Mock(
+            side_effect=lambda key, default=None: (
+                "REDUCE" if key == "drone_production_policy" else default
+            )
+        )
+        self.manager.blackboard = blackboard
+        self.bot.workers.amount = 25  # already above the 22 floor
+        self.bot.do = Mock()
+        self.bot.can_afford = Mock(return_value=True)
+
+        import asyncio
+
+        asyncio.run(self.manager._train_drone_if_needed())
+
+        self.bot.do.assert_not_called()
+
     def test_opening_hatchery_reservation_pauses_drone_training(self):
         """At 16 drones, minerals are saved for the first natural hatchery."""
         self.bot.time = 50
