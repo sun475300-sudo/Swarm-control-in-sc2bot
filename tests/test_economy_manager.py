@@ -36,7 +36,7 @@ try:
     sys.path.insert(
         0, os.path.join(os.path.dirname(__file__), "..", "wicked_zerg_challenger")
     )
-    from economy_manager import EconomyManager
+    from economy_manager import EconomyManager, ThreatLevel
 except ImportError:
     pytest.skip("EconomyManager not available", allow_module_level=True)
 
@@ -395,6 +395,49 @@ class TestEconomyRecoveryMode:
 
         # Should be False when economy is healthy
         assert isinstance(is_recovery, bool)
+
+
+class TestEconomicRecoveryRespectsCriticalThreat:
+    """check_economic_recovery must never override a CRITICAL-threat drone shutoff."""
+
+    async def test_worker_deficit_does_not_reopen_drones_under_critical_threat(self):
+        bot = MockBot()
+        # Large worker deficit: 3 bases want 66 workers, we only have 10.
+        bot.townhalls = MockUnits(
+            [
+                MockUnit(100, "HATCHERY", (50, 50)),
+                MockUnit(101, "HATCHERY", (60, 60)),
+                MockUnit(102, "HATCHERY", (70, 70)),
+            ]
+        )
+        bot.workers = MockUnits([MockUnit(i, "DRONE", (50, 50)) for i in range(10)])
+
+        manager = EconomyManager(bot)
+        manager.threat_level = ThreatLevel.CRITICAL
+        manager._target_drone_count = 0
+
+        await manager.check_economic_recovery()
+
+        assert manager._target_drone_count == 0
+
+    async def test_worker_deficit_still_reopens_drones_without_critical_threat(self):
+        bot = MockBot()
+        bot.townhalls = MockUnits(
+            [
+                MockUnit(100, "HATCHERY", (50, 50)),
+                MockUnit(101, "HATCHERY", (60, 60)),
+                MockUnit(102, "HATCHERY", (70, 70)),
+            ]
+        )
+        bot.workers = MockUnits([MockUnit(i, "DRONE", (50, 50)) for i in range(10)])
+
+        manager = EconomyManager(bot)
+        manager.threat_level = ThreatLevel.LOW
+        manager._target_drone_count = 0
+
+        await manager.check_economic_recovery()
+
+        assert manager._target_drone_count > 0
 
 
 class TestTargetDroneCount:

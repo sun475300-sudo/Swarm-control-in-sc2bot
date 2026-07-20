@@ -3530,8 +3530,10 @@ class EconomyManager:
         # * 드론 부족 감지 *
         worker_deficit = ideal_workers - worker_count
 
-        if worker_deficit > 5:
+        if worker_deficit > 5 and self.threat_level != ThreatLevel.CRITICAL:
             # 드론 심각하게 부족 -> 드론 생산 우선 모드
+            # (CRITICAL 위협 중에는 update_economy_combat_balance()가 설정한
+            #  드론 생산 중단(0)을 절대 덮어쓰지 않는다)
             self._economy_recovery_mode = True
             self._target_drone_count = min(ideal_workers, 75)
 
