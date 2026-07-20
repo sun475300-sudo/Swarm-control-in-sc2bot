@@ -236,6 +236,38 @@ class TestAllInDetection(unittest.TestCase):
         self.assertTrue(blackboard.get("queen_defense_mode"))
         self.assertFalse(manager.should_produce_drone())
 
+    def test_all_in_flags_clear_once_threat_recedes(self):
+        """queen_defense_mode/enemy_all_in must not stay latched forever.
+
+        Regression test for a bug where _detect_all_in_pressure() set these
+        flags but nothing ever cleared them once the approaching army was
+        repelled or retreated (as opposed to the enemy expanding, which was
+        the only previously-handled clear path).
+        """
+        blackboard = Blackboard()
+        bot = FakeBot(blackboard)
+        bot.time = 360.0
+        bot.units = [
+            FakeUnit(i, "ZERGLING", Point(12, 12), health=35) for i in range(4)
+        ]
+        bot.enemy_units = [
+            FakeUnit(100 + i, "MARINE", Point(35, 35), health=45) for i in range(12)
+        ]
+        manager = StrategyManager(bot, blackboard)
+        manager.detected_enemy_race = EnemyRace.TERRAN
+
+        manager._detect_all_in_pressure()
+        self.assertTrue(blackboard.get("enemy_all_in"))
+        self.assertTrue(blackboard.get("queen_defense_mode"))
+
+        # Threat recedes: attacking force destroyed/retreated far away.
+        bot.enemy_units = [FakeUnit(200, "MARINE", Point(500, 500), health=45)]
+        manager._detect_all_in_pressure()
+
+        self.assertFalse(blackboard.get("enemy_all_in"))
+        self.assertFalse(blackboard.get("enemy_all_in_detected"))
+        self.assertFalse(blackboard.get("queen_defense_mode"))
+
     def test_intel_manager_publishes_all_in_flags(self):
         blackboard = Blackboard()
         bot = FakeBot(blackboard)

@@ -149,7 +149,7 @@ class QueenManager:
             self._assign_queen_roles(queens, hatcheries)
 
             # === DEFENSE PRIORITY: Check if base is under attack ===
-            under_attack = self._is_base_under_attack()
+            under_attack = self._should_enter_defense_mode()
 
             # * Phase 23: 인젝트는 항상 최우선 (방어 중에도) *
             if not (
@@ -536,6 +536,21 @@ class QueenManager:
             except Exception as e:
                 logger.warning(f"[QueenManager] Inject execute suppressed: {e}")
                 continue
+
+    def _should_enter_defense_mode(self) -> bool:
+        """Local proximity check OR'd with strategy_manager's queen_defense_mode.
+
+        The proximity check alone can miss a detected all-in whose army
+        hasn't yet closed to detection range; queen_defense_mode is set by
+        strategy_manager.py's all-in/emergency response and cleared once the
+        threat lapses.
+        """
+        if self._is_base_under_attack():
+            return True
+        blackboard = getattr(self.bot, "blackboard", None)
+        if blackboard is not None and hasattr(blackboard, "get"):
+            return bool(blackboard.get("queen_defense_mode", False))
+        return False
 
     def _is_base_under_attack(self) -> bool:
         """Check if any base is under attack."""

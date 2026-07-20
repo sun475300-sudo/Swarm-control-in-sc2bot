@@ -631,5 +631,85 @@ class TestCombatManager(unittest.TestCase):
         self.assertGreaterEqual(result, 0)
 
 
+class TestMutaliskMagicBoxPriority(unittest.IsolatedAsyncioTestCase):
+    """Regression tests for _mutalisk_attack's magic-box-vs-hit-and-run ordering.
+
+    execute_hit_and_run stacks mutalisks together (get_stack_point) and used
+    to run unconditionally before should_use_magic_box was even checked, so
+    the spread-formation magic box branch could never actually fire against
+    splash-damage threats. See ROADMAP.md Task 4.2.
+    """
+
+    def setUp(self):
+        self.bot = Mock()
+        self.bot.units = Mock()
+        self.bot.enemy_units = Mock()
+        self.bot.enemy_structures = []
+        self.bot.townhalls = Mock()
+        self.bot.start_location = Point2((50, 50))
+        self.bot.enemy_start_locations = [Point2((150, 150))]
+        self.bot.expansion_locations_list = [Point2((60, 60)), Point2((140, 140))]
+        self.bot.iteration = 0
+        self.bot.time = 0
+        self.bot.game_info = Mock()
+        self.bot.game_info.map_center = Point2((100, 100))
+        mock_map_size = Mock()
+        mock_map_size.width = 200
+        mock_map_size.height = 200
+        self.bot.game_info.map_size = mock_map_size
+        self.bot.unit_authority = None
+        self.bot.micro = None
+        self.bot.intel = None
+
+        self.manager = CombatManager(self.bot)
+
+        self.mutalisk = Mock()
+        self.mutalisk.type_id = UnitTypeId.MUTALISK
+        self.mutalisk.name = "Mutalisk"
+
+        micro = Mock()
+
+        async def fake_regen_dance(mutalisks, current_time, bot):
+            return list(mutalisks), []
+
+        micro.execute_regen_dance = fake_regen_dance
+        micro.execute_hit_and_run = Mock()
+        micro.execute_magic_box = Mock()
+        self.manager.mutalisk_micro = micro
+
+    async def test_magic_box_skips_stacking_hit_and_run(self):
+        """When a splash threat is present, hit-and-run must not run at all."""
+        self.manager.mutalisk_micro.should_use_magic_box = Mock(return_value=True)
+        self.manager.mutalisk_micro.execute_hit_and_run = Mock(
+            side_effect=AssertionError(
+                "execute_hit_and_run must be skipped when should_use_magic_box is True"
+            )
+        )
+
+        async def fake_magic_box(mutalisks, target_position, bot):
+            return None
+
+        self.manager.mutalisk_micro.execute_magic_box = fake_magic_box
+        self.manager._select_mutalisk_target = Mock(return_value=Mock())
+
+        await self.manager._mutalisk_attack([self.mutalisk], [])
+
+    async def test_no_splash_threat_still_uses_hit_and_run(self):
+        """Without a splash threat, the normal stacking hit-and-run still runs."""
+        self.manager.mutalisk_micro.should_use_magic_box = Mock(return_value=False)
+
+        async def fake_hit_and_run(*args, **kwargs):
+            return True
+
+        self.manager.mutalisk_micro.execute_hit_and_run = Mock(
+            side_effect=fake_hit_and_run
+        )
+
+        await self.manager._mutalisk_attack([self.mutalisk], [])
+
+        self.manager.mutalisk_micro.execute_hit_and_run.assert_called_once()
+        self.manager.mutalisk_micro.execute_magic_box.assert_not_called()
+
+
 if __name__ == "__main__":
     unittest.main()

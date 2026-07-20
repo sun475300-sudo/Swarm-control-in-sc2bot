@@ -2032,6 +2032,20 @@ class StrategyManager:
 
         return None
 
+    def _clear_all_in_flags(self) -> None:
+        """Drop all-in directives once the triggering condition lapses.
+
+        Without this, queen_defense_mode/enemy_all_in stay latched true for
+        the rest of the game after a single detection, since nothing else
+        ever clears them.
+        """
+        if self._blackboard_flag("enemy_all_in") or self._blackboard_flag(
+            "queen_defense_mode"
+        ):
+            self.blackboard.set("enemy_all_in", False)
+            self.blackboard.set("enemy_all_in_detected", False)
+            self.blackboard.set("queen_defense_mode", False)
+
     def _detect_all_in_pressure(self) -> bool:
         """Detect no-expand all-ins after 5:00 and publish defense directives."""
         if not self.blackboard:
@@ -2042,9 +2056,7 @@ class StrategyManager:
             return False
 
         if self._enemy_has_expansion():
-            if self._blackboard_flag("enemy_all_in"):
-                self.blackboard.set("enemy_all_in", False)
-                self.blackboard.set("enemy_all_in_detected", False)
+            self._clear_all_in_flags()
             return False
 
         enemy_power_ratio = self._enemy_army_power_ratio()
@@ -2054,6 +2066,7 @@ class StrategyManager:
         )
 
         if enemy_power_ratio < 1.5 or not approaching:
+            self._clear_all_in_flags()
             return False
 
         self.current_mode = StrategyMode.ALL_IN
