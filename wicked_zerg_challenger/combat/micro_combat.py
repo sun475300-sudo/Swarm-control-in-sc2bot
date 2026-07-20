@@ -832,7 +832,14 @@ class MicroCombat:
         self.zvz = ZvZMicroAdjustments(bot)
 
     def manage_lurker_positioning(self, iteration: int = 0) -> Set[int]:
-        """Position Lurkers on nearby chokes and burrow with LURKERMP ids."""
+        """Walk not-yet-burrowed Lurkers onto the nearest choke and burrow them.
+
+        Once a lurker is burrowed, `LurkerAmbushSystem` (combat/lurker_ambush.py)
+        is the sole authority over it (ambush timing, retreat, unburrow) — this
+        method used to also unburrow idle burrowed lurkers on its own distance
+        heuristic, which fought LurkerAmbushSystem's independent burrow/retreat
+        state machine for the same units every step (ROADMAP Task 4.1).
+        """
         if not UnitTypeId:
             return set()
 
@@ -849,12 +856,8 @@ class MicroCombat:
         if not lurkers:
             return set()
 
-        enemies = list(getattr(self.bot, "enemy_units", []) or [])
         burrow_down = getattr(AbilityId, "BURROWDOWN_LURKER", None) or getattr(
             AbilityId, "BURROWDOWN_LURKERMP", None
-        )
-        burrow_up = getattr(AbilityId, "BURROWUP_LURKER", None) or getattr(
-            AbilityId, "BURROWUP_LURKERMP", None
         )
 
         actions = []
@@ -863,33 +866,24 @@ class MicroCombat:
             tag = getattr(lurker, "tag", None)
             if tag is None:
                 continue
-            choke = self._nearest_choke(getattr(lurker, "position", None), chokepoints)
-            if choke is None:
-                continue
 
             is_burrowed = (
                 getattr(lurker, "is_burrowed", False)
                 or self._unit_name(lurker) == "LURKERMPBURROWED"
             )
-            try:
-                if not is_burrowed:
-                    if lurker.distance_to(choke) < 3.0 and burrow_down:
-                        actions.append(lurker(burrow_down))
-                    else:
-                        actions.append(lurker.move(choke))
-                    handled.add(tag)
-                    continue
+            if is_burrowed:
+                continue
 
-                enemies_nearby = [
-                    enemy for enemy in enemies if enemy.distance_to(lurker) <= 9.0
-                ]
-                if not enemies_nearby and burrow_up:
-                    enemies_far = [
-                        enemy for enemy in enemies if enemy.distance_to(lurker) <= 20.0
-                    ]
-                    if enemies_far:
-                        actions.append(lurker(burrow_up))
-                        handled.add(tag)
+            choke = self._nearest_choke(getattr(lurker, "position", None), chokepoints)
+            if choke is None:
+                continue
+
+            try:
+                if lurker.distance_to(choke) < 3.0 and burrow_down:
+                    actions.append(lurker(burrow_down))
+                else:
+                    actions.append(lurker.move(choke))
+                handled.add(tag)
             except Exception:
                 continue
 
