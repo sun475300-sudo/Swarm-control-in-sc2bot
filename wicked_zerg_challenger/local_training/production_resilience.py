@@ -2529,7 +2529,11 @@ class ProductionResilience:
         gas = b.vespene
         game_time = getattr(b, "time", 0)
 
-        if gas <= 1500:
+        # NOTE: the on_step() caller triggers this at vespene > 500 (FIX
+        # P0-1, gas-overflow threshold lowered from 1500 to prevent gas
+        # floating), but this internal gate was left at the old 1500 value,
+        # silently turning every call into a no-op in the 500-1500 range.
+        if gas <= 500:
             return
 
         # Log gas overflow warning
@@ -2764,11 +2768,18 @@ class ProductionResilience:
         b = self.bot
         minerals = b.minerals
 
-        if minerals <= 600:
+        # NOTE: the on_step() caller triggers this at minerals > 400 with a
+        # single base, or > 600 with 2+ bases (FIX P0-8, so 1-base players
+        # don't float minerals in the 400-600 window). This internal gate
+        # was left at a flat 600, silently turning those 1-base calls into
+        # a no-op below 600.
+        bases = b.townhalls.amount if hasattr(b, "townhalls") else 1
+        mineral_threshold = 600 if bases >= 2 else 400
+        if minerals <= mineral_threshold:
             return
 
         # Calculate how much to spend
-        excess = minerals - 600
+        excess = minerals - mineral_threshold
 
         larvae = b.units(UnitTypeId.LARVA)
         if not larvae.exists:

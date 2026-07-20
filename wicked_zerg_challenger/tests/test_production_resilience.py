@@ -59,6 +59,52 @@ class TestProductionResilience(unittest.IsolatedAsyncioTestCase):
 
         self.resilience = ProductionResilience(self.bot)
 
+    # ==================== Excess Resource Spending Gate Tests ====================
+
+    async def test_spend_excess_gas_gate_matches_caller_threshold(self):
+        """on_step() triggers _spend_excess_gas() at vespene > 500 (FIX
+        P0-1), so the function's own internal gate must not silently
+        require the old 1500 before it does anything."""
+        self.bot.units = Mock(return_value=SimpleNamespace(exists=False))
+        self.resilience._build_gas_heavy_tech = AsyncMock()
+
+        self.bot.vespene = 400
+        await self.resilience._spend_excess_gas()
+        self.resilience._build_gas_heavy_tech.assert_not_called()
+
+        self.bot.vespene = 600
+        await self.resilience._spend_excess_gas()
+        self.resilience._build_gas_heavy_tech.assert_called_once()
+
+    async def test_spend_excess_minerals_gate_matches_one_base_threshold(self):
+        """on_step() triggers _spend_excess_minerals() at minerals > 400
+        with a single base (FIX P0-8), so the function's own internal gate
+        must not silently require the old flat 600 before it does anything."""
+        self.bot.units = Mock(return_value=SimpleNamespace(exists=False))
+        self.bot.townhalls.amount = 1
+        self.resilience._spend_minerals_without_larvae = AsyncMock()
+
+        self.bot.minerals = 350
+        await self.resilience._spend_excess_minerals()
+        self.resilience._spend_minerals_without_larvae.assert_not_called()
+
+        self.bot.minerals = 450
+        await self.resilience._spend_excess_minerals()
+        self.resilience._spend_minerals_without_larvae.assert_called_once()
+
+    async def test_spend_excess_minerals_gate_still_600_with_multiple_bases(self):
+        self.bot.units = Mock(return_value=SimpleNamespace(exists=False))
+        self.bot.townhalls.amount = 2
+        self.resilience._spend_minerals_without_larvae = AsyncMock()
+
+        self.bot.minerals = 450
+        await self.resilience._spend_excess_minerals()
+        self.resilience._spend_minerals_without_larvae.assert_not_called()
+
+        self.bot.minerals = 650
+        await self.resilience._spend_excess_minerals()
+        self.resilience._spend_minerals_without_larvae.assert_called_once()
+
     # ==================== Learned Parameter Tests ====================
 
     def test_get_learned_parameter_with_default(self):
