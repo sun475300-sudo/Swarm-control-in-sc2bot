@@ -4237,10 +4237,17 @@ class CombatManager:
         and return after enough damage or when badly hurt.
         """
         if not getattr(self, "harass_units", set()):
+            # No active harassment mission: reset the per-mission kill counter
+            # so it doesn't carry over as a permanent lifetime total that
+            # would force every future wave to retreat on arrival.
+            self.harass_kill_count = 0
+            self._harass_last_enemy_workers = None
             return
         if not hasattr(self.bot, "units"):
             self.harass_units.clear()
             self.harass_returning_units.clear()
+            self.harass_kill_count = 0
+            self._harass_last_enemy_workers = None
             return
 
         alive_harassers = [

@@ -158,6 +158,41 @@ class TestWorkerHarassmentDefense(unittest.TestCase):
         self.assertEqual(len(move_actions), 1)
         self.assertIn(40, manager.harass_returning_units)
 
+    def test_harass_kill_count_resets_between_missions_not_lifetime_cumulative(self):
+        """A new harassment wave must not inherit a previous wave's kill count."""
+        bot = FakeBot()
+        ling = FakeUnit(40, UnitTypeId.ZERGLING, Point2((95, 95)), can_attack=True)
+        bot.units = UnitSource([bot.queen, ling])
+        manager = CombatManager(bot)
+        manager.harass_units = {ling.tag}
+        manager.harass_kill_count = 3
+        manager.harass_returning_units = {ling.tag}
+        bot.townhalls[0].position = Point2((95, 95))  # "home" is right here -> unit returns
+
+        # Mission ends: the returning unit reaches home and drops out of harass_units.
+        asyncio.run(manager.manage_harass_units(22))
+        self.assertEqual(manager.harass_units, set())
+
+        # manage_harass_units no-ops on the next tick since harass_units is empty,
+        # which is exactly where the lifetime counter must get cleared.
+        asyncio.run(manager.manage_harass_units(23))
+        self.assertEqual(manager.harass_kill_count, 0)
+
+        # A fresh wave is assigned for a new mission; it must not be forced
+        # to retreat immediately just because a prior wave once hit 3 kills.
+        new_ling = FakeUnit(41, UnitTypeId.ZERGLING, Point2((95, 95)), can_attack=True)
+        bot.units = UnitSource([bot.queen, new_ling])
+        bot.enemy_units = FakeUnits(
+            [FakeUnit(301, UnitTypeId.SCV, Point2((98, 98)), can_attack=False)]
+        )
+        manager.harass_units = {new_ling.tag}
+        bot.actions.clear()
+
+        asyncio.run(manager.manage_harass_units(24))
+
+        self.assertNotIn(41, manager.harass_returning_units)
+        self.assertIn(("attack", 41, 301), bot.actions)
+
 
 if __name__ == "__main__":
     unittest.main()
