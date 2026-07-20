@@ -167,7 +167,9 @@ class TestWorkerHarassmentDefense(unittest.TestCase):
         manager.harass_units = {ling.tag}
         manager.harass_kill_count = 3
         manager.harass_returning_units = {ling.tag}
-        bot.townhalls[0].position = Point2((95, 95))  # "home" is right here -> unit returns
+        bot.townhalls[0].position = Point2(
+            (95, 95)
+        )  # "home" is right here -> unit returns
 
         # Mission ends: the returning unit reaches home and drops out of harass_units.
         asyncio.run(manager.manage_harass_units(22))
