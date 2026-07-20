@@ -596,6 +596,37 @@ class TestOpponentModeling(unittest.IsolatedAsyncioTestCase):
         model = self.modeling.opponent_models["opponent_Zerg"]
         self.assertEqual(model.games_played, 1)
 
+    def test_on_game_end_records_result_via_live_production_path(self):
+        """wicked_zerg_bot_pro_impl.py's on_end() calls on_game_start()/
+        on_game_end(won, lost) (not the async on_start()/on_end() pair) --
+        this must actually record the result on GameHistory.game_result so
+        update_from_game()'s win/loss branches fire instead of games_won/
+        games_lost staying stuck at 0 forever (game_result defaults to
+        "unknown", which matches neither branch).
+
+        Per update_from_game()'s own documented semantics, games_won/
+        games_lost on an OpponentModel track the *opponent's* record
+        against us: when we win, the opponent lost (games_lost += 1).
+        """
+        self.modeling.on_game_start("opponent_Zerg", self.bot.enemy_race)
+
+        self.modeling.on_game_end(won=True, lost=False)
+
+        model = self.modeling.opponent_models["opponent_Zerg"]
+        self.assertEqual(model.games_played, 1)
+        self.assertEqual(model.games_won, 0)
+        self.assertEqual(model.games_lost, 1)
+
+    def test_on_game_end_records_loss_via_live_production_path(self):
+        self.modeling.on_game_start("opponent_Zerg", self.bot.enemy_race)
+
+        self.modeling.on_game_end(won=False, lost=True)
+
+        model = self.modeling.opponent_models["opponent_Zerg"]
+        self.assertEqual(model.games_played, 1)
+        self.assertEqual(model.games_won, 1)
+        self.assertEqual(model.games_lost, 0)
+
     def test_get_opponent_stats(self):
         """Test retrieving opponent statistics"""
         # Create model with history
