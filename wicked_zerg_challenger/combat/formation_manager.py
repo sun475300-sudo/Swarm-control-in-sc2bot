@@ -42,6 +42,10 @@ class FormationManager:
             UnitTypeId.LURKERMP,
         }
 
+        # 바퀴-히드라 연합 포메이션 대상 (전열/후열)
+        self.roach_front_types = {UnitTypeId.ROACH, UnitTypeId.RAVAGER}
+        self.hydra_rear_types = {UnitTypeId.HYDRALISK}
+
     @staticmethod
     def _check_exists(units) -> bool:
         """Check if units exist, handling both Units objects and plain lists."""
@@ -71,11 +75,27 @@ class FormationManager:
         elif not units:
             return []
 
-        # 원거리 유닛과 근접 유닛 분리
-        ranged = [u for u in units if u.type_id in self.ranged_units]
-        melee = [u for u in units if u.type_id in self.melee_units]
+        unit_list = list(units)
+        assignments: List[Tuple[Unit, Point2]] = []
 
-        assignments = []
+        # 바퀴-히드라 연합 포메이션 (Sprint 4 Task 4.3): 바퀴는 전열에서 적을
+        # 향해 진격하고, 히드라리스크는 바퀴 뒤 사거리(6) 만큼 후방에서 지원
+        # 사격한다. 두 병종이 함께 있을 때만 적용하고, 나머지 유닛은 아래의
+        # 기존 concave 로직으로 처리한다.
+        roaches = [u for u in unit_list if u.type_id in self.roach_front_types]
+        hydras = [u for u in unit_list if u.type_id in self.hydra_rear_types]
+        if roaches and hydras and enemy_center:
+            assignments.extend(
+                self._form_roach_hydra_composition(roaches, hydras, enemy_center)
+            )
+            handled_tags = {u.tag for u in roaches} | {u.tag for u in hydras}
+            unit_list = [u for u in unit_list if u.tag not in handled_tags]
+            if not unit_list:
+                return assignments
+
+        # 원거리 유닛과 근접 유닛 분리
+        ranged = [u for u in unit_list if u.type_id in self.ranged_units]
+        melee = [u for u in unit_list if u.type_id in self.melee_units]
 
         # 원거리 유닛: 부채꼴 모양으로 배치
         if ranged and enemy_center:
@@ -85,7 +105,7 @@ class FormationManager:
             # 부채꼴의 중심점 (우리 본진)
             if self.bot.townhalls.exists:
                 our_base = self.bot.townhalls.first
-                direction = (enemy_center - our_base.position).normalized()
+                direction = (enemy_center - our_base.position).normalized
             else:
                 direction = Point2((1, 0))  # 기본 방향
 
@@ -108,12 +128,55 @@ class FormationManager:
                 # 전면 전방에 배치
                 if self.bot.townhalls.exists:
                     our_base = self.bot.townhalls.first
-                    direction = (enemy_center - our_base.position).normalized()
+                    direction = (enemy_center - our_base.position).normalized
                 else:
                     direction = Point2((1, 0))
 
                 target_pos = enemy_center - direction * 3.0  # 적 앞 3 거리
                 assignments.append((unit, target_pos))
+
+        return assignments
+
+    def _form_roach_hydra_composition(
+        self,
+        roaches: List[Unit],
+        hydras: List[Unit],
+        enemy_center: Point2,
+        hydra_rear_distance: float = 6.0,
+        spread_spacing: float = 1.5,
+    ) -> List[Tuple[Unit, Point2]]:
+        """
+        바퀴-히드라 연합 포메이션 (ROADMAP Sprint 4 Task 4.3)
+
+        바퀴(ROACH/RAVAGER)는 전열에서 목표(적)를 향해 진격시키고,
+        히드라리스크는 바퀴 뒤로 히드라 사거리(기본 6)만큼 후방에서
+        지원 사격하도록 배치한다.
+        """
+        if self.bot.townhalls.exists:
+            our_base = self.bot.townhalls.first.position
+        else:
+            our_base = None
+
+        if our_base is not None and our_base != enemy_center:
+            direction = (enemy_center - our_base).normalized
+        else:
+            direction = Point2((1, 0))
+
+        perpendicular = Point2((-direction.y, direction.x))
+        assignments: List[Tuple[Unit, Point2]] = []
+
+        # 바퀴: 전열, 목표 지점을 향해 이동 (약간의 좌우 스프레드)
+        for i, unit in enumerate(roaches):
+            offset = (i - (len(roaches) - 1) / 2.0) * spread_spacing
+            target_pos = enemy_center + perpendicular * offset
+            assignments.append((unit, target_pos))
+
+        # 히드라: 후열, 바퀴 뒤 hydra_rear_distance 만큼 후방에서 지원 사격
+        rear_center = enemy_center - direction * hydra_rear_distance
+        for i, unit in enumerate(hydras):
+            offset = (i - (len(hydras) - 1) / 2.0) * spread_spacing
+            target_pos = rear_center + perpendicular * offset
+            assignments.append((unit, target_pos))
 
         return assignments
 
@@ -225,7 +288,7 @@ class FormationManager:
                 # 원거리 유닛: 부채꼴 모양으로 배치
                 if self.bot.townhalls.exists:
                     our_base = self.bot.townhalls.first
-                    direction = (enemy_center - our_base.position).normalized()
+                    direction = (enemy_center - our_base.position).normalized
                 else:
                     direction = Point2((1, 0))
 
@@ -238,7 +301,7 @@ class FormationManager:
                 # 근접 유닛: 전면 돌격
                 if self.bot.townhalls.exists:
                     our_base = self.bot.townhalls.first
-                    direction = (enemy_center - our_base.position).normalized()
+                    direction = (enemy_center - our_base.position).normalized
                 else:
                     direction = Point2((1, 0))
 
