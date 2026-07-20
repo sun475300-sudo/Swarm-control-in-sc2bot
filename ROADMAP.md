@@ -24,7 +24,7 @@
 
 **파일 목록:**
 - `wicked_zerg_challenger/early_defense_system.py`
-- `wicked_zerg_challenger/build_order_executor.py`
+- `wicked_zerg_challenger/build_order_system.py`
 - 기타 비ASCII 특수문자가 포함된 모든 .py 파일
 
 **구현 지시:**
@@ -591,7 +591,7 @@ wicked_zerg_challenger/
 ├── intel_manager.py            # Sprint 2.3, 2.4, 5.3
 ├── scouting_system.py          # Sprint 2.1, 2.2, 2.5
 ├── early_defense_system.py     # Sprint 1.1, 5.1
-├── build_order_executor.py     # Sprint 1.1
+├── build_order_system.py       # Sprint 1.1
 ├── creep_manager.py            # Sprint 5.4
 ├── building_manager.py         # Sprint 7.1 (신규 생성)
 ├── combat/
