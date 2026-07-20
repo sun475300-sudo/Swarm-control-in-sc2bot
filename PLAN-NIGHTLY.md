@@ -6,6 +6,35 @@
 
 ---
 
+## 🔴 P0 finding (2026-07-19/20): the automation itself is the bottleneck, not the code
+
+As of 2026-07-19 the backlog reached **510+ open PRs with only 9 ever
+merged**, and the trigger that runs this nightly session is firing far
+more often than "daily" — **15-23 PRs/day every day since 2026-07-02**
+per direct PR-timestamp analysis (see PR #554's cluster breakdown, and
+PR #548's independent same-day finding of 13 duplicate PRs opened
+within one hour). Two docs-only PRs are already open and ready to merge
+whenever the owner has time — **merging either is standalone-safe and
+does not depend on the other**:
+
+- **PR #548** — adds a `CLAUDE.md` guardrail telling future sessions to
+  check the backlog before opening another fix PR.
+- **PR #554** — full triage of the 510-PR backlog: a ranked list of ~12
+  PRs recommended to merge (deduped, each independently re-verified
+  against `main`) and ~340 PRs recommended to bulk-close as stale/duplicate
+  (grouped by root cause, e.g. 198 PRs all fixing an `asyncio.get_event_loop()`
+  bug that's already fixed on `main`).
+
+**This session (2026-07-20)** checked the backlog first per the existing
+guardrail proposal, confirmed both #548 and #554 are still open/unmerged
+and still accurate, and — to avoid becoming yet another session that
+just re-discovers the same pile-up — did **not** open a third duplicate
+triage/guardrail PR. Instead it picked a genuinely unclaimed roadmap item
+(P2.3 below) and shipped it. **Action still needed from the repo owner:**
+merge #548 and #554, work through #554's ranked merge/close list, and
+check the trigger/schedule configuration for this recurring session —
+its actual firing rate is the root cause of the backlog growth rate.
+
 ## 🔴 P0 finding (2026-07-18): CI itself was blocking every merge
 
 As of 2026-07-18 the repo had **494 open PRs and only 8 ever merged**
@@ -73,8 +102,8 @@ being permanently red is very likely why none of them ever merged.
 | #    | Item                                            | Status | Notes |
 |------|-------------------------------------------------|--------|-------|
 | P2.1 | Force-accumulation FSM tests                    | ✅ Done | `tests/test_combat_phase_fsm.py` — 23 tests all passing. |
-| P2.2 | Benchmark runner                                | ❌ Open | Single command, N replays, APM/supply/win-rate report vs Hard. |
-| P2.3 | Build-order config externalisation              | ❌ Open | Move top-20 hardcoded values to `config/build_orders.yaml`. |
+| P2.2 | Benchmark runner                                | ❌ Open | Single command, N replays, APM/supply/win-rate report vs Hard. Confirmed unclaimed by any open PR as of 2026-07-20. |
+| P2.3 | Build-order config externalisation              | ✅ Done | `wicked_zerg_challenger/config/build_orders.yaml` (2026-07-20) — all 9 ZvT/ZvP/ZvZ build sequences (70 supply steps) moved out of `build_order_system.py` into YAML, loaded via `_load_build_orders_from_yaml()` with a built-in-default fallback on missing/malformed file or missing PyYAML. `ZVT_BUILDS`/`ZVP_BUILDS`/`ZVZ_BUILDS` module names unchanged, so no other module needed edits. 11 new tests in `tests/test_build_orders_yaml.py`. |
 | P2.4 | RL agent save-experience guard                  | ❌ Open | Unit test for save under disk-full / interrupted-rename. |
 | P2.5 | Type hints + docstring pass on core modules     | ❌ Open | `core/resource_manager.py`, `core/manager_factory.py`. |
 
