@@ -181,6 +181,23 @@ class TestIntelManager(unittest.TestCase):
         self.assertNotEqual(self.intel._threat_level, "critical")
         self.assertFalse(self.intel._high_threat_units_detected)
 
+    def test_cached_high_threat_not_downgraded_by_low_threat_enemy(self):
+        """A cache-set 'high' threat must not get silently downgraded to
+        'medium' just because a non-critical enemy is also spotted nearby."""
+        self.bot.townhalls = [Mock(position=Mock())]
+        self.bot.data_cache = Mock()
+        self.bot.data_cache.get_threat_level = Mock(return_value="HIGH")
+
+        ling = Mock()
+        ling.type_id.name = "ZERGLING"
+        ling.distance_to = Mock(return_value=10)
+        ling.position = Mock()
+        self.bot.enemy_units = [ling]
+
+        self.intel._update_threat_status()
+
+        self.assertEqual(self.intel._threat_level, "high")
+
     def test_blackboard_integration(self):
         """Test intel data is pushed to blackboard"""
         detected_pattern = "terran_bio"

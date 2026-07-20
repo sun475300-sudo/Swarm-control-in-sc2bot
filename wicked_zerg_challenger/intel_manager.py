@@ -464,7 +464,7 @@ class IntelManager:
                     found_critical = True
                 elif not found_critical and self._threat_level not in [
                     "critical",
-                    "heavy",
+                    "high",
                 ]:
                     self._threat_level = "medium"
 
