@@ -31,5 +31,7 @@ def test_log_error_rate_limits_repeated_failures(caplog):
                 handler.log_error("subsystem_x", exc)
 
     assert handler.get_error_summary()["subsystem_x"] == 5
-    error_lines = [r for r in caplog.records if r.message.startswith("subsystem_x failed")]
+    error_lines = [
+        r for r in caplog.records if r.message.startswith("subsystem_x failed")
+    ]
     assert len(error_lines) == handler.max_error_logs

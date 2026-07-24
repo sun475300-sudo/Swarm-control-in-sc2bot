@@ -21,5 +21,5 @@ def test_generate_test_script_does_not_crash(tmp_path: Path) -> None:
 
     assert result == str(output_path)
     content = output_path.read_text(encoding="utf-8")
-    assert "positions = hub.formation_plan(10, \"circle\")" in content
+    assert 'positions = hub.formation_plan(10, "circle")' in content
     assert "{len(positions)}" in content
