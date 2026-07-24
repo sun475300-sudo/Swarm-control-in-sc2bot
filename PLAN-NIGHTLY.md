@@ -2,7 +2,62 @@
 
 > Owner: 선우 (sun475300@gmail.com)
 > Maintainer: nightly automation
-> Last refreshed: 2026-07-18
+> Last refreshed: 2026-07-24
+
+---
+
+## 🔴 P0 finding (2026-07-24, still unresolved): merge backlog grew, not shrank
+
+**522 open PRs today, up from 517 (2026-07-20) and 510 (2026-07-19) — still only
+~9 ever merged in the repo's history.** The lint fix (merged, now `main` HEAD
+`7d24294`) and PR #533/#548/#554's recommendations are the only real governance
+progress in the last 5 days, and #548 (the `CLAUDE.md` guardrail that stops new
+duplicate PRs) and #554 (ranked merge/close list) are **still themselves
+unmerged**, so the pile-up they diagnosed keeps compounding. This is not a
+code problem — `main` is green (see snapshot below) — it is purely a "nobody
+has clicked merge" problem, and no further automated diagnosis fixes it.
+
+**New this session — concrete duplicate-cluster evidence** (cross-referenced
+by searching open-PR titles/bodies, not re-deriving the bugs): the exact same
+bug gets independently rediscovered, refixed, and reopened as a new PR every
+few days because fixes never land on `main`, so every session re-finds it.
+Two clear examples, given here as a ready-to-execute merge/close shortlist:
+
+| Bug (PLAN-NIGHTLY P2.4 / ROADMAP 2.5) | Duplicate open PRs | Recommendation |
+|---|---|---|
+| `RLAgent.save_model()` silent no-op + unsafe delete-then-rename | #304, #354, #376, #409, #434, #524 (6 independent copies of the same fix, all with passing regression tests) | Merge **#524** (newest, also fixes 2 unrelated CI bugs in the same diff) — close the other 5 as duplicate |
+| `deploy_changeling()` dead code (never called, no energy gate) | #329, #557 (2 independent copies) | Merge **#557** (more recent, adds an energy-gate regression test #329 doesn't have) — close #329 as duplicate |
+
+Merging just these 2 (plus #548 + #554 already recommended) would cut the
+open-PR count by 8 in one sitting with zero risk — all 8 already carry green
+test runs in their own PR description.
+
+## Resolved this run (2026-07-24)
+
+- **ROADMAP Task 4.5 doc/reality mismatch + dead code**: the roadmap's
+  `manage_combat`/fixed-5-or-2-frame-skip spec never existed in the codebase;
+  the live implementation is a more sophisticated unit-count-driven dynamic
+  skip in `combat_manager.py` (`_update_dynamic_frame_skip`, on_step
+  L150-169). Updated the doc to describe what's actually live. Separately,
+  found and deleted `utils/frame_skip.py`'s `FrameSkipManager` class — fully
+  dead code, confirmed zero references anywhere in production code (only its
+  own dedicated test file imported it), first flagged by PR #329's audit
+  notes but never actually removed until now. Deleted the class and its test
+  file (`tests/test_frame_skip_manager.py`).
+  - `tests/`: 502 passed / 14 skipped (unchanged)
+  - `wicked_zerg_challenger/tests/`: 659 passed (661 baseline − 2 removed
+    dead-code tests, 0 regressions)
+  - `black`/`isort`/`flake8 --select=E9,F63,F7,F82,F811,F821` clean on
+    touched files
+
+- **Known pre-existing issue, not touched**: running `pytest tests/
+  wicked_zerg_challenger/tests/` in a single invocation (both dirs together)
+  fails collection with `ModuleNotFoundError: No module named
+  'scripts.meta_adapter'` — a `scripts/` package namespace collision between
+  the two test roots. This matches the already-documented, already-fixed
+  (in unmerged PRs #544/#553/#534/#535) `scripts/__init__.py`-missing bug.
+  Running each suite separately (as CI does) is unaffected. Not re-fixed here
+  to avoid an 4th duplicate of that cluster — recommend merging #544 instead.
 
 ---
 

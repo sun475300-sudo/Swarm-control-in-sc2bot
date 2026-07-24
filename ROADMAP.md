@@ -365,24 +365,24 @@ async def spend_larva(self):
 
 ---
 
-### Task 4.5: 전투 프레임 스킵
+### Task 4.5: 전투 프레임 스킵 — ✅ DONE (스펙과 다른 구현으로 대체됨, 2026-07-24 재검증)
 
-**파일:** `wicked_zerg_challenger/combat_manager.py`
+**파일:** `wicked_zerg_challenger/combat_manager.py` (`on_step` L150-169,
+`_update_dynamic_frame_skip` L2566+)
 
-**구현 지시:**
-```python
-async def manage_combat(self, iteration):
-    # 전투 중이 아니면 5프레임 스킵
-    if not self._is_in_active_combat():
-        if iteration % 5 != 0:
-            return
-    # 전투 중이지만 긴급 아니면 2프레임 스킵
-    elif not self._is_emergency():
-        if iteration % 2 != 0:
-            return
-    # 긴급 상황: 매 프레임
-    await self._execute_combat()
-```
+이 태스크가 원래 지시한 `manage_combat`/고정 5·2프레임 스킵 함수는 코드베이스에
+존재한 적이 없다. 실제로 라이브 코드에서 도는 것은 그보다 더 정교한 구현이다:
+유닛 수 기반으로 `_combat_frame_skip` 값을 동적으로 재계산하고
+(`_update_dynamic_frame_skip`, 2초마다), 긴급 상황(`_combat_is_emergency`,
+3프레임마다 재평가)이면 `_combat_emergency_skip`으로 전환한다. 견제 유닛
+응답(`respond_to_worker_harassment`, `manage_harass_units`)은 스킵 파이프라인보다
+먼저 매초 실행되어 빠른 반응성을 보장한다. 문서만 스펙과 다르게 낡아 있었던
+것이므로 문서를 현재 구현에 맞게 갱신.
+
+**정리:** 이 태스크와 무관하게 완전히 죽어있던 `utils/frame_skip.py`의
+`FrameSkipManager` 클래스(자체 테스트 `tests/test_frame_skip_manager.py` 외에는
+어디서도 import되지 않음 — production 코드 전체에서 0회 참조 확인)와 그 테스트
+파일을 삭제했다. 실제 프레임 스킵 권한은 위 `combat_manager.py`의 구현 하나뿐.
 
 ---
 
