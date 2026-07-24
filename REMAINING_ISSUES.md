@@ -4,24 +4,47 @@
 
 통합 문제 해결 후 발견된 추가 개선 사항들입니다.
 
-**Last refreshed:** 2026-04-27 (Issue #1, #2 → Resolved; Issue #6 partially resolved via Batch 3)
+**Last refreshed:** 2026-07-24 (자동 점검 사이클 — N1~N4 재검증 결과 이미 해결 확인, N5 일부 추가 처리)
 
 ---
 
-## 🆕 신규 발견 (PR #44, 2026-04-27)
+## ✅ N1~N4 재검증 결과 (2026-07-24)
 
-자동/수동 점검 사이클(테스트 → 코드 검사 → 개선 → 커밋/푸시 반복)에서 새로 식별된 항목.
+`ruff check . --select F811,F821`로 전체 재스캔한 결과 아래 항목은 **이미 해결됨**
+(코드 기준 실제 중복 정의 없음 — 문서가 stale했던 것으로 확인, 별도 조치 없이 닫음):
+
+| ID | 설명 | 확인 결과 |
+|----|------|---------|
+| N1 | `OpponentModeling.on_step` 중복 정의 | `opponent_modeling.py`에 `on_step` 정의 1개뿐 (line 341) — 해결됨 |
+| N2 | `EconomyManager._prevent_resource_banking` / `_reduce_gas_workers` 재정의 | ruff F811 0건 — 해결됨 |
+| N3 | `combat_manager._find_harass_target` 재정의 | ruff F811 0건 — 해결됨 |
+| N4 | `production_resilience.build_terran_counters` 재정의 | ruff F811 0건 — 해결됨 |
+
+이번 사이클에서 저장소 전체(`ruff check . --select F811,F821`)에서 새로 발견한 3건은 수정 완료:
+- `integration_hub.py::generate_test_script` — 템플릿 문자열에 불필요한 `f` 접두사가 붙어 있어
+  호출 시 `NameError: positions` 로 항상 크래시하던 버그. `f` 제거로 수정, 회귀 테스트 추가
+  (`tests/test_integration_hub.py`).
+- `discord_advanced_features.py` / `jax_flax_rl/flax_policy.py` — 이미 모듈 상단에서 임포트한
+  `os`/`math`를 함수 내부에서 다시 임포트(redefined-while-unused)하던 것 제거.
+
+### N5 진행 상황 업데이트
+
+`bot_step_integration.py`의 서브시스템 디스패치 루프에서 `except Exception as e: if
+error_handler.debug_mode: raise` 패턴 중 **로그를 전혀 남기지 않던 11곳**
+(spatial_optimizer, data_cache, base_destruction, building_destroyer, self_healing,
+personality, battle_prep, destructible_aware, nydus_trainer, overlord_safety,
+creep_highway_astar)에 `error_handler.log_error(key, e)` 호출을 추가함. 프로덕션
+모드에서 해당 서브시스템이 매 프레임 실패해도 완전히 무음으로 삼켜지던 문제 — 이제
+rate-limited 로그(`ErrorHandler.max_error_logs`)로 진단 가능. 나머지는 이미 자체
+로깅(`error_handler.error_counts[...] += 1` + `logger.error`)을 갖추고 있어 대상에서 제외.
+`wicked_zerg_challenger/` 전역에는 여전히 `except Exception` 관련 블록이 매우 많이
+남아있음(2026-07-24 기준 `except Exception as e:` 511건 + bare `except Exception:` 469건) —
+전수 조사는 잔여 작업으로 유지, 다음 사이클에서 파일 단위로 계속 처리 예정.
 
 | ID | 설명 | 우선순위 | 상태 |
 |----|------|---------|------|
-| N1 | `OpponentModeling.on_step` 중복 정의 (line 341 vs 765 — F811) | 🟠 HIGH | open — 동작 영향(상위 on_step이 미실행) 가능 |
-| N2 | `EconomyManager._prevent_resource_banking` / `_reduce_gas_workers` 재정의 (F811) | 🟡 MED | open |
-| N3 | `combat_manager._find_harass_target` 재정의 (line 2377 vs 4278) | 🟡 MED | open |
-| N4 | `production_resilience.build_terran_counters` 재정의 (1369 vs 1866) | 🟡 MED | open |
-| N5 | bare `except Exception:` 다수 (≈360+) — 이번 PR에서 12건 처리, 잔여 다수 | 🟢 LOW | partial |
-| N6 | F841 unused local variables (visuals/make_pptx 등) | 🟢 LOW | open (presentation 코드라 영향 작음) |
-
-검증 권장: PR 분리 (N1 단독 PR 권장 — 동작 변화 가능성).
+| N5 | bare `except Exception:` 다수 — 이번 사이클: `bot_step_integration.py` 11건 로깅 추가 | 🟢 LOW | partial (계속 진행) |
+| N6 | F841 unused local variables (130건, ruff 확인) | 🟢 LOW | open (대부분 `except ... as e` 미사용/의도적 discard — 영향 작음) |
 
 ---
 

@@ -140,6 +140,21 @@ class ErrorHandler:
 
         return decorator
 
+    def log_error(self, log_key: str, exc: Exception) -> None:
+        """
+        예외를 발생시키지 않고 로그만 남긴다 (rate-limited).
+
+        production 모드에서 `except Exception: pass`로 완전히 삼켜지던
+        서브시스템 실패를 진단 가능하게 만들기 위한 용도.
+        """
+        self.error_counts[log_key] += 1
+
+        if self.error_counts[log_key] <= self.max_error_logs:
+            logger.error(f"{log_key} failed: {exc}")
+            logger.debug(traceback.format_exc())
+            if self.error_counts[log_key] == self.max_error_logs:
+                logger.error(f"{log_key}: Suppressing further error logs for this key")
+
     def get_error_summary(self) -> dict:
         """에러 통계 반환"""
         return dict(self.error_counts)

@@ -927,6 +927,7 @@ class BotStepIntegrator:
                 except Exception as e:
                     if error_handler.debug_mode:
                         raise
+                    error_handler.log_error("spatial_optimizer", e)
 
             if hasattr(self.bot, "data_cache") and self.bot.data_cache:
                 try:
@@ -934,6 +935,7 @@ class BotStepIntegrator:
                 except Exception as e:
                     if error_handler.debug_mode:
                         raise
+                    error_handler.log_error("data_cache", e)
 
             # *** Base Destruction Coordinator (모든 적 기지 파괴) ***
             if hasattr(self.bot, "base_destruction") and self.bot.base_destruction:
@@ -942,6 +944,7 @@ class BotStepIntegrator:
                 except Exception as e:
                     if error_handler.debug_mode:
                         raise
+                    error_handler.log_error("base_destruction", e)
 
             # *** Building Destroyer (건물 파괴 전문) ***
             if hasattr(self.bot, "building_destroyer") and self.bot.building_destroyer:
@@ -950,6 +953,7 @@ class BotStepIntegrator:
                 except Exception as e:
                     if error_handler.debug_mode:
                         raise
+                    error_handler.log_error("building_destroyer", e)
 
             # *** Runtime Self-Healing (실행 중 자동 복구) ***
             if hasattr(self.bot, "self_healing") and self.bot.self_healing:
@@ -958,6 +962,7 @@ class BotStepIntegrator:
                 except Exception as e:
                     if error_handler.debug_mode:
                         raise
+                    error_handler.log_error("self_healing", e)
 
             # *** Personality Module (채팅/성격) ***
             if hasattr(self.bot, "personality") and self.bot.personality:
@@ -966,6 +971,7 @@ class BotStepIntegrator:
                 except Exception as e:
                     if error_handler.debug_mode:
                         raise
+                    error_handler.log_error("personality", e)
 
             # *** Battle Preparation System (교전 대비) ***
             if hasattr(self.bot, "battle_prep") and self.bot.battle_prep:
@@ -974,6 +980,7 @@ class BotStepIntegrator:
                 except Exception as e:
                     if error_handler.debug_mode:
                         raise
+                    error_handler.log_error("battle_prep", e)
 
             # *** Destructible Awareness System (파괴 가능 구조물) ***
             if hasattr(self.bot, "destructible_aware") and self.bot.destructible_aware:
@@ -986,6 +993,7 @@ class BotStepIntegrator:
                 except Exception as e:
                     if error_handler.debug_mode:
                         raise
+                    error_handler.log_error("destructible_aware", e)
 
             # *** Nydus Network Trainer (땅굴망 학습) ***
             if hasattr(self.bot, "nydus_trainer") and self.bot.nydus_trainer:
@@ -994,6 +1002,7 @@ class BotStepIntegrator:
                 except Exception as e:
                     if error_handler.debug_mode:
                         raise
+                    error_handler.log_error("nydus_trainer", e)
 
             # *** Overlord Safety Manager (대군주 안전) ***
             if hasattr(self.bot, "overlord_safety") and self.bot.overlord_safety:
@@ -1002,6 +1011,7 @@ class BotStepIntegrator:
                 except Exception as e:
                     if error_handler.debug_mode:
                         raise
+                    error_handler.log_error("overlord_safety", e)
 
             # 0.03 *** Build Order System (빌드 오더 - 최최우선) ***
             if self.bot.time < 300.0:  # 5분 이내 (Roach Rush 지원)
@@ -1380,6 +1390,7 @@ class BotStepIntegrator:
                 except Exception as e:
                     if error_handler.debug_mode:
                         raise
+                    error_handler.log_error("creep_highway_astar", e)
 
             # 0.061 *** Creep Highway Manager (기지 간 연결) ***
             if hasattr(self.bot, "creep_highway") and self.bot.creep_highway:
