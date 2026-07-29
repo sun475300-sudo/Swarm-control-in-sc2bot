@@ -21,6 +21,30 @@ class HarassmentExtensionMixin:
                 "last_retreat_time": 0,  # Cooldown tracking
                 "retreat_cooldown": 660,  # 30 seconds (22 frames/sec * 30)
             }
+        # P1.2: expose empirical harassment metrics for eval / paper.
+        # HarassmentMetrics is stateless w.r.t. the SC2 bot — it just accepts
+        # on_position / on_unit_died events. See combat/harassment_metrics.py.
+        if not hasattr(self, "harassment_metrics"):
+            try:
+                from wicked_zerg_challenger.combat.harassment_metrics import (
+                    HarassmentMetrics,
+                )
+                enemy_start = getattr(self.bot, "enemy_start_locations", None) or [(0.0, 0.0)]
+                own_start = getattr(self.bot, "start_location", None)
+                enemy_pos = tuple(enemy_start[0])[:2] if enemy_start else (0.0, 0.0)
+                own_pos = (
+                    (float(own_start.x), float(own_start.y))
+                    if own_start is not None and hasattr(own_start, "x")
+                    else (0.0, 0.0)
+                )
+                self.harassment_metrics = HarassmentMetrics(
+                    enemy_main_position=enemy_pos,
+                    penetration_radius_m=15.0,
+                    retreat_zone_position=own_pos,
+                    retreat_zone_radius_m=10.0,
+                )
+            except ImportError:
+                self.harassment_metrics = None
 
     async def _harass_workers(self, harassment_units, enemy_workers, iteration):
         """
@@ -73,6 +97,15 @@ class HarassmentExtensionMixin:
                     # Attack if not already attacking
                     if not unit.is_attacking:
                         self.bot.do(unit.attack(target))
+
+            # P1.2: feed the metrics tracker with this unit's current position.
+            if self.harassment_metrics is not None:
+                try:
+                    self.harassment_metrics.on_position(
+                        unit.tag, (float(unit.position.x), float(unit.position.y))
+                    )
+                except Exception:  # noqa: BLE001 — never let telemetry crash the bot
+                    pass
 
     def _should_retreat_from_harassment(self, unit, enemy_threats):
         """
@@ -174,60 +207,34 @@ class HarassmentExtensionMixin:
                 self.harassment_state["retreating_units"].discard(unit.tag)
                 self.harassment_state["healing_units"].add(unit.tag)
 
-    def _find_harass_target(self):
-        """
-        Find best harassment target (enemy workers or isolated buildings).
+    def report_death_to_metrics(
+        self,
+        dead_tag: int,
+        dead_type_name: str,
+        killer_type_name=None,
+        killer_tag=None,
+    ) -> None:
+        """P1.2 hook: report a unit death to HarassmentMetrics.
 
-        Returns:
-            Position of harassment target or None
+        The bot's on_unit_destroyed callback should call this with:
+            self.report_death_to_metrics(
+                dead_tag=unit.tag,
+                dead_type_name=str(unit.type_id.name),
+                killer_type_name=None,
+                killer_tag=None,
+            )
+
+        Silently no-ops if metrics were not initialized.
         """
+        if getattr(self, "harassment_metrics", None) is None:
+            return
         try:
-            from sc2.ids.unit_typeid import UnitTypeId
-
-            # Priority 1: Enemy workers
-            enemy_workers = self.bot.enemy_units.filter(
-                lambda u: u.type_id
-                in {UnitTypeId.SCV, UnitTypeId.PROBE, UnitTypeId.DRONE}
+            self.harassment_metrics.on_unit_died(
+                dead_tag=dead_tag,
+                dead_type=dead_type_name,
+                killer_type=killer_type_name,
+                killer_tag=killer_tag,
             )
-
-            if enemy_workers:
-                # Target workers near enemy bases
-                if (
-                    hasattr(self.bot, "enemy_start_locations")
-                    and self.bot.enemy_start_locations
-                ):
-                    enemy_base = self.bot.enemy_start_locations[0]
-                    workers_near_base = enemy_workers.closer_than(20, enemy_base)
-                    if workers_near_base:
-                        return workers_near_base.center
-                return enemy_workers.center
-
-            # Priority 2: Isolated tech buildings
-            tech_buildings = self.bot.enemy_structures.filter(
-                lambda s: s.type_id
-                in {
-                    UnitTypeId.TWILIGHTCOUNCIL,
-                    UnitTypeId.TEMPLARARCHIVE,
-                    UnitTypeId.DARKSHRINE,
-                    UnitTypeId.FUSIONCORE,
-                    UnitTypeId.GHOSTACADEMY,
-                    UnitTypeId.INFESTATIONPIT,
-                    UnitTypeId.ULTRALISKCAVERN,
-                    UnitTypeId.SPIRE,
-                }
-            )
-
-            if tech_buildings:
-                return tech_buildings.first.position
-
-            # Fallback: Enemy base
-            if (
-                hasattr(self.bot, "enemy_start_locations")
-                and self.bot.enemy_start_locations
-            ):
-                return self.bot.enemy_start_locations[0]
-
-        except ImportError:
+        except Exception:
             pass
 
-        return None
