@@ -50,19 +50,20 @@
 
 ## 우선순위 중간 🟡
 
-### 4. 전투 로직 성능 최적화 (프레임 스킵)
-**문제점:**
-- 전투 로직이 매 프레임마다 실행되어 성능 저하
-- 복잡한 마이크로 계산이 FPS 감소 유발
+### 4. 전투 로직 성능 최적화 (프레임 스킵) — ✅ 2026-07-24 수정 완료
+**문제점 (원인 확인됨):**
+- `MicroFocusMode.update()`가 상황별 실행 간격(평시 8프레임 / 경계 5 / 전투 3 / 위급 1)을
+  올바르게 계산해서 반환하고 있었으나, `bot_step_integration.py`가 그 반환값(`micro_interval`)을
+  변수에 저장만 하고 실제로 사용하지 않아 `AdvancedMicroControllerV3.on_step()`이 매 프레임
+  실행되고 있었음 (계산은 있었지만 결선이 안 된 dead code).
 
-**해결 방안:**
-- 전투 로직을 3-5 프레임마다 실행 (현재: 매 프레임)
-- 긴급 상황에서만 매 프레임 실행
-- 유닛 수에 따라 동적으로 프레임 스킵 조절
+**해결 완료:**
+- `bot_step_integration.py`의 MicroV3 호출부에 `iteration % micro_interval == 0` 가드 추가.
+- 회귀 확인: `wicked_zerg_challenger` 테스트 661/661 통과, pyflakes로 dead-code 경고 소거 확인.
 
-**파일:**
-- `wicked_zerg_challenger/combat_manager.py`
-- `wicked_zerg_challenger/combat/micro_combat.py`
+**참고 파일:**
+- `wicked_zerg_challenger/bot_step_integration.py` (가드 추가 위치)
+- `wicked_zerg_challenger/micro_focus_mode.py` (간격 계산 로직, 변경 없음)
 
 ---
 

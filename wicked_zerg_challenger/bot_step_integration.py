@@ -2355,7 +2355,13 @@ class BotStepIntegrator:
                 await self._safe_manager_step(self.bot.micro, iteration, "Micro")
 
             # 10.1 *** Advanced Micro Controller V3 (Phase 15 - 고급 마이크로) ***
-            if hasattr(self.bot, "micro_v3") and self.bot.micro_v3:
+            # * micro_interval(MicroFocusMode가 계산한 실행 간격)을 실제로 적용 *
+            # * 평시 8프레임마다, 전투 시 3프레임마다, 위급 시 매 프레임 실행 *
+            if (
+                hasattr(self.bot, "micro_v3")
+                and self.bot.micro_v3
+                and iteration % micro_interval == 0
+            ):
                 start_time = self._logic_tracker.start_logic("MicroV3")
                 try:
                     await self.bot.micro_v3.on_step(iteration)
