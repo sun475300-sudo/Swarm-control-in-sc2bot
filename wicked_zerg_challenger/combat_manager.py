@@ -402,7 +402,7 @@ class CombatManager:
                 continue
             for base in bases:
                 try:
-                    if enemy.distance_to(base) < 25:
+                    if self._distance_between(enemy, base) < 25:
                         return True
                 except Exception:
                     continue
@@ -689,7 +689,9 @@ class CombatManager:
 
                 expansions = []
                 for base in enemy_bases:
-                    if base.distance_to(enemy_start) > 15:  # 본진에서 15거리 이상
+                    if (
+                        self._distance_between(base, enemy_start) > 15
+                    ):  # 본진에서 15거리 이상
                         expansions.append(base)
 
                 if expansions:
@@ -697,7 +699,9 @@ class CombatManager:
                     if hasattr(self.bot, "start_location"):
                         target_expansion = min(
                             expansions,
-                            key=lambda b: b.distance_to(self.bot.start_location),
+                            key=lambda b: self._distance_between(
+                                b, self.bot.start_location
+                            ),
                         )
                         # Priority 90 (매우 높음)
                         tasks_to_execute.append(
@@ -739,7 +743,7 @@ class CombatManager:
                             start = self.bot.start_location
                             exp_locs = sorted(
                                 list(self.bot.expansion_locations.keys()),
-                                key=lambda p: p.distance_to(start),
+                                key=lambda p: self._distance_between(p, start),
                             )
                         else:
                             exp_locs = list(self.bot.expansion_locations.keys())
@@ -754,7 +758,8 @@ class CombatManager:
                         if hasattr(self.bot, "townhalls") and self.bot.townhalls.exists:
                             main_base = self.bot.townhalls.first
                             closest_rock = min(
-                                expansion_rocks, key=lambda r: r.distance_to(main_base)
+                                expansion_rocks,
+                                key=lambda r: self._distance_between(r, main_base),
                             )
                             # * 높은 우선순위 (55) - 확장 전에 미리 암석 제거! *
                             tasks_to_execute.append(("clear_rocks", closest_rock, 55))
@@ -838,9 +843,9 @@ class CombatManager:
                 if rally_units:
                     for unit in rally_units:
                         # 이미 근처면 대기
-                        if unit.distance_to(target) > 10:
+                        if self._distance_between(unit, target) > 10:
                             self.bot.do(unit.attack(target))  # Attack-move to rally
-                        elif unit.distance_to(target) > 5:
+                        elif self._distance_between(unit, target) > 5:
                             self.bot.do(unit.move(target))
 
                     for u in rally_units:
@@ -965,7 +970,7 @@ class CombatManager:
                                 and e.can_attack
                                 and getattr(e.type_id, "name", "")
                                 not in ["SCV", "PROBE", "DRONE", "MULE", "LARVA", "EGG"]
-                                and e.distance_to(u) < 10
+                                and self._distance_between(e, u) < 10
                             ]
                             if len(nearby_combat) >= 3:
                                 self._harass_retreating_tags.add(u.tag)
@@ -1219,7 +1224,7 @@ class CombatManager:
                 nearby_enemies = [
                     e
                     for e in enemy_units
-                    if e.distance_to(th.position) < detection_range
+                    if self._distance_between(e, th.position) < detection_range
                 ]
 
             if not nearby_enemies:
@@ -1338,7 +1343,7 @@ class CombatManager:
                 enemy_type = getattr(enemy.type_id, "name", "").upper()
                 if (
                     enemy_type in high_priority_targets
-                    and enemy.distance_to(threat_position) < 15
+                    and self._distance_between(enemy, threat_position) < 15
                 ):
                     priority_target = enemy
                     break
@@ -1354,7 +1359,7 @@ class CombatManager:
         for queen in queens:
             try:
                 # 이미 가까이 있으면 공격, 아니면 이동
-                if queen.distance_to(threat_position) < 8:
+                if self._distance_between(queen, threat_position) < 8:
                     target = priority_target if priority_target else threat_position
                     self.bot.do(queen.attack(target))
                 else:
@@ -1370,7 +1375,9 @@ class CombatManager:
             spines_in_range = (
                 spines.closer_than(20, threat_position)
                 if hasattr(spines, "closer_than")
-                else [s for s in spines if s.distance_to(threat_position) < 20]
+                else [
+                    s for s in spines if self._distance_between(s, threat_position) < 20
+                ]
             )
 
             for spine in spines_in_range:
@@ -1380,7 +1387,9 @@ class CombatManager:
                         enemies_near = enemy_units.closer_than(12, spine)
                     else:
                         enemies_near = [
-                            e for e in enemy_units if e.distance_to(spine) < 12
+                            e
+                            for e in enemy_units
+                            if self._distance_between(e, spine) < 12
                         ]
 
                     if enemies_near:
@@ -1393,14 +1402,16 @@ class CombatManager:
                         ]
                         if priority_enemies:
                             target = min(
-                                priority_enemies, key=lambda e: e.distance_to(spine)
+                                priority_enemies,
+                                key=lambda e: self._distance_between(e, spine),
                             )
                         else:
                             if hasattr(enemies_near, "closest_to"):
                                 target = enemies_near.closest_to(spine)
                             else:
                                 target = min(
-                                    enemies_near, key=lambda e: e.distance_to(spine)
+                                    enemies_near,
+                                    key=lambda e: self._distance_between(e, spine),
                                 )
                         self.bot.do(spine.attack(target))
                 except (AttributeError, TypeError) as e:
@@ -1409,7 +1420,10 @@ class CombatManager:
         # 다른 유닛들 방어 (우선순위 타겟 집중)
         for unit in other_units:
             try:
-                if priority_target and unit.distance_to(priority_target) < 10:
+                if (
+                    priority_target
+                    and self._distance_between(unit, priority_target) < 10
+                ):
                     # 고위협 유닛에 집중
                     self.bot.do(unit.attack(priority_target))
                 else:
@@ -1765,7 +1779,9 @@ class CombatManager:
                         e for e in enemy_units if getattr(e, "is_flying", False)
                     ]
                     if air_enemies:
-                        target = min(air_enemies, key=lambda e: e.distance_to(unit))
+                        target = min(
+                            air_enemies, key=lambda e: self._distance_between(e, unit)
+                        )
 
                 # 공중 유닛 없으면 가장 가까운 적
                 if not target:
@@ -1852,7 +1868,7 @@ class CombatManager:
                 if drop_detected and drop_pos and army_units:
                     # 드롭 위치에서 가장 가까운 유닛 4~6기 파견
                     sorted_by_dist = sorted(
-                        army_units, key=lambda u: u.distance_to(drop_pos)
+                        army_units, key=lambda u: self._distance_between(u, drop_pos)
                     )
                     defenders = sorted_by_dist[: min(6, len(sorted_by_dist))]
                     for unit in defenders:
@@ -2253,14 +2269,15 @@ class CombatManager:
             # * 우선순위 1: 생산 건물 (병력 차단)
             if production_buildings:
                 sorted_production = sorted(
-                    production_buildings, key=lambda b: b.distance_to(our_base)
+                    production_buildings,
+                    key=lambda b: self._distance_between(b, our_base),
                 )
                 targets.extend([p.position for p in sorted_production[:2]])  # 최대 2개
 
             # * 우선순위 2: 적 기지 (경제 차단)
             if enemy_bases:
                 sorted_bases = sorted(
-                    enemy_bases, key=lambda b: b.distance_to(our_base)
+                    enemy_bases, key=lambda b: self._distance_between(b, our_base)
                 )
                 targets.extend([base.position for base in sorted_bases[:3]])  # 최대 3개
 
@@ -2309,11 +2326,11 @@ class CombatManager:
                 close_rocks = [
                     rock
                     for rock in destructible_rocks
-                    if rock.distance_to(our_base) < 50
+                    if self._distance_between(rock, our_base) < 50
                 ]
                 if close_rocks:
                     closest_rock = min(
-                        close_rocks, key=lambda r: r.distance_to(our_base)
+                        close_rocks, key=lambda r: self._distance_between(r, our_base)
                     )
                     if self.bot.iteration % 50 == 0:
                         self.logger.info(
@@ -2380,14 +2397,18 @@ class CombatManager:
                 # 모든 적 건물 중 가장 가까운 것
                 all_targets = townhall_targets + production_targets + other_targets
                 if all_targets:
-                    return min(all_targets, key=lambda s: s.distance_to(our_base))
+                    return min(
+                        all_targets, key=lambda s: self._distance_between(s, our_base)
+                    )
 
             # 1. 기지 우선 (가장 가까운 것)
             if townhall_targets:
                 if hasattr(self.bot, "start_location"):
                     return min(
                         townhall_targets,
-                        key=lambda s: s.distance_to(self.bot.start_location),
+                        key=lambda s: self._distance_between(
+                            s, self.bot.start_location
+                        ),
                     )
                 return townhall_targets[0]
 
@@ -2396,7 +2417,9 @@ class CombatManager:
                 if hasattr(self.bot, "start_location"):
                     return min(
                         production_targets,
-                        key=lambda s: s.distance_to(self.bot.start_location),
+                        key=lambda s: self._distance_between(
+                            s, self.bot.start_location
+                        ),
                     )
                 return production_targets[0]
 
@@ -2405,7 +2428,9 @@ class CombatManager:
                 if hasattr(self.bot, "start_location"):
                     return min(
                         other_targets,
-                        key=lambda s: s.distance_to(self.bot.start_location),
+                        key=lambda s: self._distance_between(
+                            s, self.bot.start_location
+                        ),
                     )
                 return other_targets[0]
 
@@ -2446,7 +2471,7 @@ class CombatManager:
             # 적 시작 위치에서 가까운 순으로 정렬
             if search_locations:
                 enemy_start = search_locations[0]
-                exp_list.sort(key=lambda pos: pos.distance_to(enemy_start))
+                exp_list.sort(key=lambda pos: self._distance_between(pos, enemy_start))
 
             # 이미 점령한 위치 제외
             our_bases = set()
@@ -2456,7 +2481,7 @@ class CombatManager:
 
             for exp_pos in exp_list:
                 # 우리 기지 근처는 스킵
-                if any(exp_pos.distance_to(base) < 5 for base in our_bases):
+                if any(self._distance_between(exp_pos, base) < 5 for base in our_bases):
                     continue
                 search_locations.append(exp_pos)
 
@@ -2635,7 +2660,9 @@ class CombatManager:
                         nearby_enemies = enemy_units.closer_than(25, townhall)
                     else:
                         nearby_enemies = [
-                            e for e in enemy_units if e.distance_to(townhall) < 25
+                            e
+                            for e in enemy_units
+                            if self._distance_between(e, townhall) < 25
                         ]
 
                     if nearby_enemies:
@@ -2652,7 +2679,9 @@ class CombatManager:
                             nearby_enemies = enemy_units.closer_than(15, unit)
                         else:
                             nearby_enemies = [
-                                e for e in enemy_units if e.distance_to(unit) < 15
+                                e
+                                for e in enemy_units
+                                if self._distance_between(e, unit) < 15
                             ]
 
                         if nearby_enemies:
@@ -2668,7 +2697,9 @@ class CombatManager:
                             nearby_enemies = enemy_units.closer_than(10, worker)
                         else:
                             nearby_enemies = [
-                                e for e in enemy_units if e.distance_to(worker) < 10
+                                e
+                                for e in enemy_units
+                                if self._distance_between(e, worker) < 10
                             ]
 
                         if nearby_enemies:
@@ -2769,7 +2800,7 @@ class CombatManager:
             nearby_enemies = enemy_units.closer_than(25, base.position)
         else:
             nearby_enemies = [
-                e for e in enemy_units if e.distance_to(base.position) < 25
+                e for e in enemy_units if self._distance_between(e, base.position) < 25
             ]
 
         if not nearby_enemies:
@@ -2867,11 +2898,15 @@ class CombatManager:
         if hasattr(enemy_units, "closer_than"):
             # Use SC2 Units collection for better performance
             enemy_workers = [
-                w for w in workers_only if w.distance_to(self._air_harass_target) < 15
+                w
+                for w in workers_only
+                if self._distance_between(w, self._air_harass_target) < 15
             ]
         else:
             enemy_workers = [
-                w for w in workers_only if w.distance_to(self._air_harass_target) < 15
+                w
+                for w in workers_only
+                if self._distance_between(w, self._air_harass_target) < 15
             ]
 
         if enemy_workers:
@@ -3003,7 +3038,7 @@ class CombatManager:
                 if hasattr(e, "can_attack")
                 and e.can_attack
                 and getattr(e.type_id, "name", "") not in ["SCV", "PROBE", "DRONE"]
-                and e.distance_to(harass_target) < 15
+                and self._distance_between(e, harass_target) < 15
             ]
 
         # 방어 병력이 3기 이상이면 전체 후퇴 (nearest base)
@@ -3023,13 +3058,15 @@ class CombatManager:
             e
             for e in enemy_units
             if getattr(e.type_id, "name", "") in ["SCV", "PROBE", "DRONE"]
-            and e.distance_to(harass_target) < 20
+            and self._distance_between(e, harass_target) < 20
         ]
 
         if enemy_workers:
             # 일꾼 공격
             for ling in fight_units:
-                closest_worker = min(enemy_workers, key=lambda w: w.distance_to(ling))
+                closest_worker = min(
+                    enemy_workers, key=lambda w: self._distance_between(w, ling)
+                )
                 try:
                     self.bot.do(ling.attack(closest_worker))
                 except (AttributeError, TypeError):
@@ -3200,7 +3237,7 @@ class CombatManager:
             if self.bot.townhalls.amount >= 2:
                 p1 = self.bot.townhalls[0].position
                 p2 = self.bot.townhalls[1].position
-                rally = p1.towards(p2, p1.distance_to(p2) * 0.5)
+                rally = p1.towards(p2, self._distance_between(p1, p2) * 0.5)
             else:
                 rally = self.bot.townhalls[0].position
         if rally:
@@ -3230,7 +3267,9 @@ class CombatManager:
 
         for target in targets:
             nearby = [
-                t for t in targets if t.tag != target.tag and target.distance_to(t) < 3
+                t
+                for t in targets
+                if t.tag != target.tag and self._distance_between(target, t) < 3
             ]
             if len(nearby) >= best_nearby_count:
                 best_nearby_count = len(nearby)
@@ -3506,7 +3545,9 @@ class CombatManager:
 
             # 근처 적 확인
             nearby_enemies = [
-                e for e in enemy_units if e.distance_to(th.position) < base_range
+                e
+                for e in enemy_units
+                if self._distance_between(e, th.position) < base_range
             ]
 
             if not nearby_enemies:
@@ -3671,7 +3712,7 @@ class CombatManager:
         closest_dist = None
         for enemy in enemy_units:
             try:
-                dist = unit.distance_to(enemy)
+                dist = self._distance_between(unit, enemy)
             except (AttributeError, TypeError) as e:
                 # Distance calculation failed
                 continue
@@ -3878,7 +3919,9 @@ class CombatManager:
         threat_enemies = []
 
         for th in self.bot.townhalls:
-            nearby_enemies = [e for e in enemy_units if e.distance_to(th.position) < 30]
+            nearby_enemies = [
+                e for e in enemy_units if self._distance_between(e, th.position) < 30
+            ]
 
             if not nearby_enemies:
                 continue
@@ -4041,7 +4084,8 @@ class CombatManager:
             if high_priority_targets:
                 # 가장 가까운 고위협 타겟
                 main_target = min(
-                    high_priority_targets, key=lambda e: e.distance_to(threat_position)
+                    high_priority_targets,
+                    key=lambda e: self._distance_between(e, threat_position),
                 )
 
                 for unit in army_units:
@@ -4094,15 +4138,19 @@ class CombatManager:
                         continue
 
                 # 일반 유닛: 우선순위 타겟 공격
-                if unit.distance_to(threat_position) < 15:
+                if self._distance_between(unit, threat_position) < 15:
                     if priority_targets:
                         # 가장 가까운 우선순위 타겟
                         closest_priority = min(
-                            priority_targets, key=lambda e: e.distance_to(unit)
+                            priority_targets,
+                            key=lambda e: self._distance_between(e, unit),
                         )
                         self.bot.do(unit.attack(closest_priority))
                     elif threat_enemies:
-                        closest = min(threat_enemies, key=lambda e: e.distance_to(unit))
+                        closest = min(
+                            threat_enemies,
+                            key=lambda e: self._distance_between(e, unit),
+                        )
                         self.bot.do(unit.attack(closest))
                     else:
                         self.bot.do(unit.attack(threat_position))
@@ -4351,7 +4399,9 @@ class CombatManager:
             last_stand_mode = defeat_status.get("last_stand_required", False)
 
         # 위협 근처 일꾼만 방어 (15 거리 내)
-        nearby_workers = [w for w in workers if w.distance_to(threat_position) < 15]
+        nearby_workers = [
+            w for w in workers if self._distance_between(w, threat_position) < 15
+        ]
 
         if not nearby_workers:
             return
@@ -4383,7 +4433,10 @@ class CombatManager:
         for worker in defense_workers:
             try:
                 # * CRITICAL: 일꾼이 기지에서 12거리 이상 벗어나면 즉시 복귀 *
-                if closest_townhall and worker.distance_to(closest_townhall) > 12:
+                if (
+                    closest_townhall
+                    and self._distance_between(worker, closest_townhall) > 12
+                ):
                     self.bot.do(
                         worker.gather(
                             self.bot.mineral_field.closest_to(closest_townhall)
@@ -4396,12 +4449,14 @@ class CombatManager:
                     base_close_threats = [
                         e
                         for e in threat_enemies
-                        if closest_townhall and e.distance_to(closest_townhall) < 12
+                        if closest_townhall
+                        and self._distance_between(e, closest_townhall) < 12
                     ]
                     if base_close_threats:
                         # 일꾼에게 가까운 위협 공격
                         closest = min(
-                            base_close_threats, key=lambda e: e.distance_to(worker)
+                            base_close_threats,
+                            key=lambda e: self._distance_between(e, worker),
                         )
                         self.bot.do(worker.attack(closest))
                     else:
@@ -4415,7 +4470,8 @@ class CombatManager:
                     # 위협 위치가 기지 근처(12거리)에 있을 때만 공격
                     if (
                         closest_townhall
-                        and threat_position.distance_to(closest_townhall) < 12
+                        and self._distance_between(threat_position, closest_townhall)
+                        < 12
                     ):
                         self.bot.do(worker.attack(threat_position))
                     else:
@@ -4635,7 +4691,9 @@ class CombatManager:
 
             # 확장 기지 주변 30 거리 내 적 확인
             nearby_enemies = [
-                e for e in enemy_units if e.distance_to(expansion.position) < 30
+                e
+                for e in enemy_units
+                if self._distance_between(e, expansion.position) < 30
             ]
 
             if nearby_enemies:
@@ -4683,7 +4741,9 @@ class CombatManager:
             return
 
         # 확장 기지에서 가까운 유닛들 찾기 (50 거리 이내)
-        nearby_army = [u for u in army_units if u.distance_to(expansion.position) < 50]
+        nearby_army = [
+            u for u in army_units if self._distance_between(u, expansion.position) < 50
+        ]
 
         # 최소 8기, 최대 12기 파견
         defense_force = nearby_army[:12] if len(nearby_army) >= 8 else nearby_army
@@ -4691,7 +4751,7 @@ class CombatManager:
         if not defense_force:
             # 근처에 병력이 없으면 멀리서라도 파견
             defense_force = sorted(
-                army_units, key=lambda u: u.distance_to(expansion.position)
+                army_units, key=lambda u: self._distance_between(u, expansion.position)
             )[:8]
 
         if not defense_force:
@@ -4731,7 +4791,7 @@ class CombatManager:
         for queen in queens:
             try:
                 target = priority_target if priority_target else threat_center
-                if queen.distance_to(expansion.position) < 15:
+                if self._distance_between(queen, expansion.position) < 15:
                     self.bot.do(queen.attack(target))
                 else:
                     self.bot.do(queen.move(expansion.position))
@@ -4787,7 +4847,8 @@ class CombatManager:
         if enemy_structures and enemy_structures.exists:
             # 가장 가까운 적 건물
             target = min(
-                enemy_structures, key=lambda s: s.distance_to(self.bot.start_location)
+                enemy_structures,
+                key=lambda s: self._distance_between(s, self.bot.start_location),
             )
 
             # 모든 반격 병력 투입
