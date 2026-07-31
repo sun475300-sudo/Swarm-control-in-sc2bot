@@ -112,6 +112,24 @@ class TestSprint4LurkerMicro(unittest.TestCase):
         self.assertIn(1, handled)
         self.assertTrue(any(action[0] == "ability" for action in bot.actions))
 
+    def test_burrowed_lurker_left_to_lurker_ambush_system(self):
+        """ROADMAP Task 4.1 regression: once burrowed, manage_lurker_positioning
+        must not issue burrow-up/move commands — LurkerAmbushSystem owns all
+        burrowed-lurker decisions (ambush/retreat/unburrow). Before this fix,
+        both systems issued conflicting burrow/unburrow commands to the same
+        unit every step."""
+        bot = FakeBot()
+        lurker = FakeUnit(1, "LURKERMP", Point(11, 10))
+        lurker.is_burrowed = True
+        bot.units = [lurker]
+        bot.enemy_units = [FakeUnit(50, "MARINE", Point(100, 100))]
+        micro = MicroCombat(bot)
+
+        handled = micro.manage_lurker_positioning(100)
+
+        self.assertEqual(handled, set())
+        self.assertEqual(bot.actions, [])
+
 
 class TestSprint4MutaliskMicro(unittest.TestCase):
     def test_mutalisk_retreats_from_anti_air_range(self):
