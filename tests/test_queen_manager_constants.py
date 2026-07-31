@@ -71,3 +71,38 @@ def test_queen_energy_thresholds_in_valid_range():
         GameConfig.QUEEN_TRANSFUSE_ENERGY_THRESHOLD,
     ):
         assert 0 <= value <= 200, f"queen energy threshold out of range: {value}"
+
+
+class _NoBlackboardBot:
+    """Bot stub with no townhalls/enemy_units/blackboard at all."""
+
+
+class _Blackboard:
+    def __init__(self, values):
+        self.values = dict(values)
+
+    def get(self, key, default=None):
+        return self.values.get(key, default)
+
+
+class _FlaggedBot:
+    def __init__(self, queen_defense_mode):
+        self.blackboard = _Blackboard({"queen_defense_mode": queen_defense_mode})
+
+
+def test_should_enter_defense_mode_false_with_no_signal():
+    manager = QueenManager(_NoBlackboardBot())
+    assert manager._should_enter_defense_mode() is False
+
+
+def test_should_enter_defense_mode_honors_strategy_manager_flag():
+    """queen_defense_mode (set by strategy_manager.py's all-in response) must
+    put queens into defense mode even before an enemy army is within the
+    local proximity check's detection range."""
+    manager = QueenManager(_FlaggedBot(queen_defense_mode=True))
+    assert manager._should_enter_defense_mode() is True
+
+
+def test_should_enter_defense_mode_false_once_flag_clears():
+    manager = QueenManager(_FlaggedBot(queen_defense_mode=False))
+    assert manager._should_enter_defense_mode() is False

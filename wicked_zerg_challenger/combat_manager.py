@@ -3290,18 +3290,23 @@ class CombatManager:
         if not combat_ready:
             return  # All units regenerating
 
+        # * MAGIC BOX: Check for splash damage threats *
+        # Must be checked before hit-and-run: hit-and-run actively stacks
+        # Mutalisks together (get_stack_point), which is the opposite of the
+        # spread formation needed against splash damage. Skip the stacking
+        # hit-and-run path whenever a splash threat is present so the spread
+        # formation below actually gets a chance to run.
+        use_magic_box = False
         if self.mutalisk_micro:
+            use_magic_box = self.mutalisk_micro.should_use_magic_box(enemy_units)
+
+        if self.mutalisk_micro and not use_magic_box:
             current_time = getattr(self.bot, "time", 0)
             handled = await self.mutalisk_micro.execute_hit_and_run(
                 combat_ready, enemy_units, self.bot, current_time
             )
             if handled:
                 return
-
-        # * MAGIC BOX: Check for splash damage threats *
-        use_magic_box = False
-        if self.mutalisk_micro:
-            use_magic_box = self.mutalisk_micro.should_use_magic_box(enemy_units)
 
         # Select target
         target = self._select_mutalisk_target(enemy_units)

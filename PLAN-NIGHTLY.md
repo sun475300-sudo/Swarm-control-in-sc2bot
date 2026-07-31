@@ -2,7 +2,80 @@
 
 > Owner: 선우 (sun475300@gmail.com)
 > Maintainer: nightly automation
-> Last refreshed: 2026-07-18
+> Last refreshed: 2026-07-20
+
+---
+
+## 🔴 P0 finding (2026-07-20, still unresolved): PR backlog governance, not code
+
+**517 open PRs, only ~9 ever merged, ever.** Growing 15-23 PRs/day since
+2026-07-02 — far faster than the "daily" cadence this automation is
+supposed to run at. PR #554 (2026-07-19) already did a full triage with a
+ranked merge list (12 PRs, including `CLAUDE.md` guardrail PR #548) and a
+~340-PR stale/duplicate close list. PR #548 already adds the exact
+guardrail needed to stop the pile-up. **Neither is merged**, so neither
+has taken effect — 25+ more duplicate PRs were opened after #554 posted
+this exact warning, because `CLAUDE.md`/this doc's update only take effect
+once merged into `main`, and no session merges its own PR (repo policy).
+**The single highest-leverage action available is for the repo owner to
+merge #548 and #554's recommended list.** No amount of further automated
+diagnosis fixes this — it needs a human to click merge. Also: ~98
+Dependabot alerts (2 critical, 37 high) on `main`, untouched by any open
+PR — separate triage needed.
+
+## 🗂️ Full ROADMAP.md audit (2026-07-20): all ~30 Sprint 1-8 tasks
+
+Static-code audit (5 parallel readers, one per sprint group) checking each
+task against its literal spec, not just "does a similarly-named function
+exist." Full detail in session transcript; condensed here.
+
+**DONE, matches spec, no action needed:** 1.1 (except referenced file
+`build_order_executor.py` doesn't exist — renamed to `build_order_system.py`,
+doc is stale), 1.2, 1.3, 1.4, 2.1, 2.3, 3.2, 3.4, 5.1, 5.2, 6.3, 8.1
+(tooling only, no games run), 8.2 (tooling exists at
+`tools/package_for_aiarena.py`, not the roadmap's named path).
+
+**Fixed this session (commit `43298f3`):**
+- 4.2 Mutalisk magic-box formation — was practically unreachable because
+  the stacking hit-and-run path ran unconditionally before
+  `should_use_magic_box()` was checked.
+- 5.3 `queen_defense_mode` — set by strategy_manager's all-in response but
+  never read by queen_manager. Wiring this in required also fixing a
+  latent permanent-latch bug (flags were only cleared when the enemy
+  expanded, never when an approaching army was repelled/retreated).
+
+**PARTIAL / real gaps still open, prioritized by win-rate impact:**
+
+| Task | Gap | Effort |
+|---|---|---|
+| 3.1 + 3.3 | `production_resilience.py` (the actual live larva-spend authority, called every step) never receives threat-level drone/army throttling — it owns its own disconnected `EconomyCombatBalancer` whose `apply_threat_level()` is never called. The roadmap's `spend_larva()` priority function is fully spec-compliant but is dead code — real larva spend is split across `economy_manager.py`, `production_controller.py`, and `production_resilience.py` (~2200 lines), uncoordinated. | medium-large |
+| 4.1 | Two independent, live lurker burrow/unburrow systems (`combat/micro_combat.py:manage_lurker_positioning` and `combat/lurker_ambush.py:LurkerAmbushSystem`) issue commands to the same `LURKERMP` units every frame — likely command-thrashing. | small (pick one authority) |
+| 4.4 | Two independent, live multi-prong-attack systems (`combat_manager._execute_multi_prong_attack`, triggered at 60+ supply; `bot_step_integration`'s `MultiProngCoordinator`, runs every step) can issue conflicting orders on overlapping units. A third module, `combat/multiprong_attack.py`, is fully dead. | small-medium |
+| 4.3 | Roach-hydra "retreat" branch is a copy-paste no-op (both if/else arms do the same thing) and no caller ever passes `retreat=True` anyway — rear-guard-on-disengage is unimplemented in practice. | small-medium |
+| 4.5 | The roadmap-spec'd `manage_combat`/`_should_skip_combat_frame` frame-skip function is never called; a different, more sophisticated unit-count-based dynamic skip runs instead (not a bug, just doc/reality mismatch — plus a third, fully dead `FrameSkipManager` module). | small (delete dead code, update doc) |
+| 6.1 | RL micro path has per-call timeout fallback but no session-level "auto-disable if underperforming rule-based" — and `use_rl_micro` is never set `True` anywhere, so it's fully dormant by default (matches spec's "default off," just never actually exercised). | small |
+| 6.2 | Stage-3 curriculum reward + transfer-learning logic is correct but `configure_stage3()` has no live caller — no training script drives macro→combat→combined progression. | medium |
+| 7.1 | Building-placement did move out of `strategy_manager.py` into `building_manager.py` as intended, but counter/composition/timing-attack logic (~5,157 combined lines across `strategy_manager.py` + the actually-live `strategy_manager_v2.py`) still far exceeds "strategy-state decisions only." | large |
+| 7.2 | `utils/distance_cache.py` is correctly implemented but barely adopted — `strategy_manager.py` doesn't use it at all (0 references, 8 raw `distance_to` calls); `combat_manager.py`/`economy_manager.py` use it at only ~3-4 call sites each vs dozens of raw calls. | medium (mechanical, repo-wide) |
+| 7.3 | `utils/game_constants.py` is complete and well-designed but `strategy_manager.py`/`strategy_manager_v2.py` (largest files) never import it at all — 0 `GameFrequencies`/`EconomyConstants` usage despite raw magic-number iteration checks throughout. | medium (mechanical) |
+
+**Cleanup-only findings (no win-rate impact, real maintenance/confusion risk):**
+~5,200 lines of fully dead/unwired code across 12 `combat/` modules
+(`air_unit_manager.py`, `baneling_bomb.py` — confusingly named near-dupe of
+the *live* `baneling_tactics.py`, `multiprong_attack.py`,
+`lurker_positioning.py`, `queen_walk.py`, `viper_tactics.py`, etc.); two
+incompatible same-named `ThreatLevel` enums in `economy_manager.py` vs
+`blackboard.py`; `local_training/self_play.py` orphaned duplicate of
+`training_pipeline.py`/`self_play_league.py`; stale `RLAGENT_DISABLED.md`
+contradicting current code (RL agent is in fact re-enabled under
+`train_mode`); dead unreachable block in `economy_manager.py:2296-2334`;
+bare `except Exception: continue/pass` with no logging in
+`combat/base_defense.py` and `early_defense_system.py` hot paths (silently
+swallows real bugs); `scouting_system.py`'s `deploy_changeling()` is a dead
+duplicate missing the spec's energy≥50 gate (the live, correct
+implementation is in `scouting/advanced_scout_system_v2.py`);
+`enemy_expansion_spotted` blackboard key is set 3x, read 0x; no
+Hydralisk-Den-existence gate on the air-threat response fallback.
 
 ---
 
