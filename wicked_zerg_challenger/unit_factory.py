@@ -20,18 +20,18 @@ except ImportError:  # Fallbacks for tooling environments
 class UnitFactory:
     def __init__(self, bot, blackboard=None, config=None):
         """
-        UnitFactory - Blackboard ???? ?類????
+        UnitFactory - larva-spend decision engine, driven by the Blackboard.
 
         Args:
-            bot: SC2 Bot ?嶺뚮ㅎ?ц짆???⑤８痢?
-            blackboard: GameStateBlackboard ?嶺뚮ㅎ?ц짆???⑤８痢?(Optional)
-            config: GameConfig ?嶺뚮ㅎ?ц짆???⑤８痢?(Optional)
+            bot: SC2 bot instance
+            blackboard: GameStateBlackboard instance (Optional)
+            config: GameConfig instance (Optional)
         """
         self.bot = bot
         self.blackboard = blackboard
         self.config = config
 
-        # Config ??れ삀??뫢????源놁젳 (fallback to defaults)
+        # Load thresholds from config (fallback to defaults)
         if config:
             self.min_gas_reserve = config.MIN_GAS_RESERVE
             self.larva_pressure_threshold = config.LARVA_PRESSURE_THRESHOLD
@@ -41,44 +41,46 @@ class UnitFactory:
 
         self.min_mineral_reserve_for_gas = 150
         self.gas_unit_ratio_target = (
-            0.50  # * BALANCED: 0.60 -> 0.50 (??筌먦끉?????Β?띾쭡) *
+            0.50  # * BALANCED: 0.60 -> 0.50 (lower gas-unit target) *
         )
         self.larva_gas_ratio = (
-            0.45  # * BALANCED: 0.6 -> 0.45 (雅?퍔瑗띰㎖?덈빝?????ル늅筌?55%) *
+            0.45  # * BALANCED: 0.6 -> 0.45 (avoid over-committing to gas units) *
         )
         self.max_larva_spend_per_step = 5
 
         # * COMBAT REINFORCEMENT SYSTEM *
-        # ??ш낄援??濚??怨뚮옖筌???野껊챶爾?????ш낄援η뵳???筌?痢??        self._combat_mode = False
+        # Detects active combat and temporarily raises the larva-spend rate
         self._combat_mode = False
         self._last_combat_check = 0
-        self._combat_check_interval = 22  # ~1?縕?袁?맪??癲ル슪???띿물?
-        self._combat_larva_spend = 5  # ??ш낄援??濚???癲ル슢??? ???⑥ロ떋 ?????(3 -> 5)
+        self._combat_check_interval = 22  # ~1s at normal game speed
+        self._combat_larva_spend = (
+            5  # spend more larva per step while fighting (3 -> 5)
+        )
 
-        # ???ろ꼥???꾨룱???좊읈??????ル늅筌??????- * RE-BALANCED: ??筌먦끉????獄쏅똾???怨뚮옖???*
+        # Per-race gas-unit ratio targets - * RE-BALANCED: lower gas-unit targets *
         self.race_gas_ratios = {
-            "Terran": 0.50,  # * BALANCED: 0.65 -> 0.50 (雅?퍔瑗띰㎖?덈빝?????? ?嶺뚮㉡?€쾮? *
-            "Protoss": 0.55,  # * BALANCED: 0.70 -> 0.55 (??筌먦끉?????Β?띾쭡) *
+            "Terran": 0.50,  # * BALANCED: 0.65 -> 0.50 (avoid over-committing to gas) *
+            "Protoss": 0.55,  # * BALANCED: 0.70 -> 0.55 (lower gas-unit target) *
             "Zerg": 0.45,  # * BALANCED: 0.55 -> 0.45 *
             "Unknown": 0.50,  # * BALANCED: 0.60 -> 0.50 *
         }
 
     def _should_save_larva(self) -> bool:
         """
-        Rogue Tactics?????⑥ロ떋 ?嶺뚮ㅎ?닻??癲ル슢?꾤땟????嶺뚮Ĳ?됮?
+        Determine whether to save larva for Rogue Tactics (e.g. a baneling drop).
 
-        癲ル슢??첎???釉랁돯???筌먦끇??????ш끽維?????ш낄援?????⑥ロ떋????ш낄猷쀨린????嚥▲꺂痢롳┼??넊? 癲ル슪???띿물??筌뤾퍓???
+        Skips normal larva spending while a rogue-tactics play is being staged.
 
         Returns:
-            ???⑥ロ떋????ш낄猷쀨린????嚥???True
+            True if larva should be saved instead of spent normally.
         """
-        # Strategy Manager 癲ル슪???띿물?
+        # Strategy Manager check
         strategy = getattr(self.bot, "strategy_manager", None)
         if strategy and hasattr(strategy, "should_save_larva"):
             if strategy.should_save_larva():
                 return True
 
-        # Rogue Tactics Manager 癲ル슣????癲ル슪???띿물?
+        # Rogue Tactics Manager check
         rogue = getattr(self.bot, "rogue_tactics", None)
         if rogue:
             if getattr(rogue, "larva_saving_active", False):
@@ -90,7 +92,7 @@ class UnitFactory:
 
     def _update_gas_ratio_target(self) -> None:
         """
-        ??? ???ろ꼥??????ㅻ깹????좊읈??????ル늅筌??????????깆뱾 ?釉뚰???
+        Recompute the gas-unit ratio target based on the detected enemy race.
         """
         # Strategy Manager에서 적 종족 정보 사용
         strategy = getattr(self.bot, "strategy_manager", None)
@@ -103,7 +105,7 @@ class UnitFactory:
                 )
                 return
 
-        # 癲ル슣???????ろ꼥???嶺뚮Ĳ?됮?
+        # Fallback: detect enemy race directly from the bot
         enemy_race = getattr(self.bot, "enemy_race", None)
         if enemy_race:
             race_str = str(enemy_race)
@@ -113,7 +115,7 @@ class UnitFactory:
                     return
 
     def _is_emergency_mode(self) -> bool:
-        """Emergency Mode ?嶺뚮Ĳ?됮?- ??筌먦끉?????????굿? ???Β?띾쭡"""
+        """Emergency Mode check - lowers the gas-unit ratio target when true"""
         strategy = getattr(self.bot, "strategy_manager", None)
         if strategy:
             return getattr(strategy, "emergency_active", False)
@@ -158,7 +160,7 @@ class UnitFactory:
 
     def _check_combat_mode(self, iteration: int) -> bool:
         """
-        ??ш낄援??癲ル슢?꾤땟????嶺뚮Ĳ?됮?- ??ш낄援??濚욌꼬?댄꺍??ル쵐異??怨뚮옖筌???野껊챶爾??癲ル슢?꾤땟?????筌????
+        Combat-mode check - raises the larva-spend rate while actively fighting.
         Returns:
             True if in combat mode (need reinforcement)
         """
@@ -168,14 +170,14 @@ class UnitFactory:
         self._last_combat_check = iteration
         in_combat = False
 
-        # ??ш낄援????좊즴?? ?釉뚰???쨨??        in_combat = False
+        # Default: not in combat
 
-        # 1. Strategy Manager??emergency_active 癲ル슪???띿물?
+        # 1. Strategy Manager emergency_active check
         strategy = getattr(self.bot, "strategy_manager", None)
         if strategy and getattr(strategy, "emergency_active", False):
             in_combat = True
 
-        # 2. ?????ル늅筌????れ삀?? ?????뗫쐩??????덉툗癲ル슣?? 癲ル슪???띿물?
+        # 2. Nearby enemy units threatening a townhall
         if (
             not in_combat
             and hasattr(self.bot, "enemy_units")
@@ -186,20 +188,18 @@ class UnitFactory:
                 nearby_enemies = [
                     e for e in enemy_units if e.distance_to(th.position) < 35
                 ]
-                if (
-                    len(nearby_enemies) >= 3
-                ):  # 3?????⑤?彛?????ㅼ굣???????뗫쐩??                    in_combat = True
+                if len(nearby_enemies) >= 3:  # 3+ enemies near a base counts as combat
                     in_combat = True
                     break
 
-        # 3. ??ш낄猷???怨뚮옖筌???????癲ル슪???띿물?(?????뭇??繹먮끏????ヂ?筌???
+        # 3. Sudden army supply loss (took a bad fight)
         if not in_combat and hasattr(self.bot, "supply_army"):
             supply_army = self.bot.supply_army
             if not hasattr(self, "_last_supply_army"):
                 self._last_supply_army = supply_army
             else:
                 supply_loss = self._last_supply_army - supply_army
-                if supply_loss > 10:  # 10 ?????뭇??繹먮끏?????⑤?彛??????
+                if supply_loss > 10:  # lost 10+ supply since last check
                     in_combat = True
                 self._last_supply_army = supply_army
 
@@ -208,20 +208,20 @@ class UnitFactory:
 
     async def on_step(self, iteration: int) -> None:
         if not (UnitTypeId and hasattr(self.bot, "larva") and self.bot.larva):
-            # ???⑥ロ떋??좊읈? ???⑤챶?뺧┼????????⑤챶苡?
+            # sc2 lib unavailable, or no larva to spend yet - skip
             return
 
-        # * CRITICAL FIX: ???????3癲ル슢議????嶺뚮㉡?€쾮????ш낄援η뵳???????怨뚮옖???(?嶺뚮Ĳ??????Β?띾쭡) *
-        # ???ル늅筌???獄쏅똾????嶺뚮Ĳ?????袁⑸젻泳?떘???? ????녳뵣????좊즴甕??????モ뵲
+        # * CRITICAL FIX: keep saving minerals for the natural expansion timing window *
+        # Recompute pending-hatchery state up front so all checks below see it
         townhalls = self.bot.townhalls
         base_count = townhalls.amount
         game_time = self.bot.time
         pending_hatch = self.bot.already_pending(UnitTypeId.HATCHERY)
 
-        # 1. ???????癲ル슪???띿물?(1??癲ル슣???????1?類?ｄ펺????醫딅뱠 ??????嶺뚮ㅎ?닻??
-        # ?? ???? ???⑤챸諭??癲꾧퀗????빝?濚욌꼬?댄꺍??ル쵐異?pending) ?嶺뚮ㅎ?닻???????????        pending_hatch = self.bot.already_pending(UnitTypeId.HATCHERY)
+        # Reservation windows below pause larva spending while an expansion is
+        # imminent, so a hatchery isn't starved of minerals by unit production.
 
-        # * FIX: ??ш낄援??濚욌꼬?댄꺍????嶺뚮Ĳ???????れ삀????壤? ???怨룹쓱 (??獄쎼뀙?????Β?띾쭡) *
+        # * FIX: treat a real base threat as overriding the expansion-reserve pause *
         strategy = getattr(self.bot, "strategy_manager", None)
         under_attack = self._has_serious_base_threat()
         if strategy:
@@ -290,13 +290,13 @@ class UnitFactory:
         if hasattr(self.bot, "supply_left") and self.bot.supply_left <= 0:
             return
 
-        # *** FIX: ????????곷츉?棺??짆?삠궘???獄쏅똾??(supply_left < 4 ????좊즴甕?? ***
-        # ?????뭇??繹먮끏????怨????袁⑸젻泳?: 雅?퍔瑗띰㎖??????곷츉?棺??짆?삠궘???獄쏅똾??
+        # *** FIX: preemptively queue an overlord (supply_left < 4) ***
+        # Prevents a supply block from silently stalling production
         if hasattr(self.bot, "supply_left") and self.bot.supply_left < 4:
-            # ???? ??獄쏅똾??濚욌꼬?댄꺍??????곷츉?棺??짆?삠궘?癲ル슪???띿물?
+            # Request an overlord via the Blackboard if available
             pending_overlords = self.bot.already_pending(UnitTypeId.OVERLORD)
             if pending_overlords == 0 and self.bot.can_afford(UnitTypeId.OVERLORD):
-                # Blackboard ????: ????곷츉?棺??짆?삠궘???ヂ??????釉먯뒜??
+                # Blackboard path: request production instead of training directly
                 if self.blackboard:
                     self.blackboard.request_production(
                         unit_type=UnitTypeId.OVERLORD,
@@ -309,7 +309,7 @@ class UnitFactory:
                             f"[*] Preemptive Overlord (supply_left={self.bot.supply_left}) [*]"
                         )
                 else:
-                    # Fallback: 癲ル슣??????獄쏅똾??
+                    # Fallback: train directly if no Blackboard is wired up
                     try:
                         if larva:
                             if hasattr(self.bot, "production") and self.bot.production:
@@ -325,10 +325,10 @@ class UnitFactory:
                     except Exception:
                         pass
 
-        # * COMBAT REINFORCEMENT: ??ш낄援??癲ル슢?꾤땟???癲ル슪???띿물?*
+        # * COMBAT REINFORCEMENT: raise larva-spend rate while fighting *
         in_combat = self._check_combat_mode(iteration)
 
-        # ??ш낄援??濚욌꼬?댄꺍??ル쵐異???癲ル슢??? ???⑥ロ떋 ?????
+        # Spend more larva per step while a fight is active
         if in_combat:
             self.max_larva_spend_per_step = self._combat_larva_spend
             if iteration % 50 == 0:
@@ -337,9 +337,9 @@ class UnitFactory:
                     f"[{int(game_time)}s] COMBAT MODE: Increased production rate"
                 )
         else:
-            self.max_larva_spend_per_step = 3  # ??れ삀???筌?
-        # === StrategyManager ???怨뺣빰??????????ㅻ쿋筌?(via Blackboard or Direct) ===
-        # 癲?????읐?壤???덊렡 ??ш끽維??癲ル슢?????????좊읈???????????좊읈??嶺??????ㅼ굣??
+            self.max_larva_spend_per_step = 3  # normal rate
+        # === Sync strategy mode (via Blackboard or Direct) ===
+        # Prefer the Blackboard; fall back to reading strategy_manager directly
         strategy_mode = "NORMAL"
         emergency_active = False
 
@@ -386,12 +386,12 @@ class UnitFactory:
                                 f"vs {race_name}: gas_ratio_target = {self.gas_unit_ratio_target:.2f}"
                             )
 
-        # Rogue Tactics ???⑥ロ떋 ?嶺뚮ㅎ?닻??癲ル슪???띿물?
+        # Rogue Tactics larva-saving check
         if self._should_save_larva():
-            # ???⑥ロ떋 ?嶺뚮ㅎ?닻??癲ル슢?꾤땟??? 癲ル슔?됭짆?????⑥ロ떋癲?????(????곷츉?棺??짆?삠궘?????ш끽維?????ル늅筌묐?異?
+            # Larva-saving mode active: minimal production (overlord only if needed)
             if iteration % 100 == 0:
                 logger.info("Larva saving mode - minimal production")
-            # ????곷츉?棺??짆?삠궘?諭苡? ??ш끽維???嚥?????獄쏅똾?? ??ш끽維??씤異????袁⑤툞
+            # Still queue an overlord if supply is about to block
             if self.bot.supply_left < 2 and self.bot.can_afford(UnitTypeId.OVERLORD):
                 if self.blackboard:
                     self.blackboard.request_production(
@@ -401,7 +401,7 @@ class UnitFactory:
                         priority=0,  # URGENT
                     )
                 else:
-                    # Fallback: 癲ル슣??????獄쏅똾??
+                    # Fallback: train directly if no Blackboard is wired up
                     try:
                         if hasattr(self.bot, "production") and self.bot.production:
                             await self.bot.production._safe_train(
@@ -413,7 +413,7 @@ class UnitFactory:
                         pass
             return
 
-        # ???ろ꼥???꾨룱???좊읈????????????녿ぅ??熬곣뫀肄?(StrategyManager ???⑤챶援???fallback)
+        # No strategy_manager available - fall back to local gas-ratio update
         if not strategy:
             self._update_gas_ratio_target()
 
@@ -426,8 +426,8 @@ class UnitFactory:
         gas_ratio = gas_units / total_units
         can_spend_gas = vespene >= self.min_gas_reserve
 
-        # *** IMPROVED: ???용봿????源낇꼧?????Β?띾쭡??筌믨퀡彛??釉뚰??ｃ뀋?(????????怨좊뭿 ??筌?痢?? ***
-        # StrictUpgradePriority??좊읈? ??좊읈???? ???怨좊뭿???源끹걬癲????ル늅筌???獄쏅똾??????モ뵲
+        # *** IMPROVED: respect StrictUpgradePriority gas reservations ***
+        # Don't let unit production eat gas that upgrades have reserved
         if hasattr(self.bot, "upgrade_priority") and self.bot.upgrade_priority:
             available_gas = self.bot.upgrade_priority.get_available_gas()
             can_spend_gas = can_spend_gas and available_gas >= self.min_gas_reserve
@@ -440,7 +440,7 @@ class UnitFactory:
             can_spend_gas=can_spend_gas,
         )
 
-        # *** Blackboard ????: ???Β?띾쭡??筌믨퀡彛???? Blackboard????釉먯뒜????⑥???濚밸Ŧ援욃ㅇ?***
+        # *** Blackboard path: request production instead of training directly ***
         if self.blackboard:
             to_request = min(self.max_larva_spend_per_step, len(larva))
 
@@ -452,9 +452,9 @@ class UnitFactory:
                     break
                 unit_requests[unit_type] = unit_requests.get(unit_type, 0) + 1
 
-            # Blackboard????獄쏅똾????釉먯뒜???濚밸Ŧ援욃ㅇ?
+            # Submit the aggregated requests to the Blackboard
             for unit_type, count in unit_requests.items():
-                # ??ш낄援??癲ル슢?꾤땟????쎾퐲????Β?띾쭡??筌믨퀡彛??亦껋꼨援?굢?(MEDIUM -> HIGH)
+                # Combat mode raises request priority (MEDIUM -> HIGH)
                 priority = 1 if in_combat else 2
                 self.blackboard.request_production(
                     unit_type=unit_type,
@@ -463,12 +463,12 @@ class UnitFactory:
                     priority=priority,
                 )
 
-            # ??釉먮폏?遺룹쐺??棺??짆??
+            # Log what was requested
             if iteration % 50 == 0 and unit_requests:
                 logger.info(f"Production requested: {unit_requests}")
 
         else:
-            # Fallback: ProductionController????ш끽維쀨굢?(???????獄쏅똾???袁⑸젻泳???濚욌꼬?댄꺇????癰귙끋源?
+            # Fallback: no Blackboard - go through ProductionController/train directly
             prod_ctrl = getattr(self.bot, "production_controller", None)
             to_spend = 0
             for larva_unit in larva:
@@ -551,14 +551,14 @@ class UnitFactory:
 
         queue: List[object] = []
 
-        # * Strategy Manager????????살쓴勇???ш낄援?뤃???좊즴????????뉖뜤?????Β?띾쭡 *
+        # * StrategyManager can force hydralisk production during a threat window *
         strategy = getattr(self.bot, "strategy_manager", None)
         if (
             strategy
             and hasattr(strategy, "should_force_hydra")
             and strategy.should_force_hydra()
         ):
-            # ????뉖뜤?????Β?띾쭡 ??筌믨퀡彛???袁⑸즲???
+            # Push a hydralisk to the front of the queue
             if self._requirements_met(UnitTypeId.HYDRALISK) and vespene >= 50:
                 queue.append(UnitTypeId.HYDRALISK)
 
@@ -706,7 +706,7 @@ class UnitFactory:
 
     def _check_protoss_threat_boost(self) -> bool:
         """
-        *** ???????ш낄援?뤃????ル늅筌????살쓴勇???낆뒩??? ??좊즴?? ***
+        *** Boost gas-unit ratio target when facing Protoss air/heavy threats ***
         """
         if not hasattr(self.bot, "enemy_units"):
             return False
