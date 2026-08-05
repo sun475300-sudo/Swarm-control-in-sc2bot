@@ -804,6 +804,17 @@ class EconomyManager:
                 workers.amount if hasattr(workers, "amount") else len(list(workers))
             )
 
+        # * ROADMAP Task 5.3: no-expand all-in response sets this flag via
+        # StrategyManager._detect_all_in_pressure(), but nothing previously
+        # read it back here -- drone production continued unaffected through
+        # a detected all-in. Mirror should_produce_drone()'s semantics. *
+        if self.blackboard and hasattr(self.blackboard, "get"):
+            policy = self.blackboard.get("drone_production_policy", None)
+            if policy == "HALT":
+                return
+            if policy == "REDUCE" and worker_count >= 22:
+                return
+
         # * 드론 절대 상한: 80마리 초과 금지 *
         if worker_count >= 80:
             return
