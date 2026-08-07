@@ -4,24 +4,22 @@
 
 통합 문제 해결 후 발견된 추가 개선 사항들입니다.
 
-**Last refreshed:** 2026-04-27 (Issue #1, #2 → Resolved; Issue #6 partially resolved via Batch 3)
+**Last refreshed:** 2026-07-04 (Issue #1-#5 confirmed resolved in code; N1-N4 confirmed resolved; Issue #6/N5/N6 partial, ongoing)
 
 ---
 
-## 🆕 신규 발견 (PR #44, 2026-04-27)
+## 🆕 신규 발견 (PR #44, 2026-04-27) — N1~N4 2026-07-04 재검증 결과 모두 해결됨
 
 자동/수동 점검 사이클(테스트 → 코드 검사 → 개선 → 커밋/푸시 반복)에서 새로 식별된 항목.
 
 | ID | 설명 | 우선순위 | 상태 |
 |----|------|---------|------|
-| N1 | `OpponentModeling.on_step` 중복 정의 (line 341 vs 765 — F811) | 🟠 HIGH | open — 동작 영향(상위 on_step이 미실행) 가능 |
-| N2 | `EconomyManager._prevent_resource_banking` / `_reduce_gas_workers` 재정의 (F811) | 🟡 MED | open |
-| N3 | `combat_manager._find_harass_target` 재정의 (line 2377 vs 4278) | 🟡 MED | open |
-| N4 | `production_resilience.build_terran_counters` 재정의 (1369 vs 1866) | 🟡 MED | open |
-| N5 | bare `except Exception:` 다수 (≈360+) — 이번 PR에서 12건 처리, 잔여 다수 | 🟢 LOW | partial |
-| N6 | F841 unused local variables (visuals/make_pptx 등) | 🟢 LOW | open (presentation 코드라 영향 작음) |
-
-검증 권장: PR 분리 (N1 단독 PR 권장 — 동작 변화 가능성).
+| N1 | `OpponentModeling.on_step` 중복 정의 (line 341 vs 765 — F811) | 🟠 HIGH | ✅ resolved — `flake8 --select=F811` 결과 0건, 정의 1개만 존재 (line 341) |
+| N2 | `EconomyManager._prevent_resource_banking` / `_reduce_gas_workers` 재정의 (F811) | 🟡 MED | ✅ resolved — 각각 정의 1개만 존재 |
+| N3 | `combat_manager._find_harass_target` 재정의 (line 2377 vs 4278) | 🟡 MED | ✅ resolved — 정의 1개만 존재 (line 4992) |
+| N4 | `production_resilience.build_terran_counters` 재정의 (1369 vs 1866) | 🟡 MED | ✅ resolved — 정의 1개만 존재 |
+| N5 | bare `except Exception:` 다수 (≈360+) — 이번 PR에서 12건 처리, 잔여 다수 | 🟢 LOW | partial — 점진 진행 |
+| N6 | F841 unused local variables (visuals/make_pptx 등) | 🟢 LOW | partial — `flake8 --select=F841` 130건 잔여 (대부분 presentation/visuals 코드) |
 
 ---
 
@@ -67,234 +65,31 @@
 
 ---
 
-## 🟡 MEDIUM Priority Issues (still open)
+## ✅ Resolved (확인일: 2026-07-04)
 
-### Issue #3: Transfusion 우선순위 개선 필요
+코드베이스가 이 문서보다 앞서 있었던 항목들. 실제 구현을 확인 후 종결합니다.
 
-**위치**: `queen_manager.py` 또는 `spell_unit_manager.py`
+### ✅ Issue #3: Transfusion 우선순위 개선 — 구현 완료
 
-**현재 문제**:
-- Transfusion 로직이 단순함
-- 고가 유닛(울트라, 브루드로드) 우선순위 없음
-- 군단 숙주, 맹독충 등 치료 불가 유닛에 낭비 가능성
+`wicked_zerg_challenger/economy/queen_transfusion_manager.py`에 `HEAL_PRIORITY`
+딕셔너리, `CANNOT_HEAL` 제외 목록, 우선순위 기반 타겟 정렬 로직이 모두 존재.
+문서가 제안한 설계와 사실상 동일하게 구현되어 있음 (line 26 `HEAL_PRIORITY`,
+line 43 `CANNOT_HEAL`, line 172 정렬 키).
 
-**개선 방법**:
-```python
-async def smart_transfusion(self, queen, damaged_units):
-    """
-    스마트 수혈 - 우선순위 기반
+### ✅ Issue #4: Resource Reservation Race Condition — 구현 완료
 
-    우선순위:
-    1. 울트라리스크 (300/200 고가 유닛)
-    2. 브루드로드 (150/150/2)
-    3. 바퀴 (75/25)
-    4. 히드라 (100/50)
-    5. 저글링 (25/0)
-    """
-    if queen.energy < 50:
-        return
+`wicked_zerg_challenger/core/resource_manager.py`의 `ResourceManager`에
+`asyncio.Lock()` (line 36) + `try_reserve()` (line 50) + `_reserved_minerals`/
+`_reserved_gas` 추적이 모두 구현되어 있음. 문서가 제안한 설계와 일치.
 
-    # 치료 우선순위 정의
-    HEAL_PRIORITY = {
-        UnitTypeId.ULTRALISK: 100,
-        UnitTypeId.BROODLORD: 90,
-        UnitTypeId.ROACH: 70,
-        UnitTypeId.RAVAGER: 75,
-        UnitTypeId.HYDRALISK: 60,
-        UnitTypeId.MUTALISK: 50,
-        UnitTypeId.CORRUPTOR: 50,
-        UnitTypeId.ZERGLING: 30,
-    }
+### ✅ Issue #5: 코드 중복 - Position 계산 — 구현 완료
 
-    # 치료 불가 유닛 제외
-    CANNOT_HEAL = {
-        UnitTypeId.BANELING,  # 맹독충 (자폭 유닛)
-        UnitTypeId.BROODLING,  # 무리 (일회용)
-        UnitTypeId.LOCUSTMP,  # 군단 숙주 (일회용)
-    }
-
-    # 우선순위대로 정렬
-    valid_targets = [
-        u for u in damaged_units
-        if u.type_id not in CANNOT_HEAL and u.health_percentage < 0.6
-    ]
-
-    if not valid_targets:
-        return
-
-    # 우선순위 정렬 (priority desc, health% asc)
-    valid_targets.sort(
-        key=lambda u: (
-            -HEAL_PRIORITY.get(u.type_id, 0),  # 우선순위 높을수록
-            u.health_percentage  # 체력 낮을수록
-        )
-    )
-
-    best_target = valid_targets[0]
-
-    # 수혈 실행 (50 에너지, +125 HP)
-    if queen.distance_to(best_target) <= 7:
-        from sc2.ids.ability_id import AbilityId
-        self.bot.do(queen(AbilityId.TRANSFUSION_TRANSFUSION, best_target))
-```
-
-**우선순위**: 🟡 MEDIUM (자원 효율성 개선)
+`wicked_zerg_challenger/utils/position_utils.py`에 `get_center_position()`,
+`get_weighted_center()` 유틸리티 존재 및 사용 중.
 
 ---
 
-### Issue #4: Resource Reservation Race Condition
-
-**위치**: `resource_manager.py` (추정)
-
-**문제**:
-- 여러 매니저가 동시에 자원 예약 시도
-- 경쟁 조건(race condition) 발생 가능
-- 자원 이중 예약 위험
-
-**예시**:
-```python
-# upgrade_manager가 저장된 자원 확인
-if self.bot.minerals >= 200:
-    # ★ 이 순간 다른 매니저도 200 미네랄 확인 가능 ★
-    reserve_resources(200, 0)
-
-# building_manager도 동시에
-if self.bot.minerals >= 150:
-    # ★ 같은 자원을 중복 예약! ★
-    reserve_resources(150, 0)
-```
-
-**해결 방법**:
-```python
-class ResourceManager:
-    def __init__(self):
-        self._lock = asyncio.Lock()  # 동기화 잠금
-        self._reserved_minerals = 0
-        self._reserved_gas = 0
-
-    async def try_reserve(self, minerals: int, gas: int, manager_name: str) -> bool:
-        """
-        자원 예약 시도 (thread-safe)
-
-        Returns:
-            성공 시 True, 실패 시 False
-        """
-        async with self._lock:  # 원자적 작업 보장
-            available_minerals = self.bot.minerals - self._reserved_minerals
-            available_gas = self.bot.vespene - self._reserved_gas
-
-            if available_minerals >= minerals and available_gas >= gas:
-                self._reserved_minerals += minerals
-                self._reserved_gas += gas
-
-                self.logger.debug(
-                    f"{manager_name} reserved {minerals}M/{gas}G "
-                    f"(Total reserved: {self._reserved_minerals}M/{self._reserved_gas}G)"
-                )
-                return True
-
-            return False
-
-    async def release(self, minerals: int, gas: int):
-        """자원 예약 해제"""
-        async with self._lock:
-            self._reserved_minerals -= minerals
-            self._reserved_gas -= gas
-```
-
-**사용 예시**:
-```python
-# upgrade_manager.py
-if await self.bot.resource_manager.try_reserve(200, 100, "UpgradeManager"):
-    # 예약 성공 - 업그레이드 시작
-    await self.start_upgrade(UpgradeId.METABOLICBOOST)
-else:
-    # 예약 실패 - 다음 프레임 재시도
-    return
-```
-
-**우선순위**: 🟡 MEDIUM (안정성 개선, 드물게 발생)
-
----
-
-## 🟢 LOW Priority Issues
-
-### Issue #5: 코드 중복 - Position 계산
-
-**위치**: 여러 파일에서 중복
-
-**문제**:
-```python
-# combat_manager.py
-center_x = sum(u.position.x for u in units) / len(units)
-center_y = sum(u.position.y for u in units) / len(units)
-
-# rally_point.py
-center_x = sum(u.position.x for u in units) / len(units)
-center_y = sum(u.position.y for u in units) / len(units)
-
-# harassment_coord.py
-center_x = sum(u.position.x for u in units) / len(units)
-center_y = sum(u.position.y for u in units) / len(units)
-
-# ★ 동일한 로직 반복 ★
-```
-
-**해결 방법**:
-```python
-# utils/position_utils.py (새 파일)
-
-from typing import List
-from sc2.position import Point2
-from sc2.unit import Unit
-
-def get_center_position(units: List[Unit]) -> Point2:
-    """
-    유닛들의 중심 위치 계산
-
-    Args:
-        units: 유닛 리스트
-
-    Returns:
-        중심 Point2
-    """
-    if not units:
-        return Point2((0, 0))
-
-    center_x = sum(u.position.x for u in units) / len(units)
-    center_y = sum(u.position.y for u in units) / len(units)
-
-    return Point2((center_x, center_y))
-
-def get_weighted_center(units: List[Unit], weight_by_health: bool = False) -> Point2:
-    """
-    가중 중심 위치 (체력 가중치 가능)
-    """
-    if not units:
-        return Point2((0, 0))
-
-    if weight_by_health:
-        total_health = sum(u.health for u in units)
-        center_x = sum(u.position.x * u.health for u in units) / total_health
-        center_y = sum(u.position.y * u.health for u in units) / total_health
-    else:
-        center_x = sum(u.position.x for u in units) / len(units)
-        center_y = sum(u.position.y for u in units) / len(units)
-
-    return Point2((center_x, center_y))
-```
-
-**사용 예시**:
-```python
-# combat_manager.py
-from utils.position_utils import get_center_position
-
-center = get_center_position(army_units)
-```
-
-**우선순위**: 🟢 LOW (코드 품질 개선)
-
----
+## 🟢 LOW Priority Issues (still open)
 
 ### Issue #6: 매직 넘버 (Magic Numbers)
 
@@ -363,12 +158,9 @@ if iteration % SECOND == 0:
 
 | 우선순위 | 이슈 | 영향도 | 난이도 |
 |---------|------|--------|--------|
-| 🟡 MEDIUM | #3 Transfusion 우선순위 | 중간 | 중간 |
-| 🟡 MEDIUM | #4 Resource Race Condition | 낮음 | 중간 |
-| 🟢 LOW | #5 코드 중복 제거 | 낮음 | 쉬움 |
-| 🟢 LOW | #6 매직 넘버 | 낮음 | 쉬움 |
+| 🟢 LOW | #6 매직 넘버 | 낮음 | 쉬움 (부분 진행 중 — `utils/game_constants.py` 존재, 전체 교체는 미완) |
 
-(Issue #1, #2 → ✅ Resolved 섹션 참조)
+(Issue #1~#5 → ✅ Resolved 섹션 참조. 2026-07-04 코드 감사 결과 #3/#4/#5는 이미 구현되어 있었음.)
 
 ---
 
@@ -377,14 +169,12 @@ if iteration % SECOND == 0:
 ### 1단계: 완료 (✅)
 ~~1. Queen Inject 쿨다운 수정 (25 → 29)~~ — 코드 반영 완료, 본 문서 ✅ Resolved 섹션 참조
 ~~2. 누락된 업그레이드 추가~~ — 코드 반영 완료, 본 문서 ✅ Resolved 섹션 참조
+~~3. Transfusion 우선순위 시스템~~ — 구현 완료 (2026-07-04 확인)
+~~4. Resource Reservation 동기화~~ — 구현 완료 (2026-07-04 확인)
+~~5. Position Utils 유틸리티 함수 분리~~ — 구현 완료 (2026-07-04 확인)
 
-### 2단계: 로직 개선 (30분, 미진행)
-3. Transfusion 우선순위 시스템 구현
-
-### 3단계: 구조 개선 (1시간, 미진행)
-4. Resource Reservation 동기화
-5. Position Utils 유틸리티 함수 분리
-6. Constants 정리
+### 2단계: 남은 작업
+6. Constants 정리 (매직 넘버 → `game_constants.py` 전체 교체, 점진 진행)
 
 ---
 
@@ -409,17 +199,18 @@ if iteration % SECOND == 0:
 
 ## 📝 참고 사항
 
-### 현재 상태
+### 현재 상태 (2026-07-04 재검증)
 - ✅ **치명적 통합 문제**: 완전히 해결됨
-- ✅ **모든 단위 테스트**: 통과 (16/16)
+- ✅ **전체 테스트 스위트**: 502 passed, 14 skipped, 0 failed
+- ✅ **CI lint gate (black/isort)**: 66개 파일 포맷 드리프트 수정, 통과
 - ✅ **기본 기능**: 정상 작동
 
-### 위의 이슈들은
-- 모두 **선택적 개선 사항**
+### 남은 이슈들은
+- 모두 **선택적 개선 사항** (Issue #6 매직 넘버, N5/N6 코드 품질)
 - 즉시 수정 불필요
 - 점진적 개선 권장
 
 ---
 
-**검토 완료일**: 2026-01-29
-**상태**: 추가 개선 사항 문서화 완료
+**검토 완료일**: 2026-07-04
+**상태**: 코드 감사로 Issue #3~#5, N1~N4 해결 확인 및 문서 정리 완료
