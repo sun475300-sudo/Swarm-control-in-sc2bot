@@ -126,7 +126,7 @@ class ThreatAssessment:
             True if counter attack should be launched
         """
         # Track combat
-        if enemy_units and len(list(enemy_units)) > 0:
+        if enemy_units:
             self._last_combat_time = game_time
 
         # Check if there was recent combat

@@ -113,7 +113,8 @@ class AirUnitManager:
             for muta in mutalisks:
                 try:
                     self.bot.do(muta.attack(target))
-                except Exception:
+                except (AttributeError, TypeError) as e:
+                    self.logger.debug(f"Air unit command failed: {e}")
                     continue
 
     async def mutalisk_harass(self, mutalisks, enemy_units, iteration: int):
@@ -229,7 +230,8 @@ class AirUnitManager:
             for muta in combat_ready:
                 try:
                     self.bot.do(muta.attack(self._air_harass_target))
-                except Exception:
+                except (AttributeError, TypeError) as e:
+                    self.logger.debug(f"Air unit command failed: {e}")
                     continue
 
     def get_anti_air_threats(self, enemy_units, position, range_check=15):
@@ -288,7 +290,8 @@ class AirUnitManager:
         for muta in mutalisks:
             try:
                 self.bot.do(muta.attack(best_target))
-            except Exception:
+            except (AttributeError, TypeError) as e:
+                self.logger.debug(f"Mutalisk attack failed: {e}")
                 continue
 
     async def mutalisk_retreat(self, mutalisks):
@@ -305,7 +308,8 @@ class AirUnitManager:
             for muta in mutalisks:
                 try:
                     self.bot.do(muta.move(retreat_pos))
-                except Exception:
+                except (AttributeError, TypeError) as e:
+                    self.logger.debug(f"Air unit command failed: {e}")
                     continue
 
     async def mutalisk_attack(self, mutalisks, enemy_units):
@@ -353,14 +357,16 @@ class AirUnitManager:
             for muta in combat_ready:
                 try:
                     self.bot.do(muta.attack(target))
-                except Exception:
+                except (AttributeError, TypeError) as e:
+                    self.logger.debug(f"Air unit command failed: {e}")
                     continue
         else:
             # 일반 공격
             for muta in combat_ready:
                 try:
                     self.bot.do(muta.attack(target))
-                except Exception:
+                except (AttributeError, TypeError) as e:
+                    self.logger.debug(f"Air unit command failed: {e}")
                     continue
 
     def select_mutalisk_target(self, enemy_units):
@@ -443,7 +449,8 @@ class AirUnitManager:
                 for corr in corruptors:
                     try:
                         self.bot.do(corr.attack(target))
-                    except Exception:
+                    except (AttributeError, TypeError) as e:
+                        self.logger.debug(f"Corruptor attack failed: {e}")
                         continue
 
         # 무리군주: 후방에서 지상 공격
@@ -456,7 +463,8 @@ class AirUnitManager:
                 for bl in broodlords:
                     try:
                         self.bot.do(bl.attack(target))
-                    except Exception:
+                    except (AttributeError, TypeError) as e:
+                        self.logger.debug(f"Broodlord attack failed: {e}")
                         continue
 
     # ===== Helper Methods =====

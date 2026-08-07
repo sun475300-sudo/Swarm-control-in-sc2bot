@@ -85,7 +85,8 @@ class ChokePointDetector:
             try:
                 if position.distance_to(choke) < self.chokepoint_radius:
                     return True
-            except Exception:
+            except (AttributeError, TypeError):
+                # choke or position missing distance_to / x / y attrs — skip
                 continue
         return False
 
@@ -128,7 +129,8 @@ class ChokePointDetector:
                 if dist < nearest_dist:
                     nearest_dist = dist
                     nearest = choke
-            except Exception:
+            except (AttributeError, TypeError):
+                # choke or position missing distance_to / x / y attrs — skip
                 continue
 
         return nearest
@@ -146,7 +148,7 @@ class ChokePointDetector:
         Returns:
             Tuple of (x, y) avoidance vector
         """
-        if not self.chokepoints or not position or not Point2:
+        if not self.chokepoints or not position:
             return 0.0, 0.0
 
         avoid_x = 0.0
@@ -163,7 +165,8 @@ class ChokePointDetector:
                 dy = position.y - choke.y
                 avoid_x += (dx / (dist + 0.1)) * strength * avoidance_weight
                 avoid_y += (dy / (dist + 0.1)) * strength * avoidance_weight
-            except Exception:
+            except (AttributeError, TypeError):
+                # choke or position missing distance_to / x / y attrs — skip
                 continue
 
         return avoid_x, avoid_y

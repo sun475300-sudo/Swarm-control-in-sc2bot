@@ -9,6 +9,7 @@ Features:
 4. Expansion path mining
 """
 
+import logging
 from typing import Dict, List, Set, Tuple
 
 try:
@@ -23,6 +24,8 @@ except ImportError:
     UpgradeId = None
     Point2 = None
     Unit = None
+
+_logger = logging.getLogger(__name__)
 
 
 class BanelingTacticsController:
@@ -240,7 +243,12 @@ class BanelingTacticsController:
                         actions.append(baneling(burrow_ability))
                         self.register_mine(baneling.tag, target_pos)
                         deployed.add(baneling.tag)
-            except Exception:
+            except (AttributeError, TypeError) as e:
+                _logger.debug(
+                    "Baneling mine deploy failed for tag %s: %s",
+                    getattr(baneling, "tag", "?"),
+                    e,
+                )
                 continue
 
         if actions:
@@ -249,8 +257,8 @@ class BanelingTacticsController:
                     result = bot.do(action)
                     if hasattr(result, "__await__"):
                         await result
-                except Exception:
-                    pass
+                except (AttributeError, TypeError) as e:
+                    _logger.debug("Baneling mine action dispatch failed: %s", e)
 
         return deployed
 
@@ -295,7 +303,12 @@ class BanelingTacticsController:
                         actions.append(baneling(unburrow_ability))
                         self.unregister_mine(baneling.tag)
                         acted_tags.add(baneling.tag)
-                    except Exception:
+                    except (AttributeError, TypeError) as e:
+                        _logger.debug(
+                            "Baneling unburrow failed for tag %s: %s",
+                            baneling.tag,
+                            e,
+                        )
                         continue
 
         # Check unburrowed Banelings for auto-explode
@@ -318,7 +331,12 @@ class BanelingTacticsController:
                     try:
                         actions.append(baneling(explode_ability))
                         acted_tags.add(baneling.tag)
-                    except Exception:
+                    except (AttributeError, TypeError) as e:
+                        _logger.debug(
+                            "Baneling explode failed for tag %s: %s",
+                            baneling.tag,
+                            e,
+                        )
                         continue
 
         if actions:
@@ -327,8 +345,8 @@ class BanelingTacticsController:
                     result = bot.do(action)
                     if hasattr(result, "__await__"):
                         await result
-                except Exception:
-                    pass
+                except (AttributeError, TypeError) as e:
+                    _logger.debug("Baneling mine action dispatch failed: %s", e)
 
         return acted_tags
 

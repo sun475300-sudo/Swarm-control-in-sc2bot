@@ -13,6 +13,7 @@ Queen Specialization Manager - 여왕 전문 분담 체제
 3. 나머지 전부 COMBAT
 """
 
+import logging
 from enum import Enum
 from typing import Dict, List, Optional, Set
 
@@ -53,22 +54,60 @@ class QueenSpecializationManager:
     COMBAT 퀸은 본대와 함께 이동하며 수혈을 제공합니다.
     """
 
+    # ── Config / Tuning constants ────────────────────────────────────────
+    # Queen inject ability cooldown — slightly under the 29s game cooldown
+    # so we re-issue the moment the buff expires.
+    DEFAULT_INJECT_COOLDOWN = 29.0
+    # Creep tumor spawn cadence per queen (seconds).
+    DEFAULT_CREEP_COOLDOWN = 4.0
+    # Minimum gap between transfusion casts per queen.
+    DEFAULT_TRANSFUSE_COOLDOWN = 1.0
+    # PUMP 퀸이 인젝트만 수행하기 위해 예약하는 최소 에너지.
+    DEFAULT_PUMP_ENERGY_RESERVE = 25
+    # CREEP 퀸이 종양을 설치할 수 있는 최소 에너지 (25 + 약간).
+    DEFAULT_CREEP_ENERGY_THRESHOLD = 25
+    # COMBAT 퀸 수혈 발동 가능 에너지 (수혈 비용 50).
+    DEFAULT_TRANSFUSE_ENERGY = 50
+    # 수혈 대상으로 고려할 체력 비율 임계값.
+    DEFAULT_TRANSFUSE_HP_THRESHOLD = 0.5
+    # PUMP 퀸이 해처리에서 이만큼 멀어지면 재배정.
+    PUMP_QUEEN_REASSIGN_DISTANCE = 12
+    # COMBAT 퀸이 본대까지 따라붙는 최소 거리.
+    COMBAT_QUEEN_FOLLOW_DISTANCE = 8
+    # 수혈 대상 탐색 기본 반경.
+    DEFAULT_TRANSFUSE_SEARCH_RADIUS = 7.0
+    # _find_injured_nearby 의 알 수 없는 유닛 타입 기본 가치.
+    DEFAULT_UNIT_VALUE = 30
+    # Transfusion 우선순위 가중치 (높을수록 먼저 수혈).
+    UNIT_TRANSFUSION_VALUE: Dict[str, int] = {
+        "ULTRALISK": 100,
+        "BROODLORD": 90,
+        "QUEEN": 85,
+        "RAVAGER": 70,
+        "LURKER": 65,
+        "ROACH": 50,
+        "HYDRALISK": 45,
+        "MUTALISK": 40,
+        "ZERGLING": 30,
+    }
+
     def __init__(self, bot):
         self.bot = bot
+        self.logger = logging.getLogger(__name__)
         self.specializations: Dict[int, QueenSpecialization] = {}  # queen_tag -> spec
         self.pump_assignments: Dict[int, int] = {}  # queen_tag -> hatchery_tag
         self.last_inject_time: Dict[int, float] = {}  # hatchery_tag -> time
         self.last_creep_time: Dict[int, float] = {}  # queen_tag -> time
         self.last_transfuse_time: Dict[int, float] = {}  # queen_tag -> time
 
-        # Config
-        self.inject_cooldown = 29.0
-        self.creep_cooldown = 4.0
-        self.transfuse_cooldown = 1.0
-        self.pump_energy_reserve = 25
-        self.creep_energy_threshold = 25
-        self.transfuse_energy = 50
-        self.transfuse_hp_threshold = 0.5
+        # Config (override on instance for tests / tuning)
+        self.inject_cooldown = self.DEFAULT_INJECT_COOLDOWN
+        self.creep_cooldown = self.DEFAULT_CREEP_COOLDOWN
+        self.transfuse_cooldown = self.DEFAULT_TRANSFUSE_COOLDOWN
+        self.pump_energy_reserve = self.DEFAULT_PUMP_ENERGY_RESERVE
+        self.creep_energy_threshold = self.DEFAULT_CREEP_ENERGY_THRESHOLD
+        self.transfuse_energy = self.DEFAULT_TRANSFUSE_ENERGY
+        self.transfuse_hp_threshold = self.DEFAULT_TRANSFUSE_HP_THRESHOLD
 
     def assign_roles(self, queens, hatcheries) -> None:
         """
@@ -104,11 +143,11 @@ class QueenSpecializationManager:
             if queen and hatch:
                 # 너무 멀면 재배정
                 try:
-                    if queen.distance_to(hatch) > 12:
+                    if queen.distance_to(hatch) > self.PUMP_QUEEN_REASSIGN_DISTANCE:
                         del self.pump_assignments[qt]
                         continue
-                except Exception:
-                    pass
+                except (AttributeError, TypeError) as e:
+                    self.logger.debug(f"Queen->hatch distance check failed: {e}")
                 self.specializations[qt] = QueenSpecialization.PUMP
                 assigned.add(qt)
 
@@ -180,7 +219,8 @@ class QueenSpecializationManager:
         # 해처리까지 이동
         try:
             dist = queen.distance_to(hatch)
-        except Exception:
+        except (AttributeError, TypeError) as e:
+            self.logger.debug(f"PUMP queen distance check failed: {e}")
             return
 
         if dist > 4.0:
@@ -192,8 +232,8 @@ class QueenSpecializationManager:
         try:
             self.bot.do(queen(AbilityId.EFFECT_INJECTLARVA, hatch))
             self.last_inject_time[hatch_tag] = current_time
-        except Exception:
-            pass
+        except (AttributeError, TypeError) as e:
+            self.logger.debug(f"PUMP queen inject failed: {e}")
 
     async def execute_creep_queen(self, queen, highway_waypoints: List) -> None:
         """
@@ -221,7 +261,8 @@ class QueenSpecializationManager:
                     if not self.bot.has_creep(wp):
                         target = wp
                         break
-                except Exception:
+                except (AttributeError, TypeError) as e:
+                    self.logger.debug(f"has_creep check failed: {e}")
                     continue
 
         # 고속도로 없으면 적 방향으로 확장
@@ -247,8 +288,8 @@ class QueenSpecializationManager:
                     closest_hatch = self.bot.townhalls.closest_to(queen)
                     move_target = queen.position.towards(closest_hatch.position, 3)
                     self.bot.do(queen.move(move_target))
-        except Exception:
-            pass
+        except (AttributeError, TypeError) as e:
+            self.logger.debug(f"CREEP queen execution failed: {e}")
 
     async def execute_combat_queen(self, queen, army_center) -> None:
         """
@@ -261,40 +302,31 @@ class QueenSpecializationManager:
             last_trans = self.last_transfuse_time.get(queen.tag, 0.0)
             if current_time - last_trans >= self.transfuse_cooldown:
                 # 주변 부상 유닛 찾기
-                injured = self._find_injured_nearby(queen, range_dist=7.0)
+                injured = self._find_injured_nearby(
+                    queen, range_dist=self.DEFAULT_TRANSFUSE_SEARCH_RADIUS
+                )
                 if injured:
                     try:
                         self.bot.do(queen(AbilityId.TRANSFUSION_TRANSFUSION, injured))
                         self.last_transfuse_time[queen.tag] = current_time
                         return
-                    except Exception:
-                        pass
+                    except (AttributeError, TypeError) as e:
+                        self.logger.debug(f"Transfusion cast failed: {e}")
 
         # 본대 따라가기
         if army_center:
             try:
-                if queen.distance_to(army_center) > 8:
+                if queen.distance_to(army_center) > self.COMBAT_QUEEN_FOLLOW_DISTANCE:
                     self.bot.do(queen.move(army_center))
-            except Exception:
-                pass
+            except (AttributeError, TypeError) as e:
+                self.logger.debug(f"COMBAT queen follow failed: {e}")
 
-    def _find_injured_nearby(self, queen, range_dist: float = 7.0):
+    def _find_injured_nearby(
+        self, queen, range_dist: float = DEFAULT_TRANSFUSE_SEARCH_RADIUS
+    ):
         """수혈 대상 - HP 비율 낮은 순으로 가치 높은 유닛 우선"""
         if not hasattr(self.bot, "units"):
             return None
-
-        # 우선순위 가중치 (높을수록 우선)
-        UNIT_VALUE = {
-            "ULTRALISK": 100,
-            "BROODLORD": 90,
-            "QUEEN": 85,
-            "RAVAGER": 70,
-            "LURKER": 65,
-            "ROACH": 50,
-            "HYDRALISK": 45,
-            "MUTALISK": 40,
-            "ZERGLING": 30,
-        }
 
         best_target = None
         best_score = 0
@@ -312,11 +344,11 @@ class QueenSpecializationManager:
             try:
                 if queen.distance_to(unit) > range_dist:
                     continue
-            except Exception:
+            except (AttributeError, TypeError):
                 continue
 
             type_name = getattr(unit.type_id, "name", "").upper()
-            value = UNIT_VALUE.get(type_name, 30)
+            value = self.UNIT_TRANSFUSION_VALUE.get(type_name, self.DEFAULT_UNIT_VALUE)
             # 점수: 가치 높고 HP 낮을수록 우선
             score = value * (1.0 - hp_ratio)
 

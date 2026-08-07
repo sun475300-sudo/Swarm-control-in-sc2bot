@@ -204,7 +204,8 @@ class BaseDefenseSystem:
             for unit in units:
                 try:
                     self.bot.do(unit.attack(threat_position))
-                except Exception:
+                except (AttributeError, TypeError) as e:
+                    self.logger.debug(f"Fallback attack failed for unit: {e}")
                     continue
             return
 
@@ -283,7 +284,8 @@ class BaseDefenseSystem:
                     self.bot.do(unit.attack(priority_target))
                 else:
                     self.bot.do(unit.attack(threat_position))
-            except Exception:
+            except (AttributeError, TypeError) as e:
+                self.logger.debug(f"Defense unit attack failed: {e}")
                 continue
 
     async def check_mandatory_base_defense(self, iteration: int) -> Optional["Point2"]:
@@ -474,7 +476,8 @@ class BaseDefenseSystem:
                                 self.bot.do(unit.attack(main_target))
                         else:
                             self.bot.do(unit.attack(main_target))
-                    except Exception:
+                    except (AttributeError, TypeError) as e:
+                        self.logger.debug(f"Last-stand attack failed: {e}")
                         continue
 
                 if iteration % 220 == 0:
@@ -519,7 +522,8 @@ class BaseDefenseSystem:
                         self.bot.do(unit.attack(threat_position))
                 else:
                     self.bot.do(unit.attack(threat_position))
-            except Exception:
+            except (AttributeError, TypeError) as e:
+                self.logger.debug(f"Defense attack failed: {e}")
                 continue
 
         if iteration % 220 == 0:
@@ -544,7 +548,7 @@ class BaseDefenseSystem:
                     continue
                 try:
                     distance = enemy.distance_to(base)
-                except Exception:
+                except (AttributeError, TypeError):
                     distance = enemy.distance_to(getattr(base, "position", base))
                 if distance <= 30.0:
                     detected.append((base, enemy))
@@ -600,7 +604,8 @@ class BaseDefenseSystem:
                 try:
                     if unit.distance_to(base) > 9:
                         self.bot.do(unit.move(getattr(base, "position", base)))
-                except Exception:
+                except (AttributeError, TypeError) as e:
+                    self.logger.debug(f"Garrison move failed: {e}")
                     continue
 
     def _command_base_garrison(self, base, target) -> None:
@@ -610,7 +615,8 @@ class BaseDefenseSystem:
                 continue
             try:
                 self.bot.do(unit.attack(target))
-            except Exception:
+            except (AttributeError, TypeError) as e:
+                self.logger.debug(f"Garrison attack failed: {e}")
                 continue
 
     def _dispatch_drop_reinforcements(self, target, desired_count: int = 10) -> None:
@@ -639,7 +645,8 @@ class BaseDefenseSystem:
         for unit in candidates[: max(8, min(12, desired_count))]:
             try:
                 self.bot.do(unit.attack(target))
-            except Exception:
+            except (AttributeError, TypeError) as e:
+                self.logger.debug(f"Drop reinforcement attack failed: {e}")
                 continue
 
     def _record_air_harass(self) -> None:
@@ -671,7 +678,8 @@ class BaseDefenseSystem:
                 building_coord.request_building(
                     UnitTypeId.SPORECRAWLER, "BaseDefense-Drop"
                 )
-            except Exception:
+            except (AttributeError, TypeError) as e:
+                self.logger.debug(f"Spore request failed: {e}")
                 continue
 
     def _townhall_list(self):
@@ -679,7 +687,9 @@ class BaseDefenseSystem:
         try:
             if hasattr(townhalls, "exists") and not townhalls.exists:
                 return []
-        except Exception:
+        except (AttributeError, TypeError):
+            # `.exists` on a non-Units collection (e.g. plain list in tests)
+            # raises — treat as "we have townhalls if the list is truthy".
             pass
         return list(townhalls)
 
@@ -785,7 +795,8 @@ class BaseDefenseSystem:
                                 self.bot.mineral_field.closest_to(closest_townhall)
                             )
                         )
-            except Exception:
+            except (AttributeError, TypeError) as e:
+                self.logger.debug(f"Worker defense command failed: {e}")
                 continue
 
         if iteration % 220 == 0:

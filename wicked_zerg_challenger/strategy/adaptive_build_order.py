@@ -14,7 +14,7 @@ Features:
 - 타이밍 공격 최적화
 """
 
-from typing import Dict, Optional
+from typing import Any, Dict, Optional
 
 from utils.logger import get_logger
 
@@ -61,7 +61,7 @@ class AdaptiveBuildOrder:
         self.current_build = "standard"  # "anti_cheese", "timing_attack", "macro"
 
         # * Race-specific timing attacks *
-        self.timing_attack_details: Dict[str, any] = {}
+        self.timing_attack_details: Dict[str, Any] = {}
         self.attack_supply_requirement = 0
         self.attack_target_time = 0
 

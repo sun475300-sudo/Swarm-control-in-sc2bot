@@ -12,7 +12,7 @@ Features:
 """
 
 import asyncio
-from typing import TYPE_CHECKING, Dict, Optional, Tuple
+from typing import TYPE_CHECKING, Any, Dict, Optional, Tuple
 
 try:
     # Package import path (when installed as module)
@@ -191,7 +191,7 @@ class ResourceManager:
         """
         return manager_name in self._reservations
 
-    def get_statistics(self) -> Dict[str, any]:
+    def get_statistics(self) -> Dict[str, Any]:
         """
         Get resource manager statistics
 
