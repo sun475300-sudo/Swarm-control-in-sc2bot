@@ -4412,10 +4412,14 @@ class CombatManager:
                             )
                         )
                 else:
-                    # 위협 위치가 기지 근처(12거리)에 있을 때만 공격
+                    # 위협 위치가 기지 근처(12거리)에 있을 때만 공격.
+                    # threat_position 은 Point2, closest_townhall 은 Hatchery Unit 이므로
+                    # 반드시 Point2.distance_to(Point2) 형태로 비교한다. 그렇지 않으면
+                    # 바깥 except (AttributeError, TypeError) 가 매 호출마다 삼켜
+                    # 일꾼 방어가 조용히 동작하지 않게 된다.
                     if (
                         closest_townhall
-                        and threat_position.distance_to(closest_townhall) < 12
+                        and threat_position.distance_to(closest_townhall.position) < 12
                     ):
                         self.bot.do(worker.attack(threat_position))
                     else:

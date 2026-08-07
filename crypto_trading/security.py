@@ -662,8 +662,24 @@ class EncryptedTradeLog:
                 self._fernet = Fernet(new_key)
             self._use_fernet = True
             logger.info("EncryptedTradeLog: Fernet 암호화 활성화")
+        except (KeyboardInterrupt, SystemExit):
+            raise
         except ImportError:
             logger.warning("EncryptedTradeLog: cryptography 미설치. base64 폴백 사용.")
+        except BaseException as exc:  # pyo3 PanicException, OSError, etc.
+            logger.warning(
+                "EncryptedTradeLog: cryptography 초기화 실패(%s). base64 폴백 사용.",
+                type(exc).__name__,
+            )
+
+    def is_encryption_active(self) -> bool:
+        """Fernet 암호화가 실제로 활성 상태인지 반환한다.
+
+        cryptography 라이브러리 import 실패 또는 패닉으로 인해 base64 폴백
+        모드로 전환되면 False를 반환한다. 거래/감사 로그를 다루는 호출자는
+        이 값으로 안전 한도(예: 라이브 거래 차단)를 결정할 수 있다.
+        """
+        return bool(self._use_fernet and self._fernet is not None)
 
     def _encrypt(self, plaintext: str) -> str:
         """문자열 암호화"""
@@ -679,6 +695,8 @@ class EncryptedTradeLog:
         else:
             return base64.b64decode(ciphertext.encode("utf-8")).decode("utf-8")
 
+    _unencrypted_write_warned: bool = False
+
     def write_log(self, entry: dict) -> Path:
         """암호화된 로그 엔트리 기록
 
@@ -691,6 +709,17 @@ class EncryptedTradeLog:
         entry["_logged_at"] = datetime.now().isoformat()
         plaintext = json.dumps(entry, ensure_ascii=False)
         encrypted = self._encrypt(plaintext)
+
+        # Fernet 폴백 상태에서 거래 로그가 base64(=평문)로 저장되고 있음을
+        # 운영자에게 명확히 알린다. 디버그 로그는 묻혀 보이지 않으므로
+        # 프로세스당 한 번 WARNING으로 노출한다.
+        if not self.is_encryption_active() and not EncryptedTradeLog._unencrypted_write_warned:
+            logger.warning(
+                "EncryptedTradeLog: 거래 로그가 암호화되지 않은 채(base64) "
+                "기록되고 있습니다 — cryptography 모듈을 복구하거나 "
+                "운영 환경에서 라이브 거래를 중단하세요."
+            )
+            EncryptedTradeLog._unencrypted_write_warned = True
 
         log_file = self.log_dir / f"trade_log_{datetime.now().strftime('%Y%m%d')}.enc"
         with open(log_file, "a", encoding="utf-8") as f:
@@ -1117,6 +1146,8 @@ class SecretManager:
             fernet_key = base64.urlsafe_b64encode(key_hash)
             self._fernet = Fernet(fernet_key)
             self._use_fernet = True
+        except (KeyboardInterrupt, SystemExit):
+            raise
         except ImportError:
             logger.warning(
                 "SecretManager: cryptography 라이브러리 미설치 — "
@@ -1125,6 +1156,23 @@ class SecretManager:
             )
             self._fernet = None
             self._use_fernet = False
+        except BaseException as exc:  # pyo3 PanicException 등 BaseException 폴백
+            logger.warning(
+                "SecretManager: cryptography 초기화 실패(%s) — base64 인코딩 폴백.",
+                type(exc).__name__,
+            )
+            self._fernet = None
+            self._use_fernet = False
+
+    def is_encryption_active(self) -> bool:
+        """Fernet 암호화가 실제로 활성 상태인지 반환한다.
+
+        cryptography 라이브러리 import 실패 또는 패닉으로 인해 base64 폴백
+        모드로 전환되면 False를 반환한다. 시크릿을 다루는 호출자는 이 값으로
+        실제 거래 차단 등 안전 정책을 적용해야 한다 (base64는 난독화일 뿐
+        암호화가 아니다).
+        """
+        return bool(self._use_fernet and self._fernet is not None)
 
     def _encrypt_value(self, value: str) -> str:
         """값 암호화 — Bug #7 Fix: Fernet 사용, 미설치 시 base64 폴백"""
@@ -1139,16 +1187,13 @@ class SecretManager:
                 return self._fernet.decrypt(encrypted.encode("utf-8")).decode("utf-8")
             except Exception:
                 # H-7: 구 SHA-256 키로 암호화된 데이터 복호화 시도 (마이그레이션 호환)
-                try:
-                    import hashlib as _hlib
+                import hashlib as _hlib
 
-                    from cryptography.fernet import Fernet as _Fernet
+                from cryptography.fernet import Fernet as _Fernet
 
-                    old_key = _hlib.sha256(self._master_key.encode("utf-8")).digest()
-                    old_fernet = _Fernet(base64.urlsafe_b64encode(old_key))
-                    return old_fernet.decrypt(encrypted.encode("utf-8")).decode("utf-8")
-                except Exception:
-                    raise
+                old_key = _hlib.sha256(self._master_key.encode("utf-8")).digest()
+                old_fernet = _Fernet(base64.urlsafe_b64encode(old_key))
+                return old_fernet.decrypt(encrypted.encode("utf-8")).decode("utf-8")
         return base64.b64decode(encrypted.encode("utf-8")).decode("utf-8")
 
     def set_secret(self, name: str, value: str):
