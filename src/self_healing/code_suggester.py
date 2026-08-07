@@ -1,27 +1,59 @@
-"""
-Code Suggester - Auto-generated placeholder.
-"""
+"""Looks up suggested fixes for known error signatures."""
+
+from __future__ import annotations
+
+import re
+from dataclasses import dataclass
+from typing import Dict, List, Pattern
+
+
+@dataclass
+class Suggestion:
+    pattern_name: str
+    fix: str
+    rationale: str = ""
 
 
 class CodeSuggester:
-    """Code Suggester module for self-healing pipeline."""
+    """Heuristic registry mapping error patterns to suggested fixes."""
+
+    name = "code_suggester"
 
     def __init__(self) -> None:
-        """Initialize CodeSuggester."""
-        self.name = "code_suggester"
+        self._rules: Dict[str, Dict] = {}
 
-    def process(self, data):
-        """
-        Process data.
+    def add_suggestion(
+        self,
+        pattern_name: str,
+        regex: str,
+        fix: str,
+        rationale: str = "",
+        flags: int = 0,
+    ) -> None:
+        if not pattern_name:
+            raise ValueError("pattern_name must be non-empty")
+        compiled: Pattern[str] = re.compile(regex, flags)
+        self._rules[pattern_name] = {
+            "regex": compiled,
+            "fix": fix,
+            "rationale": rationale,
+        }
 
-        Args:
-            data: Input data
+    def remove_suggestion(self, pattern_name: str) -> bool:
+        return self._rules.pop(pattern_name, None) is not None
 
-        Returns:
-            Processed result
-        """
-        # Placeholder implementation
-        return {"status": "ok", "data": data}
+    def suggest(self, error_message: str) -> List[Suggestion]:
+        matches: List[Suggestion] = []
+        for name, rule in self._rules.items():
+            if rule["regex"].search(error_message):
+                matches.append(
+                    Suggestion(
+                        pattern_name=name,
+                        fix=rule["fix"],
+                        rationale=rule["rationale"],
+                    )
+                )
+        return matches
 
-    def __repr__(self) -> str:
-        return f"{self.__class__.__name__}()"
+    def list_patterns(self) -> List[str]:
+        return list(self._rules.keys())

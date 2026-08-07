@@ -1,31 +1,29 @@
 """
-Swarm Behavior Module #23 - Auto-generated placeholder.
-This module can be extended with actual behavior logic.
+Swarm behavior #23 — strategy: ``defend``.
+
+This module wraps the :func:`src.bot.swarm._strategies.defend` primitive
+and exposes the legacy ``BehaviorNN`` API used elsewhere in the bot.
 """
 
+from __future__ import annotations
+
+from . import _strategies as strategies
 from .formation_controller import FormationController
 
 
 class Behavior23:
-    """Auto-generated swarm behavior module #23."""
+    """Swarm behavior #23 (defend)."""
 
     def __init__(self) -> None:
-        """Initialize behavior."""
         self.controller = FormationController()
         self.name = "behavior_23"
+        self.strategy = "defend"
+        self.base = (0.0, 0.0)
+        self.radius = 3.0
 
     def tick(self, positions: list) -> list:
-        """
-        Execute behavior tick.
-
-        Args:
-            positions: Current unit positions
-
-        Returns:
-            Target positions for units
-        """
-        # Placeholder for behavior logic
-        return self.controller.maintain_formation(positions)
+        """Apply the defend strategy to ``positions``."""
+        return strategies.defend(positions, base=self.base, radius=self.radius)
 
     def __repr__(self) -> str:
-        return f"{self.__class__.__name__}()"
+        return f"{self.__class__.__name__}(strategy={self.strategy!r})"

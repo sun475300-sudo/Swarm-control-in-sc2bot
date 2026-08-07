@@ -1,31 +1,28 @@
 """
-Swarm Behavior Module #26 - Auto-generated placeholder.
-This module can be extended with actual behavior logic.
+Swarm behavior #26 — strategy: ``ring_expand``.
+
+This module wraps the :func:`src.bot.swarm._strategies.ring_expand` primitive
+and exposes the legacy ``BehaviorNN`` API used elsewhere in the bot.
 """
 
+from __future__ import annotations
+
+from . import _strategies as strategies
 from .formation_controller import FormationController
 
 
 class Behavior26:
-    """Auto-generated swarm behavior module #26."""
+    """Swarm behavior #26 (ring_expand)."""
 
     def __init__(self) -> None:
-        """Initialize behavior."""
         self.controller = FormationController()
         self.name = "behavior_26"
+        self.strategy = "ring_expand"
+        self.factor = 0.2
 
     def tick(self, positions: list) -> list:
-        """
-        Execute behavior tick.
-
-        Args:
-            positions: Current unit positions
-
-        Returns:
-            Target positions for units
-        """
-        # Placeholder for behavior logic
-        return self.controller.maintain_formation(positions)
+        """Apply the ring_expand strategy to ``positions``."""
+        return strategies.ring_expand(positions, factor=self.factor)
 
     def __repr__(self) -> str:
-        return f"{self.__class__.__name__}()"
+        return f"{self.__class__.__name__}(strategy={self.strategy!r})"

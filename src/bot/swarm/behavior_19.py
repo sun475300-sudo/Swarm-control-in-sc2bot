@@ -1,31 +1,31 @@
 """
-Swarm Behavior Module #19 - Auto-generated placeholder.
-This module can be extended with actual behavior logic.
+Swarm behavior #19 — strategy: ``wall_off``.
+
+This module wraps the :func:`src.bot.swarm._strategies.wall_off` primitive
+and exposes the legacy ``BehaviorNN`` API used elsewhere in the bot.
 """
 
+from __future__ import annotations
+
+from . import _strategies as strategies
 from .formation_controller import FormationController
 
 
 class Behavior19:
-    """Auto-generated swarm behavior module #19."""
+    """Swarm behavior #19 (wall_off)."""
 
     def __init__(self) -> None:
-        """Initialize behavior."""
         self.controller = FormationController()
         self.name = "behavior_19"
+        self.strategy = "wall_off"
+        self.choke_a = (0.0, 0.0)
+        self.choke_b = (10.0, 0.0)
 
     def tick(self, positions: list) -> list:
-        """
-        Execute behavior tick.
-
-        Args:
-            positions: Current unit positions
-
-        Returns:
-            Target positions for units
-        """
-        # Placeholder for behavior logic
-        return self.controller.maintain_formation(positions)
+        """Apply the wall_off strategy to ``positions``."""
+        return strategies.wall_off(
+            positions, choke_a=self.choke_a, choke_b=self.choke_b
+        )
 
     def __repr__(self) -> str:
-        return f"{self.__class__.__name__}()"
+        return f"{self.__class__.__name__}(strategy={self.strategy!r})"

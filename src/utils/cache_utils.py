@@ -1,35 +1,49 @@
-"""
-Cache Utils Utilities - Auto-generated placeholder.
-"""
+"""Small in-memory caching helpers."""
+
+from __future__ import annotations
+
+from collections import OrderedDict
+from typing import Any, Hashable
 
 
-class CacheUtilsUtils:
-    """Utility class for cache utils operations."""
+class LRUCache:
+    """Bounded least-recently-used cache.
 
-    @staticmethod
-    def process(data):
-        """
-        Process data.
+    Keys are inserted to the back on write; ``get`` moves a key to the back so
+    that the front always contains the least-recently-used item to evict next.
+    """
 
-        Args:
-            data: Input data
+    def __init__(self, capacity: int) -> None:
+        if capacity <= 0:
+            raise ValueError("capacity must be positive")
+        self._capacity = int(capacity)
+        self._store: "OrderedDict[Hashable, Any]" = OrderedDict()
 
-        Returns:
-            Processed data
-        """
-        # Placeholder implementation
-        return data
+    @property
+    def capacity(self) -> int:
+        return self._capacity
 
-    @staticmethod
-    def validate(data):
-        """
-        Validate data.
+    def __len__(self) -> int:
+        return len(self._store)
 
-        Args:
-            data: Data to validate
+    def __contains__(self, key: Hashable) -> bool:
+        return key in self._store
 
-        Returns:
-            True if valid, False otherwise
-        """
-        # Placeholder implementation
-        return True
+    def get(self, key: Hashable, default: Any = None) -> Any:
+        if key not in self._store:
+            return default
+        self._store.move_to_end(key)
+        return self._store[key]
+
+    def put(self, key: Hashable, value: Any) -> None:
+        if key in self._store:
+            self._store.move_to_end(key)
+        self._store[key] = value
+        if len(self._store) > self._capacity:
+            self._store.popitem(last=False)
+
+    def clear(self) -> None:
+        self._store.clear()
+
+    def keys(self):
+        return list(self._store.keys())

@@ -1,31 +1,31 @@
 """
-Swarm Behavior Module #17 - Auto-generated placeholder.
-This module can be extended with actual behavior logic.
+Swarm behavior #17 — strategy: ``pursue_closest``.
+
+This module wraps the :func:`src.bot.swarm._strategies.pursue_closest` primitive
+and exposes the legacy ``BehaviorNN`` API used elsewhere in the bot.
 """
 
+from __future__ import annotations
+
+from . import _strategies as strategies
 from .formation_controller import FormationController
 
 
 class Behavior17:
-    """Auto-generated swarm behavior module #17."""
+    """Swarm behavior #17 (pursue_closest)."""
 
     def __init__(self) -> None:
-        """Initialize behavior."""
         self.controller = FormationController()
         self.name = "behavior_17"
+        self.strategy = "pursue_closest"
+        self.targets = ((10.0, 0.0),)
+        self.step = 1.0
 
     def tick(self, positions: list) -> list:
-        """
-        Execute behavior tick.
-
-        Args:
-            positions: Current unit positions
-
-        Returns:
-            Target positions for units
-        """
-        # Placeholder for behavior logic
-        return self.controller.maintain_formation(positions)
+        """Apply the pursue_closest strategy to ``positions``."""
+        return strategies.pursue_closest(
+            positions, targets=self.targets, step=self.step
+        )
 
     def __repr__(self) -> str:
-        return f"{self.__class__.__name__}()"
+        return f"{self.__class__.__name__}(strategy={self.strategy!r})"

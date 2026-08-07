@@ -1,31 +1,29 @@
 """
-Swarm Behavior Module #4 - Auto-generated placeholder.
-This module can be extended with actual behavior logic.
+Swarm behavior #4 — strategy: ``attack_move``.
+
+This module wraps the :func:`src.bot.swarm._strategies.attack_move` primitive
+and exposes the legacy ``BehaviorNN`` API used elsewhere in the bot.
 """
 
+from __future__ import annotations
+
+from . import _strategies as strategies
 from .formation_controller import FormationController
 
 
 class Behavior04:
-    """Auto-generated swarm behavior module #4."""
+    """Swarm behavior #4 (attack_move)."""
 
     def __init__(self) -> None:
-        """Initialize behavior."""
         self.controller = FormationController()
         self.name = "behavior_04"
+        self.strategy = "attack_move"
+        self.target = (10.0, 0.0)
+        self.step = 1.0
 
     def tick(self, positions: list) -> list:
-        """
-        Execute behavior tick.
-
-        Args:
-            positions: Current unit positions
-
-        Returns:
-            Target positions for units
-        """
-        # Placeholder for behavior logic
-        return self.controller.maintain_formation(positions)
+        """Apply the attack_move strategy to ``positions``."""
+        return strategies.attack_move(positions, target=self.target, step=self.step)
 
     def __repr__(self) -> str:
-        return f"{self.__class__.__name__}()"
+        return f"{self.__class__.__name__}(strategy={self.strategy!r})"
