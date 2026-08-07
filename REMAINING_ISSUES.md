@@ -4,24 +4,36 @@
 
 통합 문제 해결 후 발견된 추가 개선 사항들입니다.
 
-**Last refreshed:** 2026-04-27 (Issue #1, #2 → Resolved; Issue #6 partially resolved via Batch 3)
+**Last refreshed:** 2026-07-07 (자동 점검 사이클 — 661개 테스트 전체 통과 확인 후 재검증)
 
 ---
 
-## 🆕 신규 발견 (PR #44, 2026-04-27)
+## ✅ 2026-07-07 재검증 결과 (N1~N4 해결 확인)
 
-자동/수동 점검 사이클(테스트 → 코드 검사 → 개선 → 커밋/푸시 반복)에서 새로 식별된 항목.
+`flake8 --select=F811,F821,F823`을 wicked_zerg_challenger/ 전체에 재실행한 결과 0건 — 이전 PR에서 이미 해결됨. 개별 확인:
+
+| ID | 설명 | 상태 |
+|----|------|------|
+| N1 | `OpponentModeling.on_step` 중복 정의 | ✅ Resolved — `opponent_modeling.py`에 `on_step` 정의 1개만 존재 (line 341) |
+| N2 | `EconomyManager._prevent_resource_banking` / `_reduce_gas_workers` 재정의 | ✅ Resolved — 각 메서드 정의 1개씩만 존재 |
+| N3 | `combat_manager._find_harass_target` 재정의 | ✅ Resolved — 정의 1개만 존재 (line 4992) |
+| N4 | `production_resilience.build_terran_counters` 재정의 | ✅ Resolved — `local_training/production_resilience.py`에 정의 1개만 존재 |
+| N5 | bare `except Exception:` 다수 | 🟢 LOW — open, wicked_zerg_challenger/ 전체 약 460건 잔존 (기계적 대량 수정 필요, 리스크 대비 이득 낮아 보류) |
+| N6 | F841 unused local variables | 🟢 LOW — open, 약 130건 잔존 (대부분 `visuals/`, `tools/` 등 비게임로직 코드) |
+
+## 🆕 2026-07-07 로드맵 감사에서 새로 발견된 항목
+
+전체 ROADMAP.md Sprint 1~8 항목을 코드 대비 재검증(4개 서브에이전트 병렬 조사)한 결과. 상세는 `ROADMAP.md`의 "2026-07-07 구현 현황 감사" 섹션 참고.
 
 | ID | 설명 | 우선순위 | 상태 |
 |----|------|---------|------|
-| N1 | `OpponentModeling.on_step` 중복 정의 (line 341 vs 765 — F811) | 🟠 HIGH | open — 동작 영향(상위 on_step이 미실행) 가능 |
-| N2 | `EconomyManager._prevent_resource_banking` / `_reduce_gas_workers` 재정의 (F811) | 🟡 MED | open |
-| N3 | `combat_manager._find_harass_target` 재정의 (line 2377 vs 4278) | 🟡 MED | open |
-| N4 | `production_resilience.build_terran_counters` 재정의 (1369 vs 1866) | 🟡 MED | open |
-| N5 | bare `except Exception:` 다수 (≈360+) — 이번 PR에서 12건 처리, 잔여 다수 | 🟢 LOW | partial |
-| N6 | F841 unused local variables (visuals/make_pptx 등) | 🟢 LOW | open (presentation 코드라 영향 작음) |
+| N7 | Changeling 자동 배치 로직 없음 (Task 2.5) — `deploy_changeling()`이 정의만 되고 어디서도 호출되지 않았고, 에너지 50 체크도 없었음 | 🟠 HIGH | ✅ **Fixed this cycle** — 에너지 게이트 추가 + `advanced_scout_system_v2.py`의 `on_step`에 60초 쿨다운으로 자동 연동, 회귀 테스트 4건 추가 (`tests/test_changeling_auto_deploy.py`) |
+| N8 | `utils/frame_skip.py`의 `FrameSkipManager` 클래스가 어디서도 사용되지 않는 죽은 코드 — 실제 프레임 스킵은 `combat_manager.py`에 별도로 직접 구현되어 있음 | 🟢 LOW | open — 자체 테스트(`test_frame_skip_manager.py`)만 존재, 실사용 없음. 제거하거나 실제로 연결할지 결정 필요 |
+| N9 | Sprint 8.1 (30전 승률 테스트)이 실제로 실행된 증거 없음 — `mass_test_results.json`은 1게임(패배, 승률 0%)만 기록 | 🟡 MED | blocked — 실제 SC2 게임 실행에는 StarCraft II 클라이언트 + GPU가 필요하며 현재 클라우드 코딩 환경에는 없음. 유닛 테스트/정적 분석만 이 환경에서 가능 |
+| N10 | `strategy_manager.py`가 여전히 3300줄 이상의 God Object — Task 7.1 로드맵이 요구한 "NORMAL/EMERGENCY/... 상태 선택만 담당"까지는 부분적으로만 진행됨 | 🟡 MED | open — 큰 리팩토링, 실게임 검증 없이 진행 시 회귀 위험 높음. 점진적 분리 권장 |
+| N11 | PR #329 CI에서 `.github/workflows/sc2bot-ci.yml`의 "Lint & Type Check" job이 `black --check --diff .` / `isort --check-only --diff .`을 레포 루트 전체(500+ 디렉터리, 다국어 스캐폴딩 포함)에 대해 실행하다 실패 — **이 PR이 유발한 게 아니라 main에 이미 존재하던 상태**(67개 파일이 black 미준수, 이 PR이 건드린 파일 제외). 대량 재포맷은 범위가 크고 무관한 디렉터리까지 건드리므로 별도 PR로 분리 권장 | 🟡 MED | open — 이번 사이클에서 손댄 3개 파일만 black/isort 적용 완료. 나머지 ~64개 파일 전체 포맷은 후속 작업 |
 
-검증 권장: PR 분리 (N1 단독 PR 권장 — 동작 변화 가능성).
+검증 권장: 위 항목들은 각각 별도 커밋/PR로 처리.
 
 ---
 
