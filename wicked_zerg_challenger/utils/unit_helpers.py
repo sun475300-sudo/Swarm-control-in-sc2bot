@@ -25,31 +25,40 @@ except ImportError:
 logger = get_logger("UnitHelpers")
 
 
-def find_nearby_enemies(unit: Unit, enemy_units: Units, range: float) -> Units:
+def _empty_units():
+    """Return an empty Units collection, falling back to [] when sc2 is unavailable.
+
+    Both shapes support len() and iteration, which is what callers rely on.
     """
-    특정 거리 내의 적 유닛 찾기
+    if Units is not None:
+        return Units([], None)
+    return []
+
+
+def find_nearby_enemies(unit: Unit, enemy_units: Units, radius: float) -> Units:
+    """
+    특정 거리 내의 적 유닛 찾기.
 
     Args:
         unit: 기준 유닛
         enemy_units: 적 유닛 컬렉션
-        range: 검색 거리
+        radius: 검색 거리 (이전 인자명 ``range`` 는 빌트인을 가렸음 — 동일 시그니처)
 
     Returns:
         거리 내의 적 유닛 컬렉션
     """
     if not unit or not enemy_units:
-        return Units([], None)
+        return _empty_units()
 
     try:
         # closer_than 메서드 사용 (최적화)
         if hasattr(enemy_units, "closer_than"):
-            return enemy_units.closer_than(range, unit)
-        else:
-            # 폴백: 직접 필터링
-            return Units([e for e in enemy_units if e.distance_to(unit) < range], None)
+            return enemy_units.closer_than(radius, unit)
+        # 폴백: 직접 필터링
+        return Units([e for e in enemy_units if e.distance_to(unit) < radius], None)
     except Exception as e:
         logger.debug(f"find_nearby_enemies error: {e}")
-        return Units([], None)
+        return _empty_units()
 
 
 def get_health_ratio(unit: Unit) -> float:
@@ -112,18 +121,22 @@ def filter_workers_by_task(
         필터링된 일꾼 컬렉션
     """
     if not workers:
-        return Units([], None)
+        return _empty_units()
 
     try:
         return workers.filter(task_filter)
     except Exception as e:
         logger.debug(f"filter_workers_by_task error: {e}")
-        return Units([], None)
+        return _empty_units()
 
 
 def execute_unit_action(unit: Unit, action: Callable, *args, **kwargs) -> bool:
     """
-    안전한 유닛 명령 실행 (try-except 래퍼)
+    안전한 유닛 명령 실행 (try-except 래퍼).
+
+    sc2 라이브러리 호출은 다양한 RuntimeError/AssertionError를 던질 수 있으므로
+    KeyboardInterrupt·SystemExit를 제외한 일반 Exception을 모두 흡수한다.
+    실패 시 로그용 type_id가 없는 mock/partial 유닛에서도 안전하게 처리한다.
 
     Args:
         unit: 대상 유닛
@@ -139,8 +152,11 @@ def execute_unit_action(unit: Unit, action: Callable, *args, **kwargs) -> bool:
     try:
         action(*args, **kwargs)
         return True
-    except (AttributeError, TypeError, ValueError) as e:
-        logger.debug(f"execute_unit_action error for {unit.type_id}: {e}")
+    except (KeyboardInterrupt, SystemExit):
+        raise
+    except Exception as e:
+        unit_id = getattr(unit, "type_id", "?")
+        logger.debug(f"execute_unit_action error for {unit_id}: {e}")
         return False
 
 
@@ -218,26 +234,34 @@ def is_unit_attacking(unit: Unit) -> bool:
         return False
 
 
-def get_unit_range(unit: Unit) -> float:
+def get_unit_range(unit: Unit, target: Optional[Unit] = None) -> float:
     """
-    유닛의 공격 사거리 가져오기
+    유닛의 공격 사거리 가져오기.
+
+    target이 주어지면 target.is_flying 여부에 따라 air/ground range를 선택한다.
+    target이 없으면 두 사거리 중 큰 값을 반환한다 (하이드라처럼 둘 다 가진 유닛 대응).
 
     Args:
-        unit: 대상 유닛
+        unit: 대상 유닛 (공격자)
+        target: 선택적 타겟 — flying 여부에 맞는 사거리 선택용
 
     Returns:
-        공격 사거리, 없으면 0
+        공격 사거리, 없으면 0.0
     """
     if not unit:
         return 0.0
 
     try:
-        if hasattr(unit, "ground_range"):
-            return unit.ground_range
-        elif hasattr(unit, "air_range"):
-            return unit.air_range
-        return 0.0
-    except AttributeError:
+        ground = float(getattr(unit, "ground_range", 0.0) or 0.0)
+        air = float(getattr(unit, "air_range", 0.0) or 0.0)
+
+        if target is not None:
+            if getattr(target, "is_flying", False):
+                return air
+            return ground
+
+        return max(ground, air)
+    except (AttributeError, TypeError, ValueError):
         return 0.0
 
 
@@ -256,8 +280,8 @@ def can_unit_attack(unit: Unit, target: Unit) -> bool:
         return False
 
     try:
-        # 거리 체크
-        attack_range = get_unit_range(unit)
+        # 타겟의 flying 여부에 맞는 사거리 사용
+        attack_range = get_unit_range(unit, target)
         if attack_range <= 0:
             return False
 
