@@ -258,16 +258,9 @@ class CombatExecution:
         if not items:
             return None
 
-        count = len(items)
-        x_sum = sum(u.position.x for u in items)
-        y_sum = sum(u.position.y for u in items)
+        from utils.position_utils import get_center_position
 
-        try:
-            from sc2.position import Point2
-
-            return Point2((x_sum / count, y_sum / count))
-        except ImportError:
-            return items[0].position
+        return get_center_position(items)
 
     def _closest_enemy(self, enemy_units, unit):
         """가장 가까운 적 찾기"""
