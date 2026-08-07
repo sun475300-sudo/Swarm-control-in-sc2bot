@@ -137,50 +137,77 @@ def test_bot_structure():
 
 
 def verify_code_patterns():
-    """Verify critical code patterns exist in files."""
+    """Verify critical code patterns exist in files.
+
+    Returns False if any required pattern is missing so the test actually
+    fails. The orchestration moved into BotStepIntegrator, so most calls
+    are checked against bot_step_integration.py rather than the impl file.
+    """
     logger.info("\n" + "=" * 60)
     logger.info("Verifying Critical Code Patterns")
     logger.info("=" * 60)
 
-    # Check wicked_zerg_bot_pro_impl.py
-    impl_path = os.path.join(os.path.dirname(__file__), "wicked_zerg_bot_pro_impl.py")
+    here = os.path.dirname(__file__)
+    impl_path = os.path.join(here, "wicked_zerg_bot_pro_impl.py")
+    integrator_path = os.path.join(here, "bot_step_integration.py")
+    factory_path = os.path.join(here, "unit_factory.py")
+
     with open(impl_path, "r", encoding="utf-8") as f:
         impl_content = f.read()
-
-    checks = [
-        ("ProductionResilience initialization", "ProductionResilience(self)"),
-        ("strategy_manager.update() call", "self.strategy_manager.update()"),
-        ("rogue_tactics.update() call", "self.rogue_tactics.update(iteration)"),
-        ("_step_integrator initialization", "BotStepIntegrator(self)"),
-    ]
-
-    for name, pattern in checks:
-        if pattern in impl_content:
-            logger.info(f"Found: {name}")
-        else:
-            logger.info(f"Missing: {name}")
-
-    # Check unit_factory.py
-    factory_path = os.path.join(os.path.dirname(__file__), "unit_factory.py")
+    with open(integrator_path, "r", encoding="utf-8") as f:
+        integrator_content = f.read()
     with open(factory_path, "r", encoding="utf-8") as f:
         factory_content = f.read()
 
-    if "_safe_train" in factory_content:
-        logger.info("unit_factory.py uses _safe_train")
-    else:
-        logger.info("unit_factory.py doesn't use _safe_train")
+    # (description, file_label, content, pattern)
+    checks = [
+        (
+            "_step_integrator initialization in impl",
+            "wicked_zerg_bot_pro_impl.py",
+            impl_content,
+            "BotStepIntegrator(self)",
+        ),
+        (
+            "strategy_manager.update() called by integrator",
+            "bot_step_integration.py",
+            integrator_content,
+            ".strategy_manager.update()",
+        ),
+        (
+            "rogue_tactics dispatched by integrator",
+            "bot_step_integration.py",
+            integrator_content,
+            "rogue_tactics",
+        ),
+        (
+            "performance_optimizer.end_frame() in integrator",
+            "bot_step_integration.py",
+            integrator_content,
+            "end_frame()",
+        ),
+        (
+            "unit_factory uses _safe_train",
+            "unit_factory.py",
+            factory_content,
+            "_safe_train",
+        ),
+        (
+            "ProductionResilience referenced in impl",
+            "wicked_zerg_bot_pro_impl.py",
+            impl_content,
+            "ProductionResilience",
+        ),
+    ]
 
-    # Check bot_step_integration.py
-    integrator_path = os.path.join(os.path.dirname(__file__), "bot_step_integration.py")
-    with open(integrator_path, "r", encoding="utf-8") as f:
-        integrator_content = f.read()
+    success = True
+    for name, file_label, content, pattern in checks:
+        if pattern in content:
+            logger.info(f"Found: {name}  ({file_label})")
+        else:
+            logger.error(f"Missing: {name}  ({file_label})")
+            success = False
 
-    if "end_frame()" in integrator_content:
-        logger.info("bot_step_integration.py calls end_frame()")
-    else:
-        logger.info("bot_step_integration.py doesn't call end_frame()")
-
-    return True
+    return success
 
 
 def main():

@@ -125,10 +125,15 @@ class IntegrationTester:
         logger.info("\n[VALIDATION] Testing OpponentModeling initialization...")
 
         try:
+            from unittest.mock import Mock
+
             from opponent_modeling import OpponentModeling
 
-            # Initialize system
-            om = OpponentModeling()
+            # Phase 15+ requires a bot reference; use a Mock since we're not
+            # running a live game. intel manager is optional.
+            mock_bot = Mock()
+            mock_bot.time = 0.0
+            om = OpponentModeling(mock_bot)
             logger.info("  [OK] OpponentModeling initialized successfully")
 
             # Test opponent tracking
@@ -175,17 +180,16 @@ class IntegrationTester:
             micro_v3 = AdvancedMicroControllerV3(mock_bot)
             logger.info("  [OK] AdvancedMicroControllerV3 initialized successfully")
 
-            # Test status retrieval
+            # Test status retrieval. get_status() already returns int counts
+            # (length of underlying dicts), so no extra len() call here.
             status = micro_v3.get_status()
             logger.info(f"  [OK] Status retrieved: {len(status)} fields")
             logger.info(
-                f"     - Ravager cooldowns: {len(status.get('ravager_cooldowns', {}))}"
+                f"     - Ravager cooldowns: {status.get('ravager_cooldowns', 0)}"
             )
+            logger.info(f"     - Lurker burrowed: {status.get('lurker_burrowed', 0)}")
             logger.info(
-                f"     - Lurker burrowed: {len(status.get('lurker_burrowed', {}))}"
-            )
-            logger.info(
-                f"     - Focus fire assignments: {len(status.get('focus_fire_assignments', {}))}"
+                f"     - Focus fire assignments: {status.get('focus_fire_assignments', 0)}"
             )
 
             self.results["micro_v3"]["initialization"] = "success"
@@ -204,12 +208,17 @@ class IntegrationTester:
         import subprocess
 
         try:
+            # `-t .` keeps the `tests.` package prefix during discovery so
+            # `tests/__init__.py` (which installs the sc2 mock modules) is
+            # imported BEFORE any test module that does `from sc2.x import y`.
             result = subprocess.run(
                 [
                     sys.executable,
                     "-m",
                     "unittest",
                     "discover",
+                    "-t",
+                    ".",
                     "-s",
                     "tests",
                     "-p",
@@ -252,7 +261,13 @@ class IntegrationTester:
             return False
 
     def check_integration_points(self) -> bool:
-        """Verify integration points in main bot files"""
+        """Verify integration points in main bot files.
+
+        After Phase 21, AdvancedMicroV3 is constructed by BotStepIntegrator
+        (`bot_step_integration.py`) rather than the impl. OpponentModeling
+        is now constructed by the impl on its own (single instantiation
+        site - see `opponent_modeling = OpponentModeling(...)`).
+        """
         logger.info("\n[VALIDATION] Checking integration points...")
 
         # Check wicked_zerg_bot_pro_impl.py
@@ -260,18 +275,23 @@ class IntegrationTester:
         with open(impl_file, "r", encoding="utf-8") as f:
             impl_content = f.read()
 
+        # Check bot_step_integration.py for the V3 init (current home)
+        step_file = self.base_dir / "bot_step_integration.py"
+        with open(step_file, "r", encoding="utf-8") as f:
+            step_content = f.read()
+
         integration_checks = {
-            "OpponentModeling import": "from opponent_modeling import OpponentModeling"
+            "OpponentModeling import (impl)": "from opponent_modeling import OpponentModeling"
             in impl_content,
-            "AdvancedMicroV3 import": "from advanced_micro_controller_v3 import AdvancedMicroControllerV3"
+            "AdvancedMicroV3 import (integrator)": "from advanced_micro_controller_v3 import AdvancedMicroControllerV3"
+            in step_content,
+            "OpponentModeling init (impl)": "self.opponent_modeling = OpponentModeling("
             in impl_content,
-            "OpponentModeling init": "self.opponent_modeling = OpponentModeling()"
+            "AdvancedMicroV3 init (integrator)": "self.bot.micro_v3 = AdvancedMicroControllerV3("
+            in step_content,
+            "OpponentModeling on_game_start (impl)": "self.opponent_modeling.on_game_start"
             in impl_content,
-            "AdvancedMicroV3 init": "self.micro_v3 = AdvancedMicroControllerV3(self)"
-            in impl_content,
-            "OpponentModeling on_game_start": "self.opponent_modeling.on_game_start"
-            in impl_content,
-            "OpponentModeling on_game_end": "self.opponent_modeling.on_game_end"
+            "OpponentModeling on_game_end (impl)": "self.opponent_modeling.on_game_end"
             in impl_content,
         }
 
@@ -285,11 +305,6 @@ class IntegrationTester:
                 self.results["errors"].append(f"Missing integration: {check_name}")
 
         self.results["opponent_modeling"]["integration_points"] = all_passed
-
-        # Check bot_step_integration.py
-        step_file = self.base_dir / "bot_step_integration.py"
-        with open(step_file, "r", encoding="utf-8") as f:
-            step_content = f.read()
 
         step_checks = {
             "OpponentModeling on_step": "opponent_modeling.on_step" in step_content,

@@ -13,7 +13,11 @@ import logging
 from pathlib import Path
 from typing import Dict, Optional
 
-from sc2.data import Difficulty, Race
+try:
+    from sc2.data import Difficulty, Race
+except ImportError:  # graceful fallback when burnysc2 is unavailable
+    from utils.sc2_compat import Race
+    Difficulty = Race  # both treated as opaque enum-like sentinels
 
 logger = logging.getLogger("DifficultyProgression")
 
