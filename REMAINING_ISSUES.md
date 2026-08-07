@@ -4,24 +4,31 @@
 
 통합 문제 해결 후 발견된 추가 개선 사항들입니다.
 
-**Last refreshed:** 2026-04-27 (Issue #1, #2 → Resolved; Issue #6 partially resolved via Batch 3)
+**Last refreshed:** 2026-07-02 (자동 점검 사이클 — 테스트 스위트 재실행, N1-N4/#3/#4 재검증 후 해결 확인)
 
 ---
 
-## 🆕 신규 발견 (PR #44, 2026-04-27)
+## ✅ 2026-07-02 점검 결과
 
-자동/수동 점검 사이클(테스트 → 코드 검사 → 개선 → 커밋/푸시 반복)에서 새로 식별된 항목.
+- 전체 테스트 스위트 재실행: `tests/` 502 passed / 14 skipped, `wicked_zerg_challenger/tests/` 661 passed — **실패 0건**.
+- 발견된 실제 회귀 1건 수정: `tests/test_combat_phase_fsm.py`가 `asyncio.get_event_loop().run_until_complete(...)`를 사용해 최신 Python/pytest-asyncio 조합에서 `RuntimeError: There is no current event loop`로 12건 실패 — `asyncio.run(...)`으로 교체하여 해결.
+- 환경 문제 2건 수정(코드 변경 아님, 이 컨테이너의 pip 환경 이슈): `mpyq`/`burnysc2` 설치 실패(setuptools distutils 호환성) → setuptools/wheel 갱신 후 해결. `cryptography`의 `_cffi_backend` 누락 → `cffi` 설치로 해결.
+- PR #227 CI에서 `Lint & Type Check` 잡이 `black --check` 실패로 적발됨 — **레포 전체 66개 파일**이 현재 pinned black 26.3.1 포맷과 불일치(사전 존재하는 드리프트, 이번 PR과 무관). 이번 PR이 건드린 `tests/test_combat_phase_fsm.py`만 `black`/`isort` 적용해서 해당 파일은 클린하게 만들었고, 나머지 65개 파일은 범위 밖 — N7로 별도 추적.
 
 | ID | 설명 | 우선순위 | 상태 |
 |----|------|---------|------|
-| N1 | `OpponentModeling.on_step` 중복 정의 (line 341 vs 765 — F811) | 🟠 HIGH | open — 동작 영향(상위 on_step이 미실행) 가능 |
-| N2 | `EconomyManager._prevent_resource_banking` / `_reduce_gas_workers` 재정의 (F811) | 🟡 MED | open |
-| N3 | `combat_manager._find_harass_target` 재정의 (line 2377 vs 4278) | 🟡 MED | open |
-| N4 | `production_resilience.build_terran_counters` 재정의 (1369 vs 1866) | 🟡 MED | open |
-| N5 | bare `except Exception:` 다수 (≈360+) — 이번 PR에서 12건 처리, 잔여 다수 | 🟢 LOW | partial |
-| N6 | F841 unused local variables (visuals/make_pptx 등) | 🟢 LOW | open (presentation 코드라 영향 작음) |
+| N7 | 레포 전체 black/isort 포맷 드리프트 (66개 파일, CI `Lint & Type Check` 잡 상시 실패 원인) | 🟡 MED | open — 대량 일괄 `black .` 실행 필요, 별도 PR 권장 (diff가 커서 리뷰 분리) |
 
-검증 권장: PR 분리 (N1 단독 PR 권장 — 동작 변화 가능성).
+## 🆕 신규 발견 (PR #44, 2026-04-27) — 재검증 결과
+
+| ID | 설명 | 우선순위 | 상태 |
+|----|------|---------|------|
+| N1 | `OpponentModeling.on_step` 중복 정의 (line 341 vs 765 — F811) | 🟠 HIGH | ✅ resolved — 코드에 단일 정의만 존재 (PR #218에서 처리됨) |
+| N2 | `EconomyManager._prevent_resource_banking` / `_reduce_gas_workers` 재정의 (F811) | 🟡 MED | ✅ resolved — 단일 정의 확인 |
+| N3 | `combat_manager._find_harass_target` 재정의 (line 2377 vs 4278) | 🟡 MED | ✅ resolved — 단일 정의 확인 (line 4992) |
+| N4 | `production_resilience.build_terran_counters` 재정의 (1369 vs 1866) | 🟡 MED | ✅ resolved — 단일 정의 확인 |
+| N5 | bare `except Exception:` 다수 (≈360+) | 🟢 LOW | open — 현재 468건, 점진적 개선 대상 (대량 일괄 수정은 리스크가 커서 보류) |
+| N6 | F841 unused local variables (visuals/make_pptx 등) | 🟢 LOW | open (presentation 코드라 영향 작음) |
 
 ---
 
@@ -67,9 +74,20 @@
 
 ---
 
-## 🟡 MEDIUM Priority Issues (still open)
+## ✅ Issue #3, #4 — Resolved (확인일: 2026-07-02)
 
-### Issue #3: Transfusion 우선순위 개선 필요
+### ✅ Issue #3: Transfusion 우선순위 개선
+
+`queen_manager.py:_transfuse_injured_units`에 CreepyBot 스타일 우선순위 테이블(`TRANSFUSE_PRIORITY`)이 이미 구현됨 — 퀸 > 브루드로드 > 코럽터/바이퍼 > 스파인 크롤러 > 오버시어 > 울트라 > ... 순, 치료 불가 유닛(`BANELING`/`BROODLING`/`LOCUSTMP`) 제외 로직 포함. 아래 원안보다 더 세분화된 형태로 이미 반영되어 있어 별도 작업 불필요.
+
+### ✅ Issue #4: Resource Reservation Race Condition
+
+`wicked_zerg_challenger/core/resource_manager.py`에 `asyncio.Lock` 기반 `try_reserve`/`release`가 이미 구현됨 — 아래 원안과 동일한 패턴으로 반영 완료.
+
+<details>
+<summary>원안 (참고용, 이미 구현됨)</summary>
+
+### Issue #3: Transfusion 우선순위 개선 필요 (원안)
 
 **위치**: `queen_manager.py` 또는 `spell_unit_manager.py`
 
@@ -215,6 +233,8 @@ else:
 
 **우선순위**: 🟡 MEDIUM (안정성 개선, 드물게 발생)
 
+</details>
+
 ---
 
 ## 🟢 LOW Priority Issues
@@ -359,32 +379,32 @@ if iteration % SECOND == 0:
 
 ---
 
-## 📊 이슈 우선순위 요약 (open만)
+## 📊 이슈 우선순위 요약 (open만, 2026-07-02 기준)
 
 | 우선순위 | 이슈 | 영향도 | 난이도 |
 |---------|------|--------|--------|
-| 🟡 MEDIUM | #3 Transfusion 우선순위 | 중간 | 중간 |
-| 🟡 MEDIUM | #4 Resource Race Condition | 낮음 | 중간 |
-| 🟢 LOW | #5 코드 중복 제거 | 낮음 | 쉬움 |
+| 🟢 LOW | N5 bare `except Exception:` (468건) | 낮음 (디버깅 어려움) | 큼 (점진적) |
+| 🟢 LOW | #5 코드 중복 제거 (Position 계산, 10+ 지점) | 낮음 | 쉬움 |
 | 🟢 LOW | #6 매직 넘버 | 낮음 | 쉬움 |
 
-(Issue #1, #2 → ✅ Resolved 섹션 참조)
+(Issue #1-#4, N1-N4 → ✅ Resolved 섹션 참조. 이번 점검에서 새 MEDIUM/HIGH 항목 없음.)
 
 ---
 
 ## 🎯 권장 수정 순서
 
-### 1단계: 완료 (✅)
-~~1. Queen Inject 쿨다운 수정 (25 → 29)~~ — 코드 반영 완료, 본 문서 ✅ Resolved 섹션 참조
-~~2. 누락된 업그레이드 추가~~ — 코드 반영 완료, 본 문서 ✅ Resolved 섹션 참조
+### 완료 (✅)
+~~1. Queen Inject 쿨다운 수정 (25 → 29)~~
+~~2. 누락된 업그레이드 추가~~
+~~3. Transfusion 우선순위 시스템~~ — `queen_manager.py`에 이미 구현됨
+~~4. Resource Reservation 동기화~~ — `core/resource_manager.py`에 이미 구현됨
+~~N1-N4. 중복 메서드 정의 (F811)~~ — PR #218에서 정리됨
+~~test_combat_phase_fsm.py asyncio 회귀~~ — 2026-07-02 수정 (`asyncio.run()`)
 
-### 2단계: 로직 개선 (30분, 미진행)
-3. Transfusion 우선순위 시스템 구현
-
-### 3단계: 구조 개선 (1시간, 미진행)
-4. Resource Reservation 동기화
-5. Position Utils 유틸리티 함수 분리
-6. Constants 정리
+### 다음 단계 (미진행, LOW)
+5. `utils/position_utils.py`의 `get_center_position`/`get_weighted_center`를 실제 호출부(`combat_manager.py`, `combat/*.py`, `micro_controller.py`, `idle_unit_manager.py` 등 10+ 곳)에 적용 — 함수는 이미 존재하나 미사용 상태(dead code).
+6. Constants 정리 (매직 넘버 → `utils/game_constants.py`) — 점진적.
+7. bare `except Exception:` 468건 — 로그 없는 예외 삼킴 패턴부터 우선 정리.
 
 ---
 
