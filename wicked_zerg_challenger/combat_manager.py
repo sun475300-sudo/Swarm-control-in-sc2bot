@@ -333,7 +333,10 @@ class CombatManager:
                 try:
                     if self._distance_between(enemy, anchor) <= 12.0:
                         return True
-                except Exception:
+                except Exception as e:
+                    self.logger.debug(
+                        f"[CombatManager] Distance check failed in active-combat detection: {e}"
+                    )
                     continue
         return False
 

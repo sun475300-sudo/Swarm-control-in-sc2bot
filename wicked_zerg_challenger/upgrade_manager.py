@@ -217,6 +217,9 @@ class EvolutionUpgradeManager:
                         self._reserve_upgrade(upgrade_id)
                     continue
 
+                if not await self._try_reserve_upgrade_cost(upgrade_id):
+                    continue  # Another manager holds these resources this frame
+
                 try:
                     self.bot.do(spire.research(upgrade_id))
                     self.logger.info(f"[SPIRE] Researching {upgrade_name}")
@@ -225,6 +228,8 @@ class EvolutionUpgradeManager:
                     self.logger.warning(
                         f"[SPIRE] Failed to research {upgrade_name}: {e}"
                     )
+                finally:
+                    await self._release_upgrade_reservation()
 
         # Evolution Chamber 지상 업그레이드
         for evo in evo_chambers:
@@ -258,6 +263,9 @@ class EvolutionUpgradeManager:
                         self._reserve_upgrade(upgrade_id)
                     continue
 
+                if not await self._try_reserve_upgrade_cost(upgrade_id):
+                    continue  # Another manager holds these resources this frame
+
                 try:
                     self.bot.do(evo.research(upgrade_id))
                     game_time = getattr(self.bot, "time", 0)
@@ -267,6 +275,8 @@ class EvolutionUpgradeManager:
                 except Exception as e:
                     self.logger.warning(f"Failed to research upgrade {upgrade_id}: {e}")
                     continue
+                finally:
+                    await self._release_upgrade_reservation()
                 return
 
     def _should_reserve_for_third_base(self) -> bool:
@@ -1558,6 +1568,30 @@ class EvolutionUpgradeManager:
     # ========================================
     # *** Phase 18: Gas Reservation System ***
     # ========================================
+
+    async def _try_reserve_upgrade_cost(self, upgrade_id: object) -> bool:
+        """
+        Reserve this upgrade's cost via the shared ResourceManager (if the bot has one)
+        before issuing research, so UpgradeManager doesn't race BuildingManager/
+        EconomyManager for the same minerals/gas within a frame.
+
+        Returns True (proceed) when no ResourceManager is wired up, so tests and
+        lightweight bot setups keep working unchanged.
+        """
+        resource_manager = getattr(self.bot, "resource_manager", None)
+        if not resource_manager:
+            return True
+        minerals, gas = self._get_upgrade_cost(upgrade_id)
+        return await resource_manager.try_reserve(minerals, gas, "UpgradeManager")
+
+    async def _release_upgrade_reservation(self) -> None:
+        resource_manager = getattr(self.bot, "resource_manager", None)
+        if not resource_manager:
+            return
+        try:
+            await resource_manager.release("UpgradeManager")
+        except Exception as e:
+            self.logger.debug(f"[UpgradeManager] Resource release suppressed: {e}")
 
     def _get_upgrade_cost(self, upgrade_id: object) -> tuple:
         """
