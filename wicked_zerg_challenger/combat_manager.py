@@ -60,6 +60,7 @@ from combat.rally_point_calculator import (
     update_rally_point,
 )
 
+from rust_accel import calculate_retreat_path, points_to_xy_tuples
 from utils.distance_cache import DistanceCache
 from utils.frame_cache import FrameCache
 from utils.game_constants import GameFrequencies
@@ -3176,17 +3177,41 @@ class CombatManager:
                     continue
 
     async def _retreat_to_closest_base(self, units):
-        """* Phase 15: 가장 가까운 기지로 후퇴 *"""
+        """
+        * Phase 15: 가장 가까운 기지로 후퇴 *
+        * Rust accel: 크립/스파인 크롤러가 지원하는 기지를 우선 (동일 거리대에서 더 안전) *
+        """
         if not units:
             return
         if not hasattr(self.bot, "townhalls") or not self.bot.townhalls.exists:
             await self._retreat_to_base(units)
             return
 
+        base_positions = points_to_xy_tuples(th.position for th in self.bot.townhalls)
+
+        creep_positions = []
+        spine_positions = []
+        if hasattr(self.bot, "structures"):
+            try:
+                creep_positions = points_to_xy_tuples(
+                    p.position
+                    for p in self.bot.structures(UnitTypeId.CREEPTUMORBURROWED)
+                )
+                spine_positions = points_to_xy_tuples(
+                    p.position for p in self.bot.structures(UnitTypeId.SPINECRAWLER)
+                )
+            except (AttributeError, TypeError):
+                pass
+
         for unit in units:
             try:
-                closest_th = self.bot.townhalls.closest_to(unit.position)
-                self.bot.do(unit.move(closest_th.position))
+                anchor_x, anchor_y = calculate_retreat_path(
+                    (unit.position.x, unit.position.y),
+                    base_positions,
+                    creep_positions,
+                    spine_positions,
+                )
+                self.bot.do(unit.move(Point2((anchor_x, anchor_y))))
             except (AttributeError, TypeError):
                 continue
 

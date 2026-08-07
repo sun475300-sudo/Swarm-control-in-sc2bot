@@ -26,6 +26,12 @@ try:
 except ImportError:
     get_profiler = None
 
+# Memory Monitor (long-running session leak detection)
+try:
+    from utils.memory_monitor import MemoryMonitor
+except ImportError:
+    MemoryMonitor = None
+
 
 class LogicActivityTracker:
     """실시간 로직 활성화 추적기"""
@@ -384,6 +390,9 @@ class BotStepIntegrator:
         )
         self._managers_initialized = False
         self._logic_tracker = LogicActivityTracker()
+
+        # 장시간 플레이 메모리 누수 감지
+        self.memory_monitor = MemoryMonitor() if MemoryMonitor else None
 
         # 건물 배치 헬퍼
         if BuildingPlacementHelper:
@@ -824,6 +833,19 @@ class BotStepIntegrator:
             # 0.01 *** Blackboard 상태 업데이트 (최우선) ***
             if hasattr(self.bot, "blackboard") and self.bot.blackboard:
                 await self._update_blackboard_state(iteration)
+
+            # 0.008 *** 메모리 누수 감지 (장시간 플레이 대비) ***
+            if self.memory_monitor:
+                try:
+                    mem_result = self.memory_monitor.check(iteration)
+                    if mem_result.get("over_threshold"):
+                        self.logger.warning(
+                            f"[MEM] {mem_result['current_bytes'] / 1024 / 1024:.1f}MB "
+                            f"(peak {mem_result['peak_bytes'] / 1024 / 1024:.1f}MB)"
+                        )
+                except Exception as e:
+                    if iteration % 500 == 0:
+                        self.logger.warning(f"[MEM] Monitor error: {e}")
 
             # 0. Performance Optimizer 프레임 시작
             if (
@@ -2139,6 +2161,14 @@ class BotStepIntegrator:
                         )
                         if game_time >= 180 and base_count >= 3:
                             await self.bot.advanced_building_manager.build_defense_buildings_optimally()
+
+                    # 끼인 일꾼 구출 - 매 2초마다
+                    if iteration % 44 == 0:
+                        rescued = (
+                            await self.bot.advanced_building_manager.rescue_stuck_workers()
+                        )
+                        if rescued and iteration % 100 == 0:
+                            self.logger.info(f"[WORKER RESCUE] Rescued: {rescued}")
                 except Exception as e:
                     success = False
                     if iteration % 50 == 0:

@@ -107,10 +107,24 @@ class QueenManager:
             {}
         )  # hatchery_tag -> queen_tag (2차)
 
+        # Units flagged by other systems (e.g. retreating wounded units) for
+        # top-priority transfusion, regardless of the normal type-based order.
+        self.priority_heal_tags: Set[int] = set()
+
         # Transfuse settings (GameConfig 중앙화)
         self.transfuse_energy_threshold = GameConfig.QUEEN_TRANSFUSE_ENERGY_THRESHOLD
         self.transfuse_cooldown = GameConfig.QUEEN_TRANSFUSE_COOLDOWN_SEC
         self.transfuse_health_threshold = GameConfig.QUEEN_TRANSFUSE_HP_THRESHOLD
+
+    def request_priority_heal(self, unit_tag: int) -> None:
+        """
+        Flag a unit for top-priority transfusion on the next heal pass.
+
+        Intended for other systems (e.g. IdleUnitManager retreating a
+        critically wounded unit) that know a unit needs healing now, ahead
+        of the normal type-based priority order.
+        """
+        self.priority_heal_tags.add(unit_tag)
 
     async def on_step(self, iteration: int) -> None:
         """
@@ -752,6 +766,12 @@ class QueenManager:
         if hasattr(UnitTypeId, "LOCUSTMP"):
             UNHEALABLE_UNITS.add(UnitTypeId.LOCUSTMP)
 
+        # Units flagged this cycle by other systems (e.g. IdleUnitManager's
+        # retreat logic) as urgent heal requests. Consumed once per pass so
+        # callers must keep re-requesting while the condition holds.
+        requested_tags = self.priority_heal_tags
+        self.priority_heal_tags = set()
+
         # Find injured units to heal
         injured_targets = []
         if hasattr(self.bot, "units"):
@@ -761,10 +781,18 @@ class QueenManager:
                 if unit.health_max == 0:
                     continue
 
-                # CreepyBot condition: health_max - health >= 125 OR health < 25%
                 health_deficit = unit.health_max - unit.health
                 health_ratio = unit.health / unit.health_max
-                if health_deficit < 125 and health_ratio >= 0.25:
+                is_priority_request = unit.tag in requested_tags
+
+                # CreepyBot condition: health_max - health >= 125 OR health < 25%
+                # Priority-requested units skip this gate - the requester already
+                # decided the unit needs healing (e.g. a retreating unit under fire).
+                if (
+                    not is_priority_request
+                    and health_deficit < 125
+                    and health_ratio >= 0.25
+                ):
                     continue
 
                 if not getattr(unit, "is_biological", True):
@@ -772,8 +800,12 @@ class QueenManager:
                 if unit.type_id in UNHEALABLE_UNITS:
                     continue
 
-                # Priority from table, fallback to health ratio
-                type_priority = TRANSFUSE_PRIORITY.get(unit.type_id, 15)
+                # Priority-requested units jump ahead of every type-based priority.
+                type_priority = (
+                    -1
+                    if is_priority_request
+                    else TRANSFUSE_PRIORITY.get(unit.type_id, 15)
+                )
                 # Combine type priority with health urgency
                 priority = type_priority + health_ratio * 0.5
                 injured_targets.append((unit, priority))

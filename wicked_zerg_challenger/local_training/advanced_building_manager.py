@@ -86,6 +86,12 @@ class AdvancedBuildingManager:
         else:
             self.placement_helper = None
 
+        # * 일꾼 위치 기록 (제자리 걸음 감지용) *
+        # worker_tag -> (last_position, consecutive_checks_without_progress)
+        self._worker_position_history: Dict[int, Tuple[Point2, int]] = {}
+        self.STUCK_MOVE_THRESHOLD = 0.15  # 이 거리 미만 이동 시 "제자리"로 간주
+        self.STUCK_CHECK_STREAK = 3  # 연속 3회 확인될 때만 낀 것으로 판단
+
     # ==================== 1. 중복 코드 제거: 공통 변태 로직 ====================
 
     async def morph_unit_safely(
@@ -767,6 +773,11 @@ class AdvancedBuildingManager:
         if not hasattr(self.bot, "workers"):
             return 0
 
+        # 사라진 일꾼(사망/건물로 변태)의 기록은 제거해 메모리 누수를 방지
+        current_tags = {worker.tag for worker in self.bot.workers}
+        for stale_tag in set(self._worker_position_history) - current_tags:
+            del self._worker_position_history[stale_tag]
+
         rescued = 0
         for worker in self.bot.workers:
             try:
@@ -775,7 +786,25 @@ class AdvancedBuildingManager:
                 if hasattr(worker, "is_idle") and worker.is_idle:
                     is_stuck = True
 
-                # 2. 움직이지만 제자리인 경우 (TODO: 위치 기록 필요, 여기선 생략)
+                # 2. 움직이지만 제자리인 경우 (건물 사이에 물리적으로 낀 경우 등)
+                last_position, stuck_streak = self._worker_position_history.get(
+                    worker.tag, (None, 0)
+                )
+                if (
+                    last_position is not None
+                    and worker.position.distance_to(last_position)
+                    < self.STUCK_MOVE_THRESHOLD
+                ):
+                    stuck_streak += 1
+                else:
+                    stuck_streak = 0
+                self._worker_position_history[worker.tag] = (
+                    worker.position,
+                    stuck_streak,
+                )
+
+                if not is_stuck and stuck_streak >= self.STUCK_CHECK_STREAK:
+                    is_stuck = True
 
                 if is_stuck:
                     if hasattr(self.bot, "structures"):

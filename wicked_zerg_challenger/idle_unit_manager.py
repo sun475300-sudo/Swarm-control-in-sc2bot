@@ -246,10 +246,9 @@ class IdleUnitManager:
                     closest_base = self.bot.townhalls.closest_to(unit)
                     self.bot.do(unit.move(closest_base.position))
 
-                    # 퀸 트랜스퓨전 요청
+                    # 퀸 트랜스퓨전 요청 - 최우선 힐 대상으로 등록
                     if hasattr(self.bot, "queen_manager"):
-                        # 퀸 힐 우선순위 추가 (구현 필요)
-                        pass
+                        self.bot.queen_manager.request_priority_heal(unit.tag)
 
     def get_idle_count(self) -> int:
         """대기 중인 군사 유닛 수"""
