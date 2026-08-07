@@ -3,9 +3,12 @@
 
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import List
+
+_INVALID_LURKER_RE = re.compile(r"UnitTypeId\.LURKER\b")
 
 
 @dataclass
@@ -80,5 +83,5 @@ class PreflightValidator:
                 text = path.read_text(encoding="utf-8", errors="ignore")
             except OSError:
                 continue
-            count += text.count("UnitTypeId.LURKER")
+            count += len(_INVALID_LURKER_RE.findall(text))
         return count
