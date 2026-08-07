@@ -308,6 +308,45 @@ class TestProductionResilience(unittest.TestCase):
         self.assertFalse(result)
         self.bot.can_afford.assert_not_called()
 
+    def test_late_game_composition_includes_mutalisks(self):
+        """Regression: late-game production must train Mutalisks when Spire
+        is ready. `_produce_army_unit` documents 'Muta > Hydra > Roach >
+        Zergling' priority past 10 minutes, but the Mutalisk branch was
+        missing entirely so the bot never trained any."""
+        self.bot.time = 650.0
+        self.bot.minerals = 500
+        self.bot.enemy_units = []
+        self.bot.already_pending = Mock(return_value=0)
+
+        def units(unit_type):
+            amounts = {
+                UnitTypeId.ZERGLING: 10,
+                UnitTypeId.ROACH: 5,
+                UnitTypeId.HYDRALISK: 5,
+                UnitTypeId.MUTALISK: 0,
+            }
+            return SimpleNamespace(amount=amounts.get(unit_type, 0))
+
+        self.bot.units = Mock(side_effect=units)
+
+        def structures(unit_type):
+            group = Mock(amount=1, exists=True)
+            group.ready = Mock(exists=True)
+            group.first = Mock(build_progress=1.0)
+            return group
+
+        self.bot.structures = Mock(side_effect=structures)
+        self.resilience._get_counter_unit = Mock(return_value=None)
+        self.resilience._safe_train = AsyncMock(return_value=True)
+
+        import asyncio
+
+        larva = Mock()
+        result = asyncio.run(self.resilience._produce_army_unit(larva))
+
+        self.assertTrue(result)
+        self.resilience._safe_train.assert_awaited_once_with(larva, UnitTypeId.MUTALISK)
+
     def test_pending_third_releases_production_reserve(self):
         """A pending third Hatchery releases ProductionResilience spending."""
         self.bot.time = 190.0

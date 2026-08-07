@@ -4,24 +4,24 @@
 
 통합 문제 해결 후 발견된 추가 개선 사항들입니다.
 
-**Last refreshed:** 2026-04-27 (Issue #1, #2 → Resolved; Issue #6 partially resolved via Batch 3)
+**Last refreshed:** 2026-07-07 (자동 점검 사이클 재개; N1-N4 재검증 결과 모두 이미 해결, Issue #3 stale 확인, Mutalisk 생산 누락 버그 신규 수정)
 
 ---
 
-## 🆕 신규 발견 (PR #44, 2026-04-27)
+## 🆕 신규 발견 (PR #44, 2026-04-27) — 2026-07-07 재검증
 
 자동/수동 점검 사이클(테스트 → 코드 검사 → 개선 → 커밋/푸시 반복)에서 새로 식별된 항목.
 
 | ID | 설명 | 우선순위 | 상태 |
 |----|------|---------|------|
-| N1 | `OpponentModeling.on_step` 중복 정의 (line 341 vs 765 — F811) | 🟠 HIGH | open — 동작 영향(상위 on_step이 미실행) 가능 |
-| N2 | `EconomyManager._prevent_resource_banking` / `_reduce_gas_workers` 재정의 (F811) | 🟡 MED | open |
-| N3 | `combat_manager._find_harass_target` 재정의 (line 2377 vs 4278) | 🟡 MED | open |
-| N4 | `production_resilience.build_terran_counters` 재정의 (1369 vs 1866) | 🟡 MED | open |
-| N5 | bare `except Exception:` 다수 (≈360+) — 이번 PR에서 12건 처리, 잔여 다수 | 🟢 LOW | partial |
-| N6 | F841 unused local variables (visuals/make_pptx 등) | 🟢 LOW | open (presentation 코드라 영향 작음) |
+| N1 | `OpponentModeling.on_step` 중복 정의 (line 341 vs 765 — F811) | 🟠 HIGH | ✅ resolved — 현재 정의 1개만 존재 (line 341) |
+| N2 | `EconomyManager._prevent_resource_banking` / `_reduce_gas_workers` 재정의 (F811) | 🟡 MED | ✅ resolved — 각 1개 정의만 존재 |
+| N3 | `combat_manager._find_harass_target` 재정의 (line 2377 vs 4278) | 🟡 MED | ✅ resolved — 1개 정의만 존재 (line 4992) |
+| N4 | `production_resilience.build_terran_counters` 재정의 (1369 vs 1866) | 🟡 MED | ✅ resolved — 1개 정의만 존재 (line 1963) |
+| N5 | bare `except Exception:` 다수 (≈360+) — 이번 PR에서 12건 처리, 잔여 다수 | 🟢 LOW | partial (잔여 다수, 점진 개선 대상) |
+| N6 | F841 unused local variables (전체 ~125건, `flake8 --select=F841` 기준) | 🟢 LOW | partial — 대부분 무해(bare-except `e`, 로그용 미사용 변수). 그중 `production_resilience._produce_army_unit`의 `mutalisk_count`는 실제 버그(late-game Mutalisk 미생산)의 신호였음 → 수정 완료 |
 
-검증 권장: PR 분리 (N1 단독 PR 권장 — 동작 변화 가능성).
+검증 권장: 나머지 F841 항목은 낮은 우선순위 코드 정리 대상. N1-N4와 달리 동작에 영향 없는 항목이 대부분이나, "계산은 하지만 안 쓰는 변수"는 종종 드롭된 기능의 흔적이므로 다음 사이클에서 개별 확인 필요.
 
 ---
 
@@ -67,80 +67,28 @@
 
 ---
 
-## 🟡 MEDIUM Priority Issues (still open)
+## ✅ Resolved (확인일: 2026-07-07)
 
-### Issue #3: Transfusion 우선순위 개선 필요
+### ✅ Issue #3: Transfusion 우선순위 — 이미 구현되어 있음 확인
 
-**위치**: `queen_manager.py` 또는 `spell_unit_manager.py`
+`wicked_zerg_challenger/economy/queen_transfusion_manager.py`의 `QueenTransfusionManager`가
+이 문서에서 제안한 것보다 더 상세한 우선순위 기반 수혈 시스템을 이미 구현하고 있음
+(HEAL_PRIORITY 13종 유닛, CANNOT_HEAL 블랙리스트, 중복 타겟팅 방지, 큐 쿨다운, 오버힐 방지).
+`bot_step_integration.py`에서 `self.bot.queen_transfusion`으로 실전 연동 확인
+(Phase 21). 문서가 stale했던 것으로, 별도 작업 없이 닫습니다.
 
-**현재 문제**:
-- Transfusion 로직이 단순함
-- 고가 유닛(울트라, 브루드로드) 우선순위 없음
-- 군단 숙주, 맹독충 등 치료 불가 유닛에 낭비 가능성
+### ✅ (2026-07-07) `_produce_army_unit` late-game Mutalisk 생산 누락 수정
 
-**개선 방법**:
-```python
-async def smart_transfusion(self, queen, damaged_units):
-    """
-    스마트 수혈 - 우선순위 기반
-
-    우선순위:
-    1. 울트라리스크 (300/200 고가 유닛)
-    2. 브루드로드 (150/150/2)
-    3. 바퀴 (75/25)
-    4. 히드라 (100/50)
-    5. 저글링 (25/0)
-    """
-    if queen.energy < 50:
-        return
-
-    # 치료 우선순위 정의
-    HEAL_PRIORITY = {
-        UnitTypeId.ULTRALISK: 100,
-        UnitTypeId.BROODLORD: 90,
-        UnitTypeId.ROACH: 70,
-        UnitTypeId.RAVAGER: 75,
-        UnitTypeId.HYDRALISK: 60,
-        UnitTypeId.MUTALISK: 50,
-        UnitTypeId.CORRUPTOR: 50,
-        UnitTypeId.ZERGLING: 30,
-    }
-
-    # 치료 불가 유닛 제외
-    CANNOT_HEAL = {
-        UnitTypeId.BANELING,  # 맹독충 (자폭 유닛)
-        UnitTypeId.BROODLING,  # 무리 (일회용)
-        UnitTypeId.LOCUSTMP,  # 군단 숙주 (일회용)
-    }
-
-    # 우선순위대로 정렬
-    valid_targets = [
-        u for u in damaged_units
-        if u.type_id not in CANNOT_HEAL and u.health_percentage < 0.6
-    ]
-
-    if not valid_targets:
-        return
-
-    # 우선순위 정렬 (priority desc, health% asc)
-    valid_targets.sort(
-        key=lambda u: (
-            -HEAL_PRIORITY.get(u.type_id, 0),  # 우선순위 높을수록
-            u.health_percentage  # 체력 낮을수록
-        )
-    )
-
-    best_target = valid_targets[0]
-
-    # 수혈 실행 (50 에너지, +125 HP)
-    if queen.distance_to(best_target) <= 7:
-        from sc2.ids.ability_id import AbilityId
-        self.bot.do(queen(AbilityId.TRANSFUSION_TRANSFUSION, best_target))
-```
-
-**우선순위**: 🟡 MEDIUM (자원 효율성 개선)
+자동 점검 사이클에서 신규 발견: `local_training/production_resilience.py`의
+`_produce_army_unit`이 "Late (10min+): Mutalisks 30%, Hydralisks 25%, Roaches 25%,
+Zerglings 20%" 라고 문서화했고 `has_spire`/`mutalisk_count`를 계산까지 해두고도
+실제로는 뮤탈리스크를 전혀 생산하지 않는 버그 발견. 이 함수는 `fix_production_bottleneck`을
+통해 실전에서 매 스텝 호출되는 활성 경로. Late game(10분+) + Spire 보유 시 뮤탈리스크
+생산 분기를 추가하고 회귀 테스트(`test_late_game_composition_includes_mutalisks`) 추가.
 
 ---
+
+## 🟡 MEDIUM Priority Issues (still open)
 
 ### Issue #4: Resource Reservation Race Condition
 
