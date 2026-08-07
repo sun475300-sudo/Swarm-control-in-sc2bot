@@ -69,9 +69,10 @@ class MapManager:
 
     def __init__(self, stats_file: str = "map_performance.json"):
         self.stats_file = Path(stats_file)
+        # logger must be set before _load_stats(); _load_stats() logs on error.
+        self.logger = logging.getLogger(__name__)
         self.stats: Dict[str, Dict[str, int]] = self._load_stats()
         self.current_map_index = 0
-        self.logger = logging.getLogger(__name__)
 
     def _load_stats(self) -> Dict[str, Dict[str, int]]:
         if not self.stats_file.exists():

@@ -31,7 +31,25 @@ except ImportError:
         pass
 
     class UnitTypeId:
-        pass
+        # Test-environment fallback for sc2-less collection.
+        OVERLORD = "OVERLORD"
+        OVERSEER = "OVERSEER"
+        CHANGELING = "CHANGELING"
+        DRONE = "DRONE"
+        ZERGLING = "ZERGLING"
+        QUEEN = "QUEEN"
+        HATCHERY = "HATCHERY"
+        LAIR = "LAIR"
+        HIVE = "HIVE"
+        SPAWNINGPOOL = "SPAWNINGPOOL"
+        SPINECRAWLER = "SPINECRAWLER"
+        SPORECRAWLER = "SPORECRAWLER"
+        CREEPTUMOR = "CREEPTUMOR"
+        CREEPTUMORBURROWED = "CREEPTUMORBURROWED"
+        EXTRACTOR = "EXTRACTOR"
+        ROACHWARREN = "ROACHWARREN"
+        BANELINGNEST = "BANELINGNEST"
+        EVOLUTIONCHAMBER = "EVOLUTIONCHAMBER"
 
     class AbilityId:
         pass

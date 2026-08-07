@@ -442,8 +442,8 @@ class UnitMorphManager:
             self.logger.info(
                 f"[{int(self.bot.time)}s] Morphed Overseer (Active: {overseers.amount}/{target_count})"
             )
-        except Exception:
-            pass
+        except Exception as e:
+            self.logger.debug(f"Overseer morph failed: {e}")
 
     def _get_enemy_race(self) -> str:
         """상대 종족 확인"""
