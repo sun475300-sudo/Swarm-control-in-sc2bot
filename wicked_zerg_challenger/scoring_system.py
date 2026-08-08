@@ -394,7 +394,7 @@ class ScoringSystem:
 
         # 퀸 인젝트 체크
         structures = getattr(self.bot, "structures", None)
-        if structures and hasattr(structures, "__call__"):
+        if structures and callable(structures):
             try:
                 from sc2.ids.unit_typeid import UnitTypeId
 
@@ -434,7 +434,7 @@ class ScoringSystem:
         elif game_time < 480:
             # 중반: 테크 건물 + 업그레이드
             structures = getattr(self.bot, "structures", None)
-            if structures and hasattr(structures, "__call__"):
+            if structures and callable(structures):
                 try:
                     from sc2.ids.unit_typeid import UnitTypeId
 
