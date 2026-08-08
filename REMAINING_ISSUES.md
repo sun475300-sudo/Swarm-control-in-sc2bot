@@ -67,13 +67,25 @@
 
 ---
 
+## ✅ Verified resolved on `main` (2026-07-19)
+
+직접 코드 확인(문서만 신뢰하지 않고 `main` HEAD 7d24294 기준으로 실제 소스 조회) 결과,
+아래 두 항목은 이미 구현되어 있음. 여러 열린 draft PR(#536 등)도 동일하게 지적했으나
+아직 머지되지 않아 이 문서가 계속 stale 상태로 남아있었음 — 본 커밋에서 문서만 갱신.
+
+- **Issue #3 (Transfusion 우선순위)**: `wicked_zerg_challenger/economy/queen_transfusion_manager.py`에
+  `HEAL_PRIORITY` 테이블(ULTRALISK=100, BROODLORD=90 등) + `CANNOT_HEAL` 제외 목록 + 거리/체력
+  기반 정렬 로직이 이미 구현되어 있음 (`find_best_target`, `execute_transfusions`).
+- **Issue #4 (Resource Reservation Race Condition)**: `wicked_zerg_challenger/core/resource_manager.py`에
+  `asyncio.Lock` 기반 `try_reserve`/`release`/`release_partial`가 이미 구현되어 있음.
+
 ## 🟡 MEDIUM Priority Issues (still open)
 
-### Issue #3: Transfusion 우선순위 개선 필요
+### Issue #3 (원 문서, 참고용 — 위 "Verified resolved" 섹션 참조)
 
 **위치**: `queen_manager.py` 또는 `spell_unit_manager.py`
 
-**현재 문제**:
+**현재 문제** (해결됨, 아래는 원문 유지):
 - Transfusion 로직이 단순함
 - 고가 유닛(울트라, 브루드로드) 우선순위 없음
 - 군단 숙주, 맹독충 등 치료 불가 유닛에 낭비 가능성
@@ -138,11 +150,11 @@ async def smart_transfusion(self, queen, damaged_units):
         self.bot.do(queen(AbilityId.TRANSFUSION_TRANSFUSION, best_target))
 ```
 
-**우선순위**: 🟡 MEDIUM (자원 효율성 개선)
+**우선순위**: 🟡 MEDIUM (자원 효율성 개선) — **✅ 위 "Verified resolved" 섹션 참조, 이미 구현됨**
 
 ---
 
-### Issue #4: Resource Reservation Race Condition
+### Issue #4 (원 문서, 참고용 — ✅ 위 "Verified resolved" 섹션 참조, 이미 구현됨)
 
 **위치**: `resource_manager.py` (추정)
 
@@ -363,12 +375,10 @@ if iteration % SECOND == 0:
 
 | 우선순위 | 이슈 | 영향도 | 난이도 |
 |---------|------|--------|--------|
-| 🟡 MEDIUM | #3 Transfusion 우선순위 | 중간 | 중간 |
-| 🟡 MEDIUM | #4 Resource Race Condition | 낮음 | 중간 |
-| 🟢 LOW | #5 코드 중복 제거 | 낮음 | 쉬움 |
+| 🟢 LOW | #5 코드 중복 제거 (position 계산) — 일부 열린 draft PR(#536)에 미머지 픽스 존재, 코드 확인 결과 main엔 아직 잔존 | 낮음 | 쉬움 |
 | 🟢 LOW | #6 매직 넘버 | 낮음 | 쉬움 |
 
-(Issue #1, #2 → ✅ Resolved 섹션 참조)
+(Issue #1, #2 → ✅ Resolved 섹션 참조. Issue #3, #4 → ✅ 2026-07-19 "Verified resolved on main" 섹션 참조 — 이미 구현 확인됨)
 
 ---
 
@@ -377,14 +387,12 @@ if iteration % SECOND == 0:
 ### 1단계: 완료 (✅)
 ~~1. Queen Inject 쿨다운 수정 (25 → 29)~~ — 코드 반영 완료, 본 문서 ✅ Resolved 섹션 참조
 ~~2. 누락된 업그레이드 추가~~ — 코드 반영 완료, 본 문서 ✅ Resolved 섹션 참조
+~~3. Transfusion 우선순위 시스템~~ — 코드 반영 완료 (2026-07-19 확인), 본 문서 ✅ Resolved 섹션 참조
+~~4. Resource Reservation 동기화~~ — 코드 반영 완료 (2026-07-19 확인), 본 문서 ✅ Resolved 섹션 참조
 
-### 2단계: 로직 개선 (30분, 미진행)
-3. Transfusion 우선순위 시스템 구현
-
-### 3단계: 구조 개선 (1시간, 미진행)
-4. Resource Reservation 동기화
-5. Position Utils 유틸리티 함수 분리
-6. Constants 정리
+### 2단계: 구조 개선 (미진행)
+5. Position Utils 유틸리티 함수로 통일 (여러 파일에 인라인 centroid 계산 잔존 — 열린 PR #536이 이 작업을 다루고 있으나 미머지 상태)
+6. Constants 정리 (매직 넘버 → GameConstants — 열린 PR #539/#541이 대부분 다룸, 미머지 상태)
 
 ---
 
