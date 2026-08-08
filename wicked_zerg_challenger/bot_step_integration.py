@@ -3579,7 +3579,12 @@ class BotStepIntegrator:
             await self.execute_training_logic(iteration)
 
         except Exception as e:
-            if iteration % 100 == 0:
+            error_key = f"{type(e).__name__}:{e}"
+            if (
+                error_key != getattr(self, "_last_step_error_key", None)
+                or iteration % 100 == 0
+            ):
+                self._last_step_error_key = error_key
                 self.logger.error(f"[ERROR] on_step execution error: {e}")
                 import traceback
 
