@@ -14,7 +14,6 @@ REINFORCE 알고리즘 기반의 정책 학습 에이전트입니다.
 
 import logging
 import os
-import shutil
 import time
 from datetime import datetime
 from pathlib import Path
@@ -658,11 +657,10 @@ class RLAgent:
             )
             temp_actual = temp_base + ".npz"
 
-            # 원자적으로 이름 변경 (Atomic Rename)
-            # Windows에서는 기존 파일이 있으면 rename이 실패할 수 있으므로 삭제 후 변경
-            if os.path.exists(path_str):
-                os.remove(path_str)
-            os.rename(temp_actual, path_str)
+            # 원자적으로 이름 변경 (Atomic Replace)
+            # os.replace()는 Windows/POSIX 모두에서 대상 파일을 원자적으로 덮어쓴다.
+            # (사전에 기존 파일을 삭제하면 rename 실패 시 기존 데이터까지 유실되므로 금지)
+            os.replace(temp_actual, path_str)
 
             logger.info(
                 f"[OK] Experience saved atomically: {len(self.states)} states, {len(self.rewards)} rewards"
@@ -673,6 +671,12 @@ class RLAgent:
             import traceback
 
             traceback.print_exc()
+            # 실패 시 남아있는 임시 파일 정리 (기존 path_str 파일은 손대지 않았으므로 안전)
+            try:
+                if "temp_actual" in locals() and os.path.exists(temp_actual):
+                    os.remove(temp_actual)
+            except OSError:
+                pass
             return False
 
     def train_from_batch(
@@ -760,13 +764,17 @@ class RLAgent:
     def save_model(self, path: Optional[str] = None) -> bool:
         """모델 저장 (Atomic Write)"""
         save_path = Path(path) if path else self.model_path
-        tmp_path = save_path.with_suffix(".tmp")
+        # np.savez() silently appends ".npz" to the filename it's given unless
+        # the name already ends with ".npz" -- so the temp base must NOT end
+        # in ".npz", and the actual temp file produced is tmp_base + ".npz".
+        tmp_base = str(save_path.with_suffix("")) + ".tmp"
+        tmp_path = Path(tmp_base + ".npz")
 
         try:
             save_path.parent.mkdir(parents=True, exist_ok=True)
             weights = self.policy.get_weights()
             np.savez(
-                str(tmp_path),
+                tmp_base,
                 W1=weights["W1"],
                 b1=weights["b1"],
                 W2=weights["W2"],
@@ -778,18 +786,10 @@ class RLAgent:
             )
 
             # *** FIX: Atomic rename with Windows compatibility ***
-            if tmp_path.exists():
-                try:
-                    # Remove old file first on Windows (replace() can fail silently)
-                    if save_path.exists():
-                        save_path.unlink()
-                    # Use shutil.move() for cross-platform compatibility
-                    shutil.move(str(tmp_path), str(save_path))
-                except Exception as move_error:
-                    # Fallback: copy + delete
-                    logger.error(f"Move failed, trying copy: {move_error}")
-                    shutil.copy(str(tmp_path), str(save_path))
-                    tmp_path.unlink()
+            # os.replace() overwrites the destination atomically on both Windows and
+            # POSIX. Deleting save_path before the move (the old approach) left a
+            # window where a failed move/copy would lose both the old and new model.
+            os.replace(str(tmp_path), str(save_path))
 
             logger.info(f"Model saved to {save_path}")
             return True
