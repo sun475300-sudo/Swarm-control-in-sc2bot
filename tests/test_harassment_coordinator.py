@@ -4,7 +4,7 @@ Unit Tests for Harassment Coordinator
 Tests aggressive modes, baneling drops, squad locking, and multi-angle attacks.
 """
 
-from unittest.mock import MagicMock, Mock
+from unittest.mock import AsyncMock, MagicMock, Mock, patch
 
 import pytest
 
@@ -232,6 +232,37 @@ class TestHarassmentCoordinator:
         except Exception:
             # May fail in test environment
             pass
+
+    @pytest.mark.asyncio
+    async def test_multi_angle_attack_triggers_real_runby_and_mutalisk_logic(self):
+        """
+        Regression test: _trigger_zergling_runby / _trigger_mutalisk_harassment
+        used to be empty placeholders, so coordinate_multi_angle_attack never
+        actually launched a run-by or mutalisk harass even when the
+        _can_execute_* gates passed. They must now delegate to the real
+        _manage_zergling_runby / _manage_mutalisk_harassment logic.
+        """
+        with (
+            patch.object(
+                self.coordinator, "_can_execute_zergling_runby", return_value=True
+            ),
+            patch.object(
+                self.coordinator, "_can_execute_mutalisk_harass", return_value=True
+            ),
+            patch.object(
+                self.coordinator, "_can_execute_baneling_drop", return_value=False
+            ),
+            patch.object(
+                self.coordinator, "_manage_zergling_runby", new_callable=AsyncMock
+            ) as mock_runby,
+            patch.object(
+                self.coordinator, "_manage_mutalisk_harassment", new_callable=AsyncMock
+            ) as mock_muta,
+        ):
+            await self.coordinator.coordinate_multi_angle_attack(iteration=0)
+
+        mock_runby.assert_awaited_once()
+        mock_muta.assert_awaited_once()
 
     # ===== Harassment Target Selection Tests =====
 
