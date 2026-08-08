@@ -85,7 +85,16 @@ class BaseDefenseSystem:
             "THOR",
             "MEDIVAC",
         }
-        self.drop_transport_types = {"MEDIVAC", "WARPPRISM", "OVERLORDTRANSPORT"}
+        # NYDUSCANAL is the ground-side exit a Nydus Worm surfaces near our
+        # base — same "surprise army appears next to us" threat shape as an
+        # air drop, so it should trigger the same garrison + reinforcement
+        # response (destroying the canal denies the whole worm-in).
+        self.drop_transport_types = {
+            "MEDIVAC",
+            "WARPPRISM",
+            "OVERLORDTRANSPORT",
+            "NYDUSCANAL",
+        }
         self.base_defender_tags = {}
         self.air_harass_count = 0
         self._last_air_harass_time = -999.0
