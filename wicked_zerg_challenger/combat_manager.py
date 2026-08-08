@@ -286,14 +286,6 @@ class CombatManager:
                 error_msg = str(e).encode("ascii", "ignore").decode("ascii")
                 self.logger.error(f"Combat manager error: {error_msg}")
 
-    async def manage_combat(self, iteration: int):
-        """Sprint 4 frame-skip wrapper for direct combat execution."""
-        if self._should_skip_combat_frame(iteration):
-            return
-        units = self._filter_army_units(getattr(self.bot, "units", []))
-        enemy_units = getattr(self.bot, "enemy_units", [])
-        await self._execute_combat(units, enemy_units)
-
     def _should_skip_combat_frame(self, iteration: int) -> bool:
         if self._is_emergency():
             return False

@@ -654,7 +654,7 @@ class WickedZergBotProImpl(BotAI):
                             f"Loss: {training_stats.get('loss', 0):.4f}, Avg Reward: {training_stats.get('avg_reward', 0):.3f}"
                         )
                         self.logger.info(
-                            f"Steps: {training_stats.get('steps', 0)}, ε={training_stats.get('epsilon', 0):.3f}, LR={training_stats.get('learning_rate', 0):.6f}"
+                            f"Steps: {training_stats.get('steps', 0)}, epsilon={training_stats.get('epsilon', 0):.3f}, LR={training_stats.get('learning_rate', 0):.6f}"
                         )
                     else:
                         self.logger.info(
