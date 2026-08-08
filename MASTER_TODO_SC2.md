@@ -5,6 +5,21 @@
 
 ---
 
+## 0. 2026-07-17 재점검 — PR 적체 위기 (미해결, 최우선)
+
+반복 "테스트→점검→개선→커밋/푸시" 세션(이 문서 최초 작성 이후 계속됨)의 최신 점검 결과:
+
+- **open PR 462개** (`is:pr is:open` 기준, GitHub search API로 확인). `main`에 머지된 건 **PR #218 (2026-06-01)이 유일** — 그 뒤로 5주 이상 아무것도 머지되지 않음.
+- 462개 중 다수가 동일 버그(`ci.yml`의 `pytest tests/ --co -q` collect-only, `PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION` 누락, `tests/test_combat_phase_fsm.py`의 `asyncio.get_event_loop()`)를 독립적으로 재발견·재수정한 것. 이 저장소의 `.github/workflows/ci.yml`을 직접 열어 확인한 결과 **지금도 `--co`(collect-only)라 `tests/`가 실제 실행된 적이 없음**.
+- 이 문제는 이미 최소 8개 세션(PR #482, #486, #490, #494, #497, #498, #499, #500)이 반복적으로 지적하고 "머지 후보 + 나머지 bulk-close"를 권고했으나 **아직 실행되지 않음**.
+- **가장 완성도 높은 머지 후보**:
+  - `PR #499` — black/isort 전체 재포맷 + protobuf env var + `sc2bot-ci.yml`의 `tests/unit`(존재하지 않는 경로) → `tests/` 수정 + FSM asyncio 수정. `mergeable_state: clean`. 변경 파일 72개, 리포맷 포함이라 diff가 큼.
+  - `PR #500` — 동일 핵심 버그만 최소 diff로 수정 (리포맷 없음). 검증: `pytest tests/` 486 passed / 12 skipped / 0 failed.
+- **이번 세션(claude/optimistic-edison-ytsx6a)에서 한 일**: 위와 동일한 CI 버그를 또 고치는 대신 (1) N1~N4, Issue #3/#4가 이미 코드에 반영되어 있음을 재검증해 `REMAINING_ISSUES.md`를 최신화하고, (2) 462개 목록에 없던 새 항목(`sc2bot-ci.yml` lint matrix에 `fail-fast: false` 누락 — S3.1)을 찾아 수정, (3) 이 위기를 다시 한번 사용자에게 보고.
+- **다음 세션 지침**: 새 세션을 시작하기 전에 **먼저 `open PR` 목록을 확인**할 것. `asyncio.get_event_loop()` / collect-only / protobuf 버그가 또 나타나면 새 PR을 만들지 말고 기존 #499/#500을 참조·보강하거나 그냥 스킵할 것.
+
+---
+
 ## 1. 백로그 인벤토리
 
 ### 1.1 열린 PR (16건)
@@ -74,7 +89,7 @@
 - **추가 개선 후보**:
   - `pip install`을 `uv pip install`로 교체 (해석기가 ~10x 빠름, resolution-too-deep 거의 없음)
   - 의존성 캐시 최적화 (이미 cache: pip 활성)
-  - matrix `fail-fast: false` 추가 (현재는 누락 — 한 잡 실패가 다른 매트릭스 잡 cancel)
+  - ~~matrix `fail-fast: false` 추가~~ — **정정(2026-07-17)**: `ci.yml`에는 matrix가 없음(재확인함). 이 항목은 실제로는 아래 `sc2bot-ci.yml`의 lint matrix(3.10/3.11/3.12)를 가리킨 것으로 보이며, 그쪽에 ✅ 적용 완료 (2026-07-17, 이 세션).
 
 #### `sc2bot-ci.yml` (SC2 Bot CI/CD Pipeline)
 - lint matrix 3.10/3.11/3.12 → test → docker → push → deploy
@@ -130,7 +145,7 @@
 - [ ] pytest 실패가 CI fail로 전파되는지 시나리오 PR
 
 ### S3 — CI 인프라 보강
-- [ ] `ci.yml` `fail-fast: false` (간단)
+- [x] `sc2bot-ci.yml` lint matrix `fail-fast: false` (2026-07-17 적용 — `ci.yml`엔 matrix 자체가 없음, 정정 사항 위 참고)
 - [ ] `pip` → `uv pip` 교체 (lockfile 필요 시 pip-compile 먼저)
 - [ ] `sc2bot-ci.yml` lint 잡을 non-blocking 또는 변경 파일 한정 검사로 전환 (혹은 disable)
 - [ ] black/isort/flake8 → ruff 통합 (별 PR)
