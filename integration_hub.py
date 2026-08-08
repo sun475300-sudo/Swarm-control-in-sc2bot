@@ -204,7 +204,7 @@ class IntegrationHub:
         return [(cx, cy)] * count
 
     def generate_test_script(self, output_path: Path) -> str:
-        script = f'''#!/usr/bin/env python3
+        script = '''#!/usr/bin/env python3
 """Phase 66 Integration Test Script"""
 
 import sys
@@ -230,7 +230,7 @@ def main():
     
     print("\\n=== Formation Plan ===")
     positions = hub.formation_plan(10, "circle")
-    print(f"Generated {len(positions)} positions")  # noqa: F821
+    print(f"Generated {len(positions)} positions")
     
     print("\\n✅ All tests passed!")
 
