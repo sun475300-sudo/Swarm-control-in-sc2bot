@@ -4,6 +4,19 @@
 **분석일**: 2026-05-10  
 **목표**: 승률 50%+ 달성 (Easy AI 기준 80%+)
 
+> **🔄 재검증 (2026-07-13, 자동 점검 루프)**: 코드 grep 검증 결과 **P0 8개 항목 전부 구현 완료** 확인
+> (`production_resilience.py`, `blackboard.py`에 `FIX P0-1`~`FIX P0-8` 주석과 함께 반영됨 — 커밋 이력상
+> `production_resilience.py`/`blackboard.py` 관련 이전 세션에서 처리된 것으로 보이나 이 문서는 갱신되지 않았음).
+> P1 항목도 대부분 구현 확인됨: P1-1(HP가중 전투력, `combat_manager.py:3070` Phase 41), P1-3(매치업별 빌드,
+> `build_order_system.py` ZVT/ZVP/ZVZ_BUILDS), P1-2(무한루프 없음, `if` 가드 확인), P1-4(공격 타이밍 supply>=80,
+> victory push 로직), P1-5(30 반경 근접 유닛만 방어 소집, 전군 소집 아님), P1-6(인젝트 29초 쿨다운 GameConfig화).
+> P1-7(`tech_coordinator.py`), P1-8(`racial_counter_manager.py`)은 전용 모듈 존재 확인, 상세 로직 검증은 다음
+> 이터레이션 과제. **실측 게임 승률 재측정(20게임 벤치마크)은 아직 수행되지 않음 — 이 문서의 "예상 효과" 수치는
+> 검증되지 않은 추정치임에 유의.**
+>
+> 남은 실질 작업은 P2/P3(안정성·품질, 아래) 및 `REMAINING_ISSUES.md`의 Issue #5(position_utils 미채택)·
+> 잔여 F841 83건 정도이며, 자세한 최신 우선순위 목록은 `REMAINING_ISSUES.md` 하단 "다음 이터레이션" 섹션 참고.
+
 ---
 
 ## 핵심 패턴 분석
