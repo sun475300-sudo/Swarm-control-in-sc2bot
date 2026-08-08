@@ -4,7 +4,7 @@
 
 통합 문제 해결 후 발견된 추가 개선 사항들입니다.
 
-**Last refreshed:** 2026-04-27 (Issue #1, #2 → Resolved; Issue #6 partially resolved via Batch 3)
+**Last refreshed:** 2026-07-13 (N1-N4 → Resolved via PR #218; Issue #1, #2 → Resolved; Issue #6 partially resolved via Batch 3)
 
 ---
 
@@ -14,14 +14,19 @@
 
 | ID | 설명 | 우선순위 | 상태 |
 |----|------|---------|------|
-| N1 | `OpponentModeling.on_step` 중복 정의 (line 341 vs 765 — F811) | 🟠 HIGH | open — 동작 영향(상위 on_step이 미실행) 가능 |
-| N2 | `EconomyManager._prevent_resource_banking` / `_reduce_gas_workers` 재정의 (F811) | 🟡 MED | open |
-| N3 | `combat_manager._find_harass_target` 재정의 (line 2377 vs 4278) | 🟡 MED | open |
-| N4 | `production_resilience.build_terran_counters` 재정의 (1369 vs 1866) | 🟡 MED | open |
+| N1 | `OpponentModeling.on_step` 중복 정의 (line 341 vs 765 — F811) | 🟠 HIGH | ✅ resolved (PR #218, 2026-06-02) — single definition confirmed at `opponent_modeling.py:341` |
+| N2 | `EconomyManager._prevent_resource_banking` / `_reduce_gas_workers` 재정의 (F811) | 🟡 MED | ✅ resolved (PR #218) — single definitions confirmed at `economy_manager.py:3198` / `:3995` |
+| N3 | `combat_manager._find_harass_target` 재정의 (line 2377 vs 4278) | 🟡 MED | ✅ resolved (PR #218) — single definition confirmed at `combat_manager.py:4992` |
+| N4 | `production_resilience.build_terran_counters` 재정의 (1369 vs 1866) | 🟡 MED | ✅ resolved (PR #218) — single definition confirmed at `local_training/production_resilience.py:1961` |
 | N5 | bare `except Exception:` 다수 (≈360+) — 이번 PR에서 12건 처리, 잔여 다수 | 🟢 LOW | partial |
 | N6 | F841 unused local variables (visuals/make_pptx 등) | 🟢 LOW | open (presentation 코드라 영향 작음) |
+| N7 | `requirements.txt`가 SC2 봇 + Discord 봇 + AI/GenAI + AWS + 크립토 + TTS를 한 파일에 몰아넣어 pip 리졸버가 `burnysc2`를 구버전(5.0.5)으로 백트래킹 → `s2clientprotocol`(구식 pb2, protobuf 신버전과 비호환) 강제 설치 → `TypeError: Descriptors cannot be created directly` (CI "Python 린트 & 테스트" job, `pytest tests/ --co` 단계에서 `import sc2` 실패, 14 collection errors) | 🟠 HIGH | open — 원인 규명 완료(2026-07-13), 수정은 보류 (아래 참고) |
 
-검증 권장: PR 분리 (N1 단독 PR 권장 — 동작 변화 가능성).
+**N7 상세 (2026-07-13 조사):**
+- 재현: 격리된 venv에서 `pip install burnysc2 ...` 후 `pip install -r requirements.txt`를 실행하면 `s2clientprotocol==5.0.16...`(Blizzard 공식, protobuf 구세대 코드 생성)가 강제 설치되며 `pys2clientprotocol`(burnysc2가 실제로 의존하는, protobuf 6-7대 호환 패키지)과 임포트 네임스페이스(`s2clientprotocol`)가 충돌.
+- 단순히 `requirements.txt`에서 `s2clientprotocol>=4.19.0.0` 줄만 제거해도 재현됨 — pip 리졸버가 다른 패키지(추정: `google-generativeai` 등 구버전 protobuf를 요구하는 패키지)와의 제약을 만족시키려고 `burnysc2`를 5.0.5로 백트래킹하는데, 그 버전 자체가 `s2clientprotocol`(구식)을 직접 의존.
+- `burnysc2>=7.0.0`으로 하한을 올려 강제해봤더니 `error: resolution-too-deep` (pip가 전체 제약을 못 풂) — 70줄짜리 단일 requirements.txt에 서로 무관한 서브시스템이 섞여 있어 발생하는 구조적 문제.
+- **결론**: 한 줄짜리 안전한 수정이 아니라 의존성 구조 자체의 문제. 후보 해법: (1) SC2 봇용 `requirements-sc2bot.txt` 분리, (2) `pip-compile`/`uv` 락파일 도입, (3) `protobuf` 전역 핀 강제. 어느 방향으로 갈지 결정 필요 — 수정은 보류.
 
 ---
 
@@ -70,6 +75,14 @@
 ## 🟡 MEDIUM Priority Issues (still open)
 
 ### Issue #3: Transfusion 우선순위 개선 필요
+
+**✅ resolved (검증일: 2026-07-13)** — `queen_manager.py:_transfuse_injured_units` (line 711)에
+이미 이 이슈에서 제안한 것보다 더 정교한 "CreepyBot-inspired priority system"이 구현되어
+있음을 확인. Queen 자기보호 → Broodlord → Corruptor/Viper → Spine Crawler → Overseer →
+Ultralisk/Ravager/Roach 순 우선순위 테이블, `BANELING`/`BROODLING`/`LOCUSTMP` 치료 불가 처리,
+CreepyBot 방식 트리거 조건(`health_deficit >= 125 OR health_ratio < 0.25`)까지 모두 존재.
+아래 원안은 참고용으로 남겨둠.
+
 
 **위치**: `queen_manager.py` 또는 `spell_unit_manager.py`
 
@@ -143,6 +156,11 @@ async def smart_transfusion(self, queen, damaged_units):
 ---
 
 ### Issue #4: Resource Reservation Race Condition
+
+**✅ resolved (검증일: 2026-07-13)** — `wicked_zerg_challenger/core/resource_manager.py`의
+`ResourceManager` 클래스에 이 이슈에서 제안한 것과 사실상 동일한 `asyncio.Lock` 기반
+`try_reserve()` / `release()` / `release_partial()` API가 이미 구현되어 있음을 확인
+(`economy_manager.py`, `defense_coordinator.py`에서 사용 중). 아래 원안은 참고용으로 남겨둠.
 
 **위치**: `resource_manager.py` (추정)
 
