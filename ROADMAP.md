@@ -1,8 +1,17 @@
 # WickedZergBotPro Grand Roadmap
 
 > 목표: Medium AI 승률 90%+ 달성 & AI Arena 출전
-> 현재 상태: Phase 56 완료, 342/342 테스트 통과, 추정 승률 45~50%
+> 현재 상태: Phase 56 완료, 1147/1147 테스트 통과 (tests/ + wicked_zerg_challenger/tests/ 합산, 12 skipped), 추정 승률 45~50%
 > 봇 프레임워크: python-sc2 (burnysc2>=5.0.0)
+
+> **2026-07-17 코드 감사 결과**: Sprint 1~7의 모든 태스크(1.1~7.3)가 코드베이스에 이미 구현되어 있음을 확인함
+> (grep/코드 리딩으로 태스크별 개별 검증 완료 — 예: `combat_manager.py`의 `respond_to_worker_harassment`,
+> `economy_manager.py`의 `ThreatLevel`/`spend_larva`/`_get_gas_timing_by_matchup`,
+> `combat/mutalisk_micro.py`의 매직박싱/히트앤런, `intel_manager.py`의 13개 빌드 패턴 등).
+> 이 문서의 각 태스크 설명은 실제로는 **완료된 작업의 사양이었던 것으로 판명** — 미착수 작업 목록이 아님.
+> Sprint 8(QA & 배포)만 실제 SC2 게임 클라이언트가 필요해 이 샌드박스 환경에서는 검증 불가 (스크립트 존재는 확인됨:
+> `run_mass_test.py`, `create_arena_package.py`). 다음 반복 작업은 새 개선 과제를 이 문서에 추가하기 전에
+> 먼저 코드를 확인해 중복 작업을 피할 것.
 
 ---
 
