@@ -167,18 +167,31 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Check for cluster credentials
+        id: cluster_check
+        run: |
+          if [ -z "${{ secrets.KUBE_CONFIG }}" ]; then
+            echo "configured=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::KUBE_CONFIG secret is not set — no Kubernetes cluster is configured for this repo yet, skipping deploy steps instead of failing the pipeline."
+          else
+            echo "configured=true" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Configure kubectl
+        if: steps.cluster_check.outputs.configured == 'true'
         uses: azure/k8s-set-context@v4
         with:
           method: kubeconfig
           kubeconfig: ${{ secrets.KUBE_CONFIG }}
 
       - name: Set image tag in manifests
+        if: steps.cluster_check.outputs.configured == 'true'
         run: |
           IMAGE_TAG=$(echo "${{ needs.build_docker.outputs.image_tag }}" | head -1)
           sed -i "s|IMAGE_TAG_PLACEHOLDER|${IMAGE_TAG}|g" helm_charts/sc2bot/values.yaml
 
       - name: Helm upgrade (rolling update)
+        if: steps.cluster_check.outputs.configured == 'true'
         run: |
           helm upgrade --install sc2bot ./helm_charts/sc2bot \
             --namespace sc2bot \
@@ -188,4 +201,5 @@ jobs:
             --set image.tag=$(git rev-parse --short HEAD)
 
       - name: Verify rollout
+        if: steps.cluster_check.outputs.configured == 'true'
         run: kubectl rollout status deployment/sc2bot -n sc2bot --timeout=300s
