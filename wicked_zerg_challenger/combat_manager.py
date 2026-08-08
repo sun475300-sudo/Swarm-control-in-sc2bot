@@ -467,7 +467,7 @@ class CombatManager:
                     )
 
                     # 로그 (30초마다)
-                    if iteration % 660 == 0:  # 30초
+                    if iteration % GameFrequencies.EVERY_30_SECONDS == 0:  # 30초
                         remaining = len(self.bot.complete_destruction.target_buildings)
                         self.logger.info(
                             f"[{int(game_time)}s] * COMPLETE DESTRUCTION MODE: "
@@ -795,7 +795,9 @@ class CombatManager:
             and self.bot.harassment_coordinator
         ):
             locked_units = self.bot.harassment_coordinator.locked_units.copy()
-            if locked_units and iteration % 220 == 0:  # Log every 10 seconds
+            if (
+                locked_units and iteration % GameFrequencies.EVERY_10_SECONDS == 0
+            ):  # Log every 10 seconds
                 self.logger.info(
                     f"[CombatManager] {len(locked_units)} units locked in harassment missions "
                     f"(excluded from combat reassignment)"
@@ -1035,7 +1037,10 @@ class CombatManager:
                             # Unit command failed
                             continue
                     # 로그 (30초마다)
-                    if int(game_time) % 30 == 0 and self.bot.iteration % 22 == 0:
+                    if (
+                        int(game_time) % 30 == 0
+                        and self.bot.iteration % GameFrequencies.EVERY_SECOND == 0
+                    ):
                         self.logger.warning(
                             f"[{int(game_time)}s] [*] MID-GAME TIMING ATTACK! {len(attack_units)} units attacking! [*]"
                         )
@@ -1536,7 +1541,10 @@ class CombatManager:
 
             self.rl_micro_agent = RLAgent()
         except Exception as exc:
-            if getattr(self.bot, "iteration", 0) % 220 == 0:
+            if (
+                getattr(self.bot, "iteration", 0) % GameFrequencies.EVERY_10_SECONDS
+                == 0
+            ):
                 self.logger.warning(f"RL micro unavailable: {exc}")
             self.rl_micro_agent = None
         return self.rl_micro_agent
@@ -1941,7 +1949,7 @@ class CombatManager:
                 # 적의 60% 미만이면 공격하지 않음 (재집결)
                 if self._rally_point:
                     await self._gather_at_rally_point(army_units, iteration)
-                if iteration % 220 == 0:
+                if iteration % GameFrequencies.EVERY_10_SECONDS == 0:
                     self.logger.info(
                         f"[{int(game_time)}s] HOLD: army {army_supply:.0f} < enemy {visible_enemy_supply:.0f}*0.6"
                     )
@@ -3132,7 +3140,7 @@ class CombatManager:
 
             if ratio >= 2.0:
                 # * 긴급 후퇴: 본진으로 (100%+ 열세)
-                if iteration % 220 == 0:
+                if iteration % GameFrequencies.EVERY_10_SECONDS == 0:
                     self.logger.info(
                         f"[RETREAT-EMERGENCY] [{int(game_time)}s] "
                         f"Our: {our_supply:.0f}, Enemy: {enemy_supply:.0f} (ratio: {ratio:.1f}x)"
@@ -3140,7 +3148,7 @@ class CombatManager:
                 await self._retreat_to_base(engaged_units)
             elif ratio >= 1.5:
                 # * 후퇴: 가장 가까운 기지로 (50%+ 열세)
-                if iteration % 220 == 0:
+                if iteration % GameFrequencies.EVERY_10_SECONDS == 0:
                     self.logger.info(
                         f"[RETREAT] [{int(game_time)}s] "
                         f"Our: {our_supply:.0f}, Enemy: {enemy_supply:.0f} (ratio: {ratio:.1f}x)"
@@ -3148,7 +3156,7 @@ class CombatManager:
                 await self._retreat_to_closest_base(engaged_units)
             elif ratio >= 1.3:
                 # * Phase 15: 점진적 후퇴 - 랠리 포인트로 재집결 (30%+ 열세)
-                if iteration % 220 == 0:
+                if iteration % GameFrequencies.EVERY_10_SECONDS == 0:
                     self.logger.info(
                         f"[REGROUP] [{int(game_time)}s] "
                         f"Our: {our_supply:.0f}, Enemy: {enemy_supply:.0f} (ratio: {ratio:.1f}x)"
@@ -3925,7 +3933,7 @@ class CombatManager:
         enemy_count = len(threat_enemies)
 
         # 로그 출력 (5초마다)
-        if iteration % 110 == 0:
+        if iteration % GameFrequencies.EVERY_5_SECONDS == 0:
             self.logger.info(
                 f"[BASE DEFENSE] [{int(game_time)}s] [*] MANDATORY DEFENSE [*] "
                 f"Enemies: {enemy_count}, Threat score: {max_threat_score}"
@@ -4062,7 +4070,7 @@ class CombatManager:
                         # Unit command failed
                         continue
 
-                if iteration % 220 == 0:
+                if iteration % GameFrequencies.EVERY_10_SECONDS == 0:
                     self.logger.warning(
                         f"[LAST STAND] [{int(game_time)}s] {len(army_units)} units - FOCUS FIRE on {getattr(main_target.type_id, 'name', 'enemy')}"
                     )
@@ -4114,7 +4122,7 @@ class CombatManager:
                 continue
 
         # 로그 (10초마다)
-        if iteration % 220 == 0:
+        if iteration % GameFrequencies.EVERY_10_SECONDS == 0:
             defeat_msg = f" [위기도: {defeat_level}]" if defeat_level >= 2 else ""
             self.logger.info(
                 f"[BASE DEFENSE] [{int(game_time)}s] {len(army_units)} units defending{defeat_msg}"
@@ -4359,14 +4367,14 @@ class CombatManager:
         # * 패배 직전: 모든 일꾼 방어 참여 *
         if last_stand_mode or defeat_level >= 3:  # IMMINENT
             defense_workers = nearby_workers  # 모든 일꾼
-            if iteration % 220 == 0:
+            if iteration % GameFrequencies.EVERY_10_SECONDS == 0:
                 self.logger.warning(
                     f"[WORKER DEFENSE] [*] 패배 직전! 모든 일꾼({len(defense_workers)}) 방어 참여! [*]"
                 )
         # * 위기 상황: 일꾼 12명 방어 *
         elif defeat_level >= 2:  # CRITICAL
             defense_workers = nearby_workers[:12]
-            if iteration % 220 == 0:
+            if iteration % GameFrequencies.EVERY_10_SECONDS == 0:
                 self.logger.warning(
                     f"[WORKER DEFENSE] 위기 상황 - {len(defense_workers)} 일꾼 방어"
                 )
@@ -4429,7 +4437,7 @@ class CombatManager:
                 # Worker return to gather failed
                 continue
 
-        if iteration % 220 == 0:
+        if iteration % GameFrequencies.EVERY_10_SECONDS == 0:
             self.logger.info(
                 f"[BASE DEFENSE] [{int(game_time)}s] [*] {len(defense_workers)} WORKERS DEFENDING [*]"
             )
@@ -4498,7 +4506,7 @@ class CombatManager:
             await self._execute_victory_push(iteration)
 
         # 로그 (30초마다)
-        if iteration % 660 == 0:
+        if iteration % GameFrequencies.EVERY_30_SECONDS == 0:
             expansion_count = len(self._known_enemy_expansions)
             status = "ACTIVE" if self._victory_push_active else "STANDBY"
             self.logger.info(
@@ -4539,7 +4547,7 @@ class CombatManager:
                 continue
 
         # 로그 (10초마다)
-        if iteration % 220 == 0:
+        if iteration % GameFrequencies.EVERY_10_SECONDS == 0:
             target_str = (
                 f"({attack_target.x:.1f}, {attack_target.y:.1f})"
                 if hasattr(attack_target, "x")
@@ -4749,7 +4757,7 @@ class CombatManager:
                 continue
 
         # 로그 (10초마다)
-        if iteration % 220 == 0:
+        if iteration % GameFrequencies.EVERY_10_SECONDS == 0:
             current_time = getattr(self.bot, "time", 0)
             self.logger.info(
                 f"[EXPANSION DEFENSE] [{int(current_time)}s] {len(defense_force)} units defending expansion (enemies: {len(nearby_enemies)})"
