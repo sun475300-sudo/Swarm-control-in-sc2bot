@@ -13,6 +13,11 @@ from unittest.mock import MagicMock
 
 import pytest
 
+# sc2 -> s2clientprotocol의 생성된 _pb2.py가 설치된 protobuf 런타임보다 오래된
+# protoc으로 만들어진 경우 "Descriptors cannot be created directly" TypeError가 난다.
+# 순수 파이썬 구현으로 강제해 collection 단계에서 이 문제를 피한다.
+os.environ.setdefault("PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION", "python")
+
 # 프로젝트 루트를 sys.path에 추가
 PROJECT_ROOT = Path(__file__).parent.parent
 if str(PROJECT_ROOT) not in sys.path:
