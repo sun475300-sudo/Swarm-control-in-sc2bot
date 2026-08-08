@@ -4,20 +4,22 @@
 
 통합 문제 해결 후 발견된 추가 개선 사항들입니다.
 
-**Last refreshed:** 2026-04-27 (Issue #1, #2 → Resolved; Issue #6 partially resolved via Batch 3)
+**Last refreshed:** 2026-07-12 (N1-N4 재검증 완료 — 이미 해결된 상태로 확인; 신규 테스트 안정성 버그 1건 발견/수정)
 
 ---
 
-## 🆕 신규 발견 (PR #44, 2026-04-27)
+## 🆕 신규 발견 (PR #44, 2026-04-27) — 2026-07-12 재검증
 
 자동/수동 점검 사이클(테스트 → 코드 검사 → 개선 → 커밋/푸시 반복)에서 새로 식별된 항목.
+`flake8 --select=F811,F821,F63,F7` 로 `wicked_zerg_challenger/` 전체(tests 제외)를 재스캔한 결과
+N1~N4는 모두 이전 PR(#218 계열)에서 이미 정리되어 현재는 재현되지 않음. 문서만 stale했던 케이스.
 
 | ID | 설명 | 우선순위 | 상태 |
 |----|------|---------|------|
-| N1 | `OpponentModeling.on_step` 중복 정의 (line 341 vs 765 — F811) | 🟠 HIGH | open — 동작 영향(상위 on_step이 미실행) 가능 |
-| N2 | `EconomyManager._prevent_resource_banking` / `_reduce_gas_workers` 재정의 (F811) | 🟡 MED | open |
-| N3 | `combat_manager._find_harass_target` 재정의 (line 2377 vs 4278) | 🟡 MED | open |
-| N4 | `production_resilience.build_terran_counters` 재정의 (1369 vs 1866) | 🟡 MED | open |
+| N1 | `OpponentModeling.on_step` 중복 정의 (line 341 vs 765 — F811) | 🟠 HIGH | ✅ resolved — `opponent_modeling.py`에 `on_step` 정의 1개만 존재 확인 |
+| N2 | `EconomyManager._prevent_resource_banking` / `_reduce_gas_workers` 재정의 (F811) | 🟡 MED | ✅ resolved — 각 메서드 정의 1개만 존재 확인 |
+| N3 | `combat_manager._find_harass_target` 재정의 (line 2377 vs 4278) | 🟡 MED | ✅ resolved — 정의 1개만 존재 확인 |
+| N4 | `production_resilience.build_terran_counters` 재정의 (1369 vs 1866) | 🟡 MED | ✅ resolved — `local_training/production_resilience.py`에 정의 1개만 존재 확인 |
 | N5 | bare `except Exception:` 다수 (≈360+) — 이번 PR에서 12건 처리, 잔여 다수 | 🟢 LOW | partial |
 | N6 | F841 unused local variables (visuals/make_pptx 등) | 🟢 LOW | open (presentation 코드라 영향 작음) |
 
@@ -67,7 +69,22 @@
 
 ---
 
-## 🟡 MEDIUM Priority Issues (still open)
+## ✅ Resolved (재검증: 2026-07-12)
+
+Issue #3, #4, #5는 코드베이스에 이미 구현되어 있는 것으로 확인됨. 문서가 stale했던 케이스.
+
+| Issue | 검증 위치 |
+|-------|----------|
+| #3 Transfusion 우선순위 | `wicked_zerg_challenger/economy/queen_transfusion_manager.py` — `SmartTransfusionManager`, `HEAL_PRIORITY` dict, 우선순위/HP/거리 기반 타겟 선정 구현됨 |
+| #4 Resource Reservation Race Condition | `wicked_zerg_challenger/core/resource_manager.py` — `ResourceManager` 클래스에 `asyncio.Lock` + `try_reserve`/`release`/`release_partial` 원자적 구현됨 |
+| #5 Position 계산 중복 | `wicked_zerg_challenger/utils/position_utils.py` — `get_center_position` / `get_weighted_center` 유틸 존재 |
+
+Issue #6(매직 넘버)은 `game_config.py`의 `GameConfig` 클래스로 상당 부분 이관되었으나 전체 소거는
+아니므로 🟢 LOW 상태로 유지(점진적 개선 대상, 아래 원본 내용 참고용으로 보존).
+
+---
+
+## 🟡 MEDIUM Priority Issues (원본 — 위 재검증 결과로 대체됨, 참고용 보존)
 
 ### Issue #3: Transfusion 우선순위 개선 필요
 
@@ -363,12 +380,15 @@ if iteration % SECOND == 0:
 
 | 우선순위 | 이슈 | 영향도 | 난이도 |
 |---------|------|--------|--------|
-| 🟡 MEDIUM | #3 Transfusion 우선순위 | 중간 | 중간 |
-| 🟡 MEDIUM | #4 Resource Race Condition | 낮음 | 중간 |
-| 🟢 LOW | #5 코드 중복 제거 | 낮음 | 쉬움 |
-| 🟢 LOW | #6 매직 넘버 | 낮음 | 쉬움 |
+| 🟢 LOW | #6 매직 넘버 (부분 완료, 점진적 개선 대상) | 낮음 | 쉬움 |
 
-(Issue #1, #2 → ✅ Resolved 섹션 참조)
+(Issue #1~#5, N1~N4 → ✅ Resolved 섹션 참조. 2026-07-12 재검증 완료)
+
+### 🆕 이번 점검 사이클(2026-07-12)에서 새로 발견/수정한 항목
+
+| ID | 설명 | 우선순위 | 상태 |
+|----|------|---------|------|
+| N7 | `tests/test_combat_phase_fsm.py`의 5개 헬퍼가 `asyncio.get_event_loop().run_until_complete(...)` (deprecated) 사용 — `tests/test_combat_manager.py`처럼 다른 async 테스트가 먼저 실행되어 이벤트 루프가 닫히면 `RuntimeError: There is no current event loop` 로 전체 스위트 실행 시에만 12개 테스트가 실패(단독 실행 시엔 통과 — 순서 의존 버그) | 🟠 HIGH | ✅ resolved — `asyncio.run(...)`으로 교체, 전체 스위트(`pytest -q`, 502 passed / 14 skipped) 및 `wicked_zerg_challenger/tests`(661 passed) 재확인 |
 
 ---
 
@@ -423,3 +443,11 @@ if iteration % SECOND == 0:
 
 **검토 완료일**: 2026-01-29
 **상태**: 추가 개선 사항 문서화 완료
+
+---
+
+## 🔁 점검 사이클 로그
+
+| 날짜 | 점검 범위 | 결과 |
+|------|----------|------|
+| 2026-07-12 | `pytest -q`(전체), `wicked_zerg_challenger/tests`, `flake8 --select=F811,F821,F63,F7`, `py_compile`(417 files) | N1~N4·Issue #3~#5 재검증 완료(모두 resolved 확인), N7 테스트 순서 의존 버그 발견 및 수정, 전체 테스트 그린(502+661=1163 passed, 14 skipped) |
