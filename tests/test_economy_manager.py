@@ -651,5 +651,42 @@ class TestGasTimingOptimization:
         assert True
 
 
+class TestThreatLevelNormalization:
+    """
+    Regression test: DefenseCoordinator writes blackboard.ThreatLevel (IntEnum,
+    NONE=0/LOW=1/MEDIUM=2/HIGH=3/CRITICAL=4) via Blackboard.update_threat(), which
+    stores it as a plain int. _normalize_threat_level used to str()-coerce every
+    input, so ints like 2/3/4 produced "2"/"3"/"4" which matched no keyword branch
+    and silently fell back to LOW even during a HIGH/CRITICAL attack.
+    """
+
+    def test_normalizes_blackboard_int_levels(self):
+        from economy_manager import ThreatLevel
+
+        assert EconomyManager._normalize_threat_level(0) == ThreatLevel.LOW
+        assert EconomyManager._normalize_threat_level(1) == ThreatLevel.LOW
+        assert EconomyManager._normalize_threat_level(2) == ThreatLevel.MEDIUM
+        assert EconomyManager._normalize_threat_level(3) == ThreatLevel.HIGH
+        assert EconomyManager._normalize_threat_level(4) == ThreatLevel.CRITICAL
+
+    def test_normalizes_string_levels(self):
+        from economy_manager import ThreatLevel
+
+        assert (
+            EconomyManager._normalize_threat_level("critical") == ThreatLevel.CRITICAL
+        )
+        assert EconomyManager._normalize_threat_level("heavy") == ThreatLevel.HIGH
+        assert EconomyManager._normalize_threat_level("medium") == ThreatLevel.MEDIUM
+        assert EconomyManager._normalize_threat_level(None) == ThreatLevel.LOW
+
+    def test_normalizes_threatlevel_enum_passthrough(self):
+        from economy_manager import ThreatLevel
+
+        assert (
+            EconomyManager._normalize_threat_level(ThreatLevel.CRITICAL)
+            == ThreatLevel.CRITICAL
+        )
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])

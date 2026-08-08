@@ -311,12 +311,10 @@ class BurrowController:
             if down_ability:
                 return unit(down_ability)
 
-        # * FIX: Lurkers must burrow to attack! *
+        # Lurkers burrow to attack once an enemy is in range, regardless of health
         if UnitTypeId and unit.type_id == UnitTypeId.LURKERMP:
-            # 적이 공격 사거리(9) 내에 있으면 잠복
-            # NOTE: enemy_units not in scope here (existing bug). Conservative: skip burrow logic.
-            if down_ability and getattr(unit, "is_idle", False):  # noqa: F821
-                pass  # placeholder - original logic referenced undefined enemy_units
+            if enemy_nearby and down_ability and getattr(unit, "is_idle", False):
+                return unit(down_ability)
 
         return None
 

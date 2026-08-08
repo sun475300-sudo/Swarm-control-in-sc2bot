@@ -627,10 +627,23 @@ class EconomyManager:
         except (AttributeError, TypeError):
             return None
 
+    # blackboard.ThreatLevel (IntEnum) values: NONE=0, LOW=1, MEDIUM=2, HIGH=3, CRITICAL=4
+    _BLACKBOARD_INT_THREAT_MAP = {
+        0: ThreatLevel.LOW,
+        1: ThreatLevel.LOW,
+        2: ThreatLevel.MEDIUM,
+        3: ThreatLevel.HIGH,
+        4: ThreatLevel.CRITICAL,
+    }
+
     @staticmethod
     def _normalize_threat_level(value) -> ThreatLevel:
         if isinstance(value, ThreatLevel):
             return value
+        if isinstance(value, int) and not isinstance(value, bool):
+            # DefenseCoordinator writes blackboard.ThreatLevel (IntEnum) via
+            # Blackboard.update_threat(), which stores it as a plain int.
+            return EconomyManager._BLACKBOARD_INT_THREAT_MAP.get(value, ThreatLevel.LOW)
         text = str(value or "").lower()
         if text in {"critical", "severe"}:
             return ThreatLevel.CRITICAL
