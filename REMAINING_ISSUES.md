@@ -8,6 +8,44 @@
 
 ---
 
+## 🔁 자동 점검 사이클 (2026-07-19)
+
+전체 테스트(661개) 통과 확인 후 재점검. 이번 문서의 여러 항목이 실제로는
+이미 코드에 반영되어 있었음을 코드 기준으로 재검증(문서가 stale):
+
+- **N1–N4 (F811 중복 정의)**: 코드베이스 전체 AST 스캔 결과 중복 정의 0건.
+  이미 해결됨, 문서만 stale이었음.
+- **Issue #3 (Transfusion 우선순위)**: `economy/queen_transfusion_manager.py`에
+  `HEAL_PRIORITY`/`CANNOT_HEAL` 포함하여 이미 구현·연동됨.
+- **Issue #4 (Resource Race Condition)**: `core/resource_manager.py`에
+  `asyncio.Lock` 기반 `try_reserve`/`release` 이미 구현·연동됨.
+- **Issue #5 (Position 계산 중복)**: `utils/position_utils.py`는 존재했으나
+  `battle_preparation_system.py` 등 대부분 파일에서 미사용 상태였음 → 이번
+  사이클에서 아래 14개 파일의 인라인 center/centroid 계산을 `get_center_position`
+  호출로 교체하고, 회귀 테스트 `tests/test_position_utils.py`(18건) 신규 추가:
+  `combat/expansion_defense.py`, `combat/combat_execution.py`,
+  `combat/infestor_tactics.py`, `combat/micro_combat.py` (2곳),
+  `combat/base_defense.py`, `combat_phase_controller.py`, `micro_controller.py`,
+  `combat_manager.py`, `idle_unit_manager.py`, `advanced_micro_controller_v3.py`,
+  `spell_unit_manager.py`, `optimum_defense_squad.py`, `queen_manager.py`,
+  `battle_preparation_system.py`. sc2 미설치 환경에서도 임포트 가능하도록
+  기존 `try/except ImportError` 패턴을 유지한 채 적용. 전체 테스트 679개
+  (661 기존 + 18 신규) 통과 확인. Issue #5 CLOSED.
+- **ROADMAP Task 2.3 (빌드 패턴 인식 25종)**: `intel_manager.py`의
+  `BUILD_PATTERNS`에 이미 13종 구현·탐지 로직 연동 확인(로드맵 문서의
+  "12→25" 서술은 stale). 25종까지 확장은 여전히 미착수 — 다음 사이클 후보.
+- **미착수로 재확인된 항목** (다음 사이클 우선순위 후보):
+  - RL 에이전트 실전 연동(ROADMAP Task 6.1) — `RLAGENT_DISABLED.md` 사유로
+    의도적 비활성화 상태, 재활성화는 별도 검증 계획 필요.
+  - `utils/game_constants.py` 매직넘버 마이그레이션 — 4개 파일만 채택,
+    67곳 이상 원시 `iteration % N` 패턴 잔존 (Issue #6 관련, 여전히 OPEN).
+  - `utils/distance_cache.py` 실사용 저조 — `combat_manager.py`/
+    `economy_manager.py`에 각 1회만 호출, 나머지는 원시 `distance_to` 호출.
+  - `PLAN-NIGHTLY.md` P2.2/P2.3 (`benchmark_runner`, `config/build_orders.yaml`)
+    — 파일 자체가 존재하지 않음, 미착수.
+
+---
+
 ## 🆕 신규 발견 (PR #44, 2026-04-27)
 
 자동/수동 점검 사이클(테스트 → 코드 검사 → 개선 → 커밋/푸시 반복)에서 새로 식별된 항목.

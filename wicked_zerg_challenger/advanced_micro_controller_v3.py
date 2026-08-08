@@ -29,6 +29,8 @@ try:
     from sc2.ids.upgrade_id import UpgradeId
     from sc2.position import Point2
     from sc2.unit import Unit
+
+    from utils.position_utils import get_center_position
 except ImportError:
     AbilityId = None
     UnitTypeId = None
@@ -36,6 +38,7 @@ except ImportError:
     Point2 = None
     Unit = None
     BotAI = None
+    get_center_position = None
 
 
 class RavagerMicro:
@@ -276,9 +279,7 @@ class LurkerMicro:
             return None
 
         # Find enemy center
-        enemy_x = sum(e.position.x for e in enemy_units) / len(enemy_units)
-        enemy_y = sum(e.position.y for e in enemy_units) / len(enemy_units)
-        enemy_center = Point2((enemy_x, enemy_y))
+        enemy_center = get_center_position(enemy_units)
 
         # Position at optimal range from enemy center
         direction_x = lurker.position.x - enemy_center.x

@@ -22,10 +22,13 @@ else:
         from sc2.position import Point2
         from sc2.unit import Unit
         from sc2.units import Units
+
+        from utils.position_utils import get_center_position
     except ImportError:
         Units = object
         Unit = object
         Point2 = tuple
+        get_center_position = None
 
 from utils.logger import get_logger
 
@@ -814,13 +817,6 @@ class BaseDefenseSystem:
         if not enemy_units:
             return None
 
-        x_sum = sum(e.position.x for e in enemy_units)
-        y_sum = sum(e.position.y for e in enemy_units)
-        count = len(enemy_units)
-
-        try:
-            from sc2.position import Point2
-
-            return Point2((x_sum / count, y_sum / count))
-        except ImportError:
+        if get_center_position is None:
             return enemy_units[0].position
+        return get_center_position(enemy_units)

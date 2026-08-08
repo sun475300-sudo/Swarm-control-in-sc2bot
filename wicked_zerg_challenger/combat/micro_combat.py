@@ -14,11 +14,14 @@ try:
     from sc2.ids.unit_typeid import UnitTypeId
     from sc2.ids.upgrade_id import UpgradeId
     from sc2.position import Point2
+
+    from utils.position_utils import get_center_position
 except ImportError:  # Fallbacks for tooling environments
     UnitTypeId = None
     AbilityId = None
     UpgradeId = None
     Point2 = None
+    get_center_position = None
 
 try:
     from combat.terrain_analysis import ChokePointDetector
@@ -441,9 +444,7 @@ class ZvTMicroAdjustments:
             return None
         if not Point2:
             return units[0].position
-        x = sum(unit.position.x for unit in units) / len(units)
-        y = sum(unit.position.y for unit in units) / len(units)
-        return Point2((x, y))
+        return get_center_position(units)
 
     def _issue_actions(self, actions: List) -> None:
         for action in actions:
@@ -1351,9 +1352,7 @@ class MicroCombat:
     def _find_center_of_mass(self, units) -> Optional[Point2]:
         if not units or not Point2:
             return None
-        total_x = sum(u.position.x for u in units)
-        total_y = sum(u.position.y for u in units)
-        return Point2((total_x / len(units), total_y / len(units)))
+        return get_center_position(units)
 
     @staticmethod
     def _closest_enemy(unit, enemies: Iterable):
