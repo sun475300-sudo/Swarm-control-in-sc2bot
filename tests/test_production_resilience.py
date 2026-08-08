@@ -492,6 +492,120 @@ class TestBuildTerranCounters:
         # Should complete
         assert True
 
+    @pytest.mark.asyncio
+    async def test_build_terran_counters_routes_through_tech_coordinator(self):
+        """build_terran_counters must request the Baneling Nest via
+        tech_coordinator.request_structure rather than building it directly.
+
+        Regression test for a flake8 F811 bug: this method used to be
+        defined twice in production_resilience.py. The first (dead) def
+        built the Baneling Nest directly and never consulted
+        tech_coordinator; the second def (the one Python actually kept)
+        routes through tech_coordinator. If a future edit reintroduces
+        the old direct-build def below this one, that def would silently
+        win again and this assertion would fail.
+
+        Note: this test builds its own minimal fake for bot.structures()
+        instead of the shared MockUnits fixture, because MockUnits defines
+        `.exists` as a plain method (always truthy when accessed without
+        calling it) rather than a property like the real sc2 `Units.exists`.
+        Production code accesses `.exists` as a property, so MockUnits can't
+        distinguish "has structure" from "doesn't" for this check.
+        """
+        from sc2.ids.unit_typeid import UnitTypeId
+
+        class _FakeStructureView:
+            def __init__(self, items):
+                self._items = items
+
+            @property
+            def exists(self):
+                return bool(self._items)
+
+            @property
+            def ready(self):
+                return _FakeStructureView(
+                    [u for u in self._items if getattr(u, "is_ready", True)]
+                )
+
+            @property
+            def first(self):
+                return self._items[0] if self._items else None
+
+        spawning_pool = MockUnit(200, "SPAWNINGPOOL", (52, 52), is_ready=True)
+        structure_views = {
+            UnitTypeId.BANELINGNEST: _FakeStructureView([]),
+            UnitTypeId.SPAWNINGPOOL: _FakeStructureView([spawning_pool]),
+        }
+
+        bot = MockBot()
+        bot.enemy_race = "Terran"
+        bot.minerals = 500
+        bot.vespene = 300
+        bot.time = 0.0  # keep _should_reserve_third_base_minerals() False
+        bot.production = MockUnits([MockUnit(1, "LARVA", (50, 50))])  # non-empty
+        bot.larva = MockUnits([MockUnit(i, "LARVA", (50, 50)) for i in range(3)])
+        bot.structures = lambda unit_type: structure_views[unit_type]
+        bot.tech_coordinator = Mock()
+        bot.tech_coordinator.is_planned = Mock(return_value=False)
+        bot.tech_coordinator.request_structure = Mock()
+
+        resilience = ProductionResilience(bot)
+        await resilience.build_terran_counters()
+
+        assert bot.tech_coordinator.request_structure.called, (
+            "build_terran_counters did not route the Baneling Nest request "
+            "through tech_coordinator -- the dead direct-build duplicate "
+            "may have shadowed the live implementation again"
+        )
+        called_unit_type = bot.tech_coordinator.request_structure.call_args[0][0]
+        assert called_unit_type == UnitTypeId.BANELINGNEST
+
+
+def _iter_class_method_names(tree, class_name: str):
+    import ast as _ast
+
+    for node in _ast.walk(tree):
+        if isinstance(node, _ast.ClassDef) and node.name == class_name:
+            for item in node.body:
+                if isinstance(item, (_ast.FunctionDef, _ast.AsyncFunctionDef)):
+                    yield item.name
+
+
+class TestNoDuplicateMethodDefinitions:
+    """Guards against F811 "redefinition of unused" bugs in
+    ProductionResilience, where a later `def foo` in the same class
+    silently shadows (and disables) an earlier one with the same name.
+    """
+
+    def test_production_resilience_has_no_duplicate_method_names(self):
+        import ast
+        import os
+
+        source_path = os.path.join(
+            os.path.dirname(__file__),
+            "..",
+            "wicked_zerg_challenger",
+            "local_training",
+            "production_resilience.py",
+        )
+        with open(source_path, "r", encoding="utf-8") as f:
+            tree = ast.parse(f.read(), filename=source_path)
+
+        names = list(_iter_class_method_names(tree, "ProductionResilience"))
+        seen = set()
+        duplicates = set()
+        for name in names:
+            if name in seen:
+                duplicates.add(name)
+            seen.add(name)
+
+        assert not duplicates, (
+            f"ProductionResilience defines duplicate methods (F811): "
+            f"{sorted(duplicates)} -- the later definition silently "
+            f"overrides the earlier one at runtime"
+        )
+
 
 class TestBuildProtossCounters:
     """테스트 14: 프로토스 카운터 유닛"""

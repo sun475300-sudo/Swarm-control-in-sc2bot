@@ -82,6 +82,10 @@ class MockUnit:
             (self.position[0] - pos[0]) ** 2 + (self.position[1] - pos[1]) ** 2
         ) ** 0.5
 
+    def gather(self, target):
+        """Mimic sc2 Unit.gather() - returns an action-like marker for bot.do()."""
+        return ("gather", self.tag, getattr(target, "tag", target))
+
 
 class MockUnits:
     """Mock SC2 Units collection"""
@@ -94,6 +98,13 @@ class MockUnits:
 
     def __len__(self):
         return len(self._units)
+
+    def __getitem__(self, key):
+        """Support slicing/indexing like the real sc2 Units (list subclass)."""
+        result = self._units[key]
+        if isinstance(key, slice):
+            return MockUnits(result)
+        return result
 
     @property
     def amount(self):
@@ -630,6 +641,70 @@ class TestResourceBankingPrevention:
 
         # Function should complete
         assert True
+
+
+class TestReduceGasWorkers:
+    """회귀 테스트: _reduce_gas_workers 가스 심각도별 최소 유지 인원 스케일링
+
+    N2 (economy_manager.py 내 _prevent_resource_banking/_reduce_gas_workers 이중 정의,
+    F811) 수정 검증용. 예전에는 두 번째(살아있는) 정의가 첫 번째 정의를 shadow 했었고,
+    첫 번째("일꾼 1명만 제거") 정의는 죽은 코드였다. 살아있는 구현은 가스 뱅킹 심각도에
+    따라 최소 유지 인원을 0/1/2명으로 스케일링하고 초과 인원을 한 번에 모두 옮긴다.
+    """
+
+    def _make_bot_with_extractor(self, assigned_harvesters: int, vespene: int):
+        bot = MockBot()
+        bot.vespene = vespene
+        extractor = MockUnit(500, "EXTRACTOR", (10, 10))
+        extractor.assigned_harvesters = assigned_harvesters
+        bot.gas_buildings = MockUnits([extractor])
+
+        workers = []
+        for i in range(assigned_harvesters):
+            w = MockUnit(i, "DRONE", (10, 10))
+            w.order_target = extractor.tag
+            w.is_carrying_vespene = True
+            workers.append(w)
+        bot.workers = MockUnits(workers)
+
+        bot.townhalls = MockUnits([MockUnit(100, "HATCHERY", (10, 10))])
+        bot.mineral_field = MockUnits([MockUnit(200, "MINERAL", (11, 11))])
+        return bot, extractor
+
+    @pytest.mark.asyncio
+    async def test_moderate_gas_banking_keeps_two_workers(self):
+        """gas > 500 (but <= 1000) -> min_workers=2, only the excess is moved off gas"""
+        bot, extractor = self._make_bot_with_extractor(
+            assigned_harvesters=3, vespene=600
+        )
+        manager = EconomyManager(bot)
+        await manager._reduce_gas_workers()
+
+        # 3 harvesters, min 2 kept -> exactly 1 worker moved to minerals
+        assert bot.do.call_count == 1
+
+    @pytest.mark.asyncio
+    async def test_severe_gas_banking_pulls_all_workers(self):
+        """gas > 2000 -> min_workers=0, ALL assigned harvesters are moved off gas"""
+        bot, extractor = self._make_bot_with_extractor(
+            assigned_harvesters=3, vespene=2500
+        )
+        manager = EconomyManager(bot)
+        await manager._reduce_gas_workers()
+
+        # Severe banking removes every gas worker in one pass (not just one at a time)
+        assert bot.do.call_count == 3
+
+    @pytest.mark.asyncio
+    async def test_no_excess_gas_workers_no_action(self):
+        """assigned_harvesters at/under the min for the severity tier -> nothing moved"""
+        bot, extractor = self._make_bot_with_extractor(
+            assigned_harvesters=2, vespene=600
+        )
+        manager = EconomyManager(bot)
+        await manager._reduce_gas_workers()
+
+        assert bot.do.call_count == 0
 
 
 class TestGasTimingOptimization:
