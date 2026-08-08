@@ -7,6 +7,7 @@ import os
 import sys
 import tempfile
 import unittest
+import unittest.mock
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -196,6 +197,57 @@ class TestSelfPlayPipeline(unittest.TestCase):
             self.assertIn("rule_based", {opponent["id"] for opponent in pool})
             self.assertIn("v1", {opponent["id"] for opponent in pool})
             self.assertLessEqual(abs(selected["elo"] - 1500.0), 200.0)
+
+
+class TestRLAgentSaveModel(unittest.TestCase):
+    """Regression coverage for save_model()'s atomic-write path.
+
+    np.savez() auto-appends ".npz" to any target name that doesn't already
+    end with it, so a naive `path.with_suffix(".tmp")` temp name silently
+    becomes a different on-disk file than the one `.exists()` checks for
+    afterward, making the rename step -- and the whole save -- a no-op that
+    still reports success.
+    """
+
+    def test_save_model_actually_writes_the_target_file(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            model_path = Path(tmp) / "agent.npz"
+            agent = RLAgent(model_path=str(model_path))
+
+            result = agent.save_model()
+
+            self.assertTrue(result)
+            self.assertTrue(model_path.exists())
+            self.assertFalse((Path(tmp) / "agent.tmp").exists())
+            self.assertFalse((Path(tmp) / "agent.tmp.npz").exists())
+
+    def test_save_model_overwrites_existing_file(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            model_path = Path(tmp) / "agent.npz"
+            agent = RLAgent(model_path=str(model_path))
+            agent.save_model()
+            first_mtime = model_path.stat().st_mtime_ns
+
+            agent.episode_count += 1
+            agent.save_model()
+
+            self.assertTrue(model_path.exists())
+            data = np.load(str(model_path))
+            self.assertEqual(int(data["episode_count"][0]), agent.episode_count)
+            self.assertGreaterEqual(model_path.stat().st_mtime_ns, first_mtime)
+
+    def test_save_model_reports_failure_when_temp_write_does_not_land(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            model_path = Path(tmp) / "agent.npz"
+            agent = RLAgent(model_path=str(model_path))
+
+            with unittest.mock.patch(
+                "local_training.rl_agent.np.savez", return_value=None
+            ):
+                result = agent.save_model()
+
+            self.assertFalse(result)
+            self.assertFalse(model_path.exists())
 
 
 if __name__ == "__main__":

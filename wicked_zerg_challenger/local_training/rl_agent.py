@@ -760,7 +760,12 @@ class RLAgent:
     def save_model(self, path: Optional[str] = None) -> bool:
         """모델 저장 (Atomic Write)"""
         save_path = Path(path) if path else self.model_path
-        tmp_path = save_path.with_suffix(".tmp")
+        # np.savez() auto-appends ".npz" to any name that doesn't already end
+        # with it, so a tmp name of "model.tmp" silently becomes the file
+        # "model.tmp.npz" on disk while `tmp_path.exists()` below still checks
+        # for "model.tmp" -> always False -> rename never runs -> silent no-op.
+        # Giving the tmp name its own ".npz" suffix keeps savez from mangling it.
+        tmp_path = save_path.with_name(save_path.stem + ".tmp.npz")
 
         try:
             save_path.parent.mkdir(parents=True, exist_ok=True)
@@ -790,6 +795,9 @@ class RLAgent:
                     logger.error(f"Move failed, trying copy: {move_error}")
                     shutil.copy(str(tmp_path), str(save_path))
                     tmp_path.unlink()
+            else:
+                logger.error(f"Model save failed: temp file {tmp_path} was not created")
+                return False
 
             logger.info(f"Model saved to {save_path}")
             return True
