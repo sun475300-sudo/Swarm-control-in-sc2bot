@@ -63,20 +63,7 @@ from combat.rally_point_calculator import (
 from utils.distance_cache import DistanceCache
 from utils.frame_cache import FrameCache
 from utils.game_constants import GameFrequencies
-
-# Import common helpers to reduce code duplication
-try:
-    from utils.common_helpers import (
-        centroid,
-        closest_enemy,
-        filter_by_type,
-        has_units,
-        units_amount,
-    )
-
-    HELPERS_AVAILABLE = True
-except ImportError:
-    HELPERS_AVAILABLE = False
+from utils.position_utils import get_center_position
 
 try:
     from combat.formation_manager import FormationManager as _FormationManager
@@ -1619,13 +1606,7 @@ class CombatManager:
         if not units:
             return None
         try:
-            x = sum(unit.position.x for unit in units) / len(units)
-            y = sum(unit.position.y for unit in units) / len(units)
-            position_type = units[0].position.__class__
-            try:
-                return position_type((x, y))
-            except Exception:
-                return position_type(x, y)
+            return get_center_position(units)
         except Exception:
             return getattr(units[0], "position", None)
 
@@ -3530,16 +3511,12 @@ class CombatManager:
         return False
 
     def _filter_units_by_type(self, units, names):
-        if HELPERS_AVAILABLE:
-            return filter_by_type(units, names)
         if hasattr(units, "filter"):
             return units.filter(lambda u: u.type_id.name in names)
         return [u for u in units if getattr(u.type_id, "name", "") in names]
 
     @staticmethod
     def _has_units(units) -> bool:
-        if HELPERS_AVAILABLE:
-            return has_units(units)
         if hasattr(units, "exists"):
             return bool(units.exists)
         return bool(units)
@@ -3548,8 +3525,6 @@ class CombatManager:
     def _units_amount(units) -> int:
         if units is None:
             return 0
-        if HELPERS_AVAILABLE:
-            return units_amount(units)
         if hasattr(units, "amount"):
             return int(units.amount)
         return len(units)
@@ -3646,21 +3621,14 @@ class CombatManager:
         return self._iter_units(self._closer_than(queens, distance, position))
 
     def _get_enemy_center(self, enemy_units):
-        if HELPERS_AVAILABLE:
-            return centroid(enemy_units)
         if not Point2:
             return None
         items = list(enemy_units)
         if not items:
             return None
-        count = len(items)
-        x_sum = sum(u.position.x for u in items)
-        y_sum = sum(u.position.y for u in items)
-        return Point2((x_sum / count, y_sum / count))
+        return get_center_position(items)
 
     def _closest_enemy(self, enemy_units, unit):
-        if HELPERS_AVAILABLE:
-            return closest_enemy(unit, enemy_units)
         if hasattr(enemy_units, "closest_to"):
             try:
                 return enemy_units.closest_to(unit.position)
@@ -3898,15 +3866,7 @@ class CombatManager:
                 max_threat_score = threat_score
                 threat_enemies = nearby_enemies
                 # 적 중심 계산
-                x_sum = sum(e.position.x for e in nearby_enemies)
-                y_sum = sum(e.position.y for e in nearby_enemies)
-                count = len(nearby_enemies)
-                try:
-                    from sc2.position import Point2
-
-                    threat_position = Point2((x_sum / count, y_sum / count))
-                except ImportError:
-                    threat_position = nearby_enemies[0].position
+                threat_position = get_center_position(nearby_enemies)
 
         # 위협이 없으면 방어 모드 해제
         if max_threat_score == 0:

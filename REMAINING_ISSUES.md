@@ -4,24 +4,39 @@
 
 통합 문제 해결 후 발견된 추가 개선 사항들입니다.
 
-**Last refreshed:** 2026-04-27 (Issue #1, #2 → Resolved; Issue #6 partially resolved via Batch 3)
+**Last refreshed:** 2026-07-14 (자동 점검 사이클 — 테스트 스위트 전체 재실행 후 검증)
 
 ---
 
-## 🆕 신규 발견 (PR #44, 2026-04-27)
+## ✅ 2026-07-14 자동 점검 결과
 
-자동/수동 점검 사이클(테스트 → 코드 검사 → 개선 → 커밋/푸시 반복)에서 새로 식별된 항목.
+전체 테스트(423개 모듈, 502 passed / 14 skipped / 0 failed)를 재실행하고 아래 표의
+항목들을 코드에서 직접 재확인했습니다. 이 문서의 상당수 항목이 이후 PR에서 이미
+해결되어 있었는데도 "open"으로 표시되어 있었습니다 — 문서가 코드보다 뒤처져 있었던
+것으로 확인, 아래와 같이 갱신합니다.
+
+| ID | 설명 | 확인 결과 |
+|----|------|-----------|
+| N1 | `OpponentModeling.on_step` 중복 정의 | ✅ **Resolved** — `opponent_modeling.py`에 `on_step` 정의 1건만 존재 (line 341) |
+| N2 | `EconomyManager._prevent_resource_banking` / `_reduce_gas_workers` 재정의 | ✅ **Resolved** — 각각 1건만 존재 |
+| N3 | `combat_manager._find_harass_target` 재정의 | ✅ **Resolved** — 1건만 존재 (line 4992) |
+| N4 | `production_resilience.build_terran_counters` 재정의 | ✅ **Resolved** — 1건만 존재 (line 1961) |
+| N5 | bare `except Exception:` 다수 | 🟢 LOW — 여전히 468건 존재. 대규모 일괄 치환은 위험하므로 점진적 처리 권장 (아래 백로그 참고) |
+| N6 | F841 unused local variables | 🟢 LOW — `flake8 --select=F841` 기준 130건 잔존 (대부분 시각화/리포트 스크립트) |
+| Issue #3 | Transfusion 우선순위 시스템 | ✅ **Resolved** — `queen_manager.py:711` `_transfuse_injured_units`에 `TRANSFUSE_PRIORITY` 기반 우선순위 로직 구현됨 (CreepyBot 스타일) |
+| Issue #4 | Resource Reservation Race Condition | ✅ **Resolved** — `core/resource_manager.py`에 `asyncio.Lock` 기반 `try_reserve`/`release` 구현됨 |
+| Issue #5 | Position 계산 중복 | 🟡 **Partial** — `utils/position_utils.py`에 `get_center_position`/`get_weighted_center` 유틸은 존재하지만 **어디서도 import되지 않음**. `combat_manager.py`, `combat/expansion_defense.py`, `combat/combat_execution.py`, `combat/infestor_tactics.py`, `combat/micro_combat.py`(x2), `combat_phase_controller.py`, `micro_controller.py`, `battle_preparation_system.py`, `idle_unit_manager.py` 등 12곳에서 여전히 동일 로직 중복 |
+| Issue #6 | 매직 넘버 | 🟢 LOW — `utils/game_constants.py`에 상수 클래스는 있으나 전체 하드코딩 치환은 미완 |
+| ROADMAP.md Sprint 1–7 | (경제/정찰/전투/방어/RL/아키텍처 리팩토링) | ✅ **대부분 이미 구현 확인** — `respond_to_worker_harassment`, `harass_units` 추적/복귀, `building_manager.py`, `utils/distance_cache.py`, `utils/game_constants.py`, `use_rl_micro` 토글 등 모두 코드에 존재. **`ROADMAP.md`는 실제 구현 상태를 반영하지 않는 과거 스냅샷이므로 신뢰 금지 — 항상 코드에서 직접 재확인할 것.** |
+
+---
+
+## 🆕 신규 발견 (2026-07-14)
 
 | ID | 설명 | 우선순위 | 상태 |
 |----|------|---------|------|
-| N1 | `OpponentModeling.on_step` 중복 정의 (line 341 vs 765 — F811) | 🟠 HIGH | open — 동작 영향(상위 on_step이 미실행) 가능 |
-| N2 | `EconomyManager._prevent_resource_banking` / `_reduce_gas_workers` 재정의 (F811) | 🟡 MED | open |
-| N3 | `combat_manager._find_harass_target` 재정의 (line 2377 vs 4278) | 🟡 MED | open |
-| N4 | `production_resilience.build_terran_counters` 재정의 (1369 vs 1866) | 🟡 MED | open |
-| N5 | bare `except Exception:` 다수 (≈360+) — 이번 PR에서 12건 처리, 잔여 다수 | 🟢 LOW | partial |
-| N6 | F841 unused local variables (visuals/make_pptx 등) | 🟢 LOW | open (presentation 코드라 영향 작음) |
-
-검증 권장: PR 분리 (N1 단독 PR 권장 — 동작 변화 가능성).
+| N7 | `tests/test_combat_phase_fsm.py`가 전체 스위트에서 실행 순서에 따라 12개 실패 — `asyncio.get_event_loop().run_until_complete(...)` 직접 호출이 pytest-asyncio가 `set_event_loop(None)` 호출한 뒤 깨짐 (`_set_called` 플래그로 인해 auto-create 안 됨) | 🟠 HIGH | ✅ **Fixed this cycle** — `asyncio.run(...)`로 교체, 격리 실행/전체 스위트 실행 모두 통과 확인 |
+| N8 | 로컬(비 CI) 실행 환경에 `sc2`(burnysc2), `mpyq`, `cffi`, `pytest` 등이 시스템 파이썬에 설치되어 있지 않아 `pytest tests/`가 즉시 실패 | 🟢 LOW (환경 문제, 코드 결함 아님) | 참고용 기록 — `SETUPTOOLS_USE_DISTUTILS=stdlib pip install mpyq burnysc2 pytest cffi` 로 해결됨 (Debian 계열 distutils 패치와 `mpyq`/오래된 setup.py 패키지 간 `install_layout` 비호환 이슈) |
 
 ---
 
@@ -372,19 +387,29 @@ if iteration % SECOND == 0:
 
 ---
 
-## 🎯 권장 수정 순서
+## 🎯 권장 수정 순서 (2026-07-14 갱신)
 
-### 1단계: 완료 (✅)
-~~1. Queen Inject 쿨다운 수정 (25 → 29)~~ — 코드 반영 완료, 본 문서 ✅ Resolved 섹션 참조
-~~2. 누락된 업그레이드 추가~~ — 코드 반영 완료, 본 문서 ✅ Resolved 섹션 참조
+### 완료 (✅)
+- Queen Inject 쿨다운, 누락 업그레이드, Transfusion 우선순위, Resource Reservation 동기화,
+  N1–N4 F811 중복 정의, N7 테스트 스위트 event-loop 플레이크 — 모두 코드/테스트로 확인 완료.
 
-### 2단계: 로직 개선 (30분, 미진행)
-3. Transfusion 우선순위 시스템 구현
+### 다음 우선순위 (미진행, 난이도 낮음~중간)
+1. **Position Utils 실제 적용** (Issue #5) — `utils/position_utils.py`의
+   `get_center_position`/`get_weighted_center`를 12개 중복 사이트에 실제로 적용.
+   한 파일씩 교체 후 관련 유닛 테스트로 회귀 확인 권장 (동작 변경 없는 순수 리팩토링).
+2. **bare except 점진적 축소** (N5) — 468건을 한 번에 고치지 말고, 실제로 예외를
+   삼켜서 버그를 숨기는 케이스(로그 없이 `except Exception: pass` 형태)부터 우선
+   식별 후 배치로 처리.
+3. **F841 unused locals 정리** (N6) — 130건, 대부분 리포트/시각화 스크립트라 영향 낮음.
+4. **매직 넘버 → GameConstants 치환 완성** (Issue #6) — `utils/game_constants.py`
+   상수 클래스는 이미 있으므로 하드코딩된 iteration 주기 상수부터 교체.
 
-### 3단계: 구조 개선 (1시간, 미진행)
-4. Resource Reservation 동기화
-5. Position Utils 유틸리티 함수 분리
-6. Constants 정리
+### 리서치 필요 (실측 기반 검증 권장, 문서 신뢰 금지)
+- `ROADMAP.md`/`TODO.md`의 남은 항목들은 실제로는 이미 구현된 경우가 많으므로,
+  다음 사이클에서 새 항목에 착수하기 전에 반드시 `grep`/코드 리딩으로 현재 구현
+  여부를 먼저 확인할 것 (이번 사이클에서 Sprint 1–7 전체가 이미 구현된 것으로 확인됨).
+- Medium AI 30연전 승률 테스트(ROADMAP Task 8.1)는 실제 SC2 클라이언트가 필요해
+  이 자동 점검 사이클(코드/테스트 검토)에서는 실행 불가 — 별도 GPU/게임 환경 필요.
 
 ---
 
@@ -421,5 +446,5 @@ if iteration % SECOND == 0:
 
 ---
 
-**검토 완료일**: 2026-01-29
+**검토 완료일**: 2026-01-29 (최초), 2026-07-14 (자동 점검 사이클 갱신 — 502 passed / 14 skipped / 0 failed)
 **상태**: 추가 개선 사항 문서화 완료
