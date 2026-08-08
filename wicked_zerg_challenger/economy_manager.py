@@ -279,12 +279,18 @@ class EconomyManager:
         available_gas = current_gas - self._reserved_gas
 
         # Log warning on over-reservation (Logic Bug Detection)
-        if available_mins < 0 and self.bot.iteration % 100 == 0:
+        if (
+            available_mins < 0
+            and self.bot.iteration % GameFrequencies.EVERY_100_ITERATIONS == 0
+        ):
             self.logger.warning(
                 f"[ECONOMY_WARN] Negative minerals detected! ({available_mins}) Reserved: {self._reserved_minerals}"
             )
 
-        if available_gas < 0 and self.bot.iteration % 100 == 0:
+        if (
+            available_gas < 0
+            and self.bot.iteration % GameFrequencies.EVERY_100_ITERATIONS == 0
+        ):
             self.logger.warning(
                 f"[ECONOMY_WARN] Negative gas detected! ({available_gas}) Reserved: {self._reserved_gas}"
             )
@@ -1444,7 +1450,7 @@ class EconomyManager:
                     self.bot.do(worker.gather(mineral))
 
         except Exception as e:
-            if self.bot.iteration % 50 == 0:
+            if self.bot.iteration % GameFrequencies.EVERY_50_ITERATIONS == 0:
                 self.logger.warning(f"[ECONOMY_WARN] Distance mining failed: {e}")
 
     async def _evacuate_depleted_base(self, depleted_townhall) -> None:
@@ -1514,7 +1520,7 @@ class EconomyManager:
                     f"from depleted base to {target_base.position}"
                 )
         except Exception as e:
-            if self.bot.iteration % 50 == 0:
+            if self.bot.iteration % GameFrequencies.EVERY_50_ITERATIONS == 0:
                 self.logger.warning(f"[ECONOMY_WARN] Evacuation failed: {e}")
 
     async def _redistribute_mineral_workers(self) -> None:
@@ -1690,7 +1696,7 @@ class EconomyManager:
                         under_saturated.remove((under_th, deficit))
 
         except (AttributeError, TypeError, ValueError) as e:
-            if self.bot.iteration % 50 == 0:
+            if self.bot.iteration % GameFrequencies.EVERY_50_ITERATIONS == 0:
                 self.logger.warning(f"[ECONOMY_WARN] Worker redistribution failed: {e}")
 
     async def _handle_mineral_float(
@@ -1805,7 +1811,7 @@ class EconomyManager:
                         )
 
         except (AttributeError, TypeError) as e:
-            if self.bot.iteration % 50 == 0:
+            if self.bot.iteration % GameFrequencies.EVERY_50_ITERATIONS == 0:
                 self.logger.warning(
                     f"[ECONOMY_WARN] Idle worker assignment failed: {e}"
                 )
@@ -2116,7 +2122,7 @@ class EconomyManager:
 
             # 위협이 높으면 확장 시도 중단 (안정성 우선)
             if self.blackboard.threat.level >= ThreatLevel.HIGH:
-                if self.bot.iteration % 100 == 0:
+                if self.bot.iteration % GameFrequencies.EVERY_100_ITERATIONS == 0:
                     self.logger.info(
                         f"[ECONOMY] Proactive expansion paused due to HIGH THREAT"
                     )
@@ -3244,7 +3250,10 @@ class EconomyManager:
                 )
 
                 # 미네랄 과잉 로그 (30초마다)
-                if int(game_time) % 30 == 0 and self.bot.iteration % 22 == 0:
+                if (
+                    int(game_time) % 30 == 0
+                    and self.bot.iteration % GameFrequencies.EVERY_SECOND == 0
+                ):
                     self.logger.info(
                         f"[ECONOMY] [{int(game_time)}s] Resource banking: {minerals}M / {gas}G"
                     )
@@ -3290,7 +3299,7 @@ class EconomyManager:
                         )
 
         except Exception as e:
-            if self.bot.iteration % 50 == 0:
+            if self.bot.iteration % GameFrequencies.EVERY_50_ITERATIONS == 0:
                 self.logger.warning(
                     f"[ECONOMY_WARN] Resource banking prevention error: {e}"
                 )
@@ -3362,7 +3371,7 @@ class EconomyManager:
                         return  # 한 번에 하나만
 
         except (AttributeError, TypeError, ValueError) as e:
-            if self.bot.iteration % 50 == 0:
+            if self.bot.iteration % GameFrequencies.EVERY_50_ITERATIONS == 0:
                 self.logger.warning(f"[ECONOMY_WARN] Extractor building failed: {e}")
 
     async def _optimize_gas_timing(self) -> None:
@@ -3477,7 +3486,7 @@ class EconomyManager:
                                             return
 
         except Exception as e:
-            if self.bot.iteration % 50 == 0:
+            if self.bot.iteration % GameFrequencies.EVERY_50_ITERATIONS == 0:
                 self.logger.warning(
                     f"[ECONOMY_WARN] Gas timing optimization failed: {e}"
                 )
@@ -3535,7 +3544,10 @@ class EconomyManager:
             self._economy_recovery_mode = True
             self._target_drone_count = min(ideal_workers, 75)
 
-            if int(game_time) % 20 == 0 and self.bot.iteration % 22 == 0:
+            if (
+                int(game_time) % 20 == 0
+                and self.bot.iteration % GameFrequencies.EVERY_SECOND == 0
+            ):
                 self.logger.info(
                     f"[ECONOMY RECOVERY] [{int(game_time)}s] [*] Worker deficit: {worker_deficit} [*]"
                 )
@@ -3631,7 +3643,10 @@ class EconomyManager:
                     pending = self.bot.already_pending(UnitTypeId.HATCHERY)
 
                     if pending == 0 and base_count < 5:
-                        if int(game_time) % 30 == 0 and self.bot.iteration % 22 == 0:
+                        if (
+                            int(game_time) % 30 == 0
+                            and self.bot.iteration % GameFrequencies.EVERY_SECOND == 0
+                        ):
                             self.logger.info(
                                 f"[ECONOMY PREDICTION] [{int(game_time)}s] Base depleting in {depletion_time:.1f} min"
                             )
@@ -3646,7 +3661,7 @@ class EconomyManager:
                         break  # 한 번에 하나만
 
         except (AttributeError, TypeError, ValueError) as e:
-            if self.bot.iteration % 50 == 0:
+            if self.bot.iteration % GameFrequencies.EVERY_50_ITERATIONS == 0:
                 self.logger.warning(f"[ECONOMY_WARN] Predictive expansion failed: {e}")
 
     def is_economy_recovery_mode(self) -> bool:
