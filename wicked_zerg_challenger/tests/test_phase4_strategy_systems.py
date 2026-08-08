@@ -17,6 +17,7 @@ from strategy_manager import (
     TIMING_ATTACKS,
     EnemyRace,
     StrategyManager,
+    StrategyMode,
 )
 from upgrade_manager import MATCHUP_UPGRADE_PRIORITY, EvolutionUpgradeManager
 
@@ -208,6 +209,55 @@ class TestEmergencyResponseTable(unittest.TestCase):
         self.assertIn("proxy_barracks", EMERGENCY_RESPONSES)
         self.assertIn("void_ray_rush", EMERGENCY_RESPONSES)
         self.assertIn("baneling_bust", EMERGENCY_RESPONSES)
+
+    def test_emergency_start_time_resets_so_second_emergency_gets_fresh_timer(self):
+        blackboard = Blackboard()
+        bot = FakeBot(blackboard, enemy_race="Race.Protoss")
+        bot.time = 90.0
+        bot.enemy_structures = [FakeStructure("PHOTONCANNON", Point(18, 18))]
+        manager = StrategyManager(bot, blackboard)
+        manager.detected_enemy_race = EnemyRace.PROTOSS
+        manager._cached_enemy_composition = {}
+
+        manager._apply_emergency_response_table()
+        self.assertEqual(manager.emergency_start_time, 90.0)
+
+        manager._end_emergency_mode()
+        self.assertEqual(manager.emergency_start_time, 0.0)
+
+        # A later, unrelated emergency must get its own fresh start time
+        # instead of inheriting the stale one from the first emergency
+        # (which would make _check_rush_detection end it immediately).
+        bot.time = 400.0
+        bot.enemy_structures = []
+        blackboard.set("dark_shrine_scouted", True)
+        manager._apply_emergency_response_table()
+
+        self.assertEqual(manager.emergency_start_time, 400.0)
+
+
+class TestEarlyScoutPressureDecay(unittest.TestCase):
+    def test_pressure_active_decays_once_signal_goes_stale(self):
+        blackboard = Blackboard(
+            {
+                "early_scout_last_report_time": 40.0,
+                "early_scout_cheese_suspected": True,
+            }
+        )
+        bot = FakeBot(blackboard, enemy_race="Race.Terran")
+        bot.time = 40.0
+        manager = StrategyManager(bot, blackboard)
+        manager.detected_enemy_race = EnemyRace.TERRAN
+
+        manager._apply_early_scout_signals()
+        self.assertTrue(manager.early_scout_pressure_active)
+        self.assertEqual(manager.current_mode, StrategyMode.DEFENSIVE)
+
+        # Long after the 75s freshness window, with no new report, the
+        # pressure flag must be able to lift instead of latching forever.
+        bot.time = 400.0
+        manager._apply_early_scout_signals()
+        self.assertFalse(manager.early_scout_pressure_active)
 
 
 if __name__ == "__main__":

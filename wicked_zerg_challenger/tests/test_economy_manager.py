@@ -786,6 +786,27 @@ class TestEconomyManager(unittest.TestCase):
         self.assertEqual(self.manager.get_target_drone_count(), 0)
         self.bot.do.assert_not_called()
 
+    def test_recovery_mode_respects_critical_threat_drone_halt(self):
+        """check_economic_recovery must not undo a CRITICAL-threat drone halt.
+
+        Regression test: this pass used to unconditionally set
+        _target_drone_count = min(ideal_workers, 75) whenever workers were
+        short, silently overwriting the threat-scaled cap set moments
+        earlier in the same on_step tick by update_economy_combat_balance().
+        """
+        self.bot.workers.amount = 4
+        townhalls_ready = Mock()
+        townhalls_ready.amount = 3
+        self.bot.townhalls.ready = townhalls_ready
+        self.manager.threat_level = ThreatLevel.CRITICAL
+
+        import asyncio
+
+        asyncio.run(self.manager.check_economic_recovery())
+
+        self.assertTrue(self.manager._economy_recovery_mode)
+        self.assertEqual(self.manager._target_drone_count, 0)
+
     def test_opening_hatchery_reservation_pauses_drone_training(self):
         """At 16 drones, minerals are saved for the first natural hatchery."""
         self.bot.time = 50

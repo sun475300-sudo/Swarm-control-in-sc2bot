@@ -158,6 +158,51 @@ class TestWorkerHarassmentDefense(unittest.TestCase):
         self.assertEqual(len(move_actions), 1)
         self.assertIn(40, manager.harass_returning_units)
 
+    def test_harass_kill_count_resets_between_waves(self):
+        bot = FakeBot()
+        ling = FakeUnit(40, UnitTypeId.ZERGLING, Point2((95, 95)), can_attack=True)
+        bot.units = UnitSource([bot.queen, ling])
+        bot.enemy_units = FakeUnits(
+            [FakeUnit(300, UnitTypeId.SCV, Point2((98, 98)), can_attack=False)]
+        )
+        manager = CombatManager(bot)
+        manager.harass_units = {ling.tag}
+
+        asyncio.run(manager.manage_harass_units(22))
+
+        bot.actions.clear()
+        bot.enemy_units = FakeUnits()
+        manager._harass_last_enemy_workers = 3
+        asyncio.run(manager.manage_harass_units(23))
+        self.assertEqual(manager.harass_kill_count, 3)
+
+        # Unit makes it back to base and is dropped from the roster.
+        ling.position = Point2((51, 50))
+        asyncio.run(manager.manage_harass_units(24))
+        self.assertNotIn(ling.tag, manager.harass_units)
+
+        # Wave is now empty - the per-wave kill counter must reset before
+        # the next wave goes out, instead of permanently disabling
+        # harassment for the rest of the game (ROADMAP Task 1.3).
+        asyncio.run(manager.manage_harass_units(25))
+        self.assertEqual(manager.harass_kill_count, 0)
+
+        # A fresh wave should be able to reach and attack, not be
+        # immediately treated as "returning" from the stale kill count.
+        bot.actions.clear()
+        second_ling = FakeUnit(
+            41, UnitTypeId.ZERGLING, Point2((95, 95)), can_attack=True
+        )
+        bot.units = UnitSource([bot.queen, second_ling])
+        bot.enemy_units = FakeUnits(
+            [FakeUnit(301, UnitTypeId.SCV, Point2((98, 98)), can_attack=False)]
+        )
+        manager.harass_units = {second_ling.tag}
+        asyncio.run(manager.manage_harass_units(26))
+
+        self.assertNotIn(second_ling.tag, manager.harass_returning_units)
+        self.assertIn(("attack", 41, 301), bot.actions)
+
 
 if __name__ == "__main__":
     unittest.main()

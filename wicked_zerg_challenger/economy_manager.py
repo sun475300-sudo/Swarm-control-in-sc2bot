@@ -3532,8 +3532,15 @@ class EconomyManager:
 
         if worker_deficit > 5:
             # 드론 심각하게 부족 -> 드론 생산 우선 모드
+            # NOTE: never raise the target above what the current threat
+            # level allows (THREAT_DRONE_TARGETS) - otherwise a HIGH/CRITICAL
+            # threat's drone-production throttle gets silently undone here
+            # every second by this recovery pass.
             self._economy_recovery_mode = True
-            self._target_drone_count = min(ideal_workers, 75)
+            threat_cap = THREAT_DRONE_TARGETS.get(
+                self.threat_level, min(ideal_workers, 75)
+            )
+            self._target_drone_count = min(ideal_workers, 75, threat_cap)
 
             if int(game_time) % 20 == 0 and self.bot.iteration % 22 == 0:
                 self.logger.info(
