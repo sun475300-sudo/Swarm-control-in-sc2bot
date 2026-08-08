@@ -161,3 +161,20 @@
 3. **S3.1 CI fail-fast: false** (단순 패치, 별 PR, 자동 가능)
 4. **S3.2 pip-tools 도입** (별 PR, 검토 후 자동)
 5. 그 외 S2/S3/S4 항목은 사용자 우선순위 협의 후 진행
+
+---
+
+## 5. PR 적체 현황 (2026-07-17 갱신)
+
+**이 문서의 위 섹션(1~4)은 2026-04-26 시점 스냅샷이며 그 후 갱신되지 않았다** — `#482`, `#486`, `#490`, `#494`, `#497`~`#501` 세션이 이 파일에 후속 감사 내용을 추가했지만, 그 커밋들은 전부 **머지되지 않은 draft 브랜치**에만 존재해서 `main`에는 반영되지 않았다. `main`에 머지된 건 여전히 `#218` 하나뿐이고, 열린 PR은 **463건**으로 늘었다. 자세한 내용은 각 PR 본문 참고. 새 세션은 코드 수정 전에 반드시 열린 PR 목록부터 확인할 것 — 같은 `asyncio.get_event_loop()` FSM 버그가 40회 이상 중복 수정됐다.
+
+## 6. 의존성 취약점 감사 (2026-07-17)
+
+사용자 승인 항목(옵션 3: Dependabot 취약점 검토/우선순위화)에 따라 `pip-audit` + `npm audit`으로 직접 스캔 (GitHub Dependabot 알림 API는 사용 가능한 도구 목록에 없어 로컬 스캐너로 대체):
+
+- **Python** (`requirements.txt`, `requirements-dev.txt`, `requirements-crypto.txt`, `wicked_zerg_challenger/requirements.txt`): `click==8.1.8` 1건 발견 (CVE-2026-7246 / GHSA-47fr-3ffg-hgmw, `click.edit()` 명령 삽입). **수정 보류** — `gTTS`(최신 2.5.4 포함 전 버전)가 `click<8.2`를 강제해 `click>=8.3.3` 핀을 추가하면 설치 자체가 깨짐(`ResolutionImpossible`). 우리 코드는 `click`을 직접 import하지 않고, 취약 함수 `click.edit()`을 호출하는 코드 경로도 없음 — 실사용 위험 낮음으로 판단, 별도 조치 없이 보류. `gTTS` 업스트림이 `click>=8.2` 지원을 릴리스하면 재검토 필요.
+- **npm 루트** (`package.json`): 10건(high 5 / moderate 5) → **0건으로 수정**. `package-lock.json`을 `npm audit fix --package-lock-only`로 갱신하고, `next`/`discord.js` 트리에 중첩된 `undici@7.24.6`(TLS 검증 우회 등 다수 CVE)을 `overrides`로 `>=7.28.0` 고정.
+- **npm `jarvis-diary`**: 6건(high 1 / moderate 4 / low 1) → **0건으로 수정**. `next` 16.2.1 → 16.2.10(패치, 논-메이저) 갱신 + `postcss`(next 내부 중첩 사본, XSS GHSA-qx2v-qp2m-jg93) `overrides`로 `>=8.5.10` 고정. `npm run build` 재검증 완료(정상 빌드).
+- **npm `sc2-ai-dashboard` / `sc2-mobile-app`**: `package-lock.json` 없음 — 현재 스캔 대상에서 제외, 별도 확인 필요.
+- **Maven** (`maven_build/pom.xml`): `jackson-databind` 2.17.0 취약 — 이미 Dependabot PR `#219`(2.17.0→2.22.0)가 열려 있음, 별도 조치 없이 그 PR 머지를 권장.
+- **Gradle** (`groovy2`, `gradle_build`, `groovy_build`, `지휘관botmaven`): 이번 감사에서 미검토 — 후속 세션 대상.
