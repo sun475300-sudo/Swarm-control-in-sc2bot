@@ -358,7 +358,9 @@ class EvolutionUpgradeManager:
         priorities = []
 
         # *** Phase 18: 종족별 우선순위 조정 ***
-        race_modifiers = self.race_priority_modifiers.get(enemy_race, {})
+        # enemy_race는 _normalize_enemy_race()가 소문자로 반환하므로
+        # capitalize()로 race_priority_modifiers의 키("Terran" 등)와 맞춰준다
+        race_modifiers = self.race_priority_modifiers.get(enemy_race.capitalize(), {})
 
         if is_ranged_main:
             # * 바퀴/히드라 체제: 원거리 공격 올인 (사용자 요청)
@@ -388,6 +390,12 @@ class EvolutionUpgradeManager:
             # * 저글링/맹독충 체제: 근접 공격 + 방어 균형
             # 근접1 -> 방어1 -> 근접2 -> 방어2...
             priorities = ["melee", "armor", "melee", "armor", "melee", "armor"]
+
+        # *** Phase 18: 종족별 우선순위 조정 적용 ***
+        # race_modifiers가 더 높은 lane을 앞으로 당겨서 실제 연구 순서에 반영
+        # (stable sort이므로 동일 가중치 항목의 상대 순서는 유지됨)
+        if race_modifiers:
+            priorities.sort(key=lambda lane: -race_modifiers.get(lane, 1.0))
 
         # *** 공중 유닛이 있으면 공중 업그레이드 추가 ***
         corruptor_count = composition.get("corruptor", 0)
