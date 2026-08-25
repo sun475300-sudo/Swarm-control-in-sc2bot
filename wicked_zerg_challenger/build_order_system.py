@@ -10,6 +10,7 @@ Purpose: Stable and optimized automated build order execution
 """
 
 import logging
+import os
 from enum import Enum
 from typing import Any, Dict, List
 
@@ -25,6 +26,11 @@ except ImportError:
     MAX_STEP_RETRIES = 50
     EXPANSION_TIMING_TARGET = 60.0
     THREAT_CACHE_TTL = 0.5
+
+try:
+    import yaml
+except ImportError:
+    yaml = None
 
 from knowledge_manager import KnowledgeManager  # NEW
 
@@ -66,7 +72,12 @@ except ImportError:
         pass
 
 
-ZVT_BUILDS = {
+BUILD_ORDERS_YAML_PATH = os.path.join(
+    os.path.dirname(__file__), "config", "build_orders.yaml"
+)
+
+
+_DEFAULT_ZVT_BUILDS = {
     "hatch_first_16": {
         "name": "16 Hatchery macro",
         "condition": "default",
@@ -120,7 +131,7 @@ ZVT_BUILDS = {
 }
 
 
-ZVP_BUILDS = {
+_DEFAULT_ZVP_BUILDS = {
     "roach_rush": {
         "name": "Roach rush",
         "condition": "default",
@@ -176,7 +187,7 @@ ZVP_BUILDS = {
 }
 
 
-ZVZ_BUILDS = {
+_DEFAULT_ZVZ_BUILDS = {
     "safe_14pool": {
         "name": "14 Pool safe",
         "condition": "default",
@@ -226,6 +237,56 @@ ZVZ_BUILDS = {
         "note": "Fast Roach Warren when enemy speedling flood is detected.",
     },
 }
+
+
+def _resolve_build_order_token(token: str) -> Any:
+    """Map a YAML build-order token to its UnitTypeId member, or pass it
+    through unchanged when it's a non-unit action marker (e.g. METABOLIC_BOOST)."""
+    return getattr(UnitTypeId, token, token)
+
+
+def _load_build_orders_from_yaml(path: str = BUILD_ORDERS_YAML_PATH):
+    """Load ZVT/ZVP/ZVZ build orders from config/build_orders.yaml.
+
+    Falls back to the built-in defaults (_DEFAULT_ZVT_BUILDS etc.) if the
+    file is missing, unreadable, malformed, or PyYAML isn't installed, so
+    the bot always has a valid build order regardless of config state."""
+    defaults = (_DEFAULT_ZVT_BUILDS, _DEFAULT_ZVP_BUILDS, _DEFAULT_ZVZ_BUILDS)
+    if yaml is None:
+        return defaults
+    try:
+        with open(path, "r", encoding="utf-8") as f:
+            data = yaml.safe_load(f)
+        if not data:
+            raise ValueError("build_orders.yaml is empty")
+
+        loaded = {}
+        for race_key in ("zvt", "zvp", "zvz"):
+            race_builds = {}
+            for build_key, build in data[race_key].items():
+                race_builds[build_key] = {
+                    "name": build["name"],
+                    "condition": build["condition"],
+                    "order": [
+                        (supply, _resolve_build_order_token(token))
+                        for supply, token in build["order"]
+                    ],
+                    "transition": build["transition"],
+                    "note": build["note"],
+                }
+            loaded[race_key] = race_builds
+        return loaded["zvt"], loaded["zvp"], loaded["zvz"]
+    except (
+        Exception
+    ) as exc:  # noqa: BLE001 - any load failure must not crash bot startup
+        logger.warning(
+            "Failed to load build_orders.yaml (%s) — using built-in default build orders",
+            exc,
+        )
+        return defaults
+
+
+ZVT_BUILDS, ZVP_BUILDS, ZVZ_BUILDS = _load_build_orders_from_yaml()
 
 
 class BuildOrderType(Enum):

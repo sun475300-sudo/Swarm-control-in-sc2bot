@@ -1,0 +1,148 @@
+# Build-order definitions for BuildOrderSystem (wicked_zerg_challenger/build_order_system.py).
+#
+# Each `order` entry is a [supply, token] pair. `token` is either a UnitTypeId
+# member name (resolved via getattr(UnitTypeId, token)) or a literal action
+# marker such as METABOLIC_BOOST that has no UnitTypeId equivalent and is
+# passed through to BuildOrderStep as-is.
+#
+# If this file is missing or fails to parse, build_order_system.py falls back
+# to its built-in default build orders (_DEFAULT_ZVT_BUILDS / _DEFAULT_ZVP_BUILDS
+# / _DEFAULT_ZVZ_BUILDS) so the bot always has a valid build order.
+
+zvt:
+  hatch_first_16:
+    name: "16 Hatchery macro"
+    condition: "default"
+    order:
+      - [13, OVERLORD]
+      - [16, HATCHERY]
+      - [18, EXTRACTOR]
+      - [17, SPAWNINGPOOL]
+      - [20, QUEEN]
+      - [20, QUEEN]
+      - [20, ZERGLING]
+      - [24, METABOLIC_BOOST]
+      - [30, ROACHWARREN]
+    transition: "roach_hydra_mid"
+    note: "Safe macro opening after confirming one barracks."
+  aggressive_pool_first:
+    name: "14 Pool pressure defense"
+    condition: "enemy_proxy_detected OR enemy_one_base"
+    order:
+      - [13, OVERLORD]
+      - [14, SPAWNINGPOOL]
+      - [16, HATCHERY]
+      - [16, EXTRACTOR]
+      - [18, QUEEN]
+      - [18, ZERGLING]
+      - [22, METABOLIC_BOOST]
+    transition: "ling_bane_mid"
+    note: "Earlier pool for proxy or one-base Terran pressure."
+  fast_lair_macro:
+    name: "Fast Lair macro"
+    condition: "enemy_expand_confirmed AND no_aggression"
+    order:
+      - [13, OVERLORD]
+      - [16, HATCHERY]
+      - [18, EXTRACTOR]
+      - [17, SPAWNINGPOOL]
+      - [19, QUEEN]
+      - [21, QUEEN]
+      - [24, METABOLIC_BOOST]
+      - [30, LAIR]
+      - [38, HYDRALISKDEN]
+      - [44, HATCHERY]
+    transition: "hydra_lurker_late"
+    note: "Tech ahead when Terran expands safely without aggression."
+
+zvp:
+  roach_rush:
+    name: "Roach rush"
+    condition: "default"
+    order:
+      - [13, OVERLORD]
+      - [16, HATCHERY]
+      - [18, EXTRACTOR]
+      - [17, SPAWNINGPOOL]
+      - [19, QUEEN]
+      - [20, QUEEN]
+      - [22, ROACHWARREN]
+      - [24, METABOLIC_BOOST]
+      - [28, ROACH]
+    transition: "roach_ravager_push"
+    note: "Default gateway-expand response with a roach timing."
+  ling_flood_anti_cannon:
+    name: "Ling flood anti-cannon"
+    condition: "enemy_cannon_rush_detected"
+    order:
+      - [13, OVERLORD]
+      - [14, SPAWNINGPOOL]
+      - [14, HATCHERY]
+      - [16, QUEEN]
+      - [16, ZERGLING]
+      - [20, METABOLIC_BOOST]
+    transition: "ling_bane_nydus"
+    note: "Fast pool response when cannon pressure is scouted."
+  hydra_lair_macro:
+    name: "Hydra lair macro"
+    condition: "enemy_stargate_detected OR enemy_robo_detected"
+    order:
+      - [13, OVERLORD]
+      - [16, HATCHERY]
+      - [18, EXTRACTOR]
+      - [17, SPAWNINGPOOL]
+      - [19, QUEEN]
+      - [21, QUEEN]
+      - [24, METABOLIC_BOOST]
+      - [28, EXTRACTOR]
+      - [30, LAIR]
+      - [36, HYDRALISKDEN]
+      - [38, HATCHERY]
+      - [44, EXTRACTOR]
+      - [44, EXTRACTOR]
+    transition: "hydra_lurker_viper"
+    note: "Fast lair and hydra tech when Stargate or Robo is confirmed."
+
+zvz:
+  safe_14pool:
+    name: "14 Pool safe"
+    condition: "default"
+    order:
+      - [13, OVERLORD]
+      - [14, SPAWNINGPOOL]
+      - [16, HATCHERY]
+      - [16, EXTRACTOR]
+      - [18, QUEEN]
+      - [18, ZERGLING]
+      - [20, METABOLIC_BOOST]
+      - [22, QUEEN]
+      - [24, BANELINGNEST]
+    transition: "ling_bane_control"
+    note: "Default ZvZ opener into speedling and baneling control."
+  12pool_rush:
+    name: "12 Pool rush"
+    condition: "aggressive_opening"
+    order:
+      - [12, SPAWNINGPOOL]
+      - [13, OVERLORD]
+      - [14, ZERGLING]
+      - [17, EXTRACTOR]
+      - [17, QUEEN]
+      - [19, METABOLIC_BOOST]
+      - [20, HATCHERY]
+    transition: "ling_bane_allin_or_macro"
+    note: "Aggressive opener to force damage before expanding."
+  roach_warren_macro:
+    name: "Roach warren macro"
+    condition: "enemy_ling_flood_detected"
+    order:
+      - [13, OVERLORD]
+      - [14, SPAWNINGPOOL]
+      - [16, HATCHERY]
+      - [16, EXTRACTOR]
+      - [18, QUEEN]
+      - [20, ROACHWARREN]
+      - [22, QUEEN]
+      - [24, ROACH]
+    transition: "roach_ravager_mid"
+    note: "Fast Roach Warren when enemy speedling flood is detected."
