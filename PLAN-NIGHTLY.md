@@ -2,9 +2,27 @@
 
 > Owner: 선우 (sun475300@gmail.com)
 > Maintainer: nightly automation
-> Last refreshed: 2026-07-18
+> Last refreshed: 2026-07-20
 
 ---
+
+## 🔴 P0 finding (2026-07-20, still unresolved): PR pile-up is worse, not better
+
+PR #533 (black/isort repo-wide fix) merged 2026-07-18 as recommended, but
+**the open-PR count has grown since**: 515 open PRs as of 2026-07-20
+(was 494 on 2026-07-18), with still only a handful ever merged. Merging
+the CI-blocker fixed *future* PRs' ability to go green, but nothing is
+triaging the backlog itself — every automation session (including this
+one) keeps opening new small PRs on top of an already-unreviewed pile.
+
+**This needs an owner decision, not another automated PR.** Options
+flagged in PR #533 and repeated here: (a) batch rebase + review the
+highest-value subset and close the rest as superseded/duplicate, (b)
+enable auto-merge for green-CI PRs from this automation so they stop
+queuing up for manual review, or (c) explicitly tell the automation to
+stop opening new PRs until the backlog is cleared. Until one of these
+happens, this nightly loop will keep adding to the pile — flagging this
+every run rather than silently continuing.
 
 ## 🔴 P0 finding (2026-07-18): CI itself was blocking every merge
 
@@ -31,12 +49,23 @@ being permanently red is very likely why none of them ever merged.
 
 ## Snapshot (current state)
 
-- Branch: `main`, last commit: queen transfusion + requirements-dev.txt session
+- Branch: `main`, last commit `7d24294` (black+isort repo sweep, PR #533, merged 2026-07-18)
 - Bot core: `wicked_zerg_challenger/` — 179+ Python files across 10+ subdirs.
 - `.gitattributes` enforces `* text=auto` ✅
-- CI: `sc2bot-ci.yml` runs black + isort + flake8 — **was red on every PR since before 2026-06-01; fixed in PR #533 (2026-07-18), pending merge**
-- **Test suite (local verification, 2026-07-18): `tests/` 502 passed/14 skipped, `tests/integration` 10 passed, `wicked_zerg_challenger/tests/` 661 passed — 0 failures across all three**
+- CI: `sc2bot-ci.yml` runs black + isort + flake8 — **fixed in PR #533 (merged 2026-07-18)**
+- **Test suite (local verification, 2026-07-20, sandbox without real `sc2`/`burnysc2` installed): `tests/` 428 passed / 20 skipped / 0 failed after fixing the collection-abort bug (PR #558)**
 - Queen transfusion logic: 3 bugs fixed (`is_idle` guard removed, target dedup, per-queen cooldown) ✅
+- **Open PR backlog: 515 open, ~9 merged total — see P0 finding above, needs owner decision**
+
+## Resolved this run (2026-07-20)
+
+| Item | File(s) | Notes |
+|------|---------|-------|
+| Suite-wide collection abort without `sc2` installed | `tests/test_queen_transfusion.py` | Only test file missing the `try/except ImportError: pytest.skip(...)` guard every sibling sc2-import test uses. Caused `pytest tests/` to abort collecting **all** 400+ tests (not just this file) in any environment without the `sc2` package. Fixed to match siblings. PR #558 (open). |
+| Local sandbox missing dev deps | n/a (environment only) | `pytest-asyncio`, `pytest-timeout`, `pytest-mock`, `numpy`, `cffi` were absent in this session's sandbox, causing 83 additional async-test failures + 7 `cryptography`/pyo3 panics + several numpy-gated skips. Installed locally to verify; already correctly pinned in `requirements.txt`/`requirements-dev.txt`, no repo change needed. |
+| Post-fix full-suite result | `tests/` | 428 passed, 20 skipped (all remaining skips are legitimate env gaps: sc2 lib, pyupbit, config.yaml). |
+
+**Open PR backlog: 515 open, ~9 ever merged — see P0 finding above.**
 
 ## Resolved this run (2026-05-03)
 
@@ -110,6 +139,7 @@ Run `E:\GitHub\Swarm-control-in-sc2bot\scripts\commit_nightly_2026-05-03.bat`:
 
 ## Run history
 
+- **2026-07-20** — Fixed unguarded `sc2` import in `test_queen_transfusion.py` (was aborting full-suite collection when `sc2` absent). PR #558 opened. Flagged: open-PR backlog grew to 515 (from 494 on 2026-07-18) despite PR #533 merging — needs owner triage decision.
 - **2026-04-25** — Initial nightly plan.
 - **2026-04-26** — P0.2 (empty-logger CI guard) landed.
 - **2026-04-27** — black + isort + flake8 all clean.
