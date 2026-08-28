@@ -2,7 +2,27 @@
 
 > Owner: 선우 (sun475300@gmail.com)
 > Maintainer: nightly automation
-> Last refreshed: 2026-07-18
+> Last refreshed: 2026-07-19
+
+---
+
+## 🔴 P0 finding (2026-07-19): the recurring automation loop itself, not missing fixes, is now the blocker
+
+- **~507 open PRs against `main`, only 2 ever merged** (#218, #533). Confirmed via `search_pull_requests`.
+- At least 8 independent prior sessions today alone (#543–#550) reached the same conclusion and recommended the same thing: stop commissioning more one-off fix PRs, triage the backlog instead.
+- One session (#548) measured PR creation timestamps and found ~13 PRs opened within a single hour on 2026-07-18 — inconsistent with the requested "daily" cadence. The trigger/schedule that invokes this recurring session is very likely firing far more often than intended.
+- This session (PR #551) could not inspect or change that trigger config from inside the repo (`CronList` is session-scoped and empty — the trigger lives in the Claude Code on the web environment settings, outside this session's reach). **Action needed from the repo owner:** check the trigger/schedule configured for this repo in the Claude Code on the web UI and confirm it's actually set to daily, not hourly-or-more.
+- Several already-open PRs fix real, independently-verified bugs and are ready for owner review/merge: **#544** (`RLAgent.save_model()` atomic-rename no-op), **#545** (race-specific upgrade priority never applied), **#549** (`IntegrationHub.generate_test_script()` crash), **#550** (5 state-machine bugs where a transient signal permanently latches a degraded mode), **#551** (this session — opponent-learning crash, see below).
+
+## Resolved this run (2026-07-19, PR #551)
+
+`OpponentModeling.on_game_end()` (`wicked_zerg_challenger/opponent_modeling.py`) re-accessed `.value` on strings already stored by `_add_signal()` (`observed_signals` holds `StrategySignal.value`, not the enum member) — raised `AttributeError` on every game where any early-game signal fired (early pool, fast expand, etc. — routine). Silently swallowed by a broad `except Exception` in `wicked_zerg_bot_pro_impl.py`'s `on_end()`, so `model.update_from_game()`/`save_models()` never ran: **opponent-learning persistence silently never worked**. Also fixed: dead writes to non-existent `game_won`/`game_lost` fields (real field is `game_result`), and a masked `.models` → `.opponent_models` typo one line below that only stayed hidden because the above bug threw first. 2 regression tests added. `wicked_zerg_challenger/tests/` 661 → 663 passed, `tests/` unchanged at 502 passed/14 skipped.
+
+## Other candidates found this run, not yet fixed (flagged for a future session — do not re-discover from scratch)
+
+- `harassment_coordinator.py`: `zergling_runby_active` is set `True` once and never reset — permanently disables `MultiProngCoordinator` attack initiation and synchronized-strike run-bys after the first zergling run-by of the game. Same "transient flag never resets" shape as the 5 bugs already fixed in PR #550 — worth checking whether #550's pattern-fix approach can extend here.
+- `advanced_scout_system_v2.py`: the zergling-patrol dispatch path never registers units into `_patrol_units`, so `active_scouts` permanently latches at `MAX_SCOUTS["ZERGLING"]` and silently kills further zergling scouting after ~3-4 minutes.
+- `advanced_micro_controller_v3.py`: 5 sub-classes (`RavagerMicro`, `LurkerMicro`, `QueenMicro`, `ViperMicro`, `CorruptorMicro`) have exception handlers referencing `self.logger`, which is never initialized in `__init__` — any exception path in these classes raises a second `AttributeError` masking the original error.
 
 ---
 
