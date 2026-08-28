@@ -236,6 +236,38 @@ def test_strategy_manager_switches_to_defense_on_early_scout_pressure():
     assert blackboard.get("urgent_spore_all_bases") is True
 
 
+def test_early_scout_pressure_clears_once_report_goes_stale():
+    """early_scout_pressure_active must not latch permanently once triggered."""
+    blackboard = GameStateBlackboard()
+    blackboard.set("early_scout_last_report_time", 100.0)
+    blackboard.set("early_scout_cheese_suspected", True)
+    blackboard.set("early_scout_gas_time", 80.0)
+    blackboard.set("early_scout_natural_confirmed", False)
+
+    bot = SimpleNamespace(
+        time=130.0,
+        iteration=22,
+        enemy_race=SimpleNamespace(name="Protoss"),
+        enemy_units=UnitGroup(),
+        enemy_structures=[],
+        units=UnitGroup([MockUnit("DRONE", can_attack=False)]),
+        blackboard=blackboard,
+        intel=SimpleNamespace(has_tech_alert=lambda _: False),
+    )
+
+    manager = StrategyManager(bot, blackboard=blackboard)
+    manager.update()
+    assert manager.current_mode == StrategyMode.DEFENSIVE
+    assert manager.early_scout_pressure_active is True
+
+    # Report goes stale (>75s old) and the natural is later confirmed.
+    bot.time = 400.0
+    blackboard.set("early_scout_natural_confirmed", True)
+    manager.update()
+
+    assert manager.early_scout_pressure_active is False
+
+
 @pytest.mark.asyncio
 async def test_economy_manager_suppresses_drone_greed_under_pressure():
     blackboard = GameStateBlackboard()

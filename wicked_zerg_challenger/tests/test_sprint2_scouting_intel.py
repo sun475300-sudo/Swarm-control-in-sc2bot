@@ -221,6 +221,58 @@ class TestSprint2ScoutingSystem(unittest.TestCase):
         self.assertTrue(self.bot.blackboard.get("overseer_morph_requested"))
         self.bot.do.assert_not_called()
 
+    def test_deploy_changeling_requires_min_energy(self):
+        overseer = FakeUnit("OVERSEER", tag=9, position=FakePoint(12, 12))
+        overseer.energy = 49
+        self.bot.units = Mock(return_value=FakeUnits([overseer]))
+
+        result = self.scouting.deploy_changeling()
+
+        self.assertFalse(result)
+        self.bot.do.assert_not_called()
+
+    def test_cloak_alert_expires_after_threat_leaves_vision(self):
+        """A one-time cloak sighting must not pin the overseer on detection
+        duty for the rest of the match once the unit is gone and enough
+        time has passed."""
+        dark_templar = FakeUnit("DARKTEMPLAR", tag=20, position=FakePoint(40, 40))
+        overseer = FakeUnit("OVERSEER", tag=9, position=FakePoint(12, 12))
+        self.bot.enemy_units = [dark_templar]
+
+        def units_by_type(unit_type):
+            name = getattr(unit_type, "name", str(unit_type))
+            if name == "OVERSEER":
+                return FakeUnits([overseer])
+            return FakeUnits([])
+
+        self.bot.units = units_by_type
+
+        self.bot.time = 120.0
+        self.assertTrue(self.scouting.handle_cloak_detection())
+        self.assertTrue(self.bot.blackboard.get("cloak_threat_detected"))
+
+        # The dark templar is gone (out of vision), but well within the
+        # short "keep searching" window -> still returns to the last spot.
+        self.bot.enemy_units = []
+        self.bot.time = 140.0
+        self.assertTrue(self.scouting.handle_cloak_detection())
+
+        # 45s+ have now passed since it was last actually seen -> the
+        # alert must expire instead of latching forever.
+        self.bot.time = 300.0
+        self.assertFalse(self.scouting.handle_cloak_detection())
+        self.assertFalse(self.bot.blackboard.get("cloak_threat_detected"))
+
+    def test_deploy_changeling_spawns_when_energy_available(self):
+        overseer = FakeUnit("OVERSEER", tag=9, position=FakePoint(12, 12))
+        overseer.energy = 75
+        self.bot.units = Mock(return_value=FakeUnits([overseer]))
+
+        result = self.scouting.deploy_changeling()
+
+        self.assertTrue(result)
+        self.bot.do.assert_called_once()
+
 
 class TestSprint2IntelAndAirResponse(unittest.TestCase):
     def setUp(self):

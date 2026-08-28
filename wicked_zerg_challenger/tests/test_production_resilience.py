@@ -28,7 +28,7 @@ from sc2.ids.unit_typeid import UnitTypeId
 from sc2.position import Point2
 
 
-class TestProductionResilience(unittest.TestCase):
+class TestProductionResilience(unittest.IsolatedAsyncioTestCase):
     """Test suite for ProductionResilience"""
 
     def setUp(self):
@@ -58,6 +58,52 @@ class TestProductionResilience(unittest.TestCase):
         self.bot.do = Mock()
 
         self.resilience = ProductionResilience(self.bot)
+
+    # ==================== Excess Resource Spending Gate Tests ====================
+
+    async def test_spend_excess_gas_gate_matches_caller_threshold(self):
+        """on_step() triggers _spend_excess_gas() at vespene > 500 (FIX
+        P0-1), so the function's own internal gate must not silently
+        require the old 1500 before it does anything."""
+        self.bot.units = Mock(return_value=SimpleNamespace(exists=False))
+        self.resilience._build_gas_heavy_tech = AsyncMock()
+
+        self.bot.vespene = 400
+        await self.resilience._spend_excess_gas()
+        self.resilience._build_gas_heavy_tech.assert_not_called()
+
+        self.bot.vespene = 600
+        await self.resilience._spend_excess_gas()
+        self.resilience._build_gas_heavy_tech.assert_called_once()
+
+    async def test_spend_excess_minerals_gate_matches_one_base_threshold(self):
+        """on_step() triggers _spend_excess_minerals() at minerals > 400
+        with a single base (FIX P0-8), so the function's own internal gate
+        must not silently require the old flat 600 before it does anything."""
+        self.bot.units = Mock(return_value=SimpleNamespace(exists=False))
+        self.bot.townhalls.amount = 1
+        self.resilience._spend_minerals_without_larvae = AsyncMock()
+
+        self.bot.minerals = 350
+        await self.resilience._spend_excess_minerals()
+        self.resilience._spend_minerals_without_larvae.assert_not_called()
+
+        self.bot.minerals = 450
+        await self.resilience._spend_excess_minerals()
+        self.resilience._spend_minerals_without_larvae.assert_called_once()
+
+    async def test_spend_excess_minerals_gate_still_600_with_multiple_bases(self):
+        self.bot.units = Mock(return_value=SimpleNamespace(exists=False))
+        self.bot.townhalls.amount = 2
+        self.resilience._spend_minerals_without_larvae = AsyncMock()
+
+        self.bot.minerals = 450
+        await self.resilience._spend_excess_minerals()
+        self.resilience._spend_minerals_without_larvae.assert_not_called()
+
+        self.bot.minerals = 650
+        await self.resilience._spend_excess_minerals()
+        self.resilience._spend_minerals_without_larvae.assert_called_once()
 
     # ==================== Learned Parameter Tests ====================
 
@@ -123,7 +169,12 @@ class TestProductionResilience(unittest.TestCase):
         self.bot.enemy_units = [mock_marine]
 
         # Should recommend banelings against marines
-        result = await self.resilience._get_counter_unit("Terran")
+        result = self.resilience._get_counter_unit(
+            self.bot.enemy_units,
+            has_roach_warren=True,
+            has_hydra_den=True,
+            has_spire=True,
+        )
 
         # Result could be BANELING, ROACH, or MUTALISK (all valid counters)
         valid_counters = [
@@ -136,7 +187,16 @@ class TestProductionResilience(unittest.TestCase):
 
     async def test_get_counter_unit_protoss(self):
         """Test counter selection against Protoss"""
-        result = await self.resilience._get_counter_unit("Protoss")
+        mock_stalker = Mock()
+        mock_stalker.type_id = UnitTypeId.STALKER
+        self.bot.enemy_units = [mock_stalker]
+
+        result = self.resilience._get_counter_unit(
+            self.bot.enemy_units,
+            has_roach_warren=True,
+            has_hydra_den=True,
+            has_spire=True,
+        )
 
         # Common Protoss counters
         valid_counters = [
@@ -149,7 +209,16 @@ class TestProductionResilience(unittest.TestCase):
 
     async def test_get_counter_unit_zerg(self):
         """Test counter selection against Zerg"""
-        result = await self.resilience._get_counter_unit("Zerg")
+        mock_roach = Mock()
+        mock_roach.type_id = UnitTypeId.ROACH
+        self.bot.enemy_units = [mock_roach]
+
+        result = self.resilience._get_counter_unit(
+            self.bot.enemy_units,
+            has_roach_warren=True,
+            has_hydra_den=True,
+            has_spire=True,
+        )
 
         # Common Zerg counters
         valid_counters = [

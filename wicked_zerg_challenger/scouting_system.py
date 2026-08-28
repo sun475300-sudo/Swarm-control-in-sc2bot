@@ -236,9 +236,11 @@ class ScoutingSystem:
         self._reserve_overseer_morph()
         return False
 
-    def deploy_changeling(self, target=None) -> bool:
+    def deploy_changeling(self, target=None, min_energy: float = 50.0) -> bool:
         overseer = self._find_available_overseer(target or self._enemy_start())
         if not overseer:
+            return False
+        if getattr(overseer, "energy", 0) < min_energy:
             return False
         ability = getattr(AbilityId, "SPAWNCHANGELING_SPAWNCHANGELING", None)
         if not ability:
@@ -247,6 +249,7 @@ class ScoutingSystem:
         return True
 
     def _cloak_alert_position(self):
+        game_time = float(getattr(self.bot, "time", 0.0) or 0.0)
         cloak_units = []
         for enemy in getattr(self.bot, "enemy_units", []) or []:
             type_id = getattr(enemy, "type_id", None)
@@ -260,17 +263,33 @@ class ScoutingSystem:
             }:
                 cloak_units.append(enemy)
         if cloak_units:
+            position = getattr(cloak_units[0], "position", None)
             self._set("cloak_threat_detected", True)
-            return getattr(cloak_units[0], "position", None)
+            self._set("cloak_threat_position", position)
+            self._set("cloak_threat_last_seen", game_time)
+            return position
 
         for structure in getattr(self.bot, "enemy_structures", []) or []:
             if self._type_name(structure) in CLOAK_TECH_STRUCTURES:
+                position = getattr(structure, "position", None) or self._enemy_start()
                 self._set("cloak_tech_detected", True)
-                return getattr(structure, "position", None) or self._enemy_start()
+                self._set("cloak_threat_position", position)
+                self._set("cloak_threat_last_seen", game_time)
+                return position
+
+        # No cloak unit/structure currently visible: keep sending the
+        # overseer toward the last known threat only for a short window
+        # (fog of war may just be hiding it), then let the alert expire
+        # so a one-time sighting doesn't pin the overseer on detection
+        # duty for the rest of the match.
         if self._get("cloak_threat_detected", False) or self._get(
             "cloak_tech_detected", False
         ):
-            return self._get("cloak_threat_position", None) or self._enemy_start()
+            last_seen = float(self._get("cloak_threat_last_seen", 0.0) or 0.0)
+            if game_time - last_seen < 45.0:
+                return self._get("cloak_threat_position", None) or self._enemy_start()
+            self._set("cloak_threat_detected", False)
+            self._set("cloak_tech_detected", False)
         return None
 
     def _reserve_overseer_morph(self) -> None:

@@ -770,8 +770,12 @@ class OpponentModeling:
             return
 
         # Update game history
-        self.current_game_history.game_won = won
-        self.current_game_history.game_lost = lost
+        # NOTE: game_won/game_lost are not real GameHistory fields (see the
+        # dataclass def: only `game_result: str` exists) -- setting them
+        # left game_result stuck at its "unknown" default forever, so
+        # update_from_game()'s win/loss branches below never matched and
+        # games_won/games_lost never incremented from a real game.
+        self.current_game_history.game_result = "win" if won else "loss"
         self.current_game_history.early_signals = [
             s.value for s in self.observed_signals
         ]

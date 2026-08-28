@@ -151,6 +151,53 @@ class TestIntelManager(unittest.TestCase):
         self.assertEqual(self.intel._threat_level, "none")
         self.assertFalse(self.intel._under_attack)
 
+    def test_critical_threat_decays_despite_lingering_low_threat_unit(self):
+        """A lingering low-threat unit must not pin _threat_level at 'critical' forever."""
+        self.bot.townhalls = [Mock(position=Mock())]
+
+        def make_enemy(name, distance):
+            enemy = Mock()
+            enemy.type_id.name = name
+            enemy.distance_to = Mock(return_value=distance)
+            enemy.position = Mock()
+            return enemy
+
+        tank = make_enemy("SIEGETANK", 10)
+        ling = make_enemy("ZERGLING", 10)
+
+        # A siege tank pokes the base once at t=0.
+        self.bot.time = 0.0
+        self.bot.enemy_units = [tank]
+        self.intel._update_threat_status()
+        self.assertEqual(self.intel._threat_level, "critical")
+
+        # The tank retreats, but a lone zergling keeps loitering near base,
+        # refreshing _last_attack_time every tick without being high-threat
+        # itself. 20s later the critical status must have decayed.
+        self.bot.time = 20.0
+        self.bot.enemy_units = [ling]
+        self.intel._update_threat_status()
+
+        self.assertNotEqual(self.intel._threat_level, "critical")
+        self.assertFalse(self.intel._high_threat_units_detected)
+
+    def test_cached_high_threat_not_downgraded_by_low_threat_enemy(self):
+        """A cache-set 'high' threat must not get silently downgraded to
+        'medium' just because a non-critical enemy is also spotted nearby."""
+        self.bot.townhalls = [Mock(position=Mock())]
+        self.bot.data_cache = Mock()
+        self.bot.data_cache.get_threat_level = Mock(return_value="HIGH")
+
+        ling = Mock()
+        ling.type_id.name = "ZERGLING"
+        ling.distance_to = Mock(return_value=10)
+        ling.position = Mock()
+        self.bot.enemy_units = [ling]
+
+        self.intel._update_threat_status()
+
+        self.assertEqual(self.intel._threat_level, "high")
+
     def test_blackboard_integration(self):
         """Test intel data is pushed to blackboard"""
         detected_pattern = "terran_bio"

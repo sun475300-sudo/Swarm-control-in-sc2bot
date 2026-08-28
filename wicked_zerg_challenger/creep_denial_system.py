@@ -668,7 +668,11 @@ class CreepDenialSystem:
         # IntelManager의 위협 정보 사용
         is_under_attack = getattr(intel, "is_under_attack", lambda: False)()
         threat_level = getattr(intel, "get_threat_level", lambda: "none")()
-        has_high_threat = threat_level in ["heavy", "critical"]
+        # NOTE: IntelManager.get_threat_level() only ever actually returns
+        # "none"/"medium"/"critical" from its own detection, or the cache's
+        # "none"/"low"/"medium"/"high"/"critical" -- "heavy"/"light" are
+        # never produced despite being in the docstring's vocabulary.
+        has_high_threat = threat_level in ["high", "critical"]
 
         if not is_under_attack and not has_high_threat:
             # 위협이 없으면 추가 체크

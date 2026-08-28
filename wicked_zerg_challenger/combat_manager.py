@@ -64,20 +64,6 @@ from utils.distance_cache import DistanceCache
 from utils.frame_cache import FrameCache
 from utils.game_constants import GameFrequencies
 
-# Import common helpers to reduce code duplication
-try:
-    from utils.common_helpers import (
-        centroid,
-        closest_enemy,
-        filter_by_type,
-        has_units,
-        units_amount,
-    )
-
-    HELPERS_AVAILABLE = True
-except ImportError:
-    HELPERS_AVAILABLE = False
-
 try:
     from combat.formation_manager import FormationManager as _FormationManager
 
@@ -2067,7 +2053,7 @@ class CombatManager:
         for roach in roaches:
             try:
                 if retreat and retreat_anchor is not None:
-                    self.bot.do(roach.attack(target))
+                    self.bot.do(roach.move(retreat_anchor))
                 else:
                     self.bot.do(roach.attack(target))
                 handled.add(roach.tag)
@@ -3530,16 +3516,12 @@ class CombatManager:
         return False
 
     def _filter_units_by_type(self, units, names):
-        if HELPERS_AVAILABLE:
-            return filter_by_type(units, names)
         if hasattr(units, "filter"):
             return units.filter(lambda u: u.type_id.name in names)
         return [u for u in units if getattr(u.type_id, "name", "") in names]
 
     @staticmethod
     def _has_units(units) -> bool:
-        if HELPERS_AVAILABLE:
-            return has_units(units)
         if hasattr(units, "exists"):
             return bool(units.exists)
         return bool(units)
@@ -3548,8 +3530,6 @@ class CombatManager:
     def _units_amount(units) -> int:
         if units is None:
             return 0
-        if HELPERS_AVAILABLE:
-            return units_amount(units)
         if hasattr(units, "amount"):
             return int(units.amount)
         return len(units)
@@ -3646,8 +3626,6 @@ class CombatManager:
         return self._iter_units(self._closer_than(queens, distance, position))
 
     def _get_enemy_center(self, enemy_units):
-        if HELPERS_AVAILABLE:
-            return centroid(enemy_units)
         if not Point2:
             return None
         items = list(enemy_units)
@@ -3659,8 +3637,6 @@ class CombatManager:
         return Point2((x_sum / count, y_sum / count))
 
     def _closest_enemy(self, enemy_units, unit):
-        if HELPERS_AVAILABLE:
-            return closest_enemy(unit, enemy_units)
         if hasattr(enemy_units, "closest_to"):
             try:
                 return enemy_units.closest_to(unit.position)
@@ -4237,10 +4213,17 @@ class CombatManager:
         and return after enough damage or when badly hurt.
         """
         if not getattr(self, "harass_units", set()):
+            # No active harassment mission: reset the per-mission kill counter
+            # so it doesn't carry over as a permanent lifetime total that
+            # would force every future wave to retreat on arrival.
+            self.harass_kill_count = 0
+            self._harass_last_enemy_workers = None
             return
         if not hasattr(self.bot, "units"):
             self.harass_units.clear()
             self.harass_returning_units.clear()
+            self.harass_kill_count = 0
+            self._harass_last_enemy_workers = None
             return
 
         alive_harassers = [

@@ -152,6 +152,20 @@ class TestSprint4CombatManager(unittest.TestCase):
         hydra_action = [action for action in bot.actions if action[1] == 2][0]
         self.assertLess(hydra_action[2].x, target.x)
 
+    def test_roach_hydra_formation_retreats_roaches_instead_of_attacking(self):
+        bot = FakeBot()
+        bot.start_location = Point(0, 0)
+        manager = make_manager(bot)
+        target = Point(100, 100)
+        roach = FakeUnit(1, "ROACH", Point(80, 100))
+
+        handled = manager._execute_roach_hydra_formation([roach], target, retreat=True)
+
+        self.assertEqual(handled, {1})
+        roach_action = [action for action in bot.actions if action[1] == 1][0]
+        self.assertEqual(roach_action[0], "move")
+        self.assertEqual((roach_action[2].x, roach_action[2].y), (0.0, 0.0))
+
     def test_multi_prong_splits_large_army_into_three_groups(self):
         bot = FakeBot()
         manager = make_manager(bot)

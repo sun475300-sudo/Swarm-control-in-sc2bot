@@ -208,9 +208,12 @@ class CreepDenialSystem:
                 attack_pos = intel.get_attack_position()
                 if attack_pos and position.distance_to(attack_pos) < 20:
                     return True
-            # 위협 레벨이 critical/heavy면 적 진영 근처 전체 위험
+            # 위협 레벨이 critical/high면 적 진영 근처 전체 위험
+            # (IntelManager._threat_level never actually produces "heavy" --
+            # only "none"/"medium"/"critical" from its own detection, or
+            # "none"/"low"/"medium"/"high"/"critical" from the data cache)
             threat_level = getattr(intel, "_threat_level", "none")
-            if threat_level in ("critical", "heavy"):
+            if threat_level in ("critical", "high"):
                 start_locs = getattr(self.bot, "enemy_start_locations", [])
                 if start_locs and position.distance_to(start_locs[0]) < 40:
                     return True

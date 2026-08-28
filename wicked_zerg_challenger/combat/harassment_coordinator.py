@@ -1525,8 +1525,11 @@ class HarassmentCoordinator:
             return
 
         # 위협 체크: 공격받고 있으면 수비 우선
+        # (get_threat_level() never actually returns "heavy" -- only
+        # "none"/"medium"/"critical" from its own detection, or
+        # "none"/"low"/"medium"/"high"/"critical" from the data cache)
         if intel.is_under_attack() and intel.get_threat_level() in (
-            "heavy",
+            "high",
             "critical",
         ):
             self.set_aggressive_mode(AggressiveMode.PASSIVE)
