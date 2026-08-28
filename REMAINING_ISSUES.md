@@ -4,24 +4,30 @@
 
 통합 문제 해결 후 발견된 추가 개선 사항들입니다.
 
-**Last refreshed:** 2026-04-27 (Issue #1, #2 → Resolved; Issue #6 partially resolved via Batch 3)
+**Last refreshed:** 2026-07-19 (자동 점검 사이클 — N1~N4, Issue #3/#4/#5 전량 코드에 이미 반영된 상태 확인; 신규 발견 N7 수정 완료)
 
 ---
 
-## 🆕 신규 발견 (PR #44, 2026-04-27)
-
-자동/수동 점검 사이클(테스트 → 코드 검사 → 개선 → 커밋/푸시 반복)에서 새로 식별된 항목.
+## 🆕 신규 발견 (자동 점검 사이클, 2026-07-19)
 
 | ID | 설명 | 우선순위 | 상태 |
 |----|------|---------|------|
-| N1 | `OpponentModeling.on_step` 중복 정의 (line 341 vs 765 — F811) | 🟠 HIGH | open — 동작 영향(상위 on_step이 미실행) 가능 |
-| N2 | `EconomyManager._prevent_resource_banking` / `_reduce_gas_workers` 재정의 (F811) | 🟡 MED | open |
-| N3 | `combat_manager._find_harass_target` 재정의 (line 2377 vs 4278) | 🟡 MED | open |
-| N4 | `production_resilience.build_terran_counters` 재정의 (1369 vs 1866) | 🟡 MED | open |
-| N5 | bare `except Exception:` 다수 (≈360+) — 이번 PR에서 12건 처리, 잔여 다수 | 🟢 LOW | partial |
-| N6 | F841 unused local variables (visuals/make_pptx 등) | 🟢 LOW | open (presentation 코드라 영향 작음) |
+| N7 | `wicked_zerg_challenger/tests/test_opponent_modeling.py`, `test_production_resilience.py`의 `TestCase` 서브클래스가 `async def test_*`를 갖고 있으나 `IsolatedAsyncioTestCase`를 쓰지 않아 코루틴이 await되지 않고 무조건 PASS로 집계됨 (`unittest`가 non-None 반환값에 DeprecationWarning만 내고 실패 처리하지 않음) | 🟠 HIGH | **fixed** — 두 클래스를 `IsolatedAsyncioTestCase`로 전환. 실제 실행되자 `test_get_counter_unit_*` 3건이 `_get_counter_unit()` 시그니처 드리프트(`has_roach_warren`/`has_hydra_den`/`has_spire` 누락 + 불필요한 `await`)로 즉시 실패 — 테스트를 현재 시그니처에 맞게 수정. 전량 재검증: 저장소 전체 `python3 -m ast` 스캔으로 동일 패턴의 잔여 인스턴스 없음 확인 |
 
-검증 권장: PR 분리 (N1 단독 PR 권장 — 동작 변화 가능성).
+## ✅ 이전 사이클(PR #44) 발견 항목 — 2026-07-19 재검증 결과: 전량 코드 반영 확인, 문서만 stale
+
+아래 N1~N4는 실제 소스를 재확인한 결과 이미 단일 정의로 정리되어 있었다 (중복 정의 없음). 이전 사이클 이후의 다른 PR에서 조용히 해결된 것으로 보이며, 별도 조치 불필요:
+
+| ID | 설명 | 재검증 결과 |
+|----|------|------|
+| N1 | `OpponentModeling.on_step` 중복 정의 | resolved — `opponent_modeling.py`에 `on_step` 정의 1개만 존재 |
+| N2 | `EconomyManager._prevent_resource_banking` / `_reduce_gas_workers` 재정의 | resolved — 각 메서드 정의 1개씩만 존재 |
+| N3 | `combat_manager._find_harass_target` 재정의 | resolved — 정의 1개만 존재 |
+| N4 | `production_resilience.build_terran_counters` 재정의 | resolved — 정의 1개만 존재 |
+| N5 | bare `except Exception:` 다수 (≈360+) | 여전히 468건 — 낮은 우선순위, 대부분 방어적 로깅 목적으로 의도된 패턴. 별도 정리 사이클 필요 시 착수 |
+| N6 | F841 unused local variables | 여전히 130건 (`flake8 --select=F841`) — 낮은 우선순위 |
+
+검증 권장: N5/N6은 대규모 diff가 되므로 lint 전용 별도 PR로 진행 권장 (S3 CI 인프라 보강 항목 참고).
 
 ---
 
@@ -67,9 +73,13 @@
 
 ---
 
-## 🟡 MEDIUM Priority Issues (still open)
+## 🟡 MEDIUM Priority Issues — 2026-07-19 재검증: #3/#4 모두 코드에 구현되어 있음 (문서만 stale, 아래 원문은 히스토리 보존용)
 
-### Issue #3: Transfusion 우선순위 개선 필요
+> `wicked_zerg_challenger/economy/queen_transfusion_manager.py`에 `HEAL_PRIORITY`/`CANNOT_HEAL` 기반 우선순위 수혈 로직이,
+> `wicked_zerg_challenger/core/resource_manager.py`에 `asyncio.Lock` 기반 `try_reserve`/`release`가 이미 구현되어 있다.
+> 아래 제안 코드는 실제 구현과 세부 위치/네이밍이 다를 수 있으나 기능적으로는 이미 반영됨.
+
+### Issue #3: Transfusion 우선순위 개선 필요 (✅ 구현됨 — `queen_transfusion_manager.py`)
 
 **위치**: `queen_manager.py` 또는 `spell_unit_manager.py`
 
@@ -142,7 +152,7 @@ async def smart_transfusion(self, queen, damaged_units):
 
 ---
 
-### Issue #4: Resource Reservation Race Condition
+### Issue #4: Resource Reservation Race Condition (✅ 구현됨 — `wicked_zerg_challenger/core/resource_manager.py`)
 
 **위치**: `resource_manager.py` (추정)
 
@@ -219,7 +229,7 @@ else:
 
 ## 🟢 LOW Priority Issues
 
-### Issue #5: 코드 중복 - Position 계산
+### Issue #5: 코드 중복 - Position 계산 (✅ 구현됨 — `wicked_zerg_challenger/utils/position_utils.py`)
 
 **위치**: 여러 파일에서 중복
 
@@ -359,14 +369,17 @@ if iteration % SECOND == 0:
 
 ---
 
-## 📊 이슈 우선순위 요약 (open만)
+## 📊 이슈 우선순위 요약 (2026-07-19 재검증 반영)
 
-| 우선순위 | 이슈 | 영향도 | 난이도 |
-|---------|------|--------|--------|
-| 🟡 MEDIUM | #3 Transfusion 우선순위 | 중간 | 중간 |
-| 🟡 MEDIUM | #4 Resource Race Condition | 낮음 | 중간 |
-| 🟢 LOW | #5 코드 중복 제거 | 낮음 | 쉬움 |
-| 🟢 LOW | #6 매직 넘버 | 낮음 | 쉬움 |
+| 우선순위 | 이슈 | 상태 |
+|---------|------|------|
+| 🟠 HIGH | N7 async 테스트 미실행 (false-positive PASS) | ✅ fixed (본 사이클) |
+| 🟡 MEDIUM | #3 Transfusion 우선순위 | ✅ resolved (구현 확인) |
+| 🟡 MEDIUM | #4 Resource Race Condition | ✅ resolved (구현 확인) |
+| 🟢 LOW | #5 코드 중복 제거 | ✅ resolved (구현 확인) |
+| 🟢 LOW | #6 매직 넘버 | 부분 해결 (Queen Manager만; 나머지 모듈 미진행) |
+| 🟢 LOW | N5 bare except Exception (468건) | open — 별도 lint 전용 PR 권장 |
+| 🟢 LOW | N6 F841 unused variable (130건) | open — 별도 lint 전용 PR 권장 |
 
 (Issue #1, #2 → ✅ Resolved 섹션 참조)
 
@@ -375,16 +388,17 @@ if iteration % SECOND == 0:
 ## 🎯 권장 수정 순서
 
 ### 1단계: 완료 (✅)
-~~1. Queen Inject 쿨다운 수정 (25 → 29)~~ — 코드 반영 완료, 본 문서 ✅ Resolved 섹션 참조
-~~2. 누락된 업그레이드 추가~~ — 코드 반영 완료, 본 문서 ✅ Resolved 섹션 참조
+~~1. Queen Inject 쿨다운 수정 (25 → 29)~~ — 코드 반영 완료
+~~2. 누락된 업그레이드 추가~~ — 코드 반영 완료
+~~3. Transfusion 우선순위 시스템~~ — 코드 반영 완료 (`queen_transfusion_manager.py`)
+~~4. Resource Reservation 동기화~~ — 코드 반영 완료 (`core/resource_manager.py`)
+~~5. Position Utils 유틸리티 함수 분리~~ — 코드 반영 완료 (`utils/position_utils.py`)
+~~7. async 테스트가 실제로 실행되지 않던 회귀(N7)~~ — 본 사이클에서 수정
 
-### 2단계: 로직 개선 (30분, 미진행)
-3. Transfusion 우선순위 시스템 구현
-
-### 3단계: 구조 개선 (1시간, 미진행)
-4. Resource Reservation 동기화
-5. Position Utils 유틸리티 함수 분리
-6. Constants 정리
+### 2단계: 남은 저우선순위 작업 (미진행)
+6. Constants 정리 (Queen Manager 외 나머지 매직 넘버)
+8. bare `except Exception:` 468건 감사 및 정리 (lint 전용 PR)
+9. F841 미사용 변수 130건 정리 (lint 전용 PR)
 
 ---
 
