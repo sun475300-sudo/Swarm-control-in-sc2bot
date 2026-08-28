@@ -10,9 +10,21 @@ Queen의 Creep Tumor를 활용하여 맵 전체에 점막 확산:
 
 from typing import Dict, List, Set
 
-from sc2.ids.ability_id import AbilityId
-from sc2.ids.unit_typeid import UnitTypeId
-from sc2.position import Point2
+try:
+    from sc2.ids.ability_id import AbilityId
+    from sc2.ids.unit_typeid import UnitTypeId
+    from sc2.position import Point2
+except ImportError:  # Fallbacks for tooling environments
+
+    class AbilityId:
+        BUILD_CREEPTUMOR_QUEEN = "BUILD_CREEPTUMOR_QUEEN"
+        BUILD_CREEPTUMOR_TUMOR = "BUILD_CREEPTUMOR_TUMOR"
+
+    class UnitTypeId:
+        CREEPTUMORBURROWED = "CREEPTUMORBURROWED"
+        QUEEN = "QUEEN"
+
+    Point2 = tuple  # Fallback for tooling
 
 from utils.logger import get_logger
 

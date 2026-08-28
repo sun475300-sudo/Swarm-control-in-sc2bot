@@ -38,7 +38,11 @@ except ImportError:
         pass
 
     class UnitTypeId:
-        pass
+        QUEEN = "QUEEN"
+        ROACH = "ROACH"
+        SPAWNINGPOOL = "SPAWNINGPOOL"
+        SPINECRAWLER = "SPINECRAWLER"
+        ZERGLING = "ZERGLING"
 
     class AbilityId:
         pass
