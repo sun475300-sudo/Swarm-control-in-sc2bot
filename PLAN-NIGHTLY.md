@@ -2,7 +2,7 @@
 
 > Owner: 선우 (sun475300@gmail.com)
 > Maintainer: nightly automation
-> Last refreshed: 2026-07-18
+> Last refreshed: 2026-07-20
 
 ---
 
@@ -31,14 +31,22 @@ being permanently red is very likely why none of them ever merged.
 
 ## Snapshot (current state)
 
-- Branch: `main`, last commit: queen transfusion + requirements-dev.txt session
+- Branch: `claude/optimistic-edison-wd3iv0`
 - Bot core: `wicked_zerg_challenger/` — 179+ Python files across 10+ subdirs.
 - `.gitattributes` enforces `* text=auto` ✅
 - CI: `sc2bot-ci.yml` runs black + isort + flake8 — **was red on every PR since before 2026-06-01; fixed in PR #533 (2026-07-18), pending merge**
-- **Test suite (local verification, 2026-07-18): `tests/` 502 passed/14 skipped, `tests/integration` 10 passed, `wicked_zerg_challenger/tests/` 661 passed — 0 failures across all three**
+- **Test suite (local verification, 2026-07-20): `tests/` 502 passed/14 skipped, `wicked_zerg_challenger/tests/` 661 passed → after this run's fixes, 673 passed — 0 failures across both**
 - Queen transfusion logic: 3 bugs fixed (`is_idle` guard removed, target dedup, per-queen cooldown) ✅
 
-## Resolved this run (2026-05-03)
+## Resolved this run (2026-07-20)
+
+| Item | File(s) | Notes |
+|------|---------|-------|
+| RL experience save could permanently lose data | `local_training/rl_agent.py` | `save_experience_data()` removed the destination file before renaming the temp file in; a failure between those two steps (disk full, interrupted write) destroyed the last-known-good data instead of just failing the update — an orphaned `.tmp.npz` in the repo was evidence this had happened. Switched to `os.replace()` (atomic, no unsafe window) + temp-file cleanup on failure. New test: `tests/test_rl_agent_save_experience.py` (P2.4, now done). |
+| `formation_manager.py` crashed on every real direction computation | `combat/formation_manager.py` | `Point2.normalized` is a `@property` in the installed python-sc2 version, not a method — every `.normalized()` call (5 call sites) raised `TypeError: 'Point2' object is not callable` whenever the direction vector was non-zero, i.e. on every real in-game call. No test exercised these paths with a non-origin base position, so `form_concave`/`get_optimal_position` had effectively never worked at runtime. Fixed all 5 sites to use property access. New tests: `tests/test_formation_manager_roach_hydra.py`. |
+| Roach-hydra combined formation (ROADMAP.md Task 4.3) | `combat/formation_manager.py` | Confirmed genuinely missing by a code audit (everything else in ROADMAP.md Sprints 1-8 was already implemented). Roaches now hold the front line toward the enemy; hydralisks hold a rear line 6 range back; only activates when both types are present, other compositions unaffected. |
+
+## Resolved previous run (2026-05-03)
 
 | Item | File(s) | Notes |
 |------|---------|-------|
@@ -75,8 +83,9 @@ being permanently red is very likely why none of them ever merged.
 | P2.1 | Force-accumulation FSM tests                    | ✅ Done | `tests/test_combat_phase_fsm.py` — 23 tests all passing. |
 | P2.2 | Benchmark runner                                | ❌ Open | Single command, N replays, APM/supply/win-rate report vs Hard. |
 | P2.3 | Build-order config externalisation              | ❌ Open | Move top-20 hardcoded values to `config/build_orders.yaml`. |
-| P2.4 | RL agent save-experience guard                  | ❌ Open | Unit test for save under disk-full / interrupted-rename. |
+| P2.4 | RL agent save-experience guard                  | ✅ Done | Fixed real data-loss bug in `save_experience_data()` (see 2026-07-20 run) + regression test. |
 | P2.5 | Type hints + docstring pass on core modules     | ❌ Open | `core/resource_manager.py`, `core/manager_factory.py`. |
+| P2.6 | `utils/game_constants.py` is dead code           | ❌ Open | 241 lines of constants (`GameFrequencies`, `EconomyConstants`, etc.) fully defined but zero references anywhere in the codebase — either wire in to replace the magic numbers it was meant to replace, or remove. |
 
 ## Long-term direction
 
@@ -117,3 +126,4 @@ Run `E:\GitHub\Swarm-control-in-sc2bot\scripts\commit_nightly_2026-05-03.bat`:
 - **2026-05-01** — P1.1 scout cadence, P1.2 harassment, P1.3 expansion timing, P1.5 doc history. Commit blocked by index.lock.
 - **2026-05-02** — P0 scout import mismatch fixed. P1.4 deprecation shim. P2.1 FSM tests 23/23 pass.
 - **2026-05-03** — **Test suite cleared:** 90 failures → 0. Fixed pytest-asyncio, torch stubs (qmix/mappo), stale __init__ exports (mappo/comm_learning), gas threshold test, crypto skipif guards. Final: 398 pass / 20 skip / 0 fail.
+- **2026-07-20** — Fresh baseline confirmed clean (502/14/0 in `tests/`, 661/0/0 in `wicked_zerg_challenger/tests/`, matching 2026-07-18 exactly — no regressions). Audited ROADMAP.md against actual code: nearly all Sprint 1-8 items already implemented; only two real gaps found (roach-hydra formation, dead `GameConstants` module). Fixed P2.4 (RL experience save could permanently lose data on rename failure — real bug, not just a missing test). Found and fixed a second, more severe bug: `formation_manager.py` crashed on every real (non-origin-base) direction computation because `.normalized()` was called as a method on what is actually a `@property` in the installed python-sc2 version — the entire formation system had never worked at runtime. Implemented the roach-hydra formation (ROADMAP Task 4.3). Suite grew to 673 passing in `wicked_zerg_challenger/tests/`, 0 failures.
