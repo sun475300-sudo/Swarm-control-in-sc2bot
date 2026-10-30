@@ -64,19 +64,26 @@ class TestArenaPreflight(unittest.TestCase):
                 any("economy_combat_balancer.py" in error for error in result.errors)
             )
 
-    def test_preflight_rejects_invalid_manifest(self):
+    def assert_invalid_manifest(self, contents):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             self.make_project(root)
-            for contents in (
-                "{",
-                "[]",
-                "{}",
-                '{"Bots":{"bot":{"FileName":"missing.py"}}}',
-            ):
-                with self.subTest(contents=contents):
-                    (root / "ladderbots.json").write_text(contents, encoding="utf-8")
-                    self.assertFalse(PreflightValidator(tmp).validate().passed)
+            (root / "ladderbots.json").write_text(contents, encoding="utf-8")
+            self.assertFalse(PreflightValidator(tmp).validate().passed)
+
+    # Separate cases give each malformed input its own JUnit testcase. Pytest
+    # 9's passing unittest subtests increase suite totals without XML testcases.
+    def test_preflight_rejects_malformed_json(self):
+        self.assert_invalid_manifest("{")
+
+    def test_preflight_rejects_list_manifest(self):
+        self.assert_invalid_manifest("[]")
+
+    def test_preflight_rejects_empty_manifest(self):
+        self.assert_invalid_manifest("{}")
+
+    def test_preflight_rejects_missing_entrypoint(self):
+        self.assert_invalid_manifest('{"Bots":{"bot":{"FileName":"missing.py"}}}')
 
     def test_valid_lurker_ids_do_not_raise_warning(self):
         with tempfile.TemporaryDirectory() as tmp:
