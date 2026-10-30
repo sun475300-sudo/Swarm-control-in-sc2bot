@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "checked_at": "2026-10-30T10:14:29.338382+00:00",
+  "source_commit": "f18a853be9c7470859d6dc9b9936c09b6b8bb3a3",
+  "unit_tests": {
+    "tests": 782,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "passed": 782,
+    "status": "passed"
+  },
+  "real_games": {
+    "status": "unverified",
+    "reason": "No real-game benchmark was supplied"
+  }
+}
