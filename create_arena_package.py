@@ -8,8 +8,8 @@ SC2 AI Arena 업로드용 패키지 생성기
 """
 
 import argparse
+import fnmatch
 import os
-import shutil
 import zipfile
 from datetime import datetime
 from pathlib import Path
@@ -31,14 +31,17 @@ INCLUDE_DIRS = [
 # 제외할 패턴 (불필요한 파일)
 EXCLUDE_PATTERNS = [
     "__pycache__",
-    ".pyc",
-    ".pyo",
+    "*.pyc",
+    "*.pyo",
     ".git",
-    ".env",
+    ".env*",
     ".vscode",
     ".idea",
     "node_modules",
-    "local_training",
+    "comparison_reports",
+    "background_results",
+    "plots",
+    "checkpoints",
     "replays",
     "logs",
     "test_results",
@@ -46,17 +49,17 @@ EXCLUDE_PATTERNS = [
     "tests",
     "docs",
     "visuals",
-    "data\\games",
     "data/games",
-    "data\\reports",
     "data/reports",
     "*.log",
     "*.replay",
     "*.pt",  # 학습 모델 (용량 큼)
     "*.pth",
     "*.onnx",
-    "credentials",
-    "PHASE_",  # Phase 문서
+    "credentials*",
+    "*.pem",
+    "*.key",
+    "PHASE_*",  # Phase 문서
     "CLAUDE.md",
     ".claude",
 ]
@@ -72,15 +75,24 @@ pyyaml>=6.0
 
 
 def should_exclude(path_str: str) -> bool:
-    """파일/폴더 제외 여부 확인"""
+    """Match path components and glob patterns without dropping runtime code."""
+    normalized = str(path_str).replace("\\", "/")
+    parts = normalized.split("/")
     for pattern in EXCLUDE_PATTERNS:
-        if pattern in path_str:
+        if "/" in pattern:
+            if pattern in normalized:
+                return True
+        elif any(fnmatch.fnmatchcase(part, pattern) for part in parts):
             return True
     return False
 
 
 def create_arena_zip(output_dir: Path, zip_name: str):
     """Arena 업로드용 ZIP 생성"""
+    missing = [name for name in INCLUDE_FILES if not (PROJECT_DIR / name).is_file()]
+    missing.extend(name for name in INCLUDE_DIRS if not (PROJECT_DIR / name).is_dir())
+    if missing:
+        raise FileNotFoundError("Missing Arena package inputs: " + ", ".join(missing))
     zip_path = output_dir / zip_name
     print(f"=" * 60)
     print(f"  SC2 AI Arena 패키지 생성기")
@@ -122,7 +134,7 @@ def create_arena_zip(output_dir: Path, zip_name: str):
                 for file in files:
                     full_path = Path(root) / file
                     rel_path = full_path.relative_to(PROJECT_DIR)
-                    rel_str = str(rel_path)
+                    rel_str = rel_path.as_posix()
 
                     if should_exclude(rel_str):
                         continue

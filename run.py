@@ -13,12 +13,15 @@ so we implement ladder game joining directly via WebSocket.
 import argparse
 import asyncio
 import logging
+import os
 import sys
 from pathlib import Path
 
 # Add bot package to path
 bot_dir = Path(__file__).parent / "wicked_zerg_challenger"
 sys.path.insert(0, str(bot_dir))
+# Older s2clientprotocol distributions require the Python protobuf backend.
+os.environ.setdefault("PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION", "python")
 
 import aiohttp
 from sc2.client import Client
@@ -26,71 +29,77 @@ from sc2.data import Race
 from sc2.main import _play_game
 from sc2.player import Bot
 from sc2.portconfig import Portconfig
-from sc2.protocol import ConnectionAlreadyClosed
+
+try:
+    from sc2.protocol import ConnectionAlreadyClosedError as ConnectionAlreadyClosed
+except ImportError:  # burnysc2 releases before the exception rename
+    from sc2.protocol import ConnectionAlreadyClosed
 from wicked_zerg_bot_pro_impl import WickedZergBotProImpl
 
 logger = logging.getLogger(__name__)
 
 
 def _portconfig_from_start_port(start_port: int) -> Portconfig:
-    """Create Portconfig from AI Arena's --StartPort argument."""
-    pc = Portconfig.__new__(Portconfig)
-    pc.shared = start_port
-    pc.server = [start_port + 1, start_port + 2]
-    pc.players = [
-        [start_port + 3, start_port + 4],
-        [start_port + 5, start_port + 6],
-    ]
+    """Use the 1v1 port layout in AI Arena's official example bots."""
+    if not 1 <= start_port <= 65530:
+        raise ValueError("StartPort must be between 1 and 65530")
+    pc = Portconfig(
+        server_ports=[start_port + 2, start_port + 3],
+        player_ports=[[start_port + 4, start_port + 5]],
+    )
+    pc.shared = start_port + 1
     return pc
 
 
 async def _run_ladder_game(
-    bot_player: Bot, host: str, game_port: int, start_port: int, opponent_id: str = None
+    bot_player: Bot,
+    host: str,
+    game_port: int,
+    start_port: int = None,
+    opponent_id: str = None,
+    realtime: bool = False,
 ):
     """
     Connect to an already-running SC2 instance (managed by AI Arena)
     and play the game.
     """
-    portconfig = _portconfig_from_start_port(start_port)
+    portconfig = (
+        _portconfig_from_start_port(start_port) if start_port is not None else None
+    )
     ws_url = f"ws://{host}:{game_port}/sc2api"
 
     logger.info(f"Connecting to ladder server: {ws_url}")
 
     session = aiohttp.ClientSession()
+    ws = None
     try:
         ws = await session.ws_connect(ws_url, timeout=120)
         client = Client(ws)
 
-        if opponent_id and hasattr(bot_player.ai, "opponent_id"):
-            bot_player.ai.opponent_id = opponent_id
+        bot_player.ai.opponent_id = opponent_id
 
         result = await _play_game(
-            bot_player, client, realtime=False, portconfig=portconfig
+            bot_player, client, realtime=realtime, portconfig=portconfig
         )
         logger.info(f"Game result: {result}")
-
-        try:
-            await client.leave()
-        except (ConnectionAlreadyClosed, Exception):
-            pass
-        try:
-            await client.quit()
-        except (ConnectionAlreadyClosed, Exception):
-            pass
 
         return result
 
     except ConnectionAlreadyClosed:
-        logger.error("Connection was closed before the game ended")
-        return None
+        raise RuntimeError("Connection was closed before the game ended") from None
     finally:
-        await session.close()
+        # The ladder runner owns the SC2 process; do not issue client.quit().
+        try:
+            if ws is not None:
+                await ws.close()
+        finally:
+            await session.close()
 
 
-def main():
+def parse_args(argv=None):
     parser = argparse.ArgumentParser(description="WickedZergBotPro - AI Arena Entry")
     parser.add_argument(
-        "--LadderServer", action="store_true", help="Run in AI Arena ladder mode"
+        "--LadderServer", nargs="?", const="127.0.0.1", help="Ladder server host"
     )
     parser.add_argument(
         "--GamePort", type=int, default=None, help="Game connection port"
@@ -106,26 +115,23 @@ def main():
     parser.add_argument("--ComputerOpponent", type=str, default=None)
     parser.add_argument("--RealTime", action="store_true", default=False)
 
-    args, _ = parser.parse_known_args()
+    args, _ = parser.parse_known_args(argv)
+    if args.LadderServer is not None:
+        if args.GamePort is None or not 1 <= args.GamePort <= 65535:
+            parser.error("--GamePort must be between 1 and 65535 in ladder mode")
+        if args.StartPort is not None and not 1 <= args.StartPort <= 65530:
+            parser.error("--StartPort must be between 1 and 65530")
+    return args
+
+
+def main(argv=None):
+    args = parse_args(argv)
 
     bot_instance = WickedZergBotProImpl(train_mode=False)
     bot = Bot(Race.Zerg, bot_instance, name="WickedZergBotPro")
 
-    if args.LadderServer:
-        if args.GamePort is None or args.StartPort is None:
-            logger.error("--GamePort and --StartPort are required for ladder mode")
-            sys.exit(1)
-
-        host = "127.0.0.1"
-        # Some AI Arena setups pass host via positional or other args
-        for i, arg in enumerate(sys.argv):
-            if (
-                arg == "--LadderServer"
-                and i + 1 < len(sys.argv)
-                and not sys.argv[i + 1].startswith("--")
-            ):
-                host = sys.argv[i + 1]
-                break
+    if args.LadderServer is not None:
+        host = args.LadderServer
 
         logging.basicConfig(level=logging.INFO)
         logger.info(
@@ -133,17 +139,22 @@ def main():
         )
 
         result = asyncio.run(
-            _run_ladder_game(bot, host, args.GamePort, args.StartPort, args.OpponentId)
+            _run_ladder_game(
+                bot, host, args.GamePort, args.StartPort, args.OpponentId, args.RealTime
+            )
         )
         logger.info(f"Final result: {result}")
+        return 0 if result is not None else 1
     else:
         print("[run.py] No --LadderServer flag detected.")
-        print("[run.py] For local training, use: python run_with_training.py")
+        print(
+            "[run.py] For local training, use: python wicked_zerg_challenger/run_with_training.py"
+        )
         print(
             "[run.py] For Arena mode, use:     python run.py --LadderServer --GamePort PORT --StartPort PORT"
         )
-        sys.exit(1)
+        return 1
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())

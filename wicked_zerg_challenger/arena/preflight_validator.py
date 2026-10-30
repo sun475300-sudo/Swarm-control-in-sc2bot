@@ -3,6 +3,8 @@
 
 from __future__ import annotations
 
+import json
+import re
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import List
@@ -21,6 +23,13 @@ class PreflightValidator:
 
     REQUIRED_FILES = ("run.py", "ladderbots.json", "requirements.txt")
     REQUIRED_DIRS = ("wicked_zerg_challenger",)
+    REQUIRED_RUNTIME_FILES = (
+        "wicked_zerg_bot_pro_impl.py",
+        "economy_manager.py",
+        "local_training/economy_combat_balancer.py",
+        "local_training/production_resilience.py",
+        "local_training/production/__init__.py",
+    )
     MAX_PACKAGE_MB = 10.0
 
     def __init__(self, project_root: str = "."):
@@ -31,12 +40,38 @@ class PreflightValidator:
         warnings: List[str] = []
 
         for filename in self.REQUIRED_FILES:
-            if not (self.project_root / filename).exists():
+            if not (self.project_root / filename).is_file():
                 errors.append(f"Missing required file: {filename}")
 
         for dirname in self.REQUIRED_DIRS:
             if not (self.project_root / dirname).is_dir():
                 errors.append(f"Missing required directory: {dirname}")
+
+        for filename in self.REQUIRED_RUNTIME_FILES:
+            if not (self.project_root / "wicked_zerg_challenger" / filename).is_file():
+                errors.append(f"Missing required runtime file: {filename}")
+
+        manifest_path = self.project_root / "ladderbots.json"
+        if manifest_path.is_file():
+            try:
+                manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+                bots = manifest.get("Bots") if isinstance(manifest, dict) else None
+                if not isinstance(bots, dict) or not bots:
+                    errors.append(
+                        "ladderbots.json must declare a non-empty Bots object"
+                    )
+                elif not any(
+                    isinstance(bot, dict)
+                    and bot.get("FileName") == "run.py"
+                    and bot.get("Type") == "Python"
+                    and bot.get("Race") == "Zerg"
+                    for bot in bots.values()
+                ):
+                    errors.append(
+                        "ladderbots.json must declare the Python Zerg run.py entry point"
+                    )
+            except (OSError, ValueError) as exc:
+                errors.append(f"Cannot read ladderbots.json: {exc}")
 
         package_size_mb = self._latest_package_size_mb()
         if package_size_mb > self.MAX_PACKAGE_MB:
@@ -80,5 +115,5 @@ class PreflightValidator:
                 text = path.read_text(encoding="utf-8", errors="ignore")
             except OSError:
                 continue
-            count += text.count("UnitTypeId.LURKER")
+            count += len(re.findall(r"\bUnitTypeId\.LURKER\b", text))
         return count

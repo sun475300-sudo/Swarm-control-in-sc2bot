@@ -1,5 +1,9 @@
 # Project Status & Documentation Index
 
+> Current verified bot status: [README](README.md). Active competition work and
+> outstanding plan scope: [docs/COMPETITION_PLAN.md](docs/COMPETITION_PLAN.md).
+> The document inventory below is a historical index, not proof of completion.
+
 > Single-page entry point into the documentation. The repository
 > currently has 47+ historical `*.md` reports at the root. This index
 > groups them by topic so newcomers can find the canonical doc without

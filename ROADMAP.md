@@ -1,7 +1,7 @@
 # WickedZergBotPro Grand Roadmap
 
 > 목표: Medium AI 승률 90%+ 달성 & AI Arena 출전
-> 현재 상태: Phase 56 완료, 342/342 테스트 통과, 추정 승률 45~50%
+> 현재 구현·검증 상태: [대회 작업 현황](docs/COMPETITION_PLAN.md)과 [README](README.md) 참고. 실제 경기 승률은 이 환경에서 아직 검증하지 않았습니다.
 > 봇 프레임워크: python-sc2 (burnysc2>=5.0.0)
 
 ---

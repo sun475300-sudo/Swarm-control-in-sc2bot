@@ -246,3 +246,12 @@ _*.ps1
 htmlcov/
 .pytest_cache/
 pytest-cache-files-*/
+
+# Generated local reports; historical snapshots live in docs/archive/results/.
+/comprehensive_test_results.json
+/large_scale_test_results.json
+/stress_test_results.json
+/benchmark_results.json
+/precision_verification_results.json
+/test_results.json
+**/tempCodeRunnerFile.*

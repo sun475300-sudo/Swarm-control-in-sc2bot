@@ -4128,8 +4128,8 @@ class CombatManager:
         """
         Defend mineral lines against small worker-harassment threats.
 
-        Pulls local workers at a 3:1 worker-to-threat ratio, commits nearby
-        queens, and sends tagged workers back to minerals once threats clear.
+        Pulls workers against ground threats, evacuates them from flying
+        attackers, and commits queens only to targets they can attack.
         """
         try:
             if (
@@ -4155,33 +4155,59 @@ class CombatManager:
                 enemy_threats = self._filter_collection(
                     self.bot.enemy_units,
                     lambda unit: self._safe_distance(unit, base_position) < 15
-                    and bool(getattr(unit, "can_attack", False)),
+                    and bool(
+                        getattr(
+                            unit,
+                            "can_attack_ground",
+                            getattr(unit, "can_attack", False),
+                        )
+                    ),
                 )
                 threat_count = self._units_amount(enemy_threats)
                 if threat_count <= 0:
                     continue
 
                 threat_found = True
-                target = self._closest_from_collection(enemy_threats, base_position)
-                if target is None:
-                    continue
-
                 local_workers = self._closer_than(self.bot.workers, 15, base_position)
-                worker_count = min(threat_count * 3, self._units_amount(local_workers))
-                defenders = self._closest_n_units(
-                    local_workers, getattr(target, "position", target), worker_count
+                ground_threats = self._filter_collection(
+                    enemy_threats, lambda unit: not getattr(unit, "is_flying", False)
                 )
-
-                for worker in defenders:
-                    try:
-                        self.bot.do(worker.attack(target))
-                        active_defender_tags.add(worker.tag)
-                    except (AttributeError, TypeError):
-                        continue
+                target = self._closest_from_collection(ground_threats, base_position)
+                if target is not None:
+                    worker_count = min(
+                        self._units_amount(ground_threats) * 3,
+                        self._units_amount(local_workers),
+                    )
+                    defenders = self._closest_n_units(
+                        local_workers, getattr(target, "position", target), worker_count
+                    )
+                    for worker in defenders:
+                        try:
+                            self.bot.do(worker.attack(target))
+                            active_defender_tags.add(worker.tag)
+                        except (AttributeError, TypeError):
+                            continue
+                else:
+                    self._evacuate_workers_from_air_harassment(
+                        local_workers, enemy_threats, townhalls
+                    )
 
                 for queen in self._get_queens_near(base_position, 20):
+                    targets = self._filter_collection(
+                        enemy_threats,
+                        lambda enemy: (
+                            bool(getattr(queen, "can_attack_air", False))
+                            if getattr(enemy, "is_flying", False)
+                            else bool(getattr(queen, "can_attack_ground", True))
+                        ),
+                    )
+                    queen_target = self._closest_from_collection(
+                        targets, queen.position
+                    )
+                    if queen_target is None:
+                        continue
                     try:
-                        self.bot.do(queen.attack(target))
+                        self.bot.do(queen.attack(queen_target))
                     except (AttributeError, TypeError):
                         continue
 
@@ -4193,6 +4219,59 @@ class CombatManager:
 
         except Exception as e:
             self.logger.warning(f"Worker harassment response error: {e}")
+
+    def _evacuate_workers_from_air_harassment(self, workers, threats, townhalls):
+        """Prefer mining at an unthreatened base; otherwise move away from air."""
+        safe_bases = [
+            base
+            for base in self._iter_units(townhalls)
+            if not any(
+                self._safe_distance(enemy, base.position) < 20
+                and getattr(
+                    enemy, "can_attack_ground", getattr(enemy, "can_attack", False)
+                )
+                for enemy in self._iter_units(self.bot.enemy_units)
+            )
+        ]
+        minerals = getattr(self.bot, "mineral_field", None)
+        for worker in self._iter_units(workers):
+            try:
+                safe_base = self._closest_from_collection(safe_bases, worker.position)
+                if safe_base is not None:
+                    safe_minerals = self._closer_than(minerals, 10, safe_base.position)
+                    mineral = self._closest_from_collection(
+                        safe_minerals, worker.position
+                    )
+                    action = (
+                        worker.gather(mineral)
+                        if mineral is not None
+                        else worker.move(safe_base.position)
+                    )
+                else:
+                    threat = self._closest_from_collection(threats, worker.position)
+                    if self._safe_distance(worker, threat.position) > 0:
+                        retreat = worker.position.towards(threat.position, -10)
+                    else:
+                        retreat = Point2((worker.position.x - 10, worker.position.y))
+                    area = getattr(
+                        getattr(self.bot, "game_info", None), "playable_area", None
+                    )
+                    if area is not None:
+                        retreat = Point2(
+                            (
+                                min(
+                                    max(retreat.x, area.x + 1), area.x + area.width - 1
+                                ),
+                                min(
+                                    max(retreat.y, area.y + 1), area.y + area.height - 1
+                                ),
+                            )
+                        )
+                    action = worker.move(retreat)
+                self.bot.do(action)
+                self._worker_harass_defender_tags.add(worker.tag)
+            except (AttributeError, TypeError, ValueError):
+                continue
 
     async def _return_worker_harassment_defenders(self):
         """Return workers pulled by worker-harassment defense back to mining."""
@@ -4207,9 +4286,6 @@ class CombatManager:
         for worker in self._iter_units(self.bot.workers):
             if worker.tag not in defender_tags:
                 continue
-            if not getattr(worker, "is_attacking", False):
-                continue
-
             mineral = None
             if self._has_units(mineral_fields):
                 mineral = self._closest_from_collection(

@@ -105,6 +105,93 @@ class FakeBot:
 
 
 class TestWorkerHarassmentDefense(unittest.TestCase):
+    def test_air_harassment_evacuates_workers_and_uses_anti_air_queen(self):
+        bot = FakeBot()
+        oracle = FakeUnit(200, UnitTypeId.ORACLE, Point2((55, 55)), can_attack=True)
+        oracle.is_flying = True
+        oracle.can_attack_ground = True
+        bot.queen.can_attack_air = True
+        bot.enemy_units = FakeUnits([oracle])
+        manager = CombatManager(bot)
+
+        asyncio.run(manager.respond_to_worker_harassment())
+
+        self.assertIn(("attack", 30, 200), bot.actions)
+        worker_actions = [action for action in bot.actions if 10 <= action[1] < 20]
+        self.assertEqual(len(worker_actions), len(bot.workers))
+        self.assertTrue(all(action[0] == "move" for action in worker_actions))
+        for worker, action in zip(bot.workers, worker_actions):
+            self.assertGreater(
+                action[2].distance_to(oracle.position), worker.distance_to(oracle)
+            )
+
+        bot.actions.clear()
+        bot.enemy_units.clear()
+        asyncio.run(manager.respond_to_worker_harassment())
+        self.assertEqual(
+            len([action for action in bot.actions if action[0] == "gather"]), 5
+        )
+        self.assertEqual(manager._worker_harass_defender_tags, set())
+
+    def test_air_harassment_evacuates_to_minerals_at_safe_base(self):
+        bot = FakeBot()
+        oracle = FakeUnit(200, UnitTypeId.ORACLE, Point2((55, 55)), can_attack=True)
+        oracle.is_flying = True
+        bot.enemy_units = FakeUnits([oracle])
+        bot.townhalls.append(FakeUnit(2, UnitTypeId.HATCHERY, Point2((90, 50))))
+        bot.mineral_field.append(
+            FakeUnit(101, UnitTypeId.MINERALFIELD, Point2((92, 50)))
+        )
+        bot.queen.can_attack_air = True
+        manager = CombatManager(bot)
+
+        asyncio.run(manager.respond_to_worker_harassment())
+
+        worker_actions = [action for action in bot.actions if 10 <= action[1] < 20]
+        self.assertEqual(
+            worker_actions, [("gather", worker.tag, 101) for worker in bot.workers]
+        )
+
+    def test_queen_without_air_attack_does_not_attack_flyer(self):
+        bot = FakeBot()
+        oracle = FakeUnit(200, UnitTypeId.ORACLE, Point2((55, 55)), can_attack=True)
+        oracle.is_flying = True
+        bot.enemy_units = FakeUnits([oracle])
+        bot.queen.can_attack_air = False
+
+        asyncio.run(CombatManager(bot).respond_to_worker_harassment())
+
+        self.assertFalse(any(action[0] == "attack" for action in bot.actions))
+
+    def test_mixed_harassment_workers_attack_only_ground_threats(self):
+        bot = FakeBot()
+        oracle = FakeUnit(200, UnitTypeId.ORACLE, Point2((53, 51)), can_attack=True)
+        oracle.is_flying = True
+        marine = FakeUnit(201, UnitTypeId.MARINE, Point2((55, 55)), can_attack=True)
+        bot.enemy_units = FakeUnits([oracle, marine])
+        bot.queen.can_attack_air = True
+
+        asyncio.run(CombatManager(bot).respond_to_worker_harassment())
+
+        worker_attacks = [
+            action
+            for action in bot.actions
+            if action[0] == "attack" and 10 <= action[1] < 20
+        ]
+        self.assertEqual(len(worker_attacks), 3)
+        self.assertTrue(all(action[2] == 201 for action in worker_attacks))
+
+    def test_air_only_weapon_does_not_trigger_worker_pull(self):
+        bot = FakeBot()
+        phoenix = FakeUnit(200, UnitTypeId.PHOENIX, Point2((55, 55)), can_attack=True)
+        phoenix.is_flying = True
+        phoenix.can_attack_ground = False
+        bot.enemy_units = FakeUnits([phoenix])
+
+        asyncio.run(CombatManager(bot).respond_to_worker_harassment())
+
+        self.assertEqual(bot.actions, [])
+
     def test_worker_harassment_pulls_three_workers_per_threat_and_queen(self):
         bot = FakeBot()
         bot.enemy_units = FakeUnits(

@@ -1,0 +1,123 @@
+name: Core bot readiness and README
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'wicked_zerg_challenger/**'
+      - 'run.py'
+      - 'create_arena_package.py'
+      - 'requirements-dev.txt'
+      - 'scripts/update_readme_status.py'
+      - 'scripts/consolidate_branches.py'
+      - 'tests/test_update_readme_status.py'
+      - 'tests/test_consolidate_branches.py'
+      - '.github/workflows/core-readiness.yml'
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+  schedule:
+    - cron: '0 18 * * *' # 03:00 Asia/Seoul the following day
+
+permissions:
+  contents: read
+
+concurrency:
+  group: core-readiness-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION: python
+  MPLBACKEND: Agg
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+          cache-dependency-path: |
+            wicked_zerg_challenger/requirements.txt
+            requirements-dev.txt
+      - name: Install core bot and test dependencies
+        run: |
+          python -m pip install -r wicked_zerg_challenger/requirements.txt -r requirements-dev.txt pyyaml sc2reader aiohttp pytest-cov
+          python -m pip check
+      - name: Test actual bot and maintenance tools
+        run: |
+          mkdir -p "$RUNNER_TEMP/readiness"
+          python -m pytest wicked_zerg_challenger/tests tests/test_update_readme_status.py tests/test_consolidate_branches.py --timeout=120 --junitxml="$RUNNER_TEMP/readiness/tests.xml"
+      - name: Generate verified status
+        env:
+          TESTED_SHA: ${{ github.sha }}
+        run: |
+          benchmark_args=()
+          if [ -f data/reports/medium-terran.json ]; then
+            benchmark_args=(--benchmark data/reports/medium-terran.json)
+          fi
+          python scripts/update_readme_status.py --junit "$RUNNER_TEMP/readiness/tests.xml" --source-commit "$TESTED_SHA" --json-output data/reports/readiness.json "${benchmark_args[@]}"
+          cp README.md "$RUNNER_TEMP/readiness/README.md"
+          cp data/reports/readiness.json "$RUNNER_TEMP/readiness/readiness.json"
+      - name: Build competition upload package
+        run: python create_arena_package.py --output-dir "$RUNNER_TEMP/arena" --name WickedZergBotPro_Arena.zip --no-open
+      - name: Retain competition upload package
+        uses: actions/upload-artifact@v4
+        with:
+          name: arena-bot-package
+          path: ${{ runner.temp }}/arena/WickedZergBotPro_Arena.zip
+          if-no-files-found: error
+      - name: Retain test evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: core-test-evidence
+          path: ${{ runner.temp }}/readiness/tests.xml
+          if-no-files-found: warn
+      - name: Retain generated documentation
+        uses: actions/upload-artifact@v4
+        with:
+          name: core-readiness-docs
+          path: |
+            ${{ runner.temp }}/readiness/README.md
+            ${{ runner.temp }}/readiness/readiness.json
+          if-no-files-found: error
+
+  publish-status:
+    needs: verify
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+      - uses: actions/download-artifact@v4
+        with:
+          name: core-readiness-docs
+          path: ${{ runner.temp }}/readiness-publish
+      - name: Publish only the status of the tested revision
+        env:
+          TESTED_SHA: ${{ github.sha }}
+        run: |
+          if [ "$(git rev-parse HEAD)" != "$TESTED_SHA" ]; then
+            echo 'main advanced after testing; leave newer documentation untouched.'
+            exit 0
+          fi
+          cp "$RUNNER_TEMP/readiness-publish/README.md" README.md
+          mkdir -p data/reports
+          cp "$RUNNER_TEMP/readiness-publish/readiness.json" data/reports/readiness.json
+          git add -- README.md data/reports/readiness.json
+          if git diff --cached --quiet; then
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m 'docs: refresh verified bot readiness [skip ci]'
+          git push origin HEAD:refs/heads/main

@@ -554,20 +554,6 @@ class StrategyManager:
         return composition
 
     def _get_early_scout_signal_state(self) -> Dict[str, Any]:
-        if self.early_scout_pressure_active:
-            self.current_mode = StrategyMode.DEFENSIVE
-            return {
-                "fresh": False,
-                "gas_time": None,
-                "natural_confirmed": False,
-                "cheese_suspected": False,
-                "cheese_active": False,
-                "fast_gas": False,
-                "greed_suppressed": False,
-                "pressure_active": True,
-                "drone_floor": 16,
-            }
-
         game_time = getattr(self.bot, "time", 0.0)
         state: Dict[str, Any] = {
             "fresh": False,
@@ -601,10 +587,12 @@ class StrategyManager:
         cheese_suspected = bool(
             self.blackboard.get("early_scout_cheese_suspected", False)
         )
-        fresh = last_report > 0 and (game_time - last_report) <= 75.0
+        fresh = last_report > 0 and 0 <= (game_time - last_report) <= 75.0
         early_window = game_time <= 240.0
-        cheese_active = fresh and cheese_suspected
-        fast_gas = fresh and gas_time is not None and gas_time < 90.0
+        # A new scout report can repeat old opening evidence. Re-evaluate it
+        # every update instead of latching the previous pressure flag forever.
+        cheese_active = fresh and early_window and cheese_suspected
+        fast_gas = fresh and early_window and gas_time is not None and gas_time < 90.0
         greed_suppressed = fresh and early_window and not natural_confirmed
 
         state.update(
