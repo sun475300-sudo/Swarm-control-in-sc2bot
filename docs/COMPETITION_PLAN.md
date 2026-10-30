@@ -19,6 +19,10 @@
 
 ## 실제 경기에서 남은 필수 작업
 
+사용자가 제공한 대회 성적 출처는 [AI Arena 통계 페이지](https://aiarena.net/competitions/stats/3116/overview/winsbytime)입니다.
+`aiarena.net` 허용을 기존 SC2 다운로드 도메인과 함께 환경 설정 초안에 저장했습니다.
+실제 접속 전에는 URL의 숫자를 대회 ID나 봇 ID로 단정하지 않으며, 등록 이름·대회·버전·승패 수를 확인해야 합니다.
+
 1. 환경 설정에서 `blzdistsc2-a.akamaihd.net` 허용을 적용하고 공식 Linux SC2 실행 파일과 맵을 설치합니다. 현재 다운로드는 프록시 HTTP 403이며 설치 요구 도메인은 환경 설정 초안에 저장했습니다.
 2. 각 종족 Medium AI에 1경기씩 실행해 시작·종료·리플레이와 실제 행동을 확인합니다. 대회 서버 WebSocket 접속은 별도 AI Arena 환경에서 확인해야 합니다.
 3. Terran·Protoss·Zerg 각각 최소 30경기, 여러 맵과 시드로 평가하고 `--min-win-rate 90`을 검사합니다. 타임아웃·오류가 있는 결과는 합격으로 판단하지 않습니다.
