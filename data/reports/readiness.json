@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "checked_at": "2026-11-15T22:34:00.560870+00:00",
-  "source_commit": "8beed0d941b6c79c1a07eb5d4ca1e689537bc865",
+  "checked_at": "2026-11-17T01:41:38.234504+00:00",
+  "source_commit": "ebd5cca38a7ed97d5afd59a176ecfd8693c675fd",
   "unit_tests": {
     "tests": 782,
     "failures": 0,
